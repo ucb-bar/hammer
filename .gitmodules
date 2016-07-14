@@ -1,0 +1,6 @@
+[submodule "src/tools/pconfigure"]
+	path = src/tools/pconfigure
+	url = git://github.com/palmer-dabbelt/pconfigure.git
+[submodule "src/rocket-chip"]
+	path = src/rocket-chip
+	url = git://github.com/ucb-bar/rocket-chip.git
