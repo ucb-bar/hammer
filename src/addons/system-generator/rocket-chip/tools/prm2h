@@ -1,0 +1,30 @@
+#!/bin/bash
+
+unset output
+input=()
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    "-o") output="$2"; shift;;
+    *) input+=("$1");;
+    esac
+    shift
+done
+
+if [[ "$output" == "" ]]
+then
+    echo "no output proided (-o not set)"
+    exit 2
+fi
+
+if [[ "${input[*]}" == "" ]]
+then
+    echo "no inputs provided"
+    exit 2
+fi
+
+set -x
+
+cat ${input[*]} | \
+    sed 's@(\([A-Z_0-9]*\),\([0-9]*\))@#define \1 \2@' \
+    > $output

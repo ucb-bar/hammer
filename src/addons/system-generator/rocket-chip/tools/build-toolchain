@@ -1,0 +1,19 @@
+#!/bin/bash
+
+unset output
+unset tools_dir
+while [[ "$1" != "" ]]
+do
+    case $1 in
+    "-o") output="$2"; shift;;
+    "--tools-dir") tools_dir="$2"; shift;;
+    esac
+    shift
+done
+
+export RISCV="$(dirname "$output")"
+
+rm -rf "$RISCV"
+cd "$tools_dir"
+./build.sh
+touch "$output"

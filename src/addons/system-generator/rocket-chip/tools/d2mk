@@ -1,0 +1,49 @@
+#!/bin/bash
+
+set -e
+set -o pipefail
+
+# Parse the command-line arguments
+while [[ "$1" != "" ]]
+do
+    case $1 in
+    *.d)  input="$1";;
+    "-o")  output="$2"; shift;;
+    *)     echo "Unable to parse argument $1"; exit 1;;
+    esac
+
+    shift
+done
+
+if [[ "$output" == "" || "$input" == "" ]]
+then
+    echo "$0: -i <input.d> -o <output.mk>"
+    exit 1
+fi
+
+tempdir="$(mktemp -d plsi-test-list.XXXXXX)"
+trap "rm -rf $tempdir" EXIT
+
+rm -f $output
+
+# Walk though every Make variable in the input, as they all contain test lists.
+# Since we only care about the single top-level test case, just go ahead and
+# dump them all out.
+grep -P '^[a-z0-9-].*=.*\\' $input | sed 's@^\([a-z0-9-]*\).*=.*\\@\1@' | while read var
+do
+    cat > $tempdir/Makefile <<EOF
+.PHONY: all
+all:
+	@echo \$($var)
+include $(readlink -f $input)
+EOF
+    make --no-print-directory -f $tempdir/Makefile | sed 's@ @\n@g' | while read test
+    do
+        echo "check-system: \$(CHECK_SYSTEM_DIR)/$test.out" >> $tempdir/out
+        echo "check-system-vpd: \$(CHECK_SYSTEM_DIR)/$test.vpdout" >> $tempdir/out
+        echo ".PRECIOUS: \$(CHECK_SYSTEM_DIR)/$test.vpd" >> $tempdir/out
+        echo "\$(CHECK_SYSTEM_DIR)/$test.out: \$(OBJ_TOOLS_DIR)/riscv-tests/$test" >> $tempdir/out
+    done
+done
+
+mv $tempdir/out $output

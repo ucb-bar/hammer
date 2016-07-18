@@ -23,11 +23,16 @@ SYSTEM_CONFIG ?= DefaultConfig
 RTL_CONFIG ?= default
 
 # Defines the simulator used to run simulation at different levels
-RTL_SIMULATOR ?= verilator
+SYSTEM_SIMULATOR ?= verilator
 
 # The scheduler to use when running large jobs.  Changing this doesn't have any
 # effect on the generated files, just the manner in which they are generated.
 SCHEDULER ?= local
+
+# A cache directory for things that are, for some reason, difficult to create
+# and never change.  This is suitable for installing as a read-only shared
+# directory as long as someone writes to it first.
+PLSI_CACHE_DIR ?= obj/cache
 
 ##############################################################################
 # Internal Variables
@@ -40,6 +45,9 @@ SCHEDULER ?= local
 OBJ_TOOLS_DIR = obj/tools
 OBJ_SYSTEM_DIR = obj/system-$(SYSTEM_CONFIG)
 OBJ_CHECK_RTL_DIR = obj/check/rtl-$(SYSTEM_CONFIG)-$(RTL_CONFIG)
+
+# CHECK_* directories are where the output of tests go
+CHECK_SYSTEM_DIR = check/system-$(SYSTEM_CONFIG)
 
 # The outputs from the RTL generator
 OBJ_SYSTEM_RTL_V = $(OBJ_SYSTEM_DIR)/$(SYSTEM_TOP).$(SYSTEM_CONFIG).v
@@ -54,17 +62,27 @@ CMD_PTEST = $(OBJ_TOOLS_DIR)/pconfigure/bin/ptest
 # this, but if you're trying to add a new addon then you might want to look
 # here to see what variables it's expected to set.
 
-# Finds the system generator, which generates non-ASIC-specific RTL
-SYSTEM_GENERATOR_ADDON = $(wildcard src/addons/system-generator/$(SYSTEM_GENERATOR)/rules.mk $(ADDONS_DIR)/system-generator/$(SYSTEM_GENERATOR)/rules.mk)
+# Locates the various addons that will be used to setup 
+SYSTEM_GENERATOR_ADDON = $(wildcard src/addons/system-generator/$(SYSTEM_GENERATOR)/ $(ADDONS_DIR)/system-generator/$(SYSTEM_GENERATOR)/)
 ifneq ($(words $(SYSTEM_GENERATOR_ADDON)),1)
 $(error Unable to resolve SYSTEM_GENERATOR=$(SYSTEM_GENERATOR): found "$(SYSTEM_GENERATOR_ADDON)")
 endif
-include $(SYSTEM_GENERATOR_ADDON)
+
+SYSTEM_SIMULATOR_ADDON = $(wildcard src/addons/simulator/$(SYSTEM_SIMULATOR)/ $(ADDONS_DIR)/simulator/$(SYSTEM_SIMULATOR)/)
+ifneq ($(words $(SYSTEM_SIMULATOR_ADDON)),1)
+$(error Unable to resolve SYSTEM_GENERATOR=$(SYSTEM_GENERATOR): found "$(SYSTEM_GENERATOR_ADDON)")
+endif
+
+include $(SYSTEM_GENERATOR_ADDON)/vars.mk
+include $(SYSTEM_SIMULATOR_ADDON)/system-vars.mk
 
 # The name of the top-level RTL module that comes out of the system generator.
 ifeq ($(SYSTEM_TOP),)
 $(error SYSTEM_GENERATOR needs to set SYSTEM_TOP)
 endif
+
+include $(SYSTEM_GENERATOR_ADDON)/rules.mk
+include $(SYSTEM_SIMULATOR_ADDON)/system-rules.mk
 
 ##############################################################################
 # User Targets
@@ -76,7 +94,7 @@ endif
 # Runs all the test cases.  Note that this _always_ passes, you need to run
 # "make report" to see if the tests passed or not.
 .PHONY: check
-check: check-rtl
+check: check-system
 
 # A virtual target that reports on the status of the test cases, in addition to
 # running them (if necessary).
@@ -86,8 +104,8 @@ report: $(CMD_PTEST) check
 
 # Runs all the test cases at the RTL level.  The test list is actually defined
 # by the system generator, so you won't really see anything here.
-.PHONY: check-rtl
-check-rtl:
+.PHONY: check-system
+check-system:
 
 # Generates the system-level RTL
 system-verilog: bin/system-$(SYSTEM_CONFIG)/$(SYSTEM_TOP).$(SYSTEM_CONFIG).v

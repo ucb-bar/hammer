@@ -1,0 +1,16 @@
+#!/bin/bash
+
+unset simulator
+args=()
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    */simulator-*debug) simulator="$1";;
+    */ptest) ;;
+    "$0") ;;
+    *) args+=("$1");;
+    esac
+    shift
+done
+
+"$simulator" ${args[*]}
