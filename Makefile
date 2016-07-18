@@ -18,12 +18,18 @@ SYSTEM_DIR ?= src/rocket-chip
 # that's technology specific
 SYSTEM_GENERATOR ?= rocket-chip
 
+# The "chip generator" is used to add everything to a chip that isn't part of
+# the system generator (maybe because it's a NDA or something).  This default
+# chip generator doesn't actually do anything at all.
+CHIP_GENERATOR ?= nop
+
 # The configuration to run when running various steps of the process
 SYSTEM_CONFIG ?= DefaultConfig
-RTL_CONFIG ?= default
+CHIP_CONFIG ?= default
 
 # Defines the simulator used to run simulation at different levels
 SYSTEM_SIMULATOR ?= verilator
+CHIP_SIMULATOR ?= verilator
 
 # The scheduler to use when running large jobs.  Changing this doesn't have any
 # effect on the generated files, just the manner in which they are generated.
@@ -44,10 +50,11 @@ PLSI_CACHE_DIR ?= obj/cache
 # OBJ_*_DIR are the directories in which outputs end up
 OBJ_TOOLS_DIR = obj/tools
 OBJ_SYSTEM_DIR = obj/system-$(SYSTEM_CONFIG)
-OBJ_CHECK_RTL_DIR = obj/check/rtl-$(SYSTEM_CONFIG)-$(RTL_CONFIG)
+OBJ_CHIP_DIR = obj/chip-$(SYSTEM_CONFIG)-$(CHIP_CONFIG)
 
 # CHECK_* directories are where the output of tests go
 CHECK_SYSTEM_DIR = check/system-$(SYSTEM_CONFIG)
+CHECK_CHIP_DIR = check/chip-$(SYSTEM_CONFIG)-$(CHIP_CONFIG)
 
 # The outputs from the RTL generator
 OBJ_SYSTEM_RTL_V = $(OBJ_SYSTEM_DIR)/$(SYSTEM_TOP).$(SYSTEM_CONFIG).v
@@ -73,16 +80,34 @@ ifneq ($(words $(SYSTEM_SIMULATOR_ADDON)),1)
 $(error Unable to resolve SYSTEM_GENERATOR=$(SYSTEM_GENERATOR): found "$(SYSTEM_GENERATOR_ADDON)")
 endif
 
+CHIP_GENERATOR_ADDON = $(wildcard src/addons/chip-generator/$(CHIP_GENERATOR)/ $(ADDONS_DIR)/chip-generator/$(CHIP_GENERATOR)/)
+ifneq ($(words $(CHIP_GENERATOR_ADDON)),1)
+$(error Unable to resolve CHIP_GENERATOR=$(CHIP_GENERATOR): found "$(CHIP_GENERATOR_ADDON)")
+endif
+
+CHIP_SIMULATOR_ADDON = $(wildcard src/addons/simulator/$(CHIP_SIMULATOR)/ $(ADDONS_DIR)/simulator/$(CHIP_SIMULATOR)/)
+ifneq ($(words $(CHIP_SIMULATOR_ADDON)),1)
+$(error Unable to resolve CHIP_GENERATOR=$(CHIP_GENERATOR): found "$(CHIP_GENERATOR_ADDON)")
+endif
+
+# Actually loads the various addons, this is staged so we load "vars" first
+# (which set variables) and "rules" second, which set the make rules (which can
+# depend on those variables).
 include $(SYSTEM_GENERATOR_ADDON)/vars.mk
 include $(SYSTEM_SIMULATOR_ADDON)/system-vars.mk
 
-# The name of the top-level RTL module that comes out of the system generator.
 ifeq ($(SYSTEM_TOP),)
+# The name of the top-level RTL module that comes out of the system generator.
 $(error SYSTEM_GENERATOR needs to set SYSTEM_TOP)
 endif
 
+include $(CHIP_GENERATOR_ADDON)/vars.mk
+include $(CHIP_SIMULATOR_ADDON)/chip-vars.mk
+
 include $(SYSTEM_GENERATOR_ADDON)/rules.mk
 include $(SYSTEM_SIMULATOR_ADDON)/system-rules.mk
+include $(CHIP_GENERATOR_ADDON)/rules.mk
+include $(CHIP_SIMULATOR_ADDON)/chip-rules.mk
 
 ##############################################################################
 # User Targets
@@ -94,7 +119,7 @@ include $(SYSTEM_SIMULATOR_ADDON)/system-rules.mk
 # Runs all the test cases.  Note that this _always_ passes, you need to run
 # "make report" to see if the tests passed or not.
 .PHONY: check
-check: check-system
+check: $(patsubst %,check-%,system chip)
 
 # A virtual target that reports on the status of the test cases, in addition to
 # running them (if necessary).
@@ -102,10 +127,12 @@ check: check-system
 report: $(CMD_PTEST) check
 	+$(CMD_PTEST)
 
-# Runs all the test cases at the RTL level.  The test list is actually defined
-# by the system generator, so you won't really see anything here.
+# These various smaller test groups are all defined by the system generator!
 .PHONY: check-system
 check-system:
+
+.PHONY: check-chip
+check-chip:
 
 # Generates the system-level RTL
 system-verilog: bin/system-$(SYSTEM_CONFIG)/$(SYSTEM_TOP).$(SYSTEM_CONFIG).v
@@ -113,7 +140,9 @@ system-verilog: bin/system-$(SYSTEM_CONFIG)/$(SYSTEM_TOP).$(SYSTEM_CONFIG).v
 # This just cleans everything
 .PHONY: clean
 clean::
-	rm -rf $(OBJ_TOOLS_DIR) $(OBJ_SYSTEM_DIR) $(OBJ_CHECK_RTL_DIR)
+	rm -rf $(OBJ_TOOLS_DIR)
+	rm -rf $(OBJ_SYSTEM_DIR) $(CHECK_SYSTEM_DIR)
+	rm -rf $(OBJ_CHIP_DIR) $(CHECK_CHIP_DIR)
 
 ##############################################################################
 # Internal Targets

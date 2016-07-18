@@ -34,7 +34,7 @@ $(OBJ_TOOLS_DIR)/dramsim2/include/plsi-include.stamp: $(wildcard $(SYSTEM_DIR)/d
 $(OBJ_TOOLS_DIR)/riscv-tools/include/plsi-include.stamp: $(OBJ_TOOLS_DIR)/riscv-tools/plsi-build.stamp
 	touch $@
 
-$(OBJ_TOOLS_DIR)/riscv-tools/plsi-build.stamp: $(SYSTEM_GENERATOR_ADDON)/tools/build-toolchain
+$(OBJ_TOOLS_DIR)/riscv-tools/plsi-build.stamp: $(SYSTEM_GENERATOR_ADDON)/tools/build-toolchain $(find $(SYSTEM_DIR)/riscv-tools -iname "*.S" -or -iname "*.cc")
 	+$(SYSTEM_GENERATOR_ADDON)/tools/build-toolchain -o $(abspath $@) --tools-dir $(SYSTEM_DIR)/riscv-tools
 
 $(OBJ_TOOLS_DIR)/riscv-tools/lib/libfesvr.so: $(OBJ_TOOLS_DIR)/riscv-tools/plsi-build.stamp
