@@ -26,6 +26,7 @@ before_install:
   - export CXX=g++-4.8
   - export CC=gcc-4.8
   - export MAKEFLAGS=-j3
+  - export SCHEDULER=travis_wait
 
 script:
-  - travis_wait 120 make
+  - make

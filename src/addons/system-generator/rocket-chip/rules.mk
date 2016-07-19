@@ -7,7 +7,7 @@
 # the files that are allowed to be used by the rest of the system out after
 # running SBT (the .stamp file).
 $(OBJ_SYSTEM_DIR)/$(SYSTEM_TOP).$(SYSTEM_CONFIG).vsim.stamp: $(shell find $(SYSTEM_DIR) -iname "*.scala")
-	$(MAKE) RISCV=unused -C $(SYSTEM_DIR)/vsim verilog
+	+$(SCHODULER_CMD) $(MAKE) RISCV=unused -C $(SYSTEM_DIR)/vsim verilog
 	mkdir -p $(dir $@)
 	touch $@
 
@@ -35,7 +35,7 @@ $(OBJ_TOOLS_DIR)/riscv-tools/include/plsi-include.stamp: $(OBJ_TOOLS_DIR)/riscv-
 	touch $@
 
 $(OBJ_TOOLS_DIR)/riscv-tools/plsi-build.stamp: $(SYSTEM_GENERATOR_ADDON)/tools/build-toolchain $(find $(SYSTEM_DIR)/riscv-tools -iname "*.S" -or -iname "*.cc")
-	+$(SYSTEM_GENERATOR_ADDON)/tools/build-toolchain -o $(abspath $@) --tools-dir $(SYSTEM_DIR)/riscv-tools
+	+$(SCHEDULER_CMD) $(SYSTEM_GENERATOR_ADDON)/tools/build-toolchain -o $(abspath $@) --tools-dir $(SYSTEM_DIR)/riscv-tools
 
 $(OBJ_TOOLS_DIR)/riscv-tools/lib/libfesvr.so: $(OBJ_TOOLS_DIR)/riscv-tools/plsi-build.stamp
 

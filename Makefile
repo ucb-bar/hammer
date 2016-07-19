@@ -70,6 +70,11 @@ CMD_PTEST = $(OBJ_TOOLS_DIR)/pconfigure/bin/ptest
 # here to see what variables it's expected to set.
 
 # Locates the various addons that will be used to setup 
+SCHEDULER_ADDON = $(wildcard src/addons/scheduler/$(SCHEDULER)/ $(ADDONS_DIR)/scheduler/$(SCHEDULER)/)
+ifneq ($(words $(SCHEDULER_ADDON)),1)
+$(error Unable to resolve SCHEDULER=$(SCHEDULER): found "$(SCHEDULER_ADDON)")
+endif
+
 SYSTEM_GENERATOR_ADDON = $(wildcard src/addons/system-generator/$(SYSTEM_GENERATOR)/ $(ADDONS_DIR)/system-generator/$(SYSTEM_GENERATOR)/)
 ifneq ($(words $(SYSTEM_GENERATOR_ADDON)),1)
 $(error Unable to resolve SYSTEM_GENERATOR=$(SYSTEM_GENERATOR): found "$(SYSTEM_GENERATOR_ADDON)")
@@ -93,6 +98,15 @@ endif
 # Actually loads the various addons, this is staged so we load "vars" first
 # (which set variables) and "rules" second, which set the make rules (which can
 # depend on those variables).
+include $(SCHEDULER_ADDON)/vars.mk
+
+ifeq ($(SCHEDULER_CMD),)
+# A command that schedules large jobs.  This should respect the jobserver if
+# it's run locally on this machine, but it's expected that some of this stuff
+# will run on clusters and therefor won't respect the jobserver.
+$(error SCHEDULER needs to set SCHEDULER_CMD)
+endif
+
 include $(SYSTEM_GENERATOR_ADDON)/vars.mk
 include $(SYSTEM_SIMULATOR_ADDON)/system-vars.mk
 
@@ -100,6 +114,7 @@ ifeq ($(SYSTEM_TOP),)
 # The name of the top-level RTL module that comes out of the system generator.
 $(error SYSTEM_GENERATOR needs to set SYSTEM_TOP)
 endif
+
 
 include $(CHIP_GENERATOR_ADDON)/vars.mk
 include $(CHIP_SIMULATOR_ADDON)/chip-vars.mk
@@ -161,7 +176,7 @@ $(OBJ_TOOLS_DIR)/pconfigure/Makefile: $(OBJ_TOOLS_DIR)/pconfigure/Configfile.loc
                                       $(shell find src/tools/pconfigure/src -type f) \
                                       src/tools/pconfigure/bootstrap.sh
 	mkdir -p $(dir $@)
-	+cd $(dir $@); $(abspath src/tools/pconfigure/bootstrap.sh) $(abspath src/tools/pconfigure)/
+	+cd $(dir $@); $(SCHEDULER_CMD) $(abspath src/tools/pconfigure/bootstrap.sh) $(abspath src/tools/pconfigure)/
 
 $(OBJ_TOOLS_DIR)/pconfigure/Configfile.local:
 	mkdir -p $(dir $@)

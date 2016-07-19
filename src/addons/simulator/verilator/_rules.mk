@@ -19,7 +19,7 @@ VERILATOR_TAR = $(PLSI_CACHE_DIR)/distfiles/verilator-$(VERILATOR_VERSION).tar.g
 # Builds Verilator since we can't rely on whatever the system has installed.
 $(VERILATOR_BIN): $(VERILATOR_SRC)/bin/verilator
 	rm -rf $(VERILATOR_PREFIX)
-	$(MAKE) -C $(VERILATOR_SRC) install
+	$(SCHEDULER_CMD) $(MAKE) -C $(VERILATOR_SRC) install
 	# FIXME: Why do I have to do this?
 	mkdir -p $(VERILATOR_PREFIX)/include
 	cp -r $(VERILATOR_PREFIX)/share/verilator/include/* $(VERILATOR_PREFIX)/include
@@ -48,7 +48,7 @@ endif
 # These rules actually run the simulations.
 $(CHECK_$(VERILATOR_TARGET_CAPS)_DIR)/%.out: $($(VERILATOR_TARGET_CAPS)_SIMULATOR_ADDON)/tools/run-simulator $(OBJ_$(VERILATOR_TARGET_CAPS)_DIR)/simulator-ndebug $(CMD_PTEST)
 	mkdir -p $(dir $@)
-	$(CMD_PTEST) --test $(abspath $($(VERILATOR_TARGET_CAPS)_SIMULATOR_ADDON)/tools/run-simulator) --out $@ --args $(abspath $^)
+	$(SCHEDULER_CMD) $(CMD_PTEST) --test $(abspath $($(VERILATOR_TARGET_CAPS)_SIMULATOR_ADDON)/tools/run-simulator) --out $@ --args $(abspath $^)
 
 # Verilator requires a simulation object to be built.
 ifeq ($($(VERILATOR_TARGET_CAPS)_TOP),)
@@ -68,6 +68,6 @@ $(patsubst %,$(OBJ_$(VERILATOR_TARGET_CAPS)_DIR)/simulator-%,ndebug debug): \
 		$(VERILATOR_BIN) \
 		$($(VERILATOR_TARGET_CAPS)_SIMULATOR_ADDON)/tools/build-simulator
 	mkdir -p $(dir $@)
-	+$(abspath $($(VERILATOR_TARGET_CAPS)_SIMULATOR_ADDON)/tools/build-simulator) -o $(abspath $@) --top $($(VERILATOR_TARGET_CAPS)_TOP) --level $(VERILATOR_TARGET_LOWER) --mode $(patsubst simulator-%,%,$(notdir $@)) $(abspath $^)
+	+$(SCHEDULER_CMD) $(abspath $($(VERILATOR_TARGET_CAPS)_SIMULATOR_ADDON)/tools/build-simulator) -o $(abspath $@) --top $($(VERILATOR_TARGET_CAPS)_TOP) --level $(VERILATOR_TARGET_LOWER) --mode $(patsubst simulator-%,%,$(notdir $@)) $(abspath $^)
 
 
