@@ -13,6 +13,9 @@ parser.add_argument('--output', dest='output')
 
 args = parser.parse_args()
 
+htif_width = 16
+divider = 7
+
 def reverse_port_direction(direction):
   if direction == "input":
     return "output"
@@ -41,7 +44,7 @@ with open(args.output, 'w') as output:
   output.write("  }\n")
   output.write("}\n")
   output.write("\n")
-  output.write("class %sIO extends Bundle {\n" % (args.chip_top))
+  output.write("class %sIO extends Bundle {\n" % (args.system_top))
   output.write("  val interrupts_0 = Bool(INPUT);\n")
   output.write("  val interrupts_1 = Bool(INPUT);\n")
   for queue in decoupled["decoupled io"]:
@@ -50,77 +53,188 @@ with open(args.output, 'w') as output:
     for wire in queue["bits"]:
       output.write("  val %s_bits_%s = Bits(%s, width = %d);\n" % (queue["base"], wire["name"], direction_caps(queue["direction"]), int(wire["width"])))
   output.write("}\n")
-  output.write("class %sIO extends %sIO {\n" % (args.system_top, args.chip_top))
+  output.write("class %sIO extends %sIO {\n" % (args.chip_top, args.system_top))
   output.write("}\n")
   output.write("class %s extends Module {\n" % (args.chip_top))
   output.write("  val io = new %sIO()\n" % (args.chip_top))
-  output.write("  val system_top = Module(new %s)\n" % (args.system_top))
-  output.write("  io <> system_top.io\n")
+  output.write("  val syn_top = Module(new %s)\n" % (args.syn_top))
+  output.write("  syn_top.io.interrupts_0 := io.interrupts_0\n")
+  output.write("  syn_top.io.interrupts_1 := io.interrupts_1\n")
+  output.write("  syn_top.io.host_in := UInt(0)\n")
+  output.write("  val old_clock = Reg(init = Bool(false))\n")
+  output.write("  old_clock := syn_top.io.host_clk\n")
+  output.write("  val clock_edge_up = (old_clock === Bool(true) && syn_top.io.host_clk === Bool(false))\n")
+  output.write("  val clock_edge_dn = (old_clock === Bool(false) && syn_top.io.host_clk === Bool(true))\n")
+  output.write("  val synced = Reg(init = Bool(false))\n")
+  output.write("  val addr = Reg(UInt(width = 32))\n")
+  output.write("  when (syn_top.io.host_sync === Bool(true) && (clock_edge_dn)) {\n")
+  output.write("    synced := Bool(true)\n")
+  output.write("    addr := UInt(0)\n")
+  output.write("  }\n")
+  output.write("  val do_i = synced && clock_edge_dn\n")
+  output.write("  val do_o = synced && clock_edge_up\n")
+  output.write("  when (do_o & !syn_top.io.host_sync) { addr := addr + UInt(1) }\n")
+  addr = 1
+  for queue in decoupled["decoupled io"]:
+    if (queue["direction"] == "input"):
+      output.write("  val empty_%s = Reg(init = Bool(true))\n" % (queue["base"]))
+      output.write("  val rempty_%s = Reg(init = Bool(true))\n" % (queue["base"]))
+      for wire in queue["bits"]:
+        output.write("  val reg_%s_bits_%s = Reg(UInt(width = %d))\n" % (queue["base"], wire["name"], int(wire["width"])))
+        output.write("  when (empty_%s && synced && io.%s_valid && addr === UInt(0)) {\n" % (queue["base"], queue["base"]))
+        output.write("    reg_%s_bits_%s := io.%s_bits_%s\n" % (queue["base"], wire["name"], queue["base"], wire["name"]))
+        output.write("  }\n")
+        for bs in range(0, int(wire["width"]), htif_width):
+          output.write("  when (addr === UInt(%d) && !empty_%s) {\n" % (addr, queue["base"]))
+          output.write("    syn_top.io.host_in := reg_%s_bits_%s(%d, %d)\n" % (queue["base"], wire["name"], min(bs + htif_width - 1, int(wire["width"])-1), bs))
+          output.write("  }\n")
+          addr = addr + 1
+      output.write("  when (addr === UInt(%d + 0) && do_i && !empty_%s) {\n" % (addr, queue["base"]))
+      output.write("    rempty_%s := !syn_top.io.host_out(0)\n" % (queue["base"]))
+      output.write("  }\n")
+      output.write("  when (addr === UInt(%d + 1)) {\n" % (addr))
+      output.write("    syn_top.io.host_in := !empty_%s\n" % (queue["base"]))
+      output.write("  }\n")
+      output.write("  when (rempty_%s && addr === UInt(0)) {\n" % (queue["base"]))
+      output.write("    empty_%s := Bool(true)\n" % (queue["base"]))
+      output.write("    rempty_%s := Bool(false)\n" % queue["base"])
+      output.write("  }\n")
+      output.write("  when (empty_%s && io.%s_valid && synced && addr === UInt(0)) {\n" % (queue["base"], queue["base"]))
+      output.write("    empty_%s := Bool(false)\n" % (queue["base"]))
+      output.write("  }\n")
+      output.write("  io.%s_ready := empty_%s && synced && addr === UInt(0)\n" % (queue["base"], queue["base"]))
+      addr = addr + 2
+    else:
+      output.write("  val empty_%s = Reg(init = Bool(true))\n" % (queue["base"]))
+      output.write("  val rempty_%s = Reg(init = Bool(true))\n" % (queue["base"]))
+      for wire in queue["bits"]:
+        output.write("  val reg_%s_bits_%s = Reg(UInt(width = %d))\n" % (queue["base"], wire["name"], int(wire["width"])))
+        output.write("  io.%s_bits_%s := reg_%s_bits_%s\n" % (queue["base"], wire["name"], queue["base"], wire["name"]))
+        for bs in range(0, int(wire["width"]), htif_width):
+          output.write("  when (addr === UInt(%d) && do_i && empty_%s) {\n" % (addr, queue["base"]))
+          if (wire["width"] == "1"):
+            output.write("    reg_%s_bits_%s := syn_top.io.host_out\n" % (queue["base"], wire["name"]))
+          else:
+            output.write("    reg_%s_bits_%s(%d, %d) := syn_top.io.host_out\n" % (queue["base"], wire["name"], min(bs + htif_width - 1, int(wire["width"])-1), bs))
+          output.write("  }\n")
+          addr = addr + 1
+      output.write("  when (addr === UInt(%d + 0)) {\n" % (addr))
+      output.write("    syn_top.io.host_in := !empty_%s\n" % (queue["base"]))
+      output.write("  }\n")
+      output.write("  when (addr === UInt(%d + 1) && do_i && empty_%s) {\n" % (addr, queue["base"]))
+      output.write("    rempty_%s := !syn_top.io.host_out(0)\n" % (queue["base"]))
+      output.write("  }\n")
+      output.write("  when (!empty_%s && io.%s_ready && synced && addr === UInt(0)) {\n" % (queue["base"], queue["base"]))
+      output.write("    empty_%s := Bool(true)\n" % (queue["base"]))
+      output.write("  }\n")
+      output.write("  when (!rempty_%s && addr === UInt(0)) {\n" % (queue["base"]))
+      output.write("    empty_%s := Bool(false)\n" % (queue["base"]))
+      output.write("    rempty_%s := Bool(true)\n" % queue["base"])
+      output.write("  }\n")
+      output.write("  when (!empty_%s && io.%s_ready && synced && addr === UInt(0)) {\n" % (queue["base"], queue["base"]))
+      output.write("    empty_%s := Bool(true)\n" % (queue["base"]))
+      output.write("  }\n")
+      output.write("  io.%s_valid := !empty_%s && synced && addr === UInt(0)\n" % (queue["base"], queue["base"]))
+      addr = addr + 2
+  output.write("  when (addr >= UInt(%d) && do_o) { addr := UInt(0) }\n" % (addr))
   output.write("}\n")
+
+  output.write("class %sIO extends Bundle {\n" % (args.syn_top))
+  output.write("  val host_in      = Bits(INPUT,  width=%d);\n" % (htif_width))
+  output.write("  val host_out     = Bits(OUTPUT, width=%d);\n" % (htif_width))
+  output.write("  val host_clk     = Bool(OUTPUT);\n")
+  output.write("  val host_sync    = Bool(OUTPUT);\n")
+  output.write("  val interrupts_0 = Bool(INPUT);\n")
+  output.write("  val interrupts_1 = Bool(INPUT);\n")
+  output.write("}\n")
+  output.write("class %s extends Module{\n" % (args.syn_top))
+  output.write("  val io = new %sIO()\n" % (args.syn_top))
+  output.write("  io.host_out := UInt(0)\n")
+  output.write("  val sys_top = Module(new %s)\n" % (args.system_top))
+  output.write("  sys_top.io.interrupts_0 := io.interrupts_0\n")
+  output.write("  sys_top.io.interrupts_1 := io.interrupts_1\n")
+  output.write("  val divider = Reg(UInt(width = %d))\n" % (divider))
+  output.write("  divider := divider + UInt(1)\n")
+  output.write("  val addr = Reg(UInt(width = 32))\n")
+  output.write("  io.host_sync := (addr === UInt(0))\n")
+  output.write("  when (divider === UInt(0)) {\n")
+  output.write("    addr := addr + UInt(1)\n")
+  output.write("    io.host_sync := Bool(false)\n")
+  output.write("  }\n")
+  output.write("  io.host_clk := divider >= UInt(1 << %d)\n" % (divider - 1))
+  output.write("  val synced = Reg(init = Bool(false))\n")
+  output.write("  when (divider === UInt(0) && addr === UInt(0)) {\n")
+  output.write("    synced := Bool(true)\n")
+  output.write("  }\n")
+  output.write("  val do_o = divider === UInt(0)\n")
+  output.write("  val do_i = divider === UInt(1 << %d)\n" % (divider -1))
+  addr = 1
+  for queue in decoupled["decoupled io"]:
+    if (queue["direction"] == "output"):
+      output.write("  val empty_%s = Reg(init = Bool(true))\n" % (queue["base"]))
+      output.write("  val rempty_%s = Reg(init = Bool(true))\n" % (queue["base"]))
+      for wire in queue["bits"]:
+        output.write("  val reg_%s_bits_%s = Reg(UInt(width = %d))\n" % (queue["base"], wire["name"], int(wire["width"])))
+        output.write("  when (empty_%s && sys_top.io.%s_valid && addr === UInt(0)) {\n" % (queue["base"], queue["base"]))
+        output.write("    reg_%s_bits_%s := sys_top.io.%s_bits_%s\n" % (queue["base"], wire["name"], queue["base"], wire["name"]))
+        output.write("  }\n")
+        for bs in range(0, int(wire["width"]), htif_width):
+          output.write("  when (addr === UInt(%d) && !empty_%s) {\n" % (addr, queue["base"]))
+          output.write("    io.host_out := reg_%s_bits_%s(%d, %d)\n" % (queue["base"], wire["name"], min(bs + htif_width - 1, int(wire["width"])-1), bs))
+          output.write("  }\n")
+          addr = addr + 1
+      output.write("  when (addr === UInt(%d + 0) && do_i && !empty_%s) {\n" % (addr, queue["base"]))
+      output.write("    rempty_%s := !io.host_in(0)\n" % (queue["base"]))
+      output.write("  }\n")
+      output.write("  when (addr === UInt(%d + 1)) {\n" % (addr))
+      output.write("    io.host_out := !empty_%s\n" % (queue["base"]))
+      output.write("  }\n")
+      output.write("  when (rempty_%s && addr === UInt(0)) {\n" % (queue["base"]))
+      output.write("    empty_%s := Bool(true)\n" % (queue["base"]))
+      output.write("    rempty_%s := Bool(false)\n" % queue["base"])
+      output.write("  }\n")
+      output.write("  when (empty_%s && sys_top.io.%s_valid && synced && addr === UInt(0)) {\n" % (queue["base"], queue["base"]))
+      output.write("    empty_%s := Bool(false)\n" % (queue["base"]))
+      output.write("  }\n")
+      output.write("  sys_top.io.%s_ready := empty_%s && synced && addr === UInt(0)\n" % (queue["base"], queue["base"]))
+      addr = addr + 2
+    else:
+      output.write("  val empty_%s = Reg(init = Bool(true))\n" % (queue["base"]))
+      output.write("  val rempty_%s = Reg(init = Bool(true))\n" % (queue["base"]))
+      for wire in queue["bits"]:
+        output.write("  val reg_%s_bits_%s = Reg(UInt(width = %d))\n" % (queue["base"], wire["name"], int(wire["width"])))
+        output.write("  sys_top.io.%s_bits_%s := reg_%s_bits_%s\n" % (queue["base"], wire["name"], queue["base"], wire["name"]))
+        for bs in range(0, int(wire["width"]), htif_width):
+          output.write("  when (addr === UInt(%d) && do_i && empty_%s) {\n" % (addr, queue["base"]))
+          if (wire["width"] == "1"):
+            output.write("    reg_%s_bits_%s := io.host_in\n" % (queue["base"], wire["name"]))
+          else:
+            output.write("    reg_%s_bits_%s(%d, %d) := io.host_in\n" % (queue["base"], wire["name"], min(bs + htif_width - 1, int(wire["width"])-1), bs))
+          output.write("  }\n")
+          addr = addr + 1
+      output.write("  when (addr === UInt(%d + 0)) {\n" % (addr))
+      output.write("    io.host_out := !empty_%s\n" % (queue["base"]))
+      output.write("  }\n")
+      output.write("  when (addr === UInt(%d + 1) && do_i && empty_%s) {\n" % (addr, queue["base"]))
+      output.write("    rempty_%s := !io.host_in(0)\n" % (queue["base"]))
+      output.write("  }\n")
+      output.write("  when (!empty_%s && sys_top.io.%s_ready && synced && addr === UInt(0)) {\n" % (queue["base"], queue["base"]))
+      output.write("    empty_%s := Bool(true)\n" % (queue["base"]))
+      output.write("  }\n")
+      output.write("  when (!rempty_%s && addr === UInt(0)) {\n" % (queue["base"]))
+      output.write("    empty_%s := Bool(false)\n" % (queue["base"]))
+      output.write("    rempty_%s := Bool(true)\n" % queue["base"])
+      output.write("  }\n")
+      output.write("  when (!empty_%s && sys_top.io.%s_ready && synced && addr === UInt(0)) {\n" % (queue["base"], queue["base"]))
+      output.write("    empty_%s := Bool(true)\n" % (queue["base"]))
+      output.write("  }\n")
+      output.write("  sys_top.io.%s_valid := !empty_%s && synced && addr === UInt(0)\n" % (queue["base"], queue["base"]))
+      addr = addr + 2
+  output.write("  when (addr >= UInt(%d) && do_o) { addr := UInt(0) }\n" % (addr))
+  output.write("}\n");
+
   output.write("class %s extends BlackBox {\n" % (args.system_top))
   output.write("  val io = new %sIO()\n" % (args.system_top))
   output.write("  val dummy = Reg(init = Bool(false));\n")
   output.write("  debug(dummy);\n")
   output.write("}\n")
-
-exit(0)
-
-with open(args.output, 'w') as output:
-  with open(args.system_v, 'r') as system_v:
-    for line in system_v.readlines():
-      output.write(line)
-
-  decoupled = None
-  with open(args.decoupled, 'r') as decoupled_file:
-    decoupled = json.load(decoupled_file)
-  
-  output.write("module %s (\n" % (args.chip_top))
-  output.write("  input clk,\n")
-  output.write("  input reset,\n")
-  for queue in decoupled["decoupled io"]:
-    output.write("  %s %s_ready,\n" % (queue["direction"], queue["base"]))
-    output.write("  %s %s_valid,\n" % (reverse_port_direction(queue["direction"]), queue["base"]))
-    for wire in queue["bits"]:
-      output.write("  %s [%d:%d] %s_bits_%s,\n" % (queue["direction"], int(wire["width"])-1, 0, queue["base"], wire["name"]))
-  output.write("  input io_interrupts_0,\n")
-  output.write("  input io_interrupts_1\n")
-  output.write(");\n")
-
-  output.write("  wire system_top_clk;\n");
-  output.write("  assign system_top_clk = clk;\n");
-  output.write("  wire system_top_reset;\n");
-  output.write("  assign system_top_reset = reset;\n");
-  output.write("  wire system_top_io_interrupts_0;\n");
-  output.write("  assign system_top_io_interrupts_0 = io_interrupts_0;\n");
-  output.write("  wire system_top_io_interrupts_1;\n");
-  output.write("  assign system_top_io_interrupts_1 = io_interrupts_1;\n");
-  for queue in decoupled["decoupled io"]:
-    output.write("  wire system_top_%s_ready;\n" % (queue["base"]));
-    output.write("  wire system_top_%s_valid;\n" % (queue["base"]));
-    if (queue["direction"] == "input"):
-      output.write("  assign system_top_%s_ready = %s_ready;\n" % (queue["base"], queue["base"]))
-      output.write("  assign %s_valid = system_top_%s_valid && !reset;\n" % (queue["base"], queue["base"]))
-    else:
-      output.write("  assign %s_ready = system_top_%s_ready;\n" % (queue["base"], queue["base"]))
-      output.write("  assign system_top_%s_valid = %s_valid && !reset;\n" % (queue["base"], queue["base"]))
-      
-    for wire in queue["bits"]:
-      output.write("  wire [%d:%d] system_top_%s_bits_%s;\n" % (int(wire["width"])-1, 0, queue["base"], wire["name"]))
-      if (queue["direction"] == "input"):
-        output.write("  assign system_top_%s_bits_%s = %s_bits_%s;\n" % (queue["base"], wire["name"], queue["base"], wire["name"]))
-      else:
-        output.write("  assign %s_bits_%s = system_top_%s_bits_%s;\n" % (queue["base"], wire["name"], queue["base"], wire["name"]))
-
-  output.write("  %s system_top(\n" % (args.system_top))
-  output.write("    .clk(system_top_clk),\n")
-  output.write("    .reset(system_top_reset),\n")
-  for queue in decoupled["decoupled io"]:
-    output.write("    .%s_ready(system_top_%s_ready),\n" % (queue["base"], queue["base"]))
-    output.write("    .%s_valid(system_top_%s_valid),\n" % (queue["base"], queue["base"]))
-    for wire in queue["bits"]:
-      output.write("    .%s_bits_%s(system_top_%s_bits_%s),\n" % (queue["base"], wire["name"], queue["base"], wire["name"]))
-  output.write("    .io_interrupts_0(system_top_io_interrupts_0),\n")
-  output.write("    .io_interrupts_1(system_top_io_interrupts_1)\n")
-  output.write("  );\n");
-
-  output.write("endmodule\n")

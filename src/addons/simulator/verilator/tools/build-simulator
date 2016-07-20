@@ -52,7 +52,7 @@ fi
 $verilator \
     --top-module $top \
     --assert \
-    -Wno-STMTDLY \
+    -Wno-STMTDLY -Wno-WIDTH \
     --x-assign unique \
     -O3 \
     --cc --exe \
