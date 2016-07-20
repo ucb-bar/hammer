@@ -4,3 +4,6 @@
 [submodule "src/rocket-chip"]
 	path = src/rocket-chip
 	url = git://github.com/ucb-bar/rocket-chip.git
+[submodule "src/tools/pcad"]
+	path = src/tools/pcad
+	url = git://github.com/palmer-dabbelt/pcad.git

@@ -47,6 +47,9 @@ PLSI_CACHE_DIR ?= obj/cache
 # These variables aren't meant to be overridden by users -- you probably
 # shouldn't be changing them at all.
 
+# Versions of externally developed programs to download
+TCLAP_VERSION = 1.2.1
+
 # OBJ_*_DIR are the directories in which outputs end up
 OBJ_TOOLS_DIR = obj/tools
 OBJ_SYSTEM_DIR = obj/system-$(SYSTEM_CONFIG)
@@ -60,6 +63,11 @@ CHECK_CHIP_DIR = check/chip-$(SYSTEM_CONFIG)-$(CHIP_CONFIG)
 OBJ_SYSTEM_RTL_V = $(OBJ_SYSTEM_DIR)/$(SYSTEM_TOP).$(SYSTEM_CONFIG).v
 
 CMD_PTEST = $(OBJ_TOOLS_DIR)/pconfigure/bin/ptest
+CMD_PCONFIGURE = $(OBJ_TOOLS_DIR)/pconfigure/bin/pconfigure
+CMD_PCAD_INFER_DECOUPLED = $(OBJ_TOOLS_DIR)/pcad/bin/pcad-pipe-infer_decoupled
+
+PKG_CONFIG_PATH=$(abspath $(OBJ_TOOLS_DIR)/install/lib/pkgconfig)
+export PKG_CONFIG_PATH
 
 ##############################################################################
 # Addon Loading
@@ -182,7 +190,33 @@ $(OBJ_TOOLS_DIR)/pconfigure/Configfile.local:
 	mkdir -p $(dir $@)
 	echo "PREFIX = $(abspath $(OBJ_TOOLS_DIR)/pconfigure)" > $@
 
-# Here are a bunch of pattern rules that will try
+# Builds PCAD and all its dependencies.
+$(OBJ_TOOLS_DIR)/install/include/tclap/CmdLine.h: $(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION)/Makefile
+	$(SCHEDULER_CMD) $(MAKE) -C $(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION) install
+
+$(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION)/Makefile: $(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION)/configure
+	cd $(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION); ./configure --prefix=$(abspath $(OBJ_TOOLS_DIR)/install)
+
+$(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION)/configure: $(PLSI_CACHE_DIR)/tclap-$(TCLAP_VERSION).tar.gz
+	rm -rf $(dir $@)
+	mkdir -p $(dir $@)
+	tar -xvzpf $< --strip-components=1 -C $(dir $@)
+	touch $@
+
+$(PLSI_CACHE_DIR)/tclap-$(TCLAP_VERSION).tar.gz:
+	wget 'http://downloads.sourceforge.net/project/tclap/tclap-$(TCLAP_VERSION).tar.gz?r=https%3A%2F%2Fsourceforge.net%2Fprojects%2Ftclap%2Ffiles%2F&ts=1468971231&use_mirror=jaist' -O $@
+
+$(OBJ_TOOLS_DIR)/pcad/bin/%: $(OBJ_TOOLS_DIR)/pcad/Makefile
+	$(SCHEDULER_CMD) $(MAKE) -C $(OBJ_TOOLS_DIR)/pcad bin/$(notdir $@)
+
+$(OBJ_TOOLS_DIR)/pcad/Makefile: src/tools/pcad/Configfile \
+				$(shell find src/tools/pcad/src -type f) \
+				$(OBJ_TOOLS_DIR)/install/include/tclap/CmdLine.h \
+				$(CMD_PCONFIGURE)
+	mkdir -p $(dir $@)
+	cd $(dir $@); $(abspath $(CMD_PCONFIGURE)) --srcpath $(abspath src/tools/pcad)
+
+# Here are a bunch of pattern rules that will try to copy outputs.
 bin/system-$(SYSTEM_CONFIG)/%: $(OBJ_SYSTEM_DIR)/%
 	mkdir -p $(dir $@)
 	cp --reflink=auto $< $@
