@@ -1,0 +1,126 @@
+#!/usr/bin/python2
+
+import argparse
+import json
+
+parser = argparse.ArgumentParser(description='Generate an ASIC harness for UCB Test Chips')
+parser.add_argument('--system-top', dest='system_top')
+parser.add_argument('--chip-top', dest='chip_top')
+parser.add_argument('--syn-top', dest='syn_top')
+parser.add_argument('--system-v', dest='system_v')
+parser.add_argument('--decoupled', dest='decoupled')
+parser.add_argument('--output', dest='output')
+
+args = parser.parse_args()
+
+def reverse_port_direction(direction):
+  if direction == "input":
+    return "output"
+  if direction == "output":
+    return "input"
+  print "unknown direction: %s" % direction
+  exit(1)
+
+def direction_caps(direction):
+  if direction == "input":
+    return "INPUT"
+  if direction == "output":
+    return "OUTPUT"
+  print "unknown direction: %s" % direction
+  exit(1)
+
+with open(args.output, 'w') as output:
+  decoupled = None
+  with open(args.decoupled, 'r') as decoupled_file:
+    decoupled = json.load(decoupled_file)
+
+  output.write("import Chisel._\n")
+  output.write("object Main {\n")
+  output.write("  def main(args: Array[String]): Unit = {\n")
+  output.write("    chiselMain(args, () => Module(new %s()))\n" % (args.chip_top))
+  output.write("  }\n")
+  output.write("}\n")
+  output.write("\n")
+  output.write("class %sIO extends Bundle {\n" % (args.chip_top))
+  output.write("  val interrupts_0 = Bool(INPUT);\n")
+  output.write("  val interrupts_1 = Bool(INPUT);\n")
+  for queue in decoupled["decoupled io"]:
+    output.write("  val %s_ready = Bool(%s).flip;\n" % (queue["base"], direction_caps(queue["direction"])))
+    output.write("  val %s_valid = Bool(%s);\n" % (queue["base"], direction_caps(queue["direction"])))
+    for wire in queue["bits"]:
+      output.write("  val %s_bits_%s = Bits(%s, width = %d);\n" % (queue["base"], wire["name"], direction_caps(queue["direction"]), int(wire["width"])))
+  output.write("}\n")
+  output.write("class %sIO extends %sIO {\n" % (args.system_top, args.chip_top))
+  output.write("}\n")
+  output.write("class %s extends Module {\n" % (args.chip_top))
+  output.write("  val io = new %sIO()\n" % (args.chip_top))
+  output.write("  val system_top = Module(new %s)\n" % (args.system_top))
+  output.write("  io <> system_top.io\n")
+  output.write("}\n")
+  output.write("class %s extends BlackBox {\n" % (args.system_top))
+  output.write("  val io = new %sIO()\n" % (args.system_top))
+  output.write("  val dummy = Reg(init = Bool(false));\n")
+  output.write("  debug(dummy);\n")
+  output.write("}\n")
+
+exit(0)
+
+with open(args.output, 'w') as output:
+  with open(args.system_v, 'r') as system_v:
+    for line in system_v.readlines():
+      output.write(line)
+
+  decoupled = None
+  with open(args.decoupled, 'r') as decoupled_file:
+    decoupled = json.load(decoupled_file)
+  
+  output.write("module %s (\n" % (args.chip_top))
+  output.write("  input clk,\n")
+  output.write("  input reset,\n")
+  for queue in decoupled["decoupled io"]:
+    output.write("  %s %s_ready,\n" % (queue["direction"], queue["base"]))
+    output.write("  %s %s_valid,\n" % (reverse_port_direction(queue["direction"]), queue["base"]))
+    for wire in queue["bits"]:
+      output.write("  %s [%d:%d] %s_bits_%s,\n" % (queue["direction"], int(wire["width"])-1, 0, queue["base"], wire["name"]))
+  output.write("  input io_interrupts_0,\n")
+  output.write("  input io_interrupts_1\n")
+  output.write(");\n")
+
+  output.write("  wire system_top_clk;\n");
+  output.write("  assign system_top_clk = clk;\n");
+  output.write("  wire system_top_reset;\n");
+  output.write("  assign system_top_reset = reset;\n");
+  output.write("  wire system_top_io_interrupts_0;\n");
+  output.write("  assign system_top_io_interrupts_0 = io_interrupts_0;\n");
+  output.write("  wire system_top_io_interrupts_1;\n");
+  output.write("  assign system_top_io_interrupts_1 = io_interrupts_1;\n");
+  for queue in decoupled["decoupled io"]:
+    output.write("  wire system_top_%s_ready;\n" % (queue["base"]));
+    output.write("  wire system_top_%s_valid;\n" % (queue["base"]));
+    if (queue["direction"] == "input"):
+      output.write("  assign system_top_%s_ready = %s_ready;\n" % (queue["base"], queue["base"]))
+      output.write("  assign %s_valid = system_top_%s_valid && !reset;\n" % (queue["base"], queue["base"]))
+    else:
+      output.write("  assign %s_ready = system_top_%s_ready;\n" % (queue["base"], queue["base"]))
+      output.write("  assign system_top_%s_valid = %s_valid && !reset;\n" % (queue["base"], queue["base"]))
+      
+    for wire in queue["bits"]:
+      output.write("  wire [%d:%d] system_top_%s_bits_%s;\n" % (int(wire["width"])-1, 0, queue["base"], wire["name"]))
+      if (queue["direction"] == "input"):
+        output.write("  assign system_top_%s_bits_%s = %s_bits_%s;\n" % (queue["base"], wire["name"], queue["base"], wire["name"]))
+      else:
+        output.write("  assign %s_bits_%s = system_top_%s_bits_%s;\n" % (queue["base"], wire["name"], queue["base"], wire["name"]))
+
+  output.write("  %s system_top(\n" % (args.system_top))
+  output.write("    .clk(system_top_clk),\n")
+  output.write("    .reset(system_top_reset),\n")
+  for queue in decoupled["decoupled io"]:
+    output.write("    .%s_ready(system_top_%s_ready),\n" % (queue["base"], queue["base"]))
+    output.write("    .%s_valid(system_top_%s_valid),\n" % (queue["base"], queue["base"]))
+    for wire in queue["bits"]:
+      output.write("    .%s_bits_%s(system_top_%s_bits_%s),\n" % (queue["base"], wire["name"], queue["base"], wire["name"]))
+  output.write("    .io_interrupts_0(system_top_io_interrupts_0),\n")
+  output.write("    .io_interrupts_1(system_top_io_interrupts_1)\n")
+  output.write("  );\n");
+
+  output.write("endmodule\n")

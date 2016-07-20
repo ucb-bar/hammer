@@ -1,0 +1,47 @@
+#!/bin/bash
+
+scala=()
+unset output_dir
+unset top
+unset firrtl
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    *.scala) scala+=("$1");;
+    */firrtl) firrtl="$1";;
+    --output) output_dir="$2"; shift;;
+    --top) top="$2"; shift;;
+    *) echo "Unknown argument $1"; exit 1;;
+    esac
+    shift
+done
+
+set -e
+
+rm -rf "${output_dir}"
+
+mkdir -p "${output_dir}"/workdir/src/main/scala
+
+cp ${scala[*]} "${output_dir}"/workdir/src/main/scala
+
+cat >"${output_dir}"/workdir/build.sbt <<"EOF"
+organization := "edu.berkeley.cs"
+
+version := "2.3-SNAPSHOT"
+
+name := "bar-testchip"
+
+scalaVersion := "2.11.7"
+
+scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked", "-language:reflectiveCalls")
+
+
+val chiselVersion = System.getProperty("chiselVersion", "2.+")
+
+libraryDependencies ++= ( if (chiselVersion != "None" ) ("edu.berkeley.cs" %% "chisel" % chiselVersion) :: Nil; else Nil)
+EOF
+
+cd "${output_dir}"/workdir
+sbt "run --backend v"
+
+cat "${top}.v" | sed s/'io_io_'/'io_'/g > "${output_dir}"/${top}.v
