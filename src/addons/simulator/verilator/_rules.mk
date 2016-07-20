@@ -1,12 +1,5 @@
 # Copyright 2016 Palmer Dabbelt <palmer@dabbelt.com>
 
-ifeq ($(VERILATOR_TARGET_CAPS),)
-$(error You must set VERILATOR_TARGET_CAPS before using this)
-endif
-ifeq ($(VERILATOR_TARGET_LOWER),)
-$(error You must set VERILATOR_TARGET_LOWER before using this)
-endif
-
 # This script will be sourced multiple times, so there's a guard here to avoid
 # redefining the rules to build Verilator.
 ifeq ($(VERILATOR_VERSION),)
@@ -44,30 +37,3 @@ $(VERILATOR_TAR):
 	mkdir -p $(dir $@)
 	wget http://www.veripool.org/ftp/verilator-$(VERILATOR_VERSION).tgz -O $@
 endif
-
-# These rules actually run the simulations.
-$(CHECK_$(VERILATOR_TARGET_CAPS)_DIR)/%.out: $($(VERILATOR_TARGET_CAPS)_SIMULATOR_ADDON)/tools/run-simulator $(OBJ_$(VERILATOR_TARGET_CAPS)_DIR)/simulator-ndebug $(CMD_PTEST)
-	mkdir -p $(dir $@)
-	$(SCHEDULER_CMD) $(CMD_PTEST) --test $(abspath $($(VERILATOR_TARGET_CAPS)_SIMULATOR_ADDON)/tools/run-simulator) --out $@ --args $(abspath $^)
-
-# Verilator requires a simulation object to be built.
-ifeq ($($(VERILATOR_TARGET_CAPS)_TOP),)
-$(error $(VERILATOR_TARGET_CAPS)_TOP must be defined)
-endif
-
-ifeq ($(OBJ_$(VERILATOR_TARGET_CAPS)_RTL_V),)
-$(error OBJ_$(VERILATOR_TARGET_CAPS)_RTL_V must be defined)
-endif
-
-$(patsubst %,$(OBJ_$(VERILATOR_TARGET_CAPS)_DIR)/simulator-%,ndebug debug): \
-		$(OBJ_$(VERILATOR_TARGET_CAPS)_RTL_V) \
-		$(OBJ_$(VERILATOR_TARGET_CAPS)_RTL_C) \
-		$(OBJ_$(VERILATOR_TARGET_CAPS)_RTL_H) \
-		$(OBJ_$(VERILATOR_TARGET_CAPS)_RTL_O) \
-		$(OBJ_$(VERILATOR_TARGET_CAPS)_RTL_I) \
-		$(VERILATOR_BIN) \
-		$($(VERILATOR_TARGET_CAPS)_SIMULATOR_ADDON)/tools/build-simulator
-	mkdir -p $(dir $@)
-	+$(SCHEDULER_CMD) $(abspath $($(VERILATOR_TARGET_CAPS)_SIMULATOR_ADDON)/tools/build-simulator) -o $(abspath $@) --top $($(VERILATOR_TARGET_CAPS)_TOP) --level $(VERILATOR_TARGET_LOWER) --mode $(patsubst simulator-%,%,$(notdir $@)) $(abspath $^)
-
-

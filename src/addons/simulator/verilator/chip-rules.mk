@@ -1,5 +1,8 @@
 # Copyright 2016 Palmer Dabbelt <palmer@dabbelt.com>
 
-VERILATOR_TARGET_CAPS=CHIP
-VERILATOR_TARGET_LOWER=chip
-include $(SYSTEM_SIMULATOR_ADDON)/_rules.mk
+include $(CHIP_SIMULATOR_ADDON)/_rules.mk
+
+include $(OBJ_CHIP_DIR)/verilator-rules.mk
+$(OBJ_CHIP_DIR)/verilator-rules.mk: $(CHIP_SIMULATOR_ADDON)/tools/generate-makefrag
+	mkdir -p $(dir $@)
+	$< --output $@ --upper CHIP --lower chip

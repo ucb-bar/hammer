@@ -1,0 +1,40 @@
+#!/bin/bash
+
+unset output
+unset VERILATOR_TARGET_CAPS
+unset VERILATOR_TARGET_LOWER
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    --lower) VERILATOR_TARGET_LOWER="$2"; shift;;
+    --upper) VERILATOR_TARGET_CAPS="$2"; shift;;
+    --output) output="$2"; shift;;
+    *) echo "unknown argument $1"; exit 1;;
+    esac
+    shift
+done
+
+cat >"$output" <<EOF
+\$(CHECK_${VERILATOR_TARGET_CAPS}_DIR)/%.out: \$(${VERILATOR_TARGET_CAPS}_SIMULATOR_ADDON)/tools/run-simulator \$(OBJ_${VERILATOR_TARGET_CAPS}_DIR)/simulator-ndebug \$(CMD_PTEST)
+	mkdir -p \$(dir \$@)
+	\$(SCHEDULER_CMD) \$(CMD_PTEST) --test \$(abspath \$(${VERILATOR_TARGET_CAPS}_SIMULATOR_ADDON)/tools/run-simulator) --out \$@ --args \$(abspath \$^)
+
+ifeq (\$(${VERILATOR_TARGET_CAPS}_TOP),)
+\$(error ${VERILATOR_TARGET_CAPS}_TOP must be defined)
+endif
+
+ifeq (\$(OBJ_${VERILATOR_TARGET_CAPS}_RTL_V),)
+\$(error OBJ_${VERILATOR_TARGET_CAPS}_RTL_V must be defined)
+endif
+
+\$(patsubst %,\$(OBJ_${VERILATOR_TARGET_CAPS}_DIR)/simulator-%,ndebug debug): \
+		\$(OBJ_${VERILATOR_TARGET_CAPS}_RTL_V) \
+		\$(OBJ_${VERILATOR_TARGET_CAPS}_RTL_C) \
+		\$(OBJ_${VERILATOR_TARGET_CAPS}_RTL_H) \
+		\$(OBJ_${VERILATOR_TARGET_CAPS}_RTL_O) \
+		\$(OBJ_${VERILATOR_TARGET_CAPS}_RTL_I) \
+		\$(VERILATOR_BIN) \
+		\$(${VERILATOR_TARGET_CAPS}_SIMULATOR_ADDON)/tools/build-simulator
+	mkdir -p \$(dir \$@)
+	+\$(SCHEDULER_CMD) \$(abspath \$(${VERILATOR_TARGET_CAPS}_SIMULATOR_ADDON)/tools/build-simulator) -o \$(abspath \$@) --top \$(${VERILATOR_TARGET_CAPS}_TOP) --level ${VERILATOR_TARGET_LOWER} --mode \$(patsubst simulator-%,%,\$(notdir \$@)) \$(abspath \$^)
+EOF
