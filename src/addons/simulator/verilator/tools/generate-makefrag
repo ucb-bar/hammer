@@ -19,6 +19,10 @@ cat >"$output" <<EOF
 	mkdir -p \$(dir \$@)
 	\$(SCHEDULER_CMD) \$(CMD_PTEST) --test \$(abspath \$(${VERILATOR_TARGET_CAPS}_SIMULATOR_ADDON)/tools/run-simulator) --out \$@ --args \$(abspath \$^)
 
+\$(CHECK_${VERILATOR_TARGET_CAPS}_DIR)/%.vpdout \$(CHECK_${VERILATOR_TARGET_CAPS}_DIR)/%.vpd: \$(${VERILATOR_TARGET_CAPS}_SIMULATOR_ADDON)/tools/run-simulator \$(OBJ_${VERILATOR_TARGET_CAPS}_DIR)/simulator-debug \$(CMD_PTEST)
+	mkdir -p \$(dir \$@)
+	\$(SCHEDULER_CMD) \$(CMD_PTEST) --test \$(abspath \$(${VERILATOR_TARGET_CAPS}_SIMULATOR_ADDON)/tools/run-simulator) --out \$@ --args \$(abspath \$^) --vcd \$@.vcd
+
 ifeq (\$(${VERILATOR_TARGET_CAPS}_TOP),)
 \$(error ${VERILATOR_TARGET_CAPS}_TOP must be defined)
 endif

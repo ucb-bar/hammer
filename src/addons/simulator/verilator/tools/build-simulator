@@ -43,6 +43,12 @@ set -x
 
 echo $VERILATOR_ROOT
 
+if [[ "$mode" == "debug" ]]
+then
+    debug_flags=()
+    debug_flags+=("--trace")
+fi
+
 $verilator \
     --top-module $top \
     --assert \
@@ -53,6 +59,7 @@ $verilator \
     -o "$output" \
     -CFLAGS "-std=c++11 -DVERILATOR=1 -include "$output".d/V${top}.h ${i[*]} ${h[*]}" \
     -Mdir "$output".d \
+    ${debug_flags[*]} \
     ${verilog[*]} \
     ${c[*]} \
     ${o[*]}

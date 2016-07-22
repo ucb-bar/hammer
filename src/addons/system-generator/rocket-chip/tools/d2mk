@@ -43,11 +43,13 @@ EOF
         echo "check-system-vpd: \$(CHECK_SYSTEM_DIR)/$test.vpdout" >> $tempdir/out
         echo ".PRECIOUS: \$(CHECK_SYSTEM_DIR)/$test.vpd" >> $tempdir/out
         echo "\$(CHECK_SYSTEM_DIR)/$test.out: \$(OBJ_TOOLS_DIR)/riscv-tests/$test" >> $tempdir/out
+        echo "\$(CHECK_SYSTEM_DIR)/$test.vpdout: \$(OBJ_TOOLS_DIR)/riscv-tests/$test" >> $tempdir/out
 
         echo "check-chip: \$(CHECK_CHIP_DIR)/$test.out" >> $tempdir/out
         echo "check-chip-vpd: \$(CHECK_CHIP_DIR)/$test.vpdout" >> $tempdir/out
         echo ".PRECIOUS: \$(CHECK_CHIP_DIR)/$test.vpd" >> $tempdir/out
         echo "\$(CHECK_CHIP_DIR)/$test.out: \$(OBJ_TOOLS_DIR)/riscv-tests/$test" >> $tempdir/out
+        echo "\$(CHECK_CHIP_DIR)/$test.vpdout: \$(OBJ_TOOLS_DIR)/riscv-tests/$test" >> $tempdir/out
     done
 done
 
