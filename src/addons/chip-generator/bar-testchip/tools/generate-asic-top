@@ -7,7 +7,6 @@ parser = argparse.ArgumentParser(description='Generate an ASIC harness for UCB T
 parser.add_argument('--system-top', dest='system_top')
 parser.add_argument('--chip-top', dest='chip_top')
 parser.add_argument('--syn-top', dest='syn_top')
-parser.add_argument('--system-v', dest='system_v')
 parser.add_argument('--decoupled', dest='decoupled')
 parser.add_argument('--output', dest='output')
 
