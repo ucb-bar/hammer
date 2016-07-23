@@ -197,13 +197,13 @@ $(OBJ_TOOLS_DIR)/install/include/tclap/CmdLine.h: $(OBJ_TOOLS_DIR)/tclap-$(TCLAP
 $(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION)/Makefile: $(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION)/configure
 	cd $(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION); ./configure --prefix=$(abspath $(OBJ_TOOLS_DIR)/install)
 
-$(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION)/configure: $(PLSI_CACHE_DIR)/tclap-$(TCLAP_VERSION).tar.gz
+$(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION)/configure: $(PLSI_CACHE_DIR)/distfiles/tclap-$(TCLAP_VERSION).tar.gz
 	rm -rf $(dir $@)
 	mkdir -p $(dir $@)
 	tar -xvzpf $< --strip-components=1 -C $(dir $@)
 	touch $@
 
-$(PLSI_CACHE_DIR)/tclap-$(TCLAP_VERSION).tar.gz:
+$(PLSI_CACHE_DIR)/distfiles/tclap-$(TCLAP_VERSION).tar.gz:
 	wget 'http://downloads.sourceforge.net/project/tclap/tclap-$(TCLAP_VERSION).tar.gz?r=https%3A%2F%2Fsourceforge.net%2Fprojects%2Ftclap%2Ffiles%2F&ts=1468971231&use_mirror=jaist' -O $@
 
 $(OBJ_TOOLS_DIR)/pcad/bin/%: $(OBJ_TOOLS_DIR)/pcad/Makefile
