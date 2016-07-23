@@ -7,7 +7,7 @@
 # the files that are allowed to be used by the rest of the system out after
 # running SBT (the .stamp file).
 $(OBJ_SYSTEM_DIR)/$(SYSTEM_TOP).$(SYSTEM_CONFIG).vsim.stamp: $(shell find $(SYSTEM_DIR) -iname "*.scala")
-	+$(SCHODULER_CMD) $(MAKE) RISCV=unused -C $(SYSTEM_DIR)/vsim verilog
+	+$(SCHODULER_CMD) $(MAKE) RISCV=unused SUITE=RocketSuite -C $(SYSTEM_DIR)/vsim verilog
 	mkdir -p $(dir $@)
 	touch $@
 
