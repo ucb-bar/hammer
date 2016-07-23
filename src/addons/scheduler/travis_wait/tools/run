@@ -194,4 +194,4 @@ decrypt() {
   echo $1 | base64 -d | openssl rsautl -decrypt -inkey ~/.ssh/id_rsa.repo
 }
 
-travis_wait "$@"
+travis_wait 60 "$@"
