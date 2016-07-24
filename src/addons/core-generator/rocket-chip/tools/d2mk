@@ -39,11 +39,11 @@ include $(readlink -f $input)
 EOF
     make --no-print-directory -f $tempdir/Makefile | sed 's@ @\n@g' | while read test
     do
-        echo "check-system: \$(CHECK_SYSTEM_DIR)/$test.out" >> $tempdir/out
-        echo "check-system-vpd: \$(CHECK_SYSTEM_DIR)/$test.vpdout" >> $tempdir/out
-        echo ".PRECIOUS: \$(CHECK_SYSTEM_DIR)/$test.vpd" >> $tempdir/out
-        echo "\$(CHECK_SYSTEM_DIR)/$test.out: \$(OBJ_TOOLS_DIR)/riscv-tests/$test" >> $tempdir/out
-        echo "\$(CHECK_SYSTEM_DIR)/$test.vpdout: \$(OBJ_TOOLS_DIR)/riscv-tests/$test" >> $tempdir/out
+        echo "check-core: \$(CHECK_CORE_DIR)/$test.out" >> $tempdir/out
+        echo "check-core-vpd: \$(CHECK_CORE_DIR)/$test.vpdout" >> $tempdir/out
+        echo ".PRECIOUS: \$(CHECK_CORE_DIR)/$test.vpd" >> $tempdir/out
+        echo "\$(CHECK_CORE_DIR)/$test.out: \$(OBJ_TOOLS_DIR)/riscv-tests/$test" >> $tempdir/out
+        echo "\$(CHECK_CORE_DIR)/$test.vpdout: \$(OBJ_TOOLS_DIR)/riscv-tests/$test" >> $tempdir/out
 
         echo "check-chip: \$(CHECK_CHIP_DIR)/$test.out" >> $tempdir/out
         echo "check-chip-vpd: \$(CHECK_CHIP_DIR)/$test.vpdout" >> $tempdir/out

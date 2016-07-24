@@ -4,7 +4,7 @@ import argparse
 import json
 
 parser = argparse.ArgumentParser(description='Generate an ASIC harness for UCB Test Chips')
-parser.add_argument('--system-top', dest='system_top')
+parser.add_argument('--core-top', dest='core_top')
 parser.add_argument('--chip-top', dest='chip_top')
 parser.add_argument('--syn-top', dest='syn_top')
 parser.add_argument('--decoupled', dest='decoupled')
@@ -43,7 +43,7 @@ with open(args.output, 'w') as output:
   output.write("  }\n")
   output.write("}\n")
   output.write("\n")
-  output.write("class %sIO extends Bundle {\n" % (args.system_top))
+  output.write("class %sIO extends Bundle {\n" % (args.core_top))
   output.write("  val interrupts_0 = Bool(INPUT);\n")
   output.write("  val interrupts_1 = Bool(INPUT);\n")
   for queue in decoupled["decoupled io"]:
@@ -52,7 +52,7 @@ with open(args.output, 'w') as output:
     for wire in queue["bits"]:
       output.write("  val %s_bits_%s = Bits(%s, width = %d);\n" % (queue["base"], wire["name"], direction_caps(queue["direction"]), int(wire["width"])))
   output.write("}\n")
-  output.write("class %sIO extends %sIO {\n" % (args.chip_top, args.system_top))
+  output.write("class %sIO extends %sIO {\n" % (args.chip_top, args.core_top))
   output.write("}\n")
   output.write("class %s extends Module {\n" % (args.chip_top))
   output.write("  val io = new %sIO()\n" % (args.chip_top))
@@ -149,7 +149,7 @@ with open(args.output, 'w') as output:
   output.write("class %s extends Module{\n" % (args.syn_top))
   output.write("  val io = new %sIO()\n" % (args.syn_top))
   output.write("  io.host_out := UInt(0)\n")
-  output.write("  val sys_top = Module(new %s)\n" % (args.system_top))
+  output.write("  val sys_top = Module(new %s)\n" % (args.core_top))
   output.write("  sys_top.io.interrupts_0 := io.interrupts_0\n")
   output.write("  sys_top.io.interrupts_1 := io.interrupts_1\n")
   output.write("  val divider = Reg(UInt(width = %d))\n" % (divider))
@@ -232,8 +232,8 @@ with open(args.output, 'w') as output:
   output.write("  when (addr >= UInt(%d) && do_o) { addr := UInt(0) }\n" % (addr))
   output.write("}\n");
 
-  output.write("class %s extends BlackBox {\n" % (args.system_top))
-  output.write("  val io = new %sIO()\n" % (args.system_top))
+  output.write("class %s extends BlackBox {\n" % (args.core_top))
+  output.write("  val io = new %sIO()\n" % (args.core_top))
   output.write("  val dummy = Reg(init = Bool(false));\n")
   output.write("  debug(dummy);\n")
   output.write("}\n")

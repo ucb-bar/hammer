@@ -12,23 +12,23 @@ all: report
 # (if you want to do experiments).
 
 # The directory in which the RTL lives
-SYSTEM_DIR ?= src/rocket-chip
+CORE_DIR ?= src/rocket-chip
 
-# The "system generator" generates top-level RTL, but doesn't include anything
+# The "core generator" generates top-level RTL, but doesn't include anything
 # that's technology specific
-SYSTEM_GENERATOR ?= rocket-chip
+CORE_GENERATOR ?= rocket-chip
 
 # The "chip generator" is used to add everything to a chip that isn't part of
-# the system generator (maybe because it's a NDA or something).  This default
+# the core generator (maybe because it's a NDA or something).  This default
 # chip generator doesn't actually do anything at all.
 CHIP_GENERATOR ?= nop
 
 # The configuration to run when running various steps of the process
-SYSTEM_CONFIG ?= DefaultConfig
+CORE_CONFIG ?= DefaultConfig
 CHIP_CONFIG ?= default
 
 # Defines the simulator used to run simulation at different levels
-SYSTEM_SIMULATOR ?= verilator
+CORE_SIMULATOR ?= verilator
 CHIP_SIMULATOR ?= verilator
 
 # The scheduler to use when running large jobs.  Changing this doesn't have any
@@ -52,15 +52,15 @@ TCLAP_VERSION = 1.2.1
 
 # OBJ_*_DIR are the directories in which outputs end up
 OBJ_TOOLS_DIR = obj/tools
-OBJ_SYSTEM_DIR = obj/system-$(SYSTEM_CONFIG)
-OBJ_CHIP_DIR = obj/chip-$(SYSTEM_CONFIG)-$(CHIP_CONFIG)
+OBJ_CORE_DIR = obj/core-$(CORE_CONFIG)
+OBJ_CHIP_DIR = obj/chip-$(CORE_CONFIG)-$(CHIP_CONFIG)
 
 # CHECK_* directories are where the output of tests go
-CHECK_SYSTEM_DIR = check/system-$(SYSTEM_CONFIG)
-CHECK_CHIP_DIR = check/chip-$(SYSTEM_CONFIG)-$(CHIP_CONFIG)
+CHECK_CORE_DIR = check/core-$(CORE_CONFIG)
+CHECK_CHIP_DIR = check/chip-$(CORE_CONFIG)-$(CHIP_CONFIG)
 
 # The outputs from the RTL generator
-OBJ_SYSTEM_RTL_V = $(OBJ_SYSTEM_DIR)/$(SYSTEM_TOP).$(SYSTEM_CONFIG).v
+OBJ_CORE_RTL_V = $(OBJ_CORE_DIR)/$(CORE_TOP).$(CORE_CONFIG).v
 
 CMD_PTEST = $(OBJ_TOOLS_DIR)/pconfigure/bin/ptest
 CMD_PCONFIGURE = $(OBJ_TOOLS_DIR)/pconfigure/bin/pconfigure
@@ -83,14 +83,14 @@ ifneq ($(words $(SCHEDULER_ADDON)),1)
 $(error Unable to resolve SCHEDULER=$(SCHEDULER): found "$(SCHEDULER_ADDON)")
 endif
 
-SYSTEM_GENERATOR_ADDON = $(wildcard src/addons/system-generator/$(SYSTEM_GENERATOR)/ $(ADDONS_DIR)/system-generator/$(SYSTEM_GENERATOR)/)
-ifneq ($(words $(SYSTEM_GENERATOR_ADDON)),1)
-$(error Unable to resolve SYSTEM_GENERATOR=$(SYSTEM_GENERATOR): found "$(SYSTEM_GENERATOR_ADDON)")
+CORE_GENERATOR_ADDON = $(wildcard src/addons/core-generator/$(CORE_GENERATOR)/ $(ADDONS_DIR)/core-generator/$(CORE_GENERATOR)/)
+ifneq ($(words $(CORE_GENERATOR_ADDON)),1)
+$(error Unable to resolve CORE_GENERATOR=$(CORE_GENERATOR): found "$(CORE_GENERATOR_ADDON)")
 endif
 
-SYSTEM_SIMULATOR_ADDON = $(wildcard src/addons/simulator/$(SYSTEM_SIMULATOR)/ $(ADDONS_DIR)/simulator/$(SYSTEM_SIMULATOR)/)
-ifneq ($(words $(SYSTEM_SIMULATOR_ADDON)),1)
-$(error Unable to resolve SYSTEM_GENERATOR=$(SYSTEM_GENERATOR): found "$(SYSTEM_GENERATOR_ADDON)")
+CORE_SIMULATOR_ADDON = $(wildcard src/addons/simulator/$(CORE_SIMULATOR)/ $(ADDONS_DIR)/simulator/$(CORE_SIMULATOR)/)
+ifneq ($(words $(CORE_SIMULATOR_ADDON)),1)
+$(error Unable to resolve CORE_GENERATOR=$(CORE_GENERATOR): found "$(CORE_GENERATOR_ADDON)")
 endif
 
 CHIP_GENERATOR_ADDON = $(wildcard src/addons/chip-generator/$(CHIP_GENERATOR)/ $(ADDONS_DIR)/chip-generator/$(CHIP_GENERATOR)/)
@@ -115,20 +115,20 @@ ifeq ($(SCHEDULER_CMD),)
 $(error SCHEDULER needs to set SCHEDULER_CMD)
 endif
 
-include $(SYSTEM_GENERATOR_ADDON)/vars.mk
-include $(SYSTEM_SIMULATOR_ADDON)/system-vars.mk
+include $(CORE_GENERATOR_ADDON)/vars.mk
+include $(CORE_SIMULATOR_ADDON)/core-vars.mk
 
-ifeq ($(SYSTEM_TOP),)
-# The name of the top-level RTL module that comes out of the system generator.
-$(error SYSTEM_GENERATOR needs to set SYSTEM_TOP)
+ifeq ($(CORE_TOP),)
+# The name of the top-level RTL module that comes out of the core generator.
+$(error CORE_GENERATOR needs to set CORE_TOP)
 endif
 
 
 include $(CHIP_GENERATOR_ADDON)/vars.mk
 include $(CHIP_SIMULATOR_ADDON)/chip-vars.mk
 
-include $(SYSTEM_GENERATOR_ADDON)/rules.mk
-include $(SYSTEM_SIMULATOR_ADDON)/system-rules.mk
+include $(CORE_GENERATOR_ADDON)/rules.mk
+include $(CORE_SIMULATOR_ADDON)/core-rules.mk
 include $(CHIP_GENERATOR_ADDON)/rules.mk
 include $(CHIP_SIMULATOR_ADDON)/chip-rules.mk
 
@@ -142,7 +142,7 @@ include $(CHIP_SIMULATOR_ADDON)/chip-rules.mk
 # Runs all the test cases.  Note that this _always_ passes, you need to run
 # "make report" to see if the tests passed or not.
 .PHONY: check
-check: $(patsubst %,check-%,system chip)
+check: $(patsubst %,check-%,core chip)
 
 # A virtual target that reports on the status of the test cases, in addition to
 # running them (if necessary).
@@ -150,21 +150,21 @@ check: $(patsubst %,check-%,system chip)
 report: $(CMD_PTEST) check
 	+$(CMD_PTEST)
 
-# These various smaller test groups are all defined by the system generator!
-.PHONY: check-system
-check-system:
+# These various smaller test groups are all defined by the core generator!
+.PHONY: check-core
+check-core:
 
 .PHONY: check-chip
 check-chip:
 
-# Generates the system-level RTL
-system-verilog: bin/system-$(SYSTEM_CONFIG)/$(SYSTEM_TOP).$(SYSTEM_CONFIG).v
+# Generates the core-level RTL
+core-verilog: bin/core-$(CORE_CONFIG)/$(CORE_TOP).$(CORE_CONFIG).v
 
 # This just cleans everything
 .PHONY: clean
 clean::
 	rm -rf $(OBJ_TOOLS_DIR)
-	rm -rf $(OBJ_SYSTEM_DIR) $(CHECK_SYSTEM_DIR)
+	rm -rf $(OBJ_CORE_DIR) $(CHECK_CORE_DIR)
 	rm -rf $(OBJ_CHIP_DIR) $(CHECK_CHIP_DIR)
 
 .PHONY: distclean
@@ -221,6 +221,6 @@ $(OBJ_TOOLS_DIR)/pcad/Makefile: src/tools/pcad/Configfile \
 	cd $(dir $@); $(abspath $(CMD_PCONFIGURE)) --srcpath $(abspath src/tools/pcad)
 
 # Here are a bunch of pattern rules that will try to copy outputs.
-bin/system-$(SYSTEM_CONFIG)/%: $(OBJ_SYSTEM_DIR)/%
+bin/core-$(CORE_CONFIG)/%: $(OBJ_CORE_DIR)/%
 	mkdir -p $(dir $@)
 	cp --reflink=auto $< $@

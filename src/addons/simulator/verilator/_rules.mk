@@ -9,7 +9,7 @@ VERILATOR_BIN = $(VERILATOR_PREFIX)/bin/verilator
 VERILATOR_SRC = $(OBJ_TOOLS_DIR)/verilator-$(VERILATOR_VERSION)
 VERILATOR_TAR = $(PLSI_CACHE_DIR)/distfiles/verilator-$(VERILATOR_VERSION).tar.gz
 
-# Builds Verilator since we can't rely on whatever the system has installed.
+# Builds Verilator since we can't rely on whatever the core has installed.
 $(VERILATOR_BIN): $(VERILATOR_SRC)/bin/verilator
 	rm -rf $(VERILATOR_PREFIX)
 	$(SCHEDULER_CMD) $(MAKE) -C $(VERILATOR_SRC) install
