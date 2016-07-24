@@ -178,8 +178,8 @@ soc-verilog: bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP).v
 
 # The various simulators
 .PHONY: core-simulator
-core-simulator: bin/core-$(CORE_CONFIG)/$(notdir $(OBJ_CORE_SIMULATOR))
-soc-simulator: bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(notdir $(OBJ_SOC_SIMULATOR))
+core-simulator: bin/core-$(CORE_CONFIG)/$(CORE_TOP)-simulator
+soc-simulator: bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(CORE_TOP)-simulator
 
 # This just cleans everything
 .PHONY: clean
