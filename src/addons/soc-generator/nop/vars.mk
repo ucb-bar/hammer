@@ -1,0 +1,9 @@
+# Copyright 2016 Palmer Dabbelt <palmer@dabbelt.com>
+
+SOC_TOP = $(CORE_TOP)
+
+OBJ_SOC_RTL_V = $(OBJ_CORE_RTL_V)
+OBJ_SOC_RTL_C = $(OBJ_CORE_RTL_C)
+OBJ_SOC_RTL_H = $(OBJ_CORE_RTL_H)
+OBJ_SOC_RTL_O = $(OBJ_CORE_RTL_O)
+OBJ_SOC_RTL_I = $(OBJ_CORE_RTL_I)

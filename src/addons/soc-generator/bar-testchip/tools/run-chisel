@@ -29,7 +29,7 @@ organization := "edu.berkeley.cs"
 
 version := "2.3-SNAPSHOT"
 
-name := "bar-testchip"
+name := "bar-testsoc"
 
 scalaVersion := "2.11.7"
 

@@ -18,18 +18,18 @@ CORE_DIR ?= src/rocket-chip
 # that's technology specific
 CORE_GENERATOR ?= rocket-chip
 
-# The "chip generator" is used to add everything to a chip that isn't part of
+# The "soc generator" is used to add everything to a soc that isn't part of
 # the core generator (maybe because it's a NDA or something).  This default
-# chip generator doesn't actually do anything at all.
-CHIP_GENERATOR ?= nop
+# soc generator doesn't actually do anything at all.
+SOC_GENERATOR ?= nop
 
 # The configuration to run when running various steps of the process
 CORE_CONFIG ?= DefaultConfig
-CHIP_CONFIG ?= default
+SOC_CONFIG ?= default
 
 # Defines the simulator used to run simulation at different levels
 CORE_SIMULATOR ?= verilator
-CHIP_SIMULATOR ?= verilator
+SOC_SIMULATOR ?= verilator
 
 # The scheduler to use when running large jobs.  Changing this doesn't have any
 # effect on the generated files, just the manner in which they are generated.
@@ -53,11 +53,11 @@ TCLAP_VERSION = 1.2.1
 # OBJ_*_DIR are the directories in which outputs end up
 OBJ_TOOLS_DIR = obj/tools
 OBJ_CORE_DIR = obj/core-$(CORE_CONFIG)
-OBJ_CHIP_DIR = obj/chip-$(CORE_CONFIG)-$(CHIP_CONFIG)
+OBJ_SOC_DIR = obj/soc-$(CORE_CONFIG)-$(SOC_CONFIG)
 
 # CHECK_* directories are where the output of tests go
 CHECK_CORE_DIR = check/core-$(CORE_CONFIG)
-CHECK_CHIP_DIR = check/chip-$(CORE_CONFIG)-$(CHIP_CONFIG)
+CHECK_SOC_DIR = check/soc-$(CORE_CONFIG)-$(SOC_CONFIG)
 
 # The outputs from the RTL generator
 OBJ_CORE_RTL_V = $(OBJ_CORE_DIR)/$(CORE_TOP).$(CORE_CONFIG).v
@@ -93,14 +93,14 @@ ifneq ($(words $(CORE_SIMULATOR_ADDON)),1)
 $(error Unable to resolve CORE_GENERATOR=$(CORE_GENERATOR): found "$(CORE_GENERATOR_ADDON)")
 endif
 
-CHIP_GENERATOR_ADDON = $(wildcard src/addons/chip-generator/$(CHIP_GENERATOR)/ $(ADDONS_DIR)/chip-generator/$(CHIP_GENERATOR)/)
-ifneq ($(words $(CHIP_GENERATOR_ADDON)),1)
-$(error Unable to resolve CHIP_GENERATOR=$(CHIP_GENERATOR): found "$(CHIP_GENERATOR_ADDON)")
+SOC_GENERATOR_ADDON = $(wildcard src/addons/soc-generator/$(SOC_GENERATOR)/ $(ADDONS_DIR)/soc-generator/$(SOC_GENERATOR)/)
+ifneq ($(words $(SOC_GENERATOR_ADDON)),1)
+$(error Unable to resolve SOC_GENERATOR=$(SOC_GENERATOR): found "$(SOC_GENERATOR_ADDON)")
 endif
 
-CHIP_SIMULATOR_ADDON = $(wildcard src/addons/simulator/$(CHIP_SIMULATOR)/ $(ADDONS_DIR)/simulator/$(CHIP_SIMULATOR)/)
-ifneq ($(words $(CHIP_SIMULATOR_ADDON)),1)
-$(error Unable to resolve CHIP_GENERATOR=$(CHIP_GENERATOR): found "$(CHIP_GENERATOR_ADDON)")
+SOC_SIMULATOR_ADDON = $(wildcard src/addons/simulator/$(SOC_SIMULATOR)/ $(ADDONS_DIR)/simulator/$(SOC_SIMULATOR)/)
+ifneq ($(words $(SOC_SIMULATOR_ADDON)),1)
+$(error Unable to resolve SOC_GENERATOR=$(SOC_GENERATOR): found "$(SOC_GENERATOR_ADDON)")
 endif
 
 # Actually loads the various addons, this is staged so we load "vars" first
@@ -124,13 +124,13 @@ $(error CORE_GENERATOR needs to set CORE_TOP)
 endif
 
 
-include $(CHIP_GENERATOR_ADDON)/vars.mk
-include $(CHIP_SIMULATOR_ADDON)/chip-vars.mk
+include $(SOC_GENERATOR_ADDON)/vars.mk
+include $(SOC_SIMULATOR_ADDON)/soc-vars.mk
 
 include $(CORE_GENERATOR_ADDON)/rules.mk
 include $(CORE_SIMULATOR_ADDON)/core-rules.mk
-include $(CHIP_GENERATOR_ADDON)/rules.mk
-include $(CHIP_SIMULATOR_ADDON)/chip-rules.mk
+include $(SOC_GENERATOR_ADDON)/rules.mk
+include $(SOC_SIMULATOR_ADDON)/soc-rules.mk
 
 ##############################################################################
 # User Targets
@@ -142,7 +142,7 @@ include $(CHIP_SIMULATOR_ADDON)/chip-rules.mk
 # Runs all the test cases.  Note that this _always_ passes, you need to run
 # "make report" to see if the tests passed or not.
 .PHONY: check
-check: $(patsubst %,check-%,core chip)
+check: $(patsubst %,check-%,core soc)
 
 # A virtual target that reports on the status of the test cases, in addition to
 # running them (if necessary).
@@ -154,8 +154,8 @@ report: $(CMD_PTEST) check
 .PHONY: check-core
 check-core:
 
-.PHONY: check-chip
-check-chip:
+.PHONY: check-soc
+check-soc:
 
 # Generates the core-level RTL
 core-verilog: bin/core-$(CORE_CONFIG)/$(CORE_TOP).$(CORE_CONFIG).v
@@ -165,7 +165,7 @@ core-verilog: bin/core-$(CORE_CONFIG)/$(CORE_TOP).$(CORE_CONFIG).v
 clean::
 	rm -rf $(OBJ_TOOLS_DIR)
 	rm -rf $(OBJ_CORE_DIR) $(CHECK_CORE_DIR)
-	rm -rf $(OBJ_CHIP_DIR) $(CHECK_CHIP_DIR)
+	rm -rf $(OBJ_SOC_DIR) $(CHECK_SOC_DIR)
 
 .PHONY: distclean
 distclean: clean
