@@ -170,9 +170,16 @@ check-core:
 .PHONY: check-soc
 check-soc:
 
-# Generates the core-level RTL
-core-verilog: bin/core-$(CORE_CONFIG)/$(CORE_TOP).$(CORE_CONFIG).v
+# The various RTL targets
+.PHONY: core-verilog
+core-verilog: bin/core-$(CORE_CONFIG)/$(CORE_TOP).v
+.PHONY: soc-verilog
 soc-verilog: bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP).v
+
+# The various simulators
+.PHONY: core-simulator
+core-simulator: bin/core-$(CORE_CONFIG)/$(notdir $(OBJ_CORE_SIMULATOR))
+soc-simulator: bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(notdir $(OBJ_SOC_SIMULATOR))
 
 # This just cleans everything
 .PHONY: clean
@@ -236,10 +243,18 @@ $(OBJ_TOOLS_DIR)/pcad/Makefile: src/tools/pcad/Configfile \
 	cd $(dir $@); $(abspath $(CMD_PCONFIGURE)) --srcpath $(abspath src/tools/pcad)
 
 # Here are a bunch of pattern rules that will try to copy outputs.
-bin/core-$(CORE_CONFIG)/%: $(OBJ_CORE_DIR)/%
+bin/core-$(CORE_CONFIG)/$(CORE_TOP).v: $(OBJ_CORE_RTL_V)
 	mkdir -p $(dir $@)
-	cp --reflink=auto $< $@
+	cp --reflink=auto $^ $@
 
-bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/%: $(OBJ_SOC_DIR)/%
+bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP).v: $(OBJ_SOC_RTL_V)
 	mkdir -p $(dir $@)
-	cp --reflink=auto $< $@
+	cp --reflink=auto $^ $@
+
+bin/core-$(CORE_CONFIG)/$(CORE_TOP)-simulator: $(OBJ_CORE_SIMULATOR)
+	mkdir -p $(dir $@)
+	cp --reflink=auto $^ $@
+
+bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP)-simulator: $(OBJ_SOC_SIMULATOR)
+	mkdir -p $(dir $@)
+	cp --reflink=auto $^ $@

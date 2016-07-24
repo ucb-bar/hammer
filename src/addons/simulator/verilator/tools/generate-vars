@@ -1,0 +1,19 @@
+#!/bin/bash
+
+unset output
+unset VERILATOR_TARGET_CAPS
+unset VERILATOR_TARGET_LOWER
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    --lower) VERILATOR_TARGET_LOWER="$2"; shift;;
+    --upper) VERILATOR_TARGET_CAPS="$2"; shift;;
+    --output) output="$2"; shift;;
+    *) echo "unknown argument $1"; exit 1;;
+    esac
+    shift
+done
+
+cat >"$output" <<EOF
+OBJ_${VERILATOR_TARGET_CAPS}_SIMULATOR = \$(OBJ_${VERILATOR_TARGET_CAPS}_DIR)/simulator-ndebug
+EOF
