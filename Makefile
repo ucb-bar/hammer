@@ -10,6 +10,7 @@ all: report
 # Don't change these variables here, instead override them with a
 # "Makefile.project" in the directory above this one, or on the command line
 # (if you want to do experiments).
+-include ../Makefile.project
 
 # The directory in which the RTL lives
 CORE_DIR ?= src/rocket-chip
