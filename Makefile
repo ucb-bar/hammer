@@ -59,9 +59,6 @@ OBJ_SOC_DIR = obj/soc-$(CORE_CONFIG)-$(SOC_CONFIG)
 CHECK_CORE_DIR = check/core-$(CORE_CONFIG)
 CHECK_SOC_DIR = check/soc-$(CORE_CONFIG)-$(SOC_CONFIG)
 
-# The outputs from the RTL generator
-OBJ_CORE_RTL_V = $(OBJ_CORE_DIR)/$(CORE_TOP).$(CORE_CONFIG).v
-
 CMD_PTEST = $(OBJ_TOOLS_DIR)/pconfigure/bin/ptest
 CMD_PCONFIGURE = $(OBJ_TOOLS_DIR)/pconfigure/bin/pconfigure
 CMD_PCAD_INFER_DECOUPLED = $(OBJ_TOOLS_DIR)/pcad/bin/pcad-pipe-infer_decoupled
@@ -123,6 +120,10 @@ ifeq ($(CORE_TOP),)
 $(error CORE_GENERATOR needs to set CORE_TOP)
 endif
 
+ifeq ($(OBJ_CORE_RTL_V),)
+# The name of the top-level RTL Verilog output by the core.
+$(error CORE_GENERATOR needs to set OBJ_CORE_RTL_V)
+endif
 
 include $(SOC_GENERATOR_ADDON)/vars.mk
 include $(SOC_SIMULATOR_ADDON)/soc-vars.mk
