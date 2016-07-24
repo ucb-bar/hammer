@@ -139,6 +139,12 @@ include $(SOC_SIMULATOR_ADDON)/soc-rules.mk
 # The targets in here are short names for some of the internal targets below.
 # These are probably the commands you want to manually run.
 
+# I'm not sure exactly what is going on here, but it looks like the makefrag
+# generation breaks parallel builds.  This target doesn't do anything but
+# generate the various makefrags and doesn't run any other commands.
+.PHONY: makefrags
+makefrags::
+
 # Runs all the test cases.  Note that this _always_ passes, you need to run
 # "make report" to see if the tests passed or not.
 .PHONY: check

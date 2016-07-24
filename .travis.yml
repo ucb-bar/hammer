@@ -29,4 +29,5 @@ before_install:
   - export SCHEDULER=travis_wait
 
 script:
+  - make makefrags
   - make
