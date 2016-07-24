@@ -128,6 +128,11 @@ endif
 include $(SOC_GENERATOR_ADDON)/vars.mk
 include $(SOC_SIMULATOR_ADDON)/soc-vars.mk
 
+ifeq ($(OBJ_SOC_RTL_V),)
+# The name of the top-level RTL Verilog output by the SOC generator.
+$(error SOC_GENERATOR needs to set OBJ_SOC_RTL_V)
+endif
+
 include $(CORE_GENERATOR_ADDON)/rules.mk
 include $(CORE_SIMULATOR_ADDON)/core-rules.mk
 include $(SOC_GENERATOR_ADDON)/rules.mk
@@ -166,6 +171,7 @@ check-soc:
 
 # Generates the core-level RTL
 core-verilog: bin/core-$(CORE_CONFIG)/$(CORE_TOP).$(CORE_CONFIG).v
+soc-verilog: bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP).v
 
 # This just cleans everything
 .PHONY: clean
@@ -229,5 +235,9 @@ $(OBJ_TOOLS_DIR)/pcad/Makefile: src/tools/pcad/Configfile \
 
 # Here are a bunch of pattern rules that will try to copy outputs.
 bin/core-$(CORE_CONFIG)/%: $(OBJ_CORE_DIR)/%
+	mkdir -p $(dir $@)
+	cp --reflink=auto $< $@
+
+bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/%: $(OBJ_SOC_DIR)/%
 	mkdir -p $(dir $@)
 	cp --reflink=auto $< $@
