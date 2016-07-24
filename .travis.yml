@@ -30,4 +30,4 @@ before_install:
 
 script:
   - make makefrags
-  - make
+  - make soc-verilog
