@@ -167,6 +167,10 @@ clean::
 	rm -rf $(OBJ_SYSTEM_DIR) $(CHECK_SYSTEM_DIR)
 	rm -rf $(OBJ_CHIP_DIR) $(CHECK_CHIP_DIR)
 
+.PHONY: distclean
+distclean: clean
+	rm -rf bin/ obj/ check/
+
 ##############################################################################
 # Internal Targets
 ##############################################################################
