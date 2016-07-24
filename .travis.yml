@@ -30,4 +30,5 @@ before_install:
 
 script:
   - make makefrags
-  - make soc-verilog
+  - make core-verilog core-simulator
+  - make soc-verilog soc-simulator
