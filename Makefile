@@ -192,6 +192,19 @@ clean::
 distclean: clean
 	rm -rf bin/ obj/ check/
 
+# Information for bug reporting
+.PHONY: bugreport
+bugreport::
+	@echo "SCHEDULER_ADDON=$(SCHEDULER_ADDON)"
+	@echo "CORE_GENERATOR_ADDON=$(CORE_GENERATOR_ADDON)"
+	@echo "CORE_SIMULATOR_ADDON=$(CORE_SIMULATOR_ADDON)"
+	@echo "SOC_GENERATOR_ADDON=$(SOC_GENERATOR_ADDON)"
+	@echo "SOC_SIMULATOR_ADDON=$(SOC_SIMULATOR_ADDON)"
+	uname -a
+	@echo "PKG_CONFIG_PATH=$$PKG_CONFIG_PATH"
+	pkg-config tclap --cflags --libs
+	@find $(PLSI_CACHE_DIR) -type f 2>/dev/null | xargs sha1sum /dev/null
+
 ##############################################################################
 # Internal Targets
 ##############################################################################
