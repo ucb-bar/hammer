@@ -64,6 +64,7 @@ CMD_PTEST = $(OBJ_TOOLS_DIR)/pconfigure/bin/ptest
 CMD_PCONFIGURE = $(OBJ_TOOLS_DIR)/pconfigure/bin/pconfigure
 CMD_PPKGCONFIG = $(OBJ_TOOLS_DIR)/pconfigure/bin/ppkg-config
 CMD_PCAD_INFER_DECOUPLED = $(OBJ_TOOLS_DIR)/pcad/bin/pcad-pipe-infer_decoupled
+CMD_SBT = $(OBJ_TOOLS_DIR)/sbt/sbt
 
 PKG_CONFIG_PATH=$(abspath $(OBJ_TOOLS_DIR)/install/lib/pkgconfig)
 export PKG_CONFIG_PATH
@@ -255,6 +256,12 @@ $(OBJ_TOOLS_DIR)/pcad/Makefile: src/tools/pcad/Configfile \
 				$(CMD_PCONFIGURE) $(CMD_PPKGCONFIG)
 	mkdir -p $(dir $@)
 	cd $(dir $@); $(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --srcpath $(abspath src/tools/pcad)
+
+# "builds" a SBT wrapper
+$(CMD_SBT): src/tools/sbt/sbt
+	mkdir -p $(dir $@)
+	cat $^ | sed 's!@@SBT_SRC_DIR@@!$(abspath $(dir $^))!' > $@
+	chmod +x $@
 
 # Here are a bunch of pattern rules that will try to copy outputs.
 bin/core-$(CORE_CONFIG)/$(CORE_TOP).v: $(OBJ_CORE_RTL_V)

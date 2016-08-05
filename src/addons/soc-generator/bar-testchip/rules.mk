@@ -9,7 +9,7 @@ OBJ_SOC_RTL_CHISEL_V = $(OBJ_SOC_DIR)/chisel/generated-src/$(SOC_TOP).v
 $(OBJ_SOC_RTL_V): $(OBJ_SOC_RTL_CHISEL_V) $(OBJ_CORE_RTL_V)
 	cat $^ > $@
 
-$(OBJ_SOC_RTL_CHISEL_V): $(OBJ_SOC_RTL_CHISEL)
+$(OBJ_SOC_RTL_CHISEL_V): $(OBJ_SOC_RTL_CHISEL) $(CMD_SBT)
 	$(SOC_GENERATOR_ADDON)/tools/run-chisel --top $(SOC_TOP) --output $(abspath $(dir $@)) $(abspath $^)
 
 $(OBJ_SOC_RTL_CHISEL): $(OBJ_SOC_RTL_DECOUPLED_JSON) $(SOC_GENERATOR_ADDON)/tools/generate-asic-top

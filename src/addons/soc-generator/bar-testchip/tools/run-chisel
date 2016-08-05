@@ -4,17 +4,25 @@ scala=()
 unset output_dir
 unset top
 unset firrtl
+unset sbt
 while [[ "$1" != "" ]]
 do
     case "$1" in
     *.scala) scala+=("$1");;
     */firrtl) firrtl="$1";;
+    */sbt) sbt="$1";;
     --output) output_dir="$2"; shift;;
     --top) top="$2"; shift;;
     *) echo "Unknown argument $1"; exit 1;;
     esac
     shift
 done
+
+if [[ "$sbt" == "" ]]
+then
+    echo "no sbt command found"
+    exit 1
+fi
 
 set -e
 
@@ -42,6 +50,6 @@ libraryDependencies ++= ( if (chiselVersion != "None" ) ("edu.berkeley.cs" %% "c
 EOF
 
 cd "${output_dir}"/workdir
-sbt "run --backend v"
+$sbt "run --backend v"
 
 cat "${top}.v" | sed s/'io_io_'/'io_'/g > "${output_dir}"/${top}.v

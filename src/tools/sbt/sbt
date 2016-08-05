@@ -1,0 +1,3 @@
+#!/bin/bash
+
+exec java -Xmx2G -Xss8M -XX:MaxPermSize=256M -jar @@SBT_SRC_DIR@@/sbt-launch.jar "$@"
