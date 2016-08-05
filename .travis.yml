@@ -24,9 +24,12 @@ addons:
 
 matrix:
   include:
-    env:
-    - CORE_GENERATOR=rocket-chip SOC_GENERATOR=nop
-    - CORE_GENERATOR=rocket-chip SOC_GENERATOR=bar-testchip
+    - env:
+      - CORE_GENERATOR=rocket-chip
+      - SOC_GENERATOR=nop
+    - env:
+      - CORE_GENERATOR=rocket-chip
+      - SOC_GENERATOR=bar-testchip
 
 before_install:
   - export CXX=g++-4.8
