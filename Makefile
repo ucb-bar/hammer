@@ -62,6 +62,7 @@ CHECK_SOC_DIR = check/soc-$(CORE_CONFIG)-$(SOC_CONFIG)
 
 CMD_PTEST = $(OBJ_TOOLS_DIR)/pconfigure/bin/ptest
 CMD_PCONFIGURE = $(OBJ_TOOLS_DIR)/pconfigure/bin/pconfigure
+CMD_PPKGCONFIG = $(OBJ_TOOLS_DIR)/pconfigure/bin/ppkg-config
 CMD_PCAD_INFER_DECOUPLED = $(OBJ_TOOLS_DIR)/pcad/bin/pcad-pipe-infer_decoupled
 
 PKG_CONFIG_PATH=$(abspath $(OBJ_TOOLS_DIR)/install/lib/pkgconfig)
@@ -251,9 +252,9 @@ $(OBJ_TOOLS_DIR)/pcad/bin/%: $(OBJ_TOOLS_DIR)/pcad/Makefile
 $(OBJ_TOOLS_DIR)/pcad/Makefile: src/tools/pcad/Configfile \
 				$(shell find src/tools/pcad/src -type f) \
 				$(OBJ_TOOLS_DIR)/install/include/tclap/CmdLine.h \
-				$(CMD_PCONFIGURE)
+				$(CMD_PCONFIGURE) $(CMD_PPKGCONFIG)
 	mkdir -p $(dir $@)
-	cd $(dir $@); $(abspath $(CMD_PCONFIGURE)) --srcpath $(abspath src/tools/pcad)
+	cd $(dir $@); $(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --srcpath $(abspath src/tools/pcad)
 
 # Here are a bunch of pattern rules that will try to copy outputs.
 bin/core-$(CORE_CONFIG)/$(CORE_TOP).v: $(OBJ_CORE_RTL_V)
