@@ -7,7 +7,7 @@
 # the files that are allowed to be used by the rest of the core out after
 # running SBT (the .stamp file).
 $(OBJ_CORE_DIR)/$(CORE_TOP).$(CORE_CONFIG).vsim.stamp: $(shell find $(CORE_DIR) -iname "*.scala")
-	+$(SCHEDULER_CMD) $(MAKE) RISCV=unused SUITE=RocketSuite -C $(CORE_DIR)/vsim verilog
+	+$(SCHEDULER_CMD) $(MAKE) CONFIG=$(CORE_CONFIG) RISCV=unused SUITE=RocketSuite -C $(CORE_DIR)/vsim verilog
 	mkdir -p $(dir $@)
 	touch $@
 
