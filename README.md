@@ -10,10 +10,12 @@ entire process is driven by a top-level Makefile.
 The whole PLSI build process is driven by a single top-level Makefile.  To
 build a PLSI-based project, you simply obtain the sources and run make.
 
- $ git clone git://github.com/palmer-dabbelt/plsi.git
- $ cd plsi
- $ git submodule update --init --recursive
- $ make
+````
+$ git clone git://github.com/palmer-dabbelt/plsi.git
+$ cd plsi
+$ git submodule update --init --recursive
+$ make
+````
 
 You can customize the build by using make variables, which can either be set in
 "Makefile.project" or on the commandline.  The following variables can be set:
@@ -36,7 +38,9 @@ You can customize the build by using make variables, which can either be set in
 
 To submit a bug report, run something like
 
- $ make SOC_GENERATOR=bar-testchip bugreport |& tee buginfo.txt
+````
+$ make SOC_GENERATOR=bar-testchip bugreport |& tee buginfo.txt
+````
 
 and then submit the bug report to me so I can see what's going on.  Be sure to
 your make variables correctly when submitting the report!
