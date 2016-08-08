@@ -30,8 +30,8 @@ $(OBJ_CORE_RTL_V) $(OBJ_CORE_RTL_D) $(OBJ_CORE_RTL_TB_CPP) $(OBJ_CORE_RTL_PRM): 
 # little bash script.
 ifeq ($(filter $(MAKECMDGOALS),clean distclean),)
 -include $(OBJ_CORE_TESTS_MK)
-$(OBJ_CORE_DIR)/tests.mk: $(OBJ_CORE_RTL_D) $(CORE_GENERATOR_ADDON)/tools/d2mk
-	+$(CORE_GENERATOR_ADDON)/tools/d2mk $(filter $(OBJ_CORE_DIR)/%,$^) -o $@
+$(OBJ_CORE_DIR)/tests.mk: src/addons/core-generator/rocket-chip/tools/d2mk $(OBJ_CORE_RTL_D)
+	+$< $(filter $(OBJ_CORE_DIR)/%,$^) -o $@
 endif
 
 # Rocket Chip needs dramsim2 in order to actaully run tests
@@ -46,8 +46,8 @@ $(OBJ_TOOLS_DIR)/dramsim2/include/plsi-include.stamp: $(wildcard $(CORE_DIR)/dra
 $(OBJ_TOOLS_DIR)/riscv-tools/include/plsi-include.stamp: $(OBJ_TOOLS_DIR)/riscv-tools/plsi-build.stamp
 	touch $@
 
-$(OBJ_TOOLS_DIR)/riscv-tools/plsi-build.stamp: $(CORE_GENERATOR_ADDON)/tools/build-toolchain $(find $(CORE_DIR)/riscv-tools -iname "*.S" -or -iname "*.cc")
-	+$(SCHEDULER_CMD) $(CORE_GENERATOR_ADDON)/tools/build-toolchain -o $(abspath $@) --tools-dir $(OBJ_CORE_DIR)/rocket-chip/riscv-tools
+$(OBJ_TOOLS_DIR)/riscv-tools/plsi-build.stamp: src/addons/core-generator/rocket-chip/tools/build-toolchain $(find $(CORE_DIR)/riscv-tools -iname "*.S" -or -iname "*.cc")
+	+$(SCHEDULER_CMD) $< -o $(abspath $@) --tools-dir $(OBJ_CORE_DIR)/rocket-chip/riscv-tools
 
 $(OBJ_TOOLS_DIR)/riscv-tools/lib/libfesvr.so: $(OBJ_TOOLS_DIR)/riscv-tools/plsi-build.stamp
 
@@ -62,13 +62,13 @@ $(OBJ_TOOLS_DIR)/riscv-tests/%.riscv: $(OBJ_TOOLS_DIR)/riscv-tools/plsi-build.st
 # Rather than passing a bunch of -D command-line arguments through the
 # simulator build process (which is a huge hack), we instad just generate a
 # header file that has those preprocessor macros defined.
-$(OBJ_CORE_DIR)/$(CORE_TOP).$(CORE_CONFIG).define.h: $(CORE_GENERATOR_ADDON)/tools/generate-define-h $(OBJ_CORE_RTL_TB_CPP)
-	+$(CORE_GENERATOR_ADDON)/tools/generate-define-h -o $(abspath $@) --tbfrag $(abspath $(OBJ_CORE_RTL_TB_CPP))
+$(OBJ_CORE_DIR)/$(CORE_TOP).$(CORE_CONFIG).define.h: src/addons/core-generator/rocket-chip/tools/generate-define-h $(OBJ_CORE_RTL_TB_CPP)
+	+$< -o $(abspath $@) --tbfrag $(abspath $(OBJ_CORE_RTL_TB_CPP))
 
 # Rocket Chip generates something very similar to this, but it has two
 # problems: TBFRAG is defined, and it requires running SBT twice.
-%.prm.h: %.prm $(CORE_GENERATOR_ADDON)/tools/prm2h
-	+$(CORE_GENERATOR_ADDON)/tools/prm2h $(filter %.prm,$^) -o $@
+%.prm.h: src/addons/core-generator/rocket-chip/tools/prm2h %.prm
+	+$< $(filter %.prm,$^) -o $@
 
 # Simulating Rocket Chip requires dramsim2, which is included as a submodule
 # inside Rocket Chip
