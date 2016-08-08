@@ -30,6 +30,10 @@ matrix:
     - env:
       - CORE_GENERATOR=rocket-chip
       - SOC_GENERATOR=bar-testchip
+    - env:
+      - CORE_GENERATOR=crossbar
+      - CORE_CONFIG=XBar2x2Config
+      - SOC_GENERATOR=nop
 
 before_install:
   - export CXX=g++-4.8
