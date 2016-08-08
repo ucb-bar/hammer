@@ -34,6 +34,8 @@ You can customize the build by using make variables, which can either be set in
    two: "nop" doesn't do anything (it just spits the core back out), and
    "bar-testchip" generates a Berkeley-style test chip.
 
+Source for the various addons can be found in src/addons.
+
 # Bug Reports
 
 To submit a bug report, run something like
