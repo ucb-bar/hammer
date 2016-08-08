@@ -175,8 +175,11 @@ check-soc:
 # The various RTL targets
 .PHONY: core-verilog
 core-verilog: bin/core-$(CORE_CONFIG)/$(CORE_TOP).v
+	$(info $@ availiable at $<)
+
 .PHONY: soc-verilog
 soc-verilog: bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP).v
+	$(info $@ availiable at $<)
 
 # The various simulators
 .PHONY: core-simulator
