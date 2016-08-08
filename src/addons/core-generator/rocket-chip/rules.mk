@@ -7,7 +7,7 @@ $(OBJ_CORE_DIR)/rocketchip-files.stamp: $(shell find $(CORE_DIR) -iname "*.scala
 
 $(OBJ_CORE_DIR)/rocket-chip/src/main/scala/%: $(CORE_ADDON_DIR)/% $(OBJ_CORE_DIR)/rocketchip-files.stamp
 	@mkdir -p $(dir $@)
-	cp -a $< $@
+	cp --reflink=auto $< $@
 
 # When we run Rocket Chip all the outputs come from a single SBT run.  I'm
 # abstracting all this away from the addon by running the Rocket Chip Makefile
