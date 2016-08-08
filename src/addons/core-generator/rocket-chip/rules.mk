@@ -20,7 +20,14 @@ $(OBJ_CORE_DIR)/$(CORE_TOP).$(CORE_CONFIG).vsim.stamp: $(OBJ_CORE_DIR)/rocketchi
 	mkdir -p $(dir $@)
 	touch $@
 
-$(OBJ_CORE_RTL_V) $(OBJ_CORE_RTL_D) $(OBJ_CORE_RTL_TB_CPP) $(OBJ_CORE_RTL_PRM): $(OBJ_CORE_DIR)/$(CORE_TOP).$(CORE_CONFIG).vsim.stamp
+# FIXME: FIRRTL is perfectly happy to output empty Verilog files when it sees
+# an error.
+$(OBJ_CORE_RTL_V): $(OBJ_CORE_DIR)/$(CORE_TOP).$(CORE_CONFIG).vsim.stamp
+	mkdir -p $(dir $@)
+	if [[ "$$(cat $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/$(notdir $@) | wc -l)" == "0" ]]; then echo "empty Verilog from FIRRTL"; exit 1; fi
+	cp -f $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/$(notdir $@) $@
+
+$(OBJ_CORE_RTL_D) $(OBJ_CORE_RTL_TB_CPP) $(OBJ_CORE_RTL_PRM): $(OBJ_CORE_DIR)/$(CORE_TOP).$(CORE_CONFIG).vsim.stamp
 	mkdir -p $(dir $@)
 	cp -f $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/$(notdir $@) $@
 
