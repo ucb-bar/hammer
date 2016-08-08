@@ -1,6 +1,6 @@
 # Copyright 2016 Palmer Dabbelt <palmer@dabbelt.com>
 
-CORE_TOP = Top
+CORE_TOP ?= Top
 
 OBJ_CORE_RTL_V = $(OBJ_CORE_DIR)/$(CORE_TOP).$(CORE_CONFIG).v
 
@@ -27,3 +27,8 @@ OBJ_CORE_RTL_I = \
 OBJ_CORE_RTL_O = \
 	$(OBJ_TOOLS_DIR)/dramsim2/libdramsim.so \
 	$(OBJ_TOOLS_DIR)/riscv-tools/lib/libfesvr.so
+
+ifneq ($(CORE_ADDON_DIR),)
+CORE_ADDON_FILES = \
+	$(patsubst $(CORE_ADDON_DIR)/%,$(OBJ_CORE_DIR)/rocket-chip/src/main/scala/%,$(wildcard $(CORE_ADDON_DIR)/*.scala))
+endif
