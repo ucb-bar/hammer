@@ -28,6 +28,8 @@ OBJ_CORE_RTL_O = \
 	$(OBJ_TOOLS_DIR)/dramsim2/libdramsim.so \
 	$(OBJ_TOOLS_DIR)/riscv-tools/lib/libfesvr.so
 
+OBJ_CORE_TESTS_MK ?= $(OBJ_CORE_DIR)/tests.mk
+
 ifneq ($(CORE_ADDON_DIR),)
 CORE_ADDON_FILES = \
 	$(patsubst $(CORE_ADDON_DIR)/%,$(OBJ_CORE_DIR)/rocket-chip/src/main/scala/%,$(wildcard $(CORE_ADDON_DIR)/*.scala))
