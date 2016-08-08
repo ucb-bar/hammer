@@ -28,9 +28,11 @@ $(OBJ_CORE_RTL_V) $(OBJ_CORE_RTL_D) $(OBJ_CORE_RTL_TB_CPP) $(OBJ_CORE_RTL_PRM): 
 # The actual list of tests is produced from Rocket Chip by some build process.
 # This isn't quite in a format I can understand, so it gets post-processed by a
 # little bash script.
+ifeq ($(filter $(MAKECMDGOALS),clean distclean),)
 -include $(OBJ_CORE_TESTS_MK)
 $(OBJ_CORE_DIR)/tests.mk: $(OBJ_CORE_RTL_D) $(CORE_GENERATOR_ADDON)/tools/d2mk
 	+$(CORE_GENERATOR_ADDON)/tools/d2mk $(filter $(OBJ_CORE_DIR)/%,$^) -o $@
+endif
 
 # Rocket Chip needs dramsim2 in order to actaully run tests
 $(OBJ_TOOLS_DIR)/dramsim2/include/plsi-include.stamp: $(wildcard $(CORE_DIR)/dramsim2/*.h)
