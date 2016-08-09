@@ -21,7 +21,7 @@ $(OBJ_CORE_DIR)/$(CORE_TOP).$(CORE_CONFIG).vsim.stamp: $(OBJ_CORE_DIR)/rocketchi
 	if [[ "$$(cat $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/$(CORE_TOP).$(CORE_CONFIG).v | wc -l)" == "0" ]]; then echo "empty Verilog from FIRRTL"; rm -rf $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/; exit 1; fi
 	touch $@
 
-$(OBJ_CORE_RTL_V) $(OBJ_CORE_RTL_D) $(OBJ_CORE_RTL_TB_CPP) $(OBJ_CORE_RTL_PRM): $(OBJ_CORE_DIR)/$(CORE_TOP).$(CORE_CONFIG).vsim.stamp
+$(RC_OBJ_CORE_RTL_V) $(RC_OBJ_CORE_RTL_D) $(RC_OBJ_CORE_RTL_TB_CPP) $(RC_OBJ_CORE_RTL_PRM): $(OBJ_CORE_DIR)/$(CORE_TOP).$(CORE_CONFIG).vsim.stamp
 	mkdir -p $(dir $@)
 	cp -f $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/$(notdir $@) $@
 
@@ -30,7 +30,7 @@ $(OBJ_CORE_RTL_V) $(OBJ_CORE_RTL_D) $(OBJ_CORE_RTL_TB_CPP) $(OBJ_CORE_RTL_PRM): 
 # little bash script.
 ifeq ($(filter $(MAKECMDGOALS),clean distclean),)
 -include $(OBJ_CORE_TESTS_MK)
-$(OBJ_CORE_DIR)/tests.mk: src/addons/core-generator/rocket-chip/tools/d2mk $(OBJ_CORE_RTL_D)
+$(RC_OBJ_CORE_TESTS_MK): src/addons/core-generator/rocket-chip/tools/d2mk $(OBJ_CORE_RTL_D)
 	+$< $(filter $(OBJ_CORE_DIR)/%,$^) -o $@
 endif
 
