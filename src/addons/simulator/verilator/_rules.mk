@@ -12,7 +12,7 @@ VERILATOR_TAR = $(PLSI_CACHE_DIR)/distfiles/verilator-$(VERILATOR_VERSION).tar.g
 # Builds Verilator since we can't rely on whatever the core has installed.
 $(VERILATOR_BIN): $(VERILATOR_SRC)/bin/verilator
 	rm -rf $(VERILATOR_PREFIX)
-	$(SCHEDULER_CMD) $(MAKE) -C $(VERILATOR_SRC) install
+	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(VERILATOR_SRC) install
 	# FIXME: Why do I have to do this?
 	mkdir -p $(VERILATOR_PREFIX)/include
 	cp -r $(VERILATOR_PREFIX)/share/verilator/include/* $(VERILATOR_PREFIX)/include
@@ -20,7 +20,7 @@ $(VERILATOR_BIN): $(VERILATOR_SRC)/bin/verilator
 	cp -r $(VERILATOR_PREFIX)/share/verilator/bin/* $(VERILATOR_PREFIX)/bin
 
 $(VERILATOR_SRC)/bin/verilator: $(VERILATOR_SRC)/Makefile
-	$(MAKE) -C $(VERILATOR_SRC)
+	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(VERILATOR_SRC)
 	touch $@
 
 $(VERILATOR_SRC)/Makefile: $(VERILATOR_SRC)/configure

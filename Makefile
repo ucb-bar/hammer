@@ -228,7 +228,7 @@ $(OBJ_TOOLS_DIR)/pconfigure/Makefile: $(OBJ_TOOLS_DIR)/pconfigure/Configfile.loc
                                       $(shell find src/tools/pconfigure/src -type f) \
                                       src/tools/pconfigure/bootstrap.sh
 	mkdir -p $(dir $@)
-	+cd $(dir $@); $(SCHEDULER_CMD) $(abspath src/tools/pconfigure/bootstrap.sh) $(abspath src/tools/pconfigure)/
+	+cd $(dir $@); $(SCHEDULER_CMD) --max-threads=1 -- $(abspath src/tools/pconfigure/bootstrap.sh) $(abspath src/tools/pconfigure)/
 
 $(OBJ_TOOLS_DIR)/pconfigure/Configfile.local:
 	mkdir -p $(dir $@)
@@ -252,7 +252,7 @@ $(PLSI_CACHE_DIR)/distfiles/tclap-$(TCLAP_VERSION).tar.gz:
 	wget 'http://downloads.sourceforge.net/project/tclap/tclap-$(TCLAP_VERSION).tar.gz?r=https%3A%2F%2Fsourceforge.net%2Fprojects%2Ftclap%2Ffiles%2F&ts=1468971231&use_mirror=jaist' -O $@
 
 $(OBJ_TOOLS_DIR)/pcad/bin/%: $(OBJ_TOOLS_DIR)/pcad/Makefile
-	$(SCHEDULER_CMD) $(MAKE) -C $(OBJ_TOOLS_DIR)/pcad bin/$(notdir $@)
+	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(OBJ_TOOLS_DIR)/pcad bin/$(notdir $@)
 
 $(OBJ_TOOLS_DIR)/pcad/Makefile: src/tools/pcad/Configfile \
 				$(shell find src/tools/pcad/src -type f) \

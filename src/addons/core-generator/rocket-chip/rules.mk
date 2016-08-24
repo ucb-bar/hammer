@@ -16,7 +16,7 @@ $(OBJ_CORE_DIR)/rocket-chip/src/main/scala/%: $(CORE_ADDON_DIR)/% $(OBJ_CORE_DIR
 # the files that are allowed to be used by the rest of the core out after
 # running SBT (the .stamp file).
 $(OBJ_CORE_DIR)/$(CORE_TOP).$(CORE_CONFIG).vsim.stamp: $(OBJ_CORE_DIR)/rocketchip-files.stamp $(CORE_ADDON_FILES)
-	+$(SCHEDULER_CMD) $(MAKE) MODEL=$(CORE_TOP) CONFIG=$(CORE_CONFIG) RISCV=unused SUITE=RocketSuite -C $(OBJ_CORE_DIR)/rocket-chip/vsim verilog || (rm -rf $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/$(CORE_TOP).$(CORE_CONFIG).v && exit 1)
+	+$(SCHEDULER_CMD) --make -- $(MAKE) MODEL=$(CORE_TOP) CONFIG=$(CORE_CONFIG) RISCV=unused SUITE=RocketSuite -C $(OBJ_CORE_DIR)/rocket-chip/vsim verilog || (rm -rf $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/$(CORE_TOP).$(CORE_CONFIG).v && exit 1)
 	mkdir -p $(dir $@)
 	if [[ "$$(cat $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/$(CORE_TOP).$(CORE_CONFIG).v | wc -l)" == "0" ]]; then echo "empty Verilog from FIRRTL"; rm -rf $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/; exit 1; fi
 	touch $@
@@ -47,7 +47,7 @@ $(OBJ_TOOLS_DIR)/riscv-tools/include/plsi-include.stamp: $(OBJ_TOOLS_DIR)/riscv-
 	touch $@
 
 $(OBJ_TOOLS_DIR)/riscv-tools/plsi-build.stamp: src/addons/core-generator/rocket-chip/tools/build-toolchain $(find $(CORE_DIR)/riscv-tools -iname "*.S" -or -iname "*.cc")
-	+$(SCHEDULER_CMD) $< -o $(abspath $@) --tools-dir $(OBJ_CORE_DIR)/rocket-chip/riscv-tools
+	+$(SCHEDULER_CMD) -- $< -o $(abspath $@) --tools-dir $(OBJ_CORE_DIR)/rocket-chip/riscv-tools
 
 $(OBJ_TOOLS_DIR)/riscv-tools/lib/libfesvr.so: $(OBJ_TOOLS_DIR)/riscv-tools/plsi-build.stamp
 

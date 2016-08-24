@@ -17,11 +17,11 @@ done
 cat >"$output" <<EOF
 \$(CHECK_${VERILATOR_TARGET_CAPS}_DIR)/%.out: \$(${VERILATOR_TARGET_CAPS}_SIMULATOR_ADDON)/tools/run-simulator \$(OBJ_${VERILATOR_TARGET_CAPS}_DIR)/simulator-ndebug \$(CMD_PTEST)
 	mkdir -p \$(dir \$@)
-	\$(SCHEDULER_CMD) \$(CMD_PTEST) --test \$(abspath \$(${VERILATOR_TARGET_CAPS}_SIMULATOR_ADDON)/tools/run-simulator) --out \$@ --args \$(abspath \$^)
+	\$(SCHEDULER_CMD) --max-threads=1 -- \$(CMD_PTEST) --test \$(abspath \$(${VERILATOR_TARGET_CAPS}_SIMULATOR_ADDON)/tools/run-simulator) --out \$@ --args \$(abspath \$^)
 
 \$(CHECK_${VERILATOR_TARGET_CAPS}_DIR)/%.vpdout \$(CHECK_${VERILATOR_TARGET_CAPS}_DIR)/%.vpd: \$(${VERILATOR_TARGET_CAPS}_SIMULATOR_ADDON)/tools/run-simulator \$(OBJ_${VERILATOR_TARGET_CAPS}_DIR)/simulator-debug \$(CMD_PTEST)
 	mkdir -p \$(dir \$@)
-	\$(SCHEDULER_CMD) \$(CMD_PTEST) --test \$(abspath \$(${VERILATOR_TARGET_CAPS}_SIMULATOR_ADDON)/tools/run-simulator) --out \$@ --args \$(abspath \$^) --vcd \$@.vcd
+	\$(SCHEDULER_CMD) --max-threads=1 -- \$(CMD_PTEST) --test \$(abspath \$(${VERILATOR_TARGET_CAPS}_SIMULATOR_ADDON)/tools/run-simulator) --out \$@ --args \$(abspath \$^) --vcd \$@.vcd
 
 ifeq (\$(${VERILATOR_TARGET_CAPS}_TOP),)
 \$(error ${VERILATOR_TARGET_CAPS}_TOP must be defined)
@@ -40,5 +40,5 @@ endif
 		\$(VERILATOR_BIN) \\
 		\$(${VERILATOR_TARGET_CAPS}_SIMULATOR_ADDON)/tools/build-simulator
 	mkdir -p \$(dir \$@)
-	+\$(SCHEDULER_CMD) \$(abspath \$(${VERILATOR_TARGET_CAPS}_SIMULATOR_ADDON)/tools/build-simulator) -o \$(abspath \$@) --top \$(${VERILATOR_TARGET_CAPS}_TOP) --level ${VERILATOR_TARGET_LOWER} --mode \$(patsubst simulator-%,%,\$(notdir \$@)) \$(abspath \$^)
+	+\$(SCHEDULER_CMD) -- \$(abspath \$(${VERILATOR_TARGET_CAPS}_SIMULATOR_ADDON)/tools/build-simulator) -o \$(abspath \$@) --top \$(${VERILATOR_TARGET_CAPS}_TOP) --level ${VERILATOR_TARGET_LOWER} --mode \$(patsubst simulator-%,%,\$(notdir \$@)) \$(abspath \$^)
 EOF
