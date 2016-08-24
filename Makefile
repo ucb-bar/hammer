@@ -34,7 +34,7 @@ SOC_SIMULATOR ?= verilator
 
 # The scheduler to use when running large jobs.  Changing this doesn't have any
 # effect on the generated files, just the manner in which they are generated.
-SCHEDULER ?= local
+SCHEDULER ?= auto
 
 # A cache directory for things that are, for some reason, difficult to create
 # and never change.  This is suitable for installing as a read-only shared
