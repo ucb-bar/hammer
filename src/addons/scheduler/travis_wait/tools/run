@@ -194,4 +194,10 @@ decrypt() {
   echo $1 | base64 -d | openssl rsautl -decrypt -inkey ~/.ssh/id_rsa.repo
 }
 
+while [[ "$1" != "--" ]]
+do
+    shift
+done
+shift
+
 travis_wait 60 "$@"
