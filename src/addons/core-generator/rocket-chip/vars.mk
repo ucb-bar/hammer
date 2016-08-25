@@ -22,7 +22,9 @@ RC_OBJ_CORE_SIM_FILES = \
 	$(CORE_DIR)/csrc/SimDTM.cc \
 	$(OBJ_TOOLS_DIR)/riscv-tools/include/plsi-include.stamp \
 	$(OBJ_TOOLS_DIR)/riscv-tools/lib/libfesvr.so \
-	$(CORE_DIR)/vsrc/SimDTM.v
+	$(CORE_DIR)/vsrc/SimDTM.v \
+	$(CORE_DIR)/vsrc/TestDriver.v \
+	$(CORE_DIR)/vsrc/DebugTransportModuleJtag.v
 OBJ_CORE_SIM_FILES = $(RC_OBJ_CORE_SIM_FILES)
 
 # Rocket Chip generates a Makefrag for testing.  This isn't in the format I

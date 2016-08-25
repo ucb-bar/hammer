@@ -1,0 +1,85 @@
+#!/bin/bash
+
+set -e
+
+verilog=()
+verilog_h=()
+c=()
+h=()
+o=()
+output=""
+mode=""
+vcs=""
+top=""
+include=()
+i=()
+cc=()
+tbvfrag=""
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    */verilator.h) ;;
+    */emulator.cc) ;;
+    *.v) verilog+=("$1");;
+    *.vh) verilog_h+=("$1");;
+    *.c) c+=("$1");;
+    *.h) h+=("-CC \"-include$1\"");;
+    *.c++) c+=("$1");;
+    *.cxx) c+=("$1");;
+    *.cc) c+=("$1");;
+    *.so) o+=("$1");;
+    */bin/vcs) vcs="$1";;
+    */plsi-include.stamp) i+=("-CC \"-I$(dirname "$1")\"");;
+    *.tb.vfrag) tbvfrag="+define+TBVFRAG+\\\"$(basename $1)\\\"";;
+    "-o") output="$2"; shift;;
+    "--level") level="$2"; shift;;
+    "--mode") mode="$2"; shift;;
+    "--top") top="$2"; shift;;
+    $0) ;;
+    *) echo "Unknown argument $1" >&2; exit 2;;
+    esac
+    shift
+done
+
+rm -rf "$output".daidir
+
+cat >$output.enter <<EOF
+export VCS_HOME="$(dirname $(dirname "$vcs"))"
+export PATH="$VCS_HOME/bin:$PATH"
+EOF
+source $output.enter
+
+if [[ "$mode" == "debug" ]]
+then
+    debug_flags=()
+    debug_flags+=("+define+DEBUG")
+fi
+
+if [[ "$vcs" == "" ]]
+then
+    echo "Unable to find VCS, pass it on the command line"
+    exit 1
+fi
+
+set -x
+$vcs -full64 \
+    -quiet \
+    -notice -line -error=PCWM-L \
+    -timescale=1ns/10ps \
+    -sverilog \
+    -debug_pp \
+    +rad \
+    +v2k \
+    +vcs+lic+wait \
+    +define+RANDOMIZE \
+    ${debug_flags} \
+    +define+CLOCK_PERIOD=1.0 \
+    -CC "-std=c++11" \
+    $tbvfrag \
+    ${h[*]} \
+    ${i[*]} \
+    ${verilog_h[*]} \
+    ${verilog[*]} \
+    ${c[*]} \
+    ${o[*]} \
+    -o "$output"
