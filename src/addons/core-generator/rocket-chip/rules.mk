@@ -15,13 +15,13 @@ $(OBJ_CORE_DIR)/rocket-chip/src/main/scala/%: $(CORE_ADDON_DIR)/% $(OBJ_CORE_DIR
 # make sure I have proper dependencies for everything, I then go ahead and copy
 # the files that are allowed to be used by the rest of the core out after
 # running SBT (the .stamp file).
-$(OBJ_CORE_DIR)/$(CORE_TOP).$(CORE_CONFIG).vsim.stamp: $(OBJ_CORE_DIR)/rocketchip-files.stamp $(CORE_ADDON_FILES)
-	+$(SCHEDULER_CMD) --make -- $(MAKE) MODEL=$(CORE_TOP) CONFIG=$(CORE_CONFIG) RISCV=unused SUITE=RocketSuite -C $(OBJ_CORE_DIR)/rocket-chip/vsim verilog || (rm -rf $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/$(CORE_TOP).$(CORE_CONFIG).v && exit 1)
+$(OBJ_CORE_DIR)/$(CORE_SIM_TOP).$(CORE_CONFIG).vsim.stamp: $(OBJ_CORE_DIR)/rocketchip-files.stamp $(CORE_ADDON_FILES)
+	+$(SCHEDULER_CMD) --make -- $(MAKE) MODEL=$(CORE_SIM_TOP) CONFIG=$(CORE_CONFIG) RISCV=unused SUITE=RocketSuite -C $(OBJ_CORE_DIR)/rocket-chip/vsim verilog || (rm -rf $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/$(CORE_SIM_TOP).$(CORE_CONFIG).v && exit 1)
 	mkdir -p $(dir $@)
-	if [[ "$$(cat $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/$(CORE_TOP).$(CORE_CONFIG).v | wc -l)" == "0" ]]; then echo "empty Verilog from FIRRTL"; rm -rf $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/; exit 1; fi
+	if [[ "$$(cat $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/$(CORE_SIM_TOP).$(CORE_CONFIG).v | wc -l)" == "0" ]]; then echo "empty Verilog from FIRRTL"; rm -rf $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/; exit 1; fi
 	touch $@
 
-$(RC_OBJ_CORE_RTL_V) $(RC_OBJ_CORE_RTL_D) $(RC_OBJ_CORE_RTL_TB_CPP) $(RC_OBJ_CORE_RTL_PRM): $(OBJ_CORE_DIR)/$(CORE_TOP).$(CORE_CONFIG).vsim.stamp
+$(RC_OBJ_CORE_RTL_V) $(RC_OBJ_CORE_RTL_D): $(OBJ_CORE_DIR)/$(CORE_SIM_TOP).$(CORE_CONFIG).vsim.stamp
 	mkdir -p $(dir $@)
 	cp -f $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/$(notdir $@) $@
 
@@ -33,12 +33,6 @@ ifeq ($(filter $(MAKECMDGOALS),clean distclean),)
 $(RC_OBJ_CORE_TESTS_MK): src/addons/core-generator/rocket-chip/tools/d2mk $(OBJ_CORE_RTL_D)
 	+$< $(filter $(OBJ_CORE_DIR)/%,$^) -o $@
 endif
-
-# Rocket Chip needs dramsim2 in order to actaully run tests
-$(OBJ_TOOLS_DIR)/dramsim2/include/plsi-include.stamp: $(wildcard $(CORE_DIR)/dramsim2/*.h)
-	mkdir -p $(dir $@)
-	cp $^ $(dir $@)
-	touch $@
 
 # We need to have built the RISC-V tools in order to build the simulator.
 # There are two rules here: one to build the tools, and another to install the
@@ -58,24 +52,3 @@ $(OBJ_TOOLS_DIR)/riscv-tests/rv%: $(OBJ_TOOLS_DIR)/riscv-tools/plsi-build.stamp
 $(OBJ_TOOLS_DIR)/riscv-tests/%.riscv: $(OBJ_TOOLS_DIR)/riscv-tools/plsi-build.stamp
 	mkdir -p $(dir $@)
 	cp -f $(OBJ_TOOLS_DIR)/riscv-tools/riscv64-unknown-elf/share/riscv-tests/benchmarks/$(notdir $@) $@
-
-# Rather than passing a bunch of -D command-line arguments through the
-# simulator build process (which is a huge hack), we instad just generate a
-# header file that has those preprocessor macros defined.
-$(OBJ_CORE_DIR)/$(CORE_TOP).$(CORE_CONFIG).define.h: src/addons/core-generator/rocket-chip/tools/generate-define-h $(OBJ_CORE_RTL_TB_CPP)
-	+$< -o $(abspath $@) --tbfrag $(abspath $(OBJ_CORE_RTL_TB_CPP))
-
-# Rocket Chip generates something very similar to this, but it has two
-# problems: TBFRAG is defined, and it requires running SBT twice.
-%.prm.h: src/addons/core-generator/rocket-chip/tools/prm2h %.prm
-	+$< $(filter %.prm,$^) -o $@
-
-# Simulating Rocket Chip requires dramsim2, which is included as a submodule
-# inside Rocket Chip
-$(OBJ_TOOLS_DIR)/dramsim2/libdramsim.so: $(patsubst $(CORE_DIR)/dramsim2/%.cpp,$(OBJ_TOOLS_DIR)/dramsim2/%.o,$(wildcard $(CORE_DIR)/dramsim2/*.cpp))
-	mkdir -p $(dir $@)
-	$(CXX) -DNO_STORAGE -DNO_OUTPUT -o $@ -shared $(filter %.o,$^)
-
-$(OBJ_TOOLS_DIR)/dramsim2/%.o: $(CORE_DIR)/dramsim2/%.cpp $(wildcard $(CORE_DIR)/dramsim2/*.h)
-	mkdir -p $(dir $@)
-	$(CXX) -fPIC -DNO_STORAGE -DNO_OUTPUT -c -o $@ $< -I$(CORE_DIR)/dramsim2

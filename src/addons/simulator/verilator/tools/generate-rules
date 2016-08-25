@@ -33,12 +33,9 @@ endif
 
 \$(patsubst %,\$(OBJ_${VERILATOR_TARGET_CAPS}_DIR)/simulator-%,ndebug debug): \\
 		\$(OBJ_${VERILATOR_TARGET_CAPS}_RTL_V) \\
-		\$(OBJ_${VERILATOR_TARGET_CAPS}_RTL_C) \\
-		\$(OBJ_${VERILATOR_TARGET_CAPS}_RTL_H) \\
-		\$(OBJ_${VERILATOR_TARGET_CAPS}_RTL_O) \\
-		\$(OBJ_${VERILATOR_TARGET_CAPS}_RTL_I) \\
+		\$(OBJ_${VERILATOR_TARGET_CAPS}_SIM_FILES) \\
 		\$(VERILATOR_BIN) \\
 		\$(${VERILATOR_TARGET_CAPS}_SIMULATOR_ADDON)/tools/build-simulator
 	mkdir -p \$(dir \$@)
-	+\$(SCHEDULER_CMD) -- \$(abspath \$(${VERILATOR_TARGET_CAPS}_SIMULATOR_ADDON)/tools/build-simulator) -o \$(abspath \$@) --top \$(${VERILATOR_TARGET_CAPS}_TOP) --level ${VERILATOR_TARGET_LOWER} --mode \$(patsubst simulator-%,%,\$(notdir \$@)) \$(abspath \$^)
+	+\$(SCHEDULER_CMD) -- \$(abspath \$(${VERILATOR_TARGET_CAPS}_SIMULATOR_ADDON)/tools/build-simulator) -o \$(abspath \$@) --top \$(${VERILATOR_TARGET_CAPS}_SIM_TOP) --level ${VERILATOR_TARGET_LOWER} --mode \$(patsubst simulator-%,%,\$(notdir \$@)) \$(abspath \$^)
 EOF
