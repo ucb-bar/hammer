@@ -65,3 +65,9 @@ $verilator \
     ${o[*]}
 
 make -C "$output".d -f V${top}.mk
+
+if test ! -e "$output"
+then
+  echo "Verilator produced no output"
+  exit 1
+fi
