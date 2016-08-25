@@ -236,7 +236,7 @@ $(OBJ_TOOLS_DIR)/pconfigure/Configfile.local:
 
 # Builds PCAD and all its dependencies.
 $(OBJ_TOOLS_DIR)/install/include/tclap/CmdLine.h: $(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION)/Makefile
-	$(SCHEDULER_CMD) $(MAKE) -C $(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION) install
+	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION) install
 
 $(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION)/Makefile: $(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION)/configure
 	cd $(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION); ./configure --prefix=$(abspath $(OBJ_TOOLS_DIR)/install)
