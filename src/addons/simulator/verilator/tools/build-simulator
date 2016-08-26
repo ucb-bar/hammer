@@ -16,6 +16,8 @@ i=()
 while [[ "$1" != "" ]]
 do
     case "$1" in
+    */rocketTestHarness.v) ;;
+    */testDriver.v) ;;
     *.v) verilog+=("$1");;
     *.vh) verilogh+=("$1");;
     *.c) c+=("$1");;
