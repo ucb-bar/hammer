@@ -43,7 +43,6 @@ rm -rf "$output".d
 export VERILATOR_ROOT="$(dirname $(dirname "$verilator"))"
 export PATH="$VERILATOR_ROOT/bin:$PATH"
 
-set -x
 
 echo $VERILATOR_ROOT
 
@@ -52,6 +51,9 @@ then
     debug_flags=()
     debug_flags+=("--trace")
 fi
+
+set -e
+set -x
 
 $verilator \
     --top-module $top \
