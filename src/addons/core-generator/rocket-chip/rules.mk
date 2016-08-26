@@ -36,6 +36,10 @@ $(OBJ_CORE_DIR)/plsi-generated/tests-default.mk: src/addons/core-generator/rocke
 	+$< $(filter $(OBJ_CORE_DIR)/%,$^) -o $@
 endif
 
+$(OBJ_CORE_DIR)/plsi-generated/tests-%.mk: src/addons/core-generator/rocket-chip/src/tests-*.mk
+	mkdir -p $(dir $@)
+	cat $^ > $@
+
 # We need to have built the RISC-V tools in order to build the simulator.
 # There are two rules here: one to build the tools, and another to install the
 # include stamp so the simulator can find the various directories.
