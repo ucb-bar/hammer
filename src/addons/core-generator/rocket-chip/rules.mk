@@ -42,7 +42,10 @@ endif
 $(OBJ_CORE_DIR)/riscv-tools/include/plsi-include.stamp: $(OBJ_CORE_DIR)/riscv-tools/plsi-build.stamp
 	touch $@
 
-$(OBJ_CORE_DIR)/riscv-tools/plsi-build.stamp: src/addons/core-generator/rocket-chip/tools/build-toolchain $(find $(CORE_DIR)/riscv-tools -iname "*.S" -or -iname "*.cc")
+$(OBJ_CORE_DIR)/riscv-tools/plsi-build.stamp: \
+		src/addons/core-generator/rocket-chip/tools/build-toolchain \
+		$(find $(OBJ_CORE_DIR)/rocket-chip/riscv-tools -iname "*.S" -or -iname "*.cc") \
+		$(OBJ_CORE_DIR)/plsi-generated/rocket-chip.stamp
 	+$(SCHEDULER_CMD) -- $< -o $(abspath $@) --tools-dir $(OBJ_CORE_DIR)/rocket-chip/riscv-tools
 
 $(OBJ_CORE_DIR)/riscv-tools/lib/libfesvr.so: $(OBJ_CORE_DIR)/riscv-tools/plsi-build.stamp
