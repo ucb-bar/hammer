@@ -70,7 +70,14 @@ about.  The following core generators are supported:
    but instead an example of how to customize Rocket Chip without forking it.
 
 Other core generators will almost certainly be added, but for now I'm focusing
-on getting the flow to work with just Rocket Chip.
+on getting the flow to work with just Rocket Chip.  The core generator will be
+passed two make-level variables from PLSI:
+
+ * CORE_CONFIG: This gets passed as CONFIG to Rocket Chip.  Other core
+   generators can do anything.
+
+ * CORE_SIM_CONFIG: Allows users to control the test set that will be run.  For
+   Rocket Chip, a setting of "smoke" will run only a few short tests.
 
 ### SOC Generators
 
@@ -104,7 +111,11 @@ SOC generators are supported:
    top-level memory.
 
 While I anticipate that many SOC generators will be written, most of them
-probably aren't interesting for upstream.
+probably aren't interesting for upstream.  The SOC generator will be passed a
+single make-level variable from PLSI:
+
+ * SOC_CONFIG: Allows users to configure the SOC in different ways.  FIXME:
+   right now this does nothing, because the bar-testchip code is crap.
 
 ## Customizing the Flow
 

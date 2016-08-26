@@ -32,7 +32,7 @@ $(RC_OBJ_CORE_RTL_V) $(RC_OBJ_CORE_RTL_D): $(OBJ_CORE_DIR)/plsi-generated/$(CORE
 # little bash script.
 ifeq ($(filter $(MAKECMDGOALS),clean distclean),)
 -include $(OBJ_CORE_TESTS_MK)
-$(RC_OBJ_CORE_TESTS_MK): src/addons/core-generator/rocket-chip/tools/d2mk $(OBJ_CORE_RTL_D)
+$(OBJ_CORE_DIR)/plsi-generated/tests-default.mk: src/addons/core-generator/rocket-chip/tools/d2mk $(OBJ_CORE_RTL_D)
 	+$< $(filter $(OBJ_CORE_DIR)/%,$^) -o $@
 endif
 

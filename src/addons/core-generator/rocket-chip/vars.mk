@@ -34,7 +34,7 @@ OBJ_CORE_SIM_FILES = $(RC_OBJ_CORE_SIM_FILES)
 RC_OBJ_CORE_RTL_D = $(OBJ_CORE_DIR)/rocketchip-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).d
 OBJ_CORE_RTL_D ?= $(RC_OBJ_CORE_RTL_D)
 
-RC_OBJ_CORE_TESTS_MK = $(OBJ_CORE_DIR)/plsi-generated/tests.mk
+RC_OBJ_CORE_TESTS_MK = $(OBJ_CORE_DIR)/plsi-generated/tests-$(CORE_SIM_CONFIG).mk
 OBJ_CORE_TESTS_MK ?= $(RC_OBJ_CORE_TESTS_MK)
 
 # Rocket Chip supports additional addons that it can support, if a user defines

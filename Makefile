@@ -27,6 +27,7 @@ SOC_GENERATOR ?= nop
 
 # The configuration to run when running various steps of the process
 CORE_CONFIG ?= DefaultConfig
+CORE_SIM_CONFIG ?= default
 SOC_CONFIG ?= default
 
 # Defines the simulator used to run simulation at different levels
