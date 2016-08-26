@@ -37,19 +37,19 @@ all:
 	@echo \$($var)
 include $(readlink -f $input)
 EOF
-    make --no-print-directory -f $tempdir/Makefile | sed 's@ @\n@g' | while read test
+    make --no-print-directory -f $tempdir/Makefile | sed 's@ @\n@g' | head -n1 | while read test
     do
         echo "check-core: \$(CHECK_CORE_DIR)/$test.out" >> $tempdir/out
         echo "check-core-vpd: \$(CHECK_CORE_DIR)/$test.vpdout" >> $tempdir/out
         echo ".PRECIOUS: \$(CHECK_CORE_DIR)/$test.vpd" >> $tempdir/out
-        echo "\$(CHECK_CORE_DIR)/$test.out: \$(OBJ_TOOLS_DIR)/riscv-tests/$test" >> $tempdir/out
-        echo "\$(CHECK_CORE_DIR)/$test.vpdout: \$(OBJ_TOOLS_DIR)/riscv-tests/$test" >> $tempdir/out
+        echo "\$(CHECK_CORE_DIR)/$test.out: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
+        echo "\$(CHECK_CORE_DIR)/$test.vpdout: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
 
         echo "check-soc: \$(CHECK_SOC_DIR)/$test.out" >> $tempdir/out
         echo "check-soc-vpd: \$(CHECK_SOC_DIR)/$test.vpdout" >> $tempdir/out
         echo ".PRECIOUS: \$(CHECK_SOC_DIR)/$test.vpd" >> $tempdir/out
-        echo "\$(CHECK_SOC_DIR)/$test.out: \$(OBJ_TOOLS_DIR)/riscv-tests/$test" >> $tempdir/out
-        echo "\$(CHECK_SOC_DIR)/$test.vpdout: \$(OBJ_TOOLS_DIR)/riscv-tests/$test" >> $tempdir/out
+        echo "\$(CHECK_SOC_DIR)/$test.out: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
+        echo "\$(CHECK_SOC_DIR)/$test.vpdout: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
     done
 done
 
