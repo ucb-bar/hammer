@@ -37,7 +37,7 @@ all:
 	@echo \$($var)
 include $(readlink -f $input)
 EOF
-    make --no-print-directory -f $tempdir/Makefile | sed 's@ @\n@g' | head -n1 | while read test
+    make --no-print-directory -f $tempdir/Makefile | sed 's@ @\n@g' | while read test
     do
         echo "check-core: \$(CHECK_CORE_DIR)/$test.out" >> $tempdir/out
         echo "check-core-vpd: \$(CHECK_CORE_DIR)/$test.vpdout" >> $tempdir/out
