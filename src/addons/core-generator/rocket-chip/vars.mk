@@ -29,7 +29,8 @@ RC_OBJ_CORE_SIM_FILES = \
 OBJ_CORE_SIM_FILES = $(RC_OBJ_CORE_SIM_FILES)
 
 # Rocket Chip generates a Makefrag for testing.  This isn't in the format I
-# want (it doesn't have all my dependency stages) so I do some post-processing of this to produce my test list.
+# want (it doesn't have all my dependency stages) so I do some post-processing
+# of this to produce my test list.
 RC_OBJ_CORE_RTL_D = $(OBJ_CORE_DIR)/$(CORE_SIM_TOP).$(CORE_CONFIG).d
 OBJ_CORE_RTL_D ?= $(RC_OBJ_CORE_RTL_D)
 
