@@ -41,7 +41,8 @@ do
     shift
 done
 
-rm -rf "$output".daidir
+rm -rf "$output".daidir "$output".vcs_build_dir
+mkdir -p "$output".vcs_build_dir
 
 cat >$output.enter <<EOF
 export VCS_HOME="$(dirname $(dirname "$vcs"))"
@@ -61,6 +62,7 @@ then
     exit 1
 fi
 
+cd "$output".vcs_build_dir
 set -x
 $vcs -full64 \
     -quiet \
