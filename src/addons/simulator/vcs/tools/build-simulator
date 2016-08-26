@@ -73,7 +73,6 @@ $vcs -full64 \
     +vcs+lic+wait \
     +define+RANDOMIZE \
     ${debug_flags} \
-    +define+CLOCK_PERIOD=1.0 \
     -CC "-std=c++11" \
     $tbvfrag \
     ${h[*]} \

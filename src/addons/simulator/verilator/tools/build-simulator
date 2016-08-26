@@ -3,6 +3,7 @@
 set -e
 
 verilog=()
+verilogh=()
 c=()
 h=()
 o=()
@@ -16,6 +17,7 @@ while [[ "$1" != "" ]]
 do
     case "$1" in
     *.v) verilog+=("$1");;
+    *.vh) verilogh+=("$1");;
     *.c) c+=("$1");;
     *.h) h+=("-include $1");;
     *.c++) c+=("$1");;
@@ -60,6 +62,7 @@ $verilator \
     -CFLAGS "-std=c++11 -DVERILATOR=1 -include "$output".d/V${top}.h ${i[*]} ${h[*]}" \
     -Mdir "$output".d \
     ${debug_flags[*]} \
+    ${verilogh[*]} \
     ${verilog[*]} \
     ${c[*]} \
     ${o[*]}
