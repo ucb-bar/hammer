@@ -40,8 +40,8 @@ before_install:
   - export CC=gcc-4.8
   - export MAKEFLAGS=-j3
   - export SCHEDULER=travis_wait
+  - export CORE_SIM_CONFIG=smoke
 
 script:
   - make makefrags
-  - make core-verilog core-simulator
-  - make soc-verilog soc-simulator
+  - make
