@@ -12,8 +12,8 @@ parser.add_argument('--output', dest='output')
 
 args = parser.parse_args()
 
-htif_width = 16
-divider = 7
+htif_width = 256
+divider = 2
 
 def reverse_port_direction(direction):
   if direction == "input":
