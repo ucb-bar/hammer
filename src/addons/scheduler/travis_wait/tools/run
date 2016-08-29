@@ -200,4 +200,4 @@ do
 done
 shift
 
-travis_wait 60 "$@"
+travis_wait 300 "$@"
