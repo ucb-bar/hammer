@@ -16,6 +16,10 @@ $(OBJ_SOC_RTL_CHISEL): $(OBJ_SOC_RTL_DECOUPLED_JSON) $(SOC_GENERATOR_ADDON)/tool
 	mkdir -p $(dir $@)
 	$(SOC_GENERATOR_ADDON)/tools/generate-asic-top --core-top $(CORE_TOP) --soc-top $(SOC_TOP) --syn-top $(SOC_TOP_FOR_SYNTHESIS) --decoupled $(filter %.decoupled.json,$^) --output $@
 
-$(OBJ_SOC_RTL_DECOUPLED_JSON): $(CMD_PCAD_INFER_DECOUPLED) $(OBJ_CORE_RTL_V)
+$(OBJ_SOC_RTL_DECOUPLED_JSON): \
+		$(CMD_PCAD_INFER_DECOUPLED) \
+		$(filter %.vh,$(OBJ_CORE_SIM_FILES)) \
+		$(filter %.v,$(OBJ_CORE_SIM_FILES)) \
+		$(OBJ_CORE_RTL_V)
 	mkdir -p $(dir $@)
-	$(CMD_PCAD_INFER_DECOUPLED) -o $@ --top $(CORE_TOP) -i $(filter %.v,$^)
+	$(CMD_PCAD_INFER_DECOUPLED) -o $@ --top $(CORE_TOP) $(patsubst %,-i %,$(filter %.vh,$^)) $(patsubst %,-i %,$(filter %.v,$^))

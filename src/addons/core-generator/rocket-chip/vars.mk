@@ -24,7 +24,6 @@ RC_OBJ_CORE_SIM_FILES = \
 	$(OBJ_CORE_DIR)/riscv-tools/lib/libfesvr.so \
 	$(CORE_DIR)/vsrc/SimDTM.v \
 	$(CORE_DIR)/vsrc/TestDriver.v \
-	$(CORE_DIR)/vsrc/DebugTransportModuleJtag.v \
 	src/addons/core-generator/rocket-chip/src/clock.vh
 OBJ_CORE_SIM_FILES = $(RC_OBJ_CORE_SIM_FILES)
 
