@@ -2,7 +2,7 @@
 
 unset simulator
 unset debug
-unset vcd
+unset vpd
 args=()
 while [[ "$1" != "" ]]
 do
@@ -16,7 +16,7 @@ do
         debug="false"
         ;;
     */ptest) ;;
-    --vcd) vcd="$2"; shift;;
+    --vpd) vpd="$2"; shift;;
     "$0") ;;
     *) args+=("$1");;
     esac
@@ -26,7 +26,7 @@ done
 debug_args=()
 if [[ "$debug" == "true" ]]
 then
-    debug_args+=("+vcdplusfile=${vcd}.vpd")
+    debug_args+=("+vcdplusfile=${vpd}")
 fi
 
 set -e
