@@ -44,8 +44,8 @@ before_install:
 
 script:
   - make makefrags
-  - make rtl-verilog
-  - make rtl-simulator
+  - make core-verilog
+  - make core-simulator
   - make soc-verilog
   - make soc-simulator
   - make
