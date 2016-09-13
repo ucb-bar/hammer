@@ -65,6 +65,7 @@ CHECK_SOC_DIR = check/soc-$(CORE_CONFIG)-$(SOC_CONFIG)
 CMD_PTEST = $(OBJ_TOOLS_DIR)/pconfigure/bin/ptest
 CMD_PCONFIGURE = $(OBJ_TOOLS_DIR)/pconfigure/bin/pconfigure
 CMD_PPKGCONFIG = $(OBJ_TOOLS_DIR)/pconfigure/bin/ppkg-config
+CMD_PHC = $(OBJ_TOOLS_DIR)/pconfigure/bin/phc
 CMD_PCAD_INFER_DECOUPLED = $(OBJ_TOOLS_DIR)/pcad/bin/pcad-pipe-infer_decoupled
 CMD_SBT = $(OBJ_TOOLS_DIR)/sbt/sbt
 
@@ -259,9 +260,9 @@ $(OBJ_TOOLS_DIR)/pcad/bin/%: $(OBJ_TOOLS_DIR)/pcad/Makefile
 $(OBJ_TOOLS_DIR)/pcad/Makefile: src/tools/pcad/Configfile \
 				$(shell find src/tools/pcad/src -type f) \
 				$(OBJ_TOOLS_DIR)/install/include/tclap/CmdLine.h \
-				$(CMD_PCONFIGURE) $(CMD_PPKGCONFIG)
+				$(CMD_PCONFIGURE) $(CMD_PPKGCONFIG) $(CMD_PHC)
 	mkdir -p $(dir $@)
-	cd $(dir $@); $(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --srcpath $(abspath src/tools/pcad)
+	cd $(dir $@); $(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --phc $(abspath $(CMD_PHC)) --srcpath $(abspath src/tools/pcad)
 
 # "builds" a SBT wrapper
 $(CMD_SBT): src/tools/sbt/sbt
