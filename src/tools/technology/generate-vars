@@ -1,0 +1,20 @@
+#!/usr/bin/env python3
+
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("-o", "--output", dest="output", required=True)
+parser.add_argument("-i", "--input", dest="input", required=True)
+args = parser.parse_args()
+
+import json
+with open(args.input) as f:
+	techfile = json.load(f)
+
+of = open(args.output, "w+")
+
+tech_home = "$(OBJ_TECH_DIR)/extracted"
+
+of.write("TECHNOLOGY_LIBS = ")
+for lib in techfile["liberty files"]:
+	of.write(" $(abspath {0}/{1})".format(tech_home, lib))
+of.write("\n")

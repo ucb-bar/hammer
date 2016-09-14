@@ -1,0 +1,16 @@
+{
+  "name": "SAED 32nm Generic Library",
+  "tarball name": "SAED_PDK32nm_v1.6_05182016.tar.gz",
+  "tarball homepage": "https://www.synopsys.com/COMMUNITY/UNIVERSITYPROGRAM/Pages/32-28nm-generic-library.aspx",
+  "milkway tech files": [
+    "SAED_PDK32nm/techfiles/saed32nm_1p9m_mw.tf"
+  ],
+  "openaccess tech files": [
+    "SAED_PDK32nm/techfiles/saed32nm_1p9m_oa.tf"
+  ],
+  "liberty files": [
+    "SAED_PDK32nm/hspice/saed32nm.lib"
+  ],
+  "simulation files": [
+  ]
+}

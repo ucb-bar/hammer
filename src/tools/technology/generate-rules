@@ -1,0 +1,32 @@
+#!/usr/bin/env python3
+
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("-o", "--output", dest="output", required=True)
+parser.add_argument("-i", "--input", dest="input", required=True)
+args = parser.parse_args()
+
+import json
+with open(args.input) as f:
+	techfile = json.load(f)
+
+of = open(args.output, "w+")
+
+tarball_path = "$(PLSI_CACHE_DIR)/technology/$(TECHNOLOGY)/{0}".format(techfile["tarball name"])
+tech_home = "$(OBJ_TECH_DIR)/extracted"
+extract_stamp = "{0}/plsi-techtar.stamp".format(tech_home)
+
+# It's exceedingly unlikely that technology tarballs will be availiable without
+# some sort of NDA.  This just informs the user that they should download the
+# file themselves.
+of.write("{0}:\n".format(tarball_path))
+of.write("\t$(error Download the {0} technology tarball from {1} and place it at $@, this process can't be automated because of NDAs)\n".format(techfile["name"], techfile["tarball homepage"]))
+
+# There's a single extraction step in order to avoid dependency problems.
+of.write("{0}: {1}\n".format(extract_stamp, tarball_path))
+of.write("\t@rm -rf $(dir $@)\n")
+of.write("\t@mkdir -p $(dir $@)\n")
+of.write("\ttar -xpf $^ -C $(dir $@) --strip-components=1\n")
+of.write("\tdate > $@\n")
+
+# Every

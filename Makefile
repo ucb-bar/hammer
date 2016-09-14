@@ -25,6 +25,9 @@ CORE_GENERATOR ?= rocket-chip
 # soc generator doesn't actually do anything at all.
 SOC_GENERATOR ?= nop
 
+# The technology that will be used to implement this design.
+TECHNOLOGY = saed32
+
 # The configuration to run when running various steps of the process
 CORE_CONFIG ?= DefaultConfig
 CORE_SIM_CONFIG ?= default
@@ -106,6 +109,14 @@ ifneq ($(words $(SOC_SIMULATOR_ADDON)),1)
 $(error Unable to resolve SOC_GENERATOR=$(SOC_GENERATOR): found "$(SOC_GENERATOR_ADDON)")
 endif
 
+# In order to prevent EEs from seeing Makefiles, the technology description is
+# a JSON file.  This simply checks to see that the file exists before
+# continuing, in order to ensure there's no trickier errors.
+TECHNOLOGY_JSON = $(wildcard src/technologies/$(TECHNOLOGY).tech.json)
+ifeq ($(TECHNOLOGY_JSON),)
+$(error "Unable to find technology $(TECHNOLOGY), expected a cooresponding .tech.json file")
+endif
+
 # Actually loads the various addons, this is staged so we load "vars" first
 # (which set variables) and "rules" second, which set the make rules (which can
 # depend on those variables).
@@ -139,10 +150,15 @@ ifeq ($(OBJ_SOC_RTL_V),)
 $(error SOC_GENERATOR needs to set OBJ_SOC_RTL_V)
 endif
 
+-include $(OBJ_TECH_DIR)/makefrags/vars.mk
+
+# All the rules get sourced last.  We don't allow any variables to be set here,
+# so the ordering isn't important.
 include $(CORE_GENERATOR_ADDON)/rules.mk
 include $(CORE_SIMULATOR_ADDON)/core-rules.mk
 include $(SOC_GENERATOR_ADDON)/rules.mk
 include $(SOC_SIMULATOR_ADDON)/soc-rules.mk
+-include $(OBJ_TECH_DIR)/makefrags/rules.mk
 
 ##############################################################################
 # User Targets
@@ -215,7 +231,7 @@ bugreport::
 	@find $(PLSI_CACHE_DIR) -type f 2>/dev/null | xargs sha1sum /dev/null
 
 ##############################################################################
-# Internal Targets
+# Internal Tools Targets
 ##############################################################################
 
 # These targets are internal to PLSI, you probably shouldn't even be building
@@ -286,3 +302,22 @@ bin/core-$(CORE_CONFIG)/$(CORE_TOP)-simulator: $(OBJ_CORE_SIMULATOR)
 bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP)-simulator: $(OBJ_SOC_SIMULATOR)
 	mkdir -p $(dir $@)
 	cp --reflink=auto $^ $@
+
+###############################################################################
+# Internal Flow Targets
+###############################################################################
+
+# The targets in this section are part of the flow, but they're not things that
+# can be customized using multiple variables because I don't think there should
+# ever be more than one implementation of them.
+
+# Generates a technology-specific makefrag from the technology's description
+# file.
+
+$(OBJ_TECH_DIR)/makefrags/vars.mk: src/tools/technology/generate-vars $(TECHNOLOGY_JSON)
+	@mkdir -p $(dir $@)
+	$< -o $@ -i $(filter %.tech.json,$^)
+
+$(OBJ_TECH_DIR)/makefrags/rules.mk: src/tools/technology/generate-rules $(TECHNOLOGY_JSON)
+	@mkdir -p $(dir $@)
+	$< -o $@ -i $(filter %.tech.json,$^)

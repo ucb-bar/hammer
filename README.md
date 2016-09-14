@@ -134,6 +134,10 @@ following variables can be set:
    CORE_GENERATOR.  In general, there's one of these for every stage (CORE,
    SOC, ...).
 
+ * TECHNOLOGY: The technology that will be used to implement this design.
+   Technologies are described by JSON files in src/technologies, a canonical
+   example is the Synopsys educational technology library "saed32".
+
 Source for the various addons can be found in src/addons.
 
 ### Running on a Cluser
@@ -179,6 +183,35 @@ the flow.  There is currently support for the following simulators:
 
 Support for additional simulators probably won't be added (as we don't use
 them), but I'll accept patches.
+
+### Technology Description Files
+
+PLSI is designed to support multiple technologies.  Older PLSI versions allowed
+users to write technology-specific Makefile fragments, but this was deemed to
+be too difficult to use.  Instead of writing Makefile fragments, technologies
+are now described using JSON files.  Examples of technology JSON files can be
+found in src/technologies.  It's expected that the following keys are defined
+in a technology JSON file:
+
+ * "name": A human-readable name for the technology, used for reports and error
+   messages.
+
+ * "tarball name": The name of a tarball that contains the propritary
+   technology files.  If your technology doesn't come as a single tarball (for
+   example, it's been extracted by your system administrators) then don't set
+   this key, set "base directory" instead.
+
+ * "tarball homepage": A URL that describes how to obtain the technology
+   tarball, since they won't be automatically downloadable.  If your technology
+   doesn't support tarball downloads then don't set this key.
+
+ * "milkway tech files": A list of tech files that will be used when running
+   milkyway based tools.  If your technology doesn't support milkyway then
+   don't set this variable.
+
+ * "openaccess tech files": A list of tech files that will be used when running
+   openaccess based tools.  If your technology doesn't support openaccess then
+   don't set this variable.
 
 # Bug Reports
 
