@@ -1,0 +1,5 @@
+* Convert all the ${array[*]} to "${array[@]}"
+* Use one format for tar (non-verbose)
+* Use one format for "rm -rf; mkdir" (with an @)
+* Check for required arguments in bash scripts
+* Document the technology JSON file format
