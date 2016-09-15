@@ -1,16 +1,54 @@
 {
   "name": "SAED 32nm Generic Library",
-  "tarball name": "SAED_PDK32nm_v1.6_05182016.tar.gz",
-  "tarball homepage": "https://www.synopsys.com/COMMUNITY/UNIVERSITYPROGRAM/Pages/32-28nm-generic-library.aspx",
-  "milkway tech files": [
-    "SAED_PDK32nm/techfiles/saed32nm_1p9m_mw.tf"
+  "tarballs": [
+    {
+      "path": "SAED32_EDK_OPEN_ACCESS_LIBS_07222015.tar.gz",
+      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx"
+    },
+    {
+      "path": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz",
+      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx"
+    },
+    {
+      "path": "SAED_EDK32.28nm_CORE_RVT_v_01132015.tar.gz",
+      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx"
+    },
+    {
+      "path": "SAED_EDK32.28nm_IO_v_01132015.tar.gz",
+      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx"
+    },
+    {
+      "path": "SAED_EDK32.28nm_PLL_v_01132015.tar.gz",
+      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx"
+    },
+    {
+      "path": "SAED_EDK32.28nm_TECH_v_01132015.tar.gz",
+      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx"
+    },
+    {
+      "path": "SAED_PDK32nm_v1.6_05182016.tar.gz",
+      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx"
+    }
   ],
-  "openaccess tech files": [
-    "SAED_PDK32nm/techfiles/saed32nm_1p9m_oa.tf"
-  ],
-  "liberty files": [
-    "SAED_PDK32nm/hspice/saed32nm.lib"
-  ],
-  "simulation files": [
+  "libraries": [
+    {
+      "liberty file": "SAED_EDK32.28nm_CORE_RVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_rvt/db_nldm/saed32rvt_tt1p05v25c.lib",
+      "verilog file": "SAED_EDK32.28nm_CORE_RVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_rvt/verilog/saed32nm.v",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "25 C"
+      },
+      "supplies": {
+        "VDD": "1.05 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "type": "stdcell",
+          "vt": "RVT"
+        }
+      ]
+    }
   ]
 }

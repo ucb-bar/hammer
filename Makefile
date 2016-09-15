@@ -152,6 +152,10 @@ endif
 
 -include $(OBJ_TECH_DIR)/makefrags/vars.mk
 
+#ifeq ($(TECHNOLOGY_LIBERTY_FILES),)
+#$(error TECHNOLOGY needs to set TECHNOLOGY_LIBERTY_FILES)
+#endif
+
 # All the rules get sourced last.  We don't allow any variables to be set here,
 # so the ordering isn't important.
 include $(CORE_GENERATOR_ADDON)/rules.mk

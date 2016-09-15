@@ -14,7 +14,12 @@ of = open(args.output, "w+")
 
 tech_home = "$(OBJ_TECH_DIR)/extracted"
 
-of.write("TECHNOLOGY_LIBS = ")
-for lib in techfile["liberty files"]:
-	of.write(" $(abspath {0}/{1})".format(tech_home, lib))
+of.write("TECHNOLOGY_LIBERTY_FILES =")
+for library_desc in techfile["libraries"]:
+	of.write(" {0}/{1}".format(tech_home, library_desc["liberty file"]))
+of.write("\n")
+
+of.write("TECHNOLOGY_VERILOG_FILES =")
+for library_desc in techfile["libraries"]:
+	of.write(" {0}/{1}".format(tech_home, library_desc["verilog file"]))
 of.write("\n")
