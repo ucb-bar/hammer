@@ -11,8 +11,16 @@ RC_CORE_SIM_TOP = TestHarness
 CORE_SIM_TOP ?= $(RC_CORE_SIM_TOP)
 
 # This contains the whole Rocket Chip along with all the test harness stuff.
-RC_OBJ_CORE_RTL_V = $(OBJ_CORE_DIR)/rocketchip-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).v
+RC_OBJ_CORE_RTL_V = $(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).v
 OBJ_CORE_RTL_V ?= $(RC_OBJ_CORE_RTL_V)
+
+# I can't use upstream's FIRRTL invocation so I have to provide my own (to
+# split the test harness out into two parts).
+RC_OBJ_CORE_RTL_FIR = $(OBJ_CORE_DIR)/rocketchip-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).fir
+OBJ_CORE_RTL_FIRRTL ?= $(RC_OBJ_CORE_RTL_FIR)
+
+OBJ_CORE_FIRRTL_TOP_CMD ?= $(OBJ_CORE_DIR)/firrtl-passes/GenerateTop/GenerateTop
+OBJ_CORE_FIRRTL_HARNESS_CMD ?= $(OBJ_CORE_DIR)/firrtl-passes/GenerateHarness/GenerateHarness
 
 # There are various simulation-only, non-Verilog files needed to make the
 # Verilog simulate.  They're all defined here.

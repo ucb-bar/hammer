@@ -23,7 +23,22 @@ $(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).vsim.stamp: $(OBJ_
 	if [[ "$$(cat $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/$(CORE_SIM_TOP).$(CORE_CONFIG).v | wc -l)" == "0" ]]; then echo "empty Verilog from FIRRTL"; rm -rf $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/; exit 1; fi
 	touch $@
 
-$(RC_OBJ_CORE_RTL_V) $(RC_OBJ_CORE_RTL_D): $(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).vsim.stamp
+$(OBJ_CORE_FIRRTL_HARNESS_CMD) $(OBJ_CORE_FIRRTL_TOP_CMD): $(shell find $(CORE_DIR)/firrtl -type f) $(shell find src/addons/core-generator/rocket-chip/src/firrtl -type f) $(CMD_SBT)
+	@mkdir -p $(dir $@)
+	rsync -av --delete $(CORE_DIR)/firrtl $(dir $@)
+	cp -a --reflink=auto src/addons/core-generator/rocket-chip/src/firrtl/* $(dir $@)
+	sed 's/@@TOP_NAME@@/$(shell echo $(notdir $@) | tr A-Z a-z)/g' -i $(dir $@)/project/build.scala
+	rm -f $@
+	echo "cd $(dir $@)" >> $@
+	echo "set -x" >> $@
+	echo 'true | $(abspath $(CMD_SBT)) "run $$*"' >> $@
+	chmod +x $@
+
+$(RC_OBJ_CORE_RTL_V): $(RC_OBJ_CORE_RTL_FIR) $(OBJ_CORE_FIRRTL_TOP_CMD)
+	@mkdir -p $(dir $@)
+	$(OBJ_CORE_FIRRTL_TOP_CMD) -i $(abspath $(RC_OBJ_CORE_RTL_FIR)) -o $(abspath $(RC_OBJ_CORE_RTL_V)) --syn-top $(CORE_TOP) --harness-top $(CORE_SIM_TOP)
+
+$(RC_OBJ_CORE_RTL_FIR) $(RC_OBJ_CORE_RTL_D): $(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).vsim.stamp
 	mkdir -p $(dir $@)
 	cp -f $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/$(notdir $@) $@
 
