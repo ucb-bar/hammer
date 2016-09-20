@@ -36,3 +36,7 @@ for tarball in techfile["tarballs"]:
 
 	# There's one big stamp file for all the extractions
 	of.write("{0}: {1}\n".format(extract_stamp, tarball_stamp))
+
+for library in techfile["libraries"]:
+	for kind in ["liberty file", "verilog file"]:
+		of.write("{0}/{1}: {2}\n".format(tech_home, library[kind], extract_stamp))
