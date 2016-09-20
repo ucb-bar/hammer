@@ -11,7 +11,7 @@ RC_CORE_SIM_TOP = TestHarness
 CORE_SIM_TOP ?= $(RC_CORE_SIM_TOP)
 
 # This contains the whole Rocket Chip along with all the test harness stuff.
-RC_OBJ_CORE_RTL_V = $(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).v
+RC_OBJ_CORE_RTL_V = $(OBJ_CORE_DIR)/plsi-generated/$(CORE_TOP).$(CORE_CONFIG).v
 OBJ_CORE_RTL_V ?= $(RC_OBJ_CORE_RTL_V)
 
 # I can't use upstream's FIRRTL invocation so I have to provide my own (to
@@ -32,7 +32,9 @@ RC_OBJ_CORE_SIM_FILES = \
 	$(OBJ_CORE_DIR)/riscv-tools/lib/libfesvr.so \
 	$(CORE_DIR)/vsrc/SimDTM.v \
 	$(CORE_DIR)/vsrc/TestDriver.v \
-	src/addons/core-generator/rocket-chip/src/clock.vh
+	$(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).v \
+	src/addons/core-generator/rocket-chip/src/clock.vh \
+	$(OBJ_CORE_DIR)/plsi-generated/model.vh
 OBJ_CORE_SIM_FILES = $(RC_OBJ_CORE_SIM_FILES)
 
 # Rocket Chip generates a Makefrag for testing.  This isn't in the format I

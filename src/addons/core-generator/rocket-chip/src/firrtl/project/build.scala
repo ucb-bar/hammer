@@ -17,5 +17,6 @@ object BuildSettings extends Build {
   )
 
   lazy val firrtl       = project in file("firrtl")
-  lazy val @@TOP_NAME@@ = (project in file(".")).dependsOn(firrtl)
+  lazy val @@TOP_NAME_LOWER@@ = (project in file(".")).dependsOn(firrtl)
+  mainClass in (Compile, run) := Some("@@TOP_NAME_UPPER@@")
 }

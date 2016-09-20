@@ -6,29 +6,14 @@ import firrtl.Annotations._
 import firrtl.passes.Pass
 import firrtl.Annotations.AnnotationMap
 
-object FirrtlVerilogCompiler {
-  val infer_read_write_id = TransID(-1)
-  val repl_seq_mem_id     = TransID(-2)
-}
-
-class EmitTopVerilog(topName: String) extends PLSIPassManager {
-  override def operateHigh() = Seq(
-    new ReParentCircuit(topName)
-  )
-
-/*
-  override def operateMiddle() = Seq(
-      new passes.InferReadWrite(FirrtlVerilogCompiler.infer_read_write_id),
-      new passes.ReplSeqMem(FirrtlVerilogCompiler.repl_seq_mem_id)
-    )
-*/
-
+class EmitHarnessVerilog(topName: String) extends PLSIPassManager {
   override def operateLow() = Seq(
+      new ConvertToExtMod((m) => m.name == topName),
       new RemoveUnusedModules
     )
 }
 
-object GenerateTop extends App {
+object GenerateHarness extends App {
   var input: Option[String] = None
   var output: Option[String] = None
   var synTop: Option[String] = None
@@ -64,17 +49,7 @@ object GenerateTop extends App {
   firrtl.Driver.compile(
     input.get,
     output.get,
-    new EmitTopVerilog(synTop.get),
-    Parser.UseInfo/*,
-    AnnotationMap(Seq(
-      passes.InferReadWriteAnnotation(
-        s"${harnessTop.get}",
-        FirrtlVerilogCompiler.infer_read_write_id
-      ),
-      passes.ReplSeqMemAnnotation(
-        s"-c:${synTop.get}:-o:unused.conf",
-        FirrtlVerilogCompiler.repl_seq_mem_id
-      )
-    ))*/
+    new EmitHarnessVerilog(synTop.get),
+    Parser.UseInfo
   )
 }

@@ -27,16 +27,25 @@ $(OBJ_CORE_FIRRTL_HARNESS_CMD) $(OBJ_CORE_FIRRTL_TOP_CMD): $(shell find $(CORE_D
 	@mkdir -p $(dir $@)
 	rsync -av --delete $(CORE_DIR)/firrtl $(dir $@)
 	cp -a --reflink=auto src/addons/core-generator/rocket-chip/src/firrtl/* $(dir $@)
-	sed 's/@@TOP_NAME@@/$(shell echo $(notdir $@) | tr A-Z a-z)/g' -i $(dir $@)/project/build.scala
+	sed 's/@@TOP_NAME_LOWER@@/$(shell echo $(notdir $@) | tr A-Z a-z)/g' -i $(dir $@)/project/build.scala
+	sed 's/@@TOP_NAME_UPPER@@/$(shell echo $(notdir $@) | tr A-Z A-Z)/g' -i $(dir $@)/project/build.scala
 	rm -f $@
 	echo "cd $(dir $@)" >> $@
 	echo "set -x" >> $@
-	echo 'true | $(abspath $(CMD_SBT)) "run $$*"' >> $@
+	echo 'true | $(abspath $(CMD_SBT)) "run-main $(notdir $@) $$*"' >> $@
 	chmod +x $@
 
-$(RC_OBJ_CORE_RTL_V): $(RC_OBJ_CORE_RTL_FIR) $(OBJ_CORE_FIRRTL_TOP_CMD)
+$(OBJ_CORE_DIR)/plsi-generated/model.vh:
 	@mkdir -p $(dir $@)
-	$(OBJ_CORE_FIRRTL_TOP_CMD) -i $(abspath $(RC_OBJ_CORE_RTL_FIR)) -o $(abspath $(RC_OBJ_CORE_RTL_V)) --syn-top $(CORE_TOP) --harness-top $(CORE_SIM_TOP)
+	echo '`define MODEL $(CORE_SIM_TOP)' > $@
+
+$(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).v: $(OBJ_CORE_FIRRTL_HARNESS_CMD) $(RC_OBJ_CORE_RTL_FIR)
+	@mkdir -p $(dir $@)
+	$(SCHEDULER_CMD) --max-threads=1 -- $< -i $(abspath $(filter %.fir,$^)) -o $(abspath $@) --syn-top $(CORE_TOP) --harness-top $(CORE_SIM_TOP)
+
+$(RC_OBJ_CORE_RTL_V): $(OBJ_CORE_FIRRTL_TOP_CMD) $(RC_OBJ_CORE_RTL_FIR)
+	@mkdir -p $(dir $@)
+	$(SCHEDULER_CMD) --max-threads=1 -- $< -i $(abspath $(filter %.fir,$^)) -o $(abspath $@) --syn-top $(CORE_TOP) --harness-top $(CORE_SIM_TOP)
 
 $(RC_OBJ_CORE_RTL_FIR) $(RC_OBJ_CORE_RTL_D): $(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).vsim.stamp
 	mkdir -p $(dir $@)
