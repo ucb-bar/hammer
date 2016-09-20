@@ -9,7 +9,7 @@
   "libraries": [
     {
       "liberty file": "osu_soc_v2.7.tar.gz/cadence/lib/ami05/signalstorm/osu05_stdcells.lib",
-      "verilog file": "osu_soc_v2.7.tar.gz/cadence/lib/ami06/lib/osu05_stdcells.v"
+      "verilog file": "osu_soc_v2.7.tar.gz/cadence/lib/ami05/lib/osu05_stdcells.v"
     }
   ]
 }
