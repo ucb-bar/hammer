@@ -23,8 +23,13 @@ for tarball in techfile["tarballs"]:
 	# It's exceedingly unlikely that technology tarballs will be availiable
 	# without some sort of NDA.  This just informs the user that they
 	# should download the file themselves.
-	of.write("{0}:\n".format(tarball_path))
-	of.write("\t$(error Download the {0} technology tarball from {1} and place it at $@, this process can't be automated because of NDAs)\n".format(tarball["path"], tarball["homepage"]))
+	if "homepage" in tarball:
+		of.write("{0}:\n".format(tarball_path))
+		of.write("\t$(error Download the {0} technology tarball from {1} and place it at $@, this process can't be automated because of NDAs)\n".format(tarball["path"], tarball["homepage"]))
+	elif "url" in tarball:
+		of.write("{0}:\n".format(tarball_path))
+		of.write("\t@mkdir -p $(dir $@)\n")
+		of.write("\twget \"{0}\" -O $@\n".format(tarball["url"]))
 
 	# There's a single extraction step in order to avoid dependency problems.
 	of.write("{0}: {1}\n".format(tarball_stamp, tarball_path))
