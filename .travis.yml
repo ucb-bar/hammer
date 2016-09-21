@@ -48,4 +48,5 @@ script:
   - make core-simulator
   - make soc-verilog
   - make soc-simulator
+  - make syn-verilog
   - make
