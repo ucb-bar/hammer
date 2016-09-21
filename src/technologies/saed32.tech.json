@@ -3,31 +3,38 @@
   "tarballs": [
     {
       "path": "SAED32_EDK_OPEN_ACCESS_LIBS_07222015.tar.gz",
-      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx"
+      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
+      "base var": "SAED32_TARBALL_DIR"
     },
     {
       "path": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz",
-      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx"
+      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
+      "base var": "SAED32_TARBALL_DIR"
     },
     {
       "path": "SAED_EDK32.28nm_CORE_RVT_v_01132015.tar.gz",
-      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx"
+      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
+      "base var": "SAED32_TARBALL_DIR"
     },
     {
       "path": "SAED_EDK32.28nm_IO_v_01132015.tar.gz",
-      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx"
+      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
+      "base var": "SAED32_TARBALL_DIR"
     },
     {
       "path": "SAED_EDK32.28nm_PLL_v_01132015.tar.gz",
-      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx"
+      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
+      "base var": "SAED32_TARBALL_DIR"
     },
     {
       "path": "SAED_EDK32.28nm_TECH_v_01132015.tar.gz",
-      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx"
+      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
+      "base var": "SAED32_TARBALL_DIR"
     },
     {
       "path": "SAED_PDK32nm_v1.6_05182016.tar.gz",
-      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx"
+      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
+      "base var": "SAED32_TARBALL_DIR"
     }
   ],
   "libraries": [

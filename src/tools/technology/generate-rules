@@ -20,6 +20,14 @@ for tarball in techfile["tarballs"]:
 	tarball_stamp = "{0}/stamps/{1}.stamp".format(tech_home, tarball["path"])
 	target_dir = "{0}/{1}".format(tech_home, tarball["path"])
 
+	# Support technologies that can be cached as tarballs
+	if "base var" in tarball:
+		of.write("ifneq ($({0}),)\n".format(tarball["base var"]))
+		of.write("{0}: $({1})/{2}\n".format(tarball_path, tarball["base var"], tarball["path"]))
+		of.write("\t@mkdir -p $(dir $@)\n")
+		of.write("\tcp --reflink=auto $^ $@\n")
+		of.write("else\n")
+
 	# Some technologies can be fetched online, other's can't.
 	if "homepage" in tarball:
 		of.write("{0}:\n".format(tarball_path))
@@ -28,6 +36,10 @@ for tarball in techfile["tarballs"]:
 		of.write("{0}:\n".format(tarball_path))
 		of.write("\t@mkdir -p $(dir $@)\n")
 		of.write("\twget \"{0}\" -O $@\n".format(tarball["url"]))
+
+	if "base var" in tarball:
+		of.write("endif\n")
+
 
 	# There's a single extraction step in order to avoid dependency problems.
 	of.write("{0}: {1}\n".format(tarball_stamp, tarball_path))
