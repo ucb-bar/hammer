@@ -26,16 +26,21 @@ CORE_GENERATOR ?= rocket-chip
 SOC_GENERATOR ?= nop
 
 # The technology that will be used to implement this design.
-TECHNOLOGY = saed32
+TECHNOLOGY = tsmc180
+
+# The synthesis tool to run.
+SYNTHESIS_TOOL = yosys
 
 # The configuration to run when running various steps of the process
 CORE_CONFIG ?= DefaultConfig
 CORE_SIM_CONFIG ?= default
 SOC_CONFIG ?= default
+SYN_CONFIG ?= default
 
 # Defines the simulator used to run simulation at different levels
 CORE_SIMULATOR ?= verilator
 SOC_SIMULATOR ?= verilator
+SYN_SIMULATOR ?= vcs
 
 # The scheduler to use when running large jobs.  Changing this doesn't have any
 # effect on the generated files, just the manner in which they are generated.
@@ -55,15 +60,20 @@ PLSI_CACHE_DIR ?= obj/cache
 
 # Versions of externally developed programs to download
 TCLAP_VERSION = 1.2.1
+TCL_LIBRARY_VERSION = 8.6
+TCL_VERSION = 8.6.6
 
 # OBJ_*_DIR are the directories in which outputs end up
 OBJ_TOOLS_DIR = obj/tools
 OBJ_CORE_DIR = obj/core-$(CORE_CONFIG)
 OBJ_SOC_DIR = obj/soc-$(CORE_CONFIG)-$(SOC_CONFIG)
+OBJ_TECH_DIR = obj/technology/$(TECHNOLOGY)
+OBJ_SYN_DIR = obj/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(SYN_CONFIG)
 
 # CHECK_* directories are where the output of tests go
 CHECK_CORE_DIR = check/core-$(CORE_CONFIG)
 CHECK_SOC_DIR = check/soc-$(CORE_CONFIG)-$(SOC_CONFIG)
+CHECK_SYN_DIR = check/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(SYN_CONFIG)
 
 CMD_PTEST = $(OBJ_TOOLS_DIR)/pconfigure/bin/ptest
 CMD_PCONFIGURE = $(OBJ_TOOLS_DIR)/pconfigure/bin/pconfigure
@@ -107,6 +117,16 @@ endif
 SOC_SIMULATOR_ADDON = $(wildcard src/addons/simulator/$(SOC_SIMULATOR)/ $(ADDONS_DIR)/simulator/$(SOC_SIMULATOR)/)
 ifneq ($(words $(SOC_SIMULATOR_ADDON)),1)
 $(error Unable to resolve SOC_GENERATOR=$(SOC_GENERATOR): found "$(SOC_GENERATOR_ADDON)")
+endif
+
+SYNTHESIS_TOOL_ADDON = $(wildcard src/addons/synthesis/$(SYNTHESIS_TOOL)/ $(ADDONS_DIR)/synthesis/$(SYNTHESIS_TOOL)/)
+ifneq ($(words $(SYNTHESIS_TOOL_ADDON)),1)
+$(error Unable to resolve SOC_GENERATOR=$(SOC_GENERATOR): found "$(SOC_GENERATOR_ADDON)")
+endif
+
+SYN_SIMULATOR_ADDON = $(wildcard src/addons/simulator/$(SYN_SIMULATOR)/ $(ADDONS_DIR)/simulator/$(SYN_SIMULATOR)/)
+ifneq ($(words $(SYN_SIMULATOR_ADDON)),1)
+$(error Unable to resolve SYN_GENERATOR=$(SYN_GENERATOR): found "$(SYN_GENERATOR_ADDON)")
 endif
 
 # In order to prevent EEs from seeing Makefiles, the technology description is
@@ -156,6 +176,17 @@ endif
 #$(error TECHNOLOGY needs to set TECHNOLOGY_LIBERTY_FILES)
 #endif
 
+include $(SYNTHESIS_TOOL_ADDON)/vars.mk
+include $(SOC_SIMULATOR_ADDON)/syn-vars.mk
+
+ifeq ($(OBJ_SYN_MAPPED_V),)
+$(error SYNTHESIS_TOOL needs to set OBJ_SYN_MAPPED_V)
+endif
+
+ifeq ($(SYN_TOP),)
+$(error SYNTHESIS_TOOL needs to set SYN_TOP)
+endif
+
 # All the rules get sourced last.  We don't allow any variables to be set here,
 # so the ordering isn't important.
 include $(CORE_GENERATOR_ADDON)/rules.mk
@@ -163,6 +194,8 @@ include $(CORE_SIMULATOR_ADDON)/core-rules.mk
 include $(SOC_GENERATOR_ADDON)/rules.mk
 include $(SOC_SIMULATOR_ADDON)/soc-rules.mk
 -include $(OBJ_TECH_DIR)/makefrags/rules.mk
+include $(SYNTHESIS_TOOL_ADDON)/rules.mk
+include $(SOC_SIMULATOR_ADDON)/syn-rules.mk
 
 ##############################################################################
 # User Targets
@@ -180,7 +213,7 @@ makefrags::
 # Runs all the test cases.  Note that this _always_ passes, you need to run
 # "make report" to see if the tests passed or not.
 .PHONY: check
-check: $(patsubst %,check-%,core soc)
+check: $(patsubst %,check-%,core soc syn)
 
 # A virtual target that reports on the status of the test cases, in addition to
 # running them (if necessary).
@@ -202,6 +235,10 @@ core-verilog: bin/core-$(CORE_CONFIG)/$(CORE_TOP).v
 
 .PHONY: soc-verilog
 soc-verilog: bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP).v
+	$(info $@ availiable at $<)
+
+.PHONY: syn-verilog
+syn-verilog: bin/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP).v
 	$(info $@ availiable at $<)
 
 # The various simulators
@@ -229,6 +266,7 @@ bugreport::
 	@echo "CORE_SIMULATOR_ADDON=$(CORE_SIMULATOR_ADDON)"
 	@echo "SOC_GENERATOR_ADDON=$(SOC_GENERATOR_ADDON)"
 	@echo "SOC_SIMULATOR_ADDON=$(SOC_SIMULATOR_ADDON)"
+	@echo "SYNTHESIS_TOOL_ADDON=$(SYNTHESIS_TOOL_ADDON)"
 	uname -a
 	@echo "PKG_CONFIG_PATH=$$PKG_CONFIG_PATH"
 	pkg-config tclap --cflags --libs
@@ -257,7 +295,25 @@ $(OBJ_TOOLS_DIR)/pconfigure/Configfile.local:
 	mkdir -p $(dir $@)
 	echo "PREFIX = $(abspath $(OBJ_TOOLS_DIR)/pconfigure)" > $@
 
-# Builds PCAD and all its dependencies.
+# Most of the CAD tools have some sort of TCL interface, and the open source
+# ones require a TCL installation
+$(OBJ_TOOLS_DIR)/tcl-$(TCL_VERSION)-install/include/tcl.h: $(OBJ_TOOLS_DIR)/tcl-$(TCL_VERSION)/unix/Makefile
+	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(OBJ_TOOLS_DIR)/tcl-$(TCL_VERSION)/unix install
+
+$(OBJ_TOOLS_DIR)/tcl-$(TCL_VERSION)/unix/Makefile: $(OBJ_TOOLS_DIR)/tcl-$(TCL_VERSION)/README
+	cd $(OBJ_TOOLS_DIR)/tcl-$(TCL_VERSION)/unix; ./configure --prefix=$(abspath $(OBJ_TOOLS_DIR)/tcl-$(TCL_VERSION)-install)
+
+$(OBJ_TOOLS_DIR)/tcl-$(TCL_VERSION)/README: $(PLSI_CACHE_DIR)/distfiles/tcl-$(TCL_VERSION).tar.gz
+	rm -rf $(dir $@)
+	mkdir -p $(dir $@)
+	tar -xzpf $< --strip-components=1 -C $(dir $@)
+	touch $@
+
+$(PLSI_CACHE_DIR)/distfiles/tcl-$(TCL_VERSION).tar.gz:
+	mkdir -p $(dir $@)
+	wget http://prdownloads.sourceforge.net/tcl/tcl$(TCL_VERSION)-src.tar.gz -O $@
+
+# TCLAP is a C++ command-line argument parser that's used by PCAD
 $(OBJ_TOOLS_DIR)/install/include/tclap/CmdLine.h: $(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION)/Makefile
 	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION) install
 
@@ -274,6 +330,7 @@ $(PLSI_CACHE_DIR)/distfiles/tclap-$(TCLAP_VERSION).tar.gz:
 	mkdir -p $(dir $@)
 	wget 'http://downloads.sourceforge.net/project/tclap/tclap-$(TCLAP_VERSION).tar.gz?r=https%3A%2F%2Fsourceforge.net%2Fprojects%2Ftclap%2Ffiles%2F&ts=1468971231&use_mirror=jaist' -O $@
 
+# Builds PCAD, the heart of PLSI
 $(OBJ_TOOLS_DIR)/pcad/bin/%: $(OBJ_TOOLS_DIR)/pcad/Makefile
 	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(OBJ_TOOLS_DIR)/pcad bin/$(notdir $@)
 
@@ -299,11 +356,19 @@ bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP).v: $(OBJ_SOC_RTL_V)
 	mkdir -p $(dir $@)
 	cp --reflink=auto $^ $@
 
+bin/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP).v: $(OBJ_SYN_MAPPED_V)
+	mkdir -p $(dir $@)
+	cp --reflink=auto $^ $@
+
 bin/core-$(CORE_CONFIG)/$(CORE_TOP)-simulator: $(OBJ_CORE_SIMULATOR)
 	mkdir -p $(dir $@)
 	cp --reflink=auto $^ $@
 
 bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP)-simulator: $(OBJ_SOC_SIMULATOR)
+	mkdir -p $(dir $@)
+	cp --reflink=auto $^ $@
+
+bin/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP)-simulator: $(OBJ_SYN_SIMULATOR)
 	mkdir -p $(dir $@)
 	cp --reflink=auto $^ $@
 

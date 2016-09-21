@@ -48,6 +48,11 @@ EOF
         echo "trace-soc: \$(CHECK_SOC_DIR)/$test.trace-out" >> $tempdir/out
         echo "\$(CHECK_SOC_DIR)/$test.out: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
         echo "\$(CHECK_SOC_DIR)/$test.trace-out: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
+
+        echo "check-syn: \$(CHECK_SYN_DIR)/$test.out" >> $tempdir/out
+        echo "trace-syn: \$(CHECK_SYN_DIR)/$test.trace-out" >> $tempdir/out
+        echo "\$(CHECK_SYN_DIR)/$test.out: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
+        echo "\$(CHECK_SYN_DIR)/$test.trace-out: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
     done
 done
 
