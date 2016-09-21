@@ -25,7 +25,7 @@ $(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).vsim.stamp: $(OBJ_
 
 $(OBJ_CORE_FIRRTL_HARNESS_CMD) $(OBJ_CORE_FIRRTL_TOP_CMD): $(shell find $(CORE_DIR)/firrtl -type f) $(shell find src/addons/core-generator/rocket-chip/src/firrtl -type f) $(CMD_SBT)
 	@mkdir -p $(dir $@)
-	rsync -av --delete $(CORE_DIR)/firrtl $(dir $@)
+	rsync -a --delete $(CORE_DIR)/firrtl $(dir $@)
 	cp -a --reflink=auto src/addons/core-generator/rocket-chip/src/firrtl/* $(dir $@)
 	sed 's/@@TOP_NAME_LOWER@@/$(shell echo $(notdir $@) | tr A-Z a-z)/g' -i $(dir $@)/project/build.scala
 	sed 's/@@TOP_NAME_UPPER@@/$(shell echo $(notdir $@) | tr A-Z A-Z)/g' -i $(dir $@)/project/build.scala
