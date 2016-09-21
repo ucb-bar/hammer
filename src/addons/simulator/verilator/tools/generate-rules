@@ -3,12 +3,14 @@
 unset output
 unset VERILATOR_TARGET_CAPS
 unset VERILATOR_TARGET_LOWER
+unset VTYPE
 while [[ "$1" != "" ]]
 do
     case "$1" in
     --lower) VERILATOR_TARGET_LOWER="$2"; shift;;
     --upper) VERILATOR_TARGET_CAPS="$2"; shift;;
     --output) output="$2"; shift;;
+    --vtype) VTYPE="$2"; shift;;
     *) echo "unknown argument $1"; exit 1;;
     esac
     shift
@@ -27,12 +29,12 @@ ifeq (\$(${VERILATOR_TARGET_CAPS}_TOP),)
 \$(error ${VERILATOR_TARGET_CAPS}_TOP must be defined)
 endif
 
-ifeq (\$(OBJ_${VERILATOR_TARGET_CAPS}_RTL_V),)
-\$(error OBJ_${VERILATOR_TARGET_CAPS}_RTL_V must be defined)
+ifeq (\$(OBJ_${VERILATOR_TARGET_CAPS}_${VTYPE}_V),)
+\$(error OBJ_${VERILATOR_TARGET_CAPS}_${VTYPE}_V must be defined)
 endif
 
 \$(patsubst %,\$(OBJ_${VERILATOR_TARGET_CAPS}_DIR)/simulator-%,ndebug debug): \\
-		\$(OBJ_${VERILATOR_TARGET_CAPS}_RTL_V) \\
+		\$(OBJ_${VERILATOR_TARGET_CAPS}_${VTYPE}_V) \\
 		\$(OBJ_${VERILATOR_TARGET_CAPS}_SIM_FILES) \\
 		\$(VERILATOR_BIN) \\
 		\$(${VERILATOR_TARGET_CAPS}_SIMULATOR_ADDON)/tools/build-simulator
