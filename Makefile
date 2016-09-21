@@ -26,10 +26,10 @@ CORE_GENERATOR ?= rocket-chip
 SOC_GENERATOR ?= nop
 
 # The technology that will be used to implement this design.
-TECHNOLOGY = tsmc180
+TECHNOLOGY ?= tsmc180
 
 # The synthesis tool to run.
-SYNTHESIS_TOOL = yosys
+SYNTHESIS_TOOL ?= yosys
 
 # The configuration to run when running various steps of the process
 CORE_CONFIG ?= DefaultConfig
@@ -267,6 +267,7 @@ bugreport::
 	@echo "SOC_GENERATOR_ADDON=$(SOC_GENERATOR_ADDON)"
 	@echo "SOC_SIMULATOR_ADDON=$(SOC_SIMULATOR_ADDON)"
 	@echo "SYNTHESIS_TOOL_ADDON=$(SYNTHESIS_TOOL_ADDON)"
+	@echo "TECHNOLOGY=$(TECHNOLOGY)"
 	uname -a
 	@echo "PKG_CONFIG_PATH=$$PKG_CONFIG_PATH"
 	pkg-config tclap --cflags --libs
