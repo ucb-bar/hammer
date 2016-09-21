@@ -22,6 +22,10 @@ addons:
       - flex
       - texinfo
 
+cache:
+  directories:
+    - obj/cache
+
 matrix:
   include:
     - env:
