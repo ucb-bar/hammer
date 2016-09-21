@@ -3,11 +3,13 @@
 unset output
 unset VCS_TARGET_CAPS
 unset VCS_TARGET_LOWER
+unset VTYPE
 while [[ "$1" != "" ]]
 do
     case "$1" in
     --lower) VCS_TARGET_LOWER="$2"; shift;;
     --upper) VCS_TARGET_CAPS="$2"; shift;;
+    --vtype) VTYPE="$2"; shift;;
     --output) output="$2"; shift;;
     *) echo "unknown argument $1"; exit 1;;
     esac
@@ -27,8 +29,8 @@ ifeq (\$(${VCS_TARGET_CAPS}_TOP),)
 \$(error ${VCS_TARGET_CAPS}_TOP must be defined)
 endif
 
-ifeq (\$(OBJ_${VCS_TARGET_CAPS}_RTL_V),)
-\$(error OBJ_${VCS_TARGET_CAPS}_RTL_V must be defined)
+ifeq (\$(OBJ_${VCS_TARGET_CAPS}_${VTYPE}_V),)
+\$(error OBJ_${VCS_TARGET_CAPS}_${VTYPE}_V must be defined)
 endif
 
 ifeq (\$(VCS_BIN),)
@@ -36,7 +38,7 @@ ifeq (\$(VCS_BIN),)
 endif
 
 \$(patsubst %,\$(OBJ_${VCS_TARGET_CAPS}_DIR)/simulator-%,ndebug debug): \\
-		\$(OBJ_${VCS_TARGET_CAPS}_RTL_V) \\
+		\$(OBJ_${VCS_TARGET_CAPS}_${VTYPE}_V) \\
 		\$(OBJ_${VCS_TARGET_CAPS}_SIM_FILES) \\
 		\$(VCS_BIN) \\
 		\$(${VCS_TARGET_CAPS}_SIMULATOR_ADDON)/tools/build-simulator
