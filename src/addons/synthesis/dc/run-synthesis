@@ -1,0 +1,112 @@
+#!/bin/bash
+
+unset output
+unset dc
+unset rmtar
+libs=()
+mw=()
+unset top
+v=()
+tlu_min=()
+tlu_max=()
+tf=()
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    "$0") ;;
+    -o) output="$2"; shift;;
+    */dc_shell) dc="$1";;
+    */DC-RM_*.tar) rmtar="$1";;
+    *.db) libs+=("$1");;
+    */lib) mw+=("$(dirname "$1")");;
+    --top) top="$2"; shift;;
+    *.v) v+=("$1");;
+    *Cmin.tluplus) tlu_min+=("$1");;
+    *Cmax.tluplus) tlu_max+=("$1");;
+    *.tf) tf+=("$1");;
+    *) echo "Unknown argument $1"; exit 1;;
+    esac
+    shift
+done
+
+set -ex
+
+run_dir="$output".dc_run_dir
+
+rm -rf "$run_dir"
+mkdir -p "$run_dir"
+
+cat >"$run_dir"/enter <<EOF
+export DC_HOME="$(dirname $(dirname $dc))"
+export PATH="\$DC_HOME/bin:\$PATH"
+EOF
+
+# Almost all of what I do is to just use Synopsys's reference methodology,
+# which users are expected to have downloaded.
+tar -xf "$rmtar" -C "$run_dir" --strip-components=1
+
+# This variable is set in "dc_setup.tcl", which for some reason we're expected
+# to edit inside this file in addition to setting it up inside the setup file
+# above.  Instead I just remove this second definition, as it's pretty useless.
+sed 's/^set RTL_SOURCE_FILES .*$//' -i $run_dir/rm_setup/dc_setup.tcl
+
+# Here's another thing that the scripts overwrite but that I want to set
+sed 's/^set DCRM_CONSTRAINTS_INPUT_FILE .*$//' -i $run_dir/rm_setup/dc_setup_filenames.tcl
+
+# I don't want to write ICC2 files
+sed 's/^write_icc2_files .*$//' -i $run_dir/rm_dc_scripts/dc.tcl
+
+# FIXME: We aren't licensed for "DC-Extension" so we can't pass "-congestion"
+# or "-spg" to compile_ultra
+find $run_dir -iname "*.tcl" | xargs sed s/'compile_ultra .*'/'compile_ultra'/g -i
+
+# Most of the customization of the DC reference methodology is done here: this
+# sets all the input files and such.
+mkdir -p $run_dir/rm_setup
+cat >> $run_dir/rm_setup/common_setup.tcl <<EOF
+set DESIGN_NAME "$top";
+set RTL_SOURCE_FILES "${v[@]}";
+set TARGET_LIBRARY_FILES "${libs[@]}";
+set MW_REFERENCE_LIB_DIRS "${mw[@]}";
+set MIN_LIBRARY_FILES "";
+set TECH_FILE "${tf[@]}";
+set TLUPLUS_MAX_FILE "${tlu_max[@]}";
+set TLUPLUS_MIN_FILE "${tlu_min[@]}";
+set ALIB_DIR "alib";
+set DCRM_CONSTRAINTS_INPUT_FILE "generated-scripts/constraints.tcl"
+set REPORTS_DIR "reports";
+set RESULTS_DIR "results";
+set CLOCK_UNCERTAINTY "0.04";
+set INPUT_DELAY "0.10";
+set OUTPUT_DELAY "0.10";
+set_host_options -max_cores 1
+EOF
+
+# FIXME: for now, you just get one clock at one foot
+# The constraints file determines how the IO is constrained and what the clocks
+# look like.
+mkdir -p $run_dir/generated-scripts
+cat >> $run_dir/generated-scripts/constraints.tcl <<"EOF"
+# create clock
+create_clock clk -name clk -period 1
+set_clock_uncertainty 0.01 [get_clocks clk]
+
+# set drive strength for inputs
+#set_driving_cell -lib_cell INVD0BWP12T [all_inputs]
+# set load capacitance of outputs
+set_load -pin_load 0.004 [all_outputs]
+
+set all_inputs_but_clk [remove_from_collection [all_inputs] [get_ports clk]]
+set_input_delay 0.02 -clock [get_clocks clk] $all_inputs_but_clk
+set_output_delay 0.03 -clock [get_clocks clk] [all_outputs]
+
+set_isolate_ports [all_outputs] -type buffer
+set_isolate_ports [remove_from_collection [all_inputs] clk] -type buffer -force
+EOF
+
+# Here's the actual DC invocation
+cd $run_dir
+$dc -topographical_mode -f rm_dc_scripts/dc.tcl \
+    |& tee dc.log
+
+exit 1
