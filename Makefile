@@ -253,6 +253,7 @@ clean::
 	rm -rf $(OBJ_TOOLS_DIR)
 	rm -rf $(OBJ_CORE_DIR) $(CHECK_CORE_DIR)
 	rm -rf $(OBJ_SOC_DIR) $(CHECK_SOC_DIR)
+	rm -rf $(OBJ_SYN_DIR) $(CHECK_SYN_DIR)
 
 .PHONY: distclean
 distclean: clean
