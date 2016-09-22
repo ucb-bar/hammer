@@ -40,7 +40,7 @@ SYN_CONFIG ?= default
 # Defines the simulator used to run simulation at different levels
 CORE_SIMULATOR ?= verilator
 SOC_SIMULATOR ?= verilator
-SYN_SIMULATOR ?= vcs
+SYN_SIMULATOR ?= verilator
 
 # The scheduler to use when running large jobs.  Changing this doesn't have any
 # effect on the generated files, just the manner in which they are generated.
