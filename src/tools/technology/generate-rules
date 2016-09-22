@@ -53,7 +53,7 @@ for tarball in techfile["tarballs"]:
 	of.write("{0}: {1}\n".format(extract_stamp, tarball_stamp))
 
 for library in techfile["libraries"]:
-	for kind in ["liberty file", "verilog file"]:
+	for kind in ["liberty file", "verilog file", "milkyway dir"]:
 		of.write("{0}/{1}: {2}\n".format(tech_home, library[kind], extract_stamp))
 
 # A helper to extract technologies

@@ -16,10 +16,37 @@ tech_home = "$(OBJ_TECH_DIR)/extracted"
 
 of.write("TECHNOLOGY_LIBERTY_FILES =")
 for library_desc in techfile["libraries"]:
-	of.write(" {0}/{1}".format(tech_home, library_desc["liberty file"]))
+	if "liberty file" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["liberty file"]))
 of.write("\n")
 
 of.write("TECHNOLOGY_VERILOG_FILES =")
 for library_desc in techfile["libraries"]:
-	of.write(" {0}/{1}".format(tech_home, library_desc["verilog file"]))
+	if "verilog file" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["verilog file"]))
+of.write("\n")
+
+of.write("TECHNOLOGY_MILKYWAY_DIRS =")
+for library_desc in techfile["libraries"]:
+	if "milkyway dir" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["milkyway dir"]))
+of.write("\n")
+
+of.write("TECHNOLOGY_TLUPLUS_FILES =")
+for library_desc in techfile["libraries"]:
+	if "tlu+ files" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["tlu+ files"]["min cap"]))
+		of.write(" {0}/{1}".format(tech_home, library_desc["tlu+ files"]["max cap"]))
+of.write("\n")
+
+of.write("TECHNOLOGY_MILKYWAY_TECHFILES =")
+for library_desc in techfile["libraries"]:
+	if "milkyway techfile" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["milkyway techfile"]))
+of.write("\n")
+
+of.write("TECHNOLOGY_CCS_LIBRARY_FILES =")
+for library_desc in techfile["libraries"]:
+	if "ccs library file" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["ccs library file"]))
 of.write("\n")
