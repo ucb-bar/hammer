@@ -21,6 +21,7 @@ addons:
       - bison
       - flex
       - texinfo
+      - python3
 
 cache:
   directories:
