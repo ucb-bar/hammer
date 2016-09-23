@@ -86,20 +86,20 @@ EOF
 mkdir -p $run_dir/generated-scripts
 cat >> $run_dir/generated-scripts/constraints.tcl <<"EOF"
 # create clock
-create_clock clk -name clk -period 1
-set_clock_uncertainty 0.01 [get_clocks clk]
+create_clock clock -name clock -period 1
+set_clock_uncertainty 0.01 [get_clocks clock]
 
 # set drive strength for inputs
 #set_driving_cell -lib_cell INVD0BWP12T [all_inputs]
 # set load capacitance of outputs
 set_load -pin_load 0.004 [all_outputs]
 
-set all_inputs_but_clk [remove_from_collection [all_inputs] [get_ports clk]]
-set_input_delay 0.02 -clock [get_clocks clk] $all_inputs_but_clk
-set_output_delay 0.03 -clock [get_clocks clk] [all_outputs]
+set all_inputs_but_clock [remove_from_collection [all_inputs] [get_ports clock]]
+set_input_delay 0.02 -clock [get_clocks clock] $all_inputs_but_clock
+set_output_delay 0.03 -clock [get_clocks clock] [all_outputs]
 
 set_isolate_ports [all_outputs] -type buffer
-set_isolate_ports [remove_from_collection [all_inputs] clk] -type buffer -force
+set_isolate_ports [remove_from_collection [all_inputs] clock] -type buffer -force
 EOF
 
 # Here's the actual DC invocation

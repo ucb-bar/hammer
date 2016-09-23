@@ -4,7 +4,7 @@
 # the test harness.  In here, "CORE_TOP" is the name of the top-level of the
 # Verilog for synthesis and "CORE_SIM_TOP" is the name of the top-level of the
 # Verilog for simulation.
-RC_CORE_TOP = Top
+RC_CORE_TOP = ExampleTop
 CORE_TOP ?= $(RC_CORE_TOP)
 
 RC_CORE_SIM_TOP = TestHarness
@@ -16,7 +16,7 @@ OBJ_CORE_RTL_V ?= $(RC_OBJ_CORE_RTL_V)
 
 # I can't use upstream's FIRRTL invocation so I have to provide my own (to
 # split the test harness out into two parts).
-RC_OBJ_CORE_RTL_FIR = $(OBJ_CORE_DIR)/rocketchip-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).fir
+RC_OBJ_CORE_RTL_FIR = $(OBJ_CORE_DIR)/rocketchip-generated/rocketchip.$(CORE_CONFIG).fir
 OBJ_CORE_RTL_FIRRTL ?= $(RC_OBJ_CORE_RTL_FIR)
 
 OBJ_CORE_FIRRTL_TOP_CMD ?= $(OBJ_CORE_DIR)/firrtl-passes/GenerateTop/GenerateTop
