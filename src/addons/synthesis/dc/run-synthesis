@@ -1,6 +1,6 @@
 #!/bin/bash
 
-unset output
+unset run_dir
 unset dc
 unset rmtar
 libs=()
@@ -14,7 +14,7 @@ while [[ "$1" != "" ]]
 do
     case "$1" in
     "$0") ;;
-    -o) output="$2"; shift;;
+    --output_dir) run_dir="$2"; shift;;
     */dc_shell) dc="$1";;
     */DC-RM_*.tar) rmtar="$1";;
     *.db) libs+=("$1");;
@@ -30,8 +30,6 @@ do
 done
 
 set -ex
-
-run_dir="$output".dc_run_dir
 
 rm -rf "$run_dir"
 mkdir -p "$run_dir"
