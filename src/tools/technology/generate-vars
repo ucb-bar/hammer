@@ -26,10 +26,10 @@ for library_desc in techfile["libraries"]:
 		of.write(" {0}/{1}".format(tech_home, library_desc["verilog file"]))
 of.write("\n")
 
-of.write("TECHNOLOGY_MILKYWAY_DIRS =")
+of.write("TECHNOLOGY_MILKYWAY_LIB_IN_DIRS =")
 for library_desc in techfile["libraries"]:
-	if "milkyway dir" in library_desc:
-		of.write(" {0}/{1}".format(tech_home, library_desc["milkyway dir"]))
+	if "milkyway lib in dir" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["milkyway lib in dir"]))
 of.write("\n")
 
 of.write("TECHNOLOGY_TLUPLUS_FILES =")

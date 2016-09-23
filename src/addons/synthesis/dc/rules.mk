@@ -12,7 +12,7 @@ $(OBJ_SYN_MAPPED_V): $(OBJ_SYN_DIR)/synopsys-dc.stamp
 $(OBJ_SYN_DIR)/synopsys-dc.stamp: \
 		$(abspath $(SYNTHESIS_TOOL_ADDON)/run-synthesis) \
 		$(OBJ_SOC_RTL_V) \
-		$(patsubst %,%/lib,$(TECHNOLOGY_MILKYWAY_DIRS)) \
+		$(TECHNOLOGY_MILKYWAY_LIB_IN_DIRS) \
 		$(TECHNOLOGY_TLUPLUS_FILES) \
 		$(TECHNOLOGY_MILKYWAY_TECHFILES) \
 		$(TECHNOLOGY_CCS_LIBRARY_FILES) \
