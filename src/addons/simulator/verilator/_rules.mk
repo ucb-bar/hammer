@@ -4,15 +4,15 @@
 # redefining the rules to build Verilator.
 ifeq ($(VERILATOR_VERSION),)
 VERILATOR_VERSION = 3.884
-VERILATOR_PREFIX ?= $(abspath $(OBJ_TOOLS_DIR)/verilator-$(VERILATOR_VERSION).install/)
+VERILATOR_PREFIX ?= $(abspath $(OBJ_TOOLS_BIN_DIR)/verilator-$(VERILATOR_VERSION)/)
 VERILATOR_BIN = $(VERILATOR_PREFIX)/bin/verilator
-VERILATOR_SRC = $(OBJ_TOOLS_DIR)/verilator-$(VERILATOR_VERSION)
+VERILATOR_SRC = $(OBJ_TOOLS_SRC_DIR)/verilator-$(VERILATOR_VERSION)
 VERILATOR_TAR = $(PLSI_CACHE_DIR)/distfiles/verilator-$(VERILATOR_VERSION).tar.gz
 
 # Builds Verilator since we can't rely on whatever the core has installed.
 $(VERILATOR_BIN): $(VERILATOR_SRC)/bin/verilator
 	rm -rf $(VERILATOR_PREFIX)
-	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(VERILATOR_SRC) install
+	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(VERILATOR_SRC) CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX)) install
 	# FIXME: Why do I have to do this?
 	mkdir -p $(VERILATOR_PREFIX)/include
 	cp -r $(VERILATOR_PREFIX)/share/verilator/include/* $(VERILATOR_PREFIX)/include
@@ -20,12 +20,12 @@ $(VERILATOR_BIN): $(VERILATOR_SRC)/bin/verilator
 	cp -r $(VERILATOR_PREFIX)/share/verilator/bin/* $(VERILATOR_PREFIX)/bin
 
 $(VERILATOR_SRC)/bin/verilator: $(VERILATOR_SRC)/Makefile
-	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(VERILATOR_SRC)
+	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(VERILATOR_SRC) CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX))
 	touch $@
 
 $(VERILATOR_SRC)/Makefile: $(VERILATOR_SRC)/configure
 	mkdir -p $(dir $@)
-	cd $(dir $@) && ./configure --prefix=$(abspath $(VERILATOR_PREFIX))
+	cd $(dir $@) && CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX)) ./configure --prefix=$(abspath $(VERILATOR_PREFIX))
 
 $(VERILATOR_SRC)/configure: $(VERILATOR_TAR)
 	rm -rf $(dir $@)

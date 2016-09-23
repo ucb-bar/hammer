@@ -62,9 +62,11 @@ PLSI_CACHE_DIR ?= obj/cache
 TCLAP_VERSION = 1.2.1
 TCL_LIBRARY_VERSION = 8.6
 TCL_VERSION = 8.6.6
+GCC_VERSION = 4.9.3
 
 # OBJ_*_DIR are the directories in which outputs end up
-OBJ_TOOLS_DIR = obj/tools
+OBJ_TOOLS_SRC_DIR = obj/tools/src
+OBJ_TOOLS_BIN_DIR = obj/tools/install
 OBJ_CORE_DIR = obj/core-$(CORE_CONFIG)
 OBJ_SOC_DIR = obj/soc-$(CORE_CONFIG)-$(SOC_CONFIG)
 OBJ_TECH_DIR = obj/technology/$(TECHNOLOGY)
@@ -75,14 +77,16 @@ CHECK_CORE_DIR = check/core-$(CORE_CONFIG)
 CHECK_SOC_DIR = check/soc-$(CORE_CONFIG)-$(SOC_CONFIG)
 CHECK_SYN_DIR = check/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(SYN_CONFIG)
 
-CMD_PTEST = $(OBJ_TOOLS_DIR)/pconfigure/bin/ptest
-CMD_PCONFIGURE = $(OBJ_TOOLS_DIR)/pconfigure/bin/pconfigure
-CMD_PPKGCONFIG = $(OBJ_TOOLS_DIR)/pconfigure/bin/ppkg-config
-CMD_PHC = $(OBJ_TOOLS_DIR)/pconfigure/bin/phc
-CMD_PCAD_INFER_DECOUPLED = $(OBJ_TOOLS_DIR)/pcad/bin/pcad-pipe-infer_decoupled
-CMD_SBT = $(OBJ_TOOLS_DIR)/sbt/sbt
+CMD_PTEST = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/ptest
+CMD_PCONFIGURE = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/pconfigure
+CMD_PPKGCONFIG = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/ppkg-config
+CMD_PHC = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/phc
+CMD_PCAD_INFER_DECOUPLED = $(OBJ_TOOLS_BIN_DIR)/pcad/bin/pcad-pipe-infer_decoupled
+CMD_SBT = $(OBJ_TOOLS_BIN_DIR)/sbt/sbt
+CMD_GCC = $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/bin/gcc
+CMD_GXX = $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/bin/g++
 
-PKG_CONFIG_PATH=$(abspath $(OBJ_TOOLS_DIR)/install/lib/pkgconfig)
+PKG_CONFIG_PATH=$(abspath $(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/lib/pkgconfig):$(abspath $(OBJ_TOOLS_BIN_DIR)/pconfigure/lib/pkgconfig)
 export PKG_CONFIG_PATH
 
 ##############################################################################
@@ -250,7 +254,7 @@ soc-simulator: bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP)-simulator
 # This just cleans everything
 .PHONY: clean
 clean::
-	rm -rf $(OBJ_TOOLS_DIR)
+	rm -rf $(OBJ_TOOLS_BIN_DIR) $(OBJ_TOOLS_SRC_DIR)
 	rm -rf $(OBJ_CORE_DIR) $(CHECK_CORE_DIR)
 	rm -rf $(OBJ_SOC_DIR) $(CHECK_SOC_DIR)
 	rm -rf $(OBJ_SYN_DIR) $(CHECK_SYN_DIR)
@@ -282,30 +286,60 @@ bugreport::
 # them directly from the command-line.  Use the nicely named targets above,
 # they're easier to remember.
 
+# Pretty much everything needs a newer GCC than will be availiable on any CAD
+# tools machines.
+$(CMD_GCC) $(CMD_GXX): $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/stamp
+
+$(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/stamp: $(OBJ_TOOLS_SRC_DIR)/gcc-$(GCC_VERSION)/build/Makefile
+	+$(SCHEDULER_CMD) --make -- $(MAKE) -C $(dir $<)
+	+$(SCHEDULER_CMD) --make -- $(MAKE) -C $(dir $<) install
+	@date > $@
+
+$(OBJ_TOOLS_SRC_DIR)/gcc-$(GCC_VERSION)/build/Makefile: $(OBJ_TOOLS_SRC_DIR)/gcc-$(GCC_VERSION)/configure
+	@mkdir -p $(dir $@)
+	cd $(dir $@); ../configure --prefix=$(abspath $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)) --enable-languages=c,c++ --disable-multilib --disable-checking
+
+$(OBJ_TOOLS_SRC_DIR)/gcc-$(GCC_VERSION)/configure: $(PLSI_CACHE_DIR)/distfiles/gcc-$(GCC_VERSION).tar.gz
+	@rm -rf $(dir $@)
+	@mkdir -p $(dir $@)
+	tar -xpf $< --strip-components=1 -C $(dir $@)
+	touch $@
+
+$(PLSI_CACHE_DIR)/distfiles/gcc-$(GCC_VERSION).tar.gz:
+	@mkdir -p $(dir $@)
+	wget https://ftp.gnu.org/gnu/gcc/gcc-$(GCC_VERSION)/gcc-$(GCC_VERSION).tar.gz -O $@
+
 # Builds pconfigure and its related tools
-$(OBJ_TOOLS_DIR)/pconfigure/bin/%: $(OBJ_TOOLS_DIR)/pconfigure/Makefile
-	$(MAKE) -C $(OBJ_TOOLS_DIR)/pconfigure bin/$(notdir $@)
+$(CMD_PCONFIGURE) $(CMD_PTEST) $(CMD_PPKGCONFIG) $(CMD_PHC): \
+		$(OBJ_TOOLS_BIN_DIR)/pconfigure/stamp
 
-$(OBJ_TOOLS_DIR)/pconfigure/Makefile: $(OBJ_TOOLS_DIR)/pconfigure/Configfile.local \
-                                      src/tools/pconfigure/Configfiles/main \
-                                      $(shell find src/tools/pconfigure/src -type f) \
-                                      src/tools/pconfigure/bootstrap.sh
-	mkdir -p $(dir $@)
-	+cd $(dir $@); $(SCHEDULER_CMD) --max-threads=1 -- $(abspath src/tools/pconfigure/bootstrap.sh) $(abspath src/tools/pconfigure)/
+$(OBJ_TOOLS_BIN_DIR)/pconfigure/stamp: $(OBJ_TOOLS_SRC_DIR)/pconfigure/Makefile
+	$(MAKE) -C $(OBJ_TOOLS_SRC_DIR)/pconfigure CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX)) install
+	@date > $@
 
-$(OBJ_TOOLS_DIR)/pconfigure/Configfile.local:
+$(OBJ_TOOLS_SRC_DIR)/pconfigure/Makefile: $(OBJ_TOOLS_SRC_DIR)/pconfigure/stamp $(CMD_GXX)
+	@mkdir -p $(dir $@)
+	mkdir -p $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles
+	rm -f $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
+	echo 'PREFIX = $(abspath $(OBJ_TOOLS_BIN_DIR))/pconfigure' >> $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
+	+cd $(OBJ_TOOLS_SRC_DIR)/pconfigure; $(SCHEDULER_CMD) --max-threads=1 -- ./bootstrap.sh
+	cd $(OBJ_TOOLS_SRC_DIR)/pconfigure; ./bin/pconfigure --verbose
+	+$(SCHEDULER_CMD) --make -- $(MAKE) -C $(OBJ_TOOLS_SRC_DIR)/pconfigure -B CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX))
+
+$(OBJ_TOOLS_SRC_DIR)/pconfigure/stamp: $(shell find src/tools/pconfigure -type f)
 	mkdir -p $(dir $@)
-	echo "PREFIX = $(abspath $(OBJ_TOOLS_DIR)/pconfigure)" > $@
+	rsync -a --delete src/tools/pconfigure/ $(OBJ_TOOLS_SRC_DIR)/pconfigure
+	touch $@
 
 # Most of the CAD tools have some sort of TCL interface, and the open source
 # ones require a TCL installation
-$(OBJ_TOOLS_DIR)/tcl-$(TCL_VERSION)-install/include/tcl.h: $(OBJ_TOOLS_DIR)/tcl-$(TCL_VERSION)/unix/Makefile
-	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(OBJ_TOOLS_DIR)/tcl-$(TCL_VERSION)/unix install
+$(OBJ_TOOLS_BIN_DIR)/tcl-$(TCL_VERSION)/stamp: $(OBJ_TOOLS_SRC_DIR)/tcl-$(TCL_VERSION)/unix/Makefile
+	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(dir $<) install
 
-$(OBJ_TOOLS_DIR)/tcl-$(TCL_VERSION)/unix/Makefile: $(OBJ_TOOLS_DIR)/tcl-$(TCL_VERSION)/README
-	cd $(OBJ_TOOLS_DIR)/tcl-$(TCL_VERSION)/unix; ./configure --prefix=$(abspath $(OBJ_TOOLS_DIR)/tcl-$(TCL_VERSION)-install)
+$(OBJ_TOOLS_SRC_DIR)/tcl-$(TCL_VERSION)/unix/Makefile: $(OBJ_TOOLS_SRC_DIR)/tcl-$(TCL_VERSION)/stamp $(CMD_GCC)
+	cd $(dir $@); ./configure --prefix=$(abspath $(OBJ_TOOLS_BIN_DIR)/tcl-$(TCL_VERSION))
 
-$(OBJ_TOOLS_DIR)/tcl-$(TCL_VERSION)/README: $(PLSI_CACHE_DIR)/distfiles/tcl-$(TCL_VERSION).tar.gz
+$(OBJ_TOOLS_SRC_DIR)/tcl-$(TCL_VERSION)/stamp: $(PLSI_CACHE_DIR)/distfiles/tcl-$(TCL_VERSION).tar.gz
 	rm -rf $(dir $@)
 	mkdir -p $(dir $@)
 	tar -xzpf $< --strip-components=1 -C $(dir $@)
@@ -316,13 +350,14 @@ $(PLSI_CACHE_DIR)/distfiles/tcl-$(TCL_VERSION).tar.gz:
 	wget http://prdownloads.sourceforge.net/tcl/tcl$(TCL_VERSION)-src.tar.gz -O $@
 
 # TCLAP is a C++ command-line argument parser that's used by PCAD
-$(OBJ_TOOLS_DIR)/install/include/tclap/CmdLine.h: $(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION)/Makefile
-	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION) install
+$(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/stamp: $(OBJ_TOOLS_SRC_DIR)/tclap-$(TCLAP_VERSION)/Makefile
+	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(dir $<) install
+	@date > $@
 
-$(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION)/Makefile: $(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION)/configure
-	cd $(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION); ./configure --prefix=$(abspath $(OBJ_TOOLS_DIR)/install)
+$(OBJ_TOOLS_SRC_DIR)/tclap-$(TCLAP_VERSION)/Makefile: $(OBJ_TOOLS_SRC_DIR)/tclap-$(TCLAP_VERSION)/configure $(CMD_GXX)
+	cd $(OBJ_TOOLS_SRC_DIR)/tclap-$(TCLAP_VERSION); ./configure --prefix=$(abspath $(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION))
 
-$(OBJ_TOOLS_DIR)/tclap-$(TCLAP_VERSION)/configure: $(PLSI_CACHE_DIR)/distfiles/tclap-$(TCLAP_VERSION).tar.gz
+$(OBJ_TOOLS_SRC_DIR)/tclap-$(TCLAP_VERSION)/configure: $(PLSI_CACHE_DIR)/distfiles/tclap-$(TCLAP_VERSION).tar.gz
 	rm -rf $(dir $@)
 	mkdir -p $(dir $@)
 	tar -xvzpf $< --strip-components=1 -C $(dir $@)
@@ -333,15 +368,23 @@ $(PLSI_CACHE_DIR)/distfiles/tclap-$(TCLAP_VERSION).tar.gz:
 	wget 'http://downloads.sourceforge.net/project/tclap/tclap-$(TCLAP_VERSION).tar.gz?r=https%3A%2F%2Fsourceforge.net%2Fprojects%2Ftclap%2Ffiles%2F&ts=1468971231&use_mirror=jaist' -O $@
 
 # Builds PCAD, the heart of PLSI
-$(OBJ_TOOLS_DIR)/pcad/bin/%: $(OBJ_TOOLS_DIR)/pcad/Makefile
-	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(OBJ_TOOLS_DIR)/pcad bin/$(notdir $@)
+$(CMD_PCAD_INFER_DECOUPLED): $(OBJ_TOOLS_BIN_DIR)/pcad/stamp
 
-$(OBJ_TOOLS_DIR)/pcad/Makefile: src/tools/pcad/Configfile \
-				$(shell find src/tools/pcad/src -type f) \
-				$(OBJ_TOOLS_DIR)/install/include/tclap/CmdLine.h \
-				$(CMD_PCONFIGURE) $(CMD_PPKGCONFIG) $(CMD_PHC)
+$(OBJ_TOOLS_BIN_DIR)/pcad/stamp: $(OBJ_TOOLS_SRC_DIR)/pcad/Makefile $(CMD_GXX)
+	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(dir $<) install CXX=$(abspath $(CMD_GXX))
+	@date > $@
+
+$(OBJ_TOOLS_SRC_DIR)/pcad/Makefile: $(OBJ_TOOLS_SRC_DIR)/pcad/stamp \
+				    $(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/stamp \
+				    $(CMD_PCONFIGURE) $(CMD_PPKGCONFIG) $(CMD_PHC)
 	mkdir -p $(dir $@)
-	cd $(dir $@); $(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --phc $(abspath $(CMD_PHC)) --srcpath $(abspath src/tools/pcad)
+	echo 'PREFIX = $(abspath $(OBJ_TOOLS_BIN_DIR))/pcad' >> $(OBJ_TOOLS_SRC_DIR)/pcad/Configfile.local
+	cd $(dir $@); $(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --phc $(abspath $(CMD_PHC))
+
+$(OBJ_TOOLS_SRC_DIR)/pcad/stamp: $(shell find src/tools/pcad -type f)
+	mkdir -p $(dir $@)
+	rsync -a --delete src/tools/pcad/ $(OBJ_TOOLS_SRC_DIR)/pcad
+	touch $@
 
 # "builds" a SBT wrapper
 $(CMD_SBT): src/tools/sbt/sbt
