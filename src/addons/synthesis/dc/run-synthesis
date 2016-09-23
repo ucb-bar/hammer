@@ -108,7 +108,7 @@ $dc -topographical_mode -f rm_dc_scripts/dc.tcl \
     |& tee dc.log
 
 # Make sure there's no invalid output from DC
-grep ^Error dc.log || (echo "DC produced error messages"; exit 1)
-grep ^Warning dc.log || (echo "DC produced warning messages")
+grep ^Error dc.log && (echo "DC produced error messages"; exit 1)
+grep ^Warning dc.log && (echo "DC produced warning messages")
 
 exit 1
