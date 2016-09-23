@@ -20,7 +20,6 @@ $(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).vsim.stamp: $(OBJ_
 	@mkdir -p $(dir $@)
 	+$(SCHEDULER_CMD) --make -- $(MAKE) MODEL=$(CORE_SIM_TOP) CONFIG=$(CORE_CONFIG) RISCV=unused SUITE=RocketSuite -C $(OBJ_CORE_DIR)/rocket-chip/vsim verilog || (rm -rf $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/$(CORE_SIM_TOP).$(CORE_CONFIG).v && exit 1)
 	mkdir -p $(dir $@)
-	if [[ "$$(cat $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/$(CORE_SIM_TOP).$(CORE_CONFIG).v | wc -l)" == "0" ]]; then echo "empty Verilog from FIRRTL"; rm -rf $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/; exit 1; fi
 	touch $@
 
 $(OBJ_CORE_FIRRTL_HARNESS_CMD) $(OBJ_CORE_FIRRTL_TOP_CMD): $(shell find $(CORE_DIR)/firrtl -type f) $(shell find src/addons/core-generator/rocket-chip/src/firrtl -type f) $(CMD_SBT)
