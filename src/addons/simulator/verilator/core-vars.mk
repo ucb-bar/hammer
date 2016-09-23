@@ -6,5 +6,5 @@ ifeq ($(filter $(MAKECMDGOALS),clean distclean),)
 -include $(OBJ_CORE_DIR)/verilator-vars.mk
 $(OBJ_CORE_DIR)/verilator-vars.mk: $(CORE_SIMULATOR_ADDON)/tools/generate-vars
 	mkdir -p $(dir $@)
-	$< --output $@ --upper CORE --lower core
+	$< --output $@ --upper CORE --lower core --vtype RTL
 endif
