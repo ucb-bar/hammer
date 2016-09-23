@@ -335,6 +335,7 @@ $(OBJ_TOOLS_SRC_DIR)/pconfigure/stamp: $(shell find src/tools/pconfigure -type f
 # ones require a TCL installation
 $(OBJ_TOOLS_BIN_DIR)/tcl-$(TCL_VERSION)/stamp: $(OBJ_TOOLS_SRC_DIR)/tcl-$(TCL_VERSION)/unix/Makefile
 	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(dir $<) install
+	@date > $@
 
 $(OBJ_TOOLS_SRC_DIR)/tcl-$(TCL_VERSION)/unix/Makefile: $(OBJ_TOOLS_SRC_DIR)/tcl-$(TCL_VERSION)/stamp $(CMD_GCC)
 	cd $(dir $@); ./configure --prefix=$(abspath $(OBJ_TOOLS_BIN_DIR)/tcl-$(TCL_VERSION))
