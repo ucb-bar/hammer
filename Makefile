@@ -291,8 +291,8 @@ bugreport::
 $(CMD_GCC) $(CMD_GXX): $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/stamp
 
 $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/stamp: $(OBJ_TOOLS_SRC_DIR)/gcc-$(GCC_VERSION)/build/Makefile
-	+$(SCHEDULER_CMD) --make -- $(MAKE) -C $(dir $<)
-	+$(SCHEDULER_CMD) --make -- $(MAKE) -C $(dir $<) install
+	+$(SCHEDULER_CMD) --make -- $(MAKE) -C $(dir $<) >& $(OBJ_TOOLS_SRC_DIR)/gcc-$(GCC_VERSION)/build/make.log
+	+$(SCHEDULER_CMD) --make -- $(MAKE) -C $(dir $<) install >& $(OBJ_TOOLS_SRC_DIR)/gcc-$(GCC_VERSION)/build/install.log
 	@date > $@
 
 $(OBJ_TOOLS_SRC_DIR)/gcc-$(GCC_VERSION)/build/Makefile: $(OBJ_TOOLS_SRC_DIR)/gcc-$(GCC_VERSION)/configure
