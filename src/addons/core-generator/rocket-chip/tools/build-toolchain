@@ -2,15 +2,21 @@
 
 unset output
 unset tools_dir
+unset CC
+unset CXX
 while [[ "$1" != "" ]]
 do
     case $1 in
     "-o") output="$2"; shift;;
     "--tools-dir") tools_dir="$2"; shift;;
+    --cc) CC="$2" shift;;
+    --cxx) CXX="$2"; shift;;
     esac
     shift
 done
 
+export CC
+export CXX
 export RISCV="$(dirname "$output")"
 
 rm -rf "$RISCV"

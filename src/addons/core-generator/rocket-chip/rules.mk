@@ -73,7 +73,7 @@ $(OBJ_CORE_DIR)/riscv-tools/plsi-build.stamp: \
 		src/addons/core-generator/rocket-chip/tools/build-toolchain \
 		$(find $(OBJ_CORE_DIR)/rocket-chip/riscv-tools -iname "*.S" -or -iname "*.cc") \
 		$(OBJ_CORE_DIR)/plsi-generated/rocket-chip.stamp
-	+$(SCHEDULER_CMD) -- $< -o $(abspath $@) --tools-dir $(OBJ_CORE_DIR)/rocket-chip/riscv-tools
+	+$(SCHEDULER_CMD) -- $< -o $(abspath $@) --tools-dir $(OBJ_CORE_DIR)/rocket-chip/riscv-tools --cc $(abspath $(CMD_CC)) --cxx $(abspath $(CMD_GCC))
 
 $(OBJ_CORE_DIR)/riscv-tools/lib/libfesvr.so: $(OBJ_CORE_DIR)/riscv-tools/plsi-build.stamp
 
