@@ -22,5 +22,5 @@ export RISCV="$(dirname "$output")"
 
 rm -rf "$RISCV"
 cd "$tools_dir"
-./build.sh
+./build.sh || (find . -iname "build.log" | xargs tail; exit 1)
 touch "$output"
