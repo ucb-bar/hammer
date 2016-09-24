@@ -191,6 +191,10 @@ ifeq ($(SYN_TOP),)
 $(error SYNTHESIS_TOOL needs to set SYN_TOP)
 endif
 
+ifeq ($(SYN_SIM_TOP),)
+$(error SYNTHESIS_TOOLS needs to set SYN_SIM_TOP)
+endif
+
 # All the rules get sourced last.  We don't allow any variables to be set here,
 # so the ordering isn't important.
 include $(CORE_GENERATOR_ADDON)/rules.mk

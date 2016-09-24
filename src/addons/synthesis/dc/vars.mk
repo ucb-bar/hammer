@@ -14,6 +14,7 @@ $(error Expected to find dc_shell at $(DC_BIN))
 endif
 
 SYN_TOP = $(SOC_TOP)
+SYN_SIM_TOP = $(SOC_SIM_TOP)
 OBJ_SYN_MAPPED_V = $(OBJ_SYN_DIR)/generated/$(SYN_TOP).mapped.v
 OBJ_SYN_SIM_FILES = $(OBJ_SOC_SIM_FILES) $(TECHNOLOGY_VERILOG_FILES)
 
