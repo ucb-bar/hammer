@@ -40,11 +40,11 @@ $(OBJ_CORE_DIR)/plsi-generated/model.vh:
 
 $(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).v: $(OBJ_CORE_FIRRTL_HARNESS_CMD) $(RC_OBJ_CORE_RTL_FIR)
 	@mkdir -p $(dir $@)
-	$(SCHEDULER_CMD) --max-threads=1 -- $< -i $(abspath $(filter %.fir,$^)) -o $(abspath $@) --syn-top $(CORE_TOP) --harness-top $(CORE_SIM_TOP)
+	$(SCHEDULER_CMD) --max-threads=1 -- $< -i $(abspath $(filter %.fir,$^)) -o $(abspath $@) --syn-top $(CORE_TOP) --macro-output $(basename $(abspath $@))$(MACRO) --harness-top $(CORE_SIM_TOP)
 
 $(RC_OBJ_CORE_RTL_V): $(OBJ_CORE_FIRRTL_TOP_CMD) $(RC_OBJ_CORE_RTL_FIR)
 	@mkdir -p $(dir $@)
-	$(SCHEDULER_CMD) --max-threads=1 -- $< -i $(abspath $(filter %.fir,$^)) -o $(abspath $@) --syn-top $(CORE_TOP) --harness-top $(CORE_SIM_TOP)
+	$(SCHEDULER_CMD) --max-threads=1 -- $< -i $(abspath $(filter %.fir,$^)) -o $(abspath $@) --syn-top $(CORE_TOP) --macro-output $(basename $(abspath $@))$(MACRO) --harness-top $(CORE_SIM_TOP)
 
 $(RC_OBJ_CORE_RTL_FIR) $(RC_OBJ_CORE_RTL_D): $(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).vsim.stamp
 	mkdir -p $(dir $@)

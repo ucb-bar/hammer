@@ -13,7 +13,8 @@ object BuildSettings extends Build {
     parallelExecution in Global := false,
     traceLevel   := 15,
     scalacOptions ++= Seq("-deprecation","-unchecked"),
-    libraryDependencies ++= Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value)
+    libraryDependencies ++= Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value),
+    libraryDependencies ++= Seq("io.spray" %%  "spray-json" % "1.3.2")
   )
 
   lazy val firrtl       = project in file("firrtl")

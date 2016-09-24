@@ -10,6 +10,9 @@ CORE_TOP ?= $(RC_CORE_TOP)
 RC_CORE_SIM_TOP = TestHarness
 CORE_SIM_TOP ?= $(RC_CORE_SIM_TOP)
 
+RC_MACRO = ExampleMacro.macro
+MACRO ?= $(RC_MACRO)
+
 # This contains the whole Rocket Chip along with all the test harness stuff.
 RC_OBJ_CORE_RTL_V = $(OBJ_CORE_DIR)/plsi-generated/$(CORE_TOP).$(CORE_CONFIG).v
 OBJ_CORE_RTL_V ?= $(RC_OBJ_CORE_RTL_V)
