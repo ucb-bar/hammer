@@ -11,6 +11,7 @@ do
     "--tools-dir") tools_dir="$2"; shift;;
     --cc) CC="$2" shift;;
     --cxx) CXX="$2"; shift;;
+    *) echo "unknown argumente $1"; exit 1;;
     esac
     shift
 done
