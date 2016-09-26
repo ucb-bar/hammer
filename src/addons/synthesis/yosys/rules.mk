@@ -6,7 +6,7 @@ $(YOSYS_BIN): \
 		$(OBJ_TOOLS_SRC_DIR)/yosys-$(YOSYS_VERSION)/Makefile.conf \
 		$(OBJ_TOOLS_SRC_DIR)/yosys-$(YOSYS_VERSION)/abc/Makefile \
 		$(OBJ_TOOLS_BIN_DIR)/tcl-$(TCL_VERSION)/stamp
-	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(OBJ_TOOLS_SRC_DIR)/yosys-$(YOSYS_VERSION) install TCL_VERSION=tcl$(TCL_LIBRARY_VERSION) TCL_INCLUDE=$(abspath $(OBJ_TOOLS_BIN_DIR)/tcl-$(TCL_VERSION)/include) ABCREV=default PREFIX=$(abspath $(OBJ_TOOLS_BIN_DIR)/yosys-$(YOSYS_VERSION)) LDFLAGS="-L$(abspath $(OBJ_TOOLS_BIN_DIR)/tcl-$(TCL_VERSION)/lib) -Wl,-rpath,$(abspath $(OBJ_TOOLS_BIN_DRI)/tcl-$(TCL_VERSION)/lib)"
+	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(OBJ_TOOLS_SRC_DIR)/yosys-$(YOSYS_VERSION) install TCL_VERSION=tcl$(TCL_LIBRARY_VERSION) TCL_INCLUDE=$(abspath $(OBJ_TOOLS_BIN_DIR)/tcl-$(TCL_VERSION)/include) ABCREV=default PREFIX=$(abspath $(OBJ_TOOLS_BIN_DIR)/yosys-$(YOSYS_VERSION)) LDFLAGS="-L$(abspath $(OBJ_TOOLS_BIN_DIR)/tcl-$(TCL_VERSION)/lib) -Wl,-rpath,$(abspath $(OBJ_TOOLS_BIN_DIR)/tcl-$(TCL_VERSION)/lib)"
 
 $(OBJ_TOOLS_SRC_DIR)/yosys-$(YOSYS_VERSION)/Makefile.conf: $(OBJ_TOOLS_SRC_DIR)/yosys-$(YOSYS_VERSION)/Makefile
 	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(OBJ_TOOLS_SRC_DIR)/yosys-$(YOSYS_VERSION) config-gcc CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX))
