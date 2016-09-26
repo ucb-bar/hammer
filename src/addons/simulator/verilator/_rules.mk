@@ -10,7 +10,7 @@ VERILATOR_SRC = $(OBJ_TOOLS_SRC_DIR)/verilator-$(VERILATOR_VERSION)
 VERILATOR_TAR = $(PLSI_CACHE_DIR)/distfiles/verilator-$(VERILATOR_VERSION).tar.gz
 
 # Builds Verilator since we can't rely on whatever the core has installed.
-$(VERILATOR_BIN): $(VERILATOR_SRC)/bin/verilator
+$(VERILATOR_BIN): $(VERILATOR_SRC)/bin/verilator $(CMD_GCC) $(CMD_GXX)
 	rm -rf $(VERILATOR_PREFIX)
 	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(VERILATOR_SRC) CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX)) install
 	# FIXME: Why do I have to do this?
@@ -19,11 +19,11 @@ $(VERILATOR_BIN): $(VERILATOR_SRC)/bin/verilator
 	mkdir -p $(VERILATOR_PREFIX)/bin
 	cp -r $(VERILATOR_PREFIX)/share/verilator/bin/* $(VERILATOR_PREFIX)/bin
 
-$(VERILATOR_SRC)/bin/verilator: $(VERILATOR_SRC)/Makefile
+$(VERILATOR_SRC)/bin/verilator: $(VERILATOR_SRC)/Makefile $(CMD_GCC) $(CMD_GXX)
 	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(VERILATOR_SRC) CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX))
 	touch $@
 
-$(VERILATOR_SRC)/Makefile: $(VERILATOR_SRC)/configure
+$(VERILATOR_SRC)/Makefile: $(VERILATOR_SRC)/configure $(CMD_GCC) $(CMD_GXX)
 	mkdir -p $(dir $@)
 	cd $(dir $@) && CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX)) ./configure --prefix=$(abspath $(VERILATOR_PREFIX))
 
