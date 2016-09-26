@@ -132,7 +132,9 @@ following variables can be set:
  * CORE_SIMULATOR: Allows users to use different simulators for different
    stages of the flow.  CORE_SIMULATOR controls what simulates the output of
    CORE_GENERATOR.  In general, there's one of these for every stage (CORE,
-   SOC, ...).
+   SOC, ...).  You can also set SIMULATOR, which will set the simulator for
+   everything (except if you've also overridden CORE_SIMULATOR or a related
+   variable).
 
  * TECHNOLOGY: The technology that will be used to implement this design.
    Technologies are described by JSON files in src/technologies, a canonical

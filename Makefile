@@ -38,9 +38,10 @@ SOC_CONFIG ?= default
 SYN_CONFIG ?= default
 
 # Defines the simulator used to run simulation at different levels
-CORE_SIMULATOR ?= verilator
-SOC_SIMULATOR ?= verilator
-SYN_SIMULATOR ?= verilator
+SIMULATOR ?= verilator
+CORE_SIMULATOR ?= $(SIMULATOR)
+SOC_SIMULATOR ?= $(SIMULATOR)
+SYN_SIMULATOR ?= $(SIMULATOR)
 
 # The scheduler to use when running large jobs.  Changing this doesn't have any
 # effect on the generated files, just the manner in which they are generated.
