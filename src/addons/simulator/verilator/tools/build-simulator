@@ -52,6 +52,12 @@ then
     debug_flags+=("--trace")
 fi
 
+if [[ "$verilator" == "" ]]
+then
+    echo "No verilator binary found, pass one on the command line"
+    exit 2
+fi
+
 set -e
 set -x
 
