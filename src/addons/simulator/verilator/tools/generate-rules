@@ -36,6 +36,7 @@ endif
 \$(patsubst %,\$(OBJ_${VERILATOR_TARGET_CAPS}_DIR)/simulator-%,ndebug debug): \\
 		\$(OBJ_${VERILATOR_TARGET_CAPS}_${VTYPE}_V) \\
 		\$(OBJ_${VERILATOR_TARGET_CAPS}_SIM_FILES) \\
+		\$(OBJ_${VERILATOR_TARGET_CAPS}_SIM_MACRO_FILES) \\
 		\$(VERILATOR_BIN) \\
 		\$(${VERILATOR_TARGET_CAPS}_SIMULATOR_ADDON)/tools/build-simulator
 	mkdir -p \$(dir \$@)

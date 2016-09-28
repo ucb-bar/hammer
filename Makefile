@@ -162,6 +162,21 @@ ifeq ($(CORE_TOP),)
 $(error CORE_GENERATOR needs to set CORE_TOP)
 endif
 
+ifeq ($(OBJ_CORE_SIM_FILES),)
+# The extra files that are needed to simulate the core, but those that won't be
+# replaced by the eventual macro generation steps.  These won't be touched by
+# any tools.
+$(error CORE_GENERATOR needs to set OBJ_CORE_SIM_FILES)
+endif
+
+ifeq ($(OBJ_CORE_SIM_MACRO_FILES),)
+# The extra files that are necessary to simulate the core, but will be replaced
+# by some sort of technology-specific macro generation that the CAD tools won't
+# automatically map to -- for example SRAMs.  These will be replaced by other
+# things in various stages of simulation.
+$(error CORE_GENERATOR needs to set OBJ_CORE_SIM_MACRO_FILES)
+endif
+
 ifeq ($(OBJ_CORE_RTL_V),)
 # The name of the top-level RTL Verilog output by the core.
 $(error CORE_GENERATOR needs to set OBJ_CORE_RTL_V)

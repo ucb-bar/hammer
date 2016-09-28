@@ -46,7 +46,7 @@ $(RC_OBJ_CORE_RTL_V): $(OBJ_CORE_FIRRTL_TOP_CMD) $(RC_OBJ_CORE_RTL_FIR)
 	@mkdir -p $(dir $@)
 	$(SCHEDULER_CMD) --max-threads=1 -- $< -i $(abspath $(filter %.fir,$^)) -o $(abspath $@) --syn-top $(CORE_TOP) --harness-top $(CORE_SIM_TOP)
 
-$(RC_OBJ_CORE_RTL_FIR) $(RC_OBJ_CORE_RTL_D): $(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).vsim.stamp
+$(RC_OBJ_CORE_RTL_FIR) $(RC_OBJ_CORE_RTL_D) $(RC_OBJ_CORE_SIM_MACRO_FILES): $(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).vsim.stamp
 	mkdir -p $(dir $@)
 	cp -f $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/$(notdir $@) $@
 

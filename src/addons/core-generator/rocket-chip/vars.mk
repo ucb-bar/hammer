@@ -14,6 +14,11 @@ CORE_SIM_TOP ?= $(RC_CORE_SIM_TOP)
 RC_OBJ_CORE_RTL_V = $(OBJ_CORE_DIR)/plsi-generated/$(CORE_TOP).$(CORE_CONFIG).v
 OBJ_CORE_RTL_V ?= $(RC_OBJ_CORE_RTL_V)
 
+# The other output of a core generator is a list of macros that need to be
+# implemented in the technology.
+RC_OBJ_CORE_RTL_MACROS = $(OBJ_CORE_DIR)/plsi-generated/$(CORE_TOP).$(CORE_CONFIG).macros.json
+OBJ_CORE_RTL_MACROS = $(RC_OBJ_CORE_RTL_MACROS)
+
 # I can't use upstream's FIRRTL invocation so I have to provide my own (to
 # split the test harness out into two parts).
 RC_OBJ_CORE_RTL_FIR = $(OBJ_CORE_DIR)/rocketchip-generated/rocketchip.$(CORE_CONFIG).fir
@@ -36,6 +41,12 @@ RC_OBJ_CORE_SIM_FILES = \
 	src/addons/core-generator/rocket-chip/src/clock.vh \
 	$(OBJ_CORE_DIR)/plsi-generated/model.vh
 OBJ_CORE_SIM_FILES = $(RC_OBJ_CORE_SIM_FILES)
+
+# These files provide Verilog implementations of the macros, and might be
+# replaced by the output of some other tool.
+RC_OBJ_CORE_SIM_MACRO_FILES = \
+	$(OBJ_CORE_DIR)/rocketchip-generated/rocketchip.$(CORE_CONFIG).behav_srams.v
+OBJ_CORE_SIM_MACRO_FILES = $(RC_OBJ_CORE_SIM_MACRO_FILES)
 
 # Rocket Chip generates a Makefrag for testing.  This isn't in the format I
 # want (it doesn't have all my dependency stages) so I do some post-processing

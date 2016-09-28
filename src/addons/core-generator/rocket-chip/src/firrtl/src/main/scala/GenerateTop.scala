@@ -16,12 +16,10 @@ class EmitTopVerilog(topName: String) extends PLSIPassManager {
     new ReParentCircuit(topName)
   )
 
-/*
   override def operateMiddle() = Seq(
       new passes.InferReadWrite(FirrtlVerilogCompiler.infer_read_write_id),
       new passes.ReplSeqMem(FirrtlVerilogCompiler.repl_seq_mem_id)
     )
-*/
 
   override def operateLow() = Seq(
       new RemoveUnusedModules
@@ -65,16 +63,16 @@ object GenerateTop extends App {
     input.get,
     output.get,
     new EmitTopVerilog(synTop.get),
-    Parser.UseInfo/*,
+    Parser.UseInfo,
     AnnotationMap(Seq(
       passes.InferReadWriteAnnotation(
-        s"${harnessTop.get}",
+        s"${synTop.get}",
         FirrtlVerilogCompiler.infer_read_write_id
       ),
       passes.ReplSeqMemAnnotation(
         s"-c:${synTop.get}:-o:unused.conf",
         FirrtlVerilogCompiler.repl_seq_mem_id
       )
-    ))*/
+    ))
   )
 }

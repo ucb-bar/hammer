@@ -40,6 +40,7 @@ endif
 \$(patsubst %,\$(OBJ_${VCS_TARGET_CAPS}_DIR)/simulator-%,ndebug debug): \\
 		\$(OBJ_${VCS_TARGET_CAPS}_${VTYPE}_V) \\
 		\$(OBJ_${VCS_TARGET_CAPS}_SIM_FILES) \\
+		\$(OBJ_${VCS_TARGET_CAPS}_SIM_MACRO_FILES) \\
 		\$(VCS_BIN) \\
 		\$(${VCS_TARGET_CAPS}_SIMULATOR_ADDON)/tools/build-simulator
 	mkdir -p \$(dir \$@)
