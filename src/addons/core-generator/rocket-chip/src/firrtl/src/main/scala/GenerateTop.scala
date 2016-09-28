@@ -11,7 +11,7 @@ object FirrtlVerilogCompiler {
   val repl_seq_mem_id     = TransID(-2)
 }
 
-class EmitTopVerilog(topName: String) extends PLSIPassManager {
+class EmitTopVerilog(topName: String, macros: String) extends PLSIPassManager {
   override def operateHigh() = Seq(
     new ReParentCircuit(topName)
   )
@@ -24,7 +24,8 @@ class EmitTopVerilog(topName: String) extends PLSIPassManager {
 */
 
   override def operateLow() = Seq(
-      new RemoveUnusedModules
+      new RemoveUnusedModules,
+      new CollectClocks(macros)
     )
 }
 
@@ -33,6 +34,7 @@ object GenerateTop extends App {
   var output: Option[String] = None
   var synTop: Option[String] = None
   var harnessTop: Option[String] = None
+  var macroTop: Option[String] = None
 
   var usedOptions = Set.empty[Integer]
   args.zipWithIndex.foreach{ case (arg, i) =>
@@ -53,6 +55,10 @@ object GenerateTop extends App {
         harnessTop = Some(args(i+1))
         usedOptions = usedOptions | Set(i+1)
       }
+      case "--macro-output" => {
+        macroTop = Some(args(i+1))
+        usedOptions = usedOptions | Set(i+1)
+      }
       case _ => {
         if (! (usedOptions contains i)) {
           error("Unknown option " + arg)
@@ -64,7 +70,7 @@ object GenerateTop extends App {
   firrtl.Driver.compile(
     input.get,
     output.get,
-    new EmitTopVerilog(synTop.get),
+    new EmitTopVerilog(synTop.get, macroTop.get),
     Parser.UseInfo/*,
     AnnotationMap(Seq(
       passes.InferReadWriteAnnotation(
