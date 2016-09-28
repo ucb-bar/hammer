@@ -190,6 +190,18 @@ ifeq ($(OBJ_SOC_RTL_V),)
 $(error SOC_GENERATOR needs to set OBJ_SOC_RTL_V)
 endif
 
+ifeq ($(OBJ_SOC_SIM_FILES),)
+# This is just like OBJ_CORE_SIM_FILES, but if the soc needs something extra it
+# can be stuck in here.
+$(error SOC_GENERATOR needs to set OBJ_SOC_SIM_FILES)
+endif
+
+ifeq ($(OBJ_SOC_SIM_MACRO_FILES),)
+# This is just like OBJ_SOC_SIM_MACRO_FILES, but if the soc needs something
+# extra it can be stuck in here.
+$(error SOC_GENERATOR needs to set OBJ_SOC_SIM_MACRO_FILES)
+endif
+
 -include $(OBJ_TECH_DIR)/makefrags/vars.mk
 
 #ifeq ($(TECHNOLOGY_LIBERTY_FILES),)
