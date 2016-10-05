@@ -7,3 +7,6 @@
 [submodule "src/tools/pcad"]
 	path = src/tools/pcad
 	url = git://github.com/palmer-dabbelt/pcad.git
+[submodule "src/tools/pson"]
+	path = src/tools/pson
+	url = git://github.com/palmer-dabbelt/pson.git

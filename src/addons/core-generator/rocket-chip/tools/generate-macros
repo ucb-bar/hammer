@@ -1,0 +1,130 @@
+#!/bin/bash
+
+set -e
+
+unset output
+conf=()
+unset pson2json
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    "$0") ;;
+    "-o") output="$2"; shift;;
+    *.conf) conf+=("$1");;
+    */pson2json) pson2json="$1";;
+    *) echo "Unknown argument $1"; exit 1;;
+    esac
+    shift
+done
+
+if [[ "${conf[@]}" == "" ]]
+then
+    echo "No .conf file provided"
+    exit 1
+fi
+
+tempdir="$(mktemp -d plsi-rc-conf2json.XXXXXX)"
+trap "rm -rf $tempdir" EXIT
+
+cat > "$tempdir"/macros.pson << "EOF"
+[
+EOF
+
+cat "${conf[@]}" | while read line
+do
+    name="$(echo "$line" | sed 's/^name \([_A-Za-z0-9]*\) depth.*/\1/g')"
+    depth="$(echo "$line" | sed 's/.*depth \([0-9]*\) width.*/\1/g')"
+    width="$(echo "$line" | sed 's/.*width \([0-9]*\) ports.*/\1/g')"
+    ports="$(echo "$line" | sed 's/.*ports \([mrw,mwrite,mread]*\).*/\1/g')"
+
+    # Some entries don't have "mask_gran" so instead we just set it to "width"
+    # to avoid needing to special-case _everything_ in the code.
+    mask_gran="$(echo "$line" | sed 's/.*mask_gran \([0-9]*\)$/\1/g')"
+    if [[ "$(echo "$mask_gran" | grep "^name")" != "" ]]
+    then
+        mask_gran="$width"
+    fi
+
+    cat >> "$tempdir"/macros.pson <<EOF
+  {
+    "name": "$name",
+    "depth": $depth,
+    "width": $width,
+    "ports": [
+EOF
+
+    case "$ports" in
+    mrw) cat >> "$tempdir"/macros.pson <<EOF
+      {
+        "direction": "read+write",
+        "clock name": "RW0_clk",
+        "mask granularity": $mask_gran,
+        "output port name": "RW0_rdata",
+        "input port name": "RW0_wdata",
+        "address port name": "RW0_addr",
+        "mask port name": "RW0_wmask",
+        "enable port name": "RW0_en",
+        "write enable port name": "RW0_wmode",
+      },
+EOF
+    ;;
+    rw) cat >> "$tempdir"/macros.pson <<EOF
+      {
+        "direction": "read+write",
+        "clock name": "RW0_clk",
+        "output port name": "RW0_rdata",
+        "input port name": "RW0_wdata",
+        "address port name": "RW0_addr",
+        "enable port name": "RW0_en",
+        "write enable port name": "RW0_wmode",
+      },
+EOF
+    ;;
+    mwrite,read) cat >> "$tempdir"/macros.pson <<EOF
+      {
+        "direction": "write",
+        "clock name": "W0_clk",
+        "mask granularity": $mask_gran,
+        "input port name": "W0_data",
+        "address port name": "W0_addr",
+        "enable port name": "W0_en",
+        "mask port name": "W0_mask",
+      },
+      {
+        "direction": "read",
+        "clock name": "R0_clk",
+        "output port name": "R0_data",
+        "address port name": "R0_addr",
+        "enable port name": "R0_en"
+      },
+EOF
+    ;;
+    *) echo "Unknown port type $ports"; exit 1;;
+    esac
+
+    cat >> "$tempdir"/macros.pson <<EOF
+    ],
+  },
+EOF
+done
+
+cat >> "$tempdir"/macros.pson << "EOF"
+]
+EOF
+
+if [[ "$pson2json" == "" ]]
+then
+    echo "No pson2json converter provided"
+    exit 1
+fi
+
+$pson2json -i "$tempdir"/macros.pson -o "$output"
+
+cat >"$tempdir"/parse.py <<EOF
+import json
+
+json_data=open("$output").read()
+data = json.loads(json_data)
+EOF
+
+python2 "$tempdir"/parse.py

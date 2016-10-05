@@ -16,8 +16,8 @@ OBJ_CORE_RTL_V ?= $(RC_OBJ_CORE_RTL_V)
 
 # The other output of a core generator is a list of macros that need to be
 # implemented in the technology.
-RC_OBJ_CORE_RTL_MACROS = $(OBJ_CORE_DIR)/plsi-generated/$(CORE_TOP).$(CORE_CONFIG).macros.json
-OBJ_CORE_RTL_MACROS = $(RC_OBJ_CORE_RTL_MACROS)
+RC_OBJ_CORE_MACROS = $(OBJ_CORE_DIR)/plsi-generated/$(CORE_TOP).$(CORE_CONFIG).macros.json
+OBJ_CORE_MACROS = $(RC_OBJ_CORE_MACROS)
 
 # I can't use upstream's FIRRTL invocation so I have to provide my own (to
 # split the test harness out into two parts).
@@ -26,6 +26,10 @@ OBJ_CORE_RTL_FIRRTL ?= $(RC_OBJ_CORE_RTL_FIR)
 
 OBJ_CORE_FIRRTL_TOP_CMD ?= $(OBJ_CORE_DIR)/firrtl-passes/GenerateTop/GenerateTop
 OBJ_CORE_FIRRTL_HARNESS_CMD ?= $(OBJ_CORE_DIR)/firrtl-passes/GenerateHarness/GenerateHarness
+
+# The SRAM configuration file that comes out of Rocket Chip isn't directly but
+# instead needs to be merged into a macro file.
+RC_OBJ_CORE_MEMORY_CONF = $(OBJ_CORE_DIR)/rocketchip-generated/rocketchip.$(CORE_CONFIG).conf
 
 # There are various simulation-only, non-Verilog files needed to make the
 # Verilog simulate.  They're all defined here.
@@ -45,7 +49,7 @@ OBJ_CORE_SIM_FILES = $(RC_OBJ_CORE_SIM_FILES)
 # These files provide Verilog implementations of the macros, and might be
 # replaced by the output of some other tool.
 RC_OBJ_CORE_SIM_MACRO_FILES = \
-	$(OBJ_CORE_DIR)/rocketchip-generated/rocketchip.$(CORE_CONFIG).behav_srams.v
+	$(OBJ_CORE_DIR)/plsi-generated/$(CORE_TOP).$(CORE_CONFIG).macros.v
 OBJ_CORE_SIM_MACRO_FILES = $(RC_OBJ_CORE_SIM_MACRO_FILES)
 
 # Rocket Chip generates a Makefrag for testing.  This isn't in the format I

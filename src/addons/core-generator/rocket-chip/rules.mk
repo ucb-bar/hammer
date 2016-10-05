@@ -42,13 +42,30 @@ $(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).v: $(OBJ_CORE_FIRR
 	@mkdir -p $(dir $@)
 	$(SCHEDULER_CMD) --max-threads=1 -- $< -i $(abspath $(filter %.fir,$^)) -o $(abspath $@) --syn-top $(CORE_TOP) --harness-top $(CORE_SIM_TOP)
 
-$(RC_OBJ_CORE_RTL_V): $(OBJ_CORE_FIRRTL_TOP_CMD) $(RC_OBJ_CORE_RTL_FIR)
+$(OBJ_CORE_DIR)/$(CORE_TOP).$(CORE_CONFIG).%: $(OBJ_CORE_FIRRTL_TOP_CMD) $(RC_OBJ_CORE_RTL_FIR)
 	@mkdir -p $(dir $@)
 	$(SCHEDULER_CMD) --max-threads=1 -- $< -i $(abspath $(filter %.fir,$^)) -o $(abspath $@) --syn-top $(CORE_TOP) --harness-top $(CORE_SIM_TOP)
 
-$(RC_OBJ_CORE_RTL_FIR) $(RC_OBJ_CORE_RTL_D) $(RC_OBJ_CORE_SIM_MACRO_FILES): $(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).vsim.stamp
+$(RC_OBJ_CORE_RTL_FIR) \
+$(RC_OBJ_CORE_RTL_D) \
+$(RC_OBJ_CORE_MEMORY_CONF) : \
+		$(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).vsim.stamp
 	mkdir -p $(dir $@)
 	cp -f $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/$(notdir $@) $@
+
+# The Rocket Chip SRAM .conf file is funky and implicitly encodes a lot of
+# information.  To avoid having this propogate the the rest of the tools I
+# convert it into a saner macro configuration file, which has the advantage of
+# also containing information for non-SRAM macro types.
+$(RC_OBJ_CORE_MACROS): \
+		src/addons/core-generator/rocket-chip/tools/generate-macros \
+		$(RC_OBJ_CORE_MEMORY_CONF) \
+		$(CMD_PSON2JSON)
+	@mkdir -p $(dir $@)
+	$< -o $@ $^
+
+$(RC_OBJ_CORE_SIM_MACRO_FILES): $(CMD_PCAD_MACRO_COMPILER) $(RC_OBJ_CORE_MACROS)
+	$< -m $(filter %.macros.json,$^) -v $@
 
 # The actual list of tests is produced from Rocket Chip by some build process.
 # This isn't quite in a format I can understand, so it gets post-processed by a

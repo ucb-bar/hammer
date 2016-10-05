@@ -83,11 +83,13 @@ CMD_PCONFIGURE = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/pconfigure
 CMD_PPKGCONFIG = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/ppkg-config
 CMD_PHC = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/phc
 CMD_PCAD_INFER_DECOUPLED = $(OBJ_TOOLS_BIN_DIR)/pcad/bin/pcad-pipe-infer_decoupled
+CMD_PCAD_MACRO_COMPILER = $(OBJ_TOOLS_BIN_DIR)/pcad/bin/pcad-pipe-macro_compiler
 CMD_SBT = $(OBJ_TOOLS_BIN_DIR)/sbt/sbt
 CMD_GCC = $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/bin/gcc
 CMD_GXX = $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/bin/g++
+CMD_PSON2JSON = $(OBJ_TOOLS_BIN_DIR)/pson/bin/pson2json
 
-PKG_CONFIG_PATH=$(abspath $(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/lib/pkgconfig):$(abspath $(OBJ_TOOLS_BIN_DIR)/pconfigure/lib/pkgconfig)
+PKG_CONFIG_PATH=$(abspath $(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/lib/pkgconfig):$(abspath $(OBJ_TOOLS_BIN_DIR)/pconfigure/lib/pkgconfig):$(abspath $(OBJ_TOOLS_BIN_DIR)/pson/lib/pkgconfig)
 export PKG_CONFIG_PATH
 
 ##############################################################################
@@ -175,6 +177,14 @@ ifeq ($(OBJ_CORE_SIM_MACRO_FILES),)
 # automatically map to -- for example SRAMs.  These will be replaced by other
 # things in various stages of simulation.
 $(error CORE_GENERATOR needs to set OBJ_CORE_SIM_MACRO_FILES)
+endif
+
+ifeq ($(OBJ_CORE_MACROS),)
+# This is a JSON description of the macros that a core generator can request
+# from PLSI.  Various other PLSI tools will consume these macro descriptions in
+# order to insert them into other parts of the flow (for example, SRAM macros
+# will be used in synthesis, floorplanning, and P&R).
+$(error CORE_GENERATOR needs to set OBJ_CORE_MACROS)
 endif
 
 ifeq ($(OBJ_CORE_RTL_V),)
@@ -400,7 +410,7 @@ $(PLSI_CACHE_DIR)/distfiles/tclap-$(TCLAP_VERSION).tar.gz:
 	wget 'http://downloads.sourceforge.net/project/tclap/tclap-$(TCLAP_VERSION).tar.gz?r=https%3A%2F%2Fsourceforge.net%2Fprojects%2Ftclap%2Ffiles%2F&ts=1468971231&use_mirror=jaist' -O $@
 
 # Builds PCAD, the heart of PLSI
-$(CMD_PCAD_INFER_DECOUPLED): $(OBJ_TOOLS_BIN_DIR)/pcad/stamp
+$(CMD_PCAD_INFER_DECOUPLED) $(CMD_PCAD_MACRO_COMPILER): $(OBJ_TOOLS_BIN_DIR)/pcad/stamp
 
 $(OBJ_TOOLS_BIN_DIR)/pcad/stamp: $(OBJ_TOOLS_SRC_DIR)/pcad/Makefile $(CMD_GXX)
 	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(dir $<) install CXX=$(abspath $(CMD_GXX))
@@ -423,6 +433,27 @@ $(CMD_SBT): src/tools/sbt/sbt
 	mkdir -p $(dir $@)
 	cat $^ | sed 's!@@SBT_SRC_DIR@@!$(abspath $(dir $^))!' > $@
 	chmod +x $@
+
+# PSON is a C++ JSON parsing library that also allows for JSON-like files that
+# have extra trailing commas floating around.  Piping through this allows
+# stateless JSON emission from various other parts of the code.
+$(CMD_PSON2JSON): $(OBJ_TOOLS_BIN_DIR)/pson/stamp
+
+$(OBJ_TOOLS_BIN_DIR)/pson/stamp: $(OBJ_TOOLS_SRC_DIR)/pson/Makefile $(CMD_GCC) $(CMD_GXX)
+	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(dir $<) CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX)) install
+	date > $@
+
+$(OBJ_TOOLS_SRC_DIR)/pson/Makefile: \
+		$(OBJ_TOOLS_SRC_DIR)/pson/Configfile \
+		$(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/stamp \
+		$(CMD_PCONFIGURE) $(CMD_GCC) $(CMD_GXX)
+	cd $(dir $<); $(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --phc $(abspath $(CMD_PHC)) "PREFIX = $(abspath $(OBJ_TOOLS_BIN_DIR)/pson)" --verbose
+
+$(OBJ_TOOLS_SRC_DIR)/pson/Configfile: $(shell find src/tools/pson -type f)
+	rm -rf $(dir $@)
+	mkdir -p $(dir $@)
+	rsync -a --delete src/tools/pson/ $(dir $@)
+	touch $@
 
 # Here are a bunch of pattern rules that will try to copy outputs.
 bin/core-$(CORE_CONFIG)/$(CORE_TOP).v: $(OBJ_CORE_RTL_V)
