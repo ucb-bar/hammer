@@ -31,4 +31,8 @@ fi
 
 set -e
 set -x
-"$simulator" ${debug_args[*]} ${args[*]}
+"$simulator" \
+    +vcs+initreg+random \
+    +verbose \
+    ${debug_args[*]} \
+    ${args[*]}

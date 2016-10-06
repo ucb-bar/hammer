@@ -74,6 +74,7 @@ $vcs -full64 \
     +v2k \
     +vcs+lic+wait \
     +define+RANDOMIZE \
+    +vcs+initreg+random \
     ${debug_flags} \
     -CC "-std=c++11" \
     $tbvfrag \

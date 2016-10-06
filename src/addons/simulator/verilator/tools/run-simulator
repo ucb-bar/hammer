@@ -30,4 +30,6 @@ then
 fi
 
 set -x
-"$simulator" ${debug_args[*]} ${args[*]}
+"$simulator" \
+    ${debug_args[*]} \
+    ${args[*]}

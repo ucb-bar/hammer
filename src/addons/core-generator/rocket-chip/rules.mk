@@ -42,7 +42,7 @@ $(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).v: $(OBJ_CORE_FIRR
 	@mkdir -p $(dir $@)
 	$(SCHEDULER_CMD) --max-threads=1 -- $< -i $(abspath $(filter %.fir,$^)) -o $(abspath $@) --syn-top $(CORE_TOP) --harness-top $(CORE_SIM_TOP)
 
-$(OBJ_CORE_DIR)/$(CORE_TOP).$(CORE_CONFIG).%: $(OBJ_CORE_FIRRTL_TOP_CMD) $(RC_OBJ_CORE_RTL_FIR)
+$(OBJ_CORE_DIR)/plsi-generated/$(CORE_TOP).$(CORE_CONFIG).%: $(OBJ_CORE_FIRRTL_TOP_CMD) $(RC_OBJ_CORE_RTL_FIR)
 	@mkdir -p $(dir $@)
 	$(SCHEDULER_CMD) --max-threads=1 -- $< -i $(abspath $(filter %.fir,$^)) -o $(abspath $@) --syn-top $(CORE_TOP) --harness-top $(CORE_SIM_TOP)
 
@@ -65,7 +65,8 @@ $(RC_OBJ_CORE_MACROS): \
 	$< -o $@ $^
 
 $(RC_OBJ_CORE_SIM_MACRO_FILES): $(CMD_PCAD_MACRO_COMPILER) $(RC_OBJ_CORE_MACROS)
-	$< -m $(filter %.macros.json,$^) -v $@
+	#$< -m $(filter %.macros.json,$^) -v $@
+	cp $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/*.behav_srams.v $@
 
 # The actual list of tests is produced from Rocket Chip by some build process.
 # This isn't quite in a format I can understand, so it gets post-processed by a

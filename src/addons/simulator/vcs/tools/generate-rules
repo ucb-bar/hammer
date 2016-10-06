@@ -37,6 +37,7 @@ ifeq (\$(VCS_BIN),)
 \$(error VCS_BIN must be defined)
 endif
 
+\$(info \$(OBJ_${VCS_TARGET_CAPS}_${VTYPE}_V))
 \$(patsubst %,\$(OBJ_${VCS_TARGET_CAPS}_DIR)/simulator-%,ndebug debug): \\
 		\$(OBJ_${VCS_TARGET_CAPS}_${VTYPE}_V) \\
 		\$(OBJ_${VCS_TARGET_CAPS}_SIM_FILES) \\
