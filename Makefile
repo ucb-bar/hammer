@@ -418,6 +418,7 @@ $(OBJ_TOOLS_BIN_DIR)/pcad/stamp: $(OBJ_TOOLS_SRC_DIR)/pcad/Makefile $(CMD_GXX)
 
 $(OBJ_TOOLS_SRC_DIR)/pcad/Makefile: $(OBJ_TOOLS_SRC_DIR)/pcad/stamp \
 				    $(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/stamp \
+				    $(OBJ_TOOLS_BIN_DIR)/pson/stamp \
 				    $(CMD_PCONFIGURE) $(CMD_PPKGCONFIG) $(CMD_PHC)
 	mkdir -p $(dir $@)
 	echo 'PREFIX = $(abspath $(OBJ_TOOLS_BIN_DIR))/pcad' >> $(OBJ_TOOLS_SRC_DIR)/pcad/Configfile.local
