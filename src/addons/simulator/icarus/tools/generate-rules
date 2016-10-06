@@ -1,0 +1,43 @@
+#!/bin/bash
+
+unset output
+unset ICARUS_TARGET_CAPS
+unset ICARUS_TARGET_LOWER
+unset VTYPE
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    --lower) ICARUS_TARGET_LOWER="$2"; shift;;
+    --upper) ICARUS_TARGET_CAPS="$2"; shift;;
+    --output) output="$2"; shift;;
+    --vtype) VTYPE="$2"; shift;;
+    *) echo "unknown argument $1"; exit 1;;
+    esac
+    shift
+done
+
+cat >"$output" <<EOF
+\$(CHECK_${ICARUS_TARGET_CAPS}_DIR)/%.out: \$(${ICARUS_TARGET_CAPS}_SIMULATOR_ADDON)/tools/run-simulator \$(OBJ_${ICARUS_TARGET_CAPS}_DIR)/simulator-ndebug \$(CMD_PTEST)
+	mkdir -p \$(dir \$@)
+	\$(SCHEDULER_CMD) --max-threads=1 -- \$(CMD_PTEST) --test \$(abspath \$(${ICARUS_TARGET_CAPS}_SIMULATOR_ADDON)/tools/run-simulator) --out \$@ --args \$(abspath \$^)
+
+\$(CHECK_${ICARUS_TARGET_CAPS}_DIR)/%.trace-out \$(CHECK_${ICARUS_TARGET_CAPS}_DIR)/%.vpd: \$(${ICARUS_TARGET_CAPS}_SIMULATOR_ADDON)/tools/run-simulator \$(OBJ_${ICARUS_TARGET_CAPS}_DIR)/simulator-debug \$(CMD_PTEST)
+	mkdir -p \$(dir \$@)
+	\$(SCHEDULER_CMD) --max-threads=1 -- \$(CMD_PTEST) --test \$(abspath \$(${ICARUS_TARGET_CAPS}_SIMULATOR_ADDON)/tools/run-simulator) --out \$@ --args \$(abspath \$^) --vcd \$@.vcd
+
+ifeq (\$(${ICARUS_TARGET_CAPS}_TOP),)
+\$(error ${ICARUS_TARGET_CAPS}_TOP must be defined)
+endif
+
+ifeq (\$(OBJ_${ICARUS_TARGET_CAPS}_${VTYPE}_V),)
+\$(error OBJ_${ICARUS_TARGET_CAPS}_${VTYPE}_V must be defined)
+endif
+
+\$(patsubst %,\$(OBJ_${ICARUS_TARGET_CAPS}_DIR)/simulator-%,ndebug debug): \\
+		\$(OBJ_${ICARUS_TARGET_CAPS}_${VTYPE}_V) \\
+		\$(OBJ_${ICARUS_TARGET_CAPS}_SIM_FILES) \\
+		\$(ICARUS_BIN) \\
+		\$(${ICARUS_TARGET_CAPS}_SIMULATOR_ADDON)/tools/build-simulator
+	mkdir -p \$(dir \$@)
+	+\$(SCHEDULER_CMD) -- \$(abspath \$(${ICARUS_TARGET_CAPS}_SIMULATOR_ADDON)/tools/build-simulator) -o \$(abspath \$@) --top \$(${ICARUS_TARGET_CAPS}_SIM_TOP) --level ${ICARUS_TARGET_LOWER} --mode \$(patsubst simulator-%,%,\$(notdir \$@)) \$(abspath \$^)
+EOF

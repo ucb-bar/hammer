@@ -1,0 +1,47 @@
+#!/bin/bash
+
+set -e
+
+verilog=()
+verilogh=()
+c=()
+h=()
+o=()
+output=""
+mode=""
+icarus=""
+top=""
+include=()
+i=()
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    */rocketTestHarness.v) ;;
+    */TestDriver.v) ;;
+    *.v) verilog+=("$1");;
+    *.vh) verilogh+=("$1");;
+    *.c) c+=("$1");;
+    *.h) h+=("-include $1");;
+    *.c++) c+=("$1");;
+    *.cxx) c+=("$1");;
+    *.cc) c+=("$1");;
+    *.so) o+=("$1");;
+    */bin/iverilog) icarus="$1";;
+    */plsi-include.stamp) i+=("-I$(dirname "$1")");;
+    "-o") output="$2"; shift;;
+    "--level") level="$2"; shift;;
+    "--mode") mode="$2"; shift;;
+    "--top") top="$2"; shift;;
+    $0) ;;
+    *) echo "Unknown argument $1" >&2; exit 2;;
+    esac
+    shift
+done
+
+set -e
+set -x
+
+$icarus \
+    -g2005-sv \
+    ${verilogh[*]} \
+    ${verilog[*]}
