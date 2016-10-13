@@ -331,6 +331,7 @@ bugreport::
 # Pretty much everything needs a newer GCC than will be availiable on any CAD
 # tools machines.
 $(CMD_GCC) $(CMD_GXX): $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/stamp
+	touch $@
 
 $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/stamp: $(OBJ_TOOLS_SRC_DIR)/gcc-$(GCC_VERSION)/build/Makefile
 	+$(SCHEDULER_CMD) --make -- src/tools/build-gcc --srcdir $(dir $<) --bindir $(dir $@) --logfile $(dir $<)/build.log
@@ -353,6 +354,7 @@ $(PLSI_CACHE_DIR)/distfiles/gcc-$(GCC_VERSION).tar.gz:
 # Builds pconfigure and its related tools
 $(CMD_PCONFIGURE) $(CMD_PTEST) $(CMD_PPKGCONFIG) $(CMD_PHC): \
 		$(OBJ_TOOLS_BIN_DIR)/pconfigure/stamp
+	touch $@
 
 $(OBJ_TOOLS_BIN_DIR)/pconfigure/stamp: $(OBJ_TOOLS_SRC_DIR)/pconfigure/Makefile
 	$(MAKE) -C $(OBJ_TOOLS_SRC_DIR)/pconfigure CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX)) install
@@ -411,6 +413,7 @@ $(PLSI_CACHE_DIR)/distfiles/tclap-$(TCLAP_VERSION).tar.gz:
 
 # Builds PCAD, the heart of PLSI
 $(CMD_PCAD_INFER_DECOUPLED) $(CMD_PCAD_MACRO_COMPILER): $(OBJ_TOOLS_BIN_DIR)/pcad/stamp
+	touch $@
 
 $(OBJ_TOOLS_BIN_DIR)/pcad/stamp: $(OBJ_TOOLS_SRC_DIR)/pcad/Makefile $(CMD_GXX)
 	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(dir $<) install CXX=$(abspath $(CMD_GXX))
@@ -439,6 +442,7 @@ $(CMD_SBT): src/tools/sbt/sbt
 # have extra trailing commas floating around.  Piping through this allows
 # stateless JSON emission from various other parts of the code.
 $(CMD_PSON2JSON): $(OBJ_TOOLS_BIN_DIR)/pson/stamp
+	touch $@
 
 $(OBJ_TOOLS_BIN_DIR)/pson/stamp: $(OBJ_TOOLS_SRC_DIR)/pson/Makefile $(CMD_GCC) $(CMD_GXX)
 	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(dir $<) CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX)) install
