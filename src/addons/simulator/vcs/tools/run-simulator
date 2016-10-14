@@ -4,6 +4,7 @@ unset simulator
 unset debug
 unset vpd
 args=()
+debug_args=()
 while [[ "$1" != "" ]]
 do
     case "$1" in
@@ -23,14 +24,26 @@ do
     shift
 done
 
-debug_args=()
-if [[ "$debug" == "true" ]]
-then
-    debug_args+=("+vcdplusfile=${vpd}")
-fi
+#if [[ "$debug" == "true" ]]
+#then
+#    debug_args+=("+vcdplusfile=${vpd}")
+#fi
+
+tempdir="$(mktemp -d /tmp/plsi-vcs-run.XXXXXX)"
+trap "rm -rf $tempdir" EXIT
 
 set -e
 set -x
 "$simulator" \
+    +max-cycles=600000 \
     ${debug_args[*]} \
-    ${args[*]}
+    ${args[*]} |& tee $tempdir/log
+
+# FIXME: This is Rocket Chip specific
+set +e
+grep FAILED $tempdir/log
+if [[ "$?" != 1 ]]
+then
+   echo "FAILED found in log"
+   exit 1
+fi

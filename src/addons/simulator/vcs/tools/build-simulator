@@ -14,6 +14,7 @@ top=""
 include=()
 i=()
 cc=()
+debug_flags=()
 tbvfrag=""
 while [[ "$1" != "" ]]
 do
@@ -50,12 +51,6 @@ export PATH="$VCS_HOME/bin:$PATH"
 EOF
 source $output.enter
 
-if [[ "$mode" == "debug" ]]
-then
-    debug_flags=()
-    debug_flags+=("+define+DEBUG")
-fi
-
 if [[ "$vcs" == "" ]]
 then
     echo "Unable to find VCS, pass it on the command line"
@@ -73,8 +68,7 @@ $vcs -full64 \
     +rad \
     +v2k \
     +vcs+lic+wait \
-    +define+RANDOMIZE \
-    ${debug_flags} \
+    ${debug_flags[@]} \
     -CC "-std=c++11" \
     $tbvfrag \
     ${h[*]} \
