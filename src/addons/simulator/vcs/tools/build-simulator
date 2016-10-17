@@ -51,6 +51,11 @@ export PATH="$VCS_HOME/bin:$PATH"
 EOF
 source $output.enter
 
+if [[ "$mode" == "debug" ]]
+then
+    debug_flags+=("+define+DEBUG")
+fi
+
 if [[ "$vcs" == "" ]]
 then
     echo "Unable to find VCS, pass it on the command line"
