@@ -212,6 +212,12 @@ ifeq ($(OBJ_SOC_SIM_MACRO_FILES),)
 $(error SOC_GENERATOR needs to set OBJ_SOC_SIM_MACRO_FILES)
 endif
 
+ifeq ($(OBJ_SOC_MACROS),)
+# Like OBJ_CORE_MACROS, but for the whole SOC
+$(error SOC_GENERATOR needs to set OBJ_SOC_MACROS)
+endif
+
+# This selects the technology to implement the design with.
 -include $(OBJ_TECH_DIR)/makefrags/vars.mk
 
 #ifeq ($(TECHNOLOGY_LIBERTY_FILES),)
