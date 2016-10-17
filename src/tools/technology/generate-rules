@@ -45,7 +45,7 @@ for tarball in techfile["tarballs"]:
 	of.write("{0}: {1}\n".format(tarball_stamp, tarball_path))
 	of.write("\t@rm -rf {0}\n".format(target_dir))
 	of.write("\t@mkdir -p {0}\n".format(target_dir))
-	of.write("\ttar -xpf $^ -C {0}\n".format(target_dir))
+	of.write("\ttar -xf $^ -C {0}\n".format(target_dir))
 	of.write("\t@mkdir -p $(dir $@)\n")
 	of.write("\tdate > $@\n")
 
