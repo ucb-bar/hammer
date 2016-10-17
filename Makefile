@@ -35,12 +35,14 @@ SYNTHESIS_TOOL ?= yosys
 CORE_CONFIG ?= DefaultConfig
 CORE_SIM_CONFIG ?= default
 SOC_CONFIG ?= default
+MAP_CONFIG ?= default
 SYN_CONFIG ?= default
 
 # Defines the simulator used to run simulation at different levels
 SIMULATOR ?= verilator
 CORE_SIMULATOR ?= $(SIMULATOR)
 SOC_SIMULATOR ?= $(SIMULATOR)
+MAP_SIMULATOR ?= $(SIMULATOR)
 SYN_SIMULATOR ?= $(SIMULATOR)
 
 # The scheduler to use when running large jobs.  Changing this doesn't have any
@@ -71,12 +73,14 @@ OBJ_TOOLS_BIN_DIR = obj/tools/install
 OBJ_CORE_DIR = obj/core-$(CORE_CONFIG)
 OBJ_SOC_DIR = obj/soc-$(CORE_CONFIG)-$(SOC_CONFIG)
 OBJ_TECH_DIR = obj/technology/$(TECHNOLOGY)
-OBJ_SYN_DIR = obj/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(SYN_CONFIG)
+OBJ_MAP_DIR = obj/map-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)
+OBJ_SYN_DIR = obj/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)
 
 # CHECK_* directories are where the output of tests go
 CHECK_CORE_DIR = check/core-$(CORE_CONFIG)
 CHECK_SOC_DIR = check/soc-$(CORE_CONFIG)-$(SOC_CONFIG)
-CHECK_SYN_DIR = check/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(SYN_CONFIG)
+CHECK_MAP_DIR = check/map-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)
+CHECK_SYN_DIR = check/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)
 
 CMD_PTEST = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/ptest
 CMD_PCONFIGURE = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/pconfigure
@@ -124,6 +128,11 @@ endif
 SOC_SIMULATOR_ADDON = $(wildcard src/addons/simulator/$(SOC_SIMULATOR)/ $(ADDONS_DIR)/simulator/$(SOC_SIMULATOR)/)
 ifneq ($(words $(SOC_SIMULATOR_ADDON)),1)
 $(error Unable to resolve SOC_GENERATOR=$(SOC_GENERATOR): found "$(SOC_GENERATOR_ADDON)")
+endif
+
+MAP_SIMULATOR_ADDON = $(wildcard src/addons/simulator/$(MAP_SIMULATOR)/ $(ADDONS_DIR)/simulator/$(MAP_SIMULATOR)/)
+ifneq ($(words $(MAP_SIMULATOR_ADDON)),1)
+$(error Unable to resolve MAP_GENERATOR=$(MAP_GENERATOR): found "$(MAP_GENERATOR_ADDON)")
 endif
 
 SYNTHESIS_TOOL_ADDON = $(wildcard src/addons/synthesis/$(SYNTHESIS_TOOL)/ $(ADDONS_DIR)/synthesis/$(SYNTHESIS_TOOL)/)
@@ -220,10 +229,30 @@ endif
 # This selects the technology to implement the design with.
 -include $(OBJ_TECH_DIR)/makefrags/vars.mk
 
-#ifeq ($(TECHNOLOGY_LIBERTY_FILES),)
-#$(error TECHNOLOGY needs to set TECHNOLOGY_LIBERTY_FILES)
-#endif
+ifneq ($(wildcard $(OBJ_TECH_DIR)/makefrags/vars.mk),)
+ifeq ($(TECHNOLOGY_LIBERTY_FILES),)
+$(error TECHNOLOGY needs to set TECHNOLOGY_LIBERTY_FILES)
+endif
+endif
 
+# The map step implements technology-specific macros (SRAMs, pads, clock stuff)
+# in a manner that's actually technology-specific (as opposed to using the
+# generic PLSI versions).  This results in some verilog for simulation, but it
+# may result in some additional verilog for synthesis (building large SRAMs out
+# of smaller ones, for example).
+MAP_TOP = $(SOC_TOP)
+MAP_SIM_TOP = $(CORE_SIM_TOP)
+
+OBJ_MAP_RTL_V = $(OBJ_MAP_DIR)/$(MAP_TOP).v
+OBJ_MAP_SIM_FILES = $(OBJ_SOC_SIM_FILES)
+OBJ_MAP_SIM_MACRO_FILES = $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_simulation.v
+OBJ_MAP_MACROS = $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros.json
+
+include $(MAP_SIMULATOR_ADDON)/map-vars.mk
+
+# The synthesis step converts RTL to a netlist.  This only touches the
+# synthesizable Verilog that comes out of the mapping step, but additionally
+# requires a whole bunch of files so it knows what to do with the macros.
 include $(SYNTHESIS_TOOL_ADDON)/vars.mk
 include $(SYN_SIMULATOR_ADDON)/syn-vars.mk
 
@@ -246,6 +275,7 @@ include $(CORE_SIMULATOR_ADDON)/core-rules.mk
 include $(SOC_GENERATOR_ADDON)/rules.mk
 include $(SOC_SIMULATOR_ADDON)/soc-rules.mk
 -include $(OBJ_TECH_DIR)/makefrags/rules.mk
+include $(MAP_SIMULATOR_ADDON)/map-rules.mk
 include $(SYNTHESIS_TOOL_ADDON)/rules.mk
 include $(SOC_SIMULATOR_ADDON)/syn-rules.mk
 
@@ -265,7 +295,7 @@ makefrags::
 # Runs all the test cases.  Note that this _always_ passes, you need to run
 # "make report" to see if the tests passed or not.
 .PHONY: check
-check: $(patsubst %,check-%,core soc syn)
+check: $(patsubst %,check-%,core soc map syn)
 
 # A virtual target that reports on the status of the test cases, in addition to
 # running them (if necessary).
@@ -280,6 +310,9 @@ check-core:
 .PHONY: check-soc
 check-soc:
 
+.PHONY: check-map
+check-map:
+
 # The various RTL targets
 .PHONY: core-verilog
 core-verilog: bin/core-$(CORE_CONFIG)/$(CORE_TOP).v
@@ -287,6 +320,10 @@ core-verilog: bin/core-$(CORE_CONFIG)/$(CORE_TOP).v
 
 .PHONY: soc-verilog
 soc-verilog: bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP).v
+	$(info $@ availiable at $<)
+
+.PHONY: map-verilog
+map-verilog: bin/map-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)/$(MAP_TOP).v
 	$(info $@ availiable at $<)
 
 .PHONY: syn-verilog
@@ -475,6 +512,10 @@ bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP).v: $(OBJ_SOC_RTL_V)
 	mkdir -p $(dir $@)
 	cp --reflink=auto $^ $@
 
+bin/map-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)/$(MAP_TOP).v: $(OBJ_MAP_RTL_V)
+	mkdir -p $(dir $@)
+	cp --reflink=auto $^ $@
+
 bin/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP).v: $(OBJ_SYN_MAPPED_V)
 	mkdir -p $(dir $@)
 	cp --reflink=auto $^ $@
@@ -509,3 +550,20 @@ $(OBJ_TECH_DIR)/makefrags/vars.mk: src/tools/technology/generate-vars $(TECHNOLO
 $(OBJ_TECH_DIR)/makefrags/rules.mk: src/tools/technology/generate-rules $(TECHNOLOGY_JSON)
 	@mkdir -p $(dir $@)
 	$< -o $@ -i $(filter %.tech.json,$^)
+
+# The implementation of the technology mapping stage.  This produces the
+# verilog for synthesis that can later be used.  It's meant to be a single
+# file, so the macros are actually generated seperately.
+$(OBJ_MAP_RTL_V): $(OBJ_SOC_RTL_V) $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.v
+	@mkdir -p $(dir $@)
+	cat $^ > $@
+
+$(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.v: \
+		$(CMD_PCAD_MACRO_COMPILER) \
+		$(OBJ_SOC_MACROS)
+	@mkdir -p $(dir $@)
+	$< -v $@ -m $(filter %.macros.json,$^)
+
+$(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_simulation.v:
+	@mkdir -p $(dir $@)
+	touch $@
