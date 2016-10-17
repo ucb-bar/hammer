@@ -65,8 +65,7 @@ $(RC_OBJ_CORE_MACROS): \
 	$< -o $@ $^
 
 $(RC_OBJ_CORE_SIM_MACRO_FILES): $(CMD_PCAD_MACRO_COMPILER) $(RC_OBJ_CORE_MACROS)
-	#$< -m $(filter %.macros.json,$^) -v $@
-	cp $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/*.behav_srams.v $@
+	$< -m $(filter %.macros.json,$^) -v $@
 
 # The actual list of tests is produced from Rocket Chip by some build process.
 # This isn't quite in a format I can understand, so it gets post-processed by a
