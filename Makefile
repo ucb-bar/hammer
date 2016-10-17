@@ -225,7 +225,7 @@ endif
 #endif
 
 include $(SYNTHESIS_TOOL_ADDON)/vars.mk
-include $(SOC_SIMULATOR_ADDON)/syn-vars.mk
+include $(SYN_SIMULATOR_ADDON)/syn-vars.mk
 
 ifeq ($(OBJ_SYN_MAPPED_V),)
 $(error SYNTHESIS_TOOL needs to set OBJ_SYN_MAPPED_V)
