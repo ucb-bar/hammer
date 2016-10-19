@@ -92,6 +92,8 @@ CMD_SBT = $(OBJ_TOOLS_BIN_DIR)/sbt/sbt
 CMD_GCC = $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/bin/gcc
 CMD_GXX = $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/bin/g++
 CMD_PSON2JSON = $(OBJ_TOOLS_BIN_DIR)/pson/bin/pson2json
+CMD_FIRRTL_GENERATE_TOP = $(OBJ_TOOLS_BIN_DIR)/pfpmp/bin/GenerateTop
+CMD_FIRRTL_GENERATE_HARNESS = $(OBJ_TOOLS_BIN_DIR)/pfpmp/bin/GenerateHarness
 
 PKG_CONFIG_PATH=$(abspath $(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/lib/pkgconfig):$(abspath $(OBJ_TOOLS_BIN_DIR)/pconfigure/lib/pkgconfig):$(abspath $(OBJ_TOOLS_BIN_DIR)/pson/lib/pkgconfig)
 export PKG_CONFIG_PATH
@@ -502,6 +504,17 @@ $(OBJ_TOOLS_SRC_DIR)/pson/Configfile: $(shell find src/tools/pson -type f)
 	mkdir -p $(dir $@)
 	rsync -a --delete src/tools/pson/ $(dir $@)
 	touch $@
+
+# PFPMP is my collection of FIRRTL passes.
+$(CMD_FIRRTL_GENERATE_TOP) $(CMD_FIRRTL_GENERATE_HARNESS): $(OBJ_TOOLS_BIN_DIR)/pfpmp/stamp
+	touch $@
+
+$(OBJ_TOOLS_BIN_DIR)/pfpmp/stamp: $(shell find src/tools/pfpmp -type f)
+	rm -rf $(dir $@)
+	mkdir -p $(dir $@)
+	rsync -a --delete src/tools/pfpmp/ $(dir $@)
+	$(SCHEDULER_CMD) --make -- $(MAKE) FIRRTL_HOME=$(abspath src/rocket-chip/firrtl) CMD_SBT=$(abspath $(CMD_SBT)) -C $(dir $@)
+	date > $@
 
 # Here are a bunch of pattern rules that will try to copy outputs.
 bin/core-$(CORE_CONFIG)/$(CORE_TOP).v: $(OBJ_CORE_RTL_V)
