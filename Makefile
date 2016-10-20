@@ -575,7 +575,7 @@ $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.v: \
 		$(CMD_PCAD_MACRO_COMPILER) \
 		$(OBJ_SOC_MACROS)
 	@mkdir -p $(dir $@)
-	$< -v $@ -m $(filter %.macros.json,$^)
+	$< -v $@ -m $(filter %.macros.json,$^) --syn-flops
 
 $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_simulation.v:
 	@mkdir -p $(dir $@)
