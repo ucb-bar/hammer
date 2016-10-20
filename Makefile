@@ -506,7 +506,7 @@ $(OBJ_TOOLS_SRC_DIR)/pson/Configfile: $(shell find src/tools/pson -type f)
 	touch $@
 
 # PFPMP is my collection of FIRRTL passes.
-$(CMD_FIRRTL_GENERATE_TOP) $(CMD_FIRRTL_GENERATE_HARNESS): $(OBJ_TOOLS_BIN_DIR)/pfpmp/stamp
+$(CMD_FIRRTL_GENERATE_TOP) $(CMD_FIRRTL_GENERATE_HARNESS): $(OBJ_TOOLS_BIN_DIR)/pfpmp/stamp $(CMD_SBT)
 	touch $@
 
 $(OBJ_TOOLS_BIN_DIR)/pfpmp/stamp: $(shell find src/tools/pfpmp -type f)
