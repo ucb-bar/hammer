@@ -13,10 +13,10 @@ ifeq ($(wildcard $(DC_BIN)),)
 $(error Expected to find dc_shell at $(DC_BIN))
 endif
 
-SYN_TOP = $(SOC_TOP)
-SYN_SIM_TOP = $(SOC_SIM_TOP)
+SYN_TOP = $(MAP_TOP)
+SYN_SIM_TOP = $(MAP_SIM_TOP)
 OBJ_SYN_MAPPED_V = $(OBJ_SYN_DIR)/generated/$(SYN_TOP).mapped.v
-OBJ_SYN_SIM_FILES = $(OBJ_SOC_SIM_FILES) $(TECHNOLOGY_VERILOG_FILES)
+OBJ_SYN_SIM_FILES = $(OBJ_MAP_SIM_FILES) $(TECHNOLOGY_VERILOG_FILES)
 
 # DC flows are based on the reference methodology
 ifneq ($(SYNOPSYS_RM_DIR),)

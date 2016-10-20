@@ -33,7 +33,7 @@ $(PLSI_CACHE_DIR)/distfiles/abc-$(ABC_VERSION).tar.gz:
 # Runs a yosys synthesis job
 $(OBJ_SYN_MAPPED_V): \
 		$(abspath $(SYNTHESIS_TOOL_ADDON)/run-synthesis) \
-		$(OBJ_SOC_RTL_V) \
+		$(OBJ_MAP_RTL_V) \
 		$(TECHNOLOGY_LIBERTY_FILES) \
 		$(YOSYS_BIN)
 	@mkdir -p $(dir $@)

@@ -11,7 +11,7 @@ $(OBJ_SYN_MAPPED_V): $(OBJ_SYN_DIR)/synopsys-dc.stamp
 # for dependency resolution we instead.
 $(OBJ_SYN_DIR)/synopsys-dc.stamp: \
 		$(abspath $(SYNTHESIS_TOOL_ADDON)/run-synthesis) \
-		$(OBJ_SOC_RTL_V) \
+		$(OBJ_MAP_RTL_V) \
 		$(TECHNOLOGY_MILKYWAY_LIB_IN_DIRS) \
 		$(TECHNOLOGY_TLUPLUS_FILES) \
 		$(TECHNOLOGY_MILKYWAY_TECHFILES) \
