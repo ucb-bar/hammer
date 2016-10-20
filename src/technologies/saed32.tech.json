@@ -17,12 +17,27 @@
       "base var": "SAED32_TARBALL_DIR"
     },
     {
+      "path": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz",
+      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
+      "base var": "SAED32_TARBALL_DIR"
+    },
+    {
       "path": "SAED_EDK32.28nm_IO_v_01132015.tar.gz",
       "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
       "base var": "SAED32_TARBALL_DIR"
     },
     {
       "path": "SAED_EDK32.28nm_PLL_v_01132015.tar.gz",
+      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
+      "base var": "SAED32_TARBALL_DIR"
+    },
+    {
+      "path": "SAED_EDK32.28nm_REF_v_01132015.tar.gz",
+      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
+      "base var": "SAED32_TARBALL_DIR"
+    },
+    {
+      "path": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz",
       "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
       "base var": "SAED32_TARBALL_DIR"
     },
@@ -62,6 +77,47 @@
         {
           "type": "stdcell",
           "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "liberty file": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram/db_ccs/saed32sram_tt1p05v25c.lib",
+      "verilog file": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram/verilog/saed32nm.v",
+      "milkyway lib in dir": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram/milkyway/saed32nm_sram_1p9m/lib",
+      "ccs library file": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram/db_ccs/saed32sram_tt1p05v25c.db",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "25 C"
+      },
+      "supplies": {
+        "VDD": "1.05 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "type": "sram",
+          "name": "SRAM1RW1024x8",
+          "width": 8,
+          "depth": 1024,
+          "ports": [
+            {
+              "address port name": "A",
+              "address port polarity": "active high",
+              "clock port name": "CE",
+              "clock port polarity": "positive edge",
+              "write enable port name": "WEB",
+              "write enable port polarity": "active low",
+              "read enable port name": "OEB",
+              "read enable port polarity": "active low",
+              "chip enable port name": "CEB",
+              "chip enable port polarity": "active low",
+              "read port name": "O",
+              "read port polarity": "active high",
+              "write port name": "I",
+              "write port polarity": "active high"
+            }
+          ]
         }
       ]
     }
