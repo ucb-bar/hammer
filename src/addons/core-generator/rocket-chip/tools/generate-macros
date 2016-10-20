@@ -56,46 +56,42 @@ EOF
     case "$ports" in
     mrw) cat >> "$tempdir"/macros.pson <<EOF
       {
-        "direction": "read+write",
-        "clock name": "RW0_clk",
+        "clock port name": "RW0_clk",
         "mask granularity": $mask_gran,
         "output port name": "RW0_rdata",
         "input port name": "RW0_wdata",
         "address port name": "RW0_addr",
         "mask port name": "RW0_wmask",
-        "enable port name": "RW0_en",
+        "chip enable port name": "RW0_en",
         "write enable port name": "RW0_wmode",
       },
 EOF
     ;;
     rw) cat >> "$tempdir"/macros.pson <<EOF
       {
-        "direction": "read+write",
-        "clock name": "RW0_clk",
+        "clock port name": "RW0_clk",
         "output port name": "RW0_rdata",
         "input port name": "RW0_wdata",
         "address port name": "RW0_addr",
-        "enable port name": "RW0_en",
+        "chip enable port name": "RW0_en",
         "write enable port name": "RW0_wmode",
       },
 EOF
     ;;
     mwrite,read) cat >> "$tempdir"/macros.pson <<EOF
       {
-        "direction": "write",
-        "clock name": "W0_clk",
+        "clock port name": "W0_clk",
         "mask granularity": $mask_gran,
         "input port name": "W0_data",
         "address port name": "W0_addr",
-        "enable port name": "W0_en",
+        "chip enable port name": "W0_en",
         "mask port name": "W0_mask",
       },
       {
-        "direction": "read",
-        "clock name": "R0_clk",
+        "clock port name": "R0_clk",
         "output port name": "R0_data",
         "address port name": "R0_addr",
-        "enable port name": "R0_en"
+        "chip enable port name": "R0_en"
       },
 EOF
     ;;
