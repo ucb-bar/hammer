@@ -82,7 +82,7 @@
     },
     {
       "liberty file": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram/db_ccs/saed32sram_tt1p05v25c.lib",
-      "verilog file": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram/verilog/saed32nm.v",
+      "verilog file": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram/verilog/saed32sram.v",
       "milkyway lib in dir": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram/milkyway/SRAM32NM/lib",
       "ccs library file": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram/db_ccs/saed32sram_tt1p05v25c.db",
       "corner": {
