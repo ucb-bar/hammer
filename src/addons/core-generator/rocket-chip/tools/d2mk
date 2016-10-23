@@ -4,11 +4,15 @@ set -e
 set -o pipefail
 
 # Parse the command-line arguments
+unset input
+unset output
+unset config
 while [[ "$1" != "" ]]
 do
     case $1 in
     *.d)  input="$1";;
     "-o")  output="$2"; shift;;
+    "--config") config="$2"; shift;;
     *)     echo "Unable to parse argument $1"; exit 1;;
     esac
 
@@ -21,6 +25,13 @@ then
     exit 1
 fi
 
+unset shorten_tests
+case "$config" in
+smoke) shorten_tests="head -n1" ;;
+default) shorten_tests="cat" ;;
+*) echo "Unknown simulation config $config"; exit 1;;
+esac
+
 tempdir="$(mktemp -d plsi-test-list.XXXXXX)"
 trap "rm -rf $tempdir" EXIT
 
@@ -29,7 +40,7 @@ rm -f $output
 # Walk though every Make variable in the input, as they all contain test lists.
 # Since we only care about the single top-level test case, just go ahead and
 # dump them all out.
-grep -P '^[a-z0-9-].*=.*\\' $input | sed 's@^\([a-z0-9-]*\).*=.*\\@\1@' | while read var
+grep -P '^[a-z0-9-].*=.*\\' $input | sed 's@^\([a-z0-9-]*\).*=.*\\@\1@' | $shorten_tests | while read var
 do
     cat > $tempdir/Makefile <<EOF
 .PHONY: all
@@ -37,7 +48,7 @@ all:
 	@echo \$($var)
 include $(readlink -f $input)
 EOF
-    make --no-print-directory -f $tempdir/Makefile | sed 's@ @\n@g' | while read test
+    make --no-print-directory -f $tempdir/Makefile | sed 's@ @\n@g' | $shorten_tests | while read test
     do
         echo "check-core: \$(CHECK_CORE_DIR)/$test.out" >> $tempdir/out
         echo "trace-core: \$(CHECK_CORE_DIR)/$test.trace-out" >> $tempdir/out

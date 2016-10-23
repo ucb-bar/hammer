@@ -60,8 +60,8 @@ $(RC_OBJ_CORE_SIM_MACRO_FILES): $(CMD_PCAD_MACRO_COMPILER) $(RC_OBJ_CORE_MACROS)
 # little bash script.
 ifeq ($(filter $(MAKECMDGOALS),clean distclean),)
 -include $(OBJ_CORE_TESTS_MK)
-$(OBJ_CORE_DIR)/plsi-generated/tests-default.mk: src/addons/core-generator/rocket-chip/tools/d2mk $(OBJ_CORE_RTL_D)
-	+$< $(filter $(OBJ_CORE_DIR)/%,$^) -o $@
+$(OBJ_CORE_DIR)/plsi-generated/tests-$(CORE_SIM_CONFIG).mk: src/addons/core-generator/rocket-chip/tools/d2mk $(OBJ_CORE_RTL_D)
+	+$< $(filter $(OBJ_CORE_DIR)/%,$^) -o $@ --config $(CORE_SIM_CONFIG)
 endif
 
 $(OBJ_CORE_DIR)/plsi-generated/tests-%.mk: src/addons/core-generator/rocket-chip/src/tests-*.mk
