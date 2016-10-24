@@ -34,7 +34,9 @@ trap "rm -rf $tempdir" EXIT
 
 set -e
 set -x
-"$simulator" \
+cat "$simulator".ucli /dev/null | \
+    "$simulator" \
+    -ucli \
     +ntb_random_seed_automatic \
     +max-cycles=600000 \
     +vcs+initreg+random \

@@ -16,6 +16,8 @@ i=()
 cc=()
 debug_flags=()
 tbvfrag=""
+ucli_build_flags=()
+ucli_run_flags=()
 while [[ "$1" != "" ]]
 do
     case "$1" in
@@ -32,6 +34,8 @@ do
     */bin/vcs) vcs="$1";;
     */plsi-include.stamp) i+=("-CC \"-I$(dirname "$1")\"");;
     *.tb.vfrag) tbvfrag="+define+TBVFRAG+\\\"$(basename $1)\\\"";;
+    *.ucli) ucli_run_flags+=("$1");;
+    *.tab) ucli_build_flags+=("-P" "$1");;
     "-o") output="$2"; shift;;
     "--level") level="$2"; shift;;
     "--mode") mode="$2"; shift;;
@@ -75,6 +79,7 @@ $vcs -full64 \
     +vcs+lic+wait \
     +vcs+initreg+random \
     ${debug_flags[@]} \
+    ${ucli_build_flags[@]} \
     -CC "-std=c++11" \
     $tbvfrag \
     ${h[*]} \
@@ -84,3 +89,8 @@ $vcs -full64 \
     ${c[*]} \
     ${o[*]} \
     -o "$output"
+
+cat ${ucli_run_flags[@]} - >$output.ucli <<EOF
+run
+quit
+EOF
