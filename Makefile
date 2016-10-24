@@ -303,7 +303,7 @@ check: $(patsubst %,check-%,core soc map syn)
 # running them (if necessary).
 .PHONY: report
 report: $(CMD_PTEST) check
-	+$(CMD_PTEST)
+	@+$(CMD_PTEST)
 
 # These various smaller test groups are all defined by the core generator!
 .PHONY: check-core
