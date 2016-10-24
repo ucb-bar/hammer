@@ -7,7 +7,7 @@ unset CXX
 while [[ "$1" != "" ]]
 do
     case $1 in
-    "-o") output="$2"; shift;;
+    "--output-dir") output="$2"; shift;;
     "--tools-dir") tools_dir="$2"; shift;;
     --cc) CC="$2" shift;;
     --cxx) CXX="$2"; shift;;
@@ -18,9 +18,8 @@ done
 
 export CC
 export CXX
-export RISCV="$(dirname "$output")"
+export RISCV="$output"
 
 rm -rf "$RISCV"
 cd "$tools_dir"
 ./build.sh || (find . -iname "build.log" | xargs tail; exit 1)
-touch "$output"

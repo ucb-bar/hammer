@@ -37,8 +37,8 @@ RC_OBJ_CORE_SIM_FILES = \
 	$(CORE_DIR)/csrc/verilator.h \
 	$(CORE_DIR)/csrc/emulator.cc \
 	$(CORE_DIR)/csrc/SimDTM.cc \
-	$(OBJ_CORE_DIR)/riscv-tools/include/plsi-include.stamp \
-	$(OBJ_CORE_DIR)/riscv-tools/lib/libfesvr.so \
+	$(OBJ_CORE_DIR)/riscv-tools-install/include/plsi-include.stamp \
+	$(OBJ_CORE_DIR)/riscv-tools-install/lib/libfesvr.so \
 	$(CORE_DIR)/vsrc/SimDTM.v \
 	$(CORE_DIR)/vsrc/TestDriver.v \
 	$(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).v \

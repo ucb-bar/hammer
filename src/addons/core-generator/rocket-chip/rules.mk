@@ -71,22 +71,35 @@ $(OBJ_CORE_DIR)/plsi-generated/tests-%.mk: src/addons/core-generator/rocket-chip
 # We need to have built the RISC-V tools in order to build the simulator.
 # There are two rules here: one to build the tools, and another to install the
 # include stamp so the simulator can find the various directories.
-$(OBJ_CORE_DIR)/riscv-tools/include/plsi-include.stamp: $(OBJ_CORE_DIR)/riscv-tools/plsi-build.stamp
+$(OBJ_CORE_DIR)/plsi-generated/tools-copy.stamp:
+		$(find src/rocket-chip/riscv-tools -iname "*.S" -or -iname "*.cc")
+	@mkdir -p $(dir $@)
+	mkdir -p $(OBJ_CORE_DIR)/riscv-tools
+	rsync -a --delete src/rocket-chip/riscv-tools/ $(OBJ_CORE_DIR)/riscv-tools/
+	date > $@
+
+$(OBJ_CORE_DIR)/riscv-tools-install/include/plsi-include.stamp: $(OBJ_CORE_DIR)/plsi-generated/tools-build.stamp
+	@mkdir -p $(dir $@)
+	date > $@
+
+.PHONY: riscv-tools
+riscv-tools: $(OBJ_CORE_DIR)/plsi-generated/tools-build.stamp
+
+$(OBJ_CORE_DIR)/plsi-generated/tools-build.stamp: \
+		src/addons/core-generator/rocket-chip/tools/build-toolchain \
+		$(OBJ_CORE_DIR)/plsi-generated/tools-copy.stamp \
+		$(CMD_GCC) $(CMD_GXX)
+	@mkdir -p $(dir $@)
+	+$(SCHEDULER_CMD) -- $< --output-dir $(abspath $(OBJ_CORE_DIR)/riscv-tools-install) --tools-dir $(abspath $(OBJ_CORE_DIR)/riscv-tools) --cc $(abspath $(CMD_GCC)) --cxx $(abspath $(CMD_GXX))
+	date > $@
+
+$(OBJ_CORE_DIR)/riscv-tools-install/lib/libfesvr.so: $(OBJ_CORE_DIR)/plsi-generated/tools-build.stamp
 	touch $@
 
-$(OBJ_CORE_DIR)/riscv-tools/plsi-build.stamp: \
-		src/addons/core-generator/rocket-chip/tools/build-toolchain \
-		$(find $(OBJ_CORE_DIR)/rocket-chip/riscv-tools -iname "*.S" -or -iname "*.cc") \
-		$(OBJ_CORE_DIR)/plsi-generated/rocket-chip.stamp \
-		$(CMD_GCC) $(CMD_GXX)
-	+$(SCHEDULER_CMD) -- $< -o $(abspath $@) --tools-dir $(OBJ_CORE_DIR)/rocket-chip/riscv-tools --cc $(abspath $(CMD_GCC)) --cxx $(abspath $(CMD_GXX))
-
-$(OBJ_CORE_DIR)/riscv-tools/lib/libfesvr.so: $(OBJ_CORE_DIR)/riscv-tools/plsi-build.stamp
-
-$(OBJ_CORE_DIR)/riscv-tests/rv%: $(OBJ_CORE_DIR)/riscv-tools/plsi-build.stamp
+$(OBJ_CORE_DIR)/riscv-tests/rv%: $(OBJ_CORE_DIR)/plsi-generated/tools-build.stamp
 	mkdir -p $(dir $@)
-	cp -f $(OBJ_CORE_DIR)/riscv-tools/riscv64-unknown-elf/share/riscv-tests/isa/$(notdir $@) $@
+	cp -f $(OBJ_CORE_DIR)/riscv-tools-install/riscv64-unknown-elf/share/riscv-tests/isa/$(notdir $@) $@
 
-$(OBJ_CORE_DIR)/riscv-tests/%.riscv: $(OBJ_CORE_DIR)/riscv-tools/plsi-build.stamp
+$(OBJ_CORE_DIR)/riscv-tests/%.riscv: $(OBJ_CORE_DIR)/plsi-generated/tools-build.stamp
 	mkdir -p $(dir $@)
-	cp -f $(OBJ_CORE_DIR)/riscv-tools/riscv64-unknown-elf/share/riscv-tests/benchmarks/$(notdir $@) $@
+	cp -f $(OBJ_CORE_DIR)/riscv-tools-install/riscv64-unknown-elf/share/riscv-tests/benchmarks/$(notdir $@) $@
