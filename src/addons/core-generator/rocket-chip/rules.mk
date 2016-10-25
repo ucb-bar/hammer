@@ -71,8 +71,8 @@ $(OBJ_CORE_DIR)/plsi-generated/tests-%.mk: src/addons/core-generator/rocket-chip
 # We need to have built the RISC-V tools in order to build the simulator.
 # There are two rules here: one to build the tools, and another to install the
 # include stamp so the simulator can find the various directories.
-$(OBJ_CORE_DIR)/plsi-generated/tools-copy.stamp:
-		$(find src/rocket-chip/riscv-tools -iname "*.S" -or -iname "*.cc")
+$(OBJ_CORE_DIR)/plsi-generated/tools-copy.stamp: \
+		$(shell find src/rocket-chip/riscv-tools -iname "*.S" -or -iname "*.cc")
 	@mkdir -p $(dir $@)
 	mkdir -p $(OBJ_CORE_DIR)/riscv-tools
 	rsync -a --delete src/rocket-chip/riscv-tools/ $(OBJ_CORE_DIR)/riscv-tools/
