@@ -64,11 +64,6 @@ about.  The following core generators are supported:
  * rocket-chip: The interesting one.  This just calls into Rocket Chip and
    generates whatever it does.
 
- * crossbar: An example of how to customize Rocket Chip for your own top.  This
-   is a very intrusive example: it generates just a single AXI crossbar using
-   Rocket Chip's implementation.  This isn't meant to be an interesting chip
-   but instead an example of how to customize Rocket Chip without forking it.
-
 Other core generators will almost certainly be added, but for now I'm focusing
 on getting the flow to work with just Rocket Chip.  The core generator will be
 passed two make-level variables from PLSI:

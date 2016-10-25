@@ -13,3 +13,6 @@
 [submodule "src/tools/pfpmp"]
 	path = src/tools/pfpmp
 	url = git://github.com/palmer-dabbelt/pfpmp.git
+[submodule "src/addons/core-generator/boom/src/boom"]
+	path = src/addons/core-generator/boom/src/boom
+	url = git://github.com/ucb-bar/riscv-boom.git
