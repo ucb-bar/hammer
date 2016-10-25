@@ -16,7 +16,7 @@ endif
 SYN_TOP = $(MAP_TOP)
 SYN_SIM_TOP = $(MAP_SIM_TOP)
 OBJ_SYN_MAPPED_V = $(OBJ_SYN_DIR)/generated/$(SYN_TOP).mapped.v
-OBJ_SYN_SIM_FILES = $(OBJ_MAP_SIM_FILES) $(TECHNOLOGY_VERILOG_FILES)
+OBJ_SYN_SIM_FILES = $(OBJ_MAP_SIM_FILES) $(TECHNOLOGY_VERILOG_FILES) $(OBJ_SYN_DIR)/generated/$(SYN_TOP).force_regs.ucli $(OBJ_SYN_DIR)/generated/$(SYN_TOP).force_regs.tab
 
 # DC flows are based on the reference methodology
 ifneq ($(SYNOPSYS_RM_DIR),)

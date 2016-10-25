@@ -2,6 +2,8 @@
 
 # This rule is capable of producing all the various output files from DC after
 # DC has successfully run.
+$(OBJ_SYN_DIR)/generated/$(SYN_TOP).force_regs.ucli \
+$(OBJ_SYN_DIR)/generated/$(SYN_TOP).force_regs.tab \
 $(OBJ_SYN_MAPPED_V): $(OBJ_SYN_DIR)/synopsys-dc.stamp
 	@mkdir -p $(dir $@)
 	cp --reflink=auto $(OBJ_SYN_DIR)/synopsys-dc-workdir/results/$(notdir $@) $@
@@ -11,6 +13,7 @@ $(OBJ_SYN_MAPPED_V): $(OBJ_SYN_DIR)/synopsys-dc.stamp
 # for dependency resolution we instead.
 $(OBJ_SYN_DIR)/synopsys-dc.stamp: \
 		$(abspath $(SYNTHESIS_TOOL_ADDON)/run-synthesis) \
+		$(abspath $(SYNTHESIS_TOOL_ADDON)/find-regs.tcl) \
 		$(OBJ_MAP_RTL_V) \
 		$(TECHNOLOGY_MILKYWAY_LIB_IN_DIRS) \
 		$(TECHNOLOGY_TLUPLUS_FILES) \

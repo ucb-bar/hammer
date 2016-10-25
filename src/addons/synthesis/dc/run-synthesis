@@ -10,6 +10,7 @@ v=()
 tlu_min=()
 tlu_max=()
 tf=()
+unset find_regs
 while [[ "$1" != "" ]]
 do
     case "$1" in
@@ -24,6 +25,7 @@ do
     *Cmin.tluplus) tlu_min+=("$1");;
     *Cmax.tluplus) tlu_max+=("$1");;
     *.tf) tf+=("$1");;
+    */find-regs.tcl) find_regs="$1";;
     *) echo "Unknown argument $1"; exit 1;;
     esac
     shift
@@ -43,6 +45,10 @@ EOF
 # which users are expected to have downloaded.
 tar -xf "$rmtar" -C "$run_dir" --strip-components=1
 
+# The default DC script has an "exit" an the end, which we want to strip off so
+# I can add more commands after all the RM DC stuff.
+sed 's/^exit$//g' -i $run_dir/rm_dc_scripts/dc.tcl
+
 # This variable is set in "dc_setup.tcl", which for some reason we're expected
 # to edit inside this file in addition to setting it up inside the setup file
 # above.  Instead I just remove this second definition, as it's pretty useless.
@@ -56,7 +62,7 @@ sed 's/^write_icc2_files .*$//' -i $run_dir/rm_dc_scripts/dc.tcl
 
 # FIXME: We aren't licensed for "DC-Extension" so we can't pass "-congestion"
 # or "-spg" to compile_ultra
-find $run_dir -iname "*.tcl" | xargs sed s/'compile_ultra .*'/'compile_ultra'/g -i
+find $run_dir -iname "*.tcl" | xargs sed s/'compile_ultra .*'/'compile_ultra -no_auto_ungroup'/g -i
 
 # Most of the customization of the DC reference methodology is done here: this
 # sets all the input files and such.
@@ -102,10 +108,25 @@ set_isolate_ports [all_outputs] -type buffer
 set_isolate_ports [remove_from_collection [all_inputs] clock] -type buffer -force
 EOF
 
+
+# FIXME: This shouldn't depend on Synopsys
+# At the end of the DC run we want to generate a special simulation file that
+# tells VCS to set all the generated registers to 0.  I was hoping that
+# "+vcs+initreg+0" would do this, but it doesn't look like it does.
+cat >> $run_dir/rm_dc_scripts/dc.tcl <<EOF
+source ${find_regs}
+find_regs $top 0 \${RESULTS_DIR}/$top.force_regs.ucli \${RESULTS_DIR}/$top.force_regs.tab
+EOF
+
 # Here's the actual DC invocation
+echo "exit" >> $run_dir/rm_dc_scripts/dc.tcl
 cd $run_dir
 $dc -topographical_mode -f rm_dc_scripts/dc.tcl \
     |& tee dc.log
+
+# FIXME: This definately shouldn't have "dut" hard-coded here, and shouldn't
+# rely on sed.
+sed s/$top/dut/g -i $run_dir/results/$top.force_regs.ucli
 
 # Make sure there's no invalid output from DC
 grep ^Error dc.log && (echo "DC produced error messages"; exit 1)
