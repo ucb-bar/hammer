@@ -83,7 +83,8 @@ set RESULTS_DIR "results";
 set CLOCK_UNCERTAINTY "0.04";
 set INPUT_DELAY "0.10";
 set OUTPUT_DELAY "0.10";
-set_host_options -max_cores 1
+# FIXME: This shouldn't be just hard-coded, but I've forgotton how the PLSI job submission interface works
+set_host_options -max_cores 16
 EOF
 
 # FIXME: for now, you just get one clock, and the Synopsys EDK isn't very fast
