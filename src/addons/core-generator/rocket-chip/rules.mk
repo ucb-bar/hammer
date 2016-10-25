@@ -32,9 +32,9 @@ $(OBJ_CORE_DIR)/plsi-generated/rocket-chip.stamp: $(OBJ_CORE_DIR)/plsi-generated
 # make sure I have proper dependencies for everything, I then go ahead and copy
 # the files that are allowed to be used by the rest of the core out after
 # running SBT (the .stamp file).
-$(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).vsim.stamp: $(OBJ_CORE_DIR)/plsi-generated/rocket-chip.stamp $(CORE_ADDON_FILES)
+$(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).vsim.stamp: $(OBJ_CORE_DIR)/plsi-generated/rocket-chip.stamp
 	@mkdir -p $(dir $@)
-	+$(SCHEDULER_CMD) --make -- $(MAKE) MODEL=$(CORE_SIM_TOP) CONFIG=$(CORE_CONFIG) RISCV=unused SUITE=RocketSuite -C $(OBJ_CORE_DIR)/rocket-chip/vsim verilog || (rm -rf $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/$(CORE_SIM_TOP).$(CORE_CONFIG).v && exit 1)
+	+$(SCHEDULER_CMD) --make -- $(MAKE) ROCKETCHIP_ADDONS="$(notdir $(RC_CORE_ADDON_DIRS))" MODEL=$(CORE_SIM_TOP) CONFIG=$(CORE_CONFIG) RISCV=unused SUITE=RocketSuite -C $(OBJ_CORE_DIR)/rocket-chip/vsim verilog || (rm -rf $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/$(CORE_SIM_TOP).$(CORE_CONFIG).v && exit 1)
 	mkdir -p $(dir $@)
 	touch $@
 
