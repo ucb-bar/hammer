@@ -65,7 +65,12 @@ about.  The following core generators are supported:
    generates whatever it does.
 
  * boom: Generates sa BOOM core instead of a Rocket core, but otherwise uses
-   the Rocket Chip RTL.
+   the Rocket Chip RTL.  While BOOM itself is useful, this also serves as an
+   example of how to add projects based on Rocket Chip.
+
+ * counter: An extremely simple design that just generates a single counter.
+   This is useful for porting PLSI to a new tool or technology, and also serves
+   as an example of how to do a static Verilog core.
 
 Other core generators will almost certainly be added, but for now I'm focusing
 on getting the flow to work with just Rocket Chip.  The core generator will be
