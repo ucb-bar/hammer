@@ -1,5 +1,6 @@
 # Copyright 2016 Palmer Dabbelt <palmer@dabbelt.com>
 
-CORE_ADDON_DIR = $(CORE_GENERATOR_ADDON)/src
+RC_CORE_ADDON_DIRS = $(CORE_GENERATOR_ADDON)/src/boom
+RC_CORE_OVERLAY_DIR = $(CORE_GENERATOR_ADDON)/src/configs
 
 include src/addons/core-generator/rocket-chip/vars.mk

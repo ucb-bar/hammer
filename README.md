@@ -64,6 +64,9 @@ about.  The following core generators are supported:
  * rocket-chip: The interesting one.  This just calls into Rocket Chip and
    generates whatever it does.
 
+ * boom: Generates sa BOOM core instead of a Rocket core, but otherwise uses
+   the Rocket Chip RTL.
+
 Other core generators will almost certainly be added, but for now I'm focusing
 on getting the flow to work with just Rocket Chip.  The core generator will be
 passed two make-level variables from PLSI:
