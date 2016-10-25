@@ -86,13 +86,14 @@ set OUTPUT_DELAY "0.10";
 set_host_options -max_cores 1
 EOF
 
-# FIXME: for now, you just get one clock at one foot
+# FIXME: for now, you just get one clock, and the Synopsys EDK isn't very fast
+# so everything runs at 100MHz.
 # The constraints file determines how the IO is constrained and what the clocks
 # look like.
 mkdir -p $run_dir/generated-scripts
 cat >> $run_dir/generated-scripts/constraints.tcl <<"EOF"
 # create clock
-create_clock clock -name clock -period 1
+create_clock clock -name clock -period 10
 set_clock_uncertainty 0.01 [get_clocks clock]
 
 # set drive strength for inputs
