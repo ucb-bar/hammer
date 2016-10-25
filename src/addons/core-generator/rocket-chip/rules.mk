@@ -1,14 +1,30 @@
 # Copyright 2016 Palmer Dabbelt <palmer@dabbelt.com>
 
-$(OBJ_CORE_DIR)/plsi-generated/rocket-chip.stamp: $(shell find $(CORE_DIR) -iname "*.scala")
+$(OBJ_CORE_DIR)/plsi-generated/rocket-chip-base.stamp: \
+		$(shell find $(CORE_DIR) -iname "*.scala")
 	@mkdir -p $(dir $@)
 	mkdir -p $(OBJ_CORE_DIR)/rocket-chip
 	rsync -a --delete $(CORE_DIR)/ $(OBJ_CORE_DIR)/rocket-chip/
-	touch $@
+	mkdir -p $(OBJ_CORE_DIR)/rocket-chip/src/main/scala/
+	date > $@
 
-$(OBJ_CORE_DIR)/rocket-chip/src/main/scala/%: $(CORE_ADDON_DIR)/% $(OBJ_CORE_DIR)/plsi-generated/rocket-chip.stamp
+# If you add directories to this variable, they'll be copied to rocket-chip/
+# and added to ROCKETCHIP_ADDONS
+ifneq ($(RC_CORE_ADDON_DIRS),)
+$(OBJ_CORE_DIR)/plsi-generated/rocket-chip.stamp: $(shell find $(RC_CORE_ADDON_DIRS) -type f)
+endif
+
+# If you add directories to this variable, they'll be copied to rocket-chip/
+# but won't be added to ROCKETCHIP_ADDONS
+ifneq ($(RC_CORE_OVERLAY_DIR),)
+$(OBJ_CORE_DIR)/plsi-generated/rocket-chip.stamp: $(shell find $(RC_CORE_OVERLAY_DIR) -type f)
+endif
+
+$(OBJ_CORE_DIR)/plsi-generated/rocket-chip.stamp: $(OBJ_CORE_DIR)/plsi-generated/rocket-chip-base.stamp
 	@mkdir -p $(dir $@)
-	cp --reflink=auto $< $@
+	cp --reflink=auto -r $(RC_CORE_ADDON_DIRS) $(OBJ_CORE_DIR)/rocket-chip/
+	cp --reflink=auto -r $(RC_CORE_OVERLAY_DIR)/* $(OBJ_CORE_DIR)/rocket-chip/
+	date > $@
 
 # When we run Rocket Chip all the outputs come from a single SBT run.  I'm
 # abstracting all this away from the addon by running the Rocket Chip Makefile

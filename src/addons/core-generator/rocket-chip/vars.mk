@@ -60,11 +60,3 @@ OBJ_CORE_RTL_D ?= $(RC_OBJ_CORE_RTL_D)
 
 RC_OBJ_CORE_TESTS_MK = $(OBJ_CORE_DIR)/plsi-generated/tests-$(CORE_SIM_CONFIG).mk
 OBJ_CORE_TESTS_MK ?= $(RC_OBJ_CORE_TESTS_MK)
-
-# Rocket Chip supports additional addons that it can support, if a user defines
-# CORE_ADDON_DIR and then calls into this file then they'll end up with a
-# Rocket Chip that has a few more bits added to it.
-ifneq ($(CORE_ADDON_DIR),)
-CORE_ADDON_FILES = \
-	$(patsubst $(CORE_ADDON_DIR)/%,$(OBJ_CORE_DIR)/rocket-chip/src/main/scala/%,$(wildcard $(CORE_ADDON_DIR)/*.scala))
-endif
