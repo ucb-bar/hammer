@@ -54,9 +54,13 @@ for tarball in techfile["tarballs"]:
 	of.write("{0}: {1}\n".format(extract_stamp, tarball_stamp))
 
 for library in techfile["libraries"]:
-	for kind in ["liberty file", "verilog file", "milkyway lib in dir"]:
+	for kind in ["liberty file", "verilog file", "milkyway lib in dir", "css library files", "milkyway techfile"]:
 		if kind in library:
 			of.write("{0}/{1}: {2}\n".format(tech_home, library[kind], extract_stamp))
+	for tlu in ["tlu+ files"]:
+		for cap in ["min cap", "max cap"]:
+			if cap in tlu:
+				of.write("{0}/{1}: {2}\n".format(tech_home, tlu[cap], extract_stamp))
 
 # A helper to extract technologies
 of.write("technology-extract: {0}\n".format(extract_stamp))
