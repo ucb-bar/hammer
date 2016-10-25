@@ -155,6 +155,8 @@ ifeq ($(TECHNOLOGY_JSON),)
 $(error "Unable to find technology $(TECHNOLOGY), expected a cooresponding .tech.json file")
 endif
 
+OBJ_TECHNOLOGY_MACRO_LIBRARY = $(OBJ_TECH_DIR)/plsi-generated/all.macro_library.json
+
 # Actually loads the various addons, this is staged so we load "vars" first
 # (which set variables) and "rules" second, which set the make rules (which can
 # depend on those variables).
@@ -247,7 +249,7 @@ MAP_SIM_TOP = $(CORE_SIM_TOP)
 
 OBJ_MAP_RTL_V = $(OBJ_MAP_DIR)/$(MAP_TOP).v
 OBJ_MAP_SIM_FILES = $(OBJ_SOC_SIM_FILES)
-OBJ_MAP_SIM_MACRO_FILES = $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_simulation.v
+OBJ_MAP_SIM_MACRO_FILES = $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_simulation.v $(TECHNOLOGY_VERILOG_FILES)
 OBJ_MAP_MACROS = $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros.json
 
 include $(MAP_SIMULATOR_ADDON)/map-vars.mk
@@ -564,6 +566,10 @@ $(OBJ_TECH_DIR)/makefrags/rules.mk: src/tools/technology/generate-rules $(TECHNO
 	@mkdir -p $(dir $@)
 	$< -o $@ -i $(filter %.tech.json,$^)
 
+$(OBJ_TECHNOLOGY_MACRO_LIBRARY): src/tools/technology/generate-macros $(TECHNOLOGY_JSON)
+	@mkdir -p $(dir $@)
+	$< -o $@ -i $(filter %.tech.json,$^)
+
 # The implementation of the technology mapping stage.  This produces the
 # verilog for synthesis that can later be used.  It's meant to be a single
 # file, so the macros are actually generated seperately.
@@ -573,9 +579,10 @@ $(OBJ_MAP_RTL_V): $(OBJ_SOC_RTL_V) $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macr
 
 $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.v: \
 		$(CMD_PCAD_MACRO_COMPILER) \
-		$(OBJ_SOC_MACROS)
+		$(OBJ_SOC_MACROS) \
+		$(OBJ_TECHNOLOGY_MACRO_LIBRARY)
 	@mkdir -p $(dir $@)
-	$< -v $@ -m $(filter %.macros.json,$^) --syn-flops
+	$< -v $@ -m $(filter %.macros.json,$^) --syn-flops -l $(filter %.macro_library.json,$^)
 
 $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_simulation.v:
 	@mkdir -p $(dir $@)

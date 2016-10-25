@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("-o", "--output", dest="output", required=True)
+parser.add_argument("-i", "--input", dest="input", required=True)
+args = parser.parse_args()
+
+import json
+with open(args.input) as f:
+        techfile = json.load(f)
+
+of = open(args.output, "w+")
+of.write("[\n")
+
+for library in techfile["libraries"]:
+	for macro in library["provides"]:
+		print(macro)
+		if (macro["type"] == "sram"):
+			of.write(json.dumps(macro))
+			of.write(",\n")
+
+of.write("]\n")
+
+of.close
