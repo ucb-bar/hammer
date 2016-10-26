@@ -22,8 +22,12 @@ endif
 
 $(OBJ_CORE_DIR)/plsi-generated/rocket-chip.stamp: $(OBJ_CORE_DIR)/plsi-generated/rocket-chip-base.stamp
 	@mkdir -p $(dir $@)
+ifneq ($(RC_CORE_ADDON_DIRS),)
 	cp --reflink=auto -r $(RC_CORE_ADDON_DIRS) $(OBJ_CORE_DIR)/rocket-chip/
+endif
+ifneq ($(RC_CORE_OVERLAY_DIR),)
 	cp --reflink=auto -r $(RC_CORE_OVERLAY_DIR)/* $(OBJ_CORE_DIR)/rocket-chip/
+endif
 	date > $@
 
 # When we run Rocket Chip all the outputs come from a single SBT run.  I'm
