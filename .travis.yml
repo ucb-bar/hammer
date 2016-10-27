@@ -28,15 +28,8 @@ cache:
 matrix:
   include:
     - env:
-      - CORE_GENERATOR=rocket-chip
+      - CORE_GENERATOR=counter
       - SOC_GENERATOR=nop
-    - env:
-      - CORE_GENERATOR=rocket-chip
-      - SOC_GENERATOR=bar-testchip
-#    - env:
-#      - CORE_GENERATOR=crossbar
-#      - CORE_CONFIG=XBar2x2Config
-#      - SOC_GENERATOR=nop
 
 before_install:
   - export MAKEFLAGS=-j3
