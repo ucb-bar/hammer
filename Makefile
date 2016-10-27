@@ -413,8 +413,8 @@ $(OBJ_TOOLS_SRC_DIR)/pconfigure/Makefile: $(OBJ_TOOLS_SRC_DIR)/pconfigure/stamp 
 	rm -f $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
 	echo 'PREFIX = $(abspath $(OBJ_TOOLS_BIN_DIR))/pconfigure' >> $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
 	+cd $(OBJ_TOOLS_SRC_DIR)/pconfigure; $(SCHEDULER_CMD) --max-threads=1 -- ./bootstrap.sh
-	cd $(OBJ_TOOLS_SRC_DIR)/pconfigure; ./bin/pconfigure --verbose
-	+$(SCHEDULER_CMD) --make -- $(MAKE) -C $(OBJ_TOOLS_SRC_DIR)/pconfigure -B CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX))
+	cd $(OBJ_TOOLS_SRC_DIR)/pconfigure; PATH="$(OBJ_TOOLS_SRC_DIR)/pconfigure/bin:$(PATH)" ./bin/pconfigure --verbose --ppkg-config $(abspath $(OBJ_TOOLS_SRC_DIR)/pconfigure/bin/ppkg-config) --phc $(abspath $(OBJ_TOOLS_SRC_DIR)/pconfigure/bin/phc)
+	+PATH="$(abspath $(OBJ_TOOLS_SRC_DIR)/pconfigure/bin/):$$PATH" $(SCHEDULER_CMD) --make -- $(MAKE) -C $(OBJ_TOOLS_SRC_DIR)/pconfigure -B CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX))
 
 $(OBJ_TOOLS_SRC_DIR)/pconfigure/stamp: $(shell find src/tools/pconfigure -type f)
 	mkdir -p $(dir $@)
