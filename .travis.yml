@@ -38,6 +38,11 @@ matrix:
 #      - CORE_CONFIG=XBar2x2Config
 #      - SOC_GENERATOR=nop
 
+# blacklist private branches
+branches:
+  except:
+    - hwacha
+
 before_install:
   - export MAKEFLAGS=-j3
   - export SCHEDULER=travis_wait
