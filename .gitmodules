@@ -16,3 +16,7 @@
 [submodule "src/addons/core-generator/boom/src/boom"]
 	path = src/addons/core-generator/boom/src/boom
 	url = git://github.com/ucb-bar/riscv-boom.git
+[submodule "src/addons/core-generator/hwacha/hwacha-chip"]
+	path = src/addons/core-generator/hwacha/hwacha-chip
+	url = git@github.com:ucb-bar/rocket-chip
+	branch = hwacha
