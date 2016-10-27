@@ -92,10 +92,10 @@ $(OBJ_CORE_DIR)/plsi-generated/tests-%.mk: src/addons/core-generator/rocket-chip
 # There are two rules here: one to build the tools, and another to install the
 # include stamp so the simulator can find the various directories.
 $(OBJ_CORE_DIR)/plsi-generated/tools-copy.stamp: \
-		$(shell find src/rocket-chip/riscv-tools -iname "*.S" -or -iname "*.cc")
+		$(shell find $(CORE_DIR)/riscv-tools -iname "*.S" -or -iname "*.cc")
 	@mkdir -p $(dir $@)
 	mkdir -p $(OBJ_CORE_DIR)/riscv-tools
-	rsync -a --delete src/rocket-chip/riscv-tools/ $(OBJ_CORE_DIR)/riscv-tools/
+	rsync -a --delete $(CORE_DIR)/riscv-tools/ $(OBJ_CORE_DIR)/riscv-tools/
 	date > $@
 
 $(OBJ_CORE_DIR)/riscv-tools-install/include/plsi-include.stamp: $(OBJ_CORE_DIR)/plsi-generated/tools-build.stamp
