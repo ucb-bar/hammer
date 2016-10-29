@@ -59,8 +59,8 @@ for library in techfile["libraries"]:
 			of.write("{0}/{1}: {2}\n".format(tech_home, library[kind], extract_stamp))
 	for tlu in ["tlu+ files"]:
 		for cap in ["min cap", "max cap"]:
-			if cap in tlu:
-				of.write("{0}/{1}: {2}\n".format(tech_home, tlu[cap], extract_stamp))
+			if tlu in library and cap in library[tlu]:
+				of.write("{0}/{1}: {2}\n".format(tech_home, library[tlu][cap], extract_stamp))
 
 # A helper to extract technologies
 of.write("technology-extract: {0}\n".format(extract_stamp))
