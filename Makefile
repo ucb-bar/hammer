@@ -566,7 +566,7 @@ $(OBJ_TECH_DIR)/makefrags/rules.mk: src/tools/technology/generate-rules $(TECHNO
 	@mkdir -p $(dir $@)
 	$< -o $@ -i $(filter %.tech.json,$^)
 
-$(OBJ_TECHNOLOGY_MACRO_LIBRARY): src/tools/technology/generate-macros $(TECHNOLOGY_JSON)
+$(OBJ_TECHNOLOGY_MACRO_LIBRARY): src/tools/technology/generate-macros $(TECHNOLOGY_JSON) $(TECHNOLOGY_MARCO_PROVIDE_SCRIPTS)
 	@mkdir -p $(dir $@)
 	$< -o $@ -i $(filter %.tech.json,$^)
 

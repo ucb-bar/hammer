@@ -50,3 +50,9 @@ for library_desc in techfile["libraries"]:
 	if "ccs library file" in library_desc:
 		of.write(" {0}/{1}".format(tech_home, library_desc["ccs library file"]))
 of.write("\n")
+
+of.write("TECHNOLOGY_MARCO_PROVIDE_SCRIPTS =")
+for library_desc in techfile["libraries"]:
+	if "provide script" in library_desc:
+		of.write(" {0}".format(library_desc["provide script"]))
+of.write("\n")

@@ -1,0 +1,101 @@
+#!/bin/bash
+
+set -e
+
+verilog=()
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    *.v) verilog+=("$1");;
+    *) echo "Unknown argument $1"; exit 1;;
+    esac
+    shift
+done
+
+echo "["
+
+cat /dev/null ${verilog[*]} | grep "^module SRAM1RW[0-9]*x[0-9]* " | while read sram
+do
+    name="$(echo "$sram" | sed 's/^module \(SRAM1RW[0-9]*x[0-9]*\) .*/\1/g')"
+    height="$(echo "$name" | sed 's/^SRAM1RW\([0-9]*\)x[0-9]*$/\1/g')"
+    width="$(echo "$name" | sed 's/^SRAM1RW[0-9]*x\([0-9]*\)$/\1/g')"
+
+    cat << EOF
+  {
+    "type": "sram",
+    "name": "${name}",
+    "width": ${width},
+    "depth": ${height},
+    "ports": [
+      {
+        "address port name": "A",
+        "address port polarity": "active high",
+        "clock port name": "CE",
+        "clock port polarity": "positive edge",
+        "write enable port name": "WEB",
+        "write enable port polarity": "active low",
+        "read enable port name": "OEB",
+        "read enable port polarity": "active low",
+        "chip enable port name": "CSB",
+        "chip enable port polarity": "active low",
+        "output port name": "O",
+        "output port polarity": "active high",
+        "input port name": "I",
+        "input port polarity": "active high"
+      }
+    ]
+  },
+EOF
+done
+
+cat /dev/null ${verilog[*]} | grep "^module SRAM2RW[0-9]*x[0-9]* " | while read sram
+do
+    name="$(echo "$sram" | sed 's/^module \(SRAM2RW[0-9]*x[0-9]*\) .*/\1/g')"
+    height="$(echo "$name" | sed 's/^SRAM2RW\([0-9]*\)x[0-9]*$/\1/g')"
+    width="$(echo "$name" | sed 's/^SRAM2RW[0-9]*x\([0-9]*\)$/\1/g')"
+
+    cat << EOF
+  {
+    "type": "sram",
+    "name": "${name}",
+    "width": ${width},
+    "depth": ${height},
+    "ports": [
+       {
+        "address port name": "A1",
+        "address port polarity": "active high",
+        "clock port name": "CE1",
+        "clock port polarity": "positive edge",
+        "write enable port name": "WEB1",
+        "write enable port polarity": "active low",
+        "read enable port name": "OEB1",
+        "read enable port polarity": "active low",
+        "chip enable port name": "CSB1",
+        "chip enable port polarity": "active low",
+        "output port name": "O1",
+        "output port polarity": "active high",
+        "input port name": "I1",
+        "input port polarity": "active high"
+      },
+      {
+        "address port name": "A2",
+        "address port polarity": "active high",
+        "clock port name": "CE2",
+        "clock port polarity": "positive edge",
+        "write enable port name": "WEB2",
+        "write enable port polarity": "active low",
+        "read enable port name": "OEB2",
+        "read enable port polarity": "active low",
+        "chip enable port name": "CSB2",
+        "chip enable port polarity": "active low",
+        "output port name": "O2",
+        "output port polarity": "active high",
+        "input port name": "I2",
+        "input port polarity": "active high"
+      }
+    ]
+  },
+EOF
+done
+
+echo '{"type": "none"}]'
