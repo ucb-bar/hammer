@@ -16,6 +16,8 @@ i=()
 cc=()
 debug_flags=()
 tbvfrag=""
+lint_flags=()
+notiming_flags=()
 ucli_build_flags=()
 ucli_run_flags=()
 while [[ "$1" != "" ]]
@@ -57,6 +59,27 @@ export SNPSLMD_LICENSE_FILE="$SNPSLMD_LICENSE_FILE"
 EOF
 source $output.enter
 
+# FIXME: This is Chisel-specific, but I figure adding errors is always safe
+lint_flags+=("-error=PCWM-L")
+
+# FIXME: This is specific to (at least) DC's output on the 32nm EDK, but
+# there's no way to shim these arguments into VCS right now.
+lint_flags+=("-suppress=TFIPC") # too few input port connections
+lint_flags+=("-suppress=TMR") # text macro redefine
+lint_flags+=("-suppress=PCTIO-L") # port coerced to inout
+
+# FIXME: These flags might be relevant for turning off timing-accurate
+# simulations when using the EDK.
+#notiming_flags+=("+define+functonial") # EDK Verilog decides this
+#notiming_flags+=("+notimingcheck") # This turns off all $setup{,hold} PLIs
+#notiming_flags+=("+delay_mode_unit") # I thought this forced VCS to use the minimum timescale, but it actually doesn't
+
+# FIXME: This is actually Rocket Chip specific
+if [[ "$level" == "syn" ]]
+then
+    debug_flags+=("+define+GATE_LEVEL")
+fi
+
 if [[ "$mode" == "debug" ]]
 then
     debug_flags+=("+define+DEBUG")
@@ -72,14 +95,16 @@ cd "$output".vcs_build_dir
 set -x
 $vcs -full64 \
     -quiet \
-    -notice -line -error=PCWM-L \
+    -notice -line \
     -timescale=1ns/10ps \
     -sverilog \
-    -debug_pp \
+    -debug_all \
     +rad \
     +v2k \
     +vcs+lic+wait \
     +vcs+initreg+random \
+    ${notiming_flags[@]} \
+    ${lint_flags[@]} \
     ${debug_flags[@]} \
     ${ucli_build_flags[@]} \
     -CC "-std=c++11" \
