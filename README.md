@@ -143,6 +143,9 @@ following variables can be set:
    Technologies are described by JSON files in src/technologies, a canonical
    example is the Synopsys educational technology library "saed32".
 
+ * SYNTHESIS_TOOL: The tool that will be used to synthesize a design.  The
+   primary tool supported here is Synopsys's Design Compiler (the "dc" addon).
+
 Source for the various addons can be found in src/addons.
 
 ### Running on a Cluser
