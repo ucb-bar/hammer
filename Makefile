@@ -515,7 +515,7 @@ $(OBJ_TOOLS_BIN_DIR)/pfpmp/stamp: $(shell find src/tools/pfpmp/src -type f)
 	rm -rf $(dir $@)
 	mkdir -p $(dir $@)
 	rsync -a --delete src/tools/pfpmp/ $(dir $@)
-	$(SCHEDULER_CMD) --make -- $(MAKE) FIRRTL_HOME=$(abspath src/rocket-chip/firrtl) CMD_SBT=$(abspath $(CMD_SBT)) -C $(dir $@)
+	$(SCHEDULER_CMD) --make -- $(MAKE) FIRRTL_HOME=$(abspath $(CORE_DIR)/firrtl) CMD_SBT=$(abspath $(CMD_SBT)) -C $(dir $@)
 	date > $@
 
 # Here are a bunch of pattern rules that will try to copy outputs.
