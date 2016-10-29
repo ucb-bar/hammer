@@ -1,5 +1,8 @@
 #!/bin/bash
 
+set -e
+set -x
+
 unset simulator
 unset debug
 unset vpd
@@ -26,22 +29,31 @@ done
 
 if [[ "$debug" == "true" ]]
 then
-    debug_args+=("+vcdplusfile=${vpd}")
+    debug_args+=("+vcdplusfile=out.vpd")
 fi
 
 tempdir="$(mktemp -d /tmp/plsi-vcs-run.XXXXXX)"
 trap "rm -rf $tempdir" EXIT
 
-set -e
-set -x
+# FIXME: This is a fesvr problem: if your script doesn't start with a "+" then
+# fesvr will stop parsing arguments and drop the RISC-V test binary.
+cp "$simulator".ucli $tempdir/+run.ucli
+
+cd $tempdir
 cat /dev/null | \
     "$simulator" \
-    -ucli -do "$simulator".ucli \
+    -ucli -do +run.ucli \
     +ntb_random_seed_automatic \
-    +max-cycles=600000 \
+    +max-cycles=100000 \
     +vcs+initreg+random \
     ${debug_args[*]} \
     ${args[*]} |& tee $tempdir/log
+
+if [[ "$debug" == "true" ]]
+then
+    mkdir -p "$(dirname "${vpd}")"
+    mv out.vpd "${vpd}"
+fi
 
 # FIXME: This is Rocket Chip specific
 set +e
@@ -50,4 +62,18 @@ if [[ "$?" != 1 ]]
 then
    echo "FAILED found in log"
    exit 1
+fi
+
+grep "Assertion" $tempdir/log
+if [[ "$?" != 1 ]]
+then
+    echo "Assertion found in log"
+    exit 1
+fi
+
+grep "Error-" $tempdir/log
+if [[ "$?" != 1 ]]
+then
+    echo "Error- found in log"
+    exit 1
 fi

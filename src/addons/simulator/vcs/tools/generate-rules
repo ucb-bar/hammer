@@ -23,7 +23,7 @@ cat >"$output" <<EOF
 
 \$(CHECK_${VCS_TARGET_CAPS}_DIR)/%.trace-out \$(CHECK_${VCS_TARGET_CAPS}_DIR)/%.vpd: \$(${VCS_TARGET_CAPS}_SIMULATOR_ADDON)/tools/run-simulator \$(OBJ_${VCS_TARGET_CAPS}_DIR)/simulator-debug \$(CMD_PTEST)
 	mkdir -p \$(dir \$@)
-	\$(SCHEDULER_CMD) --max-threads=1 -- \$(CMD_PTEST) --test \$(abspath \$(${VCS_TARGET_CAPS}_SIMULATOR_ADDON)/tools/run-simulator) --out \$@ --args \$(abspath \$^) --vpd \$@.vpd
+	\$(SCHEDULER_CMD) --max-threads=1 -- \$(CMD_PTEST) --test \$(abspath \$(${VCS_TARGET_CAPS}_SIMULATOR_ADDON)/tools/run-simulator) --out \$@ --args \$(abspath \$^) --vpd \$(abspath \$@).vpd
 
 ifeq (\$(${VCS_TARGET_CAPS}_TOP),)
 \$(error ${VCS_TARGET_CAPS}_TOP must be defined)
