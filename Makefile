@@ -45,6 +45,10 @@ SOC_SIMULATOR ?= $(SIMULATOR)
 MAP_SIMULATOR ?= $(SIMULATOR)
 SYN_SIMULATOR ?= $(SIMULATOR)
 
+# Defines the formal verification tool to use at different levels.
+FORMAL_TOOL ?= none
+SYN_FORMAL_TOOL ?= $(FORMAL_TOOL)
+
 # The scheduler to use when running large jobs.  Changing this doesn't have any
 # effect on the generated files, just the manner in which they are generated.
 SCHEDULER ?= auto
@@ -145,6 +149,11 @@ endif
 SYN_SIMULATOR_ADDON = $(wildcard src/addons/simulator/$(SYN_SIMULATOR)/ $(ADDONS_DIR)/simulator/$(SYN_SIMULATOR)/)
 ifneq ($(words $(SYN_SIMULATOR_ADDON)),1)
 $(error Unable to resolve SYN_GENERATOR=$(SYN_GENERATOR): found "$(SYN_GENERATOR_ADDON)")
+endif
+
+SYN_FORMAL_ADDON = $(wildcard src/addons/formal/$(SYN_FORMAL_TOOL)/ $(ADDONS_DIR)/formal/$(SYN_FORMAL_TOOLS))
+ifneq ($(words $(SYN_FORMAL_ADDON)),1)
+$(error Unable to resolve SYN_FORMAL_TOOL=$(SYN_FORMAL_TOOL): found "$(SYN_FORMAL_ADDON)")
 endif
 
 # In order to prevent EEs from seeing Makefiles, the technology description is
@@ -272,6 +281,9 @@ ifeq ($(SYN_SIM_TOP),)
 $(error SYNTHESIS_TOOLS needs to set SYN_SIM_TOP)
 endif
 
+# A formal verification tool
+include $(SYN_FORMAL_ADDON)/syn-vars.mk
+
 # All the rules get sourced last.  We don't allow any variables to be set here,
 # so the ordering isn't important.
 include $(CORE_GENERATOR_ADDON)/rules.mk
@@ -282,6 +294,7 @@ include $(SOC_SIMULATOR_ADDON)/soc-rules.mk
 include $(MAP_SIMULATOR_ADDON)/map-rules.mk
 include $(SYNTHESIS_TOOL_ADDON)/rules.mk
 include $(SOC_SIMULATOR_ADDON)/syn-rules.mk
+include $(SYN_FORMAL_ADDON)/syn-rules.mk
 
 ##############################################################################
 # User Targets
