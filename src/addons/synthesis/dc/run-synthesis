@@ -128,7 +128,15 @@ $dc -topographical_mode -f rm_dc_scripts/dc.tcl \
 
 # FIXME: This definately shouldn't have "dut" hard-coded here, and shouldn't
 # rely on sed.
-sed s/$top/dut/g -i $run_dir/results/$top.force_regs.ucli
+case "$top" in
+ExampleTop)
+  sed s/$top/testHarness.ExampleTop_1/g -i $run_dir/results/$top.force_regs.ucli
+  ;;
+*)
+  echo "Ununkown top $top"
+  exit 1
+  ;;
+esac
 
 # Make sure there's no invalid output from DC
 grep ^Error dc.log && (echo "DC produced error messages"; exit 1)
