@@ -1,0 +1,73 @@
+#!/bin/bash
+
+set -ex
+
+verilog=()
+db=()
+reference_verilog=()
+implementation_verilog=()
+reference_top=()
+implementation_top=()
+formality=()
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    --reference-verilog) reference_verilog+=("$2"); shift;;
+    --implementation-verilog) implementation_verilog+=("$2"); shift;;
+    --reference-top) reference_top+=("$2"); shift;;
+    --implementation-top) implementation_top+=("$2"); shift;;
+    */fm_shell) formality+=("$1");;
+    *.v) verilog+=("$1");;
+    *.db) db+=("$1");;
+    *) echo "Unknown argument $1"; exit 1;;
+    esac
+    shift
+done
+
+tempdir=$(mktemp -d /tmp/plsi-formality.XXXXXX)
+trap "rm -rf $tempdir" EXIT
+
+cd $tempdir
+
+# Generic options to control Formality's behavior
+cat >verify.tcl <<EOF
+# FIXME: This appears to come from FIRRTL
+set_mismatch_message_filter -suppress FMR_ELAB-147
+EOF
+
+# Reference Design
+for v in ${reference_verilog[*]} ${verilog[*]}
+do
+    echo "read_verilog -r $v" >> verify.tcl
+done
+
+cat >>verify.tcl <<EOF
+set_top ${reference_top}
+EOF
+
+# Implementation Design
+for v in ${implementation_verilog[*]} ${verilog[*]}
+do
+    echo "read_verilog -i $v" >> verify.tcl
+done
+
+for db in ${db[*]}
+do
+    echo "read_db -i $db" >> verify.tcl
+done
+
+cat >>verify.tcl <<EOF
+set_top ${implementation_top}
+EOF
+
+# Verification
+cat >>verify.tcl <<EOF
+verify
+quit
+EOF
+
+cat verify.tcl
+
+cat /dev/null | ${formality[*]} -f verify.tcl
+
+exit 1

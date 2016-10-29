@@ -146,6 +146,9 @@ following variables can be set:
  * SYNTHESIS_TOOL: The tool that will be used to synthesize a design.  The
    primary tool supported here is Synopsys's Design Compiler (the "dc" addon).
 
+ * FORMAL_TOOL: The tool that will be used to formally verify a design.  The
+   primary tool supported here is Synopsys's Formality (the "formality" addon).
+
 Source for the various addons can be found in src/addons.
 
 ### Running on a Cluser
