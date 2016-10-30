@@ -62,6 +62,27 @@
       "openaccess techfile": "SAED_EDK32.28nm_TECH_v_01132015.tar.gz/SAED32_EDK/tech/milkyway/saed32nm_1p9m_oa.tf"
     },
     {
+      "liberty file": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/db_nldm/saed32lvt_tt1p05v25c.lib",
+      "verilog file": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/verilog/saed32nm_lvt.v",
+      "milkyway lib in dir": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/milkyway/saed32nm_lvt_1p9m/lib",
+      "ccs library file": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/db_ccs/saed32lvt_tt1p05v25c.db",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "25 C"
+      },
+      "supplies": {
+        "VDD": "1.05 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "type": "stdcell",
+          "vt": "LVT"
+        }
+      ]
+    },
+    {
       "liberty file": "SAED_EDK32.28nm_CORE_RVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_rvt/db_nldm/saed32rvt_tt1p05v25c.lib",
       "verilog file": "SAED_EDK32.28nm_CORE_RVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_rvt/verilog/saed32nm.v",
       "milkyway lib in dir": "SAED_EDK32.28nm_CORE_RVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_rvt/milkyway/saed32nm_rvt_1p9m/lib",
@@ -100,27 +121,6 @@
         {
           "type": "stdcell",
           "vt": "HVT"
-        }
-      ]
-    },
-    {
-      "liberty file": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/db_nldm/saed32lvt_tt1p05v25c.lib",
-      "verilog file": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/verilog/saed32nm_lvt.v",
-      "milkyway lib in dir": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/milkyway/saed32nm_lvt_1p9m/lib",
-      "ccs library file": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/db_ccs/saed32lvt_tt1p05v25c.db",
-      "corner": {
-        "nmos": "typical",
-        "pmos": "typical",
-        "temperature": "25 C"
-      },
-      "supplies": {
-        "VDD": "1.05 V",
-        "GND": "0 V"
-      },
-      "provides": [
-        {
-          "type": "stdcell",
-          "vt": "LVT"
         }
       ]
     },
