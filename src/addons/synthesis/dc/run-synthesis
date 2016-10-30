@@ -64,6 +64,9 @@ sed 's/^write_icc2_files .*$//' -i $run_dir/rm_dc_scripts/dc.tcl
 # or "-spg" to compile_ultra
 find $run_dir -iname "*.tcl" | xargs sed s/'^compile_ultra .*'/'compile_ultra -gate_clock -self_gating -retime'/g -i
 
+# Report more timing arcs
+sed 's@^report_timing@report_timing -max_paths 500 -nworst 10 -slack_lesser_than 0.01@' -i $run_dir/rm_dc_scripts/dc.tcl
+
 # Most of the customization of the DC reference methodology is done here: this
 # sets all the input files and such.
 mkdir -p $run_dir/rm_setup
