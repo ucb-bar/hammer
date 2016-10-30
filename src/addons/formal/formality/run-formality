@@ -31,8 +31,15 @@ cd $tempdir
 
 # Generic options to control Formality's behavior
 cat >verify.tcl <<EOF
+# Synopsys' recommended settings
+set synopsys_auto_setup true
+
 # FIXME: This appears to come from FIRRTL
 set_mismatch_message_filter -suppress FMR_ELAB-147
+
+# FIXME: The Synopsys 32nm EDK seems to have some missing references, this
+# ignores them.
+set hdlin_unresolved_modules black_box
 EOF
 
 # Reference Design
@@ -43,6 +50,7 @@ done
 
 cat >>verify.tcl <<EOF
 set_top ${reference_top}
+set_reference r:/WORK/${reference_top}
 EOF
 
 # Implementation Design
@@ -58,6 +66,7 @@ done
 
 cat >>verify.tcl <<EOF
 set_top ${implementation_top}
+set_implementation i:/WORK/${implementation_top}
 EOF
 
 # Verification
