@@ -98,7 +98,7 @@ $vcs -full64 \
     -notice -line \
     -timescale=1ns/10ps \
     -sverilog \
-    -debug_all \
+    -debug_pp \
     +rad \
     +v2k \
     +vcs+lic+wait \
