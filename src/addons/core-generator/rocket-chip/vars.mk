@@ -60,3 +60,7 @@ OBJ_CORE_RTL_D ?= $(RC_OBJ_CORE_RTL_D)
 
 RC_OBJ_CORE_TESTS_MK = $(OBJ_CORE_DIR)/plsi-generated/tests-$(CORE_SIM_CONFIG).mk
 OBJ_CORE_TESTS_MK ?= $(RC_OBJ_CORE_TESTS_MK)
+
+# If you're extending Rocket Chip then you'll want to override this to the
+# project that contains your configurations.
+RC_CORE_CFG_PROJECT ?= rocketchip
