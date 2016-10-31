@@ -544,7 +544,7 @@ $(CMD_PYTHON3): $(OBJ_TOOLS_BIN_DIR)/python3-$(PYTHON3_VERSION)/stamp
 	touch $@
 
 $(OBJ_TOOLS_BIN_DIR)/python3-$(PYTHON3_VERSION)/stamp: $(OBJ_TOOLS_SRC_DIR)/python3-$(PYTHON3_VERSION)/Makefile $(CMD_GCC) $(CMD_GXX)
-	make CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX)) -C $(dir $<) install
+	$(SCHEDULER_CMD) --make -- $(MAKE) CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX)) -C $(dir $<) install
 	date > $@
 
 $(OBJ_TOOLS_SRC_DIR)/python3-$(PYTHON3_VERSION)/Makefile: $(OBJ_TOOLS_SRC_DIR)/python3-$(PYTHON3_VERSION)/configure $(CMD_GCC) $(CMD_GXX)
