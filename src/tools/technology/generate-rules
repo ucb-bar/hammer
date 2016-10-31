@@ -15,43 +15,62 @@ of = open(args.output, "w+")
 tech_home = "$(OBJ_TECH_DIR)/extracted"
 extract_stamp = "{0}/plsi-techtar.stamp".format(tech_home)
 
-for tarball in techfile["tarballs"]:
-	tarball_path = "$(PLSI_CACHE_DIR)/technology/$(TECHNOLOGY)/{0}".format(tarball["path"])
-	tarball_stamp = "{0}/stamps/{1}.stamp".format(tech_home, tarball["path"])
-	target_dir = "{0}/{1}".format(tech_home, tarball["path"])
+if "tarballs" not in techfile:
+	# Support technologies that can not be re-extracted
+	for install in techfile["installs"]:
+		install_path = "$({0})".format(install["base var"])
+		install_stamp = "{0}/stamps/{1}.stamp".format(tech_home, install["path"])
+		target_dir = "{0}/{1}".format(tech_home, install["path"])
 
-	# Support technologies that can be cached as tarballs
-	if "base var" in tarball:
-		of.write("ifneq ($({0}),)\n".format(tarball["base var"]))
-		of.write("{0}: $({1})/{2}\n".format(tarball_path, tarball["base var"], tarball["path"]))
+		# link the pre-extracted library here with a stamp
+		of.write("{0}: {1}\n".format(install_stamp, install_path))
+		of.write("\t@rm -rf {0}\n".format(target_dir))
+		of.write("\t@mkdir -p {0}\n".format(tech_home))
+		of.write("\tln -sT $^ {0}\n".format(target_dir))
 		of.write("\t@mkdir -p $(dir $@)\n")
-		of.write("\tcp --reflink=auto $^ $@\n")
-		of.write("else\n")
+		of.write("\tdate > $@\n")
 
-	# Some technologies can be fetched online, other's can't.
-	if "homepage" in tarball:
-		of.write("{0}:\n".format(tarball_path))
-		of.write("\t$(error Download the {0} technology tarball from {1} and place it at $@, this process can't be automated because of NDAs)\n".format(tarball["path"], tarball["homepage"]))
-	elif "url" in tarball:
-		of.write("{0}:\n".format(tarball_path))
+		# There's one big stamp file for all the extractions
+		of.write("{0}: {1}\n".format(extract_stamp, install_stamp))
+
+else: # We can't currently support both tarballs and an install path
+	for tarball in techfile["tarballs"]:
+		tarball_path = "$(PLSI_CACHE_DIR)/technology/$(TECHNOLOGY)/{0}".format(tarball["path"])
+		tarball_stamp = "{0}/stamps/{1}.stamp".format(tech_home, tarball["path"])
+		target_dir = "{0}/{1}".format(tech_home, tarball["path"])
+
+		# Support technologies that can be cached as tarballs
+		if "base var" in tarball:
+			of.write("ifneq ($({0}),)\n".format(tarball["base var"]))
+			of.write("{0}: $({1})/{2}\n".format(tarball_path, tarball["base var"], tarball["path"]))
+			of.write("\t@mkdir -p $(dir $@)\n")
+			of.write("\tcp --reflink=auto $^ $@\n")
+			of.write("else\n")
+
+		# Some technologies can be fetched online, other's can't.
+		if "homepage" in tarball:
+			of.write("{0}:\n".format(tarball_path))
+			of.write("\t$(error Download the {0} technology tarball from {1} and place it at $@, this process can't be automated because of NDAs)\n".format(tarball["path"], tarball["homepage"]))
+		elif "url" in tarball:
+			of.write("{0}:\n".format(tarball_path))
+			of.write("\t@mkdir -p $(dir $@)\n")
+			of.write("\twget \"{0}\" -O $@\n".format(tarball["url"]))
+
+		if "base var" in tarball:
+			of.write("endif\n")
+
+
+		# There's a single extraction step in order to avoid dependency problems.
+		of.write("{0}: {1}\n".format(tarball_stamp, tarball_path))
+		of.write("\t@rm -rf {0}\n".format(target_dir))
+		of.write("\t@mkdir -p {0}\n".format(target_dir))
+		of.write("\ttar -xf $^ -C {0}\n".format(target_dir))
+		of.write("\tchmod u+rwX -R {0}\n".format(target_dir))
 		of.write("\t@mkdir -p $(dir $@)\n")
-		of.write("\twget \"{0}\" -O $@\n".format(tarball["url"]))
+		of.write("\tdate > $@\n")
 
-	if "base var" in tarball:
-		of.write("endif\n")
-
-
-	# There's a single extraction step in order to avoid dependency problems.
-	of.write("{0}: {1}\n".format(tarball_stamp, tarball_path))
-	of.write("\t@rm -rf {0}\n".format(target_dir))
-	of.write("\t@mkdir -p {0}\n".format(target_dir))
-	of.write("\ttar -xf $^ -C {0}\n".format(target_dir))
-	of.write("\tchmod u+rwX -R {0}\n".format(target_dir))
-	of.write("\t@mkdir -p $(dir $@)\n")
-	of.write("\tdate > $@\n")
-
-	# There's one big stamp file for all the extractions
-	of.write("{0}: {1}\n".format(extract_stamp, tarball_stamp))
+		# There's one big stamp file for all the extractions
+		of.write("{0}: {1}\n".format(extract_stamp, tarball_stamp))
 
 for library in techfile["libraries"]:
 	for kind in ["liberty file", "verilog file", "milkyway lib in dir", "ccs library file", "milkyway techfile"]:
