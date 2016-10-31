@@ -70,6 +70,7 @@ TCLAP_VERSION = 1.2.1
 TCL_LIBRARY_VERSION = 8.6
 TCL_VERSION = 8.6.6
 GCC_VERSION = 4.9.3
+PYTHON3_VERSION = 3.4.5
 
 # OBJ_*_DIR are the directories in which outputs end up
 OBJ_TOOLS_SRC_DIR = obj/tools/src
@@ -104,6 +105,7 @@ CMD_GXX = $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/bin/g++
 CMD_PSON2JSON = $(OBJ_TOOLS_BIN_DIR)/pson/bin/pson2json
 CMD_FIRRTL_GENERATE_TOP = $(OBJ_TOOLS_BIN_DIR)/pfpmp/bin/GenerateTop
 CMD_FIRRTL_GENERATE_HARNESS = $(OBJ_TOOLS_BIN_DIR)/pfpmp/bin/GenerateHarness
+CMD_PYTHON3 = $(OBJ_TOOLS_BIN_DIR)/python3-$(PYTHON3_VERSION)/bin/python3
 
 PKG_CONFIG_PATH=$(abspath $(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/lib/pkgconfig):$(abspath $(OBJ_TOOLS_BIN_DIR)/pconfigure/lib/pkgconfig):$(abspath $(OBJ_TOOLS_BIN_DIR)/pson/lib/pkgconfig)
 export PKG_CONFIG_PATH
@@ -537,6 +539,28 @@ $(OBJ_TOOLS_BIN_DIR)/pfpmp/stamp: $(shell find src/tools/pfpmp/src -type f)
 	$(SCHEDULER_CMD) --make -- $(MAKE) FIRRTL_HOME=$(abspath $(CORE_DIR)/firrtl) CMD_SBT=$(abspath $(CMD_SBT)) -C $(dir $@)
 	date > $@
 
+# Some machines don't have python3, but I want it everywhere.
+$(CMD_PYTHON3): $(OBJ_TOOLS_BIN_DIR)/python3-$(PYTHON3_VERSION)/stamp
+	touch $@
+
+$(OBJ_TOOLS_BIN_DIR)/python3-$(PYTHON3_VERSION)/stamp: $(OBJ_TOOLS_SRC_DIR)/python3-$(PYTHON3_VERSION)/Makefile $(CMD_GCC) $(CMD_GXX)
+	make CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX)) -C $(dir $<) install
+	date > $@
+
+$(OBJ_TOOLS_SRC_DIR)/python3-$(PYTHON3_VERSION)/Makefile: $(OBJ_TOOLS_SRC_DIR)/python3-$(PYTHON3_VERSION)/configure $(CMD_GCC) $(CMD_GXX)
+	cd $(dir $@); ./configure --prefix=$(abspath $(OBJ_TOOLS_BIN_DIR)/python3-$(PYTHON3_VERSION)) CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX))
+	touch $@
+
+$(OBJ_TOOLS_SRC_DIR)/python3-$(PYTHON3_VERSION)/configure: $(PLSI_CACHE_DIR)/distfiles/python3-$(PYTHON3_VERSION).tar.gz
+	rm -rf $(dir $@)
+	mkdir -p $(dir $@)
+	tar -C $(dir $@) -xpf $< --strip-components=1
+	touch $@
+
+$(PLSI_CACHE_DIR)/distfiles/python3-$(PYTHON3_VERSION).tar.gz:
+	@mkdir -p $(dir $@)
+	wget https://www.python.org/ftp/python/$(PYTHON3_VERSION)/Python-$(PYTHON3_VERSION).tgz -O $@
+
 # Here are a bunch of pattern rules that will try to copy outputs.
 bin/core-$(CORE_CONFIG)/$(CORE_TOP).v: $(OBJ_CORE_RTL_V)
 	mkdir -p $(dir $@)
@@ -577,17 +601,17 @@ bin/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP)-simulator: $(OBJ_S
 # Generates a technology-specific makefrag from the technology's description
 # file.
 
-$(OBJ_TECH_DIR)/makefrags/vars.mk: src/tools/technology/generate-vars $(TECHNOLOGY_JSON)
+$(OBJ_TECH_DIR)/makefrags/vars.mk: src/tools/technology/generate-vars $(TECHNOLOGY_JSON) $(CMD_PYTHON3)
 	@mkdir -p $(dir $@)
-	$< -o $@ -i $(filter %.tech.json,$^)
+	PATH="$(abspath $(dir $(CMD_PYTHON3))):$(PATH)" $< -o $@ -i $(filter %.tech.json,$^)
 
-$(OBJ_TECH_DIR)/makefrags/rules.mk: src/tools/technology/generate-rules $(TECHNOLOGY_JSON)
+$(OBJ_TECH_DIR)/makefrags/rules.mk: src/tools/technology/generate-rules $(TECHNOLOGY_JSON) $(CMD_PYTHON3)
 	@mkdir -p $(dir $@)
-	$< -o $@ -i $(filter %.tech.json,$^)
+	PATH="$(abspath $(dir $(CMD_PYTHON3))):$(PATH)" $< -o $@ -i $(filter %.tech.json,$^)
 
-$(OBJ_TECHNOLOGY_MACRO_LIBRARY): src/tools/technology/generate-macros $(TECHNOLOGY_JSON) $(TECHNOLOGY_MARCO_PROVIDE_SCRIPTS)
+$(OBJ_TECHNOLOGY_MACRO_LIBRARY): src/tools/technology/generate-macros $(TECHNOLOGY_JSON) $(TECHNOLOGY_MARCO_PROVIDE_SCRIPTS) $(CMD_PYTHON3)
 	@mkdir -p $(dir $@)
-	$< -o $@ -i $(filter %.tech.json,$^)
+	PATH="$(abspath $(dir $(CMD_PYTHON3))):$(PATH)" $< -o $@ -i $(filter %.tech.json,$^)
 
 # The implementation of the technology mapping stage.  This produces the
 # verilog for synthesis that can later be used.  It's meant to be a single
