@@ -402,7 +402,7 @@ $(CMD_GCC) $(CMD_GXX): $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/stamp
 	touch $@
 
 $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/stamp: $(OBJ_TOOLS_SRC_DIR)/gcc-$(GCC_VERSION)/build/Makefile
-	+$(SCHEDULER_CMD) --make -- src/tools/build-gcc --srcdir $(dir $<) --bindir $(dir $@) --logfile $(dir $<)/build.log
+	+$(SCHEDULER_CMD) -- src/tools/build-gcc --srcdir $(dir $<) --bindir $(dir $@) --logfile $(dir $<)/build.log
 	@date > $@
 
 $(OBJ_TOOLS_SRC_DIR)/gcc-$(GCC_VERSION)/build/Makefile: $(OBJ_TOOLS_SRC_DIR)/gcc-$(GCC_VERSION)/configure
