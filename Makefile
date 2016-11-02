@@ -617,7 +617,9 @@ $(OBJ_TECH_DIR)/makefrags/rules.mk: src/tools/technology/generate-rules $(TECHNO
 	@mkdir -p $(dir $@)
 	PATH="$(abspath $(dir $(CMD_PYTHON3))):$(PATH)" $< -o $@ -i $(filter %.tech.json,$^)
 
-$(OBJ_TECHNOLOGY_MACRO_LIBRARY): src/tools/technology/generate-macros $(TECHNOLOGY_JSON) $(TECHNOLOGY_MARCO_PROVIDE_SCRIPTS) $(CMD_PYTHON3)
+# FIXME: This is awkward: the technology-specific macro scripts might end up
+# generating their own Verilog
+$(OBJ_TECHNOLOGY_MACRO_LIBRARY): src/tools/technology/generate-macros $(TECHNOLOGY_JSON) $(TECHNOLOGY_MARCO_PROVIDE_SCRIPTS) $(TECHNOLOGY_VERILOG_FILES) $(CMD_PYTHON3)
 	@mkdir -p $(dir $@)
 	PATH="$(abspath $(dir $(CMD_PYTHON3))):$(PATH)" $< -o $@ -i $(filter %.tech.json,$^)
 
