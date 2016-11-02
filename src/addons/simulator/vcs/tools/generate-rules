@@ -42,7 +42,8 @@ endif
 		\$(OBJ_${VCS_TARGET_CAPS}_SIM_FILES) \\
 		\$(OBJ_${VCS_TARGET_CAPS}_SIM_MACRO_FILES) \\
 		\$(VCS_BIN) \\
-		\$(${VCS_TARGET_CAPS}_SIMULATOR_ADDON)/tools/build-simulator
+		\$(${VCS_TARGET_CAPS}_SIMULATOR_ADDON)/tools/build-simulator \\
+		\$(CMD_GXX)
 	mkdir -p \$(dir \$@)
 	+\$(SCHEDULER_CMD) -- \$(abspath \$(${VCS_TARGET_CAPS}_SIMULATOR_ADDON)/tools/build-simulator) -o \$(abspath \$@) --top \$(${VCS_TARGET_CAPS}_TOP) --level ${VCS_TARGET_LOWER} --mode \$(patsubst simulator-%,%,\$(notdir \$@)) \$(abspath \$^)
 EOF

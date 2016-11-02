@@ -38,6 +38,10 @@ do
     *.tb.vfrag) tbvfrag="+define+TBVFRAG+\\\"$(basename $1)\\\"";;
     *.ucli) ucli_run_flags+=("$1");;
     *.tab) ucli_build_flags+=("-P" "$1");;
+    */g++)
+      export PATH="$(dirname "$1"):$PATH"
+      cc+=("-CC \"-Wl,-rpath,$(dirname "$1")/../lib64\"")
+      ;;
     "-o") output="$2"; shift;;
     "--level") level="$2"; shift;;
     "--mode") mode="$2"; shift;;
