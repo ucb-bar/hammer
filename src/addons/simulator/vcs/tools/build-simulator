@@ -67,6 +67,7 @@ lint_flags+=("-error=PCWM-L")
 lint_flags+=("-suppress=TFIPC") # too few input port connections
 lint_flags+=("-suppress=TMR") # text macro redefine
 lint_flags+=("-suppress=PCTIO-L") # port coerced to inout
+lint_flags+=("-suppress=WUPD") # UDP previously declared
 
 # FIXME: These flags might be relevant for turning off timing-accurate
 # simulations when using the EDK.
