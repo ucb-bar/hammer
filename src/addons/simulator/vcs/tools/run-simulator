@@ -44,7 +44,7 @@ cat /dev/null | \
     "$simulator" \
     -ucli -do +run.ucli \
     +ntb_random_seed_automatic \
-    +max-cycles=10000000 \
+    +max-cycles=100000000 \
     +vcs+initreg+random \
     ${debug_args[*]} \
     ${args[*]} |& tee $tempdir/log
