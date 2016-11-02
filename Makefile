@@ -433,6 +433,8 @@ $(OBJ_TOOLS_SRC_DIR)/pconfigure/Makefile: $(OBJ_TOOLS_SRC_DIR)/pconfigure/stamp 
 	mkdir -p $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles
 	rm -f $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
 	echo 'PREFIX = $(abspath $(OBJ_TOOLS_BIN_DIR))/pconfigure' >> $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
+	echo 'LANGUAGES += c++' >> $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
+	echo 'LINKOPTS += -Wl,-rpath,$(abspath $(OBJ_TOOLS_BIN_DIR))/gcc-$(GCC_VERSION)/lib64' >> $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
 	+cd $(OBJ_TOOLS_SRC_DIR)/pconfigure; $(SCHEDULER_CMD) --max-threads=1 -- ./bootstrap.sh
 	cd $(OBJ_TOOLS_SRC_DIR)/pconfigure; PATH="$(OBJ_TOOLS_SRC_DIR)/pconfigure/bin:$(PATH)" ./bin/pconfigure --verbose --ppkg-config $(abspath $(OBJ_TOOLS_SRC_DIR)/pconfigure/bin/ppkg-config) --phc $(abspath $(OBJ_TOOLS_SRC_DIR)/pconfigure/bin/phc)
 	+PATH="$(abspath $(OBJ_TOOLS_SRC_DIR)/pconfigure/bin/):$$PATH" $(SCHEDULER_CMD) --make -- $(MAKE) -C $(OBJ_TOOLS_SRC_DIR)/pconfigure -B CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX))
@@ -492,7 +494,9 @@ $(OBJ_TOOLS_SRC_DIR)/pcad/Makefile: $(OBJ_TOOLS_SRC_DIR)/pcad/stamp \
 				    $(OBJ_TOOLS_BIN_DIR)/pson/stamp \
 				    $(CMD_PCONFIGURE) $(CMD_PPKGCONFIG) $(CMD_PHC)
 	mkdir -p $(dir $@)
-	echo 'PREFIX = $(abspath $(OBJ_TOOLS_BIN_DIR))/pcad' >> $(OBJ_TOOLS_SRC_DIR)/pcad/Configfile.local
+	echo 'PREFIX = $(abspath $(OBJ_TOOLS_BIN_DIR))/pcad' >> $(dir $@)/Configfile.local
+	echo 'LANGUAGES += c++' >> $(dir $@)/Configfile.local
+	echo 'LINKOPTS += -Wl,-rpath,$(abspath $(OBJ_TOOLS_BIN_DIR))/gcc-$(GCC_VERSION)/lib64' >> $(dir $@)/Configfile.local
 	cd $(dir $@); $(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --phc $(abspath $(CMD_PHC))
 
 $(OBJ_TOOLS_SRC_DIR)/pcad/stamp: $(shell find src/tools/pcad -type f)
@@ -520,7 +524,11 @@ $(OBJ_TOOLS_SRC_DIR)/pson/Makefile: \
 		$(OBJ_TOOLS_SRC_DIR)/pson/Configfile \
 		$(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/stamp \
 		$(CMD_PCONFIGURE) $(CMD_GCC) $(CMD_GXX)
-	cd $(dir $<); $(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --phc $(abspath $(CMD_PHC)) "PREFIX = $(abspath $(OBJ_TOOLS_BIN_DIR)/pson)" --verbose
+	@mkdir -p $(dir $@)
+	echo 'PREFIX = $(abspath $(OBJ_TOOLS_BIN_DIR)/pson)' >> $(dir $@)/Configfile.local
+	echo 'LANGUAGES += c++' >> $(dir $@)/Configfile.local
+	echo 'LINKOPTS += -Wl,-rpath,$(abspath $(OBJ_TOOLS_BIN_DIR))/gcc-$(GCC_VERSION)/lib64' >> $(dir $@)/Configfile.local
+	cd $(dir $<); $(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --phc $(abspath $(CMD_PHC)) --verbose
 
 $(OBJ_TOOLS_SRC_DIR)/pson/Configfile: $(shell find src/tools/pson -type f)
 	rm -rf $(dir $@)
