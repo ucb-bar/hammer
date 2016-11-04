@@ -117,7 +117,7 @@ $vcs -full64 \
     ${h[*]} \
     ${i[*]} \
     ${verilog_h[*]} \
-    ${verilog[*]} \
+    $(readlink -f ${verilog[*]}) \
     ${c[*]} \
     ${o[*]} \
     -o "$output"
