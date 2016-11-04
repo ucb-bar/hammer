@@ -72,13 +72,13 @@ sed 's@^report_timing@report_timing -max_paths 500 -nworst 10 -slack_lesser_than
 mkdir -p $run_dir/rm_setup
 cat >> $run_dir/rm_setup/common_setup.tcl <<EOF
 set DESIGN_NAME "$top";
-set RTL_SOURCE_FILES "${v[@]}";
-set TARGET_LIBRARY_FILES "${libs[@]}";
-set MW_REFERENCE_LIB_DIRS "${mw[@]}";
+set RTL_SOURCE_FILES "$(readlink -f ${v[@]})";
+set TARGET_LIBRARY_FILES "$(readlink -f ${libs[@]})";
+set MW_REFERENCE_LIB_DIRS "$(readlink -f ${mw[@]})";
 set MIN_LIBRARY_FILES "";
-set TECH_FILE "${tf[@]}";
-set TLUPLUS_MAX_FILE "${tlu_max[@]}";
-set TLUPLUS_MIN_FILE "${tlu_min[@]}";
+set TECH_FILE "$(readlink -f ${tf[@]})";
+set TLUPLUS_MAX_FILE "$(readlink -f ${tlu_max[@]})";
+set TLUPLUS_MIN_FILE "$(readlink -f ${tlu_min[@]})";
 set ALIB_DIR "alib";
 set DCRM_CONSTRAINTS_INPUT_FILE "generated-scripts/constraints.tcl"
 set REPORTS_DIR "reports";

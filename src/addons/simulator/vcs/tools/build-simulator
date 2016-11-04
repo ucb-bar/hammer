@@ -116,10 +116,10 @@ $vcs -full64 \
     $tbvfrag \
     ${h[*]} \
     ${i[*]} \
-    ${verilog_h[*]} \
+    $(readlink -f ${verilog_h[*]}) \
     $(readlink -f ${verilog[*]}) \
-    ${c[*]} \
-    ${o[*]} \
+    $(readlink -f ${c[*]}) \
+    $(readlink -f ${o[*]}) \
     -o "$output"
 
 cat ${ucli_run_flags[@]} - >$output.ucli <<EOF
