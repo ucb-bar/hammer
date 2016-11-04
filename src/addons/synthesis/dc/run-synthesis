@@ -81,6 +81,11 @@ then
     exit 1
 fi
 
+if [[ "$PLSI_SCHEDULER_MAX_THREADS" == "" ]]
+then
+    export PLSI_SCHEDULER_MAX_THREADS="1"
+fi
+
 # Most of the customization of the DC reference methodology is done here: this
 # sets all the input files and such.
 mkdir -p $run_dir/rm_setup
@@ -101,7 +106,7 @@ set CLOCK_UNCERTAINTY "0.04";
 set INPUT_DELAY "0.10";
 set OUTPUT_DELAY "0.10";
 # FIXME: This shouldn't be just hard-coded, but I've forgotton how the PLSI job submission interface works
-set_host_options -max_cores 12
+set_host_options -max_cores ${PLSI_SCHEDULER_MAX_THREADS}
 EOF
 
 # FIXME: for now, you just get one clock, and the Synopsys EDK isn't very fast
