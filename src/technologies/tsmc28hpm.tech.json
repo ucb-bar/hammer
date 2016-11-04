@@ -9,8 +9,8 @@
   "libraries": [
     {
       "liberty file": "tsmc28/IP/tcbn28hpmbwp35_111a/TSMCHOME/digital/Back_End/Front_End/timing_power_noise/NLDM/tcbn28hpmbwp35_111a/tcbn28hpmbwp35tt1v25c.lib",
-      "verilog file": "tsmc28/IP/tcbn28hpmbwp35_111a/TSMCHOME/digital/Front_End/tcbn28hpmbwp35_111a/tcbn28hpmbwp35.v",
-      "milkyway lib in dir": "tsmc28/IP/tcbn28hpmbwp35_111a/TSMCHOME/digital/Back_End/milkyway/tcbn28hpmbwp35_111a",
+      "verilog file": "tsmc28/IP/tcbn28hpmbwp35_111a/TSMCHOME/digital/Front_End/verilog/tcbn28hpmbwp35_111a/tcbn28hpmbwp35.v",
+      "milkyway lib in dir": "tsmc28/IP/tcbn28hpmbwp35_111a/TSMCHOME/digital/Back_End/milkyway/tcbn28hpmbwp35_111a/lib",
       "milkyway techfile": "tsmc28/IP/tcbn28hpmbwp35_111a/TSMCHOME/digital/Back_End/milkyway/tcbn28hpmbwp35_111a/techfiles/HVH_0d5_0/tsmcn28_10lm7X2ZUTRDL.tf",
       "ccs library file": "tsmc28/IP/tcbn28hpmbwp35_111a/TSMCHOME/digital/Front_End/timing_power_noise/CCS/tcbn28hpmbwp35_111a/tcbn28hpmbwp35tt1v25c_ccs.db",
       "corner": {
