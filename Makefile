@@ -497,6 +497,8 @@ $(OBJ_TOOLS_SRC_DIR)/pcad/Makefile: $(OBJ_TOOLS_SRC_DIR)/pcad/stamp \
 	echo 'PREFIX = $(abspath $(OBJ_TOOLS_BIN_DIR))/pcad' >> $(dir $@)/Configfile.local
 	echo 'LANGUAGES += c++' >> $(dir $@)/Configfile.local
 	echo 'LINKOPTS += -Wl,-rpath,$(abspath $(OBJ_TOOLS_BIN_DIR))/gcc-$(GCC_VERSION)/lib64' >> $(dir $@)/Configfile.local
+	echo 'COMPILEOPTS += -O3 -march=native -g' >> $(dir $@)/Configfile.local
+	echo 'LINKOPTS += -O3 -march=native -g' >> $(dir $@)/Configfile.local
 	cd $(dir $@); $(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --phc $(abspath $(CMD_PHC))
 
 $(OBJ_TOOLS_SRC_DIR)/pcad/stamp: $(shell find src/tools/pcad -type f)
