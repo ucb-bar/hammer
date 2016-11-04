@@ -13,6 +13,15 @@ ifeq ($(wildcard $(DC_BIN)),)
 $(error Expected to find dc_shell at $(DC_BIN))
 endif
 
+ifeq ($(STARRC_VERSION),)
+$(error You must set STARRC_VERSION to be able to run Synopsys DC)
+endif
+
+GRDGENXO_BIN = $(SYNOPSYS_HOME)/starrcxt/$(STARRC_VERSION)/bin/grdgenxo
+ifeq ($(wildcard $(GRDGENXO_BIN)),)
+$(error Expected to find grdgenxo at $(GRDGENXO_BIN))
+endif
+
 SYN_TOP = $(MAP_TOP)
 SYN_SIM_TOP = $(MAP_SIM_TOP)
 OBJ_SYN_MAPPED_V = $(OBJ_SYN_DIR)/generated/$(SYN_TOP).mapped.v
@@ -27,3 +36,8 @@ else
 $(PLSI_CACHE_DIR)/synopsys/rm/DC-RM_$(DC_VERSION).tar:
 	$(error Use the Synopsys RM generator <https://solvnet.synopsys.com/rmgen> to generate a DC reference methodology.  If these tarballs have been pre-downloaded, you can set SYNOPSYS_RM_DIR instead of generating them yourself.)
 endif
+
+# DC requires TLU+ files, but some technologies only provide
+# ITF files.  This rule converts them.
+# FIXME: This shouldn't be DC specific, it'll use ICC as well.
+OBJ_TECH_TLUPLUS_FILES = $(addsuffix .tluplus,$(addprefix $(OBJ_TECH_DIR)/plsi-generated/tluplus/,$(notdir $(TECHNOLOGY_ITF_FILES))))

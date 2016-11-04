@@ -39,6 +39,13 @@ for library_desc in techfile["libraries"]:
 		of.write(" {0}/{1}".format(tech_home, library_desc["tlu+ files"]["max cap"]))
 of.write("\n")
 
+of.write("TECHNOLOGY_ITF_FILES =")
+for library_desc in techfile["libraries"]:
+	if "itf files" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["itf files"]["min cap"]))
+		of.write(" {0}/{1}".format(tech_home, library_desc["itf files"]["max cap"]))
+of.write("\n")
+
 of.write("TECHNOLOGY_MILKYWAY_TECHFILES =")
 for library_desc in techfile["libraries"]:
 	if "milkyway techfile" in library_desc:
