@@ -24,10 +24,15 @@ for library in techfile["libraries"]:
 				of.write(",\n")
 	if "provide script" in library:
 		# FIXME: OBJ_TECH_DIR shouldn't be hard-coded here
-		p = subprocess.check_output([library["provide script"], "obj/technology/saed32/extracted/{0}".format(library["verilog file"])]).decode("utf-8")
+		files = ""
+		if "verilog file" in library:
+			files = "obj/technology/tsmc28hpm/extracted/{0}".format(library["verilog file"])
+		if "documentation pdf" in library:
+			files = "obj/technology/tsmc28hpm/extracted/{0}".format(library["documentation pdf"])
+
+		p = subprocess.check_output([library["provide script"], files]).decode("utf-8")
 		macros = json.loads(p)
 		for macro in macros:
-			print(macro)
 			if (macro["type"] == "sram"):
 				of.write(json.dumps(macro))
 				of.write(",\n")

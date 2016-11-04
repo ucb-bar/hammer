@@ -1,0 +1,112 @@
+#!/bin/bash
+
+set -e
+
+pdf=()
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    *.pdf) pdf+=("$1");;
+    *) echo "Unknown argument $1"; exit 1;;
+    esac
+    shift
+done
+
+if test ! -e ${pdf[*]}
+then
+    echo "Unable to open ${pdf[*]}" >&2
+    exit 1
+fi
+
+typename="$(basename "${pdf[*]}" | tr [:upper:] [:lower:] | sed 's@tsn28hpm\([1prf2prf]*\)_.*@\1@' )"
+case "$typename" in
+"1prf") prefix="5n";;
+"2prf") prefix="6n";;
+*) echo "Unknown typename ${typename}" >&2; exit 1;;
+esac
+
+tempdir="$(mktemp -d /tmp/plsi-tsmc28hpm-srams.XXXXXX)"
+trap "rm -rf $tempdir" EXIT
+
+pdftotext -layout ${pdf[*]} $tempdir/sram-text.txt
+
+echo "["
+
+cat $tempdir/sram-text.txt | grep -Ee "^ *${typename}" | while read sram
+do
+    depth="$(echo "$sram" | awk '{print $2}')"
+    width="$(echo "$sram" | awk '{print $3}')"
+    mux="$(echo "$sram" | awk '{print $4}')"
+    speed="$(echo "$sram" | awk '{print $5}')"
+
+    case "$typename" in
+    "1prf")
+    cat << EOF
+{
+  "type": "sram",
+  "name": "ts${prefix}28hpma${width}x${depth}m${mux}${speed}wbso_110c",
+  "width": ${width},
+  "depth": ${depth},
+  "ports": [
+    {
+      "address port name": "A",
+      "address port polarity": "active high",
+      "clock port name": "CLK",
+      "clock port polarity": "positive edge",
+      "input port name": "D",
+      "input port polarity": "active high",
+      "chip enable port name": "CEB",
+      "chip enable port polarity": "active low",
+      "read enable port name": "REB",
+      "read enable port polarity": "active low",
+      "output port name": "Q",
+      "output port polarity": "active high",
+      "write enable port name": "WEB",
+      "write enable port polarity": "active low",
+      "mask port name": "BWEB",
+      "mask port polarity": "active low",
+      "mask granularity": 1
+    }
+  ]
+},
+EOF
+    ;;
+    "2prf")
+    cat << EOF
+{
+  "type": "sram",
+  "name": "ts${prefix}28hpma${width}x${depth}m${mux}${speed}wbso_110c",
+  "width": ${width},
+  "depth": ${depth},
+  "ports": [
+    {
+      "address port name": "AB",
+      "address port polarity": "active high",
+      "clock port name": "CLKR",
+      "clock port polarity": "positive edge",
+      "read enable port name": "REB",
+      "read enable port polarity": "active low",
+      "output port name": "Q",
+      "output port polarity": "active high"
+    },
+    {
+      "address port name": "AA",
+      "addres sport polarity": "active high",
+      "clock port name": "CLKW",
+      "clock port polarity": "positive edge",
+      "input port name": "D",
+      "input port polarity": "active high",
+      "write enable port name": "WEB",
+      "write enable port polarity": "active low",
+      "mask port name": "BWEB",
+      "mask port polarity": "active low",
+      "mask granularity": 1
+    }
+  ]
+},
+EOF
+    ;;
+    esac
+done
+
+echo '{"type": "none"}]'
