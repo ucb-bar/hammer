@@ -26,7 +26,7 @@ CORE_GENERATOR ?= rocket-chip
 SOC_GENERATOR ?= nop
 
 # The technology that will be used to implement this design.
-TECHNOLOGY ?= tsmc180
+TECHNOLOGY ?= tsmc180osu
 
 # The synthesis tool to run.
 SYNTHESIS_TOOL ?= yosys
