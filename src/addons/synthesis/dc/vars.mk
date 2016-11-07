@@ -13,6 +13,11 @@ ifeq ($(wildcard $(DC_BIN)),)
 $(error Expected to find dc_shell at $(DC_BIN))
 endif
 
+# We need StarRC in order to convert ITF files to TLU+ files, which DC needs
+# for accurate wire delays.  This is only necessary if the technology provides
+# ITF files, and since lots of people don't run StarRC I shouldn't error out if
+# they don't need it.
+ifneq ($(TECHNOLOGY_ITF_FILES),)
 ifeq ($(STARRC_VERSION),)
 $(error You must set STARRC_VERSION to be able to run Synopsys DC)
 endif
@@ -20,6 +25,7 @@ endif
 GRDGENXO_BIN = $(SYNOPSYS_HOME)/starrcxt/$(STARRC_VERSION)/bin/grdgenxo
 ifeq ($(wildcard $(GRDGENXO_BIN)),)
 $(error Expected to find grdgenxo at $(GRDGENXO_BIN))
+endif
 endif
 
 SYN_TOP = $(MAP_TOP)

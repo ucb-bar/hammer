@@ -27,6 +27,8 @@ $(OBJ_SYN_DIR)/synopsys-dc.stamp: \
 
 # DC needs TLU+ files.  While this stuff isn't explicitly DC-related, this is
 # just the first tool that uses it.
+ifneq ($(TECHNOLOGY_ITF_FILES),)
 $(OBJ_TECH_TLUPLUS_FILES): $(TECHNOLOGY_ITF_FILES)
 	@mkdir -p $(dir $@)
 	$(SCHEDULER_CMD) --max-threads=1 -- $(GRDGENXO_BIN) -itf2TLUPlus -i $(realpath $(filter %/$(patsubst %.tluplus,%,$(notdir $@)),$^)) -o $(abspath $@)
+endif
