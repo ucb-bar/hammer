@@ -5,3 +5,5 @@
 * Document the technology JSON file format
 * Deal with the "dut" in the UCLI register setter
 * Pass retimable modules into the synthesis wrapper
+* Print errors to stderr
+* Print $0 before all bash errors
