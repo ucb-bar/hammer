@@ -131,7 +131,7 @@ endif
 
 CORE_SIMULATOR_ADDON = $(wildcard src/addons/simulator/$(CORE_SIMULATOR)/ $(ADDONS_DIR)/simulator/$(CORE_SIMULATOR)/)
 ifneq ($(words $(CORE_SIMULATOR_ADDON)),1)
-$(error Unable to resolve CORE_GENERATOR=$(CORE_GENERATOR): found "$(CORE_GENERATOR_ADDON)")
+$(error Unable to resolve CORE_SIMULATOR=$(CORE_SIMULATOR): found "$(CORE_SIMULATOR_ADDON)")
 endif
 
 SOC_GENERATOR_ADDON = $(wildcard src/addons/soc-generator/$(SOC_GENERATOR)/ $(ADDONS_DIR)/soc-generator/$(SOC_GENERATOR)/)
@@ -141,22 +141,22 @@ endif
 
 SOC_SIMULATOR_ADDON = $(wildcard src/addons/simulator/$(SOC_SIMULATOR)/ $(ADDONS_DIR)/simulator/$(SOC_SIMULATOR)/)
 ifneq ($(words $(SOC_SIMULATOR_ADDON)),1)
-$(error Unable to resolve SOC_GENERATOR=$(SOC_GENERATOR): found "$(SOC_GENERATOR_ADDON)")
+$(error Unable to resolve SOC_SIMULATOR=$(SOC_SIMULATOR): found "$(SOC_SIMULATOR_ADDON)")
 endif
 
 MAP_SIMULATOR_ADDON = $(wildcard src/addons/simulator/$(MAP_SIMULATOR)/ $(ADDONS_DIR)/simulator/$(MAP_SIMULATOR)/)
 ifneq ($(words $(MAP_SIMULATOR_ADDON)),1)
-$(error Unable to resolve MAP_GENERATOR=$(MAP_GENERATOR): found "$(MAP_GENERATOR_ADDON)")
+$(error Unable to resolve MAP_SIMULATOR=$(MAP_SIMULATOR): found "$(MAP_SIMULATOR_ADDON)")
 endif
 
 SYNTHESIS_TOOL_ADDON = $(wildcard src/addons/synthesis/$(SYNTHESIS_TOOL)/ $(ADDONS_DIR)/synthesis/$(SYNTHESIS_TOOL)/)
 ifneq ($(words $(SYNTHESIS_TOOL_ADDON)),1)
-$(error Unable to resolve SOC_GENERATOR=$(SOC_GENERATOR): found "$(SOC_GENERATOR_ADDON)")
+$(error Unable to resolve SYNTHESIS_TOOL=$(SYNTHESIS_TOOL): found "$(SYNTHESIS_TOOL_ADDON)")
 endif
 
 SYN_SIMULATOR_ADDON = $(wildcard src/addons/simulator/$(SYN_SIMULATOR)/ $(ADDONS_DIR)/simulator/$(SYN_SIMULATOR)/)
 ifneq ($(words $(SYN_SIMULATOR_ADDON)),1)
-$(error Unable to resolve SYN_GENERATOR=$(SYN_GENERATOR): found "$(SYN_GENERATOR_ADDON)")
+$(error Unable to resolve SYN_SIMULATOR=$(SYN_SIMULATOR): found "$(SYN_SIMULATOR_ADDON)")
 endif
 
 SYN_FORMAL_ADDON = $(wildcard src/addons/formal/$(SYN_FORMAL_TOOL)/ $(ADDONS_DIR)/formal/$(SYN_FORMAL_TOOLS))
