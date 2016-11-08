@@ -47,6 +47,7 @@ do
   "name": "$(echo "ts${prefix}28hpma${depth}x${width}m${mux}${speed}wbso" | tr [:lower:] [:upper:])",
   "width": ${width},
   "depth": ${depth},
+  "family": "sram-${typename}",
   "ports": [
     {
       "address port name": "A",
@@ -78,6 +79,7 @@ EOF
   "name": "$(echo "ts${prefix}28hpma${depth}x${width}m${mux}${speed}wbso" | tr [:lower:] [:upper:])",
   "width": ${width},
   "depth": ${depth},
+  "family": "sram-${typename}",
   "ports": [
     {
       "address port name": "AB",
