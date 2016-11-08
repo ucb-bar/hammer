@@ -267,7 +267,7 @@ MAP_SIM_TOP = $(CORE_SIM_TOP)
 OBJ_MAP_RTL_V = $(OBJ_MAP_DIR)/$(MAP_TOP).v
 OBJ_MAP_SYN_FILES =
 OBJ_MAP_SIM_FILES = $(OBJ_SOC_SIM_FILES)
-OBJ_MAP_SIM_MACRO_FILES = $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_simulation.v $(TECHNOLOGY_VERILOG_FILES)
+OBJ_MAP_SIM_MACRO_FILES = $(TECHNOLOGY_VERILOG_FILES)
 OBJ_MAP_MACROS = $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros.json
 
 # Macro compilers need to know the actual list of required macros, as it's
@@ -660,10 +660,6 @@ $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.v: \
 		$(OBJ_TECHNOLOGY_MACRO_LIBRARY)
 	@mkdir -p $(dir $@)
 	$(SCHEDULER_CMD) --max-threads=1 -- $< -v $@ -m $(filter %.macros.json,$^) --syn-flops -l $(filter %.macro_library.json,$^) |& tee $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.log | tail
-
-$(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_simulation.v:
-	@mkdir -p $(dir $@)
-	touch $@
 
 $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.mk: \
 		src/tools/map/list-macros \
