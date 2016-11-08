@@ -44,7 +44,7 @@ do
     cat << EOF
 {
   "type": "sram",
-  "name": "ts${prefix}28hpma${depth}x${width}m${mux}${speed}wbso_110d",
+  "name": "$(echo "ts${prefix}28hpma${depth}x${width}m${mux}${speed}wbso" | tr [:lower:] [:upper:])",
   "width": ${width},
   "depth": ${depth},
   "ports": [
@@ -75,7 +75,7 @@ EOF
     cat << EOF
 {
   "type": "sram",
-  "name": "ts${prefix}28hpma${depth}x${width}m${mux}${speed}wbso_110c",
+  "name": "$(echo "ts${prefix}28hpma${depth}x${width}m${mux}${speed}wbso" | tr [:lower:] [:upper:])",
   "width": ${width},
   "depth": ${depth},
   "ports": [
