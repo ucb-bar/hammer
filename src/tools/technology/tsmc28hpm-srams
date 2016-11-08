@@ -91,7 +91,7 @@ EOF
     },
     {
       "address port name": "AA",
-      "addres sport polarity": "active high",
+      "address port polarity": "active high",
       "clock port name": "CLKW",
       "clock port polarity": "positive edge",
       "input port name": "D",
