@@ -58,8 +58,6 @@ do
       "input port polarity": "active high",
       "chip enable port name": "CEB",
       "chip enable port polarity": "active low",
-      "read enable port name": "REB",
-      "read enable port polarity": "active low",
       "output port name": "Q",
       "output port polarity": "active high",
       "write enable port name": "WEB",
