@@ -80,6 +80,11 @@ for library in techfile["libraries"]:
 		for cap in ["min cap", "max cap"]:
 			if tlu in library and cap in library[tlu]:
 				of.write("{0}/{1}: {2}\n".format(tech_home, library[tlu][cap], extract_stamp))
+	for ds in ["depend script"]:
+		if ds in library:
+			of.write("$(OBJ_TECH_DIR)/generated/{0}/%.mk: {1}\n".format(library["family"], library["depend script"]))
+			of.write("\t@mkdir -p $(dir $@)\n")
+			of.write("\t{0} -o $@ --family {1} --macro $(patsubst %.mk,%,$(notdir $@))\n".format(library["depend script"], library["family"]))
 
 # A helper to extract technologies
 of.write("technology-extract: {0}\n".format(extract_stamp))

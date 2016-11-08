@@ -34,12 +34,16 @@
       ]
     },
     {
+      "family": "sram-1prf",
       "provide script": "src/tools/technology/tsmc28hpm-srams",
-      "documentation pdf": "tsmc28/IP/sram/Documentation/documents/tsn28hpm1prf_20110606_110d/tsn28hpm1prf_20110606_110d_Quick_Reference_Table.pdf"
+      "documentation pdf": "tsmc28/IP/sram/Documentation/documents/tsn28hpm1prf_20110606_110d/tsn28hpm1prf_20110606_110d_Quick_Reference_Table.pdf",
+      "depend script": "src/tools/technology/tsmc28hpm-generate_mc_deps"
     },
     {
+      "family": "sram-2prf",
       "provide script": "src/tools/technology/tsmc28hpm-srams",
-      "documentation pdf": "tsmc28/IP/sram/Documentation/documents/tsn28hpm2prf_20110606_110c/TSN28HPM2PRF_20110606_110C_Quick_Reference_Table.pdf"
+      "documentation pdf": "tsmc28/IP/sram/Documentation/documents/tsn28hpm2prf_20110606_110c/TSN28HPM2PRF_20110606_110C_Quick_Reference_Table.pdf",
+      "depend script": "src/tools/technology/tsmc28hpm-generate_mc_deps"
     }
   ]
 }

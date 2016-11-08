@@ -1,0 +1,133 @@
+#!/bin/bash
+
+unset family
+unset macro
+unset output_dir
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    --family) family="$2"; shift;;
+    --macro) macro="$2"; shift;;
+    --output_dir) output_dir="$2"; shift;;
+    *) echo "$0: unknown argument $1" >&2; exit 1;;
+    esac
+    shift
+done
+
+if [[ "$output_dir" == "" ]]
+then
+    echo "$0: you must specify --output_dir" >&2
+    exit 1
+fi
+
+rm -rf "$output_dir"
+mkdir -p "$output_dir"
+
+# Some environment variables must be set in order to run the memory compiler.
+if [[ "$MC2_INSTALL_DIR" == "" ]]
+then
+    echo "$0: MC2_INSTALL_DIR must be set in order to run the memory compiler" >&2
+    exit 1
+fi
+
+if [[ "$MC2_LICENSE_FILE" == "" ]]
+then
+    echo "$0: MC2_LICENSE_FILE must be set in order to run the memory compiler" >&2
+fi
+
+if [[ "$MC2_HOME" == "" ]]
+then
+    echo "$0: MC2_HOME must be set in order to run the memory compiler" >&2
+fi
+
+if [[ "$MC2_VERSION" == "" ]]
+then
+    echo "$0: MC2_VERSION must be set in order to run the memory compiler" >&2
+fi
+
+# We're just given the macro name that should be compiled.  This goes and
+# figures out the arguments that should be passed to
+unset width
+unset depth
+unset mux
+unset seg
+depth="$(echo "$macro" | sed 's@^TS[0-9]N28HPM[A]\([0-9]*\)X\([0-9]*\)M\([0-9]*\)\([SF]\)WBSO$@\1@g')"
+width="$(echo "$macro" | sed 's@^TS[0-9]N28HPM[A]\([0-9]*\)X\([0-9]*\)M\([0-9]*\)\([SF]\)WBSO$@\2@g')"
+mux="$(echo "$macro" | sed 's@^TS[0-9]N28HPM[A]\([0-9]*\)X\([0-9]*\)M\([0-9]*\)\([SF]\)WBSO$@\3@g')"
+seg="$(echo "$macro" | sed 's@^TS[0-9]N28HPM[A]\([0-9]*\)X\([0-9]*\)M\([0-9]*\)\([SF]\)WBSO$@\4@g')"
+
+if [[ "$depth" == "" || "$depth" == "$macro" ]]
+then
+    echo "$0: unable to parse depth from $macro" >&2
+    exit 1
+fi
+if [[ "$width" == "" || "$width" == "$macro" ]]
+then
+    echo "$0: unable to parse width from $macro" >&2
+    exit 1
+fi
+if [[ "$mux" == "" || "$mux" == "$macro" ]]
+then
+    echo "$0: unable to parse mux from $macro" >&2
+    exit 1
+fi
+if [[ "$seg" == "" || "$seg" == "$macro" ]]
+then
+    echo "$0: unable to parse seg from $macro" >&2
+    exit 1
+fi
+
+# Tries to figure out the best version of the TSMC memory compiler to use
+mc_base_name="tsn28hpm$(echo "$family" | sed "s/^sram-//g")"
+mc_home="$(find $MC2_HOME -mindepth 1 -maxdepth 1 -iname "${mc_base_name}_*")"
+
+if test ! -d "$mc_home"
+then
+    echo "$0: unable to find the MC2 path" >&2
+    echo "  MC2_HOME: $MC2_HOME" >&2
+    echo "  mc_base_name: $mc_base_name" >&2
+    echo "  looking for $MC2_HOME/${mc_base_name}_*" >&2
+    exit 1
+fi
+
+# The memory compiler will generate a whole bunch of garbage.  This ensures we
+# don't spew it all over the place.
+set -e
+tempdir="$(mktemp -d /tmp/tsmc28hpm-mc-wrapper.XXXXXX)"
+trap "rm -rf $tempdir" EXIT
+cd $tempdir
+
+cat >config.txt <<EOF
+${depth}x${width}m${mux}${seg}
+EOF
+
+cat >run_memory_compiler.tcsh <<EOF
+setenv MC2_INSTALL_DIR $MC2_INSTALL_DIR/$MC2_VERSION
+setenv LM_LICENSE_FILE $MC2_LICENSE_FILE
+set path = (\$path $MC2_INSTALL_DIR/$MC2_VERSION/bin/Linux-64)
+rehash
+
+setenv MC_HOME $mc_home
+$mc_home/${mc_base_name}_*.pl
+EOF
+
+while [[ "$(flock $HOME/mc2.lock tcsh run_memory_compiler.tcsh |& tee $output_dir/run-mc2.log | grep "Failed to get license" | wc -l)" != "0" ]]
+do
+    grep "Failed to get license" $output/mc2.log
+    echo "Waiting for license file..."
+    sleep 1s
+done
+
+generated_macro_name="$(echo "$macro" | tr [:upper:] [:lower:])"
+generated_macro_dir="$(find * -mindepth 0 -maxdepth 0 -iname "${generated_macro_name}_*")"
+if test ! -d "$generated_macro_dir"
+then
+    echo "$0: unable to find generated memory macro\n" >&2
+    echo "  existing files: " >&2
+    find . -maxdepth 1 >&2
+    tail $output_dir/run-mc2.log
+    echo " looking for: ${macro} in ${generated_macro_dir}" >&2
+    exit 1
+fi
+
+tar -c $generated_macro_dir | tar -xC $output_dir --strip-components=1

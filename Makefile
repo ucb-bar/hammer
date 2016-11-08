@@ -265,10 +265,20 @@ MAP_TOP = $(SOC_TOP)
 MAP_SIM_TOP = $(CORE_SIM_TOP)
 
 OBJ_MAP_RTL_V = $(OBJ_MAP_DIR)/$(MAP_TOP).v
+OBJ_MAP_SYN_FILES =
 OBJ_MAP_SIM_FILES = $(OBJ_SOC_SIM_FILES)
 OBJ_MAP_SIM_MACRO_FILES = $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_simulation.v $(TECHNOLOGY_VERILOG_FILES)
 OBJ_MAP_MACROS = $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros.json
 
+# Macro compilers need to know the actual list of required macros, as it's
+# unreasonable to expect that the entire output of something like a memory
+# compiler should generate every possible output before running synthesis.
+ifeq ($(filter $(MAKECMDGOALS),clean distclean),)
+-include $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.mk
+endif
+
+# This has to come after the macro vars makefrags, since it uses them to build
+# the simulator.
 include $(MAP_SIMULATOR_ADDON)/map-vars.mk
 
 # The synthesis step converts RTL to a netlist.  This only touches the
@@ -642,3 +652,10 @@ $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.v: \
 $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_simulation.v:
 	@mkdir -p $(dir $@)
 	touch $@
+
+$(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.mk: \
+		src/tools/map/list-macros \
+		$(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.v \
+		$(OBJ_TECHNOLOGY_MACRO_LIBRARY)
+	@mkdir -p $(dir $@)
+	$< -o $@ --mode $(patsubst $(MAP_TOP).macros_for_%.mk,%,$(notdir $@)) $^

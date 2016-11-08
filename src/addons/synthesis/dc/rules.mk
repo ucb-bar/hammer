@@ -15,6 +15,7 @@ $(OBJ_SYN_DIR)/synopsys-dc.stamp: \
 		$(abspath $(SYNTHESIS_TOOL_ADDON)/run-synthesis) \
 		$(abspath $(SYNTHESIS_TOOL_ADDON)/find-regs.tcl) \
 		$(OBJ_MAP_RTL_V) \
+		$(OBJ_MAP_SYN_FILES) \
 		$(TECHNOLOGY_MILKYWAY_LIB_IN_DIRS) \
 		$(TECHNOLOGY_TLUPLUS_FILES) $(OBJ_TECH_TLUPLUS_FILES) \
 		$(TECHNOLOGY_MILKYWAY_TECHFILES) \
