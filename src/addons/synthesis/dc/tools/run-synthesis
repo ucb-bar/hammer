@@ -171,3 +171,4 @@ esac
 set +e
 grep ^Warning dc.log && (echo "DC produced warning messages")
 grep ^Error dc.log && (echo "DC produced error messages"; exit 1)
+exit 0
