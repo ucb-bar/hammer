@@ -12,8 +12,8 @@ $(OBJ_SYN_MAPPED_V): $(OBJ_SYN_DIR)/synopsys-dc.stamp
 # about producing arbitrary outputs.  Rather than relying on DC's output files
 # for dependency resolution we instead.
 $(OBJ_SYN_DIR)/synopsys-dc.stamp: \
-		$(abspath $(SYNTHESIS_TOOL_ADDON)/run-synthesis) \
-		$(abspath $(SYNTHESIS_TOOL_ADDON)/find-regs.tcl) \
+		$(abspath $(SYNTHESIS_TOOL_ADDON)/tools/run-synthesis) \
+		$(abspath $(SYNTHESIS_TOOL_ADDON)/tools/find-regs.tcl) \
 		$(OBJ_MAP_RTL_V) \
 		$(OBJ_MAP_SYN_FILES) \
 		$(TECHNOLOGY_MILKYWAY_LIB_IN_DIRS) \
