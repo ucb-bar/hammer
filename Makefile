@@ -370,6 +370,8 @@ syn-verilog: bin/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP).v
 core-simulator: bin/core-$(CORE_CONFIG)/$(CORE_TOP)-simulator
 .PHONY: soc-simulator
 soc-simulator: bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP)-simulator
+.PHONY: map-simulator
+map-simulator: bin/map-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)/$(MAP_TOP)-simulator
 
 # This just cleans everything
 .PHONY: clean
@@ -603,6 +605,10 @@ bin/core-$(CORE_CONFIG)/$(CORE_TOP)-simulator: $(OBJ_CORE_SIMULATOR)
 	cp --reflink=auto $^ $@
 
 bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP)-simulator: $(OBJ_SOC_SIMULATOR)
+	mkdir -p $(dir $@)
+	cp --reflink=auto $^ $@
+
+bin/map-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)/$(MAP_TOP)-simulator: $(OBJ_MAP_SIMULATOR)
 	mkdir -p $(dir $@)
 	cp --reflink=auto $^ $@
 
