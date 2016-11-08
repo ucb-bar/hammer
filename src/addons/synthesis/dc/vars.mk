@@ -28,6 +28,17 @@ $(error Expected to find grdgenxo at $(GRDGENXO_BIN))
 endif
 endif
 
+# We need "lc_shell" in order to convert .lib files to .db files, but for some
+# reason that's not in some versions of DC.  This allows users to specify it
+# seperately.
+ifneq ($(filter %.lib,$(OBJ_MAP_SYN_FILES)),)
+LC_VERSION ?= $(DC_VERSION)
+LC_BIN = $(SYNOPSYS_HOME)/syn/$(LC_VERSION)/bin/lc_shell
+ifeq ($(wildcard $(LC_BIN)),)
+$(error Expected to find lc_shell at $(LC_BIN))
+endif
+endif
+
 SYN_TOP = $(MAP_TOP)
 SYN_SIM_TOP = $(MAP_SIM_TOP)
 OBJ_SYN_MAPPED_V = $(OBJ_SYN_DIR)/generated/$(SYN_TOP).mapped.v
@@ -46,4 +57,10 @@ endif
 # DC requires TLU+ files, but some technologies only provide
 # ITF files.  This rule converts them.
 # FIXME: This shouldn't be DC specific, it'll use ICC as well.
-OBJ_TECH_TLUPLUS_FILES = $(addsuffix .tluplus,$(addprefix $(OBJ_TECH_DIR)/plsi-generated/tluplus/,$(notdir $(TECHNOLOGY_ITF_FILES))))
+OBJ_SYN_TLUPLUS_FILES = $(addsuffix .tluplus,$(addprefix $(OBJ_TECH_DIR)/plsi-generated/tluplus/,$(notdir $(TECHNOLOGY_ITF_FILES))))
+
+# DC can't handle raw .lib files, but instead expected them to be converted to
+# .db files.
+OBJ_SYN_DB_FILES = $(addsuffix .db,$(addprefix $(OBJ_TECH_DIR)/plsi-generetad/db/,$(notdir $(filter %.lib,$(OBJ_MAP_SYN_FILES)))))
+
+OBJ_SYN_SYN_FILES = $(filter-out %.lib,$(OBJ_MAP_SYN_FILES))

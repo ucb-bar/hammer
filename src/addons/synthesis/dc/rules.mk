@@ -15,9 +15,9 @@ $(OBJ_SYN_DIR)/synopsys-dc.stamp: \
 		$(abspath $(SYNTHESIS_TOOL_ADDON)/tools/run-synthesis) \
 		$(abspath $(SYNTHESIS_TOOL_ADDON)/tools/find-regs.tcl) \
 		$(OBJ_MAP_RTL_V) \
-		$(OBJ_MAP_SYN_FILES) \
+		$(OBJ_SYN_SYN_FILES) $(OBJ_SYN_DB_FILES) \
 		$(TECHNOLOGY_MILKYWAY_LIB_IN_DIRS) \
-		$(TECHNOLOGY_TLUPLUS_FILES) $(OBJ_TECH_TLUPLUS_FILES) \
+		$(TECHNOLOGY_TLUPLUS_FILES) $(OBJ_SYN_TLUPLUS_FILES) \
 		$(TECHNOLOGY_MILKYWAY_TECHFILES) \
 		$(TECHNOLOGY_CCS_LIBRARY_FILES) \
 		$(PLSI_CACHE_DIR)/synopsys/rm/DC-RM_$(DC_VERSION).tar \
@@ -26,10 +26,15 @@ $(OBJ_SYN_DIR)/synopsys-dc.stamp: \
 	$(SCHEDULER_CMD) -- $(abspath $<) --top $(SYN_TOP) --output_dir $(abspath $(dir $@))/synopsys-dc-workdir $(abspath $^)
 	date > $@
 
-# DC needs TLU+ files.  While this stuff isn't explicitly DC-related, this is
-# just the first tool that uses it.
+# FIXME: None of these are DC-specific, so they should probably live somewhere else.
 ifneq ($(TECHNOLOGY_ITF_FILES),)
-$(OBJ_TECH_TLUPLUS_FILES): $(TECHNOLOGY_ITF_FILES)
+$(OBJ_SYN_TLUPLUS_FILES): $(TECHNOLOGY_ITF_FILES)
 	@mkdir -p $(dir $@)
 	$(SCHEDULER_CMD) --max-threads=1 -- $(GRDGENXO_BIN) -itf2TLUPlus -i $(realpath $(filter %/$(patsubst %.tluplus,%,$(notdir $@)),$^)) -o $(abspath $@)
+endif
+
+ifneq ($(OBJ_SYN_DB_FILES),)
+$(OBJ_SYN_DB_FILES): $(SYNTHESIS_TOOL_ADDON)/tools/lib2db $(OBJ_MAP_SYN_FILES)
+	@mkdir -p $(dir $@)
+	$(SCHEDULER_CMD) --max-threads=1 -- $< -i $(abspath $(filter %/$(patsubst %.db,%,$(notdir $@)),$^)) -o $(abspath $@) --lc_shell $(abspath $(LC_BIN))
 endif
