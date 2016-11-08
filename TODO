@@ -7,3 +7,4 @@
 * Pass retimable modules into the synthesis wrapper
 * Print errors to stderr
 * Print $0 before all bash errors
+* Don't use TECHNOLOGY_* variables in the synthesis scripts, use OBJ_MAP_*
