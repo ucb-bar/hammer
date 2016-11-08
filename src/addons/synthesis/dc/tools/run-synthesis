@@ -168,5 +168,6 @@ ExampleTop)
 esac
 
 # Make sure there's no invalid output from DC
+set +e
 grep ^Warning dc.log && (echo "DC produced warning messages")
 grep ^Error dc.log && (echo "DC produced error messages"; exit 1)
