@@ -659,7 +659,7 @@ $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.v: \
 		$(OBJ_SOC_MACROS) \
 		$(OBJ_TECHNOLOGY_MACRO_LIBRARY)
 	@mkdir -p $(dir $@)
-	$(SCHEDULER_CMD) --max-threads=1 -- $< -v $@ -m $(filter %.macros.json,$^) --syn-flops -l $(filter %.macro_library.json,$^) >& $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.log
+	$(SCHEDULER_CMD) --max-threads=1 -- $< -v $@ -m $(filter %.macros.json,$^) --syn-flops -l $(filter %.macro_library.json,$^) |& tee $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.log | tail
 
 $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_simulation.v:
 	@mkdir -p $(dir $@)
