@@ -4,6 +4,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-o", "--output", dest="output", required=True)
 parser.add_argument("-i", "--input", dest="input", required=True)
+parser.add_argument("-t", "--technology", dest="technology", required=True)
 args = parser.parse_args()
 
 import json
@@ -26,9 +27,9 @@ for library in techfile["libraries"]:
 		# FIXME: OBJ_TECH_DIR shouldn't be hard-coded here
 		files = ""
 		if "verilog file" in library:
-			files = "obj/technology/tsmc28hpm/extracted/{0}".format(library["verilog file"])
+			files = "obj/technology/{1}/extracted/{0}".format(library["verilog file"], args.technology)
 		if "documentation pdf" in library:
-			files = "obj/technology/tsmc28hpm/extracted/{0}".format(library["documentation pdf"])
+			files = "obj/technology/{1}/extracted/{0}".format(library["documentation pdf"], args.technology)
 
 		p = subprocess.check_output([library["provide script"], files]).decode("utf-8")
 		macros = json.loads(p)

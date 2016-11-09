@@ -645,7 +645,7 @@ $(OBJ_TECHNOLOGY_MACRO_LIBRARY): \
 		$(TECHNOLOGY_DOCUMENTATION_PDF_FILES) \
 		$(CMD_PYTHON3)
 	@mkdir -p $(dir $@)
-	PATH="$(abspath $(dir $(CMD_PYTHON3))):$(PATH)" $< -o $@ -i $(filter %.tech.json,$^)
+	PATH="$(abspath $(dir $(CMD_PYTHON3))):$(PATH)" $< -o $@ -i $(filter %.tech.json,$^) --technology $(TECHNOLOGY)
 
 # The implementation of the technology mapping stage.  This produces the
 # verilog for synthesis that can later be used.  It's meant to be a single
