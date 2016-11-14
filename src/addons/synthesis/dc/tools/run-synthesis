@@ -123,10 +123,14 @@ import re
 for clock in config["clocks"]:
 	clock_name = clock["name"]
 	clock_period = clock["period"]
-	if not re.match("[0-9]+ *ns", clock_period):
+	if not re.match("[0-9]+ *[np]s", clock_period):
 		error
 
-	clock_period_ns = re.sub(" *ns", "", clock_period)
+	if re.match("[0-9]+ *ns", clock_period):
+		clock_period_ns = re.sub(" *ns", "", clock_period)
+	if re.match("[0-9]+ *ps", clock_period):
+		clock_period_ns = int(re.sub(" *ps", "", clock_period)) / 1000.0
+
 	print("create_clock {0} -name {0} -period {1}".format(clock_name, clock_period_ns))
 	print("set_clock_uncertainty 0.01 [get_clocks {0}]".format(clock_name))
 EOF
