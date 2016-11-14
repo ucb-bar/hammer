@@ -11,6 +11,7 @@ tlu_min=()
 tlu_max=()
 tf=()
 unset find_regs
+unset config
 while [[ "$1" != "" ]]
 do
     case "$1" in
@@ -28,6 +29,7 @@ do
     *rcworst.itf.tluplus) tlu_max+=("$1");;
     *.tf) tf+=("$1");;
     */find-regs.tcl) find_regs="$1";;
+    *.syn_config.json) config="$1";;
     *) echo "Unknown argument $1"; exit 1;;
     esac
     shift
@@ -46,6 +48,7 @@ EOF
 # Almost all of what I do is to just use Synopsys's reference methodology,
 # which users are expected to have downloaded.
 tar -xf "$rmtar" -C "$run_dir" --strip-components=1
+mkdir -p $run_dir/generated-scripts
 
 # The default DC script has an "exit" an the end, which we want to strip off so
 # I can add more commands after all the RM DC stuff.
@@ -109,32 +112,46 @@ set OUTPUT_DELAY "0.10";
 set_host_options -max_cores ${PLSI_SCHEDULER_MAX_THREADS}
 EOF
 
+# Read the core's configuration file to figure out what all the clocks should
+# look like.
+python3 >>$run_dir/generated-scripts/constraints.tcl <<EOF
+import json
+with open("${config}") as f:
+	config = json.load(f)
+
+import re
+for clock in config["clocks"]:
+	clock_name = clock["name"]
+	clock_period = clock["period"]
+	if not re.match("[0-9]+ *ns", clock_period):
+		error
+
+	clock_period_ns = re.sub(" *ns", "", clock_period)
+	print("create_clock {0} -name {0} -period {1}".format(clock_name, clock_period_ns))
+	print("set_clock_uncertainty 0.01 [get_clocks {0}]".format(clock_name))
+EOF
+
 # FIXME: for now, you just get one clock, and the Synopsys EDK isn't very fast
 # so everything runs at 100MHz.
 # The constraints file determines how the IO is constrained and what the clocks
 # look like.
-mkdir -p $run_dir/generated-scripts
 cat >> $run_dir/generated-scripts/constraints.tcl <<"EOF"
-# create clock
-create_clock clock -name clock -period 1
-set_clock_uncertainty 0.01 [get_clocks clock]
-
 # set drive strength for inputs
 #set_driving_cell -lib_cell INVD0BWP12T [all_inputs]
 # set load capacitance of outputs
 set_load -pin_load 0.004 [all_outputs]
 
-set all_inputs_but_clock [remove_from_collection [all_inputs] [get_ports clock]]
-set_input_delay 0.02 -clock [get_clocks clock] $all_inputs_but_clock
-set_output_delay 0.03 -clock [get_clocks clock] [all_outputs]
+#set all_inputs_but_clock [remove_from_collection [all_inputs] [get_ports clock]]
+#set_input_delay 0.02 -clock [get_clocks clock] $all_inputs_but_clock
+#set_output_delay 0.03 -clock [get_clocks clock] [all_outputs]
 
-set_isolate_ports [all_outputs] -type buffer
-set_isolate_ports [remove_from_collection [all_inputs] clock] -type buffer -force
+#set_isolate_ports [all_outputs] -type buffer
+#set_isolate_ports [remove_from_collection [all_inputs] clock] -type buffer -force
 EOF
 
 # FIXME: This is a terrible way to specify the retiming registers, it should
 # come from a FIRRTL pass.
-for x in $(echo "IntToFP" "FPUFMAPipe" "Mul54" "INToRecFN" "IMulSlice" "FMASlice" "FCmpSlice" "FConvSlice" "DivSqrtRecF64")
+for x in $(echo "IntToFP" "FPUFMAPipe" "Mul54" "INToRecFN" "IMulSlice" "FMASlice" "FCmpSlice" "FConvSlice" "DivSqrtRecF64" "IMul")
 do
     grep "^module $x" ${v[*]} && (echo "set_optimize_registers true -design $x* -clock clock -check_design -verbose -print_critical_loop" >> $run_dir/generated-scripts/constraints.tcl)
 done

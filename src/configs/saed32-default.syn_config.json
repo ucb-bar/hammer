@@ -1,0 +1,8 @@
+{
+  "clocks": [
+    {
+      "name": "clock",
+      "period": "20ns"
+    }
+  ]
+}

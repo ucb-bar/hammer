@@ -164,6 +164,12 @@ ifneq ($(words $(SYN_FORMAL_ADDON)),1)
 $(error Unable to resolve SYN_FORMAL_TOOL=$(SYN_FORMAL_TOOL): found "$(SYN_FORMAL_ADDON)")
 endif
 
+# Check to ensure all the configurations actually exist.
+SYN_CONFIG_FILE=src/configs/$(TECHNOLOGY)-$(SYN_CONFIG).syn_config.json
+ifeq ($(wildcard $(SYN_CONFIG_FILE)),)
+$(error Unable to find synthesis configuration $(SYN_CONFIG), looked in $(SYN_CONFIG_FILE))
+endif
+
 # In order to prevent EEs from seeing Makefiles, the technology description is
 # a JSON file.  This simply checks to see that the file exists before
 # continuing, in order to ensure there's no trickier errors.
