@@ -17,7 +17,10 @@ do
 done
 
 cat >"$output" <<EOF
-\$(CHECK_${ICARUS_TARGET_CAPS}_DIR)/%.out: \$(${ICARUS_TARGET_CAPS}_SIMULATOR_ADDON)/tools/run-simulator \$(OBJ_${ICARUS_TARGET_CAPS}_DIR)/simulator-ndebug \$(CMD_PTEST)
+\$(CHECK_${ICARUS_TARGET_CAPS}_DIR)/%.out: \\
+		\$(${ICARUS_TARGET_CAPS}_SIMULATOR_ADDON)/tools/run-simulator \\
+		\$(OBJ_${ICARUS_TARGET_CAPS}_DIR)/simulator-ndebug \\
+		\$(CMD_PTEST)
 	mkdir -p \$(dir \$@)
 	\$(SCHEDULER_CMD) --max-threads=1 -- \$(CMD_PTEST) --test \$(abspath \$(${ICARUS_TARGET_CAPS}_SIMULATOR_ADDON)/tools/run-simulator) --out \$@ --args \$(abspath \$^)
 
