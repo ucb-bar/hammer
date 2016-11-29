@@ -15,14 +15,14 @@ $(ICARUS_BIN): $(ICARUS_SRC)/ivl $(CMD_GCC) $(CMD_GXX)
 	@mkdir -p $(ICARUS_PREFIX)/lib/ivl
 	@mkdir -p $(ICARUS_PREFIX)/bin
 	@mkdir -p $(ICARUS_PREFIX)/include/iverilog
-	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(ICARUS_SRC) CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX)) install
+	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(ICARUS_SRC) CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX)) LDFLAGS="-L$(abspath $(OBJ_TOOLS_BIN_DIR)/tcl-$(TCL_VERSION)/lib) -Wl,-rpath,$(abspath $(OBJ_TOOLS_BIN_DIR)/tcl-$(TCL_VERSION)/lib)"  install
 
 $(ICARUS_SRC)/ivl: $(ICARUS_SRC)/Makefile $(CMD_GCC) $(CMD_GXX)
-	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(ICARUS_SRC) CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX)) CFLAGS="-std=gnu11"
+	$(SCHEDULER_CMD) --make -- $(MAKE) -C $(ICARUS_SRC) CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX)) CFLAGS="-std=gnu11" LDFLAGS="-L$(abspath $(OBJ_TOOLS_BIN_DIR)/tcl-$(TCL_VERSION)/lib) -Wl,-rpath,$(abspath $(OBJ_TOOLS_BIN_DIR)/tcl-$(TCL_VERSION)/lib)"
 
 $(ICARUS_SRC)/Makefile: $(ICARUS_SRC)/configure $(CMD_GCC) $(CMD_GXX)
 	mkdir -p $(dir $@)
-	cd $(dir $@) && CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX)) ./configure --prefix=$(abspath $(ICARUS_PREFIX))
+	cd $(dir $@) && CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX)) LDFLAGS="-L$(abspath $(OBJ_TOOLS_BIN_DIR)/tcl-$(TCL_VERSION)/lib) -Wl,-rpath,$(abspath $(OBJ_TOOLS_BIN_DIR)/tcl-$(TCL_VERSION)/lib)" ./configure --prefix=$(abspath $(ICARUS_PREFIX))
 
 $(ICARUS_SRC)/configure: $(ICARUS_TAR)
 	rm -rf $(dir $@)
