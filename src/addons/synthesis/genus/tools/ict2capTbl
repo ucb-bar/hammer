@@ -1,0 +1,28 @@
+#!/bin/bash
+
+set -ex
+
+unset innovus
+unset ict
+unset output
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    --innovus) innovus="$2"; shift;;
+    --ict) ict="$2"; shift;;
+    --output) output="$2"; shift;;
+    *) echo "Unsupported argument $1" >&2; exit 1;;
+    esac
+    shift
+done
+
+tempdir="$(mktemp -d /tmp/plsi-ict2captbl.XXXXXX)"
+trap "rm -rf $tempdir" EXIT
+
+cat > $tempdir/run.tcl <<EOF
+generateCapTbl -output $output -ict $ict
+exit
+EOF
+
+cd $tempdir
+$innovus -no_gui -files run.tcl

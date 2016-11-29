@@ -1,0 +1,170 @@
+#!/bin/bash
+
+unset run_dir
+unset genus
+unset raktar
+libs=()
+unset top
+v=()
+unset config
+min_cap_table=()
+max_cap_table=()
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    "$0") ;;
+    --output_dir) run_dir="$2"; shift;;
+    */genus) genus="$1";;
+    */Genus_*.tar.gz) raktar="$1";;
+    --top) top="$2"; shift;;
+    *.v) v+=("$1");;
+    *.syn_config.json) config="$1";;
+    *.lib) libs+=("$2"); shift;;
+    *.lef) lefs+=("$2"); shift;;
+    *_Cmin.itf.capTbl) min_cap_table+=("$2"); shift;;
+    *_Cmax.itf.capTbl) max_cap_table+=("$2"); shift;;
+    *) echo "Unknown argument $1"; exit 1;;
+    esac
+    shift
+done
+
+if [[ "$genus" == "" ]]
+then
+    echo "No genus binary specified" >&2
+    exit 1
+fi
+
+if [[ "$min_cap_table" == "" || "$max_cap_table" == "" ]]
+then
+    echo "No min/max cap tables specified" >&2
+    exit 1
+fi
+
+set -ex
+
+rm -rf "$run_dir"
+mkdir -p "$run_dir"
+
+cat >"$run_dir"/enter <<EOF
+export GENUS_HOME="$(dirname $(dirname $genus))"
+export PATH="\$GENUS_HOME/bin:\$PATH"
+EOF
+
+# Almost all of what I do is to just use Cadence's RAK, which users are
+# expected to have downloaded.
+tar -xzf "$raktar" -C "$run_dir" --strip-components=1
+mkdir -p $run_dir/generated-scripts
+
+# By default, Cadence doesn't actually spit out much interesting stuff when
+# there's a TCL command error.  This turns on some actual error output so I can
+# see what I've done wrong.
+sed '1s@^@set_db / .report_tcl_command_error true@' -i $run_dir/LAB/run.tcl
+
+# The RAK defaults to 8 cores, instead we want it set to number of cores that
+# got reserved.
+if [[ "$PLSI_SCHEDULER_MAX_THREADS" == "" ]]
+then
+    echo "PLSI_SCHEDULER_MAX_THREADS isn't set" >&2
+    exit 1
+fi
+
+# By default, the Cadence tools don't really tell you much when there are
+# command errors.  This turns on slightly more verbose reporting so this script
+# can grep for errors, and so users can actually see what happens when they
+# have an error.
+sed "s@^set_db max_cpus_per_server.*@set_db max_cpus_per_server $PLSI_SCHEDULER_MAX_THREADS@g" -i $run_dir/LAB/run.tcl
+
+# The RAK actually comes with a full design inside it.  Remove that, as it's
+# useless.
+rm -rf $run_dir/RTL/*
+rm -rf $run_dir/LIB/*
+rm -rf $run_dir/LEF/*
+rm -rf $run_dir/Captable/*
+## FIXME: I shouldn't use any of these...
+#rm -rf $run_dir/Constraints/*
+#rm -rf $run_dir/DEF/*
+echo "# Genrated by PLSI" > $run_dir/LAB/mmmc.tcl
+
+# Substitute in our RTL for whatever was in the RAK, as it's irrelevant.
+sed "s@^set DESIGN .*@set DESIGN ${top}@g" -i $run_dir/LAB/run.tcl
+
+cat "${v[@]}" > $run_dir/RTL/$top.v
+sed "s@^set rtlList .*@set rtlList \"../RTL/${top}.v\"; set UNUSED \"\\\\@g" -i $run_dir/LAB/run.tcl
+
+# Re-generate the multi-mode/multi-corner file, which describes all the
+# libraries.
+cat >> $run_dir/LAB/mmmc.tcl <<EOF
+create_library_set -name wcl_typical -timing {
+EOF
+
+for lib in ${libs[@]}
+do
+    echo "${lib}" >> $run_dir/LAB/mmmc.tcl
+done
+
+cat >> $run_dir/LAB/mmmc.tcl <<EOF
+}
+EOF
+
+cat >> $run_dir/LAB/mmmc.tcl <<EOF
+# FIXME: This should come in from the technology JSON file, as it describes the
+# conditions.  I'm lazy for now, though.
+create_opcond -name op_cond_wcl_min -process 1 -voltage 1.05 -temperature 25
+create_opcond -name op_cond_wcl_max -process 1 -voltage 1.05 -temperature 25
+
+create_timing_condition -name timing_cond_wcl_min -opcond op_cond_wcl_min -library_sets { wcl_typical }
+create_timing_condition -name timing_cond_wcl_max -opcond op_cond_wcl_max -library_sets { wcl_typical }
+
+# FIXME: Upstream has a "-cap_table" argument to create_rc_corner, but I don't
+# know how to generate one of those
+create_rc_corner -name rc_corner_min -cap_table ${min_cap_table[@]}
+create_rc_corner -name rc_corner_max -cap_table ${max_cap_table[@]}
+
+create_delay_corner \\
+    -name delay_corner_wcl_min \\
+    -early_timing_condition timing_cond_wcl_min \\
+    -late_timing_condition timing_cond_wcl_min \\
+    -early_rc_corner rc_corner_min \\
+    -late_rc_corner rc_corner_min
+create_delay_corner \\
+    -name delay_corner_wcl_max \\
+    -early_timing_condition timing_cond_wcl_max \\
+    -late_timing_condition timing_cond_wcl_max \\
+    -early_rc_corner rc_corner_max \\
+    -late_rc_corner rc_corner_max
+EOF
+
+cat >> $run_dir/LAB/mmmc.tcl <<EOF
+create_constraint_mode -name functional_wcl_min -sdc_files {
+}
+create_constraint_mode -name functional_wcl_max -sdc_files {
+}
+EOF
+
+cat >> $run_dir/LAB/mmmc.tcl <<EOF
+create_analysis_view \\
+    -name view_wcl_min \\
+    -constraint_mode functional_wcl_min \\
+    -delay_corner delay_corner_wcl_min
+create_analysis_view \\
+    -name view_wcl_max \\
+    -constraint_mode functional_wcl_max \\
+    -delay_corner delay_corner_wcl_max
+
+set_analysis_view -setup { view_wcl_min view_wcl_max }
+EOF
+
+# Reference our LEFs, not the ones from Cadence for their process.  There's no
+# variable in the RAK, so I use some sed magic here.
+sed "s@^read_physical -lef .*@read_physical -lef { ${lefs[*]} }; set UNUSED { \\\\@" -i $run_dir/LAB/run.tcl
+
+# At this point we just run the RAK scripts
+cd $run_dir/LAB
+yes quit | $genus -f run.tcl |& tee genus.log
+
+# Check for errors
+set +e
+grep ^Warning genus.log || (echo "Genus produced a warning")
+grep ^Error genus.log || (echo "Genus produced an error"; exit 1)
+
+exit 33
