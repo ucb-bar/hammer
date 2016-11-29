@@ -73,7 +73,7 @@ else: # We can't currently support both tarballs and an install path
 		of.write("{0}: {1}\n".format(extract_stamp, tarball_stamp))
 
 for library in techfile["libraries"]:
-	for kind in ["liberty file", "verilog file", "milkyway lib in dir", "ccs library file", "milkyway techfile"]:
+	for kind in ["liberty file", "verilog file", "milkyway lib in dir", "ccs library file", "milkyway techfile", "lef file"]:
 		if kind in library:
 			of.write("{0}/{1}: {2}\n".format(tech_home, library[kind], extract_stamp))
 	for tlu in ["tlu+ files"]:

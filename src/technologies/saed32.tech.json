@@ -59,13 +59,18 @@
          "max cap": "SAED_EDK32.28nm_TECH_v_01132015.tar.gz/SAED32_EDK/tech/star_rcxt/saed32nm_1p9m_Cmax.tluplus"
       },
       "milkyway techfile": "SAED_EDK32.28nm_TECH_v_01132015.tar.gz/SAED32_EDK/tech/milkyway/saed32nm_1p9m_mw.tf",
-      "openaccess techfile": "SAED_EDK32.28nm_TECH_v_01132015.tar.gz/SAED32_EDK/tech/milkyway/saed32nm_1p9m_oa.tf"
+      "openaccess techfile": "SAED_EDK32.28nm_TECH_v_01132015.tar.gz/SAED32_EDK/tech/milkyway/saed32nm_1p9m_oa.tf",
+      "itf files": {
+        "min cap": "SAED_EDK32.28nm_TECH_v_01132015.tar.gz/SAED32_EDK/tech/star_rcxt/saed32nm_1p9m_Cmin.itf",
+	"max cap": "SAED_EDK32.28nm_TECH_v_01132015.tar.gz/SAED32_EDK/tech/star_rcxt/saed32nm_1p9m_Cmax.itf"
+      }
     },
     {
       "liberty file": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/db_nldm/saed32lvt_tt1p05v25c.lib",
       "verilog file": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/verilog/saed32nm_lvt.v",
       "milkyway lib in dir": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/milkyway/saed32nm_lvt_1p9m/lib",
       "ccs library file": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/db_ccs/saed32lvt_tt1p05v25c.db",
+      "lef file": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/lef/saed32nm_lvt_1p9m.lef",
       "corner": {
         "nmos": "typical",
         "pmos": "typical",
@@ -87,6 +92,7 @@
       "verilog file": "SAED_EDK32.28nm_CORE_RVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_rvt/verilog/saed32nm.v",
       "milkyway lib in dir": "SAED_EDK32.28nm_CORE_RVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_rvt/milkyway/saed32nm_rvt_1p9m/lib",
       "ccs library file": "SAED_EDK32.28nm_CORE_RVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_rvt/db_ccs/saed32rvt_tt1p05v25c.db",
+      "lef file": "SAED_EDK32.28nm_CORE_RVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_rvt/lef/saed32nm_rvt_1p9m.lef",
       "corner": {
         "nmos": "typical",
         "pmos": "typical",
@@ -108,6 +114,7 @@
       "verilog file": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/verilog/saed32nm_hvt.v",
       "milkyway lib in dir": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/milkyway/saed32nm_hvt_1p9m/lib",
       "ccs library file": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/db_ccs/saed32hvt_tt1p05v25c.db",
+      "lef file": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/lef/saed32nm_hvt_1p9m.lef",
       "corner": {
         "nmos": "typical",
         "pmos": "typical",
@@ -129,6 +136,7 @@
       "verilog file": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram/verilog/saed32sram.v",
       "milkyway lib in dir": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram/milkyway/SRAM32NM/lib",
       "ccs library file": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram/db_ccs/saed32sram_tt1p05v25c.db",
+      "lef file": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram/lef/saed32sram.lef",
       "corner": {
         "nmos": "typical",
         "pmos": "typical",
