@@ -81,3 +81,15 @@ for library_desc in techfile["libraries"]:
 	if "lef file" in library_desc:
 		of.write(" {0}/{1}".format(tech_home, library_desc["lef file"]))
 of.write("\n")
+
+of.write("TECHNOLOGY_OPENACCESS_TECHFILES =")
+for library_desc in techfile["libraries"]:
+	if "openaccess techfile" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["openaccess techfile"]))
+of.write("\n")
+
+of.write("TECHNOLOGY_MILKYWAY_TECHFILES =")
+for library_desc in techfile["libraries"]:
+	if "milkyway techfile" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["milkyway techfile"]))
+of.write("\n")

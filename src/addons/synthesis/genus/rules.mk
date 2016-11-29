@@ -16,6 +16,7 @@ $(OBJ_SYN_DIR)/cadence-genus.stamp: \
 		$(OBJ_MAP_RTL_V) \
 		$(PLSI_CACHE_DIR)/cadence/rak/Genus_$(GENUS_VERSION)_CommonUI_MMMC_RAK.tar.gz \
 		$(TECHNOLOGY_LIBERTY_FILES) \
+		$(OBJ_SYN_TECHLEF_FILES) \
 		$(TECHNOLOGY_LEF_FILES) \
 		$(SYN_CONFIG_FILE) \
 		$(OBJ_SYN_CAPTBL_FILES) \
@@ -41,4 +42,12 @@ $(OBJ_SYN_ICT_FILES): $(ITF2ICT_BIN) $(TECHNOLOGY_ITF_FILES)
 	$(SCHEDULER_CMD) --max-threads=1 -- perl $< $(abspath $(filter %/$(patsubst %.ict,%,$(notdir $@)),$^)) $(abspath $@)
 endif
 
+# Cadence doesn't take .tf techfiles but instead wants them converted to .lef
+# files instead.
+$(OBJ_SYN_TECHLEF_FILES): \
+		$(abspath $(SYNTHESIS_TOOL_ADDON)/tools/tf2lef) \
+		$(INNOVUS_BIN) \
+		$(TECHNOLOGY_MILKYWAY_TECHFILES)
+	@mkdir -p $(dir $@)
+	$(SCHEDULER_CMD) --max-threads=1 -- $< --innovus $(INNOVUS_BIN) --tf $(abspath $(filter %/$(patsubst %.tf.lef,%.tf,$(notdir $@)),$^)) --output $(abspath $@)
 

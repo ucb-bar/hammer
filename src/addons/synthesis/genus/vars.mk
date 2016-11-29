@@ -38,7 +38,11 @@ $(PLSI_CACHE_DIR)/cadence/rak/%:
 	$(error Download a Cadence RAK from <http://support.cadence.com/> and place it at $@)
 endif
 
+# RC info
 OBJ_SYN_CAPTBL_FILES = $(addsuffix .capTbl,$(addprefix $(OBJ_TECH_DIR)/plsi-generated/cap_table/,$(notdir $(TECHNOLOGY_ITF_FILES))))
 OBJ_SYN_ICT_FILES = $(addsuffix .ict,$(addprefix $(OBJ_TECH_DIR)/plsi-generated/cap_table/,$(notdir $(TECHNOLOGY_ITF_FILES))))
+
+# Technology definition
+OBJ_SYN_TECHLEF_FILES = $(addsuffix .lef,$(addprefix $(OBJ_TECH_DIR)/plsi-generated/tech_lef/,$(notdir $(TECHNOLOGY_MILKYWAY_TECHFILES))))
 
 OBJ_SYN_SYN_FILES = $(OBJ_MAP_SYN_FILES)
