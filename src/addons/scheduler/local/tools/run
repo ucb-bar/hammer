@@ -6,4 +6,6 @@ do
 done
 shift
 
+export PLSI_SCHEDULER_MAX_THREADS="$(cat /proc/cpuinfo | grep ^processor | wc -l)"
+
 exec "$@"
