@@ -44,4 +44,5 @@ set -x
 $icarus \
     -g2005-sv \
     ${verilogh[*]} \
-    ${verilog[*]}
+    ${verilog[*]} \
+    -o $output
