@@ -34,13 +34,8 @@ matrix:
 before_install:
   - export MAKEFLAGS=-j3
   - export SCHEDULER=travis_wait
-  - export CORE_SIM_CONFIG=smoke
+  - export SIMULATOR=icarus
 
 script:
   - make makefrags
-  - make core-verilog
-  - make core-simulator
-  - make soc-verilog
-  - make soc-simulator
-  - make syn-verilog
   - make
