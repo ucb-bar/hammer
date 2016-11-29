@@ -8,8 +8,7 @@ module CounterHarness;
   begin
     if ($value$plusargs("vcdplusfile=%s", vcdplusfile))
     begin
-`ifdef verilator
-`else
+`ifdef HAVE_SYNOPSYS_VCDPLUS
       $vcdplusfile(vcdplusfile);
       $vcdpluson(0);
       $vcdplusmemon(0);
@@ -29,12 +28,11 @@ module CounterHarness;
     cycle <= cycle + 1;
     if (cycle > 250)
     begin
-`ifdef verilator
-`else
+`ifdef HAVE_SYNOPSYS_VCDPLUS
       $vcdplusclose;
       $dumpoff;
-      $finish;
 `endif
+      $finish;
     end
   end
 
@@ -64,8 +62,7 @@ module CounterHarness;
         default:
         begin
           $display("*** FAILED ***");
-`ifdef verilator
-`else
+`ifdef HAVE_SYNOPSYS_VCDPLUS
           $vcdplusclose;
           $dumpoff;
           $fatal;
@@ -75,5 +72,4 @@ module CounterHarness;
     end
   end
 
-endmodule;
-
+endmodule
