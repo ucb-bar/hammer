@@ -27,6 +27,8 @@ do
     *Cmax.tluplus) tlu_max+=("$1");;
     *rcbest.itf.tluplus) tlu_min+=("$1");;
     *rcworst.itf.tluplus) tlu_max+=("$1");;
+    */FuncCmin/tluplus) tlu_min+=("$1");;
+    */FuncCmax/tluplus) tlu_max+=("$1");;
     *.tf) tf+=("$1");;
     */find-regs.tcl) find_regs="$1";;
     *.syn_config.json) config="$1";;
