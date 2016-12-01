@@ -72,11 +72,20 @@ find $run_dir -iname "*.tcl" | xargs sed s/'^compile_ultra .*'/'compile_ultra -g
 # Report more timing arcs
 sed 's@^report_timing@report_timing -max_paths 500 -nworst 10 -slack_lesser_than 0.01@' -i $run_dir/rm_dc_scripts/dc.tcl
 
-if [[ "${mw[*]}" == "" ]]
+if [[ "${mw[@]}" == "" ]]
 then
     echo "No milkyway libraries specified"
     exit 1
 fi
+
+for lib in "${mw[@]}"
+do
+    if test ! -d "$lib"
+    then
+        echo "Milkyway library $lib doesn't exist in filesystem" >&2
+	exit 1
+    fi
+done
 
 if [[ "${tlu_max[*]}" == "" || "${tlu_min[*]}" == "" ]]
 then
