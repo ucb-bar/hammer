@@ -34,3 +34,10 @@ then
     echo "No output produced" >&2
     exit 1
 fi
+
+if [[ "$(cat "$output" | wc -l)" == 0 ]]
+then
+    echo "0-line LEF produced" >&2
+    rm -f $output
+    exit 1
+fi
