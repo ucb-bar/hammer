@@ -1,0 +1,37 @@
+{
+  "name": "ST 28nm Library",
+  "installs": [
+    {
+      "path": "st28fdsoi",
+      "base var": "ST_INSTALL_DIR"
+    }
+  ],
+  "libraries": [
+    {
+      "liberty file": "st28fdsoi/prods/C28SOI_SC_12_CORE_LL/3.1-00/libs/C28SOI_SC_12_CORE_LL_tt28_0.90V_0.00V_0.00V_0.00V_25C.db",
+      "ccs library file": "st28fdsoi/prods/C28SOI_SC_12_CORE_LL/3.1-00/libs/C28SOI_SC_12_CORE_LL_tt28_0.90V_0.00V_0.00V_0.00V_25C.db",
+      "verilog file": "st28fdsoi/prods/C28SOI_SC_12_CORE_LL/3.1-00/behaviour/verilog/C28SOI_SC_12_CORE_LL.v",
+      "milkyway techfile": "st28fdsoi/prods/SynopsysTechnoKit_cmos028FDSOI_6U1x_2U2x_2T8x_LB/2.2.7@20140606.1/COMMON/tech_zrt.12T.tf",
+      "milkyway lib in dir": "st28fdsoi/prods/C28SOI_SC_12_CORE_LL/3.1-00/SYNOPSYS/PR/C28SOI_SC_12_CORE_LL/lib",
+      "tlu+ files": {
+        "min cap": "st28fdsoi/prods/SynopsysTechnoKit_cmos028FDSOI_6U1x_2U2x_2T8x_LB/2.2.7@20140606.1/TLUPLUS/FuncCmin/tluplus",
+        "max cap": "st28fdsoi/prods/SynopsysTechnoKit_cmos028FDSOI_6U1x_2U2x_2T8x_LB/2.2.7@20140606.1/TLUPLUS/FuncCmax/tluplus"
+      },
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "25 C"
+      },
+      "supplies": {
+        "VDD": "0.92 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "type": "stdcell",
+          "vt": "RVT"
+        }
+      ]
+    }
+  ]
+}
