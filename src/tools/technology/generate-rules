@@ -22,6 +22,11 @@ if "tarballs" not in techfile:
 		install_stamp = "{0}/stamps/{1}.stamp".format(tech_home, install["path"])
 		target_dir = "{0}/{1}".format(tech_home, install["path"])
 
+		# Check to make sure the base variable is set before proceeding
+		of.write("ifeq ($({0}),)\n".format(install["base var"]))
+		of.write("$(error You must set {0} to point to your technology)\n".format(install["base var"]))
+		of.write("endif\n")
+
 		# link the pre-extracted library here with a stamp
 		of.write("{0}: {1}\n".format(install_stamp, install_path))
 		of.write("\t@rm -rf {0}\n".format(target_dir))
