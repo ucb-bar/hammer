@@ -22,6 +22,7 @@ $(OBJ_SYN_DIR)/synopsys-dc.stamp: \
 		$(TECHNOLOGY_CCS_LIBRARY_FILES) \
 		$(PLSI_CACHE_DIR)/synopsys/rm/DC-RM_$(DC_VERSION).tar \
 		$(SYN_CONFIG_FILE) \
+		$(TECHNOLOGY_JSON) \
 		$(DC_BIN)
 	@mkdir -p $(dir $@)
 	$(SCHEDULER_CMD) -- $(abspath $<) --top $(SYN_TOP) --output_dir $(abspath $(dir $@))/synopsys-dc-workdir $(abspath $^)

@@ -12,6 +12,7 @@ tlu_max=()
 tf=()
 unset find_regs
 unset config
+unset technology
 while [[ "$1" != "" ]]
 do
     case "$1" in
@@ -32,6 +33,7 @@ do
     *.tf) tf+=("$1");;
     */find-regs.tcl) find_regs="$1";;
     *.syn_config.json) config="$1";;
+    *.tech.json) technology="$1";;
     *) echo "Unknown argument $1"; exit 1;;
     esac
     shift
@@ -146,8 +148,6 @@ for clock in config["clocks"]:
 	print("set_clock_uncertainty 0.01 [get_clocks {0}]".format(clock_name))
 EOF
 
-# FIXME: for now, you just get one clock, and the Synopsys EDK isn't very fast
-# so everything runs at 100MHz.
 # The constraints file determines how the IO is constrained and what the clocks
 # look like.
 cat >> $run_dir/generated-scripts/constraints.tcl <<"EOF"
@@ -164,13 +164,25 @@ set_load -pin_load 0.004 [all_outputs]
 #set_isolate_ports [remove_from_collection [all_inputs] clock] -type buffer -force
 EOF
 
+# We allow users to specify metal routing directions since some technologies
+# don't support those.
+python3 >>$run_dir/generated-scripts/constraints.tcl <<EOF
+import json
+with open("${technology}") as f:
+	config = json.load(f)
+
+for library in config["libraries"]:
+	if "metal layers" in library:
+		for layer in library["metal layers"]:
+			print("set_preferred_routing_direction -layers {{ {0} }} -direction {1}".format(layer["name"], layer["preferred routing direction"]))
+EOF
+
 # FIXME: This is a terrible way to specify the retiming registers, it should
 # come from a FIRRTL pass.
 for x in $(echo "IntToFP" "FPUFMAPipe" "Mul54" "INToRecFN" "IMulSlice" "FMASlice" "FCmpSlice" "FConvSlice" "DivSqrtRecF64" "IMul")
 do
     grep "^module $x" ${v[*]} && (echo "set_optimize_registers true -design $x* -clock clock -check_design -verbose -print_critical_loop" >> $run_dir/generated-scripts/constraints.tcl)
 done
-
 
 # FIXME: This shouldn't depend on Synopsys
 # At the end of the DC run we want to generate a special simulation file that
