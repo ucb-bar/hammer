@@ -129,7 +129,6 @@ set RESULTS_DIR "results";
 set CLOCK_UNCERTAINTY "0.04";
 set INPUT_DELAY "0.10";
 set OUTPUT_DELAY "0.10";
-# FIXME: This shouldn't be just hard-coded, but I've forgotton how the PLSI job submission interface works
 set_host_options -max_cores ${PLSI_SCHEDULER_MAX_THREADS}
 EOF
 
