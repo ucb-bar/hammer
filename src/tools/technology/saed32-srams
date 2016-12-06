@@ -26,6 +26,7 @@ do
     "name": "${name}",
     "width": ${width},
     "depth": ${height},
+    "family": "1rw",
     "ports": [
       {
         "address port name": "A",
@@ -60,6 +61,7 @@ do
     "name": "${name}",
     "width": ${width},
     "depth": ${height},
+    "family": "2rw",
     "ports": [
        {
         "address port name": "A1",

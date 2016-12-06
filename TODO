@@ -9,3 +9,4 @@
 * Print $0 before all bash errors
 * Don't use TECHNOLOGY_* variables in the synthesis scripts, use OBJ_MAP_*
 * Provide the LEF file to capTbl generation
+* Check for family in SRAMs rather than silently screwing up
