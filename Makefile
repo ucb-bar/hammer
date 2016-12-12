@@ -378,6 +378,8 @@ core-simulator: bin/core-$(CORE_CONFIG)/$(CORE_TOP)-simulator
 soc-simulator: bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP)-simulator
 .PHONY: map-simulator
 map-simulator: bin/map-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)/$(MAP_TOP)-simulator
+.PHONY: syn-simulator
+syn-simulator: bin/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP)-simulator
 
 # This just cleans everything
 .PHONY: clean
@@ -618,7 +620,7 @@ bin/map-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)/$(MAP_TOP)-simulator: $(OBJ_M
 	mkdir -p $(dir $@)
 	cp --reflink=auto $^ $@
 
-bin/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP)-simulator: $(OBJ_SYN_SIMULATOR)
+bin/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP)-simulator: $(OBJ_SYN_SIMULATOR)
 	mkdir -p $(dir $@)
 	cp --reflink=auto $^ $@
 
