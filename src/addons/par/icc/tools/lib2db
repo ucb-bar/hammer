@@ -1,0 +1,64 @@
+#!/bin/bash
+
+unset input
+unset output
+unset lc_shell
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    -i) input="$2"; shift;;
+    -o) output="$2"; shift;;
+    --lc_shell) lc_shell="$2"; shift;;
+    *) echo "$0: unknown argument $1" >&2; exit 1;;
+    esac
+    shift
+done
+
+if [[ "$input" == "" ]]
+then
+    echo "$0: -i argument required" >&2
+    exit 1
+fi
+if [[ "$output" == "" ]]
+then
+    echo "$0: -o argument required" >&2
+    exit 1
+fi
+if [[ "$lc_shell" == "" ]]
+then
+    echo "$0: --lc_shell argument required" >&2
+fi
+
+# Synopsys sometimes blows up if there's symlinks
+input="$(readlink -f $input)"
+output="$(readlink -f $output)"
+
+# A whole bunch of garbage will be generated
+tempdir="$(mktemp -d /tmp/plsi-dc-lib2db.XXXXXX)"
+trap "rm -rf $tempdir" EXIT
+cd $tempdir
+
+# The filename of the .lib might be unrelated to the actual instance name, we
+# use lc_shell to figure out out.
+cat > discover_name.tcl <<EOF
+read_lib "${input}"
+EOF
+
+cat /dev/null | $lc_shell -f discover_name.tcl > discover_name.log
+lib_name="$(cat discover_name.log | grep "^Technology library " | sed "s/.*'\(.*\)'.*/\\1/")"
+
+# Now that we know the name inside the liberty file, we can generate the
+# cooresponding .db file.
+cat > generate_db.tcl <<EOF
+read_lib "${input}"
+write_lib "${lib_name}" -output "${output}"
+EOF
+
+cat /dev/null | $lc_shell -f generate_db.tcl
+
+if test ! -e "${output}"
+then
+    echo "$0: no output produced" >&2
+    cat generate_db.tcl
+    exit 1
+fi

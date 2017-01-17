@@ -28,8 +28,10 @@ SOC_GENERATOR ?= nop
 # The technology that will be used to implement this design.
 TECHNOLOGY ?= tsmc180osu
 
-# The synthesis tool to run.
-SYNTHESIS_TOOL ?= yosys
+# Selects the CAD tools that will be run.  For now, I'm defaulting to Synopsys
+# as they're the only ones I've actually implemeted wrappers for.
+SYNTHESIS_TOOL ?= dc
+PAR_TOOL ?= icc
 
 # The configuration to run when running various steps of the process
 CORE_CONFIG ?= DefaultConfig
@@ -37,6 +39,7 @@ CORE_SIM_CONFIG ?= default
 SOC_CONFIG ?= default
 MAP_CONFIG ?= default
 SYN_CONFIG ?= default
+PAR_CONFIG ?= default
 
 # Defines the simulator used to run simulation at different levels
 SIMULATOR ?= verilator
@@ -44,6 +47,7 @@ CORE_SIMULATOR ?= $(SIMULATOR)
 SOC_SIMULATOR ?= $(SIMULATOR)
 MAP_SIMULATOR ?= $(SIMULATOR)
 SYN_SIMULATOR ?= $(SIMULATOR)
+PAR_SIMULATOR ?= $(SIMULATOR)
 
 # Defines the formal verification tool to use at different levels.
 FORMAL_TOOL ?= none
@@ -80,18 +84,21 @@ OBJ_SOC_DIR = obj/soc-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)
 OBJ_TECH_DIR = obj/technology/$(TECHNOLOGY)
 OBJ_MAP_DIR = obj/map-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)
 OBJ_SYN_DIR = obj/syn-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)
+OBJ_PAR_DIR = obj/par-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)
 
 # CHECK_* directories are where the output of tests go
 CHECK_CORE_DIR = check/core-$(CORE_GENERATOR)-$(CORE_CONFIG)
 CHECK_SOC_DIR = check/soc-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)
 CHECK_MAP_DIR = check/map-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)
 CHECK_SYN_DIR = check/syn-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)
+CHECK_PAR_DIR = check/par-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)
 
 # TRACE_* directories are where VPDs go
 TRACE_CORE_DIR = trace/core-$(CORE_GENERATOR)-$(CORE_CONFIG)
 TRACE_SOC_DIR = trace/soc-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)
 TRACE_MAP_DIR = trace/map-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)
 TRACE_SYN_DIR = trace/syn-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)
+TRACE_PAR_DIR = trace/par-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)
 
 CMD_PTEST = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/ptest
 CMD_PCONFIGURE = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/pconfigure
@@ -164,10 +171,25 @@ ifneq ($(words $(SYN_FORMAL_ADDON)),1)
 $(error Unable to resolve SYN_FORMAL_TOOL=$(SYN_FORMAL_TOOL): found "$(SYN_FORMAL_ADDON)")
 endif
 
+PAR_TOOL_ADDON = $(wildcard src/addons/par/$(PAR_TOOL)/ $(ADDONS_DIR)/par/$(PAR_TOOL)/)
+ifneq ($(words $(PAR_TOOL_ADDON)),1)
+$(error Unable to resolve PAR_TOOL=$(PAR_TOOL): found "$(PAR_TOOL_ADDON)")
+endif
+
+PAR_SIMULATOR_ADDON = $(wildcard src/addons/simulator/$(PAR_SIMULATOR)/ $(ADDONS_DIR)/simulator/$(PAR_SIMULATOR)/)
+ifneq ($(words $(PAR_SIMULATOR_ADDON)),1)
+$(error Unable to resolve PAR_SIMULATOR=$(PAR_SIMULATOR): found "$(PAR_SIMULATOR_ADDON)")
+endif
+
 # Check to ensure all the configurations actually exist.
 SYN_CONFIG_FILE=src/configs/$(TECHNOLOGY)-$(SYN_CONFIG).syn_config.json
 ifeq ($(wildcard $(SYN_CONFIG_FILE)),)
 $(error Unable to find synthesis configuration $(SYN_CONFIG), looked in $(SYN_CONFIG_FILE))
+endif
+
+PAR_CONFIG_FILE=src/configs/$(TECHNOLOGY)-$(PAR_CONFIG).par_config.json
+ifeq ($(wildcard $(PAR_CONFIG_FILE)),)
+$(error Unable to find synthesis configuration $(PAR_CONFIG), looked in $(PAR_CONFIG_FILE))
 endif
 
 # In order to prevent EEs from seeing Makefiles, the technology description is
@@ -305,8 +327,27 @@ ifeq ($(SYN_SIM_TOP),)
 $(error SYNTHESIS_TOOLS needs to set SYN_SIM_TOP)
 endif
 
-# A formal verification tool
+# A formal verification tool for post-synthesis.
 include $(SYN_FORMAL_ADDON)/syn-vars.mk
+
+# The place and route step (par) places all the elements of a netlist and then
+# routes the wires between them.  This can only touch the output of the
+# synthesis step, but additionally requires all the synthesis macro description
+# files and some extra floorplanning information.
+include $(PAR_TOOL_ADDON)/vars.mk
+include $(PAR_SIMULATOR_ADDON)/par-vars.mk
+
+ifeq ($(OBJ_PAR_ROUTED_V),)
+$(error PAR_TOOL needs to set OBJ_PAR_ROUTED_V)
+endif
+
+ifeq ($(PAR_TOP),)
+$(error PAR_TOOL needs to set PAR_TOP)
+endif
+
+ifeq ($(PAR_SIM_TOP),)
+$(error PAR_TOOL needs to set PAR_SIM_TOP)
+endif
 
 # All the rules get sourced last.  We don't allow any variables to be set here,
 # so the ordering isn't important.
@@ -317,8 +358,10 @@ include $(SOC_SIMULATOR_ADDON)/soc-rules.mk
 -include $(OBJ_TECH_DIR)/makefrags/rules.mk
 include $(MAP_SIMULATOR_ADDON)/map-rules.mk
 include $(SYNTHESIS_TOOL_ADDON)/rules.mk
-include $(SOC_SIMULATOR_ADDON)/syn-rules.mk
+include $(SYN_SIMULATOR_ADDON)/syn-rules.mk
 include $(SYN_FORMAL_ADDON)/syn-rules.mk
+include $(PAR_TOOL_ADDON)/rules.mk
+include $(PAR_SIMULATOR_ADDON)/par-rules.mk
 
 ##############################################################################
 # User Targets
@@ -336,7 +379,7 @@ makefrags::
 # Runs all the test cases.  Note that this _always_ passes, you need to run
 # "make report" to see if the tests passed or not.
 .PHONY: check
-check: $(patsubst %,check-%,core soc map syn)
+check: $(patsubst %,check-%,core soc map syn par)
 
 # A virtual target that reports on the status of the test cases, in addition to
 # running them (if necessary).
@@ -354,6 +397,12 @@ check-soc:
 .PHONY: check-map
 check-map:
 
+.PHONY: check-syn
+check-syn:
+
+.PHONY: check-par
+check-par:
+
 # The various RTL targets
 .PHONY: core-verilog
 core-verilog: bin/core-$(CORE_CONFIG)/$(CORE_TOP).v
@@ -368,7 +417,11 @@ map-verilog: bin/map-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)/$(MAP_TOP).v
 	$(info $@ availiable at $<)
 
 .PHONY: syn-verilog
-syn-verilog: bin/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP).v
+syn-verilog: bin/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP).v
+	$(info $@ availiable at $<)
+
+.PHONY: par-verilog
+par-verilog: bin/par-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)/$(PAR_TOP).v
 	$(info $@ availiable at $<)
 
 # The various simulators
@@ -380,6 +433,8 @@ soc-simulator: bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP)-simulator
 map-simulator: bin/map-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)/$(MAP_TOP)-simulator
 .PHONY: syn-simulator
 syn-simulator: bin/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP)-simulator
+.PHONY: par-simulator
+par-simulator: bin/par-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)/$(PAR_TOP)-simulator
 
 # This just cleans everything
 .PHONY: clean
@@ -388,6 +443,7 @@ clean::
 	rm -rf $(OBJ_CORE_DIR) $(CHECK_CORE_DIR)
 	rm -rf $(OBJ_SOC_DIR) $(CHECK_SOC_DIR)
 	rm -rf $(OBJ_SYN_DIR) $(CHECK_SYN_DIR)
+	rm -rf $(OBJ_PAR_DIR) $(CHECK_PAR_DIR)
 
 .PHONY: distclean
 distclean: clean
@@ -402,6 +458,7 @@ bugreport::
 	@echo "SOC_GENERATOR_ADDON=$(SOC_GENERATOR_ADDON)"
 	@echo "SOC_SIMULATOR_ADDON=$(SOC_SIMULATOR_ADDON)"
 	@echo "SYNTHESIS_TOOL_ADDON=$(SYNTHESIS_TOOL_ADDON)"
+	@echo "PAR_TOOL_ADDON=$(PAR_TOOL_ADDON)"
 	@echo "TECHNOLOGY=$(TECHNOLOGY)"
 	uname -a
 	@echo "PKG_CONFIG_PATH=$$PKG_CONFIG_PATH"
@@ -604,7 +661,11 @@ bin/map-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)/$(MAP_TOP).v: $(OBJ_MAP_RTL_V
 	mkdir -p $(dir $@)
 	cp --reflink=auto $^ $@
 
-bin/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP).v: $(OBJ_SYN_MAPPED_V)
+bin/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP).v: $(OBJ_SYN_MAPPED_V)
+	mkdir -p $(dir $@)
+	cp --reflink=auto $^ $@
+
+bin/par-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)/$(PAR_TOP).v: $(OBJ_PAR_ROUTED_V)
 	mkdir -p $(dir $@)
 	cp --reflink=auto $^ $@
 
@@ -621,6 +682,10 @@ bin/map-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)/$(MAP_TOP)-simulator: $(OBJ_M
 	cp --reflink=auto $^ $@
 
 bin/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP)-simulator: $(OBJ_SYN_SIMULATOR)
+	mkdir -p $(dir $@)
+	cp --reflink=auto $^ $@
+
+bin/par-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)/$(PAR_TOP)-simulator: $(OBJ_PAR_SIMULATOR)
 	mkdir -p $(dir $@)
 	cp --reflink=auto $^ $@
 

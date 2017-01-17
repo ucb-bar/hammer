@@ -4,7 +4,10 @@
 # DC has successfully run.
 $(OBJ_SYN_DIR)/generated/$(SYN_TOP).force_regs.ucli \
 $(OBJ_SYN_DIR)/generated/$(SYN_TOP).force_regs.tab \
-$(OBJ_SYN_MAPPED_V): $(OBJ_SYN_DIR)/synopsys-dc.stamp
+$(OBJ_SYN_MAPPED_V) \
+$(OBJ_SYN_MAPPED_SDC) \
+: \
+		$(OBJ_SYN_DIR)/synopsys-dc.stamp
 	@mkdir -p $(dir $@)
 	cp --reflink=auto $(OBJ_SYN_DIR)/synopsys-dc-workdir/results/$(notdir $@) $@
 

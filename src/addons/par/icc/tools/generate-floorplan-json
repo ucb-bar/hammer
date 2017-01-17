@@ -1,0 +1,324 @@
+#!/usr/bin/env python3
+
+from parse import *
+from itertools import chain
+from argparse import ArgumentParser
+
+# Represents a single position, which itself is an offset from something else.
+class Position:
+  def __init__(self, macro, corner):
+    self.macro = macro
+    self.corner = corner
+
+  def add_child(self, child):
+    self.macro.add_child(child)
+
+# Defines a constraint, which consists of two macro corners that must go together
+class Constraint:
+  def __init__(self, corner_to_move, fixed_corner, offset_x, offset_y):
+    self.corner_to_move = corner_to_move
+    self.fixed_corner = fixed_corner
+    self.offset_x = offset_x
+    self.offset_y = offset_y
+
+  def as_json(self):
+    return '{"offset_x": "%s", "offset_y": "%s", "macro": "%s", "corner_on_macro_to_match": "%s", "anchor_to_%s": "%s", "corner_on_anchor_%s_to_match": "%s"}' % (self.offset_x, self.offset_y, self.corner_to_move.macro.name, self.corner_to_move.corner, self.fixed_corner.macro.json_type(), self.fixed_corner.macro.name, self.fixed_corner.macro.json_type(), self.fixed_corner.corner)
+
+# Sometimes I want to refer to a point-sized thing
+class FixedPosition:
+  def __init__(self, corner):
+    self.corner = corner
+
+  def tl(self):
+    return self.corner
+  def tr(self):
+    return self.corner
+  def bl(self):
+    return self.corner
+  def br(self):
+    return self.corner
+
+# Contains a single macro, along with some helper functions to parse the output
+# of the macro list and to match heirarchies 
+class ParsedMacro:
+  def __init__(self, str):
+    p = parse("{} module={} width={} height={}", str).fixed
+    self.name = p[0]
+    self.module = p[1]
+    self.width = p[2]
+    self.height = p[3]
+
+  # This function matches both Chisel and DC's name mangling schemes to
+  # determine if the name of this macro matches the supplied pattern.  Modules
+  # in the heirarchy are delimated by "/" characters in the pattern, which can
+  # match either "/" characters in the module name or "_" characters in the
+  # module name (the "_" comes when DC ungroups a heirarchy).  Since Chisel
+  # mangles instance names by adding "_%d" to the end of them, appending these to
+  # the end of a module won't prevent a match.  Since macros are frequently
+  # rolled up inside otherwise unnameable objects, any string of "T%d" at the
+  # end of a module name won't reject a match.  Finally, since SRAM macros
+  # almost always have to wrap the actual SRAM implementation, any "sram%d"
+  # after the end of a pattern (and also after any "T%d" strings) won't reject a
+  # match.
+  def matches(self, pattern):
+    remaining_name = self.name
+    for module_pattern in pattern.split("/"):
+      print("Checking " + remaining_name + " againist " + module_pattern + " (full pattern: " + pattern + ")")
+      has_d = False
+      # The only way to match is to at least start with what's in this pattern
+      # entry.
+      if not remaining_name.startswith(module_pattern):
+        print(" -> module pattern start not matched")
+        print("    remaining_name: " + remaining_name)
+        print("    module_pattern: " + module_pattern)
+        return False
+      remaining_name = remaining_name[len(module_pattern):]
+
+      # If the remaining string to match does start with this module pattern,
+      # then this must either have a "/", a "_", or a "_%d" coming directly
+      # after it.
+      if not remaining_name[0] in ["/", "_"]:
+        print(" -> module pattern not matched, looking for a seperator or index")
+        print("    remaining_name: " + remaining_name)
+        return False
+      remaining_name = remaining_name[1:]
+
+      # The other half of that check above, this removes all starting numbers
+      # from a name (which must be the start of a module name, if we got here).
+      while remaining_name[:1] in "0123456789":
+        has_d = True
+        remaining_name = remaining_name[1:]
+
+      # If we had to remove a number for multiply instantiated modules then
+      # we also need to remove a trailing "/"
+      if has_d and not remaining_name[0] in ["/", "_"]:
+        print(" -> trying to remove number, but not trailed by a speerator")
+        print("    remaining_name: " + remaining_name)
+        return False
+      elif has_d:
+        remaining_name = remaining_name[1:]
+
+    # Strip all leading "T%d" instances from the heirarchy
+    while remaining_name[:2] == "T_":
+      # Chisel only generates "T_%d" nodes, not just "T" nodes.
+      remaining_name = remaining_name[2:]
+
+      if not remaining_name[:0] in "01234456789":
+        print(" -> T node isn't followed by a number")
+        print("    remaining_name: " + remaining_name)
+        return False
+
+      while remaining_name[:1] in "0123456789":
+        remaining_name = remaining_name[1:]
+
+      # At this point there must be another heirarchy break, otherwise this
+      # wasn't a Chisel temporary.
+      if not remaining_name[0] in ["/", "_"]:
+        print(" -> no break after T node")
+        print("    remaining_name: " + remaining_name)
+        return False
+      remaining_name = remaining_name[1:]
+
+    # SRAM macros can end in an arbitrary number of "sram%d" instances towards
+    # the end.
+    while (remaining_name[:4] == "sram"):
+      remaining_name = remaining_name[4:]
+      if not remaining_name[:0] in "0123456789":
+        print(" -> SRAM without number")
+        print("    remaining_name: " + remaining_name)
+        return False
+
+      while len(remaining_name) > 0 and remaining_name[0] in "0123456789":
+        remaining_name = remaining_name[1:]
+
+      if len(remaining_name) is 0:
+        print(" -> match OK")
+        return True
+
+      if not remaining_name[0] in ["/", "_"]:
+        print(" -> SRAM number, but then no heirarchy break")
+        print("    remaining_name: " + remaining_name)
+        return False
+
+      remaining_name = remaining_name[1:]
+
+    # The new Chisel stuff calls these "ext_mem_%d" instead of SRAM, but it's
+    # pretty much the same thing, but now there are two trailing numbers
+    # instead of one.
+    while (remaining_name[:7] == "ext_mem"):
+      remaining_name = remaining_name[7:]
+
+      if not remaining_name[:0] in "_":
+        print(" -> SRAM ext_mem?, not ext_mem_")
+        print("    remaining_name: " + remaining_name)
+        return False
+      remaining_name = remaining_name[1:]
+
+      if not remaining_name[:0] in "0123456789":
+        print(" -> SRAM without number")
+        print("    remaining_name: " + remaining_name)
+        return False
+
+      while len(remaining_name) > 0 and remaining_name[0] in "0123456789":
+        remaining_name = remaining_name[1:]
+
+      if len(remaining_name) is 0:
+        print(" -> match OK")
+        return True
+
+      if not remaining_name[:0] in "_":
+        print(" -> SRAM ext_mem?, not ext_mem_")
+        print("    remaining_name: " + remaining_name)
+        return False
+      remaining_name = remaining_name[1:]
+
+      if not remaining_name[:0] in "0123456789":
+        print(" -> SRAM without number")
+        print("    remaining_name: " + remaining_name)
+        return False
+
+      while len(remaining_name) > 0 and remaining_name[0] in "0123456789":
+        remaining_name = remaining_name[1:]
+
+      if len(remaining_name) is 0:
+        print(" -> match OK")
+        return True
+
+      if not remaining_name[0] in ["/", "_"]:
+        print(" -> SRAM number, but then no heirarchy break")
+        print("    remaining_name: " + remaining_name)
+        return False
+
+      remaining_name = remaining_name[1:]
+
+    print(" -> some name remains at the end")
+    print("    remaining_name: " + remaining_name)
+    return False
+
+  # These macros are used by the placement code to figure out where to place
+  # things relative to this code.
+  def tl(self):
+    return Position(self, "tl")
+  def bl(self):
+    return Position(self, "bl")
+  def tr(self):
+    return Position(self, "tr")
+  def br(self):
+    return Position(self, "br")
+  def json_type(self):
+    return "macro"
+
+# A special case macro that represents the top of the current design.
+class TopMacro:
+  def __init__(self, name):
+    self.name = name
+    self.children = []
+
+  def tl(self):
+    return Position(self, "tl")
+  def bl(self):
+    return Position(self, "bl")
+  def tr(self):
+    return Position(self, "tr")
+  def br(self):
+    return Position(self, "br")
+  def json_type(self):
+    return "cell"
+
+# This is a helper method to place macros.  It's kind of like fold_left, but it
+# doesn't reduce (and instead returns an array).
+def chain_left(initial_value, array, func):
+  prev = initial_value
+  out = []
+  for cur in array:
+    out.append(func(prev, cur))
+    prev = cur
+  return out
+
+def left2right_along_top(prev, cur):
+  return Constraint(cur.tl(), prev.tr(), 3, 0)
+def left2right_along_bot(prev, cur):
+  return Constraint(cur.bl(), prev.br(), 3, 0)
+def top2bottom_along_right(prev, cur):
+  return Constraint(cur.tr(), prev.br(), 0, -3)
+def right2left_along_top(prev, cur):
+  return Constraint(cur.tr(), prev.tl(), -3, 0)
+
+###############################################################################
+# Macro Placement Schemes
+###############################################################################
+placement_schemes = []
+
+# Knows how to place a single Rocket Tile, without any L2 cache (for now...).
+class RocketTilePlacer:
+  def __init__(self, config):
+    self.top = TopMacro(config.rtl_top)
+    self.l1d = []
+    self.l1i = []
+    self.l2 = []
+
+  @staticmethod
+  def can_place(self):
+    return True
+  
+  def insert(self, macro):
+    if macro.matches("coreplex/RocketTile/DCache/data"):
+      self.l1d.append(macro)
+    elif macro.matches("coreplex/RocketTile/DCache/MetadataArray"):
+      self.l1d.append(macro)
+    elif macro.matches("coreplex/RocketTile/icache/icache"):
+      self.l1i.append(macro)
+    elif macro.matches("coreplex/RocketTile/icache/icache/tag_array/tag_array"):
+      self.l1i.append(macro)
+    else:
+      print("%s cannot be matched" % macro.name)
+      exit(1)
+
+  class TileL2AlongRight:
+    def __init__(self, tile_count):
+      self.tile_count = tile_count
+      self.tiles_in_current_set = 0
+      self.top_macro = None
+
+    def __call__(self, prev, cur):
+      if (self.top_macro is None):
+        self.top_macro = cur
+
+      self.tiles_in_current_set = self.tiles_in_current_set + 1
+      if (self.tiles_in_current_set > self.tile_count):
+        out = right2left_along_top(self.top_macro, cur)
+        self.top_macro = cur
+        self.tiles_in_current_set = 1
+        return out
+
+      return top2bottom_along_right(prev, cur)
+
+  def list_constraints(self):
+    return [] \
+      + chain_left(FixedPosition(self.top.tl()), self.l1d, left2right_along_top) \
+      + chain_left(FixedPosition(self.top.bl()), self.l1i, left2right_along_bot) \
+      + chain_left(FixedPosition(self.top.tr()), self.l2,  self.TileL2AlongRight(4)) \
+    
+placement_schemes.append(RocketTilePlacer)
+
+###############################################################################
+# Driver Code
+###############################################################################
+parser = ArgumentParser("Generate a floorplan from a macro list")
+parser.add_argument('--rtl_top', dest='rtl_top', type=str, required=True)
+parser.add_argument('--macros', dest='macros_filename', type=str, required=True)
+parser.add_argument('--config', dest='config', type=str, required=True)
+parser.add_argument('-o', dest='output_floorplan_filename', type=str, required=True)
+
+config = parser.parse_args()
+
+placer = next(p for p in placement_schemes if p.can_place(config))(config)
+
+for line in open(config.macros_filename, "r").readlines():
+  macro = ParsedMacro(line)
+  placer.insert(macro)
+
+c_json = map( (lambda constraint: constraint.as_json()), placer.list_constraints())
+json = '[ %s ]' % (',\n'.join(c_json))
+fp_out = open(config.output_floorplan_filename, "w")
+print(json, file=fp_out)
