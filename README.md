@@ -38,10 +38,10 @@ You can customize the build by using make variables, which can either be set in
 "Makefile.project", "Makefile.local", or on the commandline.  The following
 variables can be set:
 
- * CORE_GENERATOR: The project that will be used to generate the core.  There's
-   two currently supported: "rocket-chip" which generates a Rocket Chip based
-   core, and "crossbar" which generates a single AXI crossbar (using Rocket
-   Chip's crossbar implementation).
+ * CORE_GENERATOR: The project that will be used to generate the core.  The
+   main one supported is based on Rocket Chip, but there are also a few
+   examples in case you want to extend it: "counter" contains a Verilog
+   counter, and "multiplier" contains a Chisel multiplier.
 
  * CORE_CONFIG: A configuration specific to the core being generated.  For
    Rocket Chip based projects this passes a CDE-based top-level parameter class
