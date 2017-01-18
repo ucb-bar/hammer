@@ -47,6 +47,8 @@ mkdir -p "$run_dir"
 cat >"$run_dir"/enter <<EOF
 export DC_HOME="$(dirname $(dirname $dc))"
 export PATH="\$DC_HOME/bin:\$PATH"
+export MGLS_LICENSE_FILE="$MGLS_LICENSE_FILE"
+export SNPSLMD_LICENSE_FILE="$SNPSLMD_LICENSE_FILE"
 EOF
 
 # Almost all of what I do is to just use Synopsys's reference methodology,
