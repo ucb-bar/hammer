@@ -261,6 +261,19 @@ EOF
 python3 $run_dir/generated-scripts/floorplan2tcl.py
 cat $run_dir/generated-scripts/floorplan.tcl
 
+# Opens the floorplan straight away, which is easier than doing it manually
+cat > $run_dir/generated-scripts/open_floorplan.tcl <<EOF
+source rm_setup/icc_setup.tcl
+open_mw_lib -r ${top}_LIB
+open_mw_cel -r floorplan
+EOF
+
+cat > $run_dir/generated-scripts/open_floorplan <<EOF
+cd $run_dir
+source enter
+$ICC_HOME/bin/icc_shell -gui -f generated-scripts/open_floorplan.tcl
+EOF
+chmod +x $run_dir/generated-scripts/open_floorplan
 
 # Here's the actual ICC invocation
 cd $run_dir
