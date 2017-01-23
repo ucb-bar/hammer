@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
 from parse import *
+from math import ceil
 from itertools import chain
 from argparse import ArgumentParser
+from functools import total_ordering
 
 # Represents a single position, which itself is an offset from something else.
 class Position:
@@ -40,6 +42,7 @@ class FixedPosition:
 
 # Contains a single macro, along with some helper functions to parse the output
 # of the macro list and to match heirarchies 
+@total_ordering
 class ParsedMacro:
   def __init__(self, str):
     p = parse("{} parent={} module={} width={} height={}", str)
@@ -71,9 +74,13 @@ class ParsedMacro:
   # after the end of a pattern (and also after any "T%d" strings) won't reject a
   # match.
   def matches(self, pattern):
+    print("matches(" + self.name + ", " + pattern + ")")
+    if self.name == pattern:
+      return True
+
     remaining_name = self.name
     for module_pattern in pattern.split("/"):
-      print("Checking " + remaining_name + " againist " + module_pattern + " (full pattern: " + pattern + ")")
+      print("  checking " + remaining_name + " againist " + module_pattern + " (full pattern: " + pattern + ")")
       has_d = False
       # The only way to match is to at least start with what's in this pattern
       # entry.
@@ -218,6 +225,9 @@ class ParsedMacro:
   def json_type(self):
     return "macro"
 
+  def __lt__(self, them):
+    return self.name < them.name
+
 # A special case macro that represents the top of the current design.
 class TopMacro:
   def __init__(self, name, width, height):
@@ -234,6 +244,14 @@ class TopMacro:
     return Position(self, "tr")
   def br(self):
     return Position(self, "br")
+  def tlf(self):
+    return FixedPosition(self.tl())
+  def blf(self):
+    return FixedPosition(self.bl())
+  def trf(self):
+    return FixedPosition(self.tr())
+  def brf(self):
+    return FixedPosition(self.br())
   def json_type(self):
     return "cell"
 
@@ -255,6 +273,98 @@ def top2bottom_along_right(prev, cur):
   return Constraint(cur.tr(), prev.br(), 0, -3)
 def right2left_along_top(prev, cur):
   return Constraint(cur.tr(), prev.tl(), -3, 0)
+
+# Some simple placement strategies: these place macros in order, inside the
+# bounds of another macro, and 
+class TopLeftPlacer:
+  def __init__(self, outer, anchor, macros):
+    self.outer = outer
+    self.anchor = anchor
+    self.macros = macros
+
+  def place2d(self):
+    # We want roughly even rows.  This will produce exactly even rows if given
+    # macros that are all the same size, otherwise it'll do something a bit
+    # odder.
+    width_sum = sum(map(lambda m: m.width, self.macros))
+    rows = ceil(width_sum / self.outer.width)
+    row_width = width_sum / rows
+    rows = []
+    row = []
+    row_y = 0
+
+    # Orders the macros
+    for macro in self.macros:
+      row.append(macro)
+      row_y = row_y + macro.width + 3
+      if row_y > row_width:
+        rows.append(row)
+        row = []
+        row_y = 0
+
+    if len(row) > 0:
+      rows.append(row)
+
+    return rows
+
+  def place(self):
+    anchor = self.anchor
+    out = []
+    for row in self.place2d():
+      placed = chain_left(anchor, row, left2right_along_top)
+      for place in placed:
+        out.append(place)
+      anchor = FixedPosition(row[0].bl())
+    return out
+
+  def bl(self):
+    rows = self.place2d()
+    return rows[len(rows) - 1][0]
+
+class BottomLeftPlacer:
+  def __init__(self, outer, anchor, macros):
+    self.outer = outer
+    self.anchor = anchor
+    self.macros = macros
+
+  def place2d(self):
+    # We want roughly even rows.  This will produce exactly even rows if given
+    # macros that are all the same size, otherwise it'll do something a bit
+    # odder.
+    width_sum = sum(map(lambda m: m.width, self.macros))
+    rows = ceil(width_sum / self.outer.width)
+    row_width = width_sum / rows
+    rows = []
+    row = []
+    row_y = 0
+
+    # Orders the macros
+    for macro in self.macros:
+      row.append(macro)
+      row_y = row_y + macro.width + 3
+      if row_y > row_width:
+        rows.append(row)
+        row = []
+        row_y = 0
+
+    if len(row) > 0:
+      rows.append(row)
+
+    return rows
+
+  def place(self):
+    anchor = self.anchor
+    out = []
+    for row in self.place2d():
+      placed = chain_left(anchor, row, left2right_along_bot)
+      for place in placed:
+        out.append(place)
+      anchor = FixedPosition(row[0].tl())
+    return out
+
+  def tl(self):
+    rows = self.place2d()
+    return rows[len(rows) - 1][0]
 
 ###############################################################################
 # Macro Placement Schemes
@@ -289,26 +399,13 @@ class RocketTilePlacer:
       print("%s cannot be matched" % macro.name)
       exit(1)
 
-  class TileL2AlongRight:
-    def __init__(self, tile_count):
-      self.tile_count = tile_count
-      self.tiles_in_current_set = 0
-      self.top_macro = None
-
-    def __call__(self, prev, cur):
-      if (self.top_macro is None):
-        self.top_macro = cur
-
-      self.tiles_in_current_set = self.tiles_in_current_set + 1
-      if (self.tiles_in_current_set > self.tile_count):
-        out = right2left_along_top(self.top_macro, cur)
-        self.top_macro = cur
-        self.tiles_in_current_set = 1
-        return out
-
-      return top2bottom_along_right(prev, cur)
-
   def list_constraints(self):
+    l1dd = TopLeftPlacer   (self.top, self.top.tlf(), sorted(self.l1dd))
+    l1dm = TopLeftPlacer   (self.top, l1dd.bl(),      sorted(self.l1dm))
+    l1id = BottomLeftPlacer(self.top, self.top.blf(), sorted(self.l1id))
+    l1im = BottomLeftPlacer(self.top, l1id.tl(),      sorted(self.l1im))
+    return l1dd.place() + l1dm.place() + l1id.place() + l1im.place()
+
     return [] \
       + chain_left(FixedPosition(self.top.tl()), self.l1dd, left2right_along_top) \
       + chain_left(FixedPosition(self.l1dd[0].bl()), self.l1dm, left2right_along_top) \
