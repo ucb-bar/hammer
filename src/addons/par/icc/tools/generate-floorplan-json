@@ -319,7 +319,7 @@ class TopLeftPlacer:
 
   def bl(self):
     rows = self.place2d()
-    return rows[len(rows) - 1][0]
+    return FixedPosition(rows[len(rows) - 1][0].bl())
 
 class BottomLeftPlacer:
   def __init__(self, outer, anchor, macros):
@@ -364,7 +364,7 @@ class BottomLeftPlacer:
 
   def tl(self):
     rows = self.place2d()
-    return rows[len(rows) - 1][0]
+    return FixedPosition(rows[len(rows) - 1][0].tl())
 
 ###############################################################################
 # Macro Placement Schemes
