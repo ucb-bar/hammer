@@ -51,19 +51,16 @@ else: # We can't currently support both tarballs and an install path
 			of.write("\t@mkdir -p $(dir $@)\n")
 			of.write("\tcp --reflink=auto $^ $@\n")
 			of.write("else\n")
-
+			of.write("$(error Set the {0} variable to a folder that contains {1})\n".format(tarball["base var"], tarball["path"]))
+			of.write("endif\n")
 		# Some technologies can be fetched online, other's can't.
-		if "homepage" in tarball:
+		elif "homepage" in tarball:
 			of.write("{0}:\n".format(tarball_path))
 			of.write("\t$(error Download the {0} technology tarball from {1} and place it at $@, this process can't be automated because of NDAs)\n".format(tarball["path"], tarball["homepage"]))
 		elif "url" in tarball:
 			of.write("{0}:\n".format(tarball_path))
 			of.write("\t@mkdir -p $(dir $@)\n")
 			of.write("\twget \"{0}\" -O $@\n".format(tarball["url"]))
-
-		if "base var" in tarball:
-			of.write("endif\n")
-
 
 		# There's a single extraction step in order to avoid dependency problems.
 		of.write("{0}: {1}\n".format(tarball_stamp, tarball_path))
