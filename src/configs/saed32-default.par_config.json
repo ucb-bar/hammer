@@ -1,8 +1,1 @@
-{
-  "clocks": [
-    {
-      "name": "clock",
-      "period": "20ns"
-    }
-  ]
-}
+saed32-default.syn_config.json
