@@ -10,3 +10,6 @@
 * Don't use TECHNOLOGY_* variables in the synthesis scripts, use OBJ_MAP_*
 * Provide the LEF file to capTbl generation
 * Check for family in SRAMs rather than silently screwing up
+* Allow an empty PAR_CONFIG, and default to what's in SYN_CONFIG.
+* Line up the left edge of the SRAM macros
+* Only place pins where there aren't macros
