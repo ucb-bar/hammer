@@ -42,11 +42,21 @@ class FixedPosition:
 # of the macro list and to match heirarchies 
 class ParsedMacro:
   def __init__(self, str):
-    p = parse("{} module={} width={} height={}", str).fixed
-    self.name = p[0]
-    self.module = p[1]
-    self.width = p[2]
-    self.height = p[3]
+    p = parse("{} parent={} module={} width={} height={}", str)
+    if p != None:
+      p = p.fixed
+      self.name = p[0]
+      self.parent = p[1]
+      self.module = p[2]
+      self.width = float(p[3])
+      self.height = float(p[4])
+    else:
+      p = parse("{} module={} top_left=({}, {}) bottom_right=({}, {})", str).fixed
+      self.name = p[0]
+      self.parent = None
+      self.module = p[1]
+      self.width = float(p[4]) - float(p[2])
+      self.height = float(p[5]) - float(p[3])
 
   # This function matches both Chisel and DC's name mangling schemes to
   # determine if the name of this macro matches the supplied pattern.  Modules
@@ -210,9 +220,11 @@ class ParsedMacro:
 
 # A special case macro that represents the top of the current design.
 class TopMacro:
-  def __init__(self, name):
+  def __init__(self, name, width, height):
     self.name = name
     self.children = []
+    self.width = width
+    self.height = height
 
   def tl(self):
     return Position(self, "tl")
@@ -252,24 +264,27 @@ placement_schemes = []
 # Knows how to place a single Rocket Tile, without any L2 cache (for now...).
 class RocketTilePlacer:
   def __init__(self, config):
-    self.top = TopMacro(config.rtl_top)
-    self.l1d = []
-    self.l1i = []
-    self.l2 = []
+    self.top = None
+    self.l1dd = []
+    self.l1dm = []
+    self.l1id = []
+    self.l1im = []
 
   @staticmethod
   def can_place(self):
     return True
   
   def insert(self, macro):
-    if macro.matches("coreplex/RocketTile/DCache/data"):
-      self.l1d.append(macro)
+    if macro.matches(config.rtl_top):
+      self.top = TopMacro(macro.name, macro.width, macro.height)
+    elif macro.matches("coreplex/RocketTile/DCache/data"):
+      self.l1dd.append(macro)
     elif macro.matches("coreplex/RocketTile/DCache/MetadataArray"):
-      self.l1d.append(macro)
+      self.l1dm.append(macro)
     elif macro.matches("coreplex/RocketTile/icache/icache"):
-      self.l1i.append(macro)
+      self.l1id.append(macro)
     elif macro.matches("coreplex/RocketTile/icache/icache/tag_array/tag_array"):
-      self.l1i.append(macro)
+      self.l1im.append(macro)
     else:
       print("%s cannot be matched" % macro.name)
       exit(1)
@@ -295,9 +310,10 @@ class RocketTilePlacer:
 
   def list_constraints(self):
     return [] \
-      + chain_left(FixedPosition(self.top.tl()), self.l1d, left2right_along_top) \
-      + chain_left(FixedPosition(self.top.bl()), self.l1i, left2right_along_bot) \
-      + chain_left(FixedPosition(self.top.tr()), self.l2,  self.TileL2AlongRight(4)) \
+      + chain_left(FixedPosition(self.top.tl()), self.l1dd, left2right_along_top) \
+      + chain_left(FixedPosition(self.l1dd[0].bl()), self.l1dm, left2right_along_top) \
+      + chain_left(FixedPosition(self.top.bl()), self.l1id, left2right_along_bot) \
+      + chain_left(FixedPosition(self.l1id[0].tl()), self.l1im, left2right_along_bot) \
     
 placement_schemes.append(RocketTilePlacer)
 

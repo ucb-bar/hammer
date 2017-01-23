@@ -207,13 +207,21 @@ source rm_setup/icc_setup.tcl
 open_mw_lib ${top}_LIB
 open_mw_cel -readonly init_design_icc
 
+create_floorplan -control_type aspect_ratio -core_aspect_ratio 1 -core_utilization 0.7 -left_io2core 3 -bottom_io2core 3 -right_io2core 3 -top_io2core 3 -start_first_row
+
+set top_left_x [lindex [get_placement_area] 0]
+set top_left_y [lindex [get_placement_area] 1]
+set bottom_right_x [lindex [get_placement_area] 2]
+set bottom_right_y [lindex [get_placement_area] 3]
+echo "${top} module=${top} top_left=(\$top_left_x, \$top_left_y) bottom_right=(\$bottom_right_x, \$bottom_right_y)" >> results/${top}.macros.out
+
 set fixed_cells [get_fp_cells -filter "is_fixed == true"]
 foreach_in_collection cell \$fixed_cells {
     set full_name [get_attribute \$cell full_name]
     set ref_name [get_attribute \$cell ref_name]
     set height [get_attribute \$cell height]
     set width [get_attribute \$cell width]
-    echo "\$full_name module=\$ref_name width=\$width height=\$height" >> results/${top}.macros.out
+    echo "\$full_name parent=${top} module=\$ref_name width=\$width height=\$height" >> results/${top}.macros.out
 }
 exit
 EOF
