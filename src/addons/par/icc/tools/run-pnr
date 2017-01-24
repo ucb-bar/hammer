@@ -112,7 +112,7 @@ set RESULTS_DIR "results";
 set CLOCK_UNCERTAINTY "0.04";
 set INPUT_DELAY "0.10";
 set OUTPUT_DELAY "0.10";
-set_host_options -max_cores ${PLSI_SCHEDULER_MAX_THREADS}
+set ICC_NUM_CORES ${PLSI_SCHEDULER_MAX_THREADS}
 EOF
 
 # Read the core's configuration file to figure out what all the clocks should
@@ -175,6 +175,7 @@ sed "s@^set ICC_IN_VERILOG_NETLIST_FILE.*@set ICC_IN_VERILOG_NETLIST_FILE \"${v[
 sed "s@^set ICC_IN_SDC_FILE.*@set ICC_IN_SDC_FILE \"${sdc[@]}\"@;" -i $run_dir/rm_setup/icc_setup.tcl
 sed 's@^set ICC_FLOORPLAN_INPUT.*@set ICC_FLOORPLAN_INPUT "USER_FILE";@' -i $run_dir/rm_setup/icc_setup.tcl
 sed 's@^set ICC_IN_FLOORPLAN_USER_FILE.*@set ICC_IN_FLOORPLAN_USER_FILE "generated-scripts/floorplan.tcl";@' -i $run_dir/rm_setup/icc_setup.tcl
+sed "s@^set ICC_NUM_CORES.*@set ICC_NUM_CORES ${PLSI_SCHEDULER_MAX_THREADS};@" -i $run_dir/rm_setup/icc_setup.tcl
 
 # FIXME: This claims it's necessary for 28nm and below, but I'm not actually
 # sure if I should just always turn it on or not.
