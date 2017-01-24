@@ -218,7 +218,8 @@ output.write("source -echo generated-scripts/constraints.tcl\\n")
 output.write("create_floorplan -control_type aspect_ratio -core_aspect_ratio 1 -core_utilization 0.7 -left_io2core 3 -bottom_io2core 3 -right_io2core 3 -top_io2core 3 -start_first_row\\n")
 
 output.write("set_fp_placement_strategy -macros_on_edge auto\\n")
-output.write("set_fp_macro_options [all_macro_cells] -legal_orientation {W E FW FE}\\n")
+if len(input) > 0:
+    output.write("set_fp_macro_options [all_macro_cells] -legal_orientation {W E FW FE}\\n")
 output.write("set_keepout_margin -type hard -north -outer {5 5 5 5} [all_macro_cells]\\n")
 
 output.write("set_attribute [all_macro_cells] is_fixed false\\n")
