@@ -8,3 +8,5 @@
 
 /DVEfiles
 /opendatabase.log
+
+__pycache__
