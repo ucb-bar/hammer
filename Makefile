@@ -513,7 +513,7 @@ $(OBJ_TOOLS_SRC_DIR)/pconfigure/Makefile: $(OBJ_TOOLS_SRC_DIR)/pconfigure/stamp 
 	echo 'LANGUAGES += c++' >> $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
 	echo 'LINKOPTS += -L,$(abspath $(OBJ_TOOLS_BIN_DIR))/gcc-$(GCC_VERSION)/lib64' >> $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
 	echo 'LINKOPTS += -Wl,-rpath,$(abspath $(OBJ_TOOLS_BIN_DIR))/gcc-$(GCC_VERSION)/lib64' >> $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
-	+cd $(OBJ_TOOLS_SRC_DIR)/pconfigure; $(SCHEDULER_CMD) --max-threads=1 -- ./bootstrap.sh --cc $(abspath $(CMD_GCC)) --cxx $(abspath $(CMD_GXX))
+	+cd $(OBJ_TOOLS_SRC_DIR)/pconfigure; $(SCHEDULER_CMD) --max-threads=1 -- ./bootstrap.sh --cc $(abspath $(CMD_GCC)) --cxx $(abspath $(CMD_GXX)) --cxxflags "-L,$(abspath $(OBJ_TOOLS_BIN_DIR))/gcc-$(GCC_VERSION)/lib64 -Wl,-rpath,$(abspath $(OBJ_TOOLS_BIN_DIR))/gcc-$(GCC_VERSION)/lib64"
 	cd $(OBJ_TOOLS_SRC_DIR)/pconfigure; PATH="$(OBJ_TOOLS_SRC_DIR)/pconfigure/bin:$(PATH)" ./bin/pconfigure --verbose --ppkg-config $(abspath $(OBJ_TOOLS_SRC_DIR)/pconfigure/bin/ppkg-config) --phc $(abspath $(OBJ_TOOLS_SRC_DIR)/pconfigure/bin/phc)
 	+PATH="$(abspath $(OBJ_TOOLS_SRC_DIR)/pconfigure/bin/):$$PATH" $(SCHEDULER_CMD) --make -- $(MAKE) -C $(OBJ_TOOLS_SRC_DIR)/pconfigure -B CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX))
 
