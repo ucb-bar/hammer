@@ -276,6 +276,19 @@ $ICC_HOME/bin/icc_shell -gui -f generated-scripts/open_floorplan.tcl
 EOF
 chmod +x $run_dir/generated-scripts/open_floorplan
 
+cat > $run_dir/generated-scripts/open_chip.tcl <<EOF
+source rm_setup/icc_setup.tcl
+open_mw_lib -r ${top}_LIB
+open_mw_cel -r chip_finish_icc
+EOF
+
+cat > $run_dir/generated-scripts/open_chip <<EOF
+cd $run_dir
+source enter
+$ICC_HOME/bin/icc_shell -gui -f generated-scripts/open_chip.tcl
+EOF
+chmod +x $run_dir/generated-scripts/open_chip
+
 # Here's the actual ICC invocation
 cd $run_dir
 make -f rm_setup/Makefile_zrt ic -j1 |& tee icc.log
