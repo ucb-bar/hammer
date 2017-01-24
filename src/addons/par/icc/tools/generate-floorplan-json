@@ -287,7 +287,7 @@ class TopLeftPlacer:
     # macros that are all the same size, otherwise it'll do something a bit
     # odder.
     width_sum = sum(map(lambda m: m.width, self.macros))
-    rows = ceil(width_sum / self.outer.width)
+    rows = ceil(width_sum / self.outer.width) + 0.0001
     row_width = width_sum / rows
     rows = []
     row = []
@@ -319,6 +319,8 @@ class TopLeftPlacer:
 
   def bl(self):
     rows = self.place2d()
+    if len(rows) == 0:
+      return FixedPosition(self.anchor.bl())
     return FixedPosition(rows[len(rows) - 1][0].bl())
 
 class BottomLeftPlacer:
@@ -332,7 +334,7 @@ class BottomLeftPlacer:
     # macros that are all the same size, otherwise it'll do something a bit
     # odder.
     width_sum = sum(map(lambda m: m.width, self.macros))
-    rows = ceil(width_sum / self.outer.width)
+    rows = ceil(width_sum / self.outer.width) + 0.0001
     row_width = width_sum / rows
     rows = []
     row = []
@@ -364,6 +366,8 @@ class BottomLeftPlacer:
 
   def tl(self):
     rows = self.place2d()
+    if len(rows) == 0:
+      return FixedPosition(self.anchor.tl())
     return FixedPosition(rows[len(rows) - 1][0].tl())
 
 ###############################################################################
@@ -405,12 +409,6 @@ class RocketTilePlacer:
     l1id = BottomLeftPlacer(self.top, self.top.blf(), sorted(self.l1id))
     l1im = BottomLeftPlacer(self.top, l1id.tl(),      sorted(self.l1im))
     return l1dd.place() + l1dm.place() + l1id.place() + l1im.place()
-
-    return [] \
-      + chain_left(FixedPosition(self.top.tl()), self.l1dd, left2right_along_top) \
-      + chain_left(FixedPosition(self.l1dd[0].bl()), self.l1dm, left2right_along_top) \
-      + chain_left(FixedPosition(self.top.bl()), self.l1id, left2right_along_bot) \
-      + chain_left(FixedPosition(self.l1id[0].tl()), self.l1im, left2right_along_bot) \
     
 placement_schemes.append(RocketTilePlacer)
 
