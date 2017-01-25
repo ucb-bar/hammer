@@ -15,7 +15,7 @@ $(OBJ_SYN_DIR)/cadence-genus.stamp: \
 		$(abspath $(SYNTHESIS_TOOL_ADDON)/tools/run-synthesis) \
 		$(OBJ_MAP_RTL_V) \
 		$(PLSI_CACHE_DIR)/cadence/rak/Genus_$(GENUS_VERSION)_CommonUI_MMMC_RAK.tar.gz \
-		$(TECHNOLOGY_LIBERTY_FILES) \
+		$(TECHNOLOGY_CCS_LIBERTY_FILES) \
 		$(OBJ_SYN_TECHLEF_FILES) \
 		$(TECHNOLOGY_LEF_FILES) \
 		$(SYN_CONFIG_FILE) \

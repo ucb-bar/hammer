@@ -34,7 +34,7 @@ $(PLSI_CACHE_DIR)/distfiles/abc-$(ABC_VERSION).tar.gz:
 $(OBJ_SYN_MAPPED_V): \
 		$(abspath $(SYNTHESIS_TOOL_ADDON)/run-synthesis) \
 		$(OBJ_MAP_RTL_V) \
-		$(TECHNOLOGY_LIBERTY_FILES) \
+		$(TECHNOLOGY_CCS_LIBERTY_FILES) \
 		$(YOSYS_BIN)
 	@mkdir -p $(dir $@)
 	$(SCHEDULER_CMD) --max-threads=1 -- $(abspath $<) --top $(SYN_TOP) -o $(abspath $@) $(abspath $^)

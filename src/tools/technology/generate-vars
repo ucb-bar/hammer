@@ -14,10 +14,28 @@ of = open(args.output, "w+")
 
 tech_home = "$(OBJ_TECH_DIR)/extracted"
 
-of.write("TECHNOLOGY_LIBERTY_FILES =")
+of.write("TECHNOLOGY_CCS_LIBERTY_FILES =")
 for library_desc in techfile["libraries"]:
-	if "liberty file" in library_desc:
-		of.write(" {0}/{1}".format(tech_home, library_desc["liberty file"]))
+	if "ccs liberty file" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["ccs liberty file"]))
+of.write("\n")
+
+of.write("TECHNOLOGY_CCS_LIBRARY_FILES =")
+for library_desc in techfile["libraries"]:
+	if "ccs library file" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["ccs library file"]))
+of.write("\n")
+
+of.write("TECHNOLOGY_NLDM_LIBERTY_FILES =")
+for library_desc in techfile["libraries"]:
+	if "nldm liberty file" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["nldm liberty file"]))
+of.write("\n")
+
+of.write("TECHNOLOGY_NLDM_LIBRARY_FILES =")
+for library_desc in techfile["libraries"]:
+	if "nldm library file" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["nldm library file"]))
 of.write("\n")
 
 of.write("TECHNOLOGY_VERILOG_FILES =")
@@ -56,12 +74,6 @@ of.write("TECHNOLOGY_MILKYWAY_TECHFILES =")
 for library_desc in techfile["libraries"]:
 	if "milkyway techfile" in library_desc:
 		of.write(" {0}/{1}".format(tech_home, library_desc["milkyway techfile"]))
-of.write("\n")
-
-of.write("TECHNOLOGY_CCS_LIBRARY_FILES =")
-for library_desc in techfile["libraries"]:
-	if "ccs library file" in library_desc:
-		of.write(" {0}/{1}".format(tech_home, library_desc["ccs library file"]))
 of.write("\n")
 
 of.write("TECHNOLOGY_MARCO_PROVIDE_SCRIPTS =")
