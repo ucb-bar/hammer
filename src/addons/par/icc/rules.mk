@@ -27,6 +27,7 @@ $(OBJ_PAR_DIR)/synopsys-icc.stamp: \
 		$(PLSI_CACHE_DIR)/synopsys/rm/ICC-RM_$(ICC_VERSION).tar \
 		$(SYN_CONFIG_FILE) \
 		$(TECHNOLOGY_JSON) \
+		$(ICV_BIN) \
 		$(ICC_BIN)
 	@mkdir -p $(dir $@)
 	$(SCHEDULER_CMD) -- $(abspath $<) --top $(PAR_TOP) --output_dir $(abspath $(dir $@))/synopsys-icc-workdir $(abspath $^)
@@ -57,6 +58,7 @@ $(OBJ_PAR_DIR)/synopsys-icc-macros.stamp: \
 		$(PLSI_CACHE_DIR)/synopsys/rm/ICC-RM_$(ICC_VERSION).tar \
 		$(SYN_CONFIG_FILE) \
 		$(TECHNOLOGY_JSON) \
+		$(ICV_BIN) \
 		$(ICC_BIN)
 	@mkdir -p $(dir $@)
 	$(SCHEDULER_CMD) -- $(abspath $<) --top $(PAR_TOP) --output_dir $(abspath $(dir $@))/synopsys-icc-macros-workdir $(abspath $^)

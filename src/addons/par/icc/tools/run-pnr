@@ -15,12 +15,14 @@ unset find_regs
 unset config
 unset technology
 unset floorplan_json
+unset icv
 while [[ "$1" != "" ]]
 do
     case "$1" in
     "$0") ;;
     --output_dir) run_dir="$2"; shift;;
     */icc_shell) icc="$1";;
+    */icv64) icv="$1";;
     */ICC-RM_*.tar) rmtar="$1";;
     *.db) libs+=("$1");;
     */lib) mw+=("$(dirname "$1")");;
@@ -53,6 +55,7 @@ export ICC_HOME="$(dirname $(dirname $icc))"
 export PATH="\$ICC_HOME/bin:\$PATH"
 export MGLS_LICENSE_FILE="$MGLS_LICENSE_FILE"
 export SNPSLMD_LICENSE_FILE="$SNPSLMD_LICENSE_FILE"
+export ICV="$icv"
 EOF
 source "$run_dir"/enter
 
@@ -90,6 +93,12 @@ fi
 if [[ "${v[@]}" == "" ]]
 then
     echo "No Verilog input provided" >&2
+    exit 1
+fi
+
+if [[ "$icv" == "" ]]
+then
+    echo "ICV is not specified" >&2
     exit 1
 fi
 

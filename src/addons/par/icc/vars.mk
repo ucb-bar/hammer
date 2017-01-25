@@ -48,6 +48,13 @@ $(error Expected to find lc_shell at $(LC_BIN))
 endif
 endif
 
+# ICC needs ICV to insert DRC metal fills.  The scripts say this is only
+# necessary for 28nm and below, but I just have it everywhere.
+ICV_BIN = $(SYNOPSYS_HOME)/icvalidator/$(ICV_VERSION)/bin/linux64/icv64
+ifeq ($(wildcard $(ICV_BIN)),)
+$(error Expected to find ICV at $(ICV_BIN))
+endif
+
 PAR_TOP = $(SYN_TOP)
 PAR_SIM_TOP = $(SYN_SIM_TOP)
 OBJ_PAR_ROUTED_V = $(OBJ_PAR_DIR)/generated/$(PAR_TOP).mapped.v
