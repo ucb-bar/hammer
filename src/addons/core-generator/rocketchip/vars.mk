@@ -42,7 +42,7 @@ RC_OBJ_CORE_SIM_FILES = \
 	$(CORE_DIR)/vsrc/SimDTM.v \
 	$(CORE_DIR)/vsrc/TestDriver.v \
 	$(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).v \
-	src/addons/core-generator/rocket-chip/src/clock.vh \
+	src/addons/core-generator/rocketchip/src/clock.vh \
 	$(OBJ_CORE_DIR)/plsi-generated/model.vh
 OBJ_CORE_SIM_FILES = $(RC_OBJ_CORE_SIM_FILES)
 

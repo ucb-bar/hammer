@@ -1,32 +1,32 @@
 # Copyright 2016 Palmer Dabbelt <palmer@dabbelt.com>
 
-$(OBJ_CORE_DIR)/plsi-generated/rocket-chip-base.stamp: \
+$(OBJ_CORE_DIR)/plsi-generated/rocketchip-base.stamp: \
 		$(shell find $(CORE_DIR) -iname "*.scala")
 	@mkdir -p $(dir $@)
-	mkdir -p $(OBJ_CORE_DIR)/rocket-chip
-	rsync -a --delete $(CORE_DIR)/ $(OBJ_CORE_DIR)/rocket-chip/
-	mkdir -p $(OBJ_CORE_DIR)/rocket-chip/src/main/scala/
+	mkdir -p $(OBJ_CORE_DIR)/rocketchip
+	rsync -a --delete $(CORE_DIR)/ $(OBJ_CORE_DIR)/rocketchip/
+	mkdir -p $(OBJ_CORE_DIR)/rocketchip/src/main/scala/
 	date > $@
 
-# If you add directories to this variable, they'll be copied to rocket-chip/
+# If you add directories to this variable, they'll be copied to rocketchip/
 # and added to ROCKETCHIP_ADDONS
 ifneq ($(RC_CORE_ADDON_DIRS),)
-$(OBJ_CORE_DIR)/plsi-generated/rocket-chip.stamp: $(shell find $(RC_CORE_ADDON_DIRS) -type f)
+$(OBJ_CORE_DIR)/plsi-generated/rocketchip.stamp: $(shell find $(RC_CORE_ADDON_DIRS) -type f)
 endif
 
-# If you add directories to this variable, they'll be copied to rocket-chip/
+# If you add directories to this variable, they'll be copied to rocketchip/
 # but won't be added to ROCKETCHIP_ADDONS
 ifneq ($(RC_CORE_OVERLAY_DIR),)
-$(OBJ_CORE_DIR)/plsi-generated/rocket-chip.stamp: $(shell find $(RC_CORE_OVERLAY_DIR) -type f)
+$(OBJ_CORE_DIR)/plsi-generated/rocketchip.stamp: $(shell find $(RC_CORE_OVERLAY_DIR) -type f)
 endif
 
-$(OBJ_CORE_DIR)/plsi-generated/rocket-chip.stamp: $(OBJ_CORE_DIR)/plsi-generated/rocket-chip-base.stamp
+$(OBJ_CORE_DIR)/plsi-generated/rocketchip.stamp: $(OBJ_CORE_DIR)/plsi-generated/rocketchip-base.stamp
 	@mkdir -p $(dir $@)
 ifneq ($(RC_CORE_ADDON_DIRS),)
-	cp --reflink=auto -r $(RC_CORE_ADDON_DIRS) $(OBJ_CORE_DIR)/rocket-chip/
+	cp --reflink=auto -r $(RC_CORE_ADDON_DIRS) $(OBJ_CORE_DIR)/rocketchip/
 endif
 ifneq ($(RC_CORE_OVERLAY_DIR),)
-	cp --reflink=auto -r $(RC_CORE_OVERLAY_DIR)/* $(OBJ_CORE_DIR)/rocket-chip/
+	cp --reflink=auto -r $(RC_CORE_OVERLAY_DIR)/* $(OBJ_CORE_DIR)/rocketchip/
 endif
 	date > $@
 
@@ -36,9 +36,9 @@ endif
 # make sure I have proper dependencies for everything, I then go ahead and copy
 # the files that are allowed to be used by the rest of the core out after
 # running SBT (the .stamp file).
-$(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).vsim.stamp: $(OBJ_CORE_DIR)/plsi-generated/rocket-chip.stamp
+$(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).vsim.stamp: $(OBJ_CORE_DIR)/plsi-generated/rocketchip.stamp
 	@mkdir -p $(dir $@)
-	+$(SCHEDULER_CMD) --make -- $(MAKE) CFG_PROJECT="$(RC_CORE_CFG_PROJECT)" ROCKETCHIP_ADDONS="$(RC_CORE_ADDONS) $(notdir $(RC_CORE_ADDON_DIRS))" MODEL=$(CORE_SIM_TOP) CONFIG=$(CORE_CONFIG) RISCV=unused SUITE=RocketSuite -C $(OBJ_CORE_DIR)/rocket-chip/vsim verilog || (rm -rf $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/$(CORE_SIM_TOP).$(CORE_CONFIG).v && exit 1)
+	+$(SCHEDULER_CMD) --make -- $(MAKE) CFG_PROJECT="$(RC_CORE_CFG_PROJECT)" ROCKETCHIP_ADDONS="$(RC_CORE_ADDONS) $(notdir $(RC_CORE_ADDON_DIRS))" MODEL=$(CORE_SIM_TOP) CONFIG=$(CORE_CONFIG) RISCV=unused SUITE=RocketSuite -C $(OBJ_CORE_DIR)/rocketchip/vsim verilog || (rm -rf $(OBJ_CORE_DIR)/rocketchip/vsim/generated-src/$(CORE_SIM_TOP).$(CORE_CONFIG).v && exit 1)
 	mkdir -p $(dir $@)
 	touch $@
 
@@ -59,14 +59,14 @@ $(RC_OBJ_CORE_RTL_D) \
 $(RC_OBJ_CORE_MEMORY_CONF) : \
 		$(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).vsim.stamp
 	mkdir -p $(dir $@)
-	cp -f $(OBJ_CORE_DIR)/rocket-chip/vsim/generated-src/$(notdir $@) $@
+	cp -f $(OBJ_CORE_DIR)/rocketchip/vsim/generated-src/$(notdir $@) $@
 
 # The Rocket Chip SRAM .conf file is funky and implicitly encodes a lot of
 # information.  To avoid having this propogate the the rest of the tools I
 # convert it into a saner macro configuration file, which has the advantage of
 # also containing information for non-SRAM macro types.
 $(RC_OBJ_CORE_MACROS): \
-		src/addons/core-generator/rocket-chip/tools/generate-macros \
+		src/addons/core-generator/rocketchip/tools/generate-macros \
 		$(RC_OBJ_CORE_MEMORY_CONF) \
 		$(CMD_PSON2JSON)
 	@mkdir -p $(dir $@)
@@ -80,11 +80,11 @@ $(RC_OBJ_CORE_SIM_MACRO_FILES): $(CMD_PCAD_MACRO_COMPILER) $(RC_OBJ_CORE_MACROS)
 # little bash script.
 ifeq ($(filter $(MAKECMDGOALS),clean distclean),)
 -include $(OBJ_CORE_TESTS_MK)
-$(OBJ_CORE_DIR)/plsi-generated/tests-$(CORE_SIM_CONFIG).mk: src/addons/core-generator/rocket-chip/tools/d2mk $(OBJ_CORE_RTL_D)
+$(OBJ_CORE_DIR)/plsi-generated/tests-$(CORE_SIM_CONFIG).mk: src/addons/core-generator/rocketchip/tools/d2mk $(OBJ_CORE_RTL_D)
 	+$< $(filter $(OBJ_CORE_DIR)/%,$^) -o $@ --config $(CORE_SIM_CONFIG)
 endif
 
-$(OBJ_CORE_DIR)/plsi-generated/tests-%.mk: src/addons/core-generator/rocket-chip/src/tests-*.mk
+$(OBJ_CORE_DIR)/plsi-generated/tests-%.mk: src/addons/core-generator/rocketchip/src/tests-*.mk
 	mkdir -p $(dir $@)
 	cat $^ > $@
 
@@ -106,7 +106,7 @@ $(OBJ_CORE_DIR)/riscv-tools-install/include/plsi-include.stamp: $(OBJ_CORE_DIR)/
 riscv-tools: $(OBJ_CORE_DIR)/plsi-generated/tools-build.stamp
 
 $(OBJ_CORE_DIR)/plsi-generated/tools-build.stamp: \
-		src/addons/core-generator/rocket-chip/tools/build-toolchain \
+		src/addons/core-generator/rocketchip/tools/build-toolchain \
 		$(OBJ_CORE_DIR)/plsi-generated/tools-copy.stamp \
 		$(CMD_GCC) $(CMD_GXX)
 	@mkdir -p $(dir $@)
