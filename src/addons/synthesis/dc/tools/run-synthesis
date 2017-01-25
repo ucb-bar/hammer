@@ -1,5 +1,6 @@
 #!/bin/bash
 
+unset DISPLAY
 unset run_dir
 unset dc
 unset rmtar
