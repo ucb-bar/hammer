@@ -82,23 +82,23 @@ OBJ_TOOLS_BIN_DIR = obj/tools/install
 OBJ_CORE_DIR = obj/core-$(CORE_GENERATOR)-$(CORE_CONFIG)
 OBJ_SOC_DIR = obj/soc-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)
 OBJ_TECH_DIR = obj/technology/$(TECHNOLOGY)
-OBJ_MAP_DIR = obj/map-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)
-OBJ_SYN_DIR = obj/syn-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)
-OBJ_PAR_DIR = obj/par-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)
+OBJ_MAP_DIR = obj/map-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)
+OBJ_SYN_DIR = obj/syn-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)
+OBJ_PAR_DIR = obj/par-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)
 
 # CHECK_* directories are where the output of tests go
 CHECK_CORE_DIR = check/core-$(CORE_GENERATOR)-$(CORE_CONFIG)
 CHECK_SOC_DIR = check/soc-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)
-CHECK_MAP_DIR = check/map-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)
-CHECK_SYN_DIR = check/syn-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)
-CHECK_PAR_DIR = check/par-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)
+CHECK_MAP_DIR = check/map-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)
+CHECK_SYN_DIR = check/syn-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)
+CHECK_PAR_DIR = check/par-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)
 
 # TRACE_* directories are where VPDs go
 TRACE_CORE_DIR = trace/core-$(CORE_GENERATOR)-$(CORE_CONFIG)
 TRACE_SOC_DIR = trace/soc-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)
-TRACE_MAP_DIR = trace/map-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)
-TRACE_SYN_DIR = trace/syn-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)
-TRACE_PAR_DIR = trace/par-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)
+TRACE_MAP_DIR = trace/map-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)
+TRACE_SYN_DIR = trace/syn-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)
+TRACE_PAR_DIR = trace/par-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)
 
 CMD_PTEST = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/ptest
 CMD_PCONFIGURE = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/pconfigure
@@ -413,15 +413,15 @@ soc-verilog: bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP).v
 	$(info $@ availiable at $<)
 
 .PHONY: map-verilog
-map-verilog: bin/map-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)/$(MAP_TOP).v
+map-verilog: bin/map-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)/$(MAP_TOP).v
 	$(info $@ availiable at $<)
 
 .PHONY: syn-verilog
-syn-verilog: bin/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP).v
+syn-verilog: bin/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP).v
 	$(info $@ availiable at $<)
 
 .PHONY: par-verilog
-par-verilog: bin/par-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)/$(PAR_TOP).v
+par-verilog: bin/par-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)/$(PAR_TOP).v
 	$(info $@ availiable at $<)
 
 # The various simulators
@@ -430,11 +430,11 @@ core-simulator: bin/core-$(CORE_CONFIG)/$(CORE_TOP)-simulator
 .PHONY: soc-simulator
 soc-simulator: bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP)-simulator
 .PHONY: map-simulator
-map-simulator: bin/map-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)/$(MAP_TOP)-simulator
+map-simulator: bin/map-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)/$(MAP_TOP)-simulator
 .PHONY: syn-simulator
-syn-simulator: bin/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP)-simulator
+syn-simulator: bin/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP)-simulator
 .PHONY: par-simulator
-par-simulator: bin/par-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)/$(PAR_TOP)-simulator
+par-simulator: bin/par-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)/$(PAR_TOP)-simulator
 
 # This just cleans everything
 .PHONY: clean
