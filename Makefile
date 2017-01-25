@@ -405,36 +405,36 @@ check-par:
 
 # The various RTL targets
 .PHONY: core-verilog
-core-verilog: bin/core-$(CORE_CONFIG)/$(CORE_TOP).v
+core-verilog: bin/core-$(CORE_GENERATOR)-$(CORE_CONFIG)/$(CORE_TOP).v
 	$(info $@ availiable at $<)
 
 .PHONY: soc-verilog
-soc-verilog: bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP).v
+soc-verilog: bin/soc-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP).v
 	$(info $@ availiable at $<)
 
 .PHONY: map-verilog
-map-verilog: bin/map-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)/$(MAP_TOP).v
+map-verilog: bin/map-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)/$(MAP_TOP).v
 	$(info $@ availiable at $<)
 
 .PHONY: syn-verilog
-syn-verilog: bin/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP).v
+syn-verilog: bin/syn-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP).v
 	$(info $@ availiable at $<)
 
 .PHONY: par-verilog
-par-verilog: bin/par-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)/$(PAR_TOP).v
+par-verilog: bin/par-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)/$(PAR_TOP).v
 	$(info $@ availiable at $<)
 
 # The various simulators
 .PHONY: core-simulator
-core-simulator: bin/core-$(CORE_CONFIG)/$(CORE_TOP)-simulator
+core-simulator: bin/core-$(CORE_GENERATOR)-$(CORE_CONFIG)/$(CORE_TOP)-simulator
 .PHONY: soc-simulator
-soc-simulator: bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP)-simulator
+soc-simulator: bin/soc-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP)-simulator
 .PHONY: map-simulator
-map-simulator: bin/map-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)/$(MAP_TOP)-simulator
+map-simulator: bin/map-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)/$(MAP_TOP)-simulator
 .PHONY: syn-simulator
-syn-simulator: bin/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP)-simulator
+syn-simulator: bin/syn-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP)-simulator
 .PHONY: par-simulator
-par-simulator: bin/par-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)/$(PAR_TOP)-simulator
+par-simulator: bin/par-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)/$(PAR_TOP)-simulator
 
 # This just cleans everything
 .PHONY: clean
