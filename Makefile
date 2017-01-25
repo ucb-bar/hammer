@@ -650,43 +650,43 @@ $(PLSI_CACHE_DIR)/distfiles/python3-$(PYTHON3_VERSION).tar.gz:
 	wget https://www.python.org/ftp/python/$(PYTHON3_VERSION)/Python-$(PYTHON3_VERSION).tgz -O $@
 
 # Here are a bunch of pattern rules that will try to copy outputs.
-bin/core-$(CORE_CONFIG)/$(CORE_TOP).v: $(OBJ_CORE_RTL_V)
+bin/core-$(CORE_GENERATOR)-$(CORE_CONFIG)/$(CORE_TOP).v: $(OBJ_CORE_RTL_V)
 	mkdir -p $(dir $@)
 	cp --reflink=auto $^ $@
 
-bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP).v: $(OBJ_SOC_RTL_V)
+bin/soc-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP).v: $(OBJ_SOC_RTL_V)
 	mkdir -p $(dir $@)
 	cp --reflink=auto $^ $@
 
-bin/map-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)/$(MAP_TOP).v: $(OBJ_MAP_RTL_V)
+bin/map-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)/$(MAP_TOP).v: $(OBJ_MAP_RTL_V)
 	mkdir -p $(dir $@)
 	cp --reflink=auto $^ $@
 
-bin/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP).v: $(OBJ_SYN_MAPPED_V)
+bin/syn-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP).v: $(OBJ_SYN_MAPPED_V)
 	mkdir -p $(dir $@)
 	cp --reflink=auto $^ $@
 
-bin/par-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)/$(PAR_TOP).v: $(OBJ_PAR_ROUTED_V)
+bin/par-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)/$(PAR_TOP).v: $(OBJ_PAR_ROUTED_V)
 	mkdir -p $(dir $@)
 	cp --reflink=auto $^ $@
 
-bin/core-$(CORE_CONFIG)/$(CORE_TOP)-simulator: $(OBJ_CORE_SIMULATOR)
+bin/core-$(CORE_GENERATOR)-$(CORE_CONFIG)/$(CORE_TOP)-simulator: $(OBJ_CORE_SIMULATOR)
 	mkdir -p $(dir $@)
 	cp --reflink=auto $^ $@
 
-bin/soc-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP)-simulator: $(OBJ_SOC_SIMULATOR)
+bin/soc-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP)-simulator: $(OBJ_SOC_SIMULATOR)
 	mkdir -p $(dir $@)
 	cp --reflink=auto $^ $@
 
-bin/map-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)/$(MAP_TOP)-simulator: $(OBJ_MAP_SIMULATOR)
+bin/map-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)/$(MAP_TOP)-simulator: $(OBJ_MAP_SIMULATOR)
 	mkdir -p $(dir $@)
 	cp --reflink=auto $^ $@
 
-bin/syn-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP)-simulator: $(OBJ_SYN_SIMULATOR)
+bin/syn-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP)-simulator: $(OBJ_SYN_SIMULATOR)
 	mkdir -p $(dir $@)
 	cp --reflink=auto $^ $@
 
-bin/par-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)/$(PAR_TOP)-simulator: $(OBJ_PAR_SIMULATOR)
+bin/par-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)/$(PAR_TOP)-simulator: $(OBJ_PAR_SIMULATOR)
 	mkdir -p $(dir $@)
 	cp --reflink=auto $^ $@
 
