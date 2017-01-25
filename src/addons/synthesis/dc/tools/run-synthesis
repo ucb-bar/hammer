@@ -133,6 +133,9 @@ set CLOCK_UNCERTAINTY "0.04";
 set INPUT_DELAY "0.10";
 set OUTPUT_DELAY "0.10";
 set_host_options -max_cores ${PLSI_SCHEDULER_MAX_THREADS}
+
+# Provide verbose error messages
+set power_sa_propagation_verbose true
 EOF
 
 # Read the core's configuration file to figure out what all the clocks should
