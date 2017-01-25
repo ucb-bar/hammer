@@ -2,7 +2,8 @@
   "clocks": [
     {
       "name": "clock",
-      "period": "20ns"
+      "period": "15ns",
+      "par derating": "5ns"
     }
   ]
 }

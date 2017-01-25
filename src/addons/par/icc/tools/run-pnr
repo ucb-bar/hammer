@@ -136,7 +136,10 @@ import re
 for clock in config["clocks"]:
 	clock_name = clock["name"]
 	clock_period = clock["period"]
+	par_derating = clock["par derating"]
 	if not re.match("[0-9]+ *[np]s", clock_period):
+		error
+	if not re.match("[0-9]+ *[np]s", par_derating):
 		error
 
 	if re.match("[0-9]+ *ns", clock_period):
@@ -144,7 +147,12 @@ for clock in config["clocks"]:
 	if re.match("[0-9]+ *ps", clock_period):
 		clock_period_ns = int(re.sub(" *ps", "", clock_period)) / 1000.0
 
-	print("create_clock {0} -name {0} -period {1}".format(clock_name, clock_period_ns))
+	if re.match("[0-9]+ *ns", par_derating):
+		par_derating_ns = re.sub(" *ns", "", par_derating)
+	if re.match("[0-9]+ *ps", par_derating):
+		par_derating_ns = int(re.sub(" *ps", "", par_derating)) / 1000.0
+
+	print("create_clock {0} -name {0} -period {1}".format(clock_name, clock_period_ns + par_derating_ns))
 	print("set_clock_uncertainty 0.01 [get_clocks {0}]".format(clock_name))
 EOF
 
