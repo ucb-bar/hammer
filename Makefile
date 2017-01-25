@@ -18,7 +18,7 @@ CORE_DIR ?= src/rocket-chip
 
 # The "core generator" generates top-level RTL, but doesn't include anything
 # that's technology specific
-CORE_GENERATOR ?= rocket-chip
+CORE_GENERATOR ?= rocketchip
 
 # The "soc generator" is used to add everything to a soc that isn't part of
 # the core generator (maybe because it's a NDA or something).  This default
