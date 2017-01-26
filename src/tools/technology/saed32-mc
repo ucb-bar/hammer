@@ -2,11 +2,11 @@
 
 set -e
 
-verilog=()
+unset family
 while [[ "$1" != "" ]]
 do
     case "$1" in
-    *.v) verilog+=("$1");;
+    --family) family="$2"; shift;;
     *) echo "Unknown argument $1"; exit 1;;
     esac
     shift
@@ -14,19 +14,19 @@ done
 
 echo "["
 
-cat /dev/null ${verilog[*]} | grep "^module SRAM1RW[0-9]*x[0-9]* " | while read sram
+for width in $(seq 4 512)
 do
-    name="$(echo "$sram" | sed 's/^module \(SRAM1RW[0-9]*x[0-9]*\) .*/\1/g')"
-    height="$(echo "$name" | sed 's/^SRAM1RW\([0-9]*\)x[0-9]*$/\1/g')"
-    width="$(echo "$name" | sed 's/^SRAM1RW[0-9]*x\([0-9]*\)$/\1/g')"
-
-    cat << EOF
+    for depth in $(echo 16 32 64 128)
+    do
+        case "$family" in
+        "mc-1rw")
+        cat <<EOF
   {
     "type": "sram",
-    "name": "${name}",
+    "name": "SRAM${depth}x${width}single_32",
     "width": ${width},
-    "depth": ${height},
-    "family": "sram-1rw",
+    "depth": ${depth},
+    "family": "mc-1rw",
     "ports": [
       {
         "address port name": "A",
@@ -47,21 +47,16 @@ do
     ]
   },
 EOF
-done
+        ;;
 
-cat /dev/null ${verilog[*]} | grep "^module SRAM2RW[0-9]*x[0-9]* " | while read sram
-do
-    name="$(echo "$sram" | sed 's/^module \(SRAM2RW[0-9]*x[0-9]*\) .*/\1/g')"
-    height="$(echo "$name" | sed 's/^SRAM2RW\([0-9]*\)x[0-9]*$/\1/g')"
-    width="$(echo "$name" | sed 's/^SRAM2RW[0-9]*x\([0-9]*\)$/\1/g')"
-
-    cat << EOF
+        "mc-2rw")
+        cat << EOF
   {
     "type": "sram",
-    "name": "${name}",
+    "name": "SRAM${depth}x${width}dual_32",
     "width": ${width},
-    "depth": ${height},
-    "family": "sram-2rw",
+    "depth": ${depth},
+    "family": "mc-2rw",
     "ports": [
        {
         "address port name": "A1",
@@ -98,6 +93,10 @@ do
     ]
   },
 EOF
+        ;;
+        *) echo "Unknown family $family" >&2; exit 1;;
+        esac
+    done
 done
 
 echo '{"type": "none"}]'

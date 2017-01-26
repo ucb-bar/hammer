@@ -1,0 +1,118 @@
+#!/bin/bash
+
+set -e
+
+unset family
+unset macro
+unset output_dir
+unset custom_compiler
+unset oa2lef
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    $0);;
+    --family) family="$2"; shift;;
+    --macro) macro="$2"; shift;;
+    --output_dir) output_dir="$2"; shift;;
+    */custom_compiler) custom_compiler="$1";;
+    */oa2lef) oa2lef="$1";;
+    *) echo "$0: unknown argument $1" >&2; exit 1;;
+    esac
+    shift
+done
+
+if [[ "$output_dir" == "" ]]
+then
+    echo "$0: you must specify --output_dir" >&2
+    exit 1
+fi
+
+if [[ "$custom_compiler" == "" ]]
+then
+    echo "$0: you must specify a custom_compiler to use" >&2
+    exit 1
+fi
+
+if [[ "$oa2lef" == "" ]]
+then
+    echo "$0: you must specify a oa2lef to use" >&2
+    exit 1
+fi
+
+rm -rf "$output_dir"
+mkdir -p $output_dir
+
+# FIXME: The memory compiler's home directory is hard-coded...
+export MC_HOME=$(readlink -f obj/technology/saed32/extracted/saed_mc_v2_3_4_13042016.tag.gz/saed_mc_v2_3_4/saed_mc)
+export PERL5LIB=$MC_HOME/lib:$PERL5LIB
+export PATH=$MC_HOME/bin:$PATH
+export SAED_PDK_32=$MC_HOME/etc/techs/SAED_PDK_32
+export SAED32_28_PDK=$SAED_PDK_32
+export SAED_MC_32_28_PDK=$SAED_PDK_32
+export PATH="$(dirname $custom_compiler):$(dirname $oa2lef):$PATH"
+export OA_BIT=64
+export LD_LIBRARY_PATH="$(readlink -f $(dirname $oa2lef)/../lib/linux_rhel50_gcc44x_64/opt):$(readlink -f $(dirname $custom_compiler)/../../boost/lib):$(readlink -f $(dirname $custom_compiler)/../../MYMLibrary/lib):$(readlink -f $(dirname $custom_compiler)/../../PyCellStudio/plat_linux_gcc472_64/lib):$(readlink -f $(dirname $custom_compiler)/../../fsdb/lib):$(readlink -f $(dirname $custom_compiler)/../../tdk/lib):$LD_LIBRARY_PATH"
+
+# Custom designer doesn't run on my machine, instead I'm going to try and use
+# custom compiler.
+mkdir $output_dir/bin
+export PATH="$output_dir/bin:$PATH"
+cat > $output_dir/bin/cdesigner <<EOF
+echo "cdesigner wrapper"
+$custom_compiler
+$custom_compiler \$@
+EOF
+chmod +x $output_dir/bin/cdesigner
+
+# We're just given the macro name that should be compiled.  This goes and
+# figures out the arguments that should be passed to
+unset width
+unset depth
+unset family
+depth="$(echo "$macro" | sed 's@^SRAM\([0-9]*\)x\([0-9]*\)\([singledual_32]*\)$@\1@g')"
+width="$(echo "$macro" | sed 's@^SRAM\([0-9]*\)x\([0-9]*\)\([singledual_32]*\)$@\2@g')"
+family="$(echo "$macro" | sed 's@^SRAM\([0-9]*\)x\([0-9]*\)\([singledual_32]*\)$@\3@g')"
+
+if [[ "$depth" == "" || "$depth" == "$macro" ]]
+then
+    echo "$0: unable to parse depth from $macro" >&2
+    exit 1
+fi
+if [[ "$width" == "" || "$width" == "$macro" ]]
+then
+    echo "$0: unable to parse width from $macro" >&2
+    exit 1
+fi
+if [[ "$family" == "" || "$family" == "$macro" ]]
+then
+    echo "$0: unable to parse family from $macro" >&2
+    exit 1
+fi
+
+# Generates the configuration file that will be used to run the memory compiler
+cat >${output_dir}/SRAM${width}x${depth}${family}.config <<EOF
+mem_type=${family}
+word_count=${depth}
+word_bits=${width}
+instance_name=SRAM${width}x${depth}${family}
+do_spice=0
+do_layout=1
+do_gds=0
+do_logic=1
+do_lef=1
+do_drc=0
+do_lvs=0
+do_cx=0
+do_rcx=0
+do_lib=1
+do_lib_ccs=0
+do_lib_nldm=0
+do_libdata=0
+work_dir=output
+do_toolchoose=icv
+EOF
+
+cd $output_dir
+
+cat SRAM${width}x${depth}${family}.config
+saed_mc SRAM${width}x${depth}${family}.config

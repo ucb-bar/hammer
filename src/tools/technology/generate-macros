@@ -31,7 +31,11 @@ for library in techfile["libraries"]:
 		if "documentation pdf" in library:
 			files = "obj/technology/{1}/extracted/{0}".format(library["documentation pdf"], args.technology)
 
-		p = subprocess.check_output([library["provide script"], files]).decode("utf-8")
+		if "family" in library:
+			p = subprocess.check_output([library["provide script"], "--family", library["family"], files]).decode("utf-8")
+		else:
+			p = subprocess.check_output([library["provide script"], files]).decode("utf-8")
+
 		macros = json.loads(p)
 		for macro in macros:
 			if (macro["type"] == "sram"):

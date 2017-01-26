@@ -50,6 +50,11 @@
       "path": "SAED_PDK32nm_v1.6_05182016.tar.gz",
       "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
       "base var": "SAED32_TARBALL_DIR"
+    },
+    {
+      "path": "saed_mc_v2_3_4_13042016.tag.gz",
+      "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
+      "base var": "SAED32_TARBALL_DIR"
     }
   ],
   "libraries": [
@@ -156,6 +161,16 @@
         "GND": "0 V"
       },
       "provide script": "src/tools/technology/saed32-srams"
+    },
+    {
+      "family": "mc-1rw",
+      "provide script": "src/tools/technology/saed32-mc",
+      "depend script": "src/tools/technology/saed32-mc_deps"
+    },
+    {
+      "family": "mc-2rw",
+      "provide script": "src/tools/technology/saed32-mc",
+      "depend script": "src/tools/technology/saed32-mc_deps"
     }
   ]
 }
