@@ -50,7 +50,14 @@ endif
 
 # ICC needs ICV to insert DRC metal fills.  The scripts say this is only
 # necessary for 28nm and below, but I just have it everywhere.
-ICV_BIN = $(SYNOPSYS_HOME)/icvalidator/$(ICV_VERSION)/bin/linux64/icv64
+ifeq ($(ICV_VERSION),)
+$(error Running ICC needs ICV (IC validator))
+endif
+
+# FIXME: The BWRC calls this "icv", I'm not sure which is correct.
+ICV_INSTALL_NAME ?= icvalidator
+
+ICV_BIN = $(SYNOPSYS_HOME)/$(ICV_INSTALL_NAME)/$(ICV_VERSION)/bin/linux64/icv64
 ifeq ($(wildcard $(ICV_BIN)),)
 $(error Expected to find ICV at $(ICV_BIN))
 endif
