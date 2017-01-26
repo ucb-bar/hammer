@@ -1,5 +1,7 @@
 # Copyright 2016 Palmer Dabbelt <palmer@dabbelt.com>
 
+CORE_DIR ?= src/addons/core-generator/rocketchip/rocket-chip
+
 # The RTL generates a top-level Verilog file that contains both the core and
 # the test harness.  In here, "CORE_TOP" is the name of the top-level of the
 # Verilog for synthesis and "CORE_SIM_TOP" is the name of the top-level of the
