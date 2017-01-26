@@ -54,21 +54,33 @@ EOF
         echo "trace-core: \$(CHECK_CORE_DIR)/$test.trace-out" >> $tempdir/out
         echo "\$(CHECK_CORE_DIR)/$test.out: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
         echo "\$(CHECK_CORE_DIR)/$test.trace-out: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
+        echo "\$(TRACE_CORE_DIR)/$test.vcd: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
+        echo "\$(TRACE_CORE_DIR)/$test.vpd: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
 
         echo "check-soc: \$(CHECK_SOC_DIR)/$test.out" >> $tempdir/out
         echo "trace-soc: \$(CHECK_SOC_DIR)/$test.trace-out" >> $tempdir/out
         echo "\$(CHECK_SOC_DIR)/$test.out: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
         echo "\$(CHECK_SOC_DIR)/$test.trace-out: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
+        echo "\$(TRACE_SOC_DIR)/$test.vcd: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
+        echo "\$(TRACE_SOC_DIR)/$test.vpd: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
 
         echo "check-map: \$(CHECK_MAP_DIR)/$test.out" >> $tempdir/out
         echo "trace-map: \$(CHECK_MAP_DIR)/$test.trace-out" >> $tempdir/out
         echo "\$(CHECK_MAP_DIR)/$test.out: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
         echo "\$(CHECK_MAP_DIR)/$test.trace-out: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
+        echo "\$(TRACE_MAP_DIR)/$test.vcd: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
+        echo "\$(TRACE_MAP_DIR)/$test.vpd: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
 
         echo "check-syn: \$(CHECK_SYN_DIR)/$test.out" >> $tempdir/out
         echo "trace-syn: \$(CHECK_SYN_DIR)/$test.trace-out" >> $tempdir/out
         echo "\$(CHECK_SYN_DIR)/$test.out: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
         echo "\$(CHECK_SYN_DIR)/$test.trace-out: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
+        echo "\$(TRACE_SYN_DIR)/$test.vcd: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
+        echo "\$(TRACE_SYN_DIR)/$test.vpd: \$(OBJ_CORE_DIR)/riscv-tests/$test" >> $tempdir/out
+
+        echo "ifneq (\$(SYN_POWER_SIGNOFF_TOOL),none)" >> $tempdir/out
+        echo "signoff-syn-power: \$(SIGNOFF_SYN_POWER_DIR)/$test.out" >> $tempdir/out
+        echo "endif" >> $tempdir/out
 
         echo "check-par: \$(CHECK_PAR_DIR)/$test.out" >> $tempdir/out
         echo "trace-par: \$(CHECK_PAR_DIR)/$test.trace-out" >> $tempdir/out

@@ -1,4 +1,4 @@
-# Copyright 2016 Palmer Dabbelt <palmer@dabbelt.com>
+# Copyright 2016-2017 Palmer Dabbelt <palmer@dabbelt.com>
 
 # The default target, which runs everything and tells you if it passed or not.
 all: report
@@ -50,6 +50,11 @@ PAR_SIMULATOR ?= $(SIMULATOR)
 FORMAL_TOOL ?= none
 SYN_FORMAL_TOOL ?= $(FORMAL_TOOL)
 
+# This allows post-synthesis power-related signoff, which while not being
+# exactly accurate can be used to get a general idea if a design is viable.
+POWER_SIGNOFF_TOOL ?= none
+SYN_POWER_SIGNOFF_TOOL ?= $(POWER_SIGNOFF_TOOL)
+
 # The scheduler to use when running large jobs.  Changing this doesn't have any
 # effect on the generated files, just the manner in which they are generated.
 SCHEDULER ?= auto
@@ -88,11 +93,11 @@ OBJ_SYN_DIR = obj/syn-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOG
 OBJ_PAR_DIR = obj/par-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)
 
 # CHECK_* directories are where the output of tests go
-CHECK_CORE_DIR = check/core-$(CORE_GENERATOR)-$(CORE_CONFIG)
-CHECK_SOC_DIR = check/soc-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)
-CHECK_MAP_DIR = check/map-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)
-CHECK_SYN_DIR = check/syn-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)
-CHECK_PAR_DIR = check/par-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)
+CHECK_CORE_DIR = check/sim/core-$(CORE_GENERATOR)-$(CORE_CONFIG)
+CHECK_SOC_DIR = check/sim/soc-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)
+CHECK_MAP_DIR = check/sim/map-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)
+CHECK_SYN_DIR = check/sim/syn-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)
+CHECK_PAR_DIR = check/sim/par-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)
 
 # TRACE_* directories are where VPDs go
 TRACE_CORE_DIR = trace/core-$(CORE_GENERATOR)-$(CORE_CONFIG)
@@ -100,6 +105,9 @@ TRACE_SOC_DIR = trace/soc-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)
 TRACE_MAP_DIR = trace/map-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)
 TRACE_SYN_DIR = trace/syn-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)
 TRACE_PAR_DIR = trace/par-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)
+
+# SIGNOFF_* directories are where signoff-related checks go
+SIGNOFF_SYN_POWER_DIR = check/power/syn-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)
 
 CMD_PTEST = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/ptest
 CMD_PCONFIGURE = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/pconfigure
@@ -180,6 +188,11 @@ endif
 PAR_SIMULATOR_ADDON = $(wildcard src/addons/simulator/$(PAR_SIMULATOR)/ $(ADDONS_DIR)/simulator/$(PAR_SIMULATOR)/)
 ifneq ($(words $(PAR_SIMULATOR_ADDON)),1)
 $(error Unable to resolve PAR_SIMULATOR=$(PAR_SIMULATOR): found "$(PAR_SIMULATOR_ADDON)")
+endif
+
+SYN_POWER_SIGNOFF_ADDON = $(wildcard src/addons/signoff-power/$(SYN_POWER_SIGNOFF_TOOL)/ $(ADDONS_DIR)/signoff-power/$(SYN_POWER_SIGNOFF_TOOLS))
+ifneq ($(words $(SYN_POWER_SIGNOFF_ADDON)),1)
+$(error Unable to resolve SYN_POWER_SIGNOFF_TOOL=$(SYN_POWER_SIGNOFF_TOOL): found "$(SYN_FORMAL_ADDON)")
 endif
 
 # Check to ensure all the configurations actually exist.
@@ -360,6 +373,9 @@ ifeq ($(PAR_SIM_TOP),)
 $(error PAR_TOOL needs to set PAR_SIM_TOP)
 endif
 
+# Various signoff tools
+include $(SYN_POWER_SIGNOFF_ADDON)/syn-vars.mk
+
 # All the rules get sourced last.  We don't allow any variables to be set here,
 # so the ordering isn't important.
 include $(SOC_GENERATOR_ADDON)/rules.mk
@@ -371,6 +387,7 @@ include $(SYN_SIMULATOR_ADDON)/syn-rules.mk
 include $(SYN_FORMAL_ADDON)/syn-rules.mk
 include $(PAR_TOOL_ADDON)/rules.mk
 include $(PAR_SIMULATOR_ADDON)/par-rules.mk
+include $(SYN_POWER_SIGNOFF_ADDON)/syn-rules.mk
 
 ##############################################################################
 # User Targets
@@ -389,6 +406,9 @@ makefrags::
 # "make report" to see if the tests passed or not.
 .PHONY: check
 check: $(patsubst %,check-%,core soc map syn par)
+ifneq ($(SYN_POWER_SIGNOFF_TOOL),none)
+check: signoff-syn-power
+endif
 
 # A virtual target that reports on the status of the test cases, in addition to
 # running them (if necessary).
@@ -411,6 +431,9 @@ check-syn:
 
 .PHONY: check-par
 check-par:
+
+.PHONY: signoff-syn-power
+signoff-syn-power:
 
 # The various RTL targets
 .PHONY: core-verilog
