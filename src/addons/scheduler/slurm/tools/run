@@ -13,7 +13,11 @@ while [[ "$1" != "--" ]]
 do
     case "$1" in
     --max-threads=*)
-      max_threads="$(echo -e "$max_threads\\n$(echo "$1" | cut -d= -f2-)" | sort | head -n1)"
+      new_max_threads="$(echo -e "$max_threads\\n$(echo "$1" | cut -d= -f2-)" | sort | head -n1)"
+      if [ "$new_max_threads" -lt "$max_threads" ]
+      then
+          max_threads=$new_max_threads
+      fi
       ;;
 
     --make)
