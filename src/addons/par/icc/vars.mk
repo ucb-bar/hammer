@@ -64,7 +64,7 @@ endif
 
 PAR_TOP = $(SYN_TOP)
 PAR_SIM_TOP = $(SYN_SIM_TOP)
-OBJ_PAR_ROUTED_V = $(OBJ_PAR_DIR)/generated/$(PAR_TOP).mapped.v
+OBJ_PAR_ROUTED_V = $(OBJ_PAR_DIR)/generated/$(PAR_TOP).output.v
 OBJ_PAR_SIM_FILES = $(OBJ_SYN_SIM_FILES) $(TECHNOLOGY_VERILOG_FILES) $(OBJ_PAR_DIR)/generated/$(PAR_TOP).force_regs.ucli $(OBJ_PAR_DIR)/generated/$(PAR_TOP).force_regs.tab
 OBJ_PAR_SIM_MACRO_FILES = $(OBJ_SYN_SIM_MACRO_FILES)
 
