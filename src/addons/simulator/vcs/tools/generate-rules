@@ -29,8 +29,8 @@ ifeq (\$(${VCS_TARGET_CAPS}_TOP),)
 \$(error ${VCS_TARGET_CAPS}_TOP must be defined)
 endif
 
-ifeq (\$(OBJ_${VCS_TARGET_CAPS}_${VTYPE}_V),)
-\$(error OBJ_${VCS_TARGET_CAPS}_${VTYPE}_V must be defined)
+ifeq (\$(OBJ_${VCS_TARGET_CAPS}_${VTYPE}_V)\$(OBJ_${VCS_TARGET_CAPS}_${VTYPE}_VHD),)
+\$(error OBJ_${VCS_TARGET_CAPS}_${VTYPE}_V or OBJ_${VCS_TARGET_CAPS}_${VTYPE}_VHD must be defined)
 endif
 
 ifeq (\$(VCS_BIN),)

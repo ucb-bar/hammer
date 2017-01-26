@@ -8,6 +8,7 @@ libs=()
 mw=()
 unset top
 v=()
+vhd=()
 tlu_min=()
 tlu_max=()
 tf=()
@@ -25,6 +26,7 @@ do
     */lib) mw+=("$(dirname "$1")");;
     --top) top="$2"; shift;;
     *.v) v+=("$1");;
+    *.vhd) vhd+=("$1");;
     *Cmin.tluplus) tlu_min+=("$1");;
     *Cmax.tluplus) tlu_max+=("$1");;
     *rcbest.itf.tluplus) tlu_min+=("$1");;
@@ -51,6 +53,12 @@ export PATH="\$DC_HOME/bin:\$PATH"
 export MGLS_LICENSE_FILE="$MGLS_LICENSE_FILE"
 export SNPSLMD_LICENSE_FILE="$SNPSLMD_LICENSE_FILE"
 EOF
+
+if [[ "$v" == "" ]]
+then
+    echo "No input design files specified" >&2
+    exit 1
+fi
 
 # Almost all of what I do is to just use Synopsys's reference methodology,
 # which users are expected to have downloaded.
@@ -83,6 +91,10 @@ find $run_dir -iname "*.tcl" | xargs sed s/'^compile_ultra \(.*\)'/'compile_ultr
 
 # Report more timing arcs
 sed 's@^report_timing@report_timing -max_paths 500 -nworst 10 -slack_lesser_than 0.01@' -i $run_dir/rm_dc_scripts/dc.tcl
+
+# Unfortunately I need to support both Verilog and VHDL.
+find $run_dir -iname "*.tcl" | xargs sed 's/RTL_SOURCE_FILES/RTL_SOURCE_FILES_VERILOG/g' -i
+find $run_dir -iname "*.tcl" | xargs sed 's/^\(analyze -format verilog .*\)/analyze -format vhdl ${RTL_SOURCE_FILES_VHDL}\n\1/g' -i
 
 # Report library references in case I'm missing anything.
 sed "s@^check_design @report_reference > reports/${top}.report_reference.out\\ncheck_design @" -i $run_dir/rm_dc_scripts/dc.tcl
@@ -118,7 +130,8 @@ fi
 mkdir -p $run_dir/rm_setup
 cat >> $run_dir/rm_setup/common_setup.tcl <<EOF
 set DESIGN_NAME "$top";
-set RTL_SOURCE_FILES "$(readlink -f ${v[@]})";
+set RTL_SOURCE_FILES_VERILOG "$(readlink -f ${v[@]})";
+set RTL_SOURCE_FILES_VHDL "$(readlink -f ${vhd[@]})";
 set TARGET_LIBRARY_FILES "$(readlink -f ${libs[@]})";
 set MW_REFERENCE_LIB_DIRS "$(readlink -f ${mw[@]})";
 set MIN_LIBRARY_FILES "";

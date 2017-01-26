@@ -216,6 +216,8 @@ endif
 
 include $(CORE_GENERATOR_ADDON)/vars.mk
 include $(CORE_SIMULATOR_ADDON)/core-vars.mk
+include $(CORE_GENERATOR_ADDON)/rules.mk
+include $(CORE_SIMULATOR_ADDON)/core-rules.mk
 
 ifeq ($(CORE_TOP),)
 # The name of the top-level RTL module that comes out of the core generator.
@@ -245,17 +247,17 @@ ifeq ($(OBJ_CORE_MACROS),)
 $(error CORE_GENERATOR needs to set OBJ_CORE_MACROS)
 endif
 
-ifeq ($(OBJ_CORE_RTL_V),)
+ifeq ($(OBJ_CORE_RTL_V)$(OBJ_CORE_RTL_VHD),)
 # The name of the top-level RTL Verilog output by the core.
-$(error CORE_GENERATOR needs to set OBJ_CORE_RTL_V)
+$(error CORE_GENERATOR needs to set OBJ_CORE_RTL_V or OBJ_CORE_RTL_VHD)
 endif
 
 include $(SOC_GENERATOR_ADDON)/vars.mk
 include $(SOC_SIMULATOR_ADDON)/soc-vars.mk
 
-ifeq ($(OBJ_SOC_RTL_V),)
+ifeq ($(OBJ_SOC_RTL_V)$(OBJ_SOC_RTL_VHD),)
 # The name of the top-level RTL Verilog output by the SOC generator.
-$(error SOC_GENERATOR needs to set OBJ_SOC_RTL_V)
+$(error SOC_GENERATOR needs to set OBJ_SOC_RTL_V or OBJ_SOC_RTL_VHD)
 endif
 
 ifeq ($(OBJ_SOC_SIM_FILES),)
@@ -296,7 +298,11 @@ endif
 MAP_TOP = $(SOC_TOP)
 MAP_SIM_TOP = $(CORE_SIM_TOP)
 
-OBJ_MAP_RTL_V = $(OBJ_MAP_DIR)/$(MAP_TOP).v
+# There's always a mapped Verilog file since there's macros in it and I'm only
+# going to bother generating macros as Verilog.
+OBJ_MAP_RTL_V = $(OBJ_SOC_RTL_V) $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.v
+OBJ_MAP_RTL_VHD = $(OBJ_SOC_RTL_VHD)
+
 OBJ_MAP_SYN_FILES =
 OBJ_MAP_SIM_FILES = $(OBJ_SOC_SIM_FILES)
 OBJ_MAP_SIM_MACRO_FILES = $(TECHNOLOGY_VERILOG_FILES)
@@ -355,8 +361,6 @@ endif
 
 # All the rules get sourced last.  We don't allow any variables to be set here,
 # so the ordering isn't important.
-include $(CORE_GENERATOR_ADDON)/rules.mk
-include $(CORE_SIMULATOR_ADDON)/core-rules.mk
 include $(SOC_GENERATOR_ADDON)/rules.mk
 include $(SOC_SIMULATOR_ADDON)/soc-rules.mk
 -include $(OBJ_TECH_DIR)/makefrags/rules.mk
@@ -728,10 +732,6 @@ $(OBJ_TECHNOLOGY_MACRO_LIBRARY): \
 # The implementation of the technology mapping stage.  This produces the
 # verilog for synthesis that can later be used.  It's meant to be a single
 # file, so the macros are actually generated seperately.
-$(OBJ_MAP_RTL_V): $(OBJ_SOC_RTL_V) $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.v
-	@mkdir -p $(dir $@)
-	cat $^ > $@
-
 $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.v: \
 		$(CMD_PCAD_MACRO_COMPILER) \
 		$(OBJ_SOC_MACROS) \
