@@ -6,14 +6,16 @@ CORE_DIR ?= src/addons/core-generator/rocketchip/rocket-chip
 # the test harness.  In here, "CORE_TOP" is the name of the top-level of the
 # Verilog for synthesis and "CORE_SIM_TOP" is the name of the top-level of the
 # Verilog for simulation.
-RC_CORE_TOP = ExampleTop
+RC_CORE_TOP = ExampleRocketTop
 CORE_TOP ?= $(RC_CORE_TOP)
 
 RC_CORE_SIM_TOP = TestHarness
 CORE_SIM_TOP ?= $(RC_CORE_SIM_TOP)
 
 # This contains the whole Rocket Chip along with all the test harness stuff.
-RC_OBJ_CORE_RTL_V = $(OBJ_CORE_DIR)/plsi-generated/$(CORE_TOP).$(CORE_CONFIG).v
+RC_OBJ_CORE_RTL_V = \
+	$(OBJ_CORE_DIR)/plsi-generated/$(CORE_TOP).$(CORE_CONFIG).v \
+	$(CORE_DIR)/vsrc/AsyncResetReg.v
 OBJ_CORE_RTL_V ?= $(RC_OBJ_CORE_RTL_V)
 
 # The other output of a core generator is a list of macros that need to be

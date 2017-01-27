@@ -78,7 +78,7 @@ class ParsedMacro:
     if self.name == pattern:
       return True
 
-    remaining_name = self.name
+    remaining_name = self.name.replace("__", "_")
     for module_pattern in pattern.split("/"):
       print("  checking " + remaining_name + " againist " + module_pattern + " (full pattern: " + pattern + ")")
       has_d = False
@@ -391,6 +391,7 @@ class RocketTilePlacer:
   def insert(self, macro):
     if macro.matches(config.rtl_top):
       self.top = TopMacro(macro.name, macro.width, macro.height)
+    # Version Break
     elif macro.matches("coreplex/RocketTile/DCache/data"):
       self.l1dd.append(macro)
     elif macro.matches("coreplex/RocketTile/DCache/MetadataArray"):
@@ -398,6 +399,15 @@ class RocketTilePlacer:
     elif macro.matches("coreplex/RocketTile/icache/icache"):
       self.l1id.append(macro)
     elif macro.matches("coreplex/RocketTile/icache/icache/tag_array/tag_array"):
+      self.l1im.append(macro)
+    # Version Break
+    elif macro.matches("coreplex/rocketTiles/dcache/data"):
+      self.l1dd.append(macro)
+    elif macro.matches("coreplex/rocketTiles/dcache/MetadataArray"):
+      self.l1dm.append(macro)
+    elif macro.matches("coreplex/rocketTiles/frontend/icache/u"):
+      self.l1id.append(macro)
+    elif macro.matches("coreplex/rocketTiles/frontend/icache/tag_array/tag_array"):
       self.l1im.append(macro)
     else:
       print("%s cannot be matched" % macro.name)

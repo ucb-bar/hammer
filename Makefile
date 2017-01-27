@@ -13,9 +13,6 @@ all: report
 -include Makefile.local
 -include ../Makefile.project
 
-# The directory in which the RTL lives
-CORE_DIR ?= src/rocket-chip
-
 # The "core generator" generates top-level RTL, but doesn't include anything
 # that's technology specific
 CORE_GENERATOR ?= rocketchip

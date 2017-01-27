@@ -231,6 +231,9 @@ case "$top" in
 ExampleTop)
   sed s/$top/testHarness.ExampleTop_1/g -i $run_dir/results/$top.force_regs.ucli
   ;;
+ExampleRocketTop)
+  sed s/$top/testHarness.ExampleRocketTop_1/g -i $run_dir/results/$top.force_regs.ucli
+  ;;
 Counter)
   sed s/$top/dut/g -i $run_dir/results/$top.force_regs.ucli
   ;;
