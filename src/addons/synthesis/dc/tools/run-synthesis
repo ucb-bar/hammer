@@ -237,6 +237,9 @@ ExampleTop)
 ExampleRocketTop)
   sed s/$top/testHarness.ExampleRocketTop_1/g -i $run_dir/results/$top.force_regs.ucli
   ;;
+RadioTop)
+  sed s/$top/testHarness.RadioTop_1/g -i $run_dir/results/$top.force_regs.ucli
+  ;;
 Counter)
   sed s/$top/dut/g -i $run_dir/results/$top.force_regs.ucli
   ;;
