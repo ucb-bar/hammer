@@ -59,6 +59,10 @@ SCHEDULER ?= auto
 # directory as long as someone writes to it first.
 PLSI_CACHE_DIR ?= obj/cache
 
+# A directory that contains the tools that PLSI builds, in case you want to
+# share them.
+OBJ_TOOLS_DIR ?= obj/tools
+
 ##############################################################################
 # Internal Variables
 ##############################################################################
@@ -74,8 +78,8 @@ GCC_VERSION = 4.9.3
 PYTHON3_VERSION = 3.4.5
 
 # OBJ_*_DIR are the directories in which outputs end up
-OBJ_TOOLS_SRC_DIR = obj/tools/src
-OBJ_TOOLS_BIN_DIR = obj/tools/install
+OBJ_TOOLS_SRC_DIR = $(OBJ_TOOLS_DIR)/src
+OBJ_TOOLS_BIN_DIR = $(OBJ_TOOLS_DIR)/install
 OBJ_CORE_DIR = obj/core-$(CORE_GENERATOR)-$(CORE_CONFIG)
 OBJ_SOC_DIR = obj/soc-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)
 OBJ_TECH_DIR = obj/technology/$(TECHNOLOGY)
