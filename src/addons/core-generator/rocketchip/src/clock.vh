@@ -1,4 +1,4 @@
-`define CLOCK_PERIOD 10.0
+`define CLOCK_PERIOD 20.0
 `ifdef VERILATOR
 `define PRINTF_COND $c("done_reset")
 `define STOP_COND $c("done_reset")
