@@ -684,43 +684,43 @@ $(PLSI_CACHE_DIR)/distfiles/python3-$(PYTHON3_VERSION).tar.gz:
 # Here are a bunch of pattern rules that will try to copy outputs.
 bin/core-$(CORE_GENERATOR)-$(CORE_CONFIG)/$(CORE_TOP).v: $(OBJ_CORE_RTL_V)
 	mkdir -p $(dir $@)
-	cp --reflink=auto $^ $@
+	cat $^ > $@
 
 bin/soc-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP).v: $(OBJ_SOC_RTL_V)
-	mkdir -p $(dir $@)
-	cp --reflink=auto $^ $@
+	mkdir -p $(dir > $@)
+	cat $^ > $@
 
 bin/map-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)/$(MAP_TOP).v: $(OBJ_MAP_RTL_V)
-	mkdir -p $(dir $@)
-	cp --reflink=auto $^ $@
+	mkdir -p $(dir > $@)
+	cat $^ > $@
 
 bin/syn-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP).v: $(OBJ_SYN_MAPPED_V)
-	mkdir -p $(dir $@)
-	cp --reflink=auto $^ $@
+	mkdir -p $(dir > $@)
+	cat $^ > $@
 
 bin/par-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)/$(PAR_TOP).v: $(OBJ_PAR_ROUTED_V)
-	mkdir -p $(dir $@)
-	cp --reflink=auto $^ $@
+	mkdir -p $(dir > $@)
+	cat $^ > $@
 
 bin/core-$(CORE_GENERATOR)-$(CORE_CONFIG)/$(CORE_TOP)-simulator: $(OBJ_CORE_SIMULATOR)
-	mkdir -p $(dir $@)
-	cp --reflink=auto $^ $@
+	mkdir -p $(dir > $@)
+	cat $^ > $@
 
 bin/soc-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)/$(SOC_TOP)-simulator: $(OBJ_SOC_SIMULATOR)
-	mkdir -p $(dir $@)
-	cp --reflink=auto $^ $@
+	mkdir -p $(dir > $@)
+	cat $^ > $@
 
 bin/map-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)/$(MAP_TOP)-simulator: $(OBJ_MAP_SIMULATOR)
-	mkdir -p $(dir $@)
-	cp --reflink=auto $^ $@
+	mkdir -p $(dir > $@)
+	cat $^ > $@
 
 bin/syn-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)/$(SYN_TOP)-simulator: $(OBJ_SYN_SIMULATOR)
-	mkdir -p $(dir $@)
-	cp --reflink=auto $^ $@
+	mkdir -p $(dir > $@)
+	cat $^ > $@
 
 bin/par-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG)/$(PAR_TOP)-simulator: $(OBJ_PAR_SIMULATOR)
-	mkdir -p $(dir $@)
-	cp --reflink=auto $^ $@
+	mkdir -p $(dir > $@)
+	cat $^ > $@
 
 ###############################################################################
 # Internal Flow Targets
