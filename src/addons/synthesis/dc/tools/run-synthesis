@@ -94,7 +94,10 @@ sed 's@^report_timing@report_timing -max_paths 500 -nworst 10 -slack_lesser_than
 
 # Unfortunately I need to support both Verilog and VHDL.
 find $run_dir -iname "*.tcl" | xargs sed 's/RTL_SOURCE_FILES/RTL_SOURCE_FILES_VERILOG/g' -i
-find $run_dir -iname "*.tcl" | xargs sed 's/^\(analyze -format verilog .*\)/analyze -format vhdl ${RTL_SOURCE_FILES_VHDL}\n\1/g' -i
+if [[ "$vhd" != "" ]]
+then
+    find $run_dir -iname "*.tcl" | xargs sed 's/^\(analyze -format verilog .*\)/analyze -format vhdl ${RTL_SOURCE_FILES_VHDL}\n\1/g' -i
+fi
 
 # Report library references in case I'm missing anything.
 sed "s@^check_design @report_reference > reports/${top}.report_reference.out\\ncheck_design @" -i $run_dir/rm_dc_scripts/dc.tcl
