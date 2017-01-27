@@ -52,11 +52,11 @@ mkdir -p "$run_dir"
 
 cat >"$run_dir"/enter <<EOF
 export ICC_HOME="$(dirname $(dirname $icc))"
-export PATH="\$ICC_HOME/bin:\$PATH"
+export PATH="$(dirname $icc):\$PATH"
 export MGLS_LICENSE_FILE="$MGLS_LICENSE_FILE"
 export SNPSLMD_LICENSE_FILE="$SNPSLMD_LICENSE_FILE"
 export ICV_HOME_DIR="$(dirname $(dirname $icv))"
-export PATH="\$ICV_HOME_DIR/bin/linux64:\$PATH"
+export PATH="$(dirname $icc):\$PATH"
 EOF
 source "$run_dir"/enter
 
