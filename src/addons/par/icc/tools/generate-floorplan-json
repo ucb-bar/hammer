@@ -405,6 +405,8 @@ class RocketTilePlacer:
       self.l1dd.append(macro)
     elif macro.matches("coreplex/rocketTiles/dcache/MetadataArray"):
       self.l1dm.append(macro)
+    elif macro.matches("coreplex/rocketTiles/frontend/icache"):
+      self.l1id.append(macro)
     elif macro.matches("coreplex/rocketTiles/frontend/icache/u"):
       self.l1id.append(macro)
     elif macro.matches("coreplex/rocketTiles/frontend/icache/tag_array/tag_array"):
