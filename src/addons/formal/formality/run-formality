@@ -4,11 +4,15 @@ set -ex
 
 unset dc_dir
 unset formality
+unset no_verify
+
+no_verify=false
 
 while [[ "$1" != "" ]]
 do
     case "$1" in
     --dc-dir) dc_dir="$2"; shift;;
+    --no-verify) no_verify=true;;
     */fm_shell) formality="$1";;
     *) echo "Unknown argument $1"; exit 1;;
     esac
@@ -32,6 +36,11 @@ report_matched_points -point_type block_pin >> '$dc_dir'/reports/${DESIGN_NAME}.
 report_matched_points -point_type bbox >> '$dc_dir'/reports/${DESIGN_NAME}.fmv_matched_points.rpt\
 report_matched_points -point_type bbox_pin >> '$dc_dir'/reports/${DESIGN_NAME}.fmv_matched_points.rpt\
 ' -i generated-scripts/verify.tcl
+
+# Optionally run verify
+if $no_verify; then
+  sed 's/\!\[verify\]/0/' -i generated-scripts/verify.tcl
+fi
 
 # Run Formality
 cat /dev/null | $formality -f $dc_dir/generated-scripts/verify.tcl
