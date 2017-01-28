@@ -9,4 +9,4 @@ $(CHECK_SYN_DIR)/formality-$(MAP_TOP)-$(SYN_TOP).out: \
 		$(TECHNOLOGY_VERILOG_FILES) \
 		$(TECHNOLOGY_CCS_LIBRARY_FILES)
 	mkdir -p $(dir $@)
-	$(SCHEDULER_CMD) -- $(CMD_PTEST) --test $(abspath $<) --out $(abspath $@) --args --reference-verilog $(abspath $(OBJ_MAP_RTL_V)) --implementation-verilog $(abspath $(OBJ_SYN_MAPPED_V)) --reference-top $(MAP_TOP) --implementation-top $(SYN_TOP) $(abspath $(FORMALITY_BIN)) $(abspath $(TECHNOLOGY_VERILOG_FILES)) $(abspath $(TECHNOLOGY_CCS_LIBRARY_FILES))
+	$(SCHEDULER_CMD) -- $(CMD_PTEST) --test $(abspath $<) --out $(abspath $@) --args $(abspath $(FORMALITY_BIN)) --dc-dir $(abspath $(OBJ_SYN_DIR)/synopsys-dc-workdir)
