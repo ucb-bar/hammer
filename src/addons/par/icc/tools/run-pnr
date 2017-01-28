@@ -56,7 +56,7 @@ export PATH="$(dirname $icc):\$PATH"
 export MGLS_LICENSE_FILE="$MGLS_LICENSE_FILE"
 export SNPSLMD_LICENSE_FILE="$SNPSLMD_LICENSE_FILE"
 export ICV_HOME_DIR="$(dirname $(dirname $icv))"
-export PATH="$(dirname $icc):\$PATH"
+export PATH="$(dirname $icv):\$PATH"
 EOF
 source "$run_dir"/enter
 
