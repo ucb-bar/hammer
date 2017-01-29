@@ -14,3 +14,7 @@ FORMALITY_BIN = $(FORMALITY_HOME)/bin/fm_shell
 ifeq ($(wildcard $(FORMALITY_BIN)),)
 $(error Cannot find formality at $(FORMALITY_BIN))
 endif
+
+ifneq ($(SYNTHESIS_TOOL),dc)
+$(error Formality needs to run with SYNTHESIS_TOOL=dc)
+endif
