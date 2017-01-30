@@ -18,6 +18,8 @@ unset floorplan_json
 unset icv
 metal_fill_ruleset=()
 signoff_ruleset=()
+unset technology_macro_library
+unset pcad_pipe_list_macros
 while [[ "$1" != "" ]]
 do
     case "$1" in
@@ -44,6 +46,8 @@ do
     *.syn_config.json) config="$1";;
     *.tech.json) technology="$1";;
     *.floorplan.json) floorplan_json="$1";;
+    *.macro_library.json) technology_macro_library="$(readlink -f "$1")";;
+    */pcad-pipe-list_macros) pcad_pipe_list_macros="$(readlink -f "$1")";;
     *) echo "Unknown argument $1"; exit 1;;
     esac
     shift
@@ -209,10 +213,9 @@ then
     sed "s@^set SIGNOFF_DRC_RUNSET .*@set SIGNOFF_DRC_RUNSET \"${signoff_ruleset[@]}\";@" -i $run_dir/rm_setup/icc_setup.tcl
 fi
 
-# FIXME: This is TSMC shit
-# (Angie) Fixed?
-sed 's@^set FILLER_CELL_METAL.*@set FILLER_CELL_METAL "DCAP64BWP16P90 DCAP32BWP16P90 DCAP16BWP16P90 DCAP8BWP16P90 DCAP4BWP16P90";@' -i $run_dir/rm_setup/icc_setup.tcl
-sed 's@^set FILLER_CELL.*@set FILLER_CELL "FILL64BWP16P90 FILL32BWP16P90 FILL16BWP16P90 FILL8BWP16P90 FILL4BWP16P90 FILL3BWP16P90 FILL2BWP16P90 FILL1BWP16P90";@' -i $run_dir/rm_setup/icc_setup.tcl
+# The technology is expected to provide a list of filler cells that ICC uses.
+sed "s@^set FILLER_CELL_METAL .*@set FILLER_CELL_METAL \"$($pcad_pipe_list_macros -l $technology_macro_library -t \"metal filler\" | xargs echo)\";@" -i $run_dir/rm_setup/icc_setup.tcl
+sed "s@^set FILLER_CELL .*@set FILLER_CELL \"$($pcad_pipe_list_macros -l $technology_macro_library -t \"filler\" | xargs echo)\";@" -i $run_dir/rm_setup/icc_setup.tcl
 
 # I want ICC to run all the sanity checks it can
 sed "s@^set ICC_SANITY_CHECK.*@set ICC_SANITY_CHECK TRUE@" -i $run_dir/rm_setup/icc_setup.tcl
@@ -239,6 +242,10 @@ sed 's@^set ICC_ECO_SIGNOFF_DRC_MODE .*@set ICC_ECO_SIGNOFF_DRC_MODE "AUTO_ECO"@
 sed 's@.*#  s\(.*\)@s\1@' -i $run_dir/rm_icc_zrt_scripts/signoff_drc_icc.tcl
 sed "s@^\\(signoff_autofix_drc .*\\)@exec $ICV_HOME_DIR/contrib/generate_layer_rule_map.pl -dplog signoff_drc_run/run_details/$drc_runset.dp.log -tech_file $(readlink -f ${tf[@]}) -o signoff_autofix_drc.config\n\\1@" -i $run_dir/rm_icc_zrt_scripts/signoff_drc_icc.tcl
 sed 's@\$config_file@signoff_autofix_drc.config@' -i $run_dir/rm_icc_zrt_scripts/signoff_drc_icc.tcl
+
+# Try harder to fix double VIAs, which are showing up as DRC violations on
+# SAED32 for me.
+sed 's@set ICC_DBL_VIA_FLOW_EFFORT.*@set ICC_DBL_VIA_FLOW_EFFORT "HIGH"@' -i $run_dir/rm_setup/icc_setup.tcl
 
 # ICC needs a floorplan in order to do anything.  This script turns the
 # floorplan JSON file into a floorplan TCL file for 

@@ -47,6 +47,7 @@ do
 
     cat >> "$tempdir"/macros.pson <<EOF
   {
+    "type": "sram",
     "name": "$name",
     "depth": $depth,
     "width": $width,

@@ -34,7 +34,7 @@ for library in techfile["libraries"]:
 		p = subprocess.check_output([library["provide script"], files]).decode("utf-8")
 		macros = json.loads(p)
 		for macro in macros:
-			if (macro["type"] == "sram"):
+			if (macro["type"] != "none" and macro["type"] != "stdcells"):
 				of.write(json.dumps(macro))
 				of.write(",\n")
 		

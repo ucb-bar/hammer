@@ -85,12 +85,7 @@
         "VDD": "1.05 V",
         "GND": "0 V"
       },
-      "provides": [
-        {
-          "type": "stdcell",
-          "vt": "LVT"
-        }
-      ]
+      "provide script": "src/tools/technology/saed32-stdcells"
     },
     {
       "ccs liberty file": "SAED_EDK32.28nm_CORE_RVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_rvt/db_nldm/saed32rvt_tt1p05v25c.lib",
@@ -109,12 +104,7 @@
         "VDD": "1.05 V",
         "GND": "0 V"
       },
-      "provides": [
-        {
-          "type": "stdcell",
-          "vt": "RVT"
-        }
-      ]
+      "provide script": "src/tools/technology/saed32-stdcells"
     },
     {
       "ccs liberty file": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/db_ccs/saed32hvt_tt1p05v25c.lib",
@@ -133,12 +123,7 @@
         "VDD": "1.05 V",
         "GND": "0 V"
       },
-      "provides": [
-        {
-          "type": "stdcell",
-          "vt": "HVT"
-        }
-      ]
+      "provide script": "src/tools/technology/saed32-stdcells"
     },
     {
       "ccs liberty file": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram/db_ccs/saed32sram_tt1p05v25c.lib",

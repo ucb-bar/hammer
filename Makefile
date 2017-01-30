@@ -115,6 +115,7 @@ CMD_PPKGCONFIG = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/ppkg-config
 CMD_PHC = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/phc
 CMD_PCAD_INFER_DECOUPLED = $(OBJ_TOOLS_BIN_DIR)/pcad/bin/pcad-pipe-infer_decoupled
 CMD_PCAD_MACRO_COMPILER = $(OBJ_TOOLS_BIN_DIR)/pcad/bin/pcad-pipe-macro_compiler
+CMD_PCAD_LIST_MACROS = $(OBJ_TOOLS_BIN_DIR)/pcad/bin/pcad-pipe-list_macros
 CMD_SBT = $(OBJ_TOOLS_BIN_DIR)/sbt/sbt
 CMD_GCC = $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/bin/gcc
 CMD_GXX = $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/bin/g++
@@ -592,7 +593,10 @@ $(PLSI_CACHE_DIR)/distfiles/tclap-$(TCLAP_VERSION).tar.gz:
 	wget 'http://downloads.sourceforge.net/project/tclap/tclap-$(TCLAP_VERSION).tar.gz?r=https%3A%2F%2Fsourceforge.net%2Fprojects%2Ftclap%2Ffiles%2F&ts=1468971231&use_mirror=jaist' -O $@
 
 # Builds PCAD, the heart of PLSI
-$(CMD_PCAD_INFER_DECOUPLED) $(CMD_PCAD_MACRO_COMPILER): $(OBJ_TOOLS_BIN_DIR)/pcad/stamp
+$(CMD_PCAD_LIST_MACROS) \
+$(CMD_PCAD_INFER_DECOUPLED) \
+$(CMD_PCAD_MACRO_COMPILER): \
+		$(OBJ_TOOLS_BIN_DIR)/pcad/stamp
 	touch $@
 
 $(OBJ_TOOLS_BIN_DIR)/pcad/stamp: $(OBJ_TOOLS_SRC_DIR)/pcad/Makefile $(CMD_GXX)
