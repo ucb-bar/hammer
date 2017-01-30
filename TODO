@@ -14,3 +14,4 @@
 * Line up the left edge of the SRAM macros
 * Only place pins where there aren't macros
 * Define CLOCK_PERIOD from the syn_config (or par_config)
+* They're runsets, not rulesets for ICV
