@@ -28,6 +28,7 @@ $(OBJ_PAR_DIR)/synopsys-icc.stamp: \
 		$(SYN_CONFIG_FILE) \
 		$(TECHNOLOGY_JSON) \
 		$(TECHNOLOGY_ICV_DRC_METAL_FILL_RULESET) \
+		$(TECHNOLOGY_ICV_SIGNOFF_DRC_RULESET) \
 		$(ICV_BIN) \
 		$(ICC_BIN)
 	@mkdir -p $(dir $@)

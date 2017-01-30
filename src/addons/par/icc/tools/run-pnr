@@ -17,6 +17,7 @@ unset technology
 unset floorplan_json
 unset icv
 metal_fill_ruleset=()
+signoff_ruleset=()
 while [[ "$1" != "" ]]
 do
     case "$1" in
@@ -37,6 +38,7 @@ do
     */FuncCmin/tluplus) tlu_min+=("$1");;
     */FuncCmax/tluplus) tlu_max+=("$1");;
     *mfill_rules.rs) metal_fill_ruleset+=("$1");;
+    *drc_rules.rs) signoff_ruleset+=("$1");;
     *.tf) tf+=("$1");;
     */find-regs.tcl) find_regs="$1";;
     *.syn_config.json) config="$1";;
@@ -200,10 +202,11 @@ sed "s@^set ICC_NUM_CORES.*@set ICC_NUM_CORES ${PLSI_SCHEDULER_MAX_THREADS};@" -
 # ICC claims this is only necessary for 45nm and below, but I figure if anyone
 # provides ICV metal fill rules then we might as well go ahead and use them
 # rather than ICC's built-in metal filling.
-if [[ "$metal_fill_ruleset" != "" ]]
+if [[ "$metal_fill_ruleset" != "" || "$signoff_ruleset" != "" ]]
 then
     sed 's@^set ADD_METAL_FILL.*@set ADD_METAL_FILL "ICV";@' -i $run_dir/rm_setup/icc_setup.tcl
     sed "s@^set SIGNOFF_FILL_RUNSET .*@set SIGNOFF_FILL_RUNSET \"${metal_fill_ruleset[@]}\";@" -i $run_dir/rm_setup/icc_setup.tcl
+    sed "s@^set SIGNOFF_DRC_RUNSET .*@set SIGNOFF_DRC_RUNSET \"${signoff_ruleset[@]}\";@" -i $run_dir/rm_setup/icc_setup.tcl
 fi
 
 # FIXME: This is TSMC shit
@@ -228,6 +231,10 @@ sed 's@^set MW_EXTENDED_LAYER_MODE.*@set MW_EXTENDED_LAYER_MODE TRUE@' -i $run_d
 
 # For some reason, ICC isn't echoing some of my user input files.  I want it to.
 sed 's@source \$@source -echo $@g' -i $run_dir/rm_*/*.tcl
+
+# I want ICC to try and fix DRCs automatically when possible, hopefully this
+# does it.
+sed 's@^set ICC_ECO_SIGNOFF_DRC_MODE .*@set ICC_ECO_SIGNOFF_DRC_MODE "AUTO_ECO"@' -i $run_dir/rm_setup/icc_setup.tcl
 
 # ICC needs a floorplan in order to do anything.  This script turns the
 # floorplan JSON file into a floorplan TCL file for 
