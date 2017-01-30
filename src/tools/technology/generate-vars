@@ -105,3 +105,9 @@ for library_desc in techfile["libraries"]:
 	if "milkyway techfile" in library_desc:
 		of.write(" {0}/{1}".format(tech_home, library_desc["milkyway techfile"]))
 of.write("\n")
+
+of.write("TECHNOLOGY_ICV_DRC_METAL_FILL_RULESET =")
+for library_desc in techfile["libraries"]:
+	if "icv drc metal fill ruleset" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["icv drc metal fill ruleset"]))
+of.write("\n")

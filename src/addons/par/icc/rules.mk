@@ -27,6 +27,7 @@ $(OBJ_PAR_DIR)/synopsys-icc.stamp: \
 		$(PLSI_CACHE_DIR)/synopsys/rm/ICC-RM_$(ICC_VERSION).tar \
 		$(SYN_CONFIG_FILE) \
 		$(TECHNOLOGY_JSON) \
+		$(TECHNOLOGY_ICV_DRC_METAL_FILL_RULESET) \
 		$(ICV_BIN) \
 		$(ICC_BIN)
 	@mkdir -p $(dir $@)

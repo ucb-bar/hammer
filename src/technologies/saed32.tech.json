@@ -63,7 +63,8 @@
       "itf files": {
         "min cap": "SAED_EDK32.28nm_TECH_v_01132015.tar.gz/SAED32_EDK/tech/star_rcxt/saed32nm_1p9m_Cmin.itf",
 	"max cap": "SAED_EDK32.28nm_TECH_v_01132015.tar.gz/SAED32_EDK/tech/star_rcxt/saed32nm_1p9m_Cmax.itf"
-      }
+      },
+      "icv drc metal fill ruleset": "SAED_EDK32.28nm_TECH_v_01132015.tar.gz/SAED32_EDK/tech/icv_drc/saed32nm_1p9m_mfill_rules.rs"
     },
     {
       "ccs liberty file": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/db_ccs/saed32lvt_tt1p05v25c.lib",

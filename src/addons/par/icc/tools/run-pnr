@@ -16,6 +16,7 @@ unset config
 unset technology
 unset floorplan_json
 unset icv
+metal_fill_ruleset=()
 while [[ "$1" != "" ]]
 do
     case "$1" in
@@ -35,6 +36,7 @@ do
     *rcworst.itf.tluplus) tlu_max+=("$1");;
     */FuncCmin/tluplus) tlu_min+=("$1");;
     */FuncCmax/tluplus) tlu_max+=("$1");;
+    *mfill_rules.rs) metal_fill_ruleset+=("$1");;
     *.tf) tf+=("$1");;
     */find-regs.tcl) find_regs="$1";;
     *.syn_config.json) config="$1";;
@@ -195,9 +197,14 @@ sed 's@^set ICC_FLOORPLAN_INPUT.*@set ICC_FLOORPLAN_INPUT "USER_FILE";@' -i $run
 sed 's@^set ICC_IN_FLOORPLAN_USER_FILE.*@set ICC_IN_FLOORPLAN_USER_FILE "generated-scripts/floorplan.tcl";@' -i $run_dir/rm_setup/icc_setup.tcl
 sed "s@^set ICC_NUM_CORES.*@set ICC_NUM_CORES ${PLSI_SCHEDULER_MAX_THREADS};@" -i $run_dir/rm_setup/icc_setup.tcl
 
-# FIXME: This claims it's necessary for 28nm and below, but I'm not actually
-# sure if I should just always turn it on or not.
-sed 's@^set ADD_METAL_FILL.*@set ADD_METAL_FILL "ICV";@' -i $run_dir/rm_setup/icc_setup.tcl
+# ICC claims this is only necessary for 45nm and below, but I figure if anyone
+# provides ICV metal fill rules then we might as well go ahead and use them
+# rather than ICC's built-in metal filling.
+if [[ "$metal_fill_ruleset" != "" ]]
+then
+    sed 's@^set ADD_METAL_FILL.*@set ADD_METAL_FILL "ICV";@' -i $run_dir/rm_setup/icc_setup.tcl
+    sed "s@^set SIGNOFF_FILL_RUNSET .*@set SIGNOFF_FILL_RUNSET \"${metal_fill_ruleset[@]}\";@" -i $run_dir/rm_setup/icc_setup.tcl
+fi
 
 # FIXME: This is TSMC shit
 # (Angie) Fixed?
