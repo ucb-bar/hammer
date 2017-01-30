@@ -74,7 +74,6 @@
       "nldm library file": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/db_nldm/saed32lvt_tt1p05v25c.db",
       "verilog file": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/verilog/saed32nm_lvt.v",
       "milkyway lib in dir": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/milkyway/saed32nm_lvt_1p9m/lib",
-      "nldm library file": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/db_nldm/saed32lvt_tt1p05v25c.db",
       "lef file": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/lef/saed32nm_lvt_1p9m.lef",
       "corner": {
         "nmos": "typical",
