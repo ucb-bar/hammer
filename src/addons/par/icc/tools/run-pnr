@@ -120,13 +120,13 @@ set TECH_FILE "$(readlink -f ${tf[@]})";
 set TLUPLUS_MAX_FILE "$(readlink -f ${tlu_max[@]})";
 set TLUPLUS_MIN_FILE "$(readlink -f ${tlu_min[@]})";
 set ALIB_DIR "alib";
-set DCRM_CONSTRAINTS_INPUT_FILE "generated-scripts/constraints.tcl"
+set DCRM_CONSTRAINTS_INPUT_FILE "generated-scripts/constraints.tcl";
 set REPORTS_DIR "reports";
 set RESULTS_DIR "results";
 set CLOCK_UNCERTAINTY "0.04";
 set INPUT_DELAY "0.10";
 set OUTPUT_DELAY "0.10";
-set ICC_NUM_CORES ${PLSI_SCHEDULER_MAX_THREADS}
+set ICC_NUM_CORES ${PLSI_SCHEDULER_MAX_THREADS};
 EOF
 
 # Read the core's configuration file to figure out what all the clocks should
