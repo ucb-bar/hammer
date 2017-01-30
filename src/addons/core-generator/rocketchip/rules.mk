@@ -123,3 +123,9 @@ $(OBJ_CORE_DIR)/riscv-tests/rv%: $(OBJ_CORE_DIR)/plsi-generated/tools-build.stam
 $(OBJ_CORE_DIR)/riscv-tests/%.riscv: $(OBJ_CORE_DIR)/plsi-generated/tools-build.stamp
 	mkdir -p $(dir $@)
 	cp -f $(OBJ_CORE_DIR)/riscv-tools-install/riscv64-unknown-elf/share/riscv-tests/benchmarks/$(notdir $@) $@
+
+# This rule copies over the Verilog top-level test driver, but only for
+# projects that want the default Rocket Chip one -- if a user overrides this
+# then they're expected to provide their own.
+$(OBJ_CORE_DIR)/plsi-generated/TestDriver.v: $(CORE_DIR)/vsrc/TestDriver.v
+	cp --reflink=auto $^ $@
