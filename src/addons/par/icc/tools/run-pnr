@@ -232,9 +232,13 @@ sed 's@^set MW_EXTENDED_LAYER_MODE.*@set MW_EXTENDED_LAYER_MODE TRUE@' -i $run_d
 # For some reason, ICC isn't echoing some of my user input files.  I want it to.
 sed 's@source \$@source -echo $@g' -i $run_dir/rm_*/*.tcl
 
-# I want ICC to try and fix DRCs automatically when possible, hopefully this
-# does it.
+# I want ICC to try and fix DRCs automatically when possible.  Most of the
+# commands are commented out for some reason, this enables them.
+drc_runset="$(echo "${signoff_ruleset[@]}" | xargs basename -s .rs)"
 sed 's@^set ICC_ECO_SIGNOFF_DRC_MODE .*@set ICC_ECO_SIGNOFF_DRC_MODE "AUTO_ECO"@' -i $run_dir/rm_setup/icc_setup.tcl
+sed 's@.*#  s\(.*\)@s\1@' -i $run_dir/rm_icc_zrt_scripts/signoff_drc_icc.tcl
+sed "s@^\\(signoff_autofix_drc .*\\)@exec $ICV_HOME_DIR/contrib/generate_layer_rule_map.pl -dplog signoff_drc_run/run_details/$drc_runset.dp.log -tech_file $(readlink -f ${tf[@]}) -o signoff_autofix_drc.config\n\\1@" -i $run_dir/rm_icc_zrt_scripts/signoff_drc_icc.tcl
+sed 's@\$config_file@signoff_autofix_drc.config@' -i $run_dir/rm_icc_zrt_scripts/signoff_drc_icc.tcl
 
 # ICC needs a floorplan in order to do anything.  This script turns the
 # floorplan JSON file into a floorplan TCL file for 
