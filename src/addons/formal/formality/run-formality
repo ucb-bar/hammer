@@ -2,81 +2,47 @@
 
 set -ex
 
-verilog=()
-db=()
-reference_verilog=()
-implementation_verilog=()
-reference_top=()
-implementation_top=()
-formality=()
+unset dc_dir
+unset formality
+unset no_verify
+
+no_verify=false
+
 while [[ "$1" != "" ]]
 do
     case "$1" in
-    --reference-verilog) reference_verilog+=("$2"); shift;;
-    --implementation-verilog) implementation_verilog+=("$2"); shift;;
-    --reference-top) reference_top+=("$2"); shift;;
-    --implementation-top) implementation_top+=("$2"); shift;;
-    */fm_shell) formality+=("$1");;
-    *.v) verilog+=("$1");;
-    *.db) db+=("$1");;
+    --dc-dir) dc_dir="$2"; shift;;
+    --no-verify) no_verify=true;;
+    */fm_shell) formality="$1";;
     *) echo "Unknown argument $1"; exit 1;;
     esac
     shift
 done
 
-tempdir=$(mktemp -d /tmp/plsi-formality.XXXXXX)
-trap "rm -rf $tempdir" EXIT
-
-cd $tempdir
-
-# Generic options to control Formality's behavior
-cat >verify.tcl <<EOF
-# Synopsys' recommended settings
-set synopsys_auto_setup true
-
-# FIXME: This appears to come from FIRRTL
-set_mismatch_message_filter -suppress FMR_ELAB-147
+# Use the Sysnopsys's Formality script
+cd $dc_dir
+cp rm_dc_scripts/fm.tcl generated-scripts/verify.tcl
 
 # FIXME: The Synopsys 32nm EDK seems to have some missing references, this
 # ignores them.
-set hdlin_unresolved_modules black_box
-EOF
+sed 's/\(\s*\)#\(\s*\)\(set_app_var hdlin_unresolved_modules black_box\)/\3/' -i generated-scripts/verify.tcl
+# FIXME: This appears to come from FIRRTL
+sed '/^set_app_var hdlin_unresolved_modules black_box/a set_mismatch_message_filter -suppress FMR_ELAB-147' -i generated-scripts/verify.tcl
 
-# Reference Design
-for v in ${reference_verilog[*]} ${verilog[*]}
-do
-    echo "read_verilog -r $v" >> verify.tcl
-done
+# Report matching points
+sed '/^match/a report_matched_points -point_type reg > '$dc_dir'/reports/${DESIGN_NAME}.fmv_matched_points.rpt\
+report_matched_points -point_type port >> '$dc_dir'/reports/${DESIGN_NAME}.fmv_matched_points.rpt\
+report_matched_points -point_type block_pin >> '$dc_dir'/reports/${DESIGN_NAME}.fmv_matched_points.rpt\
+report_matched_points -point_type bbox >> '$dc_dir'/reports/${DESIGN_NAME}.fmv_matched_points.rpt\
+report_matched_points -point_type bbox_pin >> '$dc_dir'/reports/${DESIGN_NAME}.fmv_matched_points.rpt\
+' -i generated-scripts/verify.tcl
 
-cat >>verify.tcl <<EOF
-set_top ${reference_top}
-set_reference r:/WORK/${reference_top}
-EOF
+# Optionally run verify
+if $no_verify; then
+  sed 's/\!\[verify\]/0/' -i generated-scripts/verify.tcl
+fi
 
-# Implementation Design
-for v in ${implementation_verilog[*]} ${verilog[*]}
-do
-    echo "read_verilog -i $v" >> verify.tcl
-done
-
-for db in ${db[*]}
-do
-    echo "read_db -i $db" >> verify.tcl
-done
-
-cat >>verify.tcl <<EOF
-set_top ${implementation_top}
-set_implementation i:/WORK/${implementation_top}
-EOF
-
-# Verification
-cat >>verify.tcl <<EOF
-verify
-quit
-EOF
-
-cat verify.tcl
-
-cat /dev/null | ${formality[*]} -f verify.tcl
+# Run Formality
+cat /dev/null | $formality -f $dc_dir/generated-scripts/verify.tcl
 
 exit 1
