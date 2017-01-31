@@ -43,6 +43,6 @@ if $no_verify; then
 fi
 
 # Run Formality
-cat /dev/null | $formality -f $dc_dir/generated-scripts/verify.tcl
+cat /dev/null | $formality -f $dc_dir/generated-scripts/verify.tcl |& tee formality.log
 
-exit 1
+grep "^Verification SUCCEEDED$" formality.log
