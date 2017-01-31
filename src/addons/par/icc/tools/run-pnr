@@ -245,9 +245,11 @@ sed 's@source \$@source -echo $@g' -i $run_dir/rm_*/*.tcl
 #sed "s@^\\(signoff_autofix_drc .*\\)@exec $ICV_HOME_DIR/contrib/generate_layer_rule_map.pl -dplog signoff_drc_run/run_details/$drc_runset.dp.log -tech_file $(readlink -f ${tf[@]}) -o signoff_autofix_drc.config\n\\1@" -i $run_dir/rm_icc_zrt_scripts/signoff_drc_icc.tcl
 #sed 's@\$config_file@signoff_autofix_drc.config@' -i $run_dir/rm_icc_zrt_scripts/signoff_drc_icc.tcl
 
-# Try harder to fix double VIAs, which are showing up as DRC violations on
-# SAED32 for me.
-sed 's@set ICC_DBL_VIA_FLOW_EFFORT.*@set ICC_DBL_VIA_FLOW_EFFORT "HIGH"@' -i $run_dir/rm_setup/icc_setup.tcl
+# FIXME: I actually can't insert double vias on SAED32 becaues of DRC errors.
+# It smells like the standard cells just aren't setup for it, but this needs to
+# be fixed somehow as it'll be necessary for a real chip to come back working.
+sed 's@set ICC_DBL_VIA .*@set ICC_DBL_VIA FALSE@' -i $run_dir/rm_setup/icc_setup.tcl
+sed 's@set ICC_DBL_VIA_FLOW_EFFORT .*@set ICC_DBL_VIA_FLOW_EFFORT "NONE"@' -i $run_dir/rm_setup/icc_setup.tcl
 
 # ICC needs a floorplan in order to do anything.  This script turns the
 # floorplan JSON file into a floorplan TCL file for 
