@@ -214,6 +214,7 @@ then
 fi
 
 # The technology is expected to provide a list of filler cells that ICC uses.
+sed 's@^set ADD_FILLER_CELL .*@set ADD_FILLER_CELL TRUE@' -i $run_dir/rm_setup/icc_setup.tcl
 sed "s@^set FILLER_CELL_METAL .*@set FILLER_CELL_METAL \"$($pcad_pipe_list_macros -l $technology_macro_library -t \"metal filler\" | xargs echo)\";@" -i $run_dir/rm_setup/icc_setup.tcl
 sed "s@^set FILLER_CELL .*@set FILLER_CELL \"$($pcad_pipe_list_macros -l $technology_macro_library -t \"filler\" | xargs echo)\";@" -i $run_dir/rm_setup/icc_setup.tcl
 
