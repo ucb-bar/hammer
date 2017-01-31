@@ -266,13 +266,13 @@ def chain_left(initial_value, array, func):
   return out
 
 def left2right_along_top(prev, cur):
-  return Constraint(cur.tl(), prev.tr(), 3, 0)
+  return Constraint(cur.tl(), prev.tr(), 0, 0)
 def left2right_along_bot(prev, cur):
-  return Constraint(cur.bl(), prev.br(), 3, 0)
+  return Constraint(cur.bl(), prev.br(), 0, 0)
 def top2bottom_along_right(prev, cur):
-  return Constraint(cur.tr(), prev.br(), 0, -3)
+  return Constraint(cur.tr(), prev.br(), 0, 0)
 def right2left_along_top(prev, cur):
-  return Constraint(cur.tr(), prev.tl(), -3, 0)
+  return Constraint(cur.tr(), prev.tl(), 0, 0)
 
 # Some simple placement strategies: these place macros in order, inside the
 # bounds of another macro, and 
