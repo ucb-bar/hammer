@@ -289,19 +289,42 @@ output.write("save_mw_cel -as floorplan\\n")
 
 output.write("create_fp_placement -effort high -timing_driven -optimize_pins\\n")
 
-output.write("set_power_plan_strategy core -nets {VDD VSS} -core\\n")
+# Power and Ground floorplanning
 output.write("derive_pg_connection -power_net VDD -power_pin VDD -create_port top\\n")
 output.write("derive_pg_connection -ground_net VSS -ground_pin VSS -create_port top\\n")
-output.write("synthesize_fp_rings -nets {VDD VSS} -core -width {2 2} -space {2 2} -offset {1 1}\\n")
+output.write("set_power_plan_strategy core -nets {VDD VSS} -core -template saed_32nm.tpl:m45_mesh(0.5,1.0)\\n")
+output.write("synthesize_fp_rings -nets {VDD VSS} -layers {M4 M5} -width {1.25 1.25} -space {0.5 0.5} -offset {1 1} -core\\n")
 output.write("compile_power_plan\\n")
+
 output.write("insert_stdcell_filler -connect_to_power {VDD} -connect_to_ground {VSS}\\n")
 output.write("preroute_standard_cells -do_not_route_over_macros -extend_for_multiple_connections\\n")
 output.write("remove_stdcell_filler -stdcell\\n")
+
 output.write("verify_pg_nets\\n")
+output.write("save_mw_cel -as power\\n")
 
 output.write("echo Floorplanning Done\\n")
 
 output.close
+EOF
+
+cat >$run_dir/saed_32nm.tpl <<EOF
+template: m45_mesh(w1, w2) {
+  layer : M4 {
+     direction : vertical
+     width : @w1
+     pitch : 8
+     spacing : 1
+     offset :
+  }
+  layer : M5 {
+     direction : horizontal
+     width : @w2
+     spacing : 1
+     pitch : 8
+     offset : 
+  }
+}
 EOF
 
 python3 $run_dir/generated-scripts/floorplan2tcl.py
@@ -320,6 +343,19 @@ source enter
 $ICC_HOME/bin/icc_shell -gui -f generated-scripts/open_floorplan.tcl
 EOF
 chmod +x $run_dir/generated-scripts/open_floorplan
+
+cat > $run_dir/generated-scripts/open_power.tcl <<EOF
+source rm_setup/icc_setup.tcl
+open_mw_lib -r ${top}_LIB
+open_mw_cel -r power
+EOF
+
+cat > $run_dir/generated-scripts/open_power <<EOF
+cd $run_dir
+source enter
+$ICC_HOME/bin/icc_shell -gui -f generated-scripts/open_power.tcl
+EOF
+chmod +x $run_dir/generated-scripts/open_power
 
 cat > $run_dir/generated-scripts/open_chip.tcl <<EOF
 source rm_setup/icc_setup.tcl

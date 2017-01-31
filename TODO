@@ -15,3 +15,4 @@
 * Only place pins where there aren't macros
 * Define CLOCK_PERIOD from the syn_config (or par_config)
 * They're runsets, not rulesets for ICV
+* Figure out what the power template should actually be.
