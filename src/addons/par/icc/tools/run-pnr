@@ -43,7 +43,7 @@ do
     *drc_rules.rs) signoff_ruleset+=("$1");;
     *.tf) tf+=("$1");;
     */find-regs.tcl) find_regs="$1";;
-    *.syn_config.json) config="$1";;
+    *.plsi_config.json) config="$1";;
     *.tech.json) technology="$1";;
     *.floorplan.json) floorplan_json="$1";;
     *.macro_library.json) technology_macro_library="$(readlink -f "$1")";;

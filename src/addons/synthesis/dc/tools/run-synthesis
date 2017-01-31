@@ -35,7 +35,7 @@ do
     */FuncCmax/tluplus) tlu_max+=("$1");;
     *.tf) tf+=("$1");;
     */find-regs.tcl) find_regs="$1";;
-    *.syn_config.json) config="$1";;
+    *.plsi_config.json) config="$1";;
     *.tech.json) technology="$1";;
     *) echo "Unknown argument $1"; exit 1;;
     esac

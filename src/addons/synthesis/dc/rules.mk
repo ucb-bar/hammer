@@ -25,7 +25,7 @@ $(OBJ_SYN_DIR)/synopsys-dc.stamp: \
 		$(TECHNOLOGY_MILKYWAY_TECHFILES) \
 		$(TECHNOLOGY_NLDM_LIBRARY_FILES) \
 		$(PLSI_CACHE_DIR)/synopsys/rm/DC-RM_$(DC_VERSION).tar \
-		$(SYN_CONFIG_FILE) \
+		$(PLSI_CAD_CONFIG_FILE) \
 		$(TECHNOLOGY_JSON) \
 		$(DC_BIN)
 	@mkdir -p $(dir $@)

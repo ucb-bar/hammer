@@ -1,0 +1,9 @@
+{
+  "clocks": [
+    {
+      "name": "clock",
+      "period": "8ns",
+      "par derating": "2ns"
+    }
+  ]
+}
