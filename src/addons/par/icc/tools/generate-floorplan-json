@@ -17,14 +17,15 @@ class Position:
 
 # Defines a constraint, which consists of two macro corners that must go together
 class Constraint:
-  def __init__(self, corner_to_move, fixed_corner, offset_x, offset_y):
+  def __init__(self, corner_to_move, fixed_corner, offset_x, offset_y, orientation):
     self.corner_to_move = corner_to_move
     self.fixed_corner = fixed_corner
     self.offset_x = offset_x
     self.offset_y = offset_y
+    self.orientation = orientation
 
   def as_json(self):
-    return '{"offset_x": "%s", "offset_y": "%s", "macro": "%s", "corner_on_macro_to_match": "%s", "anchor_to_%s": "%s", "corner_on_anchor_%s_to_match": "%s"}' % (self.offset_x, self.offset_y, self.corner_to_move.macro.name, self.corner_to_move.corner, self.fixed_corner.macro.json_type(), self.fixed_corner.macro.name, self.fixed_corner.macro.json_type(), self.fixed_corner.corner)
+    return '{"offset_x": "%s", "offset_y": "%s", "macro": "%s", "corner_on_macro_to_match": "%s", "anchor_to_%s": "%s", "corner_on_anchor_%s_to_match": "%s", "orientation": "%s"}' % (self.offset_x, self.offset_y, self.corner_to_move.macro.name, self.corner_to_move.corner, self.fixed_corner.macro.json_type(), self.fixed_corner.macro.name, self.fixed_corner.macro.json_type(), self.fixed_corner.corner, self.orientation)
 
 # Sometimes I want to refer to a point-sized thing
 class FixedPosition:
@@ -260,27 +261,58 @@ class TopMacro:
 def chain_left(initial_value, array, func):
   prev = initial_value
   out = []
+  i = 0
   for cur in array:
-    out.append(func(prev, cur))
+    out.append(func(prev, cur, i))
     prev = cur
+    i = i + 1
   return out
 
-def left2right_along_top(prev, cur):
-  return Constraint(cur.tl(), prev.tr(), 3, 0)
-def left2right_along_bot(prev, cur):
-  return Constraint(cur.bl(), prev.br(), 3, 0)
-def top2bottom_along_right(prev, cur):
-  return Constraint(cur.tr(), prev.br(), 0, -3)
-def right2left_along_top(prev, cur):
-  return Constraint(cur.tr(), prev.tl(), -3, 0)
+# FIXME: The sizes here are all hard-coded while I figure out what the right
+# thing to do is.
+def left2right_along_top_first(prev, cur, i):
+  if (i == 0):
+    return Constraint(cur.tl(), prev.tr(), 20, -20, "N")
+  else:
+    return Constraint(cur.tl(), prev.tr(), 3, 0, "N")
+def left2right_along_bot_first(prev, cur, i):
+  if (i == 0):
+    return Constraint(cur.bl(), prev.br(), 20, 20, "S")
+  else:
+    return Constraint(cur.bl(), prev.br(), 3, 0, "S")
+def left2right_along_top_rest(prev, cur, i):
+  if (i == 0):
+    return Constraint(cur.tl(), prev.tr(), 0, -3, "N")
+  else:
+    return Constraint(cur.tl(), prev.tr(), 3, 0, "N")
+def left2right_along_bot_rest(prev, cur, i):
+  if (i == 0):
+    return Constraint(cur.bl(), prev.br(), 0, 3, "S")
+  else:
+    return Constraint(cur.bl(), prev.br(), 3, 0, "S")
+
+# FIXME: These are broken now
+def top2bottom_along_right(prev, cur, i):
+  if (i == 0):
+    return Constraint(cur.tr(), prev.br(), 3, 0)
+  else:
+    return Constraint(cur.tr(), prev.br(), 0, -3)
+def right2left_along_top(prev, cur, i):
+  if (i == 0):
+    return Constraint(cur.tr(), prev.tl(), 0, -3)
+  else:
+    return Constraint(cur.tr(), prev.tl(), -3, 0)
 
 # Some simple placement strategies: these place macros in order, inside the
 # bounds of another macro, and 
 class TopLeftPlacer:
-  def __init__(self, outer, anchor, macros):
+  def __init__(self, outer, anchor, macros, corner):
     self.outer = outer
     self.anchor = anchor
     self.macros = macros
+    self.func = left2right_along_top_rest
+    if corner == True:
+      self.func = left2right_along_top_first
 
   def place2d(self):
     # We want roughly even rows.  This will produce exactly even rows if given
@@ -310,11 +342,13 @@ class TopLeftPlacer:
   def place(self):
     anchor = self.anchor
     out = []
+    func = self.func
     for row in self.place2d():
-      placed = chain_left(anchor, row, left2right_along_top)
+      placed = chain_left(anchor, row, func)
       for place in placed:
         out.append(place)
       anchor = FixedPosition(row[0].bl())
+      func = left2right_along_top_rest
     return out
 
   def bl(self):
@@ -324,10 +358,13 @@ class TopLeftPlacer:
     return FixedPosition(rows[len(rows) - 1][0].bl())
 
 class BottomLeftPlacer:
-  def __init__(self, outer, anchor, macros):
+  def __init__(self, outer, anchor, macros, corner):
     self.outer = outer
     self.anchor = anchor
     self.macros = macros
+    self.func = left2right_along_bot_rest
+    if corner == True:
+      self.func = left2right_along_bot_first
 
   def place2d(self):
     # We want roughly even rows.  This will produce exactly even rows if given
@@ -357,11 +394,13 @@ class BottomLeftPlacer:
   def place(self):
     anchor = self.anchor
     out = []
+    func = self.func
     for row in self.place2d():
-      placed = chain_left(anchor, row, left2right_along_bot)
+      placed = chain_left(anchor, row, func)
       for place in placed:
         out.append(place)
       anchor = FixedPosition(row[0].tl())
+      func = left2right_along_bot_rest
     return out
 
   def tl(self):
@@ -416,10 +455,10 @@ class RocketTilePlacer:
       exit(1)
 
   def list_constraints(self):
-    l1dd = TopLeftPlacer   (self.top, self.top.tlf(), sorted(self.l1dd))
-    l1dm = TopLeftPlacer   (self.top, l1dd.bl(),      sorted(self.l1dm))
-    l1id = BottomLeftPlacer(self.top, self.top.blf(), sorted(self.l1id))
-    l1im = BottomLeftPlacer(self.top, l1id.tl(),      sorted(self.l1im))
+    l1dd = TopLeftPlacer   (self.top, self.top.tlf(), sorted(self.l1dd), True)
+    l1dm = TopLeftPlacer   (self.top, l1dd.bl(),      sorted(self.l1dm), False)
+    l1id = BottomLeftPlacer(self.top, self.top.blf(), sorted(self.l1id), True)
+    l1im = BottomLeftPlacer(self.top, l1id.tl(),      sorted(self.l1im), False)
     return l1dd.place() + l1dm.place() + l1id.place() + l1im.place()
     
 placement_schemes.append(RocketTilePlacer)

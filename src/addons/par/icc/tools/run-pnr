@@ -274,12 +274,12 @@ output.write("set_attribute [all_macro_cells] dont_touch false\\n")
 
 for entry in input:
     if "anchor_to_macro" in entry:
-        output.write("set_fp_relative_location -name %s -target_cell %s -target_orientation N -target_corner %s -anchor_corner %s -x_offset %s -y_offset %s -anchor_object %s" % (entry["macro"], entry["macro"], entry["corner_on_macro_to_match"], entry["corner_on_anchor_macro_to_match"], entry["offset_x"], entry["offset_y"], entry["anchor_to_macro"]))
+        output.write("set_fp_relative_location -name %s -target_cell %s -target_orientation %s -target_corner %s -anchor_corner %s -x_offset %s -y_offset %s -anchor_object %s" % (entry["macro"], entry["macro"], entry["orientation"], entry["corner_on_macro_to_match"], entry["corner_on_anchor_macro_to_match"], entry["offset_x"], entry["offset_y"], entry["anchor_to_macro"]))
 
     if "anchor_to_cell" in entry:
         if entry["anchor_to_cell"] != "$top":
             exit(1)
-        output.write("set_fp_relative_location -name %s -target_cell %s -target_orientation N -target_corner %s -anchor_corner %s -x_offset %s -y_offset %s" % (entry["macro"], entry["macro"], entry["corner_on_macro_to_match"], entry["corner_on_anchor_cell_to_match"], entry["offset_x"], entry["offset_y"]))
+        output.write("set_fp_relative_location -name %s -target_cell %s -target_orientation %s -target_corner %s -anchor_corner %s -x_offset %s -y_offset %s" % (entry["macro"], entry["macro"], entry["orientation"], entry["corner_on_macro_to_match"], entry["corner_on_anchor_cell_to_match"], entry["offset_x"], entry["offset_y"]))
 
     output.write('\\n')
 
