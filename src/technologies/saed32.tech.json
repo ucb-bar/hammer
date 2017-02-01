@@ -157,7 +157,7 @@
         "temperature": "25 C"
       },
       "supplies": {
-        "VDD": "0.85 V",
+        "VDD": "1.05 V",
         "GND": "0 V"
       },
       "provide script": "src/tools/technology/saed32-stdcells"
