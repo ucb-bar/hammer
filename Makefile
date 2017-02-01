@@ -198,9 +198,9 @@ $(error Unable to resolve SYN_POWER_SIGNOFF_TOOL=$(SYN_POWER_SIGNOFF_TOOL): foun
 endif
 
 # Check to ensure all the configurations actually exist.
-PLSI_CAD_CONFIG_FILE=src/configs/$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG).plsi_config.json
-ifeq ($(wildcard $(PLSI_CAD_CONFIG_FILE)),)
-$(error Unable to find cad tools configuration, looked in $(PLSI_CAD_CONFIG_FILE))
+PLSI_CAD_CONFIG_FILE=$(wildcard src/configs/$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG).plsi_config.json $(CONFIG_DIR)/$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)-$(PAR_CONFIG).plsi_config.json)
+ifneq ($(words $(PLSI_CAD_CONFIG_FILE)),1)
+$(error Unable to resolve PLSI_CAD_CONFIG_FILE=$(PLSI_CAD_CONFIG_FILE): found "$(PLSI_CAD_CONFIG_FILE)")
 endif
 
 # In order to prevent EEs from seeing Makefiles, the technology description is
