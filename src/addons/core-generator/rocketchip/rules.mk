@@ -38,6 +38,9 @@ endif
 # running SBT (the .stamp file).
 $(OBJ_CORE_DIR)/plsi-generated/$(CORE_SIM_TOP).$(CORE_CONFIG).vsim.stamp: $(OBJ_CORE_DIR)/plsi-generated/rocketchip.stamp
 	@mkdir -p $(dir $@)
+	rm -rf $(OBJ_CORE_DIR)/rocketchip/firrtl/.git*
+	git -C $(OBJ_CORE_DIR)/rocketchip/firrtl init
+	git -C $(OBJ_CORE_DIR)/rocketchip/firrtl commit -m "this is an empty commit" --author "dummy author <nobody@example.com>" --allow-empty
 	+$(SCHEDULER_CMD) --make -- $(MAKE) CFG_PROJECT="$(RC_CORE_CFG_PROJECT)" ROCKETCHIP_ADDONS="$(RC_CORE_ADDONS) $(notdir $(RC_CORE_ADDON_DIRS))" MODEL=$(CORE_SIM_TOP) CONFIG=$(CORE_CONFIG) RISCV=unused SUITE=RocketSuite -C $(OBJ_CORE_DIR)/rocketchip/vsim verilog || (rm -rf $(OBJ_CORE_DIR)/rocketchip/vsim/generated-src/$(CORE_SIM_TOP).$(CORE_CONFIG).v && exit 1)
 	mkdir -p $(dir $@)
 	touch $@
