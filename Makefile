@@ -212,6 +212,7 @@ $(error "Unable to find technology $(TECHNOLOGY), expected a cooresponding .tech
 endif
 
 OBJ_TECHNOLOGY_MACRO_LIBRARY = $(OBJ_TECH_DIR)/plsi-generated/all.macro_library.json
+OBJ_TECHNOLOGY_JSON = $(OBJ_TECH_DIR)/plsi-generated/$(TECHNOLOGY).filtered.tech.json
 
 # Actually loads the various addons, this is staged so we load "vars" first
 # (which set variables) and "rules" second, which set the make rules (which can
@@ -733,11 +734,19 @@ bin/par-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFI
 # Generates a technology-specific makefrag from the technology's description
 # file.
 
-$(OBJ_TECH_DIR)/makefrags/vars.mk: src/tools/technology/generate-vars $(TECHNOLOGY_JSON) $(CMD_PYTHON3)
+$(OBJ_TECHNOLOGY_JSON): \
+		src/tools/technology/filter-json \
+		$(TECHNOLOGY_JSON) \
+		$(PLSI_CAD_CONFIG_FILE) \
+		$(CMD_PYTHON3)
+	@mkdir -p $(dir $@)
+	PATH="$(abspath $(dir $(CMD_PYTHON3))):$(PATH)" $< -o $@ -i $(filter-out $@,$(filter %.tech.json,$^)) -c $(filter %.plsi_config.json,$^)
+
+$(OBJ_TECH_DIR)/makefrags/vars.mk: src/tools/technology/generate-vars $(OBJ_TECHNOLOGY_JSON) $(CMD_PYTHON3)
 	@mkdir -p $(dir $@)
 	PATH="$(abspath $(dir $(CMD_PYTHON3))):$(PATH)" $< -o $@ -i $(filter %.tech.json,$^)
 
-$(OBJ_TECH_DIR)/makefrags/rules.mk: src/tools/technology/generate-rules $(TECHNOLOGY_JSON) $(CMD_PYTHON3)
+$(OBJ_TECH_DIR)/makefrags/rules.mk: src/tools/technology/generate-rules $(OBJ_TECHNOLOGY_JSON) $(CMD_PYTHON3)
 	@mkdir -p $(dir $@)
 	PATH="$(abspath $(dir $(CMD_PYTHON3))):$(PATH)" $< -o $@ -i $(filter %.tech.json,$^)
 
@@ -745,7 +754,7 @@ $(OBJ_TECH_DIR)/makefrags/rules.mk: src/tools/technology/generate-rules $(TECHNO
 # generating their own Verilog
 $(OBJ_TECHNOLOGY_MACRO_LIBRARY): \
 		src/tools/technology/generate-macros \
-		$(TECHNOLOGY_JSON) \
+		$(OBJ_TECHNOLOGY_JSON) \
 		$(TECHNOLOGY_MARCO_PROVIDE_SCRIPTS) \
 		$(TECHNOLOGY_VERILOG_FILES) \
 		$(TECHNOLOGY_DOCUMENTATION_PDF_FILES) \

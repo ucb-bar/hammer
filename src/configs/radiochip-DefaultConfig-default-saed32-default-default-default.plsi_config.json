@@ -2,8 +2,21 @@
   "clocks": [
     {
       "name": "clock",
-      "period": "8ns",
+      "period": "98ns",
       "par derating": "2ns"
+    }
+  ],
+  "scenerios": [
+    {
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "25 C"
+      },
+      "supplies": {
+        "VDD": "0.85 V",
+        "GND": "0 V"
+      }
     }
   ]
 }
