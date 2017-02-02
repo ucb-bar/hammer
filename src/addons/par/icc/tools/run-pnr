@@ -63,6 +63,11 @@ export ICC_HOME="$(dirname $(dirname $icc))"
 export PATH="$(dirname $icc):\$PATH"
 export MGLS_LICENSE_FILE="$MGLS_LICENSE_FILE"
 export SNPSLMD_LICENSE_FILE="$SNPSLMD_LICENSE_FILE"
+EOF
+
+if [[ "$icv" != "" ]]
+then
+cat >>"$run_dir"/enter <<EOF
 export ICV_HOME_DIR="$(dirname $(dirname $(dirname $icv)))"
 export PATH="$(dirname $icv):\$PATH"
 EOF
@@ -203,14 +208,18 @@ sed 's@^set ICC_FLOORPLAN_INPUT.*@set ICC_FLOORPLAN_INPUT "USER_FILE";@' -i $run
 sed 's@^set ICC_IN_FLOORPLAN_USER_FILE.*@set ICC_IN_FLOORPLAN_USER_FILE "generated-scripts/floorplan.tcl";@' -i $run_dir/rm_setup/icc_setup.tcl
 sed "s@^set ICC_NUM_CORES.*@set ICC_NUM_CORES ${PLSI_SCHEDULER_MAX_THREADS};@" -i $run_dir/rm_setup/icc_setup.tcl
 
-# ICC claims this is only necessary for 45nm and below, but I figure if anyone
-# provides ICV metal fill rules then we might as well go ahead and use them
-# rather than ICC's built-in metal filling.
-if [[ "$metal_fill_ruleset" != "" || "$signoff_ruleset" != "" ]]
+# If there's no ICV then don't run any DRC stuff at all.
+if [[ "$icv" != "" ]]
 then
-    sed 's@^set ADD_METAL_FILL.*@set ADD_METAL_FILL "ICV";@' -i $run_dir/rm_setup/icc_setup.tcl
-    sed "s@^set SIGNOFF_FILL_RUNSET .*@set SIGNOFF_FILL_RUNSET \"${metal_fill_ruleset[@]}\";@" -i $run_dir/rm_setup/icc_setup.tcl
-    sed "s@^set SIGNOFF_DRC_RUNSET .*@set SIGNOFF_DRC_RUNSET \"${signoff_ruleset[@]}\";@" -i $run_dir/rm_setup/icc_setup.tcl
+    # ICC claims this is only necessary for 45nm and below, but I figure if anyone
+    # provides ICV metal fill rules then we might as well go ahead and use them
+    # rather than ICC's built-in metal filling.
+    if [[ "$metal_fill_ruleset" != "" || "$signoff_ruleset" != "" ]]
+    then
+        sed 's@^set ADD_METAL_FILL.*@set ADD_METAL_FILL "ICV";@' -i $run_dir/rm_setup/icc_setup.tcl
+        sed "s@^set SIGNOFF_FILL_RUNSET .*@set SIGNOFF_FILL_RUNSET \"${metal_fill_ruleset[@]}\";@" -i $run_dir/rm_setup/icc_setup.tcl
+        sed "s@^set SIGNOFF_DRC_RUNSET .*@set SIGNOFF_DRC_RUNSET \"${signoff_ruleset[@]}\";@" -i $run_dir/rm_setup/icc_setup.tcl
+    fi
 fi
 
 # The technology is expected to provide a list of filler cells that ICC uses.
