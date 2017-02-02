@@ -71,6 +71,7 @@ cat >>"$run_dir"/enter <<EOF
 export ICV_HOME_DIR="$(dirname $(dirname $(dirname $icv)))"
 export PATH="$(dirname $icv):\$PATH"
 EOF
+fi
 source "$run_dir"/enter
 
 # Almost all of what I do is to just use Synopsys's reference methodology,
