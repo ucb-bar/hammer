@@ -12,6 +12,8 @@ vhd=()
 tlu_min=()
 tlu_max=()
 tf=()
+defines=()
+vh=()
 unset find_regs
 unset config
 unset technology
@@ -26,6 +28,7 @@ do
     */lib) mw+=("$(dirname "$1")");;
     --top) top="$2"; shift;;
     *.v) v+=("$1");;
+    *.vh) vh+=("$1");;
     *.vhd) vhd+=("$1");;
     *Cmin.tluplus) tlu_min+=("$1");;
     *Cmax.tluplus) tlu_max+=("$1");;
@@ -66,6 +69,11 @@ then
     exit 1
 fi
 
+defines=$(cat /dev/null "$vh" | while read line
+do
+    echo $line | sed 's@`define \([A-Za-z0-9_]*\) \([A-Za-z0-9_]*\)@-define \1=\2@'
+done | xargs echo)
+
 # Almost all of what I do is to just use Synopsys's reference methodology,
 # which users are expected to have downloaded.
 tar -xf "$rmtar" -C "$run_dir" --strip-components=1
@@ -104,6 +112,7 @@ if [[ "$vhd" != "" ]]
 then
     find $run_dir -iname "*.tcl" | xargs sed 's/^\(analyze -format verilog .*\)/analyze -format vhdl ${RTL_SOURCE_FILES_VHDL}\n\1/g' -i
 fi
+find $run_dir -iname "*.tcl" | xargs sed "s/^analyze/analyze $defines/" -i
 
 # Report library references in case I'm missing anything.
 sed "s@^check_design @report_reference > reports/${top}.report_reference.out\\ncheck_design @" -i $run_dir/rm_dc_scripts/dc.tcl
