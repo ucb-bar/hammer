@@ -35,7 +35,7 @@ in ways that aren't already supported.
 ## Customizing the Chip
 
 You can customize the build by using make variables, which can either be set in
-"Makefile.project", "Makefile.local", or on the commandline.  The following
+"Makefile.project", "Makefile.local", or on the command line.  The following
 variables can be set:
 
  * CORE_GENERATOR: The project that will be used to generate the core.  The
@@ -64,7 +64,7 @@ about.  The following core generators are supported:
  * rocket-chip: The interesting one.  This just calls into Rocket Chip and
    generates whatever it does.
 
- * boom: Generates sa BOOM core instead of a Rocket core, but otherwise uses
+ * boom: Generates a BOOM core instead of a Rocket core, but otherwise uses
    the Rocket Chip RTL.  While BOOM itself is useful, this also serves as an
    example of how to add projects based on Rocket Chip.
 
@@ -124,7 +124,7 @@ single make-level variable from PLSI:
 
 In addition to customizing the chip, there are variables that can be set to
 control the tools used to build the chip.  These variables can also either be
-set in "Makefile.project", "Makefile.local", or on the commandline.  The
+set in "Makefile.project", "Makefile.local", or on the command line.  The
 following variables can be set:
 
  * SCHEDULER: The mechanism that will be used for scheduling jobs.  It's
@@ -151,11 +151,11 @@ following variables can be set:
 
 Source for the various addons can be found in src/addons.
 
-### Running on a Cluser
+### Running on a Cluster
 
 As configured by default, PLSI will attempt to schedule jobs on a cluster if
 the users system appears to have one.  Users can override this behavior by
-setting SCHEDULER to something other than "auto", but it's not recommeneded --
+setting SCHEDULER to something other than "auto", but it's not recommended --
 whatever changes you have to make are probably just a bug in the auto scheduler
 and should be fixed rather than worked around.  The following schedulers are
 currently supported:
@@ -187,7 +187,7 @@ the flow.  There is currently support for the following simulators:
    support, so it probably won't simulate things like your foundry's
    technology-specific stuff.
 
- * Synopsys VCS: We're primairially a Synopsys shop internally.  Historically
+ * Synopsys VCS: We're primarily a Synopsys shop internally.  Historically
    this has been the only simulator Rocket Chip has used, so it's the only one
    I'm familiar with.  It's recommended you use VCS to simulate anything that
    comes out of a Synopsys tool.
