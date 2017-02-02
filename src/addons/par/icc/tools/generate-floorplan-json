@@ -318,7 +318,7 @@ class TopLeftPlacer:
     # We want roughly even rows.  This will produce exactly even rows if given
     # macros that are all the same size, otherwise it'll do something a bit
     # odder.
-    width_sum = sum(map(lambda m: m.width, self.macros))
+    width_sum = sum(map(lambda m: m.width + 3, self.macros))
     rows = ceil(width_sum / self.outer.width) + 0.0001
     row_width = width_sum / rows
     rows = []
@@ -370,7 +370,7 @@ class BottomLeftPlacer:
     # We want roughly even rows.  This will produce exactly even rows if given
     # macros that are all the same size, otherwise it'll do something a bit
     # odder.
-    width_sum = sum(map(lambda m: m.width, self.macros))
+    width_sum = sum(map(lambda m: m.width + 3, self.macros))
     rows = ceil(width_sum / self.outer.width) + 0.0001
     row_width = width_sum / rows
     rows = []
