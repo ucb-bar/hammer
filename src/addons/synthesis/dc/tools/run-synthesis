@@ -60,6 +60,12 @@ then
     exit 1
 fi
 
+if [[ "$libs" == "" ]]
+then
+    echo "No timing library provided, you should specify one in the technology JSON file" >&2
+    exit 1
+fi
+
 # Almost all of what I do is to just use Synopsys's reference methodology,
 # which users are expected to have downloaded.
 tar -xf "$rmtar" -C "$run_dir" --strip-components=1

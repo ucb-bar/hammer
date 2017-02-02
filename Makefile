@@ -299,16 +299,6 @@ endif
 # This selects the technology to implement the design with.
 -include $(OBJ_TECH_DIR)/makefrags/vars.mk
 
-ifneq ($(wildcard $(OBJ_TECH_DIR)/makefrags/vars.mk),)
-ifeq ($(TECHNOLOGY_CCS_LIBERTY_FILES)$(TECHNOLOGY_NLDM_LIBERTY_FILES),)
-$(error TECHNOLOGY needs to set TECHNOLOGY_CCS_LIBERTY_FILES or TECHNOLOGY_NLDM_LIBERTY_FILES)
-endif
-
-ifeq ($(TECHNOLOGY_CCS_LIBRARY_FILES)$(TECHNOLOGY_NLDM_LIBRARY_FILES),)
-$(error TECHNOLOGY needs to set TECHNOLOGY_CCS_LIBRARY_FILES or TECHNOLOGY_NLDM_LIBRARY_FILES)
-endif
-endif
-
 # The map step implements technology-specific macros (SRAMs, pads, clock stuff)
 # in a manner that's actually technology-specific (as opposed to using the
 # generic PLSI versions).  This results in some verilog for simulation, but it
