@@ -290,11 +290,32 @@ EOF
 #sed "s@^\\(signoff_autofix_drc .*\\)@exec $ICV_HOME_DIR/contrib/generate_layer_rule_map.pl -dplog signoff_drc_run/run_details/$drc_runset.dp.log -tech_file $(readlink -f ${tf[@]}) -o signoff_autofix_drc.config\n\\1@" -i $run_dir/rm_icc_zrt_scripts/signoff_drc_icc.tcl
 #sed 's@\$config_file@signoff_autofix_drc.config@' -i $run_dir/rm_icc_zrt_scripts/signoff_drc_icc.tcl
 
-# FIXME: I actually can't insert double vias on SAED32 becaues of DRC errors.
-# It smells like the standard cells just aren't setup for it, but this needs to
-# be fixed somehow as it'll be necessary for a real chip to come back working.
-sed 's@set ICC_DBL_VIA .*@set ICC_DBL_VIA FALSE@' -i $run_dir/rm_setup/icc_setup.tcl
-sed 's@set ICC_DBL_VIA_FLOW_EFFORT .*@set ICC_DBL_VIA_FLOW_EFFORT "NONE"@' -i $run_dir/rm_setup/icc_setup.tcl
+# Configure redundant vias / duplicate vias.
+# TODO: refactor this to be technology specific; currently SAED32-specific.
+sed 's@set ICC_DBL_VIA .*@set ICC_DBL_VIA TRUE@' -i $run_dir/rm_setup/icc_setup.tcl
+sed 's@set ICC_DBL_VIA_FLOW_EFFORT .*@set ICC_DBL_VIA_FLOW_EFFORT "LOW"@' -i $run_dir/rm_setup/icc_setup.tcl
+sed 's@set ICC_DBL_VIA_DURING_INITIAL_ROUTING .*@set ICC_DBL_VIA_DURING_INITIAL_ROUTING FALSE@' -i $run_dir/rm_setup/icc_setup.tcl
+sed 's@set ICC_CUSTOM_DBL_VIA_DEFINE_SCRIPT .*@set ICC_CUSTOM_DBL_VIA_DEFINE_SCRIPT "generated-scripts/dbl_via.tcl"@' -i $run_dir/rm_setup/icc_setup.tcl
+# Many of the SAED32 PDK's standard cell pads are too small to accomodate
+# redundant vias, so disable them for M1-M2 vias.
+# Enable quad-vias for M6-M7 due to DRC.
+python3 > $run_dir/generated-scripts/dbl_via.tcl <<EOF
+from collections import namedtuple
+RedundantViaMapping = namedtuple('RedundantViaMapping', 'from_via to_via from_via_x_size from_via_y_size to_via_x_size to_via_y_size')
+RedundantViaMapping.__new__.__defaults__ = ('', '', 1, 1, 2, 1)
+
+mapping = []
+mapping.append(RedundantViaMapping(from_via='VIA12SQ_C', to_via='VIA12SQ_C', to_via_x_size=1, to_via_y_size=1))
+mapping.append(RedundantViaMapping(from_via='VIA67SQ_C', to_via='VIA67SQ_C', to_via_x_size=4, to_via_y_size=1))
+
+mapping_zipped = list(zip(*[list(x) for x in mapping]))
+mapping_zipped_str = [' '.join([str(entry) for entry in zipped_list]) for zipped_list in mapping_zipped]
+
+print("define_zrt_redundant_vias -from_via {{ {0} }} -to_via {{ {1} }} -from_via_x_size {{ {2} }} -from_via_y_size {{ {3} }} -to_via_x_size {{ {4} }} -to_via_y_size {{ {5} }}".format(*mapping_zipped_str))
+
+print("insert_zrt_redundant_vias -list_only")
+
+EOF
 
 mkdir -p $run_dir/generated-scripts
 if [[ ! -z "$floorplan_json" ]] # if floorplan_json is set
