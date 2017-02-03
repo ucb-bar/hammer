@@ -1,4 +1,7 @@
 #!/bin/bash
+# Set up the environment to run ICC by extracting the Synopsys reference
+# methodology, adding/modifying options, and generating scripts.
+# Use with 'source'.
 
 unset run_dir
 unset icc
@@ -137,6 +140,7 @@ set CLOCK_UNCERTAINTY "0.04";
 set INPUT_DELAY "0.10";
 set OUTPUT_DELAY "0.10";
 set ICC_NUM_CORES ${PLSI_SCHEDULER_MAX_THREADS};
+set_host_options -max_cores ${PLSI_SCHEDULER_MAX_THREADS};
 EOF
 
 # Read the core's configuration file to figure out what all the clocks should
@@ -250,6 +254,33 @@ sed 's@^set MW_EXTENDED_LAYER_MODE.*@set MW_EXTENDED_LAYER_MODE TRUE@' -i $run_d
 # For some reason, ICC isn't echoing some of my user input files.  I want it to.
 sed 's@source \$@source -echo $@g' -i $run_dir/rm_*/*.tcl
 
+# The only difference between this script and the actual ICC run is that this
+# one generates a list of macros that will be used to floorplan the design, while
+# the other one actually 
+cat > $run_dir/generated-scripts/list_macros.tcl <<EOF
+source rm_setup/icc_setup.tcl
+open_mw_lib ${top}_LIB
+open_mw_cel -readonly init_design_icc
+
+create_floorplan -control_type aspect_ratio -core_aspect_ratio 1 -core_utilization 0.7 -left_io2core 3 -bottom_io2core 3 -right_io2core 3 -top_io2core 3 -start_first_row
+
+set top_left_x [lindex [get_placement_area] 0]
+set top_left_y [lindex [get_placement_area] 1]
+set bottom_right_x [lindex [get_placement_area] 2]
+set bottom_right_y [lindex [get_placement_area] 3]
+echo "${top} module=${top} top_left=(\$top_left_x, \$top_left_y) bottom_right=(\$bottom_right_x, \$bottom_right_y)" >> results/${top}.macros.out
+
+set fixed_cells [get_fp_cells -filter "is_fixed == true"]
+foreach_in_collection cell \$fixed_cells {
+    set full_name [get_attribute \$cell full_name]
+    set ref_name [get_attribute \$cell ref_name]
+    set height [get_attribute \$cell height]
+    set width [get_attribute \$cell width]
+    echo "\$full_name parent=${top} module=\$ref_name width=\$width height=\$height" >> results/${top}.macros.out
+}
+exit
+EOF
+
 ## FIXME: This throws errors because it's accessing some views on disk.
 ## I want ICC to try and fix DRCs automatically when possible.  Most of the
 ## commands are commented out for some reason, this enables them.
@@ -265,10 +296,13 @@ sed 's@source \$@source -echo $@g' -i $run_dir/rm_*/*.tcl
 sed 's@set ICC_DBL_VIA .*@set ICC_DBL_VIA FALSE@' -i $run_dir/rm_setup/icc_setup.tcl
 sed 's@set ICC_DBL_VIA_FLOW_EFFORT .*@set ICC_DBL_VIA_FLOW_EFFORT "NONE"@' -i $run_dir/rm_setup/icc_setup.tcl
 
-# ICC needs a floorplan in order to do anything.  This script turns the
-# floorplan JSON file into a floorplan TCL file for 
 mkdir -p $run_dir/generated-scripts
-cat > $run_dir/generated-scripts/floorplan2tcl.py <<EOF
+if [[ ! -z "$floorplan_json" ]] # if floorplan_json is set
+then
+    # ICC needs a floorplan in order to do anything.  This script turns the
+    # floorplan JSON file into a floorplan TCL file for
+    mkdir -p $run_dir/generated-scripts
+    cat > $run_dir/generated-scripts/floorplan2tcl.py <<EOF
 import json
 
 input=json.loads("".join(open("$floorplan_json", "r").readlines()))
@@ -292,7 +326,7 @@ for entry in input:
 
     if "anchor_to_cell" in entry:
         if entry["anchor_to_cell"] != "$top":
-            exit(1)
+           exit(1)
         output.write("set_fp_relative_location -name %s -target_cell %s -target_orientation %s -target_corner %s -anchor_corner %s -x_offset %s -y_offset %s" % (entry["macro"], entry["macro"], entry["orientation"], entry["corner_on_macro_to_match"], entry["corner_on_anchor_cell_to_match"], entry["offset_x"], entry["offset_y"]))
 
     output.write('\\n')
@@ -325,7 +359,7 @@ output.write("echo Floorplanning Done\\n")
 output.close
 EOF
 
-cat >$run_dir/saed_32nm.tpl <<EOF
+    cat >$run_dir/saed_32nm.tpl <<EOF
 template: m45_mesh(w1, w2) {
   layer : M4 {
      direction : vertical
@@ -344,8 +378,9 @@ template: m45_mesh(w1, w2) {
 }
 EOF
 
-python3 $run_dir/generated-scripts/floorplan2tcl.py
-cat $run_dir/generated-scripts/floorplan.tcl
+    python3 $run_dir/generated-scripts/floorplan2tcl.py
+    cat $run_dir/generated-scripts/floorplan.tcl
+fi
 
 # Opens the floorplan straight away, which is easier than doing it manually
 cat > $run_dir/generated-scripts/open_floorplan.tcl <<EOF
@@ -386,12 +421,3 @@ source enter
 $ICC_HOME/bin/icc_shell -gui -f generated-scripts/open_chip.tcl
 EOF
 chmod +x $run_dir/generated-scripts/open_chip
-
-# Here's the actual ICC invocation
-cd $run_dir
-make -f rm_setup/Makefile_zrt ic -j1 |& tee icc.log
-
-# Make sure there's no invalid output from ICC
-grep ^Warning icc.log && (echo "ICC produced warning messages")
-grep ^Error icc.log && (echo "ICC produced error messages"; exit 1)
-exit 0

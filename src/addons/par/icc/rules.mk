@@ -12,7 +12,7 @@ $(OBJ_PAR_ROUTED_V): $(OBJ_PAR_DIR)/synopsys-icc.stamp
 # about producing arbitrary outputs.  Rather than relying on DC's output files
 # for dependency resolution we instead.
 $(OBJ_PAR_DIR)/synopsys-icc.stamp: \
-		$(abspath $(PAR_TOOL_ADDON)/tools/run-pnr) \
+		$(abspath $(PAR_TOOL_ADDON)/tools/run-par) \
 		$(abspath $(PAR_TOOL_ADDON)/tools/find-regs.tcl) \
 		$(OBJ_PAR_DIR)/generated/$(PAR_TOP).floorplan.json \
 		$(OBJ_SYN_MAPPED_V) \
