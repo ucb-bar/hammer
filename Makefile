@@ -274,6 +274,11 @@ endif
 include $(SOC_GENERATOR_ADDON)/vars.mk
 include $(SOC_SIMULATOR_ADDON)/soc-vars.mk
 
+ifeq ($(SOC_TOP),)
+# The name of the top-level RTL module that comes out of the soc generator.
+$(error SOC_GENERATOR needs to set SOC_TOP)
+endif
+
 ifeq ($(OBJ_SOC_RTL_V)$(OBJ_SOC_RTL_VHD),)
 # The name of the top-level RTL Verilog output by the SOC generator.
 $(error SOC_GENERATOR needs to set OBJ_SOC_RTL_V or OBJ_SOC_RTL_VHD)
