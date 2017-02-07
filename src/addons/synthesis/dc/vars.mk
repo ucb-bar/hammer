@@ -72,3 +72,6 @@ endif
 OBJ_SYN_DB_FILES = $(addsuffix .db,$(addprefix $(OBJ_TECH_DIR)/plsi-generetad/db/,$(notdir $(filter %.lib,$(OBJ_MAP_SYN_FILES)))))
 
 OBJ_SYN_SYN_FILES = $(filter-out %.lib,$(OBJ_MAP_SYN_FILES))
+
+# DC compile/compile_ultra arguments
+DC_COMPILE_ARGS ?= -gate_clock

@@ -14,6 +14,7 @@ tlu_max=()
 tf=()
 defines=()
 vh=()
+compile_args=()
 unset find_regs
 unset config
 unset technology
@@ -40,6 +41,7 @@ do
     */find-regs.tcl) find_regs="$1";;
     *.plsi_config.json) config="$1";;
     *.tech.json) technology="$1";;
+    --compile_arg) compile_args+=("$2"); shift;;
     *) echo "Unknown argument $1"; exit 1;;
     esac
     shift
@@ -94,10 +96,8 @@ sed 's/^set DCRM_CONSTRAINTS_INPUT_FILE .*$//' -i $run_dir/rm_setup/dc_setup_fil
 # I don't want to write ICC2 files
 sed 's/^write_icc2_files .*$//' -i $run_dir/rm_dc_scripts/dc.tcl
 
-# FIXME: We aren't licensed for "DC-Extension" so we can't pass "-congestion"
-# or "-spg" to compile_ultra
-find $run_dir -iname "*.tcl" | xargs sed s/'^compile_ultra \(.*\)-congestion\(.*\)'/'compile_ultra \1 \2'/g -i
-find $run_dir -iname "*.tcl" | xargs sed s/'^compile_ultra \(.*\)-spg\(.*\)'/'compile_ultra \1 \2'/g -i
+# Flush compile_ultra arguments and use user specified arguments instead
+find $run_dir -iname "*.tcl" | xargs sed s/'^compile_ultra \(.*\)'/"compile_ultra ${compile_args[*]}"/g -i
 
 # Run a check before compile_utlra, as that gives better messages when
 # something is wrong.
