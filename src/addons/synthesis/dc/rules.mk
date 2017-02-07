@@ -29,7 +29,7 @@ $(OBJ_SYN_DIR)/synopsys-dc.stamp: \
 		$(TECHNOLOGY_JSON) \
 		$(DC_BIN)
 	@mkdir -p $(dir $@)
-	$(SCHEDULER_CMD) --max-threads=16 -- $(abspath $<) --top $(SYN_TOP) --output_dir $(abspath $(dir $@))/synopsys-dc-workdir $(abspath $^)
+	$(SCHEDULER_CMD) --max-threads=16 -- $(abspath $<) --top $(SYN_TOP) --output_dir $(abspath $(dir $@))/synopsys-dc-workdir $(abspath $^) $(foreach arg, $(DC_COMPILE_ARGS), --compile_arg $(arg))
 	date > $@
 
 # FIXME: None of these are DC-specific, so they should probably live somewhere else.
