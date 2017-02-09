@@ -6,7 +6,7 @@
       "par derating": "0ps"
     }
   ],
-  "scenerios": [
+  "scenarios": [
     {
       "corner": {
         "nmos": "typical",

@@ -6,7 +6,7 @@
       "par derating": "250ps"
     }
   ],
-  "scenerios": [
+  "scenarios": [
     {
       "corner": {
         "nmos": "typical",

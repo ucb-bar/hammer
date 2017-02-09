@@ -14,8 +14,8 @@ with open(args.input) as f:
 with open(args.config) as f:
 	config = json.load(f)
 
-if not "scenerios" in config:
-	print("No scenerios provided in PLSI configuration")
+if not "scenarios" in config:
+	print("No scenarios provided in PLSI configuration")
 	exit(1)
 
 of = open(args.output, "w+")
@@ -23,11 +23,11 @@ of = open(args.output, "w+")
 new_libraries = []
 for library in techfile["libraries"]:
 	a_match = False
-	for scenerio in config["scenerios"]:
+	for scenario in config["scenarios"]:
 		matched = True
-		for key in scenerio:
+		for key in scenario:
 			if key in library:
-				if library[key] != scenerio[key]:
+				if library[key] != scenario[key]:
 					matched = False
 		if matched:
 			a_match = True
