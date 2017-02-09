@@ -18,7 +18,7 @@ do
     */Genus_*.tar.gz) raktar="$1";;
     --top) top="$2"; shift;;
     *.v) v+=("$1");;
-    *.syn_config.json) config="$1";;
+    *.plsi_config.json) config="$1";;
     *.lib) libs+=("$1");;
     *.lef) lefs+=("$1");;
     *_Cmin.itf.capTbl) min_cap_table+=("$1");;
