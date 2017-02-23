@@ -1,0 +1,22 @@
+// Format for the pinmap.json file.
+{
+  // Array of all the different pin mappings for this core.
+  // If pin in the top level module is not specified in this mapping, it will
+  // be left disconnected.
+  // The "clock" pin will be automatically connected.
+  // TODO: specify clock options in the future
+  // TODO: implement automatic pin assignment
+  "pinmap": [
+    {
+      "dut_name": "io_x", // The pin name in the generated top-level Verilog file.
+      "pinname": "sw_0", // The pin name in the FPGA (e.g. see arty-master.xdc)
+      "type": "input" // A string of either "input" or "output".
+    },
+    // ...more entries here...
+    {
+      "dut_name": "io_xor",
+      "pinname": "led_2",
+      "type": "output"
+    }
+  ]
+}
