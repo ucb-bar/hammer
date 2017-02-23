@@ -1,0 +1,55 @@
+#!/bin/bash
+
+unset sbt
+unset top_package
+unset sim_top
+unset syn_top
+unset src_dir
+unset out_dir
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    "--sbt") sbt="$2";;
+    "--top-package") top_package="$2";;
+    "--sim-top") sim_top="$2";;
+    "--syn-top") syn_top="$2";;
+    "--srcdir") src_dir="$2";;
+    "--outdir") out_dir="$2";;
+    *) echo "Unknown argumest $1"; exit 1;;
+    esac
+    shift
+    shift
+done
+
+workdir="${out_dir}/workdir"
+
+# Make sure we have a clean folder.
+rm -rf $workdir
+cp -r $src_dir $workdir
+
+mkdir -p $workdir/src/main/scala/plsimain
+cat > $workdir/src/main/scala/plsimain/Main.scala <<EOF
+// Elaborate a desired circuit into FIRRTL.
+package plsimain
+
+import chisel3._
+import java.io.File
+
+import ${top_package}._
+
+object Main extends App {
+  val f = new File("${syn_top}.fir")
+  chisel3.Driver.dumpFirrtl(chisel3.Driver.elaborate(() => new ${syn_top}), Option(f))
+}
+EOF
+
+cd $workdir
+"$sbt" "run-main plsimain.Main"
+
+EXPECTED_OUTPUT_FILE="$workdir/${syn_top}.fir"
+if [ ! -f "$EXPECTED_OUTPUT_FILE" ]; then
+    echo "Design elaboration failed; FIRRTL file not found at ${EXPECTED_OUTPUT_FILE}!"
+    exit 1
+fi
+
+cp "$EXPECTED_OUTPUT_FILE" "$out_dir"/
