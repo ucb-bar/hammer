@@ -12,6 +12,16 @@
       "pinname": "sw_0", // The pin name in the FPGA (e.g. see arty-master.xdc)
       "type": "input" // A string of either "input" or "output".
     },
+    {
+      "dut_name": "io_array",
+      "pinname": [ // We can also connect an array in the top-level Verilog to multiple pins.
+        "pin_0_fpga",
+        "pin_1_fpga",
+        "pin_2_fpga",
+        "pin_3_fpga"
+      ],
+      "type": "output"
+    },
     // ...more entries here...
     {
       "dut_name": "io_xor",
