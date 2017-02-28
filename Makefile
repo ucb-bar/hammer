@@ -655,6 +655,8 @@ $(OBJ_TOOLS_SRC_DIR)/pson/Configfile: $(shell find src/tools/pson -type f)
 $(CMD_FIRRTL_GENERATE_TOP) $(CMD_FIRRTL_GENERATE_HARNESS): $(OBJ_TOOLS_BIN_DIR)/pfpmp/stamp $(CMD_SBT)
 	touch $@
 
+# TODO: bundle firrtl separately, outside $(CORE_DIR). It shouldn't need to
+# depend on rocket-chip.
 $(OBJ_TOOLS_BIN_DIR)/pfpmp/stamp: $(shell find src/tools/pfpmp/src -type f) $(shell find $(CORE_DIR)/firrtl/src -type f)
 	rm -rf $(dir $@)
 	mkdir -p $(dir $@)
