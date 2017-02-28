@@ -22,10 +22,11 @@ endif
 # See pinmap.format.json for the format.
 CORE_CONFIG_VIVADO_PINMAP ?= $(CORE_CONFIG_PROJ_DIR)/pinmap.json
 
-# TODO: fix SIM files and macros
-OBJ_CORE_SIM_FILES = $(CORE_CONFIG_PROJ_DIR)/src/MultiplierHarness.v
-OBJ_CORE_SIM_MACRO_FILES = $(CORE_CONFIG_PROJ_DIR)/src/Multiplier.simulation_macros.v
-OBJ_CORE_MACROS = $(CORE_CONFIG_PROJ_DIR)/src/Multiplier.macros.json
+# TODO: fix SIM files and macros, decide on filenames, etc.
+# Maybe also add checks for existence here for debugging.
+OBJ_CORE_SIM_FILES = $(CORE_CONFIG_PROJ_DIR)/src/$(CORE_TOP)Harness.v
+OBJ_CORE_SIM_MACRO_FILES = $(CORE_CONFIG_PROJ_DIR)/src/$(CORE_TOP).simulation_macros.v
+OBJ_CORE_MACROS = $(CORE_CONFIG_PROJ_DIR)/src/$(CORE_TOP).macros.json
 
 OBJ_CORE_RTL_FIR = $(OBJ_CORE_DIR)/generated/$(CORE_TOP).fir
 OBJ_CORE_RTL_V = $(OBJ_CORE_DIR)/generated/$(CORE_TOP).v
