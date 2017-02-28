@@ -1,0 +1,22 @@
+{
+  "clocks": [
+    {
+      "name": "clock",
+      "period": "1000ps",
+      "par derating": "0ps"
+    }
+  ],
+  "scenarios": [
+    {
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "25 C"
+      },
+      "supplies": {
+        "VDD": "1.05 V",
+        "GND": "0 V"
+      }
+    }
+  ]
+}

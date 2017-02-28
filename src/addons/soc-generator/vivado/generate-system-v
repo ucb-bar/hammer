@@ -1,0 +1,158 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+#  Generate the top-level system.v from a pin mapping and pin database.
+#  Wires up corresponding input and output pins to the top-level module.
+#  See below for arguments.
+#
+#  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+#
+import argparse
+from collections import namedtuple
+import csv
+import json
+import sys
+
+Pin = namedtuple('Pin', 'name type')
+PinmapEntry = namedtuple('PinmapEntry', 'dut_name dut_name_index pinname type') # index = -1 if not part of an array connection
+PinmapArray = namedtuple('PinmapArray', 'dut_name length type') # index = -1 if not part of an array connection
+
+def read_pin_database(filename):
+    pins = {}
+    with open(filename) as f:
+        csvreader = csv.DictReader(f, delimiter=',', quotechar='"')
+        for line in csvreader:
+            if line['Comment?'] != "":
+                continue
+            typ = line['Type']
+            if not (typ == "input" or typ == "output"):
+                raise ValueError("Error: invalid type " + typ)
+            pins[line['Pin name']] = Pin(name=line['Pin name'], type=typ)
+    return pins
+
+def read_pin_map(filename):
+    pinmap = {}
+    pinmap_arrays = []
+    with open(filename) as json_file:
+        json_data = json.load(json_file)
+        for entry in json_data['pinmap']:
+            typ = entry['type']
+            pinname = entry['pinname']
+            if not (typ == "input" or typ == "output"):
+                raise ValueError("Error: invalid type " + typ)
+            if not isinstance(pinname, str): # multiple pinname == array
+                i = 0
+                for pinname_sub in pinname:
+                    if pinname_sub in pinmap:
+                        raise ValueError("Trying to assign pin " + pinname + " twice")
+                    pinmap[pinname_sub] = PinmapEntry(dut_name=entry['dut_name'], dut_name_index=i, pinname=pinname_sub, type=typ)
+                    i += 1
+                assert i > 0
+                pinmap_arrays.append(PinmapArray(dut_name=entry['dut_name'], length=i, type=typ))
+            else:
+                if pinname in pinmap:
+                    raise ValueError("Trying to assign pin " + pinname + " twice")
+                pinmap[pinname] = PinmapEntry(dut_name=entry['dut_name'], pinname=pinname, type=typ, dut_name_index=-1)
+    return pinmap, pinmap_arrays
+
+def main_func(args):
+    top_module = args.top
+
+    pins = read_pin_database(args.database)
+    pinmap, pinmap_arrays = read_pin_map(args.pinmap)
+    print(pinmap)
+    print(pinmap_arrays)
+
+    f = open(args.template, 'r')
+    content = f.readlines()
+    f.close()
+    seen_marker = False
+    before_marker = ""
+    after_marker = ""
+    for line in content:
+        if not seen_marker:
+            if "***PLSI_REPLACE_ME***" in line:
+                seen_marker = True
+            else:
+                before_marker += line
+        else:
+            after_marker += line
+
+    connection_lines = []
+    generated_module = top_module + " dut (\n"
+    pin_entries = []
+    pin_entries.append('.clock(hfclk)') # 65MHz clock. TODO: make this configurable
+
+    # First pre-create the connections for arrays and connect them to the top-level.
+    for arr in pinmap_arrays:
+        if arr.type == "output":
+            connection_lines.append("wire [" + str(arr.length - 1) + ":0] " + arr.dut_name + ";")
+        else:
+            # e.g.
+            # wire dut_1;
+            # wire dut_0;
+            # wire [1:0] dut = {dut_1, dut_0};
+            for i in range(0, arr.length):
+                connection_lines.append("wire " + arr.dut_name + "_" + str(i) + ";")
+            conn_str = "wire [" + str(arr.length - 1) + ":0] " + arr.dut_name + " = {"
+            for i in range(arr.length-1, -1, -1): # count from length-1 to 0 inclusive
+                conn_str += arr.dut_name + "_" + str(i) + ","
+            conn_str += "};"
+            connection_lines.append(conn_str)
+        pin_entries.append('.' + arr.dut_name + '(' + arr.dut_name + ')')
+
+    # Then iterate through all the pins.
+    for pinname in sorted(pins):
+        if pinname not in pinmap:
+            # Unassigned pin, set to zero if output.
+            # Nothing to do if input.
+            if pins[pinname].type == "output":
+                connection_lines.append("assign " + pinname + " = 1'b0;")
+        else:
+            # Assigned pin.
+            # Check for I/O direction mismatch.
+            assert pins[pinname].type == pinmap[pinname].type
+
+            if pinmap[pinname].dut_name_index == -1:
+                # Normal pin, wire it up.
+                pin_entries.append('.' + pinmap[pinname].dut_name + '(' + pinname + ')')
+            else:
+                # Part of an array. Don't wire up directly to the connections but wire to the created array instead.
+                if pins[pinname].type == "output":
+                    # Pin <- Array
+                    connection_lines.append("assign " + pinname + " = " + arr.dut_name + "[" + str(pinmap[pinname].dut_name_index) + "];")
+                else:
+                    # Array <- Pin
+                    connection_lines.append("assign " + arr.dut_name + "_" + str(pinmap[pinname].dut_name_index) + " = " + pinname + ";")
+            del pinmap[pinname]
+    if len(pinmap) > 0:
+        raise ValueError("Some pins in the map were unassigned; please check for typos")
+    generated_module += ",\n".join(pin_entries)
+    generated_module += "\n);"
+
+    connections = "\n".join(connection_lines)
+
+    with open(args.output, "w") as f:
+        f.write("// Automatically generated from:\n")
+        f.write("// " + args.template + "\n")
+        f.write("// " + args.database + "\n")
+        f.write("// " + args.pinmap + "\n")
+        f.write(before_marker)
+        f.write(connections)
+        f.write("\n")
+        f.write(generated_module)
+        f.write("\n")
+        f.write(after_marker)
+
+    return 0
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("-p", "--pinmap", required=True, help="Path to the pinout in the format of pinout.format.json.")
+    parser.add_argument("-d", "--database", required=True, help="Path to the pin database. Format is \"Comment?,Pin name,Type\" (see the csv file itself).")
+    parser.add_argument("-t", "--template", required=True, help="Path to system.template.v.")
+    parser.add_argument("--top", required=True, help="Module name of the top-level module.")
+    parser.add_argument("-o", "--output", required=True, help="Output path to store the generated system.v file.")
+
+    sys.exit(main_func(parser.parse_args()))

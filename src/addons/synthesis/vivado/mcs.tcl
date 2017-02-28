@@ -1,0 +1,14 @@
+# TCL fragment to generate a .mcs (Configuration Memory File) to flash to a
+# FPGA.
+lassign $argv mcsfile bitfile datafile
+
+set_param {messaging.defaultLimit} 1000000
+
+set iface spix4
+set size 16
+set bitaddr 0x0
+
+write_cfgmem -format mcs -interface $iface -size $size \
+  -loadbit "up ${bitaddr} ${bitfile}" \
+  -loaddata [expr {$datafile ne "" ? "up 0x400000 ${datafile}" : ""}] \
+-file $mcsfile -force
