@@ -6,6 +6,7 @@ parser.add_argument("-o", "--output", dest="output", required=True)
 parser.add_argument("-i", "--input", dest="input", required=True)
 args = parser.parse_args()
 
+import sys
 import json
 with open(args.input) as f:
 	techfile = json.load(f)
@@ -15,7 +16,7 @@ of = open(args.output, "w+")
 tech_home = "$(OBJ_TECH_DIR)/extracted"
 extract_stamp = "{0}/plsi-techtar.stamp".format(tech_home)
 
-if "tarballs" not in techfile:
+if "installs" in techfile:
 	# Support technologies that can not be re-extracted
 	for install in techfile["installs"]:
 		install_path = "$({0})".format(install["base var"])
@@ -38,7 +39,7 @@ if "tarballs" not in techfile:
 		# There's one big stamp file for all the extractions
 		of.write("{0}: {1}\n".format(extract_stamp, install_stamp))
 
-else: # We can't currently support both tarballs and an install path
+elif "tarballs" in techfile: # We can't currently support both tarballs and an install path
 	for tarball in techfile["tarballs"]:
 		tarball_path = "$(PLSI_CACHE_DIR)/technology/$(TECHNOLOGY)/{0}".format(tarball["path"])
 		tarball_stamp = "{0}/stamps/{1}.stamp".format(tech_home, tarball["path"])
@@ -73,6 +74,9 @@ else: # We can't currently support both tarballs and an install path
 
 		# There's one big stamp file for all the extractions
 		of.write("{0}: {1}\n".format(extract_stamp, tarball_stamp))
+else:
+		print("No installs nor tarballs specified in techfile")
+		sys.exit(1)
 
 for library in techfile["libraries"]:
 	for kind in ["liberty file", "verilog file", "milkyway lib in dir", "ccs library file", "milkyway techfile", "lef file", "openaccess techfile", "milkyway techfile"]:
