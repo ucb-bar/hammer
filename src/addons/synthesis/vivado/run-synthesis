@@ -1,0 +1,23 @@
+#!/bin/bash
+# Run the Vivado synthesis.
+# Uses the --dcp_macro_dir as the parameter for the SRAM .dcp files.
+# If successful, copies the resulting output to the path specified by the --dcp
+# argument.
+
+workdir_tag="vivado"
+
+script_dir="$(dirname "$0")"
+source "$script_dir/vivado_common.sh"
+
+# TODO: don't hardcode the SRLatch here
+EXTRA_VSRCS="${script_dir}/sifiveblocks-vsrc/SRLatch.v"
+
+cd $workdir
+
+# TODO: fix simulation as well
+EXTRA_VSRCS=$EXTRA_VSRCS $vivado $VIVADOFLAGS -source prologue.tcl -source init.tcl -source syn.tcl
+
+if [ -n "$dcp" ]; then
+    echo "--dcp specified, copying post_synth.dcp";
+    cp $workdir/obj/post_synth.dcp $dcp
+fi

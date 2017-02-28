@@ -1,0 +1,25 @@
+Comment?,Pin name,Type
+Comment,Name of the pin,“input” or “output”
+,sw_0,input
+,sw_1,input
+,sw_2,input
+,sw_3,input
+,led0_b,output
+,led0_g,output
+,led0_r,output
+,led1_b,output
+,led1_g,output
+,led1_r,output
+,led2_b,output
+,led2_g,output
+,led2_r,output
+,led3_b,output
+,led3_g,output
+,led3_r,output
+,btn_0_o,output
+,btn_0_i,input
+,btn_0_oe,output
+,led_0,output
+,led_1,output
+,led_2,output
+,led_3,output
