@@ -5,6 +5,10 @@ ifeq ($(VIVADO_HOME),)
 $(error You must set VIVADO_HOME to be able to run Vivado synthesis)
 endif
 
+ifneq ($(TECHNOLOGY), vivado)
+$(error You must set TECHNOLOGY to "vivado" to be able to run Vivado synthesis)
+endif
+
 VIVADO_BIN = $(VIVADO_HOME)/bin/vivado
 
 VIVADO_FLAGS := \
