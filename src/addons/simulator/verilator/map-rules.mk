@@ -6,5 +6,5 @@ ifeq ($(filter $(MAKECMDGOALS),clean distclean),)
 -include $(OBJ_MAP_DIR)/verilator-rules.mk
 $(OBJ_MAP_DIR)/verilator-rules.mk: $(MAP_SIMULATOR_ADDON)/tools/generate-rules
 	mkdir -p $(dir $@)
-	$< --output $@ --upper MAP --lower map --vtype MAPPED
+	$< --output $@ --upper MAP --lower map --vtype RTL
 endif
