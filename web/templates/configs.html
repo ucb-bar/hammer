@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+{% block title %}Configurations{% endblock %}
+{% block body %}
+<p><a href="/configs/new">+ Add new configuration</a></p>
+
+<table class="table table-responsive table-hover">
+  <thead>
+    <tr>
+      <th>Configuration</th>
+      <th>CORE_TOP (top module name)</th>
+      <th>CORE_SIM_TOP (top sim module name)</th>
+      <th>CORE_CONFIG_TOP_PACKAGE (top module package)</th>
+      <th>Edit</th>
+    </tr>
+  </thead>
+  <tbody>
+
+{% for config in configs %}
+<tr>
+  <td>{{ config.name }}</td>
+  <td>{{ config.CORE_TOP }}</td>
+  <td>{{ config.CORE_SIM_TOP }}</td>
+  <td>{{ config.CORE_CONFIG_TOP_PACKAGE }}</td>
+  <td><a href="/configs/edit/{{ config.config_id }}" style="font-size:20px;">&#x270D;</a></td>
+</tr>
+{% endfor %}
+
+  </tbody>
+</table>
+{% endblock %}

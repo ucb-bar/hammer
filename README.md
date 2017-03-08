@@ -203,6 +203,11 @@ be too difficult to use.  Instead of writing Makefile fragments, technologies
 are now described using JSON files.  Examples of technology JSON files can be
 found in src/technologies.
 
+# Web Interface
+
+There is an alpha web interface to PLSI under the web/ folder. See the README.txt
+under web/ for more details.
+
 # Bug Reports
 
 To submit a bug report, run something like
