@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+{% block title %}Runs{% endblock %}
+{% block body %}
+<table class="table table-responsive table-hover">
+  <thead>
+    <tr>
+      <th>Time</th>
+      <th>Configuration</th>
+      <th>Files</th>
+      <th>Logs</th>
+      <th>Finished?</th>
+    </tr>
+  </thead>
+  <tbody>
+
+{% for run in runs %}
+<tr>
+  <td>{{ run.time }}</td>
+  <td>{{ run.config }}</td>
+  <td>
+    {% if run.finished %}
+      {% if run.system_bit() is not none %}<a href="/runs/bit/{{ run.identifier }}">.bit file</a>{% else %}<del>.bit file</del>{% endif %} | {% if run.system_mcs() is not none %}<a href="/runs/mcs/{{ run.identifier }}">.mcs file</a>{% else %}<del>.mcs file</del>{% endif %}
+    {% endif %}
+  </td>
+  <td><a href="">Status</a> | <a href="/runs/logs/{{ run.identifier }}">Full logs</a></td>
+  <td>{% if run.finished %}&#x2714;{% else %} Running <img src="{{ url_for('static', filename='loading.gif') }}" /> {% endif %}</td>
+</tr>
+{% endfor %}
+
+  </tbody>
+</table>
+
+<p>Start a new run:</p>
+<form class="form-horizontal" method="post" action="/runs/start">
+  <div class="form-group">
+    <label class="col-sm-2 control-label" for="configSelect">Configuration</label>
+    <div class="col-sm-4">
+      <select class="form-control col-sm-4" id="configSelect" name="config_id">
+        {% for config in config_names %}
+        <option value="{{ config.config_id }}">{{ config.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </div>
+</form>
+
+{% endblock %}
