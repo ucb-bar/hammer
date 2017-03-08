@@ -1,0 +1,158 @@
+{% extends "layout.html" %}
+{% block title %}{% if is_new %}Add{% else %}Edit{% endif %} Configuration{% endblock %}
+{% block body %}
+<script>
+function createNotifyWithHide(text, type) {
+  // http://stackoverflow.com/questions/20109666/notifyjs-hide-notification-from-elsewhere
+  // Trigger a notification
+  $.notify(text, {
+    clickToHide: false,
+    autoHide: false,
+    className: type
+  });
+
+  // Find the container for all notifications
+  var dnotify = $('.notifyjs-corner');
+
+  // Find the notification we just created and save a reference to it
+  var dnote = dnotify.children().first();
+
+  var remove_dnote_func = function () {
+    // trigger the custom event provided by notify
+    dnote.trigger('notify-hide');
+  }
+
+  return remove_dnote_func;
+}
+
+// url = e.g. "/configs/refresh/id"
+// action = e.g. "refreshing the repo"
+function asyncNotifyOperation(url, action) {
+  var hideFunc = createNotifyWithHide("Currently " + action + " ...", "info");
+  $.get(url)
+  .done(function(data) {
+    hideFunc();
+    console.log(data);
+    $.notify("Succeeded in " + action + "!", {
+      clickToHide: true,
+      autoHide: false,
+      className: "success"
+    });
+  })
+  .fail(function(data) {
+    console.log(data);
+    hideFunc();
+    $.notify("Error " + action + ": " + data.responseText, {
+      clickToHide: true,
+      autoHide: false,
+      className: "error"
+    });
+  });
+}
+
+function sanitize(str) {
+  return $('<div/>').text(str).html();
+}
+
+function setSimAsCoreTop() {
+  $("#configCoreSimTop").val($("#configCoreTop").val());
+}
+
+function refresh() {
+  asyncNotifyOperation("/configs/refresh/{{ config.config_id }}", "refreshing the repo");
+}
+
+function recreate_confirm() {
+  if (confirm("Really recreate the repo? This may take a long time.")) { 
+    recreate();
+  }
+}
+
+function recreate() {
+  asyncNotifyOperation("/configs/recreate/{{ config.config_id }}", "recreating the repo");
+}
+
+function checkout_confirm() {
+  var rev = prompt("Please enter the git revision in the current branch to checkout.", "");
+  if (rev != null && rev != "") {
+    checkout(sanitize(rev));
+  }
+}
+
+function checkout(rev) {
+  asyncNotifyOperation("/configs/checkout/{{ config.config_id }}/" + rev, "checking out revision " + rev);
+}
+
+</script>
+<div class="row">
+  <div class="col-md-6">
+    <form class="row" method="post" action="{{ request.path }}">
+      <div class="form-group">
+        <label class="control-label" for="configName">Configuration name</label>
+        <input type="text" class="form-control" id="configName" name="config_name" value="{{ config.name }}" />
+      </div>
+      <div class="form-group">
+        <label class="control-label" for="configCoreTop"><abbr title="CORE_TOP">Synthesis top-level module name</abbr></label>
+        <input type="text" class="form-control" id="configCoreTop" name="config_CORE_TOP" value="{{ config.CORE_TOP }}" />
+        <small class="form-text text-muted">For example: if the synthesis top-level module is test.main.MainTop, then enter <b>MainTop</b>.</small>
+      </div>
+      <div class="form-group">
+        <label class="control-label" for="configCoreSimTop"><abbr title="CORE_SIM_TOP">Simulation top-level module name</a></label>
+        <input type="text" class="form-control" id="configCoreSimTop" name="config_CORE_SIM_TOP" value="{{ config.CORE_SIM_TOP }}" />
+        <small class="form-text text-muted">If in doubt, make this the <a href="javascript:setSimAsCoreTop()">same</a> as the synthesis top-level module name.</small>
+      </div>
+      <div class="form-group">
+        <label class="control-label" for="configCoreConfigTopPackage">Top-level module package</label>
+        <input type="text" class="form-control" id="configCoreConfigTopPackage" name="config_CORE_CONFIG_TOP_PACKAGE" value="{{ config.CORE_CONFIG_TOP_PACKAGE }}" />
+        <small class="form-text text-muted">For example: if the synthesis top-level module is test.main.MainTop, then enter <b>test.main</b>.</small>
+      </div>
+      <div class="form-group">
+        <label class="control-label" for="configGitRepo">Git repo URL for this configuration</label>
+        <input type="text" class="form-control" id="configGitRepo" name="config_git_repo" value="{{ config.git_repo }}" />
+        <small class="form-text text-muted">For example: git@github.com:edwardcwang/microdemo.git</small>
+      </div>
+      <div class="form-group">
+        <label class="control-label" for="configGitBranch">Git branch name (default: master)</label>
+        <input type="text" class="form-control" id="configGitBranch" name="config_git_branch" value="{{ config.git_branch }}" />
+      </div>
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+  </div>
+  <div class="col-md-6">
+    {% if not is_new %}
+    <h2>Repo status and tools</h2>
+    <table class="table table-responsive">
+      <tr>
+        <th>Git status</th>
+        <td>{% if config.is_valid() %}<strong class="text-success">Valid</strong>{% else %}<strong class="text-danger">Invalid</strong>{% endif %}</td>
+      </tr>
+      <tr>
+        <th>Git branch (actual)</th>
+        <td>{% if config.is_valid() %}{{ config.git_branch_actual() }}{% else %}Invalid{% endif %}</td>
+      </tr>
+      <tr>
+        <th>Git branch (config)</th>
+        <td>{{ config.git_branch }}</td>
+      </tr>
+      <tr>
+        <th>Git revision</th>
+        <td>{% if config.is_valid() %}{{ config.git_revision() }}{% endif %}</td>
+      </tr>
+      <tr>
+        <th>Git repo directory</th>
+        <td>{{ config.repodir() }}</td>
+      </tr>
+      <tr>
+        <th>Tools</th>
+        <td><a href="javascript:refresh()">Refresh git repo</a> | <a href="javascript:checkout_confirm()">Checkout specific revision</a></td>
+      </tr>
+      <tr>
+        <th>Advanced tools</th>
+        <td><a href="javascript:recreate_confirm()" class="text-danger"w>Recreate git repo &#x26a0;</a> (use in case of catastrophic error)</td>
+      </tr>
+    </table>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
