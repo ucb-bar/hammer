@@ -38,9 +38,12 @@ def read_pin_map(filename):
         for entry in json_data['pinmap']:
             typ = entry['type']
             pinname = entry['pinname']
-            if not (typ == "input" or typ == "output"):
+            if not (typ == "input" or typ == "output" or typ == "inout"):
                 raise ValueError("Error: invalid type " + typ)
             if not isinstance(pinname, str): # multiple pinname == array
+                if typ == "inout":
+                    raise ValueError("Array inout not implemented, yet")
+
                 i = 0
                 for pinname_sub in pinname:
                     if pinname_sub in pinmap:
@@ -50,9 +53,18 @@ def read_pin_map(filename):
                 assert i > 0
                 pinmap_arrays.append(PinmapArray(dut_name=entry['dut_name'], length=i, type=typ))
             else:
-                if pinname in pinmap:
-                    raise ValueError("Trying to assign pin " + pinname + " twice")
-                pinmap[pinname] = PinmapEntry(dut_name=entry['dut_name'], pinname=pinname, type=typ, dut_name_index=-1)
+                if typ != "inout":
+                    if pinname in pinmap:
+                        raise ValueError("Trying to assign pin " + pinname + " twice")
+                    pinmap[pinname] = PinmapEntry(dut_name=entry['dut_name'], pinname=pinname, type=typ, dut_name_index=-1)
+                else:
+                    # Handle inout. See pinmap.format.json.
+                    for sub_dut, sub_pin, sub_type in (("_input", "_o", "input"), ("_output", "_i", "output"), ("_output_enable", "_oe", "output")):
+                        sub_pinname = pinname + sub_pin
+                        sub_dutname = entry['dut_name'] + sub_dut
+                        if sub_pinname in pinmap:
+                            raise ValueError("Trying to assign pin " + sub_pinname + " twice")
+                        pinmap[sub_pinname] = PinmapEntry(dut_name=sub_dutname, pinname=sub_pinname, type=sub_type, dut_name_index=-1)
     return pinmap, pinmap_arrays
 
 def main_func(args):
