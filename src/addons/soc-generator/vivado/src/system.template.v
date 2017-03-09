@@ -37,16 +37,7 @@ module system
   inout wire btn_2,
   inout wire btn_3,
 
-  // Dedicated QSPI interface
-  output wire qspi_cs,
-  output wire qspi_sck,
-  inout wire [3:0] qspi_dq,
-
-  // UART0 (GPIO 16,17)
-  output wire uart_rxd_out,
-  input wire uart_txd_in,
-
-  // UART1 (GPIO 24,25) (not present on 48-pin)
+  // Pmod (GPIO) connectors
   inout wire ja_0,
   inout wire ja_1,
   inout wire ja_2,
@@ -55,6 +46,15 @@ module system
   inout wire ja_5,
   inout wire ja_6,
   inout wire ja_7,
+
+  // Dedicated QSPI interface
+  output wire qspi_cs,
+  output wire qspi_sck,
+  inout wire [3:0] qspi_dq,
+
+  // UART0 (GPIO 16,17)
+  output wire uart_rxd_out,
+  input wire uart_txd_in,
 
   // Arduino (aka chipkit) shield digital IO pins, 14 is not connected to the
   // chip, used for debug.
@@ -500,6 +500,25 @@ module system
     .T(~btn_3_oe)
   );
 
+  wire ja_0_o;
+  wire ja_0_io;
+  wire ja_0_i;
+  wire ja_0_oe;
+  IOBUF
+  #(
+    .DRIVE(12),
+    .IBUF_LOW_PWR("TRUE"),
+    .IOSTANDARD("DEFAULT"),
+    .SLEW("SLOW")
+  )
+  IOBUF_gpio_ja_0
+  (
+    .O(ja_0_o),
+    .IO(ja_0_io),
+    .I(ja_0_i),
+    .T(~ja_0_oe)
+  );
+
   wire ja_1_o;
   wire ja_1_io;
   wire ja_1_i;
@@ -517,6 +536,120 @@ module system
     .IO(ja_1_io),
     .I(ja_1_i),
     .T(~ja_1_oe)
+  );
+
+  wire ja_2_o;
+  wire ja_2_io;
+  wire ja_2_i;
+  wire ja_2_oe;
+  IOBUF
+  #(
+    .DRIVE(12),
+    .IBUF_LOW_PWR("TRUE"),
+    .IOSTANDARD("DEFAULT"),
+    .SLEW("SLOW")
+  )
+  IOBUF_gpio_ja_2
+  (
+    .O(ja_2_o),
+    .IO(ja_2_io),
+    .I(ja_2_i),
+    .T(~ja_2_oe)
+  );
+
+  wire ja_3_o;
+  wire ja_3_io;
+  wire ja_3_i;
+  wire ja_3_oe;
+  IOBUF
+  #(
+    .DRIVE(12),
+    .IBUF_LOW_PWR("TRUE"),
+    .IOSTANDARD("DEFAULT"),
+    .SLEW("SLOW")
+  )
+  IOBUF_gpio_ja_3
+  (
+    .O(ja_3_o),
+    .IO(ja_3_io),
+    .I(ja_3_i),
+    .T(~ja_3_oe)
+  );
+
+  wire ja_4_o;
+  wire ja_4_io;
+  wire ja_4_i;
+  wire ja_4_oe;
+  IOBUF
+  #(
+    .DRIVE(12),
+    .IBUF_LOW_PWR("TRUE"),
+    .IOSTANDARD("DEFAULT"),
+    .SLEW("SLOW")
+  )
+  IOBUF_gpio_ja_4
+  (
+    .O(ja_4_o),
+    .IO(ja_4_io),
+    .I(ja_4_i),
+    .T(~ja_4_oe)
+  );
+
+  wire ja_5_o;
+  wire ja_5_io;
+  wire ja_5_i;
+  wire ja_5_oe;
+  IOBUF
+  #(
+    .DRIVE(12),
+    .IBUF_LOW_PWR("TRUE"),
+    .IOSTANDARD("DEFAULT"),
+    .SLEW("SLOW")
+  )
+  IOBUF_gpio_ja_5
+  (
+    .O(ja_5_o),
+    .IO(ja_5_io),
+    .I(ja_5_i),
+    .T(~ja_5_oe)
+  );
+
+  wire ja_6_o;
+  wire ja_6_io;
+  wire ja_6_i;
+  wire ja_6_oe;
+  IOBUF
+  #(
+    .DRIVE(12),
+    .IBUF_LOW_PWR("TRUE"),
+    .IOSTANDARD("DEFAULT"),
+    .SLEW("SLOW")
+  )
+  IOBUF_gpio_ja_6
+  (
+    .O(ja_6_o),
+    .IO(ja_6_io),
+    .I(ja_6_i),
+    .T(~ja_6_oe)
+  );
+
+  wire ja_7_o;
+  wire ja_7_io;
+  wire ja_7_i;
+  wire ja_7_oe;
+  IOBUF
+  #(
+    .DRIVE(12),
+    .IBUF_LOW_PWR("TRUE"),
+    .IOSTANDARD("DEFAULT"),
+    .SLEW("SLOW")
+  )
+  IOBUF_gpio_ja_7
+  (
+    .O(ja_7_o),
+    .IO(ja_7_io),
+    .I(ja_7_i),
+    .T(~ja_7_oe)
   );
 
   wire gpio_0;
@@ -1126,8 +1259,14 @@ module system
   assign btn_1 = gpio_30;
   assign btn_2 = gpio_31;
 
-  assign ja_0 = gpio_25;
+  assign ja_0 = ja_0_io;
   assign ja_1 = ja_1_io;
+  assign ja_2 = ja_2_io;
+  assign ja_3 = ja_3_io;
+  assign ja_4 = ja_4_io;
+  assign ja_5 = ja_5_io;
+  assign ja_6 = ja_6_io;
+  assign ja_7 = ja_7_io;
 
   // SPI2 pins mapped to 6 pin ICSP connector (standard on later arduinos)
   // These are connected to some extra GPIO pads not connected on the HiFive1
