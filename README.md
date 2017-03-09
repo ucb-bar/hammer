@@ -11,8 +11,9 @@ The whole PLSI build process is driven by a single top-level Makefile.  To
 build a PLSI-based project, you simply obtain the sources and run make.
 
 ````
-$ git clone git://github.com/palmer-dabbelt/plsi.git
+$ git clone git@github.com:ucb-bar/plsi.git
 $ cd plsi
+$ git checkout master
 $ git submodule update --init --recursive
 $ make
 ````
@@ -25,6 +26,16 @@ be interested in.  For example, to get top-level Verilog for the SOC step, run
 ````
 make soc-verilog
 ````
+
+You can check that all your variables were set correctly without actually
+executing any steps of the flow by running:
+
+````
+make makefrags
+````
+
+The command above will return an error message if you did not set all your
+variables correctly.
 
 # Using PLSI
 
