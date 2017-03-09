@@ -419,6 +419,13 @@ def runs_start():
     f.write(("# This is the automatically generated log of the run " + identifier + ".\n").encode())
     f.write(("# Command line executed: " + ' '.join(args) + "\n").encode())
     def create_and_wait_for_process():
+        # Remove the existing folder to rebuild the .v file.
+        try:
+            shutil.rmtree(app.config['PLSI_DIR'] + "/" + "obj/core-chisel-" + config_name)
+        except FileNotFoundError:
+            # It's okay if it doesn't exist yet.
+            pass
+
         process = subprocess.Popen(args, cwd=app.config['PLSI_DIR'], stdin=subprocess.PIPE, stdout=f, stderr=f)
         RuntimeState.run_objects[identifier] = process
         process.wait()
