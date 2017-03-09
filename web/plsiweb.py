@@ -369,6 +369,11 @@ def configs_recreate(config_id):
 @app.route("/configs/refresh/<config_id>")
 def configs_refresh(config_id):
     selected_config = CompileConfig.get(CompileConfig.config_id == config_id)
+    if not selected_config.is_valid():
+        # Try recreating it if there is no valid dir (e.g. new configuration).
+        success, msg = selected_config.recreate()
+        if not success:
+            return msg, 400
     success, msg = selected_config.refresh()
     return msg, 200 if success else 400
 
