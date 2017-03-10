@@ -444,8 +444,8 @@ def runs_start():
     def callback(future):
         del RuntimeState.run_objects[identifier]
     pool = Pool(max_workers=1)
-    f = pool.submit(create_and_wait_for_process)
-    f.add_done_callback(callback)
+    future_obj = pool.submit(create_and_wait_for_process)
+    future_obj.add_done_callback(callback)
     flash("New run added to queue!")
     return redirect(url_for('runs_list'))
 
