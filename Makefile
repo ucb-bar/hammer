@@ -110,6 +110,9 @@ TRACE_PAR_DIR = trace/par-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHN
 SIGNOFF_SYN_FORMAL_DIR = check/formal/syn-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(TECHNOLOGY)-$(MAP_CONFIG)-$(SYN_CONFIG)
 SIGNOFF_SYN_POWER_DIR = check/power/syn-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)-$(MAP_CONFIG)-$(SYN_CONFIG)
 
+# Define the location of FIRRTL (used by barstools, etc).
+FIRRTL_HOME ?= src/tools/firrtl
+
 CMD_PTEST = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/ptest
 CMD_PCONFIGURE = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/pconfigure
 CMD_PPKGCONFIG = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/ppkg-config
@@ -655,13 +658,11 @@ $(OBJ_TOOLS_SRC_DIR)/pson/Configfile: $(shell find src/tools/pson -type f)
 $(CMD_FIRRTL_GENERATE_TOP) $(CMD_FIRRTL_GENERATE_HARNESS): $(OBJ_TOOLS_BIN_DIR)/pfpmp/stamp $(CMD_SBT)
 	touch $@
 
-# TODO: bundle firrtl separately, outside $(CORE_DIR). It shouldn't need to
-# depend on rocket-chip.
-$(OBJ_TOOLS_BIN_DIR)/pfpmp/stamp: $(shell find src/tools/pfpmp/src -type f) $(shell find $(CORE_DIR)/firrtl/src -type f)
+$(OBJ_TOOLS_BIN_DIR)/pfpmp/stamp: $(shell find src/tools/pfpmp/src -type f) $(shell find $(FIRRTL_HOME)/src -type f)
 	rm -rf $(dir $@)
 	mkdir -p $(dir $@)
 	rsync -a --delete src/tools/pfpmp/ $(dir $@)
-	$(SCHEDULER_CMD) --make -- $(MAKE) FIRRTL_HOME=$(abspath $(CORE_DIR)/firrtl) CMD_SBT=$(abspath $(CMD_SBT)) -C $(dir $@)
+	$(SCHEDULER_CMD) --make -- $(MAKE) FIRRTL_HOME=$(abspath $(FIRRTL_HOME)) CMD_SBT=$(abspath $(CMD_SBT)) -C $(dir $@)
 	date > $@
 
 # Some machines don't have python3, but I want it everywhere.
