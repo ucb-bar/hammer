@@ -1,0 +1,64 @@
+#!/bin/bash
+
+unset output
+unset base_dir
+unset main
+unset sbt
+unset project
+unset sbtargs; sbtargs="" # set a blank default
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    --output) output="$2"; shift;;
+    --basedir) base_dir="$2"; shift;;
+    --main) main="$2"; shift;;
+    --sbt) sbt="$2"; shift;;
+    --project) project="$2"; shift;;
+    --sbtargs) sbtargs="$2"; shift;;
+    *) echo "Unknown argument $1"; exit 1;;
+    esac
+    shift
+done
+
+if [[ "$output" == "" ]]
+then
+    echo "provide --output"
+    exit 2
+fi
+
+if [[ "$base_dir" == "" ]]
+then
+    echo "provide --basedir"
+    exit 2
+fi
+
+if [[ "$main" == "" ]]
+then
+    echo "provide --main"
+    exit 2
+fi
+
+if [[ "$sbt" == "" ]]
+then
+    echo "provide --sbt"
+    exit 2
+fi
+
+# Optionally switch into an sbt sub-project if called for.
+if [[ -z "$project" ]]
+then
+    project_str=""
+else
+    project_str="\"project ${project}\""
+fi
+
+cat >$output <<EOF
+#!/bin/bash
+
+set -x
+
+cd "${base_dir}"
+true | ${sbt} ${sbtargs} ${project_str} "run-main ${main} \$*"
+EOF
+chmod +x $output
+
