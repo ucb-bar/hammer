@@ -124,8 +124,8 @@ CMD_SBT = $(OBJ_TOOLS_BIN_DIR)/sbt/sbt
 CMD_GCC = $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/bin/gcc
 CMD_GXX = $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/bin/g++
 CMD_PSON2JSON = $(OBJ_TOOLS_BIN_DIR)/pson/bin/pson2json
-CMD_FIRRTL_GENERATE_TOP = $(OBJ_TOOLS_BIN_DIR)/pfpmp/bin/GenerateTop
-CMD_FIRRTL_GENERATE_HARNESS = $(OBJ_TOOLS_BIN_DIR)/pfpmp/bin/GenerateHarness
+CMD_FIRRTL_GENERATE_TOP = $(OBJ_TOOLS_BIN_DIR)/barstools/bin/GenerateTop
+CMD_FIRRTL_GENERATE_HARNESS = $(OBJ_TOOLS_BIN_DIR)/barstools/bin/GenerateHarness
 CMD_PYTHON3 = $(OBJ_TOOLS_BIN_DIR)/python3-$(PYTHON3_VERSION)/bin/python3
 
 PKG_CONFIG_PATH=$(abspath $(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/lib/pkgconfig):$(abspath $(OBJ_TOOLS_BIN_DIR)/pconfigure/lib/pkgconfig):$(abspath $(OBJ_TOOLS_BIN_DIR)/pson/lib/pkgconfig)
@@ -654,15 +654,16 @@ $(OBJ_TOOLS_SRC_DIR)/pson/Configfile: $(shell find src/tools/pson -type f)
 	rsync -a --delete src/tools/pson/ $(dir $@)
 	touch $@
 
-# PFPMP is my collection of FIRRTL passes.
-$(CMD_FIRRTL_GENERATE_TOP) $(CMD_FIRRTL_GENERATE_HARNESS): $(OBJ_TOOLS_BIN_DIR)/pfpmp/stamp $(CMD_SBT)
-	touch $@
+# barstools contains firrtl utilities useful for tapeout, like GenerateTop and
+# GenerateHarness.
+$(OBJ_TOOLS_BIN_DIR)/barstools/bin/%: src/tools/generate-sbt-wrapper $(OBJ_TOOLS_BIN_DIR)/barstools/stamp $(CMD_SBT)
+	@mkdir -p $(dir $@)
+	$< --sbt $(abspath $(CMD_SBT)) --project tapeout --sbtargs "-DFIRRTL_HOME=$(abspath $(FIRRTL_HOME))" --basedir $(abspath $(OBJ_TOOLS_BIN_DIR)/barstools) --main "barstools.tapeout.transforms.$(notdir $@)" --output $@
 
-$(OBJ_TOOLS_BIN_DIR)/pfpmp/stamp: $(shell find src/tools/pfpmp/src -type f) $(shell find $(FIRRTL_HOME)/src -type f)
+$(OBJ_TOOLS_BIN_DIR)/barstools/stamp: $(shell find src/tools/barstools/tapeout -type f) $(shell find $(FIRRTL_HOME)/src -type f)
 	rm -rf $(dir $@)
 	mkdir -p $(dir $@)
-	rsync -a --delete src/tools/pfpmp/ $(dir $@)
-	$(SCHEDULER_CMD) --make -- $(MAKE) FIRRTL_HOME=$(abspath $(FIRRTL_HOME)) CMD_SBT=$(abspath $(CMD_SBT)) -C $(dir $@)
+	rsync -a --delete src/tools/barstools/ $(dir $@)
 	date > $@
 
 # Some machines don't have python3, but I want it everywhere.
