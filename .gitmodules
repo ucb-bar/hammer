@@ -11,9 +11,6 @@
 [submodule "src/tools/pson"]
 	path = src/tools/pson
 	url = git://github.com/palmer-dabbelt/pson.git
-[submodule "src/tools/pfpmp"]
-	path = src/tools/pfpmp
-	url = git://github.com/palmer-dabbelt/pfpmp.git
 [submodule "src/addons/core-generator/rocketchip/rocket-chip"]
 	path = src/addons/core-generator/rocketchip/rocket-chip
 	url = git://github.com/ucb-bar/rocket-chip.git
