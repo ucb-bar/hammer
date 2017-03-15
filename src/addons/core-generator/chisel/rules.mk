@@ -13,7 +13,7 @@ $(OBJ_CORE_RTL_FIR): \
 $(OBJ_CORE_RTL_V) $(OBJ_CORE_CHISEL_MEM_CONFIG): \
 		$(CMD_FIRRTL_GENERATE_TOP) \
 		$(OBJ_CORE_RTL_FIR)
-	$(SCHEDULER_CMD) --max-threads=1 -- $< -i $(abspath $(filter %.fir,$^)) -o $(abspath $@) --syn-top $(CORE_TOP) --harness-top $(CORE_SIM_TOP) --seq-mem-flags "-o:$(abspath $(OBJ_CORE_CHISEL_MEM_CONFIG))"
+	$(SCHEDULER_CMD) --max-threads=1 -- $< -i $(abspath $(filter %.fir,$^)) -o $(abspath $(OBJ_CORE_RTL_V)) --syn-top $(CORE_TOP) --harness-top $(CORE_SIM_TOP) --seq-mem-flags "-o:$(abspath $(OBJ_CORE_CHISEL_MEM_CONFIG))"
 
 # Generate the PLSI macros file using the generated memories config from FIRRTL.
 $(OBJ_CORE_MACROS): \
