@@ -89,7 +89,11 @@ def main(args):
     json_objs = []
 
     for line in lines:
-        json_objs.append(memToJSON(parseLine(line)))
+        mem = parseLine(line)
+        if mem is None:
+            print('Failed to parse line "' + line + '" in ' + args.macros)
+            return 1
+        json_objs.append(memToJSON(mem))
 
     json_str = json.dumps(json_objs, sort_keys=True, indent=4)
     try:
