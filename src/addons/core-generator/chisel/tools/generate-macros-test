@@ -1,0 +1,135 @@
+#!/usr/bin/env python3
+# Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+# -*- coding: utf-8 -*-
+#
+#  generate-macros-test
+
+import json
+import os
+import unittest
+
+from importlib.machinery import SourceFileLoader
+
+g = SourceFileLoader("generate-macros", os.path.dirname(os.path.realpath(__file__)) + "/generate-macros").load_module()
+
+class TestGenerateMacros(unittest.TestCase):
+    def test_rw(self):
+        gen_mem = g.parseLine('name test_1234 depth 4096 width 64 ports rw')
+        self.assertEqual(gen_mem, g.Mem(name='test_1234', depth=4096, width=64, ports=['rw'], mask_gran=None))
+        gen_json = g.memToJSON(gen_mem)
+        correct_json = json.loads(r"""
+{
+    "type": "sram",
+    "name": "test_1234",
+    "depth": 4096,
+    "width": 64,
+    "ports": [
+        {
+            "clock port name": "RW0_clk",
+            "output port name": "RW0_rdata",
+            "input port name": "RW0_wdata",
+            "address port name": "RW0_addr",
+            "chip enable port name": "RW0_en",
+            "write enable port name": "RW0_wmode"
+        }
+    ]
+}
+        """)
+        self.assertEqual(gen_json, correct_json)
+
+    def test_mrw(self):
+        gen_mem = g.parseLine('name meow888 depth 4096 width 32 ports mrw mask_gran 8')
+        self.assertEqual(gen_mem, g.Mem(name='meow888', depth=4096, width=32, ports=['mrw'], mask_gran=8))
+        gen_json = g.memToJSON(gen_mem)
+        correct_json = json.loads(r"""
+{
+    "type": "sram",
+    "name": "meow888",
+    "depth": 4096,
+    "width": 32,
+    "ports": [
+        {
+            "clock port name": "RW0_clk",
+            "mask granularity": 8,
+            "output port name": "RW0_rdata",
+            "input port name": "RW0_wdata",
+            "address port name": "RW0_addr",
+            "mask port name": "RW0_wmask",
+            "chip enable port name": "RW0_en",
+            "write enable port name": "RW0_wmode"
+        }
+    ]
+}
+        """)
+        self.assertEqual(gen_json, correct_json)
+
+    def test_write(self):
+        gen_mem = g.parseLine('name write_test_234 depth 1024 width 32 ports write')
+        self.assertEqual(gen_mem, g.Mem(name='write_test_234', depth=1024, width=32, ports=['write'], mask_gran=None))
+        gen_json = g.memToJSON(gen_mem)
+        correct_json = json.loads(r"""
+{
+    "type": "sram",
+    "name": "write_test_234",
+    "depth": 1024,
+    "width": 32,
+    "ports": [
+        {
+            "clock port name": "W0_clk",
+            "input port name": "W0_data",
+            "address port name": "W0_addr",
+            "chip enable port name": "W0_en"
+        }
+    ]
+}
+        """)
+        self.assertEqual(gen_json, correct_json)
+
+    def test_mwrite(self):
+        gen_mem = g.parseLine('name mwrite_test_234 depth 1024 width 32 ports mwrite mask_gran 8')
+        self.assertEqual(gen_mem, g.Mem(name='mwrite_test_234', depth=1024, width=32, ports=['mwrite'], mask_gran=8))
+        gen_json = g.memToJSON(gen_mem)
+        correct_json = json.loads(r"""
+{
+    "type": "sram",
+    "name": "mwrite_test_234",
+    "depth": 1024,
+    "width": 32,
+    "ports": [
+        {
+            "clock port name": "W0_clk",
+            "mask granularity": 8,
+            "input port name": "W0_data",
+            "address port name": "W0_addr",
+            "chip enable port name": "W0_en",
+            "mask port name": "W0_mask"
+        }
+    ]
+}
+        """)
+        self.assertEqual(gen_json, correct_json)
+
+    def test_read(self):
+        gen_mem = g.parseLine('name read_test_234 depth 8192 width 128 ports read')
+        self.assertEqual(gen_mem, g.Mem(name='read_test_234', depth=8192, width=128, ports=['read'], mask_gran=None))
+        gen_json = g.memToJSON(gen_mem)
+        correct_json = json.loads(r"""
+{
+    "type": "sram",
+    "name": "read_test_234",
+    "depth": 8192,
+    "width": 128,
+    "ports": [
+        {
+            "clock port name": "R0_clk",
+            "output port name": "R0_data",
+            "address port name": "R0_addr",
+            "chip enable port name": "R0_en"
+        }
+    ]
+}
+        """)
+        self.assertEqual(gen_json, correct_json)
+
+if __name__ == '__main__':
+    unittest.main()
