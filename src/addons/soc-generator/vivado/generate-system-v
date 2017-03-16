@@ -132,10 +132,10 @@ def main_func(args):
                 # Part of an array. Don't wire up directly to the connections but wire to the created array instead.
                 if pins[pinname].type == "output":
                     # Pin <- Array
-                    connection_lines.append("assign " + pinname + " = " + arr.dut_name + "[" + str(pinmap[pinname].dut_name_index) + "];")
+                    connection_lines.append("assign " + pinname + " = " + pinmap[pinname].dut_name + "[" + str(pinmap[pinname].dut_name_index) + "];")
                 else:
                     # Array <- Pin
-                    connection_lines.append("assign " + arr.dut_name + "_" + str(pinmap[pinname].dut_name_index) + " = " + pinname + ";")
+                    connection_lines.append("assign " + pinmap[pinname].dut_name + "_" + str(pinmap[pinname].dut_name_index) + " = " + pinname + ";")
             del pinmap[pinname]
     if len(pinmap) > 0:
         raise ValueError("Some pins in the map were unassigned; please check for typos")
