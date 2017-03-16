@@ -1250,14 +1250,10 @@ module system
   assign ck_io[18] = gpio_12; // A4 = PWM2(2) / SDA
   assign ck_io[19] = gpio_13; // A5 = PWM2(3) / SCL
 
-  // Only 19 out of 20 shield pins connected to GPIO pads
-  // Shield pin A5 (pin 14) left unconnected
-  // The buttons are connected to some extra GPIO pads not connected on the
-  // HiFive1 board
-
   assign btn_0 = btn_0_io;
-  assign btn_1 = gpio_30;
-  assign btn_2 = gpio_31;
+  assign btn_1 = btn_1_io;
+  assign btn_2 = btn_2_io;
+  assign btn_3 = btn_3_io;
 
   assign ja_0 = ja_0_io;
   assign ja_1 = ja_1_io;
