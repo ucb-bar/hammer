@@ -347,18 +347,6 @@ module system
   wire dut_io_pads_aon_lfextclk_o_ie;
   wire dut_io_pads_aon_lfextclk_o_pue;
   wire dut_io_pads_aon_lfextclk_o_ds;
-  wire dut_io_pads_aon_pmu_dwakeup_n_i_ival;
-  wire dut_io_pads_aon_pmu_dwakeup_n_o_oval;
-  wire dut_io_pads_aon_pmu_dwakeup_n_o_oe;
-  wire dut_io_pads_aon_pmu_dwakeup_n_o_ie;
-  wire dut_io_pads_aon_pmu_dwakeup_n_o_pue;
-  wire dut_io_pads_aon_pmu_dwakeup_n_o_ds;
-  wire dut_io_pads_aon_pmu_vddpaden_i_ival;
-  wire dut_io_pads_aon_pmu_vddpaden_o_oval;
-  wire dut_io_pads_aon_pmu_vddpaden_o_oe;
-  wire dut_io_pads_aon_pmu_vddpaden_o_ie;
-  wire dut_io_pads_aon_pmu_vddpaden_o_pue;
-  wire dut_io_pads_aon_pmu_vddpaden_o_ds;
 
   //=================================================
   // Clock & Reset
@@ -1278,24 +1266,6 @@ module system
   // End auto-generated section.
 
   // Assign reasonable values to otherwise unconnected inputs to chip top
-
-  wire iobuf_dwakeup_o;
-  IOBUF
-  #(
-    .DRIVE(12),
-    .IBUF_LOW_PWR("TRUE"),
-    .IOSTANDARD("DEFAULT"),
-    .SLEW("SLOW")
-  )
-  IOBUF_dwakeup_n
-  (
-    .O(iobuf_dwakeup_o),
-    .IO(btn_3),
-    .I(~dut_io_pads_aon_pmu_dwakeup_n_o_oval),
-    .T(~dut_io_pads_aon_pmu_dwakeup_n_o_oe)
-  );
-  assign dut_io_pads_aon_pmu_dwakeup_n_i_ival = (~iobuf_dwakeup_o) & dut_io_pads_aon_pmu_dwakeup_n_o_ie;
-
   assign dut_io_pads_aon_erst_n_i_ival = ~reset_periph;
   assign dut_io_pads_aon_lfextclk_i_ival = slowclk;
 
