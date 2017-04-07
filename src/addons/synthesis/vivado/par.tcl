@@ -19,10 +19,6 @@ power_opt_design
 route_design
 write_checkpoint -force [file join $wrkdir post_route]
 
-write_bitstream -force [file join $wrkdir "${top}.bit"]
-write_sdf -force [file join $wrkdir "${top}.sdf"]
-write_verilog -mode timesim -force [file join ${wrkdir} "${top}.v"]
-write_debug_probes -force [file join $wrkdir "${top}.ltx"]
 
 # AR 63042 <http://www.xilinx.com/support/answers/63041.html>:
 # Work around the write_mem_info command not supporting "processor-less"
@@ -54,3 +50,9 @@ report_high_fanout_nets -file [file join $rptdir fanout.txt] -timing -load_types
 report_drc -file [file join $rptdir drc.txt]
 report_io -file [file join $rptdir io.txt]
 report_clocks -file [file join $rptdir clocks.txt]
+
+# Write bitstream after reports in case of DRC errors, etc.
+write_bitstream -force [file join $wrkdir "${top}.bit"]
+write_sdf -force [file join $wrkdir "${top}.sdf"]
+write_verilog -mode timesim -force [file join ${wrkdir} "${top}.v"]
+write_debug_probes -force [file join $wrkdir "${top}.ltx"]
