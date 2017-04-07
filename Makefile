@@ -656,15 +656,9 @@ $(OBJ_TOOLS_SRC_DIR)/pson/Configfile: $(shell find src/tools/pson -type f)
 
 # barstools contains firrtl utilities useful for tapeout, like GenerateTop and
 # GenerateHarness.
-$(OBJ_TOOLS_BIN_DIR)/barstools/bin/%: src/tools/generate-sbt-wrapper $(OBJ_TOOLS_BIN_DIR)/barstools/stamp $(CMD_SBT)
+$(OBJ_TOOLS_BIN_DIR)/barstools/bin/%: src/tools/generate-sbt-wrapper $(CMD_SBT)
 	@mkdir -p $(dir $@)
-	$< --sbt $(abspath $(CMD_SBT)) --project tapeout --sbtargs "-DFIRRTL_HOME=$(abspath $(FIRRTL_HOME))" --basedir $(abspath $(OBJ_TOOLS_BIN_DIR)/barstools) --main "barstools.tapeout.transforms.$(notdir $@)" --output $@
-
-$(OBJ_TOOLS_BIN_DIR)/barstools/stamp: $(shell find src/tools/barstools/tapeout -type f) $(shell find $(FIRRTL_HOME)/src -type f)
-	rm -rf $(dir $@)
-	mkdir -p $(dir $@)
-	rsync -a --delete src/tools/barstools/ $(dir $@)
-	date > $@
+	$< --sbt $(abspath $(CMD_SBT)) --project tapeout --sbtstaging "$(abspath obj/sbt-staging)" --sbtargs "-DFIRRTL_HOME=$(abspath $(FIRRTL_HOME))" --basedir $(abspath src/tools/barstools) --main "barstools.tapeout.transforms.$(notdir $@)" --output $@
 
 # Some machines don't have python3, but I want it everywhere.
 $(CMD_PYTHON3): $(OBJ_TOOLS_BIN_DIR)/python3-$(PYTHON3_VERSION)/stamp
