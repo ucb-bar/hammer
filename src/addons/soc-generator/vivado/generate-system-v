@@ -72,8 +72,9 @@ def main_func(args):
 
     pins = read_pin_database(args.database)
     pinmap, pinmap_arrays = read_pin_map(args.pinmap)
-    print(pinmap)
-    print(pinmap_arrays)
+    # TODO: develop some notion of verbosity/logging in PLSI
+    #print(pinmap)
+    #print(pinmap_arrays)
 
     f = open(args.template, 'r')
     content = f.readlines()
