@@ -1,4 +1,5 @@
 Comment?,Pin name,Type
+Comment,For the Arty Artix-7 Development Board only. TODO: make this more generic,
 Comment,Name of the pin,“input” or “output”
 ,sw_0,input
 ,sw_1,input
