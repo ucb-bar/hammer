@@ -259,7 +259,7 @@ Counter)
   sed s/$top/dut/g -i $run_dir/results/$top.force_regs.ucli
   ;;
 *)
-  echo "Unkown top $top" >&2
+  echo "Unknown top $top" >&2
   ;;
 esac
 
