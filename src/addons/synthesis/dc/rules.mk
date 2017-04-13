@@ -14,6 +14,8 @@ $(OBJ_SYN_MAPPED_SDC) \
 # DC produces a lot of outputs, runs for a long time, and is kind of flaky
 # about producing arbitrary outputs.  Rather than relying on DC's output files
 # for dependency resolution we instead.
+# TODO: autodetect and use CCS if present in place of NLDM.
+# Note that often we can't have both since the file names are the same.
 $(OBJ_SYN_DIR)/synopsys-dc.stamp: \
 		$(abspath $(SYNTHESIS_TOOL_ADDON)/tools/run-synthesis) \
 		$(abspath $(SYNTHESIS_TOOL_ADDON)/tools/find-regs.tcl) \
