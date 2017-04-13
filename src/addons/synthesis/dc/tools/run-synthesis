@@ -163,6 +163,8 @@ fi
 # Most of the customization of the DC reference methodology is done here: this
 # sets all the input files and such.
 mkdir -p $run_dir/rm_setup
+
+# TODO: find a way to specify tlu+ mapfile.
 cat >> $run_dir/rm_setup/common_setup.tcl <<EOF
 set DESIGN_NAME "$top";
 set RTL_SOURCE_FILES_VERILOG "$(readlink_array v)";
