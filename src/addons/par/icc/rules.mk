@@ -13,8 +13,8 @@ $(OBJ_PAR_ROUTED_V): $(OBJ_PAR_DIR)/synopsys-icc.stamp
 	@mkdir -p $(dir $@)
 	cp --reflink=auto $(OBJ_PAR_DIR)/synopsys-icc-workdir/results/$(notdir $@) $@
 
-# DC produces a lot of outputs, runs for a long time, and is kind of flaky
-# about producing arbitrary outputs.  Rather than relying on DC's output files
+# ICC produces a lot of outputs, runs for a long time, and is kind of flaky
+# about producing arbitrary outputs.  Rather than relying on ICC's output files
 # for dependency resolution we instead.
 $(OBJ_PAR_DIR)/synopsys-icc.stamp: \
 		$(abspath $(PAR_TOOL_ADDON)/tools/run-par) \
