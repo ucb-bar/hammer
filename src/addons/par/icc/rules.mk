@@ -39,7 +39,7 @@ $(OBJ_PAR_DIR)/synopsys-icc.stamp: \
 		$(ICV_BIN) \
 		$(ICC_BIN)
 	@mkdir -p $(dir $@)
-	$(SCHEDULER_CMD) -- $(abspath $<) --top $(PAR_TOP) --output_dir $(abspath $(dir $@))/synopsys-icc-workdir $(abspath $^)
+	PATH="$(abspath $(dir $(CMD_PYTHON3))):$(PATH)" $(SCHEDULER_CMD) -- $(abspath $<) --top $(PAR_TOP) --output_dir $(abspath $(dir $@))/synopsys-icc-workdir $(abspath $^)
 	date > $@
 
 # Convert LEF files to Milky Way databases for ICC
@@ -70,7 +70,7 @@ $(OBJ_PAR_DIR)/synopsys-icc-macros.stamp: \
 		$(ICV_BIN) \
 		$(ICC_BIN)
 	@mkdir -p $(dir $@)
-	$(SCHEDULER_CMD) -- $(abspath $<) --top $(PAR_TOP) --output_dir $(abspath $(dir $@))/synopsys-icc-macros-workdir $(abspath $^)
+	PATH="$(abspath $(dir $(CMD_PYTHON3))):$(PATH)" $(SCHEDULER_CMD) -- $(abspath $<) --top $(PAR_TOP) --output_dir $(abspath $(dir $@))/synopsys-icc-macros-workdir $(abspath $^)
 	date > $@
 
 $(OBJ_PAR_DIR)/generated/$(PAR_TOP).macros.out: $(OBJ_PAR_DIR)/synopsys-icc-macros.stamp
@@ -80,4 +80,4 @@ $(OBJ_PAR_DIR)/generated/$(PAR_TOP).macros.out: $(OBJ_PAR_DIR)/synopsys-icc-macr
 $(OBJ_PAR_DIR)/generated/$(PAR_TOP).floorplan.json: \
 		$(PAR_TOOL_ADDON)/tools/generate-floorplan-json \
 		$(OBJ_PAR_DIR)/generated/$(PAR_TOP).macros.out
-	$(abspath $<) --macros $(filter %.macros.out,$^) --rtl_top $(SYN_TOP) --config $(PAR_CONFIG) -o $@
+	PATH="$(abspath $(dir $(CMD_PYTHON3))):$(PATH)" $(abspath $<) --macros $(filter %.macros.out,$^) --rtl_top $(SYN_TOP) --config $(PAR_CONFIG) -o $@
