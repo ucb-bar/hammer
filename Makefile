@@ -1,5 +1,9 @@
 # Copyright 2016-2017 Palmer Dabbelt <palmer@dabbelt.com>
 
+# Disable the built-in rules to speed up execution.
+MAKEFLAGS += -r
+.SUFFIXES:
+
 # The default target, which runs everything and tells you if it passed or not.
 all: report
 
