@@ -76,13 +76,13 @@ for library_desc in techfile["libraries"]:
 		of.write(" {0}/{1}".format(tech_home, library_desc["milkyway techfile"]))
 of.write("\n")
 
-of.write("TECHNOLOGY_MARCO_PROVIDE_SCRIPTS =")
+of.write("TECHNOLOGY_MACRO_PROVIDE_SCRIPTS =")
 for library_desc in techfile["libraries"]:
 	if "provide script" in library_desc:
 		of.write(" {0}".format(library_desc["provide script"]))
 of.write("\n")
 
-of.write("TECHNOLOGY_MARCO_DEPEND_SCRIPTS =")
+of.write("TECHNOLOGY_MACRO_DEPEND_SCRIPTS =")
 for library_desc in techfile["libraries"]:
 	if "depend script" in library_desc:
 		of.write(" {0}".format(library_desc["depend script"]))
