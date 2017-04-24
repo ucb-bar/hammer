@@ -327,7 +327,7 @@ MAP_SIM_TOP = $(CORE_SIM_TOP)
 
 # There's always a mapped Verilog file since there's macros in it and I'm only
 # going to bother generating macros as Verilog.
-OBJ_MAP_RTL_V = $(OBJ_SOC_RTL_V) $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.v
+OBJ_MAP_RTL_V = $(OBJ_SOC_RTL_V) $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.v $(TECHNOLOGY_VERILOG_SYNTHESIS_FILES)
 OBJ_MAP_RTL_VHD = $(OBJ_SOC_RTL_VHD)
 
 OBJ_MAP_SYN_FILES =
