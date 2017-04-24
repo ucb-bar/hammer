@@ -38,10 +38,20 @@ for library_desc in techfile["libraries"]:
 		of.write(" {0}/{1}".format(tech_home, library_desc["nldm library file"]))
 of.write("\n")
 
+# Verilog files required for simulation only.
 of.write("TECHNOLOGY_VERILOG_FILES =")
 for library_desc in techfile["libraries"]:
 	if "verilog file" in library_desc:
 		of.write(" {0}/{1}".format(tech_home, library_desc["verilog file"]))
+of.write("\n")
+
+# Verilog files required for synthesis only.
+# e.g. Simulation would use both TECHNOLOGY_VERILOG_SYNTHESIS_FILES + TECHNOLOGY_VERILOG_FILES
+# while synthesis would use only TECHNOLOGY_VERILOG_SYNTHESIS_FILES
+of.write("TECHNOLOGY_VERILOG_SYNTHESIS_FILES =")
+for library_desc in techfile["libraries"]:
+	if "verilog synth" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["verilog synth"]))
 of.write("\n")
 
 of.write("TECHNOLOGY_DOCUMENTATION_PDF_FILES =")
