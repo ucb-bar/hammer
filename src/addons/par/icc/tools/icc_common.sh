@@ -76,6 +76,11 @@ done
 
 set -ex
 
+if [[ "$script_dir" == "" ]]; then
+    echo "script_dir not set"
+    exit 1
+fi
+
 rm -rf "$run_dir"
 mkdir -p "$run_dir"
 
