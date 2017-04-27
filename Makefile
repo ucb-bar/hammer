@@ -58,6 +58,7 @@ SYN_FORMAL_TOOL ?= $(FORMAL_TOOL)
 # exactly accurate can be used to get a general idea if a design is viable.
 POWER_SIGNOFF_TOOL ?= none
 SYN_POWER_SIGNOFF_TOOL ?= $(POWER_SIGNOFF_TOOL)
+PAR_POWER_SIGNOFF_TOOL ?= $(POWER_SIGNOFF_TOOL)
 
 # The scheduler to use when running large jobs.  Changing this doesn't have any
 # effect on the generated files, just the manner in which they are generated.
@@ -202,6 +203,11 @@ endif
 SYN_POWER_SIGNOFF_ADDON = $(wildcard src/addons/signoff-power/$(SYN_POWER_SIGNOFF_TOOL)/ $(ADDONS_DIR)/signoff-power/$(SYN_POWER_SIGNOFF_TOOLS))
 ifneq ($(words $(SYN_POWER_SIGNOFF_ADDON)),1)
 $(error Unable to resolve SYN_POWER_SIGNOFF_TOOL=$(SYN_POWER_SIGNOFF_TOOL): found "$(SYN_FORMAL_ADDON)")
+endif
+
+PAR_POWER_SIGNOFF_ADDON = $(wildcard src/addons/signoff-power/$(PAR_POWER_SIGNOFF_TOOL)/ $(ADDONS_DIR)/signoff-power/$(PAR_POWER_SIGNOFF_TOOLS))
+ifneq ($(words $(PAR_POWER_SIGNOFF_ADDON)),1)
+$(error Unable to resolve PAR_POWER_SIGNOFF_TOOL=$(PAR_POWER_SIGNOFF_TOOL): found "$(PAR_FORMAL_ADDON)")
 endif
 
 # Check to ensure all the configurations actually exist.
@@ -395,6 +401,7 @@ include $(SYN_FORMAL_ADDON)/syn-rules.mk
 include $(PAR_TOOL_ADDON)/rules.mk
 include $(PAR_SIMULATOR_ADDON)/par-rules.mk
 include $(SYN_POWER_SIGNOFF_ADDON)/syn-rules.mk
+include $(PAR_POWER_SIGNOFF_ADDON)/par-rules.mk
 
 ##############################################################################
 # User Targets
