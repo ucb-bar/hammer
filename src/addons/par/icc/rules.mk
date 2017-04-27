@@ -1,15 +1,20 @@
 # Copyright 2016 Palmer Dabbelt <palmer@dabbelt.com>
 
-# This rule is capable of producing all the various output files from DC after
-# DC has successfully run.
+# Copy force_regs from DC
 $(OBJ_PAR_DIR)/generated/$(PAR_TOP).force_regs.ucli \
-$(OBJ_PAR_DIR)/generated/$(PAR_TOP).force_regs.tab \
+$(OBJ_PAR_DIR)/generated/$(PAR_TOP).force_regs.tab: \
+$(OBJ_PAR_DIR)/%: $(OBJ_SYN_DIR)/%
+	@mkdir -p $(dir $@)
+	cp --reflink=auto $< $@
+
+# This rule is capable of producing all the various output files from ICC after
+# ICC has successfully run.
 $(OBJ_PAR_ROUTED_V): $(OBJ_PAR_DIR)/synopsys-icc.stamp
 	@mkdir -p $(dir $@)
 	cp --reflink=auto $(OBJ_PAR_DIR)/synopsys-icc-workdir/results/$(notdir $@) $@
 
-# DC produces a lot of outputs, runs for a long time, and is kind of flaky
-# about producing arbitrary outputs.  Rather than relying on DC's output files
+# ICC produces a lot of outputs, runs for a long time, and is kind of flaky
+# about producing arbitrary outputs.  Rather than relying on ICC's output files
 # for dependency resolution we instead.
 $(OBJ_PAR_DIR)/synopsys-icc.stamp: \
 		$(abspath $(PAR_TOOL_ADDON)/tools/run-par) \
