@@ -22,6 +22,10 @@ CORE_GENERATOR ?= rocketchip
 # soc generator doesn't actually do anything at all.
 SOC_GENERATOR ?= nop
 
+# The testbench for simulation
+# FIXME: what's the default?
+TESTBENCH ?= none
+
 # The technology that will be used to implement this design.
 TECHNOLOGY ?= tsmc180osu
 
