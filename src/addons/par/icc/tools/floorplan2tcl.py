@@ -2,15 +2,20 @@
 
 import argparse
 import json
+import sys
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-f", "--floorplan_json", dest="floorplan_json", required=True)
 parser.add_argument("-o", "--output", dest="output", required=True)
 parser.add_argument("-t", "--top", dest="top", required=True)
 args = parser.parse_args()
+args_dict = vars(args)
 
 input=json.loads("".join(open(args.floorplan_json, "r").readlines()))
 output=open(args.output, "w")
+
+# Write a header
+output.write("# Automatically generated with {script_name} -f {floorplan_json} -o {output} -t {top}\n\n".format(script_name=sys.argv[0], **args_dict))
 
 output.write("source -echo generated-scripts/constraints.tcl\n")
 
