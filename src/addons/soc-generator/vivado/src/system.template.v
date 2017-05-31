@@ -47,6 +47,15 @@ module system
   inout wire ja_6,
   inout wire ja_7,
 
+  inout wire jd_0,
+  inout wire jd_1,
+  inout wire jd_2,
+  inout wire jd_3,
+  inout wire jd_4,
+  inout wire jd_5,
+  inout wire jd_6,
+  inout wire jd_7,
+
   // Dedicated QSPI interface
   output wire qspi_cs,
   output wire qspi_sck,
@@ -65,15 +74,7 @@ module system
   inout wire ck_miso,
   inout wire ck_mosi,
   inout wire ck_ss,
-  inout wire ck_sck,
-
-  // JD (used for JTAG connection)
-  inout wire jd_0, // TDO
-  inout wire jd_1, // TRST_n
-  inout wire jd_2, // TCK
-  inout wire jd_4, // TDI
-  inout wire jd_5, // TMS
-  input wire jd_6 // SRST_n
+  inout wire ck_sck
 );
 
   wire clk_out1;
@@ -89,36 +90,6 @@ module system
   // All wires connected to the chip top
   wire dut_clock;
   wire dut_reset;
-  wire dut_io_pads_jtag_TCK_i_ival;
-  wire dut_io_pads_jtag_TCK_o_oval;
-  wire dut_io_pads_jtag_TCK_o_oe;
-  wire dut_io_pads_jtag_TCK_o_ie;
-  wire dut_io_pads_jtag_TCK_o_pue;
-  wire dut_io_pads_jtag_TCK_o_ds;
-  wire dut_io_pads_jtag_TMS_i_ival;
-  wire dut_io_pads_jtag_TMS_o_oval;
-  wire dut_io_pads_jtag_TMS_o_oe;
-  wire dut_io_pads_jtag_TMS_o_ie;
-  wire dut_io_pads_jtag_TMS_o_pue;
-  wire dut_io_pads_jtag_TMS_o_ds;
-  wire dut_io_pads_jtag_TDI_i_ival;
-  wire dut_io_pads_jtag_TDI_o_oval;
-  wire dut_io_pads_jtag_TDI_o_oe;
-  wire dut_io_pads_jtag_TDI_o_ie;
-  wire dut_io_pads_jtag_TDI_o_pue;
-  wire dut_io_pads_jtag_TDI_o_ds;
-  wire dut_io_pads_jtag_TDO_i_ival;
-  wire dut_io_pads_jtag_TDO_o_oval;
-  wire dut_io_pads_jtag_TDO_o_oe;
-  wire dut_io_pads_jtag_TDO_o_ie;
-  wire dut_io_pads_jtag_TDO_o_pue;
-  wire dut_io_pads_jtag_TDO_o_ds;
-  wire dut_io_pads_jtag_TRST_n_i_ival;
-  wire dut_io_pads_jtag_TRST_n_o_oval;
-  wire dut_io_pads_jtag_TRST_n_o_oe;
-  wire dut_io_pads_jtag_TRST_n_o_ie;
-  wire dut_io_pads_jtag_TRST_n_o_pue;
-  wire dut_io_pads_jtag_TRST_n_o_ds;
   wire dut_io_pads_gpio_0_i_ival;
   wire dut_io_pads_gpio_0_o_oval;
   wire dut_io_pads_gpio_0_o_oe;
@@ -640,6 +611,158 @@ module system
     .T(~ja_7_oe)
   );
 
+  wire jd_0_o;
+  wire jd_0_io;
+  wire jd_0_i;
+  wire jd_0_oe;
+  IOBUF
+  #(
+    .DRIVE(12),
+    .IBUF_LOW_PWR("TRUE"),
+    .IOSTANDARD("DEFAULT"),
+    .SLEW("SLOW")
+  )
+  IOBUF_gpio_jd_0
+  (
+    .O(jd_0_o),
+    .IO(jd_0_io),
+    .I(jd_0_i),
+    .T(~jd_0_oe)
+  );
+
+  wire jd_1_o;
+  wire jd_1_io;
+  wire jd_1_i;
+  wire jd_1_oe;
+  IOBUF
+  #(
+    .DRIVE(12),
+    .IBUF_LOW_PWR("TRUE"),
+    .IOSTANDARD("DEFAULT"),
+    .SLEW("SLOW")
+  )
+  IOBUF_gpio_jd_1
+  (
+    .O(jd_1_o),
+    .IO(jd_1_io),
+    .I(jd_1_i),
+    .T(~jd_1_oe)
+  );
+
+  wire jd_2_o;
+  wire jd_2_io;
+  wire jd_2_i;
+  wire jd_2_oe;
+  IOBUF
+  #(
+    .DRIVE(12),
+    .IBUF_LOW_PWR("TRUE"),
+    .IOSTANDARD("DEFAULT"),
+    .SLEW("SLOW")
+  )
+  IOBUF_gpio_jd_2
+  (
+    .O(jd_2_o),
+    .IO(jd_2_io),
+    .I(jd_2_i),
+    .T(~jd_2_oe)
+  );
+
+  wire jd_3_o;
+  wire jd_3_io;
+  wire jd_3_i;
+  wire jd_3_oe;
+  IOBUF
+  #(
+    .DRIVE(12),
+    .IBUF_LOW_PWR("TRUE"),
+    .IOSTANDARD("DEFAULT"),
+    .SLEW("SLOW")
+  )
+  IOBUF_gpio_jd_3
+  (
+    .O(jd_3_o),
+    .IO(jd_3_io),
+    .I(jd_3_i),
+    .T(~jd_3_oe)
+  );
+
+  wire jd_4_o;
+  wire jd_4_io;
+  wire jd_4_i;
+  wire jd_4_oe;
+  IOBUF
+  #(
+    .DRIVE(12),
+    .IBUF_LOW_PWR("TRUE"),
+    .IOSTANDARD("DEFAULT"),
+    .SLEW("SLOW")
+  )
+  IOBUF_gpio_jd_4
+  (
+    .O(jd_4_o),
+    .IO(jd_4_io),
+    .I(jd_4_i),
+    .T(~jd_4_oe)
+  );
+
+  wire jd_5_o;
+  wire jd_5_io;
+  wire jd_5_i;
+  wire jd_5_oe;
+  IOBUF
+  #(
+    .DRIVE(12),
+    .IBUF_LOW_PWR("TRUE"),
+    .IOSTANDARD("DEFAULT"),
+    .SLEW("SLOW")
+  )
+  IOBUF_gpio_jd_5
+  (
+    .O(jd_5_o),
+    .IO(jd_5_io),
+    .I(jd_5_i),
+    .T(~jd_5_oe)
+  );
+
+  wire jd_6_o;
+  wire jd_6_io;
+  wire jd_6_i;
+  wire jd_6_oe;
+  IOBUF
+  #(
+    .DRIVE(12),
+    .IBUF_LOW_PWR("TRUE"),
+    .IOSTANDARD("DEFAULT"),
+    .SLEW("SLOW")
+  )
+  IOBUF_gpio_jd_6
+  (
+    .O(jd_6_o),
+    .IO(jd_6_io),
+    .I(jd_6_i),
+    .T(~jd_6_oe)
+  );
+
+  wire jd_7_o;
+  wire jd_7_io;
+  wire jd_7_i;
+  wire jd_7_oe;
+  IOBUF
+  #(
+    .DRIVE(12),
+    .IBUF_LOW_PWR("TRUE"),
+    .IOSTANDARD("DEFAULT"),
+    .SLEW("SLOW")
+  )
+  IOBUF_gpio_jd_7
+  (
+    .O(jd_7_o),
+    .IO(jd_7_io),
+    .I(jd_7_i),
+    .T(~jd_7_oe)
+  );
+
   wire gpio_0;
   wire gpio_1;
   wire gpio_2;
@@ -882,43 +1005,6 @@ module system
   );
   assign dut_io_pads_gpio_14_i_ival = iobuf_gpio_14_o & dut_io_pads_gpio_14_o_ie;
 
-  wire iobuf_gpio_16_o;
-  IOBUF
-  #(
-    .DRIVE(12),
-    .IBUF_LOW_PWR("TRUE"),
-    .IOSTANDARD("DEFAULT"),
-    .SLEW("SLOW")
-  )
-  IOBUF_gpio_16
-  (
-    .O(iobuf_gpio_16_o),
-    .IO(gpio_16),
-    .I(dut_io_pads_gpio_16_o_oval),
-    .T(~dut_io_pads_gpio_16_o_oe)
-  );
-  // This GPIO input is shared between FTDI TX pin and Arduino shield pin using SW[3]
-  // see below for details
-  assign dut_io_pads_gpio_16_i_ival = sw_3 ? (iobuf_gpio_16_o & dut_io_pads_gpio_16_o_ie) : (uart_txd_in & dut_io_pads_gpio_16_o_ie);
-
-  wire iobuf_gpio_17_o;
-  IOBUF
-  #(
-    .DRIVE(12),
-    .IBUF_LOW_PWR("TRUE"),
-    .IOSTANDARD("DEFAULT"),
-    .SLEW("SLOW")
-  )
-  IOBUF_gpio_17
-  (
-    .O(iobuf_gpio_17_o),
-    .IO(gpio_17),
-    .I(dut_io_pads_gpio_17_o_oval),
-    .T(~dut_io_pads_gpio_17_o_oe)
-  );
-  assign dut_io_pads_gpio_17_i_ival = iobuf_gpio_17_o & dut_io_pads_gpio_17_o_ie;
-  assign uart_rxd_out = (dut_io_pads_gpio_17_o_oval & dut_io_pads_gpio_17_o_oe);
-
   wire iobuf_gpio_18_o;
   IOBUF
   #(
@@ -1107,102 +1193,6 @@ module system
   assign dut_io_pads_gpio_29_i_ival = iobuf_gpio_29_o & dut_io_pads_gpio_29_o_ie;
 
   //=================================================
-  // JTAG IOBUFs
-
-  wire iobuf_jtag_TCK_o;
-  IOBUF
-  #(
-    .DRIVE(12),
-    .IBUF_LOW_PWR("TRUE"),
-    .IOSTANDARD("DEFAULT"),
-    .SLEW("SLOW")
-  )
-  IOBUF_jtag_TCK
-  (
-    .O(iobuf_jtag_TCK_o),
-    .IO(jd_2),
-    .I(dut_io_pads_jtag_TCK_o_oval),
-    .T(~dut_io_pads_jtag_TCK_o_oe)
-  );
-  assign dut_io_pads_jtag_TCK_i_ival = iobuf_jtag_TCK_o & dut_io_pads_jtag_TCK_o_ie;
-  PULLUP pullup_TCK (.O(jd_2));
-
-  wire iobuf_jtag_TMS_o;
-  IOBUF
-  #(
-    .DRIVE(12),
-    .IBUF_LOW_PWR("TRUE"),
-    .IOSTANDARD("DEFAULT"),
-    .SLEW("SLOW")
-  )
-  IOBUF_jtag_TMS
-  (
-    .O(iobuf_jtag_TMS_o),
-    .IO(jd_5),
-    .I(dut_io_pads_jtag_TMS_o_oval),
-    .T(~dut_io_pads_jtag_TMS_o_oe)
-  );
-  assign dut_io_pads_jtag_TMS_i_ival = iobuf_jtag_TMS_o & dut_io_pads_jtag_TMS_o_ie;
-  PULLUP pullup_TMS (.O(jd_5));
-
-  wire iobuf_jtag_TDI_o;
-  IOBUF
-  #(
-    .DRIVE(12),
-    .IBUF_LOW_PWR("TRUE"),
-    .IOSTANDARD("DEFAULT"),
-    .SLEW("SLOW")
-  )
-  IOBUF_jtag_TDI
-  (
-    .O(iobuf_jtag_TDI_o),
-    .IO(jd_4),
-    .I(dut_io_pads_jtag_TDI_o_oval),
-    .T(~dut_io_pads_jtag_TDI_o_oe)
-  );
-  assign dut_io_pads_jtag_TDI_i_ival = iobuf_jtag_TDI_o & dut_io_pads_jtag_TDI_o_ie;
-  PULLUP pullup_TDI (.O(jd_4));
-
-  wire iobuf_jtag_TDO_o;
-  IOBUF
-  #(
-    .DRIVE(12),
-    .IBUF_LOW_PWR("TRUE"),
-    .IOSTANDARD("DEFAULT"),
-    .SLEW("SLOW")
-  )
-  IOBUF_jtag_TDO
-  (
-    .O(iobuf_jtag_TDO_o),
-    .IO(jd_0),
-    .I(dut_io_pads_jtag_TDO_o_oval),
-    .T(~dut_io_pads_jtag_TDO_o_oe)
-  );
-  assign dut_io_pads_jtag_TDO_i_ival = iobuf_jtag_TDO_o & dut_io_pads_jtag_TDO_o_ie;
-
-  wire iobuf_jtag_TRST_n_o;
-  IOBUF
-  #(
-    .DRIVE(12),
-    .IBUF_LOW_PWR("TRUE"),
-    .IOSTANDARD("DEFAULT"),
-    .SLEW("SLOW")
-  )
-  IOBUF_jtag_TRST_n
-  (
-    .O(iobuf_jtag_TRST_n_o),
-    .IO(jd_1),
-    .I(dut_io_pads_jtag_TRST_n_o_oval),
-    .T(~dut_io_pads_jtag_TRST_n_o_oe)
-  );
-  assign dut_io_pads_jtag_TRST_n_i_ival = iobuf_jtag_TRST_n_o & dut_io_pads_jtag_TRST_n_o_ie;
-  PULLUP pullup_TRST_n(.O(jd_1));
-
-  // Mimic putting a pullup on this line (part of reset vote).
-  assign SRST_n = jd_6;
-  PULLUP pullup_SRST_n(.O(SRST_n));
-
-  //=================================================
   // Assignment of IOBUF "IO" pins to package pins
 
   // Pins IO0-IO13
@@ -1251,6 +1241,15 @@ module system
   assign ja_5 = ja_5_io;
   assign ja_6 = ja_6_io;
   assign ja_7 = ja_7_io;
+
+  assign jd_0 = jd_0_io;
+  assign jd_1 = jd_1_io;
+  assign jd_2 = jd_2_io;
+  assign jd_3 = jd_3_io;
+  assign jd_4 = jd_4_io;
+  assign jd_5 = jd_5_io;
+  assign jd_6 = jd_6_io;
+  assign jd_7 = jd_7_io;
 
   // SPI2 pins mapped to 6 pin ICSP connector (standard on later arduinos)
   // These are connected to some extra GPIO pads not connected on the HiFive1
