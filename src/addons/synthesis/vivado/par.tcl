@@ -8,9 +8,6 @@ set_param {messaging.defaultLimit} 1000000
 
 open_checkpoint $post_synth_dcp_path
 
-opt_design
-write_checkpoint -force [file join $wrkdir post_opt]
-
 place_design
 write_checkpoint -force [file join $wrkdir post_place]
 
