@@ -23,12 +23,17 @@ SRAM_DEPTH=$depth
 
 cat > $workdir/memgen.tcl <<EOF
 # TCL fragment to set generate some memories.
+# NB. For some reason Register_PortA_Output_of_Memory_Primitives is default
+# true in blk_mem_gen 8.3, causing an unwanted extra cycle of delay.
+# NB 2. The config silently fails if you use all-caps FALSE instead of lowercase
+# false...
 
 create_ip -name blk_mem_gen -vendor xilinx.com -library ip -version 8.3 -module_name ${SRAM_BLACKBOX_NAME}
 set_property -dict [list \
   CONFIG.Use_Byte_Write_Enable {true} \
   CONFIG.Byte_Size {8} \
   CONFIG.Enable_A {Always_Enabled} \
+  CONFIG.Register_PortA_Output_of_Memory_Primitives {false} \
   CONFIG.Write_Width_A {${SRAM_WIDTH}} \
   CONFIG.Write_Depth_A {${SRAM_DEPTH}} \
   CONFIG.Read_Width_A {${SRAM_WIDTH}} \
