@@ -85,17 +85,20 @@ fi
 cp "$EXPECTED_OUTPUT_FILE" "$output"
 
 # Add the wrapper (e.g. for write_enable)
+# TODO(edwardw): yes, this is dangerous. The proper (but harder fix) is to
+# rewrite pcad to support more than just bit masks.
 cat >> "$output" <<EOF
 module ${SRAM_MODULE}(
   input [11:0] addr,
   input clock,
   output [31:0] data_out,
   input [31:0] data_in,
-  input [3:0] mask,
+  input [31:0] mask,
   input write_enable
 );
 wire [3:0] mask_int;
-assign mask_int = write_enable ? mask : 4'd0;
+// TODO(edwardw): fix this dangerous construct of pretending to be a bit-masked SRAM
+assign mask_int = write_enable ? {mask[24], mask[16], mask[8], mask[0]} : 4'd0;
 ${SRAM_BLACKBOX_NAME} mem(
   .clka(clock),
   .douta(data_out),
