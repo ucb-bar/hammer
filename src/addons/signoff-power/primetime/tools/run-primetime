@@ -5,6 +5,7 @@ unset rm_tar
 unset output
 unset vpd
 unset top
+# See PRIMETIME_PATH_TO_TESTBENCH
 unset testbench
 v=()
 db=()

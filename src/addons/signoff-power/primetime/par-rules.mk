@@ -14,4 +14,4 @@ $(OBJ_PAR_DIR)/pt-power/%/stamp: \
 		$(PLSI_CACHE_DIR)/synopsys/rm/PT-RM_$(PRIMETIME_POWER_VERSION).tar \
 		$(PLSI_CAD_CONFIG_FILE)
 	mkdir -p $(dir $@)
-	$(SCHEDULER_CMD) --max-threads=1 -- $(abspath $<) --output $(abspath $@) --top $(SYN_TOP) --testbench $(TESTBENCH) $(abspath $^)
+	$(SCHEDULER_CMD) --max-threads=1 -- $(abspath $<) --output $(abspath $@) --top $(SYN_TOP) --testbench $(PRIMETIME_PATH_TO_TESTBENCH) $(abspath $^)
