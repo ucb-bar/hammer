@@ -62,8 +62,8 @@ module system
   inout wire [3:0] qspi_dq,
 
   // UART0 (GPIO 16,17)
-  output wire uart_rxd_out,
-  input wire uart_txd_in,
+  output wire uart_rxd_out_pad,
+  input wire uart_txd_in_pad,
 
   // Arduino (aka chipkit) shield digital IO pins, 14 is not connected to the
   // chip, used for debug.
@@ -761,6 +761,32 @@ module system
     .IO(jd_7_io),
     .I(jd_7_i),
     .T(~jd_7_oe)
+  );
+
+  // Buffers for UART.
+  // Strictly speaking, they don't need separate buffers, but having them won't
+  // hurt.
+  wire uart_rxd_out;
+  OBUF
+  #(
+    .IOSTANDARD("DEFAULT"),
+    .SLEW("FAST")
+  )
+  OBUF_uart_rxd_out
+  (
+    .O(uart_rxd_out_pad),
+    .I(uart_rxd_out)
+  );
+  wire uart_txd_in;
+  IBUF
+  #(
+    .IBUF_LOW_PWR("FALSE"),
+    .IOSTANDARD("DEFAULT")
+  )
+  IBUF_uart_txd_in
+  (
+    .O(uart_txd_in),
+    .I(uart_txd_in_pad)
   );
 
   wire gpio_0;
