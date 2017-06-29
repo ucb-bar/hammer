@@ -2,6 +2,8 @@
 # Set up the environment to run ICC by extracting the Synopsys reference
 # methodology, adding/modifying options, and generating scripts.
 # Use with 'source'.
+# You must set script_dir to the folder with the PLSI ICC scripts, typically
+# src/addons/par/icc/tools.
 
 unset run_dir
 unset icc
@@ -58,6 +60,8 @@ done
 
 set -ex
 
+# Directory containing ICC scripts.
+# Should be something along the lines of src/addons/par/icc/tools
 if [[ "$script_dir" == "" ]]; then
     echo "script_dir not set"
     exit 1
