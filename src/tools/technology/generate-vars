@@ -39,14 +39,14 @@ for library_desc in techfile["libraries"]:
 of.write("\n")
 
 # Verilog files required for simulation only.
-of.write("TECHNOLOGY_VERILOG_FILES =")
+of.write("TECHNOLOGY_VERILOG_SIMULATION_FILES =")
 for library_desc in techfile["libraries"]:
 	if "verilog sim" in library_desc:
 		of.write(" {0}/{1}".format(tech_home, library_desc["verilog sim"]))
 of.write("\n")
 
 # Verilog files required for synthesis only.
-# e.g. Simulation would use both TECHNOLOGY_VERILOG_SYNTHESIS_FILES + TECHNOLOGY_VERILOG_FILES
+# e.g. Simulation would use both TECHNOLOGY_VERILOG_SYNTHESIS_FILES + TECHNOLOGY_VERILOG_SIMULATION_FILES
 # while synthesis would use only TECHNOLOGY_VERILOG_SYNTHESIS_FILES
 of.write("TECHNOLOGY_VERILOG_SYNTHESIS_FILES =")
 for library_desc in techfile["libraries"]:

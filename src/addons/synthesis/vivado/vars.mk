@@ -24,7 +24,7 @@ OBJ_SYN_BOARD_FILES_DIR := $(dir $(OBJ_SYN_BOARD_FILES))
 
 # A Verilog file containing the pre-synthesized Xilinx SRAM macros.
 # TODO: FIXME: This is definitely not the right place for this.
-# $(TECHNOLOGY_VERILOG_FILES) doesn't seem to be right,
+# $(TECHNOLOGY_VERILOG_SIMULATION_FILES) doesn't seem to be right,
 # and $(OBJ_MAP_RTL_V) doesn't seem to have any other files...
 # This is probably not the right approach but we have to get something
 # working, so...
@@ -37,4 +37,4 @@ OBJ_SYN_POST_SYNTH_DCP = $(OBJ_SYN_DIR)/generated/post_synth.dcp
 SYN_TOP = $(MAP_TOP)
 SYN_SIM_TOP = $(MAP_SIM_TOP)
 OBJ_SYN_MAPPED_V = $(OBJ_SYN_DIR)/generated/$(SYN_TOP).mapped.v
-OBJ_SYN_SIM_FILES = $(OBJ_MAP_SIM_FILES) $(TECHNOLOGY_VERILOG_FILES)
+OBJ_SYN_SIM_FILES = $(OBJ_MAP_SIM_FILES) $(TECHNOLOGY_VERILOG_SIMULATION_FILES)
