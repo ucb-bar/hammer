@@ -48,6 +48,13 @@ of.write("\n")
 # Verilog files required for synthesis only.
 # e.g. Simulation would use both TECHNOLOGY_VERILOG_SYNTHESIS_FILES + TECHNOLOGY_VERILOG_SIMULATION_FILES
 # while synthesis would use only TECHNOLOGY_VERILOG_SYNTHESIS_FILES
+#
+# Example usage: say if the SRAM hard macro name is sram_foo, but the
+# vendor provides a synthesizable wrapper around it named sram_foo_wrap,
+# then the file with sram_foo_wrap goes into TECHNOLOGY_VERILOG_SYNTHESIS_FILES
+# since it's used both in synthesis and in simulation, while the file
+# with sram_foo goes into TECHNOLOGY_VERILOG_SIMULATION_FILES since it's
+# a behavioural model of a hard macro used only in simulation.
 of.write("TECHNOLOGY_VERILOG_SYNTHESIS_FILES =")
 for library_desc in techfile["libraries"]:
 	if "verilog synth" in library_desc:
