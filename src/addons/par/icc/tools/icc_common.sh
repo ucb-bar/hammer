@@ -143,7 +143,7 @@ then
     exit 1
 fi
 
-# Most of the customization of the DC reference methodology is done here: this
+# Most of the customization of the reference methodology is done here: this
 # sets all the input files and such.
 mkdir -p $run_dir/rm_setup
 cat >> $run_dir/rm_setup/common_setup.tcl <<EOF
