@@ -26,8 +26,9 @@ for library in techfile["libraries"]:
 	if "provide script" in library:
 		# FIXME: OBJ_TECH_DIR shouldn't be hard-coded here
 		files = ""
-		if "verilog file" in library:
-			files = "obj/technology/{1}/extracted/{0}".format(library["verilog file"], args.technology)
+		# "verilog sim" is a strange place from which to extract these files.
+		if "verilog sim" in library:
+			files = "obj/technology/{1}/extracted/{0}".format(library["verilog sim"], args.technology)
 		if "documentation pdf" in library:
 			files = "obj/technology/{1}/extracted/{0}".format(library["documentation pdf"], args.technology)
 
