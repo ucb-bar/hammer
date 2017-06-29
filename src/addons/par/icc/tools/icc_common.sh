@@ -3,24 +3,6 @@
 # methodology, adding/modifying options, and generating scripts.
 # Use with 'source'.
 
-# TODO: pull these into a generic shell utils or something for re-use.
-# See src/addons/synthesis/dc/tools/run-synthesis
-
-# Helper function to join arrays.
-# Example: join_by , "${FOO[@]}" #a,b,c
-# http://stackoverflow.com/a/17841619
-function join_by { local d=$1; shift; echo -n "$1"; shift; printf "%s" "${@/#/$d}"; }
-
-# Older versions of readlink, like readlink 8.4, don't support multiple
-# arguments to readlink...
-# Usage: x=$(readlink_array my_array)
-readlink_array() {
-    local ref=$1[@]
-    local v=(${!ref})
-    local output=$(join_by " " "${v[@]}")
-    echo "$output"
-}
-
 unset run_dir
 unset icc
 unset rmtar
@@ -148,13 +130,13 @@ fi
 mkdir -p $run_dir/rm_setup
 cat >> $run_dir/rm_setup/common_setup.tcl <<EOF
 set DESIGN_NAME "$top";
-set RTL_SOURCE_FILES "$(readlink_array v)";
-set TARGET_LIBRARY_FILES "$(readlink_array libs)";
-set MW_REFERENCE_LIB_DIRS "$(readlink_array mw)";
+set RTL_SOURCE_FILES "$(readlink_array ${v[@]})";
+set TARGET_LIBRARY_FILES "$(readlink_array ${libs[@]})";
+set MW_REFERENCE_LIB_DIRS "$(readlink_array ${mw[@]})";
 set MIN_LIBRARY_FILES "";
-set TECH_FILE "$(readlink_array tf)";
-set TLUPLUS_MAX_FILE "$(readlink_array tlu_max)";
-set TLUPLUS_MIN_FILE "$(readlink_array tlu_min)";
+set TECH_FILE "$(readlink_array ${tf[@]})";
+set TLUPLUS_MAX_FILE "$(readlink_array ${tlu_max[@]})";
+set TLUPLUS_MIN_FILE "$(readlink_array ${tlu_min[@]})";
 set ALIB_DIR "alib";
 set DCRM_CONSTRAINTS_INPUT_FILE "generated-scripts/constraints.tcl";
 set REPORTS_DIR "reports";

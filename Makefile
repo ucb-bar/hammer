@@ -4,6 +4,10 @@
 MAKEFLAGS += -r
 .SUFFIXES:
 
+# Add a folder of common utilities to the PATH for use in the scripts.
+SHELL := /bin/bash
+export PATH := src/tools/shell:$(PATH)
+
 # The default target, which runs everything and tells you if it passed or not.
 all: report
 
