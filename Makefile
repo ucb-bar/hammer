@@ -141,14 +141,22 @@ PKG_CONFIG_PATH=$(abspath $(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/lib/pkgcon
 export PKG_CONFIG_PATH
 
 ##############################################################################
-# Addon Loading
+# Module Loading
 ##############################################################################
 
-# This section loads the various PLSI addons.  You shouldn't be screwing with
-# this, but if you're trying to add a new addon then you might want to look
-# here to see what variables it's expected to set.
+# This section loads the various PLSI modules. This section is not intended
+# to be directly modified, but if you're trying to add a new addon then
+# you might want to look here to see what variables it's expected to set.
 
-# Locates the various addons that will be used to setup 
+# First, locate the technology module.
+
+TECHNOLOGY_MODULE_PATH = $(wildcard src/technologies/$(TECHNOLOGY)/ $(ADDONS_DIR)/technologies/$(TECHNOLOGY)/ $(ADDONS_TECH_DIR)/$(TECHNOLOGY)/)
+ifneq ($(words $(TECHNOLOGY_MODULE_PATH)),1)
+$(error Unable to resolve TECHNOLOGY=$(TECHNOLOGY): found "$(TECHNOLOGY_MODULE_PATH)")
+endif
+
+# Locates the various modules that will be used for the flow itself.
+# TODO(edwardw): rename _ADDONs to _MODULEs, in due time.
 SCHEDULER_ADDON = $(wildcard src/addons/scheduler/$(SCHEDULER)/ $(ADDONS_DIR)/scheduler/$(SCHEDULER)/)
 ifneq ($(words $(SCHEDULER_ADDON)),1)
 $(error Unable to resolve SCHEDULER=$(SCHEDULER): found "$(SCHEDULER_ADDON)")
@@ -221,16 +229,16 @@ PLSI_CAD_CONFIG_FILE = $(word 1,$(wildcard \
     $(CONFIG_DIR)/$(CORE_GENERATOR)-$(CORE_CONFIG)-$(TECHNOLOGY).plsi_config.json \
     src/configs/$(CORE_GENERATOR)-$(CORE_CONFIG)-$(TECHNOLOGY).plsi_config.json \
     $(CONFIG_DIR)/$(TECHNOLOGY).plsi_config.json \
-    src/configs/$(TECHNOLOGY).plsi_config.json \
+    $(TECHNOLOGY_MODULE_PATH)/$(TECHNOLOGY).plsi_config.json \
   ))
 ifeq ($(PLSI_CAD_CONFIG_FILE),)
-$(error Unable to resolve PLSI_CAD_CONFIG_FILE, there should be a default at src/configs/$(TECHNOLOGY).plsi_config.json)
+$(error Unable to resolve PLSI_CAD_CONFIG_FILE, there should be a default at $(TECHNOLOGY_MODULE_PATH)/$(TECHNOLOGY).plsi_config.json)
 endif
 
 # In order to prevent EEs from seeing Makefiles, the technology description is
 # a JSON file.  This simply checks to see that the file exists before
 # continuing, in order to ensure there's no trickier errors.
-TECHNOLOGY_JSON = $(wildcard src/technologies/$(TECHNOLOGY).tech.json)
+TECHNOLOGY_JSON = $(wildcard $(TECHNOLOGY_MODULE_PATH)/$(TECHNOLOGY).tech.json)
 ifeq ($(TECHNOLOGY_JSON),)
 $(error "Unable to find technology $(TECHNOLOGY), expected a cooresponding .tech.json file")
 endif
