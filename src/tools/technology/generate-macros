@@ -26,9 +26,13 @@ for library in techfile["libraries"]:
 	if "provide script" in library:
 		# FIXME: OBJ_TECH_DIR shouldn't be hard-coded here
 		files = ""
-		# "verilog sim" is a strange place from which to extract these files.
 		if "verilog sim" in library:
 			files = "obj/technology/{1}/extracted/{0}".format(library["verilog sim"], args.technology)
+		# "verilog synth" is a strange place from which to extract these files, but it's necessary
+		# sometimes - e.g. to use the sram_wrapper as the interface for memory macros instead of the
+		# raw hard macro itself.
+		if "verilog synth" in library:
+			files = "obj/technology/{1}/extracted/{0}".format(library["verilog synth"], args.technology)
 		if "documentation pdf" in library:
 			files = "obj/technology/{1}/extracted/{0}".format(library["documentation pdf"], args.technology)
 
