@@ -122,20 +122,30 @@ SIGNOFF_SYN_POWER_DIR = check/power/syn-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_C
 # Define the location of FIRRTL (used by barstools, etc).
 FIRRTL_HOME ?= src/tools/firrtl
 
-CMD_PTEST = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/ptest
-CMD_PCONFIGURE = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/pconfigure
-CMD_PPKGCONFIG = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/ppkg-config
-CMD_PHC = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/phc
-CMD_PCAD_INFER_DECOUPLED = $(OBJ_TOOLS_BIN_DIR)/pcad/bin/pcad-pipe-infer_decoupled
-CMD_PCAD_MACRO_COMPILER = $(OBJ_TOOLS_BIN_DIR)/pcad/bin/pcad-pipe-macro_compiler
-CMD_PCAD_LIST_MACROS = $(OBJ_TOOLS_BIN_DIR)/pcad/bin/pcad-pipe-list_macros
+##############################################################################
+# Various external tools and binaries used in PLSI.
+##############################################################################
+
+CMD_PTEST ?= $(OBJ_TOOLS_BIN_PTEST)
+CMD_PCONFIGURE ?= $(OBJ_TOOLS_BIN_PCONFIGURE)
+CMD_PPKGCONFIG ?= $(OBJ_TOOLS_BIN_PPKGCONFIG)
+CMD_PHC ?= $(OBJ_TOOLS_BIN_PHC)
+
+CMD_PCAD_INFER_DECOUPLED ?= $(OBJ_TOOLS_BIN_PCAD_INFER_DECOUPLED)
+CMD_PCAD_MACRO_COMPILER ?= $(OBJ_TOOLS_BIN_PCAD_MACRO_COMPILER)
+CMD_PCAD_LIST_MACROS ?= $(OBJ_TOOLS_BIN_PCAD_LIST_MACROS)
+
 CMD_SBT = $(OBJ_TOOLS_BIN_DIR)/sbt/sbt
-CMD_GCC = $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/bin/gcc
-CMD_GXX = $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/bin/g++
+
+CMD_GCC ?= $(OBJ_TOOLS_BIN_GCC)
+CMD_GXX ?= $(OBJ_TOOLS_BIN_GXX)
+
 CMD_PSON2JSON = $(OBJ_TOOLS_BIN_DIR)/pson/bin/pson2json
+
 CMD_FIRRTL_GENERATE_TOP = $(OBJ_TOOLS_BIN_DIR)/barstools/bin/GenerateTop
 CMD_FIRRTL_GENERATE_HARNESS = $(OBJ_TOOLS_BIN_DIR)/barstools/bin/GenerateHarness
-CMD_PYTHON3 = $(OBJ_TOOLS_BIN_DIR)/python3-$(PYTHON3_VERSION)/bin/python3
+
+CMD_PYTHON3 ?= $(OBJ_TOOLS_BIN_PYTHON3)
 
 PKG_CONFIG_PATH=$(abspath $(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/lib/pkgconfig):$(abspath $(OBJ_TOOLS_BIN_DIR)/pconfigure/lib/pkgconfig):$(abspath $(OBJ_TOOLS_BIN_DIR)/pson/lib/pkgconfig)
 export PKG_CONFIG_PATH
