@@ -84,13 +84,6 @@ OBJ_TOOLS_DIR ?= obj/tools
 # These variables aren't meant to be overridden by users -- you probably
 # shouldn't be changing them at all.
 
-# Versions of externally developed programs to download
-TCLAP_VERSION = 1.2.1
-TCL_LIBRARY_VERSION = 8.6
-TCL_VERSION = 8.6.6
-GCC_VERSION = 4.9.3
-PYTHON3_VERSION = 3.4.5
-
 # OBJ_*_DIR are the directories in which outputs end up
 OBJ_TOOLS_SRC_DIR = $(OBJ_TOOLS_DIR)/src
 OBJ_TOOLS_BIN_DIR = $(OBJ_TOOLS_DIR)/install
