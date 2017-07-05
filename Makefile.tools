@@ -1,6 +1,25 @@
 # This Makefile fragment is included from Makefile and is not intended to be
 # used directly.
 
+ifeq ($(OBJ_TOOLS_BIN_DIR),)
+$(error Set OBJ_TOOLS_BIN_DIR to the folder where binaries will be installed)
+endif
+
+ifeq ($(OBJ_TOOLS_SRC_DIR),)
+$(error Set OBJ_TOOLS_SRC_DIR to the folder where source files will be installed)
+endif
+
+ifeq ($(PLSI_CACHE_DIR),)
+$(error Set PLSI_CACHE_DIR to the PLSI cache dir)
+endif
+
+# Versions of externally developed programs to download
+TCLAP_VERSION = 1.2.1
+TCL_LIBRARY_VERSION = 8.6
+TCL_VERSION = 8.6.6
+GCC_VERSION = 4.9.3
+PYTHON3_VERSION = 3.4.5
+
 ##############################################################################
 # GCC
 ##############################################################################
