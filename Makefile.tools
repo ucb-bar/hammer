@@ -170,11 +170,9 @@ $(PLSI_CACHE_DIR)/distfiles/tclap-$(TCLAP_VERSION).tar.gz:
 # _plsi_ contrib pcad targets = OBJ_TOOLS_BIN_PCAD_INFER_DECOUPLED OBJ_TOOLS_BIN_PCAD_MACRO_COMPILER OBJ_TOOLS_BIN_PCAD_LIST_MACROS
 
 OBJ_TOOLS_BIN_PCAD_INFER_DECOUPLED = $(OBJ_TOOLS_BIN_DIR)/pcad/bin/pcad-pipe-infer_decoupled
-OBJ_TOOLS_BIN_PCAD_MACRO_COMPILER = $(OBJ_TOOLS_BIN_DIR)/pcad/bin/pcad-pipe-macro_compiler
 OBJ_TOOLS_BIN_PCAD_LIST_MACROS = $(OBJ_TOOLS_BIN_DIR)/pcad/bin/pcad-pipe-list_macros
 
 $(OBJ_TOOLS_BIN_PCAD_INFER_DECOUPLED) \
-$(OBJ_TOOLS_BIN_PCAD_MACRO_COMPILER) \
 $(OBJ_TOOLS_BIN_PCAD_LIST_MACROS): \
 		$(OBJ_TOOLS_BIN_DIR)/pcad/stamp
 	touch $@
@@ -266,7 +264,9 @@ $(OBJ_TOOLS_SRC_DIR)/pson/Configfile: $(shell find src/tools/pson -type f)
 # GenerateHarness.
 $(OBJ_TOOLS_BIN_DIR)/barstools/bin/%: src/tools/generate-sbt-wrapper $(CMD_SBT)
 	@mkdir -p $(dir $@)
-	$< --sbt $(abspath $(CMD_SBT)) --project tapeout --sbtstaging "$(abspath obj/sbt-staging)" --sbtargs "-DFIRRTL_HOME=$(abspath $(FIRRTL_HOME))" --basedir $(abspath src/tools/barstools) --main "barstools.tapeout.transforms.$(notdir $@)" --output $@
+	$< --sbt $(abspath $(CMD_SBT)) --project $(firstword $(subst ., ,$*)) \
+	 --sbtstaging "$(abspath obj/sbt-staging)" --sbtargs "-DFIRRTL_HOME=$(abspath $(FIRRTL_HOME))" \
+	--basedir $(abspath src/tools/barstools) --main "barstools.$(notdir $*)" --output $@
 
 ##############################################################################
 # Python3
