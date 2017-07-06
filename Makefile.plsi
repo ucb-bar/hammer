@@ -129,7 +129,6 @@ CMD_PHC ?= $(OBJ_TOOLS_BIN_PHC)
 CMD_PATH_TCLAP_PC ?= $(OBJ_TOOLS_BIN_PATH_TCLAP_PC)
 
 CMD_PCAD_INFER_DECOUPLED ?= $(OBJ_TOOLS_BIN_PCAD_INFER_DECOUPLED)
-CMD_PCAD_MACRO_COMPILER ?= $(OBJ_TOOLS_BIN_PCAD_MACRO_COMPILER)
 CMD_PCAD_LIST_MACROS ?= $(OBJ_TOOLS_BIN_PCAD_LIST_MACROS)
 
 CMD_SBT ?= $(OBJ_TOOLS_BIN_SBT)
@@ -143,8 +142,9 @@ CMD_PATH_PSON_PC ?= $(OBJ_TOOLS_BIN_PATH_PSON_PC)
 
 CMD_PYTHON3 ?= $(OBJ_TOOLS_BIN_PYTHON3)
 
-CMD_FIRRTL_GENERATE_TOP = $(OBJ_TOOLS_BIN_DIR)/barstools/bin/GenerateTop
-CMD_FIRRTL_GENERATE_HARNESS = $(OBJ_TOOLS_BIN_DIR)/barstools/bin/GenerateHarness
+CMD_FIRRTL_GENERATE_TOP = $(OBJ_TOOLS_BIN_DIR)/barstools/bin/tapeout.transforms.GenerateTop
+CMD_FIRRTL_GENERATE_HARNESS = $(OBJ_TOOLS_BIN_DIR)/barstools/bin/tapeout.transforms.GenerateHarness
+CMD_FIRRTL_MACRO_COMPILER = $(OBJ_TOOLS_BIN_DIR)/barstools/bin/macros.MacroCompiler
 
 # TODO(edwardw): find a cleaner way to get around this.
 # The problem is that binaries compiled with libpson depend on it...
@@ -418,7 +418,7 @@ OBJ_MAP_RTL_VHD = $(OBJ_SOC_RTL_VHD)
 
 OBJ_MAP_SYN_FILES =
 OBJ_MAP_SIM_FILES = $(OBJ_SOC_SIM_FILES)
-OBJ_MAP_SIM_MACRO_FILES = $(TECHNOLOGY_VERILOG_FILES)
+OBJ_MAP_SIM_MACRO_FILES = $(TECHNOLOGY_VERILOG_SIMULATION_FILES)
 OBJ_MAP_MACROS = $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros.json
 
 # Macro compilers need to know the actual list of required macros, as it's
@@ -681,7 +681,7 @@ $(OBJ_TECHNOLOGY_MACRO_LIBRARY): \
 		$(OBJ_TECHNOLOGY_JSON) \
 		$(OBJ_TECH_DIR)/extracted/plsi-techtar.stamp \
 		$(TECHNOLOGY_MACRO_PROVIDE_SCRIPTS) \
-		$(TECHNOLOGY_VERILOG_FILES) \
+		$(TECHNOLOGY_VERILOG_SIMULATION_FILES) \
 		$(TECHNOLOGY_DOCUMENTATION_PDF_FILES) \
 		$(CMD_PYTHON3)
 	@mkdir -p $(dir $@)
@@ -691,11 +691,11 @@ $(OBJ_TECHNOLOGY_MACRO_LIBRARY): \
 # verilog for synthesis that can later be used.  It's meant to be a single
 # file, so the macros are actually generated seperately.
 $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.v: \
-		$(CMD_PCAD_MACRO_COMPILER) \
+		$(CMD_FIRRTL_MACRO_COMPILER) \
 		$(OBJ_SOC_MACROS) \
 		$(OBJ_TECHNOLOGY_MACRO_LIBRARY)
 	@mkdir -p $(dir $@)
-	$(SCHEDULER_CMD) --max-threads=1 -- $< -v $@ -m $(filter %.macros.json,$^) --syn-flops -l $(filter %.macro_library.json,$^) |& tee $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.log | tail
+	$(SCHEDULER_CMD) --max-threads=1 -- $< -v $(abspath $@) -m $(abspath $(filter %.macros.json,$^)) --syn-flops -l $(abspath $(filter %.macro_library.json,$^)) |& tee $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.log | tail
 
 $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.mk: \
 		src/tools/map/list-macros \
