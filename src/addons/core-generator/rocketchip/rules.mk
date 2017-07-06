@@ -70,12 +70,11 @@ $(RC_OBJ_CORE_MEMORY_CONF) : \
 # also containing information for non-SRAM macro types.
 $(RC_OBJ_CORE_MACROS): \
 		src/addons/core-generator/rocketchip/tools/generate-macros \
-		$(RC_OBJ_CORE_MEMORY_CONF) \
-		$(CMD_PSON2JSON)
+		$(RC_OBJ_CORE_MEMORY_CONF)
 	@mkdir -p $(dir $@)
-	$< -o $@ $^
+	$< --json $@ --conf $(word 2, $^)
 
-$(RC_OBJ_CORE_SIM_MACRO_FILES): $(CMD_PCAD_MACRO_COMPILER) $(RC_OBJ_CORE_MACROS)
+$(RC_OBJ_CORE_SIM_MACRO_FILES): $(CMD_FIRRTL_MACRO_COMPILER) $(RC_OBJ_CORE_MACROS)
 	$< -m $(filter %.macros.json,$^) -v $@
 
 # The actual list of tests is produced from Rocket Chip by some build process.
