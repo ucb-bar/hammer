@@ -77,7 +77,7 @@ $(OBJ_TOOLS_BIN_PHC): $(OBJ_TOOLS_BIN_DIR)/pconfigure/stamp
 	touch $@
 
 $(OBJ_TOOLS_BIN_DIR)/pconfigure/stamp: $(OBJ_TOOLS_SRC_DIR)/pconfigure/Makefile
-	$(MAKE) -C $(OBJ_TOOLS_SRC_DIR)/pconfigure CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX)) install
+	MAKEFLAGS="$(TOOLS_MAKEFLAGS)" $(MAKE) -C $(OBJ_TOOLS_SRC_DIR)/pconfigure CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX)) install
 	@date > $@
 
 $(OBJ_TOOLS_SRC_DIR)/pconfigure/Makefile: $(OBJ_TOOLS_SRC_DIR)/pconfigure/stamp $(CMD_GXX)
