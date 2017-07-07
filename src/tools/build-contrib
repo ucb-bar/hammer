@@ -45,9 +45,9 @@ cat > Makefile.tmp <<EOF
 OBJ_TOOLS_BIN_DIR=${bin_dir}
 OBJ_TOOLS_SRC_DIR=${src_dir}
 PLSI_CACHE_DIR=${cache_dir}
-CMD_GCC=$(which gcc)
-CMD_GXX=$(which g++)
-SCHEDULER_CMD=src/addons/scheduler/local/tools/run
+CMD_GCC ?= $(which gcc)
+CMD_GXX ?= $(which g++)
+SCHEDULER_CMD=$(readlink -f src/addons/scheduler/local/tools/run)
 EOF
 
 make -rR $PLSI_MAKEFLAGS $(./src/tools/get-makefiles-args $PLSI_MAKEFILES) -f Makefile.tmp -f Makefile.tools -pn dummylol | ./src/tools/get-makefile-vars - > targets.txt
