@@ -10,24 +10,6 @@
 # PLSI_MAKEFILES is a list (string separated by spaces) of all the extra
 # Makefiles to include via -f before running the main PLSI makefile.
 
-# Build list of '-f' Makefiles.
-# e.g. "file1 file2" -> "-f file1 -f file2"
-makefiles=""
-IFSold="$IFS"
-arr_buf=${PLSI_MAKEFILES}
-while true; do
- read -r file rest <<< $arr_buf
-  if [ ! -z "$file" ]; then
-    makefiles="$makefiles -f $file";
-  fi
-  arr_buf=${rest}
-  if [ -z "$arr_buf" ]; then
-    break
-  fi
-done
-IFS="$IFSold"
-unset IFSold
-
-make_cmd="make $PLSI_MAKEFLAGS $makefiles -f Makefile.plsi $@"
+make_cmd="make $PLSI_MAKEFLAGS $(./src/tools/get-makefiles-args $PLSI_MAKEFILES) -f Makefile.plsi $@"
 echo "Make command to be executed: $make_cmd"
 #$make_cmd
