@@ -36,6 +36,7 @@ PYTHON3_VERSION = 3.4.5
 
 OBJ_TOOLS_BIN_GCC = $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/bin/gcc
 OBJ_TOOLS_BIN_GXX = $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/bin/g++
+OBJ_TOOLS_BIN_GCC_LIB64 = $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/lib64
 
 # Pretty much everything needs a newer GCC than will be availiable on any CAD
 # tools machines.
@@ -85,9 +86,9 @@ $(OBJ_TOOLS_SRC_DIR)/pconfigure/Makefile: $(OBJ_TOOLS_SRC_DIR)/pconfigure/stamp 
 	rm -f $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
 	echo 'PREFIX = $(abspath $(OBJ_TOOLS_BIN_DIR))/pconfigure' >> $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
 	echo 'LANGUAGES += c++' >> $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
-	echo 'LINKOPTS += -L,$(abspath $(OBJ_TOOLS_BIN_DIR))/gcc-$(GCC_VERSION)/lib64' >> $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
-	echo 'LINKOPTS += -Wl,-rpath,$(abspath $(OBJ_TOOLS_BIN_DIR))/gcc-$(GCC_VERSION)/lib64' >> $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
-	+cd $(OBJ_TOOLS_SRC_DIR)/pconfigure; $(SCHEDULER_CMD) --max-threads=1 -- ./bootstrap.sh --cc $(abspath $(CMD_GCC)) --cxx $(abspath $(CMD_GXX)) --cxxflags "-L,$(abspath $(OBJ_TOOLS_BIN_DIR))/gcc-$(GCC_VERSION)/lib64 -Wl,-rpath,$(abspath $(OBJ_TOOLS_BIN_DIR))/gcc-$(GCC_VERSION)/lib64"
+	echo 'LINKOPTS += -L,$(abspath $(CMD_GCC_LIB64))' >> $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
+	echo 'LINKOPTS += -Wl,-rpath,$(abspath $(CMD_GCC_LIB64))' >> $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
+	+cd $(OBJ_TOOLS_SRC_DIR)/pconfigure; $(SCHEDULER_CMD) --max-threads=1 -- ./bootstrap.sh --cc $(abspath $(CMD_GCC)) --cxx $(abspath $(CMD_GXX)) --cxxflags "-L,$(abspath $(CMD_GCC_LIB64)) -Wl,-rpath,$(abspath $(CMD_GCC_LIB64))"
 	cd $(OBJ_TOOLS_SRC_DIR)/pconfigure; PATH="$(OBJ_TOOLS_SRC_DIR)/pconfigure/bin:$(PATH)" ./bin/pconfigure --verbose --ppkg-config $(abspath $(OBJ_TOOLS_SRC_DIR)/pconfigure/bin/ppkg-config) --phc $(abspath $(OBJ_TOOLS_SRC_DIR)/pconfigure/bin/phc)
 	+PATH="$(abspath $(OBJ_TOOLS_SRC_DIR)/pconfigure/bin/):$$PATH" MAKEFLAGS="$(TOOLS_MAKEFLAGS)" $(SCHEDULER_CMD) --make -- $(MAKE) -C $(OBJ_TOOLS_SRC_DIR)/pconfigure -B CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX))
 
@@ -163,7 +164,7 @@ $(OBJ_TOOLS_SRC_DIR)/pcad/Makefile: $(OBJ_TOOLS_SRC_DIR)/pcad/stamp \
 	mkdir -p $(dir $@)
 	echo 'PREFIX = $(abspath $(OBJ_TOOLS_BIN_DIR))/pcad' >> $(dir $@)/Configfile.local
 	echo 'LANGUAGES += c++' >> $(dir $@)/Configfile.local
-	echo 'LINKOPTS += -Wl,-rpath,$(abspath $(OBJ_TOOLS_BIN_DIR))/gcc-$(GCC_VERSION)/lib64' >> $(dir $@)/Configfile.local
+	echo 'LINKOPTS += -Wl,-rpath,$(abspath $(CMD_GCC_LIB64))' >> $(dir $@)/Configfile.local
 	echo 'COMPILEOPTS += -O3 -march=native -g' >> $(dir $@)/Configfile.local
 	echo 'LINKOPTS += -O3 -march=native -g' >> $(dir $@)/Configfile.local
 	cd $(dir $@); $(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --phc $(abspath $(CMD_PHC))
@@ -204,7 +205,7 @@ $(OBJ_TOOLS_SRC_DIR)/pson/Makefile: \
 	@mkdir -p $(dir $@)
 	echo 'PREFIX = $(abspath $(OBJ_TOOLS_BIN_DIR)/pson)' >> $(dir $@)/Configfile.local
 	echo 'LANGUAGES += c++' >> $(dir $@)/Configfile.local
-	echo 'LINKOPTS += -Wl,-rpath,$(abspath $(OBJ_TOOLS_BIN_DIR))/gcc-$(GCC_VERSION)/lib64' >> $(dir $@)/Configfile.local
+	echo 'LINKOPTS += -Wl,-rpath,$(abspath $(CMD_GCC_LIB64))' >> $(dir $@)/Configfile.local
 	cd $(dir $<); $(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --phc $(abspath $(CMD_PHC)) --verbose
 
 $(OBJ_TOOLS_SRC_DIR)/pson/Configfile: $(shell find src/tools/pson -type f)
