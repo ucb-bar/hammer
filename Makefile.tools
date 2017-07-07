@@ -1,6 +1,8 @@
 # This Makefile fragment is included from Makefile and is not intended to be
 # used directly.
 
+# Convention: OBJ_TOOLS_BIN_<x> ↔ CMD_<x>
+
 ifeq ($(OBJ_TOOLS_BIN_DIR),)
 $(error Set OBJ_TOOLS_BIN_DIR to the folder where binaries will be installed)
 endif
@@ -11,6 +13,10 @@ endif
 
 ifeq ($(PLSI_CACHE_DIR),)
 $(error Set PLSI_CACHE_DIR to the PLSI cache dir)
+endif
+
+ifeq ($(SCHEDULER_CMD),)
+$(error Set SCHEDULER_CMD from Makefile)
 endif
 
 # Versions of externally developed programs to download
