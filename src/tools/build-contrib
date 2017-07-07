@@ -76,7 +76,7 @@ EOF
 for var in "${makefile_var[@]}"; do
   # Find the actual target name from the variable name.
 
-  makefile_target_name_grep=$(cat targets.txt | grep ${var} || true) # ignore grep failures
+  makefile_target_name_grep=$(cat targets.txt | grep "${var} = " || true) # ignore grep failures
   # Check for partial matches (e.g. FOO matching FOOBAR), which is
   # undesired.
   if [[ ! "$makefile_target_name_grep" =~ ^"${var} = ".* ]]; then
@@ -86,7 +86,7 @@ for var in "${makefile_var[@]}"; do
     exit 1
   fi
 
-  makefile_target_name=$(cat targets.txt | grep ${var} | sed -e "s/^${var} = //g")
+  makefile_target_name=$(cat targets.txt | grep "${var} = " | sed -e "s/^${var} = //g")
   if [ -z "$makefile_target_name" ]; then
     >&2 echo "No target found for variable $var"
     # Clean up
