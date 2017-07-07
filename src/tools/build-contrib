@@ -1,0 +1,108 @@
+#!/bin/bash
+# Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+# Build a certain prebuilt binary contrib.
+# Example: build-contrib --name python --makefile_var OBJ_TOOLS_BIN_PYTHON3
+
+unset name # e.g. python
+unset makefile_var # e.g. OBJ_TOOLS_BIN_PYTHON3
+makefile_var=()
+unset cache_dir; cache_dir=$(readlink -f obj/cache)
+unset src_dir; src_dir=$(readlink -f contrib_src)
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    "$0") ;;
+    --name) name="$2"; shift;;
+    --makefile_var) makefile_var+=("$2"); shift;;
+    --cache_dir) cache_dir="$2"; shift;;
+    --src_dir) src_dir="$2"; shift;;
+    *) echo "Unknown argument $1"; exit 1;;
+    esac
+    shift
+done
+
+if [ -z "${name}" ]; then
+  >&2 echo "--name not specified"
+  exit 1
+fi
+
+if [ -z "${makefile_var}" ]; then
+  >&2 echo "--makefile_var not specified"
+  exit 1
+fi
+
+set -e
+
+bin_dir="contrib_${name}"
+# Ensure that the folder has been created for readlink calls below.
+mkdir -p $bin_dir
+
+cat > Makefile.tmp <<EOF
+# Prevent make from trying to execute a default target.
+.PHONY: dummylol
+
+OBJ_TOOLS_BIN_DIR=${bin_dir}
+OBJ_TOOLS_SRC_DIR=${src_dir}
+PLSI_CACHE_DIR=${cache_dir}
+CMD_GCC=$(which gcc)
+CMD_GXX=$(which g++)
+SCHEDULER_CMD=src/addons/scheduler/local/tools/run
+EOF
+
+make -rR -f Makefile.tmp -f Makefile.tools -pn dummylol | ./src/tools/get-makefile-vars - > targets.txt
+
+# Create a Makefile snippet and shell snippet to use this prebuilt
+# contrib.
+makefile_snippet=$(readlink -f "${bin_dir}/Makefile.${name}")
+echo $makefile_snippet
+rm -f "${makefile_snippet}"
+cat > "${makefile_snippet}" <<EOF
+# This is an automatically generated snippet to use the prebuilt binaries
+# for tool ${name}.
+# This file must be used in conjunction with the appropriate -o options
+# to prevent make from trying to rebuild the pre-built binaries.
+SELF_DIR := \$(dir \$(lastword \$(MAKEFILE_LIST)))
+EOF
+rm -f "contrib_${name}.sh"
+cat > "contrib_${name}.sh" <<EOF
+# This is an automatically generated snippet to use the prebuilt binaries
+# for tool ${name}.
+# To use this, simply source this script and call ./makeplsi as usual.
+bin_dir_${name}=$(readlink -f ${bin_dir})
+export PLSI_MAKEFILES="\$PLSI_MAKEFILES \$bin_dir_${name}/Makefile.${name}"
+EOF
+
+for var in "${makefile_var[@]}"; do
+  # Find the actual target name from the variable name.
+
+  makefile_target_name_grep=$(cat targets.txt | grep ${var} || true) # ignore grep failures
+  # Check for partial matches (e.g. FOO matching FOOBAR), which is
+  # undesired.
+  if [[ ! "$makefile_target_name_grep" =~ ^"${var} = ".* ]]; then
+    >&2 echo "No target found for variable $var"
+    # Clean up
+    rm -f "contrib_${name}.sh"
+    exit 1
+  fi
+
+  makefile_target_name=$(cat targets.txt | grep ${var} | sed -e "s/^${var} = //g")
+  if [ -z "$makefile_target_name" ]; then
+    >&2 echo "No target found for variable $var"
+    # Clean up
+    rm -f "contrib_${name}.sh"
+    exit 1
+  fi
+  echo "Makefile target is ${makefile_target_name}"
+
+  # Build the target.
+  make -rR -f Makefile.tmp -f Makefile.tools -j1 "${makefile_target_name}"
+
+  # Find target path relative to the bin_dir.
+  # https://stackoverflow.com/a/7305217
+  makefile_target_rel=$(python -c 'import os, sys; print(os.path.relpath(*sys.argv[1:]))' $(readlink -f $makefile_target_name) $(readlink -f ${bin_dir}))
+
+  # Drop pointers into the contrib and Makefile scripts to make it easy
+  # to use.
+  echo "export PLSI_MAKEFLAGS=\"\$PLSI_MAKEFLAGS -o \$bin_dir_${name}/${makefile_target_rel}\"" >> "contrib_${name}.sh"
+  echo "$(echo $var | sed -e s/^OBJ_TOOLS_BIN_/CMD_/g) := \$(SELF_DIR)/${makefile_target_rel}" >> "${makefile_snippet}"
+done
