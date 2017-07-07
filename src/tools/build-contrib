@@ -1,6 +1,7 @@
 #!/bin/bash
 # Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
 # Build a certain prebuilt binary contrib.
+# Respects PLSI_MAKEFLAGS and PLSI_MAKEFILES (see makeplsi for documentation).
 # Example: build-contrib --name python --makefile_var OBJ_TOOLS_BIN_PYTHON3
 
 unset name # e.g. python
@@ -49,7 +50,7 @@ CMD_GXX=$(which g++)
 SCHEDULER_CMD=src/addons/scheduler/local/tools/run
 EOF
 
-make -rR -f Makefile.tmp -f Makefile.tools -pn dummylol | ./src/tools/get-makefile-vars - > targets.txt
+make -rR $PLSI_MAKEFLAGS $(./src/tools/get-makefiles-args $PLSI_MAKEFILES) -f Makefile.tmp -f Makefile.tools -pn dummylol | ./src/tools/get-makefile-vars - > targets.txt
 
 # Create a Makefile snippet and shell snippet to use this prebuilt
 # contrib.
@@ -95,7 +96,7 @@ for var in "${makefile_var[@]}"; do
   echo "Makefile target is ${makefile_target_name}"
 
   # Build the target.
-  make -rR -f Makefile.tmp -f Makefile.tools -j1 "${makefile_target_name}"
+  make -rR $PLSI_MAKEFLAGS $(./src/tools/get-makefiles-args $PLSI_MAKEFILES) -f Makefile.tmp -f Makefile.tools -j1 "${makefile_target_name}"
 
   # Find target path relative to the bin_dir.
   # https://stackoverflow.com/a/7305217
