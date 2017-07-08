@@ -187,7 +187,7 @@ $(OBJ_TOOLS_SRC_DIR)/pcad/Makefile: $(OBJ_TOOLS_SRC_DIR)/pcad/stamp \
 	echo 'LINKOPTS += -Wl,-rpath,$(abspath $(CMD_PATH_GCC_LIB64))' >> $(dir $@)/Configfile.local
 	echo 'COMPILEOPTS += -O3 -march=native -g' >> $(dir $@)/Configfile.local
 	echo 'LINKOPTS += -O3 -march=native -g' >> $(dir $@)/Configfile.local
-	cd $(dir $@); PKG_CONFIG_PATH="$PKG_CONFIG_PATH $(CMD_PATH_TCLAP_PC)" $(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --phc $(abspath $(CMD_PHC))
+	cd $(dir $@); PKG_CONFIG_PATH="$$PKG_CONFIG_PATH:$(abspath $(dir $(CMD_PATH_TCLAP_PC)))" $(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --phc $(abspath $(CMD_PHC))
 
 $(OBJ_TOOLS_SRC_DIR)/pcad/stamp: $(shell find src/tools/pcad -type f)
 	mkdir -p $(dir $@)
