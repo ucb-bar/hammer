@@ -42,7 +42,7 @@ PYTHON3_VERSION = 3.4.5
 
 OBJ_TOOLS_BIN_GCC = $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/bin/gcc
 OBJ_TOOLS_BIN_GXX = $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/bin/g++
-OBJ_TOOLS_BIN_GCC_LIB64 = $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/lib64
+OBJ_TOOLS_BIN_PATH_GCC_LIB64 = $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/lib64
 
 # Pretty much everything needs a newer GCC than will be availiable on any CAD
 # tools machines.
@@ -94,9 +94,9 @@ $(OBJ_TOOLS_SRC_DIR)/pconfigure/Makefile: $(OBJ_TOOLS_SRC_DIR)/pconfigure/stamp 
 	rm -f $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
 	echo 'PREFIX = $(abspath $(OBJ_TOOLS_BIN_DIR))/pconfigure' >> $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
 	echo 'LANGUAGES += c++' >> $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
-	echo 'LINKOPTS += -L,$(abspath $(CMD_GCC_LIB64))' >> $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
-	echo 'LINKOPTS += -Wl,-rpath,$(abspath $(CMD_GCC_LIB64))' >> $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
-	+cd $(OBJ_TOOLS_SRC_DIR)/pconfigure; $(SCHEDULER_CMD) --max-threads=1 -- ./bootstrap.sh --cc $(abspath $(CMD_GCC)) --cxx $(abspath $(CMD_GXX)) --cxxflags "-L,$(abspath $(CMD_GCC_LIB64)) -Wl,-rpath,$(abspath $(CMD_GCC_LIB64))"
+	echo 'LINKOPTS += -L,$(abspath $(CMD_PATH_GCC_LIB64))' >> $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
+	echo 'LINKOPTS += -Wl,-rpath,$(abspath $(CMD_PATH_GCC_LIB64))' >> $(OBJ_TOOLS_SRC_DIR)/pconfigure/Configfiles/local
+	+cd $(OBJ_TOOLS_SRC_DIR)/pconfigure; $(SCHEDULER_CMD) --max-threads=1 -- ./bootstrap.sh --cc $(abspath $(CMD_GCC)) --cxx $(abspath $(CMD_GXX)) --cxxflags "-L,$(abspath $(CMD_PATH_GCC_LIB64)) -Wl,-rpath,$(abspath $(CMD_PATH_GCC_LIB64))"
 	cd $(OBJ_TOOLS_SRC_DIR)/pconfigure; PATH="$(OBJ_TOOLS_SRC_DIR)/pconfigure/bin:$(PATH)" ./bin/pconfigure --verbose --ppkg-config $(abspath $(OBJ_TOOLS_SRC_DIR)/pconfigure/bin/ppkg-config) --phc $(abspath $(OBJ_TOOLS_SRC_DIR)/pconfigure/bin/phc)
 	+PATH="$(abspath $(OBJ_TOOLS_SRC_DIR)/pconfigure/bin/):$$PATH" MAKEFLAGS="$(TOOLS_MAKEFLAGS)" $(SCHEDULER_CMD) --make -- $(MAKE) -C $(OBJ_TOOLS_SRC_DIR)/pconfigure -B CC=$(abspath $(CMD_GCC)) CXX=$(abspath $(CMD_GXX))
 
@@ -107,7 +107,7 @@ $(OBJ_TOOLS_SRC_DIR)/pconfigure/stamp: $(shell find src/tools/pconfigure -type f
 
 
 ##############################################################################
-# TCL and TCLAP
+# TCL
 ##############################################################################
 
 # Most of the CAD tools have some sort of TCL interface, and the open source
@@ -129,7 +129,17 @@ $(PLSI_CACHE_DIR)/distfiles/tcl-$(TCL_VERSION).tar.gz:
 	mkdir -p $(dir $@)
 	wget http://prdownloads.sourceforge.net/tcl/tcl$(TCL_VERSION)-src.tar.gz -O $@
 
+##############################################################################
+# TCLAP
+##############################################################################
+
+# _plsi_ contrib tclap targets = OBJ_TOOLS_PATH_TCLAP_PC
+
+OBJ_TOOLS_BIN_PATH_TCLAP_PC = $(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/lib/pkgconfig/tclap.pc
+
 # TCLAP is a C++ command-line argument parser that's used by PCAD
+$(OBJ_TOOLS_PATH_TCLAP_PC): $(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/stamp
+
 $(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/stamp: $(OBJ_TOOLS_SRC_DIR)/tclap-$(TCLAP_VERSION)/Makefile
 	MAKEFLAGS="$(TOOLS_MAKEFLAGS)" $(SCHEDULER_CMD) --make -- $(MAKE) -C $(dir $<) install
 	@date > $@
@@ -168,16 +178,16 @@ $(OBJ_TOOLS_BIN_DIR)/pcad/stamp: $(OBJ_TOOLS_SRC_DIR)/pcad/Makefile $(CMD_GXX)
 	@date > $@
 
 $(OBJ_TOOLS_SRC_DIR)/pcad/Makefile: $(OBJ_TOOLS_SRC_DIR)/pcad/stamp \
-				    $(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/stamp \
+				    $(CMD_PATH_TCLAP_PC) \
 				    $(OBJ_TOOLS_BIN_DIR)/pson/stamp \
 				    $(CMD_PCONFIGURE) $(CMD_PPKGCONFIG) $(CMD_PHC)
 	mkdir -p $(dir $@)
 	echo 'PREFIX = $(abspath $(OBJ_TOOLS_BIN_DIR))/pcad' >> $(dir $@)/Configfile.local
 	echo 'LANGUAGES += c++' >> $(dir $@)/Configfile.local
-	echo 'LINKOPTS += -Wl,-rpath,$(abspath $(CMD_GCC_LIB64))' >> $(dir $@)/Configfile.local
+	echo 'LINKOPTS += -Wl,-rpath,$(abspath $(CMD_PATH_GCC_LIB64))' >> $(dir $@)/Configfile.local
 	echo 'COMPILEOPTS += -O3 -march=native -g' >> $(dir $@)/Configfile.local
 	echo 'LINKOPTS += -O3 -march=native -g' >> $(dir $@)/Configfile.local
-	cd $(dir $@); $(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --phc $(abspath $(CMD_PHC))
+	cd $(dir $@); PKG_CONFIG_PATH="$PKG_CONFIG_PATH $(CMD_PATH_TCLAP_PC)" $(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --phc $(abspath $(CMD_PHC))
 
 $(OBJ_TOOLS_SRC_DIR)/pcad/stamp: $(shell find src/tools/pcad -type f)
 	mkdir -p $(dir $@)
@@ -198,10 +208,14 @@ $(CMD_SBT): src/tools/sbt/sbt
 # PSON
 ##############################################################################
 
+# _plsi_ contrib pson targets = OBJ_TOOLS_BIN_PSON2JSON
+
+OBJ_TOOLS_BIN_PSON2JSON = $(OBJ_TOOLS_BIN_DIR)/pson/bin/pson2json
+
 # PSON is a C++ JSON parsing library that also allows for JSON-like files that
 # have extra trailing commas floating around.  Piping through this allows
 # stateless JSON emission from various other parts of the code.
-$(CMD_PSON2JSON): $(OBJ_TOOLS_BIN_DIR)/pson/stamp
+$(OBJ_TOOLS_BIN_PSON2JSON): $(OBJ_TOOLS_BIN_DIR)/pson/stamp
 	touch $@
 
 $(OBJ_TOOLS_BIN_DIR)/pson/stamp: $(OBJ_TOOLS_SRC_DIR)/pson/Makefile $(CMD_GCC) $(CMD_GXX)
@@ -210,13 +224,13 @@ $(OBJ_TOOLS_BIN_DIR)/pson/stamp: $(OBJ_TOOLS_SRC_DIR)/pson/Makefile $(CMD_GCC) $
 
 $(OBJ_TOOLS_SRC_DIR)/pson/Makefile: \
 		$(OBJ_TOOLS_SRC_DIR)/pson/Configfile \
-		$(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/stamp \
+		$(CMD_PATH_TCLAP_PC) \
 		$(CMD_PCONFIGURE) $(CMD_GCC) $(CMD_GXX)
 	@mkdir -p $(dir $@)
 	echo 'PREFIX = $(abspath $(OBJ_TOOLS_BIN_DIR)/pson)' >> $(dir $@)/Configfile.local
 	echo 'LANGUAGES += c++' >> $(dir $@)/Configfile.local
-	echo 'LINKOPTS += -Wl,-rpath,$(abspath $(CMD_GCC_LIB64))' >> $(dir $@)/Configfile.local
-	cd $(dir $<); $(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --phc $(abspath $(CMD_PHC)) --verbose
+	echo 'LINKOPTS += -Wl,-rpath,$(abspath $(CMD_PATH_GCC_LIB64))' >> $(dir $@)/Configfile.local
+	cd $(dir $<); PKG_CONFIG_PATH="$$PKG_CONFIG_PATH:$(abspath $(dir $(CMD_PATH_TCLAP_PC)))" $(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --phc $(abspath $(CMD_PHC)) --verbose
 
 $(OBJ_TOOLS_SRC_DIR)/pson/Configfile: $(shell find src/tools/pson -type f)
 	rm -rf $(dir $@)
