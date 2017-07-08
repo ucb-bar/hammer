@@ -42,7 +42,14 @@ echo '.PHONY: DUMMY_RULE' >> $tmpfile2
 echo 'DUMMY_RULE:' >> $tmpfile2
 echo -e "\t@echo > /dev/null" >> $tmpfile2
 
-echo 'VARS_OLD := $(.VARIABLES)' >> $tmpfile2
+cat >> $tmpfile2 <<"EOF"
+VARS_OLD := $(.VARIABLES)
+# Escape any rogue '%' characters, or filter_out will to match it and weird
+# things can happen.
+# e.g. if %D is present in .VARIABLES, then any variable ending in the letter D
+# will be filtered out without warning (!!!)
+VARS_OLD := $(subst %,\%,$(VARS_OLD))
+EOF
 cat $tmpfile >> $tmpfile2
 cat >> $tmpfile2 <<"EOF"
 $(foreach v,                                        \
