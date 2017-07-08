@@ -140,6 +140,7 @@ CMD_FIRRTL_GENERATE_HARNESS = $(OBJ_TOOLS_BIN_DIR)/barstools/bin/GenerateHarness
 
 CMD_PYTHON3 ?= $(OBJ_TOOLS_BIN_PYTHON3)
 
+# TODO(edwardw): this should be folded up into the contribs or Makefile.tools
 PKG_CONFIG_PATH=$(abspath $(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/lib/pkgconfig):$(abspath $(OBJ_TOOLS_BIN_DIR)/pconfigure/lib/pkgconfig):$(abspath $(OBJ_TOOLS_BIN_DIR)/pson/lib/pkgconfig)
 export PKG_CONFIG_PATH
 
