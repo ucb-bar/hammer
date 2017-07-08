@@ -133,12 +133,12 @@ $(PLSI_CACHE_DIR)/distfiles/tcl-$(TCL_VERSION).tar.gz:
 # TCLAP
 ##############################################################################
 
-# _plsi_ contrib tclap targets = OBJ_TOOLS_PATH_TCLAP_PC
+# _plsi_ contrib tclap targets = OBJ_TOOLS_BIN_PATH_TCLAP_PC
 
 OBJ_TOOLS_BIN_PATH_TCLAP_PC = $(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/lib/pkgconfig/tclap.pc
 
 # TCLAP is a C++ command-line argument parser that's used by PCAD
-$(OBJ_TOOLS_PATH_TCLAP_PC): $(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/stamp
+$(OBJ_TOOLS_BIN_PATH_TCLAP_PC): $(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/stamp
 
 $(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/stamp: $(OBJ_TOOLS_SRC_DIR)/tclap-$(TCLAP_VERSION)/Makefile
 	MAKEFLAGS="$(TOOLS_MAKEFLAGS)" $(SCHEDULER_CMD) --make -- $(MAKE) -C $(dir $<) install
