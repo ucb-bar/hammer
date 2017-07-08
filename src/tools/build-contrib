@@ -55,7 +55,6 @@ make -rR $PLSI_MAKEFLAGS $(./src/tools/get-makefiles-args $PLSI_MAKEFILES) -f Ma
 # Create a Makefile snippet and shell snippet to use this prebuilt
 # contrib.
 makefile_snippet=$(readlink -f "${bin_dir}/Makefile.${name}")
-echo $makefile_snippet
 rm -f "${makefile_snippet}"
 cat > "${makefile_snippet}" <<EOF
 # This is an automatically generated snippet to use the prebuilt binaries
