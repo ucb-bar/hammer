@@ -3,6 +3,10 @@
 
 # Convention: OBJ_TOOLS_BIN_<x> ↔ CMD_<x>
 
+# The lines beginning with "# _plsi_ are metadata by PLSI internally.
+# Lines like # _plsi_ contrib python targets = OBJ_TOOLS_BIN_PYTHON3 are used by build-contrib-auto
+# to automatically determine the binary targets to build and export.
+
 ifeq ($(OBJ_TOOLS_BIN_DIR),)
 $(error Set OBJ_TOOLS_BIN_DIR to the folder where binaries will be installed)
 endif
@@ -34,6 +38,8 @@ PYTHON3_VERSION = 3.4.5
 # GCC
 ##############################################################################
 
+# _plsi_ contrib gcc targets = OBJ_TOOLS_BIN_GCC OBJ_TOOLS_BIN_GXX OBJ_TOOLS_BIN_PATH_GCC_LIB64
+
 OBJ_TOOLS_BIN_GCC = $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/bin/gcc
 OBJ_TOOLS_BIN_GXX = $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/bin/g++
 OBJ_TOOLS_BIN_GCC_LIB64 = $(OBJ_TOOLS_BIN_DIR)/gcc-$(GCC_VERSION)/lib64
@@ -64,6 +70,8 @@ $(PLSI_CACHE_DIR)/distfiles/gcc-$(GCC_VERSION).tar.gz:
 ##############################################################################
 # pconfigure and related tools
 ##############################################################################
+
+# _plsi_ contrib pconfigure targets = OBJ_TOOLS_BIN_PTEST OBJ_TOOLS_BIN_PCONFIGURE OBJ_TOOLS_BIN_PPKGCONFIG OBJ_TOOLS_BIN_PHC
 
 OBJ_TOOLS_BIN_PTEST = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/ptest
 OBJ_TOOLS_BIN_PCONFIGURE = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/pconfigure
@@ -142,6 +150,8 @@ $(PLSI_CACHE_DIR)/distfiles/tclap-$(TCLAP_VERSION).tar.gz:
 ##############################################################################
 # PCAD
 ##############################################################################
+
+# _plsi_ contrib pcad targets = OBJ_TOOLS_BIN_PCAD_INFER_DECOUPLED OBJ_TOOLS_BIN_PCAD_MACRO_COMPILER OBJ_TOOLS_BIN_PCAD_MACRO_COMPILER
 
 OBJ_TOOLS_BIN_PCAD_INFER_DECOUPLED = $(OBJ_TOOLS_BIN_DIR)/pcad/bin/pcad-pipe-infer_decoupled
 OBJ_TOOLS_BIN_PCAD_MACRO_COMPILER = $(OBJ_TOOLS_BIN_DIR)/pcad/bin/pcad-pipe-macro_compiler
@@ -227,6 +237,8 @@ $(OBJ_TOOLS_BIN_DIR)/barstools/bin/%: src/tools/generate-sbt-wrapper $(CMD_SBT)
 ##############################################################################
 # Python3
 ##############################################################################
+
+# _plsi_ contrib python targets = OBJ_TOOLS_BIN_PYTHON3
 
 OBJ_TOOLS_BIN_PYTHON3 = $(OBJ_TOOLS_BIN_DIR)/python3-$(PYTHON3_VERSION)/bin/python3
 
