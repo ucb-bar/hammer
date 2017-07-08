@@ -12,4 +12,4 @@
 
 make_cmd="make $PLSI_MAKEFLAGS $(./src/tools/get-makefiles-args $PLSI_MAKEFILES) -f Makefile.plsi $@"
 echo "Make command to be executed: $make_cmd"
-#$make_cmd
+$make_cmd
