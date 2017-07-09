@@ -139,10 +139,10 @@ CMD_PATH_GCC_LIB64 ?= $(OBJ_TOOLS_BIN_PATH_GCC_LIB64)
 CMD_PSON2JSON ?= $(OBJ_TOOLS_BIN_PSON2JSON)
 CMD_PATH_PSON_PC ?= $(OBJ_TOOLS_BIN_PATH_PSON_PC)
 
+CMD_PYTHON3 ?= $(OBJ_TOOLS_BIN_PYTHON3)
+
 CMD_FIRRTL_GENERATE_TOP = $(OBJ_TOOLS_BIN_DIR)/barstools/bin/GenerateTop
 CMD_FIRRTL_GENERATE_HARNESS = $(OBJ_TOOLS_BIN_DIR)/barstools/bin/GenerateHarness
-
-CMD_PYTHON3 ?= $(OBJ_TOOLS_BIN_PYTHON3)
 
 ##############################################################################
 # Module Loading
