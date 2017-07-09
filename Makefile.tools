@@ -202,10 +202,15 @@ $(OBJ_TOOLS_SRC_DIR)/pcad/stamp: $(shell find src/tools/pcad -type f)
 # SBT
 ##############################################################################
 
-# "builds" a SBT wrapper
-$(CMD_SBT): src/tools/sbt/sbt
+# _plsi_ contrib sbt targets = OBJ_TOOLS_BIN_SBT
+
+OBJ_TOOLS_BIN_SBT = $(OBJ_TOOLS_BIN_DIR)/sbt/sbt
+
+# Caches the sbt binary to the tools directory.
+$(OBJ_TOOLS_BIN_SBT): src/tools/sbt/sbt-launch.jar src/tools/sbt/sbt
 	mkdir -p $(dir $@)
-	cat $^ | sed 's!@@SBT_SRC_DIR@@!$(abspath $(dir $^))!' > $@
+	cp src/tools/sbt/sbt-launch.jar $(dir $@)
+	cp src/tools/sbt/sbt $(dir $@)
 	chmod +x $@
 
 ##############################################################################
