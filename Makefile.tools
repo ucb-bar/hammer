@@ -7,6 +7,10 @@
 # Lines like # _plsi_ contrib python targets = OBJ_TOOLS_BIN_PYTHON3 are used by build-contrib-auto
 # to automatically determine the binary targets to build and export.
 
+# Note: while having to manually add PKG_CONFIG_PATH is annoying, Make
+# lacks a way to easily perform conditional includes, and always including
+# would implictly create a dependency for all runs, even contrib builds.
+
 ifeq ($(OBJ_TOOLS_BIN_DIR),)
 $(error Set OBJ_TOOLS_BIN_DIR to the folder where binaries will be installed)
 endif
@@ -179,7 +183,7 @@ $(OBJ_TOOLS_BIN_DIR)/pcad/stamp: $(OBJ_TOOLS_SRC_DIR)/pcad/Makefile $(CMD_GXX)
 
 $(OBJ_TOOLS_SRC_DIR)/pcad/Makefile: $(OBJ_TOOLS_SRC_DIR)/pcad/stamp \
 				    $(CMD_PATH_TCLAP_PC) \
-				    $(OBJ_TOOLS_BIN_DIR)/pson/stamp \
+				    $(CMD_PATH_PSON_PC) \
 				    $(CMD_PCONFIGURE) $(CMD_PPKGCONFIG) $(CMD_PHC)
 	mkdir -p $(dir $@)
 	echo 'PREFIX = $(abspath $(OBJ_TOOLS_BIN_DIR))/pcad' >> $(dir $@)/Configfile.local
@@ -187,7 +191,7 @@ $(OBJ_TOOLS_SRC_DIR)/pcad/Makefile: $(OBJ_TOOLS_SRC_DIR)/pcad/stamp \
 	echo 'LINKOPTS += -Wl,-rpath,$(abspath $(CMD_PATH_GCC_LIB64))' >> $(dir $@)/Configfile.local
 	echo 'COMPILEOPTS += -O3 -march=native -g' >> $(dir $@)/Configfile.local
 	echo 'LINKOPTS += -O3 -march=native -g' >> $(dir $@)/Configfile.local
-	cd $(dir $@); PKG_CONFIG_PATH="$$PKG_CONFIG_PATH:$(abspath $(dir $(CMD_PATH_TCLAP_PC)))" $(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --phc $(abspath $(CMD_PHC))
+	cd $(dir $@); PKG_CONFIG_PATH="$$PKG_CONFIG_PATH:$(abspath $(dir $(CMD_PATH_TCLAP_PC))):$(abspath $(dir $(CMD_PATH_PSON_PC)))" $(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --phc $(abspath $(CMD_PHC))
 
 $(OBJ_TOOLS_SRC_DIR)/pcad/stamp: $(shell find src/tools/pcad -type f)
 	mkdir -p $(dir $@)
@@ -208,14 +212,15 @@ $(CMD_SBT): src/tools/sbt/sbt
 # PSON
 ##############################################################################
 
-# _plsi_ contrib pson targets = OBJ_TOOLS_BIN_PSON2JSON
+# _plsi_ contrib pson targets = OBJ_TOOLS_BIN_PSON2JSON OBJ_TOOLS_BIN_PATH_PSON_PC
 
 OBJ_TOOLS_BIN_PSON2JSON = $(OBJ_TOOLS_BIN_DIR)/pson/bin/pson2json
+OBJ_TOOLS_BIN_PATH_PSON_PC = $(OBJ_TOOLS_BIN_DIR)/pson/lib/pkgconfig/pson.pc
 
 # PSON is a C++ JSON parsing library that also allows for JSON-like files that
 # have extra trailing commas floating around.  Piping through this allows
 # stateless JSON emission from various other parts of the code.
-$(OBJ_TOOLS_BIN_PSON2JSON): $(OBJ_TOOLS_BIN_DIR)/pson/stamp
+$(OBJ_TOOLS_BIN_PSON2JSON) $(OBJ_TOOLS_BIN_PATH_PSON_PC): $(OBJ_TOOLS_BIN_DIR)/pson/stamp
 	touch $@
 
 $(OBJ_TOOLS_BIN_DIR)/pson/stamp: $(OBJ_TOOLS_SRC_DIR)/pson/Makefile $(CMD_GCC) $(CMD_GXX)
