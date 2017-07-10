@@ -1,0 +1,13 @@
+#!/bin/bash
+# Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+# Build all contribs automatically.
+# TODO: find some way to do this automatically
+
+rm -rf contrib_*
+./src/tools/build-contrib-auto --contrib_name python
+./src/tools/build-contrib-auto --contrib_name gcc
+./src/tools/build-contrib-auto --contrib_name sbt
+(source contrib_gcc.sh && ./src/tools/build-contrib-auto --contrib_name tclap)
+(source contrib_gcc.sh && ./src/tools/build-contrib-auto --contrib_name pconfigure)
+(source contrib_gcc.sh && source contrib_tclap.sh && source contrib_pconfigure.sh && ./src/tools/build-contrib-auto --contrib_name pson)
+(source contrib_gcc.sh && source contrib_tclap.sh && source contrib_pconfigure.sh && source contrib_pson.sh && ./src/tools/build-contrib-auto --contrib_name pcad)
