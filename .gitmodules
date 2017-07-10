@@ -17,3 +17,6 @@
 [submodule "src/tools/firrtl"]
 	path = src/tools/firrtl
 	url = https://github.com/ucb-bar/firrtl.git
+[submodule "src/tools/pyyaml"]
+	path = src/tools/pyyaml
+	url = https://github.com/edwardcwang/pyyaml_plsi.git
