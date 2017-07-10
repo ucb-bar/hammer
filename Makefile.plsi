@@ -129,7 +129,6 @@ CMD_PHC ?= $(OBJ_TOOLS_BIN_PHC)
 CMD_PATH_TCLAP_PC ?= $(OBJ_TOOLS_BIN_PATH_TCLAP_PC)
 
 CMD_PCAD_INFER_DECOUPLED ?= $(OBJ_TOOLS_BIN_PCAD_INFER_DECOUPLED)
-CMD_PCAD_LIST_MACROS ?= $(OBJ_TOOLS_BIN_PCAD_LIST_MACROS)
 
 CMD_SBT ?= $(OBJ_TOOLS_BIN_SBT)
 
@@ -145,6 +144,7 @@ CMD_PYTHON3 ?= $(OBJ_TOOLS_BIN_PYTHON3)
 CMD_FIRRTL_GENERATE_TOP = $(OBJ_TOOLS_BIN_DIR)/barstools/bin/tapeout.transforms.GenerateTop
 CMD_FIRRTL_GENERATE_HARNESS = $(OBJ_TOOLS_BIN_DIR)/barstools/bin/tapeout.transforms.GenerateHarness
 CMD_FIRRTL_MACRO_COMPILER = $(OBJ_TOOLS_BIN_DIR)/barstools/bin/macros.MacroCompiler
+CMD_LIST_MACROS = $(abspath src/tools/technology/list-macros)
 
 # TODO(edwardw): find a cleaner way to get around this.
 # The problem is that binaries compiled with libpson depend on it...
