@@ -26,7 +26,7 @@ unset icv
 metal_fill_ruleset=()
 signoff_ruleset=()
 unset technology_macro_library
-unset pcad_pipe_list_macros
+unset list_macros
 while [[ "$1" != "" ]]
 do
     case "$1" in
@@ -56,7 +56,7 @@ do
     *get-config) get_config="$1";;
     *config.db.json) config_db="$1";;
     *.macro_library.json) technology_macro_library="$(readlink -f "$1")";;
-    */pcad-pipe-list_macros) pcad_pipe_list_macros="$(readlink -f "$1")";;
+    */list-macros) list_macros="$(readlink -f "$1")";;
     *) echo "Unknown argument $1"; exit 1;;
     esac
     shift
@@ -307,8 +307,8 @@ else
 fi
 
 # The technology is expected to provide a list of filler cells that ICC uses.
-filler_metal_cells_list=$($pcad_pipe_list_macros -l $technology_macro_library -t "metal filler" | xargs echo)
-filler_cells_list=$($pcad_pipe_list_macros -l $technology_macro_library -t filler | xargs echo)
+filler_metal_cells_list=$($list_macros -l $technology_macro_library -t "metal filler" | xargs echo)
+filler_cells_list=$($list_macros -l $technology_macro_library -t filler | xargs echo)
 sed 's@^set ADD_FILLER_CELL .*@set ADD_FILLER_CELL TRUE@' -i $run_dir/rm_setup/icc_setup.tcl
 sed "s@^set FILLER_CELL_METAL .*@set FILLER_CELL_METAL \"${filler_metal_cells_list}\";@" -i $run_dir/rm_setup/icc_setup.tcl
 sed "s@^set FILLER_CELL .*@set FILLER_CELL \"${filler_cells_list}\";@" -i $run_dir/rm_setup/icc_setup.tcl
