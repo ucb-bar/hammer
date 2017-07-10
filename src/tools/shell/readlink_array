@@ -5,7 +5,7 @@
 # arguments to readlink.
 # This script is meant to emulate that behaviour on those systems.
 # Usage:
-# readlink_array foo bar baz == readlink -f foo bar baz 
+# readlink_array foo bar baz == readlink -f foo bar baz
 #
 #  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
 #
