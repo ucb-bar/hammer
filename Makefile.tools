@@ -167,13 +167,11 @@ $(PLSI_CACHE_DIR)/distfiles/tclap-$(TCLAP_VERSION).tar.gz:
 # PCAD
 ##############################################################################
 
-# _plsi_ contrib pcad targets = OBJ_TOOLS_BIN_PCAD_INFER_DECOUPLED OBJ_TOOLS_BIN_PCAD_MACRO_COMPILER OBJ_TOOLS_BIN_PCAD_LIST_MACROS
+# _plsi_ contrib pcad targets = OBJ_TOOLS_BIN_PCAD_INFER_DECOUPLED
 
 OBJ_TOOLS_BIN_PCAD_INFER_DECOUPLED = $(OBJ_TOOLS_BIN_DIR)/pcad/bin/pcad-pipe-infer_decoupled
-OBJ_TOOLS_BIN_PCAD_LIST_MACROS = $(OBJ_TOOLS_BIN_DIR)/pcad/bin/pcad-pipe-list_macros
 
-$(OBJ_TOOLS_BIN_PCAD_INFER_DECOUPLED) \
-$(OBJ_TOOLS_BIN_PCAD_LIST_MACROS): \
+$(OBJ_TOOLS_BIN_PCAD_INFER_DECOUPLED): \
 		$(OBJ_TOOLS_BIN_DIR)/pcad/stamp
 	touch $@
 

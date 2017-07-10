@@ -1,0 +1,17 @@
+#!/usr/bin/env python
+
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("-l", "--library", dest="lib", type=file, required=True)
+parser.add_argument("-t", "--type", dest="type", type=str, required=True)
+args = parser.parse_args()
+
+import json
+lib = json.load(args.lib)
+
+tpe = "metal filler cell" if args.type == "metal filler" else \
+      "filler cell" if args.type == "filler" else args.type
+
+for macro in lib:
+  if macro["type"] == tpe:
+    print macro["name"]
