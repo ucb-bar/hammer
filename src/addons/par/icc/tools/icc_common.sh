@@ -461,3 +461,18 @@ source enter
 $ICC_HOME/bin/icc_shell -gui -f generated-scripts/open_chip.tcl
 EOF
 chmod +x $run_dir/generated-scripts/open_chip
+
+# Write SDF
+cat > $run_dir/generated-scripts/write_sdf.tcl <<EOF
+source rm_setup/icc_setup.tcl
+open_mw_cel \$ICC_OUTPUTS_CEL -lib \$MW_DESIGN_LIBRARY
+current_design ${top}
+write_sdf \$RESULTS_DIR/\$DESIGN_NAME.output.sdf
+exit
+EOF
+
+cat > $run_dir/generated-scripts/write_sdf <<EOF
+cd $run_dir
+$ICC_HOME/bin/icc_shell -f generated-scripts/write_sdf.tcl
+EOF
+chmod +x $run_dir/generated-scripts/write_sdf
