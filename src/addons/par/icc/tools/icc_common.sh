@@ -126,7 +126,7 @@ fi
 if [[ "$icv" == "" ]]
 then
     echo "ICV is not specified" >&2
-    exit 1
+    # exit 1
 fi
 
 # Most of the customization of the reference methodology is done here: this
@@ -243,6 +243,8 @@ then
     then
         sed "s@^set SIGNOFF_DRC_RUNSET .*@set SIGNOFF_DRC_RUNSET \"${signoff_ruleset[@]}\";@" -i $run_dir/rm_setup/icc_setup.tcl
     fi
+else
+    sed 's@^set ADD_METAL_FILL.*@set ADD_METAL_FILL "";@' -i $run_dir/rm_setup/icc_setup.tcl
 fi
 
 # The technology is expected to provide a list of filler cells that ICC uses.

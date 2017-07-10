@@ -52,14 +52,14 @@ endif
 # necessary for 28nm and below, but I just have it everywhere.
 ifeq ($(ICV_VERSION),)
 $(warning Running ICC needs ICV (IC validator) to run DRC, it will be skipped)
-endif
-
+else
 # FIXME: The BWRC calls this "icv", I'm not sure which is correct.
 ICV_INSTALL_NAME ?= icvalidator
 
 ICV_BIN = $(SYNOPSYS_HOME)/$(ICV_INSTALL_NAME)/$(ICV_VERSION)/bin/linux64/icv64
 ifeq ($(wildcard $(ICV_BIN)),)
 $(warning Expected to find ICV at $(ICV_BIN), there will be no DRC run)
+endif
 endif
 
 PAR_TOP = $(SYN_TOP)
