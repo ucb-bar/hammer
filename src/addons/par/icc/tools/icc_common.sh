@@ -173,7 +173,7 @@ set MW_GROUND_NET               "$($get_config $config_db -e par.icc.MW_GROUND_N
 set MW_GROUND_PORT              "$($get_config $config_db -e par.icc.MW_GROUND_PORT)";
 EOF
 
-icc_setup_tcl_path=$($get_config $config_db -n "" par.icc.icc_setup_appendix_tcl_path)
+icc_setup_appendix_tcl_path=$($get_config $config_db -n "" par.icc.icc_setup_appendix_tcl_path)
 if [[ "$icc_setup_appendix_tcl_path" != "" ]]
 then
     echo "# The following snippet was added by PLSI from ${icc_setup_appendix_tcl_path}" >> $run_dir/rm_setup/icc_setup.tcl
