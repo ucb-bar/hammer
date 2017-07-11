@@ -166,7 +166,7 @@ def yaml2json():
             f2 = sys.argv[2]
         obj = yaml.safe_load(load(f))
         obj = convertArrays(obj)
-        outputContent = json.dumps(obj)
+        outputContent = json.dumps(obj, indent=2)
         obj2 = json.loads(outputContent)
         if not compare(obj, obj2):
             print("error: they dont match structure")
