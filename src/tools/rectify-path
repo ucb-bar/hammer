@@ -1,0 +1,98 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+#  rectify-path
+#  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+#
+#  Rectify recursively all the given keys which end in a given suffix (default
+#  "_path").
+
+# pylint: disable=invalid-name
+
+from __future__ import print_function
+
+import argparse
+import json
+import sys
+
+# Python 2 vs 3, mumbo jumbo
+try:
+    basestring
+except NameError:
+    basestring = str
+
+def rectify(suffix, prefix, absolute, dictionary):
+    """
+    Prepend the given prefix to all values whose keys end in suffix.
+    If absolute is True, always add the prefix even if the path is absolute
+    (i.e. begins with '/'). (!)
+    >>> p = rectify("_p", "/gold/rush", False, {})
+    >>> p == {}
+    True
+    >>> d = {"a_p": "a", "b_p": 0, "c": "c", "d": {"e_p": "e"},
+    ...      "f_p": {"g_p": "g", "h_p": 1, "i_p": None, "h_p": "/dev"}}
+    >>> p = rectify("_p", "/gold/rush", False, d)
+    >>> p == {"a_p": "/gold/rush/a", "b_p": 0, "c": "c", "d": {"e_p": "/gold/rush/e"},
+    ...      "f_p": {"g_p": "/gold/rush/g", "h_p": 1, "i_p": None, "h_p": "/dev"}}
+    True
+    >>> p = rectify("_p", "/gold/rush/", False, d)
+    >>> p == {"a_p": "/gold/rush/a", "b_p": 0, "c": "c", "d": {"e_p": "/gold/rush/e"},
+    ...      "f_p": {"g_p": "/gold/rush/g", "h_p": 1, "i_p": None, "h_p": "/dev"}}
+    True
+    >>> p = rectify("_p", "/gold/rush", True, d)
+    >>> p == {"a_p": "/gold/rush/a", "b_p": 0, "c": "c", "d": {"e_p": "/gold/rush/e"},
+    ...      "f_p": {"g_p": "/gold/rush/g", "h_p": 1, "i_p": None, "h_p": "/gold/rush//dev"}}
+    True
+    """
+    # Strip off trailing '/' if present
+    prefix = prefix[:-1] if prefix.endswith('/') else prefix
+
+    output_dict = {}
+    for key, value in dictionary.items():
+        if isinstance(value, dict):
+            output_dict[key] = rectify(suffix, prefix, absolute, value)
+            continue
+
+        if not key.endswith(suffix):
+            output_dict[key] = value
+            continue
+
+        elif isinstance(value, basestring):
+            if not value.startswith('/') or (value.startswith('/') and absolute):
+                output_dict[key] = prefix + "/" + value
+            else:
+                output_dict[key] = value
+        else:
+            # Don't rectify non-strings
+            output_dict[key] = value
+    return output_dict
+
+def main(args):
+    database = json.load(open(args.db))
+    output = json.dumps(rectify(args.suffix, args.prefix, args.absolute, database),
+                        indent=2)
+    if args.in_place:
+        with open(args.db, 'w') as write_file:
+            write_file.write(output)
+    else:
+        print(output)
+
+    return 0
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("-s", "--suffix", default="_path", required=False,
+                        help="Key suffix to replace")
+    parser.add_argument("-a", "--absolute", const=True, default=False,
+                        required=False, action='store_const',
+                        help="Rectify always (even absolute paths beginning with '/') (!!!)")
+    parser.add_argument("-i", "--in-place", const=True, default=False,
+                        required=False, action='store_const',
+                        help="Edit in place")
+    parser.add_argument("-p", "--prefix", required=True,
+                        help="Path to prepend to the value")
+    parser.add_argument('db', metavar='DB', type=str,
+                        help='Path to the JSON database')
+
+    sys.exit(main(parser.parse_args()))
