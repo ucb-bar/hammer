@@ -1,0 +1,10 @@
+# Configuration options and defaults for ICC.
+# The values specified in this file are the defaults.
+# e.g. foo: "bar" in this file means that the default setting for foo is "bar".
+
+par.icc:
+  # Power and ground net names.
+  MW_POWER_NET: "VDD"
+  MW_POWER_PORT: "VDD"
+  MW_GROUND_NET: "VSS"
+  MW_GROUND_PORT: "VSS"
