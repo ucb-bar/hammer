@@ -298,7 +298,7 @@ sed 's@source \$@source -echo $@g' -i $run_dir/rm_*/*.tcl
 
 # The only difference between this script and the actual ICC run is that this
 # one generates a list of macros that will be used to floorplan the design, while
-# the other one actually 
+# the other one actually
 cat > $run_dir/generated-scripts/list_macros.tcl <<EOF
 source rm_setup/icc_setup.tcl
 open_mw_lib ${top}_LIB
@@ -359,7 +359,7 @@ template: m45_mesh(w1, w2) {
      width : @w2
      spacing : 1
      pitch : 8
-     offset : 
+     offset :
   }
 }
 EOF
