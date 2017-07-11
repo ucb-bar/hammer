@@ -144,6 +144,11 @@ CMD_PYTHON3 ?= $(OBJ_TOOLS_BIN_PYTHON3)
 CMD_FIRRTL_GENERATE_TOP = $(OBJ_TOOLS_BIN_DIR)/barstools/bin/GenerateTop
 CMD_FIRRTL_GENERATE_HARNESS = $(OBJ_TOOLS_BIN_DIR)/barstools/bin/GenerateHarness
 
+# TODO(edwardw): find a cleaner way to get around this.
+# The problem is that binaries compiled with libpson depend on it...
+LD_LIBRARY_PATH := $(LD_LIBRARY_PATH):$(dir $(CMD_PATH_PSON_PC))/..
+export LD_LIBRARY_PATH
+
 ##############################################################################
 # Module Loading
 ##############################################################################
