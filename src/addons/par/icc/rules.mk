@@ -32,6 +32,8 @@ $(OBJ_PAR_DIR)/synopsys-icc.stamp: \
 		$(PLSI_CACHE_DIR)/synopsys/rm/ICC-RM_$(ICC_VERSION).tar \
 		$(PLSI_CAD_CONFIG_FILE) \
 		$(TECHNOLOGY_JSON) \
+		$(PLSI_CMD_GET_CONFIG) \
+		$(OBJ_CONFIG_DB) \
 		$(TECHNOLOGY_ICV_DRC_METAL_FILL_RULESET) \
 		$(TECHNOLOGY_ICV_SIGNOFF_DRC_RULESET) \
 		$(OBJ_TECHNOLOGY_MACRO_LIBRARY) \
@@ -67,6 +69,8 @@ $(OBJ_PAR_DIR)/synopsys-icc-macros.stamp: \
 		$(PLSI_CACHE_DIR)/synopsys/rm/ICC-RM_$(ICC_VERSION).tar \
 		$(PLSI_CAD_CONFIG_FILE) \
 		$(TECHNOLOGY_JSON) \
+		$(PLSI_CMD_GET_CONFIG) \
+		$(OBJ_CONFIG_DB) \
 		$(ICV_BIN) \
 		$(ICC_BIN)
 	@mkdir -p $(dir $@)
