@@ -149,6 +149,12 @@ CMD_FIRRTL_GENERATE_HARNESS = $(OBJ_TOOLS_BIN_DIR)/barstools/bin/GenerateHarness
 LD_LIBRARY_PATH := $(LD_LIBRARY_PATH):$(dir $(CMD_PATH_PSON_PC))/..
 export LD_LIBRARY_PATH
 
+# Internal commands
+
+PLSI_CMD_YAML2JSON = src/tools/yaml2json
+$(PLSI_CMD_YAML2JSON): $(CMD_PYTHON3) src/tools/pyyaml
+	touch $@
+
 ##############################################################################
 # Module Loading
 ##############################################################################
