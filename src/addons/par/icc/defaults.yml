@@ -8,3 +8,7 @@ par.icc:
   MW_POWER_PORT: "VDD"
   MW_GROUND_NET: "VSS"
   MW_GROUND_PORT: "VSS"
+
+  # Path to a tcl fragment to include at the end of rm_setup/icc_setup.tcl.
+  # Set to null if unused.
+  icc_setup_appendix_tcl_path: null
