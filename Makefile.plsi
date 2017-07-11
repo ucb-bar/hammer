@@ -87,6 +87,7 @@ OBJ_TOOLS_DIR ?= obj/tools
 # OBJ_*_DIR are the directories in which outputs end up
 OBJ_TOOLS_SRC_DIR = $(OBJ_TOOLS_DIR)/src
 OBJ_TOOLS_BIN_DIR = $(OBJ_TOOLS_DIR)/install
+OBJ_CONFIG_DIR = obj/config
 OBJ_CORE_DIR = obj/core-$(CORE_GENERATOR)-$(CORE_CONFIG)
 OBJ_SOC_DIR = obj/soc-$(CORE_GENERATOR)-$(CORE_CONFIG)-$(SOC_CONFIG)
 OBJ_TECH_DIR = obj/technology/$(TECHNOLOGY)
@@ -236,6 +237,101 @@ PAR_POWER_SIGNOFF_ADDON = $(wildcard src/addons/signoff-power/$(PAR_POWER_SIGNOF
 ifneq ($(words $(PAR_POWER_SIGNOFF_ADDON)),1)
 $(error Unable to resolve PAR_POWER_SIGNOFF_TOOL=$(PAR_POWER_SIGNOFF_TOOL): found "$(PAR_FORMAL_ADDON)")
 endif
+
+##############################################################################
+# Config Loading
+##############################################################################
+
+# For the discussion of why .yml vs .yaml, please see http://markdblackwell.blogspot.com/2013/07/use-file-extension-yml-for-yaml.html
+
+# Define some useful targets.
+OBJ_CONFIG_DB = $(OBJ_CONFIG_DIR)/config.db.json
+PLSI_CMD_GET_CONFIG = src/tools/get-config
+PLSI_CMD_RECTIFY_PATH = src/tools/rectify-path
+
+# How to get a config:
+# $(shell $(PLSI_CMD_GET_CONFIG) [-e] [-n something_custom_to_print_if_null] $(OBJ_CONFIG_DB) your.key.here)
+
+# TODO(edwardw): expand this system to all modules (currently only applied to par)
+# TODO(edwardw): generate these automatically, DRY
+PAR_TOOL_CONFIG_DEFAULTS_YAML = $(PAR_TOOL_ADDON)/defaults.yml
+OBJ_PAR_TOOL_CONFIG_DEFAULTS_YAML_JSON = $(OBJ_CONFIG_DIR)/par.defaults.yml.json
+$(OBJ_PAR_TOOL_CONFIG_DEFAULTS_YAML_JSON): $(wildcard $(PAR_TOOL_CONFIG_DEFAULTS_YAML))
+	@mkdir -p $(dir $@)
+ifneq ($(wildcard $(PAR_TOOL_CONFIG_DEFAULTS_YAML)),)
+	PATH="$(abspath $(dir $(CMD_PYTHON3))):$(PATH)" $(PLSI_CMD_YAML2JSON) $(PAR_TOOL_CONFIG_DEFAULTS_YAML) $@
+	$(PLSI_CMD_RECTIFY_PATH) --prefix $(dir $(abspath $(PAR_TOOL_CONFIG_DEFAULTS_YAML))) --in-place $@
+else
+	touch $@
+endif
+PAR_TOOL_CONFIG_DEFAULTS_JSON = $(PAR_TOOL_ADDON)/defaults.json
+OBJ_PAR_TOOL_CONFIG_DEFAULTS_JSON = $(OBJ_CONFIG_DIR)/par.defaults.json
+$(OBJ_PAR_TOOL_CONFIG_DEFAULTS_JSON): $(wildcard $(PAR_TOOL_CONFIG_DEFAULTS_JSON))
+	@mkdir -p $(dir $@)
+ifneq ($(wildcard $(PAR_TOOL_CONFIG_DEFAULTS_JSON)),)
+	cp $(PAR_TOOL_CONFIG_DEFAULTS_JSON) $@
+	$(PLSI_CMD_RECTIFY_PATH) --prefix $(dir $(abspath $(PAR_TOOL_CONFIG_DEFAULTS_JSON))) --in-place $@
+else
+	touch $@
+endif
+
+# Technology defaults
+TECHNOLOGY_CONFIG_DEFAULTS_YAML = $(TECHNOLOGY_MODULE_PATH)/defaults.yml
+OBJ_TECHNOLOGY_CONFIG_DEFAULTS_YAML_JSON = $(OBJ_CONFIG_DIR)/$(TECHNOLOGY).defaults.yml.json
+$(OBJ_TECHNOLOGY_CONFIG_DEFAULTS_YAML_JSON): $(wildcard $(TECHNOLOGY_CONFIG_DEFAULTS_YAML))
+	@mkdir -p $(dir $@)
+ifneq ($(wildcard $(TECHNOLOGY_CONFIG_DEFAULTS_YAML)),)
+	PATH="$(abspath $(dir $(CMD_PYTHON3))):$(PATH)" $(PLSI_CMD_YAML2JSON) $(TECHNOLOGY_CONFIG_DEFAULTS_YAML) $@
+	$(PLSI_CMD_RECTIFY_PATH) --prefix $(dir $(abspath $(TECHNOLOGY_CONFIG_DEFAULTS_YAML))) --in-place $@
+else
+	touch $@
+endif
+TECHNOLOGY_CONFIG_DEFAULTS_JSON = $(TECHNOLOGY_MODULE_PATH)/defaults.json
+OBJ_TECHNOLOGY_CONFIG_DEFAULTS_JSON = $(OBJ_CONFIG_DIR)/$(TECHNOLOGY).defaults.json
+$(OBJ_TECHNOLOGY_CONFIG_DEFAULTS_JSON): $(wildcard $(TECHNOLOGY_CONFIG_DEFAULTS_JSON))
+	@mkdir -p $(dir $@)
+ifneq ($(wildcard $(TECHNOLOGY_CONFIG_DEFAULTS_JSON)),)
+	cp $(TECHNOLOGY_CONFIG_DEFAULTS_JSON) $@
+	$(PLSI_CMD_RECTIFY_PATH) --prefix $(dir $(abspath $(TECHNOLOGY_CONFIG_DEFAULTS_JSON))) --in-place $@
+else
+	touch $@
+endif
+
+# Project config
+PROJECT_NAME ?= project
+PROJECT_CONFIG_YAML ?=
+OBJ_PROJECT_CONFIG_YAML_JSON = $(OBJ_CONFIG_DIR)/$(PROJECT_NAME).yml.json
+$(OBJ_PROJECT_CONFIG_YAML_JSON): $(wildcard $(PROJECT_CONFIG_YAML))
+	@mkdir -p $(dir $@)
+ifneq ($(wildcard $(PROJECT_CONFIG_YAML)),)
+	PATH="$(abspath $(dir $(CMD_PYTHON3))):$(PATH)" $(PLSI_CMD_YAML2JSON) $(PROJECT_CONFIG_YAML) $@
+	$(PLSI_CMD_RECTIFY_PATH) --prefix $(dir $(abspath $(PROJECT_CONFIG_YAML))) --in-place $@
+else
+	touch $@
+endif
+PROJECT_CONFIG_JSON ?=
+OBJ_PROJECT_CONFIG_JSON = $(OBJ_CONFIG_DIR)/$(PROJECT_NAME).json
+$(OBJ_PROJECT_CONFIG_JSON): $(wildcard $(PROJECT_CONFIG_JSON))
+	@mkdir -p $(dir $@)
+ifneq ($(wildcard $(PROJECT_CONFIG_JSON)),)
+	cp $(PROJECT_CONFIG_JSON) $@
+	$(PLSI_CMD_RECTIFY_PATH) --prefix $(dir $(abspath $(PROJECT_CONFIG_JSON))) --in-place $@
+else
+	touch $@
+endif
+
+# Space separated list of configurations, to be merged into a run config.
+CONFIG_LIST = \
+	$(OBJ_PAR_TOOL_CONFIG_DEFAULTS_YAML_JSON) $(OBJ_PAR_TOOL_CONFIG_DEFAULTS_JSON) \
+	$(OBJ_TECHNOLOGY_CONFIG_DEFAULTS_YAML_JSON) $(OBJ_TECHNOLOGY_CONFIG_DEFAULTS_JSON) \
+	$(OBJ_PROJECT_CONFIG_YAML_JSON) $(OBJ_PROJECT_CONFIG_JSON)
+
+$(OBJ_CONFIG_DB): $(CONFIG_LIST)
+	@mkdir -p $(dir $@)
+	PATH="$(abspath $(dir $(CMD_PYTHON3))):$(PATH)" src/tools/build-config $^ > $@
+	$(shell echo "Built by PLSI from src/tools/build-config $^" > $@.meta)
+
+# Deal with old config system below.
 
 # Check to ensure all the configurations actually exist.
 PLSI_CAD_CONFIG_FILE = $(word 1,$(wildcard \
