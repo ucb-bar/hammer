@@ -20,6 +20,8 @@ unset find_regs
 unset config
 unset technology
 unset floorplan_json
+unset get_config
+unset config_db
 unset icv
 metal_fill_ruleset=()
 signoff_ruleset=()
@@ -51,6 +53,8 @@ do
     *.plsi_config.json) config="$1";;
     *.tech.json) technology="$1";;
     *.floorplan.json) floorplan_json="$1";;
+    *get-config) get_config="$1";;
+    *config.db.json) config_db="$1";;
     *.macro_library.json) technology_macro_library="$(readlink -f "$1")";;
     */pcad-pipe-list_macros) pcad_pipe_list_macros="$(readlink -f "$1")";;
     *) echo "Unknown argument $1"; exit 1;;
@@ -129,6 +133,18 @@ then
     # exit 1
 fi
 
+if [[ "$get_config" == "" ]]
+then
+    echo "get-config not specified" >&2
+    exit 1
+fi
+
+if [[ "$config_db" == "" ]]
+then
+    echo "config db not specified" >&2
+    exit 1
+fi
+
 # Most of the customization of the reference methodology is done here: this
 # sets all the input files and such.
 mkdir -p $run_dir/rm_setup
@@ -150,6 +166,11 @@ set INPUT_DELAY "0.10";
 set OUTPUT_DELAY "0.10";
 set ICC_NUM_CORES ${PLSI_SCHEDULER_MAX_THREADS};
 set_host_options -max_cores ${PLSI_SCHEDULER_MAX_THREADS};
+
+set MW_POWER_NET                "$($get_config $config_db -e par.icc.MW_POWER_NET)";
+set MW_POWER_PORT               "$($get_config $config_db -e par.icc.MW_POWER_PORT)";
+set MW_GROUND_NET               "$($get_config $config_db -e par.icc.MW_GROUND_NET)";
+set MW_GROUND_PORT              "$($get_config $config_db -e par.icc.MW_GROUND_PORT)";
 EOF
 
 # Read the core's configuration file to figure out what all the clocks should
