@@ -106,7 +106,7 @@ do
     if test ! -d "$lib"
     then
         echo "Milkyway library $lib doesn't exist in filesystem" >&2
-	exit 1
+        exit 1
     fi
 done
 
@@ -185,30 +185,30 @@ fi
 python3 >>$run_dir/generated-scripts/constraints.tcl <<EOF
 import json
 with open("${config}") as f:
-	config = json.load(f)
+    config = json.load(f)
 
 import re
 for clock in config["clocks"]:
-	clock_name = clock["name"]
-	clock_period = clock["period"]
-	par_derating = clock["par derating"]
-	if not re.match("[0-9]+ *[np]s", clock_period):
-		error
-	if not re.match("[0-9]+ *[np]s", par_derating):
-		error
+    clock_name = clock["name"]
+    clock_period = clock["period"]
+    par_derating = clock["par derating"]
+    if not re.match("[0-9]+ *[np]s", clock_period):
+        error
+    if not re.match("[0-9]+ *[np]s", par_derating):
+        error
 
-	if re.match("[0-9]+ *ns", clock_period):
-		clock_period_ns = re.sub(" *ns", "", clock_period)
-	if re.match("[0-9]+ *ps", clock_period):
-		clock_period_ns = int(re.sub(" *ps", "", clock_period)) / 1000.0
+    if re.match("[0-9]+ *ns", clock_period):
+        clock_period_ns = re.sub(" *ns", "", clock_period)
+    if re.match("[0-9]+ *ps", clock_period):
+        clock_period_ns = int(re.sub(" *ps", "", clock_period)) / 1000.0
 
-	if re.match("[0-9]+ *ns", par_derating):
-		par_derating_ns = re.sub(" *ns", "", par_derating)
-	if re.match("[0-9]+ *ps", par_derating):
-		par_derating_ns = int(re.sub(" *ps", "", par_derating)) / 1000.0
+    if re.match("[0-9]+ *ns", par_derating):
+        par_derating_ns = re.sub(" *ns", "", par_derating)
+    if re.match("[0-9]+ *ps", par_derating):
+        par_derating_ns = int(re.sub(" *ps", "", par_derating)) / 1000.0
 
-	print("create_clock {0} -name {0} -period {1}".format(clock_name, clock_period_ns + par_derating_ns))
-	print("set_clock_uncertainty 0.01 [get_clocks {0}]".format(clock_name))
+    print("create_clock {0} -name {0} -period {1}".format(clock_name, clock_period_ns + par_derating_ns))
+    print("set_clock_uncertainty 0.01 [get_clocks {0}]".format(clock_name))
 EOF
 
 # The constraints file determines how the IO is constrained and what the clocks
@@ -232,15 +232,15 @@ EOF
 python3 >>$run_dir/generated-scripts/constraints.tcl <<EOF
 import json
 with open("${technology}") as f:
-	config = json.load(f)
+    config = json.load(f)
 
 # Suppress PSYN-882 ("Warning: Consecutive metal layers have the same preferred routing direction") while the layer routing is being built.
 print("set suppress_errors  [concat \$suppress_errors  [list PSYN-882]]")
 
 for library in config["libraries"]:
-	if "metal layers" in library:
-		for layer in library["metal layers"]:
-			print("set_preferred_routing_direction -layers {{ {0} }} -direction {1}".format(layer["name"], layer["preferred routing direction"]))
+    if "metal layers" in library:
+        for layer in library["metal layers"]:
+            print("set_preferred_routing_direction -layers {{ {0} }} -direction {1}".format(layer["name"], layer["preferred routing direction"]))
 
 print("set suppress_errors  [lminus \$suppress_errors  [list PSYN-882]]")
 EOF
