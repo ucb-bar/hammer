@@ -12,3 +12,12 @@ par.icc:
   # Path to a tcl fragment to include at the end of rm_setup/icc_setup.tcl.
   # Set to null if unused.
   icc_setup_appendix_tcl_path: null
+
+  # Floorplanning script to use (ICC_IN_FLOORPLAN_USER_FILE in the reference methodology).
+  # Valid options are:
+  # - oldplsi - The 'old' floorplanning script present in PLSI at src/addons/par/icc/tools/generate-floorplan-json as of revision 2abcd1e
+  # - manual - Specify a manual floorplanning script to use.
+  #   If you specify this, you must also specify the floorplanning_script config below. The floorplanning_script config will be ignored in other modes.
+  # TODO(edwardw): Put in new floorplanning thing here when done.
+  floorplan_mode: oldplsi
+  floorplan_script: null

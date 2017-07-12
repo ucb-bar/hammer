@@ -182,6 +182,11 @@ fi
 
 # Read the core's configuration file to figure out what all the clocks should
 # look like.
+cat >> $run_dir/generated-scripts/constraints.tcl <<"EOF"
+if {![info exists generated_scripts_constraints_included]} {
+set generated_scripts_constraints_included 1;
+EOF
+
 python3 >>$run_dir/generated-scripts/constraints.tcl <<EOF
 import json
 with open("${config}") as f:
@@ -243,6 +248,11 @@ for library in config["libraries"]:
             print("set_preferred_routing_direction -layers {{ {0} }} -direction {1}".format(layer["name"], layer["preferred routing direction"]))
 
 print("set suppress_errors  [lminus \$suppress_errors  [list PSYN-882]]")
+EOF
+
+cat >> $run_dir/generated-scripts/constraints.tcl <<"EOF"
+}
+# generated_scripts_constraints_included
 EOF
 
 # I want to use DC's Verilog output instead of the milkyway stuff, which
@@ -338,35 +348,54 @@ EOF
 sed 's@set ICC_DBL_VIA .*@set ICC_DBL_VIA FALSE@' -i $run_dir/rm_setup/icc_setup.tcl
 sed 's@set ICC_DBL_VIA_FLOW_EFFORT .*@set ICC_DBL_VIA_FLOW_EFFORT "NONE"@' -i $run_dir/rm_setup/icc_setup.tcl
 
-mkdir -p $run_dir/generated-scripts
-if [[ ! -z "$floorplan_json" ]] # if floorplan_json is set
-then
-    # ICC needs a floorplan in order to do anything.  This script turns the
-    # floorplan JSON file into a floorplan TCL file for
-    mkdir -p $run_dir/generated-scripts
+floorplan_mode="$($get_config $config_db -e par.icc.floorplan_mode)"
+floorplan_script="$($get_config $config_db -n "" par.icc.floorplan_script)"
 
-    cat >$run_dir/saed_32nm.tpl <<EOF
+mkdir -p $run_dir/generated-scripts
+if [[ "$floorplan_mode" == "oldplsi" ]]; then
+    if [[ ! -z "$floorplan_json" ]] # if floorplan_json is set
+    then
+        # ICC needs a floorplan in order to do anything.  This script turns the
+        # floorplan JSON file into a floorplan TCL file for
+
+        cat >$run_dir/saed_32nm.tpl <<EOF
 template: m45_mesh(w1, w2) {
   layer : M4 {
-     direction : vertical
-     width : @w1
-     pitch : 8
-     spacing : 1
-     offset :
+    direction : vertical
+    width : @w1
+    pitch : 8
+    spacing : 1
+    offset :
   }
   layer : M5 {
-     direction : horizontal
-     width : @w2
-     spacing : 1
-     pitch : 8
-     offset :
+    direction : horizontal
+    width : @w2
+    spacing : 1
+    pitch : 8
+    offset :
   }
 }
 EOF
 
-    python3 $script_dir/floorplan2tcl.py --floorplan_json "$floorplan_json" --output "$run_dir/generated-scripts/floorplan.tcl" --top "$top"
-    cat $run_dir/generated-scripts/floorplan.tcl
+        python3 $script_dir/floorplan2tcl.py --floorplan_json "$floorplan_json" --output "$run_dir/generated-scripts/floorplan_inner.tcl" --top "$top"
+        cat $run_dir/generated-scripts/floorplan_inner.tcl
+    fi
+elif [[ "$floorplan_mode" == "manual" ]]; then
+    if [[ -z "$floorplan_script" ]]; then
+        >&2 echo "floorplan_mode is manual but no floorplan_script specified"
+        exit 1
+    fi
+    cp $floorplan_script $run_dir/generated-scripts/floorplan_inner.tcl
+else
+    >&2 echo "Invalid floorplan_mode"
+    exit 1
 fi
+
+# Prepend constraints to the floorplan.
+cat > $run_dir/generated-scripts/floorplan.tcl <<EOF
+source -echo -verbose generated-scripts/constraints.tcl
+source -echo -verbose generated-scripts/floorplan_inner.tcl
+EOF
 
 # Opens the floorplan straight away, which is easier than doing it manually
 cat > $run_dir/generated-scripts/open_floorplan.tcl <<EOF
