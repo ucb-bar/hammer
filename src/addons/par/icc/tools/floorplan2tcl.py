@@ -17,7 +17,7 @@ output=open(args.output, "w")
 # Write a header
 output.write("# Automatically generated with {script_name} -f {floorplan_json} -o {output} -t {top}\n\n".format(script_name=sys.argv[0], **args_dict))
 
-output.write("source -echo generated-scripts/constraints.tcl\n")
+output.write("source -echo -verbose generated-scripts/constraints.tcl\n")
 
 output.write("create_floorplan -control_type aspect_ratio -core_aspect_ratio 1 -core_utilization 0.7 -left_io2core 3 -bottom_io2core 3 -right_io2core 3 -top_io2core 3 -start_first_row\n")
 
