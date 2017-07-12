@@ -3,6 +3,15 @@
 # e.g. foo: "bar" in this file means that the default setting for foo is "bar".
 
 par.icc:
+  # Path to a folder with files to copy.
+  # e.g. if a folder named "src" is specified here, then the contents of
+  # src will be copied recursively to the Synopsys RM directory (the one
+  # containing README.ICC-RM.txt, etc).
+  resources_icc_path: null
+  # These two are for the technology and project to override, respectively.
+  resources_tech_path: null
+  resources_project_path: null
+
   # Power and ground net names.
   MW_POWER_NET: "VDD"
   MW_POWER_PORT: "VDD"
