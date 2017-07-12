@@ -51,11 +51,13 @@ mkdir -p $run_dir/rm_setup
 cat >> $run_dir/rm_setup/common_setup.tcl <<EOF
 set DESIGN_NAME "$top";
 set NETLIST_FILES "$(readlink -f ${v[@]})";
-set STRIP_PATH "$testbench";
 set ACTIVITY_FILE "$(readlink -f $run_dir/input.saif)";
 set TARGET_LIBRARY_FILES "$(readlink -f ${db[@]} | xargs echo)";
 set CONSTRAINT_FILES "$(readlink -f $run_dir/generated-scripts/constraints.tcl)";
 EOF
+
+sed "s@^set STRIP_PATH .*@set STRIP_PATH \"$testbench\"@" -i $run_dir/rm_setup/pt_setup.tcl
+
 
 # PT needs clock to be defined.  This script looks a whole lot like the DC one
 # and might not work correctly.
