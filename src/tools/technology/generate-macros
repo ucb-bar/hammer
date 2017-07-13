@@ -57,4 +57,4 @@ for library in techfile["libraries"]:
 
 of.write("]\n")
 
-of.close
+of.close()
