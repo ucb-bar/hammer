@@ -84,4 +84,9 @@ $(OBJ_PAR_DIR)/generated/$(PAR_TOP).macros.out: $(OBJ_PAR_DIR)/synopsys-icc-macr
 $(OBJ_PAR_DIR)/generated/$(PAR_TOP).floorplan.json: \
 		$(PAR_TOOL_ADDON)/tools/generate-floorplan-json \
 		$(OBJ_PAR_DIR)/generated/$(PAR_TOP).macros.out
-	PATH="$(abspath $(dir $(CMD_PYTHON3))):$(PATH)" $(abspath $<) --macros $(filter %.macros.out,$^) --rtl_top $(SYN_TOP) --config $(PAR_CONFIG) -o $@
+	# Don't let the rule fail if we are not using the oldplsi floorplan_mode
+	if [ ! "$(shell $(PLSI_CMD_GET_CONFIG) -e $(OBJ_CONFIG_DB) par.icc.floorplan_mode)" == "oldplsi" ]; then \
+		echo "{}" > $@; \
+	else \
+		PATH="$(abspath $(dir $(CMD_PYTHON3))):$(PATH)" $(abspath $<) --macros $(filter %.macros.out,$^) --rtl_top $(SYN_TOP) --config $(PAR_CONFIG) -o $@; \
+	fi
