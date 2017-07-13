@@ -1,0 +1,215 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+#  execute-config-meta
+#  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+#
+#  Executes all meta configuration options (options present in _meta keys).
+#  See README.config for more details.
+
+# pylint: disable=invalid-name
+
+import argparse
+import collections
+import os
+import json
+import string
+import sys
+import unicodedata
+
+ProgramConfig = collections.namedtuple('ProgramConfig', 'srcdir outdir globaldb configname') # pylint: disable=invalid-name
+
+# For testing only.
+DUMMY_PROGRAM_CONFIG = ProgramConfig(srcdir=".", outdir=".", configname="test",
+                                     globaldb={"param1": "one"})
+
+# Adapted from https://stackoverflow.com/a/21688083
+# We need this to handle format strings with dots in them, like "{foo.bar}".
+class CustomFormatter(string.Formatter):
+    def parse(self, fstring):
+        if fstring is None:  # we also get called with the (null) format spec, for some reason
+            return
+        parts = fstring.split("}")
+        for part in parts:
+            if "{" in part:
+                literal, fieldname = part.split("{")
+                yield (literal, fieldname, None, None)
+            else:
+                yield (part, None, None, None)
+    def get_field(self, field_name, args, kwargs):
+        # obj, used_key
+        # The object to be resulted for formatting is obj.
+        return kwargs[field_name], field_name
+    def get_value(self, key, args, kwargs):
+        return kwargs[key]
+
+# Adapted from https://stackoverflow.com/a/27264385
+def slugify(value):
+    """
+    Converts to lowercase, removes non-word characters (alphanumerics and
+    underscores) and converts spaces to hyphens. Also strips leading and
+    trailing whitespace.
+    >>> slugify("a.b.c")
+    'a-b-c'
+    >>> slugify("Hello World")
+    'hello-world'
+    """
+    import re
+    value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore').decode('ascii')
+    value = re.sub(r'\.+', '-', value)
+    value = re.sub(r'[^\w\s-]', '', value).strip().lower()
+    return re.sub(r'[-\s]+', '-', value)
+
+def remove_meta_attribute(dictionary, key, attribute):
+    """
+    Remove the given meta attribute from the given key in the dictionary, and
+    remove the _meta key altogether if it is the last one.
+    Returns the same dictionary for convenience.
+    >>> d = {"foo": 1, "foo_meta": ['lol', 'etc']}
+    >>> d == remove_meta_attribute(d, "bar", "lol")
+    True
+    >>> d == remove_meta_attribute(d, "bar", "lols")
+    True
+    >>> d == remove_meta_attribute(d, "foo", "lols")
+    True
+    >>> e = remove_meta_attribute(d, "foo", "lol")
+    >>> e == {"foo": 1, "foo_meta": ['etc']}
+    True
+    >>> remove_meta_attribute(d, "foo", "etc") == {"foo": 1}
+    True
+    """
+    if key not in dictionary:
+        return dictionary
+    meta_key = key + "_meta"
+    if meta_key not in dictionary:
+        return dictionary
+
+    if attribute in dictionary[meta_key]:
+        dictionary[meta_key].remove(attribute)
+    if len(dictionary[meta_key]) == 0:
+        del dictionary[meta_key]
+
+    return dictionary
+
+def get_meta_attributes(dictionary, key):
+    """
+    Get the list of meta attributes for a key, if any.
+    >>> d = {"foo": 1, "foo_meta": ['lol', 'etc'], "bar": 2}
+    >>> get_meta_attributes(d, "foosball") == []
+    True
+    >>> get_meta_attributes(d, "foo_meta") == []
+    True
+    >>> get_meta_attributes(d, "") == []
+    True
+    >>> get_meta_attributes(d, "bar") == []
+    True
+    >>> get_meta_attributes(d, "foo") == ['lol', 'etc']
+    True
+    """
+    if key not in dictionary:
+        return []
+    meta_key = key + "_meta"
+    if meta_key not in dictionary:
+        return []
+    if not isinstance(dictionary[meta_key], list):
+        raise ValueError(meta_key + " is not a list")
+    return dictionary[meta_key]
+
+def substfile(config, dictionary, key):
+    """
+    Implements the substfile meta attribute.
+    >>> data = "{param1}"
+    >>> with open("testfile", 'w') as f:
+    ...   f.write(data)
+    8
+    >>> d = {"foo_path": "testfile", "foo_path_meta": ['substfile']}
+    >>> substfile(DUMMY_PROGRAM_CONFIG, d, "foo_path")
+    >>> d == {"foo_path": "./test_testfile"}
+    True
+    >>> open("./test_testfile").read() == "one"
+    True
+    """
+    remove_meta_attribute(dictionary, key, "substfile")
+
+    input_filename_only = os.path.basename(dictionary[key])
+
+    input_file = open(dictionary[key]).read()
+    input_file = CustomFormatter().vformat(input_file, [], config.globaldb)
+
+    output_file_name = config.outdir + "/" + config.configname + "_" + input_filename_only
+    with open(output_file_name, 'w') as output_file:
+        output_file.write(input_file)
+
+    dictionary[key] = output_file_name
+
+# List of metas.
+META_LOOKUP = {'substfile': substfile}
+
+def execute_meta(config, dictionary):
+    """
+    Execute the processing of meta configs.
+    Modifies the dictionary in-place.
+    """
+    for key in list(dictionary.keys()):
+        # key might have disappeared, so double check before using it.
+        if key in dictionary and isinstance(dictionary[key], dict):
+            execute_meta(config, dictionary[key])
+            continue
+
+        for meta in list(get_meta_attributes(dictionary, key)):
+            if meta not in META_LOOKUP:
+                raise ValueError("Meta keyword " + meta + " is invalid")
+            else:
+                META_LOOKUP[meta](config, dictionary, key)
+
+def load_json_from_file(filename):
+    """
+    Load JSON from a filename, returning a blank dictionary if the file is
+    empty, instead of an error.
+    """
+    file_contents = open(filename, "r").read()
+    if file_contents.strip() == "":
+        return {}
+    else:
+        return json.loads(file_contents)
+
+def main(args):
+    # Load the JSON config database.
+    database = load_json_from_file(args.db)
+
+    # Create the config.
+    config = ProgramConfig(srcdir=args.srcdir, outdir=args.outdir,
+                           configname=slugify(os.path.basename(args.db)),
+                           globaldb=load_json_from_file(args.globaldb))
+
+    # Execute the meta.
+    execute_meta(config, database)
+
+    # JSON output.
+    output = json.dumps(database, indent=2, sort_keys=True)
+
+    if args.in_place:
+        with open(args.db, 'w') as write_file:
+            write_file.write(output)
+    else:
+        print(output)
+
+    return 0
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser() # pylint: disable=invalid-name
+
+    parser.add_argument("-s", "--srcdir", required=True,
+                        help="Source directory of this config.")
+    parser.add_argument("-o", "--outdir", required=True,
+                        help="Output directory of this config.")
+    parser.add_argument("-g", "--globaldb", required=True,
+                        help="Path to the current global db.")
+    parser.add_argument("-i", "--in-place", const=True, default=False,
+                        required=False, action='store_const',
+                        help="Edit in place")
+    parser.add_argument('db', metavar='DB', type=str,
+                        help='Path to the JSON database')
+
+    sys.exit(main(parser.parse_args()))
+
