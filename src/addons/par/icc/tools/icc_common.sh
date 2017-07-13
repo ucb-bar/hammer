@@ -187,6 +187,13 @@ set MW_GROUND_NET               "$($get_config $config_db -e par.icc.MW_GROUND_N
 set MW_GROUND_PORT              "$($get_config $config_db -e par.icc.MW_GROUND_PORT)";
 EOF
 
+common_setup_appendix_tcl_path=$($get_config $config_db -n "" par.icc.common_setup_appendix_tcl_path)
+if [[ "$common_setup_appendix_tcl_path" != "" ]]
+then
+    echo "# The following snippet was added by PLSI from ${common_setup_appendix_tcl_path}" >> $run_dir/rm_setup/common_setup.tcl
+    cat ${common_setup_appendix_tcl_path} >> $run_dir/rm_setup/common_setup.tcl
+fi
+
 icc_setup_appendix_tcl_path=$($get_config $config_db -n "" par.icc.icc_setup_appendix_tcl_path)
 if [[ "$icc_setup_appendix_tcl_path" != "" ]]
 then
