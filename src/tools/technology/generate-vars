@@ -4,11 +4,14 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-o", "--output", dest="output", required=True)
 parser.add_argument("-i", "--input", dest="input", required=True)
+parser.add_argument("-s", "--srcdir", dest="srcdir", required=True)
 args = parser.parse_args()
 
 import json
 with open(args.input) as f:
 	techfile = json.load(f)
+
+import os
 
 of = open(args.output, "w+")
 
@@ -96,7 +99,15 @@ of.write("\n")
 of.write("TECHNOLOGY_MACRO_PROVIDE_SCRIPTS =")
 for library_desc in techfile["libraries"]:
 	if "provide script" in library_desc:
-		of.write(" {0}".format(library_desc["provide script"]))
+		provide_script = library_desc["provide script"]
+		if (not provide_script.startswith("/")):
+			# TODO(edwardw): migrate this to the new config and nuke this hideous hack from orbit
+			# Try to support a script relative to the input json.
+			# See generate-macros
+			new_path = os.path.dirname(args.srcdir) + "/" + provide_script
+			if os.path.isfile(new_path):
+				provide_script = new_path
+		of.write(" {0}".format(provide_script))
 of.write("\n")
 
 of.write("TECHNOLOGY_MACRO_DEPEND_SCRIPTS =")
