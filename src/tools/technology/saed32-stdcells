@@ -24,7 +24,7 @@ done
 
 if test ! -f "$v"
 then
-    echo "Unabel to open Verilog stdcell library: '$v'" >&2
+    echo "Unable to open Verilog stdcell library: '$v'" >&2
     exit 1
 fi
 
