@@ -167,7 +167,7 @@ $(PLSI_CMD_YAML2JSON): $(CMD_PYTHON3) src/tools/pyyaml
 
 # First, locate the technology module.
 
-TECHNOLOGY_MODULE_PATH = $(wildcard src/technologies/$(TECHNOLOGY)/ $(ADDONS_DIR)/technologies/$(TECHNOLOGY)/ $(ADDONS_TECH_DIR)/$(TECHNOLOGY)/)
+TECHNOLOGY_MODULE_PATH = $(wildcard src/technologies/$(TECHNOLOGY)/ $(ADDONS_DIR)/technologies/$(TECHNOLOGY)/ $(ADDONS_TECH_DIR)/$(TECHNOLOGY)/ $(ADDONS_TECH_DIR_DIRECT))
 ifneq ($(words $(TECHNOLOGY_MODULE_PATH)),1)
 $(error Unable to resolve TECHNOLOGY=$(TECHNOLOGY): found "$(TECHNOLOGY_MODULE_PATH)")
 endif
