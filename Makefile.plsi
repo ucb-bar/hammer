@@ -120,6 +120,7 @@ FIRRTL_HOME ?= src/tools/firrtl
 # Various external tools and binaries used in PLSI.
 ##############################################################################
 
+CMD_PATH_PCONFIGURE_LIB ?= $(OBJ_TOOLS_BIN_PATH_PCONFIGURE_LIB)
 CMD_PTEST ?= $(OBJ_TOOLS_BIN_PTEST)
 CMD_PCONFIGURE ?= $(OBJ_TOOLS_BIN_PCONFIGURE)
 CMD_PPKGCONFIG ?= $(OBJ_TOOLS_BIN_PPKGCONFIG)
