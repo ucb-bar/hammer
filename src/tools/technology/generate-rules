@@ -41,6 +41,7 @@ if "installs" in techfile:
 
 		# There's one big stamp file for all the extractions
 		of.write("{0}: {1}\n".format(extract_stamp, install_stamp))
+		of.write("\ttouch $@\n")
 
 elif "tarballs" in techfile: # We can't currently support both tarballs and an install path
 	for tarball in techfile["tarballs"]:
@@ -77,6 +78,7 @@ elif "tarballs" in techfile: # We can't currently support both tarballs and an i
 
 		# There's one big stamp file for all the extractions
 		of.write("{0}: {1}\n".format(extract_stamp, tarball_stamp))
+		of.write("\ttouch $@\n")
 else:
 		print("No installs nor tarballs specified in techfile")
 		sys.exit(1)
