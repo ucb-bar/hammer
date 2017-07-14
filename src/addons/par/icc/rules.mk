@@ -71,6 +71,8 @@ $(OBJ_PAR_DIR)/synopsys-icc-macros.stamp: \
 		$(TECHNOLOGY_JSON) \
 		$(PLSI_CMD_GET_CONFIG) \
 		$(OBJ_CONFIG_DB) \
+		$(OBJ_TECHNOLOGY_MACRO_LIBRARY) \
+		$(CMD_PCAD_LIST_MACROS) \
 		$(ICV_BIN) \
 		$(ICC_BIN)
 	@mkdir -p $(dir $@)
