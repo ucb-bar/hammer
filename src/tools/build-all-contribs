@@ -3,6 +3,8 @@
 # Build all contribs automatically.
 # TODO: find some way to do this automatically
 
+set -ex
+
 rm -rf contrib_*
 ./src/tools/build-contrib-auto --contrib_name python
 ./src/tools/build-contrib-auto --contrib_name gcc
