@@ -314,7 +314,7 @@ endif
 # continuing, in order to ensure there's no trickier errors.
 TECHNOLOGY_JSON = $(wildcard $(TECHNOLOGY_MODULE_PATH)/$(TECHNOLOGY).tech.json)
 ifeq ($(TECHNOLOGY_JSON),)
-$(error "Unable to find technology $(TECHNOLOGY), expected a cooresponding .tech.json file")
+$(error "Unable to find technology $(TECHNOLOGY); expected a corresponding .tech.json file")
 endif
 
 OBJ_TECHNOLOGY_MACRO_LIBRARY = $(OBJ_TECH_DIR)/plsi-generated/all.macro_library.json
