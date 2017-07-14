@@ -679,6 +679,7 @@ $(OBJ_TECH_DIR)/makefrags/rules.mk: src/tools/technology/generate-rules $(OBJ_TE
 $(OBJ_TECHNOLOGY_MACRO_LIBRARY): \
 		src/tools/technology/generate-macros \
 		$(OBJ_TECHNOLOGY_JSON) \
+		$(OBJ_TECH_DIR)/extracted/plsi-techtar.stamp \
 		$(TECHNOLOGY_MACRO_PROVIDE_SCRIPTS) \
 		$(TECHNOLOGY_VERILOG_FILES) \
 		$(TECHNOLOGY_DOCUMENTATION_PDF_FILES) \
