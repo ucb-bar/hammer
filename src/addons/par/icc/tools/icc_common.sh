@@ -305,9 +305,11 @@ then
 fi
 
 # The technology is expected to provide a list of filler cells that ICC uses.
+filler_metal_cells_list=$($pcad_pipe_list_macros -l $technology_macro_library -t "metal filler" | xargs echo)
+filler_cells_list=$($pcad_pipe_list_macros -l $technology_macro_library -t filler | xargs echo)
 sed 's@^set ADD_FILLER_CELL .*@set ADD_FILLER_CELL TRUE@' -i $run_dir/rm_setup/icc_setup.tcl
-sed "s@^set FILLER_CELL_METAL .*@set FILLER_CELL_METAL \"$($pcad_pipe_list_macros -l $technology_macro_library -t \"metal filler\" | xargs echo)\";@" -i $run_dir/rm_setup/icc_setup.tcl
-sed "s@^set FILLER_CELL .*@set FILLER_CELL \"$($pcad_pipe_list_macros -l $technology_macro_library -t \"filler\" | xargs echo)\";@" -i $run_dir/rm_setup/icc_setup.tcl
+sed "s@^set FILLER_CELL_METAL .*@set FILLER_CELL_METAL \"${filler_metal_cells_list}\";@" -i $run_dir/rm_setup/icc_setup.tcl
+sed "s@^set FILLER_CELL .*@set FILLER_CELL \"${filler_cells_list}\";@" -i $run_dir/rm_setup/icc_setup.tcl
 
 # I want ICC to run all the sanity checks it can
 sed "s@^set ICC_SANITY_CHECK.*@set ICC_SANITY_CHECK TRUE@" -i $run_dir/rm_setup/icc_setup.tcl
