@@ -75,13 +75,15 @@ $(PLSI_CACHE_DIR)/distfiles/gcc-$(GCC_VERSION).tar.gz:
 # pconfigure and related tools
 ##############################################################################
 
-# _plsi_ contrib pconfigure targets = OBJ_TOOLS_BIN_PTEST OBJ_TOOLS_BIN_PCONFIGURE OBJ_TOOLS_BIN_PPKGCONFIG OBJ_TOOLS_BIN_PHC
+# _plsi_ contrib pconfigure targets = OBJ_TOOLS_BIN_PATH_PCONFIGURE_LIB OBJ_TOOLS_BIN_PTEST OBJ_TOOLS_BIN_PCONFIGURE OBJ_TOOLS_BIN_PPKGCONFIG OBJ_TOOLS_BIN_PHC
 
+OBJ_TOOLS_BIN_PATH_PCONFIGURE_LIB = $(OBJ_TOOLS_BIN_DIR)/pconfigure/lib
 OBJ_TOOLS_BIN_PTEST = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/ptest
 OBJ_TOOLS_BIN_PCONFIGURE = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/pconfigure
 OBJ_TOOLS_BIN_PPKGCONFIG = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/ppkg-config
 OBJ_TOOLS_BIN_PHC = $(OBJ_TOOLS_BIN_DIR)/pconfigure/bin/phc
 
+$(OBJ_TOOLS_BIN_PATH_PCONFIGURE_LIB) \
 $(OBJ_TOOLS_BIN_PTEST) \
 $(OBJ_TOOLS_BIN_PCONFIGURE) \
 $(OBJ_TOOLS_BIN_PPKGCONFIG) \
@@ -184,6 +186,7 @@ $(OBJ_TOOLS_BIN_DIR)/pcad/stamp: $(OBJ_TOOLS_SRC_DIR)/pcad/Makefile $(CMD_GXX)
 $(OBJ_TOOLS_SRC_DIR)/pcad/Makefile: $(OBJ_TOOLS_SRC_DIR)/pcad/stamp \
 				    $(CMD_PATH_TCLAP_PC) \
 				    $(CMD_PATH_PSON_PC) \
+				    $(CMD_PATH_PCONFIGURE_LIB) \
 				    $(CMD_PCONFIGURE) $(CMD_PPKGCONFIG) $(CMD_PHC)
 	mkdir -p $(dir $@)
 	echo 'PREFIX = $(abspath $(OBJ_TOOLS_BIN_DIR))/pcad' >> $(dir $@)/Configfile.local
@@ -191,7 +194,10 @@ $(OBJ_TOOLS_SRC_DIR)/pcad/Makefile: $(OBJ_TOOLS_SRC_DIR)/pcad/stamp \
 	echo 'LINKOPTS += -Wl,-rpath,$(abspath $(CMD_PATH_GCC_LIB64))' >> $(dir $@)/Configfile.local
 	echo 'COMPILEOPTS += -O3 -march=native -g' >> $(dir $@)/Configfile.local
 	echo 'LINKOPTS += -O3 -march=native -g' >> $(dir $@)/Configfile.local
-	cd $(dir $@); PKG_CONFIG_PATH="$$PKG_CONFIG_PATH:$(abspath $(dir $(CMD_PATH_TCLAP_PC))):$(abspath $(dir $(CMD_PATH_PSON_PC)))" $(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --phc $(abspath $(CMD_PHC))
+	cd $(dir $@); \
+		PKG_CONFIG_PATH="$$PKG_CONFIG_PATH:$(abspath $(dir $(CMD_PATH_TCLAP_PC))):$(abspath $(dir $(CMD_PATH_PSON_PC)))" \
+		LD_LIBRARY_PATH="$$LD_LIBRARY_PATH:$(CMD_PATH_PCONFIGURE_LIB)" \
+		$(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --phc $(abspath $(CMD_PHC))
 
 $(OBJ_TOOLS_SRC_DIR)/pcad/stamp: $(shell find src/tools/pcad -type f)
 	mkdir -p $(dir $@)
@@ -235,12 +241,16 @@ $(OBJ_TOOLS_BIN_DIR)/pson/stamp: $(OBJ_TOOLS_SRC_DIR)/pson/Makefile $(CMD_GCC) $
 $(OBJ_TOOLS_SRC_DIR)/pson/Makefile: \
 		$(OBJ_TOOLS_SRC_DIR)/pson/Configfile \
 		$(CMD_PATH_TCLAP_PC) \
+		$(CMD_PATH_PCONFIGURE_LIB) \
 		$(CMD_PCONFIGURE) $(CMD_GCC) $(CMD_GXX)
 	@mkdir -p $(dir $@)
 	echo 'PREFIX = $(abspath $(OBJ_TOOLS_BIN_DIR)/pson)' >> $(dir $@)/Configfile.local
 	echo 'LANGUAGES += c++' >> $(dir $@)/Configfile.local
 	echo 'LINKOPTS += -Wl,-rpath,$(abspath $(CMD_PATH_GCC_LIB64))' >> $(dir $@)/Configfile.local
-	cd $(dir $<); PKG_CONFIG_PATH="$$PKG_CONFIG_PATH:$(abspath $(dir $(CMD_PATH_TCLAP_PC)))" $(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --phc $(abspath $(CMD_PHC)) --verbose
+	cd $(dir $<); \
+		PKG_CONFIG_PATH="$$PKG_CONFIG_PATH:$(abspath $(dir $(CMD_PATH_TCLAP_PC)))" \
+		LD_LIBRARY_PATH="$$LD_LIBRARY_PATH:$(CMD_PATH_PCONFIGURE_LIB)" \
+		$(abspath $(CMD_PCONFIGURE)) --ppkg-config $(abspath $(CMD_PPKGCONFIG)) --phc $(abspath $(CMD_PHC)) --verbose
 
 $(OBJ_TOOLS_SRC_DIR)/pson/Configfile: $(shell find src/tools/pson -type f)
 	rm -rf $(dir $@)
