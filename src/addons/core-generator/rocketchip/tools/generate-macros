@@ -43,7 +43,10 @@ def read_conf(filename):
 def expand_ports(srams):
   for sram in srams:
     eports = list()
-    for i, port in enumerate(sram['ports']):
+    r_idx = 0
+    w_idx = 0
+    rw_idx = 0
+    for port in sram['ports']:
       eport = dict()
       masked = False
 
@@ -52,30 +55,33 @@ def expand_ports(srams):
         port = port[1:]
 
       if port == 'rw':
-        eport["clock port name"] = "RW%d_clk" % (i)
-        eport["output port name"] = "RW%d_rdata" % (i)
-        eport["input port name"] = "RW%d_wdata" % (i)
-        eport["address port name"] = "RW%d_addr" % (i)
-        eport["chip enable port name"] = "RW%d_en" % (i)
-        eport["write enable port name"] = "RW%d_wmode" % (i)
+        eport["clock port name"] = "RW%d_clk" % rw_idx
+        eport["output port name"] = "RW%d_rdata" % rw_idx
+        eport["input port name"] = "RW%d_wdata" % rw_idx
+        eport["address port name"] = "RW%d_addr" % rw_idx
+        eport["chip enable port name"] = "RW%d_en" % rw_idx
+        eport["write enable port name"] = "RW%d_wmode" % rw_idx
         if masked:
-          eport["mask port name"] = "RW%d_wmask" % (i)
+          eport["mask port name"] = "RW%d_wmask" % rw_idx
           eport["mask granularity"] = sram["mask_gran"]
+        rw_idx += 1
 
       elif port == 'read':
-        eport["clock port name"] ="R%d_clk" % (i)
-        eport["output port name"] ="R%d_data" % (i)
-        eport["address port name"] ="R%d_addr" % (i)
-        eport["chip enable port name"] ="R%d_en" % (i)
+        eport["clock port name"] ="R%d_clk" % r_idx
+        eport["output port name"] ="R%d_data" % r_idx
+        eport["address port name"] ="R%d_addr" % r_idx
+        eport["chip enable port name"] ="R%d_en" % r_idx
+        r_idx += 1
 
       elif port == 'write':
-        eport["clock port name"] = "W%d_clk" % (i)
-        eport["input port name"] = "W%d_data" % (i)
-        eport["address port name"] = "W%d_addr" % (i)
-        eport["chip enable port name"] = "W%d_en" % (i)
+        eport["clock port name"] = "W%d_clk" % w_idx
+        eport["input port name"] = "W%d_data" % w_idx
+        eport["address port name"] = "W%d_addr" % w_idx
+        eport["chip enable port name"] = "W%d_en" % w_idx
         if masked:
-          eport["mask port name"] = "W%d_wmask" % (i)
+          eport["mask port name"] = "W%d_mask" % w_idx
           eport["mask granularity"] = sram["mask_gran"]
+        w_idx += 1
 
       eports.append(eport)
 
