@@ -232,10 +232,10 @@ EOF
 
 # FIXME: This is a terrible way to specify the retiming registers, it should
 # come from a FIRRTL pass.
-for x in $(echo "IntToFP" "FPUFMAPipe" "Mul54" "INToRecFN" "IMulSlice" "FMASlice" "FCmpSlice" "FConvSlice" "DivSqrtRecF64" "IMul")
-do
-    grep "^module $x" ${v[*]} && (echo "set_optimize_registers true -design $x* -clock clock -check_design -verbose -print_critical_loop" >> $run_dir/generated-scripts/constraints.tcl)
-done
+#for x in $(echo "IntToFP" "FPUFMAPipe" "Mul54" "INToRecFN" "IMulSlice" "FMASlice" "FCmpSlice" "FConvSlice" "DivSqrtRecF64" "IMul")
+#do
+#    grep "^module $x" ${v[*]} && (echo "set_optimize_registers true -design $x* -clock clock -check_design -verbose -print_critical_loop" >> $run_dir/generated-scripts/constraints.tcl)
+#done
 
 # FIXME: This shouldn't depend on Synopsys
 # At the end of the DC run we want to generate a special simulation file that
