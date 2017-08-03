@@ -95,7 +95,7 @@ sed 's@^read_vcd .*$@read_saif $ACTIVITY_FILE -strip_path $STRIP_PATH@g' -i $run
 sed 's@^set power_analysis_mode .*@set power_analysis_mode average@' -i $run_dir/rm_pt_scripts/pt.tcl
 sed 's@^set_power_analysis_options -waveform_format .*@@' -i $run_dir/rm_pt_scripts/pt.tcl
 
-# Better power report
+# Better power report which shows component-wise power estimation with detailed numbers.
 sed 's@^report_power\s*>@report_power -nosplit -verbose -hierarchy >@' -i $run_dir/rm_pt_scripts/pt.tcl
 
 # In order to read VPD files I need to set VCS_HOME
