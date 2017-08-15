@@ -7,6 +7,7 @@ unset vpd
 unset top
 # See PRIMETIME_PATH_TO_TESTBENCH
 unset testbench
+rtl_trace=""
 v=()
 db=()
 unset vcd2vpd
@@ -21,6 +22,7 @@ do
     *.vpd) vpd="$1";;
     --top) top="$2"; shift;;
     --testbench) testbench="$2"; shift;;
+    --rtl-trace) rtl_trace="-rtl";;
     *.v) v+=("$1");;
     *.db) db+=("$1");;
     */pt_shell) pt_shell="$1";;
@@ -51,7 +53,7 @@ mkdir -p $run_dir/rm_setup
 cat >> $run_dir/rm_setup/common_setup.tcl <<EOF
 set DESIGN_NAME "$top";
 set NETLIST_FILES "$(readlink -f ${v[@]})";
-set ACTIVITY_FILE "$(readlink -f $run_dir/input.saif)";
+set ACTIVITY_FILE "$(readlink -f $vpd)";
 set TARGET_LIBRARY_FILES "$(readlink -f ${db[@]} | xargs echo)";
 set CONSTRAINT_FILES "$(readlink -f $run_dir/generated-scripts/constraints.tcl)";
 EOF
@@ -88,8 +90,8 @@ sed 's/source $NAME_MAP_FILE//g' -i $run_dir/rm_pt_scripts/pt.tcl
 # For debugging purposes, I list all the designs before reading one
 sed 's/^current_design /list_designs -all\ncurrent_design /g' -i $run_dir/rm_pt_scripts/pt.tcl
 
-# I always use gate-level VCDs, and they're piped in from vcd2saif
-sed 's@^read_vcd .*$@read_saif $ACTIVITY_FILE -strip_path $STRIP_PATH@g' -i $run_dir/rm_pt_scripts/pt.tcl
+# We can read vpd files using 'read_vcd'
+sed 's@^read_vcd .*$@read_vcd '$rtl_trace' $ACTIVITY_FILE -strip_path $STRIP_PATH@g' -i $run_dir/rm_pt_scripts/pt.tcl
 
 # I use averaged mode, because 
 sed 's@^set power_analysis_mode .*@set power_analysis_mode average@' -i $run_dir/rm_pt_scripts/pt.tcl
@@ -105,15 +107,6 @@ export VCS_MODE_FLAG=64
 export PATH="\$VCS_HOME/bin:\$PATH"
 EOF
 source $run_dir/enter.bash
-
-# FIXME: PT claims it can read VPD files directly
-$vcd2saif -input $vpd -output $run_dir/input.saif |& tee $run_dir/vcd2saif.log
-if test ! -f $run_dir/input.saif
-then
-    echo "vcd2saif didn't generate output">&2
-    tail $run_dir/vcd2saif.log >&2
-    exit 1
-fi
 
 cd $run_dir
 echo -e "error_info\nquit" | $pt_shell -f rm_pt_scripts/pt.tcl |& tee pt.log
