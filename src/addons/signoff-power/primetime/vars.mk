@@ -34,3 +34,6 @@ VPD2VCD_BIN = $(SYNOPSYS_HOME)/vcs/$(VCS_VERSION)/bin/vpd2vcd
 ifeq ($(wildcard $(VPD2VCD_BIN)),)
 $(error Cannot find vpd2vcd at $(VPD2VCD_BIN))
 endif
+
+# Use rtl waveform?
+PRIMETIME_RTL_TRACE ?=
