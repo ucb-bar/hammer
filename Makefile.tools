@@ -27,7 +27,7 @@ ifeq ($(SCHEDULER_CMD),)
 $(error Set SCHEDULER_CMD from Makefile)
 endif
 
-# Many of the Makefiles (e.g. in python3) rely in implicit rules to function,
+# Many of the Makefiles (e.g. in python3) rely on implicit rules to function,
 # so cancel out any -rR for them.
 TOOLS_MAKEFLAGS = $(shell echo $(MAKEFLAGS) | sed -e "s/r//g" | sed -e "s/R//g")
 
