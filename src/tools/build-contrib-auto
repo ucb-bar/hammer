@@ -3,7 +3,7 @@
 # Build a certain prebuilt binary contrib automatically by reading
 # metadata from Makefile.tools
 # Respects PLSI_MAKEFLAGS and PLSI_MAKEFILES (see makeplsi for documentation).
-# Example: build-contrib --contrib_name python
+# Example: build-contrib-auto --contrib_name python
 
 unset contrib_name # e.g. python
 while [[ "$1" != "" ]]
