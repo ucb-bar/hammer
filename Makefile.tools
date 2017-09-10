@@ -139,11 +139,12 @@ $(PLSI_CACHE_DIR)/distfiles/tcl-$(TCL_VERSION).tar.gz:
 # TCLAP
 ##############################################################################
 
+# TCLAP is a C++ command-line argument parser that's used by PCAD
+
 # _plsi_ contrib tclap targets = OBJ_TOOLS_BIN_PATH_TCLAP_PC
 
 OBJ_TOOLS_BIN_PATH_TCLAP_PC = $(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/lib/pkgconfig/tclap.pc
 
-# TCLAP is a C++ command-line argument parser that's used by PCAD
 $(OBJ_TOOLS_BIN_PATH_TCLAP_PC): $(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/stamp
 
 $(OBJ_TOOLS_BIN_DIR)/tclap-$(TCLAP_VERSION)/stamp: $(OBJ_TOOLS_SRC_DIR)/tclap-$(TCLAP_VERSION)/Makefile
@@ -223,14 +224,15 @@ $(OBJ_TOOLS_BIN_SBT): src/tools/sbt/sbt-launch.jar src/tools/sbt/sbt
 # PSON
 ##############################################################################
 
+# PSON is a C++ JSON parsing library that also allows for JSON-like files that
+# have extra trailing commas floating around.  Piping through this allows
+# stateless JSON emission from various other parts of the code.
+
 # _plsi_ contrib pson targets = OBJ_TOOLS_BIN_PSON2JSON OBJ_TOOLS_BIN_PATH_PSON_PC
 
 OBJ_TOOLS_BIN_PSON2JSON = $(OBJ_TOOLS_BIN_DIR)/pson/bin/pson2json
 OBJ_TOOLS_BIN_PATH_PSON_PC = $(OBJ_TOOLS_BIN_DIR)/pson/lib/pkgconfig/pson.pc
 
-# PSON is a C++ JSON parsing library that also allows for JSON-like files that
-# have extra trailing commas floating around.  Piping through this allows
-# stateless JSON emission from various other parts of the code.
 $(OBJ_TOOLS_BIN_PSON2JSON) $(OBJ_TOOLS_BIN_PATH_PSON_PC): $(OBJ_TOOLS_BIN_DIR)/pson/stamp
 	touch $@
 
