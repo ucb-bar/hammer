@@ -54,7 +54,7 @@ def load_json_from_file(filename):
     Load JSON from a filename, returning a blank dictionary if the file is
     empty, instead of an error.
     """
-    file_contents = open(filename, "r").read(10000000) # arbitrary limit
+    file_contents = open(filename, "r").read()
     if file_contents.strip() == "":
         return {}
     else:
