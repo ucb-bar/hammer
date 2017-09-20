@@ -150,13 +150,13 @@ resources_icc_path="$($get_config $config_db -n "" par.icc.resources_icc_path)"
 resources_tech_path="$($get_config $config_db -n "" par.icc.resources_tech_path)"
 resources_project_path="$($get_config $config_db -n "" par.icc.resources_project_path)"
 if [[ ! -z "$resources_icc_path" ]]; then
-    cp -r "${resources_icc_path}"/* $run_dir
+    cp -ra "${resources_icc_path}"/* $run_dir
 fi
 if [[ ! -z "$resources_tech_path" ]]; then
-    cp -r "${resources_tech_path}"/* $run_dir
+    cp -ra "${resources_tech_path}"/* $run_dir
 fi
 if [[ ! -z "$resources_project_path" ]]; then
-    cp -r "${resources_project_path}"/* $run_dir
+    cp -ra "${resources_project_path}"/* $run_dir
 fi
 
 # Most of the customization of the reference methodology is done here: this
