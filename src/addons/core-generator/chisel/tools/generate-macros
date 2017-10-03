@@ -22,7 +22,7 @@ def parseLine(line):
     name = match.groups()[0]
     depth = int(match.groups()[1])
     width = int(match.groups()[2])
-    ports = match.groups()[3].split(' ')
+    ports = match.groups()[3].split(',')
     mask_gran = match.groups()[4]
     if mask_gran is not None:
         mask_gran = int(mask_gran)
