@@ -6,7 +6,7 @@ $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.v: \
 		$(OBJ_SOC_MACROS) \
 		$(OBJ_TECHNOLOGY_MACRO_LIBRARY)
 	@mkdir -p $(dir $@)
-	$(SCHEDULER_CMD) --max-threads=1 -- $< -v $(abspath $@) -m $(abspath $(filter %.macros.json,$^)) --syn-flops -l $(abspath $(filter %.macro_library.json,$^)) |& tee $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.log | tail
+	$(SCHEDULER_CMD) --max-threads=1 -- $< -v $(abspath $@) -m $(abspath $(filter %.macros.json,$^)) -l $(abspath $(filter %.macro_library.json,$^)) |& tee $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.log | tail
 
 $(OBJ_MAP_DIR)/plsi-generated/$(MAP_TOP).macros_for_synthesis.mk: \
 		src/tools/map/list-macros \
