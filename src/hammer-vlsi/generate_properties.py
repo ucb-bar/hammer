@@ -12,7 +12,13 @@ import sys
 InterfaceVar = namedtuple("InterfaceVar", 'name type desc')
 
 def generate_from_list(template, lst):
-    return map(lambda var: template.format(var_name=var.name, var_type=var.type, var_desc=var.desc), lst)
+    def format_var(var):
+        if var.type.startswith("Iterable"):
+            var_type_instance_check = "Iterable"
+        else:
+            var_type_instance_check = var.type
+        return template.format(var_name=var.name, var_type=var.type, var_desc=var.desc, var_type_instance_check=var_type_instance_check)
+    return map(format_var, lst)
 
 def main(args):
     template = """
@@ -31,7 +37,7 @@ def {var_name}(self) -> {var_type}:
 @{var_name}.setter
 def {var_name}(self, value: {var_type}) -> None:
     \"""Set the {var_desc}.\"""
-    if not isinstance(value, {var_type}):
+    if not isinstance(value, {var_type_instance_check}):
         raise TypeError("{var_name} must be a {var_type}")
     self._{var_name} = value # type: {var_type}
 """

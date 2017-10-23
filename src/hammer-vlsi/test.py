@@ -16,19 +16,19 @@ class HammerVLSILoggingTest(unittest.TestCase):
         """
         msg = "This is a test message" # type: str
 
-        logging = hammer_vlsi.HammerVLSILogging
+        log = hammer_vlsi.HammerVLSILogging.context("test")
 
         hammer_vlsi.HammerVLSILogging.enable_buffering = True # we need this for test
         hammer_vlsi.HammerVLSILogging.clear_callbacks()
         hammer_vlsi.HammerVLSILogging.add_callback(hammer_vlsi.HammerVLSILogging.callback_buffering)
 
         hammer_vlsi.HammerVLSILogging.enable_colour = True
-        logging.info(msg)
-        self.assertEqual(logging.get_colour_escape(logging.Level.INFO) + "[<global>] " + msg + logging.COLOUR_CLEAR, logging.get_buffer()[0])
+        log.info(msg)
+        self.assertEqual(hammer_vlsi.HammerVLSILogging.get_colour_escape(hammer_vlsi.Level.INFO) + "[test] " + msg + hammer_vlsi.HammerVLSILogging.COLOUR_CLEAR, hammer_vlsi.HammerVLSILogging.get_buffer()[0])
 
         hammer_vlsi.HammerVLSILogging.enable_colour = False
-        logging.info(msg)
-        self.assertEqual("[<global>] " + msg, logging.get_buffer()[0])
+        log.info(msg)
+        self.assertEqual("[test] " + msg, hammer_vlsi.HammerVLSILogging.get_buffer()[0])
 
 if __name__ == '__main__':
     unittest.main()
