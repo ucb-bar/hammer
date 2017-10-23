@@ -1,0 +1,46 @@
+# Core configuration options and defaults for hammer-vlsi.
+# The values specified in this file are the defaults.
+# e.g. foo: "bar" in this file means that the default setting for foo is "bar".
+
+vlsi.core:
+  # Path(s) to out-of-tree hammer technology libraries.
+  technology_path: ["${vlsi.builtins.hammer_vlsi_path}/technology"]
+  technology_path_meta: subst
+
+  # Technology to use. hammer-vlsi will read this and load the appropriate technology libraries.
+  technology: "saed32"
+
+  # Path(s) to synthesis tools.
+  # Add the built-in path to synthesis tools.
+  synthesis_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/synthesis"]
+  synthesis_tool_path_meta: subst
+
+  # Path(s) to place and route tools.
+  # Add the built-in path to place and route tools.
+  par_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/par"]
+  par_tool_path_meta: subst
+
+  # Synthesis tool to use.
+  # Currently we can choose from a selection of built-in tools which hammer-vlsi supports.
+  synthesis_tool: "nop"
+
+  # Place and route tool to use.
+  par_tool: "nop"
+
+  # Maximum threads to use in a CAD tool invocation.
+  max_threads: 1
+
+# General VLSI inputs.
+# These will vary per run of hammer-vlsi.
+vlsi.inputs:
+  # Supply voltages.
+  supplies:
+    VDD: "0.85 V"
+    GND: "0 V"
+
+# Specific inputs for the synthesis tool.
+# These will vary per run of hammer-vlsi.
+synthesis.inputs:
+  # Top RTL module.
+  # Set to null to not specify from the JSON.
+  top_module: null

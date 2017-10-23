@@ -10,3 +10,5 @@
 /opendatabase.log
 
 __pycache__
+*.pyc
+.mypy_cache
