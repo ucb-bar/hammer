@@ -2,57 +2,55 @@
 
 # TODO: pull these into a generic shell utils or something for re-use.
 
-unset DISPLAY
 unset run_dir
 unset dc
-unset rmtar
-libs=()
-mw=()
-unset top
+unset preferred_routing_directions_fragment
+unset find_regs_tcl
 v=()
-vhd=()
-tlu_min=()
-tlu_max=()
+vhd=('')
+libs=()
+milkyway=()
 tf=()
-defines=()
-vh=()
-compile_args=()
-unset find_regs
-unset config
-unset technology
+tlu_max=()
+tlu_min=()
+unset top
+unset MGLS_LICENSE_FILE
+unset SNPSLMD_LICENSE_FILE
+compile_args=('')
 while [[ "$1" != "" ]]
 do
     case "$1" in
     "$0") ;;
-    --output_dir) run_dir="$2"; shift;;
-    */dc_shell) dc="$1";;
-    */DC-RM_*.tar) rmtar="$1";;
-    *.db) libs+=("$1");;
-    */lib) mw+=("$(dirname "$1")");;
-    --top) top="$2"; shift;;
+    --run_dir) run_dir="$2"; shift;;
+    --dc) dc="$2"; shift;;
+    --preferred_routing_directions_fragment) preferred_routing_directions_fragment="$2"; shift;;
+    --find_regs_tcl) find_regs_tcl="$2"; shift;;
     *.v) v+=("$1");;
-    *.vh) vh+=("$1");;
+    *.sv) v+=("$1");;
     *.vhd) vhd+=("$1");;
-    *Cmin.tluplus) tlu_min+=("$1");;
-    *Cmax.tluplus) tlu_max+=("$1");;
-    *rcbest.itf.tluplus) tlu_min+=("$1");;
-    *rcworst.itf.tluplus) tlu_max+=("$1");;
-    */FuncCmin/tluplus) tlu_min+=("$1");;
-    */FuncCmax/tluplus) tlu_max+=("$1");;
-    *.tf) tf+=("$1");;
-    */find-regs.tcl) find_regs="$1";;
-    *.plsi_config.json) config="$1";;
-    *.tech.json) technology="$1";;
-    --compile_arg) compile_args+=("$2"); shift;;
+    --lib) libs+=("$2"); shift;;
+    --milkyway) milkyway+=("$2"); shift;;
+    --tf) tf+=("$2"); shift;;
+    --tlu_max) tlu_max+=("$2"); shift;;
+    --tlu_min) tlu_min+=("$2"); shift;;
+    --top) top="$2"; shift;;
+    --MGLS_LICENSE_FILE) MGLS_LICENSE_FILE="$2"; shift;;
+    --SNPSLMD_LICENSE_FILE) SNPSLMD_LICENSE_FILE="$2"; shift;;
+    --compile_arg) compile_args+=("$2"); shift;; # TODO: implement this one in __init__.py
+
+    #~ */dc_shell) dc="$1";;
+    #~ */lib) mw+=("$(dirname "$1")");;
+    #~ --top) top="$2"; shift;;
+    #~ *.vh) vh+=("$1");;
+    #~ *.tf) tf+=("$1");;
+    #~ */find-regs.tcl) find_regs="$1";;
+    #~ *.plsi_config.json) config="$1";;
     *) echo "Unknown argument $1"; exit 1;;
     esac
     shift
 done
 
-set -ex
-
-rm -rf "$run_dir"
-mkdir -p "$run_dir"
+set -eux
 
 cat >"$run_dir"/enter <<EOF
 export DC_HOME="$(dirname $(dirname $dc))"
@@ -78,9 +76,6 @@ do
     echo $line | sed 's@`define \([A-Za-z0-9_]*\) \([A-Za-z0-9_]*\)@-define \1=\2@'
 done | xargs echo)
 
-# Almost all of what I do is to just use Synopsys's reference methodology,
-# which users are expected to have downloaded.
-tar -xf "$rmtar" -C "$run_dir" --strip-components=1
 mkdir -p $run_dir/generated-scripts
 
 # The default DC script has an "exit" an the end, which we want to strip off so
@@ -119,20 +114,11 @@ find $run_dir -iname "*.tcl" | xargs sed "s/^analyze/analyze $defines/" -i
 # Report library references in case I'm missing anything.
 sed "s@^check_design @report_reference > reports/${top}.report_reference.out\\ncheck_design @" -i $run_dir/rm_dc_scripts/dc.tcl
 
-if [[ "${mw[@]}" == "" ]]
+if [[ "${milkyway[@]}" == "" ]]
 then
     echo "No milkyway libraries specified"
     exit 1
 fi
-
-for lib in "${mw[@]}"
-do
-    if test ! -d "$lib"
-    then
-        echo "Milkyway library $lib doesn't exist in filesystem" >&2
-	exit 1
-    fi
-done
 
 if [[ "${tlu_max[*]}" == "" || "${tlu_min[*]}" == "" ]]
 then
@@ -140,10 +126,7 @@ then
     exit 1
 fi
 
-if [[ "$PLSI_SCHEDULER_MAX_THREADS" == "" ]]
-then
-    export PLSI_SCHEDULER_MAX_THREADS="1"
-fi
+max_threads=$(get-config vlsi.core.max_threads)
 
 # Most of the customization of the DC reference methodology is done here: this
 # sets all the input files and such.
@@ -155,7 +138,7 @@ set DESIGN_NAME "$top";
 set RTL_SOURCE_FILES_VERILOG "$(readlink_array ${v[@]})";
 set RTL_SOURCE_FILES_VHDL "$(readlink_array ${vhd[@]})";
 set TARGET_LIBRARY_FILES "$(readlink_array ${libs[@]})";
-set MW_REFERENCE_LIB_DIRS "$(readlink_array ${mw[@]})";
+set MW_REFERENCE_LIB_DIRS "$(readlink_array ${milkyway[@]})";
 set MIN_LIBRARY_FILES "";
 set TECH_FILE "$(readlink_array ${tf[@]})";
 set TLUPLUS_MAX_FILE "$(readlink_array ${tlu_max[@]})";
@@ -167,7 +150,7 @@ set RESULTS_DIR "results";
 set CLOCK_UNCERTAINTY "0.04";
 set INPUT_DELAY "0.10";
 set OUTPUT_DELAY "0.10";
-set_host_options -max_cores ${PLSI_SCHEDULER_MAX_THREADS}
+set_host_options -max_cores ${max_threads}
 
 # Provide verbose error messages
 set power_sa_propagation_verbose true
@@ -175,26 +158,27 @@ EOF
 
 # Read the core's configuration file to figure out what all the clocks should
 # look like.
-python3 >>$run_dir/generated-scripts/constraints.tcl <<EOF
-import json
-with open("${config}") as f:
-	config = json.load(f)
+# TODO: this is broken, should be generated in Python from JSON/annotations
+#~ python3 >>$run_dir/generated-scripts/constraints.tcl <<EOF
+#~ import json
+#~ with open("${config}") as f:
+	#~ config = json.load(f)
 
-import re
-for clock in config["clocks"]:
-	clock_name = clock["name"]
-	clock_period = clock["period"]
-	if not re.match("[0-9]+ *[np]s", clock_period):
-		error
+#~ import re
+#~ for clock in config["clocks"]:
+	#~ clock_name = clock["name"]
+	#~ clock_period = clock["period"]
+	#~ if not re.match("[0-9]+ *[np]s", clock_period):
+		#~ error
 
-	if re.match("[0-9]+ *ns", clock_period):
-		clock_period_ns = re.sub(" *ns", "", clock_period)
-	if re.match("[0-9]+ *ps", clock_period):
-		clock_period_ns = int(re.sub(" *ps", "", clock_period)) / 1000.0
+	#~ if re.match("[0-9]+ *ns", clock_period):
+		#~ clock_period_ns = re.sub(" *ns", "", clock_period)
+	#~ if re.match("[0-9]+ *ps", clock_period):
+		#~ clock_period_ns = int(re.sub(" *ps", "", clock_period)) / 1000.0
 
-	print("create_clock {0} -name {0} -period {1}".format(clock_name, clock_period_ns))
-	print("set_clock_uncertainty 0.01 [get_clocks {0}]".format(clock_name))
-EOF
+	#~ print("create_clock {0} -name {0} -period {1}".format(clock_name, clock_period_ns))
+	#~ print("set_clock_uncertainty 0.01 [get_clocks {0}]".format(clock_name))
+#~ EOF
 
 # The constraints file determines how the IO is constrained and what the clocks
 # look like.
@@ -214,21 +198,7 @@ EOF
 
 # We allow users to specify metal routing directions since some technologies
 # don't support those.
-python3 >>$run_dir/generated-scripts/constraints.tcl <<EOF
-import json
-with open("${technology}") as f:
-	config = json.load(f)
-
-# Suppress PSYN-882 ("Warning: Consecutive metal layers have the same preferred routing direction") while the layer routing is being built.
-print("set suppress_errors  [concat \$suppress_errors  [list PSYN-882]]")
-
-for library in config["libraries"]:
-	if "metal layers" in library:
-		for layer in library["metal layers"]:
-			print("set_preferred_routing_direction -layers {{ {0} }} -direction {1}".format(layer["name"], layer["preferred routing direction"]))
-
-print("set suppress_errors  [lminus \$suppress_errors  [list PSYN-882]]")
-EOF
+cat $preferred_routing_directions_fragment >>$run_dir/generated-scripts/constraints.tcl
 
 # FIXME: This is a terrible way to specify the retiming registers, it should
 # come from a FIRRTL pass.
@@ -242,9 +212,13 @@ done
 # tells VCS to set all the generated registers to 0.  I was hoping that
 # "+vcs+initreg+0" would do this, but it doesn't look like it does.
 cat >> $run_dir/rm_dc_scripts/dc.tcl <<EOF
-source ${find_regs}
+source ${find_regs_tcl}
 find_regs $top 0 \${RESULTS_DIR}/$top.force_regs.ucli \${RESULTS_DIR}/$top.force_regs.tab
 EOF
+
+# Add licensing servers to the environment
+export MGLS_LICENSE_FILE="$MGLS_LICENSE_FILE"
+export SNPSLMD_LICENSE_FILE="$SNPSLMD_LICENSE_FILE"
 
 # Here's the actual DC invocation
 echo "exit" >> $run_dir/rm_dc_scripts/dc.tcl

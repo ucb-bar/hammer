@@ -4,57 +4,57 @@
     {
       "path": "SAED32_EDK_OPEN_ACCESS_LIBS_07222015.tar.gz",
       "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
-      "base var": "SAED32_TARBALL_DIR"
+      "base var": "technology.saed32.tarball_dir"
     },
     {
       "path": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz",
       "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
-      "base var": "SAED32_TARBALL_DIR"
+      "base var": "technology.saed32.tarball_dir"
     },
     {
       "path": "SAED_EDK32.28nm_CORE_RVT_v_01132015.tar.gz",
       "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
-      "base var": "SAED32_TARBALL_DIR"
+      "base var": "technology.saed32.tarball_dir"
     },
     {
       "path": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz",
       "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
-      "base var": "SAED32_TARBALL_DIR"
+      "base var": "technology.saed32.tarball_dir"
     },
     {
       "path": "SAED_EDK32.28nm_IO_v_01132015.tar.gz",
       "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
-      "base var": "SAED32_TARBALL_DIR"
+      "base var": "technology.saed32.tarball_dir"
     },
     {
       "path": "SAED_EDK32.28nm_PLL_v_01132015.tar.gz",
       "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
-      "base var": "SAED32_TARBALL_DIR"
+      "base var": "technology.saed32.tarball_dir"
     },
     {
       "path": "SAED_EDK32.28nm_REF_v_01132015.tar.gz",
       "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
-      "base var": "SAED32_TARBALL_DIR"
+      "base var": "technology.saed32.tarball_dir"
     },
     {
       "path": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz",
       "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
-      "base var": "SAED32_TARBALL_DIR"
+      "base var": "technology.saed32.tarball_dir"
     },
     {
       "path": "SAED_EDK32.28nm_TECH_v_01132015.tar.gz",
       "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
-      "base var": "SAED32_TARBALL_DIR"
+      "base var": "technology.saed32.tarball_dir"
     },
     {
       "path": "SAED_PDK32nm_v1.6_05182016.tar.gz",
       "homepage": "http://www.synopsys.com/Community/UniversityProgram/Pages/32-28nm-ipdk.aspx",
-      "base var": "SAED32_TARBALL_DIR"
+      "base var": "technology.saed32.tarball_dir"
     }
   ],
   "libraries": [
     {
-      "tlu+ files" : {
+      "tluplus files" : {
          "min cap": "SAED_EDK32.28nm_TECH_v_01132015.tar.gz/SAED32_EDK/tech/star_rcxt/saed32nm_1p9m_Cmin.tluplus",
          "max cap": "SAED_EDK32.28nm_TECH_v_01132015.tar.gz/SAED32_EDK/tech/star_rcxt/saed32nm_1p9m_Cmax.tluplus"
       },
@@ -106,8 +106,8 @@
       "provide script": "src/tools/technology/saed32-stdcells"
     },
     {
-      "ccs liberty file": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/db_ccs/saed32hvt_tt1p05v25c.lib",
-      "ccs library file": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/db_ccs/saed32hvt_tt1p05v25c.db",
+      "ccs liberty file_missing": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/db_ccs/saed32hvt_tt1p05v25c.lib",
+      "ccs library file_missing": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/db_ccs/saed32hvt_tt1p05v25c.db",
       "nldm liberty file": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/db_nldm/saed32hvt_tt1p05v25c.lib",
       "nldm library file": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/db_nldm/saed32hvt_tt1p05v25c.db",
       "verilog sim": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/verilog/saed32nm_hvt.v",
@@ -182,8 +182,8 @@
       "provide script": "src/tools/technology/saed32-stdcells"
     },
     {
-      "ccs liberty file": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/db_ccs/saed32hvt_tt0p85v25c.lib",
-      "ccs library file": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/db_ccs/saed32hvt_tt0p85v25c.db",
+      "ccs liberty file_missing": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/db_ccs/saed32hvt_tt0p85v25c.lib",
+      "ccs library file_missing": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/db_ccs/saed32hvt_tt0p85v25c.db",
       "nldm liberty file": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/db_nldm/saed32hvt_tt0p85v25c.lib",
       "nldm library file": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/db_nldm/saed32hvt_tt0p85v25c.db",
       "verilog sim": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/verilog/saed32nm_hvt.v",
@@ -201,8 +201,8 @@
       "provide script": "src/tools/technology/saed32-stdcells"
     },
     {
-      "ccs liberty file": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram_lp/db_ccs/saed32sramlp_tt0p85v25c_i0p85v.lib",
-      "ccs library file": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram_lp/db_ccs/saed32sramlp_tt0p85v25c_i0p85v.db",
+      "ccs liberty file_missing": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram_lp/db_ccs/saed32sramlp_tt0p85v25c_i0p85v.lib",
+      "ccs library file_missing": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram_lp/db_ccs/saed32sramlp_tt0p85v25c_i0p85v.db",
       "nldm liberty file": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram_lp/db_nldm/saed32sramlp_tt0p85v25c_i0p85v.lib",
       "nldm library file": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram_lp/db_nldm/saed32sramlp_tt0p85v25c_i0p85v.db",
       "verilog sim": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram_lp/verilog/saed32sram.v",

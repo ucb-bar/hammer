@@ -1,0 +1,3 @@
+#!/bin/sh
+# Simple script which tests if hammer-shell is correctly installed into the path.
+echo "hammer-shell appears to be on the path"
