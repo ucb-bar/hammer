@@ -8,7 +8,7 @@
 from abc import ABCMeta, abstractmethod
 from enum import Enum
 
-from typing import Callable, Iterable, List, TypeVar
+from typing import Callable, Iterable, List, NamedTuple, TypeVar, Type
 
 from functools import reduce
 
@@ -18,6 +18,29 @@ import subprocess
 import sys
 
 import hammer_config
+
+class Level(Enum):
+    """
+    Logging levels.
+    """
+    # Explanation of logging levels:
+    # DEBUG - for debugging only, too verbose for general use
+    # INFO - general informational messages (e.g. "starting synthesis")
+    # WARNING - things the user should check out (e.g. a setting uses something very usual)
+    # ERROR - something gone wrong but the process can still continue (e.g. synthesis run failed), though the user should definitely check it out.
+    # FATAL - an error which will abort the process immediately without warning (e.g. assertion failure)
+    DEBUG = 0
+    INFO = 1
+    WARNING = 2
+    ERROR = 3
+    FATAL = 4
+
+# Message including additional metadata such as level and context.
+FullMessage = NamedTuple('FullMessage', [
+    ('message', str),
+    ('level', Level),
+    ('context', List[str])
+])
 
 # Need a way to bind the callbacks to the class...
 def with_default_callbacks(cls):
@@ -43,14 +66,6 @@ class HammerVLSILogging:
     # Enable printing the tag (e.g. "[synthesis] ...).
     enable_tag = True # type: bool
 
-    # Explanation of logging levels:
-    # DEBUG - for debugging only, too verbose for general use
-    # INFO - general informational messages (e.g. "starting synthesis")
-    # WARNING - things the user should check out (e.g. a setting uses something very usual)
-    # ERROR - something gone wrong but the process can still continue (e.g. synthesis run failed), though the user should definitely check it out.
-    # FATAL - an error which will abort the process immediately without warning (e.g. assertion failure)
-    Level = Enum('Level', 'DEBUG INFO WARNING ERROR FATAL')
-
     # Various escape characters for colour output.
     COLOUR_BLUE = "\033[96m"
     COLOUR_GREY = "\033[37m"
@@ -62,38 +77,39 @@ class HammerVLSILogging:
 
     # Some default callback implementations.
     @classmethod
-    def callback_print(cls, message: str, level: Level, context: List[str] = []) -> None:
+    def callback_print(cls, fullmessage: FullMessage) -> None:
         """Default callback which prints a colour message."""
-        print(cls.build_message(message, level, context))
+        print(cls.build_message(fullmessage))
 
     output_buffer = [] # type: List[str]
     @classmethod
-    def callback_buffering(cls, message: str, level: Level, context: List[str] = []) -> None:
+    def callback_buffering(cls, fullmessage: FullMessage) -> None:
         """Get the current contents of the logging buffer and clear it."""
         if not cls.enable_buffering:
             return
-        cls.output_buffer.append(cls.build_message(message, level, context))
+        cls.output_buffer.append(cls.build_message(fullmessage))
 
     @classmethod
-    def file_logger(cls, output_path: str, format_msg_callback: Callable[[str, Level, List[str]], str] = None) -> Callable[[str], None]:
+    def build_log_message(cls, fullmessage: FullMessage) -> str:
+        """Build a plain message for logs, without colour."""
+        template = "{context} {level}: {message}"
+
+        return template.format(context=cls.get_tag(fullmessage.context), level=fullmessage.level, message=fullmessage.message)
+
+    @classmethod
+    def file_logger(cls, output_path: str, format_msg_callback: Callable[[FullMessage], str] = None) -> Callable[[FullMessage], None]:
         """Create a file logger which logs to the given file."""
 
-        def build_log_message(message: str, level: "Level", context: List[str] = []) -> str:
-            """Build a plain message for logs, without colour."""
-            template = "{context} {level}: {message}"
-
-            return template.format(context=cls.get_tag(context), level=level, message=message)
-
         f = open(output_path, "a")
-        def file_callback(message: str, level: "Level", context: List[str] = []) -> None:
+        def file_callback(fullmessage: FullMessage) -> None:
             if format_msg_callback:
-                f.write(format_msg_callback(message, level, context) + "\n")
+                f.write(format_msg_callback(fullmessage) + "\n")
             else:
-                f.write(build_log_message(message, level, context) + "\n")
+                f.write(cls.build_log_message(fullmessage) + "\n")
         return file_callback
 
     # List of callbacks to call for logging.
-    callbacks = [] # type: List[Callable[[str, Level, List[str]], None]]
+    callbacks = [] # type: List[Callable[[FullMessage], None]]
 
     @classmethod
     def clear_callbacks(cls) -> None:
@@ -101,7 +117,7 @@ class HammerVLSILogging:
         cls.callbacks = []
 
     @classmethod
-    def add_callback(cls, callback: Callable[[str], None]) -> None:
+    def add_callback(cls, callback: Callable[[FullMessage], None]) -> None:
         """Add a callback."""
         cls.callbacks.append(callback)
 
@@ -121,11 +137,11 @@ class HammerVLSILogging:
     def get_colour_escape(cls, level: Level) -> str:
         """Colour table to translate level -> colour in logging."""
         table = {
-            cls.Level.DEBUG: cls.COLOUR_GREY,
-            cls.Level.INFO: cls.COLOUR_BLUE,
-            cls.Level.WARNING: cls.COLOUR_YELLOW,
-            cls.Level.ERROR: cls.COLOUR_RED,
-            cls.Level.FATAL: cls.COLOUR_RED_BG
+            Level.DEBUG: cls.COLOUR_GREY,
+            Level.INFO: cls.COLOUR_BLUE,
+            Level.WARNING: cls.COLOUR_YELLOW,
+            Level.ERROR: cls.COLOUR_RED,
+            Level.FATAL: cls.COLOUR_RED_BG
         }
         if level in table:
             return table[level]
@@ -133,31 +149,20 @@ class HammerVLSILogging:
             return ""
 
     @classmethod
-    def debug(cls, message: str) -> None:
-        """Create an debug-level log message."""
-        return cls.log(message, cls.Level.DEBUG)
-
-    @classmethod
-    def info(cls, message: str) -> None:
-        """Create an info-level log message."""
-        return cls.log(message, cls.Level.INFO)
-
-    @classmethod
-    def warning(cls, message: str) -> None:
-        """Create an warning-level log message."""
-        return cls.log(message, cls.Level.WARNING)
-
-    @classmethod
-    def log(cls, message: str, level: Level, context: List[str] = []) -> None:
+    def log(cls, fullmessage: FullMessage) -> None:
         """
         Log the given message at the given level in the given context.
         """
         for callback in cls.callbacks:
-            callback(message, level, context)
+            callback(fullmessage)
 
     @classmethod
-    def build_message(cls, message: str, level: Level, context: List[str] = []) -> str:
+    def build_message(cls, fullmessage: FullMessage) -> str:
         """Build a colour message."""
+        message = fullmessage.message
+        level = fullmessage.level
+        context = fullmessage.context
+
         context_tag = cls.get_tag(context) # type: str
 
         output = "" # type: str
@@ -192,12 +197,12 @@ class HammerVLSILoggingContext:
     Logging interface to hammer-vlsi which contains a context (list of strings denoting hierarchy where the log occurred).
     e.g. ["synthesis", "subprocess run-synthesis"]
     """
-    def __init__(self, context: List[str], logging_class: HammerVLSILogging):
+    def __init__(self, context: List[str], logging_class: Type[HammerVLSILogging]) -> None:
         """
         Create a new interface with the given context.
         """
         self._context = context # type: List[str]
-        self.logging_class = logging_class # type: HammerVLSILogging
+        self.logging_class = logging_class # type: Type[HammerVLSILogging]
 
     def context(self: VT, new_context: str) -> VT:
         """
@@ -207,29 +212,28 @@ class HammerVLSILoggingContext:
         context2.append(new_context)
         return HammerVLSILoggingContext(context2, self.logging_class)
 
-    # TODO: deduplicate these methods from the other class or merge things
     def debug(self, message: str) -> None:
         """Create an debug-level log message."""
-        return self.log(message, self.logging_class.Level.DEBUG)
+        return self.log(message, Level.DEBUG)
 
     def info(self, message: str) -> None:
         """Create an info-level log message."""
-        return self.log(message, self.logging_class.Level.INFO)
+        return self.log(message, Level.INFO)
 
     def warning(self, message: str) -> None:
         """Create an warning-level log message."""
-        return self.log(message, self.logging_class.Level.WARNING)
+        return self.log(message, Level.WARNING)
 
     def error(self, message: str) -> None:
         """Create an error-level log message."""
-        return self.log(message, self.logging_class.Level.ERROR)
+        return self.log(message, Level.ERROR)
 
     def fatal(self, message: str) -> None:
         """Create an fatal-level log message."""
-        return self.log(message, self.logging_class.Level.FATAL)
+        return self.log(message, Level.FATAL)
 
-    def log(self, message: str, level: HammerVLSILogging.Level) -> None:
-        return self.logging_class.log(message, level, self._context)
+    def log(self, message: str, level: Level) -> None:
+        return self.logging_class.log(FullMessage(message, level, self._context))
 
 import hammer_tech
 
@@ -367,7 +371,7 @@ class HammerTool(metaclass=ABCMeta):
             raise ValueError("Internal error: no database set by hammer-vlsi")
 
     # TODO(edwardw): consider pulling this out so that hammer_tech can also use this
-    def run_executable(self, args: Iterable[str]) -> str:
+    def run_executable(self, args: List[str]) -> str:
         """
         Run an executable and log the command to the log while also capturing the output.
 
@@ -421,7 +425,7 @@ class HammerSynthesisTool(HammerTool):
     @input_files.setter
     def input_files(self, value: Iterable[str]) -> None:
         """Set the input collection of source RTL files (e.g. *.v)."""
-        if not isinstance(value, Iterable[str]):
+        if not isinstance(value, Iterable):
             raise TypeError("input_files must be a Iterable[str]")
         self._input_files = value # type: Iterable[str]
 
@@ -463,7 +467,7 @@ class HammerSynthesisTool(HammerTool):
     @output_files.setter
     def output_files(self, value: Iterable[str]) -> None:
         """Set the output collection of mapped (post-synthesis) RTL files."""
-        if not isinstance(value, Iterable[str]):
+        if not isinstance(value, Iterable):
             raise TypeError("output_files must be a Iterable[str]")
         self._output_files = value # type: Iterable[str]
 

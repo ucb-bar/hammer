@@ -61,7 +61,9 @@ def main(args: dict) -> int:
         tech_json_path = os.path.join(path, tech_str, "%s.tech.json" % (tech_str))
         if os.path.exists(tech_json_path):
             break
+    log.info("Loading technology '{0}'".format(tech_str))
     tech = hammer_tech.HammerTechnology.load_from_dir(tech_str, os.path.dirname(tech_json_path))
+    tech.logger = log.context("tech")
     tech.set_database(database)
     tech.cache_dir = "%s/tech-%s-cache" % (hammer_vlsi.HammerVLSISettings.hammer_vlsi_path, tech_str) # TODO: don't hardcode this
     database.update_technology(tech.get_config())

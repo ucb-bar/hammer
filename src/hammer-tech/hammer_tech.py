@@ -12,7 +12,7 @@ from typing import List
 
 import hammer_config
 
-from hammer_vlsi import HammerVLSILogging as logging
+from hammer_vlsi import HammerVLSILoggingContext
 
 import python_jsonschema_objects # type: ignore
 
@@ -43,6 +43,21 @@ class HammerTechnology:
         self._cachedir = value # type: str
         # Ensure the cache_dir exists.
         os.makedirs(value, exist_ok=True)
+
+    # hammer-vlsi properties.
+    # TODO: deduplicate/put these into an interface to share with HammerTool?
+    @property
+    def logger(self) -> HammerVLSILoggingContext:
+        """Get the logger for this tool."""
+        try:
+            return self._logger
+        except AttributeError:
+            raise ValueError("Internal error: logger not set by hammer-vlsi")
+
+    @logger.setter
+    def logger(self, value: HammerVLSILoggingContext) -> None:
+        """Set the logger for this tool."""
+        self._logger = value # type: HammerVLSILoggingContext
 
     # Methods.
     def __init__(self):
@@ -107,7 +122,7 @@ class HammerTechnology:
         for tarball in self.config.tarballs:
             target_path = os.path.join(self.extracted_tarballs_dir, tarball.path)
             tarball_path = os.path.join(self.get_setting(tarball.base_var), tarball.path)
-            logging.debug("Extracting/verifying tarball %s" % (tarball_path))
+            self.logger.debug("Extracting/verifying tarball %s" % (tarball_path))
             if os.path.isdir(target_path):
                 # If the folder already seems to exist, continue
                 continue

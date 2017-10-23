@@ -31,13 +31,17 @@ class DC(HammerSynthesisTool):
         """
         filtered_libs = reduce(lambda libs, func: filter(func, libs), lib_filters, self.technology.config.libraries)
 
-        lib_results = list(reduce(lambda a, b: a + b, map(func, filtered_libs)))
-        lib_results = list(set(lib_results)) # TODO(edwardw): fixme, remove this (hack)
+        lib_results = list(reduce(lambda a, b: a+b, list(map(func, filtered_libs))))
+
+        # Uniqueify results.
+        # TODO: think about whether this really belongs here and whether we always need to uniqueify.
+        # This is here to get stuff working since some CAD tools dislike duplicated arguments (e.g. duplicated stdcell lib, etc).
+        lib_results = list(set(lib_results))
 
         lib_results_with_extra_funcs = reduce(lambda arr, func: map(func, arr), extra_funcs, lib_results)
 
         # Turn them into --arg arguments.
-        return reduce(lambda a, b: a + b, map(lambda res: [arg_name, res], lib_results_with_extra_funcs))
+        return reduce(lambda a, b: a + b, list(map(lambda res: [arg_name, res], lib_results_with_extra_funcs)))
 
     # TODO(edwardw): this also belong in a common place
     def args_from_tarball_libraries(self, func: Callable[[hammer_tech.Library], List[str]], arg_name: str, arg_type: str, is_file: bool) -> Iterable[str]:
