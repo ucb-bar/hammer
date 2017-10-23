@@ -1,0 +1,18 @@
+#!/bin/bash
+
+unset logfile
+unset srcdir
+unset bindir
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    --logfile) logfile="$2"; shift;;
+    --srcdir) srcdir="$2"; shift;;
+    --bindir) bindir="$2"; shift;;
+    *) echo "unknown argument $1"; exit 1;;
+    esac
+    shift
+done
+
+make -C $srcdir > $logfile
+make -C $srcdir install >> $logfile

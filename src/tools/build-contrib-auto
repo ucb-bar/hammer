@@ -1,0 +1,56 @@
+#!/bin/bash
+# Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+# Build a certain prebuilt binary contrib automatically by reading
+# metadata from Makefile.tools
+# Respects PLSI_MAKEFLAGS and PLSI_MAKEFILES (see makeplsi for documentation).
+# Example: build-contrib-auto --contrib_name python
+
+unset contrib_name # e.g. python
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    "$0") ;;
+    --contrib_name) contrib_name="$2"; shift;;
+    *) echo "Unknown argument $1"; exit 1;;
+    esac
+    shift
+done
+
+if [ -z "${contrib_name}" ]; then
+  >&2 echo "--contrib_name not specified"
+  exit 1
+fi
+
+set -e
+
+# The portion we want to match (in this case, contrib targets)
+target_match="# _plsi_ contrib ${contrib_name} targets = "
+
+# Try to match a line like # _plsi_ contrib python targets = OBJ_TOOLS_BIN_PYTHON3
+contrib_targets_line=$(grep -E "^${target_match}" Makefile.tools || true)
+if [ -z "${contrib_targets_line}" ]; then
+  >&2 echo "contrib \"${contrib_name}\" not found in Makefile.tools"
+  exit 1
+fi
+
+# Get the actual list of targets, separated by spaces.
+contrib_targets=$(echo "${contrib_targets_line}" | sed -e "s/${target_match}//g")
+
+makefile_vars=""
+OLDIFS="$IFS"; IFS=" " # save old IFS
+arr_buf="$contrib_targets"
+while true; do
+ read -r file rest <<< $arr_buf
+  if [ ! -z "$file" ]; then
+    makefile_vars="$makefile_vars --makefile_var $file";
+  fi
+  arr_buf=${rest}
+  if [ -z "$arr_buf" ]; then
+    break
+  fi
+done
+IFS="$OLDIFS"; unset OLDIFS
+
+build_contrib_cmd="src/tools/build-contrib --name ${contrib_name} $makefile_vars"
+echo "Running build-contrib command as follows: ${build_contrib_cmd}"
+$build_contrib_cmd

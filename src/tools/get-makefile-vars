@@ -1,0 +1,64 @@
+#!/bin/bash
+# get-makefile-vars
+#
+# Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+#
+# Get the expanded variable definitions from a Makefile.
+#
+# Usage:
+# make <...> -pn | get-makefile-vars -
+
+set -e
+
+# The file containing the make -pn results.
+if [[ $1 == "-" ]]; then
+  in_data=/dev/stdin
+else
+  in_data=$1
+fi
+
+# Commands adapted from https://stackoverflow.com/q/7117978
+
+tmpfile=$(mktemp)
+
+# Get the list of variables.
+# This will output something like:
+# VAR1 := foo
+# VAR2 = $(VAR1) bar
+cat $1 | grep -A1 "^# makefile"| grep -v "^#\|^--" | sort -u > $tmpfile
+
+# Remove MAKEFILE_LIST and MAKEFLAGS to prevent the previous Make run
+# from interfering.
+sed -i "s/^MAKEFILE_LIST.*//g" $tmpfile
+sed -i "s/^MAKEFLAGS.*//g" $tmpfile
+
+# Re-run the list of variables and expand all definitions.
+# Filter .VARIABLES to exclude variables not defined in this Makefile.
+# e.g. the above example would have VAR2 = foo bar
+tmpfile2=$(mktemp)
+
+# Add a dummy target for Make to chew on and suppress an unwanted message.
+echo '.PHONY: DUMMY_RULE' >> $tmpfile2
+echo 'DUMMY_RULE:' >> $tmpfile2
+echo -e "\t@echo > /dev/null" >> $tmpfile2
+
+cat >> $tmpfile2 <<"EOF"
+VARS_OLD := $(.VARIABLES)
+# Escape any rogue '%' characters, or filter_out will to match it and weird
+# things can happen.
+# e.g. if %D is present in .VARIABLES, then any variable ending in the letter D
+# will be filtered out without warning (!!!)
+VARS_OLD := $(subst %,\%,$(VARS_OLD))
+EOF
+cat $tmpfile >> $tmpfile2
+cat >> $tmpfile2 <<"EOF"
+$(foreach v,                                        \
+  $(filter-out $(VARS_OLD) VARS_OLD,$(.VARIABLES)), \
+  $(info $(v) = $($(v))))
+EOF
+
+make -f $tmpfile2 DUMMY_RULE
+
+# Clean up temporaries.
+rm $tmpfile
+rm $tmpfile2

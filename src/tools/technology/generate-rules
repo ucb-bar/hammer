@@ -1,0 +1,113 @@
+#!/usr/bin/env python3
+
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("-o", "--output", dest="output", required=True)
+parser.add_argument("-i", "--input", dest="input", required=True)
+args = parser.parse_args()
+
+import sys
+import json
+
+techfile_name = args.input
+
+with open(techfile_name) as f:
+	techfile = json.load(f)
+
+of = open(args.output, "w+")
+
+tech_home = "$(OBJ_TECH_DIR)/extracted"
+extract_stamp = "{0}/plsi-techtar.stamp".format(tech_home)
+
+if "installs" in techfile:
+	# Support technologies that can not be re-extracted
+	for install in techfile["installs"]:
+		install_path = "$({0})".format(install["base var"])
+		install_stamp = "{0}/stamps/{1}.stamp".format(tech_home, install["path"])
+		target_dir = "{0}/{1}".format(tech_home, install["path"])
+
+		# Check to make sure the base variable is set before proceeding
+		of.write("ifeq ($({0}),)\n".format(install["base var"]))
+		of.write("$(error You must set {0} to point to your technology)\n".format(install["base var"]))
+		of.write("endif\n")
+
+		# link the pre-extracted library here with a stamp
+		of.write("{0}: {1}\n".format(install_stamp, install_path))
+		of.write("\t@rm -rf {0}\n".format(target_dir))
+		of.write("\t@mkdir -p {0}\n".format(tech_home))
+		of.write("\tln -sT $^ {0}\n".format(target_dir))
+		of.write("\t@mkdir -p $(dir $@)\n")
+		of.write("\tdate > $@\n")
+
+		# There's one big stamp file for all the extractions
+		of.write("{0}: {1}\n".format(extract_stamp, install_stamp))
+		of.write("\ttouch $@\n")
+
+elif "tarballs" in techfile: # We can't currently support both tarballs and an install path
+	for tarball in techfile["tarballs"]:
+		tarball_path = "$(PLSI_CACHE_DIR)/technology/$(TECHNOLOGY)/{0}".format(tarball["path"])
+		tarball_stamp = "{0}/stamps/{1}.stamp".format(tech_home, tarball["path"])
+		target_dir = "{0}/{1}".format(tech_home, tarball["path"])
+
+		# Support technologies that can be cached as tarballs
+		if "base var" in tarball:
+			of.write("ifneq ($({0}),)\n".format(tarball["base var"]))
+			of.write("{0}: $({1})/{2}\n".format(tarball_path, tarball["base var"], tarball["path"]))
+			of.write("\t@mkdir -p $(dir $@)\n")
+			of.write("\tcp --reflink=auto $^ $@\n")
+			of.write("else\n")
+			of.write("$(error Set the {0} variable to a folder that contains {1})\n".format(tarball["base var"], tarball["path"]))
+			of.write("endif\n")
+		# Some technologies can be fetched online, other's can't.
+		elif "homepage" in tarball:
+			of.write("{0}:\n".format(tarball_path))
+			of.write("\t$(error Download the {0} technology tarball from {1} and place it at $@, this process can't be automated because of NDAs)\n".format(tarball["path"], tarball["homepage"]))
+		elif "url" in tarball:
+			of.write("{0}:\n".format(tarball_path))
+			of.write("\t@mkdir -p $(dir $@)\n")
+			of.write("\twget \"{0}\" -O $@\n".format(tarball["url"]))
+
+		# There's a single extraction step in order to avoid dependency problems.
+		of.write("{0}: {1}\n".format(tarball_stamp, tarball_path))
+		of.write("\t@rm -rf {0}\n".format(target_dir))
+		of.write("\t@mkdir -p {0}\n".format(target_dir))
+		of.write("\ttar -xf $^ -C {0}\n".format(target_dir))
+		of.write("\tchmod u+rwX -R {0}\n".format(target_dir))
+		of.write("\t@mkdir -p $(dir $@)\n")
+		of.write("\tdate > $@\n")
+
+		# There's one big stamp file for all the extractions
+		of.write("{0}: {1}\n".format(extract_stamp, tarball_stamp))
+		of.write("\ttouch $@\n")
+else:
+		print("No installs nor tarballs specified in techfile")
+		sys.exit(1)
+
+# A helper to add a dependency for the given file on the given stamp file
+# and check that the given file was actually extracted as expected.
+def add_dep_on_stamp(filename, stamp):
+	"""
+	filename - full (relative) path to the filename
+	stamp - full (relative) path to the technology stamp file
+	"""
+	of.write("{0}: {1}\n".format(filename, stamp))
+	# GNU Make ifeq is like a pre-processor macro - we cannot use it to test
+	# for targets created during the build.
+	of.write("\ttest -s \"{filename}\" || {{ echo \"{filename} does not exist as specified in the techfile {tfname}\" >&2; false; }}\n".format(filename=filename, tfname=techfile_name))
+
+for library in techfile["libraries"]:
+	for kind in ["liberty file", "verilog sim", "milkyway lib in dir", "ccs library file", "milkyway techfile", "lef file", "openaccess techfile"]:
+		if kind in library:
+			add_dep_on_stamp(tech_home + "/" + library[kind], extract_stamp)
+	for tlu in ["tlu+ files"]:
+		for cap in ["min cap", "max cap"]:
+			if tlu in library and cap in library[tlu]:
+				add_dep_on_stamp(tech_home + "/" + library[tlu][cap], extract_stamp)
+	for ds in ["depend script"]:
+		if ds in library:
+			of.write("$(OBJ_TECH_DIR)/generated/{0}/%.mk: {1}\n".format(library["family"], library["depend script"]))
+			of.write("\t@mkdir -p $(dir $@)\n")
+			of.write("\t{0} -o $@ --family {1} --macro $(patsubst %.mk,%,$(notdir $@))\n".format(library["depend script"], library["family"]))
+
+# A helper to extract technologies
+of.write("technology-extract: {0}\n".format(extract_stamp))

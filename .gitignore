@@ -1,0 +1,14 @@
+*.swp
+
+/bin
+/obj
+/check
+/trace
+/Makefile.local
+
+/DVEfiles
+/opendatabase.log
+
+__pycache__
+*.pyc
+.mypy_cache

@@ -1,0 +1,4 @@
+# Settings for the saed32 technology to be overriden by the project.
+technology.saed32:
+  # Path to the directory which contains all the saed32 tarballs (e.g. SAED_EDKxxxxxxx_CORE_LVT_v_xxxxxxxx.tar.gz)
+  tarball_dir: ""

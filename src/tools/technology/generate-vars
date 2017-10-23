@@ -1,0 +1,147 @@
+#!/usr/bin/env python3
+
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("-o", "--output", dest="output", required=True)
+parser.add_argument("-i", "--input", dest="input", required=True)
+parser.add_argument("-s", "--srcdir", dest="srcdir", required=True)
+args = parser.parse_args()
+
+import json
+with open(args.input) as f:
+	techfile = json.load(f)
+
+import os
+
+of = open(args.output, "w+")
+
+tech_home = "$(OBJ_TECH_DIR)/extracted"
+
+of.write("TECHNOLOGY_CCS_LIBERTY_FILES =")
+for library_desc in techfile["libraries"]:
+	if "ccs liberty file" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["ccs liberty file"]))
+of.write("\n")
+
+of.write("TECHNOLOGY_CCS_LIBRARY_FILES =")
+for library_desc in techfile["libraries"]:
+	if "ccs library file" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["ccs library file"]))
+of.write("\n")
+
+of.write("TECHNOLOGY_NLDM_LIBERTY_FILES =")
+for library_desc in techfile["libraries"]:
+	if "nldm liberty file" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["nldm liberty file"]))
+of.write("\n")
+
+of.write("TECHNOLOGY_NLDM_LIBRARY_FILES =")
+for library_desc in techfile["libraries"]:
+	if "nldm library file" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["nldm library file"]))
+of.write("\n")
+
+# Verilog files required for simulation only.
+of.write("TECHNOLOGY_VERILOG_SIMULATION_FILES =")
+for library_desc in techfile["libraries"]:
+	if "verilog sim" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["verilog sim"]))
+of.write("\n")
+
+# Verilog files required for synthesis only.
+# e.g. Simulation would use both TECHNOLOGY_VERILOG_SYNTHESIS_FILES + TECHNOLOGY_VERILOG_SIMULATION_FILES
+# while synthesis would use only TECHNOLOGY_VERILOG_SYNTHESIS_FILES
+#
+# Example usage: say if the SRAM hard macro name is sram_foo, but the
+# vendor provides a synthesizable wrapper around it named sram_foo_wrap,
+# then the file with sram_foo_wrap goes into TECHNOLOGY_VERILOG_SYNTHESIS_FILES
+# since it's used both in synthesis and in simulation, while the file
+# with sram_foo goes into TECHNOLOGY_VERILOG_SIMULATION_FILES since it's
+# a behavioural model of a hard macro used only in simulation.
+of.write("TECHNOLOGY_VERILOG_SYNTHESIS_FILES =")
+for library_desc in techfile["libraries"]:
+	if "verilog synth" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["verilog synth"]))
+of.write("\n")
+
+of.write("TECHNOLOGY_DOCUMENTATION_PDF_FILES =")
+for library_desc in techfile["libraries"]:
+	if "documentation pdf" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["documentation pdf"]))
+of.write("\n")
+
+of.write("TECHNOLOGY_MILKYWAY_LIB_IN_DIRS =")
+for library_desc in techfile["libraries"]:
+	if "milkyway lib in dir" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["milkyway lib in dir"]))
+of.write("\n")
+
+of.write("TECHNOLOGY_TLUPLUS_FILES =")
+for library_desc in techfile["libraries"]:
+	if "tlu+ files" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["tlu+ files"]["min cap"]))
+		of.write(" {0}/{1}".format(tech_home, library_desc["tlu+ files"]["max cap"]))
+of.write("\n")
+
+of.write("TECHNOLOGY_ITF_FILES =")
+for library_desc in techfile["libraries"]:
+	if "itf files" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["itf files"]["min cap"]))
+		of.write(" {0}/{1}".format(tech_home, library_desc["itf files"]["max cap"]))
+of.write("\n")
+
+of.write("TECHNOLOGY_MILKYWAY_TECHFILES =")
+for library_desc in techfile["libraries"]:
+	if "milkyway techfile" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["milkyway techfile"]))
+of.write("\n")
+
+of.write("TECHNOLOGY_MACRO_PROVIDE_SCRIPTS =")
+for library_desc in techfile["libraries"]:
+	if "provide script" in library_desc:
+		provide_script = library_desc["provide script"]
+		if (not provide_script.startswith("/")):
+			# TODO(edwardw): migrate this to the new config and nuke this hideous hack from orbit
+			# Try to support a script relative to the input json.
+			# See generate-macros
+			new_path = os.path.dirname(args.srcdir) + "/" + provide_script
+			if os.path.isfile(new_path):
+				provide_script = new_path
+		of.write(" {0}".format(provide_script))
+of.write("\n")
+
+of.write("TECHNOLOGY_MACRO_DEPEND_SCRIPTS =")
+for library_desc in techfile["libraries"]:
+	if "depend script" in library_desc:
+		of.write(" {0}".format(library_desc["depend script"]))
+of.write("\n")
+
+of.write("TECHNOLOGY_LEF_FILES =")
+for library_desc in techfile["libraries"]:
+	if "lef file" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["lef file"]))
+of.write("\n")
+
+of.write("TECHNOLOGY_OPENACCESS_TECHFILES =")
+for library_desc in techfile["libraries"]:
+	if "openaccess techfile" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["openaccess techfile"]))
+of.write("\n")
+
+of.write("TECHNOLOGY_MILKYWAY_TECHFILES =")
+for library_desc in techfile["libraries"]:
+	if "milkyway techfile" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["milkyway techfile"]))
+of.write("\n")
+
+of.write("TECHNOLOGY_ICV_DRC_METAL_FILL_RULESET =")
+for library_desc in techfile["libraries"]:
+	if "icv drc metal fill ruleset" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["icv drc metal fill ruleset"]))
+of.write("\n")
+
+of.write("TECHNOLOGY_ICV_SIGNOFF_DRC_RULESET =")
+for library_desc in techfile["libraries"]:
+	if "icv signoff drc ruleset" in library_desc:
+		of.write(" {0}/{1}".format(tech_home, library_desc["icv signoff drc ruleset"]))
+of.write("\n")

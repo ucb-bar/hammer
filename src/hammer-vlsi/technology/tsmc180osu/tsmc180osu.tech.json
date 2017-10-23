@@ -1,0 +1,15 @@
+{
+  "name": "TSMC 180nm Static CMOS from MOSIS via OSU",
+  "tarballs": [
+    {
+      "path": "osu_soc_v2.7.tar.gz",
+      "url": "http://vlsiarch.ecen.okstate.edu/flows/MOSIS_SCMOS/osu_soc_v2.7/osu_soc_v2.7.tar.gz"
+    }
+  ],
+  "libraries": [
+    {
+      "liberty file": "osu_soc_v2.7.tar.gz/cadence/lib/tsmc018/signalstorm/osu018_stdcells.lib",
+      "verilog sim": "osu_soc_v2.7.tar.gz/cadence/flow/tsmc018/osu018_stdcells.v"
+    }
+  ]
+}

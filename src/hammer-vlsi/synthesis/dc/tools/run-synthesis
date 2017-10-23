@@ -1,0 +1,253 @@
+#!/bin/bash
+
+# TODO: pull these into a generic shell utils or something for re-use.
+
+unset run_dir
+unset dc
+unset preferred_routing_directions_fragment
+unset find_regs_tcl
+v=()
+vhd=('')
+libs=()
+milkyway=()
+tf=()
+tlu_max=()
+tlu_min=()
+unset top
+unset MGLS_LICENSE_FILE
+unset SNPSLMD_LICENSE_FILE
+compile_args=('')
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    "$0") ;;
+    --run_dir) run_dir="$2"; shift;;
+    --dc) dc="$2"; shift;;
+    --preferred_routing_directions_fragment) preferred_routing_directions_fragment="$2"; shift;;
+    --find_regs_tcl) find_regs_tcl="$2"; shift;;
+    *.v) v+=("$1");;
+    *.sv) v+=("$1");;
+    *.vhd) vhd+=("$1");;
+    --lib) libs+=("$2"); shift;;
+    --milkyway) milkyway+=("$2"); shift;;
+    --tf) tf+=("$2"); shift;;
+    --tlu_max) tlu_max+=("$2"); shift;;
+    --tlu_min) tlu_min+=("$2"); shift;;
+    --top) top="$2"; shift;;
+    --MGLS_LICENSE_FILE) MGLS_LICENSE_FILE="$2"; shift;;
+    --SNPSLMD_LICENSE_FILE) SNPSLMD_LICENSE_FILE="$2"; shift;;
+    --compile_arg) compile_args+=("$2"); shift;; # TODO: implement this one in __init__.py
+
+    #~ */dc_shell) dc="$1";;
+    #~ */lib) mw+=("$(dirname "$1")");;
+    #~ --top) top="$2"; shift;;
+    #~ *.vh) vh+=("$1");;
+    #~ *.tf) tf+=("$1");;
+    #~ */find-regs.tcl) find_regs="$1";;
+    #~ *.plsi_config.json) config="$1";;
+    *) echo "Unknown argument $1"; exit 1;;
+    esac
+    shift
+done
+
+set -eux
+
+cat >"$run_dir"/enter <<EOF
+export DC_HOME="$(dirname $(dirname $dc))"
+export PATH="\$DC_HOME/bin:\$PATH"
+export MGLS_LICENSE_FILE="$MGLS_LICENSE_FILE"
+export SNPSLMD_LICENSE_FILE="$SNPSLMD_LICENSE_FILE"
+EOF
+
+if [[ "$v" == "" ]]
+then
+    echo "No input design files specified" >&2
+    exit 1
+fi
+
+if [[ "$libs" == "" ]]
+then
+    echo "No timing library provided, you should specify one in the technology JSON file" >&2
+    exit 1
+fi
+
+defines=$(cat /dev/null "$vh" | while read line
+do
+    echo $line | sed 's@`define \([A-Za-z0-9_]*\) \([A-Za-z0-9_]*\)@-define \1=\2@'
+done | xargs echo)
+
+mkdir -p $run_dir/generated-scripts
+
+# The default DC script has an "exit" an the end, which we want to strip off so
+# I can add more commands after all the RM DC stuff.
+sed 's/^exit$//g' -i $run_dir/rm_dc_scripts/dc.tcl
+
+# This variable is set in "dc_setup.tcl", which for some reason we're expected
+# to edit inside this file in addition to setting it up inside the setup file
+# above.  Instead I just remove this second definition, as it's pretty useless.
+sed 's/^set RTL_SOURCE_FILES .*$//' -i $run_dir/rm_setup/dc_setup.tcl
+
+# Here's another thing that the scripts overwrite but that I want to set
+sed 's/^set DCRM_CONSTRAINTS_INPUT_FILE .*$//' -i $run_dir/rm_setup/dc_setup_filenames.tcl
+
+# I don't want to write ICC2 files
+sed 's/^write_icc2_files .*$//' -i $run_dir/rm_dc_scripts/dc.tcl
+
+# Flush compile_ultra arguments and use user specified arguments instead
+find $run_dir -iname "*.tcl" | xargs sed s/'^compile_ultra \(.*\)'/"compile_ultra ${compile_args[*]}"/g -i
+
+# Run a check before compile_utlra, as that gives better messages when
+# something is wrong.
+find $run_dir -iname "*.tcl" | xargs sed s/'^compile_ultra \(.*\)'/'compile_ultra -check_only \1\ncompile_ultra \1'/g -i
+
+# Report more timing arcs
+sed 's@^report_timing@report_timing -max_paths 500 -nworst 10 -slack_lesser_than 0.01@' -i $run_dir/rm_dc_scripts/dc.tcl
+
+# Unfortunately I need to support both Verilog and VHDL.
+find $run_dir -iname "*.tcl" | xargs sed 's/RTL_SOURCE_FILES/RTL_SOURCE_FILES_VERILOG/g' -i
+if [[ "$vhd" != "" ]]
+then
+    find $run_dir -iname "*.tcl" | xargs sed 's/^\(analyze -format verilog .*\)/analyze -format vhdl ${RTL_SOURCE_FILES_VHDL}\n\1/g' -i
+fi
+find $run_dir -iname "*.tcl" | xargs sed "s/^analyze/analyze $defines/" -i
+
+# Report library references in case I'm missing anything.
+sed "s@^check_design @report_reference > reports/${top}.report_reference.out\\ncheck_design @" -i $run_dir/rm_dc_scripts/dc.tcl
+
+if [[ "${milkyway[@]}" == "" ]]
+then
+    echo "No milkyway libraries specified"
+    exit 1
+fi
+
+if [[ "${tlu_max[*]}" == "" || "${tlu_min[*]}" == "" ]]
+then
+    echo "No TLU+ files specified"
+    exit 1
+fi
+
+max_threads=$(get-config vlsi.core.max_threads)
+
+# Most of the customization of the DC reference methodology is done here: this
+# sets all the input files and such.
+mkdir -p $run_dir/rm_setup
+
+# TODO: find a way to specify tlu+ mapfile.
+cat >> $run_dir/rm_setup/common_setup.tcl <<EOF
+set DESIGN_NAME "$top";
+set RTL_SOURCE_FILES_VERILOG "$(readlink_array ${v[@]})";
+set RTL_SOURCE_FILES_VHDL "$(readlink_array ${vhd[@]})";
+set TARGET_LIBRARY_FILES "$(readlink_array ${libs[@]})";
+set MW_REFERENCE_LIB_DIRS "$(readlink_array ${milkyway[@]})";
+set MIN_LIBRARY_FILES "";
+set TECH_FILE "$(readlink_array ${tf[@]})";
+set TLUPLUS_MAX_FILE "$(readlink_array ${tlu_max[@]})";
+set TLUPLUS_MIN_FILE "$(readlink_array ${tlu_min[@]})";
+set ALIB_DIR "alib";
+set DCRM_CONSTRAINTS_INPUT_FILE "generated-scripts/constraints.tcl"
+set REPORTS_DIR "reports";
+set RESULTS_DIR "results";
+set CLOCK_UNCERTAINTY "0.04";
+set INPUT_DELAY "0.10";
+set OUTPUT_DELAY "0.10";
+set_host_options -max_cores ${max_threads}
+
+# Provide verbose error messages
+set power_sa_propagation_verbose true
+EOF
+
+# Read the core's configuration file to figure out what all the clocks should
+# look like.
+# TODO: this is broken, should be generated in Python from JSON/annotations
+#~ python3 >>$run_dir/generated-scripts/constraints.tcl <<EOF
+#~ import json
+#~ with open("${config}") as f:
+	#~ config = json.load(f)
+
+#~ import re
+#~ for clock in config["clocks"]:
+	#~ clock_name = clock["name"]
+	#~ clock_period = clock["period"]
+	#~ if not re.match("[0-9]+ *[np]s", clock_period):
+		#~ error
+
+	#~ if re.match("[0-9]+ *ns", clock_period):
+		#~ clock_period_ns = re.sub(" *ns", "", clock_period)
+	#~ if re.match("[0-9]+ *ps", clock_period):
+		#~ clock_period_ns = int(re.sub(" *ps", "", clock_period)) / 1000.0
+
+	#~ print("create_clock {0} -name {0} -period {1}".format(clock_name, clock_period_ns))
+	#~ print("set_clock_uncertainty 0.01 [get_clocks {0}]".format(clock_name))
+#~ EOF
+
+# The constraints file determines how the IO is constrained and what the clocks
+# look like.
+cat >> $run_dir/generated-scripts/constraints.tcl <<"EOF"
+# set drive strength for inputs
+#set_driving_cell -lib_cell INVD0BWP12T [all_inputs]
+# set load capacitance of outputs
+set_load -pin_load 0.004 [all_outputs]
+
+#set all_inputs_but_clock [remove_from_collection [all_inputs] [get_ports clock]]
+#set_input_delay 0.02 -clock [get_clocks clock] $all_inputs_but_clock
+#set_output_delay 0.03 -clock [get_clocks clock] [all_outputs]
+
+#set_isolate_ports [all_outputs] -type buffer
+#set_isolate_ports [remove_from_collection [all_inputs] clock] -type buffer -force
+EOF
+
+# We allow users to specify metal routing directions since some technologies
+# don't support those.
+cat $preferred_routing_directions_fragment >>$run_dir/generated-scripts/constraints.tcl
+
+# FIXME: This is a terrible way to specify the retiming registers, it should
+# come from a FIRRTL pass.
+for x in $(echo "IntToFP" "FPUFMAPipe" "Mul54" "INToRecFN" "IMulSlice" "FMASlice" "FCmpSlice" "FConvSlice" "DivSqrtRecF64" "IMul")
+do
+    grep "^module $x" ${v[*]} && (echo "set_optimize_registers true -design $x* -clock clock -check_design -verbose -print_critical_loop" >> $run_dir/generated-scripts/constraints.tcl)
+done
+
+# FIXME: This shouldn't depend on Synopsys
+# At the end of the DC run we want to generate a special simulation file that
+# tells VCS to set all the generated registers to 0.  I was hoping that
+# "+vcs+initreg+0" would do this, but it doesn't look like it does.
+cat >> $run_dir/rm_dc_scripts/dc.tcl <<EOF
+source ${find_regs_tcl}
+find_regs $top 0 \${RESULTS_DIR}/$top.force_regs.ucli \${RESULTS_DIR}/$top.force_regs.tab
+EOF
+
+# Add licensing servers to the environment
+export MGLS_LICENSE_FILE="$MGLS_LICENSE_FILE"
+export SNPSLMD_LICENSE_FILE="$SNPSLMD_LICENSE_FILE"
+
+# Here's the actual DC invocation
+echo "exit" >> $run_dir/rm_dc_scripts/dc.tcl
+cd $run_dir
+$dc -topographical_mode -f rm_dc_scripts/dc.tcl \
+    |& tee dc.log
+
+# FIXME: This definately shouldn't have "dut" hard-coded here, and shouldn't
+# rely on sed.
+case "$top" in
+ExampleTop)
+  sed s/$top/testHarness.ExampleTop_1/g -i $run_dir/results/$top.force_regs.ucli
+  ;;
+ExampleRocketTop)
+  sed s/$top/testHarness.ExampleRocketTop_1/g -i $run_dir/results/$top.force_regs.ucli
+  ;;
+RadioTop)
+  sed s/$top/testHarness.RadioTop_1/g -i $run_dir/results/$top.force_regs.ucli
+  ;;
+Counter)
+  sed s/$top/dut/g -i $run_dir/results/$top.force_regs.ucli
+  ;;
+*)
+  echo "Unknown top $top" >&2
+  ;;
+esac
+
+# Make sure there's no invalid output from DC
+set +e
+grep ^Warning dc.log && (echo "DC produced warning messages")
+grep ^Error dc.log && (echo "DC produced error messages"; exit 1)
+exit 0

@@ -1,0 +1,5 @@
+# Built-in variables set by the hammer-vlsi system.
+# These settings should not be overridden.
+vlsi.builtins:
+  # Path to the hammer-vlsi directory.
+  hammer_vlsi_path: ""

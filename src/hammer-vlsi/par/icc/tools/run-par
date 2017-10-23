@@ -1,0 +1,13 @@
+#!/bin/bash
+
+script_dir="$(dirname "$0")"
+source "$script_dir/icc_common.sh"
+
+# Here's the actual ICC invocation
+cd $run_dir
+make -f rm_setup/Makefile_zrt ic -j1 |& tee icc.log
+
+# Make sure there's no invalid output from ICC
+grep ^Warning icc.log && (echo "ICC produced warning messages")
+grep ^Error icc.log && (echo "ICC produced error messages"; exit 1)
+exit 0

@@ -1,0 +1,124 @@
+{
+  "title" : "TechJSON",
+  "type" : "object",
+  "properties" : {
+    "libraries" : {
+      "type" : "array",
+      "items" : {
+        "title" : "Library",
+        "type" : "object",
+        "properties" : {
+          "ccs liberty file" : {
+            "type" : "string"
+          },
+          "ccs library file" : {
+            "type" : "string"
+          },
+          "corner" : {
+            "title" : "Corner",
+            "type" : "object",
+            "properties" : {
+              "nmos" : {
+                "type" : "string"
+              },
+              "pmos" : {
+                "type" : "string"
+              },
+              "temperature" : {
+                "type" : "string"
+              }
+            }
+          },
+          "itf files" : {
+            "title" : "MinMaxCap",
+            "type" : "object",
+            "properties" : {
+              "max cap" : {
+                "type" : "string"
+              },
+              "min cap" : {
+                "type" : "string"
+              }
+            }
+          },
+          "metal layers" : {
+            "type" : "array",
+            "items" : {
+              "title" : "MetalLayer",
+              "type" : "object",
+              "properties" : {
+                "name" : {
+                  "type" : "string"
+                },
+                "preferred routing direction" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
+          "milkyway lib in dir" : {
+            "type" : "string"
+          },
+          "milkyway techfile" : {
+            "type" : "string"
+          },
+          "nldm liberty file" : {
+            "type" : "string"
+          },
+          "nldm library file" : {
+            "type" : "string"
+          },
+          "openaccess techfile" : {
+            "type" : "string"
+          },
+          "supplies" : {
+            "title" : "Supplies",
+            "type" : "object",
+            "properties" : {
+              "GND" : {
+                "type" : "string"
+              },
+              "VDD" : {
+                "type" : "string"
+              }
+            }
+          },
+          "tluplus files" : {
+            "title" : "MinMaxCap",
+            "type" : "object",
+            "properties" : {
+              "max cap" : {
+                "type" : "string"
+              },
+              "min cap" : {
+                "type" : "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "name" : {
+      "type" : "string"
+    },
+    "tarballs" : {
+      "type" : "array",
+      "items" : {
+        "title" : "Tarball",
+        "type" : "object",
+        "properties" : {
+          "base var" : {
+            "type" : "string"
+          },
+          "homepage" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          }
+        },
+        "additionalProperties" : false
+      }
+    }
+  }
+}

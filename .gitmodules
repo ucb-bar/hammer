@@ -1,0 +1,23 @@
+[submodule "src/tools/barstools"]
+	path = src/tools/barstools
+	url = https://github.com/ucb-bar/barstools
+	branch = plsi
+[submodule "src/tools/pconfigure"]
+	path = src/tools/pconfigure
+	url = git://github.com/palmer-dabbelt/pconfigure.git
+[submodule "src/tools/pcad"]
+	path = src/tools/pcad
+	url = git://github.com/palmer-dabbelt/pcad.git
+[submodule "src/tools/pson"]
+	path = src/tools/pson
+	url = git://github.com/palmer-dabbelt/pson.git
+[submodule "src/tools/firrtl"]
+	path = src/tools/firrtl
+	url = https://github.com/ucb-bar/firrtl.git
+[submodule "src/tools/pyyaml"]
+	path = src/tools/pyyaml
+	url = https://github.com/edwardcwang/pyyaml_plsi.git
+[submodule "src/python-jsonschema-objects"]
+	path = src/python-jsonschema-objects
+	url = https://github.com/edwardcwang/python-jsonschema-objects.git
+	branch = hammer-201710

@@ -1,0 +1,36 @@
+# Configuration options and defaults for ICC.
+# The values specified in this file are the defaults.
+# e.g. foo: "bar" in this file means that the default setting for foo is "bar".
+
+par.icc:
+  # Path to a folder with files to copy.
+  # e.g. if a folder named "src" is specified here, then the contents of
+  # src will be copied recursively to the Synopsys RM directory (the one
+  # containing README.ICC-RM.txt, etc).
+  resources_icc_path: null
+  # These two are for the technology and project to override, respectively.
+  resources_tech_path: null
+  resources_project_path: null
+
+  # Power and ground net names.
+  MW_POWER_NET: "VDD"
+  MW_POWER_PORT: "VDD"
+  MW_GROUND_NET: "VSS"
+  MW_GROUND_PORT: "VSS"
+
+  # Path to a tcl fragment to include at the end of rm_setup/icc_setup.tcl.
+  # Set to null if unused.
+  icc_setup_appendix_tcl_path: null
+
+  # Path to a tcl fragment to include at the end of rm_setup/common_setup.tcl.
+  # Set to null if unused.
+  common_setup_appendix_tcl_path: null
+
+  # Floorplanning script to use (ICC_IN_FLOORPLAN_USER_FILE in the reference methodology).
+  # Valid options are:
+  # - oldplsi - The 'old' floorplanning script present in PLSI at src/addons/par/icc/tools/generate-floorplan-json as of revision 2abcd1e
+  # - manual - Specify a manual floorplanning script to use.
+  #   If you specify this, you must also specify the floorplanning_script config below. The floorplanning_script config will be ignored in other modes.
+  # TODO(edwardw): Put in new floorplanning thing here when done.
+  floorplan_mode: oldplsi
+  floorplan_script: null

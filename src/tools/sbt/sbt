@@ -1,0 +1,4 @@
+#!/bin/bash
+
+script_dir="$(dirname "$0")"
+exec java -Xmx2G -Xss8M -XX:MaxPermSize=256M -jar ${script_dir}/sbt-launch.jar "$@"
