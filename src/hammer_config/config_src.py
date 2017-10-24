@@ -281,16 +281,17 @@ def combine_configs(configs: Iterable[dict]) -> dict:
     :return: A loaded config dictionary.
     """
     expanded_config = dict(reduce(update_and_expand_meta, configs, {})) # type: dict
+    expanded_config_orig = dict(expanded_config) # type: dict
 
     # Now, we need to handle dynamic* metas.
     dynamic_metas = dict()
 
     meta_dict_keys = list(expanded_config.keys())
-    meta_keys = filter(lambda k: k.endswith("_meta"), meta_dict_keys)
+    meta_keys = list(filter(lambda k: k.endswith("_meta"), meta_dict_keys))
 
     meta_len = len("_meta")
     for meta_key in meta_keys:
-        setting = meta_key[:-meta_len]
+        setting = meta_key[:-meta_len] # type: str
         meta_type = expanded_config[meta_key] # type: str
 
         assert meta_type.startswith("dynamic"), "Should have only dynamic metas left now"
@@ -307,7 +308,7 @@ def combine_configs(configs: Iterable[dict]) -> dict:
             for match in matches:
                 target_var = match.group(1)
                 # Ensure that the target variable isn't also a dynamicsubst variable.
-                if target_var + "_meta" in expanded_config:
+                if target_var + "_meta" in expanded_config_orig: # make sure the order in which we delete doesn't affect this search
                     raise ValueError("dynamicsubst variable referencing another dynamic variable not supported yet")
 
         # Delete from expanded_config
