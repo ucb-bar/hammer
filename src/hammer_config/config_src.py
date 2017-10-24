@@ -57,6 +57,8 @@ def unpack(config_dict: dict, prefix: str = "") -> dict:
             output_dict[real_prefix + key] = value
     return output_dict
 
+__VARIABLE_EXPANSION_REGEX = r'\${([a-zA-Z_\-\d.]+)}'
+
 def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
     """
     Expand the _meta variables for the given config dict and return a new
@@ -79,7 +81,7 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
     def meta_subst(config_dict: dict, key: str, value) -> None:
         def subst_str(input_str: str) -> str:
             """Substitute ${...}"""
-            return re.sub(r'\${([a-zA-Z_\-\d.]+)}', lambda x: config_dict[x.group(1)], input_str)
+            return re.sub(__VARIABLE_EXPANSION_REGEX, lambda x: config_dict[x.group(1)], input_str)
         newval = "" # type: Union[str, List[str]]
         if isinstance(value, list):
             newval = list(map(subst_str, value))
@@ -297,6 +299,16 @@ def combine_configs(configs: Iterable[dict]) -> dict:
         # e.g. what used to be a dynamicsubst just becomes a plain subst since everything is fully resolved now.
         dynamic_metas[meta_key] = meta_type[len("dynamic"):]
         dynamic_metas[setting] = expanded_config[setting] # copy over the template too
+
+        # Just check that we don't reference any other dynamicsubst variables for now.
+        # We can always go to a DAG tree later if need be.
+        if meta_type == "dynamicsubst":
+            matches = re.finditer(__VARIABLE_EXPANSION_REGEX, expanded_config[setting], re.DOTALL)
+            for match in matches:
+                target_var = match.group(1)
+                # Ensure that the target variable isn't also a dynamicsubst variable.
+                if target_var + "_meta" in expanded_config:
+                    raise ValueError("dynamicsubst variable referencing another dynamic variable not supported yet")
 
         # Delete from expanded_config
         del expanded_config[meta_key]
