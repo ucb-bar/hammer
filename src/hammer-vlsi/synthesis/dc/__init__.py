@@ -99,57 +99,19 @@ class DC(HammerSynthesisTool):
         with open(preferred_routing_directions_fragment, "w") as f:
             f.write(self.generate_tcl_preferred_routing_direction())
 
-        # Get timing libraries.
-        def select_timing_db(lib: hammer_tech.Library) -> List[str]:
-            # Choose ccs if available, if not, nldm.
-            if lib.ccs_library_file is not None:
-                return [lib.ccs_library_file]
-            elif lib.nldm_library_file is not None:
-                return [lib.nldm_library_file]
-            else:
-                return []
-        timing_args = self.args_from_tarball_libraries(select_timing_db, "--lib", "CCS/NLDM timing db", is_file=True)
-
-        # Get all the milkyway libraries.
-        def select_milkyway_lib(lib: hammer_tech.Library) -> List[str]:
-            if lib.milkyway_lib_in_dir is not None:
-                return [os.path.dirname(lib.milkyway_lib_in_dir)]
-            else:
-                return []
-        # Turn them into --milkyway arguments.
-        milkyway_args = self.args_from_tarball_libraries(select_milkyway_lib, "--milkyway", "Milkyway lib", is_file=False)
-
-        # Get milkyway techfiles.
-        def select_milkyway_tfs(lib: hammer_tech.Library) -> List[str]:
-            if lib.milkyway_techfile is not None:
-                return [lib.milkyway_techfile]
-            else:
-                return []
-        # Turn them into --milkyway arguments.
-        tf_args = list(self.args_from_tarball_libraries(select_milkyway_tfs, "--tf", "Milkyway techfile", is_file=True))
-        if len(tf_args) == 0:
-            raise ValueError("Must have at least one milkyway tech file")
-
-        # TLU min/max cap
-        def select_tlu_max_cap(lib: hammer_tech.Library) -> List[str]:
-            if lib.tluplus_files is not None and lib.tluplus_files.max_cap is not None:
-                return [lib.tluplus_files.max_cap]
-            else:
-                return []
-        def select_tlu_min_cap(lib: hammer_tech.Library) -> List[str]:
-            if lib.tluplus_files is not None and lib.tluplus_files.min_cap is not None:
-                return [lib.tluplus_files.min_cap]
-            else:
-                return []
-        # Turn them into --milkyway arguments.
-        tlu_max_args = self.args_from_tarball_libraries(select_tlu_max_cap, "--tlu_max", "tlu max_cap", is_file=True)
-        tlu_min_args = self.args_from_tarball_libraries(select_tlu_min_cap, "--tlu_min", "tlu min_cap", is_file=True)
+        # Get libraries.
+        lib_args = self.read_libs([
+            self.timing_db_filter._replace(tag="lib"),
+            self.milkyway_lib_dir_filter._replace(tag="milkyway"),
+            self.tlu_max_cap_filter._replace(tag="tlu_max"),
+            self.tlu_min_cap_filter._replace(tag="tlu_min"),
+            self.milkyway_techfile_filter._replace(tag="tf")
+        ], self.to_command_line_args)
 
         # Pre-extract the tarball (so that we can make TCL modifications in Python)
-        extract_args = [
+        self.run_executable([
             "tar", "-xf", synopsys_rm_tarball, "-C", self.run_dir, "--strip-components=1"
-        ]
-        self.run_executable(extract_args)
+        ])
 
         # Disable the DC congestion map if needed.
         if not self.get_setting("synthesis.dc.enable_congestion_map"):
@@ -167,11 +129,7 @@ class DC(HammerSynthesisTool):
             "--top", self.top_module
         ]
         args.extend(verilog_args)
-        args.extend(timing_args)
-        args.extend(milkyway_args)
-        args.extend(tf_args)
-        args.extend(tlu_max_args)
-        args.extend(tlu_min_args)
+        args.extend(lib_args)
 
         # Temporarily disable colours/tag to make DC run output more readable.
         # TODO: think of a more elegant way to do this?
