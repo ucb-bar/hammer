@@ -18,43 +18,6 @@ import re
 import subprocess
 
 class DC(HammerSynthesisTool):
-    # TODO(edwardw): move this to a common place since this is not DC specific
-    def args_from_library(self, func: Callable[[hammer_tech.Library], List[str]], arg_name: str, extra_funcs: List[Callable[[str], str]] = [], lib_filters: List[Callable[[hammer_tech.Library], bool]] = []) -> Iterable[str]:
-        """
-        Generate a list of --arg <variable> --arg <variable> arguments for calling shell scripts by filtering the list of libraries.
-
-        :param func: Function to call to extract the desired component of the lib.
-        :param arg_name: Argument name e.g. "--foobar" would generate --foobar 1 --foobar 2 ...
-        :param extra_funcs: List of extra functions to call before wrapping them in the arg prefixes.
-        :param lib_filters: Filters to filter the list of libraries before selecting desired results from them.
-        :return: List of arguments to pass to a shell script
-        """
-        filtered_libs = reduce(lambda libs, func: filter(func, libs), lib_filters, self.technology.config.libraries)
-
-        lib_results = list(reduce(lambda a, b: a+b, list(map(func, filtered_libs))))
-
-        # Uniqueify results.
-        # TODO: think about whether this really belongs here and whether we always need to uniqueify.
-        # This is here to get stuff working since some CAD tools dislike duplicated arguments (e.g. duplicated stdcell lib, etc).
-        lib_results = list(set(lib_results))
-
-        lib_results_with_extra_funcs = reduce(lambda arr, func: map(func, arr), extra_funcs, lib_results)
-
-        # Turn them into --arg arguments.
-        return reduce(lambda a, b: a + b, list(map(lambda res: [arg_name, res], lib_results_with_extra_funcs)))
-
-    # TODO(edwardw): this also belong in a common place
-    def args_from_tarball_libraries(self, func: Callable[[hammer_tech.Library], List[str]], arg_name: str, arg_type: str, is_file: bool) -> Iterable[str]:
-        """Build a list of --arg_name arguments by filtering tarball-extracted arguments from the libraries, filtered by supplies."""
-        return self.args_from_library(func, arg_name, extra_funcs=[self.technology.prepend_tarball_dir, self.make_check_isfile(arg_type) if is_file else self.make_check_isdir(arg_type)], lib_filters=[self.filter_for_supplies])
-
-    # TODO(edwardw): move this to common
-    def filter_for_supplies(self, lib: hammer_tech.Library) -> bool:
-        if lib.supplies is None:
-            self.logger.warning("Lib %s has no supplies annotation! Using anyway." % (lib.serialize()))
-            return True
-        return self.get_setting("vlsi.inputs.supplies.VDD") == lib.supplies.VDD and self.get_setting("vlsi.inputs.supplies.GND") == lib.supplies.GND
-
     # TODO(edwardw): move this to synopsys common
     def generate_tcl_preferred_routing_direction(self):
         """
@@ -73,32 +36,6 @@ class DC(HammerSynthesisTool):
         output.append("set suppress_errors  [lminus $suppress_errors  [list PSYN-882]]")
         output.append("") # Add newline at the end
         return "\n".join(output)
-
-    # TODO(edwardw): move to a common place
-    @staticmethod
-    def make_check_isdir(description: str = "Path") -> Callable[[str], str]:
-        """
-        Utility function to generate functions which check whether a path exists.
-        """
-        def check_isdir(path: str) -> str:
-            if not os.path.isdir(path):
-                raise ValueError("%s %s is not a directory or does not exist" % (description, path))
-            else:
-                return path
-        return check_isdir
-
-    # TODO(edwardW): move to a common place
-    @staticmethod
-    def make_check_isfile(description: str = "File") -> Callable[[str], str]:
-        """
-        Utility function to generate functions which check whether a path exists.
-        """
-        def check_isfile(path: str) -> str:
-            if not os.path.isfile(path):
-                raise ValueError("%s %s is not a file or does not exist" % (description, path))
-            else:
-                return path
-        return check_isfile
 
     def disable_congestion_map(self) -> None:
         """Disables the congestion map generation in rm_dc_scripts/dc.tcl since it requires a GUI and licences.
