@@ -49,6 +49,41 @@ def with_default_callbacks(cls):
     cls.add_callback(cls.callback_buffering)
     return cls
 
+class HammerVLSIFileLogger:
+    """A file logger for HammerVLSILogging."""
+
+    def __init__(self, output_path: str, format_msg_callback: Callable[[FullMessage], str] = None) -> None:
+        """
+        Create a new file logger.
+
+        :param output_path: Output path of the logger.
+        :param format_msg_callback: Optional callback to run to build the message. None to use HammerVLSILogging.build_log_message.
+        """
+        self._file = open(output_path, "a")
+        self._format_msg_callback = format_msg_callback
+
+    def __enter__(self):
+        return self
+
+    def close(self) -> None:
+        """
+        Close this file logger.
+        """
+        self._file.close()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+
+    @property
+    def callback(self) -> Callable[[FullMessage], None]:
+        """Get the callback for HammerVLSILogging.add_callback."""
+        def file_callback(fullmessage: FullMessage) -> None:
+            if self._format_msg_callback is not None:
+                self._file.write(self._format_msg_callback(fullmessage) + "\n")
+            else:
+                self._file.write(HammerVLSILogging.build_log_message(fullmessage) + "\n")
+        return file_callback
+
 @with_default_callbacks
 class HammerVLSILogging:
     """Singleton which handles logging in hammer-vlsi.
@@ -95,18 +130,6 @@ class HammerVLSILogging:
         template = "{context} {level}: {message}"
 
         return template.format(context=cls.get_tag(fullmessage.context), level=fullmessage.level, message=fullmessage.message)
-
-    @classmethod
-    def file_logger(cls, output_path: str, format_msg_callback: Callable[[FullMessage], str] = None) -> Callable[[FullMessage], None]:
-        """Create a file logger which logs to the given file."""
-
-        f = open(output_path, "a")
-        def file_callback(fullmessage: FullMessage) -> None:
-            if format_msg_callback:
-                f.write(format_msg_callback(fullmessage) + "\n")
-            else:
-                f.write(cls.build_log_message(fullmessage) + "\n")
-        return file_callback
 
     # List of callbacks to call for logging.
     callbacks = [] # type: List[Callable[[FullMessage], None]]
