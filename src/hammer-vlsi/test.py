@@ -7,6 +7,7 @@
 
 import hammer_vlsi
 
+import tempfile
 import unittest
 
 class HammerVLSILoggingTest(unittest.TestCase):
@@ -29,6 +30,25 @@ class HammerVLSILoggingTest(unittest.TestCase):
         hammer_vlsi.HammerVLSILogging.enable_colour = False
         log.info(msg)
         self.assertEqual("[test] " + msg, hammer_vlsi.HammerVLSILogging.get_buffer()[0])
+
+    def test_file_logging(self):
+        import os
+        fd, path = tempfile.mkstemp(".log")
+        os.close(fd) # Don't leak file descriptors
+
+        filelogger = hammer_vlsi.HammerVLSIFileLogger(path)
+
+        hammer_vlsi.HammerVLSILogging.add_callback(filelogger.callback)
+        log = hammer_vlsi.HammerVLSILogging.context()
+        log.info("Hello world")
+        log.info("Eternal voyage to the edge of the universe")
+        filelogger.close()
+
+        with open(path, 'r') as f:
+            self.assertEqual(f.read().strip(), """
+[<global>] Level.INFO: Hello world
+[<global>] Level.INFO: Eternal voyage to the edge of the universe
+""".strip())
 
 if __name__ == '__main__':
     unittest.main()

@@ -26,7 +26,8 @@ def main(args: dict) -> int:
         log_file = datetime.datetime.now().strftime("hammer-vlsi-%Y%m%d-%H%M%S.log")
     else:
         log_file = args["log"]
-    hammer_vlsi.HammerVLSILogging.add_callback(hammer_vlsi.HammerVLSILogging.file_logger(log_file))
+    file_logger = hammer_vlsi.HammerVLSIFileLogger(log_file)
+    hammer_vlsi.HammerVLSILogging.add_callback(file_logger.callback)
     log = hammer_vlsi.HammerVLSILogging.context()
 
     # Create a new hammer database.
