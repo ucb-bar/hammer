@@ -94,6 +94,35 @@ foo:
         self.assertEqual(db.get_setting("foo.reginit"), "WireInit")
         self.assertEqual(db.get_setting("foo.later"), "later")
 
+    def test_meta_dynamicsubst_other_dynamicsubst(self):
+        """
+        Check that a dynamicsubst which references other dynamicsubst errors for now.
+        """
+        """
+        Test that the meta attribute "dynamicsubst" works.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo:
+    flash: "yes"
+    one: "1"
+    two: "2"
+    lolcat: ""
+    twelve: "${lolcat}"
+    twelve_meta: dynamicsubst
+""", is_yaml=True)
+        project = hammer_config.load_config_from_string("""
+{
+  "lolcat": "whatever",
+  "later": "${foo.twelve}",
+  "later_meta": "dynamicsubst"
+}
+""", is_yaml=False)
+        db.update_core([base])
+        db.update_project([project])
+        with self.assertRaises(ValueError):
+            print(db.get_config())
+
     def test_meta_append(self):
         """
         Test that the meta attribute "append" works.
