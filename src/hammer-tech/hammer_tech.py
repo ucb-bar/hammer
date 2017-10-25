@@ -115,8 +115,36 @@ class HammerTechnology:
         return os.path.join(self.cache_dir, "extracted")
 
     # TODO(edwardw): think about moving more of these kinds of functions out of the synthesis tool and in here instead.
-    def prepend_tarball_dir(self, path: str) -> str:
-        return os.path.join(self.extracted_tarballs_dir, path)
+    def prepend_dir_path(self, path: str) -> str:
+        """
+        Prepend the appropriate path (either from tarballs or installs) to the given library item.
+        """
+        base_path = path.split(os.path.sep)[0]
+
+        if self.config.installs is not None:
+            matching_installs = list(filter(lambda install: install.path == base_path, self.config.installs))
+        else:
+            matching_installs = []
+        if self.config.tarballs is not None:
+            matching_tarballs = list(filter(lambda tarball: tarball.path == base_path, self.config.tarballs))
+        else:
+            matching_tarballs = []
+
+        matches = len(matching_installs) + len(matching_tarballs)
+        if matches < 1:
+            raise ValueError("Path {0} did not match any tarballs or installs".format(path))
+        elif matches > 1:
+            raise ValueError("Path {0} matched more than one tarball or install".format(path))
+        else:
+            if len(matching_installs) == 1:
+                install = matching_installs[0]
+                if install.base_var == "":
+                    base = self.path
+                else:
+                    base = self.get_setting(install.base_var)
+                return os.path.join(base, path)
+            else:
+                return os.path.join(self.extracted_tarballs_dir, path)
 
     def extract_tarballs(self) -> None:
         """Extract tarballs to the given cache_dir, or verify that they've been extracted."""
