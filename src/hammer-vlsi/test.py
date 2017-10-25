@@ -31,6 +31,30 @@ class HammerVLSILoggingTest(unittest.TestCase):
         log.info(msg)
         self.assertEqual("[test] " + msg, hammer_vlsi.HammerVLSILogging.get_buffer()[0])
 
+    def test_subcontext(self):
+        hammer_vlsi.HammerVLSILogging.enable_colour = False
+        hammer_vlsi.HammerVLSILogging.enable_tag = True
+
+        hammer_vlsi.HammerVLSILogging.clear_callbacks()
+        hammer_vlsi.HammerVLSILogging.add_callback(hammer_vlsi.HammerVLSILogging.callback_buffering)
+
+        # Get top context
+        log = hammer_vlsi.HammerVLSILogging.context("top")
+
+        # Create sub-contexts.
+        logA = log.context("A")
+        logB = log.context("B")
+
+        msgA = "Hello world from A"
+        msgB = "Hello world from B"
+
+        logA.info(msgA)
+        logB.error(msgB)
+
+        self.assertEqual(hammer_vlsi.HammerVLSILogging.get_buffer(),
+            ['[top] [A] ' + msgA, '[top] [B] ' + msgB]
+        )
+
     def test_file_logging(self):
         import os
         fd, path = tempfile.mkstemp(".log")
@@ -38,6 +62,7 @@ class HammerVLSILoggingTest(unittest.TestCase):
 
         filelogger = hammer_vlsi.HammerVLSIFileLogger(path)
 
+        hammer_vlsi.HammerVLSILogging.clear_callbacks()
         hammer_vlsi.HammerVLSILogging.add_callback(filelogger.callback)
         log = hammer_vlsi.HammerVLSILogging.context()
         log.info("Hello world")
