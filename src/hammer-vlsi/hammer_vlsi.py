@@ -430,10 +430,6 @@ class HammerTool(metaclass=ABCMeta):
 
         return list(lib_results_with_extra_funcs)
 
-    def fiter_and_select_libs_tarball(self, func: Callable[[hammer_tech.Library], List[str]], arg_type: str, is_file: bool) -> Iterable[str]:
-        """Build a list by filtering tarball-extracted arguments from the libraries, filtered by supplies."""
-        return self.filter_and_select_libs(func, extra_funcs=[self.technology.prepend_tarball_dir, self.make_check_isfile(arg_type) if is_file else self.make_check_isdir(arg_type)], lib_filters=[self.filter_for_supplies])
-
     def filter_for_supplies(self, lib: hammer_tech.Library) -> bool:
         """Function to help filter a list of libraries to find libraries which have matching supplies.
         Will also use libraries with no supplies annotation.
@@ -580,7 +576,7 @@ class HammerTool(metaclass=ABCMeta):
                 return []
         return LibraryFilter(select_tlu_min_cap, "tlu_min", "TLU+ min cap db", is_file=True)
 
-    def read_libs(self, libraries: Iterable[LibraryFilter], output_func: Callable[[str, LibraryFilter], List[str]]) -> List[str]:
+    def read_libs(self, libraries: Iterable[LibraryFilter], output_func: Callable[[str, LibraryFilter], List[str]], must_exist: bool = True) -> List[str]:
         """
         Read the given libraries and return a list of strings according to some output format.
 
@@ -592,11 +588,17 @@ class HammerTool(metaclass=ABCMeta):
 
         :param libraries: List of libraries to filter, specified as a list of LibraryFilter elements.
         :param output_func: Function which processes the outputs, taking in the filtered lib and the library filter which generated it.
+        :param must_exist: Must each library item actually exist? Default: True (yes, they must exist)
         :return: List of filtered libraries processed according output_func.
         """
 
         def process_library_filter(filt: LibraryFilter) -> Tuple[Iterable[str], LibraryFilter]:
-            lib_items = self.fiter_and_select_libs_tarball(filt.func, filt.description, is_file=filt.is_file)
+            if must_exist:
+                existence_check_func = self.make_check_isfile(filt.description) if filt.is_file else self.make_check_isdir(filt.description)
+            else:
+                existence_check_func = lambda x: x # everything goes
+
+            lib_items = self.filter_and_select_libs(filt.func, extra_funcs=[self.technology.prepend_dir_path, existence_check_func], lib_filters=[self.filter_for_supplies])
 
             # Run any list-level functions.
             return (reduce(lambda arg, func: func(list(arg)), filt.extra_post_filter_funcs, lib_items), filt)

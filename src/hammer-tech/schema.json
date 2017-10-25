@@ -2,6 +2,21 @@
   "title" : "TechJSON",
   "type" : "object",
   "properties" : {
+    "installs" : {
+      "type" : "array",
+      "items" : {
+        "title" : "Install",
+        "type" : "object",
+        "properties" : {
+          "base var" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          }
+        }
+      }
+    },
     "libraries" : {
       "type" : "array",
       "items" : {

@@ -50,5 +50,69 @@ class HammerVLSILoggingTest(unittest.TestCase):
 [<global>] Level.INFO: Eternal voyage to the edge of the universe
 """.strip())
 
+        # Remove temp file
+        os.remove(path)
+
+class HammerToolTest(unittest.TestCase):
+    def test_read_libs(self):
+        import hammer_config
+        import hammer_tech
+        import json
+        import shutil
+
+        tech_dir = tempfile.mkdtemp()
+        # TODO: use a structured way of creating it when arrays actually work!
+        # Currently the subelements of the array don't get recursively "validated", so the underscores don't disappear, etc.
+        #~ tech_json_obj = hammer_tech.TechJSON(name="dummy28")
+        #~ tech_json_obj.libraries = [
+            #~ hammer_tech.Library(milkyway_techfile="soy"),
+            #~ hammer_tech.Library(milkyway_techfile="coconut"),
+            #~ hammer_tech.Library(openaccess_techfile="juice"),
+            #~ hammer_tech.Library(openaccess_techfile="tea")
+        #~ ]
+        #~ tech_json = tech_json_obj.serialize()
+        tech_json = {
+            "name": "dummy28",
+            "installs": [
+            {
+              "path": "test",
+              "base var": "" # means relative to tech dir
+            }
+            ],
+            "libraries": [
+                { "milkyway techfile": "test/soy" },
+                { "openaccess techfile": "test/juice" },
+                { "milkyway techfile": "test/coconut" },
+                { "openaccess techfile": "test/tea" }
+            ]
+        }
+        with open(tech_dir + "/dummy28.tech.json", "w") as f:
+            f.write(json.dumps(tech_json, indent=4))
+        tech = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
+        tech.cache_dir = tech_dir
+
+        class Tool(hammer_vlsi.HammerTool):
+            def do_run(self) -> bool:
+                def test_tool_format(lib, filt):
+                    return ["drink {0}".format(lib)]
+
+                self._read_lib_output = self.read_libs([self.milkyway_techfile_filter], test_tool_format, must_exist=False)
+                return True
+        test = Tool()
+        test.logger = hammer_vlsi.HammerVLSILogging.context("")
+        test.run_dir = tempfile.mkdtemp()
+        test.technology = tech
+        test.set_database(hammer_config.HammerDatabase())
+        test.run()
+
+        # Don't care about ordering here.
+        self.assertEqual(set(test._read_lib_output), set([
+            "drink {0}/test/soy".format(tech_dir),
+            "drink {0}/test/coconut".format(tech_dir),
+        ]))
+
+        # Cleanup
+        shutil.rmtree(test.run_dir)
+
 if __name__ == '__main__':
     unittest.main()
