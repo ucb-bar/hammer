@@ -391,7 +391,8 @@ class HammerTool(metaclass=ABCMeta):
         """
         path = os.path.join(self.run_dir, "config_db_tmp.json")
         db_contents = self._database.get_database_json()
-        open(path, 'w').write(db_contents)
+        with open(path, 'w') as f:
+            f.write(db_contents)
         return path
 
     def get_config(self) -> List[dict]:
