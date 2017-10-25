@@ -77,10 +77,10 @@ def main(args: dict) -> int:
     assert isinstance(syn_tool_get, hammer_vlsi.HammerSynthesisTool), "Synthesis tool must be a HammerSynthesisTool"
     syn_tool = syn_tool_get # type: hammer_vlsi.HammerSynthesisTool
     syn_tool.logger = log.context("synthesis")
-    syn_tool.set_database(database)
-    syn_tool.run_dir = hammer_vlsi.HammerVLSISettings.hammer_vlsi_path + "/syn-rundir" # TODO: don't hardcode this
-    syn_tool.input_files = args['verilog']
     syn_tool.technology = tech
+    syn_tool.run_dir = hammer_vlsi.HammerVLSISettings.hammer_vlsi_path + "/syn-rundir" # TODO: don't hardcode this
+    syn_tool.set_database(database)
+    syn_tool.input_files = args['verilog']
     if database.get_setting("synthesis.inputs.top_module") != 'null':
         syn_tool.top_module = database.get_setting("synthesis.inputs.top_module")
     else:
