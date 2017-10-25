@@ -88,7 +88,8 @@ class HammerTechnology:
         tech.path = path
 
         # Configuration
-        tech.config = TechJSON.from_json(open(os.path.join(path, "%s.tech.json" % (tech.name))).read())
+        with open(os.path.join(path, "%s.tech.json" % (tech.name))) as f:
+            tech.config = TechJSON.from_json(f.read())
 
         return tech
 
