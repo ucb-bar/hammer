@@ -8,7 +8,6 @@
 #  Entry point to the hammer VLSI abstraction.
 
 import argparse
-import datetime
 import importlib
 import json
 import os
@@ -19,108 +18,84 @@ import hammer_config
 import hammer_vlsi
 import hammer_tech
 
-# TODO: move most of this into the hammer-vlsi library itself so that applications can more easily utilize this without duplicating all this code.
+from typing import List, Dict, Tuple, Any
+
+def parse_args(args: dict, defaultOptions: hammer_vlsi.HammerDriverOptions = hammer_vlsi.HammerDriver.get_default_driver_options()) -> Tuple[hammer_vlsi.HammerDriverOptions, dict, List[str]]:
+    """Parse command line arguments for the command line front-end to hammer-vlsi.
+    
+    :return: DriverOptions, a parsed config for certain options, and a list of errors."""
+
+    # TODO: rewrite this less tediously?
+
+    # Driver options.
+    options = defaultOptions # type: hammer_vlsi.HammerDriverOptions
+
+    # Extra config (flattened JSON).
+    config = {} # type: Dict[str, Any]
+
+    # Create a list of errors for the user.
+    errors = [] # type: List[str]
+
+    # Load environment configs.
+    env_configs = args['environment_config']
+    if isinstance(env_configs, List):
+        for c in env_configs:
+            if not os.path.exists(c):
+                errors.append("Environment config %s does not exist!" % (c))
+        options = options._replace(environment_configs=list(env_configs))
+    else:
+        errors.append("environment_config was not a list?")
+
+    # Load project configs.
+    project_configs = args['configs']
+    if isinstance(env_configs, List):
+        for c in project_configs:
+            if not os.path.exists(c):
+                errors.append("Project config %s does not exist!" % (c))
+        options = options._replace(project_configs=list(project_configs))
+    else:
+        errors.append("configs was not a list?")
+
+    # Log file.
+    log = args["log"]
+    if log is not None:
+        if isinstance(log, str):
+            options = options._replace(log_file=log)
+        else:
+            errors.append("Log file 'log' is not a string")
+
+    # Verilog inputs.
+    # (optional, since it can also be specified from JSON)
+    verilogs = args['verilog']
+    if isinstance(verilogs, List) and len(verilogs) > 0:
+        config.update({'synthesis.inputs.input_files': list(verilogs)})
+
+    # Top module.
+    # (optional, since it can also be specified from JSON)
+    top_module = args['top']
+    if isinstance(top_module, str) and len(top_module) > 0:
+        config['synthesis.inputs.top_module'] = top_module
+
+    return options, config, errors
+
 def main(args: dict) -> int:
-    # Create global logging context.
-    if args["log"] is None:
-        log_file = datetime.datetime.now().strftime("hammer-vlsi-%Y%m%d-%H%M%S.log")
-    else:
-        log_file = args["log"]
-    file_logger = hammer_vlsi.HammerVLSIFileLogger(log_file)
-    hammer_vlsi.HammerVLSILogging.add_callback(file_logger.callback)
-    log = hammer_vlsi.HammerVLSILogging.context()
-
-    # Create a new hammer database.
-    database = hammer_config.HammerDatabase() # type: hammer_config.HammerDatabase
-
-    log.info("Loading hammer-vlsi libraries and reading settings")
-
-    # Load in builtins.
-    database.update_builtins([
-        hammer_config.load_config_from_file("builtins.yml", strict=True),
-        hammer_vlsi.HammerVLSISettings.get_config()
-    ])
-
-    # Read in core defaults.
-    database.update_core(hammer_config.load_config_from_defaults(os.getcwd()))
-
-    # Read in the environment config for paths to CAD tools, etc.
-    for config in args['environment_config']:
-        if not os.path.exists(config):
-            log.error("Environment config %s does not exist!" % (config))
-    database.update_environment(hammer_config.load_config_from_paths(args['environment_config'], strict=True))
-
-    # Read in the project config to find the syn, par, and tech.
-    project_configs = hammer_config.load_config_from_paths(args['configs'], strict=True)
-    database.update_project(project_configs)
-    project_config = hammer_config.combine_configs(project_configs) # type: dict
-
-    # Get the technology and load technology settings.
-    tech_str = database.get_setting("vlsi.core.technology")
-    tech_paths = database.get_setting("vlsi.core.technology_path")
-    for path in tech_paths:
-        tech_json_path = os.path.join(path, tech_str, "%s.tech.json" % (tech_str))
-        if os.path.exists(tech_json_path):
-            break
-    log.info("Loading technology '{0}'".format(tech_str))
-    tech = hammer_tech.HammerTechnology.load_from_dir(tech_str, os.path.dirname(tech_json_path))
-    tech.logger = log.context("tech")
-    tech.set_database(database)
-    tech.cache_dir = "%s/tech-%s-cache" % (hammer_vlsi.HammerVLSISettings.hammer_vlsi_path, tech_str) # TODO: don't hardcode this
-    database.update_technology(tech.get_config())
-
-    tech.extract_tarballs() # TODO: move this back into tech itself
-
-    # Find the synthesis/par tool and read in their configs.
-    syn_tool_name = database.get_setting("vlsi.core.synthesis_tool")
-    syn_tool_get = hammer_vlsi.load_tool(path=database.get_setting("vlsi.core.synthesis_tool_path"), tool_name=syn_tool_name)
-    assert isinstance(syn_tool_get, hammer_vlsi.HammerSynthesisTool), "Synthesis tool must be a HammerSynthesisTool"
-    syn_tool = syn_tool_get # type: hammer_vlsi.HammerSynthesisTool
-    syn_tool.logger = log.context("synthesis")
-    syn_tool.technology = tech
-    syn_tool.run_dir = hammer_vlsi.HammerVLSISettings.hammer_vlsi_path + "/syn-rundir" # TODO: don't hardcode this
-    syn_tool.set_database(database)
-    syn_tool.input_files = args['verilog']
-    if database.get_setting("synthesis.inputs.top_module") != 'null':
-        syn_tool.top_module = database.get_setting("synthesis.inputs.top_module")
-    else:
-        syn_tool.top_module = args['top']
-
-    par_tool_name = database.get_setting("vlsi.core.par_tool")
-    par_tool_get = hammer_vlsi.load_tool(path=database.get_setting("vlsi.core.par_tool_path"), tool_name=par_tool_name)
-    assert isinstance(par_tool_get, hammer_vlsi.HammerPlaceAndRouteTool), "Synthesis tool must be a HammerPlaceAndRouteTool"
-    par_tool = par_tool_get # type: hammer_vlsi.HammerPlaceAndRouteTool
-    par_tool.logger = log.context("par")
-    par_tool.set_database(database)
-    par_tool.run_dir = hammer_vlsi.HammerVLSISettings.hammer_vlsi_path + "/par-rundir" # TODO: don't hardcode this
-
-    database.update_tools(syn_tool.get_config() + par_tool.get_config())
-
-    # TODO: think about artifact storage?
-    log.info("Starting synthesis with tool '%s'" % (syn_tool_name))
-    syn_tool.run()
-    # TODO: check and handle failure!!!
-
-    # Record output from the syn_tool into the JSON output.
-    # TODO(edwardw): automate this
-    try:
-        project_config["synthesis.outputs.output_files"] = syn_tool.output_files
-        project_config["synthesis.inputs.input_files"] = syn_tool.input_files
-        project_config["synthesis.inputs.top_module"] = syn_tool.top_module
-    except ValueError as e:
-        log.fatal(e.args[0])
+    if args['firrtl'] is not None and len(args['firrtl']) > 0:
+        print("firrtl convenience argument not yet implemented", file=sys.stderr)
         return 1
 
-    log.info("Starting place and route with tool '%s'" % (par_tool_name))
-    # TODO: get place and route working
-    par_tool.run()
+    options, config, errors = parse_args(args)
+    driver = hammer_vlsi.HammerDriver(options, config)
+    driver.load_synthesis_tool()
 
+    syn_output = driver.run_synthesis()
     # Dump output config for modular composition of hammer-vlsi runs.
-    output_json = json.dumps(project_config, indent=4)
+    output_json = json.dumps(syn_output, indent=4)
     with open(args["output"], "w") as f:
         f.write(output_json)
     print(output_json)
 
+    #~ hammer_vlsi.HammerDriver.par_run_from_synthesis()
+    #~ driver.run_par()
     return 0
 
 if __name__ == '__main__':
