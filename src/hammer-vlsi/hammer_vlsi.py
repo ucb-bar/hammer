@@ -8,10 +8,11 @@
 from abc import ABCMeta, abstractmethod
 from enum import Enum
 
-from typing import Callable, Iterable, List, NamedTuple, Tuple, TypeVar, Type, Optional
+from typing import Callable, Iterable, List, NamedTuple, Tuple, TypeVar, Type, Optional, Dict
 
 from functools import reduce
 
+import datetime
 import importlib
 import os
 import subprocess
@@ -402,6 +403,24 @@ class HammerTool(metaclass=ABCMeta):
 
     # Properties.
     @property
+    def name(self) -> str:
+        """
+        Short name of the tool library.
+        Typically the folder name (e.g. "dc", "yosys", etc).
+
+        :return: Short name of the tool library.
+        """
+        try:
+            return self._name
+        except AttributeError:
+            raise ValueError("Internal error: Short name of the tool library not set by hammer-vlsi")
+
+    @name.setter
+    def name(self, value: str) -> None:
+        """Set the Short name of the tool library."""
+        self._name = value # type: str
+
+    @property
     def tool_dir(self) -> str:
         """
         Get the location of the tool library.
@@ -504,12 +523,12 @@ class HammerTool(metaclass=ABCMeta):
         """
         filtered_libs = reduce(lambda libs, func: filter(func, libs), lib_filters, self.technology.config.libraries)
 
-        lib_results = list(reduce(lambda a, b: a+b, list(map(func, filtered_libs))))
+        lib_results = list(reduce(lambda a, b: a+b, list(map(func, filtered_libs)))) # type: List[str]
 
         # Uniqueify results.
         # TODO: think about whether this really belongs here and whether we always need to uniqueify.
         # This is here to get stuff working since some CAD tools dislike duplicated arguments (e.g. duplicated stdcell lib, etc).
-        lib_results = list(set(lib_results)) # type: Iterator[str]
+        lib_results = list(set(lib_results))
 
         lib_results_with_extra_funcs = reduce(lambda arr, func: map(func, arr), extra_funcs, lib_results)
 
@@ -785,6 +804,175 @@ class HammerSynthesisTool(HammerTool):
 
 class HammerPlaceAndRouteTool(HammerTool):
     pass
+
+
+# Options for invoking the driver.
+HammerDriverOptions = NamedTuple('HammerDriverOptions', [
+    # List of environment config files in .json
+    ('environment_configs', List[str]),
+    # List of project config files in .json
+    ('project_configs', List[str]),
+    # Log file location.
+    ('log_file', str)
+])
+
+class HammerDriver:
+    @staticmethod
+    def get_default_driver_options() -> HammerDriverOptions:
+        """Get default driver options."""
+        return HammerDriverOptions(
+            environment_configs=[],
+            project_configs=[],
+            log_file=datetime.datetime.now().strftime("hammer-vlsi-%Y%m%d-%H%M%S.log")
+        )
+
+    def __init__(self, options: HammerDriverOptions, extra_project_config: dict = {}) -> None:
+        """
+        Create a hammer-vlsi driver, which is a higher level convenience function
+        for quickly using hammer-vlsi. It imports and uses the hammer-vlsi blocks.
+
+        Set up logging, databases, context, etc.
+
+        :param options: Driver options.
+        :param extra_project_config: An extra flattened config for the project. Optional.
+        """
+
+        # Create global logging context.
+        file_logger = HammerVLSIFileLogger(options.log_file)
+        HammerVLSILogging.add_callback(file_logger.callback)
+        self.log = HammerVLSILogging.context() # type: HammerVLSILoggingContext
+
+        # Create a new hammer database.
+        self.database = hammer_config.HammerDatabase() # type: hammer_config.HammerDatabase
+
+        self.log.info("Loading hammer-vlsi libraries and reading settings")
+
+        # Load in builtins.
+        self.database.update_builtins([
+            hammer_config.load_config_from_file("builtins.yml", strict=True),
+            HammerVLSISettings.get_config()
+        ])
+
+        # Read in core defaults.
+        self.database.update_core(hammer_config.load_config_from_defaults(os.getcwd()))
+
+        # Read in the environment config for paths to CAD tools, etc.
+        for config in options.environment_configs:
+            if not os.path.exists(config):
+                self.log.error("Environment config %s does not exist!" % (config))
+        self.database.update_environment(hammer_config.load_config_from_paths(options.environment_configs, strict=True))
+
+        # Read in the project config to find the syn, par, and tech.
+        project_configs = hammer_config.load_config_from_paths(options.project_configs, strict=True)
+        project_configs.append(extra_project_config)
+        self.database.update_project(project_configs)
+        # Store input config for later.
+        self.project_config = hammer_config.combine_configs(project_configs) # type: dict
+
+        # Get the technology and load technology settings.
+        tech_str = self.database.get_setting("vlsi.core.technology")
+        tech_paths = self.database.get_setting("vlsi.core.technology_path")
+        for path in tech_paths:
+            tech_json_path = os.path.join(path, tech_str, "%s.tech.json" % (tech_str))
+            if os.path.exists(tech_json_path):
+                break
+        self.log.info("Loading technology '{0}'".format(tech_str))
+        self.tech = hammer_tech.HammerTechnology.load_from_dir(tech_str, os.path.dirname(tech_json_path)) # type: hammer_tech.HammerTechnology
+        self.tech.logger = self.log.context("tech")
+        self.tech.set_database(self.database)
+        self.tech.cache_dir = "%s/tech-%s-cache" % (HammerVLSISettings.hammer_vlsi_path, tech_str) # TODO: don't hardcode this
+        self.database.update_technology(self.tech.get_config())
+
+        self.tech.extract_tarballs() # TODO: move this back into tech itself
+
+        # Keep track of what the synthesis and par configs are since
+        # update_tools() just takes a whole list.
+        self.tool_configs = {} # type: Dict[str, List[dict]]
+
+        # Initialize tool fields.
+        self.syn_tool = None # type: HammerSynthesisTool
+        self.par_tool = None # type: HammerPlaceAndRouteTool
+
+    def update_tool_configs(self) -> None:
+        """
+        Calls self.database.update_tools with self.tool_configs as a list.
+        """
+        tools = reduce(lambda a, b: a + b, list(self.tool_configs.values()))
+        self.database.update_tools(tools)
+
+    def load_par_tool(self) -> None:
+        """Load the place and route tool based on the given database.
+        """
+        par_tool_name = self.database.get_setting("vlsi.core.par_tool")
+        par_tool_get = load_tool(
+            path=self.database.get_setting("vlsi.core.par_tool_path"),
+            tool_name=par_tool_name
+        )
+        assert isinstance(par_tool_get, HammerPlaceAndRouteTool), "Par tool must be a HammerPlaceAndRouteTool"
+        par_tool = par_tool_get # type: HammerPlaceAndRouteTool
+        par_tool.logger = self.log.context("par")
+        par_tool.set_database(self.database)
+        par_tool.run_dir = HammerVLSISettings.hammer_vlsi_path + "/par-rundir" # TODO: don't hardcode this
+
+    def load_synthesis_tool(self):
+        """Load the synthesis tool based on the given database.
+        """
+        # Find the synthesis/par tool and read in their configs.
+        syn_tool_name = self.database.get_setting("vlsi.core.synthesis_tool")
+        syn_tool_get = load_tool(
+            path=self.database.get_setting("vlsi.core.synthesis_tool_path"),
+            tool_name=syn_tool_name
+        )
+        assert isinstance(syn_tool_get, HammerSynthesisTool), "Synthesis tool must be a HammerSynthesisTool"
+        # TODO: generate this automatically
+        syn_tool = syn_tool_get # type: HammerSynthesisTool
+        syn_tool.name = syn_tool_name
+        syn_tool.logger = self.log.context("synthesis")
+        syn_tool.technology = self.tech
+        syn_tool.run_dir = HammerVLSISettings.hammer_vlsi_path + "/syn-rundir" # TODO: don't hardcode this
+        syn_tool.set_database(self.database)
+        syn_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
+        syn_tool.top_module = self.database.get_setting("synthesis.inputs.top_module")
+
+        self.syn_tool = syn_tool
+
+        self.tool_configs["synthesis"] = syn_tool.get_config()
+        self.update_tool_configs()
+
+    def run_synthesis(self) -> dict:
+        """
+        Run synthesis based on the given database.
+        """
+
+        # TODO: think about artifact storage?
+        self.log.info("Starting synthesis with tool '%s'" % (self.syn_tool.name))
+        self.syn_tool.run()
+        # TODO: check and handle failure!!!
+
+        # Record output from the syn_tool into the JSON output.
+        output_config = dict(self.project_config)
+        # TODO(edwardw): automate this
+        try:
+            output_config["synthesis.outputs.output_files"] = self.syn_tool.output_files
+            output_config["synthesis.inputs.input_files"] = self.syn_tool.input_files
+            output_config["synthesis.inputs.top_module"] = self.syn_tool.top_module
+        except ValueError as e:
+            self.log.fatal(e.args[0])
+            return {}
+
+        return output_config
+
+    def par_run_from_synthesis(self):
+        pass
+
+    def run_par(self) -> dict:
+        """
+        Run place and route based on the given database.
+        """
+        self.log.info("Starting place and route with tool '%s'" % (self.par_tool.name))
+        # TODO: get place and route working
+        self.par_tool.run()
+        return {}
 
 def load_tool(tool_name: str, path: Iterable[str]) -> HammerTool:
     """
