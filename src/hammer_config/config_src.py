@@ -102,6 +102,7 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
     newdict = dict(config_dict)
 
     # Find meta variables.
+    assert isinstance(meta_dict, dict)
     meta_dict = dict(meta_dict) # create a copy so we can remove items.
     meta_dict_keys = list(meta_dict.keys())
     meta_keys = filter(lambda k: k.endswith("_meta"), meta_dict_keys)
