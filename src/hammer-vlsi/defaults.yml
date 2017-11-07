@@ -46,7 +46,9 @@ vlsi.inputs:
   clocks: []
 
 # Specific inputs for the synthesis tool.
-# These will vary per run of hammer-vlsi.
+# These inputs are the generic inputs; specific tools ("CAD junk") may require
+# additional inputs.
+# They will vary per run of hammer-vlsi.
 synthesis.inputs:
   # Input files.
   # Typically a list of Verilog/VHDL files, depending on the synthesis tool.
@@ -54,4 +56,18 @@ synthesis.inputs:
 
   # Top RTL module.
   # Set to null to not specify from the JSON.
+  top_module: null
+
+
+# Specific inputs for the place and route tool.
+# These inputs are the generic inputs; specific tools ("CAD junk") may require
+# additional inputs.
+# They will vary per run of hammer-vlsi.
+par.inputs:
+  # Input post-synthesis netlist files.
+  # Typically a list of Verilog/VHDL files, depending on the tool.
+  # For place and route, these should typically be post-synthesis netlists.
+  input_files: []
+
+  # Top RTL module.
   top_module: null

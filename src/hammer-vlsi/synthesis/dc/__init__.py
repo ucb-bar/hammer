@@ -6,6 +6,7 @@
 #  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
 
 from hammer_vlsi import HammerSynthesisTool
+from hammer_vlsi import SynopsysTool
 from hammer_vlsi import HammerVLSILogging
 
 import hammer_tech
@@ -17,7 +18,7 @@ import os
 import re
 import subprocess
 
-class DC(HammerSynthesisTool):
+class DC(HammerSynthesisTool, SynopsysTool):
     # TODO(edwardw): move this to synopsys common
     def generate_tcl_preferred_routing_direction(self):
         """
@@ -84,10 +85,7 @@ class DC(HammerSynthesisTool):
     def do_run(self) -> bool:
         # TODO(edwardw): move most of this to Synopsys common since it's not DC-specific.
         # Locate reference methodology tarball.
-        synopsys_rm_tarball = os.path.join(self.get_setting("synopsys.rm_dir"), "DC-RM_%s.tar" % (self.get_setting("synthesis.dc.dc_version")))
-        if not os.path.exists(synopsys_rm_tarball):
-            # TODO: convert these to logger calls
-            raise FileNotFoundError("Expected reference methodology tarball not found at %s. Use the Synopsys RM generator <https://solvnet.synopsys.com/rmgen> to generate a DC reference methodology. If these tarballs have been pre-downloaded, you can set synopsys.rm_dir instead of generating them yourself." % (synopsys_rm_tarball))
+        synopsys_rm_tarball = self.get_synopsys_rm_tarball("DC")
 
         # Locate DC binary.
         dc_bin = self.get_setting("synthesis.dc.dc_bin")
