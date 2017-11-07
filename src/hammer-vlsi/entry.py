@@ -105,10 +105,10 @@ def main(args: dict) -> int:
         print(output_json)
 
     if mode == "synthesis_par":
-        print("mode == synthesis_par, FIXME remove")
+        #~ print("TODO: mode == synthesis_par, FIXME remove")
         pass
     elif mode == "par":
-        print("set par input")
+        #~ print("TODO: set par input")
         pass
 
     if mode == "synthesis_par" or mode == "par":
