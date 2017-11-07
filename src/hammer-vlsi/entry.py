@@ -20,7 +20,7 @@ import hammer_tech
 
 from typing import List, Dict, Tuple, Any
 
-def parse_args(args: dict, defaultOptions: hammer_vlsi.HammerDriverOptions = hammer_vlsi.HammerDriver.get_default_driver_options()) -> Tuple[hammer_vlsi.HammerDriverOptions, dict, List[str]]:
+def args_to_driver(args: dict, defaultOptions: hammer_vlsi.HammerDriverOptions = hammer_vlsi.HammerDriver.get_default_driver_options()) -> Tuple[hammer_vlsi.HammerDriverOptions, dict, List[str]]:
     """Parse command line arguments for the command line front-end to hammer-vlsi.
     
     :return: DriverOptions, a parsed config for certain options, and a list of errors."""
@@ -79,23 +79,40 @@ def parse_args(args: dict, defaultOptions: hammer_vlsi.HammerDriverOptions = ham
     return options, config, errors
 
 def main(args: dict) -> int:
+    mode = args['mode']
+    if mode not in ["synthesis", "par", "synthesis_par"]:
+        print("Invalid mode %s" % (mode), file=sys.stderr)
+        return 1
+
     if args['firrtl'] is not None and len(args['firrtl']) > 0:
         print("firrtl convenience argument not yet implemented", file=sys.stderr)
         return 1
 
-    options, config, errors = parse_args(args)
+    options, config, errors = args_to_driver(args)
     driver = hammer_vlsi.HammerDriver(options, config)
-    driver.load_synthesis_tool()
 
-    syn_output = driver.run_synthesis()
-    # Dump output config for modular composition of hammer-vlsi runs.
-    output_json = json.dumps(syn_output, indent=4)
-    with open(args["output"], "w") as f:
-        f.write(output_json)
-    print(output_json)
+    if mode == "synthesis":
+        driver.load_synthesis_tool()
+        syn_output = driver.run_synthesis()
+        # TODO: detect errors
+        # Dump output config for modular composition of hammer-vlsi runs.
+        output_json = json.dumps(syn_output, indent=4)
+        with open(args["output"], "w") as f:
+            f.write(output_json)
+        print(output_json)
 
-    #~ hammer_vlsi.HammerDriver.par_run_from_synthesis()
-    #~ driver.run_par()
+    if mode == "synthesis_par":
+        print("mode == synthesis_par, FIXME remove")
+        pass
+    elif mode == "par":
+        print("set par input")
+        pass
+
+    if mode == "synthesis_par" or mode == "par":
+        #~ hammer_vlsi.HammerDriver.par_run_from_synthesis()
+        driver.load_par_tool()
+        driver.run_par()
+
     return 0
 
 if __name__ == '__main__':
@@ -115,6 +132,8 @@ if __name__ == '__main__':
                         help="CAD files.")
     parser.add_argument("--environment_config", action='append', required=False,
                         help="Environment config files (.yml or .json) - .json will take precendence over any .yml. These config files will not be re-emitted in the output json.")
+    parser.add_argument('mode', metavar='MODE', type=str,
+                        help='What to do: synthesis, par, or "synthesis_par"')
     parser.add_argument('configs', metavar='CONFIGS', type=str, nargs='+',
                         help='Project config files (.yml or .json) - .json will take precedence over any .yml.')
 
