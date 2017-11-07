@@ -38,7 +38,10 @@ def args_to_driver(args: dict, defaultOptions: hammer_vlsi.HammerDriverOptions =
 
     # Load environment configs.
     env_configs = args['environment_config']
-    if isinstance(env_configs, List):
+    if env_configs is None:
+        # No environment_config arguments.
+        pass
+    elif isinstance(env_configs, List):
         for c in env_configs:
             if not os.path.exists(c):
                 errors.append("Environment config %s does not exist!" % (c))
