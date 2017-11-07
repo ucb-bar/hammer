@@ -1,10 +1,19 @@
 #!/bin/bash
+# Lightweight wrapper around make + tee
 
-script_dir="$(dirname "$0")"
-source "$script_dir/icc_common.sh"
+unset run_dir
+while [[ "$1" != "" ]]
+do
+    case "$1" in
+    "$0") ;;
+    --run_dir) run_dir="$2"; shift;;
+    *) echo "Unknown argument $1"; exit 1;;
+    esac
+    shift
+done
 
-# Here's the actual ICC invocation
-cd $run_dir
+source "$run_dir"/enter
+
 make -f rm_setup/Makefile_zrt ic -j1 |& tee icc.log
 
 # Make sure there's no invalid output from ICC

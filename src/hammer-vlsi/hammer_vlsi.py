@@ -15,6 +15,7 @@ from functools import reduce
 import datetime
 import importlib
 import os
+import re
 import subprocess
 import sys
 
@@ -572,12 +573,41 @@ class HammerTool(metaclass=ABCMeta):
                 return path
         return check_isfile
 
+    @staticmethod
+    def replace_tcl_set(variable: str, value: str, tcl_path: str, quotes: bool = True) -> None:
+        """
+        Utility function to replaces a "set VARIABLE ..." line with set VARIABLE
+        "value" in the given TCL script file.
+
+        :param variable: Variable name to replace
+        :param value: Value to replace it with (default quoted)
+        :param tcl_path: Path to the TCL script.
+        :param quotes: (optional) Set to False to disable quoting of the value.
+        """
+        with open(tcl_path, "r") as f:
+            tcl_contents = f.read() # type: str
+
+        value_string = value
+        if quotes:
+            value_string = '"' + value_string + '"'
+        replacement_string = "set %s %s;" % (variable, value_string)
+
+        regex = r'^set +%s.*' % (re.escape(variable))
+        if re.search(regex, tcl_contents, flags=re.MULTILINE) is None:
+            raise ValueError("set %s line not found in tcl file %s!" % (variable, tcl_path))
+
+        new_tcl_contents = re.sub(regex, replacement_string, tcl_contents, flags=re.MULTILINE) # type: str
+
+        with open(tcl_path, "w") as f:
+            f.write(new_tcl_contents)
+
     # TODO(edwardw): consider pulling this out so that hammer_tech can also use this
-    def run_executable(self, args: List[str]) -> str:
+    def run_executable(self, args: List[str], cwd: str = None) -> str:
         """
         Run an executable and log the command to the log while also capturing the output.
 
-        :param args: Command-line to run; each item in the list is one token. The first token should be the command ot run.
+        :param args: Command-line to run; each item in the list is one token. The first token should be the command to run.
+        :param cwd: Working directory (leave as None to use the current working directory).
         :return: Output from the command or an error message.
         """
         self.logger.debug("Executing subprocess: " + ' '.join(args))
@@ -596,7 +626,7 @@ class HammerTool(metaclass=ABCMeta):
         prog_tag = prog_name + " " + prog_args
         subprocess_logger = self.logger.context("Exec " + prog_tag)
 
-        proc = subprocess.Popen(args, shell=False, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, env=self._subprocess_env)
+        proc = subprocess.Popen(args, shell=False, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, env=self._subprocess_env, cwd=cwd)
         # Log output and also capture output at the same time.
         output_buf = ""
         while True:
@@ -625,6 +655,13 @@ class HammerTool(metaclass=ABCMeta):
         Generate command-line args in the form --<filt.tag> <lib_item>.
         """
         return ["--" + filt.tag, lib_item]
+
+    @staticmethod
+    def to_plain_item(lib_item: str, filt: LibraryFilter) -> List[str]:
+        """
+        Generate plain outputs in the form of <lib_item1> <lib_item2> ...
+        """
+        return [lib_item]
 
     @property
     def timing_db_filter(self) -> LibraryFilter:
@@ -803,8 +840,50 @@ class HammerSynthesisTool(HammerTool):
         self._output_files = value # type: Iterable[str]
 
 class HammerPlaceAndRouteTool(HammerTool):
-    pass
+    ### Generated interface HammerPlaceAndRouteTool ###
+    ### Inputs ###
 
+    @property
+    def input_files(self) -> Iterable[str]:
+        """
+        Get the input post-synthesis netlist files.
+
+        :return: The input post-synthesis netlist files.
+        """
+        try:
+            return self._input_files
+        except AttributeError:
+            raise ValueError("Nothing set for the input post-synthesis netlist files yet")
+
+    @input_files.setter
+    def input_files(self, value: Iterable[str]) -> None:
+        """Set the input post-synthesis netlist files."""
+        if not isinstance(value, Iterable):
+            raise TypeError("input_files must be a Iterable[str]")
+        self._input_files = value # type: Iterable[str]
+
+
+    @property
+    def top_module(self) -> str:
+        """
+        Get the top RTL module.
+
+        :return: The top RTL module.
+        """
+        try:
+            return self._top_module
+        except AttributeError:
+            raise ValueError("Nothing set for the top RTL module yet")
+
+    @top_module.setter
+    def top_module(self, value: str) -> None:
+        """Set the top RTL module."""
+        if not isinstance(value, str):
+            raise TypeError("top_module must be a str")
+        self._top_module = value # type: str
+
+
+    ### Outputs ###
 
 # Options for invoking the driver.
 HammerDriverOptions = NamedTuple('HammerDriverOptions', [
@@ -910,11 +989,22 @@ class HammerDriver:
         )
         assert isinstance(par_tool_get, HammerPlaceAndRouteTool), "Par tool must be a HammerPlaceAndRouteTool"
         par_tool = par_tool_get # type: HammerPlaceAndRouteTool
+        par_tool.name = par_tool_name
         par_tool.logger = self.log.context("par")
+        par_tool.technology = self.tech
         par_tool.set_database(self.database)
         par_tool.run_dir = HammerVLSISettings.hammer_vlsi_path + "/par-rundir" # TODO: don't hardcode this
 
-    def load_synthesis_tool(self):
+        # TODO: automate this based on the definitions
+        par_tool.input_files = self.database.get_setting("par.inputs.input_files")
+        par_tool.top_module = self.database.get_setting("par.inputs.top_module")
+
+        self.par_tool = par_tool
+
+        self.tool_configs["par"] = par_tool.get_config()
+        self.update_tool_configs()
+
+    def load_synthesis_tool(self) -> None:
         """Load the synthesis tool based on the given database.
         """
         # Find the synthesis/par tool and read in their configs.
@@ -929,8 +1019,9 @@ class HammerDriver:
         syn_tool.name = syn_tool_name
         syn_tool.logger = self.log.context("synthesis")
         syn_tool.technology = self.tech
-        syn_tool.run_dir = HammerVLSISettings.hammer_vlsi_path + "/syn-rundir" # TODO: don't hardcode this
         syn_tool.set_database(self.database)
+        syn_tool.run_dir = HammerVLSISettings.hammer_vlsi_path + "/syn-rundir" # TODO: don't hardcode this
+
         syn_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
         syn_tool.top_module = self.database.get_setting("synthesis.inputs.top_module")
 
@@ -973,6 +1064,27 @@ class HammerDriver:
         # TODO: get place and route working
         self.par_tool.run()
         return {}
+
+class SynopsysTool(HammerTool):
+    """Mix-in trait with functions useful for Synopsys-based tools."""
+    def get_synopsys_rm_tarball(self, product: str, settings_key: str = "") -> str:
+        """Locate reference methodology tarball.
+
+        :param product: Either "DC" or "ICC"
+        :param settings_key: Key to retrieve the version for the product. Leave blank for DC and ICC.
+        """
+        key = settings_key # type: str
+        if product == "DC":
+            key = "synthesis.dc.dc_version"
+        elif product == "ICC":
+            key = "par.icc.icc_version"
+
+        synopsys_rm_tarball = os.path.join(self.get_setting("synopsys.rm_dir"), "%s-RM_%s.tar" % (product, self.get_setting(key)))
+        if not os.path.exists(synopsys_rm_tarball):
+            # TODO: convert these to logger calls
+            raise FileNotFoundError("Expected reference methodology tarball not found at %s. Use the Synopsys RM generator <https://solvnet.synopsys.com/rmgen> to generate a DC reference methodology. If these tarballs have been pre-downloaded, you can set synopsys.rm_dir instead of generating them yourself." % (synopsys_rm_tarball))
+        else:
+            return synopsys_rm_tarball
 
 def load_tool(tool_name: str, path: Iterable[str]) -> HammerTool:
     """
