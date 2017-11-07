@@ -529,7 +529,7 @@ class HammerTool(metaclass=ABCMeta):
         # Uniqueify results.
         # TODO: think about whether this really belongs here and whether we always need to uniqueify.
         # This is here to get stuff working since some CAD tools dislike duplicated arguments (e.g. duplicated stdcell lib, etc).
-        lib_results = list(set(lib_results))
+        lib_results = list(set(lib_results)) # type: List[str]
 
         lib_results_with_extra_funcs = reduce(lambda arr, func: map(func, arr), extra_funcs, lib_results)
 

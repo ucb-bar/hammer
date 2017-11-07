@@ -281,7 +281,8 @@ def combine_configs(configs: Iterable[dict]) -> dict:
     :param handle_meta: Handle meta configs?
     :return: A loaded config dictionary.
     """
-    expanded_config = dict(reduce(update_and_expand_meta, configs, {})) # type: dict
+    expanded_config_reduce = reduce(update_and_expand_meta, configs, {}) # type: dict
+    expanded_config = dict(expanded_config_reduce) # type: dict
     expanded_config_orig = dict(expanded_config) # type: dict
 
     # Now, we need to handle dynamic* metas.
