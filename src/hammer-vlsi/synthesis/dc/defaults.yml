@@ -11,7 +11,11 @@ synthesis.dc:
   # Causes a GUI session to be temporarily opened, which requires a graphical
   # environment and associated licences.
   enable_congestion_map: false
-  
+
+  # Respect max_threads.
+  # Calls disable_multicore_resource_checks to always use the number of cores
+  # specified instead of DC's own load detection.
+  disable_multicore_resource_checks: true
 
 # Common synopsys settings.
 # TODO: move these to a shared file between ICC and DC.
