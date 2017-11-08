@@ -4,6 +4,7 @@
 
 unset run_dir
 unset dc
+unset clock_constraints_fragment
 unset preferred_routing_directions_fragment
 unset find_regs_tcl
 v=()
@@ -23,6 +24,7 @@ do
     "$0") ;;
     --run_dir) run_dir="$2"; shift;;
     --dc) dc="$2"; shift;;
+    --clock_constraints_fragment) clock_constraints_fragment="$2"; shift;;
     --preferred_routing_directions_fragment) preferred_routing_directions_fragment="$2"; shift;;
     --find_regs_tcl) find_regs_tcl="$2"; shift;;
     *.v) v+=("$1");;
@@ -164,29 +166,11 @@ set disable_multicore_resource_checks true;
 EOF
 fi
 
-# Read the core's configuration file to figure out what all the clocks should
-# look like.
-# TODO: this is broken, should be generated in Python from JSON/annotations
-#~ python3 >>$run_dir/generated-scripts/constraints.tcl <<EOF
-#~ import json
-#~ with open("${config}") as f:
-	#~ config = json.load(f)
+# Clear constraints.tcl to prevent previous runs from showing up.
+echo "" > $run_dir/generated-scripts/constraints.tcl
 
-#~ import re
-#~ for clock in config["clocks"]:
-	#~ clock_name = clock["name"]
-	#~ clock_period = clock["period"]
-	#~ if not re.match("[0-9]+ *[np]s", clock_period):
-		#~ error
-
-	#~ if re.match("[0-9]+ *ns", clock_period):
-		#~ clock_period_ns = re.sub(" *ns", "", clock_period)
-	#~ if re.match("[0-9]+ *ps", clock_period):
-		#~ clock_period_ns = int(re.sub(" *ps", "", clock_period)) / 1000.0
-
-	#~ print("create_clock {0} -name {0} -period {1}".format(clock_name, clock_period_ns))
-	#~ print("set_clock_uncertainty 0.01 [get_clocks {0}]".format(clock_name))
-#~ EOF
+# Figure out what all the clocks should look like.
+cat $clock_constraints_fragment >>$run_dir/generated-scripts/constraints.tcl
 
 # The constraints file determines how the IO is constrained and what the clocks
 # look like.
