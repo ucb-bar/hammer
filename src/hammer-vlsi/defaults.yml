@@ -38,6 +38,13 @@ vlsi.inputs:
     VDD: "0.85 V"
     GND: "0 V"
 
+  # Clock ports of the top-level module.
+  # Clock struct members:
+  # name (str) - Name of the clock port.
+  # period (TimeValue) - Clock port period. e.g. "1 ns", "5ns". Default units: ns
+  # uncertainty (TimeValue) - Optional. Clock uncertainty. e.g. "1 ns", "5ns". Default units: ns
+  clocks: []
+
 # Specific inputs for the synthesis tool.
 # These will vary per run of hammer-vlsi.
 synthesis.inputs:

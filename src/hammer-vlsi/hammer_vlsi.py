@@ -8,7 +8,7 @@
 from abc import ABCMeta, abstractmethod
 from enum import Enum
 
-from typing import Callable, Iterable, List, NamedTuple, Tuple, TypeVar, Type
+from typing import Callable, Iterable, List, NamedTuple, Tuple, TypeVar, Type, Optional
 
 from functools import reduce
 
@@ -352,6 +352,12 @@ class TimeValue:
         # %g removes trailing zeroes
         return "%g" % (self.value_in_units(prefix, round_zeroes)) + " " + prefix
 
+ClockPort = NamedTuple('ClockPort', [
+    ('name', str),
+    ('period', TimeValue),
+    ('uncertainty', Optional[TimeValue])
+])
+
 # Library filter containing a filtering function, identifier tag, and a
 # short human-readable description.
 class LibraryFilter(NamedTuple('LibraryFilter', [
@@ -694,6 +700,24 @@ class HammerTool(metaclass=ABCMeta):
                 map(process_library_filter, libraries)
             ))
         ))
+
+    # TODO: these helper functions might get a bit out of hand, put them somewhere more organized?
+    def get_clock_ports(self) -> List[ClockPort]:
+        """
+        Get the clock ports of the top-level module, as specified in vlsi.inputs.clocks.
+        """
+        clocks = self.get_setting("vlsi.inputs.clocks")
+        output = [] # type: List[ClockPort]:
+        for clock_port in clocks:
+            clock = ClockPort(
+                name=clock_port["name"], period=TimeValue(clock_port["period"]),
+                uncertainty=None
+            )
+            if "uncertainty" in clock_port:
+                output.append( clock._replace(uncertainty=TimeValue(clock_port["uncertainty"])) )
+            else:
+                output.append(clock)
+        return output
 
 class HammerSynthesisTool(HammerTool):
     ### Inputs ###
