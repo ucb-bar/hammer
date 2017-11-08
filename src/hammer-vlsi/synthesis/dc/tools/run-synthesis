@@ -156,6 +156,14 @@ set_host_options -max_cores ${max_threads}
 set power_sa_propagation_verbose true
 EOF
 
+disable_multicore_resource_checks=$(get-config synthesis.dc.disable_multicore_resource_checks)
+if [[ "$disable_multicore_resource_checks" == "True" ]] || [[ "$disable_multicore_resource_checks" == "true" ]]; then
+    cat >> $run_dir/rm_setup/common_setup.tcl <<EOF
+# Actually use specified number of cores.
+set disable_multicore_resource_checks true;
+EOF
+fi
+
 # Read the core's configuration file to figure out what all the clocks should
 # look like.
 # TODO: this is broken, should be generated in Python from JSON/annotations
