@@ -116,6 +116,9 @@ find $run_dir -iname "*.tcl" | xargs sed "s/^analyze/analyze $defines/" -i
 # Report library references in case I'm missing anything.
 sed "s@^check_design @report_reference > reports/${top}.report_reference.out\\ncheck_design @" -i $run_dir/rm_dc_scripts/dc.tcl
 
+# Report hierarchical area estimates.
+sed "s@report_qor > \${REPORTS_DIR}/\${DCRM_FINAL_QOR_REPORT}@report_reference -hierarchy > reports/${top}.mapped.report_reference.out \\nreport_qor > \${REPORTS_DIR}/\${DCRM_FINAL_QOR_REPORT} @" -i $run_dir/rm_dc_scripts/dc.tcl
+
 if [[ "${milkyway[@]}" == "" ]]
 then
     echo "No milkyway libraries specified"
