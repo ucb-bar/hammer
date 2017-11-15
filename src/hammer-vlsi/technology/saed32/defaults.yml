@@ -2,3 +2,14 @@
 technology.saed32:
   # Path to the directory which contains all the saed32 tarballs (e.g. SAED_EDKxxxxxxx_CORE_LVT_v_xxxxxxxx.tar.gz)
   tarball_dir: ""
+
+# Set some defaults for this technology.
+# For quick performance evaluations, use the typical voltage+temperature corners.
+# Nominal voltage for 32nm technology is 1.05V and is the only voltage provided
+# for normal SRAMs.
+# TODO: add default temperature corners.
+vlsi.inputs:
+  # Supply voltages.
+  supplies:
+    VDD: "1.05 V"
+    GND: "0 V"
