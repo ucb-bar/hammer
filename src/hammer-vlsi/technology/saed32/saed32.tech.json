@@ -201,6 +201,25 @@
       "provide script": "src/tools/technology/saed32-stdcells"
     },
     {
+      "ccs liberty file_missing": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram_lp/db_ccs/saed32sramlp_tt1p05v25c_i1p05v.lib",
+      "ccs library file_missing": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram_lp/db_ccs/saed32sramlp_tt1p05v25c_i1p05v.db",
+      "nldm liberty file": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram_lp/db_nldm/saed32sramlp_tt1p05v25c_i1p05v.lib",
+      "nldm library file": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram_lp/db_nldm/saed32sramlp_tt1p05v25c_i1p05v.db",
+      "verilog sim": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram_lp/verilog/saed32sram.v",
+      "milkyway lib in dir": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram_lp/milkyway/saed32sram_lp/lib",
+      "lef file": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram_lp/lef/saed32sram.lef",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "25 C"
+      },
+      "supplies": {
+        "VDD": "1.05 V",
+        "GND": "0 V"
+      },
+      "provide script": "src/tools/technology/saed32-srams"
+    },
+    {
       "ccs liberty file_missing": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram_lp/db_ccs/saed32sramlp_tt0p85v25c_i0p85v.lib",
       "ccs library file_missing": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram_lp/db_ccs/saed32sramlp_tt0p85v25c_i0p85v.db",
       "nldm liberty file": "SAED_EDK32.28nm_SRAM_v_01132015.tar.gz/SAED32_EDK/lib/sram_lp/db_nldm/saed32sramlp_tt0p85v25c_i0p85v.lib",
