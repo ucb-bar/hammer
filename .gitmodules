@@ -2,12 +2,6 @@
 	path = src/tools/barstools
 	url = https://github.com/ucb-bar/barstools
 	branch = plsi
-[submodule "src/tools/pconfigure"]
-	path = src/tools/pconfigure
-	url = git://github.com/palmer-dabbelt/pconfigure.git
-[submodule "src/tools/pcad"]
-	path = src/tools/pcad
-	url = git://github.com/palmer-dabbelt/pcad.git
 [submodule "src/tools/pson"]
 	path = src/tools/pson
 	url = git://github.com/palmer-dabbelt/pson.git
