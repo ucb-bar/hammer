@@ -21,3 +21,6 @@
 	path = src/python-jsonschema-objects
 	url = https://github.com/edwardcwang/python-jsonschema-objects.git
 	branch = hammer-201710
+[submodule "src/jsonschema"]
+	path = src/jsonschema
+	url = https://github.com/edwardcwang/jsonschema.git
