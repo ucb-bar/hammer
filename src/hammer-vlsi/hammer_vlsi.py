@@ -763,7 +763,7 @@ class HammerTool(metaclass=ABCMeta):
         Get the clock ports of the top-level module, as specified in vlsi.inputs.clocks.
         """
         clocks = self.get_setting("vlsi.inputs.clocks")
-        output = [] # type: List[ClockPort]:
+        output = [] # type: List[ClockPort]
         for clock_port in clocks:
             clock = ClockPort(
                 name=clock_port["name"], period=TimeValue(clock_port["period"]),
