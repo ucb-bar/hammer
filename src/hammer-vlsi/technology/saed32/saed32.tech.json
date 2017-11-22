@@ -68,44 +68,6 @@
       "icv signoff drc ruleset": "SAED_EDK32.28nm_TECH_v_01132015.tar.gz/SAED32_EDK/tech/icv_drc/saed32nm_1p9m_drc_rules.rs"
     },
     {
-      "ccs liberty file": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/db_ccs/saed32lvt_tt1p05v25c.lib",
-      "ccs library file": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/db_ccs/saed32lvt_tt1p05v25c.db",
-      "nldm liberty file": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/db_nldm/saed32lvt_tt1p05v25c.lib",
-      "nldm library file": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/db_nldm/saed32lvt_tt1p05v25c.db",
-      "verilog sim": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/verilog/saed32nm_lvt.v",
-      "milkyway lib in dir": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/milkyway/saed32nm_lvt_1p9m/lib",
-      "lef file": "SAED_EDK32.28nm_CORE_LVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_lvt/lef/saed32nm_lvt_1p9m.lef",
-      "corner": {
-        "nmos": "typical",
-        "pmos": "typical",
-        "temperature": "25 C"
-      },
-      "supplies": {
-        "VDD": "1.05 V",
-        "GND": "0 V"
-      },
-      "provide script": "src/tools/technology/saed32-stdcells"
-    },
-    {
-      "ccs liberty file": "SAED_EDK32.28nm_CORE_RVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_rvt/db_nldm/saed32rvt_tt1p05v25c.lib",
-      "ccs library file": "SAED_EDK32.28nm_CORE_RVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_rvt/db_ccs/saed32rvt_tt1p05v25c.db",
-      "nldm liberty file": "SAED_EDK32.28nm_CORE_RVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_rvt/db_nldm/saed32rvt_tt1p05v25c.lib",
-      "nldm library file": "SAED_EDK32.28nm_CORE_RVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_rvt/db_nldm/saed32rvt_tt1p05v25c.db",
-      "verilog sim": "SAED_EDK32.28nm_CORE_RVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_rvt/verilog/saed32nm.v",
-      "milkyway lib in dir": "SAED_EDK32.28nm_CORE_RVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_rvt/milkyway/saed32nm_rvt_1p9m/lib",
-      "lef file": "SAED_EDK32.28nm_CORE_RVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_rvt/lef/saed32nm_rvt_1p9m.lef",
-      "corner": {
-        "nmos": "typical",
-        "pmos": "typical",
-        "temperature": "25 C"
-      },
-      "supplies": {
-        "VDD": "1.05 V",
-        "GND": "0 V"
-      },
-      "provide script": "src/tools/technology/saed32-stdcells"
-    },
-    {
       "ccs liberty file_missing": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/db_ccs/saed32hvt_tt1p05v25c.lib",
       "ccs library file_missing": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/db_ccs/saed32hvt_tt1p05v25c.db",
       "nldm liberty file": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/db_nldm/saed32hvt_tt1p05v25c.lib",
