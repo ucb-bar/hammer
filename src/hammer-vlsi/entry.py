@@ -51,7 +51,7 @@ def args_to_driver(args: dict, defaultOptions: hammer_vlsi.HammerDriverOptions =
 
     # Load project configs.
     project_configs = args['configs']
-    if isinstance(env_configs, List):
+    if isinstance(project_configs, List):
         for c in project_configs:
             if not os.path.exists(c):
                 errors.append("Project config %s does not exist!" % (c))
