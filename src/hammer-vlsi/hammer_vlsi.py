@@ -935,12 +935,12 @@ class HammerDriver:
 
         # Load in builtins.
         self.database.update_builtins([
-            hammer_config.load_config_from_file("builtins.yml", strict=True),
+            hammer_config.load_config_from_file(os.path.join(HammerVLSISettings.hammer_vlsi_path, "builtins.yml"), strict=True),
             HammerVLSISettings.get_config()
         ])
 
         # Read in core defaults.
-        self.database.update_core(hammer_config.load_config_from_defaults(os.getcwd()))
+        self.database.update_core(hammer_config.load_config_from_defaults(HammerVLSISettings.hammer_vlsi_path))
 
         # Read in the environment config for paths to CAD tools, etc.
         for config in options.environment_configs:
