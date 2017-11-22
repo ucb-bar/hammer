@@ -79,6 +79,12 @@ def args_to_driver(args: dict, defaultOptions: hammer_vlsi.HammerDriverOptions =
     if isinstance(top_module, str) and len(top_module) > 0:
         config['synthesis.inputs.top_module'] = top_module
 
+    # Object dir.
+    # (optional)
+    obj_dir = args['obj_dir']
+    if isinstance(obj_dir, str) and len(obj_dir) > 0:
+        options = options._replace(obj_dir=obj_dir)
+
     return options, config, errors
 
 def main(args: dict) -> int:
@@ -131,6 +137,8 @@ if __name__ == '__main__':
                         help='Log file. Leave blank to automatically create one.')
     parser.add_argument("-t", "--top", required=False,
                         help='Top module. If not specified, hammer-vlsi will take it from synthesis.inputs.top_module.')
+    parser.add_argument("--obj_dir", required=False,
+                        help='Folder for storing results of CAD tool runs. If not specified, this will be the hammer-vlsi folder by default.')
     parser.add_argument("--cad-files", action='append', required=False,
                         help="CAD files.")
     parser.add_argument("--environment_config", action='append', required=False,

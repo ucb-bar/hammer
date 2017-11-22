@@ -892,8 +892,11 @@ HammerDriverOptions = NamedTuple('HammerDriverOptions', [
     # List of project config files in .json
     ('project_configs', List[str]),
     # Log file location.
-    ('log_file', str)
+    ('log_file', str),
+    # Folder for storing runtime files / CAD junk.
+    ('obj_dir', str)
 ])
+
 
 class HammerDriver:
     @staticmethod
@@ -902,7 +905,8 @@ class HammerDriver:
         return HammerDriverOptions(
             environment_configs=[],
             project_configs=[],
-            log_file=datetime.datetime.now().strftime("hammer-vlsi-%Y%m%d-%H%M%S.log")
+            log_file=datetime.datetime.now().strftime("hammer-vlsi-%Y%m%d-%H%M%S.log"),
+            obj_dir=HammerVLSISettings.hammer_vlsi_path
         )
 
     def __init__(self, options: HammerDriverOptions, extra_project_config: dict = {}) -> None:
@@ -925,6 +929,9 @@ class HammerDriver:
         self.database = hammer_config.HammerDatabase() # type: hammer_config.HammerDatabase
 
         self.log.info("Loading hammer-vlsi libraries and reading settings")
+
+        # Store the run dir.
+        self.obj_dir = options.obj_dir # type: str
 
         # Load in builtins.
         self.database.update_builtins([
@@ -949,20 +956,8 @@ class HammerDriver:
         self.project_config = hammer_config.combine_configs(project_configs) # type: dict
 
         # Get the technology and load technology settings.
-        tech_str = self.database.get_setting("vlsi.core.technology")
-        tech_paths = self.database.get_setting("vlsi.core.technology_path")
-        for path in tech_paths:
-            tech_json_path = os.path.join(path, tech_str, "%s.tech.json" % (tech_str))
-            if os.path.exists(tech_json_path):
-                break
-        self.log.info("Loading technology '{0}'".format(tech_str))
-        self.tech = hammer_tech.HammerTechnology.load_from_dir(tech_str, os.path.dirname(tech_json_path)) # type: hammer_tech.HammerTechnology
-        self.tech.logger = self.log.context("tech")
-        self.tech.set_database(self.database)
-        self.tech.cache_dir = "%s/tech-%s-cache" % (HammerVLSISettings.hammer_vlsi_path, tech_str) # TODO: don't hardcode this
-        self.database.update_technology(self.tech.get_config())
-
-        self.tech.extract_tarballs() # TODO: move this back into tech itself
+        self.tech = None # type: hammer_tech.HammerTechnology
+        self.load_technology()
 
         # Keep track of what the synthesis and par configs are since
         # update_tools() just takes a whole list.
@@ -972,6 +967,30 @@ class HammerDriver:
         self.syn_tool = None # type: HammerSynthesisTool
         self.par_tool = None # type: HammerPlaceAndRouteTool
 
+    def load_technology(self, cache_dir: str = "") -> None:
+        tech_str = self.database.get_setting("vlsi.core.technology")
+
+        if cache_dir == "":
+            cache_dir = os.path.join(self.obj_dir, "tech-%s-cache" % tech_str)
+
+        tech_paths = self.database.get_setting("vlsi.core.technology_path")
+        tech_json_path = "" # type: str
+        for path in tech_paths:
+            tech_json_path = os.path.join(path, tech_str, "%s.tech.json" % tech_str)
+            if os.path.exists(tech_json_path):
+                break
+        if tech_json_path == "":
+            self.log.error("Technology {0} not found or missing .tech.json!".format(tech_str))
+            return
+        self.log.info("Loading technology '{0}'".format(tech_str))
+        self.tech = hammer_tech.HammerTechnology.load_from_dir(tech_str, os.path.dirname(tech_json_path))  # type: hammer_tech.HammerTechnology
+        self.tech.logger = self.log.context("tech")
+        self.tech.set_database(self.database)
+        self.tech.cache_dir = cache_dir
+        self.database.update_technology(self.tech.get_config())
+
+        self.tech.extract_tarballs()  # TODO: move this back into tech itself
+
     def update_tool_configs(self) -> None:
         """
         Calls self.database.update_tools with self.tool_configs as a list.
@@ -979,9 +998,16 @@ class HammerDriver:
         tools = reduce(lambda a, b: a + b, list(self.tool_configs.values()))
         self.database.update_tools(tools)
 
-    def load_par_tool(self) -> None:
-        """Load the place and route tool based on the given database.
+    def load_par_tool(self, run_dir: str = "") -> None:
         """
+        Load the place and route tool based on the given database.
+
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
+        constructor.
+        """
+        if run_dir == "":
+            run_dir = os.path.join(self.obj_dir, "par-rundir")
+
         par_tool_name = self.database.get_setting("vlsi.core.par_tool")
         par_tool_get = load_tool(
             path=self.database.get_setting("vlsi.core.par_tool_path"),
@@ -993,7 +1019,7 @@ class HammerDriver:
         par_tool.logger = self.log.context("par")
         par_tool.technology = self.tech
         par_tool.set_database(self.database)
-        par_tool.run_dir = HammerVLSISettings.hammer_vlsi_path + "/par-rundir" # TODO: don't hardcode this
+        par_tool.run_dir = run_dir
 
         # TODO: automate this based on the definitions
         par_tool.input_files = self.database.get_setting("par.inputs.input_files")
@@ -1004,9 +1030,16 @@ class HammerDriver:
         self.tool_configs["par"] = par_tool.get_config()
         self.update_tool_configs()
 
-    def load_synthesis_tool(self) -> None:
-        """Load the synthesis tool based on the given database.
+    def load_synthesis_tool(self, run_dir: str = "") -> None:
         """
+        Load the synthesis tool based on the given database.
+
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
+        constructor.
+        """
+        if run_dir == "":
+            run_dir = os.path.join(self.obj_dir, "syn-rundir")
+
         # Find the synthesis/par tool and read in their configs.
         syn_tool_name = self.database.get_setting("vlsi.core.synthesis_tool")
         syn_tool_get = load_tool(
@@ -1020,7 +1053,7 @@ class HammerDriver:
         syn_tool.logger = self.log.context("synthesis")
         syn_tool.technology = self.tech
         syn_tool.set_database(self.database)
-        syn_tool.run_dir = HammerVLSISettings.hammer_vlsi_path + "/syn-rundir" # TODO: don't hardcode this
+        syn_tool.run_dir = run_dir
 
         syn_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
         syn_tool.top_module = self.database.get_setting("synthesis.inputs.top_module")
