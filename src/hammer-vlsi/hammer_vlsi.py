@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 #  hammer_vlsi.py
-#  
+#
 #  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
 
 from abc import ABCMeta, abstractmethod
@@ -526,8 +526,8 @@ class HammerTool(metaclass=ABCMeta):
 
         lib_results = list(reduce(lambda a, b: a+b, list(map(func, filtered_libs)))) # type: List[str]
 
-        # Uniqueify results.
-        # TODO: think about whether this really belongs here and whether we always need to uniqueify.
+        # Uniquify results.
+        # TODO: think about whether this really belongs here and whether we always need to uniquify.
         # This is here to get stuff working since some CAD tools dislike duplicated arguments (e.g. duplicated stdcell lib, etc).
         lib_results = list(set(lib_results)) # type: List[str]
 
@@ -1100,14 +1100,14 @@ def load_tool(tool_name: str, path: Iterable[str]) -> HammerTool:
         sys.path.insert(0, p)
     try:
         mod = importlib.import_module(tool_name)
-    except ImportError as e:
+    except ImportError:
         raise ValueError("No such tool " + tool_name)
     # Now restore the original import path.
-    for p in path:
+    for _ in path:
         sys.path.pop(0)
     try:
         htool = getattr(mod, "tool")
-    except AttributeError as e:
+    except AttributeError:
         raise ValueError("No such tool " + tool_name + ", or tool does not follow the hammer-vlsi tool library format")
 
     if not isinstance(htool, HammerTool):
