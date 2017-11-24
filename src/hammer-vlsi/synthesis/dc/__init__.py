@@ -95,17 +95,8 @@ class DC(HammerSynthesisTool, SynopsysTool):
             return False
 
         # Load input files.
-        verilog_args = self.input_files
-        error = False
-        for v in verilog_args:
-            if not (v.endswith(".v") or v.endswith(".sv")):
-                self.logger.error("Non-verilog input {0} detected! DC only supports Verilog inputs.".format(v))
-                error = True
-            if not os.path.isfile(v):
-                self.logger.error("Input file {0} does not exist!".format(v))
-                error = True
-        if error:
-            return False
+        if not self.check_input_files([".v", ".sv"]):
+          return False
 
         # Generate preferred_routing_directions.
         preferred_routing_directions_fragment = os.path.join(self.run_dir, "preferred_routing_directions.tcl")
@@ -159,6 +150,7 @@ class DC(HammerSynthesisTool, SynopsysTool):
         HammerVLSILogging.enable_tag = True
 
         # Check that the mapped.v exists if the synthesis run was successful
+        # TODO: move this check upwards?
         mapped_v = "%s/results/%s.mapped.v" % (self.run_dir, self.top_module)
         if not os.path.isfile(mapped_v):
             raise ValueError("Output mapped verilog %s not found" % (mapped_v)) # better error?

@@ -383,6 +383,17 @@ class HammerTool(metaclass=ABCMeta):
         """
         pass
 
+    @property
+    @abstractmethod
+    def env_vars(self) -> Dict[str, str]:
+        """
+        Get the list of environment variables required for this tool.
+        Note to subclasses: remember to include variables from super().env_vars!
+
+        :return: Mapping of environment variable -> contents of said variable.
+        """
+        pass
+
     # Setup functions.
     def run(self) -> bool:
         """Run this tool.
@@ -396,11 +407,19 @@ class HammerTool(metaclass=ABCMeta):
         # Ensure that the run_dir exists.
         os.makedirs(self.run_dir, exist_ok=True)
 
-        # Add HAMMER_DATABASE to the environment for the script.
-        self._subprocess_env = os.environ.copy()
-        self._subprocess_env.update({"HAMMER_DATABASE": self.dump_database()})
-
         return self.do_run()
+
+    @property
+    def _subprocess_env(self) -> dict:
+        """
+        Internal helper function to set the environment variables for
+        self.run_executable().
+        """
+        env = os.environ.copy()
+        # Add HAMMER_DATABASE to the environment for the script.
+        env.update({"HAMMER_DATABASE": self.dump_database()})
+        env.update(self.env_vars)
+        return env
 
     # Properties.
     @property
@@ -511,6 +530,37 @@ class HammerTool(metaclass=ABCMeta):
             return self._database.get(key)
         except AttributeError:
             raise ValueError("Internal error: no database set by hammer-vlsi")
+
+    def create_enter_script(self, enter_script_location: str = "") -> None:
+        """
+        Create the enter script inside the rundir which can be used to
+        create an interactive environment with all the same variables
+        used to launch this tool.
+
+        :param enter_script_location: Location to create the enter script. Defaults to self.run_dir + "/enter"
+        """
+        if enter_script_location == "":
+            enter_script_location = os.path.join(self.run_dir, "enter")
+        enter_script = reduce(lambda a, b: a + "\n" + b, map(lambda k_v: "export {0}=\"{1}\"".format(k_v[0], k_v[1]), self.env_vars.items()))
+        with open(enter_script_location, "w") as f:
+            f.write(enter_script)
+
+    def check_input_files(self, extensions: List[str]) -> bool:
+        """Verify that input files exist and have the specified extensions.
+
+        :param extensions: List of extensions e.g. [".v", ".sv"]
+        :return: True if all files exist and have the specified extensions.
+        """
+        verilog_args = self.input_files
+        error = False
+        for v in verilog_args:
+            if not v.endswith(tuple(extensions)):
+                self.logger.error("Input of unsupported type {0} detected!".format(v))
+                error = True
+            if not os.path.isfile(v):
+                self.logger.error("Input file {0} does not exist!".format(v))
+                error = True
+        return not error
 
     # TODO: should some of these live in hammer_tech instead?
     def filter_and_select_libs(self, func: Callable[[hammer_tech.Library], List[str]], extra_funcs: List[Callable[[str], str]] = [], lib_filters: List[Callable[[hammer_tech.Library], bool]] = []) -> Iterable[str]:
@@ -666,7 +716,7 @@ class HammerTool(metaclass=ABCMeta):
     @property
     def timing_db_filter(self) -> LibraryFilter:
         """
-        Selecting timing libraries. Prefers CCS if available; picks NLDM as a fallback.
+        Selecting Synopsys timing libraries (.db). Prefers CCS if available; picks NLDM as a fallback.
         """
         def select_func(lib: hammer_tech.Library) -> List[str]:
             # Choose ccs if available, if not, nldm.
@@ -676,7 +726,22 @@ class HammerTool(metaclass=ABCMeta):
                 return [lib.nldm_library_file]
             else:
                 return []
-        return LibraryFilter(select_func, "timing_lib", "CCS/NLDM timing lib", is_file=True)
+        return LibraryFilter(select_func, "timing_db", "CCS/NLDM timing lib (Synopsys .db)", is_file=True)
+
+    @property
+    def liberty_lib_filter(self) -> LibraryFilter:
+        """
+        Selecting ASCII liberty (.lib) libraries. Prefers CCS if available; picks NLDM as a fallback.
+        """
+        def select_func(lib: hammer_tech.Library) -> List[str]:
+            # Choose ccs if available, if not, nldm.
+            if lib.ccs_liberty_file is not None:
+                return [lib.ccs_liberty_file]
+            elif lib.nldm_liberty_file is not None:
+                return [lib.nldm_liberty_file]
+            else:
+                return []
+        return LibraryFilter(select_func, "timing_lib", "CCS/NLDM timing lib (liberty ASCII .lib)", is_file=True)
 
     @property
     def milkyway_lib_dir_filter(self) -> LibraryFilter:
@@ -1070,8 +1135,10 @@ class HammerDriver:
 
         # TODO: think about artifact storage?
         self.log.info("Starting synthesis with tool '%s'" % (self.syn_tool.name))
-        self.syn_tool.run()
-        # TODO: check and handle failure!!!
+        if not self.syn_tool.run():
+            self.log.error("Synthesis tool %s failed! Please check its output." % (self.syn_tool.name))
+            # Allow the flow to keep running, just in case.
+            # TODO: make this an option
 
         # Record output from the syn_tool into the JSON output.
         output_config = dict(self.project_config)
@@ -1097,6 +1164,10 @@ class HammerDriver:
         # TODO: get place and route working
         self.par_tool.run()
         return {}
+
+class CadenceTool(HammerTool):
+    """Mix-in trait with functions useful for Cadence-based tools."""
+    pass
 
 class SynopsysTool(HammerTool):
     """Mix-in trait with functions useful for Synopsys-based tools."""
