@@ -115,15 +115,13 @@ class DC(HammerSynthesisTool, SynopsysTool):
         args = [
             os.path.join(self.tool_dir, "tools", "run-synthesis"),
             "--dc", dc_bin,
-            "--MGLS_LICENSE_FILE", self.get_setting("synopsys.MGLS_LICENSE_FILE"),
-            "--SNPSLMD_LICENSE_FILE", self.get_setting("synopsys.SNPSLMD_LICENSE_FILE"),
             "--clock_constraints_fragment", clock_constraints_fragment,
             "--preferred_routing_directions_fragment", preferred_routing_directions_fragment,
             "--find_regs_tcl", os.path.join(self.tool_dir, "tools", "find-regs.tcl"),
             "--run_dir", self.run_dir,
             "--top", self.top_module
         ]
-        args.extend(verilog_args)
+        args.extend(self.input_files) # We asserted these are Verilog above
         args.extend(lib_args)
 
         # Temporarily disable colours/tag to make DC run output more readable.
