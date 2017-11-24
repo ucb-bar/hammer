@@ -15,8 +15,6 @@ tf=()
 tlu_max=()
 tlu_min=()
 unset top
-unset MGLS_LICENSE_FILE
-unset SNPSLMD_LICENSE_FILE
 compile_args=('')
 while [[ "$1" != "" ]]
 do
@@ -36,8 +34,6 @@ do
     --tlu_max) tlu_max+=("$2"); shift;;
     --tlu_min) tlu_min+=("$2"); shift;;
     --top) top="$2"; shift;;
-    --MGLS_LICENSE_FILE) MGLS_LICENSE_FILE="$2"; shift;;
-    --SNPSLMD_LICENSE_FILE) SNPSLMD_LICENSE_FILE="$2"; shift;;
     --compile_arg) compile_args+=("$2"); shift;; # TODO: implement this one in __init__.py
 
     #~ */dc_shell) dc="$1";;
@@ -210,10 +206,6 @@ cat >> $run_dir/rm_dc_scripts/dc.tcl <<EOF
 source ${find_regs_tcl}
 find_regs $top 0 \${RESULTS_DIR}/$top.force_regs.ucli \${RESULTS_DIR}/$top.force_regs.tab
 EOF
-
-# Add licensing servers to the environment
-export MGLS_LICENSE_FILE="$MGLS_LICENSE_FILE"
-export SNPSLMD_LICENSE_FILE="$SNPSLMD_LICENSE_FILE"
 
 # Here's the actual DC invocation
 echo "exit" >> $run_dir/rm_dc_scripts/dc.tcl
