@@ -1199,6 +1199,18 @@ class CadenceTool(HasSDCSupport, HammerTool):
 
 class SynopsysTool(HasSDCSupport, HammerTool):
     """Mix-in trait with functions useful for Synopsys-based tools."""
+    @property
+    def env_vars(self) -> Dict[str, str]:
+        """
+        Get the list of environment variables required for this tool.
+        Note to subclasses: remember to include variables from super().env_vars!
+        """
+        return {
+            "SNPSLMD_LICENSE_FILE": self.get_setting("synopsys.SNPSLMD_LICENSE_FILE"),
+            # TODO: this is actually a Mentor Graphics licence, not sure why the old dc scripts depend on it.
+            "MGLS_LICENSE_FILE": self.get_setting("synopsys.MGLS_LICENSE_FILE")
+        }
+
     def get_synopsys_rm_tarball(self, product: str, settings_key: str = "") -> str:
         """Locate reference methodology tarball.
 
