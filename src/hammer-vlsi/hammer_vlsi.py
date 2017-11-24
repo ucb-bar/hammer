@@ -1165,11 +1165,39 @@ class HammerDriver:
         self.par_tool.run()
         return {}
 
-class CadenceTool(HammerTool):
-    """Mix-in trait with functions useful for Cadence-based tools."""
-    pass
+class HasSDCSupport(HammerTool):
+    """Mix-in trait with functions useful for tools with SDC-style
+    constaints."""
+    @property
+    def sdc_clock_constraints(self) -> str:
+        """Generate TCL fragments for top module clock constraints."""
+        # TODO(edwardw): move to SynopsysTool
+        output = [] # type: List[str]
 
-class SynopsysTool(HammerTool):
+        clocks = self.get_clock_ports()
+        for clock in clocks:
+            # TODO: FIXME This assumes that library units are always in ns!!!
+            output.append("create_clock {0} -name {0} -period {1}".format(clock.name, clock.period.value_in_units("ns")))
+            if clock.uncertainty is not None:
+                output.append("set_clock_uncertainty {1} [get_clocks {0}]".format(clock.name, clock.uncertainty.value_in_units("ns")))
+
+        output.append("\n")
+        return "\n".join(output)
+
+class CadenceTool(HasSDCSupport, HammerTool):
+    """Mix-in trait with functions useful for Cadence-based tools."""
+    @property
+    def env_vars(self) -> Dict[str, str]:
+        """
+        Get the list of environment variables required for this tool.
+        Note to subclasses: remember to include variables from super().env_vars!
+        """
+        return {
+            "CDS_LIC_FILE": self.get_setting("cadence.CDS_LIC_FILE"),
+            "CADENCE_HOME": self.get_setting("cadence.cadence_home")
+        }
+
+class SynopsysTool(HasSDCSupport, HammerTool):
     """Mix-in trait with functions useful for Synopsys-based tools."""
     def get_synopsys_rm_tarball(self, product: str, settings_key: str = "") -> str:
         """Locate reference methodology tarball.
