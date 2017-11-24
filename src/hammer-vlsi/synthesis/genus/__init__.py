@@ -6,6 +6,7 @@
 #  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
 
 from hammer_vlsi import HammerTool
+from hammer_vlsi import CadenceTool
 from hammer_vlsi import HammerSynthesisTool
 from hammer_vlsi import HammerVLSILogging
 
@@ -15,18 +16,6 @@ from functools import reduce
 from typing import Callable, Dict, List, Iterable
 
 import os
-
-class CadenceTool(HammerTool):
-    @property
-    def env_vars(self) -> Dict[str, str]:
-        """
-        Get the list of environment variables required for this tool.
-        Note to subclasses: remember to include variables from super().env_vars!
-        """
-        return {
-            "CDS_LIC_FILE": self.get_setting("cadence.CDS_LIC_FILE"),
-            "CADENCE_HOME": self.get_setting("cadence.cadence_home")
-        }
 
 class Genus(HammerSynthesisTool, CadenceTool):
     @property
@@ -62,7 +51,17 @@ class Genus(HammerSynthesisTool, CadenceTool):
         # Elaborate/parse the RTL.
         verbose_append("elaborate")
 
-        # TODO: generate constraints
+        # Apply constraints.
+        constraint_files = [] # type: List[str]
+        # Generate clock constraints.
+        clock_constraints_fragment = os.path.join(self.run_dir, "clock_constraints_fragment.sdc")
+        with open(clock_constraints_fragment, "w") as f:
+            f.write(self.sdc_clock_constraints)
+        constraint_files.append(clock_constraints_fragment)
+
+        verbose_append("create_constraint_mode -name func -sdc_files [list {}]".format(" ".join(constraint_files)))
+        # Apparently it also needs to be sourced to work?
+        verbose_append("source -echo -verbose {}".format(clock_constraints_fragment))
 
         # Synthesize and map.
         verbose_append("syn_generic")

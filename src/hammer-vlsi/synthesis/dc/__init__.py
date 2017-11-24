@@ -67,21 +67,6 @@ class DC(HammerSynthesisTool, SynopsysTool):
         f.write(output)
         f.close()
 
-    def generate_tcl_clock_constraints(self) -> str:
-        """Generate TCL fragments for top module clock constraints."""
-        # TODO(edwardw): move to SynopsysTool
-        output = [] # type: List[str]
-
-        clocks = self.get_clock_ports()
-        for clock in clocks:
-            # TODO: are units in Synopsys always in ns?
-            output.append("create_clock {0} -name {0} -period {1}".format(clock.name, clock.period.value_in_units("ns")))
-            if clock.uncertainty is not None:
-                output.append("set_clock_uncertainty {1} [get_clocks {0}]".format(clock.name, clock.uncertainty.value_in_units("ns")))
-
-        output.append("\n")
-        return "\n".join(output)
-
     def do_run(self) -> bool:
         # TODO(edwardw): move most of this to Synopsys common since it's not DC-specific.
         # Locate reference methodology tarball.
@@ -106,7 +91,7 @@ class DC(HammerSynthesisTool, SynopsysTool):
         # Generate clock constraints.
         clock_constraints_fragment = os.path.join(self.run_dir, "clock_constraints_fragment.tcl")
         with open(clock_constraints_fragment, "w") as f:
-            f.write(self.generate_tcl_clock_constraints())
+            f.write(self.sdc_clock_constraints)
 
         # Get libraries.
         lib_args = self.read_libs([
