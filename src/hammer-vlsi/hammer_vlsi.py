@@ -16,6 +16,7 @@ import datetime
 import importlib
 import os
 import re
+import shlex
 import subprocess
 import sys
 
@@ -530,17 +531,31 @@ class HammerTool(metaclass=ABCMeta):
         except AttributeError:
             raise ValueError("Internal error: no database set by hammer-vlsi")
 
-    def create_enter_script(self, enter_script_location: str = "") -> None:
+    def create_enter_script(self, enter_script_location: str = "", raw: bool = False) -> None:
         """
         Create the enter script inside the rundir which can be used to
         create an interactive environment with all the same variables
         used to launch this tool.
 
         :param enter_script_location: Location to create the enter script. Defaults to self.run_dir + "/enter"
+        :param raw: Emit the raw string without shell escaping (without quotes!!!)
         """
+        def escape_value(val: str) -> str:
+            if raw:
+                return val
+            else:
+                if val == "":
+                    return '""'
+                quoted = shlex.quote(val) # type: str
+                # For readability e.g. export X="9" vs export X=9
+                if quoted == val:
+                    return '"' + val + '"'
+                else:
+                    return quoted
+
         if enter_script_location == "":
             enter_script_location = os.path.join(self.run_dir, "enter")
-        enter_script = reduce(lambda a, b: a + "\n" + b, map(lambda k_v: "export {0}=\"{1}\"".format(k_v[0], k_v[1]), self.env_vars.items()))
+        enter_script = reduce(lambda a, b: a + "\n" + b, map(lambda k_v: "export {0}={1}".format(k_v[0], escape_value(k_v[1])), sorted(self.env_vars.items())))
         with open(enter_script_location, "w") as f:
             f.write(enter_script)
 
