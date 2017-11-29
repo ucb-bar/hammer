@@ -1181,11 +1181,10 @@ class HammerDriver:
 
 class HasSDCSupport(HammerTool):
     """Mix-in trait with functions useful for tools with SDC-style
-    constaints."""
+    constraints."""
     @property
     def sdc_clock_constraints(self) -> str:
         """Generate TCL fragments for top module clock constraints."""
-        # TODO(edwardw): move to SynopsysTool
         output = [] # type: List[str]
 
         clocks = self.get_clock_ports()
