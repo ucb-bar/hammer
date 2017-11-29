@@ -384,7 +384,6 @@ class HammerTool(metaclass=ABCMeta):
         pass
 
     @property
-    @abstractmethod
     def env_vars(self) -> Dict[str, str]:
         """
         Get the list of environment variables required for this tool.
@@ -392,7 +391,7 @@ class HammerTool(metaclass=ABCMeta):
 
         :return: Mapping of environment variable -> contents of said variable.
         """
-        pass
+        return {}
 
     # Setup functions.
     def run(self) -> bool:
