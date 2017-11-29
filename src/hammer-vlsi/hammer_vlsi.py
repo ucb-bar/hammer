@@ -555,7 +555,7 @@ class HammerTool(metaclass=ABCMeta):
 
         if enter_script_location == "":
             enter_script_location = os.path.join(self.run_dir, "enter")
-        enter_script = reduce(lambda a, b: a + "\n" + b, map(lambda k_v: "export {0}={1}".format(k_v[0], escape_value(k_v[1])), sorted(self.env_vars.items())))
+        enter_script = "\n".join(map(lambda k_v: "export {0}={1}".format(k_v[0], escape_value(k_v[1])), sorted(self.env_vars.items())))
         with open(enter_script_location, "w") as f:
             f.write(enter_script)
 
