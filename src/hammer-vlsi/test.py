@@ -2,11 +2,14 @@
 # -*- coding: utf-8 -*-
 #
 #  Tests for hammer-vlsi
-#  
+#
 #  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
 
 import hammer_vlsi
 
+from typing import Dict
+
+import os
 import tempfile
 import unittest
 
@@ -56,7 +59,6 @@ class HammerVLSILoggingTest(unittest.TestCase):
         )
 
     def test_file_logging(self):
-        import os
         fd, path = tempfile.mkstemp(".log")
         os.close(fd) # Don't leak file descriptors
 
@@ -138,6 +140,54 @@ class HammerToolTest(unittest.TestCase):
 
         # Cleanup
         shutil.rmtree(test.run_dir)
+
+    def test_create_enter_script(self):
+        class Tool(hammer_vlsi.HammerTool):
+            @property
+            def env_vars(self) -> Dict[str, str]:
+                return {
+                    "HELLO": "WORLD",
+                    "EMPTY": "",
+                    "CLOUD": "9",
+                    "lol": "abc\"cat\""
+                }
+            def do_run(self) -> bool:
+                return True
+
+        fd, path = tempfile.mkstemp(".sh")
+        os.close(fd) # Don't leak file descriptors
+
+        test = Tool()
+        test.create_enter_script(path)
+        with open(path) as f:
+            enter_script = f.read()
+        # Cleanup
+        os.remove(path)
+
+        self.assertEqual(
+"""
+export CLOUD="9"
+export EMPTY=""
+export HELLO="WORLD"
+export lol='abc"cat"'
+""".strip(), enter_script.strip()
+        )
+
+        fd, path = tempfile.mkstemp(".sh")
+        test.create_enter_script(path, raw=True)
+        with open(path) as f:
+            enter_script = f.read()
+        # Cleanup
+        os.remove(path)
+
+        self.assertEqual(
+"""
+export CLOUD=9
+export EMPTY=
+export HELLO=WORLD
+export lol=abc"cat"
+""".strip(), enter_script.strip()
+        )
 
 class TimeValueTest(unittest.TestCase):
     def test_read_and_write(self):
