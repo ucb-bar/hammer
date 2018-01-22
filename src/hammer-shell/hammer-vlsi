@@ -1,0 +1,2 @@
+#!/bin/sh
+$HAMMER_VLSI/cli_driver.py $@
