@@ -1,7 +1,7 @@
 #!/bin/sh
 set -x
 # Core
-mypy ../hammer-vlsi/entry.py
+mypy ../hammer-vlsi/cli_driver.py
 
 # Shell
 mypy ../hammer-shell/get-config
