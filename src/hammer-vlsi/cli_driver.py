@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-#  entry.py
+#  cli_driver.py
 #  
 #  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
 #
@@ -50,7 +50,7 @@ def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callab
 
 def args_to_driver(args: dict,
                    defaultOptions: hammer_vlsi.HammerDriverOptions = hammer_vlsi.HammerDriver.get_default_driver_options()) -> \
-Tuple[hammer_vlsi.HammerDriverOptions, dict, List[str]]:
+        Tuple[hammer_vlsi.HammerDriverOptions, dict, List[str]]:
     """Parse command line arguments and environment variables for the command line front-end to hammer-vlsi.
     
     :return: DriverOptions, a parsed config for certain options, and a list of errors."""
@@ -58,13 +58,13 @@ Tuple[hammer_vlsi.HammerDriverOptions, dict, List[str]]:
     # TODO: rewrite this less tediously?
 
     # Driver options.
-    options = defaultOptions # type: hammer_vlsi.HammerDriverOptions
+    options = defaultOptions  # type: hammer_vlsi.HammerDriverOptions
 
     # Extra config (flattened JSON).
-    config = {} # type: Dict[str, Any]
+    config = {}  # type: Dict[str, Any]
 
     # Create a list of errors for the user.
-    errors = [] # type: List[str]
+    errors = []  # type: List[str]
 
     # Load environment configs.
     env_configs = parse_optional_file_list_from_args(args['environment_config'],
@@ -180,6 +180,7 @@ def main(args: dict) -> int:
         print(output_json)
         return 0
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
@@ -220,7 +221,8 @@ if __name__ == '__main__':
     except PermissionError as e:
         output = str(e.args[0]) + " " + e.args[1]
     if output != "hammer-shell appears to be on the path":
-        print("hammer-shell does not appear to be on the path (hammer-shell-test failed to run: %s)" % (output), file=sys.stderr)
+        print("hammer-shell does not appear to be on the path (hammer-shell-test failed to run: %s)" % (output),
+              file=sys.stderr)
         sys.exit(1)
 
     sys.exit(main(vars(parser.parse_args())))
