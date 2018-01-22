@@ -14,7 +14,7 @@ from hammer_vlsi import SynopsysTool
 from hammer_vlsi import HammerVLSILogging
 
 class ICC(HammerPlaceAndRouteTool, SynopsysTool):
-    def do_run(self) -> None:
+    def do_run(self) -> bool:
         # Locate reference methodology tarball.
         synopsys_rm_tarball = self.get_synopsys_rm_tarball("ICC")
 
@@ -78,20 +78,20 @@ export SNPSLMD_LICENSE_FILE="{snps}"
         tlu_min_caps = ' '.join(self.read_libs([self.tlu_min_cap_filter], self.to_plain_item))
 
         if timing_dbs == "":
-            self.log.error("No timing dbs (libs) specified!")
+            self.logger.error("No timing dbs (libs) specified!")
             return False
         if milkyway_lib_dirs == "":
-            self.log.error("No milkyway lib dirs specified!")
+            self.logger.error("No milkyway lib dirs specified!")
             return False
         if milkyway_techfiles == "":
-            self.log.error("No milkyway tech files specified!")
+            self.logger.error("No milkyway tech files specified!")
             return False
         if tlu_max_caps == "" and tlu_min_caps == "":
-            self.log.error("No tlu+ cap files specified!")
+            self.logger.error("No tlu+ cap files specified!")
             return False
 
         # Load input files.
-        verilog_args = self.input_files
+        verilog_args = list(self.input_files)
         error = False
         for v in verilog_args:
             if not (v.endswith(".v")):
@@ -363,11 +363,11 @@ set MW_GROUND_PORT              "{MW_GROUND_PORT}";
 #~ }
 #~ EOF
             if floorplan_script == "null" or floorplan_script == "":
-                self.log.error("floorplan_mode is manual but no floorplan_script specified")
+                self.logger.error("floorplan_mode is manual but no floorplan_script specified")
                 return False
             copyfile(floorplan_script, os.path.join(self.run_dir, "generated-scripts", "floorplan_inner.tcl"))
         else:
-            self.log.error("Invalid floorplan_mode %s" % (floorplan_mode))
+            self.logger.error("Invalid floorplan_mode %s" % (floorplan_mode))
             return False
 
         # Prepend constraints to the floorplan.
