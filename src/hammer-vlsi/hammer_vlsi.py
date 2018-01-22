@@ -1077,7 +1077,7 @@ class HammerDriver:
         tools = reduce(lambda a, b: a + b, list(self.tool_configs.values()))
         self.database.update_tools(tools)
 
-    def load_par_tool(self, run_dir: str = "") -> None:
+    def load_par_tool(self, run_dir: str = "") -> bool:
         """
         Load the place and route tool based on the given database.
 
@@ -1108,13 +1108,15 @@ class HammerDriver:
 
         self.tool_configs["par"] = par_tool.get_config()
         self.update_tool_configs()
+        return True
 
-    def load_synthesis_tool(self, run_dir: str = "") -> None:
+    def load_synthesis_tool(self, run_dir: str = "") -> bool:
         """
         Load the synthesis tool based on the given database.
 
         :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
         constructor.
+        :return: True if synthesis tool loading was successful, False otherwise.
         """
         if run_dir == "":
             run_dir = os.path.join(self.obj_dir, "syn-rundir")
@@ -1125,7 +1127,9 @@ class HammerDriver:
             path=self.database.get_setting("vlsi.core.synthesis_tool_path"),
             tool_name=syn_tool_name
         )
-        assert isinstance(syn_tool_get, HammerSynthesisTool), "Synthesis tool must be a HammerSynthesisTool"
+        if not isinstance(syn_tool_get, HammerSynthesisTool):
+            self.log.error("Synthesis tool must be a HammerSynthesisTool")
+            return False
         # TODO: generate this automatically
         syn_tool = syn_tool_get # type: HammerSynthesisTool
         syn_tool.name = syn_tool_name
@@ -1135,12 +1139,22 @@ class HammerDriver:
         syn_tool.run_dir = run_dir
 
         syn_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
-        syn_tool.top_module = self.database.get_setting("synthesis.inputs.top_module")
+        syn_tool.top_module = self.database.get_setting("synthesis.inputs.top_module", nullvalue="")
+        missing_inputs = False
+        if syn_tool.top_module == "":
+            self.log.error("Top module not specified for synthesis")
+            missing_inputs = True
+        if len(syn_tool.input_files) == 0:
+            self.log.error("No input files specified for synthesis")
+            missing_inputs = True
+        if missing_inputs:
+            return False
 
         self.syn_tool = syn_tool
 
         self.tool_configs["synthesis"] = syn_tool.get_config()
         self.update_tool_configs()
+        return True
 
     def run_synthesis(self) -> dict:
         """
@@ -1167,8 +1181,14 @@ class HammerDriver:
 
         return output_config
 
-    def par_run_from_synthesis(self):
-        pass
+    @staticmethod
+    def generate_par_inputs_from_synthesis(config_in: dict) -> dict:
+        """Generate the appropriate inputs for running place-and-route from the outputs of synthesis run."""
+        output_dict = dict(config_in)
+        # Plug in the outputs of synthesis into the par inputs.
+        output_dict["par.inputs.input_files"] = output_dict["synthesis.outputs.output_files"]
+        output_dict["par.inputs.top_module"] = output_dict["synthesis.inputs.top_module"]
+        return output_dict
 
     def run_par(self) -> dict:
         """
