@@ -120,6 +120,7 @@ class HammerTechnology:
         Prepend the appropriate path (either from tarballs or installs) to the given library item.
         """
         base_path = path.split(os.path.sep)[0]
+        rest_of_path = path.split(os.path.sep)[1:]
 
         if self.config.installs is not None:
             matching_installs = list(filter(lambda install: install.path == base_path, self.config.installs))
@@ -142,9 +143,30 @@ class HammerTechnology:
                     base = self.path
                 else:
                     base = self.get_setting(install.base_var)
-                return os.path.join(base, path)
+                return os.path.join(*([base] + rest_of_path))
             else:
                 return os.path.join(self.extracted_tarballs_dir, path)
+
+    def extract_technology_files(self) -> None:
+        """Ensure that the technology files exist either via tarballs or installs."""
+        if self.config.installs is not None:
+            self.check_installs()
+            return
+        if self.config.tarballs is not None:
+            self.extract_tarballs()
+            return
+        self.logger.error("Technology specified neither tarballs or installs")
+
+    def check_installs(self) -> bool:
+        """Check that the all directories for a pre-installed technology actually exist.
+
+        :return: Return True if the directories is OK, False otherwise."""
+        for install in self.config.installs:
+            install_path = str(self.get_setting(install.base_var))
+            if not os.path.exists(install_path):
+                self.logger.error("installs {path} does not exist".format(path=install_path))
+                return False
+        return True
 
     def extract_tarballs(self) -> None:
         """Extract tarballs to the given cache_dir, or verify that they've been extracted."""
