@@ -134,8 +134,8 @@ class HammerToolTest(unittest.TestCase):
 
         # Don't care about ordering here.
         self.assertEqual(set(test._read_lib_output), set([
-            "drink {0}/test/soy".format(tech_dir),
-            "drink {0}/test/coconut".format(tech_dir),
+            "drink {0}/soy".format(tech_dir),
+            "drink {0}/coconut".format(tech_dir),
         ]))
 
         # Cleanup

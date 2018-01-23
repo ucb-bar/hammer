@@ -1066,9 +1066,9 @@ class HammerDriver:
         self.tech.logger = self.log.context("tech")
         self.tech.set_database(self.database)
         self.tech.cache_dir = cache_dir
+        self.tech.extract_technology_files()
         self.database.update_technology(self.tech.get_config())
 
-        self.tech.extract_tarballs()  # TODO: move this back into tech itself
 
     def update_tool_configs(self) -> None:
         """
