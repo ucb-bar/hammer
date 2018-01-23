@@ -112,6 +112,8 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
     for meta_key in meta_keys:
         setting = meta_key[:-meta_len]
         meta_type = meta_dict[meta_key] # type: str
+        if not isinstance(meta_type, str):
+            raise TypeError("meta_type was not a string: " + repr(meta_type))
         try:
             meta_func = meta_variable_functions[meta_type]
         except KeyError:
