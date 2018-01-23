@@ -8,7 +8,7 @@
 from abc import ABCMeta, abstractmethod
 from enum import Enum
 
-from typing import Callable, Iterable, List, NamedTuple, Tuple, TypeVar, Type, Optional, Dict
+from typing import Callable, Iterable, List, NamedTuple, Tuple, TypeVar, Type, Optional, Dict, Any
 
 from functools import reduce
 
@@ -577,7 +577,9 @@ class HammerTool(metaclass=ABCMeta):
         return not error
 
     # TODO: should some of these live in hammer_tech instead?
-    def filter_and_select_libs(self, func: Callable[[hammer_tech.Library], List[str]], extra_funcs: List[Callable[[str], str]] = [], lib_filters: List[Callable[[hammer_tech.Library], bool]] = []) -> Iterable[str]:
+    def filter_and_select_libs(self, func: Callable[[hammer_tech.Library], List[str]],
+                               extra_funcs: List[Callable[[str], str]] = [],
+                               lib_filters: List[Callable[[hammer_tech.Library], bool]] = []) -> List[str]:
         """
         Generate a list by filtering the list of libraries and selecting some parts of it.
 
@@ -586,7 +588,11 @@ class HammerTool(metaclass=ABCMeta):
         :param lib_filters: Filters to filter the list of libraries before selecting desired results from them.
         :return: List of arguments to pass to a shell script
         """
-        filtered_libs = reduce(lambda libs, func: filter(func, libs), lib_filters, self.technology.config.libraries)
+        filtered_libs = reduce_named(
+            sequence=lib_filters,
+            initial=self.technology.config.libraries,
+            function=lambda libs, func: filter(func, libs)
+        )
 
         lib_results = list(reduce(lambda a, b: a+b, list(map(func, filtered_libs)))) # type: List[str]
 
@@ -796,7 +802,8 @@ class HammerTool(metaclass=ABCMeta):
                 return []
         return LibraryFilter(select_tlu_min_cap, "tlu_min", "TLU+ min cap db", is_file=True)
 
-    def read_libs(self, libraries: Iterable[LibraryFilter], output_func: Callable[[str, LibraryFilter], List[str]], must_exist: bool = True) -> List[str]:
+    def read_libs(self, libraries: Iterable[LibraryFilter], output_func: Callable[[str, LibraryFilter], List[str]],
+                  must_exist: bool = True) -> List[str]:
         """
         Read the given libraries and return a list of strings according to some output format.
 
@@ -807,34 +814,48 @@ class HammerTool(metaclass=ABCMeta):
         - Append everything
 
         :param libraries: List of libraries to filter, specified as a list of LibraryFilter elements.
-        :param output_func: Function which processes the outputs, taking in the filtered lib and the library filter which generated it.
+        :param output_func: Function which processes the outputs, taking in the filtered lib and the library filter
+                            which generated it.
         :param must_exist: Must each library item actually exist? Default: True (yes, they must exist)
         :return: List of filtered libraries processed according output_func.
         """
-
-        def process_library_filter(filt: LibraryFilter) -> Tuple[Iterable[str], LibraryFilter]:
-            if must_exist:
-                existence_check_func = self.make_check_isfile(filt.description) if filt.is_file else self.make_check_isdir(filt.description)
-            else:
-                existence_check_func = lambda x: x # everything goes
-
-            lib_items = self.filter_and_select_libs(filt.func, extra_funcs=[self.technology.prepend_dir_path, existence_check_func], lib_filters=[self.filter_for_supplies])
-
-            # Run any list-level functions.
-            return (reduce(lambda arg, func: func(list(arg)), filt.extra_post_filter_funcs, lib_items), filt)
 
         def add_lists(a: List[str], b: List[str]) -> List[str]:
             assert isinstance(a, List)
             assert isinstance(b, List)
             return a + b
 
-        return list(reduce(
-            add_lists,
-            list(map(
-                lambda libitems_filt: reduce(lambda a, b: a + b, list(map(lambda item: output_func(item, libitems_filt[1]), libitems_filt[0]))),
-                map(process_library_filter, libraries)
-            ))
-        ))
+        def process_library_filter(filt: LibraryFilter) -> List[str]:
+            if must_exist:
+                existence_check_func = self.make_check_isfile(filt.description) if filt.is_file else self.make_check_isdir(filt.description)
+            else:
+                existence_check_func = lambda x: x # everything goes
+
+            lib_items = self.filter_and_select_libs(filt.func, extra_funcs=[self.technology.prepend_dir_path,
+                                                                            existence_check_func],
+                                                    lib_filters=[self.filter_for_supplies])  # type: List[str]
+            # Quickly check that lib_items is actually a List[str].
+            if not isinstance(lib_items, List):
+                raise TypeError("lib_items is not a List[str], but a " + str(type(lib_items)))
+            for i in lib_items:
+                if not isinstance(i, str):
+                    raise TypeError("lib_items is a List but not a List[str]")
+
+            # Apply any list-level functions.
+            after_post_filter = reduce_named(
+                sequence=filt.extra_post_filter_funcs,
+                initial=lib_items,
+                function=lambda libs, func: func(list(libs)),
+            )
+
+            # Finally, apply any output functions.
+            # e.g. turning foo.db into ["--timing", "foo.db"].
+            after_output_functions = map(lambda item: output_func(item, filt), after_post_filter)
+
+            # Concatenate lists of List[str] together.
+            return list(reduce(add_lists, after_output_functions, []))
+
+        return list(reduce(add_lists, map(process_library_filter, libraries)))
 
     # TODO: these helper functions might get a bit out of hand, put them somewhere more organized?
     def get_clock_ports(self) -> List[ClockPort]:
@@ -1294,3 +1315,13 @@ def load_tool(tool_name: str, path: Iterable[str]) -> HammerTool:
     htool.tool_dir = os.path.dirname(os.path.abspath(mod.__file__))
     return htool
 
+
+def reduce_named(function: Callable, sequence: Iterable, initial=None) -> Any:
+    """
+    Version of functools.reduce with named arguments.
+    See https://mail.python.org/pipermail/python-ideas/2014-October/029803.html
+    """
+    if initial is None:
+        return reduce(function, sequence)
+    else:
+        return reduce(function, sequence, initial)
