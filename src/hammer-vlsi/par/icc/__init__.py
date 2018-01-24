@@ -136,35 +136,44 @@ set MW_POWER_PORT               "{MW_POWER_PORT}";
 set MW_GROUND_NET               "{MW_GROUND_NET}";
 set MW_GROUND_PORT              "{MW_GROUND_PORT}";
 """.format(
-        top_module=self.top_module,
-        verilogs=verilogs,
-        timing_dbs=timing_dbs,
-        milkyway_lib_dirs=milkyway_lib_dirs,
-        num_cores=self.get_setting("vlsi.core.max_threads"),
-        milkyway_techfiles=milkyway_techfiles,
-        tlu_max_caps=tlu_max_caps,
-        tlu_min_caps=tlu_min_caps,
-        MW_POWER_NET=self.get_setting("par.icc.MW_POWER_NET"),
-        MW_POWER_PORT=self.get_setting("par.icc.MW_POWER_PORT"),
-        MW_GROUND_NET=self.get_setting("par.icc.MW_GROUND_NET"),
-        MW_GROUND_PORT=self.get_setting("par.icc.MW_GROUND_PORT")
-))
-
-#~ common_setup_appendix_tcl_path=$($get_config $config_db -n "" par.icc.common_setup_appendix_tcl_path)
-#~ if [[ "$common_setup_appendix_tcl_path" != "" ]]
-#~ then
-    #~ echo "# The following snippet was added by PLSI from ${common_setup_appendix_tcl_path}" >> $run_dir/rm_setup/common_setup.tcl
-    #~ cat ${common_setup_appendix_tcl_path} >> $run_dir/rm_setup/common_setup.tcl
-#~ fi
-
-#~ icc_setup_appendix_tcl_path=$($get_config $config_db -n "" par.icc.icc_setup_appendix_tcl_path)
-#~ if [[ "$icc_setup_appendix_tcl_path" != "" ]]
-#~ then
-    #~ echo "# The following snippet was added by PLSI from ${icc_setup_appendix_tcl_path}" >> $run_dir/rm_setup/icc_setup.tcl
-    #~ cat ${icc_setup_appendix_tcl_path} >> $run_dir/rm_setup/icc_setup.tcl
-#~ fi
+                top_module=self.top_module,
+                verilogs=verilogs,
+                timing_dbs=timing_dbs,
+                milkyway_lib_dirs=milkyway_lib_dirs,
+                num_cores=self.get_setting("vlsi.core.max_threads"),
+                milkyway_techfiles=milkyway_techfiles,
+                tlu_max_caps=tlu_max_caps,
+                tlu_min_caps=tlu_min_caps,
+                MW_POWER_NET=self.get_setting("par.icc.MW_POWER_NET"),
+                MW_POWER_PORT=self.get_setting("par.icc.MW_POWER_PORT"),
+                MW_GROUND_NET=self.get_setting("par.icc.MW_GROUND_NET"),
+                MW_GROUND_PORT=self.get_setting("par.icc.MW_GROUND_PORT")
+            ))
 
         icc_setup_path = os.path.join(self.run_dir, "rm_setup", "icc_setup.tcl")
+        common_setup_path = os.path.join(self.run_dir, "rm_setup", "common_setup.tcl")
+
+        common_setup_appendix_tcl_path = str(self.get_setting("par.icc.common_setup_appendix_tcl_path", nullvalue=""))
+        if common_setup_appendix_tcl_path != "":
+            with open(common_setup_appendix_tcl_path, "r") as f:
+                common_setup_appendix_tcl_path_contents = str(f.read()).split("\n")  # type: List[str]
+            # TODO(edwardw): come up with a more generic "source locator" for hammer
+            header_text = "# The following snippet was added by HAMMER from {path}".format(
+                path=common_setup_appendix_tcl_path)
+            common_setup_appendix_tcl_path_contents.insert(0, header_text)
+            with open(common_setup_path, "a") as f:
+                f.write("\n".join(common_setup_appendix_tcl_path_contents))
+
+        icc_setup_appendix_tcl_path = str(self.get_setting("par.icc.icc_setup_appendix_tcl_path", nullvalue=""))
+        if icc_setup_appendix_tcl_path != "":
+            with open(icc_setup_appendix_tcl_path, "r") as f:
+                icc_setup_appendix_tcl_path_contents = str(f.read()).split("\n")  # type: List[str]
+            # TODO(edwardw): come up with a more generic "source locator" for hammer
+            header_text = "# The following snippet was added by HAMMER from {path}".format(
+                path=icc_setup_appendix_tcl_path)
+            icc_setup_appendix_tcl_path_contents.insert(0, header_text)
+            with open(icc_setup_path, "a") as f:
+                f.write("\n".join(icc_setup_appendix_tcl_path_contents))
 
 #~ # Read the core's configuration file to figure out what all the clocks should
 #~ # look like.

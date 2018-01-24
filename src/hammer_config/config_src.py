@@ -21,6 +21,9 @@ import os
 import re
 import sys
 
+# Special key used for meta variables which require config paths like prependlocal.
+CONFIG_PATH_KEY = "_config_path"
+
 def unpack(config_dict: dict, prefix: str = "") -> dict:
     """
     Unpack the given config_dict, flattening key names recursively.
@@ -78,27 +81,35 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
         if not isinstance(value, list):
             raise ValueError("Trying to append to list %s with non-list %s" % (key, str(value)))
         config_dict[key] += value
+
     def meta_subst(config_dict: dict, key: str, value) -> None:
         def subst_str(input_str: str) -> str:
             """Substitute ${...}"""
             return re.sub(__VARIABLE_EXPANSION_REGEX, lambda x: config_dict[x.group(1)], input_str)
-        newval = "" # type: Union[str, List[str]]
+
+        newval = ""  # type: Union[str, List[str]]
         if isinstance(value, list):
             newval = list(map(subst_str, value))
         else:
             newval = subst_str(value)
         config_dict[key] = newval
+
     def meta_dynamicsubst(config_dict: dict, key: str, value) -> None:
         # Do nothing at this stage, since we need to deal with dynamicsubst only after
         # everything has been bound.
         config_dict[key] = value
         config_dict[key + "_meta"] = "dynamicsubst"
 
+    def meta_prependlocal(config_dict: dict, key: str, value) -> None:
+        """Prepend the local path of the config dict."""
+        config_dict[key] = os.path.join(meta_dict[CONFIG_PATH_KEY], str(value))
+
     # Lookup table of meta functions.
     meta_variable_functions = {}
     meta_variable_functions['append'] = meta_append
     meta_variable_functions['subst'] = meta_subst
     meta_variable_functions['dynamicsubst'] = meta_dynamicsubst
+    meta_variable_functions['prependlocal'] = meta_prependlocal
     newdict = dict(config_dict)
 
     # Find meta variables.
@@ -233,15 +244,20 @@ class HammerDatabase:
         self.builtins = builtins_config
         self.__config_cache_dirty = True
 
-def load_config_from_string(contents: str, is_yaml: bool) -> dict:
+
+def load_config_from_string(contents: str, is_yaml: bool, path: str = "unspecified") -> dict:
     """
     Load config from a string by loading it and unpacking it.
 
     :param contents: Contents of the config.
     :param is_yaml: True if the contents are yaml.
+    :param path: Path to the folder where the config file is located.
     :return: Loaded config dictionary, unpacked.
     """
-    return unpack(load_yaml(contents) if is_yaml else json.loads(contents))
+    unpacked = unpack(load_yaml(contents) if is_yaml else json.loads(contents))
+    unpacked[CONFIG_PATH_KEY] = path
+    return unpacked
+
 
 def load_config_from_file(filename: str, strict: bool = False) -> dict:
     """
@@ -272,7 +288,8 @@ def load_config_from_file(filename: str, strict: bool = False) -> dict:
     if file_contents.strip() == "":
         return {}
     else:
-        return load_config_from_string(file_contents, is_yaml)
+        return load_config_from_string(file_contents, is_yaml, path=os.path.dirname(filename))
+
 
 def combine_configs(configs: Iterable[dict]) -> dict:
     """

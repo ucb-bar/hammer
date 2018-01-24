@@ -146,6 +146,35 @@ foo:
         self.assertEqual(db.get_setting("foo.bar.dac"), "current_weighted")
         self.assertEqual(db.get_setting("foo.bar.dsl"), ["scala", "python"])
 
+    def test_meta_prependlocal(self):
+        """
+        Test that the meta attribute "prependlocal" works.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo:
+    bar:
+        adc: "yes"
+        dac: "no"
+        dsl: ["scala"]
+        base_test: "local_path"
+        base_test_meta: prependlocal
+""", is_yaml=True, path="base/config/path")
+        meta = hammer_config.load_config_from_string("""
+{
+  "foo.bar.dsl": ["python"],
+  "foo.bar.dsl_meta": "append",
+  "foo.bar.dac": "current_weighted",
+  "foo.bar.meta_test": "local_path",
+  "foo.bar.meta_test_meta": "prependlocal"
+}
+""", is_yaml=False, path="meta/config/path")
+        db.update_core([base, meta])
+        self.assertEqual(db.get_setting("foo.bar.dac"), "current_weighted")
+        self.assertEqual(db.get_setting("foo.bar.dsl"), ["scala", "python"])
+        self.assertEqual(db.get_setting("foo.bar.base_test"), "base/config/path/local_path")
+        self.assertEqual(db.get_setting("foo.bar.meta_test"), "meta/config/path/local_path")
+
     def test_meta_append_bad(self):
         """
         Test that the meta attribute "append" catches bad inputs.
