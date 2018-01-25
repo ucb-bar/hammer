@@ -4,10 +4,14 @@
 #  Unit tests for the hammer_config module.
 #
 #  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+import tempfile
 
 import hammer_config
 
 import unittest
+
+import os
+
 
 class HammerDatabaseTest(unittest.TestCase):
 
@@ -174,6 +178,110 @@ foo:
         self.assertEqual(db.get_setting("foo.bar.dsl"), ["scala", "python"])
         self.assertEqual(db.get_setting("foo.bar.base_test"), "base/config/path/local_path")
         self.assertEqual(db.get_setting("foo.bar.meta_test"), "meta/config/path/local_path")
+
+    def test_meta_transclude(self):
+        """
+        Test that the meta attribute "transclude" works.
+        """
+        # Put some text into the file.
+        file_contents = "The quick brown fox jumps over the lazy dog"
+        fd, path = tempfile.mkstemp(".txt")
+        with open(path, "w") as f:
+            f.write(file_contents)
+
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+chips:
+    potato: tuber
+    bear: "yeah"
+""", is_yaml=True, path="base/config/path")
+        meta = hammer_config.load_config_from_string("""
+{
+  "chips.tree": "<path>",
+  "chips.tree_meta": "transclude"
+}
+""".replace("<path>", path), is_yaml=False, path="meta/config/path")
+
+        db.update_core([base, meta])
+
+        # Trigger merge before cleanup
+        self.assertEqual(db.get_setting("chips.potato"), "tuber")
+
+        # Cleanup
+        os.remove(path)
+
+        self.assertEqual(db.get_setting("chips.bear"), "yeah")
+        self.assertEqual(db.get_setting("chips.tree"), file_contents)
+
+    def test_meta_transclude_prependlocal(self):
+        """
+        Test that the meta attribute "transclude" works with "prependlocal".
+        """
+        # Put some text into the file.
+        file_contents = "The quick brown fox jumps over the lazy dog"
+        local_path = "meta/config/path"
+        fd, path = tempfile.mkstemp(".txt")
+        with open(path, "w") as f:
+            f.write(file_contents)
+
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+chips:
+    potato: tuber
+    bear: "yeah"
+""", is_yaml=True)
+        meta = hammer_config.load_config_from_string("""
+{
+  "chips.tree": "<path>",
+  "chips.tree_meta": ["transclude", "prependlocal"]
+}
+""".replace("<path>", path), is_yaml=False, path=local_path)
+
+        db.update_core([base, meta])
+
+        # Trigger merge before cleanup
+        self.assertEqual(db.get_setting("chips.potato"), "tuber")
+
+        # Cleanup
+        os.remove(path)
+
+        self.assertEqual(db.get_setting("chips.bear"), "yeah")
+        self.assertEqual(db.get_setting("chips.tree"), os.path.join(local_path, file_contents))
+
+    def test_meta_transclude_subst(self):
+        """
+        Test that the meta attribute "transclude" works with "subst".
+        """
+        # Put some text into the file.
+        file_contents = "I like ${food.condiment} on my ${food.dish}."
+        file_contents_sol = "I like monosodium monochloride on my chips."
+        local_path = "meta/config/path"
+        fd, path = tempfile.mkstemp(".txt")
+        with open(path, "w") as f:
+            f.write(file_contents)
+
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+food:
+    condiment: "monosodium monochloride"
+    dish: "chips"
+""", is_yaml=True)
+        meta = hammer_config.load_config_from_string("""
+{
+  "food.announcement": "<path>",
+  "food.announcement_meta": ["transclude", "subst"]
+}
+""".replace("<path>", path), is_yaml=False, path=local_path)
+
+        db.update_core([base, meta])
+
+        # Trigger merge before cleanup
+        self.assertEqual(db.get_setting("food.dish"), "chips")
+
+        # Cleanup
+        os.remove(path)
+
+        self.assertEqual(db.get_setting("food.announcement"), file_contents_sol)
 
     def test_meta_as_array_1(self):
         """
