@@ -7,11 +7,9 @@
 #  Dumps the output in JSON format to standard output.
 #  See README.config for more details.
 
-# TODO(edwardw): implement meta variables
-
 # pylint: disable=invalid-name
 
-from typing import Iterable, List, Union
+from typing import Iterable, List, Union, Callable, Any
 
 from .yaml2json import load_yaml # grumble grumble
 
@@ -21,7 +19,7 @@ import os
 import re
 import sys
 
-# Special key used for meta variables which require config paths like prependlocal.
+# Special key used for meta directives which require config paths like prependlocal.
 CONFIG_PATH_KEY = "_config_path"
 
 def unpack(config_dict: dict, prefix: str = "") -> dict:
@@ -60,19 +58,43 @@ def unpack(config_dict: dict, prefix: str = "") -> dict:
             output_dict[real_prefix + key] = value
     return output_dict
 
+
 __VARIABLE_EXPANSION_REGEX = r'\${([a-zA-Z_\-\d.]+)}'
+
 
 def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
     """
-    Expand the _meta variables for the given config dict and return a new
+    Expand the meta directives for the given config dict and return a new
     dictionary containing the updated settings with respect to the base config_dict.
 
     :param config_dict: Base config.
-    :param meta_dict: Dictionary with potentially new meta variables.
+    :param meta_dict: Dictionary with potentially new meta directives.
     :return: New dictionary with meta_dict updating config_dict.
     """
-    # Helper functions to implement each meta variable.
-    def meta_append(config_dict: dict, key: str, value) -> None:
+
+    def perform_subst(value: Union[str, List[str]]) -> Union[str, List[str]]:
+        """
+        Perform substitutions for the given value.
+        If value is a string, perform substitutions in the string. If value is a list, then perform substitutions
+        in every string in the list.
+        :param value: String or list
+        :return: String or list but with everything substituted.
+        """
+
+        def subst_str(input_str: str) -> str:
+            """Substitute ${...}"""
+            return re.sub(__VARIABLE_EXPANSION_REGEX, lambda x: config_dict[x.group(1)], input_str)
+
+        newval = ""  # type: Union[str, List[str]]
+
+        if isinstance(value, list):
+            newval = list(map(subst_str, value))
+        else:
+            newval = subst_str(value)
+        return newval
+
+    # Helper functions to implement each meta directive.
+    def meta_append(config_dict: dict, key: str, value: Any) -> None:
         if key not in config_dict:
             config_dict[key] = []
 
@@ -82,59 +104,70 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
             raise ValueError("Trying to append to list %s with non-list %s" % (key, str(value)))
         config_dict[key] += value
 
-    def meta_subst(config_dict: dict, key: str, value) -> None:
-        def subst_str(input_str: str) -> str:
-            """Substitute ${...}"""
-            return re.sub(__VARIABLE_EXPANSION_REGEX, lambda x: config_dict[x.group(1)], input_str)
+    def meta_subst(config_dict: dict, key: str, value: Any) -> None:
+        config_dict[key] = perform_subst(value)
 
-        newval = ""  # type: Union[str, List[str]]
-        if isinstance(value, list):
-            newval = list(map(subst_str, value))
-        else:
-            newval = subst_str(value)
-        config_dict[key] = newval
+    def make_meta_dynamic(dynamic_meta: str) -> Callable[[dict, str, Any], None]:
+        """
+        Create a meta_dynamicFOO function.
+        :param dynamic_meta: Dynamic meta type e.g. "dynamicsubst"
+        :return: A function for meta_directive_functions.
+        """
 
-    def meta_dynamicsubst(config_dict: dict, key: str, value) -> None:
-        # Do nothing at this stage, since we need to deal with dynamicsubst only after
-        # everything has been bound.
-        config_dict[key] = value
-        config_dict[key + "_meta"] = "dynamicsubst"
+        def meta_dynamic(config_dict: dict, key: str, value: Any) -> None:
+            # Do nothing at this stage, since we need to deal with dynamicsubst only after
+            # everything has been bound.
+            config_dict[key] = value
+            config_dict[key + "_meta"] = dynamic_meta
+
+        return meta_dynamic
 
     def meta_prependlocal(config_dict: dict, key: str, value) -> None:
         """Prepend the local path of the config dict."""
         config_dict[key] = os.path.join(meta_dict[CONFIG_PATH_KEY], str(value))
 
     # Lookup table of meta functions.
-    meta_variable_functions = {}
-    meta_variable_functions['append'] = meta_append
-    meta_variable_functions['subst'] = meta_subst
-    meta_variable_functions['dynamicsubst'] = meta_dynamicsubst
-    meta_variable_functions['prependlocal'] = meta_prependlocal
+    meta_directive_functions = {}
+    meta_directive_functions['append'] = meta_append
+    meta_directive_functions['subst'] = meta_subst
+    meta_directive_functions['dynamicsubst'] = make_meta_dynamic('dynamicsubst')
+    meta_directive_functions['prependlocal'] = meta_prependlocal
     newdict = dict(config_dict)
 
-    # Find meta variables.
+    # Find meta directives.
     assert isinstance(meta_dict, dict)
-    meta_dict = dict(meta_dict) # create a copy so we can remove items.
+    meta_dict = dict(meta_dict)  # create a copy so we can remove items.
     meta_dict_keys = list(meta_dict.keys())
     meta_keys = filter(lambda k: k.endswith("_meta"), meta_dict_keys)
 
-    # Deal with meta variables.
+    # Deal with meta directives.
     meta_len = len("_meta")
     for meta_key in meta_keys:
         setting = meta_key[:-meta_len]
-        meta_type = meta_dict[meta_key] # type: str
-        if not isinstance(meta_type, str):
-            raise TypeError("meta_type was not a string: " + repr(meta_type))
-        try:
-            meta_func = meta_variable_functions[meta_type]
-        except KeyError:
-            raise ValueError("The type of meta variable %s is not supported (%s)" % (meta_key, meta_type))
-        meta_func(newdict, setting, meta_dict[setting])
+        meta_type_from_dict = meta_dict[meta_key]  # type: Union[str, List[str]]
+        if isinstance(meta_type_from_dict, str):
+            meta_directives = [meta_type_from_dict]  # type: List[str]
+        else:
+            meta_directives = meta_type_from_dict  # type: List[str]
+
+        # Process each meta type in order.
+        for meta_type in meta_directives:
+            if not isinstance(meta_type, str):
+                raise TypeError("meta_type was not a string: " + repr(meta_type))
+            try:
+                meta_func = meta_directive_functions[meta_type]
+            except KeyError:
+                raise ValueError("The type of meta variable %s is not supported (%s)" % (meta_key, meta_type))
+            meta_func(newdict, setting, meta_dict[setting])
+            # Update meta_dict if there are multiple meta directives.
+            meta_dict[setting] = newdict[setting]
+
         del meta_dict[meta_key]
         del meta_dict[setting]
 
-    newdict.update(meta_dict) # Update everything else.
+    newdict.update(meta_dict)  # Update everything else.
     return newdict
+
 
 class HammerDatabase:
     """

@@ -175,6 +175,46 @@ foo:
         self.assertEqual(db.get_setting("foo.bar.base_test"), "base/config/path/local_path")
         self.assertEqual(db.get_setting("foo.bar.meta_test"), "meta/config/path/local_path")
 
+    def test_meta_as_array_1(self):
+        """
+        Test that meta attributes that are an array.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo:
+    bar:
+        base_test: "local_path"
+""", is_yaml=True, path="base/config/path")
+        meta = hammer_config.load_config_from_string("""
+{
+  "foo.bar.meta_test": "${foo.bar.base_test}",
+  "foo.bar.meta_test_meta": ["subst"]
+}
+""", is_yaml=False, path="meta/config/path")
+        db.update_core([base, meta])
+        self.assertEqual(db.get_setting("foo.bar.base_test"), "local_path")
+        self.assertEqual(db.get_setting("foo.bar.meta_test"), "local_path")
+
+    def test_meta_subst_and_prependlocal(self):
+        """
+        Test that meta attributes that are an array.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo:
+    bar:
+        base_test: "local_path"
+""", is_yaml=True, path="base/config/path")
+        meta = hammer_config.load_config_from_string("""
+{
+  "foo.bar.meta_test": "${foo.bar.base_test}",
+  "foo.bar.meta_test_meta": ["subst", "prependlocal"]
+}
+""", is_yaml=False, path="meta/config/path")
+        db.update_core([base, meta])
+        self.assertEqual(db.get_setting("foo.bar.base_test"), "local_path")
+        self.assertEqual(db.get_setting("foo.bar.meta_test"), "meta/config/path/local_path")
+
     def test_meta_append_bad(self):
         """
         Test that the meta attribute "append" catches bad inputs.
