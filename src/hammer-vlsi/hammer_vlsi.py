@@ -881,6 +881,23 @@ class HammerTool(metaclass=ABCMeta):
                 output.append(clock)
         return output
 
+    @staticmethod
+    def append_contents_to_path(content_to_append: str, target_path: str) -> None:
+        """
+        Append the given contents to the file located at target_path, if target_path is not empty.
+        :param content_to_append: Content to append.
+        :param target_path: Where to append the content.
+        """
+        if content_to_append != "":
+            content_lines = content_to_append.split("\n")  # type: List[str]
+
+            # TODO(edwardw): come up with a more generic "source locator" for hammer
+            header_text = "# The following snippet was added by HAMMER"
+            content_lines.insert(0, header_text)
+
+            with open(target_path, "a") as f:
+                f.write("\n".join(content_lines))
+
 class HammerSynthesisTool(HammerTool):
     ### Inputs ###
 

@@ -153,27 +153,10 @@ set MW_GROUND_PORT              "{MW_GROUND_PORT}";
         icc_setup_path = os.path.join(self.run_dir, "rm_setup", "icc_setup.tcl")
         common_setup_path = os.path.join(self.run_dir, "rm_setup", "common_setup.tcl")
 
-        common_setup_appendix_tcl_path = str(self.get_setting("par.icc.common_setup_appendix_tcl_path", nullvalue=""))
-        if common_setup_appendix_tcl_path != "":
-            with open(common_setup_appendix_tcl_path, "r") as f:
-                common_setup_appendix_tcl_path_contents = str(f.read()).split("\n")  # type: List[str]
-            # TODO(edwardw): come up with a more generic "source locator" for hammer
-            header_text = "# The following snippet was added by HAMMER from {path}".format(
-                path=common_setup_appendix_tcl_path)
-            common_setup_appendix_tcl_path_contents.insert(0, header_text)
-            with open(common_setup_path, "a") as f:
-                f.write("\n".join(common_setup_appendix_tcl_path_contents))
-
-        icc_setup_appendix_tcl_path = str(self.get_setting("par.icc.icc_setup_appendix_tcl_path", nullvalue=""))
-        if icc_setup_appendix_tcl_path != "":
-            with open(icc_setup_appendix_tcl_path, "r") as f:
-                icc_setup_appendix_tcl_path_contents = str(f.read()).split("\n")  # type: List[str]
-            # TODO(edwardw): come up with a more generic "source locator" for hammer
-            header_text = "# The following snippet was added by HAMMER from {path}".format(
-                path=icc_setup_appendix_tcl_path)
-            icc_setup_appendix_tcl_path_contents.insert(0, header_text)
-            with open(icc_setup_path, "a") as f:
-                f.write("\n".join(icc_setup_appendix_tcl_path_contents))
+        self.append_contents_to_path(str(self.get_setting("par.icc.common_setup_appendix_tcl_contents", nullvalue="")),
+                                     common_setup_path)
+        self.append_contents_to_path(str(self.get_setting("par.icc.icc_setup_appendix_tcl_contents", nullvalue="")),
+                                     icc_setup_path)
 
 #~ # Read the core's configuration file to figure out what all the clocks should
 #~ # look like.
