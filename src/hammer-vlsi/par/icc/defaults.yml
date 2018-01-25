@@ -25,13 +25,13 @@ par.icc:
   MW_GROUND_NET: "VSS"
   MW_GROUND_PORT: "VSS"
 
-  # Path to a tcl fragment to include at the end of rm_setup/icc_setup.tcl.
+  # Contents of a tcl fragment to include at the end of rm_setup/icc_setup.tcl.
   # Set to null if unused.
-  icc_setup_appendix_tcl_path: null
+  icc_setup_appendix_tcl_contents: null
 
-  # Path to a tcl fragment to include at the end of rm_setup/common_setup.tcl.
+  # Contents of a tcl fragment to include at the end of rm_setup/common_setup.tcl.
   # Set to null if unused.
-  common_setup_appendix_tcl_path: null
+  common_setup_appendix_tcl_contents: null
 
   # Floorplanning script to use (ICC_IN_FLOORPLAN_USER_FILE in the reference methodology).
   # Valid options are:
