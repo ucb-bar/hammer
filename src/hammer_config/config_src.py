@@ -107,6 +107,13 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
     def meta_subst(config_dict: dict, key: str, value: Any) -> None:
         config_dict[key] = perform_subst(value)
 
+    def meta_transclude(config_dict: dict, key: str, value: Any) -> None:
+        """Transclude the contents of the file pointed to by value."""
+        assert isinstance(value, str), "Path to file for transclusion must be a string"
+        with open(value, "r") as f:
+            file_contents = str(f.read())
+        config_dict[key] = file_contents
+
     def make_meta_dynamic(dynamic_meta: str) -> Callable[[dict, str, Any], None]:
         """
         Create a meta_dynamicFOO function.
@@ -131,6 +138,8 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
     meta_directive_functions['append'] = meta_append
     meta_directive_functions['subst'] = meta_subst
     meta_directive_functions['dynamicsubst'] = make_meta_dynamic('dynamicsubst')
+    meta_directive_functions['transclude'] = meta_transclude
+    meta_directive_functions['dynamictransclude'] = make_meta_dynamic('dynamictransclude')
     meta_directive_functions['prependlocal'] = meta_prependlocal
     newdict = dict(config_dict)
 
