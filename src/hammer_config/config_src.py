@@ -9,7 +9,7 @@
 
 # pylint: disable=invalid-name
 
-from typing import Iterable, List, Union, Callable, Any
+from typing import Iterable, List, Union, Callable, Any, Dict
 
 from .yaml2json import load_yaml # grumble grumble
 
@@ -134,13 +134,14 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
         config_dict[key] = os.path.join(meta_dict[CONFIG_PATH_KEY], str(value))
 
     # Lookup table of meta functions.
-    meta_directive_functions = {}
-    meta_directive_functions['append'] = meta_append
-    meta_directive_functions['subst'] = meta_subst
-    meta_directive_functions['dynamicsubst'] = make_meta_dynamic('dynamicsubst')
-    meta_directive_functions['transclude'] = meta_transclude
-    meta_directive_functions['dynamictransclude'] = make_meta_dynamic('dynamictransclude')
-    meta_directive_functions['prependlocal'] = meta_prependlocal
+    meta_directive_functions = {
+        'append': meta_append,
+        'subst': meta_subst,
+        'dynamicsubst': make_meta_dynamic('dynamicsubst'),
+        'transclude': meta_transclude,
+        'dynamictransclude': make_meta_dynamic('dynamictransclude'),
+        'prependlocal': meta_prependlocal
+    }  # type: Dict[str, Callable[[dict, str, Any], None]]
     newdict = dict(config_dict)
 
     # Find meta directives.
@@ -154,10 +155,12 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
     for meta_key in meta_keys:
         setting = meta_key[:-meta_len]
         meta_type_from_dict = meta_dict[meta_key]  # type: Union[str, List[str]]
+        meta_directives = []  # type: List[str]
         if isinstance(meta_type_from_dict, str):
-            meta_directives = [meta_type_from_dict]  # type: List[str]
+            meta_directives = [meta_type_from_dict]
         else:
-            meta_directives = meta_type_from_dict  # type: List[str]
+            assert isinstance(meta_type_from_dict, List)
+            meta_directives = meta_type_from_dict
 
         # Process each meta type in order.
         for meta_type in meta_directives:
