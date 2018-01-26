@@ -898,6 +898,16 @@ class HammerTool(metaclass=ABCMeta):
             with open(target_path, "a") as f:
                 f.write("\n".join(content_lines))
 
+    @staticmethod
+    def verbose_tcl_append(cmd: str, output_buffer: List[str]) -> None:
+        """
+        Helper function to verbosely run a command (print the command before running).
+        :param cmd: TCL command to run
+        :param output_buffer: Buffer in which to enqueue the resulting TCL lines.
+        """
+        output_buffer.append("""puts "{0}" """.format(cmd.replace('"', '\"')))
+        output_buffer.append(cmd)
+
 class HammerSynthesisTool(HammerTool):
     ### Inputs ###
 
