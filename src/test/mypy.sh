@@ -14,4 +14,5 @@ mypy ../hammer_config_test/test.py
 mypy ../hammer-vlsi/synthesis/dc/__init__.py
 mypy ../hammer-vlsi/synthesis/genus/__init__.py
 mypy ../hammer-vlsi/par/icc/__init__.py
+mypy ../hammer-vlsi/par/innovus/__init__.py
 mypy ../hammer-vlsi/par/*.py
