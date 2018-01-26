@@ -4,13 +4,15 @@
 #  nop.py
 #  No-op place and route tool.
 #
-#  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 from hammer_vlsi import HammerPlaceAndRouteTool
 
+
 class Nop(HammerPlaceAndRouteTool):
-    def do_run(self) -> None:
+    def do_run(self) -> bool:
         # Do nothing
         pass
+
 
 tool = Nop()
