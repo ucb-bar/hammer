@@ -29,10 +29,11 @@ class Genus(HammerSynthesisTool, CadenceTool):
 
         top = self.top_module
 
-        output = [] # type: List[str]
+        output = []  # type: List[str]
+
+        # Python doesn't have Scala's nice currying syntax (e.g. val newfunc = func(_, fixed_arg))
         def verbose_append(cmd: str) -> None:
-            output.append("""puts "{0}" """.format(cmd.replace('"', '\"')))
-            output.append(cmd)
+            self.verbose_tcl_append(cmd, output)
 
         # TODO(edwardw): figure out how to make Genus quit instead of hanging on error.
         # Get libraries.
