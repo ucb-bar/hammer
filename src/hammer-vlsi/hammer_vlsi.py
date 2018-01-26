@@ -475,6 +475,27 @@ class HammerTool(metaclass=ABCMeta):
         self._rundir = value # type: str
 
     @property
+    def input_files(self) -> Iterable[str]:
+        """
+        Input files for this tool library.
+        The exact nature of the files will depend on the type of library.
+        """
+        try:
+            return self._input_files
+        except AttributeError:
+            raise ValueError("Nothing set for inputs yet")
+
+    @input_files.setter
+    def input_files(self, value: Iterable[str]) -> None:
+        """
+        Set the input files for this tool library.
+        The exact nature of the files will depend on the type of library.
+        """
+        if not isinstance(value, Iterable):
+            raise TypeError("input_files must be a Iterable[str]")
+        self._input_files = value # type: Iterable[str]
+
+    @property
     def technology(self) -> hammer_tech.HammerTechnology:
         """
         Get the technology library currently in use.
