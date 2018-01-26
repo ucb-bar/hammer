@@ -1,0 +1,21 @@
+# Configuration options and defaults for Innovus.
+# The values specified in this file are the defaults.
+
+par.innovus:
+  # Location of the binary.
+  innovus_bin: "${cadence.cadence_home}/INNOVUS/INNOVUS${par.innovus.version}/bin/innovus"
+  innovus_bin_meta: dynamicsubst # we want later overrides to be able to affect this
+
+  # Innovus version to use.
+  # Used to locate the binary - e.g. the '171' in ${cadence.cadence_home}/INNOVUS/INNOVUS171/bin/innovus
+  version: "171"
+
+  # Floorplanning SDC constraints to use.
+  # Valid options are:
+  # - blank - Specify no floorplanning constraints (likely won't work)
+  # - manual - Specify the contents of a manual SDC floorplanning script to use in floorplan_script_contents.
+  # - generate - Generate a floorplan from the hammer-vlsi config/IR. (not implemented)
+  #   If you specify this, you must also specify the floorplanning_script config below. The floorplanning_script config will be ignored in other modes.
+  # TODO(edwardw): Put in new floorplanning thing here when done.
+  floorplan_mode: blank
+  floorplan_script_contents: null
