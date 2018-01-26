@@ -5,7 +5,7 @@ synthesis.genus:
   genus_bin_meta: dynamicsubst # we want later overrides to be able to affect this
 
   # Genus version to use.
-  # Used to locate Genus - e.g. the '171' in ${cadence.cadence_home}/GENUS/GENUS171/bin/genus
+  # Used to locate the binary - e.g. the '171' in ${cadence.cadence_home}/GENUS/GENUS171/bin/genus
   version: "171"
 
 # Common Cadence settings.
