@@ -829,7 +829,7 @@ class HammerTool(metaclass=ABCMeta):
                 return []
         return LibraryFilter(select_tlu_min_cap, "tlu_min", "TLU+ min cap db", is_file=True)
 
-    def read_libs(self, libraries: Iterable[LibraryFilter], output_func: Callable[[str, LibraryFilter], List[str]],
+    def read_libs(self, library_types: Iterable[LibraryFilter], output_func: Callable[[str, LibraryFilter], List[str]],
                   must_exist: bool = True) -> List[str]:
         """
         Read the given libraries and return a list of strings according to some output format.
@@ -840,7 +840,7 @@ class HammerTool(metaclass=ABCMeta):
         - For every lib item in each lib items, run output_func
         - Append everything
 
-        :param libraries: List of libraries to filter, specified as a list of LibraryFilter elements.
+        :param library_types: List of libraries to filter, specified as a list of LibraryFilter elements.
         :param output_func: Function which processes the outputs, taking in the filtered lib and the library filter
                             which generated it.
         :param must_exist: Must each library item actually exist? Default: True (yes, they must exist)
@@ -882,7 +882,7 @@ class HammerTool(metaclass=ABCMeta):
             # Concatenate lists of List[str] together.
             return list(reduce(add_lists, after_output_functions, []))
 
-        return list(reduce(add_lists, map(process_library_filter, libraries)))
+        return list(reduce(add_lists, map(process_library_filter, library_types)))
 
     # TODO: these helper functions might get a bit out of hand, put them somewhere more organized?
     def get_clock_ports(self) -> List[ClockPort]:
