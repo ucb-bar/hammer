@@ -36,11 +36,8 @@ class Genus(HammerSynthesisTool, CadenceTool):
             self.verbose_tcl_append(cmd, output)
 
         # TODO(edwardw): figure out how to make Genus quit instead of hanging on error.
-        # Get libraries.
-        lib_args = self.read_libs([
-            self.liberty_lib_filter
-        ], self.to_plain_item)
-        verbose_append("set_db library {{ {} }}".format(" ".join(lib_args)))
+        # Set up libraries.
+        verbose_append("set_db library {{ {} }}".format(self.get_liberty_libs()))
 
         # Load input files and check that they are all Verilog.
         if not self.check_input_files([".v", ".sv"]):
