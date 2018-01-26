@@ -1305,6 +1305,16 @@ class CadenceTool(HasSDCSupport, HammerTool):
             "CADENCE_HOME": self.get_setting("cadence.cadence_home")
         }
 
+    def get_liberty_libs(self) -> str:
+        """
+        Helper function to get the list of ASCII liberty files in space separated format.
+        :return: List of lib files separated by spaces
+        """
+        lib_args = self.read_libs([
+            self.liberty_lib_filter
+        ], self.to_plain_item)
+        return " ".join(lib_args)
+
 class SynopsysTool(HasSDCSupport, HammerTool):
     """Mix-in trait with functions useful for Synopsys-based tools."""
     @property
