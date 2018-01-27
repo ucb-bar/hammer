@@ -65,7 +65,12 @@
         "max cap": "SAED_EDK32.28nm_TECH_v_01132015.tar.gz/SAED32_EDK/tech/star_rcxt/saed32nm_1p9m_Cmax.itf"
       },
       "icv drc metal fill ruleset": "SAED_EDK32.28nm_TECH_v_01132015.tar.gz/SAED32_EDK/tech/icv_drc/saed32nm_1p9m_mfill_rules.rs",
-      "icv signoff drc ruleset": "SAED_EDK32.28nm_TECH_v_01132015.tar.gz/SAED32_EDK/tech/icv_drc/saed32nm_1p9m_drc_rules.rs"
+      "icv signoff drc ruleset": "SAED_EDK32.28nm_TECH_v_01132015.tar.gz/SAED32_EDK/tech/icv_drc/saed32nm_1p9m_drc_rules.rs",
+      "provides": [
+        {
+          "lib_type": "technology"
+        }
+      ]
     },
     {
       "ccs liberty file_missing": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/db_ccs/saed32hvt_tt1p05v25c.lib",
@@ -84,6 +89,11 @@
         "VDD": "1.05 V",
         "GND": "0 V"
       },
+      "provides": [
+        {
+          "lib_type": "stdcell"
+        }
+      ],
       "provide script": "src/tools/technology/saed32-stdcells"
     },
     {
