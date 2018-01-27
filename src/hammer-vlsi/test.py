@@ -4,10 +4,11 @@
 #  Tests for hammer-vlsi
 #
 #  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+from numbers import Number
 
 import hammer_vlsi
 
-from typing import Dict
+from typing import Dict, List
 
 import os
 import tempfile
@@ -101,16 +102,33 @@ class HammerToolTest(unittest.TestCase):
         tech_json = {
             "name": "dummy28",
             "installs": [
-            {
-              "path": "test",
-              "base var": "" # means relative to tech dir
-            }
+                {
+                    "path": "test",
+                    "base var": ""  # means relative to tech dir
+                }
             ],
             "libraries": [
                 { "milkyway techfile": "test/soy" },
                 { "openaccess techfile": "test/juice" },
                 { "milkyway techfile": "test/coconut" },
-                { "openaccess techfile": "test/tea" }
+                {
+                    "openaccess techfile": "test/orange",
+                    "provides": [
+                        {"lib_type": "stdcell"}
+                    ]
+                },
+                {
+                    "openaccess techfile": "test/grapefruit",
+                    "provides": [
+                        {"lib_type": "stdcell"}
+                    ]
+                },
+                {
+                    "openaccess techfile": "test/tea",
+                    "provides": [
+                        {"lib_type": "technology"}
+                    ]
+                },
             ]
         }
         with open(tech_dir + "/dummy28.tech.json", "w") as f:
@@ -118,12 +136,39 @@ class HammerToolTest(unittest.TestCase):
         tech = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
         tech.cache_dir = tech_dir
 
+        def make_test_filter() -> hammer_vlsi.LibraryFilter:
+            def filter_func(lib: hammer_tech.Library) -> bool:
+                return lib.openaccess_techfile is not None
+
+            def extraction_func(lib: hammer_tech.Library) -> List[str]:
+                assert lib.openaccess_techfile is not None
+                return [lib.openaccess_techfile]
+
+            def sort_func(lib: hammer_tech.Library) -> Number:
+                assert lib.openaccess_techfile is not None
+                if lib.provides is not None and len(
+                        list(filter(lambda x: x is not None and x.lib_type == "technology", lib.provides))) > 0:
+                    # Put technology first
+                    return (0, "")
+                else:
+                    return (1, str(lib.openaccess_techfile))
+
+            return hammer_vlsi.LibraryFilter.new(
+                filter_func=filter_func,
+                extraction_func=extraction_func,
+                tag="test", description="Test filter",
+                is_file=True,
+                sort_func=sort_func
+            )
+
         class Tool(hammer_vlsi.HammerTool):
             def do_run(self) -> bool:
                 def test_tool_format(lib, filt):
                     return ["drink {0}".format(lib)]
 
                 self._read_lib_output = self.read_libs([self.milkyway_techfile_filter], test_tool_format, must_exist=False)
+
+                self._test_filter_output = self.read_libs([make_test_filter()], test_tool_format, must_exist=False)
                 return True
         test = Tool()
         test.logger = hammer_vlsi.HammerVLSILogging.context("")
@@ -133,10 +178,16 @@ class HammerToolTest(unittest.TestCase):
         test.run()
 
         # Don't care about ordering here.
-        self.assertEqual(set(test._read_lib_output), set([
-            "drink {0}/soy".format(tech_dir),
-            "drink {0}/coconut".format(tech_dir),
-        ]))
+        self.assertEqual(set(test._read_lib_output),
+                         {"drink {0}/soy".format(tech_dir), "drink {0}/coconut".format(tech_dir)})
+
+        # We do care about ordering here.
+        self.assertEqual(test._test_filter_output, [
+            "drink {0}/tea".format(tech_dir),
+            "drink {0}/grapefruit".format(tech_dir),
+            "drink {0}/juice".format(tech_dir),
+            "drink {0}/orange".format(tech_dir)
+        ])
 
         # Cleanup
         shutil.rmtree(test.run_dir)
