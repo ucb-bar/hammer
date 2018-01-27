@@ -89,6 +89,21 @@
           "openaccess techfile" : {
             "type" : "string"
           },
+          "provides" : {
+            "type" : "array",
+            "items" : {
+              "title" : "Provide",
+              "type" : "object",
+              "properties" : {
+                "lib_type" : {
+                  "type" : "string"
+                },
+                "vt" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "supplies" : {
             "title" : "Supplies",
             "type" : "object",
