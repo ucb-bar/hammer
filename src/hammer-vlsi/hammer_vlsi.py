@@ -837,6 +837,29 @@ class HammerTool(metaclass=ABCMeta):
                                  extraction_func=extraction_func, is_file=True)
 
     @property
+    def lef_filter(self) -> LibraryFilter:
+        """
+        Select LEF files for physical layout.
+        """
+
+        def filter_func(lib: hammer_tech.Library) -> bool:
+            return lib.lef_file is not None
+
+        def extraction_func(lib: hammer_tech.Library) -> List[str]:
+            assert lib.lef_file is not None
+            return [lib.lef_file]
+
+        def sort_func(lib: hammer_tech.Library):
+            if lib.provides is not None:
+                for provided in lib.provides:
+                    if provided.lib_type is not None and provided.lib_type == "technology":
+                        return 0  # put the technology LEF in front
+            return 100  # put it behind
+
+        return LibraryFilter.new("lef", "LEF physical design layout library", is_file=True, filter_func=filter_func,
+                                 extraction_func=extraction_func, sort_func=sort_func)
+
+    @property
     def milkyway_lib_dir_filter(self) -> LibraryFilter:
         def select_milkyway_lib(lib: hammer_tech.Library) -> List[str]:
             if lib.milkyway_lib_in_dir is not None:
