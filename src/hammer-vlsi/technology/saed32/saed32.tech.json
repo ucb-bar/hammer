@@ -73,6 +73,14 @@
       ]
     },
     {
+      "lef file": "SAED32_EDK_OPEN_ACCESS_LIBS_07222015.tar.gz/SAED32_EDK/src/oa/saed32_sram_lp_dual_oa/new/newtech.lef",
+      "provides": [
+        {
+          "lib_type": "technology"
+        }
+      ]
+    },
+    {
       "ccs liberty file_missing": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/db_ccs/saed32hvt_tt1p05v25c.lib",
       "ccs library file_missing": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/db_ccs/saed32hvt_tt1p05v25c.db",
       "nldm liberty file": "SAED_EDK32.28nm_CORE_HVT_v_01132015.tar.gz/SAED32_EDK/lib/stdcell_hvt/db_nldm/saed32hvt_tt1p05v25c.lib",
