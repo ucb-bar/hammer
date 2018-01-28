@@ -419,6 +419,13 @@ class HammerTool(metaclass=ABCMeta):
         """
         return {}
 
+    def export_config_outputs(self) -> Dict[str, Any]:
+        """
+        Export the outputs of this tool to a config.
+        :return: Config dictionary of the outputs of this tool.
+        """
+        return {}
+
     # Setup functions.
     def run(self) -> bool:
         """Run this tool.
@@ -1052,6 +1059,13 @@ class HammerTool(metaclass=ABCMeta):
         output_buffer.append(cmd)
 
 class HammerSynthesisTool(HammerTool):
+    def export_config_outputs(self) -> Dict[str, Any]:
+        outputs = dict(super().export_config_outputs())
+        outputs["synthesis.outputs.output_files"] = self.output_files
+        outputs["synthesis.inputs.input_files"] = self.input_files
+        outputs["synthesis.inputs.top_module"] = self.top_module
+        return outputs
+
     ### Inputs ###
 
     @property
@@ -1369,9 +1383,7 @@ class HammerDriver:
         output_config = dict(self.project_config)
         # TODO(edwardw): automate this
         try:
-            output_config["synthesis.outputs.output_files"] = self.syn_tool.output_files
-            output_config["synthesis.inputs.input_files"] = self.syn_tool.input_files
-            output_config["synthesis.inputs.top_module"] = self.syn_tool.top_module
+            output_config.update(self.syn_tool.export_config_outputs())
         except ValueError as e:
             self.log.fatal(e.args[0])
             return {}
