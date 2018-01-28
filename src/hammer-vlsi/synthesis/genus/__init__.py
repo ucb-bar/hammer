@@ -69,9 +69,10 @@ class Genus(HammerSynthesisTool, CadenceTool):
 
         # Write output files.
         output_verilog = os.path.join(self.run_dir, "{}.mapped.v".format(top))
+        output_sdc = os.path.join(self.run_dir, "{}.mapped.sdc".format(top))
         verbose_append("write_hdl > {}".format(output_verilog))
-        verbose_append("write_script > {}.script.g".format(top))
-        verbose_append("write_sdc > {}.mapped.sdc".format(top))
+        verbose_append("write_script > {}.mapped.scr".format(top))
+        verbose_append("write_sdc > {}".format(output_sdc))
         verbose_append("write_design -innovus -gzip_files {}".format(top))
 
         # Quit Genus.
