@@ -13,7 +13,7 @@ from hammer_vlsi import HammerVLSILogging
 import hammer_tech
 
 from functools import reduce
-from typing import Callable, Dict, List, Iterable
+from typing import Callable, Dict, List, Iterable, Any
 
 import os
 
@@ -23,6 +23,11 @@ class Genus(HammerSynthesisTool, CadenceTool):
         new_dict = dict(super().env_vars)
         new_dict.update({}) # TODO: stuffs
         return new_dict
+
+    def export_config_outputs(self) -> Dict[str, Any]:
+        outputs = dict(super().export_config_outputs())
+        outputs["synthesis.outputs.sdc"] = self.output_sdc
+        return outputs
 
     def do_run(self) -> bool:
         self.create_enter_script()
@@ -110,6 +115,10 @@ class Genus(HammerSynthesisTool, CadenceTool):
         if not os.path.isfile(mapped_v):
             raise ValueError("Output mapped verilog %s not found" % (mapped_v)) # better error?
         self.output_files = [mapped_v]
+
+        if not os.path.isfile(output_sdc):
+            raise ValueError("Output SDC %s not found" % (output_sdc)) # better error?
+        self.output_sdc = output_sdc
 
         return True
 
