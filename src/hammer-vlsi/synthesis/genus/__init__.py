@@ -49,6 +49,12 @@ class Genus(HammerSynthesisTool, CadenceTool):
         # Elaborate/parse the RTL.
         verbose_append("elaborate")
 
+        # Set units to pF and ns.
+        # Must be done after elaboration.
+        verbose_append("set_units -capacitance 1.0pF")
+        verbose_append("set_load_unit -picofarads 1")
+        verbose_append("set_units -time 1.0ns")
+
         # Apply constraints.
         constraint_files = [] # type: List[str]
         # Generate clock constraints.
