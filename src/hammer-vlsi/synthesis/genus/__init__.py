@@ -26,6 +26,7 @@ class Genus(HammerSynthesisTool, CadenceTool):
 
     def export_config_outputs(self) -> Dict[str, Any]:
         outputs = dict(super().export_config_outputs())
+        # TODO(edwardw): find a "safer" way of passing around these settings keys.
         outputs["synthesis.outputs.sdc"] = self.output_sdc
         return outputs
 

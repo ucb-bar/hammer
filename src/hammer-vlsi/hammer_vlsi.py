@@ -1437,6 +1437,8 @@ class HammerDriver:
         # Plug in the outputs of synthesis into the par inputs.
         output_dict["par.inputs.input_files"] = output_dict["synthesis.outputs.output_files"]
         output_dict["par.inputs.top_module"] = output_dict["synthesis.inputs.top_module"]
+        if "synthesis.outputs.sdc" in output_dict:
+            output_dict["par.inputs.post_synth_sdc"] = output_dict["synthesis.outputs.sdc"]
         return output_dict
 
     def run_par(self) -> dict:
