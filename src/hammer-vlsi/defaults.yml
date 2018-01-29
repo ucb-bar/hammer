@@ -45,6 +45,16 @@ vlsi.inputs:
   # uncertainty (TimeValue) - Optional. Clock uncertainty. e.g. "1 ns", "5ns". Default units: ns
   clocks: []
 
+  # Default output pin load capacitance.
+  # Default: 1pF
+  default_output_load: 1
+
+  # List of output load constraints.
+  # Each item in the list should be a struct with the following members:
+  # name (str) - Name of the output load (e.g. io_out)
+  # load (float) - Output load capacitance in pF.
+  output_loads: []
+
 # Specific inputs for the synthesis tool.
 # These inputs are the generic inputs; specific tools ("CAD junk") may require
 # additional inputs.
