@@ -356,10 +356,16 @@ class TimeValue:
         # %g removes trailing zeroes
         return "%g" % (self.value_in_units(prefix, round_zeroes)) + " " + prefix
 
+
 ClockPort = NamedTuple('ClockPort', [
     ('name', str),
     ('period', TimeValue),
     ('uncertainty', Optional[TimeValue])
+])
+
+OutputLoadConstraint = NamedTuple('OutputLoadConstraint', [
+    ('name', str),
+    ('load', float)
 ])
 
 
@@ -1031,6 +1037,20 @@ class HammerTool(metaclass=ABCMeta):
                 output.append(clock)
         return output
 
+    def get_output_load_constraints(self) -> List[OutputLoadConstraint]:
+        """
+        Get a list of output load constraints as specified in the config.
+        """
+        output_loads = self.get_setting("vlsi.inputs.output_loads")
+        output = []  # type: List[OutputLoadConstraint]
+        for load_src in output_loads:
+            load = OutputLoadConstraint(
+                name=str(load_src["name"]),
+                load=float(load_src["load"])
+            )
+            output.append(load)
+        return output
+
     @staticmethod
     def append_contents_to_path(content_to_append: str, target_path: str) -> None:
         """
@@ -1444,6 +1464,26 @@ class HasSDCSupport(HammerTool):
                 output.append("set_clock_uncertainty {1} [get_clocks {0}]".format(clock.name, clock.uncertainty.value_in_units("ns")))
 
         output.append("\n")
+        return "\n".join(output)
+
+    @property
+    def sdc_pin_constraints(self) -> str:
+        """Generate a fragment for I/O pin constraints."""
+        output = []  # type: List[str]
+
+        default_output_load = float(self.get_setting("vlsi.inputs.default_output_load"))
+
+        # Specify default load.
+        output.append("set_load {load} [all_outputs]".format(
+            load=default_output_load
+        ))
+
+        # Also specify loads for specific pins.
+        for load in self.get_output_load_constraints():
+            output.append("set_load {load} [get_port \"{name}\"]".format(
+                load=load.load,
+                name=load.name
+            ))
         return "\n".join(output)
 
 class CadenceTool(HasSDCSupport, HammerTool):
