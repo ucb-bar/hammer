@@ -1369,6 +1369,7 @@ class HammerDriver:
         # TODO: automate this based on the definitions
         par_tool.input_files = self.database.get_setting("par.inputs.input_files")
         par_tool.top_module = self.database.get_setting("par.inputs.top_module")
+        par_tool.post_synth_sdc = self.database.get_setting("par.inputs.post_synth_sdc", nullvalue="")
 
         self.par_tool = par_tool
 
