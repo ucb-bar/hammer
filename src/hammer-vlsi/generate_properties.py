@@ -60,7 +60,8 @@ def main(args):
             InterfaceVar("top_module", "str", "top-level module")
         ],
         outputs=[
-            InterfaceVar("output_files", "Iterable[str]", "output collection of mapped (post-synthesis) RTL files")
+            InterfaceVar("output_files", "Iterable[str]", "output collection of mapped (post-synthesis) RTL files"),
+            InterfaceVar("output_sdc", "str", "(optional) output post-synthesis SDC constraints file")
             # TODO: model CAD junk
         ]
     )
@@ -68,7 +69,8 @@ def main(args):
     HammerPlaceAndRouteTool = Interface(module="HammerPlaceAndRouteTool",
         inputs=[
             InterfaceVar("input_files", "Iterable[str]", "input post-synthesis netlist files"),
-            InterfaceVar("top_module", "str", "top RTL module")
+            InterfaceVar("top_module", "str", "top RTL module"),
+            InterfaceVar("post_synth_sdc", "str", "input post-synthesis SDC constraint file")
         ],
         outputs=[
             # TODO: model CAD junk
