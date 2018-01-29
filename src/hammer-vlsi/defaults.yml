@@ -81,3 +81,7 @@ par.inputs:
 
   # Top RTL module.
   top_module: null
+
+  # Optional: SDC input file from post-synthesis.
+  # Leave as null to not use.
+  post_synth_sdc: null
