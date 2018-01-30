@@ -12,6 +12,10 @@ import os
 from hammer_vlsi import HammerPlaceAndRouteTool, CadenceTool, HammerVLSILogging
 
 
+# Notes: camelCase commands are the old syntax (deprecated)
+# snake_case commands are the new/common UI syntax.
+# This plugin should only use snake_case commands.
+
 class Innovus(HammerPlaceAndRouteTool, CadenceTool):
     @property
     def env_vars(self) -> Dict[str, str]:
@@ -32,7 +36,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         lef_files = self.read_libs([
             self.lef_filter
         ], self.to_plain_item)
-        verbose_append("set init_lef_file {{ {files} }}".format(
+        verbose_append("read_physical -lef {{ {files} }}".format(
             files=" ".join(lef_files)
         ))
 
@@ -40,7 +44,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         mmmc_path = os.path.join(self.run_dir, "mmmc.tcl")
         with open(mmmc_path, "w") as f:
             f.write(self.generate_mmmc_script())
-        verbose_append("set init_mmmc_file {{ {mmmc_path} }}".format(mmmc_path=mmmc_path))
+        verbose_append("read_mmmc {mmmc_path}".format(mmmc_path=mmmc_path))
 
         # Read netlist.
         # Innovus only supports structural Verilog for the netlist.
@@ -48,39 +52,44 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             return False
         # We are switching working directories and Genus still needs to find paths.
         abspath_input_files = list(map(lambda name: os.path.join(os.getcwd(), name), self.input_files))
-        verbose_append("set init_verilog {{ {files} }}".format(
-            files=" ".join(abspath_input_files)))
+        verbose_append("read_netlist {{ {files} }} -top {top}".format(
+            files=" ".join(abspath_input_files),
+            top=self.top_module
+        ))
 
         # Specify Verilog input type.
-        verbose_append("set init_design_netlisttype Verilog")
-
-        # Set top module.
-        verbose_append('set init_top_cell {top}'.format(top=self.top_module))
+        #verbose_append("set init_design_netlisttype Verilog")
 
         # Run init_design to validate data and start the Cadence place-and-route workflow.
         verbose_append("init_design")
 
         # Set design mode to express effort to increase turnaround speed.
         # TODO: make this a parameter
-        verbose_append("setDesignMode -flowEffort express")
+        verbose_append("set_db design_flow_effort express")
+
+        floorplan_tcl = os.path.join(self.run_dir, "floorplan.tcl")
+        with open(floorplan_tcl, "w") as f:
+            f.write("\n".join(self.create_floorplan_tcl()))
+        verbose_append("source -echo -verbose {}".format(floorplan_tcl))
 
         # Place the design and do pre-routing optimization.
         verbose_append("place_opt_design")
 
         # Route the design.
-        verbose_append("routeDesign")
+        verbose_append("route_design")
 
         # Post-route optimization and fix setup & hold time violations.
-        verbose_append("optDesign -postRoute -setup -hold")
+        verbose_append("opt_design -post_route -setup -hold")
 
         # Save the Innovus design.
         output_innovus_lib_name = "{top}_ENC".format(top=self.top_module)
-        verbose_append("saveDesign {lib_name} -def -verilog -tcon".format(
+        verbose_append("write_db {lib_name} -def -verilog".format(
             lib_name=output_innovus_lib_name
         ))
 
         # GDS streamout.
-        verbose_append("streamOut -outputMacros -units 1 gds_file")
+        verbose_append("write_stream -output_macros -mode ALL -unit 1000 gds_file")
+        # extra junk: -map_file -attach_inst_name ... -attach_net_name ...
 
         # Quit Innovus.
         verbose_append("exit")
@@ -97,15 +106,14 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         # Create open_chip script.
         with open(os.path.join(generated_scripts_dir, "open_chip.tcl"), "w") as f:
             f.write("""
-win
-source {lib_name}
-        """.format(lib_name=output_innovus_lib_name))
+read_db {name}
+        """.format(name=output_innovus_lib_name))
 
         with open(os.path.join(generated_scripts_dir, "open_chip"), "w") as f:
             f.write("""
 cd {run_dir}
 source enter
-$INNOVUS_BIN -files generated-scripts/open_chip.tcl
+$INNOVUS_BIN -common_ui -files generated-scripts/open_chip.tcl
         """.format(run_dir=self.run_dir))
         self.run_executable([
             "chmod", "+x", os.path.join(generated_scripts_dir, "open_chip")
@@ -115,6 +123,7 @@ $INNOVUS_BIN -files generated-scripts/open_chip.tcl
         args = [
             self.get_setting("par.innovus.innovus_bin"),
             "-nowin",  # Prevent the GUI popping up.
+            "-common_ui",
             "-files", par_tcl_filename
         ]
 
@@ -129,6 +138,27 @@ $INNOVUS_BIN -files generated-scripts/open_chip.tcl
         # TODO: check that par run was successful
 
         return True
+
+    def create_floorplan_tcl(self) -> List[str]:
+        """
+        Create a floorplan TCL depending on the floorplan mode.
+        """
+        output = []  # type: List[str]
+
+        floorplan_mode = str(self.get_setting("par.innovus.floorplan_mode"))
+        if floorplan_mode == "manual":
+            floorplan_script_contents = str(self.get_setting("par.innovus.floorplan_script_contents"))
+            # TODO(edwardw): proper source locators/SourceInfo
+            output.append("# Floorplan manually specified from HAMMER")
+            output.extend(floorplan_script_contents.split("\n"))
+        elif floorplan_mode == "generate":
+            output.extend(self.generate_floorplan_tcl())
+        else:
+            if floorplan_mode != "blank":
+                self.logger.error("Invalid floorplan_mode {mode}. Using blank floorplan.".format(mode=floorplan_mode))
+            # Write blank floorplan
+            output.append("# Blank floorplan specified from HAMMER")
+        return output
 
     def generate_mmmc_script(self) -> str:
         """
@@ -148,44 +178,26 @@ $INNOVUS_BIN -files generated-scripts/open_chip.tcl
             list=self.get_liberty_libs()
         ))
 
+        # Next, create an Innovus timing condition.
+        timing_condition_name = "my_timing_condition"
+        append_mmmc("create_timing_condition -name {name} -library_sets [list {list}]".format(
+            name=timing_condition_name,
+            list=library_set_name
+        ))
+        # extra junk: -opcond ...
+
         # Next, create an Innovus delay corner.
         delay_corner_name = "my_delay_corner"
         append_mmmc(
-            "create_delay_corner -name {name} -library_set {library_set}".format(
+            "create_delay_corner -name {name} -timing_condition {timing_cond}".format(
                 name=delay_corner_name,
-                library_set=library_set_name
+                timing_cond=timing_condition_name
             ))
-        # extra junk: -opcond_library my_cond_library -opcond my_cond -rc_corner my_rc_corner_maybe_worst
+        # extra junk: -rc_corner my_rc_corner_maybe_worst
 
         # In parallel, create an Innovus constraint mode.
         constraint_mode = "my_constraint_mode"
         sdc_files = []  # type: List[str]
-
-        # Add floorplan SDC.
-        floorplan_sdc = os.path.join(self.run_dir, "floorplan.sdc")
-        with open(floorplan_sdc, "w") as f:
-            f.write(self.sdc_pin_constraints)
-
-        floorplan_mode = str(self.get_setting("par.innovus.floorplan_mode"))
-        if floorplan_mode == "blank":
-            # Write blank floorplan
-            with open(floorplan_sdc, "w") as f:
-                f.write("")
-        elif floorplan_mode == "manual":
-            with open(floorplan_sdc, "w") as f:
-                floorplan_script_contents = str(self.get_setting("par.innovus.floorplan_script_contents"))
-                # TODO(edwardw): proper source locators/SourceInfo
-                final_content = "# Floorplan SDC manually specified from HAMMER\n" + floorplan_script_contents
-                f.write(final_content)
-        elif floorplan_mode == "generate":
-            with open(floorplan_sdc, "w") as f:
-                f.write(self.generate_floorplan_sdc())
-        else:
-            self.logger.error("Invalid floorplan_mode {mode}. Using blank floorplan.".format(mode=floorplan_mode))
-            # Write blank floorplan
-            with open(floorplan_sdc, "w") as f:
-                f.write("")
-        sdc_files.append(floorplan_sdc)
 
         # Add the post-synthesis SDC, if present.
         if self.post_synth_sdc != "":
@@ -217,19 +229,21 @@ $INNOVUS_BIN -files generated-scripts/open_chip.tcl
 
         return "\n".join(mmmc_output)
 
-    def generate_floorplan_sdc(self) -> str:
+    def generate_floorplan_tcl(self) -> List[str]:
         """
-        Generate an floorplan in SDC format for Innovus based on the input config/IR.
+        Generate a TCL floorplan for Innovus based on the input config/IR.
+        Not to be confused with create_floorplan_tcl, which calls this function.
         """
         output = []  # type: List[str]
 
         # TODO(edwardw): proper source locators/SourceInfo
-        output.append("# Floorplan SDC automatically generated from HAMMER")
+        output.append("# Floorplan automatically generated from HAMMER")
 
         # TODO: implement floorplan generation
-        # output.append("create_floorplan -core_margins_by die -die_size_by_io_height max -site core -die_size {4900.0 4900.0 100 100 100 100}")
+        output.append("create_floorplan -core_margins_by die -die_size_by_io_height max -die_size {1100.0 400.0 100 100 100 100}")
+        # extra junk: -site core
 
-        return "\n".join(output)
+        return output
 
 
 tool = Innovus()
