@@ -1005,11 +1005,8 @@ class HammerTool(metaclass=ABCMeta):
         """
         seen = set()
         i = 0
-        while True:
-            if i == len(items):
-                # All done
-                break
-
+        # We will be all done when i == len(items)
+        while i < len(items):
             item = items[i]
             if item in seen:
                 # Delete and keep index pointer the same.
@@ -1071,7 +1068,7 @@ class HammerTool(metaclass=ABCMeta):
     @staticmethod
     def verbose_tcl_append(cmd: str, output_buffer: List[str]) -> None:
         """
-        Helper function to verbosely run a command (print the command before running).
+        Helper function to echo and run a command.
         :param cmd: TCL command to run
         :param output_buffer: Buffer in which to enqueue the resulting TCL lines.
         """
