@@ -12,7 +12,7 @@ from hammer_vlsi import HammerPlaceAndRouteTool
 class Nop(HammerPlaceAndRouteTool):
     def do_run(self) -> bool:
         # Do nothing
-        pass
+        return True
 
 
 tool = Nop()
