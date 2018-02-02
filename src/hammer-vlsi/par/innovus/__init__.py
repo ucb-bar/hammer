@@ -60,9 +60,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         # Run init_design to validate data and start the Cadence place-and-route workflow.
         verbose_append("init_design")
 
-        # Set design mode to express effort to increase turnaround speed.
-        # TODO: make this a parameter
-        verbose_append("set_db design_flow_effort express")
+        # Set design effort.
+        verbose_append("set_db design_flow_effort {}".format(self.get_setting("par.innovus.design_flow_effort")))
 
         floorplan_tcl = os.path.join(self.run_dir, "floorplan.tcl")
         with open(floorplan_tcl, "w") as f:
