@@ -57,9 +57,6 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             top=self.top_module
         ))
 
-        # Specify Verilog input type.
-        #verbose_append("set init_design_netlisttype Verilog")
-
         # Run init_design to validate data and start the Cadence place-and-route workflow.
         verbose_append("init_design")
 
