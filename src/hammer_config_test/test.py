@@ -40,6 +40,15 @@ foo:
         self.assertEqual(db.get_setting("foo.bar.adc"), "yes")
         self.assertEqual(db.get_setting("foo.bar.dac"), "no")
 
+    def test_no_config_junk(self):
+        """Test that no _config_path junk variables get left behind."""
+        db = hammer_config.HammerDatabase()
+        db.update_core([hammer_config.load_config_from_string("key1: value1", is_yaml=True)])
+        db.update_technology([hammer_config.load_config_from_string("key2: value2", is_yaml=True)])
+        db.update_project([hammer_config.load_config_from_string("key3: value3", is_yaml=True)])
+        for key in hammer_config.HammerDatabase.internal_keys():
+            self.assertFalse(db.has_setting(key), "Should not have internal key " + key)
+
     def test_meta_subst(self):
         """
         Test that the meta attribute "subst" works.

@@ -9,7 +9,7 @@
 
 # pylint: disable=invalid-name
 
-from typing import Iterable, List, Union, Callable, Any, Dict
+from typing import Iterable, List, Union, Callable, Any, Dict, Set
 
 from .yaml2json import load_yaml # grumble grumble
 
@@ -200,23 +200,30 @@ class HammerDatabase:
     - environment
     - project
     """
-    def __init__(self) -> None:
-        self.builtins = [] # type: List[dict]
-        self.core = [] # type: List[dict]
-        self.tools = [] # type: List[dict]
-        self.technology = [] # type: List[dict]
-        self.environment = [] # type: List[dict]
-        self.project = [] # type: List[dict]
 
-        self.__config_cache = {} # type: dict
-        self.__config_cache_dirty = False # type: bool
+    def __init__(self) -> None:
+        self.builtins = []  # type: List[dict]
+        self.core = []  # type: List[dict]
+        self.tools = []  # type: List[dict]
+        self.technology = []  # type: List[dict]
+        self.environment = []  # type: List[dict]
+        self.project = []  # type: List[dict]
+
+        self.__config_cache = {}  # type: dict
+        self.__config_cache_dirty = False  # type: bool
+
+    @staticmethod
+    def internal_keys() -> Set[str]:
+        """Internal keys that shouldn't show up in any final config."""
+        return {CONFIG_PATH_KEY}
 
     def get_config(self) -> dict:
         """
         Get the config of this database after all the overrides have been dealt with.
         """
         if self.__config_cache_dirty:
-            self.__config_cache = combine_configs([{}] + self.builtins + self.core + self.tools + self.technology + self.environment + self.project)
+            self.__config_cache = combine_configs(
+                [{}] + self.builtins + self.core + self.tools + self.technology + self.environment + self.project)
             self.__config_cache_dirty = False
         return self.__config_cache
 
@@ -233,7 +240,11 @@ class HammerDatabase:
         """Alias for get_setting()."""
         return self.get_setting(key)
 
-    def get_setting(self, key : str, nullvalue: str = "null"):
+    def __contains__(self, item: str) -> bool:
+        """Alias for has_setting()."""
+        return self.has_setting(item)
+
+    def get_setting(self, key: str, nullvalue: str = "null"):
         """
         Retrieve the given key.
 
@@ -246,6 +257,15 @@ class HammerDatabase:
         else:
             value = self.get_config()[key]
             return nullvalue if value is None else value
+
+    def has_setting(self, key: str) -> bool:
+        """
+        Check if the given key exists in the database.
+
+        :param key: Desired key.
+        :return: True if the given setting exists.
+        """
+        return key in self.get_config()
 
     def update_core(self, core_config: List[dict]) -> None:
         """
@@ -381,7 +401,13 @@ def combine_configs(configs: Iterable[dict]) -> dict:
         del expanded_config[meta_key]
         del expanded_config[setting]
 
-    return update_and_expand_meta(expanded_config, dynamic_metas)
+    final_dict = update_and_expand_meta(expanded_config, dynamic_metas)
+
+    # Remove the temporary key used for path metas.
+    if CONFIG_PATH_KEY in final_dict:
+        del final_dict[CONFIG_PATH_KEY]
+
+    return final_dict
 
 def load_config_from_paths(config_paths: Iterable[str], strict: bool = False) -> List[dict]:
     """
