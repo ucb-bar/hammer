@@ -120,7 +120,7 @@ $INNOVUS_BIN -common_ui -files generated-scripts/open_chip.tcl
             self.get_setting("par.innovus.innovus_bin"),
             "-nowin",  # Prevent the GUI popping up.
             "-common_ui",
-            "-files", par_tcl_filename
+            "-files", os.path.abspath(par_tcl_filename)
         ]
 
         # Temporarily disable colours/tag to make run output more readable.
