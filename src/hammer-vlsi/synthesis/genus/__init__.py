@@ -67,12 +67,12 @@ class Genus(HammerSynthesisTool, CadenceTool):
         clock_constraints_fragment = os.path.join(self.run_dir, "clock_constraints_fragment.sdc")
         with open(clock_constraints_fragment, "w") as f:
             f.write(self.sdc_clock_constraints)
-        constraint_files.append(clock_constraints_fragment)
+        constraint_files.append(os.path.abspath(clock_constraints_fragment))
         # Generate port constraints.
         pin_constraints_fragment = os.path.join(self.run_dir, "pin_constraints_fragment.sdc")
         with open(pin_constraints_fragment, "w") as f:
             f.write(self.sdc_pin_constraints)
-        constraint_files.append(pin_constraints_fragment)
+        constraint_files.append(os.path.abspath(pin_constraints_fragment))
 
         verbose_append("create_constraint_mode -name func -sdc_files [list {}]".format(" ".join(constraint_files)))
         # Apparently it also needs to be sourced to work?
