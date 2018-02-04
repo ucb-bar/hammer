@@ -49,16 +49,24 @@ def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callab
 
 
 def args_to_driver(args: dict,
-                   defaultOptions: hammer_vlsi.HammerDriverOptions = hammer_vlsi.HammerDriver.get_default_driver_options()) -> \
+                   default_options: Optional[hammer_vlsi.HammerDriverOptions] = None) -> \
         Tuple[hammer_vlsi.HammerDriverOptions, dict, List[str]]:
     """Parse command line arguments and environment variables for the command line front-end to hammer-vlsi.
-    
+
     :return: DriverOptions, a parsed config for certain options, and a list of errors."""
 
     # TODO: rewrite this less tediously?
 
+    # Resolve default_options.
+    # Can't call hammer_vlsi.HammerDriver.get_default_driver_options in the
+    # parameters as it will be called when args_to_driver is defined, and
+    # hammer_vlsi_path will not be defined yet.
+    default_options_resolved = hammer_vlsi.HammerDriver.get_default_driver_options()  # type: hammer_vlsi.HammerDriverOptions
+    if default_options is not None:
+        default_options_resolved = default_options
+
     # Driver options.
-    options = defaultOptions  # type: hammer_vlsi.HammerDriverOptions
+    options = default_options_resolved  # type: hammer_vlsi.HammerDriverOptions
 
     # Extra config (flattened JSON).
     config = {}  # type: Dict[str, Any]
