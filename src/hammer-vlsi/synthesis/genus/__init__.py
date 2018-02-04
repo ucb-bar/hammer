@@ -105,7 +105,8 @@ class Genus(HammerSynthesisTool, CadenceTool):
         # Build args.
         args = [
             self.get_setting("synthesis.genus.genus_bin"),
-            "-f", syn_tcl_filename
+            "-f", syn_tcl_filename,
+            "-no_gui"
         ]
 
         # Temporarily disable colours/tag to make run output more readable.
