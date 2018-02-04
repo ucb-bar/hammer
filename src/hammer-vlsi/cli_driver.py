@@ -70,9 +70,11 @@ def args_to_driver(args: dict,
     env_configs = parse_optional_file_list_from_args(args['environment_config'],
                                                      append_error_func=errors.append)  # type: List[str]
     # Also load any environment configs from the environment.
-    env_config_environment_var = parse_optional_file_list_from_args(
-        os.environ.get("HAMMER_ENVIRONMENT_CONFIGS", default="").split(':'),
-        append_error_func=errors.append)  # type: List[str]
+    split_env_var_s = os.environ.get("HAMMER_ENVIRONMENT_CONFIGS", default="").split(os.pathsep)  # type: List[str]
+    # "".split(':') returns [''], so we need to catch this case and return an empty list as intended.
+    split_env_var = [] if split_env_var_s == [''] else split_env_var_s  # type: List[str]
+    env_config_environment_var = parse_optional_file_list_from_args(split_env_var,
+                                                                    append_error_func=errors.append)  # type: List[str]
     for extra_path in env_config_environment_var:
         env_configs.append(extra_path)
     options = options._replace(environment_configs=list(env_configs))
