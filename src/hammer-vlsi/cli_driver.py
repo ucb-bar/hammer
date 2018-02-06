@@ -24,8 +24,11 @@ def action_map() -> Dict[str, Callable[[hammer_vlsi.HammerDriver, Callable[[str]
     """Return the mapping of valid actions -> functions for each action of the command-line driver."""
     return {
         "synthesis": synthesis_action,
+        "syn": synthesis_action,
         "par": par_action,
         "synthesis_to_par": synthesis_to_par_action,
+        "synthesis-to-par": synthesis_to_par_action,
+        "syn_to_par": synthesis_to_par_action,
         "syn-to-par": synthesis_to_par_action,
         "synthesis_par": None
     }
