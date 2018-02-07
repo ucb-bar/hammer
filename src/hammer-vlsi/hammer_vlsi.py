@@ -1524,6 +1524,86 @@ class CadenceTool(HasSDCSupport, HammerTool):
         ], self.to_plain_item)
         return " ".join(lib_args)
 
+    def generate_mmmc_script(self) -> str:
+        """
+        Output for the mmmc.tcl script.
+        Innovus (init_design) requires that the timing script be placed in a separate file.
+        :return: Contents of the mmmc script.
+        """
+        mmmc_output = []  # type: List[str]
+
+        def append_mmmc(cmd: str) -> None:
+            self.verbose_tcl_append(cmd, mmmc_output)
+
+        # First, create an Innovus library set.
+        library_set_name = "my_lib_set"
+        append_mmmc("create_library_set -name {name} -timing [list {list}]".format(
+            name=library_set_name,
+            list=self.get_liberty_libs()
+        ))
+
+        # Next, create an Innovus timing condition.
+        timing_condition_name = "my_timing_condition"
+        append_mmmc("create_timing_condition -name {name} -library_sets [list {list}]".format(
+            name=timing_condition_name,
+            list=library_set_name
+        ))
+        # extra junk: -opcond ...
+
+        # Next, create an Innovus delay corner.
+        delay_corner_name = "my_delay_corner"
+        append_mmmc(
+            "create_delay_corner -name {name} -timing_condition {timing_cond}".format(
+                name=delay_corner_name,
+                timing_cond=timing_condition_name
+            ))
+        # extra junk: -rc_corner my_rc_corner_maybe_worst
+
+        # In parallel, create an Innovus constraint mode.
+        constraint_mode = "my_constraint_mode"
+        sdc_files = []  # type: List[str]
+
+        # Generate constraints
+        clock_constraints_fragment = os.path.join(self.run_dir, "clock_constraints_fragment.sdc")
+        with open(clock_constraints_fragment, "w") as f:
+            f.write(self.sdc_clock_constraints)
+        sdc_files.append(clock_constraints_fragment)
+        # Generate port constraints.
+        pin_constraints_fragment = os.path.join(self.run_dir, "pin_constraints_fragment.sdc")
+        with open(pin_constraints_fragment, "w") as f:
+            f.write(self.sdc_pin_constraints)
+        sdc_files.append(pin_constraints_fragment)
+        # Add the post-synthesis SDC, if present.
+        if hasattr(self, 'post_synth_sdc'):
+            if self.post_synth_sdc != "":
+                sdc_files.append(self.post_synth_sdc)
+        # TODO: add floorplanning SDC
+        if len(sdc_files) > 0:
+            sdc_files_arg = "-sdc_files [list {sdc_files}]".format(
+                sdc_files=" ".join(sdc_files)
+            )
+        else:
+            blank_sdc = os.path.join(self.run_dir, "blank.sdc")
+            self.run_executable(["touch", blank_sdc])
+            sdc_files_arg = "-sdc_files {{ {} }}".format(blank_sdc)
+        append_mmmc("create_constraint_mode -name {name} {sdc_files_arg}".format(
+            name=constraint_mode,
+            sdc_files_arg=sdc_files_arg
+        ))
+
+        # Next, create an Innovus analysis view.
+        analysis_view_name = "my_view"
+        append_mmmc("create_analysis_view -name {name} -delay_corner {corner} -constraint_mode {constraint}".format(
+            name=analysis_view_name, corner=delay_corner_name, constraint=constraint_mode))
+        # Finally, apply the analysis view.
+        # TODO: introduce different views of setup/hold and true multi-corner
+        append_mmmc("set_analysis_view -setup {{ {setup_view} }} -hold {{ {hold_view} }}".format(
+            setup_view=analysis_view_name,
+            hold_view=analysis_view_name
+        ))
+
+        return "\n".join(mmmc_output)
+
 class SynopsysTool(HasSDCSupport, HammerTool):
     """Mix-in trait with functions useful for Synopsys-based tools."""
     @property
