@@ -43,7 +43,18 @@ class Genus(HammerSynthesisTool, CadenceTool):
 
         # TODO(edwardw): figure out how to make Genus quit instead of hanging on error.
         # Set up libraries.
-        verbose_append("set_db library {{ {} }}".format(self.get_liberty_libs()))
+        # Read timing libraries.
+        mmmc_path = os.path.join(self.run_dir, "mmmc.tcl")
+        with open(mmmc_path, "w") as f:
+            f.write(self.generate_mmmc_script())
+        verbose_append("read_mmmc {mmmc_path}".format(mmmc_path=mmmc_path))
+        # Read LEF layouts.
+        lef_files = self.read_libs([
+            self.lef_filter
+        ], self.to_plain_item)
+        verbose_append("read_physical -lef {{ {files} }}".format(
+            files=" ".join(lef_files)
+        ))
 
         # Load input files and check that they are all Verilog.
         if not self.check_input_files([".v", ".sv"]):
@@ -53,31 +64,14 @@ class Genus(HammerSynthesisTool, CadenceTool):
         verbose_append("read_hdl {{ {} }}".format(" ".join(abspath_input_files)))
 
         # Elaborate/parse the RTL.
-        verbose_append("elaborate")
+        verbose_append("elaborate {}".format(top))
+        verbose_append("init_design -top {}".format(top))
 
         # Set units to pF and ns.
         # Must be done after elaboration.
         verbose_append("set_units -capacitance 1.0pF")
         verbose_append("set_load_unit -picofarads 1")
         verbose_append("set_units -time 1.0ns")
-
-        # Apply constraints.
-        constraint_files = [] # type: List[str]
-        # Generate clock constraints.
-        clock_constraints_fragment = os.path.join(self.run_dir, "clock_constraints_fragment.sdc")
-        with open(clock_constraints_fragment, "w") as f:
-            f.write(self.sdc_clock_constraints)
-        constraint_files.append(clock_constraints_fragment)
-        # Generate port constraints.
-        pin_constraints_fragment = os.path.join(self.run_dir, "pin_constraints_fragment.sdc")
-        with open(pin_constraints_fragment, "w") as f:
-            f.write(self.sdc_pin_constraints)
-        constraint_files.append(pin_constraints_fragment)
-
-        verbose_append("create_constraint_mode -name func -sdc_files [list {}]".format(" ".join(constraint_files)))
-        # Apparently it also needs to be sourced to work?
-        for i in constraint_files:
-            verbose_append("source -echo -verbose {}".format(i))
 
         # Synthesize and map.
         verbose_append("syn_generic")
