@@ -277,6 +277,19 @@ class HammerVLSISettings:
             "vlsi.builtins.hammer_vlsi_path": HammerVLSISettings.hammer_vlsi_path
         }
 
+    @classmethod
+    def set_hammer_vlsi_path_from_environment(cls) -> bool:
+        """
+        Try to set hammer_vlsi_path from the environment variable HAMMER_VLSI.
+        :return: True if successfully set, False otherwise
+        """
+        if "HAMMER_VLSI" not in os.environ:
+            return False
+        else:
+            cls.hammer_vlsi_path = os.environ["HAMMER_VLSI"]
+            return True
+
+
 class TimeValue:
     """Time value - e.g. "4 ns".
     Parses time values from strings.

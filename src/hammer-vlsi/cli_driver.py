@@ -221,9 +221,7 @@ if __name__ == '__main__':
     parser.add_argument("--cad-files", action='append', required=False,
                         help="CAD files.")
 
-    if "HAMMER_VLSI" in os.environ:
-        hammer_vlsi.HammerVLSISettings.hammer_vlsi_path = os.environ["HAMMER_VLSI"]
-    else:
+    if hammer_vlsi.HammerVLSISettings.set_hammer_vlsi_path_from_environment() is False:
         print("You must set HAMMER_VLSI to the hammer-vlsi directory", file=sys.stderr)
         sys.exit(1)
 
