@@ -32,6 +32,9 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         def verbose_append(cmd: str) -> None:
             self.verbose_tcl_append(cmd, output)
 
+        # Generic settings
+        verbose_append("set_db design_process_node {}".format(self.get_setting("vlsi.core.node")))
+
         # Read LEF layouts.
         lef_files = self.read_libs([
             self.lef_filter
