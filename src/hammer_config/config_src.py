@@ -342,7 +342,8 @@ def load_config_from_file(filename: str, strict: bool = False) -> dict:
         raise ValueError("Invalid config type " + filename)
 
     try:
-        file_contents = open(filename, "r").read()
+        with open(filename, "r") as f:
+            file_contents = f.read()
     except FileNotFoundError as e:
         if strict:
             raise e
