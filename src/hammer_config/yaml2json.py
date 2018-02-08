@@ -85,6 +85,7 @@ def compare(o1, o2):
                 return False
     return (o1 == o2)
 
+
 def load_yaml(yamlStr: str) -> dict:
     """
     Load a YAML database as JSON.
@@ -101,5 +102,9 @@ def load_yaml(yamlStr: str) -> dict:
     if not compare(obj, obj2):
         raise ValueError("YAML -> JSON structures don't match: %s and %s do not match" % (str(obj), str(obj2)))
     else:
-        assert isinstance(obj2, dict), "Config databases should be a dictionary"
-        return obj2
+        if obj2 is None:
+            # Loading a YAML file with nothing (except comments) can return None.
+            return {}
+        else:
+            assert isinstance(obj2, dict), "Config databases should be a dictionary"
+            return obj2
