@@ -41,6 +41,9 @@ class Genus(HammerSynthesisTool, CadenceTool):
         def verbose_append(cmd: str) -> None:
             self.verbose_tcl_append(cmd, output)
 
+        # Generic Settings
+        verbose_append("set_db max_cpus_per_server {}".format(self.get_setting("vlsi.core.max_threads")))
+
         # TODO(edwardw): figure out how to make Genus quit instead of hanging on error.
         # Set up libraries.
         # Read timing libraries.
@@ -84,7 +87,8 @@ class Genus(HammerSynthesisTool, CadenceTool):
         output_sdc = os.path.join(self.run_dir, "{}.mapped.sdc".format(top))
         verbose_append("write_hdl > {}".format(output_verilog))
         verbose_append("write_script > {}.mapped.scr".format(top))
-        verbose_append("write_sdc > {}".format(output_sdc))
+        # TODO: remove hardcoded my_view string
+        verbose_append("write_sdc -view my_view > {}".format(output_sdc))
         verbose_append("write_design -innovus -gzip_files {}".format(top))
 
         # Quit Genus.

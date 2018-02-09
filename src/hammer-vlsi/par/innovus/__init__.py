@@ -34,6 +34,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
 
         # Generic settings
         verbose_append("set_db design_process_node {}".format(self.get_setting("vlsi.core.node")))
+        verbose_append("set_multi_cpu_usage -local_cpu {}".format(self.get_setting("vlsi.core.max_threads")))
 
         # Read LEF layouts.
         lef_files = self.read_libs([
