@@ -32,7 +32,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         def verbose_append(cmd: str) -> None:
             self.verbose_tcl_append(cmd, output)
 
-        # Generic Settings
+        # Generic settings
+        verbose_append("set_db design_process_node {}".format(self.get_setting("vlsi.core.node")))
         verbose_append("set_multi_cpu_usage -local_cpu {}".format(self.get_setting("vlsi.core.max_threads")))
 
         # Read LEF layouts.

@@ -8,8 +8,11 @@ technology.saed32:
 # Nominal voltage for 32nm technology is 1.05V and is the only voltage provided
 # for normal SRAMs.
 # TODO: add default temperature corners.
-vlsi.inputs:
-  # Supply voltages.
-  supplies:
-    VDD: "1.05 V"
-    GND: "0 V"
+vlsi:
+  # Technology dimension
+  core.node: 32
+  inputs:
+    # Supply voltages.
+    supplies:
+      VDD: "1.05 V"
+      GND: "0 V"
