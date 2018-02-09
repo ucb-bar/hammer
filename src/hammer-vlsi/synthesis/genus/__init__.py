@@ -41,6 +41,9 @@ class Genus(HammerSynthesisTool, CadenceTool):
         def verbose_append(cmd: str) -> None:
             self.verbose_tcl_append(cmd, output)
 
+        # Generic Settings
+        verbose_append("set_db max_cpus_per_server {}".format(self.get_setting("vlsi.core.max_threads")))
+
         # TODO(edwardw): figure out how to make Genus quit instead of hanging on error.
         # Set up libraries.
         # Read timing libraries.
