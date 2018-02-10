@@ -144,7 +144,7 @@ def synthesis_action(driver: hammer_vlsi.HammerDriver, append_error_func: Callab
     if not driver.load_synthesis_tool():
         # If the driver didn't successfully load, return None.
         return None
-    syn_output = driver.run_synthesis()
+    success, syn_output = driver.run_synthesis()
     # TODO: detect errors
     return syn_output
 
@@ -154,7 +154,7 @@ def par_action(driver: hammer_vlsi.HammerDriver, append_error_func: Callable[[st
     if not driver.load_par_tool():
         # If the driver didn't successfully load, return None.
         return None
-    par_output = driver.run_par()
+    success, par_output = driver.run_par()
     # TODO: detect errors
     return par_output
 
