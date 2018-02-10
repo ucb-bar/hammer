@@ -4,12 +4,12 @@
 #  hammer_vlsi.py
 #
 #  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
-
+import inspect
 from abc import ABCMeta, abstractmethod
 from enum import Enum
 from numbers import Number
 
-from typing import Callable, Iterable, List, NamedTuple, Tuple, TypeVar, Type, Optional, Dict, Any, Union
+from typing import Callable, Iterable, List, NamedTuple, Tuple, TypeVar, Type, Optional, Dict, Any, Union, Set
 
 from functools import reduce
 
@@ -22,6 +22,7 @@ import subprocess
 import sys
 
 import hammer_config
+
 
 class Level(Enum):
     """
@@ -39,11 +40,72 @@ class Level(Enum):
     ERROR = 3
     FATAL = 4
 
+
 # Message including additional metadata such as level and context.
 FullMessage = NamedTuple('FullMessage', [
     ('message', str),
     ('level', Level),
     ('context', List[str])
+])
+
+
+HammerStepFunction = Callable[['HammerTool'], bool]
+
+
+class HammerToolPauseException(Exception):
+    """
+    Internal hammer-vlsi exception raised to indicate that a step has stopped execution of the tool.
+    This is not necessarily an error condition.
+    """
+    pass
+
+
+def check_hammer_step_function(func: HammerStepFunction) -> None:
+    msg = "Function {func} does not meet the required signature".format(func=str(func))
+
+    inspected = inspect.getfullargspec(func)
+    annotations = inspected.annotations
+    args = inspected.args
+    if len(args) != 1:
+        raise TypeError(msg)
+    else:
+        if annotations[args[0]] != HammerTool:
+            raise TypeError(msg)
+    if annotations['return'] != bool:
+        raise TypeError(msg)
+
+
+HammerToolStep = NamedTuple('HammerToolStep', [
+    # Function to call to execute this step
+    ('func', HammerStepFunction),
+    # Name of the step
+    ('name', str)
+])
+
+
+def make_raw_hammer_tool_step(func: HammerStepFunction, name: str) -> HammerToolStep:
+    check_hammer_step_function(func)
+    return HammerToolStep(func, name)
+
+
+# Where to insert/replace the given step.
+class HookLocation(Enum):
+    InsertPreStep = 1
+    InsertPostStep = 2
+    ReplaceStep = 10
+    ResumePreStep = 20
+    ResumePostStep = 21
+
+
+# An hook action. Actions can insert new steps before or after an existing one, or replace an existing stage.
+# Note: hook actions are executed in the order provided.
+HammerToolHookAction = NamedTuple('HammerToolHookAction', [
+    # Where/what to do
+    ('location', HookLocation),
+    # Target step to insert before/after or replace
+    ('target_name', str),
+    # Step to insert/replace
+    ('step', HammerToolStep)
 ])
 
 # Need a way to bind the callbacks to the class...
@@ -420,14 +482,6 @@ class LibraryFilter(NamedTuple('LibraryFilter', [
 
 class HammerTool(metaclass=ABCMeta):
     # Interface methods.
-    @abstractmethod
-    def do_run(self) -> bool:
-        """Run the tool after the setup.
-
-        :return: True if the tool finished successfully; false otherwise.
-        """
-        pass
-
     @property
     def env_vars(self) -> Dict[str, str]:
         """
@@ -446,11 +500,11 @@ class HammerTool(metaclass=ABCMeta):
         return {}
 
     # Setup functions.
-    def run(self) -> bool:
+    def run(self, hook_actions: List[HammerToolHookAction] = []) -> bool:
         """Run this tool.
 
-        Perform some setup operations to set up the config and tool environment, and then
-        calls do_run() to invoke the tool-specific actions.
+        Perform some setup operations to set up the config and tool environment, runs the tool-specific actions defined
+        in steps, and collects the outputs.
 
         :return: True if the tool finished successfully; false otherwise.
         """
@@ -458,7 +512,28 @@ class HammerTool(metaclass=ABCMeta):
         # Ensure that the run_dir exists.
         os.makedirs(self.run_dir, exist_ok=True)
 
-        return self.do_run()
+        # Run the list of steps defined for this tool.
+        if not self.run_steps(self.steps, hook_actions):
+            return False
+
+        # Fill the outputs of the tool.
+        return self.fill_outputs()
+
+    @property
+    @abstractmethod
+    def steps(self) -> List[HammerToolStep]:
+        """
+        List of steps defined for the execution of this tool.
+        """
+        pass
+
+    def fill_outputs(self) -> bool:
+        """
+        Fill the outputs of the tool.
+        Note: if you override this, remember to call the superclass method too!
+        :return: True if successful, False otherwise.
+        """
+        return True
 
     @property
     def _subprocess_env(self) -> dict:
@@ -576,8 +651,277 @@ class HammerTool(metaclass=ABCMeta):
         """Set the logger for this tool."""
         self._logger = value # type: HammerVLSILoggingContext
 
+    ##############################
+    # Hooks
+    ##############################
+    def check_duplicates(self, lst: List[HammerToolStep]) -> Tuple[bool, Set[str]]:
+        """Check that no two steps have the same name."""
+        seen_names = set()  # type: Set[str]
+        for step in lst:
+            if step.name in seen_names:
+                self.logger.error("Duplicate step '{step}' encountered".format(step=step.name))
+                return False, set()
+            else:
+                seen_names.add(step.name)
+        return True, seen_names
+
+    def run_steps(self, steps: List[HammerToolStep], hook_actions: List[HammerToolHookAction] = []) -> bool:
+        """
+        Run the given steps, checking for errors/conditions between each step.
+        :param steps: List of steps.
+        :param hook_actions: List of hook actions.
+        :return: Returns true if all the steps are successful.
+        """
+        duplicate_free, names = self.check_duplicates(steps)
+        if not duplicate_free:
+            return False
+
+        def has_step(name: str) -> bool:
+            return name in names
+
+        # Copy the list of steps
+        new_steps = list(steps)
+
+        # Where to resume, if such a hook exists
+        resume_step = None  # type: Optional[str]
+        # If resume_step is not None, whether to resume pre or post this step
+        resume_step_pre = True  # type: bool
+
+        for action in hook_actions:
+            if not has_step(action.target_name):
+                self.logger.error("Target step '{step}' does not exist".format(step=action.target_name))
+                return False
+
+            step_id = -1
+            for i in range(len(new_steps)):
+                if new_steps[i].name == action.target_name:
+                    step_id = i
+                    break
+            assert step_id != -1
+
+            if action.location == HookLocation.ReplaceStep:
+                assert action.target_name == action.step.name, "Replacement step should have the same name"
+                new_steps[step_id] = action.step
+            elif action.location == HookLocation.InsertPreStep:
+                if has_step(action.step.name):
+                    self.logger.error("New step '{step}' already exists".format(step=action.step.name))
+                    return False
+                new_steps.insert(step_id, action.step)
+            elif action.location == HookLocation.InsertPostStep:
+                if has_step(action.step.name):
+                    self.logger.error("New step '{step}' already exists".format(step=action.step.name))
+                    return False
+                new_steps.insert(step_id + 1, action.step)
+            elif action.location == HookLocation.ResumePreStep or action.location == HookLocation.ResumePostStep:
+                if resume_step is not None:
+                    self.logger.error("More than one resume hook is present")
+                    return False
+                resume_step = action.target_name
+                resume_step_pre = action.location == HookLocation.ResumePreStep
+            else:
+                assert False, "Should not reach here"
+
+        # Check function types before running
+        for step in new_steps:
+            if not isinstance(step, HammerToolStep):
+                raise ValueError("Element in List[HammerToolStep] is not a HammerToolStep")
+            check_hammer_step_function(step.func)
+
+        for step in new_steps:
+            self.logger.debug("Running sub-step '{step}'".format(step=step.name))
+
+            # Do this step?
+            do_step = True
+
+            if resume_step is not None:
+                if resume_step_pre:
+                    if resume_step == step.name:
+                        self.logger.info("Resuming before '{step}' due to resume hook".format(step=step.name))
+                        # Remove resume marker
+                        resume_step = None
+                    else:
+                        self.logger.info("Sub-step '{step}' skipped due to resume hook".format(step=step.name))
+                        do_step = False
+                else:
+                    self.logger.info("Sub-step '{step}' skipped due to resume hook".format(step=step.name))
+                    do_step = False
+
+            if do_step:
+                try:
+                    func_out = step.func(self)  # type: bool
+                except HammerToolPauseException:
+                    self.logger.info("Sub-step '{step}' paused the tool execution".format(step=step.name))
+                    return True
+                assert isinstance(func_out, bool)
+                if not func_out:
+                    return False
+
+            if resume_step is not None:
+                if not resume_step_pre and resume_step == step.name:
+                    self.logger.info("Resuming after '{step}' due to resume hook".format(step=step.name))
+                    resume_step = None
+
+        return True
+
+    @staticmethod
+    def make_step_from_method(func: Callable[[], bool], name: str = "") -> HammerToolStep:
+        """
+        Create a HammerToolStep from a method.
+        :param func: Method for the given substep (e.g. self.elaborate)
+        :param name: Name of the hook. If unspecified, defaults to func.__name__.
+        :return: A HammerToolStep defining this step.
+        """
+        if not callable(func):
+            raise TypeError("func is not callable")
+        if not hasattr(func, "__self__"):
+            raise ValueError("This function does not take unbound functions")
+        annotations = inspect.getfullargspec(func).annotations
+        if annotations != {'return': bool}:
+            raise TypeError("Function {func} does not meet the required signature".format(func=str(func)))
+
+        # Wrapper to make __func__ take a proper type annotation for "self"
+        def wrapper(x: HammerTool) -> bool:
+            return func.__func__(x)  # type: ignore # no type stub for builtin __func__
+
+        if name == "":
+            name = func.__name__
+        return make_raw_hammer_tool_step(func=wrapper, name=name)
+
+    @staticmethod
+    def make_steps_from_methods(funcs: List[Callable[[], bool]]) -> List[HammerToolStep]:
+        """
+        Create a series of HammerToolStep from the given list of bound methods.
+        :param funcs: List of bound methods (e.g. [self.step1, self.step2])
+        :return: List of HammerToolSteps
+        """
+        return list(map(lambda x: HammerTool.make_step_from_method(x), funcs))
+
+    @staticmethod
+    def make_step_from_function(func: HammerStepFunction, name: str = "") -> HammerToolStep:
+        """
+        Create a HammerToolStep from a function.
+        :param func: Class function for the given substep
+        :param name: Name of the hook. If unspecified, defaults to func.__name__.
+        :return: A HammerToolStep defining this step.
+        """
+        if hasattr(func, "__self__"):
+            raise ValueError("This function does not take bound methods")
+        if name == "":
+            name = func.__name__
+        return make_raw_hammer_tool_step(func=func, name=name)
+
+    @staticmethod
+    def make_pause_function() -> HammerStepFunction:
+        """
+        Get a step function which will stop the execution of the tool.
+        """
+        def pause(x: HammerTool) -> bool:
+            raise HammerToolPauseException()
+        return pause
+
+    @staticmethod
+    def make_replacement_hook(step: str, func: HammerStepFunction) -> HammerToolHookAction:
+        """
+        Create a hook action which replaces an existing step.
+        :return: Hook action which replaces the given step.
+        """
+        return HammerToolHookAction(
+            target_name=step,
+            location=HookLocation.ReplaceStep,
+            step=HammerTool.make_step_from_function(func, step)
+        )
+
+    @staticmethod
+    def make_insertion_hook(step: str, location: HookLocation, func: HammerStepFunction) -> HammerToolHookAction:
+        """
+        Create a hook action is inserted relative to the given step.
+        """
+        if location != HookLocation.InsertPreStep and location != HookLocation.InsertPostStep:
+            raise ValueError("Insertion hook location must be Insert*")
+
+        return HammerToolHookAction(
+            target_name=step,
+            location=location,
+            step=HammerTool.make_step_from_function(func)
+        )
+
+    @staticmethod
+    def make_resume_hook(step: str, location: HookLocation) -> HammerToolHookAction:
+        """
+        Create a hook action is inserted relative to the given step.
+        """
+        if location != HookLocation.ResumePreStep and location != HookLocation.ResumePostStep:
+            raise ValueError("Resume hook location must be Resume*")
+
+        return HammerToolHookAction(
+            target_name=step,
+            location=location,
+            step=None
+        )
+
+    @staticmethod
+    def make_pre_pause_hook(step: str) -> HammerToolHookAction:
+        """
+        Create pause before the execution of the given step.
+        """
+        return HammerTool.make_insertion_hook(step, HookLocation.InsertPreStep, HammerTool.make_pause_function())
+
+    @staticmethod
+    def make_post_pause_hook(step: str) -> HammerToolHookAction:
+        """
+        Create pause before the execution of the given step.
+        """
+        return HammerTool.make_insertion_hook(step, HookLocation.InsertPostStep, HammerTool.make_pause_function())
+
+    @staticmethod
+    def make_pre_resume_hook(step: str) -> HammerToolHookAction:
+        """
+        Resume before the given step.
+        Note that only one resume hook may be present.
+        """
+        return HammerTool.make_resume_hook(step, HookLocation.ResumePreStep)
+
+    @staticmethod
+    def make_post_resume_hook(step: str) -> HammerToolHookAction:
+        """
+        Resume after the given step.
+        Note that only one resume hook may be present.
+        """
+        return HammerTool.make_resume_hook(step, HookLocation.ResumePostStep)
+
+    @staticmethod
+    def make_pre_insertion_hook(step: str, func: HammerStepFunction) -> HammerToolHookAction:
+        """
+        Create a hook action is inserted prior to the given step.
+        """
+        return HammerTool.make_insertion_hook(step, HookLocation.InsertPreStep, func)
+
+    @staticmethod
+    def make_post_insertion_hook(step: str, func: HammerStepFunction) -> HammerToolHookAction:
+        """
+        Create a hook action is inserted after the given step.
+        """
+        return HammerTool.make_insertion_hook(step, HookLocation.InsertPostStep, func)
+
+    @staticmethod
+    def make_removal_hook(step: str) -> HammerToolHookAction:
+        """
+        Helper function to remove a step by replacing it with an empty step.
+        :return: Hook action which replaces the given step.
+        """
+        def dummy_step(x: HammerTool) -> bool:
+            return True
+        return HammerToolHookAction(
+            target_name=step,
+            location=HookLocation.ReplaceStep,
+            step=HammerTool.make_step_from_function(dummy_step, step)
+        )
+
+
+    ##############################
     # Accessory functions available to tools.
     # TODO(edwardw): maybe move set_database/get_setting into an interface like UsesHammerDatabase?
+    ##############################
     def set_database(self, database: hammer_config.HammerDatabase) -> None:
         """Set the settings database for use by the tool."""
         self._database = database # type: hammer_config.HammerDatabase
@@ -608,6 +952,12 @@ class HammerTool(metaclass=ABCMeta):
                 return self._database.get_setting(key, nullvalue)
         except AttributeError:
             raise ValueError("Internal error: no database set by hammer-vlsi")
+
+    def set_setting(self, key: str, value: Any) -> None:
+        """
+        Set a runtime setting in the database.
+        """
+        self._database.set_setting(key, value)
 
     def create_enter_script(self, enter_script_location: str = "", raw: bool = False) -> None:
         """
@@ -1104,6 +1454,10 @@ class HammerTool(metaclass=ABCMeta):
         output_buffer.append(cmd)
 
 class HammerSynthesisTool(HammerTool):
+    @abstractmethod
+    def fill_outputs(self) -> bool:
+        pass
+
     def export_config_outputs(self) -> Dict[str, Any]:
         outputs = dict(super().export_config_outputs())
         outputs["synthesis.outputs.output_files"] = self.output_files
@@ -1448,14 +1802,15 @@ class HammerDriver:
         self.update_tool_configs()
         return True
 
-    def run_synthesis(self) -> dict:
+    def run_synthesis(self, hook_actions: List[HammerToolHookAction] = []) -> Tuple[bool, dict]:
         """
         Run synthesis based on the given database.
         """
 
         # TODO: think about artifact storage?
         self.log.info("Starting synthesis with tool '%s'" % (self.syn_tool.name))
-        if not self.syn_tool.run():
+        run_succeeded = self.syn_tool.run(hook_actions)
+        if not run_succeeded:
             self.log.error("Synthesis tool %s failed! Please check its output." % (self.syn_tool.name))
             # Allow the flow to keep running, just in case.
             # TODO: make this an option
@@ -1467,9 +1822,9 @@ class HammerDriver:
             output_config.update(self.syn_tool.export_config_outputs())
         except ValueError as e:
             self.log.fatal(e.args[0])
-            return {}
+            return False, {}
 
-        return output_config
+        return run_succeeded, output_config
 
     @staticmethod
     def generate_par_inputs_from_synthesis(config_in: dict) -> dict:
@@ -1482,14 +1837,14 @@ class HammerDriver:
             output_dict["par.inputs.post_synth_sdc"] = output_dict["synthesis.outputs.sdc"]
         return output_dict
 
-    def run_par(self) -> dict:
+    def run_par(self, hook_actions: List[HammerToolHookAction] = []) -> Tuple[bool, dict]:
         """
         Run place and route based on the given database.
         """
         self.log.info("Starting place and route with tool '%s'" % (self.par_tool.name))
         # TODO: get place and route working
-        self.par_tool.run()
-        return {}
+        self.par_tool.run(hook_actions)
+        return True, {}
 
 class HasSDCSupport(HammerTool):
     """Mix-in trait with functions useful for tools with SDC-style
