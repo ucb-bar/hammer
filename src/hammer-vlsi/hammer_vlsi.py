@@ -1026,12 +1026,12 @@ class HammerTool(metaclass=ABCMeta):
         return a + b
 
     @staticmethod
-    def util_in_place_unique(items: list) -> None:
+    def util_in_place_unique(items: List[Any]) -> None:
         """
         "Fast" in-place uniquification of a list.
         :param items: List to be uniquified.
         """
-        seen = set()
+        seen = set()  # type: Set[Any]
         i = 0
         # We will be all done when i == len(items)
         while i < len(items):
