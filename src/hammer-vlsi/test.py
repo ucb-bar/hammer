@@ -4,11 +4,13 @@
 #  Tests for hammer-vlsi
 #
 #  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+import json
+import shutil
 from numbers import Number
 
 import hammer_vlsi
 
-from typing import Dict, List
+from typing import Dict, List, TypeVar, Union
 
 import os
 import tempfile
@@ -85,8 +87,6 @@ class HammerToolTest(unittest.TestCase):
     def test_read_libs(self):
         import hammer_config
         import hammer_tech
-        import json
-        import shutil
 
         tech_dir = tempfile.mkdtemp()
         # TODO: use a structured way of creating it when arrays actually work!
@@ -144,7 +144,7 @@ class HammerToolTest(unittest.TestCase):
                 assert lib.openaccess_techfile is not None
                 return [lib.openaccess_techfile]
 
-            def sort_func(lib: hammer_tech.Library) -> Number:
+            def sort_func(lib: hammer_tech.Library) -> Union[Number, str, tuple]:
                 assert lib.openaccess_techfile is not None
                 if lib.provides is not None and len(
                         list(filter(lambda x: x is not None and x.lib_type == "technology", lib.provides))) > 0:
@@ -162,7 +162,13 @@ class HammerToolTest(unittest.TestCase):
             )
 
         class Tool(hammer_vlsi.HammerTool):
-            def do_run(self) -> bool:
+            @property
+            def steps(self) -> List[hammer_vlsi.HammerToolStep]:
+                return self.make_steps_from_methods([
+                    self.step
+                ])
+
+            def step(self) -> bool:
                 def test_tool_format(lib, filt):
                     return ["drink {0}".format(lib)]
 
@@ -195,6 +201,10 @@ class HammerToolTest(unittest.TestCase):
     def test_create_enter_script(self):
         class Tool(hammer_vlsi.HammerTool):
             @property
+            def steps(self) -> List[hammer_vlsi.HammerToolStep]:
+                return []
+
+            @property
             def env_vars(self) -> Dict[str, str]:
                 return {
                     "HELLO": "WORLD",
@@ -202,8 +212,6 @@ class HammerToolTest(unittest.TestCase):
                     "CLOUD": "9",
                     "lol": "abc\"cat\""
                 }
-            def do_run(self) -> bool:
-                return True
 
         fd, path = tempfile.mkstemp(".sh")
         os.close(fd) # Don't leak file descriptors
@@ -239,6 +247,216 @@ export HELLO=WORLD
 export lol=abc"cat"
 """.strip(), enter_script.strip()
         )
+
+
+T = TypeVar('T')
+
+
+class HammerToolHooksTestContext:
+    def __init__(self, test: unittest.TestCase) -> None:
+        self.test = test  # type: unittest.TestCase
+        self.temp_dir = ""  # type: str
+        self.driver = None  # type: hammer_vlsi.HammerDriver
+
+    def __enter__(self: T) -> T:
+        """Initialize context by creating the temp_dir, driver, and loading mocksynth."""
+        self.test.assertTrue(hammer_vlsi.HammerVLSISettings.set_hammer_vlsi_path_from_environment(),
+                        "hammer_vlsi_path must exist")
+        temp_dir = tempfile.mkdtemp()
+        json_path = os.path.join(temp_dir, "project.json")
+        with open(json_path, "w") as f:
+            f.write(json.dumps({
+                "vlsi.core.synthesis_tool": "mocksynth",
+                "vlsi.core.technology": "nop",
+                "synthesis.inputs.top_module": "dummy",
+                "synthesis.inputs.input_files": ("/dev/null",),
+                "synthesis.mocksynth.temp_folder": temp_dir
+            }, indent=4))
+        options = hammer_vlsi.HammerDriverOptions(
+            environment_configs=[],
+            project_configs=[json_path],
+            log_file=os.path.join(temp_dir, "log.txt"),
+            obj_dir=temp_dir
+        )
+        self.temp_dir = temp_dir
+        self.driver = hammer_vlsi.HammerDriver(options)
+        self.test.assertTrue(self.driver.load_synthesis_tool())
+        return self
+
+    def __exit__(self, type, value, traceback) -> bool:
+        """Clean up the context by removing the temp_dir."""
+        shutil.rmtree(self.temp_dir)
+
+
+class HammerToolHooksTest(unittest.TestCase):
+    def create_context(self) -> HammerToolHooksTestContext:
+        return HammerToolHooksTestContext(self)
+
+    @staticmethod
+    def read(filename: str) -> str:
+        with open(filename, "r") as f:
+            return f.read()
+
+    def test_normal_execution(self) -> None:
+        """Test that no hooks means that everything is executed properly."""
+        with self.create_context() as c:
+            success, syn_output = c.driver.run_synthesis()
+            self.assertTrue(success)
+
+            for i in range(1, 5):
+                self.assertEqual(self.read(os.path.join(c.temp_dir, "step{}.txt".format(i))), "step{}".format(i))
+
+    def test_replacement_hooks(self) -> None:
+        """Test that replacement hooks work."""
+        with self.create_context() as c:
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_removal_hook("step2"),
+                hammer_vlsi.HammerTool.make_removal_hook("step4")
+            ])
+            self.assertTrue(success)
+
+            for i in range(1, 5):
+                file = os.path.join(c.temp_dir, "step{}.txt".format(i))
+                if i == 2 or i == 4:
+                    self.assertFalse(os.path.exists(file))
+                else:
+                    self.assertEqual(self.read(file), "step{}".format(i))
+
+    def test_resume_hooks(self) -> None:
+        """Test that resume hooks work."""
+        with self.create_context() as c:
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_pre_resume_hook("step3")
+            ])
+            self.assertTrue(success)
+
+            for i in range(1, 5):
+                file = os.path.join(c.temp_dir, "step{}.txt".format(i))
+                if i <= 2:
+                    self.assertFalse(os.path.exists(file), "step{}.txt should not exist".format(i))
+                else:
+                    self.assertEqual(self.read(file), "step{}".format(i))
+
+        with self.create_context() as c:
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_post_resume_hook("step2")
+            ])
+            self.assertTrue(success)
+
+            for i in range(1, 5):
+                file = os.path.join(c.temp_dir, "step{}.txt".format(i))
+                if i <= 2:
+                    self.assertFalse(os.path.exists(file), "step{}.txt should not exist".format(i))
+                else:
+                    self.assertEqual(self.read(file), "step{}".format(i))
+
+    def test_pause_hooks(self) -> None:
+        """Test that pause hooks work."""
+        with self.create_context() as c:
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_pre_pause_hook("step3")
+            ])
+            self.assertTrue(success)
+
+            for i in range(1, 5):
+                file = os.path.join(c.temp_dir, "step{}.txt".format(i))
+                if i > 2:
+                    self.assertFalse(os.path.exists(file))
+                else:
+                    self.assertEqual(self.read(file), "step{}".format(i))
+
+        with self.create_context() as c:
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_post_pause_hook("step3")
+            ])
+            self.assertTrue(success)
+
+            for i in range(1, 5):
+                file = os.path.join(c.temp_dir, "step{}.txt".format(i))
+                if i > 3:
+                    self.assertFalse(os.path.exists(file))
+                else:
+                    self.assertEqual(self.read(file), "step{}".format(i))
+
+    def test_extra_pause_hooks(self) -> None:
+        """Test that extra pause hooks do nothing."""
+        with self.create_context() as c:
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_pre_pause_hook("step3"),
+                hammer_vlsi.HammerTool.make_post_pause_hook("step3")
+            ])
+            self.assertTrue(success)
+
+            for i in range(1, 5):
+                file = os.path.join(c.temp_dir, "step{}.txt".format(i))
+                if i > 2:
+                    self.assertFalse(os.path.exists(file))
+                else:
+                    self.assertEqual(self.read(file), "step{}".format(i))
+
+    def test_insertion_hooks(self) -> None:
+        """Test that insertion hooks work."""
+
+        def change2(x: hammer_vlsi.HammerTool) -> bool:
+            x.set_setting("synthesis.mocksynth.step2", "HelloWorld")
+            return True
+
+        def change3(x: hammer_vlsi.HammerTool) -> bool:
+            x.set_setting("synthesis.mocksynth.step3", "HelloWorld")
+            return True
+
+        def change4(x: hammer_vlsi.HammerTool) -> bool:
+            x.set_setting("synthesis.mocksynth.step4", "HelloWorld")
+            return True
+
+        with self.create_context() as c:
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_pre_insertion_hook("step3", change3)
+            ])
+            self.assertTrue(success)
+
+            for i in range(1, 5):
+                file = os.path.join(c.temp_dir, "step{}.txt".format(i))
+                if i == 3:
+                    self.assertEqual(self.read(file), "HelloWorld")
+                else:
+                    self.assertEqual(self.read(file), "step{}".format(i))
+
+        with self.create_context() as c:
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_pre_insertion_hook("step2", change2),
+                hammer_vlsi.HammerTool.make_post_insertion_hook("step3", change3),
+                hammer_vlsi.HammerTool.make_pre_insertion_hook("step4", change4)
+            ])
+            self.assertTrue(success)
+
+            for i in range(1, 5):
+                file = os.path.join(c.temp_dir, "step{}.txt".format(i))
+                if i == 2 or i == 4:
+                    self.assertEqual(self.read(file), "HelloWorld")
+                else:
+                    self.assertEqual(self.read(file), "step{}".format(i))
+
+    def test_bad_hooks(self) -> None:
+        """Test that hooks with bad targets are errors."""
+        with self.create_context() as c:
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_removal_hook("does_not_exist")
+            ])
+            self.assertFalse(success)
+
+        with self.create_context() as c:
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_removal_hook("free_lunch")
+            ])
+            self.assertFalse(success)
+
+        with self.create_context() as c:
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_removal_hook("penrose_stairs")
+            ])
+            self.assertFalse(success)
+
 
 class TimeValueTest(unittest.TestCase):
     def test_read_and_write(self):

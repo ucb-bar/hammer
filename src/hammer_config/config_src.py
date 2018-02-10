@@ -199,6 +199,7 @@ class HammerDatabase:
     - technology
     - environment
     - project
+    - runtime (settings dynamically updated during the run a hammer run)
     """
 
     def __init__(self) -> None:
@@ -208,9 +209,14 @@ class HammerDatabase:
         self.technology = []  # type: List[dict]
         self.environment = []  # type: List[dict]
         self.project = []  # type: List[dict]
+        self._runtime = {}  # type: Dict[str, Any]
 
         self.__config_cache = {}  # type: dict
         self.__config_cache_dirty = False  # type: bool
+
+    @property
+    def runtime(self) -> List[dict]:
+        return [self._runtime]
 
     @staticmethod
     def internal_keys() -> Set[str]:
@@ -223,7 +229,8 @@ class HammerDatabase:
         """
         if self.__config_cache_dirty:
             self.__config_cache = combine_configs(
-                [{}] + self.builtins + self.core + self.tools + self.technology + self.environment + self.project)
+                [{}] + self.builtins + self.core + self.tools + self.technology + self.environment +
+                self.project + self.runtime)
             self.__config_cache_dirty = False
         return self.__config_cache
 
@@ -257,6 +264,16 @@ class HammerDatabase:
         else:
             value = self.get_config()[key]
             return nullvalue if value is None else value
+
+    def set_setting(self, key: str, value: Any) -> None:
+        """
+        Set the given key. The setting will be placed into the runtime dictionary.
+
+        :param key: Key
+        :param value: Value for key
+        """
+        self._runtime[key] = value
+        self.__config_cache_dirty = True
 
     def has_setting(self, key: str) -> bool:
         """
