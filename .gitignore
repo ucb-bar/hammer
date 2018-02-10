@@ -1,19 +1,17 @@
+# Text editors / IDEs
 *.swp
 .idea
 
-/bin
-/obj
-/check
-/trace
-/Makefile.local
-
+# Hammer outputs
 *.log
 *rundir/
 /*.json
 
-/DVEfiles
-/opendatabase.log
-
+# Python junk
 __pycache__
 *.pyc
 .mypy_cache
+
+# Misc / unknown?
+/DVEfiles
+/opendatabase.log
