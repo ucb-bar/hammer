@@ -89,6 +89,9 @@
           "openaccess techfile" : {
             "type" : "string"
           },
+          "qrc techfile" : {
+            "type" : "string"
+          },
           "provides" : {
             "type" : "array",
             "items" : {
