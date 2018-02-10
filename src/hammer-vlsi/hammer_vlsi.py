@@ -1575,9 +1575,9 @@ class CadenceTool(HasSDCSupport, HammerTool):
         ))
         # extra junk: -opcond ...
         rc_corner_name = "rc_cond"
-        append_mmmc("create_rc_corner -name {name} -temperature {temp} {qrc}".format(
+        append_mmmc("create_rc_corner -name {name} -temperature {tempInCelsius} {qrc}".format(
             name=rc_corner_name,
-            temp=120, # TODO: this should come from tech config
+            tempInCelsius=120, # TODO: this should come from tech config
             qrc="-qrc_tech {}".format(self.get_qrc_tech()) if self.get_qrc_tech () != '' else ''
         ))
 
