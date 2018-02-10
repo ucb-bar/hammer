@@ -852,7 +852,7 @@ class HammerTool(metaclass=ABCMeta):
     @property
     def qrc_tech_filter(self) -> LibraryFilter:
         """
-        Selecting qrc RC Corner tech (qrcTecch) files.
+        Selecting qrc RC Corner tech (qrcTech) files.
         """
 
         def extraction_func(lib: hammer_tech.Library) -> List[str]:
@@ -1575,10 +1575,10 @@ class CadenceTool(HasSDCSupport, HammerTool):
         ))
         # extra junk: -opcond ...
         rc_corner_name = "rc_cond"
-        append_mmmc("create_rc_corner -name {name} -temperature {temp} -qrc_tech {qrc}".format(
+        append_mmmc("create_rc_corner -name {name} -temperature {temp} {qrc}".format(
             name=rc_corner_name,
             temp=120, # TODO: this should come from tech config
-            qrc=self.get_qrc_tech()
+            qrc="-qrc_tech {}".format(self.get_qrc_tech()) if self.get_qrc_tech () != '' else ''
         ))
 
         # Next, create an Innovus delay corner.
