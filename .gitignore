@@ -7,6 +7,10 @@
 /trace
 /Makefile.local
 
+*.log
+*rundir/
+/*.json
+
 /DVEfiles
 /opendatabase.log
 
