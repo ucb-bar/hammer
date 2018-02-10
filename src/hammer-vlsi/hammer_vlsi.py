@@ -850,6 +850,21 @@ class HammerTool(metaclass=ABCMeta):
                                  extraction_func=extraction_func, is_file=True)
 
     @property
+    def qrc_tech_filter(self) -> LibraryFilter:
+        """
+        Selecting qrc RC Corner tech (qrcTecch) files.
+        """
+
+        def extraction_func(lib: hammer_tech.Library) -> List[str]:
+            if lib.qrc_techfile is not None:
+                return [lib.qrc_techfile]
+            else:
+                return []
+
+        return LibraryFilter.new("qrc", "qrc RC corner tech file",
+                                 extraction_func=extraction_func, is_file=True)
+
+    @property
     def lef_filter(self) -> LibraryFilter:
         """
         Select LEF files for physical layout.
@@ -1524,6 +1539,16 @@ class CadenceTool(HasSDCSupport, HammerTool):
         ], self.to_plain_item)
         return " ".join(lib_args)
 
+    def get_qrc_tech(self) -> str:
+        """
+        Helper function to get the list of rc corner tech files in space separated format.
+        :return: List of qrc tech files separated by spaces
+        """
+        lib_args = self.read_libs([
+            self.qrc_tech_filter
+        ], self.to_plain_item)
+        return " ".join(lib_args)
+
     def generate_mmmc_script(self) -> str:
         """
         Output for the mmmc.tcl script.
@@ -1549,14 +1574,21 @@ class CadenceTool(HasSDCSupport, HammerTool):
             list=library_set_name
         ))
         # extra junk: -opcond ...
+        rc_corner_name = "rc_cond"
+        append_mmmc("create_rc_corner -name {name} -temperature {temp} -qrc_tech {qrc}".format(
+            name=rc_corner_name,
+            temp=120, # TODO: this should come from tech config
+            qrc=self.get_qrc_tech()
+        ))
 
         # Next, create an Innovus delay corner.
         delay_corner_name = "my_delay_corner"
         append_mmmc(
-            "create_delay_corner -name {name} -timing_condition {timing_cond}".format(
+            "create_delay_corner -name {name} -timing_condition {timing_cond} -rc_corner {rc}".format(
                 name=delay_corner_name,
-                timing_cond=timing_condition_name
-            ))
+                timing_cond=timing_condition_name,
+                rc=rc_corner_name
+        ))
         # extra junk: -rc_corner my_rc_corner_maybe_worst
 
         # In parallel, create an Innovus constraint mode.
