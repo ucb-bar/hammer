@@ -527,6 +527,32 @@ class HammerTool(metaclass=ABCMeta):
         """
         pass
 
+    def do_pre_steps(self) -> bool:
+        """
+        Function to run before the list of steps executes.
+        Intended to be overridden by subclasses.
+        :return: True if successful, False otherwise.
+        """
+        return True
+
+    def do_between_steps(self, prev: HammerToolStep, next: HammerToolStep) -> bool:
+        """
+        Function to run after the list of steps executes.
+        Intended to be overridden by subclasses.
+        :param prev: The step that just finished
+        :param next: The next step about to run.
+        :return: True if successful, False otherwise.
+        """
+        return True
+
+    def do_post_steps(self) -> bool:
+        """
+        Function to run after the list of steps executes.
+        Intended to be overridden by subclasses.
+        :return: True if successful, False otherwise.
+        """
+        return True
+
     def fill_outputs(self) -> bool:
         """
         Fill the outputs of the tool.
@@ -727,6 +753,12 @@ class HammerTool(metaclass=ABCMeta):
                 raise ValueError("Element in List[HammerToolStep] is not a HammerToolStep")
             check_hammer_step_function(step.func)
 
+        # Run pre-step hook.
+        self.do_pre_steps()
+
+        # Run steps.
+        prev_step = None  # type: HammerToolStep
+
         for step in new_steps:
             self.logger.debug("Running sub-step '{step}'".format(step=step.name))
 
@@ -748,7 +780,10 @@ class HammerTool(metaclass=ABCMeta):
 
             if do_step:
                 try:
+                    if prev_step is not None:
+                        self.do_between_steps(prev_step, step)
                     func_out = step.func(self)  # type: bool
+                    prev_step = step
                 except HammerToolPauseException:
                     self.logger.info("Sub-step '{step}' paused the tool execution".format(step=step.name))
                     return True
@@ -760,6 +795,9 @@ class HammerTool(metaclass=ABCMeta):
                 if not resume_step_pre and resume_step == step.name:
                     self.logger.info("Resuming after '{step}' due to resume hook".format(step=step.name))
                     resume_step = None
+
+        # Run post-steps hook.
+        self.do_post_steps()
 
         return True
 
