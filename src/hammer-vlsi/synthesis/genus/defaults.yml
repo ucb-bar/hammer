@@ -8,6 +8,9 @@ synthesis.genus:
   # Used to locate the binary - e.g. the '171' in ${cadence.cadence_home}/GENUS/GENUS171/bin/genus
   version: "171"
 
+  # Generate the TCL file but do not run it yet.
+  generate_only: false
+
 # Common Cadence settings.
 # TODO: move these to a shared file.
 cadence:
