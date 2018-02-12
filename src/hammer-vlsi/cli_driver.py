@@ -129,11 +129,13 @@ def args_to_driver(args: dict,
     driver = hammer_vlsi.HammerDriver(options, config)
     if from_step is not None or to_step is not None:
         driver.set_syn_tool_hooks(hammer_vlsi.HammerTool.make_from_to_hooks(from_step, to_step))
+        driver.set_par_tool_hooks(hammer_vlsi.HammerTool.make_from_to_hooks(from_step, to_step))
         if only_step is not None:
             errors.append("Cannot specify from_step/to_step and only_step")
     else:
         if only_step is not None:
             driver.set_syn_tool_hooks(hammer_vlsi.HammerTool.make_from_to_hooks(only_step, only_step))
+            driver.set_par_tool_hooks(hammer_vlsi.HammerTool.make_from_to_hooks(only_step, only_step))
 
     return driver, errors
 

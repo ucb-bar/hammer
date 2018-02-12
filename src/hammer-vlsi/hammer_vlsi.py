@@ -1890,6 +1890,13 @@ class HammerDriver:
         """
         self.syn_tool_hooks = list(hooks)
 
+    def set_par_tool_hooks(self, hooks: List[HammerToolHookAction]) -> None:
+        """
+        Set the default list of place and route tool hooks to be used in run_par.
+        :param hooks: Hooks to run
+        """
+        self.par_tool_hooks = list(hooks)
+
     def run_synthesis(self, hook_actions: Optional[List[HammerToolHookAction]] = None) -> Tuple[bool, dict]:
         """
         Run synthesis based on the given database.
@@ -1931,14 +1938,18 @@ class HammerDriver:
             output_dict["par.inputs.post_synth_sdc"] = output_dict["synthesis.outputs.sdc"]
         return output_dict
 
-    def run_par(self, hook_actions: List[HammerToolHookAction] = []) -> Tuple[bool, dict]:
+    def run_par(self, hook_actions: Optional[List[HammerToolHookAction]] = None) -> Tuple[bool, dict]:
         """
         Run place and route based on the given database.
         """
         # TODO: update API to match run_synthesis and deduplicate logic
         self.log.info("Starting place and route with tool '%s'" % (self.par_tool.name))
+        if hook_actions is None:
+            hooks_to_use = self.par_tool_hooks
+        else:
+            hooks_to_use = hook_actions
         # TODO: get place and route working
-        self.par_tool.run(hook_actions)
+        self.par_tool.run(hooks_to_use)
         return True, {}
 
 class HasSDCSupport(HammerTool):
