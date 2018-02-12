@@ -1990,8 +1990,10 @@ class HasSDCSupport(HammerTool):
             ))
         return "\n".join(output)
 
+
 class CadenceTool(HasSDCSupport, HammerTool):
     """Mix-in trait with functions useful for Cadence-based tools."""
+
     @property
     def env_vars(self) -> Dict[str, str]:
         """
@@ -2051,8 +2053,8 @@ class CadenceTool(HasSDCSupport, HammerTool):
         rc_corner_name = "rc_cond"
         append_mmmc("create_rc_corner -name {name} -temperature {tempInCelsius} {qrc}".format(
             name=rc_corner_name,
-            tempInCelsius=120, # TODO: this should come from tech config
-            qrc="-qrc_tech {}".format(self.get_qrc_tech()) if self.get_qrc_tech () != '' else ''
+            tempInCelsius=120,  # TODO: this should come from tech config
+            qrc="-qrc_tech {}".format(self.get_qrc_tech()) if self.get_qrc_tech() != '' else ''
         ))
 
         # Next, create an Innovus delay corner.
@@ -2062,7 +2064,7 @@ class CadenceTool(HasSDCSupport, HammerTool):
                 name=delay_corner_name,
                 timing_cond=timing_condition_name,
                 rc=rc_corner_name
-        ))
+            ))
         # extra junk: -rc_corner my_rc_corner_maybe_worst
 
         # In parallel, create an Innovus constraint mode.
