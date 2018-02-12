@@ -76,9 +76,7 @@ class Genus(HammerSynthesisTool, CadenceTool):
         """
         Buffered output to be put into syn.tcl.
         """
-        if not hasattr(self, "_output"):
-            setattr(self, "_output", [])
-        return getattr(self, "_output")
+        return self.attr_getter("_output", [])
 
     @property
     def mapped_v_path(self) -> str:
@@ -91,13 +89,11 @@ class Genus(HammerSynthesisTool, CadenceTool):
     @property
     def ran_write_outputs(self) -> bool:
         """The write_outputs stage sets this to True if it was run."""
-        if not hasattr(self, "_ran_write_outputs"):
-            setattr(self, "_ran_write_outputs", False)
-        return getattr(self, "_ran_write_outputs")
+        return self.attr_getter("_ran_write_outputs", False)
 
     @ran_write_outputs.setter
     def ran_write_outputs(self, val: bool) -> None:
-        setattr(self, "_ran_write_outputs", val)
+        self.attr_setter("_ran_write_outputs", val)
 
     # Python doesn't have Scala's nice currying syntax (e.g. val newfunc = func(_, fixed_arg))
     def verbose_append(self, cmd: str) -> None:
