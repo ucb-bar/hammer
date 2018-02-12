@@ -9,7 +9,7 @@ from typing import List, Dict
 
 import os
 
-from hammer_vlsi import HammerPlaceAndRouteTool, CadenceTool, HammerVLSILogging
+from hammer_vlsi import HammerPlaceAndRouteTool, CadenceTool, HammerVLSILogging, HammerToolStep
 
 
 # Notes: camelCase commands are the old syntax (deprecated)
@@ -23,14 +23,49 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         v["INNOVUS_BIN"] = self.get_setting("par.innovus.innovus_bin")
         return v
 
-    def do_run(self) -> bool:
+    def do_pre_steps(self, first_step: HammerToolStep) -> bool:
+        assert super().do_pre_steps(first_step)
+        # Restore from the last checkpoint if we're not starting over.
+        if first_step.name != "init_design":
+            self.verbose_append("read_db pre_{step}".format(step=first_step.name))
+        return True
+
+    def do_between_steps(self, prev: HammerToolStep, next: HammerToolStep) -> bool:
+        assert super().do_between_steps(prev, next)
+        # Write a checkpoint to disk.
+        self.verbose_append("write_db pre_{step}".format(step=next.name))
+        return True
+
+    def do_post_steps(self) -> bool:
+        assert super().do_post_steps()
+        return self.run_innovus()
+
+    @property
+    def output(self) -> List[str]:
+        """
+        Buffered output to be put into par.tcl.
+        """
+        return self.attr_getter("_output", [])
+
+    # Python doesn't have Scala's nice currying syntax (e.g. val newfunc = func(_, fixed_arg))
+    def verbose_append(self, cmd: str) -> None:
+        self.verbose_tcl_append(cmd, self.output)
+
+    @property
+    def steps(self) -> List[HammerToolStep]:
+        return self.make_steps_from_methods([
+            self.init_design,
+            self.place_opt_design,
+            self.route_design,
+            self.opt_design,
+            self.write_design
+        ])
+
+    def init_design(self) -> bool:
+        """Initialize the design."""
         self.create_enter_script()
 
-        output = []  # type: List[str]
-
-        # Python doesn't have Scala's nice currying syntax (e.g. val newfunc = func(_, fixed_arg))
-        def verbose_append(cmd: str) -> None:
-            self.verbose_tcl_append(cmd, output)
+        verbose_append = self.verbose_append
 
         # Generic settings
         verbose_append("set_db design_process_node {}".format(self.get_setting("vlsi.core.node")))
@@ -72,32 +107,36 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             f.write("\n".join(self.create_floorplan_tcl()))
         verbose_append("source -echo -verbose {}".format(floorplan_tcl))
 
-        # Place the design and do pre-routing optimization.
-        verbose_append("place_opt_design")
+        return True
 
-        # Route the design.
-        verbose_append("route_design")
+    def place_opt_design(self) -> bool:
+        """Place the design and do pre-routing optimization."""
+        self.verbose_append("place_opt_design")
+        return True
 
-        # Post-route optimization and fix setup & hold time violations.
-        verbose_append("opt_design -post_route -setup -hold")
+    def route_design(self) -> bool:
+        """Route the design."""
+        self.verbose_append("route_design")
+        return True
 
+    def opt_design(self) -> bool:
+        """Post-route optimization and fix setup & hold time violations."""
+        self.verbose_append("opt_design -post_route -setup -hold")
+        return True
+
+    @property
+    def output_innovus_lib_name(self) -> str:
+        return "{top}_FINAL".format(top=self.top_module)
+
+    def write_design(self) -> bool:
         # Save the Innovus design.
-        output_innovus_lib_name = "{top}_ENC".format(top=self.top_module)
-        verbose_append("write_db {lib_name} -def -verilog".format(
-            lib_name=output_innovus_lib_name
+        self.verbose_append("write_db {lib_name} -def -verilog".format(
+            lib_name=self.output_innovus_lib_name
         ))
 
         # GDS streamout.
-        verbose_append("write_stream -output_macros -mode ALL -unit 1000 gds_file")
+        self.verbose_append("write_stream -output_macros -mode ALL -unit 1000 gds_file")
         # extra junk: -map_file -attach_inst_name ... -attach_net_name ...
-
-        # Quit Innovus.
-        verbose_append("exit")
-
-        # Create par script.
-        par_tcl_filename = os.path.join(self.run_dir, "par.tcl")
-        with open(par_tcl_filename, "w") as f:
-            f.write("\n".join(output))
 
         # Make sure that generated-scripts exists.
         generated_scripts_dir = os.path.join(self.run_dir, "generated-scripts")
@@ -106,18 +145,28 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         # Create open_chip script.
         with open(os.path.join(generated_scripts_dir, "open_chip.tcl"), "w") as f:
             f.write("""
-read_db {name}
-        """.format(name=output_innovus_lib_name))
+        read_db {name}
+                """.format(name=self.output_innovus_lib_name))
 
         with open(os.path.join(generated_scripts_dir, "open_chip"), "w") as f:
             f.write("""
-cd {run_dir}
-source enter
-$INNOVUS_BIN -common_ui -files generated-scripts/open_chip.tcl
-        """.format(run_dir=self.run_dir))
+        cd {run_dir}
+        source enter
+        $INNOVUS_BIN -common_ui -files generated-scripts/open_chip.tcl
+                """.format(run_dir=self.run_dir))
         self.run_executable([
             "chmod", "+x", os.path.join(generated_scripts_dir, "open_chip")
         ])
+        return True
+
+    def run_innovus(self) -> bool:
+        # Quit Innovus.
+        self.verbose_append("exit")
+
+        # Create par script.
+        par_tcl_filename = os.path.join(self.run_dir, "par.tcl")
+        with open(par_tcl_filename, "w") as f:
+            f.write("\n".join(self.output))
 
         # Build args.
         args = [
