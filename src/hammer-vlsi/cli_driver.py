@@ -124,9 +124,16 @@ def args_to_driver(args: dict,
     # Stage control: from/to
     from_step = get_nonempty_str(args['from_step'])
     to_step = get_nonempty_str(args['to_step'])
+    only_step = get_nonempty_str(args['only_step'])
 
     driver = hammer_vlsi.HammerDriver(options, config)
-    driver.set_syn_tool_hooks(hammer_vlsi.HammerTool.make_from_to_hooks(from_step, to_step))
+    if from_step is not None or to_step is not None:
+        driver.set_syn_tool_hooks(hammer_vlsi.HammerTool.make_from_to_hooks(from_step, to_step))
+        if only_step is not None:
+            errors.append("Cannot specify from_step/to_step and only_step")
+    else:
+        if only_step is not None:
+            driver.set_syn_tool_hooks(hammer_vlsi.HammerTool.make_from_to_hooks(only_step, only_step))
 
     return driver, errors
 
@@ -217,6 +224,8 @@ if __name__ == '__main__':
                         help="Run the given action from the given step (inclusive).")
     parser.add_argument("--to_step", dest="to_step", required=False,
                         help="Run the given action to the given step (inclusive).")
+    parser.add_argument("--only_step", dest="only_step", required=False,
+                        help="Run only the given step. Not compatible with --from_step or --to_step.")
     # Required arguments for CLI hammer driver.
     parser.add_argument("-o", "--output", default="output.json", required=False,
                         help='Output JSON file for results and modular use of hammer-vlsi. Default: output.json.')
