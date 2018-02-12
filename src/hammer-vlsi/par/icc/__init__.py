@@ -3,18 +3,26 @@
 #
 #  hammer-vlsi plugin for Synopsys ICC.
 #
-#  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+#  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 import os
 from shutil import copyfile
 from os.path import dirname
+from typing import List
 
-from hammer_vlsi import HammerPlaceAndRouteTool
+from hammer_vlsi import HammerPlaceAndRouteTool, HammerToolStep
 from hammer_vlsi import SynopsysTool
 from hammer_vlsi import HammerVLSILogging
 
+
 class ICC(HammerPlaceAndRouteTool, SynopsysTool):
-    def do_run(self) -> bool:
+    @property
+    def steps(self) -> List[HammerToolStep]:
+        return self.make_steps_from_methods([
+            self.main_step
+        ])
+
+    def main_step(self) -> bool:
         # Locate reference methodology tarball.
         synopsys_rm_tarball = self.get_synopsys_rm_tarball("ICC")
 
@@ -447,5 +455,8 @@ $ICC_HOME/bin/icc_shell -gui -f generated-scripts/open_chip.tcl
         self.run_executable(args, cwd=self.run_dir) # TODO: check for errors and deal with them
         HammerVLSILogging.enable_colour = True
         HammerVLSILogging.enable_tag = True
+
+        return True
+
 
 tool = ICC()
