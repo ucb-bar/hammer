@@ -3,22 +3,34 @@
 #
 #  hammer-vlsi plugin for Synopsys DC.
 #
-#  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+#  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
 
-from hammer_vlsi import HammerSynthesisTool
+from typing import List
+
+from hammer_vlsi import HammerSynthesisTool, HammerToolStep
 from hammer_vlsi import SynopsysTool
 from hammer_vlsi import HammerVLSILogging
 
-import hammer_tech
-
-from functools import reduce
-from typing import Callable, List, Iterable
-
 import os
 import re
-import subprocess
+
 
 class DC(HammerSynthesisTool, SynopsysTool):
+    def fill_outputs(self) -> bool:
+        # Check that the mapped.v exists if the synthesis run was successful
+        # TODO: move this check upwards?
+        mapped_v = "%s/results/%s.mapped.v" % (self.run_dir, self.top_module)
+        if not os.path.isfile(mapped_v):
+            raise ValueError("Output mapped verilog %s not found" % (mapped_v))  # better error?
+        self.output_files = [mapped_v]
+        return True
+
+    @property
+    def steps(self) -> List[HammerToolStep]:
+        return self.make_steps_from_methods([
+            self.main_step
+        ])
+
     # TODO(edwardw): move this to synopsys common
     def generate_tcl_preferred_routing_direction(self):
         """
@@ -32,10 +44,11 @@ class DC(HammerSynthesisTool, SynopsysTool):
         for library in self.technology.config.libraries:
             if library.metal_layers is not None:
                 for layer in library.metal_layers:
-                    output.append("set_preferred_routing_direction -layers {{ {0} }} -direction {1}".format(layer.name, layer.preferred_routing_direction))
+                    output.append("set_preferred_routing_direction -layers {{ {0} }} -direction {1}".format(layer.name,
+                                                                                                            layer.preferred_routing_direction))
 
         output.append("set suppress_errors  [lminus $suppress_errors  [list PSYN-882]]")
-        output.append("") # Add newline at the end
+        output.append("")  # Add newline at the end
         return "\n".join(output)
 
     def disable_congestion_map(self) -> None:
@@ -67,7 +80,7 @@ class DC(HammerSynthesisTool, SynopsysTool):
         f.write(output)
         f.close()
 
-    def do_run(self) -> bool:
+    def main_step(self) -> bool:
         # TODO(edwardw): move most of this to Synopsys common since it's not DC-specific.
         # Locate reference methodology tarball.
         synopsys_rm_tarball = self.get_synopsys_rm_tarball("DC")
@@ -81,7 +94,7 @@ class DC(HammerSynthesisTool, SynopsysTool):
 
         # Load input files.
         if not self.check_input_files([".v", ".sv"]):
-          return False
+            return False
 
         # Generate preferred_routing_directions.
         preferred_routing_directions_fragment = os.path.join(self.run_dir, "preferred_routing_directions.tcl")
@@ -121,24 +134,17 @@ class DC(HammerSynthesisTool, SynopsysTool):
             "--run_dir", self.run_dir,
             "--top", self.top_module
         ]
-        args.extend(self.input_files) # We asserted these are Verilog above
+        args.extend(self.input_files)  # We asserted these are Verilog above
         args.extend(lib_args)
 
         # Temporarily disable colours/tag to make DC run output more readable.
         # TODO: think of a more elegant way to do this?
         HammerVLSILogging.enable_colour = False
         HammerVLSILogging.enable_tag = False
-        self.run_executable(args) # TODO: check for errors and deal with them
+        self.run_executable(args)  # TODO: check for errors and deal with them
         HammerVLSILogging.enable_colour = True
         HammerVLSILogging.enable_tag = True
-
-        # Check that the mapped.v exists if the synthesis run was successful
-        # TODO: move this check upwards?
-        mapped_v = "%s/results/%s.mapped.v" % (self.run_dir, self.top_module)
-        if not os.path.isfile(mapped_v):
-            raise ValueError("Output mapped verilog %s not found" % (mapped_v)) # better error?
-        self.output_files = [mapped_v]
-
         return True
+
 
 tool = DC()
