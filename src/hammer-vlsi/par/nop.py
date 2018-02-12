@@ -6,13 +6,15 @@
 #
 #  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
-from hammer_vlsi import HammerPlaceAndRouteTool
+from typing import List
+
+from hammer_vlsi import HammerPlaceAndRouteTool, HammerToolStep
 
 
 class Nop(HammerPlaceAndRouteTool):
-    def do_run(self) -> bool:
-        # Do nothing
-        return True
+    @property
+    def steps(self) -> List[HammerToolStep]:
+        return []
 
 
 tool = Nop()
