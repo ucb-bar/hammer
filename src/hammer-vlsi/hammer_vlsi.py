@@ -539,6 +539,7 @@ class HammerTool(metaclass=ABCMeta):
     def do_between_steps(self, prev: HammerToolStep, next: HammerToolStep) -> bool:
         """
         Function to run after the list of steps executes.
+        Does not include pause hooks.
         Intended to be overridden by subclasses.
         :param prev: The step that just finished
         :param next: The next step about to run.
@@ -757,7 +758,9 @@ class HammerTool(metaclass=ABCMeta):
         # Run steps.
         prev_step = None  # type: HammerToolStep
 
-        for step in new_steps:
+        for step_index in range(len(new_steps)):
+            step = new_steps[step_index]
+
             self.logger.debug("Running sub-step '{step}'".format(step=step.name))
 
             # Do this step?
@@ -782,7 +785,13 @@ class HammerTool(metaclass=ABCMeta):
                         # Run pre-step hook.
                         self.do_pre_steps(step)
                     else:
-                        self.do_between_steps(prev_step, step)
+                        # TODO: find a cleaner way of detecting a pause hook
+                        if step.name == "pause":
+                            # Don't include "pause" for do_between_steps
+                            if step_index + 1 < len(new_steps):
+                                self.do_between_steps(prev_step, new_steps[step_index + 1])
+                        else:
+                            self.do_between_steps(prev_step, step)
                     func_out = step.func(self)  # type: bool
                     prev_step = step
                 except HammerToolPauseException:
