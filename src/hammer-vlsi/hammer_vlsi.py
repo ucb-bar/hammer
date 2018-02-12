@@ -938,13 +938,13 @@ class HammerTool(metaclass=ABCMeta):
         return HammerTool.make_resume_hook(step, HookLocation.ResumePostStep)
 
     @staticmethod
-    def make_from_to_hooks(from_step: Optional[str] = None, to_step: Optional[str] = None) -> List[
-        HammerToolHookAction]:
+    def make_from_to_hooks(from_step: Optional[str] = None,
+                           to_step: Optional[str] = None) -> List[HammerToolHookAction]:
         """
         Helper function to create a HammerToolHookAction list which will run from and to the given steps, inclusive.
         :param from_step: Run from the given step, inclusive. Leave as None to resume from the beginning.
         :param to_step: Run to the given step, inclusive. Leave as None to run to the end.
-        :return:
+        :return: HammerToolHookAction list for running from and to the given steps, inclusive.
         """
         output = []  # type: List[HammerToolHookAction]
         if from_step is not None:
