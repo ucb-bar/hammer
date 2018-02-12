@@ -680,6 +680,19 @@ class HammerTool(metaclass=ABCMeta):
         self._logger = value # type: HammerVLSILoggingContext
 
     ##############################
+    # Implementation helpers for properties
+    ##############################
+    def attr_getter(self, key: str, default: Any) -> Any:
+        """Helper function for implementing the getter of a property with a default."""
+        if not hasattr(self, key):
+            setattr(self, key, default)
+        return getattr(self, key)
+
+    def attr_setter(self, key: str, value: Any) -> None:
+        """Helper function for implementing the setter of a property with a default."""
+        setattr(self, key, value)
+
+    ##############################
     # Hooks
     ##############################
     def check_duplicates(self, lst: List[HammerToolStep]) -> Tuple[bool, Set[str]]:
