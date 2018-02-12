@@ -527,10 +527,11 @@ class HammerTool(metaclass=ABCMeta):
         """
         pass
 
-    def do_pre_steps(self) -> bool:
+    def do_pre_steps(self, first_step: HammerToolStep) -> bool:
         """
         Function to run before the list of steps executes.
         Intended to be overridden by subclasses.
+        :param first_step: First step to be taken.
         :return: True if successful, False otherwise.
         """
         return True
@@ -753,9 +754,6 @@ class HammerTool(metaclass=ABCMeta):
                 raise ValueError("Element in List[HammerToolStep] is not a HammerToolStep")
             check_hammer_step_function(step.func)
 
-        # Run pre-step hook.
-        self.do_pre_steps()
-
         # Run steps.
         prev_step = None  # type: HammerToolStep
 
@@ -780,7 +778,10 @@ class HammerTool(metaclass=ABCMeta):
 
             if do_step:
                 try:
-                    if prev_step is not None:
+                    if prev_step is None:
+                        # Run pre-step hook.
+                        self.do_pre_steps(step)
+                    else:
                         self.do_between_steps(prev_step, step)
                     func_out = step.func(self)  # type: bool
                     prev_step = step
