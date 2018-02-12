@@ -55,10 +55,18 @@ class Genus(HammerSynthesisTool, CadenceTool):
             self.write_outputs
         ])
 
+    def do_pre_steps(self, first_step: HammerToolStep) -> bool:
+        assert super().do_pre_steps(first_step)
+        # If the first step isn't init_environment, then reload from a checkpoint.
+        if first_step.name != "init_environment":
+            self.verbose_append("read_db pre_{step}".format(step=first_step.name))
+        return True
+
     def do_between_steps(self, prev: HammerToolStep, next: HammerToolStep) -> bool:
         assert super().do_between_steps(prev, next)
         # Write a checkpoint to disk.
         self.verbose_append("write_db -to_file {step}".format(step=prev.name))
+        self.verbose_append("write_db -to_file pre_{step}".format(step=next.name))
 
     def do_post_steps(self) -> bool:
         assert super().do_post_steps()
