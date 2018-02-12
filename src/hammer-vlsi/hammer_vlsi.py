@@ -786,7 +786,7 @@ class HammerTool(metaclass=ABCMeta):
                     prev_step = step
                 except HammerToolPauseException:
                     self.logger.info("Sub-step '{step}' paused the tool execution".format(step=step.name))
-                    return True
+                    break
                 assert isinstance(func_out, bool)
                 if not func_out:
                     return False
@@ -926,6 +926,22 @@ class HammerTool(metaclass=ABCMeta):
         Note that only one resume hook may be present.
         """
         return HammerTool.make_resume_hook(step, HookLocation.ResumePostStep)
+
+    @staticmethod
+    def make_from_to_hooks(from_step: Optional[str] = None, to_step: Optional[str] = None) -> List[
+        HammerToolHookAction]:
+        """
+        Helper function to create a HammerToolHookAction list which will run from and to the given steps, inclusive.
+        :param from_step: Run from the given step, inclusive. Leave as None to resume from the beginning.
+        :param to_step: Run to the given step, inclusive. Leave as None to run to the end.
+        :return:
+        """
+        output = []  # type: List[HammerToolHookAction]
+        if from_step is not None:
+            output.append(HammerTool.make_pre_resume_hook(from_step))
+        if to_step is not None:
+            output.append(HammerTool.make_post_pause_hook(to_step))
+        return output
 
     @staticmethod
     def make_pre_insertion_hook(step: str, func: HammerStepFunction) -> HammerToolHookAction:
@@ -1730,6 +1746,10 @@ class HammerDriver:
         self.syn_tool = None # type: HammerSynthesisTool
         self.par_tool = None # type: HammerPlaceAndRouteTool
 
+        # Initialize tool hooks.
+        self.syn_tool_hooks = []  # type: List[HammerToolHookAction]
+        self.par_tool_hooks = []  # type: List[HammerToolHookAction]
+
     def load_technology(self, cache_dir: str = "") -> None:
         tech_str = self.database.get_setting("vlsi.core.technology")
 
@@ -1840,14 +1860,27 @@ class HammerDriver:
         self.update_tool_configs()
         return True
 
-    def run_synthesis(self, hook_actions: List[HammerToolHookAction] = []) -> Tuple[bool, dict]:
+    def set_syn_tool_hooks(self, hooks: List[HammerToolHookAction]) -> None:
+        """
+        Set the default list of synthesis tool hooks to be used in run_synthesis.
+        :param hooks: Hooks to run
+        """
+        self.syn_tool_hooks = list(hooks)
+
+    def run_synthesis(self, hook_actions: Optional[List[HammerToolHookAction]] = None) -> Tuple[bool, dict]:
         """
         Run synthesis based on the given database.
+        :param hook_actions: List of hook actions, or leave as None to use the hooks sets in set_synthesis_hooks.
+        :return: Tuple of (success, output config dict)
         """
 
         # TODO: think about artifact storage?
         self.log.info("Starting synthesis with tool '%s'" % (self.syn_tool.name))
-        run_succeeded = self.syn_tool.run(hook_actions)
+        if hook_actions is None:
+            hooks_to_use = self.syn_tool_hooks
+        else:
+            hooks_to_use = hook_actions
+        run_succeeded = self.syn_tool.run(hooks_to_use)
         if not run_succeeded:
             self.log.error("Synthesis tool %s failed! Please check its output." % (self.syn_tool.name))
             # Allow the flow to keep running, just in case.
@@ -1879,6 +1912,7 @@ class HammerDriver:
         """
         Run place and route based on the given database.
         """
+        # TODO: update API to match run_synthesis and deduplicate logic
         self.log.info("Starting place and route with tool '%s'" % (self.par_tool.name))
         # TODO: get place and route working
         self.par_tool.run(hook_actions)

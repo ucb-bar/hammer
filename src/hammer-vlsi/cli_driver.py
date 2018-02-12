@@ -5,7 +5,7 @@
 #  
 #  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
 #
-#  Entry point to the hammer VLSI abstraction.
+#  CLI entry point to the Hammer VLSI abstraction.
 
 import argparse
 import json
@@ -13,9 +13,7 @@ import os
 import subprocess
 import sys
 
-import hammer_config
 import hammer_vlsi
-import hammer_tech
 
 from typing import List, Dict, Tuple, Any, Iterable, Callable, Optional
 
@@ -53,10 +51,10 @@ def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callab
 
 def args_to_driver(args: dict,
                    default_options: Optional[hammer_vlsi.HammerDriverOptions] = None) -> \
-        Tuple[hammer_vlsi.HammerDriverOptions, dict, List[str]]:
+        Tuple[hammer_vlsi.HammerDriver, List[str]]:
     """Parse command line arguments and environment variables for the command line front-end to hammer-vlsi.
 
-    :return: DriverOptions, a parsed config for certain options, and a list of errors."""
+    :return: HammerDriver and a list of errors."""
 
     # TODO: rewrite this less tediously?
 
@@ -123,7 +121,14 @@ def args_to_driver(args: dict,
     if obj_dir is not None:
         options = options._replace(obj_dir=obj_dir)
 
-    return options, config, errors
+    # Stage control: from/to
+    from_step = get_nonempty_str(args['from_step'])
+    to_step = get_nonempty_str(args['to_step'])
+
+    driver = hammer_vlsi.HammerDriver(options, config)
+    driver.set_syn_tool_hooks(hammer_vlsi.HammerTool.make_from_to_hooks(from_step, to_step))
+
+    return driver, errors
 
 
 def get_nonempty_str(arg: Any) -> Optional[str]:
@@ -176,8 +181,7 @@ def main(args: dict) -> int:
         print("firrtl convenience argument not yet implemented", file=sys.stderr)
         return 1
 
-    options, config, errors = args_to_driver(args)
-    driver = hammer_vlsi.HammerDriver(options, config)
+    driver, errors = args_to_driver(args)
 
     output_config = action_map()[action](driver, errors.append)
     if output_config is None:
@@ -199,7 +203,7 @@ if __name__ == '__main__':
 
     parser.add_argument('action', metavar='ACTION', type=str, choices=valid_actions(),
                         help='Action to perform with the command-line driver.')
-    # Required options for (Python) hammer driver.
+    # Required arguments for (Python) hammer driver.
     parser.add_argument("-e", "--environment_config", action='append', required=False,
                         help="Environment config files (.yml or .json) - .json will take precendence over any .yml. These config files will not be re-emitted in the output json. Can also be specified as a colon-separated list in the environment variable HAMMER_ENVIRONMENT_CONFIGS.")
     parser.add_argument("-p", "--project_config", action='append', dest="configs", type=str,
@@ -208,7 +212,12 @@ if __name__ == '__main__':
                         help='Log file. Leave blank to automatically create one.')
     parser.add_argument("--obj_dir", required=False,
                         help='Folder for storing results of CAD tool runs. If not specified, this will be the hammer-vlsi folder by default. Can also be specified via the environment variable HAMMER_DRIVER_OBJ_DIR.')
-    # Required options for CLI hammer driver.
+    # Optional arguments for step control.
+    parser.add_argument("--from_step", dest="from_step", required=False,
+                        help="Run the given action from the given step (inclusive).")
+    parser.add_argument("--to_step", dest="to_step", required=False,
+                        help="Run the given action to the given step (inclusive).")
+    # Required arguments for CLI hammer driver.
     parser.add_argument("-o", "--output", default="output.json", required=False,
                         help='Output JSON file for results and modular use of hammer-vlsi. Default: output.json.')
     # Optional arguments (depending on context)
