@@ -66,6 +66,7 @@ class Genus(HammerSynthesisTool, CadenceTool):
         assert super().do_between_steps(prev, next)
         # Write a checkpoint to disk.
         self.verbose_append("write_db -to_file pre_{step}".format(step=next.name))
+        return True
 
     def do_post_steps(self) -> bool:
         assert super().do_post_steps()
