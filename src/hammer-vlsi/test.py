@@ -258,7 +258,7 @@ class HammerToolHooksTestContext:
         self.temp_dir = ""  # type: str
         self.driver = None  # type: hammer_vlsi.HammerDriver
 
-    def __enter__(self: T) -> T:
+    def __enter__(self) -> "HammerToolHooksTestContext":
         """Initialize context by creating the temp_dir, driver, and loading mocksynth."""
         self.test.assertTrue(hammer_vlsi.HammerVLSISettings.set_hammer_vlsi_path_from_environment(),
                         "hammer_vlsi_path must exist")
@@ -286,6 +286,7 @@ class HammerToolHooksTestContext:
     def __exit__(self, type, value, traceback) -> bool:
         """Clean up the context by removing the temp_dir."""
         shutil.rmtree(self.temp_dir)
+        return True
 
 
 class HammerToolHooksTest(unittest.TestCase):
