@@ -13,6 +13,7 @@ from typing import Callable, Iterable, List, NamedTuple, Tuple, TypeVar, Type, O
 
 from functools import reduce
 
+import atexit
 import datetime
 import importlib
 import os
@@ -1217,6 +1218,7 @@ class HammerTool(metaclass=ABCMeta):
         subprocess_logger = self.logger.context("Exec " + prog_tag)
 
         proc = subprocess.Popen(args, bufsize=1, shell=False, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, env=self._subprocess_env, cwd=cwd)
+        atexit.register(proc.kill)
         # Log output and also capture output at the same time.
         output_buf = ""
         while True:
