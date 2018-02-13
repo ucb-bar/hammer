@@ -1216,7 +1216,7 @@ class HammerTool(metaclass=ABCMeta):
         prog_tag = prog_name + " " + prog_args
         subprocess_logger = self.logger.context("Exec " + prog_tag)
 
-        proc = subprocess.Popen(args, shell=False, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, env=self._subprocess_env, cwd=cwd)
+        proc = subprocess.Popen(args, bufsize=1, shell=False, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, env=self._subprocess_env, cwd=cwd)
         # Log output and also capture output at the same time.
         output_buf = ""
         while True:
