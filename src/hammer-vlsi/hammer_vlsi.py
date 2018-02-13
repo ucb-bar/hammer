@@ -1217,12 +1217,12 @@ class HammerTool(metaclass=ABCMeta):
         prog_tag = prog_name + " " + prog_args
         subprocess_logger = self.logger.context("Exec " + prog_tag)
 
-        proc = subprocess.Popen(args, bufsize=1, shell=False, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, env=self._subprocess_env, cwd=cwd)
+        proc = subprocess.Popen(args, bufsize=1, shell=False, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, env=self._subprocess_env, cwd=cwd, universal_newlines=True)
         atexit.register(proc.kill)
         # Log output and also capture output at the same time.
         output_buf = ""
         while True:
-            line = proc.stdout.readline().decode("utf-8")
+            line = proc.stdout.readline()
             if line != '':
                 subprocess_logger.debug(line.rstrip())
                 output_buf += line
