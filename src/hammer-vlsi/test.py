@@ -398,6 +398,10 @@ class HammerToolHooksTest(unittest.TestCase):
     def test_insertion_hooks(self) -> None:
         """Test that insertion hooks work."""
 
+        def change1(x: hammer_vlsi.HammerTool) -> bool:
+            x.set_setting("synthesis.mocksynth.step1", "HelloWorld")
+            return True
+
         def change2(x: hammer_vlsi.HammerTool) -> bool:
             x.set_setting("synthesis.mocksynth.step2", "HelloWorld")
             return True
@@ -419,6 +423,20 @@ class HammerToolHooksTest(unittest.TestCase):
             for i in range(1, 5):
                 file = os.path.join(c.temp_dir, "step{}.txt".format(i))
                 if i == 3:
+                    self.assertEqual(self.read(file), "HelloWorld")
+                else:
+                    self.assertEqual(self.read(file), "step{}".format(i))
+
+        # Test inserting before the first step
+        with self.create_context() as c:
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_pre_insertion_hook("step1", change1)
+            ])
+            self.assertTrue(success)
+
+            for i in range(1, 5):
+                file = os.path.join(c.temp_dir, "step{}.txt".format(i))
+                if i == 1:
                     self.assertEqual(self.read(file), "HelloWorld")
                 else:
                     self.assertEqual(self.read(file), "step{}".format(i))
