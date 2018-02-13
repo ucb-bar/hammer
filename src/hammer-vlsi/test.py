@@ -445,7 +445,7 @@ class HammerToolHooksTest(unittest.TestCase):
             success, syn_output = c.driver.run_synthesis(hook_actions=[
                 hammer_vlsi.HammerTool.make_pre_insertion_hook("step2", change2),
                 hammer_vlsi.HammerTool.make_post_insertion_hook("step3", change3),
-                hammer_vlsi.HammerTool.make_pre_insertion_hook("step4", change4)
+                hammer_vlsi.HammerTool.make_pre_insertion_hook("change3", change4)
             ])
             self.assertTrue(success)
 
