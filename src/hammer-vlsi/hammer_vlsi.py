@@ -749,11 +749,13 @@ class HammerTool(metaclass=ABCMeta):
                     self.logger.error("New step '{step}' already exists".format(step=action.step.name))
                     return False
                 new_steps.insert(step_id, action.step)
+                names.add(action.step.name)
             elif action.location == HookLocation.InsertPostStep:
                 if has_step(action.step.name):
                     self.logger.error("New step '{step}' already exists".format(step=action.step.name))
                     return False
                 new_steps.insert(step_id + 1, action.step)
+                names.add(action.step.name)
             elif action.location == HookLocation.ResumePreStep or action.location == HookLocation.ResumePostStep:
                 if resume_step is not None:
                     self.logger.error("More than one resume hook is present")
