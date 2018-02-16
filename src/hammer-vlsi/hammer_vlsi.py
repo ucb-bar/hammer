@@ -436,6 +436,7 @@ class TimeValue:
 ClockPort = NamedTuple('ClockPort', [
     ('name', str),
     ('period', TimeValue),
+    ('port', Optional[str]),
     ('uncertainty', Optional[TimeValue])
 ])
 
@@ -1485,12 +1486,13 @@ class HammerTool(metaclass=ABCMeta):
         for clock_port in clocks:
             clock = ClockPort(
                 name=clock_port["name"], period=TimeValue(clock_port["period"]),
-                uncertainty=None
+                uncertainty=None, port=None
             )
+            if "port" in clock_port:
+                clock = clock._replace(port=clock_port["port"])
             if "uncertainty" in clock_port:
-                output.append( clock._replace(uncertainty=TimeValue(clock_port["uncertainty"])) )
-            else:
-                output.append(clock)
+                clock = clock._replace(uncertainty=TimeValue(clock_port["uncertainty"]))
+            output.append(clock)
         return output
 
     def get_output_load_constraints(self) -> List[OutputLoadConstraint]:
@@ -1967,7 +1969,10 @@ class HasSDCSupport(HammerTool):
         clocks = self.get_clock_ports()
         for clock in clocks:
             # TODO: FIXME This assumes that library units are always in ns!!!
-            output.append("create_clock {0} -name {0} -period {1}".format(clock.name, clock.period.value_in_units("ns")))
+            if clock.port is not None:
+                output.append("create_clock {0} -name {1} -period {2}".format(clock.port, clock.name, clock.period.value_in_units("ns")))
+            else:
+                output.append("create_clock {0} -name {0} -period {1}".format(clock.name, clock.period.value_in_units("ns")))
             if clock.uncertainty is not None:
                 output.append("set_clock_uncertainty {1} [get_clocks {0}]".format(clock.name, clock.uncertainty.value_in_units("ns")))
 
