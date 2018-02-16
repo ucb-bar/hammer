@@ -109,6 +109,7 @@ class Genus(HammerSynthesisTool, CadenceTool):
         verbose_append = self.verbose_append
 
         # Generic Settings
+        verbose_append("set_db hdl_error_on_blackbox true")
         verbose_append("set_db max_cpus_per_server {}".format(self.get_setting("vlsi.core.max_threads")))
 
         # TODO(edwardw): figure out how to make Genus quit instead of hanging on error.
