@@ -1527,6 +1527,15 @@ class HammerTool(metaclass=ABCMeta):
                 f.write("\n".join(content_lines))
 
     @staticmethod
+    def tcl_append(cmd: str, output_buffer: List[str]) -> None:
+        """
+        Helper function to echo and run a command.
+        :param cmd: TCL command to run
+        :param output_buffer: Buffer in which to enqueue the resulting TCL lines.
+        """
+        output_buffer.append(cmd)
+
+    @staticmethod
     def verbose_tcl_append(cmd: str, output_buffer: List[str]) -> None:
         """
         Helper function to echo and run a command.

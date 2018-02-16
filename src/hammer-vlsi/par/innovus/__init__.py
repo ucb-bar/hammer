@@ -50,6 +50,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
     # Python doesn't have Scala's nice currying syntax (e.g. val newfunc = func(_, fixed_arg))
     def verbose_append(self, cmd: str) -> None:
         self.verbose_tcl_append(cmd, self.output)
+    def append(self, cmd: str) -> None:
+        self.tcl_append(cmd, self.output)
 
     @property
     def steps(self) -> List[HammerToolStep]:
