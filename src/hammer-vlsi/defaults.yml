@@ -45,6 +45,7 @@ vlsi.inputs:
   # Clock struct members:
   # name (str) - Name of the clock port.
   # period (TimeValue) - Clock port period. e.g. "1 ns", "5ns". Default units: ns
+  # port (str) - Optional. If specified, this is the RTL path to the clock. Otherwise, the path is the same as the name.
   # uncertainty (TimeValue) - Optional. Clock uncertainty. e.g. "1 ns", "5ns". Default units: ns
   clocks: []
 
