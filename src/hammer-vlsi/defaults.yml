@@ -9,7 +9,8 @@ vlsi.core:
 
   # Technology to use. hammer-vlsi will read this and load the appropriate technology libraries.
   technology: "saed32"
-  # Technology node dimension(nm) to use, some tools change what they do as this changes
+  # Technology node dimension (nm) to use.
+  # Some tools change what they do as this changes.
   node: 32
 
   # Path(s) to synthesis tools.
