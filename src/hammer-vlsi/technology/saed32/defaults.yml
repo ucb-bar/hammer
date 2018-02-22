@@ -10,7 +10,8 @@ technology.saed32:
 # TODO: add default temperature corners.
 vlsi:
   # Technology dimension
-  core.node: 32
+  # TODO: add more technology files to make some CAD tools happy with the actual number of 32nm
+  core.node: 33
   inputs:
     # Supply voltages.
     supplies:
