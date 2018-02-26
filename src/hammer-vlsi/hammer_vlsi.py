@@ -446,6 +446,47 @@ OutputLoadConstraint = NamedTuple('OutputLoadConstraint', [
 ])
 
 
+class PlacementConstraintType(Enum):
+    Dummy = 1
+    Placement = 2
+    TopLevel = 3
+    HardMacro = 4
+    Hierarchical = 5
+
+    @staticmethod
+    def from_string(s: str) -> "PlacementConstraintType":
+        if s == "dummy":
+            return PlacementConstraintType.Dummy
+        elif s == "placement":
+            return PlacementConstraintType.Placement
+        elif s == "toplevel":
+            return PlacementConstraintType.TopLevel
+        elif s == "hardmacro":
+            return PlacementConstraintType.HardMacro
+        elif s == "hierarchical":
+            return PlacementConstraintType.Hierarchical
+        else:
+            raise ValueError("Invalid placement constraint type '{}'".format(s))
+
+# For the top-level chip size constraint, set the margin from core area to left/bottom/right/top.
+Margins = NamedTuple('Margins', [
+    ('left', float),
+    ('bottom', float),
+    ('right', float),
+    ('top', float)
+])
+
+PlacementConstraint = NamedTuple('PlacementConstraint', [
+    ('path', str),
+    ('type', PlacementConstraintType),
+    ('x', float),
+    ('y', float),
+    ('width', float),
+    ('height', float),
+    ('margins', Optional[Margins])
+])
+
+
 # Library filter containing a filtering function, identifier tag, and a
 # short human-readable description.
 class LibraryFilter(NamedTuple('LibraryFilter', [
@@ -1493,6 +1534,35 @@ class HammerTool(metaclass=ABCMeta):
             if "uncertainty" in clock_port:
                 clock = clock._replace(uncertainty=TimeValue(clock_port["uncertainty"]))
             output.append(clock)
+        return output
+
+    def get_placement_constraints(self) -> List[PlacementConstraint]:
+        """
+        Get a list of placement constraints as specified in the config.
+        """
+        constraints = self.get_setting("vlsi.inputs.placement_constraints")
+        output = []  # type: List[PlacementConstraint]
+        for constraint in constraints:
+            constraint_type = PlacementConstraintType.from_string(str(constraint["type"]))
+            margins = None  # type: Optional[Margins]
+            if constraint_type == PlacementConstraintType.TopLevel:
+                margins_dict = constraint["margins"]
+                margins = Margins(
+                    left=float(margins_dict["left"]),
+                    bottom=float(margins_dict["bottom"]),
+                    right=float(margins_dict["right"]),
+                    top=float(margins_dict["top"])
+                )
+            load = PlacementConstraint(
+                path=str(constraint["path"]),
+                type=constraint_type,
+                x=float(constraint["x"]),
+                y=float(constraint["y"]),
+                width=float(constraint["width"]),
+                height=float(constraint["height"]),
+                margins=margins
+            )
+            output.append(load)
         return output
 
     def get_output_load_constraints(self) -> List[OutputLoadConstraint]:

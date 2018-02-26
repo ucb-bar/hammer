@@ -59,6 +59,21 @@ vlsi.inputs:
   # load (float) - Output load capacitance in pF.
   output_loads: []
 
+  # List of placement constraints.
+  # Each item is a struct member:
+  # path (str) - Path to the given instance
+  # type (str) - One of the following:
+  # - "dummy" (does nothing with this constraint)
+  # - "placement" (creates a placement constraint for an instance)
+  # - "hardmacro" (places this hard macro at a particular spot)
+  # - "hierarchical" (marks this instance as part of hierarchical place and route)
+  # TODO(edwardw): add rotation
+  # x (float) - x coordinate in um
+  # y (float) - y coordinate in um
+  # width (float) - width in um
+  # height (float) - height in um
+  placement_constraints: []
+
 # Specific inputs for the synthesis tool.
 # These inputs are the generic inputs; specific tools ("CAD junk") may require
 # additional inputs.
