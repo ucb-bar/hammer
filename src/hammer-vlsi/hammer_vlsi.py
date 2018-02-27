@@ -486,6 +486,29 @@ PlacementConstraint = NamedTuple('PlacementConstraint', [
     ('margins', Optional[Margins])
 ])
 
+class MMMCCornerType(Enum):
+    Setup = 1
+    Hold = 2
+    Extra = 3
+
+    @staticmethod
+    def from_string(s: str) -> "MMMCCornerType":
+        if s == "setup":
+            return MMMCCornerType.Setup
+        elif s == "hold":
+            return MMMCCornerType.Hold
+        elif s == "extra":
+            return MMMCCornerType.Extra
+        else:
+            raise ValueError("Invalid mmmc corner type '{}'".format(s))
+
+MMMCCorner = NamedTuple('MMMCCorner', [
+    ('name', str),
+    ('type', PlacementConstraintType),
+    ('voltage', float),
+    ('temp', int),
+])
+
 
 # Library filter containing a filtering function, identifier tag, and a
 # short human-readable description.
@@ -1184,6 +1207,24 @@ class HammerTool(metaclass=ABCMeta):
             return True
         return self.get_setting("vlsi.inputs.supplies.VDD") == lib.supplies.VDD and self.get_setting("vlsi.inputs.supplies.GND") == lib.supplies.GND
 
+    def filter_for_mmmc(self, voltage, temp) -> Callable[[hammer_tech.Library],bool]:
+        """
+        Selecting libraries that match given temp and voltage.
+        """
+        def extraction_func(lib: hammer_tech.Library) -> bool:
+            if lib.corner is None or lib.corner.temperature is None:
+                return False
+            if lib.supplies is None or lib.supplies.VDD is None:
+                return False
+            if lib.corner.temperature == temp:
+                if lib.supplies.VDD == voltage:
+                    return True
+                else:
+                    return False
+            else:
+                return False
+        return extraction_func
+
     @staticmethod
     def make_check_isdir(description: str = "Path") -> Callable[[str], str]:
         """
@@ -1420,7 +1461,7 @@ class HammerTool(metaclass=ABCMeta):
 
         return LibraryFilter.new("tlu_min", "TLU+ min cap db", is_file=True, extraction_func=select_tlu_min_cap)
 
-    def process_library_filter(self, filt: LibraryFilter, output_func: Callable[[str, LibraryFilter], List[str]],
+    def process_library_filter(self, pre_filts: Iterable[Callable[[hammer_tech.Library], bool]], filt: LibraryFilter, output_func: Callable[[str, LibraryFilter], List[str]],
                                must_exist: bool = True) -> List[str]:
         """
         Process the given library filter and return a list of items from that library filter with any extra
@@ -1441,7 +1482,7 @@ class HammerTool(metaclass=ABCMeta):
         else:
             existence_check_func = lambda x: x  # everything goes
 
-        lib_filters = [self.filter_for_supplies]
+        lib_filters = pre_filts
         if filt.filter_func is not None:
             lib_filters.append(filt.filter_func)
         lib_items = self.filter_and_select_libs(
@@ -1472,7 +1513,8 @@ class HammerTool(metaclass=ABCMeta):
         return list(reduce(self.util_add_lists, after_output_functions, []))
 
     def read_libs(self, library_types: Iterable[LibraryFilter], output_func: Callable[[str, LibraryFilter], List[str]],
-                  must_exist: bool = True) -> List[str]:
+            pre_filters: Iterable[Callable[[hammer_tech.Library],bool]] = [],
+            must_exist: bool = True) -> List[str]:
         """
         Read the given libraries and return a list of strings according to some output format.
 
@@ -1482,10 +1524,12 @@ class HammerTool(metaclass=ABCMeta):
         :param must_exist: Must each library item actually exist? Default: True (yes, they must exist)
         :return: List of filtered libraries processed according output_func.
         """
+        if pre_filters == []:
+            pre_filters = [self.filter_for_supplies]
         return list(reduce(
             self.util_add_lists,
             map(
-                lambda lib: self.process_library_filter(lib, output_func=output_func, must_exist=must_exist),
+                lambda lib: self.process_library_filter(pre_filts=pre_filters, filt=lib, output_func=output_func, must_exist=must_exist),
                 library_types
             )
         ))
@@ -1563,6 +1607,23 @@ class HammerTool(metaclass=ABCMeta):
                 margins=margins
             )
             output.append(load)
+        return output
+
+    def get_mmmc_corners(self) -> List[MMMCCorner]:
+        """
+        Get a list of MMMC corners as specified in the config.
+        """
+        corners = self.get_setting("vlsi.inputs.mmmc_corners")
+        output = []  # type: List[MMMCCorner]
+        for corner in corners:
+            corner_type = MMMCCornerType.from_string(str(corner["type"]))
+            corn = MMMCCorner(
+                name=str(corner["name"]),
+                type=corner_type,
+                voltage=str(corner["voltage"]),
+                temp=str(corner["temp"]),
+            )
+            output.append(corn)
         return output
 
     def get_output_load_constraints(self) -> List[OutputLoadConstraint]:
@@ -2103,6 +2164,16 @@ class CadenceTool(HasSDCSupport, HammerTool):
         ], self.to_plain_item)
         return " ".join(lib_args)
 
+    def get_mmmc_libs(self, corner: MMMCCorner) -> str:
+        lib_args = self.read_libs([self.liberty_lib_filter],self.to_plain_item, pre_filters=[
+            self.filter_for_mmmc(voltage=corner.voltage, temp=corner.temp)])
+        return " ".join(lib_args)
+
+    def get_mmmc_qrc(self, corner: MMMCCorner) -> str:
+        lib_args = self.read_libs([self.qrc_tech_filter],self.to_plain_item, pre_filters=[
+            self.filter_for_mmmc(voltage=corner.voltage, temp=corner.temp)])
+        return " ".join(lib_args)
+
     def get_qrc_tech(self) -> str:
         """
         Helper function to get the list of rc corner tech files in space separated format.
@@ -2124,38 +2195,7 @@ class CadenceTool(HasSDCSupport, HammerTool):
         def append_mmmc(cmd: str) -> None:
             self.verbose_tcl_append(cmd, mmmc_output)
 
-        # First, create an Innovus library set.
-        library_set_name = "my_lib_set"
-        append_mmmc("create_library_set -name {name} -timing [list {list}]".format(
-            name=library_set_name,
-            list=self.get_liberty_libs()
-        ))
-
-        # Next, create an Innovus timing condition.
-        timing_condition_name = "my_timing_condition"
-        append_mmmc("create_timing_condition -name {name} -library_sets [list {list}]".format(
-            name=timing_condition_name,
-            list=library_set_name
-        ))
-        # extra junk: -opcond ...
-        rc_corner_name = "rc_cond"
-        append_mmmc("create_rc_corner -name {name} -temperature {tempInCelsius} {qrc}".format(
-            name=rc_corner_name,
-            tempInCelsius=120,  # TODO: this should come from tech config
-            qrc="-qrc_tech {}".format(self.get_qrc_tech()) if self.get_qrc_tech() != '' else ''
-        ))
-
-        # Next, create an Innovus delay corner.
-        delay_corner_name = "my_delay_corner"
-        append_mmmc(
-            "create_delay_corner -name {name} -timing_condition {timing_cond} -rc_corner {rc}".format(
-                name=delay_corner_name,
-                timing_cond=timing_condition_name,
-                rc=rc_corner_name
-            ))
-        # extra junk: -rc_corner my_rc_corner_maybe_worst
-
-        # In parallel, create an Innovus constraint mode.
+        # Create an Innovus constraint mode.
         constraint_mode = "my_constraint_mode"
         sdc_files = []  # type: List[str]
 
@@ -2187,16 +2227,110 @@ class CadenceTool(HasSDCSupport, HammerTool):
             sdc_files_arg=sdc_files_arg
         ))
 
-        # Next, create an Innovus analysis view.
-        analysis_view_name = "my_view"
-        append_mmmc("create_analysis_view -name {name} -delay_corner {corner} -constraint_mode {constraint}".format(
-            name=analysis_view_name, corner=delay_corner_name, constraint=constraint_mode))
-        # Finally, apply the analysis view.
-        # TODO: introduce different views of setup/hold and true multi-corner
-        append_mmmc("set_analysis_view -setup {{ {setup_view} }} -hold {{ {hold_view} }}".format(
-            setup_view=analysis_view_name,
-            hold_view=analysis_view_name
-        ))
+        corners = self.get_mmmc_corners()
+        print(corners)
+        # In parallel, create the delay corners
+        if(corners):
+            setup_corner = corners[0]
+            hold_corner = corners[0]
+            # TODO (colins): handle more than one corner and do something with extra corners
+            for corner in corners:
+                if(corner.type is MMMCCornerType.Setup):
+                    setup_corner = corner
+                if(corner.type is MMMCCornerType.Hold):
+                    hold_corner = corner
+            print("hold:")
+            print(hold_corner)
+            print("setup:")
+            print(setup_corner)
+            # First, create Innovus library sets
+            append_mmmc("create_library_set -name {name} -timing [list {list}]".format(
+                name="{n}.setup_set".format(n=setup_corner.name),
+                list=self.get_mmmc_libs(setup_corner)
+            ))
+            append_mmmc("create_library_set -name {name} -timing [list {list}]".format(
+                name="{n}.hold_set".format(n=hold_corner.name),
+                list=self.get_mmmc_libs(hold_corner)
+            ))
+            # Skip opconds for now
+            # Next, create Innovus timing conditions
+            append_mmmc("create_timing_condition -name {name} -library_sets [list {list}]".format(
+                name="{n}.setup_cond".format(n=setup_corner.name),
+                list="{n}.setup_set".format(n=setup_corner.name)
+            ))
+            append_mmmc("create_timing_condition -name {name} -library_sets [list {list}]".format(
+                name="{n}.hold_cond".format(n=hold_corner.name),
+                list="{n}.hold_set".format(n=hold_corner.name)
+            ))
+            # Next, create Innovus rc corners from qrc tech files
+            append_mmmc("create_rc_corner -name {name} -temperature {tempInCelsius} {qrc}".format(
+                name="{n}.setup_rc".format(n=setup_corner.name),
+                tempInCelsius=setup_corner.temp.split(" ")[0],
+                qrc="-qrc_tech {}".format(self.get_mmmc_qrc(setup_corner)) if self.get_mmmc_qrc(setup_corner) != '' else ''
+            ))
+            append_mmmc("create_rc_corner -name {name} -temperature {tempInCelsius} {qrc}".format(
+                name="{n}.hold_rc".format(n=hold_corner.name),
+                tempInCelsius=hold_corner.temp.split(" ")[0],
+                qrc="-qrc_tech {}".format(self.get_mmmc_qrc(hold_corner)) if self.get_mmmc_qrc(hold_corner) != '' else ''
+            ))
+            # Next, create an Innovus delay corner.
+            append_mmmc(
+                "create_delay_corner -name {name}_delay -timing_condition {name}_cond -rc_corner {name}_rc".format(
+                    name="{n}.setup".format(n=setup_corner.name)
+                ))
+            append_mmmc(
+                "create_delay_corner -name {name}_delay -timing_condition {name}_cond -rc_corner {name}_rc".format(
+                    name="{n}.hold".format(n=hold_corner.name)
+                ))
+            # Next, create the analysis views
+            append_mmmc("create_analysis_view -name {name}_view -delay_corner {name}_delay -constraint_mode {constraint}".format(
+                name="{n}.setup".format(n=setup_corner.name), constraint=constraint_mode))
+            append_mmmc("create_analysis_view -name {name}_view -delay_corner {name}_delay -constraint_mode {constraint}".format(
+                name="{n}.hold".format(n=hold_corner.name), constraint=constraint_mode))
+            # Finally, apply the analysis view.
+            append_mmmc("set_analysis_view -setup {{ {setup_view} }} -hold {{ {hold_view} }}".format(
+                setup_view="{n}.setup_view".format(n=setup_corner.name),
+                hold_view="{n}.hold_view".format(n=hold_corner.name)
+            ))
+        else:
+            # First, create an Innovus library set.
+            library_set_name = "my_lib_set"
+            append_mmmc("create_library_set -name {name} -timing [list {list}]".format(
+                name=library_set_name,
+                list=self.get_liberty_libs()
+            ))
+            # Next, create an Innovus timing condition.
+            timing_condition_name = "my_timing_condition"
+            append_mmmc("create_timing_condition -name {name} -library_sets [list {list}]".format(
+                name=timing_condition_name,
+                list=library_set_name
+            ))
+            # extra junk: -opcond ...
+            rc_corner_name = "rc_cond"
+            append_mmmc("create_rc_corner -name {name} -temperature {tempInCelsius} {qrc}".format(
+                name=rc_corner_name,
+                tempInCelsius=120,  # TODO: this should come from tech config
+                qrc="-qrc_tech {}".format(self.get_qrc_tech()) if self.get_qrc_tech() != '' else ''
+            ))
+            # Next, create an Innovus delay corner.
+            delay_corner_name = "my_delay_corner"
+            append_mmmc(
+                "create_delay_corner -name {name} -timing_condition {timing_cond} -rc_corner {rc}".format(
+                    name=delay_corner_name,
+                    timing_cond=timing_condition_name,
+                    rc=rc_corner_name
+                ))
+            # extra junk: -rc_corner my_rc_corner_maybe_worst
+            # Next, create an Innovus analysis view.
+            analysis_view_name = "my_view"
+            append_mmmc("create_analysis_view -name {name} -delay_corner {corner} -constraint_mode {constraint}".format(
+                name=analysis_view_name, corner=delay_corner_name, constraint=constraint_mode))
+            # Finally, apply the analysis view.
+            # TODO: introduce different views of setup/hold and true multi-corner
+            append_mmmc("set_analysis_view -setup {{ {setup_view} }} -hold {{ {hold_view} }}".format(
+                setup_view=analysis_view_name,
+                hold_view=analysis_view_name
+            ))
 
         return "\n".join(mmmc_output)
 
