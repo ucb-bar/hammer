@@ -41,6 +41,17 @@ vlsi.inputs:
     VDD: "0.85 V"
     GND: "0 V"
 
+  # Muli-mode multi-corner setups, overrides supplies
+  # MMMC struct members:
+  # name (str) - name of the corner.
+  # type (str) - One of the following:
+  # - "setup" (corner used for setup timing)
+  # - "hold" (corner used for hold timing)
+  # - "extra" (misc. corner potentially used for power analysis
+  # voltage (str) - voltage of the corner should match tech json
+  # temp (str) - temperature of the corner should mathc tech json
+  mmmc_corners: []
+
   # Clock ports of the top-level module.
   # Clock struct members:
   # name (str) - Name of the clock port.
