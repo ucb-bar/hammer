@@ -504,7 +504,7 @@ class MMMCCornerType(Enum):
 
 MMMCCorner = NamedTuple('MMMCCorner', [
     ('name', str),
-    ('type', PlacementConstraintType),
+    ('type', MMMCCornerType),
     ('voltage', float),
     ('temp', int),
 ])
@@ -2228,21 +2228,17 @@ class CadenceTool(HasSDCSupport, HammerTool):
         ))
 
         corners = self.get_mmmc_corners()
-        print(corners)
         # In parallel, create the delay corners
-        if(corners):
+        if corners:
             setup_corner = corners[0]
             hold_corner = corners[0]
             # TODO (colins): handle more than one corner and do something with extra corners
             for corner in corners:
-                if(corner.type is MMMCCornerType.Setup):
+                if corner.type is MMMCCornerType.Setup:
                     setup_corner = corner
-                if(corner.type is MMMCCornerType.Hold):
+                if corner.type is MMMCCornerType.Hold:
                     hold_corner = corner
-            print("hold:")
-            print(hold_corner)
-            print("setup:")
-            print(setup_corner)
+
             # First, create Innovus library sets
             append_mmmc("create_library_set -name {name} -timing [list {list}]".format(
                 name="{n}.setup_set".format(n=setup_corner.name),
