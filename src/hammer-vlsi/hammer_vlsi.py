@@ -2043,10 +2043,12 @@ class HammerDriver:
         """
         self.par_tool_hooks = list(hooks)
 
-    def run_synthesis(self, hook_actions: Optional[List[HammerToolHookAction]] = None) -> Tuple[bool, dict]:
+    def run_synthesis(self, hook_actions: Optional[List[HammerToolHookAction]] = None, force_override: bool = False) -> Tuple[bool, dict]:
         """
         Run synthesis based on the given database.
         :param hook_actions: List of hook actions, or leave as None to use the hooks sets in set_synthesis_hooks.
+        If hooks from set_synthesis_hooks are present, it will append this list afterwards.
+        :param force_override: Set to true to overwrite instead of append.
         :return: Tuple of (success, output config dict)
         """
 
@@ -2055,7 +2057,10 @@ class HammerDriver:
         if hook_actions is None:
             hooks_to_use = self.syn_tool_hooks
         else:
-            hooks_to_use = hook_actions
+            if force_override:
+                hooks_to_use = hook_actions
+            else:
+                hooks_to_use = self.syn_tool_hooks + hook_actions
         run_succeeded = self.syn_tool.run(hooks_to_use)
         if not run_succeeded:
             self.log.error("Synthesis tool %s failed! Please check its output." % (self.syn_tool.name))
@@ -2084,7 +2089,7 @@ class HammerDriver:
             output_dict["par.inputs.post_synth_sdc"] = output_dict["synthesis.outputs.sdc"]
         return output_dict
 
-    def run_par(self, hook_actions: Optional[List[HammerToolHookAction]] = None) -> Tuple[bool, dict]:
+    def run_par(self, hook_actions: Optional[List[HammerToolHookAction]] = None, force_override: bool = False) -> Tuple[bool, dict]:
         """
         Run place and route based on the given database.
         """
@@ -2093,7 +2098,10 @@ class HammerDriver:
         if hook_actions is None:
             hooks_to_use = self.par_tool_hooks
         else:
-            hooks_to_use = hook_actions
+            if force_override:
+                hooks_to_use = hook_actions
+            else:
+                hooks_to_use = self.par_tool_hooks + hook_actions
         # TODO: get place and route working
         self.par_tool.run(hooks_to_use)
         return True, {}
