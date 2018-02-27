@@ -3,7 +3,8 @@
 #
 #  hammer_vlsi.py
 #
-#  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+#  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
+
 import inspect
 from abc import ABCMeta, abstractmethod
 from enum import Enum
@@ -2412,3 +2413,5 @@ def reduce_named(function: Callable, sequence: Iterable, initial=None) -> Any:
         return reduce(function, sequence)
     else:
         return reduce(function, sequence, initial)
+
+from cli_driver import CLIDriver

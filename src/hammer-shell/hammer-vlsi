@@ -1,2 +1,12 @@
-#!/bin/sh
-$HAMMER_VLSI/cli_driver.py $@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+#  hammer-vlsi
+#  CLI script - by default, it just uses the default CLIDriver.
+#
+#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
+
+from hammer_vlsi import CLIDriver
+
+if __name__ == '__main__':
+    CLIDriver().main()
