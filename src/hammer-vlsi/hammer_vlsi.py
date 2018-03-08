@@ -484,6 +484,7 @@ PlacementConstraint = NamedTuple('PlacementConstraint', [
     ('y', float),
     ('width', float),
     ('height', float),
+    ('orientation', Optional[str]),
     ('margins', Optional[Margins])
 ])
 
@@ -1590,6 +1591,7 @@ class HammerTool(metaclass=ABCMeta):
         for constraint in constraints:
             constraint_type = PlacementConstraintType.from_string(str(constraint["type"]))
             margins = None  # type: Optional[Margins]
+            orientation = None # type: Optional[str]
             if constraint_type == PlacementConstraintType.TopLevel:
                 margins_dict = constraint["margins"]
                 margins = Margins(
@@ -1598,6 +1600,8 @@ class HammerTool(metaclass=ABCMeta):
                     right=float(margins_dict["right"]),
                     top=float(margins_dict["top"])
                 )
+            if "orientation" in constraint:
+                orientation = str(constraint["orientation"])
             load = PlacementConstraint(
                 path=str(constraint["path"]),
                 type=constraint_type,
@@ -1605,6 +1609,7 @@ class HammerTool(metaclass=ABCMeta):
                 y=float(constraint["y"]),
                 width=float(constraint["width"]),
                 height=float(constraint["height"]),
+                orientation=orientation,
                 margins=margins
             )
             output.append(load)
