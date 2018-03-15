@@ -16,16 +16,17 @@ import os
 import tempfile
 import unittest
 
+
 class HammerVLSILoggingTest(unittest.TestCase):
     def test_colours(self):
         """
         Test that we can log with and without colour.
         """
-        msg = "This is a test message" # type: str
+        msg = "This is a test message"  # type: str
 
         log = hammer_vlsi.HammerVLSILogging.context("test")
 
-        hammer_vlsi.HammerVLSILogging.enable_buffering = True # we need this for test
+        hammer_vlsi.HammerVLSILogging.enable_buffering = True  # we need this for test
         hammer_vlsi.HammerVLSILogging.clear_callbacks()
         hammer_vlsi.HammerVLSILogging.add_callback(hammer_vlsi.HammerVLSILogging.callback_buffering)
 
@@ -286,7 +287,8 @@ class HammerToolHooksTestContext:
     def __exit__(self, type, value, traceback) -> bool:
         """Clean up the context by removing the temp_dir."""
         shutil.rmtree(self.temp_dir)
-        return True
+        # Return True (normal execution) if no exception occurred.
+        return True if type is None else False
 
 
 class HammerToolHooksTest(unittest.TestCase):
@@ -380,20 +382,13 @@ class HammerToolHooksTest(unittest.TestCase):
                     self.assertEqual(self.read(file), "step{}".format(i))
 
     def test_extra_pause_hooks(self) -> None:
-        """Test that extra pause hooks do nothing."""
+        """Test that extra pause hooks cause an error."""
         with self.create_context() as c:
             success, syn_output = c.driver.run_synthesis(hook_actions=[
                 hammer_vlsi.HammerTool.make_pre_pause_hook("step3"),
                 hammer_vlsi.HammerTool.make_post_pause_hook("step3")
             ])
-            self.assertTrue(success)
-
-            for i in range(1, 5):
-                file = os.path.join(c.temp_dir, "step{}.txt".format(i))
-                if i > 2:
-                    self.assertFalse(os.path.exists(file))
-                else:
-                    self.assertEqual(self.read(file), "step{}".format(i))
+            self.assertFalse(success)
 
     def test_insertion_hooks(self) -> None:
         """Test that insertion hooks work."""
