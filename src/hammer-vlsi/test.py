@@ -471,6 +471,25 @@ class HammerToolHooksTest(unittest.TestCase):
             ])
             self.assertFalse(success)
 
+    def test_insert_before_first_step(self) -> None:
+        """Test that inserting a step before the first step works."""
+        def change3(x: hammer_vlsi.HammerTool) -> bool:
+            x.set_setting("synthesis.mocksynth.step3", "HelloWorld")
+            return True
+
+        with self.create_context() as c:
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_pre_insertion_hook("step1", change3)
+            ])
+            self.assertTrue(success)
+
+            for i in range(1, 5):
+                file = os.path.join(c.temp_dir, "step{}.txt".format(i))
+                if i == 3:
+                    self.assertEqual(self.read(file), "HelloWorld")
+                else:
+                    self.assertEqual(self.read(file), "step{}".format(i))
+
 
 class TimeValueTest(unittest.TestCase):
     def test_read_and_write(self):
