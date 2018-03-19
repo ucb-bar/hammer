@@ -26,15 +26,15 @@ The hammer-vlsi frontend/command line interface allows the latter two (environme
 
 The hammer-vlsi frontend will also dump an output copy of the project JSON along with the outputs in order to allow for modular re-use of hammer-vlsi.
 
-Meta config
-===========
+Meta directives
+===============
 Sometimes we want to append to pre-existing setting or substitute pre-existing setting.
 
 When reading a setting, if the setting has an accompanying `_meta` setting, it will be used when getting the setting. The `_meta` setting is be a string currently specifying one keyword.  Currently valid `_meta` attributes are:
 
 `append` - appends to the given array. The given base setting must be an array.
 Example:
-If parent JSON has "test": ["foo"] and child JSON has
+If parent JSON has `"test": ["foo"]` and child JSON has
 ```
 {
   "test": ["bar"],
@@ -46,13 +46,14 @@ then output JSON will be:
 {
   "test": ["foo", "bar"]
 }
+```
 
 `subst`, which means that if the keyword `subst` is present, `get-config` will substitute variables using curly braces. Example: if `foo: "one"`, `bar: "{foo} two"`, and `bar_meta: "subst"`, then `get-config` for `bar` will return "one two".
 
 base: {}
 update: {"a": "{b}", "a_meta": "subst", 
          "b": "{a}", "b_meta": "subst" }
---> result in blank/error since a will try to look for b in base, and b will look for a in base.
+--> results in blank/error since a will try to look for b in base, and b will look for a in base.
 
 `dynamicsubst` means that the given config will not be substituted until all known configs have been bound. Use this to enable settings to be overwritten until the very end.
 
@@ -60,7 +61,7 @@ base: {}
 update: {"a": "{b}", "a_meta": "dynamicsubst", 
          "b": "{a}", "b_meta": "dynamicsubst"}
 
-All dynamic metas are single-stage.
+All dynamic meta directivs are single-stage.
 
 meta config, but keyword is "script". If this keyword is present, it will execute the given script and substitute variables like so `{var_name}`
 ^ not implemented yet!!!
