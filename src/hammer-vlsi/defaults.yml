@@ -76,6 +76,7 @@ vlsi.inputs:
   # type (str) - One of the following:
   # - "dummy" (does nothing with this constraint)
   # - "placement" (creates a placement constraint for an instance)
+  # - "toplevel" (top-level chip dimensions; may only occur once, for the top-level module)
   # - "hardmacro" (places this hard macro at a particular spot)
   # - "hierarchical" (marks this instance as part of hierarchical place and route)
   # TODO(edwardw): add rotation
