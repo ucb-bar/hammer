@@ -114,6 +114,13 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
             file_contents = str(f.read())
         config_dict[key] = file_contents
 
+    def meta_json2list(config_dict: dict, key: str, value: Any) -> None:
+        """Turn the value of the key (JSON list) into a list."""
+        assert isinstance(value, str), "json2list requires a JSON string that is a list"
+        parsed = json.loads(value)
+        assert isinstance(parsed, list), "json2list requires a JSON string that is a list"
+        config_dict[key] = parsed
+
     def make_meta_dynamic(dynamic_meta: str) -> Callable[[dict, str, Any], None]:
         """
         Create a meta_dynamicFOO function.
@@ -140,6 +147,8 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
         'dynamicsubst': make_meta_dynamic('dynamicsubst'),
         'transclude': meta_transclude,
         'dynamictransclude': make_meta_dynamic('dynamictransclude'),
+        'json2list': meta_json2list,
+        'dynamicjson2list': make_meta_dynamic('dynamicjson2list'),
         'prependlocal': meta_prependlocal
     }  # type: Dict[str, Callable[[dict, str, Any], None]]
     newdict = dict(config_dict)

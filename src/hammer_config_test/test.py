@@ -49,6 +49,49 @@ foo:
         for key in hammer_config.HammerDatabase.internal_keys():
             self.assertFalse(db.has_setting(key), "Should not have internal key " + key)
 
+    def test_meta_json2list(self):
+        """
+        Test that the meta attribute "json2list" works.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo:
+    flash: "yes"
+    max: "min"
+""", is_yaml=True)
+        meta = hammer_config.load_config_from_string("""
+{
+    "foo.pipeline": "[\\"1\\", \\"2\\"]",
+    "foo.pipeline_meta": "json2list"
+}
+    """, is_yaml=False)
+        db.update_core([base, meta])
+        self.assertEqual(db.get_setting("foo.flash"), "yes")
+        self.assertEqual(db.get_setting("foo.max"), "min")
+        self.assertEqual(db.get_setting("foo.pipeline"), ["1", "2"])
+
+    def test_meta_dynamicjson2list(self):
+        """
+        Test that the meta attribute "dynamicjson2list" works.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo:
+    flash: "yes"
+    max: "min"
+    pipeline: "[]"
+    pipeline_meta: "dynamicjson2list"
+""", is_yaml=True)
+        meta = hammer_config.load_config_from_string("""
+{
+    "foo.pipeline": "[\\"1\\", \\"2\\"]"
+}
+    """, is_yaml=False)
+        db.update_core([base, meta])
+        self.assertEqual(db.get_setting("foo.flash"), "yes")
+        self.assertEqual(db.get_setting("foo.max"), "min")
+        self.assertEqual(db.get_setting("foo.pipeline"), ["1", "2"])
+
     def test_meta_subst(self):
         """
         Test that the meta attribute "subst" works.
