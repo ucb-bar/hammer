@@ -2168,6 +2168,11 @@ class CadenceTool(HasSDCSupport, HammerTool):
     """Mix-in trait with functions useful for Cadence-based tools."""
 
     @property
+    def config_dirs(self) -> List[str]:
+        # Override this to pull in Cadence-common configs.
+        return [self.get_setting("cadence.common_path")] + super().config_dirs
+
+    @property
     def env_vars(self) -> Dict[str, str]:
         """
         Get the list of environment variables required for this tool.

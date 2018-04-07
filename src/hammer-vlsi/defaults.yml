@@ -33,6 +33,11 @@ vlsi.core:
   # Maximum threads to use in a CAD tool invocation.
   max_threads: 1
 
+cadence:
+  # Path to the folder with defaults.yml for common Cadence settings.
+  common_path: "${vlsi.builtins.hammer_vlsi_path}/common/cadence"
+  common_path_meta: subst
+
 # General VLSI inputs.
 # These will vary per run of hammer-vlsi.
 vlsi.inputs:
