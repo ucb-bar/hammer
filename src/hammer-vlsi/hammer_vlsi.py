@@ -1082,9 +1082,18 @@ class HammerTool(metaclass=ABCMeta):
             f.write(db_contents)
         return path
 
+    @property
+    def config_dirs(self) -> List[str]:
+        """
+        List of folders where (default) configs can live.
+        Defaults to self.tool_dir.
+        :return: List of default config folders.
+        """
+        return [self.tool_dir]
+
     def get_config(self) -> List[dict]:
         """Get the config for this tool."""
-        return hammer_config.load_config_from_defaults(self.tool_dir)
+        return reduce(self.util_add_lists, map(lambda path: hammer_config.load_config_from_defaults(path), self.config_dirs))
 
     def get_setting(self, key: str, nullvalue: Optional[str] = None):
         """
