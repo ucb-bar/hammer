@@ -84,8 +84,9 @@ class HammerVLSILoggingTest(unittest.TestCase):
         # Remove temp file
         os.remove(path)
 
+
 class HammerToolTest(unittest.TestCase):
-    def test_read_libs(self):
+    def test_read_libs(self) -> None:
         import hammer_config
         import hammer_tech
 
@@ -199,7 +200,7 @@ class HammerToolTest(unittest.TestCase):
         # Cleanup
         shutil.rmtree(test.run_dir)
 
-    def test_create_enter_script(self):
+    def test_create_enter_script(self) -> None:
         class Tool(hammer_vlsi.HammerTool):
             @property
             def steps(self) -> List[hammer_vlsi.HammerToolStep]:
