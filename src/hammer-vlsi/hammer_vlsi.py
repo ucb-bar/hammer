@@ -1473,7 +1473,7 @@ class HammerTool(metaclass=ABCMeta):
 
         return LibraryFilter.new("tlu_min", "TLU+ min cap db", is_file=True, extraction_func=select_tlu_min_cap)
 
-    def process_library_filter(self, pre_filts: Iterable[Callable[[hammer_tech.Library], bool]], filt: LibraryFilter, output_func: Callable[[str, LibraryFilter], List[str]],
+    def process_library_filter(self, pre_filts: List[Callable[[hammer_tech.Library], bool]], filt: LibraryFilter, output_func: Callable[[str, LibraryFilter], List[str]],
                                must_exist: bool = True) -> List[str]:
         """
         Process the given library filter and return a list of items from that library filter with any extra
@@ -1482,6 +1482,8 @@ class HammerTool(metaclass=ABCMeta):
         - Get a list of lib items
         - Run any extra_post_filter_funcs (if needed)
         - For every lib item in each lib items, run output_func
+        :param pre_filts: List of functions with which to pre-filter the libraries. Each function must return true
+                          in order for this library to be used.
         :param filt: LibraryFilter to check against the list.
         :param output_func: Function which processes the outputs, taking in the filtered lib and the library filter
                             which generated it.
