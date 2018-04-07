@@ -119,6 +119,12 @@ class HammerTechnology:
         """
         Prepend the appropriate path (either from tarballs or installs) to the given library item.
         """
+        assert len(path) > 0, "path must not be empty"
+
+        # If the path is an absolute path, return it as-is.
+        if path[0] == "/":
+            return path
+
         base_path = path.split(os.path.sep)[0]
         rest_of_path = path.split(os.path.sep)[1:]
 
