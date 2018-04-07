@@ -1183,7 +1183,8 @@ class HammerTool(metaclass=ABCMeta):
         if sort_func is not None:
             filtered_libs = sorted(filtered_libs, key=sort_func)
 
-        lib_results = list(reduce(self.util_add_lists, list(map(extraction_func, filtered_libs))))  # type: List[str]
+        lib_results = list(
+            reduce(self.util_add_lists, list(map(extraction_func, filtered_libs)), []))  # type: List[str]
 
         # Uniquify results.
         # TODO: think about whether this really belongs here and whether we always need to uniquify.
