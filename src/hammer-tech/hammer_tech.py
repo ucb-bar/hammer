@@ -168,10 +168,16 @@ class HammerTechnology:
 
         :return: Return True if the directories is OK, False otherwise."""
         for install in self.config.installs:
-            install_path = str(self.get_setting(install.base_var))
-            if not os.path.exists(install_path):
-                self.logger.error("installs {path} does not exist".format(path=install_path))
-                return False
+            base_var = str(install.base_var)
+
+            if len(base_var) == 0:
+                # Blank install_path is okay to reference the current technology directory.
+                pass
+            else:
+                install_path = str(self.get_setting(base_var))
+                if not os.path.exists(install_path):
+                    self.logger.error("installs {path} does not exist".format(path=install_path))
+                    return False
         return True
 
     def extract_tarballs(self) -> None:
