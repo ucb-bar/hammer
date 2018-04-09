@@ -9,8 +9,10 @@ vlsi.core:
 
   # Technology to use. hammer-vlsi will read this and load the appropriate technology libraries.
   technology: "saed32"
+
   # Technology node dimension (nm) to use.
   # Some tools change what they do as this changes.
+  # TODO: move this to vlsi.technology
   node: 32
 
   # Path(s) to synthesis tools.
@@ -32,6 +34,13 @@ vlsi.core:
 
   # Maximum threads to use in a CAD tool invocation.
   max_threads: 1
+
+vlsi.technology:
+  # Placement site for macros. (str)
+  # Typically specified in standard cell LEFs.
+  # See http://www.ispd.cc/contests/18/lefdefref.pdf
+  # Required for some CAD tools to function properly.
+  placement_site: null
 
 cadence:
   # Path to the folder with defaults.yml for common Cadence settings.
