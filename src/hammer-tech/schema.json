@@ -2,9 +2,6 @@
   "title" : "TechJSON",
   "type" : "object",
   "properties" : {
-    "site" : {
-      "type" : "string"
-    },
     "installs" : {
       "type" : "array",
       "items" : {
