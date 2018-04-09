@@ -1933,9 +1933,9 @@ class HammerDriver:
         self.syn_tool = None # type: HammerSynthesisTool
         self.par_tool = None # type: HammerPlaceAndRouteTool
 
-        # Initialize tool hooks.
-        self.syn_tool_hooks = []  # type: List[HammerToolHookAction]
-        self.par_tool_hooks = []  # type: List[HammerToolHookAction]
+        # Initialize tool hooks. Used to specify resume/pause hooks after custom hooks have been registered.
+        self.post_custom_syn_tool_hooks = []  # type: List[HammerToolHookAction]
+        self.post_custom_par_tool_hooks = []  # type: List[HammerToolHookAction]
 
     def load_technology(self, cache_dir: str = "") -> None:
         tech_str = self.database.get_setting("vlsi.core.technology")
@@ -2047,25 +2047,27 @@ class HammerDriver:
         self.update_tool_configs()
         return True
 
-    def set_syn_tool_hooks(self, hooks: List[HammerToolHookAction]) -> None:
+    def set_post_custom_syn_tool_hooks(self, hooks: List[HammerToolHookAction]) -> None:
         """
-        Set the default list of synthesis tool hooks to be used in run_synthesis.
+        Set the extra list of hooks used for control flow (resume/pause) in run_synthesis.
+        They will run after main/hook_actions.
         :param hooks: Hooks to run
         """
-        self.syn_tool_hooks = list(hooks)
+        self.post_custom_syn_tool_hooks = list(hooks)
 
-    def set_par_tool_hooks(self, hooks: List[HammerToolHookAction]) -> None:
+    def set_post_custom_par_tool_hooks(self, hooks: List[HammerToolHookAction]) -> None:
         """
-        Set the default list of place and route tool hooks to be used in run_par.
+        Set the extra list of hooks used for control flow (resume/pause) in run_par.
+        They will run after main/hook_actions.
         :param hooks: Hooks to run
         """
-        self.par_tool_hooks = list(hooks)
+        self.post_custom_par_tool_hooks = list(hooks)
 
     def run_synthesis(self, hook_actions: Optional[List[HammerToolHookAction]] = None, force_override: bool = False) -> Tuple[bool, dict]:
         """
         Run synthesis based on the given database.
         :param hook_actions: List of hook actions, or leave as None to use the hooks sets in set_synthesis_hooks.
-        If hooks from set_synthesis_hooks are present, it will append this list afterwards.
+        Hooks from set_synthesis_hooks, if present, will be appended afterwards.
         :param force_override: Set to true to overwrite instead of append.
         :return: Tuple of (success, output config dict)
         """
@@ -2073,12 +2075,12 @@ class HammerDriver:
         # TODO: think about artifact storage?
         self.log.info("Starting synthesis with tool '%s'" % (self.syn_tool.name))
         if hook_actions is None:
-            hooks_to_use = self.syn_tool_hooks
+            hooks_to_use = self.post_custom_syn_tool_hooks
         else:
             if force_override:
                 hooks_to_use = hook_actions
             else:
-                hooks_to_use = self.syn_tool_hooks + hook_actions
+                hooks_to_use = hook_actions + self.post_custom_syn_tool_hooks
         run_succeeded = self.syn_tool.run(hooks_to_use)
         if not run_succeeded:
             self.log.error("Synthesis tool %s failed! Please check its output." % (self.syn_tool.name))
@@ -2114,12 +2116,12 @@ class HammerDriver:
         # TODO: update API to match run_synthesis and deduplicate logic
         self.log.info("Starting place and route with tool '%s'" % (self.par_tool.name))
         if hook_actions is None:
-            hooks_to_use = self.par_tool_hooks
+            hooks_to_use = self.post_custom_par_tool_hooks
         else:
             if force_override:
                 hooks_to_use = hook_actions
             else:
-                hooks_to_use = self.par_tool_hooks + hook_actions
+                hooks_to_use = hook_actions + self.post_custom_par_tool_hooks
         # TODO: get place and route working
         self.par_tool.run(hooks_to_use)
         return True, {}

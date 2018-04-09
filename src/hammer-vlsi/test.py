@@ -491,6 +491,27 @@ class HammerToolHooksTest(unittest.TestCase):
                 else:
                     self.assertEqual(self.read(file), "step{}".format(i))
 
+    def test_resume_pause_hooks_with_custom_steps(self) -> None:
+        """Test that resume/pause hooks work with custom steps."""
+        with self.create_context() as c:
+            def step5(x: hammer_vlsi.HammerTool) -> bool:
+                with open(os.path.join(c.temp_dir, "step5.txt"), "w") as f:
+                    f.write("HelloWorld")
+                return True
+
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_from_to_hooks("step5", "step5"))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_post_insertion_hook("step4", step5)
+            ])
+            self.assertTrue(success)
+
+            for i in range(1, 6):
+                file = os.path.join(c.temp_dir, "step{}.txt".format(i))
+                if i == 5:
+                    self.assertEqual(self.read(file), "HelloWorld")
+                else:
+                    self.assertFalse(os.path.exists(file))
+
 
 class TimeValueTest(unittest.TestCase):
     def test_read_and_write(self):
