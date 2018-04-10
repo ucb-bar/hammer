@@ -43,18 +43,24 @@ def get_nonempty_str(arg: Any) -> Optional[str]:
     return None
 
 
+# Type signature of a CLIDriver action.
+CLIActionType = Callable[[hammer_vlsi.HammerDriver, Callable[[str], None]], Optional[dict]]
+
+
 class CLIDriver:
     """
     Helper class for projects to easily write/customize a CLI driver for hammer without needing to rewrite/copy all the
     argparse and plumbing.
     """
 
-    def action_map(self) -> Dict[str, Callable[[hammer_vlsi.HammerDriver, Callable[[str], None]], Optional[dict]]]:
+    def action_map(self) -> Dict[str, CLIActionType]:
         """Return the mapping of valid actions -> functions for each action of the command-line driver."""
+        synthesis_action = self.create_synthesis_action([])
+        par_action = self.create_par_action([])
         return {
-            "synthesis": self.synthesis_action,
-            "syn": self.synthesis_action,
-            "par": self.par_action,
+            "synthesis": synthesis_action,
+            "syn": synthesis_action,
+            "par": par_action,
             "synthesis_to_par": self.synthesis_to_par_action,
             "synthesis-to-par": self.synthesis_to_par_action,
             "syn_to_par": self.synthesis_to_par_action,
@@ -76,26 +82,53 @@ class CLIDriver:
         """
         return list()
 
-    def synthesis_action(self, driver: hammer_vlsi.HammerDriver, append_error_func: Callable[[str], None]) -> Optional[
-        dict]:
-        """Run the command-line synthesis action."""
-        if not driver.load_synthesis_tool():
-            # If the driver didn't successfully load, return None.
-            return None
-        success, syn_output = driver.run_synthesis(
-            self.get_extra_synthesis_hooks() if len(self.get_extra_synthesis_hooks()) > 0 else None)
-        # TODO: detect errors
-        return syn_output
+    def create_synthesis_action(self, custom_hooks: List[hammer_vlsi.HammerToolHookAction],
+                                post_load_func: Optional[
+                                    Callable[[hammer_vlsi.HammerDriver], None]] = None) -> CLIActionType:
+        hooks = self.get_extra_synthesis_hooks() + custom_hooks
+        return self.create_action("synthesis", hooks if len(hooks) > 0 else None, post_load_func)
 
-    def par_action(self, driver: hammer_vlsi.HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
-        """Run the command-line par action."""
-        if not driver.load_par_tool():
+    def create_par_action(self, custom_hooks: List[hammer_vlsi.HammerToolHookAction],
+                          post_load_func: Optional[Callable[[hammer_vlsi.HammerDriver], None]] = None) -> CLIActionType:
+        hooks = self.get_extra_par_hooks() + custom_hooks
+        return self.create_action("par", hooks if len(hooks) > 0 else None, post_load_func)
+
+    def create_action(self, action_type: str,
+                      extra_hooks: Optional[List[hammer_vlsi.HammerToolHookAction]],
+                      post_load_func: Optional[Callable[[hammer_vlsi.HammerDriver], None]]) -> CLIActionType:
+        """
+        Create an action function for the action_map.
+        :param action_type: Either "syn"/"synthesis" or "par"
+        :param extra_hooks: List of hooks to pass to the run function.
+        :param post_load_func: Optional function to call after loading the tool.
+        :return: Action function.
+        """
+
+        def post_load_func_checked(driver: hammer_vlsi.HammerDriver) -> None:
+            """Check that post_load_func isn't null before calling it."""
+            if post_load_func is not None:
+                post_load_func(driver)
+
+        def action(driver: hammer_vlsi.HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
             # If the driver didn't successfully load, return None.
-            return None
-        success, par_output = driver.run_par(
-            self.get_extra_par_hooks() if len(self.get_extra_par_hooks()) > 0 else None)
-        # TODO: detect errors
-        return par_output
+            if action_type == "synthesis" or action_type == "syn":
+                if not driver.load_synthesis_tool():
+                    return None
+                else:
+                    post_load_func_checked(driver)
+                success, output = driver.run_synthesis(extra_hooks)
+            elif action_type == "par":
+                if not driver.load_par_tool():
+                    return None
+                else:
+                    post_load_func_checked(driver)
+                success, output = driver.run_par(extra_hooks)
+            else:
+                raise ValueError("Invalid action_type = " + str(action_type))
+            # TODO: detect errors
+            return output
+
+        return action
 
     def synthesis_to_par_action(self, driver: hammer_vlsi.HammerDriver, append_error_func: Callable[[str], None]) -> \
     Optional[
