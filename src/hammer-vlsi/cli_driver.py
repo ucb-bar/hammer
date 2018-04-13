@@ -134,7 +134,6 @@ class CLIDriver:
     Optional[
         dict]:
         """Create a config to run the output."""
-        print("driver.project_config = " + str(driver.project_config))
         return hammer_vlsi.HammerDriver.generate_par_inputs_from_synthesis(driver.project_config)
 
     def synthesis_par_action(self, driver: hammer_vlsi.HammerDriver, append_error_func: Callable[[str], None]) -> \
