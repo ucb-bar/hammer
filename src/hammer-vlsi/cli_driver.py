@@ -65,7 +65,7 @@ class CLIDriver:
             "synthesis-to-par": self.synthesis_to_par_action,
             "syn_to_par": self.synthesis_to_par_action,
             "syn-to-par": self.synthesis_to_par_action,
-            "synthesis_par": None  # TODO: implement
+            "synthesis_par": self.synthesis_par_action
         }
 
     def get_extra_synthesis_hooks(self) -> List[hammer_vlsi.HammerToolHookAction]:
@@ -136,6 +136,18 @@ class CLIDriver:
         """Create a config to run the output."""
         print("driver.project_config = " + str(driver.project_config))
         return hammer_vlsi.HammerDriver.generate_par_inputs_from_synthesis(driver.project_config)
+
+    def synthesis_par_action(self, driver: hammer_vlsi.HammerDriver, append_error_func: Callable[[str], None]) -> \
+    Optional[
+        dict]:
+        syn_output = self.synthesis_action(driver, append_error_func)
+        par_config = hammer_vlsi.HammerDriver.generate_par_inputs_from_synthesis(syn_output)
+        #TODO: Make this a function
+        self.project_config = par_config
+        self.database.update_project(self.project_config)
+        par_output = self.par_action(driver, append_error_func)
+        return par_output
+
 
     def valid_actions(self) -> Iterable[str]:
         """Get the list of valid actions for the command-line driver."""
