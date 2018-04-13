@@ -99,6 +99,26 @@ class HookLocation(Enum):
     ResumePostStep = 21
 
 
+class HierarchicalMode(Enum):
+    Flat = 1
+    Root = 2
+    Hierarchical = 3
+    Top = 4
+
+    @staticmethod
+    def from_str(x: str) -> "HierarchicalMode":
+        mapping = {
+            "flat": HierarchicalMode.Flat,
+            "root": HierarchicalMode.Root,
+            "hierarchical": HierarchicalMode.Hierarchical,
+            "top": HierarchicalMode.Top
+        }  # type: Dict[str, HierarchicalMode]
+        try:
+            return mapping[x]
+        except KeyError:
+            raise ValueError("Invalid string for HierarchicalMode: " + str(x))
+
+
 # An hook action. Actions can insert new steps before or after an existing one, or replace an existing stage.
 # Note: hook actions are executed in the order provided.
 HammerToolHookAction = NamedTuple('HammerToolHookAction', [
@@ -716,6 +736,28 @@ class HammerTool(metaclass=ABCMeta):
         if not isinstance(value, Iterable):
             raise TypeError("input_files must be a Iterable[str]")
         self._input_files = value # type: Iterable[str]
+
+
+    @property
+    def hierarchical_mode(self) -> HierarchicalMode:
+        """
+        Input files for this tool library.
+        The exact nature of the files will depend on the type of library.
+        """
+        try:
+            return self.attr_getter("_hierarchical_mode", None)
+        except AttributeError:
+            raise ValueError("HierarchicalMode not set")
+
+    @hierarchical_mode.setter
+    def hierarchical_mode(self, value: HierarchicalMode) -> None:
+        """
+        Set the input files for this tool library.
+        The exact nature of the files will depend on the type of library.
+        """
+        if not isinstance(value, HierarchicalMode):
+            raise TypeError("hierarchical_mode must be a HierarchicalMode")
+        self.attr_setter("_hierarchical_mode", value)
 
     @property
     def technology(self) -> hammer_tech.HammerTechnology:
@@ -1994,6 +2036,7 @@ class HammerDriver:
         par_tool.technology = self.tech
         par_tool.set_database(self.database)
         par_tool.run_dir = run_dir
+        par_tool.hierarchical_mode = HierarchicalMode.from_str(self.database.get_setting("vlsi.core.hierarchical_mode"))
 
         # TODO: automate this based on the definitions
         par_tool.input_files = self.database.get_setting("par.inputs.input_files")
@@ -2033,6 +2076,7 @@ class HammerDriver:
         syn_tool.technology = self.tech
         syn_tool.set_database(self.database)
         syn_tool.run_dir = run_dir
+        syn_tool.hierarchical_mode = HierarchicalMode.from_str(self.database.get_setting("vlsi.core.hierarchical_mode"))
 
         syn_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
         syn_tool.top_module = self.database.get_setting("synthesis.inputs.top_module", nullvalue="")
