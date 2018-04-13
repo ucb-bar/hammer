@@ -751,9 +751,13 @@ class HammerTool(metaclass=ABCMeta):
     # Implementation helpers for properties
     ##############################
     def attr_getter(self, key: str, default: Any) -> Any:
-        """Helper function for implementing the getter of a property with a default."""
+        """Helper function for implementing the getter of a property with a default.
+        If default is None, then raise a AttributeError."""
         if not hasattr(self, key):
-            setattr(self, key, default)
+            if default is not None:
+                setattr(self, key, default)
+            else:
+                raise AttributeError("No such attribute " + str(key))
         return getattr(self, key)
 
     def attr_setter(self, key: str, value: Any) -> None:
@@ -1706,6 +1710,7 @@ class HammerSynthesisTool(HammerTool):
         outputs["synthesis.inputs.top_module"] = self.top_module
         return outputs
 
+    ### Generated interface HammerSynthesisTool ###
     ### Inputs ###
 
     @property
@@ -1716,7 +1721,7 @@ class HammerSynthesisTool(HammerTool):
         :return: The input collection of source RTL files (e.g. *.v).
         """
         try:
-            return self._input_files
+            return self.attr_getter("_input_files", None)
         except AttributeError:
             raise ValueError("Nothing set for the input collection of source RTL files (e.g. *.v) yet")
 
@@ -1725,7 +1730,7 @@ class HammerSynthesisTool(HammerTool):
         """Set the input collection of source RTL files (e.g. *.v)."""
         if not isinstance(value, Iterable):
             raise TypeError("input_files must be a Iterable[str]")
-        self._input_files = value  # type: Iterable[str]
+        self.attr_setter("_input_files", value)
 
     @property
     def top_module(self) -> str:
@@ -1735,7 +1740,7 @@ class HammerSynthesisTool(HammerTool):
         :return: The top-level module.
         """
         try:
-            return self._top_module
+            return self.attr_getter("_top_module", None)
         except AttributeError:
             raise ValueError("Nothing set for the top-level module yet")
 
@@ -1744,7 +1749,7 @@ class HammerSynthesisTool(HammerTool):
         """Set the top-level module."""
         if not isinstance(value, str):
             raise TypeError("top_module must be a str")
-        self._top_module = value  # type: str
+        self.attr_setter("_top_module", value)
 
     ### Outputs ###
 
@@ -1756,7 +1761,7 @@ class HammerSynthesisTool(HammerTool):
         :return: The output collection of mapped (post-synthesis) RTL files.
         """
         try:
-            return self._output_files
+            return self.attr_getter("_output_files", None)
         except AttributeError:
             raise ValueError("Nothing set for the output collection of mapped (post-synthesis) RTL files yet")
 
@@ -1765,7 +1770,7 @@ class HammerSynthesisTool(HammerTool):
         """Set the output collection of mapped (post-synthesis) RTL files."""
         if not isinstance(value, Iterable):
             raise TypeError("output_files must be a Iterable[str]")
-        self._output_files = value  # type: Iterable[str]
+        self.attr_setter("_output_files", value)
 
     @property
     def output_sdc(self) -> str:
@@ -1775,7 +1780,7 @@ class HammerSynthesisTool(HammerTool):
         :return: The (optional) output post-synthesis SDC constraints file.
         """
         try:
-            return self._output_sdc
+            return self.attr_getter("_output_sdc", None)
         except AttributeError:
             raise ValueError("Nothing set for the (optional) output post-synthesis SDC constraints file yet")
 
@@ -1784,7 +1789,7 @@ class HammerSynthesisTool(HammerTool):
         """Set the (optional) output post-synthesis SDC constraints file."""
         if not isinstance(value, str):
             raise TypeError("output_sdc must be a str")
-        self._output_sdc = value  # type: str
+        self.attr_setter("_output_sdc", value)
 
 
 class HammerPlaceAndRouteTool(HammerTool):
@@ -1799,7 +1804,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         :return: The input post-synthesis netlist files.
         """
         try:
-            return self._input_files
+            return self.attr_getter("_input_files", None)
         except AttributeError:
             raise ValueError("Nothing set for the input post-synthesis netlist files yet")
 
@@ -1808,8 +1813,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         """Set the input post-synthesis netlist files."""
         if not isinstance(value, Iterable):
             raise TypeError("input_files must be a Iterable[str]")
-        self._input_files = value # type: Iterable[str]
-
+        self.attr_setter("_input_files", value)
 
     @property
     def top_module(self) -> str:
@@ -1819,7 +1823,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         :return: The top RTL module.
         """
         try:
-            return self._top_module
+            return self.attr_getter("_top_module", None)
         except AttributeError:
             raise ValueError("Nothing set for the top RTL module yet")
 
@@ -1828,7 +1832,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         """Set the top RTL module."""
         if not isinstance(value, str):
             raise TypeError("top_module must be a str")
-        self._top_module = value # type: str
+        self.attr_setter("_top_module", value)
 
     @property
     def post_synth_sdc(self) -> str:
@@ -1838,7 +1842,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         :return: The input post-synthesis SDC constraint file.
         """
         try:
-            return self._post_synth_sdc
+            return self.attr_getter("_post_synth_sdc", None)
         except AttributeError:
             raise ValueError("Nothing set for the input post-synthesis SDC constraint file yet")
 
@@ -1847,9 +1851,10 @@ class HammerPlaceAndRouteTool(HammerTool):
         """Set the input post-synthesis SDC constraint file."""
         if not isinstance(value, str):
             raise TypeError("post_synth_sdc must be a str")
-        self._post_synth_sdc = value  # type: str
+        self.attr_setter("_post_synth_sdc", value)
 
     ### Outputs ###
+
 
 # Options for invoking the driver.
 HammerDriverOptions = NamedTuple('HammerDriverOptions', [

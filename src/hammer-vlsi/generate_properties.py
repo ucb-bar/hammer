@@ -32,7 +32,7 @@ def {var_name}(self) -> {var_type}:
     :return: The {var_desc}.
     \"""
     try:
-        return self._{var_name}
+        return self.attr_getter("_{var_name}", None)
     except AttributeError:
         raise ValueError("Nothing set for the {var_desc} yet")
 
@@ -41,7 +41,7 @@ def {var_name}(self, value: {var_type}) -> None:
     \"""Set the {var_desc}.\"""
     if not isinstance(value, {var_type_instance_check}):
         raise TypeError("{var_name} must be a {var_type}")
-    self._{var_name} = value # type: {var_type}
+    self.attr_setter("_{var_name}", value)
 """
 
     output = []
