@@ -1839,6 +1839,16 @@ class HammerSynthesisTool(HammerTool):
 
 
 class HammerPlaceAndRouteTool(HammerTool):
+    @abstractmethod
+    def fill_outputs(self) -> bool:
+        pass
+
+    def export_config_outputs(self) -> Dict[str, Any]:
+        outputs = dict(super().export_config_outputs())
+        if self.output_ilm_dir is not None:
+            outputs["par.outputs.output_ilm_dir"] = self.output_ilm_dir
+        return outputs
+
     ### Generated interface HammerPlaceAndRouteTool ###
     ### Inputs ###
 
@@ -1857,7 +1867,7 @@ class HammerPlaceAndRouteTool(HammerTool):
     @input_files.setter
     def input_files(self, value: Iterable[str]) -> None:
         """Set the input post-synthesis netlist files."""
-        if not isinstance(value, Iterable):
+        if not (isinstance(value, Iterable)):
             raise TypeError("input_files must be a Iterable[str]")
         self.attr_setter("_input_files", value)
 
@@ -1876,7 +1886,7 @@ class HammerPlaceAndRouteTool(HammerTool):
     @top_module.setter
     def top_module(self, value: str) -> None:
         """Set the top RTL module."""
-        if not isinstance(value, str):
+        if not (isinstance(value, str)):
             raise TypeError("top_module must be a str")
         self.attr_setter("_top_module", value)
 
@@ -1895,11 +1905,31 @@ class HammerPlaceAndRouteTool(HammerTool):
     @post_synth_sdc.setter
     def post_synth_sdc(self, value: str) -> None:
         """Set the input post-synthesis SDC constraint file."""
-        if not isinstance(value, str):
+        if not (isinstance(value, str)):
             raise TypeError("post_synth_sdc must be a str")
         self.attr_setter("_post_synth_sdc", value)
 
     ### Outputs ###
+
+    @property
+    def output_ilm_dir(self) -> Optional[str]:
+        """
+        Get the (optional) path to output directory with ILM information in hierarchical mode.
+
+        :return: The (optional) path to output directory with ILM information in hierarchical mode.
+        """
+        try:
+            return self.attr_getter("_output_ilm_dir", None)
+        except AttributeError:
+            raise ValueError(
+                "Nothing set for the (optional) path to output directory with ILM information in hierarchical mode yet")
+
+    @output_ilm_dir.setter
+    def output_ilm_dir(self, value: Optional[str]) -> None:
+        """Set the (optional) path to output directory with ILM information in hierarchical mode."""
+        if not (isinstance(value, str) or (value is None)):
+            raise TypeError("output_ilm_dir must be a Optional[str]")
+        self.attr_setter("_output_ilm_dir", value)
 
 
 class HasSDCSupport(HammerTool):
