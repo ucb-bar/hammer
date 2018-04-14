@@ -13,7 +13,8 @@ import os
 import subprocess
 import sys
 
-import hammer_vlsi
+from hammer_vlsi_impl import HammerToolHookAction, HammerTool, HammerVLSISettings
+from hammer_driver import HammerDriver, HammerDriverOptions
 
 from typing import List, Dict, Tuple, Any, Iterable, Callable, Optional
 
@@ -44,7 +45,7 @@ def get_nonempty_str(arg: Any) -> Optional[str]:
 
 
 # Type signature of a CLIDriver action.
-CLIActionType = Callable[[hammer_vlsi.HammerDriver, Callable[[str], None]], Optional[dict]]
+CLIActionType = Callable[[HammerDriver, Callable[[str], None]], Optional[dict]]
 
 
 class CLIDriver:
@@ -76,34 +77,34 @@ class CLIDriver:
             "syn_par": self.synthesis_par_action
         }
 
-    def get_extra_synthesis_hooks(self) -> List[hammer_vlsi.HammerToolHookAction]:
+    def get_extra_synthesis_hooks(self) -> List[HammerToolHookAction]:
         """
         Return a list of extra synthesis hooks in this project.
         To be overridden by subclasses.
         """
         return list()
 
-    def get_extra_par_hooks(self) -> List[hammer_vlsi.HammerToolHookAction]:
+    def get_extra_par_hooks(self) -> List[HammerToolHookAction]:
         """
         Return a list of extra place and route hooks in this project.
         To be overridden by subclasses.
         """
         return list()
 
-    def create_synthesis_action(self, custom_hooks: List[hammer_vlsi.HammerToolHookAction],
+    def create_synthesis_action(self, custom_hooks: List[HammerToolHookAction],
                                 post_load_func: Optional[
-                                    Callable[[hammer_vlsi.HammerDriver], None]] = None) -> CLIActionType:
-        hooks = self.get_extra_synthesis_hooks() + custom_hooks  # type: List[hammer_vlsi.HammerToolHookAction]
+                                    Callable[[HammerDriver], None]] = None) -> CLIActionType:
+        hooks = self.get_extra_synthesis_hooks() + custom_hooks  # type: List[HammerToolHookAction]
         return self.create_action("synthesis", hooks if len(hooks) > 0 else None, post_load_func)
 
-    def create_par_action(self, custom_hooks: List[hammer_vlsi.HammerToolHookAction],
-                          post_load_func: Optional[Callable[[hammer_vlsi.HammerDriver], None]] = None) -> CLIActionType:
-        hooks = self.get_extra_par_hooks() + custom_hooks  # type: List[hammer_vlsi.HammerToolHookAction]
+    def create_par_action(self, custom_hooks: List[HammerToolHookAction],
+                          post_load_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionType:
+        hooks = self.get_extra_par_hooks() + custom_hooks  # type: List[HammerToolHookAction]
         return self.create_action("par", hooks if len(hooks) > 0 else None, post_load_func)
 
     def create_action(self, action_type: str,
-                      extra_hooks: Optional[List[hammer_vlsi.HammerToolHookAction]],
-                      post_load_func: Optional[Callable[[hammer_vlsi.HammerDriver], None]]) -> CLIActionType:
+                      extra_hooks: Optional[List[HammerToolHookAction]],
+                      post_load_func: Optional[Callable[[HammerDriver], None]]) -> CLIActionType:
         """
         Create an action function for the action_map.
         :param action_type: Either "syn"/"synthesis" or "par"
@@ -112,12 +113,12 @@ class CLIDriver:
         :return: Action function.
         """
 
-        def post_load_func_checked(driver: hammer_vlsi.HammerDriver) -> None:
+        def post_load_func_checked(driver: HammerDriver) -> None:
             """Check that post_load_func isn't null before calling it."""
             if post_load_func is not None:
                 post_load_func(driver)
 
-        def action(driver: hammer_vlsi.HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        def action(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
             # If the driver didn't successfully load, return None.
             if action_type == "synthesis" or action_type == "syn":
                 if not driver.load_synthesis_tool(self.syn_rundir if self.syn_rundir is not None else ""):
@@ -138,17 +139,17 @@ class CLIDriver:
 
         return action
 
-    def synthesis_to_par_action(self, driver: hammer_vlsi.HammerDriver, append_error_func: Callable[[str], None]) -> \
+    def synthesis_to_par_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> \
     Optional[
         dict]:
         """Create a config to run the output."""
-        return hammer_vlsi.HammerDriver.generate_par_inputs_from_synthesis(driver.project_config)
+        return HammerDriver.generate_par_inputs_from_synthesis(driver.project_config)
 
-    def synthesis_par_action(self, driver: hammer_vlsi.HammerDriver, append_error_func: Callable[[str], None]) -> \
+    def synthesis_par_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> \
     Optional[
         dict]:
         syn_output = self.synthesis_action(driver, append_error_func)
-        par_config = hammer_vlsi.HammerDriver.generate_par_inputs_from_synthesis(syn_output)
+        par_config = HammerDriver.generate_par_inputs_from_synthesis(syn_output)
         # TODO: Make this a function
         driver.project_config = par_config
         driver.database.update_project([driver.project_config])
@@ -161,8 +162,8 @@ class CLIDriver:
         return list(self.action_map().keys())
 
     def args_to_driver(self, args: dict,
-                       default_options: Optional[hammer_vlsi.HammerDriverOptions] = None) -> \
-            Tuple[hammer_vlsi.HammerDriver, List[str]]:
+                       default_options: Optional[HammerDriverOptions] = None) -> \
+            Tuple[HammerDriver, List[str]]:
         """Parse command line arguments and environment variables for the command line front-end to hammer-vlsi.
 
         :return: HammerDriver and a list of errors."""
@@ -170,15 +171,15 @@ class CLIDriver:
         # TODO: rewrite this less tediously?
 
         # Resolve default_options.
-        # Can't call hammer_vlsi.HammerDriver.get_default_driver_options in the
+        # Can't call HammerDriver.get_default_driver_options in the
         # parameters as it will be called when args_to_driver is defined, and
         # hammer_vlsi_path will not be defined yet.
-        default_options_resolved = hammer_vlsi.HammerDriver.get_default_driver_options()  # type: hammer_vlsi.HammerDriverOptions
+        default_options_resolved = HammerDriver.get_default_driver_options()  # type: HammerDriverOptions
         if default_options is not None:
             default_options_resolved = default_options
 
         # Driver options.
-        options = default_options_resolved  # type: hammer_vlsi.HammerDriverOptions
+        options = default_options_resolved  # type: HammerDriverOptions
 
         # Extra config (flattened JSON).
         config = {}  # type: Dict[str, Any]
@@ -240,16 +241,16 @@ class CLIDriver:
         to_step = get_nonempty_str(args['to_step'])
         only_step = get_nonempty_str(args['only_step'])
 
-        driver = hammer_vlsi.HammerDriver(options, config)
+        driver = HammerDriver(options, config)
         if from_step is not None or to_step is not None:
-            driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_from_to_hooks(from_step, to_step))
-            driver.set_post_custom_par_tool_hooks(hammer_vlsi.HammerTool.make_from_to_hooks(from_step, to_step))
+            driver.set_post_custom_syn_tool_hooks(HammerTool.make_from_to_hooks(from_step, to_step))
+            driver.set_post_custom_par_tool_hooks(HammerTool.make_from_to_hooks(from_step, to_step))
             if only_step is not None:
                 errors.append("Cannot specify from_step/to_step and only_step")
         else:
             if only_step is not None:
-                driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_from_to_hooks(only_step, only_step))
-                driver.set_post_custom_par_tool_hooks(hammer_vlsi.HammerTool.make_from_to_hooks(only_step, only_step))
+                driver.set_post_custom_syn_tool_hooks(HammerTool.make_from_to_hooks(only_step, only_step))
+                driver.set_post_custom_par_tool_hooks(HammerTool.make_from_to_hooks(only_step, only_step))
 
         return driver, errors
 
@@ -328,7 +329,7 @@ class CLIDriver:
         parser.add_argument("--cad-files", action='append', required=False,
                             help="CAD files.")
 
-        if hammer_vlsi.HammerVLSISettings.set_hammer_vlsi_path_from_environment() is False:
+        if HammerVLSISettings.set_hammer_vlsi_path_from_environment() is False:
             print("You must set HAMMER_VLSI to the hammer-vlsi directory", file=sys.stderr)
             sys.exit(1)
 
