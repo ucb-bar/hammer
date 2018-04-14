@@ -12,6 +12,9 @@ from hammer_vlsi import HammerPlaceAndRouteTool, HammerToolStep
 
 
 class Nop(HammerPlaceAndRouteTool):
+    def fill_outputs(self) -> bool:
+        return True
+
     @property
     def steps(self) -> List[HammerToolStep]:
         return []
