@@ -53,6 +53,12 @@ class CLIDriver:
     argparse and plumbing.
     """
 
+    def __init__(self) -> None:
+        # Cache for the synthesis dir and par dir.
+        # Defaults to blank (obj_dir + syn-rundir/par-rundir)
+        self.syn_rundir = ""  # type: Optional[str]
+        self.par_rundir = ""  # type: Optional[str]
+
     def action_map(self) -> Dict[str, CLIActionType]:
         """Return the mapping of valid actions -> functions for each action of the command-line driver."""
         synthesis_action = self.create_synthesis_action([])
@@ -112,13 +118,13 @@ class CLIDriver:
         def action(driver: hammer_vlsi.HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
             # If the driver didn't successfully load, return None.
             if action_type == "synthesis" or action_type == "syn":
-                if not driver.load_synthesis_tool():
+                if not driver.load_synthesis_tool(self.syn_rundir if self.syn_rundir is not None else ""):
                     return None
                 else:
                     post_load_func_checked(driver)
                 success, output = driver.run_synthesis(extra_hooks)
             elif action_type == "par":
-                if not driver.load_par_tool():
+                if not driver.load_par_tool(self.par_rundir if self.par_rundir is not None else ""):
                     return None
                 else:
                     post_load_func_checked(driver)
@@ -223,6 +229,9 @@ class CLIDriver:
             obj_dir = get_nonempty_str(os.environ.get("HAMMER_DRIVER_OBJ_DIR", ""))
         if obj_dir is not None:
             options = options._replace(obj_dir=obj_dir)
+        # Syn/par rundir (optional)
+        self.syn_rundir = get_nonempty_str(args['syn_rundir'])
+        self.par_rundir = get_nonempty_str(args['par_rundir'])
 
         # Stage control: from/to
         from_step = get_nonempty_str(args['from_step'])
@@ -293,6 +302,10 @@ class CLIDriver:
                             help='Log file. Leave blank to automatically create one.')
         parser.add_argument("--obj_dir", required=False,
                             help='Folder for storing results of CAD tool runs. If not specified, this will be the hammer-vlsi folder by default. Can also be specified via the environment variable HAMMER_DRIVER_OBJ_DIR.')
+        parser.add_argument("--syn_rundir", required=False, default="",
+                            help='(optional) Directory to store syn results in')
+        parser.add_argument("--par_rundir", required=False, default="",
+                            help='(optional) Directory to store par results in')
         # Optional arguments for step control.
         parser.add_argument("--from_step", dest="from_step", required=False,
                             help="Run the given action from the given step (inclusive).")
