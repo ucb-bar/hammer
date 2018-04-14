@@ -12,7 +12,7 @@ from typing import List
 
 import hammer_config
 
-from hammer_vlsi import HammerVLSILoggingContext
+from hammer_vlsi_impl import HammerVLSILoggingContext
 
 import python_jsonschema_objects # type: ignore
 
