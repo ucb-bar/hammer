@@ -79,7 +79,12 @@ def main(args):
             InterfaceVar("post_synth_sdc", "str", "input post-synthesis SDC constraint file")
         ],
         outputs=[
-            # TODO: model CAD junk
+            # TODO: model more CAD junk
+
+            # e.g. par-rundir/TopModuleILMDir/mmmc/ilm_data/TopModule. Has a bunch of files TopModule_postRoute*
+            InterfaceVar("output_ilm_dir", "Optional[str]", "(optional) path to output directory with ILM information in hierarchical mode")
+
+            # TODO: add individual parts of the ILM (e.g. verilog, sdc, spef, etc) for cross-tool compatibility?
         ]
     )
 
