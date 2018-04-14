@@ -703,6 +703,7 @@ class HammerTool(metaclass=ABCMeta):
     def run_dir(self) -> str:
         """
         Get the location of the run dir, a writable temporary information for use by the tool.
+        This should return an absolute path.
 
         :return: Path to the location of the library.
         """
@@ -712,9 +713,12 @@ class HammerTool(metaclass=ABCMeta):
             raise ValueError("Internal error: run dir location not set by hammer-vlsi")
 
     @run_dir.setter
-    def run_dir(self, value: str) -> None:
+    def run_dir(self, path: str) -> None:
         """Set the location of a writable directory which the tool can use to store temporary information."""
-        self._rundir = value # type: str
+        # If the path isn't absolute, make it absolute.
+        if not os.path.isabs(path):
+            path = os.path.abspath(path)
+        self._rundir = path  # type: str
 
     @property
     def input_files(self) -> Iterable[str]:
