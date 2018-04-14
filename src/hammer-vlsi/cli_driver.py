@@ -93,12 +93,12 @@ class CLIDriver:
     def create_synthesis_action(self, custom_hooks: List[hammer_vlsi.HammerToolHookAction],
                                 post_load_func: Optional[
                                     Callable[[hammer_vlsi.HammerDriver], None]] = None) -> CLIActionType:
-        hooks = self.get_extra_synthesis_hooks() + custom_hooks
+        hooks = self.get_extra_synthesis_hooks() + custom_hooks  # type: List[hammer_vlsi.HammerToolHookAction]
         return self.create_action("synthesis", hooks if len(hooks) > 0 else None, post_load_func)
 
     def create_par_action(self, custom_hooks: List[hammer_vlsi.HammerToolHookAction],
                           post_load_func: Optional[Callable[[hammer_vlsi.HammerDriver], None]] = None) -> CLIActionType:
-        hooks = self.get_extra_par_hooks() + custom_hooks
+        hooks = self.get_extra_par_hooks() + custom_hooks  # type: List[hammer_vlsi.HammerToolHookAction]
         return self.create_action("par", hooks if len(hooks) > 0 else None, post_load_func)
 
     def create_action(self, action_type: str,
