@@ -157,7 +157,7 @@ class HammerDriver:
         par_tool.technology = self.tech
         par_tool.set_database(self.database)
         par_tool.run_dir = run_dir
-        par_tool.hierarchical_mode = HierarchicalMode.from_str(self.database.get_setting("vlsi.core.hierarchical_mode"))
+        par_tool.hierarchical_mode = HierarchicalMode.from_str(self.database.get_setting("vlsi.inputs.hierarchical_mode"))
 
         # TODO: automate this based on the definitions
         par_tool.input_files = self.database.get_setting("par.inputs.input_files")

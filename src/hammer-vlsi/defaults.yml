@@ -35,14 +35,6 @@ vlsi.core:
   # Maximum threads to use in a CAD tool invocation.
   max_threads: 1
 
-  # Hierarchical par mode. (str)
-  # Valid options:
-  # flat - Perform a flat place and route run.
-  # root - Root module in a hierarchical run - same as flat except that an extra write_ilm step is added.
-  # hierarchical - Module which has sub-modules which are also hierarchical.
-  # top - Top module in a hierarchical run - runs an extra assemble_design step.
-  hierarchical_mode: flat
-
 vlsi.technology:
   # Placement site for macros. (str)
   # Typically specified in standard cell LEFs.
@@ -62,6 +54,20 @@ vlsi.inputs:
   supplies:
     VDD: "0.85 V"
     GND: "0 V"
+
+  # Hierarchical par mode. (str)
+  # Valid options:
+  # flat - Perform a flat place and route run.
+  # root - Root module in a hierarchical run - same as flat except that an extra write_ilm step is added.
+  # hierarchical - Module which has sub-modules which are also hierarchical.
+  # top - Top module in a hierarchical run - runs an extra assemble_design step.
+  hierarchical_mode: flat
+
+  # ILMs for hierarchical mode.
+  # ILM struct (ILMStruct) members:
+  # dir (str) - directory to the ILMs
+  # module (str) - module name for the ILM
+  ilms: []
 
   # Muli-mode multi-corner setups, overrides supplies
   # MMMC struct members:

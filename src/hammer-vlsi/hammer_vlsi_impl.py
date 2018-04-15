@@ -119,6 +119,12 @@ class HierarchicalMode(Enum):
             raise ValueError("Invalid string for HierarchicalMode: " + str(x))
 
 
+ILMStruct = NamedTuple('ILMStruct', [
+    ('dir', str),
+    ('module', str)
+])
+
+
 # An hook action. Actions can insert new steps before or after an existing one, or replace an existing stage.
 # Note: hook actions are executed in the order provided.
 HammerToolHookAction = NamedTuple('HammerToolHookAction', [
@@ -1145,7 +1151,7 @@ class HammerTool(metaclass=ABCMeta):
         """Get the config for this tool."""
         return reduce(self.util_add_lists, map(lambda path: hammer_config.load_config_from_defaults(path), self.config_dirs))
 
-    def get_setting(self, key: str, nullvalue: Optional[str] = None):
+    def get_setting(self, key: str, nullvalue: Optional[str] = None) -> Any:
         """
         Get a particular setting from the database.
         :param key: Key of the setting to receive.
@@ -1694,6 +1700,20 @@ class HammerTool(metaclass=ABCMeta):
             output.append(corn)
         return output
 
+    def get_input_ilms(self) -> List[ILMStruct]:
+        """
+        Get a list of input ILM modules for hierarchical mode.
+        """
+        ilms = self.get_setting("vlsi.inputs.ilms")  # type: List[dict]
+        assert isinstance(ilms, list)
+        output = []  # type: List[ILMStruct]
+        for ilm in ilms:
+            output.append(ILMStruct(
+                dir=str(ilm["dir"]),
+                module=str(ilm["module"])
+            ))
+        return output
+
     def get_output_load_constraints(self) -> List[OutputLoadConstraint]:
         """
         Get a list of output load constraints as specified in the config.
@@ -1845,8 +1865,7 @@ class HammerPlaceAndRouteTool(HammerTool):
 
     def export_config_outputs(self) -> Dict[str, Any]:
         outputs = dict(super().export_config_outputs())
-        if self.output_ilm_dir is not None:
-            outputs["par.outputs.output_ilm_dir"] = self.output_ilm_dir
+        outputs["par.outputs.output_ilms"] = self.output_ilms
         return outputs
 
     ### Generated interface HammerPlaceAndRouteTool ###
@@ -1912,24 +1931,23 @@ class HammerPlaceAndRouteTool(HammerTool):
     ### Outputs ###
 
     @property
-    def output_ilm_dir(self) -> Optional[str]:
+    def output_ilms(self) -> List[ILMStruct]:
         """
-        Get the (optional) path to output directory with ILM information in hierarchical mode.
+        Get the (optional) output ILM information for hierarchical mode.
 
-        :return: The (optional) path to output directory with ILM information in hierarchical mode.
+        :return: The (optional) output ILM information for hierarchical mode.
         """
         try:
-            return self.attr_getter("_output_ilm_dir", None)
+            return self.attr_getter("_output_ilms", None)
         except AttributeError:
-            raise ValueError(
-                "Nothing set for the (optional) path to output directory with ILM information in hierarchical mode yet")
+            raise ValueError("Nothing set for the (optional) output ILM information for hierarchical mode yet")
 
-    @output_ilm_dir.setter
-    def output_ilm_dir(self, value: Optional[str]) -> None:
-        """Set the (optional) path to output directory with ILM information in hierarchical mode."""
-        if not (isinstance(value, str) or (value is None)):
-            raise TypeError("output_ilm_dir must be a Optional[str]")
-        self.attr_setter("_output_ilm_dir", value)
+    @output_ilms.setter
+    def output_ilms(self, value: List[ILMStruct]) -> None:
+        """Set the (optional) output ILM information for hierarchical mode."""
+        if not (isinstance(value, List[ILMStruct])):
+            raise TypeError("output_ilms must be a List[ILMStruct]")
+        self.attr_setter("_output_ilms", value)
 
 
 class HasSDCSupport(HammerTool):
