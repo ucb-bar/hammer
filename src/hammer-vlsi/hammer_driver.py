@@ -254,7 +254,7 @@ class HammerDriver:
                 hooks_to_use = hook_actions + self.post_custom_syn_tool_hooks
         run_succeeded = self.syn_tool.run(hooks_to_use)
         if not run_succeeded:
-            self.log.error("Synthesis tool %s failed! Please check its output." % (self.syn_tool.name))
+            self.log.error("Synthesis tool %s failed! Please check its output." % self.syn_tool.name)
             # Allow the flow to keep running, just in case.
             # TODO: make this an option
 
@@ -295,5 +295,19 @@ class HammerDriver:
             else:
                 hooks_to_use = hook_actions + self.post_custom_par_tool_hooks
         # TODO: get place and route working
-        self.par_tool.run(hooks_to_use)
-        return True, {}
+        run_succeeded = self.par_tool.run(hooks_to_use)
+        if not run_succeeded:
+            self.log.error("Place and route tool %s failed! Please check its output." % self.par_tool.name)
+            # Allow the flow to keep running, just in case.
+            # TODO: make this an option
+
+        # Record output from the syn_tool into the JSON output.
+        output_config = dict(self.project_config)
+        # TODO(edwardw): automate this
+        try:
+            output_config.update(self.par_tool.export_config_outputs())
+        except ValueError as e:
+            self.log.fatal(e.args[0])
+            return False, {}
+
+        return run_succeeded, output_config
