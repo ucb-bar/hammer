@@ -82,7 +82,7 @@ def main(args):
             # TODO: model more CAD junk
 
             # e.g. par-rundir/TopModuleILMDir/mmmc/ilm_data/TopModule. Has a bunch of files TopModule_postRoute*
-            InterfaceVar("output_ilm_dir", "Optional[str]", "(optional) path to output directory with ILM information in hierarchical mode")
+            InterfaceVar("output_ilms", "List[ILMStruct]", "(optional) output ILM information for hierarchical mode")
 
             # TODO: add individual parts of the ILM (e.g. verilog, sdc, spef, etc) for cross-tool compatibility?
         ]
