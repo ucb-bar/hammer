@@ -15,16 +15,21 @@ InterfaceVar = namedtuple("InterfaceVar", 'name type desc')
 
 Interface = namedtuple("Interface", 'module inputs outputs')
 
+def isinstance_check(t: str) -> str:
+    return "isinstance(value, {t})".format(t=t)
+
 def generate_from_list(template, lst):
     def format_var(var):
         if var.type.startswith("Iterable"):
-            var_type_instance_check = "isinstance(value, {t})".format(t="Iterable")
+            var_type_instance_check = isinstance_check("Iterable")
+        elif var.type.startswith("List"):
+            var_type_instance_check = isinstance_check("List")
         elif var.type.startswith("Optional"):
             m = re.search(r"Optional\[(\S+)\]", var.type)
             subtype = str(m.group(1))
-            var_type_instance_check = "isinstance(value, {t})".format(t=subtype) + " or (value is None)"
+            var_type_instance_check = isinstance_check(subtype) + " or (value is None)"
         else:
-            var_type_instance_check = "isinstance(value, {t})".format(t=var.type)
+            var_type_instance_check = isinstance_check(var.type)
         return template.format(var_name=var.name, var_type=var.type, var_desc=var.desc, var_type_instance_check=var_type_instance_check)
     return map(format_var, lst)
 
