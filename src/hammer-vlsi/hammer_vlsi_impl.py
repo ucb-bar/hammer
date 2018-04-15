@@ -1945,7 +1945,7 @@ class HammerPlaceAndRouteTool(HammerTool):
     @output_ilms.setter
     def output_ilms(self, value: List[ILMStruct]) -> None:
         """Set the (optional) output ILM information for hierarchical mode."""
-        if not (isinstance(value, List[ILMStruct])):
+        if not (isinstance(value, List)):
             raise TypeError("output_ilms must be a List[ILMStruct]")
         self.attr_setter("_output_ilms", value)
 
