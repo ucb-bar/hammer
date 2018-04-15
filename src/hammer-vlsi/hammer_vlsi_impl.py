@@ -119,10 +119,25 @@ class HierarchicalMode(Enum):
             raise ValueError("Invalid string for HierarchicalMode: " + str(x))
 
 
-ILMStruct = NamedTuple('ILMStruct', [
+# Struct that holds various path
+class ILMStruct(NamedTuple('ILMStruct', [
     ('dir', str),
     ('module', str)
-])
+])):
+    __slots__ = ()
+
+    def to_setting(self) -> dict:
+        return {
+            "dir": self.dir,
+            "module": self.module
+        }
+
+    @staticmethod
+    def from_setting(ilm: dict) -> "ILMStruct":
+        return ILMStruct(
+            dir=str(ilm["dir"]),
+            module=str(ilm["module"])
+        )
 
 
 # An hook action. Actions can insert new steps before or after an existing one, or replace an existing stage.
@@ -1706,13 +1721,7 @@ class HammerTool(metaclass=ABCMeta):
         """
         ilms = self.get_setting("vlsi.inputs.ilms")  # type: List[dict]
         assert isinstance(ilms, list)
-        output = []  # type: List[ILMStruct]
-        for ilm in ilms:
-            output.append(ILMStruct(
-                dir=str(ilm["dir"]),
-                module=str(ilm["module"])
-            ))
-        return output
+        return list(map(ILMStruct.from_setting, ilms))
 
     def get_output_load_constraints(self) -> List[OutputLoadConstraint]:
         """
@@ -1865,7 +1874,7 @@ class HammerPlaceAndRouteTool(HammerTool):
 
     def export_config_outputs(self) -> Dict[str, Any]:
         outputs = dict(super().export_config_outputs())
-        outputs["par.outputs.output_ilms"] = self.output_ilms
+        outputs["par.outputs.output_ilms"] = list(map(lambda s: s.to_setting(), self.output_ilms))
         return outputs
 
     ### Generated interface HammerPlaceAndRouteTool ###
