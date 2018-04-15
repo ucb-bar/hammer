@@ -197,7 +197,7 @@ class HammerDriver:
         syn_tool.technology = self.tech
         syn_tool.set_database(self.database)
         syn_tool.run_dir = run_dir
-        syn_tool.hierarchical_mode = HierarchicalMode.from_str(self.database.get_setting("vlsi.core.hierarchical_mode"))
+        syn_tool.hierarchical_mode = HierarchicalMode.from_str(self.database.get_setting("vlsi.inputs.hierarchical_mode"))
 
         syn_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
         syn_tool.top_module = self.database.get_setting("synthesis.inputs.top_module", nullvalue="")
