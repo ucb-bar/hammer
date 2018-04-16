@@ -11,4 +11,6 @@
 from hammer_vlsi_impl import *
 from hammer_driver import *
 
+from verilog_utils import *
+
 from cli_driver import CLIDriver
