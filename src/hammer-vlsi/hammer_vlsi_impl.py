@@ -118,6 +118,13 @@ class HierarchicalMode(Enum):
         except KeyError:
             raise ValueError("Invalid string for HierarchicalMode: " + str(x))
 
+    def is_nonroot_hierarchical(self) -> bool:
+        """
+        Helper function that returns True if this mode is a non-root hierarchical mode (i.e. any block with
+        hierarchical sub-blocks).
+        """
+        return self == HierarchicalMode.Hierarchical or self == HierarchicalMode.Top
+
 
 # Struct that holds various path
 class ILMStruct(NamedTuple('ILMStruct', [
