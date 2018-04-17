@@ -202,6 +202,28 @@ foo:
         self.assertEqual(db.get_setting("foo.bar.dac"), "current_weighted")
         self.assertEqual(db.get_setting("foo.bar.dsl"), ["scala", "python"])
 
+    def test_repeated_updates(self) -> None:
+        """
+        Test that repeated updates don't cause duplicates.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+a.b:
+  c: []
+""", is_yaml=True)
+        meta = hammer_config.load_config_from_string("""
+a.b.c: ["test"]
+a.b.c_meta: append
+""", is_yaml=True)
+        db.update_core([base])
+        self.assertEqual(db.get_setting("a.b.c"), [])
+        db.update_project([meta])
+        self.assertEqual(db.get_setting("a.b.c"), ["test"])
+        db.update_technology([])
+        self.assertEqual(db.get_setting("a.b.c"), ["test"])
+        db.update_environment([])
+        self.assertEqual(db.get_setting("a.b.c"), ["test"])
+
     def test_meta_prependlocal(self):
         """
         Test that the meta attribute "prependlocal" works.
