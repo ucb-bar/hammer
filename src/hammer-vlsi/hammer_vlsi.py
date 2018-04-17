@@ -13,4 +13,6 @@ from hammer_driver import *
 
 from verilog_utils import *
 
+from utils import *
+
 from cli_driver import CLIDriver

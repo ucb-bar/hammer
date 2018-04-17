@@ -12,6 +12,8 @@ from typing import NamedTuple, List, Optional, Tuple, Dict
 import datetime
 import os
 
+from utils import *
+
 import hammer_config
 import hammer_tech
 from hammer_vlsi_impl import HammerVLSISettings, HammerToolHookAction, HammerPlaceAndRouteTool, HammerSynthesisTool, \
@@ -259,7 +261,7 @@ class HammerDriver:
             # TODO: make this an option
 
         # Record output from the syn_tool into the JSON output.
-        output_config = dict(self.project_config)
+        output_config = deepdict(self.project_config)
         # TODO(edwardw): automate this
         try:
             output_config.update(self.syn_tool.export_config_outputs())
@@ -272,7 +274,7 @@ class HammerDriver:
     @staticmethod
     def generate_par_inputs_from_synthesis(config_in: dict) -> dict:
         """Generate the appropriate inputs for running place-and-route from the outputs of synthesis run."""
-        output_dict = dict(config_in)
+        output_dict = deepdict(config_in)
         # Plug in the outputs of synthesis into the par inputs.
         output_dict["par.inputs.input_files"] = output_dict["synthesis.outputs.output_files"]
         output_dict["par.inputs.top_module"] = output_dict["synthesis.inputs.top_module"]
@@ -302,7 +304,7 @@ class HammerDriver:
             # TODO: make this an option
 
         # Record output from the syn_tool into the JSON output.
-        output_config = dict(self.project_config)
+        output_config = deepdict(self.project_config)
         # TODO(edwardw): automate this
         try:
             output_config.update(self.par_tool.export_config_outputs())

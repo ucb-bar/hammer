@@ -11,6 +11,7 @@
 
 from typing import Iterable, List, Union, Callable, Any, Dict, Set
 
+from utils import deepdict
 from .yaml2json import load_yaml # grumble grumble
 
 from functools import reduce
@@ -151,11 +152,11 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
         'dynamicjson2list': make_meta_dynamic('dynamicjson2list'),
         'prependlocal': meta_prependlocal
     }  # type: Dict[str, Callable[[dict, str, Any], None]]
-    newdict = dict(config_dict)
+    newdict = deepdict(config_dict)
 
     # Find meta directives.
     assert isinstance(meta_dict, dict)
-    meta_dict = dict(meta_dict)  # create a copy so we can remove items.
+    meta_dict = deepdict(meta_dict)  # create a copy so we can remove items.
     meta_dict_keys = list(meta_dict.keys())
     meta_keys = filter(lambda k: k.endswith("_meta"), meta_dict_keys)
 
@@ -393,11 +394,11 @@ def combine_configs(configs: Iterable[dict]) -> dict:
     :return: A loaded config dictionary.
     """
     expanded_config_reduce = reduce(update_and_expand_meta, configs, {}) # type: dict
-    expanded_config = dict(expanded_config_reduce) # type: dict
-    expanded_config_orig = dict(expanded_config) # type: dict
+    expanded_config = deepdict(expanded_config_reduce) # type: dict
+    expanded_config_orig = deepdict(expanded_config) # type: dict
 
     # Now, we need to handle dynamic* metas.
-    dynamic_metas = dict()
+    dynamic_metas = {}
 
     meta_dict_keys = list(expanded_config.keys())
     meta_keys = list(filter(lambda k: k.endswith("_meta"), meta_dict_keys))

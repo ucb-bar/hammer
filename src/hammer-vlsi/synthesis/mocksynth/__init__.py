@@ -6,15 +6,10 @@
 #  NOT FOR EXTERNAL/PUBLIC USE.
 #
 #  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
-from enum import Enum
 
-from hammer_vlsi import HammerSynthesisTool, HammerToolHookAction, HammerToolStep
-from hammer_vlsi import HammerVLSILogging
+from hammer_vlsi import HammerSynthesisTool, HammerToolStep, deepdict
 
-import hammer_tech
-
-from functools import reduce
-from typing import Callable, Dict, List, Iterable, Any, NamedTuple, Tuple, Set
+from typing import Dict, List, Any
 
 import os
 
@@ -22,7 +17,7 @@ import os
 class MockSynth(HammerSynthesisTool):
     @property
     def env_vars(self) -> Dict[str, str]:
-        new_dict = dict(super().env_vars)
+        new_dict = deepdict(super().env_vars)
         new_dict.update({})  # TODO: stuffs
         return new_dict
 
