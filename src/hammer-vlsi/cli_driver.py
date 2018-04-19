@@ -139,15 +139,11 @@ class CLIDriver:
 
         return action
 
-    def synthesis_to_par_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> \
-    Optional[
-        dict]:
+    def synthesis_to_par_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
         """Create a config to run the output."""
         return HammerDriver.generate_par_inputs_from_synthesis(driver.project_config)
 
-    def synthesis_par_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> \
-    Optional[
-        dict]:
+    def synthesis_par_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
         syn_output = self.synthesis_action(driver, append_error_func)
         par_config = HammerDriver.generate_par_inputs_from_synthesis(syn_output)
         # TODO: Make this a function
