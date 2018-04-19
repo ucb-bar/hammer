@@ -129,21 +129,24 @@ class HierarchicalMode(Enum):
 # Struct that holds various path
 class ILMStruct(NamedTuple('ILMStruct', [
     ('dir', str),
-    ('module', str)
+    ('module', str),
+    ('lef', str)
 ])):
     __slots__ = ()
 
     def to_setting(self) -> dict:
         return {
             "dir": self.dir,
-            "module": self.module
+            "module": self.module,
+            "lef": self.lef
         }
 
     @staticmethod
     def from_setting(ilm: dict) -> "ILMStruct":
         return ILMStruct(
             dir=str(ilm["dir"]),
-            module=str(ilm["module"])
+            module=str(ilm["module"]),
+            lef=str(ilm["lef"])
         )
 
 
