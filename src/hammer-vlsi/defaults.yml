@@ -67,6 +67,7 @@ vlsi.inputs:
   # ILM struct (ILMStruct) members:
   # dir (str) - directory to the ILMs
   # module (str) - module name for the ILM
+  # lef (str) - path to the LEF file
   ilms: []
 
   # Muli-mode multi-corner setups, overrides supplies
