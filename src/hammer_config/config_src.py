@@ -249,11 +249,11 @@ class HammerDatabase:
         """
         return json.dumps(self.get_config(), sort_keys=True, indent=4, separators=(',', ': '))
 
-    def get(self, key: str):
+    def get(self, key: str) -> Any:
         """Alias for get_setting()."""
         return self.get_setting(key)
 
-    def __getitem__(self, key: str):
+    def __getitem__(self, key: str) -> Any:
         """Alias for get_setting()."""
         return self.get_setting(key)
 
@@ -261,7 +261,7 @@ class HammerDatabase:
         """Alias for has_setting()."""
         return self.has_setting(item)
 
-    def get_setting(self, key: str, nullvalue: str = "null"):
+    def get_setting(self, key: str, nullvalue: str = "null") -> Any:
         """
         Retrieve the given key.
 
