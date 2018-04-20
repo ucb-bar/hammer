@@ -7,7 +7,7 @@
 #  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 import copy
-from typing import List, Any, Set
+from typing import List, Any, Set, Dict, Tuple
 
 
 def deepdict(x: dict) -> dict:
@@ -81,3 +81,42 @@ def in_place_unique(items: List[Any]) -> None:
         else:
             seen.add(item)
             i += 1
+
+
+def topological_sort(graph: Dict[str, Tuple[List[str], List[str]]], starting_nodes: List[str]) -> List[str]:
+    """
+    Perform a topological sort on the graph and return a valid ordering.
+    :param graph: dict that represents key as the node and value as a tuple of (outgoing edges, incoming edges).
+    :param starting_nodes: List of starting nodes to use.
+    :return: A valid topological ordering of the graph.
+    """
+
+    # Make a copy of the graph since we'll be modifying it.
+    working_graph = deepdict(graph)  # type: Dict[str, Tuple[List[str], List[str]]]
+
+    queue = []  # type: List[str]
+    output = []  # type: List[str]
+
+    # Add starting nodes to the queue.
+    queue.extend(starting_nodes)
+
+    while len(queue) > 0:
+        # Get front-most node in the queue.
+        node = queue.pop(0)
+
+        # It should have no incoming edges.
+        assert len(working_graph[node][1]) == 0
+
+        # Add it to the output.
+        output.append(node)
+
+        # Examine all targets of outgoing edges of this node.
+        for target_node in working_graph[node][0]:
+            # Remove the corresponding incoming edge there.
+            working_graph[target_node][1].remove(node)
+
+            # If the target node now has no incoming nodes, we can add it to the queue.
+            if len(working_graph[target_node][1]) == 0:
+                queue.append(target_node)
+
+    return output
