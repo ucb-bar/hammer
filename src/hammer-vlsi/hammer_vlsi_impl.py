@@ -25,7 +25,8 @@ import sys
 
 import hammer_config
 
-from utils import add_lists, in_place_unique
+from utils import add_lists, in_place_unique, reverse_dict
+
 
 class Level(Enum):
     """
@@ -106,18 +107,24 @@ class HierarchicalMode(Enum):
     Hierarchical = 3
     Top = 4
 
-    @staticmethod
-    def from_str(x: str) -> "HierarchicalMode":
-        mapping = {
+    @classmethod
+    def __mapping(cls) -> Dict[str, "HierarchicalMode"]:
+        return {
             "flat": HierarchicalMode.Flat,
             "root": HierarchicalMode.Root,
             "hierarchical": HierarchicalMode.Hierarchical,
             "top": HierarchicalMode.Top
-        }  # type: Dict[str, HierarchicalMode]
+        }
+
+    @staticmethod
+    def from_str(x: str) -> "HierarchicalMode":
         try:
-            return mapping[x]
+            return HierarchicalMode.__mapping()[x]
         except KeyError:
             raise ValueError("Invalid string for HierarchicalMode: " + str(x))
+
+    def __str__(self) -> str:
+        return reverse_dict(HierarchicalMode.__mapping())[self]
 
     def is_nonroot_hierarchical(self) -> bool:
         """
