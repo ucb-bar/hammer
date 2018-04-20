@@ -25,6 +25,7 @@ import sys
 
 import hammer_config
 
+from utils import add_lists, in_place_unique
 
 class Level(Enum):
     """
@@ -1174,7 +1175,7 @@ class HammerTool(metaclass=ABCMeta):
 
     def get_config(self) -> List[dict]:
         """Get the config for this tool."""
-        return reduce(self.util_add_lists, map(lambda path: hammer_config.load_config_from_defaults(path), self.config_dirs))
+        return reduce(add_lists, map(lambda path: hammer_config.load_config_from_defaults(path), self.config_dirs))
 
     def get_setting(self, key: str, nullvalue: Optional[str] = None) -> Any:
         """
@@ -1274,13 +1275,13 @@ class HammerTool(metaclass=ABCMeta):
             filtered_libs = sorted(filtered_libs, key=sort_func)
 
         lib_results = list(
-            reduce(self.util_add_lists, list(map(extraction_func, filtered_libs)), []))  # type: List[str]
+            reduce(add_lists, list(map(extraction_func, filtered_libs)), []))  # type: List[str]
 
         # Uniquify results.
         # TODO: think about whether this really belongs here and whether we always need to uniquify.
         # This is here to get stuff working since some CAD tools dislike duplicated arguments (e.g. duplicated stdcell
         # lib, etc).
-        self.util_in_place_unique(lib_results)
+        in_place_unique(lib_results)
 
         lib_results_with_extra_funcs = reduce(lambda arr, extra_func: map(extra_func, arr), extra_funcs, lib_results)
 
@@ -1605,7 +1606,7 @@ class HammerTool(metaclass=ABCMeta):
         after_output_functions = map(lambda item: output_func(item, filt), after_post_filter)
 
         # Concatenate lists of List[str] together.
-        return list(reduce(self.util_add_lists, after_output_functions, []))
+        return list(reduce(add_lists, after_output_functions, []))
 
     def read_libs(self, library_types: Iterable[LibraryFilter], output_func: Callable[[str, LibraryFilter], List[str]],
             pre_filters: Iterable[Callable[[hammer_tech.Library],bool]] = [],
@@ -1622,39 +1623,12 @@ class HammerTool(metaclass=ABCMeta):
         if pre_filters == []:
             pre_filters = [self.filter_for_supplies]
         return list(reduce(
-            self.util_add_lists,
+            add_lists,
             map(
                 lambda lib: self.process_library_filter(pre_filts=pre_filters, filt=lib, output_func=output_func, must_exist=must_exist),
                 library_types
             )
         ))
-
-    @staticmethod
-    def util_add_lists(a: List[str], b: List[str]) -> List[str]:
-        """Helper method: join two lists together while type checking."""
-        # TODO: move this to a util class/package eventually
-        assert isinstance(a, List)
-        assert isinstance(b, List)
-        return a + b
-
-    @staticmethod
-    def util_in_place_unique(items: List[Any]) -> None:
-        """
-        "Fast" in-place uniquification of a list.
-        :param items: List to be uniquified.
-        """
-        seen = set()  # type: Set[Any]
-        i = 0
-        # We will be all done when i == len(items)
-        while i < len(items):
-            item = items[i]
-            if item in seen:
-                # Delete and keep index pointer the same.
-                del items[i]
-                continue
-            else:
-                seen.add(item)
-                i += 1
 
     # TODO: these helper functions might get a bit out of hand, put them somewhere more organized?
     def get_clock_ports(self) -> List[ClockPort]:
