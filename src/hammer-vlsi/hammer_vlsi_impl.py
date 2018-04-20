@@ -127,7 +127,7 @@ class HierarchicalMode(Enum):
         return self == HierarchicalMode.Hierarchical or self == HierarchicalMode.Top
 
 
-# Struct that holds various path
+# Struct that holds various paths related to ILMs.
 class ILMStruct(NamedTuple('ILMStruct', [
     ('dir', str),
     ('module', str),
