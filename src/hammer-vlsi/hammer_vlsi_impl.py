@@ -536,7 +536,8 @@ Margins = NamedTuple('Margins', [
     ('top', float)
 ])
 
-PlacementConstraint = NamedTuple('PlacementConstraint', [
+
+class PlacementConstraint(NamedTuple('PlacementConstraint', [
     ('path', str),
     ('type', PlacementConstraintType),
     ('x', float),
@@ -545,7 +546,34 @@ PlacementConstraint = NamedTuple('PlacementConstraint', [
     ('height', float),
     ('orientation', Optional[str]),
     ('margins', Optional[Margins])
-])
+])):
+    __slots__ = ()
+
+    @staticmethod
+    def from_dict(constraint: dict) -> "PlacementConstraint":
+        constraint_type = PlacementConstraintType.from_string(str(constraint["type"]))
+        margins = None  # type: Optional[Margins]
+        orientation = None  # type: Optional[str]
+        if constraint_type == PlacementConstraintType.TopLevel:
+            margins_dict = constraint["margins"]
+            margins = Margins(
+                left=float(margins_dict["left"]),
+                bottom=float(margins_dict["bottom"]),
+                right=float(margins_dict["right"]),
+                top=float(margins_dict["top"])
+            )
+        if "orientation" in constraint:
+            orientation = str(constraint["orientation"])
+        return PlacementConstraint(
+            path=str(constraint["path"]),
+            type=constraint_type,
+            x=float(constraint["x"]),
+            y=float(constraint["y"]),
+            width=float(constraint["width"]),
+            height=float(constraint["height"]),
+            orientation=orientation,
+            margins=margins
+        )
 
 class MMMCCornerType(Enum):
     Setup = 1
@@ -1661,33 +1689,8 @@ class HammerTool(metaclass=ABCMeta):
         Get a list of placement constraints as specified in the config.
         """
         constraints = self.get_setting("vlsi.inputs.placement_constraints")
-        output = []  # type: List[PlacementConstraint]
-        for constraint in constraints:
-            constraint_type = PlacementConstraintType.from_string(str(constraint["type"]))
-            margins = None  # type: Optional[Margins]
-            orientation = None # type: Optional[str]
-            if constraint_type == PlacementConstraintType.TopLevel:
-                margins_dict = constraint["margins"]
-                margins = Margins(
-                    left=float(margins_dict["left"]),
-                    bottom=float(margins_dict["bottom"]),
-                    right=float(margins_dict["right"]),
-                    top=float(margins_dict["top"])
-                )
-            if "orientation" in constraint:
-                orientation = str(constraint["orientation"])
-            load = PlacementConstraint(
-                path=str(constraint["path"]),
-                type=constraint_type,
-                x=float(constraint["x"]),
-                y=float(constraint["y"]),
-                width=float(constraint["width"]),
-                height=float(constraint["height"]),
-                orientation=orientation,
-                margins=margins
-            )
-            output.append(load)
-        return output
+        assert isinstance(constraints, list)
+        return list(map(PlacementConstraint.from_dict, constraints))
 
     def get_mmmc_corners(self) -> List[MMMCCorner]:
         """
