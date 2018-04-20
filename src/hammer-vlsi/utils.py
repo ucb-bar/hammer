@@ -38,6 +38,32 @@ def add_lists(a: List[str], b: List[str]) -> List[str]:
     return a + b
 
 
+def add_dicts(a: dict, b: dict) -> dict:
+    """Helper method: join two dicts together while type checking.
+    The second dictionary will override any entries in the first."""
+    assert isinstance(a, dict)
+    assert isinstance(b, dict)
+
+    # Deepdicts are necessary since Python dictionaries are mutable, and dict() does a shallow copy.
+    # Here, don't modify the original 'a'.
+    newdict = deepdict(a)
+    # When we updated newdict with b, e.g. if b['a'] was a (mutable) list with id 123, then newdict['a'] would point to
+    # the same list as in id(newdict['a']) == 123.
+    # Therefore, we need to deepdict b (or the result equivalently).
+    newdict.update(deepdict(b))
+    return newdict
+
+
+def reverse_dict(x: dict) -> dict:
+    """
+    Reverse a dictionary (keys become values and vice-versa). Only works if the dictionary is isomorphic (no duplicate
+    values), or some pairs will be lost.
+    :param x: Dictionary to reverse
+    :return: Reversed dictionary
+    """
+    return {value: key for key, value in x.items()}
+
+
 def in_place_unique(items: List[Any]) -> None:
     """
     "Fast" in-place uniquification of a list.
