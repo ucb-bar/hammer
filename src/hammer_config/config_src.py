@@ -188,7 +188,7 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
         del meta_dict[meta_key]
         del meta_dict[setting]
 
-    newdict.update(meta_dict)  # Update everything else.
+    newdict.update(deepdict(meta_dict))  # Update everything else.
     return newdict
 
 
