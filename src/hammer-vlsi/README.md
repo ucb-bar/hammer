@@ -26,9 +26,10 @@ export PATH="$HAMMER_HOME/src/hammer-shell:$PATH"
 Tool library system
 ===================
 
-hammer-vlsi imports libraries as python modules. For example, if dc was a tool, it would be either 1) a folder named "dc" with __init__.py which follows the given format; 2) a file named dc.py which follows the given format.
+hammer-vlsi imports libraries as Python modules. For example, if dc was a tool, it would be either 1) a folder named "dc" with __init__.py which follows the given format; 2) a file named dc.py which follows the given format.
 
-The module should contain an object named 'tool', since hammer-vlsi will do "import dc.tool", for example. `tool` should be an instance of an appropriate subclass of HammerTool (e.g. HammerSynthesisTool).
+The module should contain an class object named 'tool', since hammer-vlsi will do `import dc.tool`, for example, and use it to create an instance of the tool.
+`tool` should be a class object of an appropriate subclass of HammerTool (e.g. `HammerSynthesisTool`).
 
 Technology library system
 =========================

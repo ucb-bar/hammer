@@ -83,4 +83,4 @@ class MockSynth(HammerSynthesisTool):
         return True
 
 
-tool = MockSynth()
+tool = MockSynth
