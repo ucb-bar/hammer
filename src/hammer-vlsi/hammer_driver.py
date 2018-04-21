@@ -169,7 +169,7 @@ class HammerDriver:
         par_tool.technology = self.tech
         par_tool.set_database(self.database)
         par_tool.run_dir = run_dir
-        par_tool.hierarchical_mode = HierarchicalMode.from_str(self.database.get_setting("vlsi.inputs.hierarchical_mode"))
+        par_tool.hierarchical_mode = HierarchicalMode.from_str(self.database.get_setting("vlsi.inputs.hierarchical.mode"))
 
         # TODO: automate this based on the definitions
         par_tool.input_files = self.database.get_setting("par.inputs.input_files")
@@ -209,7 +209,7 @@ class HammerDriver:
         syn_tool.technology = self.tech
         syn_tool.set_database(self.database)
         syn_tool.run_dir = run_dir
-        syn_tool.hierarchical_mode = HierarchicalMode.from_str(self.database.get_setting("vlsi.inputs.hierarchical_mode"))
+        syn_tool.hierarchical_mode = HierarchicalMode.from_str(self.database.get_setting("vlsi.inputs.hierarchical.mode"))
 
         syn_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
         syn_tool.top_module = self.database.get_setting("synthesis.inputs.top_module", nullvalue="")
@@ -332,7 +332,7 @@ class HammerDriver:
         :return: List of tuples of (module name, config snippet)
         """
         # TODO: move this to HammerDriver
-        hier_source_key = "vlsi.inputs.hierarchical_definition"
+        hier_source_key = "vlsi.inputs.hierarchical.config_source"
         hier_source = str(self.database.get_setting(hier_source_key))
         hier_modules = {}  # type: Dict[str, List[str]]
         hier_placement_constraints = {}  # type: Dict[str, List[PlacementConstraint]]
@@ -340,10 +340,10 @@ class HammerDriver:
             pass
         elif hier_source == "manual":
             list_of_hier_modules = self.database.get_setting(
-                "vlsi.inputs.hierarchical_manual_modules")  # type: List[Dict]
+                "vlsi.inputs.hierarchical.manual_modules")  # type: List[Dict]
             assert isinstance(list_of_hier_modules, list)
             list_of_placement_constraints = self.database.get_setting(
-                "vlsi.inputs.hierarchical_manual_placement_constraints")  # type: List[Dict]
+                "vlsi.inputs.hierarchical.manual_placement_constraints")  # type: List[Dict]
             assert isinstance(list_of_placement_constraints, list)
             hier_modules = reduce(add_dicts, list_of_hier_modules)
             combined_raw_placement_dict = reduce(add_dicts, list_of_placement_constraints)
@@ -405,7 +405,7 @@ class HammerDriver:
                 assert "Should not get here"
 
             output.append((module, {
-                "vlsi.inputs.hierarchical_mode": str(mode),
+                "vlsi.inputs.hierarchical.mode": str(mode),
                 "synthesis.inputs.top_module": module,
                 "vlsi.inputs.placement_constraints": list(map(PlacementConstraint.to_dict, hier_placement_constraints[module]))
             }))
