@@ -513,20 +513,26 @@ class PlacementConstraintType(Enum):
     HardMacro = 4
     Hierarchical = 5
 
+    @classmethod
+    def __mapping(cls) -> Dict[str, "PlacementConstraintType"]:
+        return {
+            "dummy": PlacementConstraintType.Dummy,
+            "placement": PlacementConstraintType.Placement,
+            "toplevel": PlacementConstraintType.TopLevel,
+            "hardmacro": PlacementConstraintType.HardMacro,
+            "hierarchical": PlacementConstraintType.Hierarchical
+        }
+
     @staticmethod
-    def from_string(s: str) -> "PlacementConstraintType":
-        if s == "dummy":
-            return PlacementConstraintType.Dummy
-        elif s == "placement":
-            return PlacementConstraintType.Placement
-        elif s == "toplevel":
-            return PlacementConstraintType.TopLevel
-        elif s == "hardmacro":
-            return PlacementConstraintType.HardMacro
-        elif s == "hierarchical":
-            return PlacementConstraintType.Hierarchical
-        else:
-            raise ValueError("Invalid placement constraint type '{}'".format(s))
+    def from_str(x: str) -> "PlacementConstraintType":
+        try:
+            return PlacementConstraintType.__mapping()[x]
+        except KeyError:
+            raise ValueError("Invalid placement constraint type: " + str(x))
+
+    def __str__(self) -> str:
+        return reverse_dict(PlacementConstraintType.__mapping())[self]
+
 
 # For the top-level chip size constraint, set the margin from core area to left/bottom/right/top.
 Margins = NamedTuple('Margins', [
@@ -551,7 +557,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
 
     @staticmethod
     def from_dict(constraint: dict) -> "PlacementConstraint":
-        constraint_type = PlacementConstraintType.from_string(str(constraint["type"]))
+        constraint_type = PlacementConstraintType.from_str(str(constraint["type"]))
         margins = None  # type: Optional[Margins]
         orientation = None  # type: Optional[str]
         if constraint_type == PlacementConstraintType.TopLevel:
@@ -574,6 +580,26 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             orientation=orientation,
             margins=margins
         )
+
+    def to_dict(self) -> dict:
+        output = {
+            "path": self.path,
+            "type": str(self.type),
+            "x": str(self.x),
+            "y": str(self.y),
+            "width": str(self.width),
+            "height": str(self.height)
+        }  # type: Dict[str, Any]
+        if self.orientation is not None:
+            output.update({"orientation": self.orientation})
+        if self.margins is not None:
+            output.update({"margins": {
+                "left": self.margins.left,
+                "bottom": self.margins.bottom,
+                "right": self.margins.right,
+                "top": self.margins.top
+            }})
+        return output
 
 class MMMCCornerType(Enum):
     Setup = 1
