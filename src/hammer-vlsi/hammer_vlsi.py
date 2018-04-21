@@ -2427,16 +2427,17 @@ def load_tool(tool_name: str, path: Iterable[str]) -> HammerTool:
     for _ in path:
         sys.path.pop(0)
     try:
-        htool = getattr(mod, "tool")
+        tool_class = getattr(mod, "tool")
     except AttributeError:
         raise ValueError("No such tool " + tool_name + ", or tool does not follow the hammer-vlsi tool library format")
 
-    if not isinstance(htool, HammerTool):
+    if not issubclass(tool_class, HammerTool):
         raise ValueError("Tool must be a HammerTool")
 
     # Set the tool directory.
-    htool.tool_dir = os.path.dirname(os.path.abspath(mod.__file__))
-    return htool
+    tool = tool_class()
+    tool.tool_dir = os.path.dirname(os.path.abspath(mod.__file__))
+    return tool
 
 
 def reduce_named(function: Callable, sequence: Iterable, initial=None) -> Any:
