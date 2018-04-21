@@ -12,11 +12,14 @@ import json
 import os
 import subprocess
 import sys
+from functools import reduce
 
-from hammer_vlsi_impl import HammerToolHookAction, HammerTool, HammerVLSISettings
+from hammer_vlsi_impl import HammerToolHookAction, HammerTool, HammerVLSISettings, PlacementConstraint, HierarchicalMode
 from hammer_driver import HammerDriver, HammerDriverOptions
 
-from typing import List, Dict, Tuple, Any, Iterable, Callable, Optional
+from typing import List, Dict, Tuple, Any, Iterable, Callable, Optional, Set
+
+from utils import deepdict, add_lists, add_dicts, topological_sort, deeplist
 
 
 def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callable[[str], None]) -> List[str]:
@@ -62,10 +65,18 @@ class CLIDriver:
 
         self.synthesis_action = self.create_synthesis_action([])
         self.par_action = self.create_par_action([])
+        self.synthesis_par_action = self.create_synthesis_par_action(self.synthesis_action, self.par_action)
+
+        # Dictionaries of module-CLIActionType for hierarchical flows.
+        # See all_hierarchical_actions() below.
+        self.hierarchical_synthesis_actions = {}  # type: Dict[str, CLIActionType]
+        self.hierarchical_par_actions = {}  # type: Dict[str, CLIActionType]
+        self.hierarchical_synthesis_par_actions = {}  # type: Dict[str, CLIActionType]
+        self.hierarchical_auto_action = None  # type: Optional[CLIActionType]
 
     def action_map(self) -> Dict[str, CLIActionType]:
         """Return the mapping of valid actions -> functions for each action of the command-line driver."""
-        return {
+        return add_dicts({
             "synthesis": self.synthesis_action,
             "syn": self.synthesis_action,
             "par": self.par_action,
@@ -75,7 +86,7 @@ class CLIDriver:
             "syn-to-par": self.synthesis_to_par_action,
             "synthesis_par": self.synthesis_par_action,
             "syn_par": self.synthesis_par_action
-        }
+        }, self.all_hierarchical_actions)
 
     def get_extra_synthesis_hooks(self) -> List[HammerToolHookAction]:
         """
@@ -92,24 +103,34 @@ class CLIDriver:
         return list()
 
     def create_synthesis_action(self, custom_hooks: List[HammerToolHookAction],
-                                post_load_func: Optional[
-                                    Callable[[HammerDriver], None]] = None) -> CLIActionType:
+                                pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
+                                post_load_func: Optional[Callable[[HammerDriver], None]] = None,
+                                post_run_func: Optional[Callable[[HammerDriver], None]] = None
+                                ) -> CLIActionType:
         hooks = self.get_extra_synthesis_hooks() + custom_hooks  # type: List[HammerToolHookAction]
-        return self.create_action("synthesis", hooks if len(hooks) > 0 else None, post_load_func)
+        return self.create_action("synthesis", hooks if len(hooks) > 0 else None,
+                                  pre_action_func, post_load_func, post_run_func)
 
     def create_par_action(self, custom_hooks: List[HammerToolHookAction],
-                          post_load_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionType:
+                          pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_load_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionType:
         hooks = self.get_extra_par_hooks() + custom_hooks  # type: List[HammerToolHookAction]
-        return self.create_action("par", hooks if len(hooks) > 0 else None, post_load_func)
+        return self.create_action("par", hooks if len(hooks) > 0 else None,
+                                  pre_action_func, post_load_func, post_run_func)
 
     def create_action(self, action_type: str,
                       extra_hooks: Optional[List[HammerToolHookAction]],
-                      post_load_func: Optional[Callable[[HammerDriver], None]]) -> CLIActionType:
+                      pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
+                      post_load_func: Optional[Callable[[HammerDriver], None]] = None,
+                      post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionType:
         """
         Create an action function for the action_map.
         :param action_type: Either "syn"/"synthesis" or "par"
         :param extra_hooks: List of hooks to pass to the run function.
+        :param pre_action_func: Optional function to call before doing anything.
         :param post_load_func: Optional function to call after loading the tool.
+        :param post_run_func: Optional function to call after running the tool.
         :return: Action function.
         """
 
@@ -118,7 +139,15 @@ class CLIDriver:
             if post_load_func is not None:
                 post_load_func(driver)
 
+        def post_run_func_checked(driver: HammerDriver) -> None:
+            """Check that post_run_func isn't null before calling it."""
+            if post_run_func is not None:
+                post_run_func(driver)
+
         def action(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+            if pre_action_func is not None:
+                pre_action_func(driver)
+
             # If the driver didn't successfully load, return None.
             if action_type == "synthesis" or action_type == "syn":
                 if not driver.load_synthesis_tool(self.syn_rundir if self.syn_rundir is not None else ""):
@@ -126,12 +155,14 @@ class CLIDriver:
                 else:
                     post_load_func_checked(driver)
                 success, output = driver.run_synthesis(extra_hooks)
+                post_run_func_checked(driver)
             elif action_type == "par":
                 if not driver.load_par_tool(self.par_rundir if self.par_rundir is not None else ""):
                     return None
                 else:
                     post_load_func_checked(driver)
                 success, output = driver.run_par(extra_hooks)
+                post_run_func_checked(driver)
             else:
                 raise ValueError("Invalid action_type = " + str(action_type))
             # TODO: detect errors
@@ -143,17 +174,119 @@ class CLIDriver:
         """Create a config to run the output."""
         return HammerDriver.generate_par_inputs_from_synthesis(driver.project_config)
 
-    def synthesis_par_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
-        syn_output = self.synthesis_action(driver, append_error_func)
-        par_config = HammerDriver.generate_par_inputs_from_synthesis(syn_output)
-        # TODO: Make this a function
-        driver.project_config = par_config
-        driver.database.update_project([driver.project_config])
-        par_output = self.par_action(driver, append_error_func)
-        return par_output
+    def create_synthesis_par_action(self, synthesis_action: CLIActionType, par_action: CLIActionType) -> CLIActionType:
+        """
+        Create a parameterizable synthesis_par action for the CLIDriver.
+        :param synthesis_action: synthesis action
+        :param par_action: par action
+        :return: Custom synthesis_par action
+        """
+        def syn_par_action(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+            syn_output = synthesis_action(driver, append_error_func)
+            par_config = HammerDriver.generate_par_inputs_from_synthesis(syn_output)
+            driver.update_project_configs([par_config])
+            par_output = par_action(driver, append_error_func)
+            return par_output
+        return syn_par_action
 
+    ### Hierarchical stuff ###
+    @property
+    def all_hierarchical_actions(self) -> Dict[str, CLIActionType]:
+        """
+        Return a list of hierarchical actions if the given project configuration is a hierarchical design.
+        Set when the driver is first created in args_to_driver.
+        Create syn/synthesis-[block], par-[block], and /syn_par-[block].
+        :return: Dictionary of actions to use (could be empty).
+        """
+        actions = {}  # type: Dict[str, CLIActionType]
+        if self.hierarchical_auto_action is not None:
+            actions.update({"auto": self.hierarchical_auto_action})
 
-    def valid_actions(self) -> Iterable[str]:
+        def add_variants(templates: List[str], block: str, action: CLIActionType) -> None:
+            """Just add the given action using the name templates."""
+            for template in templates:
+                name = template.format(block=block)
+                actions.update({name: action})
+
+        for module, action in self.hierarchical_synthesis_actions.items():
+            add_variants([
+                "syn-{block}",
+                "synthesis-{block}",
+                "syn_{block}",
+                "synthesis_{block}"
+            ], module, action)
+
+        for module, action in self.hierarchical_par_actions.items():
+            add_variants([
+                "par-{block}",
+                "par_{block}"
+            ], module, action)
+
+        for module, action in self.hierarchical_synthesis_par_actions.items():
+            add_variants([
+                "syn-par-{block}",
+                "syn_par-{block}",
+                "syn-par_{block}",
+                "syn_par_{block}"
+            ], module, action)
+
+        return actions
+
+    def get_extra_hierarchical_synthesis_hooks(self) -> Dict[str, List[HammerToolHookAction]]:
+        """
+        Return a list of extra hierarchical synthesis hooks in this project.
+        To be overridden by subclasses.
+        :return: Dictionary of (module name, list of hooks)
+        """
+        return dict()
+
+    def get_extra_hierarchical_par_hooks(self) -> Dict[str, List[HammerToolHookAction]]:
+        """
+        Return a list of extra hierarchical place and route hooks in this project.
+        To be overridden by subclasses.
+        :return: Dictionary of (module name, list of hooks)
+        """
+        return dict()
+
+    # The following functions are present for further user customizability.
+
+    def get_hierarchical_synthesis_action(self, module: str) -> CLIActionType:
+        """
+        Get the action associated with hierarchical synthesis for the given module (in hierarchical flows).
+        """
+        return self.hierarchical_synthesis_actions[module]
+
+    def set_hierarchical_synthesis_action(self, module: str, action: CLIActionType) -> None:
+        """
+        Set the action associated with hierarchical synthesis for the given module (in hierarchical flows).
+        """
+        self.hierarchical_synthesis_actions[module] = action
+
+    def get_hierarchical_par_action(self, module: str) -> CLIActionType:
+        """
+        Get the action associated with hierarchical par for the given module (in hierarchical flows).
+        """
+        return self.hierarchical_par_actions[module]
+
+    def set_hierarchical_par_action(self, module: str, action: CLIActionType) -> None:
+        """
+        Set the action associated with hierarchical par for the given module (in hierarchical flows).
+        """
+        self.hierarchical_par_actions[module] = action
+
+    def get_hierarchical_synthesis_par_action(self, module: str) -> CLIActionType:
+        """
+        Get the action associated with hierarchical syn_par for the given module (in hierarchical flows).
+        """
+        return self.hierarchical_synthesis_par_actions[module]
+
+    def set_hierarchical_synthesis_par_action(self, module: str, action: CLIActionType) -> None:
+        """
+        Set the action associated with hierarchical syn_par for the given module (in hierarchical flows).
+        """
+        self.hierarchical_synthesis_par_actions[module] = action
+
+    def valid_actions(self) -> List[str]:
         """Get the list of valid actions for the command-line driver."""
         return list(self.action_map().keys())
 
@@ -248,6 +381,83 @@ class CLIDriver:
                 driver.set_post_custom_syn_tool_hooks(HammerTool.make_from_to_hooks(only_step, only_step))
                 driver.set_post_custom_par_tool_hooks(HammerTool.make_from_to_hooks(only_step, only_step))
 
+        # Hierarchical support.
+        # Generate synthesis and par actions for each module above.
+        hierarchical_settings = driver.get_hierarchical_settings()
+
+        for module_iter, config_iter in hierarchical_settings:
+            def create_actions(module: str, config: dict) -> None:
+                # Create a new context (this def) per module, otherwise when these higher-order funcs run they'll all
+                # use the last iteration of the loop.
+
+                # TODO(edwardw): this is a bit of a hack.
+                # Should really add an API to allow a run to have a bit of temporary project config
+                base_project_config = [[], []]  # type: List[List[dict]]
+
+                def syn_pre_func(d: HammerDriver) -> None:
+                    self.syn_rundir = os.path.join(d.obj_dir, "syn-{module}".format(
+                        module=module))  # TODO(edwardw): fix this ugly os.path.join; it doesn't belong here.
+                    # TODO(edwardw): remove ugly hack to store stuff in parent context
+                    base_project_config[0] = deeplist(driver.project_configs)
+                    d.update_project_configs(deeplist(base_project_config[0]) + [config])
+
+                def par_pre_func(d: HammerDriver) -> None:
+                    self.par_rundir = os.path.join(d.obj_dir, "par-{module}".format(
+                        module=module))  # TODO(edwardw): fix this ugly os.path.join; it doesn't belong here.
+                    # TODO(edwardw): remove ugly hack to store stuff in parent context
+                    base_project_config[1] = deeplist(driver.project_configs)
+                    d.update_project_configs(deeplist(base_project_config[1]) + [config])
+
+                def syn_post_run(d: HammerDriver) -> None:
+                    d.update_project_configs(deeplist(base_project_config[0]))
+
+                def par_post_run(d: HammerDriver) -> None:
+                    d.update_project_configs(deeplist(base_project_config[1]))
+
+                syn_action = self.create_synthesis_action(self.get_extra_hierarchical_synthesis_hooks().get(module, []),
+                                                          pre_action_func=syn_pre_func, post_load_func=None,
+                                                          post_run_func=syn_post_run)
+                self.set_hierarchical_synthesis_action(module, syn_action)
+                par_action = self.create_par_action(self.get_extra_hierarchical_par_hooks().get(module, []),
+                                                    pre_action_func=par_pre_func, post_load_func=None,
+                                                    post_run_func=par_post_run)
+                self.set_hierarchical_par_action(module, par_action)
+                syn_par_action = self.create_synthesis_par_action(synthesis_action=syn_action, par_action=par_action)
+                self.set_hierarchical_synthesis_par_action(module, syn_par_action)
+
+            create_actions(module_iter, config_iter)
+
+        # If we are in hierarchical mode, also generate an auto that can run the whole flow.
+        if len(hierarchical_settings) > 0:
+            def auto_action(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+                log = driver.log.context("CLIDriver_auto")
+                output = {}  # type: dict
+                for module, _ in hierarchical_settings:
+                    syn_par_action = self.get_hierarchical_synthesis_par_action(module)
+                    new_output = syn_par_action(driver, append_error_func)
+
+                    log.info("Hierarchical syn-par run for module {module} finished".format(module=module))
+                    b, ext = os.path.splitext(args["output"])
+                    new_output_filename = "{base}-{module}{ext}".format(base=b, module=module, ext=ext)
+                    with open(new_output_filename, "w") as f:
+                        new_output_json = json.dumps(new_output, indent=4)
+                        f.write(new_output_json)
+                    log.info("Output JSON: " + str(new_output))
+
+                    new_ilm = {
+                        "vlsi.inputs.ilms": new_output["par.outputs.output_ilms"],
+                        "vlsi.inputs.ilms_meta": "append"
+                    }
+                    new_ilm_filename = "{base}-{module}_ilm{ext}".format(base=b, module=module, ext=ext)
+                    with open(new_ilm_filename, "w") as f:
+                        json_content = json.dumps(new_ilm, indent=4)
+                        f.write(json_content)
+                    log.info("New input ILM JSON written to " + new_ilm_filename)
+                    driver.update_project_configs(driver.project_configs + [new_ilm])
+                return output
+
+            self.hierarchical_auto_action = auto_action
+
         return driver, errors
 
     def run_main_parsed(self, args: dict) -> int:
@@ -255,16 +465,18 @@ class CLIDriver:
         Given a parsed dictionary of arguments, find and run the given action.
         :return: Return code (0 for success)
         """
-        action = str(args['action'])  # type: str
-        if action not in self.valid_actions():
-            print("Invalid action %s" % action, file=sys.stderr)
-            return 1
-
         if args['firrtl'] is not None and len(args['firrtl']) > 0:
             print("firrtl convenience argument not yet implemented", file=sys.stderr)
             return 1
 
         driver, errors = self.args_to_driver(args)
+
+        # Check for action after creating the driver (e.g. for custom actions like hierarchical actions).
+        action = str(args['action'])  # type: str
+        if action not in self.valid_actions():
+            print("Invalid action {action}".format(action=action), file=sys.stderr)
+            print("Valid actions are: {actions}".format(actions=", ".join(self.valid_actions())), file=sys.stderr)
+            return 1
 
         output_config = self.action_map()[action](driver, errors.append)
         if output_config is None:
@@ -290,7 +502,7 @@ class CLIDriver:
         """
         parser = argparse.ArgumentParser()
 
-        parser.add_argument('action', metavar='ACTION', type=str, choices=self.valid_actions(),
+        parser.add_argument('action', metavar='ACTION', type=str,  # choices=self.valid_actions() <- sadly incompatible w/custom actions
                             help='Action to perform with the command-line driver.')
         # Required arguments for (Python) hammer driver.
         parser.add_argument("-e", "--environment_config", action='append', required=False,

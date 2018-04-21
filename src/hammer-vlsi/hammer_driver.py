@@ -17,7 +17,7 @@ from utils import *
 import hammer_config
 import hammer_tech
 from hammer_vlsi_impl import HammerVLSISettings, HammerToolHookAction, HammerPlaceAndRouteTool, HammerSynthesisTool, \
-    HierarchicalMode, HammerVLSIFileLogger, HammerVLSILogging, load_tool, HammerVLSILoggingContext
+    HierarchicalMode, HammerVLSIFileLogger, HammerVLSILogging, load_tool, HammerVLSILoggingContext, PlacementConstraint
 
 # Options for invoking the driver.
 HammerDriverOptions = NamedTuple('HammerDriverOptions', [
@@ -86,9 +86,8 @@ class HammerDriver:
         # Read in the project config to find the syn, par, and tech.
         project_configs = hammer_config.load_config_from_paths(options.project_configs, strict=True)
         project_configs.append(extra_project_config)
-        self.database.update_project(project_configs)
-        # Store input config for later.
-        self.project_config = hammer_config.combine_configs(project_configs)  # type: dict
+        self.project_configs = []  # type: List[dict]
+        self.update_project_configs(project_configs)
 
         # Get the technology and load technology settings.
         self.tech = None  # type: hammer_tech.HammerTechnology
@@ -105,6 +104,17 @@ class HammerDriver:
         # Initialize tool hooks. Used to specify resume/pause hooks after custom hooks have been registered.
         self.post_custom_syn_tool_hooks = []  # type: List[HammerToolHookAction]
         self.post_custom_par_tool_hooks = []  # type: List[HammerToolHookAction]
+
+    @property
+    def project_config(self) -> dict:
+        return hammer_config.combine_configs(self.project_configs)
+
+    def update_project_configs(self, project_configs: List[dict]) -> None:
+        """
+        Update the project configs in the driver and database.
+        """
+        self.project_configs = project_configs
+        self.database.update_project(self.project_configs)
 
     def load_technology(self, cache_dir: str = "") -> None:
         tech_str = self.database.get_setting("vlsi.core.technology")
@@ -313,3 +323,91 @@ class HammerDriver:
             return False, {}
 
         return run_succeeded, output_config
+
+    def get_hierarchical_settings(self) -> List[Tuple[str, dict]]:
+        """
+        Read settings from the database, determine root/hierarchical modules, an order of execution, and return an
+        ordered list (from root to top) of modules and associated config snippets needed to run syn+par for that module
+        hierarchically.
+        :return: List of tuples of (module name, config snippet)
+        """
+        # TODO: move this to HammerDriver
+        hier_source_key = "vlsi.inputs.hierarchical_definition"
+        hier_source = str(self.database.get_setting(hier_source_key))
+        hier_modules = {}  # type: Dict[str, List[str]]
+        hier_placement_constraints = {}  # type: Dict[str, List[PlacementConstraint]]
+        if hier_source == "none":
+            pass
+        elif hier_source == "manual":
+            list_of_hier_modules = self.database.get_setting(
+                "vlsi.inputs.hierarchical_manual_modules")  # type: List[Dict]
+            assert isinstance(list_of_hier_modules, list)
+            list_of_placement_constraints = self.database.get_setting(
+                "vlsi.inputs.hierarchical_manual_placement_constraints")  # type: List[Dict]
+            assert isinstance(list_of_placement_constraints, list)
+            hier_modules = reduce(add_dicts, list_of_hier_modules)
+            combined_raw_placement_dict = reduce(add_dicts, list_of_placement_constraints)
+            hier_placement_constraints = {key: list(map(PlacementConstraint.from_dict, lst))
+                                          for key, lst in combined_raw_placement_dict.items()}
+        elif hier_source == "from_placement":
+            raise NotImplementedError("Generation from placement not implemented yet")
+        else:
+            raise ValueError("Invalid value for " + hier_source_key)
+
+        assert isinstance(hier_modules, dict)
+        if not hier_modules:
+            return []
+
+        root_modules = set()  # type: Set[str]
+        intermediate_modules = set()  # type: Set[str]
+        top_module = str(self.database.get_setting("synthesis.inputs.top_module"))
+
+        # Node + outgoing edges (nodes that depend on us) + incoming edges (nodes we depend on)
+        dependency_graph = {}  # type: Dict[str, Tuple[List[str], List[str]]]
+
+        # If there is a hierarchy, find the root and intermediate modules.
+        def visit_module(mod: str) -> None:
+            if mod not in hier_modules:
+                if mod == top_module:
+                    raise ValueError("Cannot have a hierarchical flow with top as root")
+                root_modules.add(mod)
+                return
+            elif len(hier_modules[mod]) == 0:
+                if mod == top_module:
+                    raise ValueError("Cannot have a hierarchical flow with top as root")
+                root_modules.add(mod)
+                return
+            else:
+                if mod != top_module:
+                    intermediate_modules.add(mod)
+                for m in hier_modules[mod]:
+                    # m depends on us
+                    dependency_graph.setdefault(m, ([], []))[0].append(mod)
+                    # We depend on m
+                    dependency_graph.setdefault(mod, ([], []))[1].append(m)
+                    visit_module(m)
+        visit_module(top_module)
+
+        # Create an order for the modules to be run in.
+        order = topological_sort(dependency_graph, list(root_modules))
+
+        output = []  # type: List[Tuple[str, dict]]
+
+        for module in order:
+            mode = HierarchicalMode.Hierarchical
+            if module == top_module:
+                mode = HierarchicalMode.Top
+            elif module in root_modules:
+                mode = HierarchicalMode.Root
+            elif module in intermediate_modules:
+                mode = HierarchicalMode.Hierarchical
+            else:
+                assert "Should not get here"
+
+            output.append((module, {
+                "vlsi.inputs.hierarchical_mode": str(mode),
+                "synthesis.inputs.top_module": module,
+                "vlsi.inputs.placement_constraints": list(map(PlacementConstraint.to_dict, hier_placement_constraints[module]))
+            }))
+
+        return output
