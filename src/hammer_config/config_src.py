@@ -152,6 +152,7 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
         'dynamicjson2list': make_meta_dynamic('dynamicjson2list'),
         'prependlocal': meta_prependlocal
     }  # type: Dict[str, Callable[[dict, str, Any], None]]
+
     newdict = deepdict(config_dict)
 
     # Find meta directives.
