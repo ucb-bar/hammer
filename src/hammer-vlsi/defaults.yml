@@ -55,6 +55,22 @@ vlsi.inputs:
     VDD: "0.85 V"
     GND: "0 V"
 
+  # Used by HammerDriver to generate configurations for hierarchical place-and-route.
+  # type: (str)
+  # Valid options:
+  # none - Do nothing. (default)
+  # manual - Read from hierarchical_manual_* below.
+  # from_placement - Generate from "hierarchical" entries in vlsi.inputs.placement_constraints.
+  hierarchical_definition: none
+
+  # Manual hierarchical definitions used only if hierarchical_definition_source is set to manual mode.
+  # Should be a list along the lines of [{"module1": "module1_sub1", "module1_sub2", "module2": "module2_sub"}].
+  hierarchical_manual_modules: []
+
+  # Manual hierarchical placement constraints used only if hierarchical_definition_source is set to manual mode.
+  # Should be a list along the lines of [{"module1": <list of PlacementConstraint structs>}].
+  hierarchical_manual_placement_constraints: []
+
   # Hierarchical par mode. (str)
   # Valid options:
   # flat - Perform a flat place and route run.
