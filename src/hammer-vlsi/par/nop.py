@@ -17,4 +17,4 @@ class Nop(HammerPlaceAndRouteTool):
         return []
 
 
-tool = Nop()
+tool = Nop
