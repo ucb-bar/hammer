@@ -408,25 +408,30 @@ class CLIDriver:
                     base_project_config[0] = deeplist(driver.project_configs)
                     d.update_project_configs(deeplist(base_project_config[0]) + [config])
 
-                def post_run(d: HammerDriver) -> None:
+                def post_run(d: HammerDriver, rundir: str) -> None:
                     # Write out the configs used/generated for logging/debugging.
-                    with open(os.path.join(self.syn_rundir, "full_config.json"), "w") as f:
+                    with open(os.path.join(rundir, "full_config.json"), "w") as f:
                         new_output_json = json.dumps(d.project_config, indent=4)
                         f.write(new_output_json)
-                    with open(os.path.join(self.syn_rundir, "module_config.json"), "w") as f:
+                    with open(os.path.join(rundir, "module_config.json"), "w") as f:
                         new_output_json = json.dumps(config, indent=4)
                         f.write(new_output_json)
 
                     d.update_project_configs(deeplist(base_project_config[0]))
 
+                def syn_post_run(d: HammerDriver) -> None:
+                    post_run(d, self.syn_rundir)
+
+                def par_post_run(d: HammerDriver) -> None:
+                    post_run(d, self.par_rundir)
 
                 syn_action = self.create_synthesis_action(self.get_extra_hierarchical_synthesis_hooks().get(module, []),
                                                           pre_action_func=syn_pre_func, post_load_func=None,
-                                                          post_run_func=post_run)
+                                                          post_run_func=syn_post_run)
                 self.set_hierarchical_synthesis_action(module, syn_action)
                 par_action = self.create_par_action(self.get_extra_hierarchical_par_hooks().get(module, []),
                                                     pre_action_func=par_pre_func, post_load_func=None,
-                                                    post_run_func=post_run)
+                                                    post_run_func=par_post_run)
                 self.set_hierarchical_par_action(module, par_action)
                 syn_par_action = self.create_synthesis_par_action(synthesis_action=syn_action, par_action=par_action)
                 self.set_hierarchical_synthesis_par_action(module, syn_par_action)
