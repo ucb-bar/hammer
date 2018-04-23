@@ -137,6 +137,7 @@ class HierarchicalMode(Enum):
 # Struct that holds various paths related to ILMs.
 class ILMStruct(NamedTuple('ILMStruct', [
     ('dir', str),
+    ('data_dir', str),
     ('module', str),
     ('lef', str)
 ])):
@@ -145,6 +146,7 @@ class ILMStruct(NamedTuple('ILMStruct', [
     def to_setting(self) -> dict:
         return {
             "dir": self.dir,
+            "data_dir": self.data_dir,
             "module": self.module,
             "lef": self.lef
         }
@@ -153,6 +155,7 @@ class ILMStruct(NamedTuple('ILMStruct', [
     def from_setting(ilm: dict) -> "ILMStruct":
         return ILMStruct(
             dir=str(ilm["dir"]),
+            data_dir=str(ilm["data_dir"]),
             module=str(ilm["module"]),
             lef=str(ilm["lef"])
         )
