@@ -326,8 +326,8 @@ class HammerDriver:
 
     def get_hierarchical_settings(self) -> List[Tuple[str, dict]]:
         """
-        Read settings from the database, determine root/hierarchical modules, an order of execution, and return an
-        ordered list (from root to top) of modules and associated config snippets needed to run syn+par for that module
+        Read settings from the database, determine leaf/hierarchical modules, an order of execution, and return an
+        ordered list (from leaf to top) of modules and associated config snippets needed to run syn+par for that module
         hierarchically.
         :return: List of tuples of (module name, config snippet)
         """
@@ -358,24 +358,24 @@ class HammerDriver:
         if not hier_modules:
             return []
 
-        root_modules = set()  # type: Set[str]
+        leaf_modules = set()  # type: Set[str]
         intermediate_modules = set()  # type: Set[str]
         top_module = str(self.database.get_setting("vlsi.inputs.hierarchical.top_module"))
 
         # Node + outgoing edges (nodes that depend on us) + incoming edges (nodes we depend on)
         dependency_graph = {}  # type: Dict[str, Tuple[List[str], List[str]]]
 
-        # If there is a hierarchy, find the root and intermediate modules.
+        # If there is a hierarchy, find the leaf and intermediate modules.
         def visit_module(mod: str) -> None:
             if mod not in hier_modules:
                 if mod == top_module:
-                    raise ValueError("Cannot have a hierarchical flow with top as root")
-                root_modules.add(mod)
+                    raise ValueError("Cannot have a hierarchical flow with top as leaf")
+                leaf_modules.add(mod)
                 return
             elif len(hier_modules[mod]) == 0:
                 if mod == top_module:
-                    raise ValueError("Cannot have a hierarchical flow with top as root")
-                root_modules.add(mod)
+                    raise ValueError("Cannot have a hierarchical flow with top as leaf")
+                leaf_modules.add(mod)
                 return
             else:
                 if mod != top_module:
@@ -389,7 +389,7 @@ class HammerDriver:
         visit_module(top_module)
 
         # Create an order for the modules to be run in.
-        order = topological_sort(dependency_graph, list(root_modules))
+        order = topological_sort(dependency_graph, list(leaf_modules))
 
         output = []  # type: List[Tuple[str, dict]]
 
@@ -397,8 +397,8 @@ class HammerDriver:
             mode = HierarchicalMode.Hierarchical
             if module == top_module:
                 mode = HierarchicalMode.Top
-            elif module in root_modules:
-                mode = HierarchicalMode.Root
+            elif module in leaf_modules:
+                mode = HierarchicalMode.Leaf
             elif module in intermediate_modules:
                 mode = HierarchicalMode.Hierarchical
             else:
