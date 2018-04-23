@@ -331,7 +331,6 @@ class HammerDriver:
         hierarchically.
         :return: List of tuples of (module name, config snippet)
         """
-        # TODO: move this to HammerDriver
         hier_source_key = "vlsi.inputs.hierarchical.config_source"
         hier_source = str(self.database.get_setting(hier_source_key))
         hier_modules = {}  # type: Dict[str, List[str]]
