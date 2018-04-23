@@ -360,7 +360,7 @@ class HammerDriver:
 
         root_modules = set()  # type: Set[str]
         intermediate_modules = set()  # type: Set[str]
-        top_module = str(self.database.get_setting("synthesis.inputs.top_module"))
+        top_module = str(self.database.get_setting("vlsi.inputs.hierarchical.top_module"))
 
         # Node + outgoing edges (nodes that depend on us) + incoming edges (nodes we depend on)
         dependency_graph = {}  # type: Dict[str, Tuple[List[str], List[str]]]
