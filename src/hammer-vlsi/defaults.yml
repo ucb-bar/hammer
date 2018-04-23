@@ -82,7 +82,8 @@ vlsi.inputs:
 
   # ILMs for hierarchical mode.
   # ILM struct (ILMStruct) members:
-  # dir (str) - directory to the ILMs
+  # dir (str) - directory to the ILMs (...ILMDir)
+  # data_dir (str) - data directory to the ILMs (...ILMDir/mmmc/...)
   # module (str) - module name for the ILM
   # lef (str) - path to the LEF file
   ilms: []
