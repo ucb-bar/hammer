@@ -64,6 +64,11 @@ vlsi.inputs:
     # top - Top module in a hierarchical run - runs an extra assemble_design step.
     mode: flat
 
+    # Top RTL module in the hierarchical flow. (str)
+    # Not to be confused with synthesis.inputs.top_module which specifies the synthesis module for this run.
+    # (e.g. synthesis.inputs.top_module is used for a sub-synthesis run)
+    top_module: "null"
+
     # Used by HammerDriver to generate configurations for hierarchical place-and-route.
     # type: (str)
     # Valid options:
