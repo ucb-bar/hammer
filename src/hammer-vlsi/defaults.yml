@@ -59,7 +59,7 @@ vlsi.inputs:
     # Hierarchical par mode. (str)
     # Valid options:
     # flat - Perform a flat place and route run.
-    # root - Root module in a hierarchical run - same as flat except that an extra write_ilm step is added.
+    # leaf - Leaf module in a hierarchical run - same as flat except that an extra write_ilm step is added.
     # hierarchical - Module which has sub-modules which are also hierarchical.
     # top - Top module in a hierarchical run - runs an extra assemble_design step.
     mode: flat

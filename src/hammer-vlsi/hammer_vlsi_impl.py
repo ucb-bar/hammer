@@ -103,7 +103,7 @@ class HookLocation(Enum):
 
 class HierarchicalMode(Enum):
     Flat = 1
-    Root = 2
+    Leaf = 2
     Hierarchical = 3
     Top = 4
 
@@ -111,7 +111,7 @@ class HierarchicalMode(Enum):
     def __mapping(cls) -> Dict[str, "HierarchicalMode"]:
         return {
             "flat": HierarchicalMode.Flat,
-            "root": HierarchicalMode.Root,
+            "leaf": HierarchicalMode.Leaf,
             "hierarchical": HierarchicalMode.Hierarchical,
             "top": HierarchicalMode.Top
         }
@@ -126,9 +126,9 @@ class HierarchicalMode(Enum):
     def __str__(self) -> str:
         return reverse_dict(HierarchicalMode.__mapping())[self]
 
-    def is_nonroot_hierarchical(self) -> bool:
+    def is_nonleaf_hierarchical(self) -> bool:
         """
-        Helper function that returns True if this mode is a non-root hierarchical mode (i.e. any block with
+        Helper function that returns True if this mode is a non-leaf hierarchical mode (i.e. any block with
         hierarchical sub-blocks).
         """
         return self == HierarchicalMode.Hierarchical or self == HierarchicalMode.Top
