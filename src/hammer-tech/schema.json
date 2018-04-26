@@ -89,9 +89,6 @@
           "openaccess techfile" : {
             "type" : "string"
           },
-          "qrc techfile" : {
-            "type" : "string"
-          },
           "provides" : {
             "type" : "array",
             "items" : {
@@ -106,6 +103,9 @@
                 }
               }
             }
+          },
+          "qrc techfile" : {
+            "type" : "string"
           },
           "supplies" : {
             "title" : "Supplies",
@@ -130,6 +130,12 @@
                 "type" : "string"
               }
             }
+          },
+          "verilog sim" : {
+            "type" : "string"
+          },
+          "verilog synth" : {
+            "type" : "string"
           }
         }
       }
