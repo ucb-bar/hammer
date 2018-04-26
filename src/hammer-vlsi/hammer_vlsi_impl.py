@@ -1550,6 +1550,22 @@ class HammerTool(metaclass=ABCMeta):
                                  extraction_func=extraction_func, is_file=True)
 
     @property
+    def verilog_synth_filter(self) -> LibraryFilter:
+        """
+        Selecting verilog_synth files which are synthesizable wrappers (e.g. for SRAM) which are needed in some
+        technologies.
+        """
+
+        def extraction_func(lib: hammer_tech.Library) -> List[str]:
+            if lib.verilog_synth is not None:
+                return [lib.verilog_synth]
+            else:
+                return []
+
+        return LibraryFilter.new("verilog_synth", "Synthesizable Verilog wrappers",
+                                 extraction_func=extraction_func, is_file=True)
+
+    @property
     def lef_filter(self) -> LibraryFilter:
         """
         Select LEF files for physical layout.
