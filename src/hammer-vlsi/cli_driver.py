@@ -85,7 +85,9 @@ class CLIDriver:
             "syn_to_par": self.synthesis_to_par_action,
             "syn-to-par": self.synthesis_to_par_action,
             "synthesis_par": self.synthesis_par_action,
-            "syn_par": self.synthesis_par_action
+            "synthesis-par": self.synthesis_par_action,
+            "syn_par": self.synthesis_par_action,
+            "syn-par": self.synthesis_par_action
         }, self.all_hierarchical_actions)
 
     def get_extra_synthesis_hooks(self) -> List[HammerToolHookAction]:
