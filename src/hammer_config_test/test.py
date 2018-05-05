@@ -126,6 +126,7 @@ foo:
     flash: "yes"
     one: "1"
     two: "2"
+style: "waterfall"
 """, is_yaml=True)
         meta = hammer_config.load_config_from_string("""
 {
@@ -135,12 +136,15 @@ foo:
   "foo.reginit": "${foo.reg}Init",
   "foo.reginit_meta": "dynamicsubst",
   "foo.later": "${later}",
-  "foo.later_meta": "dynamicsubst"
+  "foo.later_meta": "dynamicsubst",
+  "foo.methodology": "${style} design",
+  "foo.methodology_meta": "dynamicsubst"
 }
 """, is_yaml=False)
         project = hammer_config.load_config_from_string("""
 {
-  "later": "later"
+  "later": "later",
+  "style": "agile"
 }
 """, is_yaml=False)
         db.update_core([base, meta])
@@ -149,6 +153,7 @@ foo:
         self.assertEqual(db.get_setting("foo.pipeline"), "yesman")
         self.assertEqual(db.get_setting("foo.reginit"), "WireInit")
         self.assertEqual(db.get_setting("foo.later"), "later")
+        self.assertEqual(db.get_setting("foo.methodology"), "agile design")
 
     def test_meta_dynamicsubst_other_dynamicsubst(self):
         """
