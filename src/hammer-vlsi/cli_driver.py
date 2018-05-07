@@ -128,6 +128,7 @@ class CLIDriver:
                       post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionType:
         """
         Create an action function for the action_map.
+
         :param action_type: Either "syn"/"synthesis" or "par"
         :param extra_hooks: List of hooks to pass to the run function.
         :param pre_action_func: Optional function to call before doing anything.
@@ -179,6 +180,7 @@ class CLIDriver:
     def create_synthesis_par_action(self, synthesis_action: CLIActionType, par_action: CLIActionType) -> CLIActionType:
         """
         Create a parameterizable synthesis_par action for the CLIDriver.
+
         :param synthesis_action: synthesis action
         :param par_action: par action
         :return: Custom synthesis_par action
@@ -198,6 +200,7 @@ class CLIDriver:
         Return a list of hierarchical actions if the given project configuration is a hierarchical design.
         Set when the driver is first created in args_to_driver.
         Create syn/synthesis-[block], par-[block], and /syn_par-[block].
+
         :return: Dictionary of actions to use (could be empty).
         """
         actions = {}  # type: Dict[str, CLIActionType]
@@ -238,6 +241,7 @@ class CLIDriver:
         """
         Return a list of extra hierarchical synthesis hooks in this project.
         To be overridden by subclasses.
+
         :return: Dictionary of (module name, list of hooks)
         """
         return dict()
@@ -246,6 +250,7 @@ class CLIDriver:
         """
         Return a list of extra hierarchical place and route hooks in this project.
         To be overridden by subclasses.
+
         :return: Dictionary of (module name, list of hooks)
         """
         return dict()
@@ -476,6 +481,7 @@ class CLIDriver:
     def run_main_parsed(self, args: dict) -> int:
         """
         Given a parsed dictionary of arguments, find and run the given action.
+
         :return: Return code (0 for success)
         """
         if args['firrtl'] is not None and len(args['firrtl']) > 0:

@@ -152,7 +152,7 @@ class HammerDriver:
         Load the place and route tool based on the given database.
 
         :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
-        constructor.
+                        constructor.
         """
         if run_dir == "":
             run_dir = os.path.join(self.obj_dir, "par-rundir")
@@ -187,7 +187,7 @@ class HammerDriver:
         Load the synthesis tool based on the given database.
 
         :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
-        constructor.
+                        constructor.
         :return: True if synthesis tool loading was successful, False otherwise.
         """
         if run_dir == "":
@@ -233,6 +233,7 @@ class HammerDriver:
         """
         Set the extra list of hooks used for control flow (resume/pause) in run_synthesis.
         They will run after main/hook_actions.
+
         :param hooks: Hooks to run
         """
         self.post_custom_syn_tool_hooks = list(hooks)
@@ -241,6 +242,7 @@ class HammerDriver:
         """
         Set the extra list of hooks used for control flow (resume/pause) in run_par.
         They will run after main/hook_actions.
+
         :param hooks: Hooks to run
         """
         self.post_custom_par_tool_hooks = list(hooks)
@@ -249,8 +251,9 @@ class HammerDriver:
             Tuple[bool, dict]:
         """
         Run synthesis based on the given database.
+
         :param hook_actions: List of hook actions, or leave as None to use the hooks sets in set_synthesis_hooks.
-        Hooks from set_synthesis_hooks, if present, will be appended afterwards.
+                             Hooks from set_synthesis_hooks, if present, will be appended afterwards.
         :param force_override: Set to true to overwrite instead of append.
         :return: Tuple of (success, output config dict)
         """
@@ -329,6 +332,7 @@ class HammerDriver:
         Read settings from the database, determine leaf/hierarchical modules, an order of execution, and return an
         ordered list (from leaf to top) of modules and associated config snippets needed to run syn+par for that module
         hierarchically.
+
         :return: List of tuples of (module name, config snippet)
         """
         hier_source_key = "vlsi.inputs.hierarchical.config_source"

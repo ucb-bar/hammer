@@ -407,6 +407,7 @@ class HammerVLSISettings:
     def set_hammer_vlsi_path_from_environment(cls) -> bool:
         """
         Try to set hammer_vlsi_path from the environment variable HAMMER_VLSI.
+
         :return: True if successfully set, False otherwise
         """
         if "HAMMER_VLSI" not in os.environ:
@@ -679,6 +680,7 @@ class HammerTool(metaclass=ABCMeta):
     def export_config_outputs(self) -> Dict[str, Any]:
         """
         Export the outputs of this tool to a config.
+
         :return: Config dictionary of the outputs of this tool.
         """
         return {}
@@ -715,6 +717,7 @@ class HammerTool(metaclass=ABCMeta):
         """
         Function to run before the list of steps executes.
         Intended to be overridden by subclasses.
+
         :param first_step: First step to be taken.
         :return: True if successful, False otherwise.
         """
@@ -725,6 +728,7 @@ class HammerTool(metaclass=ABCMeta):
         Function to run after the list of steps executes.
         Does not include pause hooks.
         Intended to be overridden by subclasses.
+
         :param prev: The step that just finished
         :param next: The next step about to run.
         :return: True if successful, False otherwise.
@@ -735,6 +739,7 @@ class HammerTool(metaclass=ABCMeta):
         """
         Function to run after the list of steps executes.
         Intended to be overridden by subclasses.
+
         :return: True if successful, False otherwise.
         """
         return True
@@ -743,6 +748,7 @@ class HammerTool(metaclass=ABCMeta):
         """
         Fill the outputs of the tool.
         Note: if you override this, remember to call the superclass method too!
+
         :return: True if successful, False otherwise.
         """
         return True
@@ -923,6 +929,7 @@ class HammerTool(metaclass=ABCMeta):
     def run_steps(self, steps: List[HammerToolStep], hook_actions: List[HammerToolHookAction] = []) -> bool:
         """
         Run the given steps, checking for errors/conditions between each step.
+
         :param steps: List of steps.
         :param hook_actions: List of hook actions.
         :return: Returns true if all the steps are successful.
@@ -1044,6 +1051,7 @@ class HammerTool(metaclass=ABCMeta):
     def make_step_from_method(func: Callable[[], bool], name: str = "") -> HammerToolStep:
         """
         Create a HammerToolStep from a method.
+
         :param func: Method for the given substep (e.g. self.elaborate)
         :param name: Name of the hook. If unspecified, defaults to func.__name__.
         :return: A HammerToolStep defining this step.
@@ -1068,6 +1076,7 @@ class HammerTool(metaclass=ABCMeta):
     def make_steps_from_methods(funcs: List[Callable[[], bool]]) -> List[HammerToolStep]:
         """
         Create a series of HammerToolStep from the given list of bound methods.
+
         :param funcs: List of bound methods (e.g. [self.step1, self.step2])
         :return: List of HammerToolSteps
         """
@@ -1077,6 +1086,7 @@ class HammerTool(metaclass=ABCMeta):
     def make_step_from_function(func: HammerStepFunction, name: str = "") -> HammerToolStep:
         """
         Create a HammerToolStep from a function.
+
         :param func: Class function for the given substep
         :param name: Name of the hook. If unspecified, defaults to func.__name__.
         :return: A HammerToolStep defining this step.
@@ -1100,6 +1110,7 @@ class HammerTool(metaclass=ABCMeta):
     def make_replacement_hook(step: str, func: HammerStepFunction) -> HammerToolHookAction:
         """
         Create a hook action which replaces an existing step.
+
         :return: Hook action which replaces the given step.
         """
         return HammerToolHookAction(
@@ -1171,6 +1182,7 @@ class HammerTool(metaclass=ABCMeta):
                            to_step: Optional[str] = None) -> List[HammerToolHookAction]:
         """
         Helper function to create a HammerToolHookAction list which will run from and to the given steps, inclusive.
+
         :param from_step: Run from the given step, inclusive. Leave as None to resume from the beginning.
         :param to_step: Run to the given step, inclusive. Leave as None to run to the end.
         :return: HammerToolHookAction list for running from and to the given steps, inclusive.
@@ -1200,6 +1212,7 @@ class HammerTool(metaclass=ABCMeta):
     def make_removal_hook(step: str) -> HammerToolHookAction:
         """
         Helper function to remove a step by replacing it with an empty step.
+
         :return: Hook action which replaces the given step.
         """
         def dummy_step(x: HammerTool) -> bool:
@@ -1233,6 +1246,7 @@ class HammerTool(metaclass=ABCMeta):
         """
         List of folders where (default) configs can live.
         Defaults to self.tool_dir.
+
         :return: List of default config folders.
         """
         return [self.tool_dir]
@@ -1244,6 +1258,7 @@ class HammerTool(metaclass=ABCMeta):
     def get_setting(self, key: str, nullvalue: Optional[str] = None) -> Any:
         """
         Get a particular setting from the database.
+
         :param key: Key of the setting to receive.
         :param nullvalue: Value to return in case of null (leave as None to use the default).
         """
@@ -1317,11 +1332,11 @@ class HammerTool(metaclass=ABCMeta):
         Generate a list by filtering the list of libraries and selecting some parts of it.
 
         :param lib_filters: Filters to filter the list of libraries before selecting desired results from them.
-        e.g. remove libraries of the wrong type
+                            e.g. remove libraries of the wrong type
         :param sort_func: Sort function to re-order the resultant components.
-        e.g. put stdcell libraries before any other libraries
+                          e.g. put stdcell libraries before any other libraries
         :param extraction_func: Function to call to extract the desired component of the lib.
-        e.g. turns the library into the ".lib" file corresponding to that library
+                                e.g. turns the library into the ".lib" file corresponding to that library
         :param extra_funcs: List of extra functions to call before wrapping them in the arg prefixes.
 
         :return: List generated from list of libraries
@@ -1780,6 +1795,7 @@ class HammerTool(metaclass=ABCMeta):
     def append_contents_to_path(content_to_append: str, target_path: str) -> None:
         """
         Append the given contents to the file located at target_path, if target_path is not empty.
+
         :param content_to_append: Content to append.
         :param target_path: Where to append the content.
         """
@@ -1797,6 +1813,7 @@ class HammerTool(metaclass=ABCMeta):
     def tcl_append(cmd: str, output_buffer: List[str]) -> None:
         """
         Helper function to echo and run a command.
+
         :param cmd: TCL command to run
         :param output_buffer: Buffer in which to enqueue the resulting TCL lines.
         """
@@ -1806,6 +1823,7 @@ class HammerTool(metaclass=ABCMeta):
     def verbose_tcl_append(cmd: str, output_buffer: List[str]) -> None:
         """
         Helper function to echo and run a command.
+
         :param cmd: TCL command to run
         :param output_buffer: Buffer in which to enqueue the resulting TCL lines.
         """
@@ -2073,6 +2091,7 @@ class CadenceTool(HasSDCSupport, HammerTool):
     def get_liberty_libs(self) -> str:
         """
         Helper function to get the list of ASCII liberty files in space separated format.
+
         :return: List of lib files separated by spaces
         """
         lib_args = self.read_libs([
@@ -2093,6 +2112,7 @@ class CadenceTool(HasSDCSupport, HammerTool):
     def get_qrc_tech(self) -> str:
         """
         Helper function to get the list of rc corner tech files in space separated format.
+
         :return: List of qrc tech files separated by spaces
         """
         lib_args = self.read_libs([
@@ -2104,6 +2124,7 @@ class CadenceTool(HasSDCSupport, HammerTool):
         """
         Output for the mmmc.tcl script.
         Innovus (init_design) requires that the timing script be placed in a separate file.
+
         :return: Contents of the mmmc script.
         """
         mmmc_output = []  # type: List[str]
