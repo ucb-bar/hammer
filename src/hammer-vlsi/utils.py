@@ -15,6 +15,7 @@ def deepdict(x: dict) -> dict:
     Deep copy a dictionary. This is needed because dict() by itself only makes a shallow copy.
     See https://stackoverflow.com/questions/5105517/deep-copy-of-a-dict-in-python
     Convenience function.
+
     :param x: Dictionary to copy
     :return: Deep copy of the dictionary provided by copy.deepcopy().
     """
@@ -25,6 +26,7 @@ def deeplist(x: list) -> list:
     Deep copy a list. This is needed because list() by itself only makes a shallow copy.
     See https://stackoverflow.com/questions/5105517/deep-copy-of-a-dict-in-python
     Convenience function.
+
     :param x: List to copy
     :return: Deep copy of the list provided by copy.deepcopy().
     """
@@ -58,6 +60,7 @@ def reverse_dict(x: dict) -> dict:
     """
     Reverse a dictionary (keys become values and vice-versa). Only works if the dictionary is isomorphic (no duplicate
     values), or some pairs will be lost.
+
     :param x: Dictionary to reverse
     :return: Reversed dictionary
     """
@@ -67,6 +70,7 @@ def reverse_dict(x: dict) -> dict:
 def in_place_unique(items: List[Any]) -> None:
     """
     "Fast" in-place uniquification of a list.
+
     :param items: List to be uniquified.
     """
     seen = set()  # type: Set[Any]
@@ -86,6 +90,7 @@ def in_place_unique(items: List[Any]) -> None:
 def topological_sort(graph: Dict[str, Tuple[List[str], List[str]]], starting_nodes: List[str]) -> List[str]:
     """
     Perform a topological sort on the graph and return a valid ordering.
+
     :param graph: dict that represents key as the node and value as a tuple of (outgoing edges, incoming edges).
     :param starting_nodes: List of starting nodes to use.
     :return: A valid topological ordering of the graph.
