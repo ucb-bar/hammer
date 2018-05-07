@@ -1659,6 +1659,7 @@ class HammerTool(metaclass=ABCMeta):
         - Get a list of lib items
         - Run any extra_post_filter_funcs (if needed)
         - For every lib item in each lib items, run output_func
+
         :param pre_filts: List of functions with which to pre-filter the libraries. Each function must return true
                           in order for this library to be used.
         :param filt: LibraryFilter to check against the list.
@@ -1848,9 +1849,9 @@ class HammerSynthesisTool(HammerTool):
     @property
     def input_files(self) -> Iterable[str]:
         """
-        Get the input collection of source RTL files (e.g. *.v).
+        Get the input collection of source RTL files (e.g. \*.v).
 
-        :return: The input collection of source RTL files (e.g. *.v).
+        :return: The input collection of source RTL files (e.g. \*.v).
         """
         try:
             return self.attr_getter("_input_files", None)
