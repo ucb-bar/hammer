@@ -17,7 +17,8 @@ from utils import *
 import hammer_config
 import hammer_tech
 from hammer_vlsi_impl import HammerVLSISettings, HammerToolHookAction, HammerPlaceAndRouteTool, HammerSynthesisTool, \
-    HierarchicalMode, HammerVLSIFileLogger, HammerVLSILogging, load_tool, HammerVLSILoggingContext, PlacementConstraint
+    HierarchicalMode, load_tool, PlacementConstraint
+from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, HammerVLSILoggingContext
 
 # Options for invoking the driver.
 HammerDriverOptions = NamedTuple('HammerDriverOptions', [
