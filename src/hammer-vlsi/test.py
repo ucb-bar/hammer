@@ -9,6 +9,7 @@ import shutil
 from numbers import Number
 
 import hammer_vlsi
+from hammer_logging import Level
 
 from typing import Dict, List, TypeVar, Union
 
@@ -32,7 +33,7 @@ class HammerVLSILoggingTest(unittest.TestCase):
 
         hammer_vlsi.HammerVLSILogging.enable_colour = True
         log.info(msg)
-        self.assertEqual(hammer_vlsi.HammerVLSILogging.get_colour_escape(hammer_vlsi.Level.INFO) + "[test] " + msg + hammer_vlsi.HammerVLSILogging.COLOUR_CLEAR, hammer_vlsi.HammerVLSILogging.get_buffer()[0])
+        self.assertEqual(hammer_vlsi.HammerVLSILogging.get_colour_escape(Level.INFO) + "[test] " + msg + hammer_vlsi.HammerVLSILogging.COLOUR_CLEAR, hammer_vlsi.HammerVLSILogging.get_buffer()[0])
 
         hammer_vlsi.HammerVLSILogging.enable_colour = False
         log.info(msg)
