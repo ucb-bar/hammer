@@ -7,6 +7,9 @@
 *rundir/
 /*.json
 
+# Sphinx/doc junk
+doc/_build/
+
 # Python junk
 __pycache__
 *.pyc
