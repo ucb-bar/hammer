@@ -1,7 +1,7 @@
-hammer\_vlsi module
-===================
+hammer\_config module
+=====================
 
-.. automodule:: hammer_vlsi
+.. automodule:: hammer_config
     :members:
     :undoc-members:
     :show-inheritance:
