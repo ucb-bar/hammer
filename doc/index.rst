@@ -11,6 +11,8 @@ Welcome to hammer-vlsi's documentation!
    :caption: Contents:
 
    hammer_vlsi
+   hammer_config
+   hammer_tech
 
 Indices and tables
 ==================
