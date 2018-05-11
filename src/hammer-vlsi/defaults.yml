@@ -72,17 +72,36 @@ vlsi.inputs:
   # period (TimeValue) - Clock port period. e.g. "1 ns", "5ns". Default units: ns
   # port (str) - Optional. If specified, this is the RTL path to the clock. Otherwise, the path is the same as the name.
   # uncertainty (TimeValue) - Optional. Clock uncertainty. e.g. "1 ns", "5ns". Default units: ns
+  # generated (bool) - Optional. If true this clock should be derived from another
+  # master_clcok
+  # master_port
+  # divisor
   clocks: []
 
   # Default output pin load capacitance.
   # Default: 1pF
   default_output_load: 1
+  # Default input delay
+  # Default: 0.2ns?
+  default_input_transition: 1.0
+  default_input_max_delay: 4.0
+  default_input_delay: 0.4
+  default_input_clock: "clock"
+  custom_pin_constraints: ""
 
   # List of output load constraints.
   # Each item in the list should be a struct with the following members:
   # name (str) - Name of the output load (e.g. io_out)
   # load (float) - Output load capacitance in pF.
   output_loads: []
+
+  # List of input delay constraints.
+  # Each item in the list should be a struct with the following members:
+  # name (str) - Name of the input load (e.g. io_in)
+  # clock (str) - Name of the clock the input delay should be based on
+  # direction (str) - is this an input or output delay
+  # delay (float) - Fraction of clock period the delay should be
+  delays: []
 
   # List of placement constraints.
   # Each item is a struct member:

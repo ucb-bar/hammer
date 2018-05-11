@@ -438,12 +438,23 @@ ClockPort = NamedTuple('ClockPort', [
     ('name', str),
     ('period', TimeValue),
     ('port', Optional[str]),
-    ('uncertainty', Optional[TimeValue])
+    ('uncertainty', Optional[TimeValue]),
+    ('generated', Optional[bool]),
+    ('master_clock', Optional[str]),
+    ('master_port', Optional[str]),
+    ('divisor', Optional[int])
 ])
 
 OutputLoadConstraint = NamedTuple('OutputLoadConstraint', [
     ('name', str),
     ('load', float)
+])
+
+DelayConstraint = NamedTuple('DelayConstraint', [
+    ('name', str),
+    ('clock', str),
+    ('direction', str),
+    ('delay', float)
 ])
 
 
@@ -453,6 +464,7 @@ class PlacementConstraintType(Enum):
     TopLevel = 3
     HardMacro = 4
     Hierarchical = 5
+    Obstruction = 6
 
     @staticmethod
     def from_string(s: str) -> "PlacementConstraintType":
@@ -466,6 +478,8 @@ class PlacementConstraintType(Enum):
             return PlacementConstraintType.HardMacro
         elif s == "hierarchical":
             return PlacementConstraintType.Hierarchical
+        elif s == "obstruction":
+            return PlacementConstraintType.Obstruction
         else:
             raise ValueError("Invalid placement constraint type '{}'".format(s))
 
@@ -484,8 +498,10 @@ PlacementConstraint = NamedTuple('PlacementConstraint', [
     ('y', float),
     ('width', float),
     ('height', float),
+    ('layers', Optional[str]),
     ('orientation', Optional[str]),
-    ('margins', Optional[Margins])
+    ('margins', Optional[Margins]),
+    ('obs_types', Optional[List[str]])
 ])
 
 class MMMCCornerType(Enum):
@@ -1585,12 +1601,19 @@ class HammerTool(metaclass=ABCMeta):
         for clock_port in clocks:
             clock = ClockPort(
                 name=clock_port["name"], period=TimeValue(clock_port["period"]),
-                uncertainty=None, port=None
+                uncertainty=None, port=None,
+                generated=None, master_clock=None, master_port=None, divisor=None
             )
             if "port" in clock_port:
                 clock = clock._replace(port=clock_port["port"])
             if "uncertainty" in clock_port:
                 clock = clock._replace(uncertainty=TimeValue(clock_port["uncertainty"]))
+            if "generated" in clock_port:
+                clock = clock._replace(generated=clock_port["generated"],
+                        master_clock=clock_port["master_clock"],
+                        master_port=clock_port["master_port"],
+                        divisor=int(clock_port["divisor"])
+                        )
             output.append(clock)
         return output
 
@@ -1604,6 +1627,8 @@ class HammerTool(metaclass=ABCMeta):
             constraint_type = PlacementConstraintType.from_string(str(constraint["type"]))
             margins = None  # type: Optional[Margins]
             orientation = None # type: Optional[str]
+            obs_types = None # type: Optional[str]
+            layers = None # type: Optional[str]
             if constraint_type == PlacementConstraintType.TopLevel:
                 margins_dict = constraint["margins"]
                 margins = Margins(
@@ -1614,6 +1639,13 @@ class HammerTool(metaclass=ABCMeta):
                 )
             if "orientation" in constraint:
                 orientation = str(constraint["orientation"])
+            if "layers" in constraint:
+                layers = str(constraint["layers"])
+            if "obs_types" in constraint:
+                obs_types = []
+                types = constraint["obs_types"]
+                for t in types:
+                    obs_types.append(str(t))
             load = PlacementConstraint(
                 path=str(constraint["path"]),
                 type=constraint_type,
@@ -1622,6 +1654,8 @@ class HammerTool(metaclass=ABCMeta):
                 width=float(constraint["width"]),
                 height=float(constraint["height"]),
                 orientation=orientation,
+                obs_types=obs_types,
+                layers=layers,
                 margins=margins
             )
             output.append(load)
@@ -1657,6 +1691,23 @@ class HammerTool(metaclass=ABCMeta):
             )
             output.append(load)
         return output
+
+    def get_delay_constraints(self) -> List[DelayConstraint]:
+        """
+        Get a list of input delay constraints as specified in the config.
+        """
+        delays = self.get_setting("vlsi.inputs.delays")
+        output = []  # type: List[DelayConstraint]
+        for delay_src in delays:
+            delay = DelayConstraint(
+                name=str(delay_src["name"]),
+                clock=str(delay_src["clock"]),
+                direction=str(delay_src["direction"]),
+                delay=float(delay_src["delay"])
+            )
+            output.append(delay)
+        return output
+
 
     @staticmethod
     def append_contents_to_path(content_to_append: str, target_path: str) -> None:
@@ -2137,7 +2188,10 @@ class HasSDCSupport(HammerTool):
         clocks = self.get_clock_ports()
         for clock in clocks:
             # TODO: FIXME This assumes that library units are always in ns!!!
-            if clock.port is not None:
+            if clock.generated is not None:
+                output.append("create_generated_clock -name {n} -source {m_port} -divide_by {div} {port}".
+                        format(n=clock.name, m_port=clock.master_port, div=clock.divisor, port=clock.port, m_clock=clock.master_clock))
+            elif clock.port is not None:
                 output.append("create_clock {0} -name {1} -period {2}".format(clock.port, clock.name, clock.period.value_in_units("ns")))
             else:
                 output.append("create_clock {0} -name {0} -period {1}".format(clock.name, clock.period.value_in_units("ns")))
@@ -2153,18 +2207,47 @@ class HasSDCSupport(HammerTool):
         output = []  # type: List[str]
 
         default_output_load = float(self.get_setting("vlsi.inputs.default_output_load"))
+        default_input_transition = float(self.get_setting("vlsi.inputs.default_input_transition"))
+        default_input_delay = float(self.get_setting("vlsi.inputs.default_input_delay"))
+        default_input_max_delay = float(self.get_setting("vlsi.inputs.default_input_max_delay"))
+        default_input_clock = str(self.get_setting("vlsi.inputs.default_input_clock"))
 
         # Specify default load.
         output.append("set_load {load} [all_outputs]".format(
             load=default_output_load
         ))
-
         # Also specify loads for specific pins.
         for load in self.get_output_load_constraints():
             output.append("set_load {load} [get_port \"{name}\"]".format(
                 load=load.load,
                 name=load.name
             ))
+
+        # Specificy default transition
+        #output.append("set_input_transition  {transition} [all_inputs]".format(
+            #transition=default_input_transition
+        #))
+        # Specificy default max delay
+        #output.append("set_max_delay  {delay} -from [all_inputs]".format(
+            #delay=default_input_max_delay
+        #))
+
+        # Specify default delay.
+        output.append("set_input_delay {delay} -clock {clock} [all_inputs]".format(
+            delay=default_input_delay,
+            clock=default_input_clock
+        ))
+        # Also specify delays for specific pins.
+        for delay in self.get_delay_constraints():
+            output.append("set_{direction}_delay {delay} -clock {clock} [get_port \"{name}\"]".format(
+                delay=delay.delay,
+                clock=delay.clock,
+                direction=delay.direction,
+                name=delay.name
+            ))
+
+        output.append(str(self.get_setting("vlsi.inputs.custom_pin_constraints")))
+
         return "\n".join(output)
 
 
