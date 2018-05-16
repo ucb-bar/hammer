@@ -1405,5 +1405,3 @@ class HammerTool(metaclass=ABCMeta):
         """
         output_buffer.append("""puts "{0}" """.format(cmd.replace('"', '\"')))
         output_buffer.append(cmd)
-
-

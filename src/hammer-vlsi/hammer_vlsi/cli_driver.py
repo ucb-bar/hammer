@@ -80,6 +80,7 @@ class CLIDriver:
         # Defaults to blank (obj_dir + syn-rundir/par-rundir)
         self.syn_rundir = ""  # type: Optional[str]
         self.par_rundir = ""  # type: Optional[str]
+        self.formal_rundir = ""  # type: Optional[str]
 
         # If a subclass has defined these, don't clobber them in init
         # since the subclass still uses this init function.
@@ -95,6 +96,10 @@ class CLIDriver:
             check_CLIActionType_type(self.synthesis_par_action)  # type: ignore
         else:
             self.synthesis_par_action = self.create_synthesis_par_action(self.synthesis_action, self.par_action)  # type: CLIActionType
+        if hasattr(self, "formal_action"):
+            check_CLIActionType_type(self.formal_action)  # type: ignore
+        else:
+            self.formal_action = self.create_formal_action([])  # type: CLIActionType
 
         # Dictionaries of module-CLIActionType for hierarchical flows.
         # See all_hierarchical_actions() below.
@@ -105,6 +110,7 @@ class CLIDriver:
 
     def action_map(self) -> Dict[str, CLIActionType]:
         """Return the mapping of valid actions -> functions for each action of the command-line driver."""
+        # TODO: synthesis-to-formal, synthesis-formal-par?
         return add_dicts({
             "synthesis": self.synthesis_action,
             "syn": self.synthesis_action,
@@ -116,7 +122,8 @@ class CLIDriver:
             "synthesis_par": self.synthesis_par_action,
             "synthesis-par": self.synthesis_par_action,
             "syn_par": self.synthesis_par_action,
-            "syn-par": self.synthesis_par_action
+            "syn-par": self.synthesis_par_action,
+            "formal": self.formal_action
         }, self.all_hierarchical_actions)
 
     def get_extra_synthesis_hooks(self) -> List[HammerToolHookAction]:
@@ -148,6 +155,15 @@ class CLIDriver:
                           post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionType:
         hooks = self.get_extra_par_hooks() + custom_hooks  # type: List[HammerToolHookAction]
         return self.create_action("par", hooks if len(hooks) > 0 else None,
+                                  pre_action_func, post_load_func, post_run_func)
+
+    def create_formal_action(self, custom_hooks: List[HammerToolHookAction],
+                                pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
+                                post_load_func: Optional[Callable[[HammerDriver], None]] = None,
+                                post_run_func: Optional[Callable[[HammerDriver], None]] = None
+                                ) -> CLIActionType:
+        hooks = self.get_extra_synthesis_hooks() + custom_hooks  # type: List[HammerToolHookAction]
+        return self.create_action("formal", hooks if len(hooks) > 0 else None,
                                   pre_action_func, post_load_func, post_run_func)
 
     def create_action(self, action_type: str,
@@ -194,6 +210,13 @@ class CLIDriver:
                 else:
                     post_load_func_checked(driver)
                 success, output = driver.run_par(extra_hooks)
+                post_run_func_checked(driver)
+            elif action_type == "formal":
+                if not driver.load_formal_tool(self.formal_rundir if self.formal_rundir is not None else ""):
+                    return None
+                else:
+                    post_load_func_checked(driver)
+                sucess, output = driver.run_formal(extra_hooks)
                 post_run_func_checked(driver)
             else:
                 raise ValueError("Invalid action_type = " + str(action_type))
@@ -416,6 +439,7 @@ class CLIDriver:
         # Syn/par rundir (optional)
         self.syn_rundir = get_nonempty_str(args['syn_rundir'])
         self.par_rundir = get_nonempty_str(args['par_rundir'])
+        self.formal_rundir = get_nonempty_str(args['formal_rundir'])
 
         # Stage control: from/to
         from_step = get_nonempty_str(args['from_step'])
@@ -589,6 +613,8 @@ class CLIDriver:
                             help='(optional) Directory to store syn results in')
         parser.add_argument("--par_rundir", required=False, default="",
                             help='(optional) Directory to store par results in')
+        parser.add_argument("--formal_rundir", required=False, default="",
+                            help='(optional) Directory to store formal check results in')
         # Optional arguments for step control.
         parser.add_argument("--from_step", dest="from_step", required=False,
                             help="Run the given action from the given step (inclusive).")

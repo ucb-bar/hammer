@@ -331,6 +331,11 @@ class HammerPlaceAndRouteTool(HammerTool):
         self.attr_setter("_output_ilms", value)
 
 
+class HammerFormalTool(HammerTool):
+    ### Generated interface HammerFormalTool ###
+    pass
+
+
 class HasSDCSupport(HammerTool):
     """Mix-in trait with functions useful for tools with SDC-style
     constraints."""
