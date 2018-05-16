@@ -17,7 +17,7 @@ from utils import *
 import hammer_config
 import hammer_tech
 from hammer_vlsi_impl import HammerVLSISettings, HammerToolHookAction, HammerPlaceAndRouteTool, HammerSynthesisTool, \
-    HierarchicalMode, load_tool, PlacementConstraint
+    HammerFormalTool, HierarchicalMode, load_tool, PlacementConstraint
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, HammerVLSILoggingContext
 
 # Options for invoking the driver.
@@ -101,10 +101,13 @@ class HammerDriver:
         # Initialize tool fields.
         self.syn_tool = None  # type: HammerSynthesisTool
         self.par_tool = None  # type: HammerPlaceAndRouteTool
+        self.formal_tool = None  # type: HammerFormalTool
 
         # Initialize tool hooks. Used to specify resume/pause hooks after custom hooks have been registered.
         self.post_custom_syn_tool_hooks = []  # type: List[HammerToolHookAction]
         self.post_custom_par_tool_hooks = []  # type: List[HammerToolHookAction]
+        # Donggyu: do we need this for formality?
+        self.post_custom_formal_tool_hooks = []  # type: List[HammerToolHookAction]
 
     @property
     def project_config(self) -> dict:
@@ -147,6 +150,40 @@ class HammerDriver:
         """
         tools = reduce(lambda a, b: a + b, list(self.tool_configs.values()))
         self.database.update_tools(tools)
+
+    def load_formal_tool(self, run_dir: str = "") -> bool:
+        """
+        Load the place and route tool based on the given database.
+
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
+                        constructor.
+        """
+        if run_dir == "":
+            # Use the synthesis directory for formal tools
+            run_dir = os.path.join(self.obj_dir, "syn-rundir")
+
+        formal_tool_name = self.database.get_setting("vlsi.core.formal_tool")
+        formal_tool_get = load_tool(
+            path=self.database.get_setting("vlsi.core.formal_tool_path"),
+            tool_name=formal_tool_name
+        )
+        assert isinstance(formal_tool_get, HammerFormalTool), "Formal tool must be a HammerFormalTool"
+        formal_tool = formal_tool_get  # type: HammerTool
+        formal_tool.name = formal_tool_name
+        formal_tool.logger = self.log.context("formal")
+        formal_tool.set_database(self.database)
+        formal_tool.run_dir = run_dir
+
+        formal_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
+        if len(formal_tool.input_files) < 2:
+            self.log.error("There must be at least two input files for formal tools: reference and implementation")
+            return False
+
+        self.formal_tool = formal_tool
+
+        self.tool_configs["formal"] = formal_tool.get_config()
+        self.update_tool_configs()
+        return True
 
     def load_par_tool(self, run_dir: str = "") -> bool:
         """
@@ -248,6 +285,15 @@ class HammerDriver:
         """
         self.post_custom_par_tool_hooks = list(hooks)
 
+    def set_post_custom_formal_tool_hooks(self, hooks: List[HammerToolHookAction]) -> None:
+        """
+        Set the extra list of hooks used for control flow (resume/pause) in run_par.
+        They will run after main/hook_actions.
+
+        :param hooks: Hooks to run
+        """
+        self.post_custom_formal_tool_hooks = list(hooks)
+
     def run_synthesis(self, hook_actions: Optional[List[HammerToolHookAction]] = None, force_override: bool = False) -> \
             Tuple[bool, dict]:
         """
@@ -322,6 +368,43 @@ class HammerDriver:
         # TODO(edwardw): automate this
         try:
             output_config.update(self.par_tool.export_config_outputs())
+        except ValueError as e:
+            self.log.fatal(e.args[0])
+            return False, {}
+
+        return run_succeeded, output_config
+
+    def run_formal(self, hook_actions: Optional[List[HammerToolHookAction]] = None, force_override: bool = False) -> \
+            Tuple[bool, dict]:
+        """
+        Run formal check based on the given database.
+
+        :param hook_actions: List of hook actions, or leave as None to use the hooks sets in set_formal_hooks.
+                             Hooks from set_formal_hooks, if present, will be appended afterwards.
+        :param force_override: Set to true to overwrite instead of append.
+        :return: Tuple of (success, output config dict)
+        """
+
+        # TODO: think about artifact storage?
+        self.log.info("Starting formal check with tool '%s'" % (self.formal_tool.name))
+        if hook_actions is None:
+            hooks_to_use = self.post_custom_formal_tool_hooks
+        else:
+            if force_override:
+                hooks_to_use = hook_actions
+            else:
+                hooks_to_use = hook_actions + self.post_custom_formal_tool_hooks
+        run_succeeded = self.formal_tool.run(hooks_to_use)
+        if not run_succeeded:
+            self.log.error("Formal check tool %s failed! Please check its output." % self.formal_tool.name)
+            # Allow the flow to keep running, just in case.
+            # TODO: make this an option
+
+        # Record output from the formal_tool into the JSON output.
+        output_config = deepdict(self.project_config)
+        # TODO(edwardw): automate this
+        try:
+            output_config.update(self.formal_tool.export_config_outputs())
         except ValueError as e:
             self.log.fatal(e.args[0])
             return False, {}
