@@ -4,8 +4,8 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("-o", "--output", dest="output", required=True)
 parser.add_argument("-i", "--input", dest="input", required=True)
-parser.add_argument("-s", "--srcdir", dest="srcdir", required=True)
-parser.add_argument("-t", "--technology", dest="technology", required=True)
+parser.add_argument("-d", "--basedir", dest="basedir", required=True)
+parser.add_argument("-t", "--tech-cache", dest="tech_cache", required=True)
 args = parser.parse_args()
 
 import json
@@ -21,34 +21,35 @@ for library in techfile["libraries"]:
 	if "provides" in library:
 		for macro in library["provides"]:
 			print(macro)
-			if (macro["type"] == "sram"):
+			if (macro["lib_type"] == "sram"):
 				output.append(macro)
 	if "provide script" in library:
 		# FIXME: OBJ_TECH_DIR shouldn't be hard-coded here
 		files = ""
 		if "verilog sim" in library:
-			files = "obj/technology/{1}/extracted/{0}".format(library["verilog sim"], args.technology)
+			files = os.path.join(args.tech_cache, "extracted", library["verilog sim"])
 		# "verilog synth" is a strange place from which to extract these files, but it's necessary
 		# sometimes - e.g. to use the sram_wrapper as the interface for memory macros instead of the
 		# raw hard macro itself.
 		if "verilog synth" in library:
-			files = "obj/technology/{1}/extracted/{0}".format(library["verilog synth"], args.technology)
+			files = os.path.join(args.tech_cache, "extracted", library["verilog synth"])
 		if "documentation pdf" in library:
-			files = "obj/technology/{1}/extracted/{0}".format(library["documentation pdf"], args.technology)
+			files = os.path.join(args.tech_cache, "extracted", library["documentation pdf"])
 
 		provide_script = library["provide script"]
 		if not provide_script.startswith("/"):
 			# TODO(edwardw): migrate this to the new config and nuke this hideous hack from orbit
 			# Try to support a script relative to the input json.
 			# See generate-vars
-			new_path = os.path.dirname(args.srcdir) + "/" + provide_script
+			new_path = os.path.join(args.basedir, provide_script)
 			if os.path.isfile(new_path):
 				provide_script = new_path
 
-		p = subprocess.check_output([provide_script, files]).decode("utf-8")
+		if os.path.exists(files):
+			p = subprocess.check_output([provide_script, files]).decode("utf-8")
 		macros = json.loads(p)
 		for macro in macros:
-			if (macro["type"] != "none" and macro["type"] != "stdcells"):
+			if (macro["type"] != "none" and macro["type"] != "stdcell"):
 				output.append(macro)
 		
 with open(args.output, "w") as of:
