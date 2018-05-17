@@ -112,6 +112,7 @@ class CLIDriver:
         self.lvs_rundir = ""  # type: Optional[str]
         self.sram_generator_rundir = ""  # type: Optional[str]
         self.formal_rundir = ""  # type: Optional[str]
+        self.power_rundir = ""  # type: Optional[str]
 
         # If a subclass has defined these, don't clobber them in init
         # since the subclass still uses this init function.
@@ -144,6 +145,10 @@ class CLIDriver:
             check_CLIActionType_type(self.formal_action)  # type: ignore
         else:
             self.formal_action = self.create_formal_action([])  # type: CLIActionType
+        if hasattr(self, "power_action"):
+            check_CLIActionType_type(self.power_action)  # type: ignore
+        else:
+            self.power_action = self.create_power_action([])  # type: CLIActionType
 
         # Dictionaries of module-CLIActionConfigType for hierarchical flows.
         # See all_hierarchical_actions() below.
@@ -157,6 +162,7 @@ class CLIDriver:
     def action_map(self) -> Dict[str, CLIActionType]:
         """Return the mapping of valid actions -> functions for each action of the command-line driver."""
         # TODO: synthesis-to-formal, synthesis-formal-par?
+        # TODO: synthesis-[formal]-par-power?
         return add_dicts({
             "dump": self.dump_action,
             "dump-macrosizes": self.dump_macrosizes_action,
@@ -182,7 +188,8 @@ class CLIDriver:
             "par-to-lvs": self.par_to_lvs_action,
             "drc": self.drc_action,
             "lvs": self.lvs_action
-            "formal": self.formal_action
+            "formal": self.formal_action,
+            "power": self.power_action
         }, self.all_hierarchical_actions)
 
     @staticmethod
@@ -310,6 +317,14 @@ class CLIDriver:
         return self.create_action("formal", hooks if len(hooks) > 0 else None,
                                   pre_action_func, post_load_func, post_run_func)
 
+    def create_power_action(self, custom_hooks: List[HammerToolHookAction],
+                                pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
+                                post_load_func: Optional[Callable[[HammerDriver], None]] = None,
+                                post_run_func: Optional[Callable[[HammerDriver], None]] = None
+                                ) -> CLIActionType:
+        hooks = self.get_extra_synthesis_hooks() + custom_hooks  # type: List[HammerToolHookAction]
+        return self.create_action("power", hooks if len(hooks) > 0 else None,
+                                  pre_action_func, post_load_func, post_run_func)
     def create_action(self, action_type: str,
                       extra_hooks: Optional[List[HammerToolHookAction]],
                       pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
@@ -396,6 +411,14 @@ class CLIDriver:
                 else:
                     post_load_func_checked(driver)
                 sucess, output = driver.run_formal(extra_hooks)
+                post_run_func_checked(driver)
+            elif action_type == "power":
+                print("run dir: ", self.power_rundir)
+                if not driver.load_power_tool(self.power_rundir if self.power_rundir is not None else ""):
+                    return None
+                else:
+                    post_load_func_checked(driver)
+                sucess, output = driver.run_power(extra_hooks)
                 post_run_func_checked(driver)
             else:
                 raise ValueError("Invalid action_type = " + str(action_type))
@@ -694,6 +717,11 @@ class CLIDriver:
         if top_module is not None:
             config['synthesis.inputs.top_module'] = top_module
 
+        # Waveform files
+        waveforms = args['waveform']
+        if isinstance(waveforms, List) and len(waveforms) > 0:
+            config['power.inputs.waveform_files'] = waveforms
+
         # Object dir.
         # (optional)
         obj_dir = get_nonempty_str(args['obj_dir'])
@@ -708,6 +736,7 @@ class CLIDriver:
         self.drc_rundir = get_nonempty_str(args['drc_rundir'])
         self.lvs_rundir = get_nonempty_str(args['lvs_rundir'])
         self.formal_rundir = get_nonempty_str(args['formal_rundir'])
+        self.power_rundir = get_nonempty_str(args['power_rundir'])
 
         # Stage control: from/to
         from_step = get_nonempty_str(args['from_step'])
@@ -925,6 +954,8 @@ class CLIDriver:
                             help='(optional) Directory to store LVS results in')
         parser.add_argument("--formal_rundir", required=False, default="",
                             help='(optional) Directory to store formal check results in')
+        parser.add_argument("--power_rundir", required=False, default="",
+                            help='(optional) Directory to store power analysis results in')
         # Optional arguments for step control.
         parser.add_argument("--from_step", dest="from_step", required=False,
                             help="Run the given action from the given step (inclusive).")
@@ -942,6 +973,8 @@ class CLIDriver:
                             help='Input set of firrtl files. Provided for convenience; hammer-vlsi will transform it to Verilog.')
         parser.add_argument("-t", "--top", required=False,
                             help='Top module. If not specified, hammer-vlsi will take it from synthesis.inputs.top_module.')
+        parser.add_argument("-w", "--waveform", required=False, action='append',
+                            help='Input set of waveform files.')
         parser.add_argument("--cad-files", action='append', required=False,
                             help="CAD files.")
 

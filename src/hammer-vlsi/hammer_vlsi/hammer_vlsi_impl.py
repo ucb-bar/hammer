@@ -973,6 +973,68 @@ class HammerFormalTool(HammerTool):
     pass
 
 
+class HammerPowerTool(HammerTool):
+    ### Generated interface HammerPowerTool ###
+    @property
+    def top_module(self) -> str:
+        """
+        Get the top-level module.
+
+        :return: The top-level module.
+        """
+        try:
+            return self.attr_getter("_top_module", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the top-level module yet")
+
+    @top_module.setter
+    def top_module(self, value: str) -> None:
+        """Set the top-level module."""
+        if not isinstance(value, str):
+            raise TypeError("top_module must be a str")
+        self.attr_setter("_top_module", value)
+
+
+    @property
+    def waveform_files(self) -> Iterable[str]:
+        """
+        Get the waveform files.
+
+        :return: The waveform files.
+        """
+        try:
+            return self.attr_getter("_waveform_files", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the input waveform files yet")
+
+    @waveform_files.setter
+    def waveform_files(self, value: Iterable[str]) -> None:
+        """
+        Set the waveform files for this tool library.
+        The exact nature of the files will depend on the type of library.
+        """
+        if not isinstance(value, Iterable):
+            raise TypeError("input_files must be a Iterable[str]")
+        self._waveform_files = value # type: Iterable[str]
+
+    def check_waveform_files(self, extensions: List[str]) -> bool:
+        """Verify that waveform files exist and have the specified extensions.
+
+        :param extensions: List of extensions e.g. [".vcd", ".vpd"]
+        :return: True if all files exist and have the specified extensions.
+        """
+        waveform_args = self.waveform_files
+        error = False
+        for w in waveform_args:
+            if not w.endswith(tuple(extensions)):
+                self.logger.error("Input of unsupported type {0} detected!".format(v))
+                error = True
+            if not os.path.isfile(w):
+                self.logger.error("Input file {0} does not exist!".format(v))
+                error = True
+        return not error
+
+
 class HasSDCSupport(HammerTool):
     """Mix-in trait with functions useful for tools with SDC-style
     constraints."""
