@@ -2246,7 +2246,11 @@ class HasSDCSupport(HammerTool):
                 name=delay.name
             ))
 
-        output.append(str(self.get_setting("vlsi.inputs.custom_pin_constraints")))
+        for custom_pin in self.get_setting("vlsi.inputs.custom_pin_constraints"):
+            output.append(custom_pin)
+
+        #Some tools don't handle a lack of newline at the end of your sdc file
+        output.append("\n")
 
         return "\n".join(output)
 
