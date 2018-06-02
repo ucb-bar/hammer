@@ -101,7 +101,7 @@ vlsi.inputs:
   # - "hold" (corner used for hold timing)
   # - "extra" (misc. corner potentially used for power analysis
   # voltage (str) - voltage of the corner should match tech json
-  # temp (str) - temperature of the corner should mathc tech json
+  # temp (str) - temperature of the corner should match tech json
   mmmc_corners: []
 
   # Clock ports of the top-level module.

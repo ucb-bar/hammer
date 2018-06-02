@@ -515,7 +515,7 @@ class HammerToolHooksTest(unittest.TestCase):
 
 
 class TimeValueTest(unittest.TestCase):
-    def test_read_and_write(self):
+    def test_read_and_write(self) -> None:
         """
         Test that we can parse and emit time values.
         """
@@ -524,7 +524,7 @@ class TimeValueTest(unittest.TestCase):
         self.assertEqual(tv.str_value_in_units("us"), "1 us")
         self.assertEqual(tv.value_in_units("ps"), 1000000.0)
 
-    def test_default_prefix(self):
+    def test_default_prefix(self) -> None:
         """
         Test that we can parse and emit time values.
         """
@@ -533,7 +533,7 @@ class TimeValueTest(unittest.TestCase):
         tv2 = hammer_vlsi.TimeValue("42", "m")
         self.assertEqual(tv2.value_in_units("ms"), 42)
 
-    def test_errors(self):
+    def test_errors(self) -> None:
         """
         Test that errors get caught.
         """
@@ -552,6 +552,7 @@ class TimeValueTest(unittest.TestCase):
         self.assertRaises(ValueError, bad_3)
         self.assertRaises(ValueError, bad_4)
         self.assertRaises(ValueError, bad_5)
+
 
 if __name__ == '__main__':
     unittest.main()
