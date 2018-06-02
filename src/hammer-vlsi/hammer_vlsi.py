@@ -13,6 +13,8 @@ from hammer_driver import *
 
 from verilog_utils import *
 
+import units
+
 from utils import *
 
 from cli_driver import CLIDriver
