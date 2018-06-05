@@ -1524,6 +1524,7 @@ class HammerTool(metaclass=ABCMeta):
         output_buffer.append("""puts "{0}" """.format(cmd.replace('"', '\"')))
         output_buffer.append(cmd)
 
+
 class HammerSynthesisTool(HammerTool):
     @abstractmethod
     def fill_outputs(self) -> bool:
@@ -1540,11 +1541,11 @@ class HammerSynthesisTool(HammerTool):
     ### Inputs ###
 
     @property
-    def input_files(self) -> Iterable[str]:
+    def input_files(self) -> List[str]:
         """
-        Get the input collection of source RTL files (e.g. \*.v).
+        Get the input collection of source RTL files (e.g. *.v).
 
-        :return: The input collection of source RTL files (e.g. \*.v).
+        :return: The input collection of source RTL files (e.g. *.v).
         """
         try:
             return self.attr_getter("_input_files", None)
@@ -1552,10 +1553,10 @@ class HammerSynthesisTool(HammerTool):
             raise ValueError("Nothing set for the input collection of source RTL files (e.g. *.v) yet")
 
     @input_files.setter
-    def input_files(self, value: Iterable[str]) -> None:
+    def input_files(self, value: List[str]) -> None:
         """Set the input collection of source RTL files (e.g. *.v)."""
-        if not isinstance(value, Iterable):
-            raise TypeError("input_files must be a Iterable[str]")
+        if not (isinstance(value, List)):
+            raise TypeError("input_files must be a List[str]")
         self.attr_setter("_input_files", value)
 
     @property
@@ -1573,14 +1574,14 @@ class HammerSynthesisTool(HammerTool):
     @top_module.setter
     def top_module(self, value: str) -> None:
         """Set the top-level module."""
-        if not isinstance(value, str):
+        if not (isinstance(value, str)):
             raise TypeError("top_module must be a str")
         self.attr_setter("_top_module", value)
 
     ### Outputs ###
 
     @property
-    def output_files(self) -> Iterable[str]:
+    def output_files(self) -> List[str]:
         """
         Get the output collection of mapped (post-synthesis) RTL files.
 
@@ -1592,10 +1593,10 @@ class HammerSynthesisTool(HammerTool):
             raise ValueError("Nothing set for the output collection of mapped (post-synthesis) RTL files yet")
 
     @output_files.setter
-    def output_files(self, value: Iterable[str]) -> None:
+    def output_files(self, value: List[str]) -> None:
         """Set the output collection of mapped (post-synthesis) RTL files."""
-        if not isinstance(value, Iterable):
-            raise TypeError("output_files must be a Iterable[str]")
+        if not (isinstance(value, List)):
+            raise TypeError("output_files must be a List[str]")
         self.attr_setter("_output_files", value)
 
     @property
@@ -1613,7 +1614,7 @@ class HammerSynthesisTool(HammerTool):
     @output_sdc.setter
     def output_sdc(self, value: str) -> None:
         """Set the (optional) output post-synthesis SDC constraints file."""
-        if not isinstance(value, str):
+        if not (isinstance(value, str)):
             raise TypeError("output_sdc must be a str")
         self.attr_setter("_output_sdc", value)
 
@@ -1632,7 +1633,7 @@ class HammerPlaceAndRouteTool(HammerTool):
     ### Inputs ###
 
     @property
-    def input_files(self) -> Iterable[str]:
+    def input_files(self) -> List[str]:
         """
         Get the input post-synthesis netlist files.
 
@@ -1644,10 +1645,10 @@ class HammerPlaceAndRouteTool(HammerTool):
             raise ValueError("Nothing set for the input post-synthesis netlist files yet")
 
     @input_files.setter
-    def input_files(self, value: Iterable[str]) -> None:
+    def input_files(self, value: List[str]) -> None:
         """Set the input post-synthesis netlist files."""
-        if not (isinstance(value, Iterable)):
-            raise TypeError("input_files must be a Iterable[str]")
+        if not (isinstance(value, List)):
+            raise TypeError("input_files must be a List[str]")
         self.attr_setter("_input_files", value)
 
     @property
