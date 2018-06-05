@@ -7,7 +7,7 @@
 #  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 import copy
-from typing import List, Any, Set, Dict, Tuple
+from typing import List, Any, Set, Dict, Tuple, TypeVar
 
 
 def deepdict(x: dict) -> dict:
@@ -33,7 +33,10 @@ def deeplist(x: list) -> list:
     return copy.deepcopy(x)
 
 
-def add_lists(a: List[str], b: List[str]) -> List[str]:
+_T = TypeVar('_T')
+
+
+def add_lists(a: List[_T], b: List[_T]) -> List[_T]:
     """Helper method: join two lists together while type checking."""
     assert isinstance(a, List)
     assert isinstance(b, List)
