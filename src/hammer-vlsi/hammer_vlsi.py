@@ -8,12 +8,18 @@
 
 # Just import everything that the public hammer_vlsi module should see.
 
+import units
+
 from hammer_vlsi_impl import *
+# Remove imports unwanted in the public package
+from typing import List
+impl_remove = ["TimeValue", "VoltageValue", "TemperatureValue"]  # type: List[str]
+for name in impl_remove:
+    del globals()[name]
+
 from hammer_driver import *
 
 from verilog_utils import *
-
-import units
 
 from utils import *
 
