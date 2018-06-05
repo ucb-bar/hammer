@@ -1049,7 +1049,7 @@ class HammerTool(metaclass=ABCMeta):
         # lib, etc).
         in_place_unique(lib_results)
 
-        lib_results_with_extra_funcs = reduce(lambda arr, extra_func: map(extra_func, arr), extra_funcs, lib_results)
+        lib_results_with_extra_funcs = reduce(lambda arr, extra_func: list(map(extra_func, arr)), extra_funcs, lib_results)
 
         return list(lib_results_with_extra_funcs)
 
@@ -1392,7 +1392,7 @@ class HammerTool(metaclass=ABCMeta):
         return list(reduce(add_lists, after_output_functions, []))
 
     def read_libs(self, library_types: Iterable[LibraryFilter], output_func: Callable[[str, LibraryFilter], List[str]],
-            pre_filters: Iterable[Callable[[hammer_tech.Library],bool]] = [],
+            pre_filters: Optional[List[Callable[[hammer_tech.Library],bool]]] = None,
             must_exist: bool = True) -> List[str]:
         """
         Read the given libraries and return a list of strings according to some output format.
@@ -1400,15 +1400,21 @@ class HammerTool(metaclass=ABCMeta):
         :param library_types: List of libraries to filter, specified as a list of LibraryFilter elements.
         :param output_func: Function which processes the outputs, taking in the filtered lib and the library filter
                             which generated it.
+        :param pre_filters: List of additional filter functions to use to filter the list of libraries.
         :param must_exist: Must each library item actually exist? Default: True (yes, they must exist)
         :return: List of filtered libraries processed according output_func.
         """
-        if pre_filters == []:
-            pre_filters = [self.filter_for_supplies]
+
+        if pre_filters is None:
+            pre_filts = [self.filter_for_supplies]  # type: List[Callable[[hammer_tech.Library], bool]]
+        else:
+            assert isinstance(pre_filters, List)
+            pre_filts = pre_filters
+
         return list(reduce(
             add_lists,
             map(
-                lambda lib: self.process_library_filter(pre_filts=pre_filters, filt=lib, output_func=output_func, must_exist=must_exist),
+                lambda lib: self.process_library_filter(pre_filts=pre_filts, filt=lib, output_func=output_func, must_exist=must_exist),
                 library_types
             )
         ))
