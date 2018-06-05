@@ -28,8 +28,7 @@ from hammer_logging import HammerVLSILoggingContext
 
 from utils import add_lists, in_place_unique, reverse_dict
 
-from units import TimeValue
-
+from units import TimeValue, VoltageValue, TemperatureValue
 
 HammerStepFunction = Callable[['HammerTool'], bool]
 
@@ -309,8 +308,8 @@ class MMMCCornerType(Enum):
 MMMCCorner = NamedTuple('MMMCCorner', [
     ('name', str),
     ('type', MMMCCornerType),
-    ('voltage', float),
-    ('temp', int),
+    ('voltage', VoltageValue),
+    ('temp', TemperatureValue),
 ])
 
 
@@ -1449,8 +1448,8 @@ class HammerTool(metaclass=ABCMeta):
             corn = MMMCCorner(
                 name=str(corner["name"]),
                 type=corner_type,
-                voltage=str(corner["voltage"]),
-                temp=str(corner["temp"]),
+                voltage=VoltageValue(str(corner["voltage"])),
+                temp=TemperatureValue(str(corner["temp"])),
             )
             output.append(corn)
         return output
@@ -1850,12 +1849,12 @@ class CadenceTool(HasSDCSupport, HammerTool):
             sdc_files_arg=sdc_files_arg
         ))
 
-        corners = self.get_mmmc_corners()
+        corners = self.get_mmmc_corners()  # type: List[MMMCCorner]
         # In parallel, create the delay corners
         if corners:
-            setup_corner = corners[0]
-            hold_corner = corners[0]
-            # TODO (colins): handle more than one corner and do something with extra corners
+            setup_corner = corners[0]  # type: MMMCCorner
+            hold_corner = corners[0]  # type: MMMCCorner
+            # TODO(colins): handle more than one corner and do something with extra corners
             for corner in corners:
                 if corner.type is MMMCCornerType.Setup:
                     setup_corner = corner
@@ -1884,12 +1883,12 @@ class CadenceTool(HasSDCSupport, HammerTool):
             # Next, create Innovus rc corners from qrc tech files
             append_mmmc("create_rc_corner -name {name} -temperature {tempInCelsius} {qrc}".format(
                 name="{n}.setup_rc".format(n=setup_corner.name),
-                tempInCelsius=setup_corner.temp.split(" ")[0],
+                tempInCelsius=str(setup_corner.temp.value),
                 qrc="-qrc_tech {}".format(self.get_mmmc_qrc(setup_corner)) if self.get_mmmc_qrc(setup_corner) != '' else ''
             ))
             append_mmmc("create_rc_corner -name {name} -temperature {tempInCelsius} {qrc}".format(
                 name="{n}.hold_rc".format(n=hold_corner.name),
-                tempInCelsius=hold_corner.temp.split(" ")[0],
+                tempInCelsius=str(hold_corner.temp.value),
                 qrc="-qrc_tech {}".format(self.get_mmmc_qrc(hold_corner)) if self.get_mmmc_qrc(hold_corner) != '' else ''
             ))
             # Next, create an Innovus delay corner.
