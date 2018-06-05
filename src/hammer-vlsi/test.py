@@ -520,7 +520,7 @@ class TimeValueTest(unittest.TestCase):
         """
         Test that we can parse and emit time values.
         """
-        tv = hammer_vlsi.TimeValue("1000 ns")
+        tv = hammer_vlsi.units.TimeValue("1000 ns")
         self.assertEqual(tv.str_value_in_units("ns"), "1000 ns")
         self.assertEqual(tv.str_value_in_units("us"), "1 us")
         self.assertEqual(tv.value_in_units("ps"), 1000000.0)
@@ -529,9 +529,9 @@ class TimeValueTest(unittest.TestCase):
         """
         Test that we can parse and emit time values.
         """
-        tv = hammer_vlsi.TimeValue("1000")
+        tv = hammer_vlsi.units.TimeValue("1000")
         self.assertEqual(tv.value_in_units("ns"), 1000)
-        tv2 = hammer_vlsi.TimeValue("42", "m")
+        tv2 = hammer_vlsi.units.TimeValue("42", "m")
         self.assertEqual(tv2.value_in_units("ms"), 42)
 
     def test_errors(self) -> None:
@@ -539,19 +539,19 @@ class TimeValueTest(unittest.TestCase):
         Test that errors get caught.
         """
         def bad_1():
-            hammer_vlsi.TimeValue("bugaboo")
+            hammer_vlsi.units.TimeValue("bugaboo")
 
         def bad_2():
-            hammer_vlsi.TimeValue("1.1.1.1 ps")
+            hammer_vlsi.units.TimeValue("1.1.1.1 ps")
 
         def bad_3():
-            hammer_vlsi.TimeValue("420 xs")
+            hammer_vlsi.units.TimeValue("420 xs")
 
         def bad_4():
-            hammer_vlsi.TimeValue("12 noobs")
+            hammer_vlsi.units.TimeValue("12 noobs")
 
         def bad_5():
-            hammer_vlsi.TimeValue("666......")
+            hammer_vlsi.units.TimeValue("666......")
         self.assertRaises(ValueError, bad_1)
         self.assertRaises(ValueError, bad_2)
         self.assertRaises(ValueError, bad_3)
