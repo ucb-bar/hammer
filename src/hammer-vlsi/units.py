@@ -25,6 +25,7 @@ class ValueWithUnit(ABC):
         'm': 1e-3,  # mili
         'c': 1e-2,  # centi
         'd': 1e-1,  # deci
+        '':  1,    # <no prefix>
         'k': 1e3,  # kilo
         'M': 1e6,  # mega
         'G': 1e9,  # giga
@@ -83,7 +84,12 @@ class ValueWithUnit(ABC):
     def value_in_units(self, prefix: str, round_zeroes: bool = True) -> float:
         """Get this value in the given prefix. e.g. "ns", "mV", etc.
         """
-        retval = self._value * (self._prefix / self._prefix_table[prefix[0]])
+        # e.g. extract "n" from "ns" or blank if it's blank (e.g. "V" -> "")
+        letter_prefix = ""
+        if prefix != self.unit:
+            letter_prefix = prefix[0]
+
+        retval = self._value * (self._prefix / self._prefix_table[letter_prefix])
         if round_zeroes:
             return round(retval, 2)
         else:
@@ -113,3 +119,29 @@ class TimeValue(ValueWithUnit):
     def unit_type(self) -> str:
         return "time"
 
+
+class VoltageValue(ValueWithUnit):
+    """Voltage value - e.g. "0.95 V", "950 mV".
+    """
+
+    @property
+    def unit(self) -> str:
+        return "V"
+
+    @property
+    def unit_type(self) -> str:
+        return "voltage"
+
+
+class TemperatureValue(ValueWithUnit):
+    """Temperature value in Celsius - e.g. "25 C", "125 C".
+    Mainly used for specifying corners for MMMC.
+    """
+
+    @property
+    def unit(self) -> str:
+        return "C"
+
+    @property
+    def unit_type(self) -> str:
+        return "voltage"
