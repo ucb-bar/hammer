@@ -11,7 +11,7 @@ from abc import ABCMeta, abstractmethod
 from enum import Enum
 from numbers import Number
 
-from typing import Callable, Iterable, List, NamedTuple, Tuple, Optional, Dict, Any, Union, Set
+from typing import Callable, Iterable, List, NamedTuple, Tuple, Optional, Dict, Any, Union, Set, cast
 
 from functools import reduce
 
@@ -146,7 +146,7 @@ HammerToolHookAction = NamedTuple('HammerToolHookAction', [
     # Target step to insert before/after or replace
     ('target_name', str),
     # Step to insert/replace
-    ('step', HammerToolStep)
+    ('step', Optional[HammerToolStep])
 ])
 
 import hammer_tech
@@ -673,7 +673,10 @@ class HammerTool(metaclass=ABCMeta):
         for step in new_steps:
             if not isinstance(step, HammerToolStep):
                 raise ValueError("Element in List[HammerToolStep] is not a HammerToolStep")
-            check_hammer_step_function(step.func)
+            else:
+                # Cajole the type checker into accepting that step is a HammerToolStep
+                step = cast(HammerToolStep, step)
+                check_hammer_step_function(step.func)
 
         # Run steps.
         prev_step = None  # type: HammerToolStep
@@ -1741,6 +1744,15 @@ class HasSDCSupport(HammerTool):
                 name=load.name
             ))
         return "\n".join(output)
+
+    @property
+    @abstractmethod
+    def post_synth_sdc(self) -> str:
+        """
+        Get the input post-synthesis SDC constraint file.
+        :return: The input post-synthesis SDC constraint file.
+        """
+        pass
 
 
 class CadenceTool(HasSDCSupport, HammerTool):
