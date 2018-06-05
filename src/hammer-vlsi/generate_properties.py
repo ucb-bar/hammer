@@ -67,11 +67,11 @@ def {var_name}(self, value: {var_type}) -> None:
 def main(args):
     HammerSynthesisTool = Interface(module="HammerSynthesisTool",
         inputs=[
-            InterfaceVar("input_files", "Iterable[str]", "input collection of source RTL files (e.g. *.v)"),
+            InterfaceVar("input_files", "List[str]", "input collection of source RTL files (e.g. *.v)"),
             InterfaceVar("top_module", "str", "top-level module")
         ],
         outputs=[
-            InterfaceVar("output_files", "Iterable[str]", "output collection of mapped (post-synthesis) RTL files"),
+            InterfaceVar("output_files", "List[str]", "output collection of mapped (post-synthesis) RTL files"),
             InterfaceVar("output_sdc", "str", "(optional) output post-synthesis SDC constraints file")
             # TODO: model CAD junk
         ]
@@ -79,7 +79,7 @@ def main(args):
 
     HammerPlaceAndRouteTool = Interface(module="HammerPlaceAndRouteTool",
         inputs=[
-            InterfaceVar("input_files", "Iterable[str]", "input post-synthesis netlist files"),
+            InterfaceVar("input_files", "List[str]", "input post-synthesis netlist files"),
             InterfaceVar("top_module", "str", "top RTL module"),
             InterfaceVar("post_synth_sdc", "str", "input post-synthesis SDC constraint file")
         ],
