@@ -18,8 +18,10 @@ Interface = namedtuple("Interface", 'module inputs outputs')
 def isinstance_check(t: str) -> str:
     return "isinstance(value, {t})".format(t=t)
 
-def generate_from_list(template, lst):
+def generate_from_list(template: str, lst):
     def format_var(var):
+        attr_error_logic = """raise ValueError("Nothing set for the {var_desc} yet")"""
+
         if var.type.startswith("Iterable"):
             var_type_instance_check = isinstance_check("Iterable")
         elif var.type.startswith("List"):
@@ -28,9 +30,14 @@ def generate_from_list(template, lst):
             m = re.search(r"Optional\[(\S+)\]", var.type)
             subtype = str(m.group(1))
             var_type_instance_check = isinstance_check(subtype) + " or (value is None)"
+            attr_error_logic = "return None"
         else:
             var_type_instance_check = isinstance_check(var.type)
-        return template.format(var_name=var.name, var_type=var.type, var_desc=var.desc, var_type_instance_check=var_type_instance_check)
+
+        t = template.replace("[[attr_error_logic]]", attr_error_logic)
+
+        return t.format(var_name=var.name, var_type=var.type, var_desc=var.desc,
+                               var_type_instance_check=var_type_instance_check)
     return map(format_var, lst)
 
 def generate_interface(interface: Interface):
@@ -45,7 +52,7 @@ def {var_name}(self) -> {var_type}:
     try:
         return self.attr_getter("_{var_name}", None)
     except AttributeError:
-        raise ValueError("Nothing set for the {var_desc} yet")
+        [[attr_error_logic]]
 
 @{var_name}.setter
 def {var_name}(self, value: {var_type}) -> None:
