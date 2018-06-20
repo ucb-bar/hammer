@@ -196,11 +196,22 @@ class CLIDriver:
         :return: Custom synthesis_par action
         """
         def syn_par_action(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+            # Synthesis output.
             syn_output = synthesis_action(driver, append_error_func)
-            par_config = HammerDriver.generate_par_inputs_from_synthesis(syn_output)
-            driver.update_project_configs([par_config])
+
+            # Generate place-and-route input from the synthesis output.
+            par_input = HammerDriver.generate_par_inputs_from_synthesis(syn_output)  # type: dict
+
+            # Dump both synthesis output and par input for debugging/resuming.
+            # TODO(edwardw): make these output filenames configurable?
+            dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output.json"), syn_output)
+            dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "par-input.json"), par_input)
+
+            # Use new par input and run place-and-route.
+            driver.update_project_configs([par_input])
             par_output = par_action(driver, append_error_func)
             return par_output
+
         return syn_par_action
 
     ### Hierarchical stuff ###
