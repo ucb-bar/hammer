@@ -1671,22 +1671,22 @@ class HammerPlaceAndRouteTool(HammerTool):
         self.attr_setter("_top_module", value)
 
     @property
-    def post_synth_sdc(self) -> str:
+    def post_synth_sdc(self) -> Optional[str]:
         """
-        Get the input post-synthesis SDC constraint file.
+        Get the (optional) input post-synthesis SDC constraint file.
 
-        :return: The input post-synthesis SDC constraint file.
+        :return: The (optional) input post-synthesis SDC constraint file.
         """
         try:
             return self.attr_getter("_post_synth_sdc", None)
         except AttributeError:
-            raise ValueError("Nothing set for the input post-synthesis SDC constraint file yet")
+            return None
 
     @post_synth_sdc.setter
-    def post_synth_sdc(self, value: str) -> None:
-        """Set the input post-synthesis SDC constraint file."""
-        if not (isinstance(value, str)):
-            raise TypeError("post_synth_sdc must be a str")
+    def post_synth_sdc(self, value: Optional[str]) -> None:
+        """Set the (optional) input post-synthesis SDC constraint file."""
+        if not (isinstance(value, str) or (value is None)):
+            raise TypeError("post_synth_sdc must be a Optional[str]")
         self.attr_setter("_post_synth_sdc", value)
 
     ### Outputs ###
@@ -1754,10 +1754,11 @@ class HasSDCSupport(HammerTool):
 
     @property
     @abstractmethod
-    def post_synth_sdc(self) -> str:
+    def post_synth_sdc(self) -> Optional[str]:
         """
-        Get the input post-synthesis SDC constraint file.
-        :return: The input post-synthesis SDC constraint file.
+        Get the (optional) input post-synthesis SDC constraint file.
+
+        :return: The (optional) input post-synthesis SDC constraint file.
         """
         pass
 
@@ -1845,15 +1846,18 @@ class CadenceTool(HasSDCSupport, HammerTool):
         with open(clock_constraints_fragment, "w") as f:
             f.write(self.sdc_clock_constraints)
         sdc_files.append(clock_constraints_fragment)
+
         # Generate port constraints.
         pin_constraints_fragment = os.path.join(self.run_dir, "pin_constraints_fragment.sdc")
         with open(pin_constraints_fragment, "w") as f:
             f.write(self.sdc_pin_constraints)
         sdc_files.append(pin_constraints_fragment)
+
         # Add the post-synthesis SDC, if present.
-        if hasattr(self, 'post_synth_sdc'):
-            if self.post_synth_sdc != "":
-                sdc_files.append(self.post_synth_sdc)
+        post_synth_sdc = self.post_synth_sdc
+        if post_synth_sdc is not None:
+            sdc_files.append(post_synth_sdc)
+
         # TODO: add floorplanning SDC
         if len(sdc_files) > 0:
             sdc_files_arg = "-sdc_files [list {sdc_files}]".format(
