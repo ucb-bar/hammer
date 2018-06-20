@@ -26,7 +26,7 @@ import sys
 import hammer_config
 from hammer_logging import HammerVLSILoggingContext
 
-from utils import add_lists, in_place_unique, reverse_dict
+from utils import add_lists, in_place_unique, reverse_dict, deepdict
 
 from units import TimeValue, VoltageValue, TemperatureValue
 
@@ -1531,7 +1531,7 @@ class HammerSynthesisTool(HammerTool):
         pass
 
     def export_config_outputs(self) -> Dict[str, Any]:
-        outputs = dict(super().export_config_outputs())
+        outputs = deepdict(super().export_config_outputs())
         outputs["synthesis.outputs.output_files"] = self.output_files
         outputs["synthesis.inputs.input_files"] = self.input_files
         outputs["synthesis.inputs.top_module"] = self.top_module
@@ -1625,7 +1625,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         pass
 
     def export_config_outputs(self) -> Dict[str, Any]:
-        outputs = dict(super().export_config_outputs())
+        outputs = deepdict(super().export_config_outputs())
         outputs["par.outputs.output_ilms"] = list(map(lambda s: s.to_setting(), self.output_ilms))
         return outputs
 
@@ -1786,7 +1786,7 @@ class CadenceTool(HasSDCSupport, HammerTool):
         }
 
         def update_dict(old: dict, new: dict) -> dict:
-            tmp = dict(old)
+            tmp = deepdict(old)
             tmp.update(new)
             return tmp
 
