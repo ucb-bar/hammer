@@ -521,10 +521,11 @@ class CLIDriver:
             print(output_json)
             return 0
 
-    def main(self) -> None:
+    def main(self, args: Optional[List[str]] = None) -> None:
         """
         Main function to call from your entry point script.
         Parses command line arguments.
+        :param args: Custom command-line arguments.  If not given, sys.argv[1:] will be used.
         Example:
         >>> if __name__ == '__main__':
         >>>   CLIDriver().main()
@@ -581,4 +582,4 @@ class CLIDriver:
                   file=sys.stderr)
             sys.exit(1)
 
-        sys.exit(self.run_main_parsed(vars(parser.parse_args())))
+        sys.exit(self.run_main_parsed(vars(parser.parse_args(args))))
