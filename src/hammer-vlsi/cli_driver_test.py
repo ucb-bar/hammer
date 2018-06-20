@@ -40,7 +40,7 @@ class CLIDriverTest(unittest.TestCase):
             f.write(json.dumps(config, indent=4))
 
         # Check that running the CLIDriver executes successfully (code 0).
-        with self.assertRaises(SystemExit) as cm:
+        with self.assertRaises(SystemExit) as cm:  # type: ignore
             CLIDriver().main(args=[
                 "syn-par", # action
                 "-p", config_path,

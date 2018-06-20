@@ -5,6 +5,8 @@
 #
 #  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
+from typing import Dict, Tuple, List
+
 from utils import topological_sort
 
 import unittest
@@ -26,7 +28,7 @@ class UtilsTest(unittest.TestCase):
             "6": ([], ["3"]),
             "7": (["8"], ["4"]),
             "8": ([], ["7", "5"])
-        }
+        }  # type: Dict[str, Tuple[List[str], List[str]]]
 
         self.assertEqual(topological_sort(graph, ["1", "2", "3"]), ["1", "2", "3", "4", "6", "7", "5", "8"])
 
