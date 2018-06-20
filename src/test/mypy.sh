@@ -8,6 +8,8 @@ mypy ../hammer-shell/get-config
 
 # Testing code
 mypy ../hammer-vlsi/test.py
+mypy ../hammer-vlsi/utils_test.py
+mypy ../hammer-vlsi/verilog_utils_test.py
 mypy ../hammer_config_test/test.py 
 
 # Plugins
