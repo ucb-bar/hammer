@@ -47,6 +47,16 @@ def get_nonempty_str(arg: Any) -> Optional[str]:
     return None
 
 
+def dump_config_to_json_file(output_path: str, config: dict) -> None:
+    """
+    Helper function to dump the given config to the given output path while overwriting it if it already exists.
+    :param output_path: Output path (e.g. "obj/output.log")
+    :param config: Config dictionary to dump
+    """
+    with open(output_path, "w") as f:
+        f.write(json.dumps(config, indent=4))
+
+
 # Type signature of a CLIDriver action.
 CLIActionType = Callable[[HammerDriver, Callable[[str], None]], Optional[dict]]
 
