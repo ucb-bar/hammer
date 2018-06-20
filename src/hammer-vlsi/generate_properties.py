@@ -88,7 +88,7 @@ def main(args):
         inputs=[
             InterfaceVar("input_files", "List[str]", "input post-synthesis netlist files"),
             InterfaceVar("top_module", "str", "top RTL module"),
-            InterfaceVar("post_synth_sdc", "str", "input post-synthesis SDC constraint file")
+            InterfaceVar("post_synth_sdc", "Optional[str]", "(optional) input post-synthesis SDC constraint file")
         ],
         outputs=[
             # TODO: model more CAD junk
