@@ -131,11 +131,17 @@ vlsi.inputs:
   # - "toplevel" (top-level chip dimensions; may only occur once, for the top-level module)
   # - "hardmacro" (places this hard macro at a particular spot)
   # - "hierarchical" (marks this instance as part of hierarchical place and route)
+  # - "obstruction" (creates a blockage at a particular spot see obs_type)
   # TODO(edwardw): add rotation
   # x (float) - x coordinate in um
   # y (float) - y coordinate in um
   # width (float) - width in um
   # height (float) - height in um
+  # layers (str) - String that enumerates layer(s) blocked by the obstruction
+  # obs_type (List[str]) - A list of one or more of the following:
+  # - "place" - This obstruction type stops the placement of standard cells inside it
+  # - "route" - This obstruction type stops all routing inside it
+  # - "power" - This obstruction type stops only power routing/straps inside it
   placement_constraints: []
 
 # Specific inputs for the synthesis tool.
