@@ -198,6 +198,7 @@ class PlacementConstraintType(Enum):
     TopLevel = 3
     HardMacro = 4
     Hierarchical = 5
+    Obstruction = 6
 
     @classmethod
     def __mapping(cls) -> Dict[str, "PlacementConstraintType"]:
@@ -206,7 +207,8 @@ class PlacementConstraintType(Enum):
             "placement": PlacementConstraintType.Placement,
             "toplevel": PlacementConstraintType.TopLevel,
             "hardmacro": PlacementConstraintType.HardMacro,
-            "hierarchical": PlacementConstraintType.Hierarchical
+            "hierarchical": PlacementConstraintType.Hierarchical,
+            "obstruction": PlacementConstraintType.Obstruction
         }
 
     @staticmethod
@@ -218,6 +220,28 @@ class PlacementConstraintType(Enum):
 
     def __str__(self) -> str:
         return reverse_dict(PlacementConstraintType.__mapping())[self]
+
+    class ObstructionType(Enum):
+        Place = 1
+        Route = 2
+        Power = 3
+
+        @classmethod
+        def __mapping(cls) -> Dict[str, "PlacementConstraintType.ObstructionType"]:
+            return {
+                "place": PlacementConstraintType.ObstructionType.Place,
+                "route": PlacementConstraintType.ObstructionType.Route,
+                "power": PlacementConstraintType.ObstructionType.Power
+            }
+
+        @staticmethod
+        def from_str(x: str) -> "PlacementConstraintType.ObstructionType":
+            try:
+                return PlacementConstraintType.ObstructionType.__mapping()[x]
+            except KeyError:
+                raise ValueError("Invalid obstruction type: " + str(x))
+        def __str__(self) -> str:
+            return reverse_dict(PlacementConstraintType.ObstructionType.__mapping())[self]
 
 
 # For the top-level chip size constraint, set the margin from core area to left/bottom/right/top.
@@ -237,7 +261,9 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
     ('width', float),
     ('height', float),
     ('orientation', Optional[str]),
-    ('margins', Optional[Margins])
+    ('margins', Optional[Margins]),
+    ('layers', Optional[str]),
+    ('obs_types', Optional[List[PlacementConstraintType.ObstructionType]])
 ])):
     __slots__ = ()
 
@@ -246,6 +272,8 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         constraint_type = PlacementConstraintType.from_str(str(constraint["type"]))
         margins = None  # type: Optional[Margins]
         orientation = None  # type: Optional[str]
+        layers = None  # type: Optional[str]
+        obs_types = None  # type: Optional[List[PlacementConstraintType.ObstructionType]]
         if constraint_type == PlacementConstraintType.TopLevel:
             margins_dict = constraint["margins"]
             margins = Margins(
@@ -256,6 +284,13 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             )
         if "orientation" in constraint:
             orientation = str(constraint["orientation"])
+        if "layers" in constraint:
+            layers = str(constraint["layers"])
+        if "obs_types" in constraint:
+            obs_types = []
+            types = constraint["obs_types"]
+            for t in types:
+                obs_types.append(PlacementConstraintType.ObstructionType.from_str(str(t)))
         return PlacementConstraint(
             path=str(constraint["path"]),
             type=constraint_type,
@@ -264,7 +299,9 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             width=float(constraint["width"]),
             height=float(constraint["height"]),
             orientation=orientation,
-            margins=margins
+            margins=margins,
+            layers=layers,
+            obs_types=obs_types
         )
 
     def to_dict(self) -> dict:
@@ -285,6 +322,10 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
                 "right": self.margins.right,
                 "top": self.margins.top
             }})
+        if self.layers is not None:
+            output.update({"layers": self.layers})
+        if self.obs_types is not None:
+            output.update({"obs_types": list(map(str, self.obs_types))})
         return output
 
 
