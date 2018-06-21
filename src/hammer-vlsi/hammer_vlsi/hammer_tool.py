@@ -956,6 +956,22 @@ class HammerTool(metaclass=ABCMeta):
             output.append(load)
         return output
 
+    def get_delay_constraints(self) -> List[DelayConstraint]:
+        """
+        Get a list of input and output delay constraints as specified in the config.
+        """
+        delays = self.get_setting("vlsi.inputs.delays")  # type: list
+        output = []  # type: List[DelayConstraint]
+        for delay_src in delays:
+            delay = DelayConstraint(
+                name=str(delay_src["name"]),
+                clock=str(delay_src["clock"]),
+                direction=str(delay_src["direction"]),
+                delay=TimeValue(delay_src["delay"])
+            )
+            output.append(delay)
+        return output
+
     @staticmethod
     def append_contents_to_path(content_to_append: str, target_path: str) -> None:
         """

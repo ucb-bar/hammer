@@ -14,9 +14,9 @@ from typing import Dict, NamedTuple, Optional, List, Any
 from hammer_utils import reverse_dict
 from .units import TimeValue, VoltageValue, TemperatureValue
 
-__all__ = ['ILMStruct', 'ClockPort', 'OutputLoadConstraint', 'ObstructionType',
-           'PlacementConstraintType', 'Margins', 'PlacementConstraint',
-           'MMMCCornerType', 'MMMCCorner']
+__all__ = ['ILMStruct', 'ClockPort', 'OutputLoadConstraint',
+           'DelayConstraint', 'ObstructionType', 'PlacementConstraintType',
+           'Margins', 'PlacementConstraint', 'MMMCCornerType', 'MMMCCorner']
 
 
 # Struct that holds various paths related to ILMs.
@@ -56,9 +56,18 @@ ClockPort = NamedTuple('ClockPort', [
     ('divisor', Optional[int])
 ])
 
+
 OutputLoadConstraint = NamedTuple('OutputLoadConstraint', [
     ('name', str),
     ('load', float)
+])
+
+
+DelayConstraint = NamedTuple('DelayConstraint', [
+    ('name', str),
+    ('clock', str),
+    ('direction', str),
+    ('delay', TimeValue)
 ])
 
 

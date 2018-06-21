@@ -814,6 +814,15 @@ class HasSDCSupport(HammerTool):
                 load=load.load,
                 name=load.name
             ))
+
+        # Also specify delays for specific pins.
+        for delay in self.get_delay_constraints():
+            output.append("set_{direction}_delay {delay} -clock {clock} [get_port \"{name}\"]".format(
+                delay=delay.delay.value_in_units("ns"),
+                clock=delay.clock,
+                direction=delay.direction,
+                name=delay.name
+            ))
         return "\n".join(output)
 
     @property
