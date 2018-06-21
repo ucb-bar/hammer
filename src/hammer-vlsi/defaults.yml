@@ -137,8 +137,9 @@ vlsi.inputs:
   # y (float) - y coordinate in um
   # width (float) - width in um
   # height (float) - height in um
-  # layers (str) - String that enumerates layer(s) blocked by the obstruction
-  # obs_type (List[str]) - A list of one or more of the following:
+  # layers (List[str]) - Optional: only used for obstruction type. 
+  #   If specified, a list of strings that enumerates layer(s) blocked by the obstruction otherwise all layers are blocked
+  # obs_type (List[str]) - Required for obstruction type. A list of one or more of the following:
   # - "place" - This obstruction type stops the placement of standard cells inside it
   # - "route" - This obstruction type stops all routing inside it
   # - "power" - This obstruction type stops only power routing/straps inside it
