@@ -183,7 +183,10 @@ ClockPort = NamedTuple('ClockPort', [
     ('name', str),
     ('period', TimeValue),
     ('port', Optional[str]),
-    ('uncertainty', Optional[TimeValue])
+    ('uncertainty', Optional[TimeValue]),
+    ('generated', Optional[bool]),
+    ('source_port', Optional[str]),
+    ('divisor', Optional[int])
 ])
 
 OutputLoadConstraint = NamedTuple('OutputLoadConstraint', [
@@ -1472,12 +1475,17 @@ class HammerTool(metaclass=ABCMeta):
         for clock_port in clocks:
             clock = ClockPort(
                 name=clock_port["name"], period=TimeValue(clock_port["period"]),
-                uncertainty=None, port=None
+                uncertainty=None, port=None, generated=None, source_port=None, divisor=None
             )
             if "port" in clock_port:
                 clock = clock._replace(port=clock_port["port"])
             if "uncertainty" in clock_port:
                 clock = clock._replace(uncertainty=TimeValue(clock_port["uncertainty"]))
+            if "generated" in clock_port:
+                clock = clock._replace(generated=clock_port["generated"],
+                        source_port=clock_port["source_port"],
+                        divisor=int(clock_port["divisor"])
+                        )
             output.append(clock)
         return output
 
@@ -1765,7 +1773,10 @@ class HasSDCSupport(HammerTool):
         clocks = self.get_clock_ports()
         for clock in clocks:
             # TODO: FIXME This assumes that library units are always in ns!!!
-            if clock.port is not None:
+            if clock.generated is not None:
+                output.append("create_generated_clock -name {n} -source {m_port} -divide_by {div} {port}".
+                        format(n=clock.name, m_port=clock.source_port, div=clock.divisor, port=clock.port))
+            elif clock.port is not None:
                 output.append("create_clock {0} -name {1} -period {2}".format(clock.port, clock.name, clock.period.value_in_units("ns")))
             else:
                 output.append("create_clock {0} -name {0} -period {1}".format(clock.name, clock.period.value_in_units("ns")))

@@ -110,6 +110,9 @@ vlsi.inputs:
   # period (TimeValue) - Clock port period. e.g. "1 ns", "5ns". Default units: ns
   # port (str) - Optional. If specified, this is the RTL path to the clock. Otherwise, the path is the same as the name.
   # uncertainty (TimeValue) - Optional. Clock uncertainty. e.g. "1 ns", "5ns". Default units: ns
+  # generated (bool) - Optional. If specified this clock is generated from another clock, must specify source_port and divisor
+  # source_port (str) - Required if generated. The port of the clock that this clock is generated from.
+  # divisor (int) - Required if generated. The amount this generated clock is slowed from the source clock e.g. 2 => this clock will be two times slower than the source clock.
   clocks: []
 
   # Default output pin load capacitance.
