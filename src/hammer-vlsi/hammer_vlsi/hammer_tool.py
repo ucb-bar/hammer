@@ -831,12 +831,17 @@ class HammerTool(metaclass=ABCMeta):
         for clock_port in clocks:
             clock = ClockPort(
                 name=clock_port["name"], period=TimeValue(clock_port["period"]),
-                uncertainty=None, port=None
+                uncertainty=None, path=None, generated=None, source_path=None, divisor=None
             )
-            if "port" in clock_port:
-                clock = clock._replace(port=clock_port["port"])
+            if "path" in clock_port:
+                clock = clock._replace(path=clock_port["path"])
             if "uncertainty" in clock_port:
                 clock = clock._replace(uncertainty=TimeValue(clock_port["uncertainty"]))
+            if "generated" in clock_port:
+                clock = clock._replace(generated=clock_port["generated"],
+                        source_path=clock_port["source_path"],
+                        divisor=int(clock_port["divisor"])
+                        )
             output.append(clock)
         return output
 

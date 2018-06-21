@@ -49,8 +49,11 @@ class ILMStruct(NamedTuple('ILMStruct', [
 ClockPort = NamedTuple('ClockPort', [
     ('name', str),
     ('period', TimeValue),
-    ('port', Optional[str]),
-    ('uncertainty', Optional[TimeValue])
+    ('path', Optional[str]),
+    ('uncertainty', Optional[TimeValue]),
+    ('generated', Optional[bool]),
+    ('source_path', Optional[str]),
+    ('divisor', Optional[int])
 ])
 
 OutputLoadConstraint = NamedTuple('OutputLoadConstraint', [
