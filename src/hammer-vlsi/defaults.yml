@@ -159,6 +159,7 @@ vlsi.inputs:
   mmmc_corners: []
 
   # Clock ports of the top-level module.
+  # TODO: support multiply_by in generated clocks
   # Clock struct members:
   # name (str) - Name of the clock port.
   # period (TimeValue) - Clock port period. e.g. "1 ns", "5ns". Default units: ns
@@ -167,6 +168,7 @@ vlsi.inputs:
   # generated (bool) - Optional. If specified this clock is generated from another clock, must specify source_path and divisor
   # source_path (str) - Required if generated. The path of the clock that this clock is generated from.
   # divisor (int) - Required if generated. The amount this generated clock is slowed from the source clock e.g. 2 => this clock will be two times slower than the source clock.
+  #   We are constrained to integers by SDC.
   clocks: []
 
   # Default output pin load capacitance.
