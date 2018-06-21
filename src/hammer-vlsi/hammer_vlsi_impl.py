@@ -191,6 +191,12 @@ OutputLoadConstraint = NamedTuple('OutputLoadConstraint', [
     ('load', float)
 ])
 
+DelayConstraint = NamedTuple('DelayConstraint', [
+    ('name', str),
+    ('clock', str),
+    ('direction', str),
+    ('delay', TimeValue)
+])
 
 class PlacementConstraintType(Enum):
     Dummy = 1
@@ -1528,6 +1534,22 @@ class HammerTool(metaclass=ABCMeta):
             output.append(load)
         return output
 
+    def get_delay_constraints(self) -> List[DelayConstraint]:
+        """
+        Get a list of input and output delay constraints as specified in the config.
+        """
+        delays = self.get_setting("vlsi.inputs.delays")
+        output = []  # type: List[DelayConstraint]
+        for delay_src in delays:
+            delay = DelayConstraint(
+                name=str(delay_src["name"]),
+                clock=str(delay_src["clock"]),
+                direction=str(delay_src["direction"]),
+                delay=TimeValue(delay_src["delay"])
+            )
+            output.append(delay)
+        return output
+
     @staticmethod
     def append_contents_to_path(content_to_append: str, target_path: str) -> None:
         """
@@ -1792,6 +1814,15 @@ class HasSDCSupport(HammerTool):
             output.append("set_load {load} [get_port \"{name}\"]".format(
                 load=load.load,
                 name=load.name
+            ))
+
+        # Also specify delays for specific pins.
+        for delay in self.get_delay_constraints():
+            output.append("set_{direction}_delay {delay} -clock {clock} [get_port \"{name}\"]".format(
+                delay=delay.delay.value_in_units("ns"),
+                clock=delay.clock,
+                direction=delay.direction,
+                name=delay.name
             ))
         return "\n".join(output)
 

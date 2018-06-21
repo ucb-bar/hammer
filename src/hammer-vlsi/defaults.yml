@@ -122,6 +122,18 @@ vlsi.inputs:
   # load (float) - Output load capacitance in pF.
   output_loads: []
 
+  # List of delay constraints.
+  # These either constrain inputs to arrive after a certain delay relative to the clock or
+  # constrain outputs to arrive a certain delay before the clock edge
+  # Each item in the list should be a struct with the following members:
+  # name (str) - Name of the I/O being delayed
+  # delay (TimeValue) - Delay applied to the I/O
+  # clock (str) - Name of the clock that this delay is based on
+  # direction (str) - Gives the direction of the I/O should be one of
+  # - "input"
+  # - "output"
+  delays: []
+
   # List of placement constraints.
   # Each item is a struct member:
   # path (str) - Path to the given instance
