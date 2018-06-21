@@ -262,7 +262,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
     ('height', float),
     ('orientation', Optional[str]),
     ('margins', Optional[Margins]),
-    ('layers', Optional[str]),
+    ('layers', Optional[List[str]]),
     ('obs_types', Optional[List[PlacementConstraintType.ObstructionType]])
 ])):
     __slots__ = ()
@@ -272,7 +272,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         constraint_type = PlacementConstraintType.from_str(str(constraint["type"]))
         margins = None  # type: Optional[Margins]
         orientation = None  # type: Optional[str]
-        layers = None  # type: Optional[str]
+        layers = None  # type: Optional[List[str]]
         obs_types = None  # type: Optional[List[PlacementConstraintType.ObstructionType]]
         if constraint_type == PlacementConstraintType.TopLevel:
             margins_dict = constraint["margins"]
@@ -285,7 +285,9 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         if "orientation" in constraint:
             orientation = str(constraint["orientation"])
         if "layers" in constraint:
-            layers = str(constraint["layers"])
+            layers = []
+            for l in constraint["layers"]:
+                layers.append(str(l))
         if "obs_types" in constraint:
             obs_types = []
             types = constraint["obs_types"]
