@@ -192,6 +192,30 @@ OutputLoadConstraint = NamedTuple('OutputLoadConstraint', [
 ])
 
 
+class ObstructionType(Enum):
+    Place = 1
+    Route = 2
+    Power = 3
+
+    @classmethod
+    def __mapping(cls) -> Dict[str, "ObstructionType"]:
+        return {
+            "place": ObstructionType.Place,
+            "route": ObstructionType.Route,
+            "power": ObstructionType.Power
+        }
+
+    @staticmethod
+    def from_str(x: str) -> "ObstructionType":
+        try:
+            return ObstructionType.__mapping()[x]
+        except KeyError:
+            raise ValueError("Invalid obstruction type: " + str(x))
+
+    def __str__(self) -> str:
+        return reverse_dict(ObstructionType.__mapping())[self]
+
+
 class PlacementConstraintType(Enum):
     Dummy = 1
     Placement = 2
@@ -221,28 +245,6 @@ class PlacementConstraintType(Enum):
     def __str__(self) -> str:
         return reverse_dict(PlacementConstraintType.__mapping())[self]
 
-    class ObstructionType(Enum):
-        Place = 1
-        Route = 2
-        Power = 3
-
-        @classmethod
-        def __mapping(cls) -> Dict[str, "PlacementConstraintType.ObstructionType"]:
-            return {
-                "place": PlacementConstraintType.ObstructionType.Place,
-                "route": PlacementConstraintType.ObstructionType.Route,
-                "power": PlacementConstraintType.ObstructionType.Power
-            }
-
-        @staticmethod
-        def from_str(x: str) -> "PlacementConstraintType.ObstructionType":
-            try:
-                return PlacementConstraintType.ObstructionType.__mapping()[x]
-            except KeyError:
-                raise ValueError("Invalid obstruction type: " + str(x))
-        def __str__(self) -> str:
-            return reverse_dict(PlacementConstraintType.ObstructionType.__mapping())[self]
-
 
 # For the top-level chip size constraint, set the margin from core area to left/bottom/right/top.
 Margins = NamedTuple('Margins', [
@@ -263,7 +265,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
     ('orientation', Optional[str]),
     ('margins', Optional[Margins]),
     ('layers', Optional[List[str]]),
-    ('obs_types', Optional[List[PlacementConstraintType.ObstructionType]])
+    ('obs_types', Optional[List[ObstructionType]])
 ])):
     __slots__ = ()
 
@@ -273,7 +275,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         margins = None  # type: Optional[Margins]
         orientation = None  # type: Optional[str]
         layers = None  # type: Optional[List[str]]
-        obs_types = None  # type: Optional[List[PlacementConstraintType.ObstructionType]]
+        obs_types = None  # type: Optional[List[ObstructionType]]
         if constraint_type == PlacementConstraintType.TopLevel:
             margins_dict = constraint["margins"]
             margins = Margins(
@@ -292,7 +294,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             obs_types = []
             types = constraint["obs_types"]
             for t in types:
-                obs_types.append(PlacementConstraintType.ObstructionType.from_str(str(t)))
+                obs_types.append(ObstructionType.from_str(str(t)))
         return PlacementConstraint(
             path=str(constraint["path"]),
             type=constraint_type,
