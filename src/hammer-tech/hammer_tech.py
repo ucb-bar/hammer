@@ -3,7 +3,7 @@
 #
 #  Python interface to the hammer technology abstraction.
 #
-#  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+#  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 import json
 import os
@@ -14,7 +14,7 @@ import hammer_config
 
 from hammer_logging import HammerVLSILoggingContext
 
-import python_jsonschema_objects # type: ignore
+import python_jsonschema_objects  # type: ignore
 
 builder = python_jsonschema_objects.ObjectBuilder(json.loads(open(os.path.dirname(__file__) + "/schema.json").read()))
 ns = builder.build_classes()
@@ -22,6 +22,7 @@ ns = builder.build_classes()
 # Pull definitions from the autoconstructed classes.
 TechJSON = ns.Techjson
 Library = ns.Library
+
 
 class HammerTechnology:
     # Properties.
@@ -40,7 +41,7 @@ class HammerTechnology:
     @cache_dir.setter
     def cache_dir(self, value: str) -> None:
         """Set the directory as a persistent cache dir for this library."""
-        self._cachedir = value # type: str
+        self._cachedir = value  # type: str
         # Ensure the cache_dir exists.
         os.makedirs(value, exist_ok=True)
 
@@ -57,19 +58,19 @@ class HammerTechnology:
     @logger.setter
     def logger(self, value: HammerVLSILoggingContext) -> None:
         """Set the logger for this tool."""
-        self._logger = value # type: HammerVLSILoggingContext
+        self._logger = value  # type: HammerVLSILoggingContext
 
     # Methods.
     def __init__(self):
         """Don't call this directly. Use other constructors like load_from_dir()."""
         # Name of the technology
-        self.name = "" # type: str
+        self.name = ""  # type: str
 
         # Path to the technology folder
-        self.path = "" # type: str
+        self.path = ""  # type: str
 
         # Configuration
-        self.config = None # type: TechJSON
+        self.config = None  # type: TechJSON
 
     @classmethod
     def load_from_dir(cls, technology_name: str, path: str):
@@ -95,7 +96,7 @@ class HammerTechnology:
 
     def set_database(self, database: hammer_config.HammerDatabase) -> None:
         """Set the settings database for use by the tool."""
-        self._database = database # type: hammer_config.HammerDatabase
+        self._database = database  # type: hammer_config.HammerDatabase
 
     def get_setting(self, key: str):
         """Get a particular setting from the database.
@@ -191,6 +192,6 @@ class HammerTechnology:
                 continue
             else:
                 # Else, extract the tarballs.
-                os.makedirs(target_path, exist_ok=True) # Make sure it exists or tar will not be happy.
+                os.makedirs(target_path, exist_ok=True)  # Make sure it exists or tar will not be happy.
                 subprocess.check_call("tar -xf %s -C %s" % (tarball_path, target_path), shell=True)
                 subprocess.check_call("chmod u+rwX -R %s" % (target_path), shell=True)
