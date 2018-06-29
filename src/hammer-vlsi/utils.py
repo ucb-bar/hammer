@@ -7,7 +7,7 @@
 #  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 import copy
-from typing import List, Any, Set, Dict, Tuple, TypeVar
+from typing import List, Any, Set, Dict, Tuple, TypeVar, Optional
 
 
 def deepdict(x: dict) -> dict:
@@ -88,6 +88,19 @@ def in_place_unique(items: List[Any]) -> None:
         else:
             seen.add(item)
             i += 1
+
+
+def get_or_else(opt: Optional[_T], elseval: _T) -> _T:
+    """
+    Get the value in opt else return an alternative value if opt is None.
+    :param opt: An optional object which could be None.
+    :param elseval: Alternative value to return if the object is None.
+    :return: The optional object if it exists or the alternative value.
+    """
+    if opt is None:
+        return elseval
+    else:
+        return opt
 
 
 def topological_sort(graph: Dict[str, Tuple[List[str], List[str]]], starting_nodes: List[str]) -> List[str]:
