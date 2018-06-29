@@ -167,6 +167,9 @@ class CLIDriver:
                     return None
                 else:
                     post_load_func_checked(driver)
+                # Re-populate rundir if none was specified.
+                if self.syn_rundir is None:
+                    self.syn_rundir = driver.syn_tool.run_dir
                 success, output = driver.run_synthesis(extra_hooks)
                 post_run_func_checked(driver)
             elif action_type == "par":
@@ -174,6 +177,9 @@ class CLIDriver:
                     return None
                 else:
                     post_load_func_checked(driver)
+                # Re-populate rundir if none was specified.
+                if self.par_rundir is None:
+                    self.par_rundir = driver.par_tool.run_dir
                 success, output = driver.run_par(extra_hooks)
                 post_run_func_checked(driver)
             else:
@@ -448,9 +454,11 @@ class CLIDriver:
                     d.update_project_configs(deeplist(base_project_config[0]))
 
                 def syn_post_run(d: HammerDriver) -> None:
+                    assert self.syn_rundir is not None
                     post_run(d, self.syn_rundir)
 
                 def par_post_run(d: HammerDriver) -> None:
+                    assert self.par_rundir is not None
                     post_run(d, self.par_rundir)
 
                 syn_action = self.create_synthesis_action(self.get_extra_hierarchical_synthesis_hooks().get(module, []),
