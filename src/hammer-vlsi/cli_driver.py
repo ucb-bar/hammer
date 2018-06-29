@@ -473,7 +473,7 @@ class CLIDriver:
                 output = {}  # type: dict
                 for module, _ in hierarchical_settings:
                     syn_par_action = self.get_hierarchical_synthesis_par_action(module)
-                    new_output = syn_par_action(driver, append_error_func)
+                    new_output = get_or_else(syn_par_action(driver, append_error_func), dict())
 
                     log.info("Hierarchical syn-par run for module {module} finished".format(module=module))
                     b, ext = os.path.splitext(args["output"])
