@@ -19,7 +19,7 @@ from hammer_driver import HammerDriver, HammerDriverOptions
 
 from typing import List, Dict, Tuple, Any, Iterable, Callable, Optional, Set
 
-from utils import deepdict, add_lists, add_dicts, topological_sort, deeplist
+from utils import deepdict, add_lists, add_dicts, topological_sort, deeplist, get_or_else
 
 
 def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callable[[str], None]) -> List[str]:
@@ -163,14 +163,14 @@ class CLIDriver:
 
             # If the driver didn't successfully load, return None.
             if action_type == "synthesis" or action_type == "syn":
-                if not driver.load_synthesis_tool(self.syn_rundir if self.syn_rundir is not None else ""):
+                if not driver.load_synthesis_tool(get_or_else(self.syn_rundir, "")):
                     return None
                 else:
                     post_load_func_checked(driver)
                 success, output = driver.run_synthesis(extra_hooks)
                 post_run_func_checked(driver)
             elif action_type == "par":
-                if not driver.load_par_tool(self.par_rundir if self.par_rundir is not None else ""):
+                if not driver.load_par_tool(get_or_else(self.par_rundir, "")):
                     return None
                 else:
                     post_load_func_checked(driver)
@@ -197,7 +197,7 @@ class CLIDriver:
         """
         def syn_par_action(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
             # Synthesis output.
-            syn_output = synthesis_action(driver, append_error_func)
+            syn_output = get_or_else(synthesis_action(driver, append_error_func), dict())
 
             # Generate place-and-route input from the synthesis output.
             par_input = HammerDriver.generate_par_inputs_from_synthesis(syn_output)  # type: dict
