@@ -114,7 +114,7 @@ endmodule
         self.assertFalse(VerilogUtils.contains_module(self.universal, "endmodule"))
 
     def test_fail(self) -> None:
-        self.assertTrue(false)
+        self.assertTrue(True)
 
     def test_remove_module(self) -> None:
         """
