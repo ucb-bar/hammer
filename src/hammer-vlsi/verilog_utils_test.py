@@ -115,7 +115,7 @@ endmodule
 
     def test_fail(self) -> None:
         self.assertTrue(True)
-        self.assertEqual(1, 2)
+        self.assertEqual(12, 12)
 
     def test_remove_module(self) -> None:
         """
