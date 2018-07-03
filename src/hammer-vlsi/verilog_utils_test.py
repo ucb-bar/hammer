@@ -113,6 +113,10 @@ endmodule
         self.assertFalse(VerilogUtils.contains_module(self.universal, "clock"))
         self.assertFalse(VerilogUtils.contains_module(self.universal, "endmodule"))
 
+    def test_fail(self) -> None:
+        self.assertTrue(True)
+        self.assertEqual(12, 12)
+
     def test_remove_module(self) -> None:
         """
         Test remove_module.
