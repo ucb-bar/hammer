@@ -7,7 +7,11 @@
 #  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 import copy
-from typing import List, Any, Set, Dict, Tuple, TypeVar
+from functools import reduce
+from typing import List, Any, Set, Dict, Tuple, TypeVar, Callable, Iterable
+
+__all__ = ['deepdict', 'deeplist', 'add_lists', 'add_dicts', 'reverse_dict', 'in_place_unique', 'topological_sort',
+           'reduce_named']
 
 
 def deepdict(x: dict) -> dict:
@@ -20,6 +24,7 @@ def deepdict(x: dict) -> dict:
     :return: Deep copy of the dictionary provided by copy.deepcopy().
     """
     return copy.deepcopy(x)
+
 
 def deeplist(x: list) -> list:
     """
@@ -128,3 +133,14 @@ def topological_sort(graph: Dict[str, Tuple[List[str], List[str]]], starting_nod
                 queue.append(target_node)
 
     return output
+
+
+def reduce_named(function: Callable, sequence: Iterable, initial: Any = None) -> Any:
+    """
+    Version of functools.reduce with named arguments.
+    See https://mail.python.org/pipermail/python-ideas/2014-October/029803.html
+    """
+    if initial is None:
+        return reduce(function, sequence)
+    else:
+        return reduce(function, sequence, initial)
