@@ -7,7 +7,7 @@
 
 from typing import Dict, Tuple, List
 
-from utils import topological_sort
+from hammer_utils import topological_sort
 
 import unittest
 

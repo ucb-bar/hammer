@@ -6,7 +6,7 @@
 #  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
 from typing import Iterable, Tuple, Any
 
-from verilog_utils import VerilogUtils
+from hammer_vlsi import VerilogUtils
 
 import unittest
 

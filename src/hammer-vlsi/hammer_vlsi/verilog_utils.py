@@ -8,6 +8,8 @@
 
 import re
 
+__all__ = ['VerilogUtils']
+
 
 class VerilogUtils:
     @staticmethod

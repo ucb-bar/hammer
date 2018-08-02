@@ -10,7 +10,8 @@ import shutil
 from numbers import Number
 
 import hammer_vlsi
-from hammer_logging import Level
+from hammer_logging import Level, HammerVLSIFileLogger
+from hammer_logging import HammerVLSILogging
 
 from typing import Dict, List, TypeVar, Union
 
@@ -26,29 +27,29 @@ class HammerVLSILoggingTest(unittest.TestCase):
         """
         msg = "This is a test message"  # type: str
 
-        log = hammer_vlsi.HammerVLSILogging.context("test")
+        log = HammerVLSILogging.context("test")
 
-        hammer_vlsi.HammerVLSILogging.enable_buffering = True  # we need this for test
-        hammer_vlsi.HammerVLSILogging.clear_callbacks()
-        hammer_vlsi.HammerVLSILogging.add_callback(hammer_vlsi.HammerVLSILogging.callback_buffering)
+        HammerVLSILogging.enable_buffering = True  # we need this for test
+        HammerVLSILogging.clear_callbacks()
+        HammerVLSILogging.add_callback(HammerVLSILogging.callback_buffering)
 
-        hammer_vlsi.HammerVLSILogging.enable_colour = True
+        HammerVLSILogging.enable_colour = True
         log.info(msg)
-        self.assertEqual(hammer_vlsi.HammerVLSILogging.get_colour_escape(Level.INFO) + "[test] " + msg + hammer_vlsi.HammerVLSILogging.COLOUR_CLEAR, hammer_vlsi.HammerVLSILogging.get_buffer()[0])
+        self.assertEqual(HammerVLSILogging.get_colour_escape(Level.INFO) + "[test] " + msg + HammerVLSILogging.COLOUR_CLEAR, HammerVLSILogging.get_buffer()[0])
 
-        hammer_vlsi.HammerVLSILogging.enable_colour = False
+        HammerVLSILogging.enable_colour = False
         log.info(msg)
-        self.assertEqual("[test] " + msg, hammer_vlsi.HammerVLSILogging.get_buffer()[0])
+        self.assertEqual("[test] " + msg, HammerVLSILogging.get_buffer()[0])
 
     def test_subcontext(self):
-        hammer_vlsi.HammerVLSILogging.enable_colour = False
-        hammer_vlsi.HammerVLSILogging.enable_tag = True
+        HammerVLSILogging.enable_colour = False
+        HammerVLSILogging.enable_tag = True
 
-        hammer_vlsi.HammerVLSILogging.clear_callbacks()
-        hammer_vlsi.HammerVLSILogging.add_callback(hammer_vlsi.HammerVLSILogging.callback_buffering)
+        HammerVLSILogging.clear_callbacks()
+        HammerVLSILogging.add_callback(HammerVLSILogging.callback_buffering)
 
         # Get top context
-        log = hammer_vlsi.HammerVLSILogging.context("top")
+        log = HammerVLSILogging.context("top")
 
         # Create sub-contexts.
         logA = log.context("A")
@@ -60,7 +61,7 @@ class HammerVLSILoggingTest(unittest.TestCase):
         logA.info(msgA)
         logB.error(msgB)
 
-        self.assertEqual(hammer_vlsi.HammerVLSILogging.get_buffer(),
+        self.assertEqual(HammerVLSILogging.get_buffer(),
             ['[top] [A] ' + msgA, '[top] [B] ' + msgB]
         )
 
@@ -68,11 +69,11 @@ class HammerVLSILoggingTest(unittest.TestCase):
         fd, path = tempfile.mkstemp(".log")
         os.close(fd) # Don't leak file descriptors
 
-        filelogger = hammer_vlsi.HammerVLSIFileLogger(path)
+        filelogger = HammerVLSIFileLogger(path)
 
-        hammer_vlsi.HammerVLSILogging.clear_callbacks()
-        hammer_vlsi.HammerVLSILogging.add_callback(filelogger.callback)
-        log = hammer_vlsi.HammerVLSILogging.context()
+        HammerVLSILogging.clear_callbacks()
+        HammerVLSILogging.add_callback(filelogger.callback)
+        log = HammerVLSILogging.context()
         log.info("Hello world")
         log.info("Eternal voyage to the edge of the universe")
         filelogger.close()
@@ -181,7 +182,7 @@ class HammerToolTest(unittest.TestCase):
                 self._test_filter_output = self.read_libs([make_test_filter()], test_tool_format, must_exist=False)
                 return True
         test = Tool()
-        test.logger = hammer_vlsi.HammerVLSILogging.context("")
+        test.logger = HammerVLSILogging.context("")
         test.run_dir = tempfile.mkdtemp()
         test.technology = tech
         test.set_database(hammer_config.HammerDatabase())
