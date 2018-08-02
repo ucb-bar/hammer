@@ -14,12 +14,13 @@ import subprocess
 import sys
 from functools import reduce
 
-from hammer_vlsi_impl import HammerToolHookAction, HammerTool, HammerVLSISettings, PlacementConstraint, HierarchicalMode
-from hammer_driver import HammerDriver, HammerDriverOptions
+from .hammer_vlsi_impl import HammerTool, HammerVLSISettings
+from .hooks import HammerToolHookAction
+from .driver import HammerDriver, HammerDriverOptions
 
-from typing import List, Dict, Tuple, Any, Iterable, Callable, Optional, Set
+from typing import List, Dict, Tuple, Any, Callable, Optional
 
-from utils import deepdict, add_lists, add_dicts, topological_sort, deeplist
+from hammer_utils import add_dicts, deeplist
 
 
 def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callable[[str], None]) -> List[str]:
