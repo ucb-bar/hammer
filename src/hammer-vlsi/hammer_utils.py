@@ -8,7 +8,7 @@
 
 import copy
 from functools import reduce
-from typing import List, Any, Set, Dict, Tuple, TypeVar, Callable, Iterable
+from typing import List, Any, Set, Dict, Tuple, TypeVar, Callable, Iterable, Optional
 
 __all__ = ['deepdict', 'deeplist', 'add_lists', 'add_dicts', 'reverse_dict', 'in_place_unique', 'topological_sort',
            'reduce_named']
@@ -144,3 +144,16 @@ def reduce_named(function: Callable, sequence: Iterable, initial: Any = None) ->
         return reduce(function, sequence)
     else:
         return reduce(function, sequence, initial)
+
+
+def get_or_else(optional: Optional[_T], default: _T) -> _T:
+    """
+    Get the value from the given Optional value or the default.
+    :param optional: Optional value from which to extract a value.
+    :param default: Default value if the given Optional is None.
+    :return: Value from the Optional or the default.
+    """
+    if optional is None:
+        return default
+    else:
+        return optional
