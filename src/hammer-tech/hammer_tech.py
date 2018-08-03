@@ -21,6 +21,7 @@ ns = builder.build_classes()
 
 # Pull definitions from the autoconstructed classes.
 TechJSON = ns.Techjson
+# Semiconductor IP library
 Library = ns.Library
 
 
@@ -114,6 +115,19 @@ class HammerTechnology:
     def extracted_tarballs_dir(self) -> str:
         """Return the path to a folder under self.path where extracted tarballs are stored/cached."""
         return os.path.join(self.cache_dir, "extracted")
+
+    @staticmethod
+    def parse_library(lib: dict) -> Library:
+        """
+        Parse a given lib in dictionary form to a hammer_tech Library (IP library).
+        :param lib: Library to parse, must be a dictionary
+        :return: Parsed hammer_tech Library or exception.
+        """
+        if not isinstance(lib, dict):
+            raise TypeError("lib must be a dict")
+
+        # Convert the dict to JSON...
+        return Library.from_json(json.dumps(lib))
 
     # TODO(edwardw): think about moving more of these kinds of functions out of the synthesis tool and in here instead.
     def prepend_dir_path(self, path: str) -> str:
