@@ -10,6 +10,7 @@ import shutil
 from numbers import Number
 
 import hammer_vlsi
+import hammer_tech
 from hammer_logging import Level, HammerVLSIFileLogger
 from hammer_logging import HammerVLSILogging
 
@@ -88,22 +89,22 @@ class HammerVLSILoggingTest(unittest.TestCase):
         os.remove(path)
 
 
-class HammerToolTest(unittest.TestCase):
-    def test_read_libs(self) -> None:
-        import hammer_config
-        import hammer_tech
-
-        tech_dir = tempfile.mkdtemp()
+class HammerToolTestHelpers:
+    """
+    Helper functions to aid in the testing of IP library filtering/processing.
+    """
+    @staticmethod
+    def write_tech_json(tech_json_filename: str) -> None:
         # TODO: use a structured way of creating it when arrays actually work!
         # Currently the subelements of the array don't get recursively "validated", so the underscores don't disappear, etc.
-        #~ tech_json_obj = hammer_tech.TechJSON(name="dummy28")
-        #~ tech_json_obj.libraries = [
-            #~ hammer_tech.Library(milkyway_techfile="soy"),
-            #~ hammer_tech.Library(milkyway_techfile="coconut"),
-            #~ hammer_tech.Library(openaccess_techfile="juice"),
-            #~ hammer_tech.Library(openaccess_techfile="tea")
-        #~ ]
-        #~ tech_json = tech_json_obj.serialize()
+        # ~ tech_json_obj = hammer_tech.TechJSON(name="dummy28")
+        # ~ tech_json_obj.libraries = [
+        # ~ hammer_tech.Library(milkyway_techfile="soy"),
+        # ~ hammer_tech.Library(milkyway_techfile="coconut"),
+        # ~ hammer_tech.Library(openaccess_techfile="juice"),
+        # ~ hammer_tech.Library(openaccess_techfile="tea")
+        # ~ ]
+        # ~ tech_json = tech_json_obj.serialize()
         tech_json = {
             "name": "dummy28",
             "installs": [
@@ -113,9 +114,9 @@ class HammerToolTest(unittest.TestCase):
                 }
             ],
             "libraries": [
-                { "milkyway techfile": "test/soy" },
-                { "openaccess techfile": "test/juice" },
-                { "milkyway techfile": "test/coconut" },
+                {"milkyway techfile": "test/soy"},
+                {"openaccess techfile": "test/juice"},
+                {"milkyway techfile": "test/coconut"},
                 {
                     "openaccess techfile": "test/orange",
                     "provides": [
@@ -136,35 +137,51 @@ class HammerToolTest(unittest.TestCase):
                 },
             ]
         }
-        with open(tech_dir + "/dummy28.tech.json", "w") as f:
+        with open(tech_json_filename, "w") as f:
             f.write(json.dumps(tech_json, indent=4))
+
+    @staticmethod
+    def make_test_filter() -> hammer_vlsi.LibraryFilter:
+        """
+        Make a test filter that returns libraries with openaccess techfiles with libraries that provide 'technology'
+        in lib_type first, with the rest sorted by the openaccess techfile.
+        """
+        def filter_func(lib: hammer_tech.Library) -> bool:
+            return lib.openaccess_techfile is not None
+
+        def extraction_func(lib: hammer_tech.Library) -> List[str]:
+            assert lib.openaccess_techfile is not None
+            return [lib.openaccess_techfile]
+
+        def sort_func(lib: hammer_tech.Library) -> Union[Number, str, tuple]:
+            assert lib.openaccess_techfile is not None
+            if lib.provides is not None and len(
+                    list(filter(lambda x: x is not None and x.lib_type == "technology", lib.provides))) > 0:
+                # Put technology first
+                return (0, "")
+            else:
+                return (1, str(lib.openaccess_techfile))
+
+        return hammer_vlsi.LibraryFilter.new(
+            filter_func=filter_func,
+            extraction_func=extraction_func,
+            tag="test", description="Test filter",
+            is_file=True,
+            sort_func=sort_func
+        )
+
+class HammerToolTest(unittest.TestCase):
+    def test_read_libs(self) -> None:
+        """
+        Test that HammerTool can read technology IP libraries and filter/process them.
+        """
+        import hammer_config
+
+        tech_dir = tempfile.mkdtemp()
+        tech_json_filename = tech_dir + "/dummy28.tech.json"
+        HammerToolTestHelpers.write_tech_json(tech_json_filename)
         tech = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
         tech.cache_dir = tech_dir
-
-        def make_test_filter() -> hammer_vlsi.LibraryFilter:
-            def filter_func(lib: hammer_tech.Library) -> bool:
-                return lib.openaccess_techfile is not None
-
-            def extraction_func(lib: hammer_tech.Library) -> List[str]:
-                assert lib.openaccess_techfile is not None
-                return [lib.openaccess_techfile]
-
-            def sort_func(lib: hammer_tech.Library) -> Union[Number, str, tuple]:
-                assert lib.openaccess_techfile is not None
-                if lib.provides is not None and len(
-                        list(filter(lambda x: x is not None and x.lib_type == "technology", lib.provides))) > 0:
-                    # Put technology first
-                    return (0, "")
-                else:
-                    return (1, str(lib.openaccess_techfile))
-
-            return hammer_vlsi.LibraryFilter.new(
-                filter_func=filter_func,
-                extraction_func=extraction_func,
-                tag="test", description="Test filter",
-                is_file=True,
-                sort_func=sort_func
-            )
 
         class Tool(hammer_vlsi.HammerTool):
             @property
@@ -174,12 +191,12 @@ class HammerToolTest(unittest.TestCase):
                 ])
 
             def step(self) -> bool:
-                def test_tool_format(lib, filt):
+                def test_tool_format(lib, filt) -> List[str]:
                     return ["drink {0}".format(lib)]
 
                 self._read_lib_output = self.read_libs([self.milkyway_techfile_filter], test_tool_format, must_exist=False)
 
-                self._test_filter_output = self.read_libs([make_test_filter()], test_tool_format, must_exist=False)
+                self._test_filter_output = self.read_libs([HammerToolTestHelpers.make_test_filter()], test_tool_format, must_exist=False)
                 return True
         test = Tool()
         test.logger = HammerVLSILogging.context("")
@@ -201,6 +218,7 @@ class HammerToolTest(unittest.TestCase):
         ])
 
         # Cleanup
+        shutil.rmtree(tech_dir)
         shutil.rmtree(test.run_dir)
 
     def test_create_enter_script(self) -> None:
