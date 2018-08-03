@@ -42,6 +42,11 @@ vlsi.technology:
   # Required for some CAD tools to function properly.
   placement_site: null
 
+  # Extra semiconductor IP libraries/stdcell libs/hard macros. (List[hammer_tech.Library])
+  # Used for non-technology-vendor-provided custom IP blocks.
+  # Extra libraries are added at the end of the library list, in the event that order matters.
+  extra_libraries: []
+
 cadence:
   # Path to the folder with defaults.yml for common Cadence settings.
   common_path: "${vlsi.builtins.hammer_vlsi_path}/common/cadence"
