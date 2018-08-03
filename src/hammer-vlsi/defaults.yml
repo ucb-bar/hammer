@@ -36,7 +36,7 @@ vlsi.core:
   max_threads: 1
 
 vlsi.technology:
-  # Placement site for macros. (str)
+  # Placement site for macros. (Optional[str])
   # Typically specified in standard cell LEFs.
   # See http://www.ispd.cc/contests/18/lefdefref.pdf
   # Required for some CAD tools to function properly.
