@@ -94,7 +94,7 @@ class HammerDriver:
         self.update_project_configs(project_configs)
 
         # Get the technology and load technology settings.
-        self.tech = None  # type: hammer_tech.HammerTechnology
+        self.tech = None  # type: Optional[hammer_tech.HammerTechnology]
         self.load_technology()
 
         # Keep track of what the synthesis and par configs are since
@@ -102,8 +102,8 @@ class HammerDriver:
         self.tool_configs = {}  # type: Dict[str, List[dict]]
 
         # Initialize tool fields.
-        self.syn_tool = None  # type: HammerSynthesisTool
-        self.par_tool = None  # type: HammerPlaceAndRouteTool
+        self.syn_tool = None  # type: Optional[HammerSynthesisTool]
+        self.par_tool = None  # type: Optional[HammerPlaceAndRouteTool]
 
         # Initialize tool hooks. Used to specify resume/pause hooks after custom hooks have been registered.
         self.post_custom_syn_tool_hooks = []  # type: List[HammerToolHookAction]
@@ -135,14 +135,17 @@ class HammerDriver:
         if tech_json_path == "":
             self.log.error("Technology {0} not found or missing .tech.json!".format(tech_str))
             return
+
         self.log.info("Loading technology '{0}'".format(tech_str))
-        self.tech = hammer_tech.HammerTechnology.load_from_dir(tech_str, os.path.dirname(
+        tech = hammer_tech.HammerTechnology.load_from_dir(tech_str, os.path.dirname(
             tech_json_path))  # type: hammer_tech.HammerTechnology
-        self.tech.logger = self.log.context("tech")
-        self.tech.set_database(self.database)
-        self.tech.cache_dir = cache_dir
-        self.tech.extract_technology_files()
-        self.database.update_technology(self.tech.get_config())
+        tech.logger = self.log.context("tech")
+        tech.set_database(self.database)
+        tech.cache_dir = cache_dir
+        tech.extract_technology_files()
+        self.database.update_technology(tech.get_config())
+
+        self.tech = tech
 
     def update_tool_configs(self) -> None:
         """
@@ -157,7 +160,12 @@ class HammerDriver:
 
         :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
                         constructor.
+        :return: True if successful, false otherwise
         """
+        if self.tech is None:
+            self.log.error("Must load technology before loading par tool")
+            return False
+
         if run_dir == "":
             run_dir = os.path.join(self.obj_dir, "par-rundir")
 
@@ -194,6 +202,10 @@ class HammerDriver:
                         constructor.
         :return: True if synthesis tool loading was successful, False otherwise.
         """
+        if self.tech is None:
+            self.log.error("Must load technology before loading synthesis tool")
+            return False
+
         if run_dir == "":
             run_dir = os.path.join(self.obj_dir, "syn-rundir")
 
@@ -261,6 +273,9 @@ class HammerDriver:
         :param force_override: Set to true to overwrite instead of append.
         :return: Tuple of (success, output config dict)
         """
+        if self.syn_tool is None:
+            self.log.error("Must load synthesis tool before calling run_synthesis")
+            return False, {}
 
         # TODO: think about artifact storage?
         self.log.info("Starting synthesis with tool '%s'" % (self.syn_tool.name))
@@ -304,6 +319,10 @@ class HammerDriver:
         """
         Run place and route based on the given database.
         """
+        if self.par_tool is None:
+            self.log.error("Must load par tool before calling run_par")
+            return False, {}
+
         # TODO: update API to match run_synthesis and deduplicate logic
         self.log.info("Starting place and route with tool '%s'" % (self.par_tool.name))
         if hook_actions is None:
