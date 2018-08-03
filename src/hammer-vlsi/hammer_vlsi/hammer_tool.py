@@ -349,15 +349,18 @@ class HammerTool(metaclass=ABCMeta):
             assert step_id != -1
 
             if action.location == HookLocation.ReplaceStep:
+                assert action.step is not None, "ReplaceStep requires a step"
                 assert action.target_name == action.step.name, "Replacement step should have the same name"
                 new_steps[step_id] = action.step
             elif action.location == HookLocation.InsertPreStep:
+                assert action.step is not None, "InsertPreStep requires a step"
                 if has_step(action.step.name):
                     self.logger.error("New step '{step}' already exists".format(step=action.step.name))
                     return False
                 new_steps.insert(step_id, action.step)
                 names.add(action.step.name)
             elif action.location == HookLocation.InsertPostStep:
+                assert action.step is not None, "InsertPostStep requires a step"
                 if has_step(action.step.name):
                     self.logger.error("New step '{step}' already exists".format(step=action.step.name))
                     return False
@@ -382,7 +385,7 @@ class HammerTool(metaclass=ABCMeta):
                 check_hammer_step_function(step.func)
 
         # Run steps.
-        prev_step = None  # type: HammerToolStep
+        prev_step = None  # type: Optional[HammerToolStep]
 
         for step_index in range(len(new_steps)):
             step = new_steps[step_index]
