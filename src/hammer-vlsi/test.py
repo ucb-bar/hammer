@@ -13,7 +13,7 @@ import hammer_vlsi
 from hammer_logging import Level, HammerVLSIFileLogger
 from hammer_logging import HammerVLSILogging
 
-from typing import Dict, List, TypeVar, Union
+from typing import Dict, List, TypeVar, Union, Optional
 
 import os
 import tempfile
@@ -261,7 +261,13 @@ class HammerToolHooksTestContext:
     def __init__(self, test: unittest.TestCase) -> None:
         self.test = test  # type: unittest.TestCase
         self.temp_dir = ""  # type: str
-        self.driver = None  # type: hammer_vlsi.HammerDriver
+        self._driver = None  # type: Optional[hammer_vlsi.HammerDriver]
+
+    # Helper property to check that the driver did get initialized.
+    @property
+    def driver(self) -> hammer_vlsi.HammerDriver:
+        assert self._driver is not None, "HammerDriver must be initialized before use"
+        return self._driver
 
     def __enter__(self) -> "HammerToolHooksTestContext":
         """Initialize context by creating the temp_dir, driver, and loading mocksynth."""
@@ -284,7 +290,7 @@ class HammerToolHooksTestContext:
             obj_dir=temp_dir
         )
         self.temp_dir = temp_dir
-        self.driver = hammer_vlsi.HammerDriver(options)
+        self._driver = hammer_vlsi.HammerDriver(options)
         self.test.assertTrue(self.driver.load_synthesis_tool())
         return self
 
