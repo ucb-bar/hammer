@@ -476,11 +476,18 @@ class CLIDriver:
             def auto_action(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
                 log = driver.log.context("CLIDriver_auto")
                 output = {}  # type: dict
+
+                # Run syn_par for every module.
                 for module, _ in hierarchical_settings:
                     syn_par_action = self.get_hierarchical_synthesis_par_action(module)
                     new_output = syn_par_action(driver, append_error_func)
 
-                    log.info("Hierarchical syn-par run for module {module} finished".format(module=module))
+                    if new_output is None:
+                        log.error("Hierarchical syn-par run for module {module} failed".format(module=module))
+                        return None
+                    else:
+                        log.info("Hierarchical syn-par run for module {module} finished".format(module=module))
+
                     b, ext = os.path.splitext(args["output"])
                     new_output_filename = "{base}-{module}{ext}".format(base=b, module=module, ext=ext)
                     with open(new_output_filename, "w") as f:
