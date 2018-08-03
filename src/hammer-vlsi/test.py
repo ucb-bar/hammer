@@ -306,6 +306,78 @@ class HammerToolTest(unittest.TestCase):
         shutil.rmtree(tech_dir)
         shutil.rmtree(test.run_dir)
 
+    def test_read_extra_libs(self) -> None:
+        """
+        Test that HammerTool can read/process extra IP libraries in addition to those of the technology.
+        """
+        import hammer_config
+
+        tech_dir = tempfile.mkdtemp()
+        tech_json_filename = tech_dir + "/dummy28.tech.json"
+        HammerToolTestHelpers.write_tech_json(tech_json_filename)
+        tech = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
+        tech.cache_dir = tech_dir
+
+        class Tool(hammer_vlsi.HammerTool):
+            @property
+            def steps(self) -> List[hammer_vlsi.HammerToolStep]:
+                return self.make_steps_from_methods([
+                    self.step
+                ])
+
+            def step(self) -> bool:
+                def test_tool_format(lib, filt) -> List[str]:
+                    return ["drink {0}".format(lib)]
+
+                self._read_lib_output = self.read_libs([self.milkyway_techfile_filter], test_tool_format,
+                                                       must_exist=False)
+
+                self._test_filter_output = self.read_libs([HammerToolTestHelpers.make_test_filter()], test_tool_format,
+                                                          must_exist=False)
+                return True
+
+        test = Tool()
+        test.logger = HammerVLSILogging.context("")
+        test.run_dir = tempfile.mkdtemp()
+        test.technology = tech
+        # Add some extra libraries to see if they are picked up
+        database = hammer_config.HammerDatabase()
+        database.update_project([{
+            'vlsi.technology.extra_libraries': [
+                {"milkyway techfile": "test/extra_cake"},
+                {
+                    "openaccess techfile": "test/extra_doughnut",
+                    "provides": [
+                        {"lib_type": "stdcell"}
+                    ]
+                }
+            ]
+        }])
+        test.set_database(database)
+        test.run()
+
+        # Don't care about ordering here.
+        self.assertEqual(set(test._read_lib_output),
+                         {
+                             "drink {0}/soy".format(tech_dir),
+                             "drink {0}/coconut".format(tech_dir),
+                             "drink {0}/extra_cake".format(tech_dir)
+                         })
+
+        # We do care about ordering here.
+        # Test filter
+        self.assertEqual(test._test_filter_output, [
+            "drink {0}/tea".format(tech_dir),
+            "drink {0}/extra_doughnut".format(tech_dir),
+            "drink {0}/grapefruit".format(tech_dir),
+            "drink {0}/juice".format(tech_dir),
+            "drink {0}/orange".format(tech_dir)
+        ])
+
+        # Cleanup
+        shutil.rmtree(tech_dir)
+        shutil.rmtree(test.run_dir)
+
     def test_create_enter_script(self) -> None:
         class Tool(hammer_vlsi.HammerTool):
             @property
