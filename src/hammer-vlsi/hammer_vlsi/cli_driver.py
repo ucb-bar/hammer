@@ -209,6 +209,7 @@ class CLIDriver:
 
                 # Dump both synthesis output and par input for debugging/resuming.
                 # TODO(edwardw): make these output filenames configurable?
+                assert driver.syn_tool is not None, "Syn tool must exist since we ran synthesis_action successfully"
                 dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output.json"), syn_output)
                 dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "par-input.json"), par_input)
 
