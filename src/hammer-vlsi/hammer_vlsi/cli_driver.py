@@ -20,7 +20,7 @@ from .driver import HammerDriver, HammerDriverOptions
 
 from typing import List, Dict, Tuple, Any, Callable, Optional
 
-from hammer_utils import add_dicts, deeplist
+from hammer_utils import add_dicts, deeplist, get_or_else
 
 
 def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callable[[str], None]) -> List[str]:
@@ -164,14 +164,14 @@ class CLIDriver:
 
             # If the driver didn't successfully load, return None.
             if action_type == "synthesis" or action_type == "syn":
-                if not driver.load_synthesis_tool(self.syn_rundir if self.syn_rundir is not None else ""):
+                if not driver.load_synthesis_tool(get_or_else(self.syn_rundir, "")):
                     return None
                 else:
                     post_load_func_checked(driver)
                 success, output = driver.run_synthesis(extra_hooks)
                 post_run_func_checked(driver)
             elif action_type == "par":
-                if not driver.load_par_tool(self.par_rundir if self.par_rundir is not None else ""):
+                if not driver.load_par_tool(get_or_else(self.par_rundir, "")):
                     return None
                 else:
                     post_load_func_checked(driver)
@@ -196,22 +196,26 @@ class CLIDriver:
         :param par_action: par action
         :return: Custom synthesis_par action
         """
+
         def syn_par_action(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
             # Synthesis output.
             syn_output = synthesis_action(driver, append_error_func)
+            if syn_output is None:
+                append_error_func("Synthesis action in syn_par failed")
+                return None
+            else:
+                # Generate place-and-route input from the synthesis output.
+                par_input = HammerDriver.generate_par_inputs_from_synthesis(syn_output)  # type: dict
 
-            # Generate place-and-route input from the synthesis output.
-            par_input = HammerDriver.generate_par_inputs_from_synthesis(syn_output)  # type: dict
+                # Dump both synthesis output and par input for debugging/resuming.
+                # TODO(edwardw): make these output filenames configurable?
+                dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output.json"), syn_output)
+                dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "par-input.json"), par_input)
 
-            # Dump both synthesis output and par input for debugging/resuming.
-            # TODO(edwardw): make these output filenames configurable?
-            dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output.json"), syn_output)
-            dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "par-input.json"), par_input)
-
-            # Use new par input and run place-and-route.
-            driver.update_project_configs([par_input])
-            par_output = par_action(driver, append_error_func)
-            return par_output
+                # Use new par input and run place-and-route.
+                driver.update_project_configs([par_input])
+                par_output = par_action(driver, append_error_func)
+                return par_output
 
         return syn_par_action
 
@@ -449,10 +453,10 @@ class CLIDriver:
                     d.update_project_configs(deeplist(base_project_config[0]))
 
                 def syn_post_run(d: HammerDriver) -> None:
-                    post_run(d, self.syn_rundir)
+                    post_run(d, get_or_else(self.syn_rundir, ""))
 
                 def par_post_run(d: HammerDriver) -> None:
-                    post_run(d, self.par_rundir)
+                    post_run(d, get_or_else(self.par_rundir, ""))
 
                 syn_action = self.create_synthesis_action(self.get_extra_hierarchical_synthesis_hooks().get(module, []),
                                                           pre_action_func=syn_pre_func, post_load_func=None,
