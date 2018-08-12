@@ -7,6 +7,7 @@
 
 import json
 import shutil
+from abc import abstractmethod, ABCMeta
 from numbers import Number
 
 import hammer_vlsi
@@ -170,6 +171,26 @@ class HammerToolTestHelpers:
             sort_func=sort_func
         )
 
+
+class SingleStepTool(hammer_vlsi.HammerTool, metaclass=ABCMeta):
+    """
+    Helper class to define a single-step tool in tests.
+    """
+    @property
+    def steps(self) -> List[hammer_vlsi.HammerToolStep]:
+        return self.make_steps_from_methods([
+            self.step
+        ])
+
+    @abstractmethod
+    def step(self) -> bool:
+        """
+        Implement this method for the single step.
+        :return: True if the step passed
+        """
+        pass
+
+
 class HammerToolTest(unittest.TestCase):
     def test_read_libs(self) -> None:
         """
@@ -183,13 +204,7 @@ class HammerToolTest(unittest.TestCase):
         tech = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
         tech.cache_dir = tech_dir
 
-        class Tool(hammer_vlsi.HammerTool):
-            @property
-            def steps(self) -> List[hammer_vlsi.HammerToolStep]:
-                return self.make_steps_from_methods([
-                    self.step
-                ])
-
+        class Tool(SingleStepTool):
             def step(self) -> bool:
                 def test_tool_format(lib, filt) -> List[str]:
                     return ["drink {0}".format(lib)]
