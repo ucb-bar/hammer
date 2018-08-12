@@ -927,7 +927,7 @@ class HammerTool(metaclass=ABCMeta):
     @property
     def liberty_lib_filter(self) -> LibraryFilter:
         """
-        Selecting ASCII liberty (.lib) libraries. Prefers CCS if available; picks NLDM as a fallback.
+        Select ASCII liberty (.lib) timing libraries. Prefers CCS if available; picks NLDM as a fallback.
         """
 
         def extraction_func(lib: hammer_tech.Library) -> List[str]:
@@ -940,6 +940,26 @@ class HammerTool(metaclass=ABCMeta):
                 return []
 
         return LibraryFilter.new("timing_lib", "CCS/NLDM timing lib (liberty ASCII .lib)",
+                                 extraction_func=extraction_func, is_file=True)
+
+    @property
+    def timing_lib_with_ecsm_filter(self) -> LibraryFilter:
+        """
+        Select ASCII liberty (.lib) timing libraries. Prefers ECSM, then CCS, then NLDM if multiple are present for
+        a single given .lib.
+        """
+
+        def extraction_func(lib: hammer_tech.Library) -> List[str]:
+            if lib.ecsm_liberty_file is not None:
+                return [lib.ecsm_liberty_file]
+            elif lib.ccs_liberty_file is not None:
+                return [lib.ccs_liberty_file]
+            elif lib.nldm_liberty_file is not None:
+                return [lib.nldm_liberty_file]
+            else:
+                return []
+
+        return LibraryFilter.new("timing_lib_with_ecsm", "ECSM/CCS/NLDM timing lib (liberty ASCII .lib)",
                                  extraction_func=extraction_func, is_file=True)
 
     @property
