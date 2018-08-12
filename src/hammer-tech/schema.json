@@ -29,6 +29,12 @@
           "ccs library file" : {
             "type" : "string"
           },
+          "ecsm liberty file" : {
+            "type" : "string"
+          },
+          "ecsm library file" : {
+            "type" : "string"
+          },
           "corner" : {
             "title" : "Corner",
             "type" : "object",
