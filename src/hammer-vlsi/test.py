@@ -236,6 +236,76 @@ class HammerToolTest(unittest.TestCase):
         shutil.rmtree(tech_dir)
         shutil.rmtree(test.run_dir)
 
+    def test_timing_lib_ecsm_filter(self) -> None:
+        """
+        Test that the ECSM-first filter works as expected.
+        """
+        import hammer_config
+
+        tech_dir = tempfile.mkdtemp()
+        tech_json_filename = tech_dir + "/dummy28.tech.json"
+        tech_json = {
+            "name": "dummy28",
+            "installs": [
+                {
+                    "path": "test",
+                    "base var": ""  # means relative to tech dir
+                }
+            ],
+            "libraries": [
+                {
+                    "ecsm liberty file": "test/eggs.ecsm",
+                    "ccs liberty file": "test/eggs.ccs",
+                    "nldm liberty file": "test/eggs.nldm"
+                },
+                {
+                    "ccs liberty file": "test/custard.ccs",
+                    "nldm liberty file": "test/custard.nldm"
+                },
+                {
+                    "nldm liberty file": "test/noodles.nldm"
+                },
+                {
+                    "ecsm liberty file": "test/eggplant.ecsm"
+                },
+                {
+                    "ccs liberty file": "test/cookies.ccs"
+                }
+            ]
+        }
+        with open(tech_json_filename, "w") as f:
+            f.write(json.dumps(tech_json, indent=4))
+        tech = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
+        tech.cache_dir = tech_dir
+
+        class Tool(SingleStepTool):
+            lib_outputs = []  # type: List[str]
+
+            def step(self) -> bool:
+                Tool.lib_outputs = self.read_libs([self.timing_lib_with_ecsm_filter], self.to_plain_item,
+                                                       must_exist=False)
+                return True
+
+        test = Tool()
+        test.logger = HammerVLSILogging.context("")
+        test.run_dir = tempfile.mkdtemp()
+        test.technology = tech
+        test.set_database(hammer_config.HammerDatabase())
+        test.run()
+
+        # Check that the ecsm-based filter prioritized ecsm -> ccs -> nldm.
+        self.assertEqual(set(Tool.lib_outputs), {
+            "{0}/eggs.ecsm".format(tech_dir),
+            "{0}/custard.ccs".format(tech_dir),
+            "{0}/noodles.nldm".format(tech_dir),
+            "{0}/eggplant.ecsm".format(tech_dir),
+            "{0}/cookies.ccs".format(tech_dir)
+        })
+
+        # Cleanup
+        shutil.rmtree(tech_dir)
+        shutil.rmtree(test.run_dir)
+
     def test_create_enter_script(self) -> None:
         class Tool(hammer_vlsi.HammerTool):
             @property
