@@ -404,12 +404,12 @@ class CadenceTool(HasSDCSupport, HammerTool):
         :return: List of lib files separated by spaces
         """
         lib_args = self.read_libs([
-            self.liberty_lib_filter
+            self.timing_lib_filter
         ], self.to_plain_item)
         return " ".join(lib_args)
 
     def get_mmmc_libs(self, corner: MMMCCorner) -> str:
-        lib_args = self.read_libs([self.liberty_lib_filter],self.to_plain_item, pre_filters=[
+        lib_args = self.read_libs([self.timing_lib_filter],self.to_plain_item, pre_filters=[
             self.filter_for_mmmc(voltage=corner.voltage, temp=corner.temp)])
         return " ".join(lib_args)
 
