@@ -11,7 +11,7 @@ from functools import reduce
 from typing import List, Any, Set, Dict, Tuple, TypeVar, Callable, Iterable, Optional
 
 __all__ = ['deepdict', 'deeplist', 'add_lists', 'add_dicts', 'reverse_dict', 'in_place_unique', 'topological_sort',
-           'reduce_named']
+           'reduce_named', 'get_or_else']
 
 
 def deepdict(x: dict) -> dict:
