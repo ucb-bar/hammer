@@ -5,16 +5,18 @@
 #  HammerTool - the main Hammer tool abstraction class.
 #
 #  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
-import inspect
+
 from abc import ABCMeta, abstractmethod
 import atexit
 from functools import reduce
+import inspect
 from numbers import Number
 import os
 import re
 import shlex
 import subprocess
 from typing import Callable, Iterable, List, Tuple, Optional, Dict, Any, Union, Set, cast
+import warnings
 
 import hammer_config
 import hammer_tech
@@ -929,6 +931,7 @@ class HammerTool(metaclass=ABCMeta):
         """
         Select ASCII liberty (.lib) timing libraries. Prefers CCS if available; picks NLDM as a fallback.
         """
+        warnings.warn("Use timing_lib_filter instead", DeprecationWarning, stacklevel=2)
 
         def extraction_func(lib: hammer_tech.Library) -> List[str]:
             # Choose ccs if available, if not, nldm.
@@ -939,13 +942,31 @@ class HammerTool(metaclass=ABCMeta):
             else:
                 return []
 
-        return LibraryFilter.new("timing_lib", "CCS/NLDM timing lib (liberty ASCII .lib)",
+        return LibraryFilter.new("timing_lib", "CCS/NLDM timing lib (ASCII .lib)",
+                                 extraction_func=extraction_func, is_file=True)
+
+    @property
+    def timing_lib_filter(self) -> LibraryFilter:
+        """
+        Select ASCII .lib timing libraries. Prefers CCS if available; picks NLDM as a fallback.
+        """
+
+        def extraction_func(lib: hammer_tech.Library) -> List[str]:
+            # Choose ccs if available, if not, nldm.
+            if lib.ccs_liberty_file is not None:
+                return [lib.ccs_liberty_file]
+            elif lib.nldm_liberty_file is not None:
+                return [lib.nldm_liberty_file]
+            else:
+                return []
+
+        return LibraryFilter.new("timing_lib", "CCS/NLDM timing lib (ASCII .lib)",
                                  extraction_func=extraction_func, is_file=True)
 
     @property
     def timing_lib_with_ecsm_filter(self) -> LibraryFilter:
         """
-        Select ASCII liberty (.lib) timing libraries. Prefers ECSM, then CCS, then NLDM if multiple are present for
+        Select ASCII .lib timing libraries. Prefers ECSM, then CCS, then NLDM if multiple are present for
         a single given .lib.
         """
 
