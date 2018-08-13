@@ -1,7 +1,7 @@
 # Common Cadence settings.
 cadence:
-  # Directory where synopsys tools are installed. Contains subfolders
-  # like INNOVUS, GENUS, etc.
+  # Directory where Cadence tools are installed. Contains subfolders like
+  # INNOVUS, GENUS, etc.
   cadence_home: ""
 
   # License server information, to be overridden by some project generator.
