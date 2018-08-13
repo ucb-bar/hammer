@@ -775,7 +775,7 @@ class HammerTool(metaclass=ABCMeta):
             return True
         return self.get_setting("vlsi.inputs.supplies.VDD") == lib.supplies.VDD and self.get_setting("vlsi.inputs.supplies.GND") == lib.supplies.GND
 
-    def filter_for_mmmc(self, voltage, temp) -> Callable[[hammer_tech.Library],bool]:
+    def filter_for_mmmc(self, voltage: VoltageValue, temp: TemperatureValue) -> Callable[[hammer_tech.Library],bool]:
         """
         Selecting libraries that match given temp and voltage.
         """
