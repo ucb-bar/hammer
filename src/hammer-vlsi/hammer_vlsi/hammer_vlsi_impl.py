@@ -15,7 +15,7 @@ import os
 import sys
 from typing import Callable, Iterable, List, NamedTuple, Optional, Dict, Any, Union
 
-from hammer_utils import reverse_dict, deepdict
+from hammer_utils import reverse_dict, deepdict, optional_map
 
 from .constraints import *
 
@@ -397,20 +397,19 @@ class CadenceTool(HasSDCSupport, HammerTool):
 
         return reduce(update_dict, list_of_vars + [cadence_vars], {})
 
-    def get_liberty_libs(self) -> str:
+    def get_timing_libs(self, corner: Optional[MMMCCorner] = None) -> str:
         """
-        Helper function to get the list of ASCII liberty files in space separated format.
+        Helper function to get the list of ASCII timing .lib files in space separated format.
+        Note that Cadence tools support ECSM, so we can use the ECSM-based filter.
 
+        :param corner: Optional corner to consider. If supplied, this will use filter_for_mmmc to select libraries that
+        match a given corner (voltage/temperature).
         :return: List of lib files separated by spaces
         """
-        lib_args = self.read_libs([
-            self.timing_lib_filter
-        ], self.to_plain_item)
-        return " ".join(lib_args)
+        pre_filters = optional_map(corner, lambda c: [self.filter_for_mmmc(voltage=c.voltage,
+                                                                           temp=c.temp)])  # type: Optional[List[Callable[[hammer_tech.Library],bool]]]
 
-    def get_mmmc_libs(self, corner: MMMCCorner) -> str:
-        lib_args = self.read_libs([self.timing_lib_filter],self.to_plain_item, pre_filters=[
-            self.filter_for_mmmc(voltage=corner.voltage, temp=corner.temp)])
+        lib_args = self.read_libs([self.timing_lib_with_ecsm_filter], self.to_plain_item, pre_filters=pre_filters)
         return " ".join(lib_args)
 
     def get_mmmc_qrc(self, corner: MMMCCorner) -> str:
@@ -491,11 +490,11 @@ class CadenceTool(HasSDCSupport, HammerTool):
             # First, create Innovus library sets
             append_mmmc("create_library_set -name {name} -timing [list {list}]".format(
                 name="{n}.setup_set".format(n=setup_corner.name),
-                list=self.get_mmmc_libs(setup_corner)
+                list=self.get_timing_libs(setup_corner)
             ))
             append_mmmc("create_library_set -name {name} -timing [list {list}]".format(
                 name="{n}.hold_set".format(n=hold_corner.name),
-                list=self.get_mmmc_libs(hold_corner)
+                list=self.get_timing_libs(hold_corner)
             ))
             # Skip opconds for now
             # Next, create Innovus timing conditions
@@ -542,7 +541,7 @@ class CadenceTool(HasSDCSupport, HammerTool):
             library_set_name = "my_lib_set"
             append_mmmc("create_library_set -name {name} -timing [list {list}]".format(
                 name=library_set_name,
-                list=self.get_liberty_libs()
+                list=self.get_timing_libs()
             ))
             # Next, create an Innovus timing condition.
             timing_condition_name = "my_timing_condition"
