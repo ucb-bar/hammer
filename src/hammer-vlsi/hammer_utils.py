@@ -11,7 +11,7 @@ from functools import reduce
 from typing import List, Any, Set, Dict, Tuple, TypeVar, Callable, Iterable, Optional
 
 __all__ = ['deepdict', 'deeplist', 'add_lists', 'add_dicts', 'reverse_dict', 'in_place_unique', 'topological_sort',
-           'reduce_named', 'get_or_else']
+           'reduce_named', 'get_or_else', 'optional_map']
 
 
 def deepdict(x: dict) -> dict:
@@ -157,3 +157,19 @@ def get_or_else(optional: Optional[_T], default: _T) -> _T:
         return default
     else:
         return optional
+
+
+_U = TypeVar('_U')
+
+
+def optional_map(optional: Optional[_T], func: Callable[[_T], _U]) -> Optional[_U]:
+    """
+    If 'optional' is not None, then apply the given function to it. Otherwise, return None.
+    :param optional: Optional value to map.
+    :param func: Function to apply to optional value.
+    :return: 'func' applied to optional, or None if 'optional' is None.
+    """
+    if optional is None:
+        return None
+    else:
+        return func(optional)

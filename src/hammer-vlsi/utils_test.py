@@ -7,7 +7,7 @@
 
 from typing import Dict, Tuple, List
 
-from hammer_utils import topological_sort, get_or_else
+from hammer_utils import topological_sort, get_or_else, optional_map
 
 import unittest
 
@@ -37,6 +37,17 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(get_or_else(None, ""), "")
         self.assertEqual(get_or_else("Hello World", "default"), "Hello World")
         self.assertEqual(get_or_else("Hello World", ""), "Hello World")
+
+    def test_optional_map(self) -> None:
+        num_to_str = lambda x: str(x) + "_str"
+        str_to_num = lambda x: int(x) * 10
+        self.assertEqual(optional_map(None, num_to_str), None)
+        self.assertEqual(optional_map(10, num_to_str), "10_str")
+        self.assertEqual(optional_map(0, num_to_str), "0_str")
+        self.assertEqual(optional_map(None, str_to_num), None)
+        self.assertEqual(optional_map("88", str_to_num), 880)
+        self.assertNotEqual(optional_map("88", str_to_num), "880")
+        self.assertEqual(optional_map("42", str_to_num), 420)
 
 
 if __name__ == '__main__':
