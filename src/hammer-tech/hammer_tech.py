@@ -74,11 +74,25 @@ class HammerTechnology:
         self.config = None  # type: TechJSON
 
     @classmethod
-    def load_from_dir(cls, technology_name: str, path: str):
+    def load_from_dir(cls, technology_name: str, path: str) -> "HammerTechnology":
         """Load a technology from a given folder.
 
         :param technology_name: Technology name (e.g. "saed32")
         :param path: Path to the technology folder (e.g. foo/bar/technology/saed32)
+        """
+
+        with open(os.path.join(path, "{technology_name}.tech.json".format(technology_name=technology_name))) as f:
+            json_str = f.read()
+
+        return HammerTechnology.load_from_json(technology_name, json_str, path)
+
+    @classmethod
+    def load_from_json(cls, technology_name: str, json_str: str, path: str) -> "HammerTechnology":
+        """Load a technology from a given folder.
+
+        :param technology_name: Technology name (e.g. "saed32")
+        :param json_str: JSON string to use as the technology JSON
+        :param path: Path to set as the technology folder (e.g. foo/bar/technology/saed32)
         """
 
         tech = HammerTechnology()
@@ -90,8 +104,7 @@ class HammerTechnology:
         tech.path = path
 
         # Configuration
-        with open(os.path.join(path, "%s.tech.json" % (tech.name))) as f:
-            tech.config = TechJSON.from_json(f.read())
+        tech.config = TechJSON.from_json(json_str)
 
         return tech
 
