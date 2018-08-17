@@ -113,6 +113,40 @@ class HammerTechnologyTest(unittest.TestCase):
         prefixes2.append(hammer_tech.PathPrefix(prefix="bar", path="/tmp/bar"))
         self.assertEqual(lib.extra_prefixes, prefixes_orig)
 
+    def test_prepend_dir_path(self) -> None:
+        tech_json = {
+            "name": "My Technology Library",
+            "installs": [
+                {
+                    "path": "test",
+                    "base var": ""  # means relative to tech dir
+                }
+            ],
+            "libraries": []
+        }
+
+        tech_dir = "/tmp/path"  # should not be used
+        tech = hammer_tech.HammerTechnology.load_from_json("dummy28", json.dumps(tech_json, indent=2), tech_dir)
+
+        # Check that a tech-provided prefix works fine
+        self.assertEqual("{0}/water".format(tech_dir), tech.prepend_dir_path("test/water"))
+        self.assertEqual("{0}/fruit".format(tech_dir), tech.prepend_dir_path("test/fruit"))
+
+        # Check that a non-existent prefix gives an error
+        with self.assertRaises(ValueError):
+            tech.prepend_dir_path("badprefix/file")
+
+        # Check that a lib's custom prefix works
+        from hammer_vlsi.hammer_tool import ExtraLibrary
+        lib = ExtraLibrary(
+            library=hammer_tech.library_from_json("""{"milkyway techfile": "custom/chair"}"""),
+            prefix=hammer_tech.PathPrefix(
+                prefix="custom",
+                path="/tmp/custom"
+            )
+        ).store_into_library()
+        self.assertEqual("{0}/hat".format("/tmp/custom"), tech.prepend_dir_path("custom/hat", lib))
+
 
 class HammerToolTestHelpers:
     """
