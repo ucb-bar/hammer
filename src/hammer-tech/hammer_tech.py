@@ -25,6 +25,21 @@ TechJSON = ns.Techjson
 Library = ns.Library
 
 
+# TODO(edwardw): deprecate these functions once Library is no longer auto-generated.
+def copy_library(lib: Library) -> Library:
+    """Perform a deep copy of a Library."""
+    return Library.from_json(lib.serialize())
+
+
+def library_from_json(json: str) -> Library:
+    """
+    Creatre a library from a JSON string.
+    :param json: JSON string.
+    :return: hammer_tech library.
+    """
+    return Library.from_json(json)
+
+
 class HammerTechnology:
     # Properties.
     @property
