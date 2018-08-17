@@ -90,6 +90,30 @@ class HammerVLSILoggingTest(unittest.TestCase):
         os.remove(path)
 
 
+class HammerTechnologyTest(unittest.TestCase):
+    """
+    Tests for the Hammer technology library (hammer_tech).
+    """
+    def test_extra_prefixes(self) -> None:
+        """
+        Test that extra_prefixes works properly as a property.
+        """
+        lib = hammer_tech.library_from_json('{"openaccess techfile": "test/oa"}')  # type: hammer_tech.Library
+
+        prefixes_orig = [hammer_tech.PathPrefix(prefix="test", path="/tmp/test")]
+
+        prefixes = [hammer_tech.PathPrefix(prefix="test", path="/tmp/test")]
+        lib.extra_prefixes = prefixes
+        # Check that we get the original back even after mutating the original list.
+        prefixes.append(hammer_tech.PathPrefix(prefix="bar", path="/tmp/bar"))
+        self.assertEqual(lib.extra_prefixes, prefixes_orig)
+
+        prefixes2 = lib.extra_prefixes
+        # Check that we don't mutate the copy stored in the lib if we mutate after getting it
+        prefixes2.append(hammer_tech.PathPrefix(prefix="bar", path="/tmp/bar"))
+        self.assertEqual(lib.extra_prefixes, prefixes_orig)
+
+
 class HammerToolTestHelpers:
     """
     Helper functions to aid in the testing of IP library filtering/processing.
