@@ -15,7 +15,7 @@ import os
 import re
 import shlex
 import subprocess
-from typing import Callable, Iterable, List, Tuple, Optional, Dict, Any, Union, Set, cast
+from typing import Callable, Iterable, List, Tuple, Optional, Dict, Any, Union, Set, cast, NamedTuple
 import warnings
 
 import hammer_config
@@ -28,10 +28,10 @@ from .hooks import HammerToolHookAction, HammerToolStep, HammerStepFunction, Hoo
 
 from .hammer_vlsi_impl import HierarchicalMode, LibraryFilter, HammerToolPauseException
 from .units import TimeValue, VoltageValue, TemperatureValue
-from hammer_utils import add_lists, in_place_unique, reduce_named
+from hammer_utils import (add_lists, get_or_else, in_place_unique,
+                          optional_map, reduce_named)
 
-
-__all__ = ['HammerTool']
+__all__ = ['HammerTool', 'ExtraLibrary']
 
 
 def make_raw_hammer_tool_step(func: HammerStepFunction, name: str) -> HammerToolStep:
@@ -52,6 +52,36 @@ def check_hammer_step_function(func: HammerStepFunction) -> None:
             raise TypeError(msg)
     if annotations['return'] != bool:
         raise TypeError(msg)
+
+
+# Struct that holds an extra library and possible prefix.
+class ExtraLibrary(NamedTuple('ExtraLibrary', [
+    ('prefix', Optional[hammer_tech.PathPrefix]),
+    ('library', hammer_tech.Library)
+])):
+    __slots__ = ()
+
+    def to_setting(self) -> dict:
+        raise NotImplementedError("No clean implementation for JSON export of library yet")
+
+    @staticmethod
+    def from_setting(d: dict) -> "ExtraLibrary":
+        prefix = None
+        if "prefix" in d:
+            prefix = hammer_tech.PathPrefix.from_setting(d["prefix"])
+        return ExtraLibrary(
+            prefix=prefix,
+            library=hammer_tech.HammerTechnology.parse_library(d["library"])
+        )
+
+    def store_into_library(self) -> hammer_tech.Library:
+        """
+        Store the prefix into extra_prefixes of the library, and return a new copy.
+        :return: A copy of the library in this ExtraPrefix with the prefix stored in extra_prefixes, if one exists.
+        """
+        lib_copied = hammer_tech.copy_library(self.library)  # type: hammer_tech.Library
+        lib_copied.extra_prefixes = get_or_else(optional_map(self.prefix, lambda p: [p]), [])
+        return lib_copied
 
 
 class HammerTool(metaclass=ABCMeta):
