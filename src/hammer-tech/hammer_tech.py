@@ -5,10 +5,11 @@
 #
 #  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
 
+from abc import ABCMeta, abstractmethod
 import json
 import os
 import subprocess
-from typing import List
+from typing import List, NamedTuple, Union
 
 import hammer_config
 
@@ -23,6 +24,88 @@ ns = builder.build_classes()
 TechJSON = ns.Techjson
 # Semiconductor IP library
 Library = ns.Library
+
+
+class LibraryPrefix(metaclass=ABCMeta):
+    """
+    Base type for all library path prefixes.
+    """
+
+    @property
+    @abstractmethod
+    def prefix(self) -> str:
+        """
+        Get the prefix that this LibraryPrefix instance provides.
+        For example, if this is a path prefix for "myprefix" -> "/usr/share/myprefix", then
+        this method returns "myprefix".
+        :return: Prefix of this LibraryPrefix.
+        """
+        pass
+
+    @abstractmethod
+    def prepend(self, rest_of_path: str) -> str:
+        """
+        Prepend the path held by this LibraryPrefix to the given rest_of_path.
+        The exact implementation of this depends on the subclass. For example,
+        a path prefix may just append the path it holds, while a variable
+        prefix might do some lookups.
+        :param rest_of_path: Rest of the path
+        :return: Path held by this prefix prepended to rest_of_path.
+        """
+        pass
+
+
+# Internal backend of PathPrefix. Do not use.
+_PathPrefixInternal = NamedTuple('PathPrefix', [
+    ('prefix', str),
+    ('path', str)
+])
+
+
+class PathPrefix(LibraryPrefix):
+    """
+    # Struct that holds a path-based prefix.
+    """
+    __slots__ = ('internal',)
+
+    def __init__(self, prefix: str, path: str) -> None:
+        """
+        Initialize a new PathPrefix.
+        e.g. a PathPrefix might map 'mylib' to '/usr/lib/mylib'.
+        :param prefix: Prefix to hold e.g. 'mylib'
+        :param path: Path to map this prefix to - e.g. '/usr/lib/mylib'.
+        """
+        self.internal = _PathPrefixInternal(
+            prefix=str(prefix),
+            path=str(path)
+        )
+
+    def __eq__(self, other) -> bool:
+        return self.internal == other.internal
+
+    @property
+    def prefix(self) -> str:
+        return self.internal.prefix
+
+    @property
+    def path(self) -> str:
+        return self.internal.path
+
+    def to_setting(self) -> dict:
+        return {
+            "prefix": self.prefix,
+            "path": self.path
+        }
+
+    @staticmethod
+    def from_setting(d: dict) -> "PathPrefix":
+        return PathPrefix(
+            prefix=str(d["prefix"]),
+            path=str(d["path"])
+        )
+
+    def prepend(self, rest_of_path: str) -> str:
+        return os.path.join(self.path, rest_of_path)
 
 
 # TODO(edwardw): deprecate these functions once Library is no longer auto-generated.
