@@ -797,13 +797,21 @@ class HammerTool(metaclass=ABCMeta):
             sequence=lib_filters,
             initial=self.get_available_libraries(),
             function=lambda libs, func: filter(func, libs)
-        )
+        )  # type: List[hammer_tech.Library]
 
         if sort_func is not None:
             filtered_libs = sorted(filtered_libs, key=sort_func)
 
+        def extract_and_prepend_path(lib: hammer_tech.Library) -> List[str]:
+            """
+            Call extraction_func on this library and then prepend to the resultant paths.
+            """
+            assert extraction_func is not None  # type checker technicality for above
+            paths = extraction_func(lib)
+            return list(map(lambda path: self.technology.prepend_dir_path(path, lib), paths))
+
         lib_results = list(
-            reduce(add_lists, list(map(extraction_func, filtered_libs)), []))  # type: List[str]
+            reduce(add_lists, list(map(extract_and_prepend_path, filtered_libs)), []))  # type: List[str]
 
         # Uniquify results.
         # TODO: think about whether this really belongs here and whether we always need to uniquify.
@@ -1169,7 +1177,7 @@ class HammerTool(metaclass=ABCMeta):
             lib_filters=lib_filters,
             sort_func=filt.sort_func,
             extraction_func=filt.extraction_func,
-            extra_funcs=[self.technology.prepend_dir_path, existence_check_func])  # type: List[str]
+            extra_funcs=[existence_check_func])  # type: List[str]
 
         # Quickly check that lib_items is actually a List[str].
         if not isinstance(lib_items, List):

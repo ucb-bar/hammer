@@ -9,14 +9,14 @@ from abc import ABCMeta, abstractmethod
 import json
 import os
 import subprocess
-from typing import Any, List, NamedTuple, Union
+from typing import Any, Callable, List, NamedTuple, Optional, Union
 
 import hammer_config
 
 from hammer_logging import HammerVLSILoggingContext
 
 import python_jsonschema_objects  # type: ignore
-from hammer_utils import deeplist
+from hammer_utils import deeplist, get_or_else, optional_map
 
 builder = python_jsonschema_objects.ObjectBuilder(json.loads(open(os.path.dirname(__file__) + "/schema.json").read()))
 ns = builder.build_classes()
@@ -280,10 +280,13 @@ class HammerTechnology:
         # Convert the dict to JSON...
         return Library.from_json(json.dumps(lib))
 
-    # TODO(edwardw): think about moving more of these kinds of functions out of the synthesis tool and in here instead.
-    def prepend_dir_path(self, path: str) -> str:
+    def prepend_dir_path(self, path: str, lib: Optional[Library] = None) -> str:
         """
         Prepend the appropriate path (either from tarballs or installs) to the given library item.
+        e.g. if the path argument is "foo/bar" and we have a prefix that defines foo as "/usr/share/foo", then
+        this will return "/usr/share/foo/bar".
+        :param path: Path to which we should prepend
+        :param lib: (optional) Library which produced this path. Used to look for additional prefixes.
         """
         assert len(path) > 0, "path must not be empty"
 
@@ -298,12 +301,18 @@ class HammerTechnology:
             matching_installs = list(filter(lambda install: install.path == base_path, self.config.installs))
         else:
             matching_installs = []
+
         if self.config.tarballs is not None:
             matching_tarballs = list(filter(lambda tarball: tarball.path == base_path, self.config.tarballs))
         else:
             matching_tarballs = []
 
-        matches = len(matching_installs) + len(matching_tarballs)
+        # Some extra typing junk because Library is a dynamically-generated class...
+        get_extra_prefixes = lambda l: l.extra_prefixes  # type: Callable[[Any], List[LibraryPrefix]]
+        extra_prefixes = get_or_else(optional_map(lib, get_extra_prefixes), [])  # type: List[LibraryPrefix]
+        matching_extra_prefixes = list(filter(lambda p: p.prefix == base_path, extra_prefixes))
+
+        matches = len(matching_installs) + len(matching_tarballs) + len(matching_extra_prefixes)
         if matches < 1:
             raise ValueError("Path {0} did not match any tarballs or installs".format(path))
         elif matches > 1:
@@ -316,8 +325,11 @@ class HammerTechnology:
                 else:
                     base = self.get_setting(install.base_var)
                 return os.path.join(*([base] + rest_of_path))
-            else:
+            elif len(matching_tarballs) == 1:
                 return os.path.join(self.extracted_tarballs_dir, path)
+            else:
+                matched = matching_extra_prefixes[0]
+                return matched.prepend(os.path.join(*rest_of_path))
 
     def extract_technology_files(self) -> None:
         """Ensure that the technology files exist either via tarballs or installs."""
