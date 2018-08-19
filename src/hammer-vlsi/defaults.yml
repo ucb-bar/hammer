@@ -42,8 +42,16 @@ vlsi.technology:
   # Required for some CAD tools to function properly.
   placement_site: null
 
-  # Extra semiconductor IP libraries/stdcell libs/hard macros. (List[hammer_tech.Library])
+  # Extra semiconductor IP libraries/stdcell libs/hard macros. (List[ExtraLibrary])
   # Used for non-technology-vendor-provided custom IP blocks.
+  # ExtraLibrary is a struct with two fields:
+  # - prefix (Optional[PathPrefix]) - struct that holds a prefix and path.
+  #   - path (str) - Path for the prefix below.
+  #     For example, if the path is /foo/bar/pll, then a reference of pll/test.txt (assuming 'pll' is the prefix) will
+  #     resolve to /foo/bar/pll/test.txt.
+  #   - prefix (str) - prefix used for referencing in the library.
+  #     For example, if "lef file" in HammerLibrary references "pll/layout/pll.lef", then the path would be "pll".
+  # - library (hammer_tech.HammerLibrary) - IP library to add.
   # Extra libraries are added at the end of the library list, in the event that order matters.
   extra_libraries: []
 
