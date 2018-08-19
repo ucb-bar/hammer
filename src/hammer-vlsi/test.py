@@ -377,6 +377,9 @@ class HammerToolTest(unittest.TestCase):
         tech.cache_dir = tech_dir
 
         class Tool(hammer_vlsi.HammerTool):
+            lib_output = []  # type: List[str]
+            filter_output = []  # type: List[str]
+
             @property
             def steps(self) -> List[hammer_vlsi.HammerToolStep]:
                 return self.make_steps_from_methods([
@@ -387,11 +390,10 @@ class HammerToolTest(unittest.TestCase):
                 def test_tool_format(lib, filt) -> List[str]:
                     return ["drink {0}".format(lib)]
 
-                self._read_lib_output = self.read_libs([self.milkyway_techfile_filter], test_tool_format,
-                                                       must_exist=False)
+                Tool.lib_output = self.read_libs([self.milkyway_techfile_filter], test_tool_format, must_exist=False)
 
-                self._test_filter_output = self.read_libs([HammerToolTestHelpers.make_test_filter()], test_tool_format,
-                                                          must_exist=False)
+                Tool.filter_output = self.read_libs([HammerToolTestHelpers.make_test_filter()], test_tool_format,
+                                                    must_exist=False)
                 return True
 
         test = Tool()
@@ -400,37 +402,76 @@ class HammerToolTest(unittest.TestCase):
         test.technology = tech
         # Add some extra libraries to see if they are picked up
         database = hammer_config.HammerDatabase()
+        lib1_path = "/foo/bar"
+        lib1b_path = "/library/specific/prefix"
+        lib2_path = "/baz/quux"
         database.update_project([{
             'vlsi.technology.extra_libraries': [
-                {"milkyway techfile": "test/extra_cake"},
                 {
-                    "openaccess techfile": "test/extra_doughnut",
-                    "provides": [
-                        {"lib_type": "stdcell"}
-                    ]
+                    "library": {"milkyway techfile": "test/xylophone"}
+                },
+                {
+                    "library": {"openaccess techfile": "test/orange"}
+                },
+                {
+                    "prefix": {
+                        "prefix": "lib1",
+                        "path": lib1_path
+                    },
+                    "library": {"milkyway techfile": "lib1/muffin"}
+                },
+                {
+                    "prefix": {
+                        "prefix": "lib1",
+                        "path": lib1b_path
+                    },
+                    "library": {"milkyway techfile": "lib1/granola"}
+                },
+                {
+                    "prefix": {
+                        "prefix": "lib2",
+                        "path": lib2_path
+                    },
+                    "library": {
+                        "openaccess techfile": "lib2/cake",
+                        "milkyway techfile": "lib2/brownie",
+                        "provides": [
+                            {"lib_type": "stdcell"}
+                        ]
+                    }
                 }
             ]
         }])
         test.set_database(database)
         test.run()
 
-        # Don't care about ordering here.
-        self.assertEqual(set(test._read_lib_output),
+        # Not testing ordering in this assertion.
+        self.assertEqual(set(Tool.lib_output),
                          {
                              "drink {0}/soy".format(tech_dir),
                              "drink {0}/coconut".format(tech_dir),
-                             "drink {0}/extra_cake".format(tech_dir)
+                             "drink {0}/xylophone".format(tech_dir),
+                             "drink {0}/muffin".format(lib1_path),
+                             "drink {0}/granola".format(lib1b_path),
+                             "drink {0}/brownie".format(lib2_path)
                          })
 
         # We do care about ordering here.
-        # Test filter
-        self.assertEqual(test._test_filter_output, [
-            "drink {0}/tea".format(tech_dir),
-            "drink {0}/extra_doughnut".format(tech_dir),
+        # Our filter should put the techfile first and sort the rest.
+        print("Tool.filter_output = " + str(Tool.filter_output))
+        tech_lef_result = [
+            # tech lef
+            "drink {0}/tea".format(tech_dir)
+        ]
+        base_lib_results = [
             "drink {0}/grapefruit".format(tech_dir),
             "drink {0}/juice".format(tech_dir),
             "drink {0}/orange".format(tech_dir)
-        ])
+        ]
+        extra_libs_results = [
+            "drink {0}/cake".format(lib2_path)
+        ]
+        self.assertEqual(Tool.filter_output, tech_lef_result + sorted(base_lib_results + extra_libs_results))
 
         # Cleanup
         shutil.rmtree(tech_dir)

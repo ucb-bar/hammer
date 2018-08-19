@@ -746,7 +746,7 @@ class HammerTool(metaclass=ABCMeta):
                 error = True
         return not error
 
-    def get_extra_libraries(self) -> List[hammer_tech.Library]:
+    def get_extra_libraries(self) -> List[ExtraLibrary]:
         """
         Get the list of extra libraries from the config.
         See vlsi.technology.extra_libraries in defaults.yml.
@@ -760,7 +760,7 @@ class HammerTool(metaclass=ABCMeta):
         if not isinstance(extra_libs, list):
             raise ValueError("extra_libraries was not a list")
         else:
-            return list(map(hammer_tech.HammerTechnology.parse_library, extra_libs))
+            return list(map(ExtraLibrary.from_setting, extra_libs))
 
     def get_available_libraries(self) -> List[hammer_tech.Library]:
         """
@@ -768,7 +768,8 @@ class HammerTool(metaclass=ABCMeta):
         extra IP libraries specified in the config (see get_extra_libraries).
         :return: List of all available IP libraries.
         """
-        return list(self.technology.config.libraries) + self.get_extra_libraries()
+        return list(self.technology.tech_defined_libraries) + list(
+            map(lambda el: el.store_into_library(), self.get_extra_libraries()))
 
     # TODO: should some of these live in hammer_tech instead?
     def filter_and_select_libs(self,
