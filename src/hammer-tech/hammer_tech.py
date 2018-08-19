@@ -280,6 +280,14 @@ class HammerTechnology:
         # Convert the dict to JSON...
         return Library.from_json(json.dumps(lib))
 
+    @property
+    def tech_defined_libraries(self) -> List[Library]:
+        """
+        Get all technology-defined libraries from the config.
+        :return: List of technology-defined libraries with any extra prefixes if present.
+        """
+        return list(self.config.libraries)
+
     def prepend_dir_path(self, path: str, lib: Optional[Library] = None) -> str:
         """
         Prepend the appropriate path (either from tarballs or installs) to the given library item.
