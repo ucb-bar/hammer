@@ -65,6 +65,9 @@
           "lef file" : {
             "type" : "string"
           },
+          "gds file" : {
+            "type" : "string"
+          },
           "metal layers" : {
             "type" : "array",
             "items" : {
