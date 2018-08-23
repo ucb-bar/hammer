@@ -1101,6 +1101,22 @@ class HammerTool(metaclass=ABCMeta):
                                  extraction_func=extraction_func, sort_func=sort_func)
 
     @property
+    def gds_filter(self) -> LibraryFilter:
+        """
+        Select GDS files for opaque physical information.
+        """
+
+        def filter_func(lib: hammer_tech.Library) -> bool:
+            return lib.gds_file is not None
+
+        def extraction_func(lib: hammer_tech.Library) -> List[str]:
+            assert lib.gds_file is not None
+            return [lib.gds_file]
+
+        return LibraryFilter.new("gds", "GDS opaque physical design layout", is_file=True, filter_func=filter_func,
+                                 extraction_func=extraction_func)
+
+    @property
     def milkyway_lib_dir_filter(self) -> LibraryFilter:
         def select_milkyway_lib(lib: hammer_tech.Library) -> List[str]:
             if lib.milkyway_lib_in_dir is not None:
