@@ -188,3 +188,9 @@ par.inputs:
   # Optional: SDC input file from post-synthesis.
   # Leave as null to not use.
   post_synth_sdc: null
+
+  # Optional: GDS map file showing how/what layers should be put in the GDSII file
+  # Leave as null to use a default for the tool. This often results in a complete but arbitrary assignment
+  gds_map_file: null
+  # If true tell the PAR tool to merge any library/macro GDS's into the final GDS
+  gds_merge: false
