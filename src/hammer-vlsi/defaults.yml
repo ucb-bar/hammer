@@ -189,8 +189,16 @@ par.inputs:
   # Leave as null to not use.
   post_synth_sdc: null
 
-  # Optional: GDS map file name showing how/what layers should be put in the GDSII file.
-  # Leave as null to use a default for the tool. This often results in a complete but arbitrary assignment.
+  # GDS output map mode. (str)
+  # The GDS map file shows how/what layers should be put in the GDSII file.
+  # Valid options:
+  # auto - Use the technology plugin's value for the map file
+  # empty - Don't use a map file at all and let the cad tool do what it wants.
+  #   This often results in a complete but arbitrary assignment.
+  # manual - Read the map file from the variable below, overriding the technology plugin
+  gds_map_mode: auto
+  # Optional: GDS map file path
+  # Leave as null to use an empty map.
   # type: Optional[str]
   gds_map_file: null
 
