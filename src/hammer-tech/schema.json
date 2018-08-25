@@ -152,6 +152,9 @@
     "name" : {
       "type" : "string"
     },
+    "gds map file" : {
+      "type" : "string"
+    },
     "tarballs" : {
       "type" : "array",
       "items" : {
