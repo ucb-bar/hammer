@@ -189,19 +189,20 @@ par.inputs:
   # Leave as null to not use.
   post_synth_sdc: null
 
-  # GDS output map mode. (str)
+  # GDS output map mode.
+  # type: str
   # The GDS map file shows how/what layers should be put in the GDSII file.
   # Valid options:
-  # auto - Use the technology plugin's value for the map file
+  # auto - Use the technology plugin's value for the map file.
   # empty - Don't use a map file at all and let the cad tool do what it wants.
-  #   This often results in a complete but arbitrary assignment.
-  # manual - Read the map file from the variable below, overriding the technology plugin
+  #         This often results in a complete but arbitrary assignment.
+  # manual - Read the map file from the variable below, overriding the technology plugin.
   gds_map_mode: auto
-  # Optional: GDS map file path
-  # Leave as null to use an empty map.
+  # Optional: GDS map file path. Used only if gds_map_mode above is set to manual.
   # type: Optional[str]
   gds_map_file: null
 
-  # If true tell the PAR tool to merge any library/macro GDSes into the final GDS.
+  # If true, tell the place and route tool to merge any library/macro GDSes into
+  # the final GDS.
   # type: bool
   gds_merge: false
