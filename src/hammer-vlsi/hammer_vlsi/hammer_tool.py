@@ -1264,6 +1264,39 @@ class HammerTool(metaclass=ABCMeta):
             output.append(clock)
         return output
 
+    def get_gds_map_file(self) -> Optional[str]:
+        """
+        Get a GDS map in accordance with settings in the Hammer IR.
+        Return a fully-resolved (i.e. already prepended path) path to the GDS map or None if none was specified.
+        :return: Fully-resolved path to GDS map file or None.
+        """
+        # Mode can be auto, empty, or manual
+        gds_map_mode = str(self.get_setting("par.inputs.gds_map_mode"))  # type: str
+
+        # gds_map_file will only be used in manual mode
+        # Not including the map_file flag includes all layers but with no specific layer numbers
+        manual_map_file = str(self.get_setting("par.inputs.gds_map_file")) if self.get_setting(
+            "par.inputs.gds_map_file") is not None else None  # type: Optional[str]
+
+        # tech_map_file will only be used in auto mode
+        tech_map_file_raw = self.technology.config.gds_map_file  # type: ignore
+        tech_map_file_optional = str(
+            tech_map_file_raw) if tech_map_file_raw is not None else None  # type: Optional[str]
+        tech_map_file = optional_map(tech_map_file_optional, lambda p: self.technology.prepend_dir_path(p))
+
+        if gds_map_mode == "auto":
+            map_file = tech_map_file
+        elif gds_map_mode == "manual":
+            map_file = manual_map_file
+        elif gds_map_mode == "empty":
+            map_file = None
+        else:
+            self.logger.error(
+                "Invalid gds_map_mode {mode}. Using auto gds map.".format(mode=gds_map_mode))
+            map_file = tech_map_file
+
+        return map_file
+
     def get_placement_constraints(self) -> List[PlacementConstraint]:
         """
         Get a list of placement constraints as specified in the config.
