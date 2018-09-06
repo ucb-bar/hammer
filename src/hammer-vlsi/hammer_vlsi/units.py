@@ -87,7 +87,7 @@ class ValueWithUnit(ABC):
         # e.g. extract "n" from "ns" or blank if it's blank (e.g. "V" -> "")
         letter_prefix = ""
         if prefix != self.unit:
-            letter_prefix = prefix[0]
+            letter_prefix = "" if prefix == "" else prefix[0]
 
         retval = self._value * (self._prefix / self._prefix_table[letter_prefix])
         if round_zeroes:
