@@ -847,8 +847,11 @@ class HammerTool(metaclass=ABCMeta):
                 return False
             if lib.supplies is None or lib.supplies.VDD is None:
                 return False
-            if lib.corner.temperature == temp:
-                if lib.supplies.VDD == voltage:
+            # TODO: use regular comparison operators once hammer#168 is fixed!
+            lib_temperature = TemperatureValue(str(lib.corner.temperature)).str_value_in_units("")
+            lib_VDD = VoltageValue(str(lib.supplies.VDD)).str_value_in_units("")
+            if lib_temperature == temp.str_value_in_units(""):
+                if lib_VDD == voltage.str_value_in_units(""):
                     return True
                 else:
                     return False
