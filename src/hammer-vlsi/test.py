@@ -892,6 +892,7 @@ class TimeValueTest(unittest.TestCase):
         self.assertEqual(tv.value_in_units("ns"), 1000)
         tv2 = hammer_vlsi.units.TimeValue("42", "m")
         self.assertEqual(tv2.value_in_units("ms"), 42)
+        self.assertEqual(tv2.value_in_units("", round_zeroes=False), 0.042)
 
     def test_errors(self) -> None:
         """
