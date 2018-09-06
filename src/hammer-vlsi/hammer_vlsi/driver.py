@@ -139,11 +139,12 @@ class HammerDriver:
         self.log.info("Loading technology '{0}'".format(tech_str))
         tech = hammer_tech.HammerTechnology.load_from_dir(tech_str, os.path.dirname(
             tech_json_path))  # type: hammer_tech.HammerTechnology
+        # Update database as soon as possible since e.g. extract_technology_files could use those settings
+        self.database.update_technology(tech.get_config())
         tech.logger = self.log.context("tech")
         tech.set_database(self.database)
         tech.cache_dir = cache_dir
         tech.extract_technology_files()
-        self.database.update_technology(tech.get_config())
 
         self.tech = tech
 
