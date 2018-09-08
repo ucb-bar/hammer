@@ -74,9 +74,16 @@ class CLIDriver:
         self.syn_rundir = ""  # type: Optional[str]
         self.par_rundir = ""  # type: Optional[str]
 
-        self.synthesis_action = self.create_synthesis_action([])
-        self.par_action = self.create_par_action([])
-        self.synthesis_par_action = self.create_synthesis_par_action(self.synthesis_action, self.par_action)
+        # If a subclass has defined these, don't clobber them in init
+        # since the subclass still uses this init function.
+        # TODO(edwardw): check the function signatures of any pre-defined
+        # functions
+        if not hasattr(self, "synthesis_action"):
+            self.synthesis_action = self.create_synthesis_action([])
+        if not hasattr(self, "par_action"):
+            self.par_action = self.create_par_action([])
+        if not hasattr(self, "synthesis_par_action"):
+            self.synthesis_par_action = self.create_synthesis_par_action(self.synthesis_action, self.par_action)
 
         # Dictionaries of module-CLIActionType for hierarchical flows.
         # See all_hierarchical_actions() below.
