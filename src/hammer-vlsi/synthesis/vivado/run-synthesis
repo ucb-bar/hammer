@@ -15,7 +15,7 @@ EXTRA_VSRCS="${script_dir}/sifiveblocks-vsrc/SRLatch.v"
 cd $workdir
 
 # TODO: fix simulation as well
-EXTRA_VSRCS=$EXTRA_VSRCS $vivado $VIVADOFLAGS -source prologue.tcl -source init.tcl -source syn.tcl
+vivado $VIVADOFLAGS -source prologue.tcl -source init.tcl -source syn.tcl $EXTRA_VSRCS
 
 if [ -n "$dcp" ]; then
     echo "--dcp specified, copying post_synth.dcp";
