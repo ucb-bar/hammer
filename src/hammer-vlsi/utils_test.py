@@ -5,7 +5,7 @@
 #
 #  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
-from typing import Dict, Tuple, List
+from typing import Dict, Tuple, List, Optional
 
 from hammer_utils import topological_sort, get_or_else, optional_map, check_function_type
 
@@ -69,6 +69,18 @@ class UtilsTest(unittest.TestCase):
             return [a, b]
 
         check_function_type(test4, [int, int], List[int])
+
+        # Check that dict == typing.Dict, etc.
+        def test5(a: int) -> dict:
+            return {"a": a}
+
+        check_function_type(test5, [int], Dict)
+
+        # Check that dict == typing.Dict, etc.
+        def test6(a: int) -> Optional[dict]:
+            return {"a": a}
+
+        check_function_type(test6, [int], Optional[Dict])
 
         with self.assertRaises(TypeError):
             # Different # of arguments
