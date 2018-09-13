@@ -28,30 +28,21 @@ from .hooks import HammerToolHookAction, HammerToolStep, HammerStepFunction, Hoo
 
 from .hammer_vlsi_impl import HierarchicalMode, LibraryFilter, HammerToolPauseException
 from .units import TimeValue, VoltageValue, TemperatureValue
-from hammer_utils import (add_lists, get_or_else, in_place_unique,
+from hammer_utils import (add_lists, check_function_type, get_or_else, in_place_unique,
                           optional_map, reduce_named)
 
 __all__ = ['HammerTool', 'ExtraLibrary']
 
 
 def make_raw_hammer_tool_step(func: HammerStepFunction, name: str) -> HammerToolStep:
+    # Check the type of the HammerStepFunction
     check_hammer_step_function(func)
     return HammerToolStep(func, name)
 
 
 def check_hammer_step_function(func: HammerStepFunction) -> None:
-    msg = "Function {func} does not meet the required signature".format(func=str(func))
-
-    inspected = inspect.getfullargspec(func)
-    annotations = inspected.annotations
-    args = inspected.args
-    if len(args) != 1:
-        raise TypeError(msg)
-    else:
-        if annotations[args[0]] != HammerTool:
-            raise TypeError(msg)
-    if annotations['return'] != bool:
-        raise TypeError(msg)
+    """Internal alias for checking HammerStepFunction signatures."""
+    check_function_type(func, args=[HammerTool], return_type=bool)
 
 
 # Struct that holds an extra library and possible prefix.
