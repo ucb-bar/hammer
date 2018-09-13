@@ -193,24 +193,63 @@ def check_function_type(function: Callable, args: List[type], return_type: type)
         return "Function {function} has an incorrect signature{cause_full}".format(function=str(function),
                                                                                    cause_full=cause_full)
 
+    def get_name_from_type(t: Any) -> str:
+        """Getting names can be complicated."""
+        try:
+            name = str(t.__name__)  # type: ignore
+        except AttributeError:
+            # mypy objects are weird e.g. typing.Union doesn't have __name__ or __mro__ etc.
+            name = str(t)
+        return name
+
+    def compare_types_internal(a: Any, b: Any) -> bool:
+        """
+        Comparing types is also complicated.
+        Particularly when you have native Python times and mypy types floating around at once.
+        WARNING: this method is in no way complete/exhaustive
+        """
+        import typing
+        if a == dict and b == typing.Dict:
+            return True
+        elif isinstance(a, typing._Union) and isinstance(b, typing._Union):  # type: ignore
+            if len(a.__args__) == len(b.__args__):  # type: ignore
+                for ai, bi in list(zip(a.__args__, b.__args__)):  # type: ignore
+                    if not compare_types(ai, bi):
+                        return False
+                return True
+            else:
+                return False
+        else:
+            return a == b
+
+    def compare_types(a: Any, b: Any) -> bool:
+        """Order-insensitive compare."""
+        return compare_types_internal(a, b) or compare_types_internal(b, a)
+
     inspected = inspect.getfullargspec(function)
     annotations = inspected.annotations
     inspected_args = inspected.args
+    # Check that methods are bound
+    if len(inspected_args) > 0 and inspected_args[0] == "self":
+        # If it is bound, then ignore self
+        if hasattr(function, '__self__'):
+            del inspected_args[0]
+
     if len(inspected_args) != len(args):
         raise TypeError(msg(
             "Too many arguments - got {got}, expected {expected}".format(got=len(inspected_args), expected=len(args))))
     else:
         for i, (inspected_var_name, expected) in list(enumerate(zip(inspected_args, args))):
             inspected = annotations[inspected_var_name]
-            if inspected != expected:
-                inspected_name = str(inspected.__name__)  # type: ignore
-                expected_name = str(expected.__name__)  # type: ignore
+            if not compare_types(inspected, expected):
+                inspected_name = get_name_from_type(inspected)
+                expected_name = get_name_from_type(expected)
                 raise TypeError(msg(
                     "For argument {i}, got {got}, expected {expected}".format(i=i, got=inspected_name,
                                                                               expected=expected_name)))
     inspected_return = annotations['return']
-    if inspected_return != return_type:
-        inspected_return_name = str(inspected_return.__name__)  # type: ignore
-        return_type_name = str(return_type.__name__)  # type: ignore
+    if not compare_types(inspected_return, return_type):
+        inspected_return_name = get_name_from_type(inspected_return)
+        return_type_name = get_name_from_type(return_type)
         raise TypeError(msg("Got return type {got}, expected {expected}".format(got=inspected_return_name,
                                                                                 expected=return_type_name)))
