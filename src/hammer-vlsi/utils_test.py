@@ -7,7 +7,7 @@
 
 from typing import Dict, Tuple, List
 
-from hammer_utils import topological_sort, get_or_else, optional_map
+from hammer_utils import topological_sort, get_or_else, optional_map, check_function_type
 
 import unittest
 
@@ -48,6 +48,43 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(optional_map("88", str_to_num), 880)
         self.assertNotEqual(optional_map("88", str_to_num), "880")
         self.assertEqual(optional_map("42", str_to_num), 420)
+
+    def test_check_function_type(self) -> None:
+        def test1(x: int) -> str:
+            return str(x + 5)
+
+        check_function_type(test1, [int], str)
+
+        def test2(a: int, b: float) -> None:
+            print("{a}{b}".format(a=a, b=b))
+
+        check_function_type(test2, [int, float], None)  # type: ignore
+
+        def test3(a: int, b: int) -> List[int]:
+            return [a, b]
+
+        check_function_type(test3, [int, int], List[int])
+
+        def test4(a: int, b: int) -> List[int]:
+            return [a, b]
+
+        check_function_type(test4, [int, int], List[int])
+
+        with self.assertRaises(TypeError):
+            # Different # of arguments
+            check_function_type(test1, [int, int], str)
+        with self.assertRaises(TypeError):
+            # Different return type
+            check_function_type(test1, [int], bool)
+        with self.assertRaises(TypeError):
+            # Different argument type
+            check_function_type(test1, [str], str)
+        with self.assertRaises(TypeError):
+            # Different # of arguments and different return type
+            check_function_type(test3, [int], bool)
+        with self.assertRaises(TypeError):
+            # Entirely different
+            check_function_type(test3, [], dict)
 
 
 if __name__ == '__main__':

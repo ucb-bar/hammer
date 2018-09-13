@@ -8,10 +8,11 @@
 
 import copy
 from functools import reduce
+import inspect
 from typing import List, Any, Set, Dict, Tuple, TypeVar, Callable, Iterable, Optional
 
 __all__ = ['deepdict', 'deeplist', 'add_lists', 'add_dicts', 'reverse_dict', 'in_place_unique', 'topological_sort',
-           'reduce_named', 'get_or_else', 'optional_map']
+           'reduce_named', 'get_or_else', 'optional_map', 'check_function_type']
 
 
 def deepdict(x: dict) -> dict:
@@ -173,3 +174,43 @@ def optional_map(optional: Optional[_T], func: Callable[[_T], _U]) -> Optional[_
         return None
     else:
         return func(optional)
+
+
+def check_function_type(function: Callable, args: List[type], return_type: type) -> None:
+    """
+    Check that the given function obeys its function type signature.
+    Raises TypeError if the function is of the incorrect type.
+    :param function: Function to typecheck
+    :param args: List of arguments to the function
+    :param return_type: Return type
+    """
+
+    def msg(cause: str) -> str:
+        if cause != "":
+            cause_full = ": " + cause
+        else:
+            cause_full = cause
+        return "Function {function} has an incorrect signature{cause_full}".format(function=str(function),
+                                                                                   cause_full=cause_full)
+
+    inspected = inspect.getfullargspec(function)
+    annotations = inspected.annotations
+    inspected_args = inspected.args
+    if len(inspected_args) != len(args):
+        raise TypeError(msg(
+            "Too many arguments - got {got}, expected {expected}".format(got=len(inspected_args), expected=len(args))))
+    else:
+        for i, (inspected_var_name, expected) in list(enumerate(zip(inspected_args, args))):
+            inspected = annotations[inspected_var_name]
+            if inspected != expected:
+                inspected_name = str(inspected.__name__)  # type: ignore
+                expected_name = str(expected.__name__)  # type: ignore
+                raise TypeError(msg(
+                    "For argument {i}, got {got}, expected {expected}".format(i=i, got=inspected_name,
+                                                                              expected=expected_name)))
+    inspected_return = annotations['return']
+    if inspected_return != return_type:
+        inspected_return_name = str(inspected_return.__name__)  # type: ignore
+        return_type_name = str(return_type.__name__)  # type: ignore
+        raise TypeError(msg("Got return type {got}, expected {expected}".format(got=inspected_return_name,
+                                                                                expected=return_type_name)))
