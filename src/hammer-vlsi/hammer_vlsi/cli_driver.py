@@ -12,7 +12,6 @@ import json
 import os
 import subprocess
 import sys
-from functools import reduce
 
 from .hammer_vlsi_impl import HammerTool, HammerVLSISettings
 from .hooks import HammerToolHookAction
@@ -20,7 +19,7 @@ from .driver import HammerDriver, HammerDriverOptions
 
 from typing import List, Dict, Tuple, Any, Callable, Optional
 
-from hammer_utils import add_dicts, deeplist, get_or_else
+from hammer_utils import add_dicts, deeplist, get_or_else, check_function_type
 
 
 def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callable[[str], None]) -> List[str]:
@@ -62,6 +61,14 @@ def dump_config_to_json_file(output_path: str, config: dict) -> None:
 CLIActionType = Callable[[HammerDriver, Callable[[str], None]], Optional[dict]]
 
 
+def check_CLIActionType_type(func: CLIActionType) -> None:
+    """
+    Check that the given CLIActionType obeys its function type signature.
+    Raises TypeError if the function is of the incorrect type.
+    """
+    check_function_type(func, [HammerDriver, Callable[[str], None]], Optional[dict])
+
+
 class CLIDriver:
     """
     Helper class for projects to easily write/customize a CLI driver for hammer without needing to rewrite/copy all the
@@ -76,14 +83,18 @@ class CLIDriver:
 
         # If a subclass has defined these, don't clobber them in init
         # since the subclass still uses this init function.
-        # TODO(edwardw): check the function signatures of any pre-defined
-        # functions
-        if not hasattr(self, "synthesis_action"):
-            self.synthesis_action = self.create_synthesis_action([])
-        if not hasattr(self, "par_action"):
-            self.par_action = self.create_par_action([])
-        if not hasattr(self, "synthesis_par_action"):
-            self.synthesis_par_action = self.create_synthesis_par_action(self.synthesis_action, self.par_action)
+        if hasattr(self, "synthesis_action"):
+            check_CLIActionType_type(self.synthesis_action)  # type: ignore
+        else:
+            self.synthesis_action = self.create_synthesis_action([])  # type: CLIActionType
+        if hasattr(self, "par_action"):
+            check_CLIActionType_type(self.par_action)  # type: ignore
+        else:
+            self.par_action = self.create_par_action([])  # type: CLIActionType
+        if hasattr(self, "synthesis_par_action"):
+            check_CLIActionType_type(self.synthesis_par_action)  # type: ignore
+        else:
+            self.synthesis_par_action = self.create_synthesis_par_action(self.synthesis_action, self.par_action)  # type: CLIActionType
 
         # Dictionaries of module-CLIActionType for hierarchical flows.
         # See all_hierarchical_actions() below.
