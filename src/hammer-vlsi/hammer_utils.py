@@ -202,6 +202,14 @@ def check_function_type(function: Callable, args: List[type], return_type: type)
             name = str(t)
         return name
 
+    def is_union(t: Any) -> bool:
+        """Return true if 't' is a Union type."""
+        import typing
+        if not hasattr(t, "__origin__"):
+            # Not a mypy type
+            return False
+        return t.__origin__ == typing.Union
+
     def compare_types_internal(a: Any, b: Any) -> bool:
         """
         Comparing types is also complicated.
@@ -211,7 +219,7 @@ def check_function_type(function: Callable, args: List[type], return_type: type)
         import typing
         if a == dict and b == typing.Dict:
             return True
-        elif isinstance(a, typing._Union) and isinstance(b, typing._Union):  # type: ignore
+        elif is_union(a) and is_union(b):  # type: ignore
             if len(a.__args__) == len(b.__args__):  # type: ignore
                 for ai, bi in list(zip(a.__args__, b.__args__)):  # type: ignore
                     if not compare_types(ai, bi):
