@@ -12,7 +12,7 @@ try:
     from abc import ABC
 except ImportError:
     if sys.version_info.major == 3 and sys.version_info.minor < 4:
-        # Python 3.3 compatibility.
+        # Python compatibility: 3.3
         # Python 3.3 and below don't have abc.ABC
         import abc
         ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})
