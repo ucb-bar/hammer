@@ -206,8 +206,20 @@ def check_function_type(function: Callable, args: List[type], return_type: type)
         """Return true if 't' is a Union type."""
         import typing
         if not hasattr(t, "__origin__"):
-            # Not a mypy type
-            return False
+            import sys
+            if sys.version_info.major == 3 and sys.version_info.minor == 5 and sys.version_info.micro <= 2:
+                # Python compatibility: <3.5.2
+
+                # Monkey-patch in the __args__ that's present in modern versions of the typing lib.
+                if isinstance(t, typing.UnionMeta):
+                    assert(hasattr(t, "__union_params__"))
+                    setattr(t, "__args__", getattr(t, "__union_params__"))
+                    return True
+                else:
+                    return False
+            else:
+                # Not a mypy type
+                return False
         return t.__origin__ == typing.Union
 
     def compare_types_internal(a: Any, b: Any) -> bool:
