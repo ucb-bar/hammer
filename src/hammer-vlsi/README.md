@@ -7,6 +7,9 @@ Setup and environment
 =====================
 
 Requirements:
+- Python 3.3+
+  - For **Python 3.4 and lower**, the `typing` module must be installed. (`python3 -m pip install typing`)
+  - For **Python 3.4**, the [enum34](https://pypi.org/project/enum34/) package must be installed. (`python3 -m pip install enum34`)
 - python3 in the $PATH
 - hammer-shell in the $PATH
 
