@@ -15,7 +15,7 @@ except ImportError:
         # Python compatibility: 3.3
         # Python 3.3 and below don't have abc.ABC
         import abc
-        ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})
+        ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})  # type: ignore
 
 
 class ValueWithUnit(ABC):
