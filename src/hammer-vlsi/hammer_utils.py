@@ -211,7 +211,7 @@ def check_function_type(function: Callable, args: List[type], return_type: type)
                 # Python compatibility: <3.5.2
 
                 # Monkey-patch in the __args__ that's present in modern versions of the typing lib.
-                if isinstance(t, typing.UnionMeta):
+                if isinstance(t, typing.UnionMeta):  # type: ignore
                     assert(hasattr(t, "__union_params__"))
                     setattr(t, "__args__", getattr(t, "__union_params__"))
                     return True
