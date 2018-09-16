@@ -17,9 +17,11 @@ except ImportError:
         import abc
         ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})  # type: ignore
 
-from typing import Optional
+from typing import Optional, TypeVar, overload
 
 from hammer_utils import get_or_else
+
+_TT = TypeVar('_TT', bound='ValueWithUnit')
 
 class ValueWithUnit(ABC):
     """Represents some particular value that has units (e.g. "10 ns", "2000 um", "25 C", etc).
@@ -128,6 +130,80 @@ class ValueWithUnit(ABC):
         """
         # %g removes trailing zeroes
         return "%g" % (self.value_in_units(prefix, round_zeroes)) + " " + prefix
+
+    # Comparison operators.
+    # Note that mypy doesn't properly support type checking on equality operators so the type of __eq__ is object :(
+    # As a result, the operators' (e.g. __eq__) 'other' type can't be _TT.
+    # Therefore, we implement the operators themselves separately and then wrap them in the special operators.
+    # See https://github.com/python/mypy/issues/1271
+
+    def eq(self: _TT, other: _TT) -> bool:
+        """
+        Compare equality of this value with another.
+        The types must match.
+        """
+        if type(self) != type(other):
+            raise TypeError("Types do not match")
+        return self.value_in_units(self.default_prefix) == other.value_in_units(self.default_prefix)
+
+    def __eq__(self: _TT, other: object) -> bool:
+        """
+        Compare equality of this value with another.
+        The types must match.
+        """
+        return self.eq(other)  # type: ignore
+
+    def ne(self: _TT, other: _TT) -> bool:
+        """
+        Compare inequality of this value with another.
+        The types must match.
+        """
+        if type(self) != type(other):
+            raise TypeError("Types do not match")
+        return not self.eq(other)
+
+    def __ne__(self: _TT, other: object) -> bool:
+        """
+        Compare inequality of this value with another.
+        The types must match.
+        """
+        return self.ne(other)  # type: ignore
+
+    def __lt__(self: _TT, other: _TT) -> bool:
+        """
+        Check if self is less than other.
+        The types must match.
+        """
+        if type(self) != type(other):
+            raise TypeError("Types do not match")
+        return self.value < other.value
+
+    def __le__(self: _TT, other: _TT) -> bool:
+        """
+        Check if self is less than or equal to other.
+        The types must match.
+        """
+        if type(self) != type(other):
+            raise TypeError("Types do not match")
+        return self.value <= other.value
+
+    def __gt__(self: _TT, other: _TT) -> bool:
+        """
+        Check if self is greater than other.
+        The types must match.
+        """
+        if type(self) != type(other):
+            raise TypeError("Types do not match")
+        return self.value > other.value
+
+    def __ge__(self: _TT, other: _TT) -> bool:
+        """
+        Check if self is greater than or equal to other.
+        The types must match.
+        """
+        if type(self) != type(other):
+            raise TypeError("Types do not match")
+        return self.value >= other.value
 
 
 class TimeValue(ValueWithUnit):
