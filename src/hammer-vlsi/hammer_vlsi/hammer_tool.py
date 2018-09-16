@@ -29,7 +29,7 @@ from .hooks import HammerToolHookAction, HammerToolStep, HammerStepFunction, Hoo
 from .hammer_vlsi_impl import HierarchicalMode, LibraryFilter, HammerToolPauseException
 from .units import TimeValue, VoltageValue, TemperatureValue
 from hammer_utils import (add_lists, check_function_type, get_or_else, in_place_unique,
-                          optional_map, reduce_named)
+                          optional_map, reduce_named, reduce_list_str)
 
 __all__ = ['HammerTool', 'ExtraLibrary']
 
@@ -802,8 +802,9 @@ class HammerTool(metaclass=ABCMeta):
             paths = extraction_func(lib)
             return list(map(lambda path: self.technology.prepend_dir_path(path, lib), paths))
 
-        lib_results = list(
-            reduce(add_lists, list(map(extract_and_prepend_path, filtered_libs)), []))  # type: List[str]
+        lib_results_nested = list(map(extract_and_prepend_path, filtered_libs))  # type: List[List[str]]
+        empty = []  # type: List[str]
+        lib_results = reduce_list_str(add_lists, lib_results_nested, empty)  # type: List[str]
 
         # Uniquify results.
         # TODO: think about whether this really belongs here and whether we always need to uniquify.
@@ -813,7 +814,7 @@ class HammerTool(metaclass=ABCMeta):
 
         lib_results_with_extra_funcs = reduce(lambda arr, extra_func: list(map(extra_func, arr)), extra_funcs, lib_results)
 
-        return list(lib_results_with_extra_funcs)
+        return lib_results_with_extra_funcs
 
     def filter_for_supplies(self, lib: hammer_tech.Library) -> bool:
         """Function to help filter a list of libraries to find libraries which have matching supplies.
@@ -1206,10 +1207,10 @@ class HammerTool(metaclass=ABCMeta):
 
         # Finally, apply any output functions.
         # e.g. turning foo.db into ["--timing", "foo.db"].
-        after_output_functions = map(lambda item: output_func(item, filt), after_post_filter)
+        after_output_functions = list(map(lambda item: output_func(item, filt), after_post_filter))
 
         # Concatenate lists of List[str] together.
-        return list(reduce(add_lists, after_output_functions, []))
+        return reduce_list_str(add_lists, after_output_functions, [])
 
     def read_libs(self, library_types: Iterable[LibraryFilter], output_func: Callable[[str, LibraryFilter], List[str]],
             pre_filters: Optional[List[Callable[[hammer_tech.Library],bool]]] = None,
@@ -1231,13 +1232,13 @@ class HammerTool(metaclass=ABCMeta):
             assert isinstance(pre_filters, List)
             pre_filts = pre_filters
 
-        return list(reduce(
+        return reduce_list_str(
             add_lists,
             map(
                 lambda lib: self.process_library_filter(pre_filts=pre_filts, filt=lib, output_func=output_func, must_exist=must_exist),
                 library_types
             )
-        ))
+        )
 
     # TODO: these helper functions might get a bit out of hand, put them somewhere more organized?
     def get_clock_ports(self) -> List[ClockPort]:
