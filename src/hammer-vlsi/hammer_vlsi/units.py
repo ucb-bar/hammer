@@ -115,7 +115,7 @@ class ValueWithUnit(ABC):
 
         retval = self._value * (self._prefix / self._prefix_table[letter_prefix])
         if round_zeroes:
-            return round(retval, 2)
+            return round(retval, 3)
         else:
             return retval
 
@@ -124,7 +124,7 @@ class ValueWithUnit(ABC):
         e.g. return "5 ns".
 
         :param prefix: Prefix for the resulting value - e.g. "ns".
-        :param round_zeroes: True to round 1.00000001 etc to 1 within 2 decimal places.
+        :param round_zeroes: True to round 1.00000001 etc to 1 within 3 decimal places.
         """
         # %g removes trailing zeroes
         return "%g" % (self.value_in_units(prefix, round_zeroes)) + " " + prefix
