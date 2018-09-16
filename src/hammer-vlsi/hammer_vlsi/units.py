@@ -17,6 +17,9 @@ except ImportError:
         import abc
         ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})  # type: ignore
 
+from typing import Optional
+
+from hammer_utils import get_or_else
 
 class ValueWithUnit(ABC):
     """Represents some particular value that has units (e.g. "10 ns", "2000 um", "25 C", etc).
@@ -57,33 +60,45 @@ class ValueWithUnit(ABC):
         """Get the base unit type for values. (e.g. for "s", this would be "time")
         Meant to be overridden by subclasses."""
 
-    def __init__(self, value: str, default_prefix: str = 'n') -> None:
-        """Create a time value from parsing the given string.
-        Default prefix: n- (e.g. "ns", "nV", etc)
+    @property
+    @abstractmethod
+    def default_prefix(self) -> str:
+        """Get the default prefix for values.
+        (e.g. for time, specifying "n" would mean "0.25" would be interpreted as "0.25 ns".)
+        Meant to be overridden by subclasses."""
+
+    def __init__(self, value: str, prefix: Optional[str] = None) -> None:
+        """
+        Create a value from parsing the given string.
+        :param value: Value encoded in the given string.
+        :param prefix: If value does not have a prefix (e.g. "0.25"), then use the given prefix, or the default prefix
+                       defined by the class if one is not specified.
         """
         import re
+
+        default_prefix = get_or_else(prefix, self.default_prefix)
 
         regex = r"^([\d.]+) *(.*){}$".format(re.escape(self.unit))
         m = re.search(regex, value)
         if m is None:
             try:
                 num = str(float(value))
-                prefix = default_prefix
+                value_prefix = default_prefix
             except ValueError:
                 raise ValueError("Malformed {type} value {value}".format(type=self.unit_type, value=value))
         else:
             num = m.group(1)
-            prefix = m.group(2)
+            value_prefix = m.group(2)
 
-        if num.count('.') > 1 or len(prefix) > 1:
+        if num.count('.') > 1 or len(value_prefix) > 1:
             raise ValueError("Malformed {type} value {value}".format(type=self.unit_type, value=value))
 
-        if prefix not in self._prefix_table:
+        if value_prefix not in self._prefix_table:
             raise ValueError("Bad prefix for {value}".format(value=value))
 
         self._value = float(num)  # type: float
         # Preserve the prefix too to preserve precision
-        self._prefix = self._prefix_table[prefix]  # type: float
+        self._prefix = self._prefix_table[value_prefix]  # type: float
 
     @property
     def value(self) -> float:
@@ -121,6 +136,11 @@ class TimeValue(ValueWithUnit):
     """
 
     @property
+    def default_prefix(self) -> str:
+        """Default prefix: ns"""
+        return "n"
+
+    @property
     def unit(self) -> str:
         return "s"
 
@@ -132,6 +152,11 @@ class TimeValue(ValueWithUnit):
 class VoltageValue(ValueWithUnit):
     """Voltage value - e.g. "0.95 V", "950 mV".
     """
+
+    @property
+    def default_prefix(self) -> str:
+        """Default is plain volts (e.g. "0.1" -> 0.1 V)."""
+        return ""
 
     @property
     def unit(self) -> str:
@@ -146,6 +171,11 @@ class TemperatureValue(ValueWithUnit):
     """Temperature value in Celsius - e.g. "25 C", "125 C".
     Mainly used for specifying corners for MMMC.
     """
+
+    @property
+    def default_prefix(self) -> str:
+        """Default is plain degrees Celsius (e.g. "25" -> "25 C")."""
+        return ""
 
     @property
     def unit(self) -> str:
