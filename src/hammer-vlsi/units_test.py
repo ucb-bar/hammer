@@ -29,6 +29,41 @@ class VoltageValueTest(unittest.TestCase):
         v4 = hammer_vlsi.units.VoltageValue("400 mV")
         self.assertEqual(v4.str_value_in_units("V"), "0.4 V")
 
+    def test_compare(self) -> None:
+        """
+        Test that comparison operators work properly.
+        """
+        value_125_mV = hammer_vlsi.units.VoltageValue("125 mV")
+        value_125_mV2 = hammer_vlsi.units.VoltageValue("0.125")
+        value_250_mV = hammer_vlsi.units.VoltageValue("250 mV")
+        value_111_uV = hammer_vlsi.units.VoltageValue("111 uV")
+
+        # Equality
+        self.assertTrue(value_125_mV == value_125_mV2)
+        self.assertTrue(value_125_mV2 == value_125_mV)
+        self.assertFalse(value_250_mV == value_125_mV)
+        self.assertTrue(value_250_mV != value_125_mV)
+
+        # Less than
+        self.assertTrue(value_125_mV <= value_125_mV)
+        self.assertTrue(value_125_mV < value_250_mV)
+        self.assertTrue(value_125_mV2 < value_250_mV)
+
+        # Greater than
+        self.assertTrue(value_125_mV >= value_125_mV)
+        self.assertTrue(value_125_mV > value_111_uV)
+        self.assertTrue(value_125_mV2 > value_111_uV)
+
+        # Check that comparing against the wrong type leads to TypeError
+        with self.assertRaises(TypeError):
+            value_125_mV == "125 mV"  # type: ignore
+        with self.assertRaises(TypeError):
+            value_125_mV2 == hammer_vlsi.units.TimeValue("0.125")  # type: ignore
+        with self.assertRaises(TypeError):
+            value_125_mV < 1  # type: ignore
+        with self.assertRaises(TypeError):
+            value_125_mV > 0.111  # type: ignore
+
 
 class TimeValueTest(unittest.TestCase):
     def test_read_and_write(self) -> None:
