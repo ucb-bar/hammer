@@ -147,6 +147,18 @@ def reduce_named(function: Callable, sequence: Iterable, initial: Any = None) ->
         return reduce(function, sequence, initial)
 
 
+def reduce_list_str(function: Callable[[List[str], List[str]], List[str]], sequence: Iterable[List[str]],
+                    initial: Optional[List[str]] = None) -> List[str]:
+    """
+    Hardcoded (i.e. not using generics) version of reduce for processing lists of lists of strings.
+    Working around https://github.com/python/mypy/issues/4150
+    """
+    if initial is None:
+        return reduce(function, sequence)  # type: ignore
+    else:
+        return reduce(function, sequence, initial)  # type: ignore
+
+
 def get_or_else(optional: Optional[_T], default: _T) -> _T:
     """
     Get the value from the given Optional value or the default.
