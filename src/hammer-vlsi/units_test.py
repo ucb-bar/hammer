@@ -64,6 +64,18 @@ class VoltageValueTest(unittest.TestCase):
         with self.assertRaises(TypeError):
             value_125_mV > 0.111  # type: ignore
 
+    def test_negatives(self) -> None:
+        """
+        Test that negative values work properly.
+        """
+        positive = hammer_vlsi.units.VoltageValue("1 V")
+        zero = hammer_vlsi.units.VoltageValue("0")
+        negative = hammer_vlsi.units.VoltageValue("-200 mV")
+        self.assertTrue(positive > zero)
+        self.assertTrue(zero > negative)
+        self.assertTrue(negative < zero)
+        self.assertTrue(negative < positive)
+
 
 class TimeValueTest(unittest.TestCase):
     def test_read_and_write(self) -> None:
@@ -105,11 +117,19 @@ class TimeValueTest(unittest.TestCase):
         def bad_5():
             hammer_vlsi.units.TimeValue("666......")
 
+        def bad_6():
+            hammer_vlsi.units.TimeValue("--12 ps")
+
+        def bad_7():
+            hammer_vlsi.units.TimeValue("15-45 ps")
+
         self.assertRaises(ValueError, bad_1)
         self.assertRaises(ValueError, bad_2)
         self.assertRaises(ValueError, bad_3)
         self.assertRaises(ValueError, bad_4)
         self.assertRaises(ValueError, bad_5)
+        self.assertRaises(ValueError, bad_6)
+        self.assertRaises(ValueError, bad_7)
 
 
 class TemperatureValueTest(unittest.TestCase):
