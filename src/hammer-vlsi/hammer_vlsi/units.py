@@ -80,7 +80,7 @@ class ValueWithUnit(ABC):
 
         default_prefix = get_or_else(prefix, self.default_prefix)
 
-        regex = r"^([\d.]+) *(.*){}$".format(re.escape(self.unit))
+        regex = r"^(-?[\d.]+) *(.*){}$".format(re.escape(self.unit))
         m = re.search(regex, value)
         if m is None:
             try:
