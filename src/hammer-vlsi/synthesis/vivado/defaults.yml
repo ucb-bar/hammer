@@ -1,0 +1,8 @@
+# Default settings for synthesis in Vivado, for project/technology configuration and overriding.
+synthesis.vivado:
+  # Location of the binary.
+  vivado_bin: "vivado"
+  # Location of the vivado setup script
+  vivado_setup_script: "/tools/xilinx/Vivado/2018.1/settings64.sh"
+  # Generate the TCL file but do not run it yet.
+  generate_only: false

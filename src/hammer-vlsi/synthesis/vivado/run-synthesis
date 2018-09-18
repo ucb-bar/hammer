@@ -6,16 +6,19 @@
 
 workdir_tag="vivado"
 
+# setup environment variables
+source "$VIVADO_SETUP_SH"
+
 script_dir="$(dirname "$0")"
 source "$script_dir/vivado_common.sh"
 
-# TODO: don't hardcode the SRLatch here
-EXTRA_VSRCS="${script_dir}/sifiveblocks-vsrc/SRLatch.v"
+# TODO: hack hack hack
+export TOP=$top
 
 cd $workdir
 
 # TODO: fix simulation as well
-EXTRA_VSRCS=$EXTRA_VSRCS $vivado $VIVADOFLAGS -source prologue.tcl -source init.tcl -source syn.tcl
+$VIVADO_BIN $VIVADOFLAGS
 
 if [ -n "$dcp" ]; then
     echo "--dcp specified, copying post_synth.dcp";

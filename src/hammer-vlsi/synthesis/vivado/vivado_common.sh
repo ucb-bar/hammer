@@ -74,4 +74,5 @@ set srcmainverilogfile "${v}";
 set srcmainverilogfiles "${v_joined}";
 EOF
 
-VIVADOFLAGS="-nojournal -mode batch -source board.tcl -source paths.tcl -source project.tcl"
+VIVADOFLAGS="-nojournal -mode batch -source board.tcl -source paths.tcl -source project.tcl\
+ -source prologue.tcl -source init.tcl -source syn.tcl"
