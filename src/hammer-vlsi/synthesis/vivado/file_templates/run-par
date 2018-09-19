@@ -1,0 +1,13 @@
+#!/bin/bash
+# Run Vivado place and route.
+
+# setup environment variables
+source {{ env_setup_script }}
+
+# execute vivado
+cd {{ work_dir }}
+{{ vivado_cmd }} -nojournal -mode batch -source board.tcl -source paths.tcl -source project.tcl \
+                 -source synth_dcp_path.tcl -source par.tcl
+
+{{ vivado_cmd }} -nojournal -mode batch -source board.tcl -source paths.tcl -source project.tcl \
+                 -source mcs.tcl -tclargs "obj/system.mcs" "obj/system.bit"

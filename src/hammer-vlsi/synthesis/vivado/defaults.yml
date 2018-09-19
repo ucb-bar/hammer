@@ -6,11 +6,15 @@ synthesis.vivado:
   setup_script: "/tools/projects/erichang/hammer-examples/vivado_setup.sh"
   # Location of the constraints file
   constraints_file: "/tools/projects/erichang/hammer-examples/vc707.xdc"
+  # FPGA board files to add to board repository
+  board_files: ""
   # FPGA board name
   board_name: "vc707"
   # FPGA part name
   part_fpga: "xc7vx485tffg1761-2"
   # FPGA board part
   part_board: "xilinx.com:vc707:part0:1.3"
+  # DCP macro files directory
+  dcp_macro_dir: ""
   # Generate the TCL file but do not run it yet.
   generate_only: false
