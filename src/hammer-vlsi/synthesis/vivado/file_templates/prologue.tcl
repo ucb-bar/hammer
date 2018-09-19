@@ -5,7 +5,7 @@ set constrsdir [file join $scriptdir constrs]
 set wrkdir [file join [pwd] obj]
 set ipdir [file join $wrkdir ip]
 
-set top $env(TOP)
+set top {{ top_module }}
 
 set_property -dict [list \
   IP_REPO_PATHS $ipdir \

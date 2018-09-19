@@ -1,8 +1,16 @@
 # Default settings for synthesis in Vivado, for project/technology configuration and overriding.
 synthesis.vivado:
   # Location of the binary.
-  vivado_bin: "vivado"
+  binary: "vivado"
   # Location of the vivado setup script
-  vivado_setup_script: "/tools/xilinx/Vivado/2018.1/settings64.sh"
+  setup_script: "/tools/projects/erichang/hammer-examples/vivado_setup.sh"
+  # Location of the constraints file
+  constraints_file: "/tools/projects/erichang/hammer-examples/vc707.xdc"
+  # FPGA board name
+  board_name: "vc707"
+  # FPGA part name
+  part_fpga: "xc7vx485tffg1761-2"
+  # FPGA board part
+  part_board: "xilinx.com:vc707:part0:1.3"
   # Generate the TCL file but do not run it yet.
   generate_only: false
