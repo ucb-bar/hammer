@@ -36,7 +36,7 @@ class ValueWithUnit(ABC):
         'p': 1e-12,  # pico
         'n': 1e-9,  # nano
         'u': 1e-6,  # micro
-        'm': 1e-3,  # mili
+        'm': 1e-3,  # milli
         'c': 1e-2,  # centi
         'd': 1e-1,  # deci
         '':  1,    # <no prefix>
