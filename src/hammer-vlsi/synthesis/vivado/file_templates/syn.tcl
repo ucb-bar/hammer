@@ -5,4 +5,4 @@ write_checkpoint -force [file join $wrkdir post_synth]
 
 opt_design
 write_checkpoint -force [file join $wrkdir post_opt]
-write_verilog "obj/${top}_post_synth.v"
+write_verilog -force "obj/${top}_post_synth.v"
