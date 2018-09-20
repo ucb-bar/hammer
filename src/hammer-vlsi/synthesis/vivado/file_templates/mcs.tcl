@@ -2,8 +2,6 @@
 # FPGA.
 lassign $argv mcsfile bitfile datafile
 
-set_param {messaging.defaultLimit} 1000000
-
 set iface spix4
 set size 16
 set bitaddr 0x0

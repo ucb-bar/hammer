@@ -11,18 +11,49 @@ class VivadoPlaceAndRoute(HammerPlaceAndRouteTool, VivadoCommon):
     @property
     def steps(self) -> List[HammerToolStep]:
         return self.make_steps_from_methods([
+            self.setup_workspace,
+            self.generate_board_defs,
+            self.generate_paths_and_src_defs,
+            self.generate_project_defs,
+            self.generate_dcp_path_defs,
+            self.generate_dcp_par_cmds,
+            self.generate_dcp_mcs_cmds,
             self.run_place_and_route,
         ])
 
-    def run_place_and_route(self) -> bool:
-        run_script = 'run-par'
-        add_files = ['synth_dcp_path.tcl', 'par.tcl', 'mcs.tcl']
+    def generate_dcp_path_defs(self) -> bool:
         dcp_files = ' '.join((os.path.abspath(fname)
                               for fname in self.input_files
                               if fname.endswith('.dcp')))
-        print('input files: ', self.input_files)
-        self.setup_workspace(add_files, run_script, dict(dcp_path=dcp_files))
-        self.run_executable([os.path.join(self.run_dir, run_script)])
+        self.append('set post_synth_dcp_path {}'.format(dcp_files))
+        return True
+
+    def generate_par_cmds(self) -> bool:
+        self.append_file('par.tcl', None)
+        return True
+
+    def generate_mcs_cmds(self) -> bool:
+        self.append_file('mcs.tcl', None)
+        return True
+
+    def run_place_and_route(self) -> bool:
+        # Create tcl script.
+        tcl_filename = os.path.join(self.run_dir, "par.tcl")
+
+        with open(tcl_filename, "w") as f:
+            f.write("\n".join(self.output))
+
+        # create executable
+        file_params = {
+            'env_setup_script':
+            self.get_setting('synthesis.vivado.setup_script'),
+            'work_dir': self.run_dir,
+            'vivado_cmd': self.get_setting('synthesis.vivado.binary'),
+        }
+        run_script = self.generate_run_script('run-par', file_params)
+
+        # run executable
+        self.run_executable([run_script])
         return True
 
     def fill_outputs(self) -> bool:

@@ -22,7 +22,6 @@ proc findincludedir { basedir pattern } {
 file mkdir $ipdir
 update_ip_catalog -rebuild
 
-{% if has_ip %}
 source [file join $scriptdir ip.tcl]
 
 # AR 58526 <http://www.xilinx.com/support/answers/58526.html>
@@ -31,7 +30,6 @@ set obj [get_ips]
 generate_target all $obj
 export_ip_user_files -of_objects $obj -no_script -force
 set obj [current_fileset]
-{% endif %}
 
 # Xilinx bug workaround
 # scrape IP tree for directories containing .vh files
