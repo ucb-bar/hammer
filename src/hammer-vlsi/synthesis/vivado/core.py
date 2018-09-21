@@ -3,7 +3,6 @@ from typing import Dict, List, Optional
 import os
 import errno
 import shutil
-import pkg_resources
 from itertools import chain
 from abc import ABCMeta
 
@@ -44,15 +43,14 @@ class VivadoCommon(HammerTool, metaclass=ABCMeta):
         self.output = []
         return True
 
-    @classmethod
-    def get_file_contents(cls, file_name: str,
+    def get_file_contents(self, file_name: str,
                           file_params: Optional[Dict[str, str]]) -> str:
-        content = pkg_resources.resource_string(
-            __name__, os.path.join('file_templates',
-                                   file_name)).decode('utf-8')
-        if file_params:
-            return content.format(**file_params)
-        return content
+        fname = os.path.join(self.tool_dir, 'file_templates', file_name)
+        with open(fname, 'r') as f:
+            content = f.read()
+            if file_params:
+                content = content.format(**file_params)
+            return content
 
     def append_file(self, file_name: str, file_params: Dict[str, str]) -> None:
         for line in self.get_file_contents(file_name,
