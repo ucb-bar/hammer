@@ -4,7 +4,7 @@ import os
 import errno
 import shutil
 from itertools import chain
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 
 from hammer_utils import deepdict
 from hammer_vlsi import HammerTool
@@ -16,18 +16,13 @@ class VivadoCommon(HammerTool, metaclass=ABCMeta):
         new_dict = deepdict(super().env_vars)
         return new_dict
 
+    @property
+    @abstractmethod
+    def top_module(self) -> str:
+        pass
+
     def append(self, cmd: str) -> None:
         self.tcl_append(cmd, self.output)
-
-    def sym_link_force(self, source: str, dest: str) -> None:
-        try:
-            os.symlink(source, dest)
-        except OSError as e:
-            if e.errno == errno.EEXIST:
-                os.remove(dest)
-                os.symlink(source, dest)
-            else:
-                raise e
 
     def setup_workspace(self) -> bool:
         # make object directory
@@ -40,19 +35,22 @@ class VivadoCommon(HammerTool, metaclass=ABCMeta):
         cons_targ = os.path.join(cons_dir, os.path.basename(cons_fname))
         shutil.copyfile(cons_fname, cons_targ)
 
-        self.output = []
+        self.output = []  # type: List[str]
         return True
 
     def get_file_contents(self, file_name: str,
                           file_params: Optional[Dict[str, str]]) -> str:
-        fname = os.path.join(self.tool_dir, 'file_templates', file_name)
+        if os.path.isabs(file_name):
+            fname = file_name  # type: str
+        else:
+            fname = os.path.join(self.tool_dir, 'file_templates', file_name)
         with open(fname, 'r') as f:
             content = f.read()
             if file_params:
                 content = content.format(**file_params)
             return content
 
-    def append_file(self, file_name: str, file_params: Dict[str, str]) -> None:
+    def append_file(self, file_name: str, file_params: Optional[Dict[str, str]]) -> None:
         for line in self.get_file_contents(file_name,
                                            file_params).splitlines():
             self.append(line)

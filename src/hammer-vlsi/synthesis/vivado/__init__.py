@@ -1,10 +1,10 @@
-from typing import List
+from typing import List, Optional
 
 import os
 
 from hammer_vlsi import HammerSynthesisTool, HammerToolStep
 
-from .core import VivadoCommon
+from vivado_core import VivadoCommon
 
 
 class VivadoSynth(HammerSynthesisTool, VivadoCommon):
@@ -27,10 +27,9 @@ class VivadoSynth(HammerSynthesisTool, VivadoCommon):
         return True
 
     def generate_ip_defs(self) -> bool:
-        ip_file = self.get_setting('synthesis.vivado.ip_def_tcl')
+        ip_file = self.get_setting('synthesis.vivado.ip_def_tcl')  # type: Optional[str]
         if ip_file:
-            _sym_link_force(ip_file, os.path.join(self.run_dr, 'ip.tcl'))
-            self.append_file('init.tcl', None)
+            self.append_file(ip_file, None)
         return True
 
     def generate_messaging_params(self) -> bool:

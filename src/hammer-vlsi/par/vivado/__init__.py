@@ -4,7 +4,7 @@ import os
 
 from hammer_vlsi import HammerPlaceAndRouteTool, HammerToolStep
 
-from .core import VivadoCommon
+from vivado_core import VivadoCommon
 
 
 class VivadoPlaceAndRoute(HammerPlaceAndRouteTool, VivadoCommon):
@@ -54,11 +54,6 @@ class VivadoPlaceAndRoute(HammerPlaceAndRouteTool, VivadoCommon):
 
         # run executable
         self.run_executable([run_script])
-        return True
-
-    def fill_outputs(self) -> bool:
-        # This tool doesn't really have outputs
-        self.output_files = []
         return True
 
 

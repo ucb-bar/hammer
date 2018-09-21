@@ -3,8 +3,10 @@ synthesis.vivado:
   # Location of the binary.
   binary: "vivado"
   # Location of the vivado setup script
+  # type: Optional[str]
   setup_script: "/tools/projects/erichang/hammer-examples/vivado_setup.sh"
   # Location of the constraints file
+  # type: Optional[str]
   constraints_file: "/tools/projects/erichang/hammer-examples/vc707.xdc"
   # FPGA board files to add to board repository.  Empty string for no board files.
   board_files: ""
