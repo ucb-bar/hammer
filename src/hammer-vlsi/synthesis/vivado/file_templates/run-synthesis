@@ -1,0 +1,9 @@
+#!/bin/bash
+# Run the Vivado synthesis.
+
+# setup environment variables
+source {env_setup_script}
+
+# execute vivado
+cd {work_dir}
+{vivado_cmd} -nojournal -mode batch -source -source syn.tcl

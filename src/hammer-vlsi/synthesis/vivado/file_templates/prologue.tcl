@@ -2,10 +2,7 @@
 set srcdir [file join $scriptdir src]
 set constrsdir [file join $scriptdir constrs]
 
-set wrkdir [file join [pwd] obj]
 set ipdir [file join $wrkdir ip]
-
-set top $env(TOP)
 
 set_property -dict [list \
   IP_REPO_PATHS $ipdir \

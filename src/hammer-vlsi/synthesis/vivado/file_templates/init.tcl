@@ -29,7 +29,6 @@ set_property GENERATE_SYNTH_CHECKPOINT {false} [get_files -all {*.xci}]
 set obj [get_ips]
 generate_target all $obj
 export_ip_user_files -of_objects $obj -no_script -force
-
 set obj [current_fileset]
 
 # Xilinx bug workaround
