@@ -1,3 +1,5 @@
+# example IP definition file
+
 create_ip -vendor xilinx.com -library ip -name clk_wiz -module_name mmcm -dir $ipdir -force
 set_property -dict [list \
   CONFIG.PRIMITIVE {MMCM} \

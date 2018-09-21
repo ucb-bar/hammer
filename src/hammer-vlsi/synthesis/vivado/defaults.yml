@@ -1,0 +1,24 @@
+# Default settings for synthesis in Vivado, for project/technology configuration and overriding.
+synthesis.vivado:
+  # Location of the binary.
+  binary: "vivado"
+  # Location of the vivado setup script
+  # type: Optional[str]
+  setup_script: "/tools/projects/erichang/hammer-examples/vivado_setup.sh"
+  # Location of the constraints file
+  # type: Optional[str]
+  constraints_file: "/tools/projects/erichang/hammer-examples/vc707.xdc"
+  # FPGA board files to add to board repository.  Empty string for no board files.
+  board_files: ""
+  # FPGA board name
+  board_name: "vc707"
+  # FPGA part name
+  part_fpga: "xc7vx485tffg1761-2"
+  # FPGA board part
+  part_board: "xilinx.com:vc707:part0:1.3"
+  # DCP macro files directory.  Empty string for no DCP macro.
+  dcp_macro_dir: ""
+  # IP definition TCL file.  Empty string for no IP.
+  ip_def_tcl: ""
+  # Generate the TCL file but do not run it yet.
+  generate_only: false
