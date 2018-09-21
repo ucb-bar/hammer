@@ -16,8 +16,8 @@ class VivadoPlaceAndRoute(HammerPlaceAndRouteTool, VivadoCommon):
             self.generate_paths_and_src_defs,
             self.generate_project_defs,
             self.generate_dcp_path_defs,
-            self.generate_dcp_par_cmds,
-            self.generate_dcp_mcs_cmds,
+            self.generate_par_cmds,
+            self.generate_mcs_cmds,
             self.run_place_and_route,
         ])
 
