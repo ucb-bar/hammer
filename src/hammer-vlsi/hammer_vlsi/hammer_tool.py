@@ -152,7 +152,7 @@ class HammerTool(metaclass=ABCMeta):
 
     def do_between_steps(self, prev: HammerToolStep, next: HammerToolStep) -> bool:
         """
-        Function to run after the list of steps executes.
+        Function to run between the execution of two steps.
         Does not include pause hooks.
         Intended to be overridden by subclasses.
 
