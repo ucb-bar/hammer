@@ -651,11 +651,7 @@ class SynopsysTool(HasSDCSupport, HammerTool):
         :param product: Either "DC" or "ICC"
         :param settings_key: Key to retrieve the version for the product. Leave blank for DC and ICC.
         """
-        key = settings_key # type: str
-        if product == "DC":
-            key = "synthesis.dc.dc_version"
-        elif product == "ICC":
-            key = "par.icc.icc_version"
+        key = self.tool_config_prefix() + ".version" # type: str
 
         synopsys_rm_tarball = os.path.join(self.get_setting("synopsys.rm_dir"), "%s-RM_%s.tar" % (product, self.get_setting(key)))
         if not os.path.exists(synopsys_rm_tarball):
