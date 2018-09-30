@@ -617,8 +617,8 @@ class SynopsysTool(HasSDCSupport, HammerTool):
     # Assumes versions look like NAME-YYYY.MM-SPMINOR
     def is_newer_version(self, test_version: str) -> bool:
         current_version = self.get_setting(self.tool_config_prefix() + ".version") # type: str
-        current_date = current_version.split("-")[1:] # type: str
-        test_date = test_version.split("-")[1:] # type: str
+        current_date = "-".join(current_version.split("-")[1:]) # type: str
+        test_date = "-".join(test_version.split("-")[1:]) # type: str
         current_year = int(test_date.split(".")[0]) # type: int
         current_month = int(test_date.split(".")[1][:2]) # type: int
         test_year = int(test_date.split(".")[0]) # type: int
