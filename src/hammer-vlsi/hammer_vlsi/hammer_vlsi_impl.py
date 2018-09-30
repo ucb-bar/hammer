@@ -397,6 +397,28 @@ class CadenceTool(HasSDCSupport, HammerTool):
 
         return reduce(update_dict, list_of_vars + [cadence_vars], {})
 
+    # Assumes versions look like MAJOR_ISRMINOR
+    def is_newer_version(self, test_version: str) -> bool:
+        current_version = self.get_setting(self.tool_config_prefix() + ".version") # type: str
+        current_main_version = int(current_version.split("_")[0]) # type: int
+        test_main_version = int(test_version.split("_")[0]) # type: int
+        if(current_main_version > test_main_version):
+            return True
+        if(current_main_version < test_main_version):
+            return False
+        if("_" in current_version):
+            if("_" in test_version):
+                current_minor_version = int(current_version.split("_")[1][3:]) # type: int
+                test_minor_version = int(test_version.split("_")[1][3:]) # type: int
+                if(current_minor_version >= test_minor_version):
+                    return True
+                else:
+                    return False
+            else:
+                return False
+        else: # If there is no minor version they are at least equal
+            return True
+
     def get_timing_libs(self, corner: Optional[MMMCCorner] = None) -> str:
         """
         Helper function to get the list of ASCII timing .lib files in space separated format.
@@ -591,6 +613,37 @@ class SynopsysTool(HasSDCSupport, HammerTool):
             # TODO: this is actually a Mentor Graphics licence, not sure why the old dc scripts depend on it.
             "MGLS_LICENSE_FILE": self.get_setting("synopsys.MGLS_LICENSE_FILE")
         }
+
+    # Assumes versions look like NAME-YYYY.MM-SPMINOR
+    def is_newer_version(self, test_version: str) -> bool:
+        current_version = self.get_setting(self.tool_config_prefix() + ".version") # type: str
+        current_date = current_version.split("-")[1:] # type: str
+        test_date = test_version.split("-")[1:] # type: str
+        current_year = int(test_date.split(".")[0]) # type: int
+        current_month = int(test_date.split(".")[1][:2]) # type: int
+        test_year = int(test_date.split(".")[0]) # type: int
+        test_month = int(test_date.split(".")[1][:2]) # type: int
+        if(current_year > test_year):
+            return True
+        if(current_year < test_year):
+            return False
+        # current_year == test_year
+        if(current_month > test_month):
+            return True
+        if(current_month < test_month):
+            return False
+        if("-" in current_date):
+            if("-" in test_date):
+                current_minor_version = int(current_date.split("-")[1][2:]) # type: int
+                test_minor_version = int(test_date.split("-")[1][2:]) # type: int
+                if(current_minor_version >= test_minor_version):
+                    return True
+                else:
+                    return False
+            else:
+                return False
+        else: # If there is no minor version they are at least equal
+            return True
 
     def get_synopsys_rm_tarball(self, product: str, settings_key: str = "") -> str:
         """Locate reference methodology tarball.

@@ -95,6 +95,23 @@ class HammerTool(metaclass=ABCMeta):
         """
         return {}
 
+    def tool_config_prefix(self) -> str:
+        """
+        Returns the config string that contains all tool specific settings
+
+        :return: A string that is the prefix for all tool specific settings
+        """
+        return ""
+
+    def is_newer_version(self, test_version: str) -> bool:
+        """
+        Based on the tool figures out if the test_version is at least as new as the current version
+
+        :param test_version: The version to compare against the in-use version
+        :return: True if the test_version is at least as new as the current version
+        """
+        return True
+
     # Setup functions.
     def run(self, hook_actions: List[HammerToolHookAction] = []) -> bool:
         """Run this tool.
