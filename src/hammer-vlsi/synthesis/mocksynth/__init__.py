@@ -21,6 +21,12 @@ class MockSynth(HammerSynthesisTool):
         new_dict.update({})  # TODO: stuffs
         return new_dict
 
+    def tool_config_prefix(self):
+        return "empty"
+
+    def version_number(self, version:str):
+        return 1
+
     def temp_file(self, filename: str) -> str:
         """Helper function to get the full path to a filename under temp_folder."""
         if self.get_setting("synthesis.mocksynth.temp_folder", nullvalue="") == "":
