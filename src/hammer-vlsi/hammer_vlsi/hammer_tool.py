@@ -110,7 +110,7 @@ class HammerTool(metaclass=ABCMeta):
 
         :return: The version number of the current tool
         """
-        return self.version_number(self.get_setting(self.tool_config_prefix() + ".version")) # type: str
+        return self.version_number(self.get_setting(self.tool_config_prefix() + ".version"))
 
     @abstractmethod
     def version_number(self, version: str) -> int:
