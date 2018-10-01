@@ -194,6 +194,12 @@ class SingleStepTool(hammer_vlsi.HammerTool, metaclass=ABCMeta):
         """
         pass
 
+    def tool_config_prefix(self):
+        return "empty"
+
+    def version_number(self, version:str):
+        return 1
+
 
 class DummyTool(SingleStepTool):
     """
@@ -464,6 +470,12 @@ class HammerToolTest(unittest.TestCase):
                     self.step
                 ])
 
+            def tool_config_prefix(self):
+                return "empty"
+
+            def version_number(self, version:str):
+                return 1
+
             def step(self) -> bool:
                 def test_tool_format(lib, filt) -> List[str]:
                     return ["drink {0}".format(lib)]
@@ -569,6 +581,11 @@ class HammerToolTest(unittest.TestCase):
                     "CLOUD": "9",
                     "lol": "abc\"cat\""
                 }
+            def tool_config_prefix(self):
+                return "empty"
+
+            def version_number(self, version:str):
+                return 1
 
         fd, path = tempfile.mkstemp(".sh")
         os.close(fd) # Don't leak file descriptors
