@@ -397,11 +397,13 @@ class CadenceTool(HasSDCSupport, HammerTool):
 
         return reduce(update_dict, list_of_vars + [cadence_vars], {})
 
-    # Assumes versions look like MAJOR_ISRMINOR and we will have less than 100 minor versions
-    def version_number(self, version:str) -> int:
+    def version_number(self, version: str) -> int:
+        """
+        Assumes versions look like MAJOR_ISRMINOR and we will have less than 100 minor versions.
+        """
         main_version = int(version.split("_")[0]) # type: int
         minor_version = 0 # type: int
-        if("_" in version):
+        if "_" in version:
             minor_version = int(version.split("_")[1][3:])
         return main_version * 100 + minor_version
 
@@ -600,14 +602,16 @@ class SynopsysTool(HasSDCSupport, HammerTool):
             "MGLS_LICENSE_FILE": self.get_setting("synopsys.MGLS_LICENSE_FILE")
         }
 
-    # Assumes versions look like NAME-YYYY.MM-SPMINOR
-    # Also assumes less than 100 minor versions
-    def version_number(self, version:str) -> int:
-        date = "-".join(version.split("-")[1:]) # type: str
-        year = int(date.split(".")[0]) # type: int
-        month = int(date.split(".")[1][:2]) # type: int
-        minor_version = 0 # type: int
-        if("-" in date):
+    def version_number(self, version: str) -> int:
+        """
+        Assumes versions look like NAME-YYYY.MM-SPMINOR.
+        Assumes less than 100 minor versions.
+        """
+        date = "-".join(version.split("-")[1:])  # type: str
+        year = int(date.split(".")[0])  # type: int
+        month = int(date.split(".")[1][:2])  # type: int
+        minor_version = 0  # type: int
+        if "-" in date:
             minor_version = int(date.split("-")[1][2:])
         return (year * 100 + month) * 100 + minor_version
 
@@ -617,7 +621,7 @@ class SynopsysTool(HasSDCSupport, HammerTool):
         :param product: Either "DC" or "ICC"
         :param settings_key: Key to retrieve the version for the product. Leave blank for DC and ICC.
         """
-        key = self.tool_config_prefix() + ".version" # type: str
+        key = self.tool_config_prefix() + "." + "version" # type: str
 
         synopsys_rm_tarball = os.path.join(self.get_setting("synopsys.rm_dir"), "%s-RM_%s.tar" % (product, self.get_setting(key)))
         if not os.path.exists(synopsys_rm_tarball):
