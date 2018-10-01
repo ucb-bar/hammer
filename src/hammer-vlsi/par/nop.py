@@ -16,6 +16,12 @@ class Nop(HammerPlaceAndRouteTool):
         self.output_ilms = []
         return True
 
+    def tool_config_prefix(self):
+        return "empty"
+
+    def version_number(self, version:str):
+        return 1
+
     @property
     def steps(self) -> List[HammerToolStep]:
         return []
