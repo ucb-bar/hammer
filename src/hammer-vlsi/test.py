@@ -176,7 +176,7 @@ class HammerToolTestHelpers:
         )
 
 
-class SingleStepTool(hammer_vlsi.HammerTool, metaclass=ABCMeta):
+class SingleStepTool(hammer_vlsi.DummyHammerTool, metaclass=ABCMeta):
     """
     Helper class to define a single-step tool in tests.
     """
@@ -193,13 +193,6 @@ class SingleStepTool(hammer_vlsi.HammerTool, metaclass=ABCMeta):
         :return: True if the step passed
         """
         pass
-
-    def tool_config_prefix(self):
-        return "empty"
-
-    def version_number(self, version:str):
-        return 1
-
 
 class DummyTool(SingleStepTool):
     """
@@ -460,7 +453,7 @@ class HammerToolTest(unittest.TestCase):
         tech = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
         tech.cache_dir = tech_dir
 
-        class Tool(hammer_vlsi.HammerTool):
+        class Tool(hammer_vlsi.DummyHammerTool):
             lib_output = []  # type: List[str]
             filter_output = []  # type: List[str]
 
@@ -469,12 +462,6 @@ class HammerToolTest(unittest.TestCase):
                 return self.make_steps_from_methods([
                     self.step
                 ])
-
-            def tool_config_prefix(self):
-                return "empty"
-
-            def version_number(self, version:str):
-                return 1
 
             def step(self) -> bool:
                 def test_tool_format(lib, filt) -> List[str]:
@@ -568,11 +555,7 @@ class HammerToolTest(unittest.TestCase):
         shutil.rmtree(test.run_dir)
 
     def test_create_enter_script(self) -> None:
-        class Tool(hammer_vlsi.HammerTool):
-            @property
-            def steps(self) -> List[hammer_vlsi.HammerToolStep]:
-                return []
-
+        class Tool(hammer_vlsi.DummyHammerTool):
             @property
             def env_vars(self) -> Dict[str, str]:
                 return {
@@ -581,11 +564,6 @@ class HammerToolTest(unittest.TestCase):
                     "CLOUD": "9",
                     "lol": "abc\"cat\""
                 }
-            def tool_config_prefix(self):
-                return "empty"
-
-            def version_number(self, version:str):
-                return 1
 
         fd, path = tempfile.mkstemp(".sh")
         os.close(fd) # Don't leak file descriptors

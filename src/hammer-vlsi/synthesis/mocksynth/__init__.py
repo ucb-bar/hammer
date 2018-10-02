@@ -7,25 +7,19 @@
 #
 #  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
-from hammer_vlsi import HammerSynthesisTool, HammerToolStep, deepdict
+from hammer_vlsi import HammerSynthesisTool, DummyHammerTool, HammerToolStep, deepdict
 
 from typing import Dict, List, Any
 
 import os
 
 
-class MockSynth(HammerSynthesisTool):
+class MockSynth(HammerSynthesisTool, DummyHammerTool):
     @property
     def env_vars(self) -> Dict[str, str]:
         new_dict = deepdict(super().env_vars)
         new_dict.update({})  # TODO: stuffs
         return new_dict
-
-    def tool_config_prefix(self):
-        return "empty"
-
-    def version_number(self, version:str):
-        return 1
 
     def temp_file(self, filename: str) -> str:
         """Helper function to get the full path to a filename under temp_folder."""

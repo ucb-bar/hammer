@@ -126,8 +126,18 @@ class LibraryFilter(NamedTuple('LibraryFilter', [
         )
 
 
-from .hammer_tool import HammerTool
+from .hammer_tool import HammerTool, HammerToolStep
 
+class DummyHammerTool(HammerTool):
+    def tool_config_prefix(self) -> str:
+        return ""
+
+    def version_number(self, version: str) -> int:
+        return 1
+
+    @property
+    def steps(self) -> List[HammerToolStep]:
+        return []
 
 class HammerSynthesisTool(HammerTool):
     @abstractmethod
