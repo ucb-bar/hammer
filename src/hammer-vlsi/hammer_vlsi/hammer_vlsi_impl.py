@@ -129,6 +129,12 @@ class LibraryFilter(NamedTuple('LibraryFilter', [
 from .hammer_tool import HammerTool, HammerToolStep
 
 class DummyHammerTool(HammerTool):
+    """
+    This is a dummy implementation of HammerTool that does nothing.
+    It has no config, and no particular sense of versioning.
+    It is present for nop tools and as a testing aid.
+    """
+
     def tool_config_prefix(self) -> str:
         return ""
 
