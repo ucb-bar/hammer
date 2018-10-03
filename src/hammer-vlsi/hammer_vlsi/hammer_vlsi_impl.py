@@ -126,8 +126,24 @@ class LibraryFilter(NamedTuple('LibraryFilter', [
         )
 
 
-from .hammer_tool import HammerTool
+from .hammer_tool import HammerTool, HammerToolStep
 
+class DummyHammerTool(HammerTool):
+    """
+    This is a dummy implementation of HammerTool that does nothing.
+    It has no config, and no particular sense of versioning.
+    It is present for nop tools and as a testing aid.
+    """
+
+    def tool_config_prefix(self) -> str:
+        return ""
+
+    def version_number(self, version: str) -> int:
+        return 1
+
+    @property
+    def steps(self) -> List[HammerToolStep]:
+        return []
 
 class HammerSynthesisTool(HammerTool):
     @abstractmethod
@@ -397,6 +413,16 @@ class CadenceTool(HasSDCSupport, HammerTool):
 
         return reduce(update_dict, list_of_vars + [cadence_vars], {})
 
+    def version_number(self, version: str) -> int:
+        """
+        Assumes versions look like MAJOR_ISRMINOR and we will have less than 100 minor versions.
+        """
+        main_version = int(version.split("_")[0]) # type: int
+        minor_version = 0 # type: int
+        if "_" in version:
+            minor_version = int(version.split("_")[1][3:])
+        return main_version * 100 + minor_version
+
     def get_timing_libs(self, corner: Optional[MMMCCorner] = None) -> str:
         """
         Helper function to get the list of ASCII timing .lib files in space separated format.
@@ -592,17 +618,26 @@ class SynopsysTool(HasSDCSupport, HammerTool):
             "MGLS_LICENSE_FILE": self.get_setting("synopsys.MGLS_LICENSE_FILE")
         }
 
+    def version_number(self, version: str) -> int:
+        """
+        Assumes versions look like NAME-YYYY.MM-SPMINOR.
+        Assumes less than 100 minor versions.
+        """
+        date = "-".join(version.split("-")[1:])  # type: str
+        year = int(date.split(".")[0])  # type: int
+        month = int(date.split(".")[1][:2])  # type: int
+        minor_version = 0  # type: int
+        if "-" in date:
+            minor_version = int(date.split("-")[1][2:])
+        return (year * 100 + month) * 100 + minor_version
+
     def get_synopsys_rm_tarball(self, product: str, settings_key: str = "") -> str:
         """Locate reference methodology tarball.
 
         :param product: Either "DC" or "ICC"
         :param settings_key: Key to retrieve the version for the product. Leave blank for DC and ICC.
         """
-        key = settings_key # type: str
-        if product == "DC":
-            key = "synthesis.dc.dc_version"
-        elif product == "ICC":
-            key = "par.icc.icc_version"
+        key = self.tool_config_prefix() + "." + "version" # type: str
 
         synopsys_rm_tarball = os.path.join(self.get_setting("synopsys.rm_dir"), "%s-RM_%s.tar" % (product, self.get_setting(key)))
         if not os.path.exists(synopsys_rm_tarball):
