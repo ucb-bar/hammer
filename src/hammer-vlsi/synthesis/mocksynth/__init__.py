@@ -7,14 +7,14 @@
 #
 #  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
-from hammer_vlsi import HammerSynthesisTool, HammerToolStep, deepdict
+from hammer_vlsi import HammerSynthesisTool, DummyHammerTool, HammerToolStep, deepdict
 
 from typing import Dict, List, Any
 
 import os
 
 
-class MockSynth(HammerSynthesisTool):
+class MockSynth(HammerSynthesisTool, DummyHammerTool):
     @property
     def env_vars(self) -> Dict[str, str]:
         new_dict = deepdict(super().env_vars)

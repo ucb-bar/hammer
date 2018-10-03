@@ -95,6 +95,35 @@ class HammerTool(metaclass=ABCMeta):
         """
         return {}
 
+    @abstractmethod
+    def tool_config_prefix(self) -> str:
+        """
+        Returns the config prefix that contains all tool specific settings.
+        e.g. "synthesis.yosys".
+
+        :return: A string that is the prefix for all tool specific settings.
+        """
+        pass
+
+    def version(self) -> int:
+        """
+        Returns the version number of the current tool version, using version_number
+        below.
+
+        :return: The version number of the current tool.
+        """
+        return self.version_number(self.get_setting(self.tool_config_prefix() + ".version"))
+
+    @abstractmethod
+    def version_number(self, version: str) -> int:
+        """
+        Based on the tool, figures out an integer value for the version number.
+
+        :param version: The version number given by the tool vendor.
+        :return: An integer representing the version suitable for comparisons.
+        """
+        pass
+
     # Setup functions.
     def run(self, hook_actions: List[HammerToolHookAction] = []) -> bool:
         """Run this tool.
