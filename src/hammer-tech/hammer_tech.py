@@ -213,23 +213,24 @@ class HammerTechnology:
         self.config = None  # type: TechJSON
 
     @classmethod
-    def load_from_dir(cls, technology_name: str, path: str, is_yaml: bool = False) -> "HammerTechnology":
-        """Load a technology from a given folder.
+    def load_from_dir(cls, technology_name: str, paths: List[str]) -> Optional["HammerTechnology"]:
+        """Load a technology from a given set of folders.
 
         :param technology_name: Technology name (e.g. "saed32")
-        :param path: Path to the technology folder (e.g. foo/bar/technology/saed32)
-        :param is_yaml: Whether the technology information is stored in yaml or not. If false hammer will assume json.
+        :param paths: A list of paths to the technology folders (e.g. foo/bar/technology/saed32)
         """
-
-        if is_yaml:
-            with open(os.path.join(path, "{technology_name}.tech.yaml".format(technology_name=technology_name))) as f:
-                yaml_str = f.read()
-                return HammerTechnology.load_from_yaml(technology_name, yaml_str, path)
-        else:
-            with open(os.path.join(path, "{technology_name}.tech.json".format(technology_name=technology_name))) as f:
-                json_str = f.read()
-                return HammerTechnology.load_from_json(technology_name, json_str, path)
-
+        for path in paths:
+            tech_blob_path = os.path.join(path, technology_name, "%s.tech.json" % technology_name)
+            if os.path.exists(tech_blob_path):
+                with open(tech_blob_path) as f:
+                    json_str = f.read()
+                    return HammerTechnology.load_from_json(technology_name, json_str, path)
+            tech_blob_path = os.path.join(path, technology_name, "%s.tech.yaml" % technology_name)
+            if os.path.exists(tech_blob_path):
+                with open(tech_blob_path) as f:
+                    yaml_str = f.read()
+                    return HammerTechnology.load_from_yaml(technology_name, yaml_str, path)
+        return None
 
     @classmethod
     def load_from_json(cls, technology_name: str, json_str: str, path: str) -> "HammerTechnology":
