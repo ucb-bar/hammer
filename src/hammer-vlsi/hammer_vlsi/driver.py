@@ -161,7 +161,7 @@ class HammerDriver:
 
     def load_formal_tool(self, run_dir: str = "") -> bool:
         """
-        Load the place and route tool based on the given database.
+        Load the formal verification tool based on the given database.
 
         :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
                         constructor.
@@ -195,7 +195,7 @@ class HammerDriver:
 
     def load_power_tool(self, run_dir: str = "") -> bool:
         """
-        Load the place and route tool based on the given database.
+        Load the power analysis tool based on the given database.
 
         :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
                         constructor.
