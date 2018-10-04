@@ -259,6 +259,26 @@ class HammerTechnologyTest(unittest.TestCase):
         ).store_into_library()
         self.assertEqual("{0}/hat".format("/tmp/custom"), tech.prepend_dir_path("custom/hat", lib))
 
+    def test_yaml_tech_file(self) -> None:
+        """
+        Test that we can load a yaml tech plugin
+        """
+        tech_yaml = """
+name: My Technology Library
+installs:
+    - path: test
+      base var: ""  # means relative to tech dir
+libraries: []
+        """
+        tech_dir = tempfile.mkdtemp()
+        tech_yaml_filename = tech_dir + "/dummy28.tech.yaml"
+        with open(tech_yaml_filename, "w") as f:
+            f.write(tech_yaml)
+        tech = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir, True)
+
+        # Cleanup
+        shutil.rmtree(tech_dir)
+
     def test_gds_map_file(self) -> None:
         """
         Test that GDS map file support works as expected.

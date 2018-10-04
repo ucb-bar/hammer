@@ -17,6 +17,7 @@ from hammer_logging import HammerVLSILoggingContext
 
 import python_jsonschema_objects  # type: ignore
 from hammer_utils import deeplist, get_or_else, optional_map
+from hammer_config import load_yaml
 
 builder = python_jsonschema_objects.ObjectBuilder(json.loads(open(os.path.dirname(__file__) + "/schema.json").read()))
 ns = builder.build_classes()
@@ -212,17 +213,23 @@ class HammerTechnology:
         self.config = None  # type: TechJSON
 
     @classmethod
-    def load_from_dir(cls, technology_name: str, path: str) -> "HammerTechnology":
+    def load_from_dir(cls, technology_name: str, path: str, is_yaml: bool = False) -> "HammerTechnology":
         """Load a technology from a given folder.
 
         :param technology_name: Technology name (e.g. "saed32")
         :param path: Path to the technology folder (e.g. foo/bar/technology/saed32)
+        :param is_yaml: Whether the technology information is stored in yaml or not. If false hammer will assume json.
         """
 
-        with open(os.path.join(path, "{technology_name}.tech.json".format(technology_name=technology_name))) as f:
-            json_str = f.read()
+        if is_yaml:
+            with open(os.path.join(path, "{technology_name}.tech.yaml".format(technology_name=technology_name))) as f:
+                yaml_str = f.read()
+                return HammerTechnology.load_from_yaml(technology_name, yaml_str, path)
+        else:
+            with open(os.path.join(path, "{technology_name}.tech.json".format(technology_name=technology_name))) as f:
+                json_str = f.read()
+                return HammerTechnology.load_from_json(technology_name, json_str, path)
 
-        return HammerTechnology.load_from_json(technology_name, json_str, path)
 
     @classmethod
     def load_from_json(cls, technology_name: str, json_str: str, path: str) -> "HammerTechnology":
@@ -245,6 +252,17 @@ class HammerTechnology:
         tech.config = TechJSON.from_json(json_str)
 
         return tech
+
+    @classmethod
+    def load_from_yaml(cls, technology_name: str, yaml_str: str, path: str) -> "HammerTechnology":
+        """Load a technology from a given folder.
+
+        :param technology_name: Technology name (e.g. "saed32")
+        :param yaml_str: yaml string to use as the technology yaml
+        :param path: Path to set as the technology folder (e.g. foo/bar/technology/saed32)
+        """
+
+        return HammerTechnology.load_from_json(technology_name, json.dumps(load_yaml(yaml_str)), path)
 
     def set_database(self, database: hammer_config.HammerDatabase) -> None:
         """Set the settings database for use by the tool."""
