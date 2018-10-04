@@ -968,8 +968,8 @@ class HasCPFSupport(HammerTool):
         return "\n".join(output)
 
 
-class HammerFormalTool(HammerTool):
-    ### Generated interface HammerFormalTool ###
+class HammerFormalLECTool(HammerTool):
+    ### Generated interface HammerFormalLECTool ###
     pass
 
 
