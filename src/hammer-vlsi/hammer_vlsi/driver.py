@@ -166,6 +166,10 @@ class HammerDriver:
         :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
                         constructor.
         """
+        if self.tech is None:
+            self.log.error("Must load technology before loading par tool")
+            return False
+
         if run_dir == "":
             # Use the synthesis directory for formal tools
             run_dir = os.path.join(self.obj_dir, "syn-rundir")
@@ -176,7 +180,7 @@ class HammerDriver:
             tool_name=formal_tool_name
         )
         assert isinstance(formal_tool_get, HammerFormalLECTool), "Formal tool must be a HammerFormalLECTool"
-        formal_tool = formal_tool_get  # type: HammerTool
+        formal_tool = formal_tool_get  # type: HammerFormalLECTool
         formal_tool.name = formal_tool_name
         formal_tool.logger = self.log.context("formal")
         formal_tool.set_database(self.database)
@@ -200,6 +204,10 @@ class HammerDriver:
         :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
                         constructor.
         """
+        if self.tech is None:
+            self.log.error("Must load technology before loading par tool")
+            return False
+
         if run_dir == "":
             run_dir = os.path.join(self.obj_dir, "pwr-rundir")
 
@@ -448,6 +456,9 @@ class HammerDriver:
         :param force_override: Set to true to overwrite instead of append.
         :return: Tuple of (success, output config dict)
         """
+        if self.formal_tool is None:
+            self.log.error("Must load formal tool before calling run_formal")
+            return False, {}
 
         # TODO: think about artifact storage?
         self.log.info("Starting formal check with tool '%s'" % (self.formal_tool.name))
@@ -485,6 +496,9 @@ class HammerDriver:
         :param force_override: Set to true to overwrite instead of append.
         :return: Tuple of (success, output config dict)
         """
+        if self.power_tool is None:
+            self.log.error("Must load power tool before calling run_power")
+            return False, {}
 
         # TODO: think about artifact storage?
         self.log.info("Starting power check with tool '%s'" % (self.power_tool.name))
