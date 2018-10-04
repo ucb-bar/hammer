@@ -970,7 +970,24 @@ class HasCPFSupport(HammerTool):
 
 class HammerFormalLECTool(HammerTool):
     ### Generated interface HammerFormalLECTool ###
-    pass
+    @property
+    def input_files(self) -> List[str]:
+        """
+        Get the input collection of source RTL files (e.g. *.v).
+
+        :return: The input collection of source RTL files (e.g. *.v).
+        """
+        try:
+            return self.attr_getter("_input_files", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the input collection of source RTL files (e.g. *.v) yet")
+
+    @input_files.setter
+    def input_files(self, value: List[str]) -> None:
+        """Set the input collection of source RTL files (e.g. *.v)."""
+        if not (isinstance(value, List)):
+            raise TypeError("input_files must be a List[str]")
+        self.attr_setter("_input_files", value)
 
 
 class HammerPowerTool(HammerTool):
@@ -994,9 +1011,27 @@ class HammerPowerTool(HammerTool):
             raise TypeError("top_module must be a str")
         self.attr_setter("_top_module", value)
 
+    @property
+    def input_files(self) -> List[str]:
+        """
+        Get the input collection of source RTL files (e.g. *.v).
+
+        :return: The input collection of source RTL files (e.g. *.v).
+        """
+        try:
+            return self.attr_getter("_input_files", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the input collection of source RTL files (e.g. *.v) yet")
+
+    @input_files.setter
+    def input_files(self, value: List[str]) -> None:
+        """Set the input collection of source RTL files (e.g. *.v)."""
+        if not (isinstance(value, List)):
+            raise TypeError("input_files must be a List[str]")
+        self.attr_setter("_input_files", value)
 
     @property
-    def waveform_files(self) -> Iterable[str]:
+    def waveform_files(self) -> List[str]:
         """
         Get the waveform files.
 
@@ -1008,7 +1043,7 @@ class HammerPowerTool(HammerTool):
             raise ValueError("Nothing set for the input waveform files yet")
 
     @waveform_files.setter
-    def waveform_files(self, value: Iterable[str]) -> None:
+    def waveform_files(self, value: List[str]) -> None:
         """
         Set the waveform files for this tool library.
         The exact nature of the files will depend on the type of library.
@@ -1027,10 +1062,10 @@ class HammerPowerTool(HammerTool):
         error = False
         for w in waveform_args:
             if not w.endswith(tuple(extensions)):
-                self.logger.error("Input of unsupported type {0} detected!".format(v))
+                self.logger.error("Input of unsupported type {0} detected!".format(w))
                 error = True
             if not os.path.isfile(w):
-                self.logger.error("Input file {0} does not exist!".format(v))
+                self.logger.error("Input file {0} does not exist!".format(w))
                 error = True
         return not error
 
