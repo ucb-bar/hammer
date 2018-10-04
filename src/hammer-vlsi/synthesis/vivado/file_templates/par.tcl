@@ -1,9 +1,5 @@
 # TCL fragment to placce and route a design in Vivado and spit out some files.
 
-# TODO: deduplicate this with prologue.tcl
-set wrkdir [file join $scriptdir obj]
-set top {system}
-
 set_param {messaging.defaultLimit} 1000000
 
 open_checkpoint $post_synth_dcp_path

@@ -11,7 +11,7 @@
 
 from typing import Iterable, List, Union, Callable, Any, Dict, Set
 
-from utils import deepdict
+from hammer_utils import deepdict
 from .yaml2json import load_yaml # grumble grumble
 
 from functools import reduce

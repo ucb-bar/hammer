@@ -12,14 +12,14 @@ import json
 import os
 import subprocess
 import sys
-from functools import reduce
 
-from hammer_vlsi_impl import HammerToolHookAction, HammerTool, HammerVLSISettings, PlacementConstraint, HierarchicalMode
-from hammer_driver import HammerDriver, HammerDriverOptions
+from .hammer_vlsi_impl import HammerTool, HammerVLSISettings
+from .hooks import HammerToolHookAction
+from .driver import HammerDriver, HammerDriverOptions
 
-from typing import List, Dict, Tuple, Any, Iterable, Callable, Optional, Set
+from typing import List, Dict, Tuple, Any, Callable, Optional
 
-from utils import deepdict, add_lists, add_dicts, topological_sort, deeplist
+from hammer_utils import add_dicts, deeplist, get_or_else, check_function_type
 
 
 def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callable[[str], None]) -> List[str]:
@@ -47,8 +47,26 @@ def get_nonempty_str(arg: Any) -> Optional[str]:
     return None
 
 
+def dump_config_to_json_file(output_path: str, config: dict) -> None:
+    """
+    Helper function to dump the given config to the given output path while overwriting it if it already exists.
+    :param output_path: Output path (e.g. "obj/output.log")
+    :param config: Config dictionary to dump
+    """
+    with open(output_path, "w") as f:
+        f.write(json.dumps(config, indent=4))
+
+
 # Type signature of a CLIDriver action.
 CLIActionType = Callable[[HammerDriver, Callable[[str], None]], Optional[dict]]
+
+
+def check_CLIActionType_type(func: CLIActionType) -> None:
+    """
+    Check that the given CLIActionType obeys its function type signature.
+    Raises TypeError if the function is of the incorrect type.
+    """
+    check_function_type(func, [HammerDriver, Callable[[str], None]], Optional[dict])
 
 
 class CLIDriver:
@@ -65,11 +83,25 @@ class CLIDriver:
         self.formal_rundir = ""  # type: Optional[str]
         self.power_rundir = ""  # type: Optional[str]
 
-        self.synthesis_action = self.create_synthesis_action([])
-        self.par_action = self.create_par_action([])
-        self.synthesis_par_action = self.create_synthesis_par_action(self.synthesis_action, self.par_action)
+        # If a subclass has defined these, don't clobber them in init
+        # since the subclass still uses this init function.
+        if hasattr(self, "synthesis_action"):
+            check_CLIActionType_type(self.synthesis_action)  # type: ignore
+        else:
+            self.synthesis_action = self.create_synthesis_action([])  # type: CLIActionType
+        if hasattr(self, "par_action"):
+            check_CLIActionType_type(self.par_action)  # type: ignore
+        else:
+            self.par_action = self.create_par_action([])  # type: CLIActionType
+        if hasattr(self, "synthesis_par_action"):
+            check_CLIActionType_type(self.synthesis_par_action)  # type: ignore
+        else:
+            self.synthesis_par_action = self.create_synthesis_par_action(self.synthesis_action, self.par_action)  # type: CLIActionType
+
+        # FIXME: Edward?
         self.formal_action = self.create_formal_action([])
         self.power_action = self.create_power_action([])
+        ###
 
         # Dictionaries of module-CLIActionType for hierarchical flows.
         # See all_hierarchical_actions() below.
@@ -178,14 +210,14 @@ class CLIDriver:
 
             # If the driver didn't successfully load, return None.
             if action_type == "synthesis" or action_type == "syn":
-                if not driver.load_synthesis_tool(self.syn_rundir if self.syn_rundir is not None else ""):
+                if not driver.load_synthesis_tool(get_or_else(self.syn_rundir, "")):
                     return None
                 else:
                     post_load_func_checked(driver)
                 success, output = driver.run_synthesis(extra_hooks)
                 post_run_func_checked(driver)
             elif action_type == "par":
-                if not driver.load_par_tool(self.par_rundir if self.par_rundir is not None else ""):
+                if not driver.load_par_tool(get_or_else(self.par_rundir, "")):
                     return None
                 else:
                     post_load_func_checked(driver)
@@ -225,12 +257,28 @@ class CLIDriver:
         :param par_action: par action
         :return: Custom synthesis_par action
         """
+
         def syn_par_action(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+            # Synthesis output.
             syn_output = synthesis_action(driver, append_error_func)
-            par_config = HammerDriver.generate_par_inputs_from_synthesis(syn_output)
-            driver.update_project_configs([par_config])
-            par_output = par_action(driver, append_error_func)
-            return par_output
+            if syn_output is None:
+                append_error_func("Synthesis action in syn_par failed")
+                return None
+            else:
+                # Generate place-and-route input from the synthesis output.
+                par_input = HammerDriver.generate_par_inputs_from_synthesis(syn_output)  # type: dict
+
+                # Dump both synthesis output and par input for debugging/resuming.
+                # TODO(edwardw): make these output filenames configurable?
+                assert driver.syn_tool is not None, "Syn tool must exist since we ran synthesis_action successfully"
+                dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output.json"), syn_output)
+                dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "par-input.json"), par_input)
+
+                # Use new par input and run place-and-route.
+                driver.update_project_configs([par_input])
+                par_output = par_action(driver, append_error_func)
+                return par_output
+
         return syn_par_action
 
     ### Hierarchical stuff ###
@@ -474,10 +522,10 @@ class CLIDriver:
                     d.update_project_configs(deeplist(base_project_config[0]))
 
                 def syn_post_run(d: HammerDriver) -> None:
-                    post_run(d, self.syn_rundir)
+                    post_run(d, get_or_else(self.syn_rundir, ""))
 
                 def par_post_run(d: HammerDriver) -> None:
-                    post_run(d, self.par_rundir)
+                    post_run(d, get_or_else(self.par_rundir, ""))
 
                 syn_action = self.create_synthesis_action(self.get_extra_hierarchical_synthesis_hooks().get(module, []),
                                                           pre_action_func=syn_pre_func, post_load_func=None,
@@ -497,11 +545,18 @@ class CLIDriver:
             def auto_action(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
                 log = driver.log.context("CLIDriver_auto")
                 output = {}  # type: dict
+
+                # Run syn_par for every module.
                 for module, _ in hierarchical_settings:
                     syn_par_action = self.get_hierarchical_synthesis_par_action(module)
                     new_output = syn_par_action(driver, append_error_func)
 
-                    log.info("Hierarchical syn-par run for module {module} finished".format(module=module))
+                    if new_output is None:
+                        log.error("Hierarchical syn-par run for module {module} failed".format(module=module))
+                        return None
+                    else:
+                        log.info("Hierarchical syn-par run for module {module} finished".format(module=module))
+
                     b, ext = os.path.splitext(args["output"])
                     new_output_filename = "{base}-{module}{ext}".format(base=b, module=module, ext=ext)
                     with open(new_output_filename, "w") as f:
@@ -558,10 +613,11 @@ class CLIDriver:
             print(output_json)
             return 0
 
-    def main(self) -> None:
+    def main(self, args: Optional[List[str]] = None) -> None:
         """
         Main function to call from your entry point script.
         Parses command line arguments.
+        :param args: Custom command-line arguments.  If not given, sys.argv[1:] will be used.
         Example:
         >>> if __name__ == '__main__':
         >>>   CLIDriver().main()
@@ -624,4 +680,4 @@ class CLIDriver:
                   file=sys.stderr)
             sys.exit(1)
 
-        sys.exit(self.run_main_parsed(vars(parser.parse_args())))
+        sys.exit(self.run_main_parsed(vars(parser.parse_args(args))))

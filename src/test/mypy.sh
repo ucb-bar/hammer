@@ -1,19 +1,49 @@
-#!/bin/sh
-set -x
+#!/bin/bash
+# Shell script that calls mypy a number of times and then suppresses the output
+# if empty so that mypy_with_exclusions.sh can report success.
+# Exclude bits known to be problematic to mypy.
+
+set -e
+
+err=0
+
+call_mypy () {
+    >&2 echo "Running mypy $*"
+    output=$(mypy "$@" | grep -v "python-jsonschema-objects" | grep -v TechJSON | grep -v installs | grep -v tarballs | grep -v ccs | grep -v nldm | grep -v supplies | grep -v lef_file | grep -v qrc_techfile | grep -v serialize | grep -v "hammer_tech.Library" | grep -v milkyway_ | grep -v tluplus | grep -v jsonschema | grep -v "pyyaml/" | grep -v provides | grep -v \"libraries\" || true)
+    if [[ ! -z "${output}" ]]; then
+        echo "${output}"
+        err=1
+    fi
+}
+
 # Core
-mypy ../hammer-vlsi/cli_driver.py
+call_mypy --package hammer_vlsi
 
 # Shell
-mypy ../hammer-shell/get-config
+call_mypy ../hammer-shell/get-config
 
 # Testing code
-mypy ../hammer-vlsi/test.py
-mypy ../hammer_config_test/test.py 
+call_mypy ../hammer-vlsi/*test.py
+call_mypy ../hammer_config_test/test.py
 
 # Plugins
-mypy ../hammer-vlsi/synthesis/dc/__init__.py
-mypy ../hammer-vlsi/synthesis/genus/__init__.py
-mypy ../hammer-vlsi/synthesis/mocksynth/__init__.py
-mypy ../hammer-vlsi/par/icc/__init__.py
-mypy ../hammer-vlsi/par/innovus/__init__.py
-mypy ../hammer-vlsi/par/*.py
+call_mypy ../hammer-vlsi/synthesis/mocksynth/__init__.py
+call_mypy ../hammer-vlsi/synthesis/vivado/__init__.py
+call_mypy ../hammer-vlsi/par/nop.py
+call_mypy ../hammer-vlsi/par/vivado/__init__.py
+
+# Plugins which may or may not exist
+if [ -f ../hammer-vlsi/synthesis/dc/__init__.py ]; then
+    call_mypy ../hammer-vlsi/synthesis/dc/__init__.py
+fi
+if [ -f ../hammer-vlsi/synthesis/genus/__init__.py ]; then
+    call_mypy ../hammer-vlsi/synthesis/genus/__init__.py
+fi
+if [ -f ../hammer-vlsi/par/icc/__init__.py ]; then
+    call_mypy ../hammer-vlsi/par/icc/__init__.py
+fi
+if [ -f ../hammer-vlsi/par/innovus/__init__.py ]; then
+    call_mypy ../hammer-vlsi/par/innovus/__init__.py
+fi
+
+exit $err

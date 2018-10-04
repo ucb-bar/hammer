@@ -18,8 +18,10 @@ Interface = namedtuple("Interface", 'module inputs outputs')
 def isinstance_check(t: str) -> str:
     return "isinstance(value, {t})".format(t=t)
 
-def generate_from_list(template, lst):
+def generate_from_list(template: str, lst):
     def format_var(var):
+        attr_error_logic = """raise ValueError("Nothing set for the {var_desc} yet")"""
+
         if var.type.startswith("Iterable"):
             var_type_instance_check = isinstance_check("Iterable")
         elif var.type.startswith("List"):
@@ -28,9 +30,14 @@ def generate_from_list(template, lst):
             m = re.search(r"Optional\[(\S+)\]", var.type)
             subtype = str(m.group(1))
             var_type_instance_check = isinstance_check(subtype) + " or (value is None)"
+            attr_error_logic = "return None"
         else:
             var_type_instance_check = isinstance_check(var.type)
-        return template.format(var_name=var.name, var_type=var.type, var_desc=var.desc, var_type_instance_check=var_type_instance_check)
+
+        t = template.replace("[[attr_error_logic]]", attr_error_logic)
+
+        return t.format(var_name=var.name, var_type=var.type, var_desc=var.desc,
+                               var_type_instance_check=var_type_instance_check)
     return map(format_var, lst)
 
 def generate_interface(interface: Interface):
@@ -45,7 +52,7 @@ def {var_name}(self) -> {var_type}:
     try:
         return self.attr_getter("_{var_name}", None)
     except AttributeError:
-        raise ValueError("Nothing set for the {var_desc} yet")
+        [[attr_error_logic]]
 
 @{var_name}.setter
 def {var_name}(self, value: {var_type}) -> None:
@@ -67,11 +74,11 @@ def {var_name}(self, value: {var_type}) -> None:
 def main(args):
     HammerSynthesisTool = Interface(module="HammerSynthesisTool",
         inputs=[
-            InterfaceVar("input_files", "Iterable[str]", "input collection of source RTL files (e.g. *.v)"),
+            InterfaceVar("input_files", "List[str]", "input collection of source RTL files (e.g. *.v)"),
             InterfaceVar("top_module", "str", "top-level module")
         ],
         outputs=[
-            InterfaceVar("output_files", "Iterable[str]", "output collection of mapped (post-synthesis) RTL files"),
+            InterfaceVar("output_files", "List[str]", "output collection of mapped (post-synthesis) RTL files"),
             InterfaceVar("output_sdc", "str", "(optional) output post-synthesis SDC constraints file")
             # TODO: model CAD junk
         ]
@@ -79,9 +86,9 @@ def main(args):
 
     HammerPlaceAndRouteTool = Interface(module="HammerPlaceAndRouteTool",
         inputs=[
-            InterfaceVar("input_files", "Iterable[str]", "input post-synthesis netlist files"),
+            InterfaceVar("input_files", "List[str]", "input post-synthesis netlist files"),
             InterfaceVar("top_module", "str", "top RTL module"),
-            InterfaceVar("post_synth_sdc", "str", "input post-synthesis SDC constraint file")
+            InterfaceVar("post_synth_sdc", "Optional[str]", "(optional) input post-synthesis SDC constraint file")
         ],
         outputs=[
             # TODO: model more CAD junk

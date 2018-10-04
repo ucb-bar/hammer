@@ -8,16 +8,12 @@
 
 from typing import List
 
-from hammer_vlsi import HammerPlaceAndRouteTool, HammerToolStep
+from hammer_vlsi import HammerPlaceAndRouteTool, DummyHammerTool
 
 
-class Nop(HammerPlaceAndRouteTool):
+class Nop(HammerPlaceAndRouteTool, DummyHammerTool):
     def fill_outputs(self) -> bool:
+        self.output_ilms = []
         return True
-
-    @property
-    def steps(self) -> List[HammerToolStep]:
-        return []
-
 
 tool = Nop

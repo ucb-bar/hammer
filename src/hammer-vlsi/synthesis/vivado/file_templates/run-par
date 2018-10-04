@@ -1,0 +1,9 @@
+#!/bin/bash
+# Run Vivado place and route.
+
+# setup environment variables
+source {env_setup_script}
+
+# execute vivado
+cd {work_dir}
+{vivado_cmd} -nojournal -mode batch -source par.tcl -tclargs "obj/system.mcs" "obj/system.bit"

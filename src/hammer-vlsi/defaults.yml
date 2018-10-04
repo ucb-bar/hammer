@@ -36,11 +36,24 @@ vlsi.core:
   max_threads: 1
 
 vlsi.technology:
-  # Placement site for macros. (str)
+  # Placement site for macros. (Optional[str])
   # Typically specified in standard cell LEFs.
   # See http://www.ispd.cc/contests/18/lefdefref.pdf
   # Required for some CAD tools to function properly.
   placement_site: null
+
+  # Extra semiconductor IP libraries/stdcell libs/hard macros. (List[ExtraLibrary])
+  # Used for non-technology-vendor-provided custom IP blocks.
+  # ExtraLibrary is a struct with two fields:
+  # - prefix (Optional[PathPrefix]) - struct that holds a prefix and path.
+  #   - path (str) - Path for the prefix below.
+  #     For example, if the path is /foo/bar/pll, then a reference of pll/test.txt (assuming 'pll' is the prefix) will
+  #     resolve to /foo/bar/pll/test.txt.
+  #   - prefix (str) - prefix used for referencing in the library.
+  #     For example, if "lef file" in HammerLibrary references "pll/layout/pll.lef", then the path would be "pll".
+  # - library (hammer_tech.HammerLibrary) - IP library to add.
+  # Extra libraries are added at the end of the library list, in the event that order matters.
+  extra_libraries: []
 
 cadence:
   # Path to the folder with defaults.yml for common Cadence settings.
@@ -101,7 +114,7 @@ vlsi.inputs:
   # - "hold" (corner used for hold timing)
   # - "extra" (misc. corner potentially used for power analysis
   # voltage (str) - voltage of the corner should match tech json
-  # temp (str) - temperature of the corner should mathc tech json
+  # temp (str) - temperature of the corner should match tech json
   mmmc_corners: []
 
   # Clock ports of the top-level module.
@@ -131,11 +144,18 @@ vlsi.inputs:
   # - "toplevel" (top-level chip dimensions; may only occur once, for the top-level module)
   # - "hardmacro" (places this hard macro at a particular spot)
   # - "hierarchical" (marks this instance as part of hierarchical place and route)
+  # - "obstruction" (creates a blockage at a particular spot; see obs_types)
   # TODO(edwardw): add rotation
   # x (float) - x coordinate in um
   # y (float) - y coordinate in um
   # width (float) - width in um
   # height (float) - height in um
+  # layers (List[str]) - Optional: only used for obstruction type. 
+  #   If specified, a list of strings that enumerates layer(s) blocked by the obstruction otherwise all layers are blocked
+  # obs_types (List[str]) - Required for obstruction type. A list of one or more of the following:
+  # - "place" - This obstruction type stops the placement of standard cells inside it
+  # - "route" - This obstruction type stops all routing inside it
+  # - "power" - This obstruction type stops only power routing/straps inside it
   placement_constraints: []
 
 # Specific inputs for the synthesis tool.
@@ -168,3 +188,21 @@ par.inputs:
   # Optional: SDC input file from post-synthesis.
   # Leave as null to not use.
   post_synth_sdc: null
+
+  # GDS output map mode.
+  # type: str
+  # The GDS map file shows how/what layers should be put in the GDSII file.
+  # Valid options:
+  # auto - Use the technology plugin's value for the map file.
+  # empty - Don't use a map file at all and let the cad tool do what it wants.
+  #         This often results in a complete but arbitrary assignment.
+  # manual - Read the map file from the variable below, overriding the technology plugin.
+  gds_map_mode: auto
+  # Optional: GDS map file path. Used only if gds_map_mode above is set to manual.
+  # type: Optional[str]
+  gds_map_file: null
+
+  # If true, tell the place and route tool to merge any library/macro GDSes into
+  # the final GDS.
+  # type: bool
+  gds_merge: false

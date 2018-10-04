@@ -3,19 +3,25 @@
 #
 #  Tests for hammer-vlsi
 #
-#  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+#  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
+
 import json
 import shutil
+from abc import abstractmethod, ABCMeta
 from numbers import Number
 
 import hammer_vlsi
-from hammer_logging import Level
+import hammer_tech
+from hammer_logging import Level, HammerVLSIFileLogger
+from hammer_logging import HammerVLSILogging
 
-from typing import Dict, List, TypeVar, Union
+from typing import Dict, List, TypeVar, Union, Optional, Callable, Any
 
 import os
 import tempfile
 import unittest
+
+from hammer_utils import deepdict
 
 
 class HammerVLSILoggingTest(unittest.TestCase):
@@ -25,29 +31,29 @@ class HammerVLSILoggingTest(unittest.TestCase):
         """
         msg = "This is a test message"  # type: str
 
-        log = hammer_vlsi.HammerVLSILogging.context("test")
+        log = HammerVLSILogging.context("test")
 
-        hammer_vlsi.HammerVLSILogging.enable_buffering = True  # we need this for test
-        hammer_vlsi.HammerVLSILogging.clear_callbacks()
-        hammer_vlsi.HammerVLSILogging.add_callback(hammer_vlsi.HammerVLSILogging.callback_buffering)
+        HammerVLSILogging.enable_buffering = True  # we need this for test
+        HammerVLSILogging.clear_callbacks()
+        HammerVLSILogging.add_callback(HammerVLSILogging.callback_buffering)
 
-        hammer_vlsi.HammerVLSILogging.enable_colour = True
+        HammerVLSILogging.enable_colour = True
         log.info(msg)
-        self.assertEqual(hammer_vlsi.HammerVLSILogging.get_colour_escape(Level.INFO) + "[test] " + msg + hammer_vlsi.HammerVLSILogging.COLOUR_CLEAR, hammer_vlsi.HammerVLSILogging.get_buffer()[0])
+        self.assertEqual(HammerVLSILogging.get_colour_escape(Level.INFO) + "[test] " + msg + HammerVLSILogging.COLOUR_CLEAR, HammerVLSILogging.get_buffer()[0])
 
-        hammer_vlsi.HammerVLSILogging.enable_colour = False
+        HammerVLSILogging.enable_colour = False
         log.info(msg)
-        self.assertEqual("[test] " + msg, hammer_vlsi.HammerVLSILogging.get_buffer()[0])
+        self.assertEqual("[test] " + msg, HammerVLSILogging.get_buffer()[0])
 
     def test_subcontext(self):
-        hammer_vlsi.HammerVLSILogging.enable_colour = False
-        hammer_vlsi.HammerVLSILogging.enable_tag = True
+        HammerVLSILogging.enable_colour = False
+        HammerVLSILogging.enable_tag = True
 
-        hammer_vlsi.HammerVLSILogging.clear_callbacks()
-        hammer_vlsi.HammerVLSILogging.add_callback(hammer_vlsi.HammerVLSILogging.callback_buffering)
+        HammerVLSILogging.clear_callbacks()
+        HammerVLSILogging.add_callback(HammerVLSILogging.callback_buffering)
 
         # Get top context
-        log = hammer_vlsi.HammerVLSILogging.context("top")
+        log = HammerVLSILogging.context("top")
 
         # Create sub-contexts.
         logA = log.context("A")
@@ -59,7 +65,7 @@ class HammerVLSILoggingTest(unittest.TestCase):
         logA.info(msgA)
         logB.error(msgB)
 
-        self.assertEqual(hammer_vlsi.HammerVLSILogging.get_buffer(),
+        self.assertEqual(HammerVLSILogging.get_buffer(),
             ['[top] [A] ' + msgA, '[top] [B] ' + msgB]
         )
 
@@ -67,11 +73,11 @@ class HammerVLSILoggingTest(unittest.TestCase):
         fd, path = tempfile.mkstemp(".log")
         os.close(fd) # Don't leak file descriptors
 
-        filelogger = hammer_vlsi.HammerVLSIFileLogger(path)
+        filelogger = HammerVLSIFileLogger(path)
 
-        hammer_vlsi.HammerVLSILogging.clear_callbacks()
-        hammer_vlsi.HammerVLSILogging.add_callback(filelogger.callback)
-        log = hammer_vlsi.HammerVLSILogging.context()
+        HammerVLSILogging.clear_callbacks()
+        HammerVLSILogging.add_callback(filelogger.callback)
+        log = HammerVLSILogging.context()
         log.info("Hello world")
         log.info("Eternal voyage to the edge of the universe")
         filelogger.close()
@@ -86,22 +92,22 @@ class HammerVLSILoggingTest(unittest.TestCase):
         os.remove(path)
 
 
-class HammerToolTest(unittest.TestCase):
-    def test_read_libs(self) -> None:
-        import hammer_config
-        import hammer_tech
-
-        tech_dir = tempfile.mkdtemp()
+class HammerToolTestHelpers:
+    """
+    Helper functions to aid in the testing of IP library filtering/processing.
+    """
+    @staticmethod
+    def write_tech_json(tech_json_filename: str, postprocessing_func: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None) -> None:
         # TODO: use a structured way of creating it when arrays actually work!
         # Currently the subelements of the array don't get recursively "validated", so the underscores don't disappear, etc.
-        #~ tech_json_obj = hammer_tech.TechJSON(name="dummy28")
-        #~ tech_json_obj.libraries = [
-            #~ hammer_tech.Library(milkyway_techfile="soy"),
-            #~ hammer_tech.Library(milkyway_techfile="coconut"),
-            #~ hammer_tech.Library(openaccess_techfile="juice"),
-            #~ hammer_tech.Library(openaccess_techfile="tea")
-        #~ ]
-        #~ tech_json = tech_json_obj.serialize()
+        # ~ tech_json_obj = hammer_tech.TechJSON(name="dummy28")
+        # ~ tech_json_obj.libraries = [
+        # ~ hammer_tech.Library(milkyway_techfile="soy"),
+        # ~ hammer_tech.Library(milkyway_techfile="coconut"),
+        # ~ hammer_tech.Library(openaccess_techfile="juice"),
+        # ~ hammer_tech.Library(openaccess_techfile="tea")
+        # ~ ]
+        # ~ tech_json = tech_json_obj.serialize()
         tech_json = {
             "name": "dummy28",
             "installs": [
@@ -111,9 +117,9 @@ class HammerToolTest(unittest.TestCase):
                 }
             ],
             "libraries": [
-                { "milkyway techfile": "test/soy" },
-                { "openaccess techfile": "test/juice" },
-                { "milkyway techfile": "test/coconut" },
+                {"milkyway techfile": "test/soy"},
+                {"openaccess techfile": "test/juice"},
+                {"milkyway techfile": "test/coconut"},
                 {
                     "openaccess techfile": "test/orange",
                     "provides": [
@@ -133,54 +139,217 @@ class HammerToolTest(unittest.TestCase):
                     ]
                 },
             ]
-        }
-        with open(tech_dir + "/dummy28.tech.json", "w") as f:
+        }  # type: Dict[str, Any]
+        if postprocessing_func is not None:
+            tech_json = postprocessing_func(tech_json)
+        with open(tech_json_filename, "w") as f:
             f.write(json.dumps(tech_json, indent=4))
+
+    @staticmethod
+    def make_test_filter() -> hammer_vlsi.LibraryFilter:
+        """
+        Make a test filter that returns libraries with openaccess techfiles with libraries that provide 'technology'
+        in lib_type first, with the rest sorted by the openaccess techfile.
+        """
+        def filter_func(lib: hammer_tech.Library) -> bool:
+            return lib.openaccess_techfile is not None
+
+        def extraction_func(lib: hammer_tech.Library) -> List[str]:
+            assert lib.openaccess_techfile is not None
+            return [lib.openaccess_techfile]
+
+        def sort_func(lib: hammer_tech.Library) -> Union[Number, str, tuple]:
+            assert lib.openaccess_techfile is not None
+            if lib.provides is not None and len(
+                    list(filter(lambda x: x is not None and x.lib_type == "technology", lib.provides))) > 0:
+                # Put technology first
+                return (0, "")
+            else:
+                return (1, str(lib.openaccess_techfile))
+
+        return hammer_vlsi.LibraryFilter.new(
+            filter_func=filter_func,
+            extraction_func=extraction_func,
+            tag="test", description="Test filter",
+            is_file=True,
+            sort_func=sort_func
+        )
+
+
+class SingleStepTool(hammer_vlsi.DummyHammerTool, metaclass=ABCMeta):
+    """
+    Helper class to define a single-step tool in tests.
+    """
+    @property
+    def steps(self) -> List[hammer_vlsi.HammerToolStep]:
+        return self.make_steps_from_methods([
+            self.step
+        ])
+
+    @abstractmethod
+    def step(self) -> bool:
+        """
+        Implement this method for the single step.
+        :return: True if the step passed
+        """
+        pass
+
+class DummyTool(SingleStepTool):
+    """
+    A dummy tool that does nothing and always passes.
+    """
+    def step(self) -> bool:
+        return True
+
+
+class HammerTechnologyTest(unittest.TestCase):
+    """
+    Tests for the Hammer technology library (hammer_tech).
+    """
+    def test_extra_prefixes(self) -> None:
+        """
+        Test that extra_prefixes works properly as a property.
+        """
+        lib = hammer_tech.library_from_json('{"openaccess techfile": "test/oa"}')  # type: hammer_tech.Library
+
+        prefixes_orig = [hammer_tech.PathPrefix(prefix="test", path="/tmp/test")]
+
+        prefixes = [hammer_tech.PathPrefix(prefix="test", path="/tmp/test")]
+        lib.extra_prefixes = prefixes
+        # Check that we get the original back even after mutating the original list.
+        prefixes.append(hammer_tech.PathPrefix(prefix="bar", path="/tmp/bar"))
+        self.assertEqual(lib.extra_prefixes, prefixes_orig)
+
+        prefixes2 = lib.extra_prefixes
+        # Check that we don't mutate the copy stored in the lib if we mutate after getting it
+        prefixes2.append(hammer_tech.PathPrefix(prefix="bar", path="/tmp/bar"))
+        self.assertEqual(lib.extra_prefixes, prefixes_orig)
+
+    def test_prepend_dir_path(self) -> None:
+        tech_json = {
+            "name": "My Technology Library",
+            "installs": [
+                {
+                    "path": "test",
+                    "base var": ""  # means relative to tech dir
+                }
+            ],
+            "libraries": []
+        }
+
+        tech_dir = "/tmp/path"  # should not be used
+        tech = hammer_tech.HammerTechnology.load_from_json("dummy28", json.dumps(tech_json, indent=2), tech_dir)
+
+        # Check that a tech-provided prefix works fine
+        self.assertEqual("{0}/water".format(tech_dir), tech.prepend_dir_path("test/water"))
+        self.assertEqual("{0}/fruit".format(tech_dir), tech.prepend_dir_path("test/fruit"))
+
+        # Check that a non-existent prefix gives an error
+        with self.assertRaises(ValueError):
+            tech.prepend_dir_path("badprefix/file")
+
+        # Check that a lib's custom prefix works
+        from hammer_vlsi.hammer_tool import ExtraLibrary
+        lib = ExtraLibrary(
+            library=hammer_tech.library_from_json("""{"milkyway techfile": "custom/chair"}"""),
+            prefix=hammer_tech.PathPrefix(
+                prefix="custom",
+                path="/tmp/custom"
+            )
+        ).store_into_library()
+        self.assertEqual("{0}/hat".format("/tmp/custom"), tech.prepend_dir_path("custom/hat", lib))
+
+    def test_gds_map_file(self) -> None:
+        """
+        Test that GDS map file support works as expected.
+        """
+        import hammer_config
+
+        tech_dir = tempfile.mkdtemp()
+        tech_json_filename = tech_dir + "/dummy28.tech.json"
+
+        def add_gds_map(d: Dict[str, Any]) -> Dict[str, Any]:
+            r = deepdict(d)
+            r.update({"gds map file": "test/gds_map_file"})
+            return r
+
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_gds_map)
         tech = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
         tech.cache_dir = tech_dir
 
-        def make_test_filter() -> hammer_vlsi.LibraryFilter:
-            def filter_func(lib: hammer_tech.Library) -> bool:
-                return lib.openaccess_techfile is not None
+        tool = DummyTool()
+        tool.technology = tech
+        database = hammer_config.HammerDatabase()
+        tool.set_database(database)
 
-            def extraction_func(lib: hammer_tech.Library) -> List[str]:
-                assert lib.openaccess_techfile is not None
-                return [lib.openaccess_techfile]
+        # Test that empty for gds_map_mode results in no map file.
+        database.update_project([{
+            'par.inputs.gds_map_mode': 'empty',
+            'par.inputs.gds_map_file': None
+        }])
+        self.assertEqual(tool.get_gds_map_file(), None)
 
-            def sort_func(lib: hammer_tech.Library) -> Union[Number, str, tuple]:
-                assert lib.openaccess_techfile is not None
-                if lib.provides is not None and len(
-                        list(filter(lambda x: x is not None and x.lib_type == "technology", lib.provides))) > 0:
-                    # Put technology first
-                    return (0, "")
-                else:
-                    return (1, str(lib.openaccess_techfile))
+        # Test that manual mode for gds_map_mode works.
+        database.update_project([{
+            'par.inputs.gds_map_mode': 'manual',
+            'par.inputs.gds_map_file': '/tmp/foo/bar'
+        }])
+        self.assertEqual(tool.get_gds_map_file(), '/tmp/foo/bar')
 
-            return hammer_vlsi.LibraryFilter.new(
-                filter_func=filter_func,
-                extraction_func=extraction_func,
-                tag="test", description="Test filter",
-                is_file=True,
-                sort_func=sort_func
-            )
+        # Test that auto mode for gds_map_mode works if the technology has a map file.
+        database.update_project([{
+            'par.inputs.gds_map_mode': 'auto',
+            'par.inputs.gds_map_file': None
+        }])
+        self.assertEqual(tool.get_gds_map_file(), '{tech}/gds_map_file'.format(tech=tech_dir))
 
-        class Tool(hammer_vlsi.HammerTool):
-            @property
-            def steps(self) -> List[hammer_vlsi.HammerToolStep]:
-                return self.make_steps_from_methods([
-                    self.step
-                ])
+        # Cleanup
+        shutil.rmtree(tech_dir)
 
+        # Create a new technology with no GDS map file.
+        tech_dir = tempfile.mkdtemp()
+        tech_json_filename = tech_dir + "/dummy28.tech.json"
+        HammerToolTestHelpers.write_tech_json(tech_json_filename)
+        tech = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
+        tech.cache_dir = tech_dir
+
+        tool.technology = tech
+
+        # Test that auto mode for gds_map_mode works if the technology has no map file.
+        database.update_project([{
+            'par.inputs.gds_map_mode': 'auto',
+            'par.inputs.gds_map_file': None
+        }])
+        self.assertEqual(tool.get_gds_map_file(), None)
+
+        # Cleanup
+        shutil.rmtree(tech_dir)
+
+
+class HammerToolTest(unittest.TestCase):
+    def test_read_libs(self) -> None:
+        """
+        Test that HammerTool can read technology IP libraries and filter/process them.
+        """
+        import hammer_config
+
+        tech_dir = tempfile.mkdtemp()
+        tech_json_filename = tech_dir + "/dummy28.tech.json"
+        HammerToolTestHelpers.write_tech_json(tech_json_filename)
+        tech = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
+        tech.cache_dir = tech_dir
+
+        class Tool(SingleStepTool):
             def step(self) -> bool:
-                def test_tool_format(lib, filt):
+                def test_tool_format(lib, filt) -> List[str]:
                     return ["drink {0}".format(lib)]
 
                 self._read_lib_output = self.read_libs([self.milkyway_techfile_filter], test_tool_format, must_exist=False)
 
-                self._test_filter_output = self.read_libs([make_test_filter()], test_tool_format, must_exist=False)
+                self._test_filter_output = self.read_libs([HammerToolTestHelpers.make_test_filter()], test_tool_format, must_exist=False)
                 return True
         test = Tool()
-        test.logger = hammer_vlsi.HammerVLSILogging.context("")
+        test.logger = HammerVLSILogging.context("")
         test.run_dir = tempfile.mkdtemp()
         test.technology = tech
         test.set_database(hammer_config.HammerDatabase())
@@ -199,14 +368,194 @@ class HammerToolTest(unittest.TestCase):
         ])
 
         # Cleanup
+        shutil.rmtree(tech_dir)
+        shutil.rmtree(test.run_dir)
+
+    def test_timing_lib_ecsm_filter(self) -> None:
+        """
+        Test that the ECSM-first filter works as expected.
+        """
+        import hammer_config
+
+        tech_dir = tempfile.mkdtemp()
+        tech_json_filename = tech_dir + "/dummy28.tech.json"
+        tech_json = {
+            "name": "dummy28",
+            "installs": [
+                {
+                    "path": "test",
+                    "base var": ""  # means relative to tech dir
+                }
+            ],
+            "libraries": [
+                {
+                    "ecsm liberty file": "test/eggs.ecsm",
+                    "ccs liberty file": "test/eggs.ccs",
+                    "nldm liberty file": "test/eggs.nldm"
+                },
+                {
+                    "ccs liberty file": "test/custard.ccs",
+                    "nldm liberty file": "test/custard.nldm"
+                },
+                {
+                    "nldm liberty file": "test/noodles.nldm"
+                },
+                {
+                    "ecsm liberty file": "test/eggplant.ecsm"
+                },
+                {
+                    "ccs liberty file": "test/cookies.ccs"
+                }
+            ]
+        }
+        with open(tech_json_filename, "w") as f:
+            f.write(json.dumps(tech_json, indent=4))
+        tech = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
+        tech.cache_dir = tech_dir
+
+        class Tool(SingleStepTool):
+            lib_outputs = []  # type: List[str]
+
+            def step(self) -> bool:
+                Tool.lib_outputs = self.read_libs([self.timing_lib_with_ecsm_filter], self.to_plain_item,
+                                                       must_exist=False)
+                return True
+
+        test = Tool()
+        test.logger = HammerVLSILogging.context("")
+        test.run_dir = tempfile.mkdtemp()
+        test.technology = tech
+        test.set_database(hammer_config.HammerDatabase())
+        test.run()
+
+        # Check that the ecsm-based filter prioritized ecsm -> ccs -> nldm.
+        self.assertEqual(set(Tool.lib_outputs), {
+            "{0}/eggs.ecsm".format(tech_dir),
+            "{0}/custard.ccs".format(tech_dir),
+            "{0}/noodles.nldm".format(tech_dir),
+            "{0}/eggplant.ecsm".format(tech_dir),
+            "{0}/cookies.ccs".format(tech_dir)
+        })
+
+        # Cleanup
+        shutil.rmtree(tech_dir)
+        shutil.rmtree(test.run_dir)
+
+    def test_read_extra_libs(self) -> None:
+        """
+        Test that HammerTool can read/process extra IP libraries in addition to those of the technology.
+        """
+        import hammer_config
+
+        tech_dir = tempfile.mkdtemp()
+        tech_json_filename = tech_dir + "/dummy28.tech.json"
+        HammerToolTestHelpers.write_tech_json(tech_json_filename)
+        tech = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
+        tech.cache_dir = tech_dir
+
+        class Tool(hammer_vlsi.DummyHammerTool):
+            lib_output = []  # type: List[str]
+            filter_output = []  # type: List[str]
+
+            @property
+            def steps(self) -> List[hammer_vlsi.HammerToolStep]:
+                return self.make_steps_from_methods([
+                    self.step
+                ])
+
+            def step(self) -> bool:
+                def test_tool_format(lib, filt) -> List[str]:
+                    return ["drink {0}".format(lib)]
+
+                Tool.lib_output = self.read_libs([self.milkyway_techfile_filter], test_tool_format, must_exist=False)
+
+                Tool.filter_output = self.read_libs([HammerToolTestHelpers.make_test_filter()], test_tool_format,
+                                                    must_exist=False)
+                return True
+
+        test = Tool()
+        test.logger = HammerVLSILogging.context("")
+        test.run_dir = tempfile.mkdtemp()
+        test.technology = tech
+        # Add some extra libraries to see if they are picked up
+        database = hammer_config.HammerDatabase()
+        lib1_path = "/foo/bar"
+        lib1b_path = "/library/specific/prefix"
+        lib2_path = "/baz/quux"
+        database.update_project([{
+            'vlsi.technology.extra_libraries': [
+                {
+                    "library": {"milkyway techfile": "test/xylophone"}
+                },
+                {
+                    "library": {"openaccess techfile": "test/orange"}
+                },
+                {
+                    "prefix": {
+                        "prefix": "lib1",
+                        "path": lib1_path
+                    },
+                    "library": {"milkyway techfile": "lib1/muffin"}
+                },
+                {
+                    "prefix": {
+                        "prefix": "lib1",
+                        "path": lib1b_path
+                    },
+                    "library": {"milkyway techfile": "lib1/granola"}
+                },
+                {
+                    "prefix": {
+                        "prefix": "lib2",
+                        "path": lib2_path
+                    },
+                    "library": {
+                        "openaccess techfile": "lib2/cake",
+                        "milkyway techfile": "lib2/brownie",
+                        "provides": [
+                            {"lib_type": "stdcell"}
+                        ]
+                    }
+                }
+            ]
+        }])
+        test.set_database(database)
+        test.run()
+
+        # Not testing ordering in this assertion.
+        self.assertEqual(set(Tool.lib_output),
+                         {
+                             "drink {0}/soy".format(tech_dir),
+                             "drink {0}/coconut".format(tech_dir),
+                             "drink {0}/xylophone".format(tech_dir),
+                             "drink {0}/muffin".format(lib1_path),
+                             "drink {0}/granola".format(lib1b_path),
+                             "drink {0}/brownie".format(lib2_path)
+                         })
+
+        # We do care about ordering here.
+        # Our filter should put the techfile first and sort the rest.
+        print("Tool.filter_output = " + str(Tool.filter_output))
+        tech_lef_result = [
+            # tech lef
+            "drink {0}/tea".format(tech_dir)
+        ]
+        base_lib_results = [
+            "drink {0}/grapefruit".format(tech_dir),
+            "drink {0}/juice".format(tech_dir),
+            "drink {0}/orange".format(tech_dir)
+        ]
+        extra_libs_results = [
+            "drink {0}/cake".format(lib2_path)
+        ]
+        self.assertEqual(Tool.filter_output, tech_lef_result + sorted(base_lib_results + extra_libs_results))
+
+        # Cleanup
+        shutil.rmtree(tech_dir)
         shutil.rmtree(test.run_dir)
 
     def test_create_enter_script(self) -> None:
-        class Tool(hammer_vlsi.HammerTool):
-            @property
-            def steps(self) -> List[hammer_vlsi.HammerToolStep]:
-                return []
-
+        class Tool(hammer_vlsi.DummyHammerTool):
             @property
             def env_vars(self) -> Dict[str, str]:
                 return {
@@ -259,7 +608,13 @@ class HammerToolHooksTestContext:
     def __init__(self, test: unittest.TestCase) -> None:
         self.test = test  # type: unittest.TestCase
         self.temp_dir = ""  # type: str
-        self.driver = None  # type: hammer_vlsi.HammerDriver
+        self._driver = None  # type: Optional[hammer_vlsi.HammerDriver]
+
+    # Helper property to check that the driver did get initialized.
+    @property
+    def driver(self) -> hammer_vlsi.HammerDriver:
+        assert self._driver is not None, "HammerDriver must be initialized before use"
+        return self._driver
 
     def __enter__(self) -> "HammerToolHooksTestContext":
         """Initialize context by creating the temp_dir, driver, and loading mocksynth."""
@@ -282,7 +637,7 @@ class HammerToolHooksTestContext:
             obj_dir=temp_dir
         )
         self.temp_dir = temp_dir
-        self.driver = hammer_vlsi.HammerDriver(options)
+        self._driver = hammer_vlsi.HammerDriver(options)
         self.test.assertTrue(self.driver.load_synthesis_tool())
         return self
 
@@ -513,45 +868,6 @@ class HammerToolHooksTest(unittest.TestCase):
                 else:
                     self.assertFalse(os.path.exists(file))
 
-
-class TimeValueTest(unittest.TestCase):
-    def test_read_and_write(self):
-        """
-        Test that we can parse and emit time values.
-        """
-        tv = hammer_vlsi.TimeValue("1000 ns")
-        self.assertEqual(tv.str_value_in_units("ns"), "1000 ns")
-        self.assertEqual(tv.str_value_in_units("us"), "1 us")
-        self.assertEqual(tv.value_in_units("ps"), 1000000.0)
-
-    def test_default_prefix(self):
-        """
-        Test that we can parse and emit time values.
-        """
-        tv = hammer_vlsi.TimeValue("1000")
-        self.assertEqual(tv.value_in_units("ns"), 1000)
-        tv2 = hammer_vlsi.TimeValue("42", "m")
-        self.assertEqual(tv2.value_in_units("ms"), 42)
-
-    def test_errors(self):
-        """
-        Test that errors get caught.
-        """
-        def bad_1():
-            hammer_vlsi.TimeValue("bugaboo")
-        def bad_2():
-            hammer_vlsi.TimeValue("1.1.1.1 ps")
-        def bad_3():
-            hammer_vlsi.TimeValue("420 xs")
-        def bad_4():
-            hammer_vlsi.TimeValue("12 noobs")
-        def bad_5():
-            hammer_vlsi.TimeValue("666......")
-        self.assertRaises(ValueError, bad_1)
-        self.assertRaises(ValueError, bad_2)
-        self.assertRaises(ValueError, bad_3)
-        self.assertRaises(ValueError, bad_4)
-        self.assertRaises(ValueError, bad_5)
 
 if __name__ == '__main__':
     unittest.main()
