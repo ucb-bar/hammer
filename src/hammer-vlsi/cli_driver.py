@@ -403,7 +403,7 @@ class CLIDriver:
         # Waveform files
         waveforms = args['waveform']
         if isinstance(waveforms, List) and len(waveforms) > 0:
-            config['power.inputs.waveform_files'] = waveforms
+            config.update({'power.inputs.waveform_files': list(waveforms)})
 
         # Object dir.
         # (optional)
