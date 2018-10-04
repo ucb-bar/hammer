@@ -121,24 +121,30 @@ class HammerDriver:
         self.database.update_project(self.project_configs)
 
     def load_technology(self, cache_dir: str = "") -> None:
-        tech_str = self.database.get_setting("vlsi.core.technology")
+        tech_str = self.database.get_setting("vlsi.core.technology") # type: str
 
         if cache_dir == "":
             cache_dir = os.path.join(self.obj_dir, "tech-%s-cache" % tech_str)
 
         tech_paths = self.database.get_setting("vlsi.core.technology_path")
-        tech_json_path = ""  # type: str
+        tech_blob_path = ""  # type: str
+        is_yaml = False # type: bool
         for path in tech_paths:
-            tech_json_path = os.path.join(path, tech_str, "%s.tech.json" % tech_str)
-            if os.path.exists(tech_json_path):
+            tech_blob_path = os.path.join(path, tech_str, "%s.tech.json" % tech_str)
+            if os.path.exists(tech_blob_path):
+                is_yaml = False
                 break
-        if tech_json_path == "":
-            self.log.error("Technology {0} not found or missing .tech.json!".format(tech_str))
+            tech_blob_path = os.path.join(path, tech_str, "%s.tech.yaml" % tech_str)
+            if os.path.exists(tech_blob_path):
+                is_yaml = True
+                break
+        if tech_blob_path == "":
+            self.log.error("Technology {0} not found or missing .tech.[json/yaml]!".format(tech_str))
             return
 
         self.log.info("Loading technology '{0}'".format(tech_str))
         tech = hammer_tech.HammerTechnology.load_from_dir(tech_str, os.path.dirname(
-            tech_json_path))  # type: hammer_tech.HammerTechnology
+            tech_blob_path), is_yaml)  # type: hammer_tech.HammerTechnology
         # Update database as soon as possible since e.g. extract_technology_files could use those settings
         self.database.update_technology(tech.get_config())
         tech.logger = self.log.context("tech")
