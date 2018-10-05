@@ -187,6 +187,7 @@ class CLIDriver:
                 else:
                     post_load_func_checked(driver)
                 success, output = driver.run_synthesis(extra_hooks)
+                dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output.json"), output)
                 post_run_func_checked(driver)
             elif action_type == "par":
                 if not driver.load_par_tool(get_or_else(self.par_rundir, "")):
@@ -194,6 +195,7 @@ class CLIDriver:
                 else:
                     post_load_func_checked(driver)
                 success, output = driver.run_par(extra_hooks)
+                dump_config_to_json_file(os.path.join(driver.par_tool.run_dir, "par-output.json"), output)
                 post_run_func_checked(driver)
             else:
                 raise ValueError("Invalid action_type = " + str(action_type))
@@ -228,7 +230,6 @@ class CLIDriver:
                 # Dump both synthesis output and par input for debugging/resuming.
                 # TODO(edwardw): make these output filenames configurable?
                 assert driver.syn_tool is not None, "Syn tool must exist since we ran synthesis_action successfully"
-                dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output.json"), syn_output)
                 dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "par-input.json"), par_input)
 
                 # Use new par input and run place-and-route.
