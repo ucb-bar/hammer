@@ -276,8 +276,11 @@ libraries: []
         tech_yaml_filename = tech_dir + "/dummy28/dummy28.tech.yaml"
         with open(tech_yaml_filename, "w") as f:
             f.write(tech_yaml)
-        tech = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
-        self.assertTrue(tech is not None, "Unable to load technology")
+        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
+        if tech_opt is None:
+            self.assertTrue(tech_opt is not None, "Unable to load technology")
+        else:
+            tech = tech_opt # type: hammer_tech.HammerTechnology
 
         # Cleanup
         shutil.rmtree(tech_dir)
@@ -299,8 +302,11 @@ libraries: []
             return r
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, add_gds_map)
-        tech = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
-        self.assertTrue(tech is not None, "Unable to load technology")
+        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
+        if tech_opt is None:
+            self.assertTrue(tech_opt is not None, "Unable to load technology")
+        else:
+            tech = tech_opt # type: hammer_tech.HammerTechnology
         tech.cache_dir = tech_dir
 
         tool = DummyTool()
@@ -337,8 +343,11 @@ libraries: []
         os.mkdir(tech_dir + "/dummy28")
         tech_json_filename = tech_dir + "/dummy28/dummy28.tech.json"
         HammerToolTestHelpers.write_tech_json(tech_json_filename)
-        tech = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
-        self.assertTrue(tech is not None, "Unable to load technology")
+        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
+        if tech_opt is None:
+            self.assertTrue(tech_opt is not None, "Unable to load technology")
+        else:
+            tech = tech_opt
         tech.cache_dir = tech_dir
 
         tool.technology = tech
@@ -365,8 +374,11 @@ class HammerToolTest(unittest.TestCase):
         os.mkdir(tech_dir + "/dummy28")
         tech_json_filename = tech_dir + "/dummy28/dummy28.tech.json"
         HammerToolTestHelpers.write_tech_json(tech_json_filename)
-        tech = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
-        self.assertTrue(tech is not None, "Unable to load technology")
+        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
+        if tech_opt is None:
+            self.assertTrue(tech_opt is not None, "Unable to load technology")
+        else:
+            tech = tech_opt # type: hammer_tech.HammerTechnology
         tech.cache_dir = tech_dir
 
         class Tool(SingleStepTool):
@@ -441,8 +453,11 @@ class HammerToolTest(unittest.TestCase):
         }
         with open(tech_json_filename, "w") as f:
             f.write(json.dumps(tech_json, indent=4))
-        tech = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
-        self.assertTrue(tech is not None, "Unable to load technology")
+        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
+        if tech_opt is None:
+            self.assertTrue(tech_opt is not None, "Unable to load technology")
+        else:
+            tech = tech_opt # type: hammer_tech.HammerTechnology
         tech.cache_dir = tech_dir
 
         class Tool(SingleStepTool):
@@ -483,8 +498,11 @@ class HammerToolTest(unittest.TestCase):
         os.mkdir(tech_dir + "/dummy28")
         tech_json_filename = tech_dir + "/dummy28/dummy28.tech.json"
         HammerToolTestHelpers.write_tech_json(tech_json_filename)
-        tech = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
-        self.assertTrue(tech is not None, "Unable to load technology")
+        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
+        if tech_opt is None:
+            self.assertTrue(tech_opt is not None, "Unable to load technology")
+        else:
+            tech = tech_opt # type: hammer_tech.HammerTechnology
         tech.cache_dir = tech_dir
 
         class Tool(hammer_vlsi.HammerTool):
