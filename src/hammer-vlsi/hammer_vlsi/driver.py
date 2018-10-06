@@ -7,7 +7,7 @@
 #  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 from functools import reduce
-from typing import NamedTuple, List, Optional, Tuple, Dict, Set
+from typing import NamedTuple, List, Optional, Tuple, Dict, Set, Any
 
 import datetime
 import os
@@ -269,6 +269,7 @@ class HammerDriver:
             Tuple[bool, dict]:
         """
         Run synthesis based on the given database.
+        The output config dict returned does NOT have a copy of the input config settings.
 
         :param hook_actions: List of hook actions, or leave as None to use the hooks sets in set_synthesis_hooks.
                              Hooks from set_synthesis_hooks, if present, will be appended afterwards.
@@ -295,10 +296,10 @@ class HammerDriver:
             # TODO: make this an option
 
         # Record output from the syn_tool into the JSON output.
-        output_config = deepdict(self.project_config)
+        output_config = {}  # type: Dict[str, Any]
         # TODO(edwardw): automate this
         try:
-            output_config.update(self.syn_tool.export_config_outputs())
+            output_config = deepdict(self.syn_tool.export_config_outputs())
         except ValueError as e:
             self.log.fatal(e.args[0])
             return False, {}
@@ -306,20 +307,27 @@ class HammerDriver:
         return run_succeeded, output_config
 
     @staticmethod
-    def generate_par_inputs_from_synthesis(config_in: dict) -> dict:
-        """Generate the appropriate inputs for running place-and-route from the outputs of synthesis run."""
-        output_dict = deepdict(config_in)
-        # Plug in the outputs of synthesis into the par inputs.
-        output_dict["par.inputs.input_files"] = output_dict["synthesis.outputs.output_files"]
-        output_dict["par.inputs.top_module"] = output_dict["synthesis.inputs.top_module"]
+    def synthesis_output_to_par_input(output_dict: dict) -> dict:
+        """
+        Generate the appropriate inputs for running place-and-route from the
+        outputs of synthesis run.
+        Does not merge the results with any project dictionaries.
+        :param output_dict: Dict containing synthesis.outputs.*
+        :return: par.inputs.* settings generated from output_dict
+        """
+        result = {
+            "par.inputs.input_files": output_dict["synthesis.outputs.output_files"],
+            "par.inputs.top_module": output_dict["synthesis.inputs.top_module"]
+        }
         if "synthesis.outputs.sdc" in output_dict:
-            output_dict["par.inputs.post_synth_sdc"] = output_dict["synthesis.outputs.sdc"]
-        return output_dict
+            result["par.inputs.post_synth_sdc"] = output_dict["synthesis.outputs.sdc"]
+        return result
 
     def run_par(self, hook_actions: Optional[List[HammerToolHookAction]] = None, force_override: bool = False) -> Tuple[
         bool, dict]:
         """
         Run place and route based on the given database.
+        The output config dict returned does NOT have a copy of the input config settings.
         """
         if self.par_tool is None:
             self.log.error("Must load par tool before calling run_par")
@@ -342,10 +350,10 @@ class HammerDriver:
             # TODO: make this an option
 
         # Record output from the syn_tool into the JSON output.
-        output_config = deepdict(self.project_config)
+        output_config = {}  # type: Dict[str, Any]
         # TODO(edwardw): automate this
         try:
-            output_config.update(self.par_tool.export_config_outputs())
+            output_config = deepdict(self.par_tool.export_config_outputs())
         except ValueError as e:
             self.log.fatal(e.args[0])
             return False, {}
