@@ -132,7 +132,8 @@ class HammerDriver:
         tech_opt = hammer_tech.HammerTechnology.load_from_dir(tech_str, tech_paths)  # type: Optional[hammer_tech.HammerTechnology]
         if tech_opt is None:
             self.log.fatal("Technology {0} not found or missing .tech.[json/yaml]!".format(tech_str))
-        tech = tech_opt # type: hammer_tech.HammerTechnology
+        else:
+            tech = tech_opt # type: hammer_tech.HammerTechnology
         # Update database as soon as possible since e.g. extract_technology_files could use those settings
         self.database.update_technology(tech.get_config())
         tech.logger = self.log.context("tech")
