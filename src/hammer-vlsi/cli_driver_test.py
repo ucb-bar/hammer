@@ -68,9 +68,18 @@ class CLIDriverTest(unittest.TestCase):
         with open(os.path.join(syn_rundir, "syn-output.json"), "r") as f:
             syn_output = json.loads(f.read())
             self.assertEqual(syn_output["synthesis.outputs.output_files"], [])
+            # syn-output should NOT keep other settings
+            self.assertFalse("vlsi.core.technology" in syn_output)
+        with open(os.path.join(syn_rundir, "syn-output-full.json"), "r") as f:
+            syn_output_full = json.loads(f.read())
+            self.assertEqual(syn_output_full["synthesis.outputs.output_files"], [])
+            # syn-output-full should preserve other settings
+            self.assertEqual(syn_output_full["vlsi.core.technology"], "nop")
         with open(os.path.join(syn_rundir, "par-input.json"), "r") as f:
             par_input = json.loads(f.read())
             self.assertEqual(par_input["par.inputs.top_module"], top_module)
+            # par-input should preserve other settings
+            self.assertEqual(par_input["vlsi.core.technology"], "nop")
 
         # Cleanup
         shutil.rmtree(syn_rundir)

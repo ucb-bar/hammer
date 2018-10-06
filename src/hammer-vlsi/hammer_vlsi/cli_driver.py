@@ -19,7 +19,7 @@ from .driver import HammerDriver, HammerDriverOptions
 
 from typing import List, Dict, Tuple, Any, Callable, Optional
 
-from hammer_utils import add_dicts, deeplist, get_or_else, check_function_type
+from hammer_utils import add_dicts, deeplist, deepdict, get_or_else, check_function_type
 
 
 def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callable[[str], None]) -> List[str]:
@@ -150,6 +150,22 @@ class CLIDriver:
         return self.create_action("par", hooks if len(hooks) > 0 else None,
                                   pre_action_func, post_load_func, post_run_func)
 
+    @staticmethod
+    def get_full_config(driver: HammerDriver, output: dict) -> dict:
+        """
+        Get the full configuration by combining the project config from the
+        driver with the given output dict (i.e. it contains only
+        "synthesis.output.blah") that we want to combine with the project
+        config.
+        :param driver: HammerDriver that has the full project config.
+        :param output: Output dict containing specific settings we want to add
+                       to the full project config.
+        :return: Full project config combined with the output dict
+        """
+        output_full = deepdict(driver.project_config)
+        output_full.update(deepdict(output))
+        return output_full
+
     def create_action(self, action_type: str,
                       extra_hooks: Optional[List[HammerToolHookAction]],
                       pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
@@ -188,6 +204,8 @@ class CLIDriver:
                     post_load_func_checked(driver)
                 success, output = driver.run_synthesis(extra_hooks)
                 dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output.json"), output)
+                dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output-full.json"),
+                                         self.get_full_config(driver, output))
                 post_run_func_checked(driver)
             elif action_type == "par":
                 if not driver.load_par_tool(get_or_else(self.par_rundir, "")):
@@ -196,6 +214,8 @@ class CLIDriver:
                     post_load_func_checked(driver)
                 success, output = driver.run_par(extra_hooks)
                 dump_config_to_json_file(os.path.join(driver.par_tool.run_dir, "par-output.json"), output)
+                dump_config_to_json_file(os.path.join(driver.par_tool.run_dir, "par-output-full.json"),
+                                         self.get_full_config(driver, output))
                 post_run_func_checked(driver)
             else:
                 raise ValueError("Invalid action_type = " + str(action_type))
@@ -205,8 +225,8 @@ class CLIDriver:
         return action
 
     def synthesis_to_par_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
-        """Create a config to run the output."""
-        return HammerDriver.generate_par_inputs_from_synthesis(driver.project_config)
+        """Create a full config to run the output."""
+        return self.get_full_config(driver, HammerDriver.synthesis_output_to_par_input(driver.project_config))
 
     def create_synthesis_par_action(self, synthesis_action: CLIActionType, par_action: CLIActionType) -> CLIActionType:
         """
@@ -225,7 +245,8 @@ class CLIDriver:
                 return None
             else:
                 # Generate place-and-route input from the synthesis output.
-                par_input = HammerDriver.generate_par_inputs_from_synthesis(syn_output)  # type: dict
+                par_input = self.get_full_config(driver,
+                                                 HammerDriver.synthesis_output_to_par_input(syn_output))  # type: dict
 
                 # Dump both synthesis output and par input for debugging/resuming.
                 # TODO(edwardw): make these output filenames configurable?
