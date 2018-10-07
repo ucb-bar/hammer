@@ -278,7 +278,7 @@ libraries: []
             f.write(tech_yaml)
         tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
         if tech_opt is None:
-            self.assertTrue(tech_opt is not None, "Unable to load technology")
+            self.assertTrue(False, "Unable to load technology")
         else:
             tech = tech_opt # type: hammer_tech.HammerTechnology
 
@@ -304,7 +304,7 @@ libraries: []
         HammerToolTestHelpers.write_tech_json(tech_json_filename, add_gds_map)
         tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
         if tech_opt is None:
-            self.assertTrue(tech_opt is not None, "Unable to load technology")
+            self.assertTrue(False, "Unable to load technology")
         else:
             tech = tech_opt # type: hammer_tech.HammerTechnology
         tech.cache_dir = tech_dir
@@ -345,7 +345,7 @@ libraries: []
         HammerToolTestHelpers.write_tech_json(tech_json_filename)
         tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
         if tech_opt is None:
-            self.assertTrue(tech_opt is not None, "Unable to load technology")
+            self.assertTrue(False, "Unable to load technology")
         else:
             tech = tech_opt
         tech.cache_dir = tech_dir
@@ -376,7 +376,7 @@ class HammerToolTest(unittest.TestCase):
         HammerToolTestHelpers.write_tech_json(tech_json_filename)
         tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
         if tech_opt is None:
-            self.assertTrue(tech_opt is not None, "Unable to load technology")
+            self.assertTrue(False, "Unable to load technology")
         else:
             tech = tech_opt # type: hammer_tech.HammerTechnology
         tech.cache_dir = tech_dir
@@ -455,7 +455,7 @@ class HammerToolTest(unittest.TestCase):
             f.write(json.dumps(tech_json, indent=4))
         tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
         if tech_opt is None:
-            self.assertTrue(tech_opt is not None, "Unable to load technology")
+            self.assertTrue(False, "Unable to load technology")
         else:
             tech = tech_opt # type: hammer_tech.HammerTechnology
         tech.cache_dir = tech_dir
@@ -500,7 +500,7 @@ class HammerToolTest(unittest.TestCase):
         HammerToolTestHelpers.write_tech_json(tech_json_filename)
         tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
         if tech_opt is None:
-            self.assertTrue(tech_opt is not None, "Unable to load technology")
+            self.assertTrue(False, "Unable to load technology")
         else:
             tech = tech_opt # type: hammer_tech.HammerTechnology
         tech.cache_dir = tech_dir
