@@ -162,8 +162,17 @@ class CLIDriver:
                        to the full project config.
         :return: Full project config combined with the output dict
         """
+        if "vlsi.builtins.is_complete" in output:
+            if bool(output["vlsi.builtins.is_complete"]):
+                raise ValueError("Output-only config claims it is complete")
+        else:
+            raise ValueError("Output-only config does not appear to be output only")
+
         output_full = deepdict(driver.project_config)
         output_full.update(deepdict(output))
+        # Merged configs are always complete
+        if "vlsi.builtins.is_complete" in output_full:
+            del output_full["vlsi.builtins.is_complete"]
         return output_full
 
     def create_action(self, action_type: str,
