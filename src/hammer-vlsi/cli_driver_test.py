@@ -17,7 +17,8 @@ import unittest
 
 
 class CLIDriverTest(unittest.TestCase):
-    def generate_dummy_config(self, syn_rundir: str, config_path: str, top_module: str) -> Dict[str, Any]:
+    @staticmethod
+    def generate_dummy_config(syn_rundir: str, config_path: str, top_module: str) -> Dict[str, Any]:
         """
         Generate and write a dummy config to the given path.
         :param syn_rundir: Directory to set as the synthesis rundir.
