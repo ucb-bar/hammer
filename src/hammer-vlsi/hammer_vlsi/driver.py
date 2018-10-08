@@ -295,11 +295,20 @@ class HammerDriver:
             # Allow the flow to keep running, just in case.
             # TODO: make this an option
 
-        # Record output from the syn_tool into the JSON output.
+        # Record output from the tool into the JSON output.
+        # Note: the output config dict is NOT complete
         output_config = {}  # type: Dict[str, Any]
         # TODO(edwardw): automate this
         try:
             output_config = deepdict(self.syn_tool.export_config_outputs())
+            if output_config.get("vlsi.builtins.is_complete", True):
+                # TODO: should we soften this message?
+                self.log.fatal(
+                    "The synthesis plugin is mis-written; "
+                    "it did not mark its output dictionary as output-only "
+                    "or did not call super().export_config_outputs(). "
+                    "Subsequent commands might not behave correctly.")
+                output_config["vlsi.builtins.is_complete"] = False
         except ValueError as e:
             self.log.fatal(e.args[0])
             return False, {}
@@ -317,8 +326,9 @@ class HammerDriver:
         """
         result = {
             "par.inputs.input_files": output_dict["synthesis.outputs.output_files"],
-            "par.inputs.top_module": output_dict["synthesis.inputs.top_module"]
-        }
+            "par.inputs.top_module": output_dict["synthesis.inputs.top_module"],
+            "vlsi.builtins.is_complete": False
+        }  # type: Dict[str, Any]
         if "synthesis.outputs.sdc" in output_dict:
             result["par.inputs.post_synth_sdc"] = output_dict["synthesis.outputs.sdc"]
         return result
@@ -349,11 +359,20 @@ class HammerDriver:
             # Allow the flow to keep running, just in case.
             # TODO: make this an option
 
-        # Record output from the syn_tool into the JSON output.
+        # Record output from the tool into the JSON output.
+        # Note: the output config dict is NOT complete
         output_config = {}  # type: Dict[str, Any]
         # TODO(edwardw): automate this
         try:
             output_config = deepdict(self.par_tool.export_config_outputs())
+            if output_config.get("vlsi.builtins.is_complete", True):
+                # TODO: should we soften this message?
+                self.log.fatal(
+                    "The place-and-route plugin is mis-written; "
+                    "it did not mark its output dictionary as output-only "
+                    "or did not call super().export_config_outputs(). "
+                    "Subsequent commands might not behave correctly.")
+                output_config["vlsi.builtins.is_complete"] = False
         except ValueError as e:
             self.log.fatal(e.args[0])
             return False, {}
