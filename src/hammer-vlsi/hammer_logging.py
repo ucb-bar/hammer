@@ -93,7 +93,7 @@ class HammerVLSILogging:
     enable_colour = True  # type: bool
 
     # If buffering is enabled, instead of printing right away, we will store it
-    # into a buffer for later retrival.
+    # into a buffer for later retrieval.
     enable_buffering = False  # type: bool
 
     # Enable printing the tag (e.g. "[synthesis] ...).
