@@ -67,7 +67,7 @@ class HammerVLSISettings:
     """
     Static class which holds global hammer-vlsi settings.
     """
-    hammer_vlsi_path = "" # type: str
+    hammer_vlsi_path = ""  # type: str
 
     @staticmethod
     def get_config() -> dict:
