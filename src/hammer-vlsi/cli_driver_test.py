@@ -40,6 +40,32 @@ class CLIDriverTest(unittest.TestCase):
 
         return config
 
+    def run_syn_to_par_with_output(self, config_path: str, syn_rundir: str,
+                                   par_rundir: str,
+                                   syn_out_path: str,
+                                   syn_to_par_out_path: str) -> None:
+        # Check that running the CLIDriver executes successfully (code 0).
+        with self.assertRaises(SystemExit) as cm:  # type: ignore
+            CLIDriver().main(args=[
+                "syn",  # action
+                "-p", config_path,
+                "--output", syn_out_path,
+                "--syn_rundir", syn_rundir,
+                "--par_rundir", par_rundir
+            ])
+        self.assertEqual(cm.exception.code, 0)
+        # Now run syn-to-par with the main config as well as the outputs.
+        with self.assertRaises(SystemExit) as cm:  # type: ignore
+            CLIDriver().main(args=[
+                "syn-to-par",  # action
+                "-p", config_path,
+                "-p", syn_out_path,
+                "--output", syn_to_par_out_path,
+                "--syn_rundir", syn_rundir,
+                "--par_rundir", par_rundir
+            ])
+        self.assertEqual(cm.exception.code, 0)
+
     def test_syn_to_par(self) -> None:
         """
         Test that syn-to-par works with the output-only JSON.
@@ -56,28 +82,8 @@ class CLIDriverTest(unittest.TestCase):
         syn_to_par_out_path = os.path.join(syn_rundir, "syn_par_out.json")
         self.generate_dummy_config(syn_rundir, config_path, top_module)
 
-        # Check that running the CLIDriver executes successfully (code 0).
-        with self.assertRaises(SystemExit) as cm:  # type: ignore
-            CLIDriver().main(args=[
-                "syn", # action
-                "-p", config_path,
-                "--output", syn_out_path,
-                "--syn_rundir", syn_rundir,
-                "--par_rundir", par_rundir
-            ])
-        self.assertEqual(cm.exception.code, 0)
-
-        # Now run syn-to-par with the main config as well as the outputs.
-        with self.assertRaises(SystemExit) as cm:  # type: ignore
-            CLIDriver().main(args=[
-                "syn-to-par", # action
-                "-p", config_path,
-                "-p", syn_out_path,
-                "--output", syn_to_par_out_path,
-                "--syn_rundir", syn_rundir,
-                "--par_rundir", par_rundir
-            ])
-        self.assertEqual(cm.exception.code, 0)
+        self.run_syn_to_par_with_output(config_path, syn_rundir, par_rundir,
+                                        syn_out_path, syn_to_par_out_path)
 
         # synthesis output should NOT keep other settings
         with open(syn_out_path, "r") as f:
@@ -143,6 +149,52 @@ class CLIDriverTest(unittest.TestCase):
             self.assertEqual(par_input["par.inputs.top_module"], top_module)
             # par-input should preserve other settings
             self.assertEqual(par_input["vlsi.core.technology"], "nop")
+
+        # Cleanup
+        shutil.rmtree(syn_rundir)
+        shutil.rmtree(par_rundir)
+
+    def test_syn_to_par_same_as_syn_par(self) -> None:
+        """
+        Test that syn-par generates the same par input as calling syn,
+        syn-to-par.
+        """
+
+        # Set up some temporary folders for the unit test.
+        syn_rundir = tempfile.mkdtemp()
+        par_rundir = tempfile.mkdtemp()
+
+        # Generate a config for testing.
+        top_module = "dummy"
+        config_path = os.path.join(syn_rundir, "run_config.json")
+        syn_out_path = os.path.join(syn_rundir, "syn_out.json")
+        syn_to_par_out_path = os.path.join(syn_rundir, "syn_par_out.json")
+        self.generate_dummy_config(syn_rundir, config_path, top_module)
+
+        # Run syn-to-par
+        self.run_syn_to_par_with_output(config_path, syn_rundir, par_rundir,
+                                        syn_out_path, syn_to_par_out_path)
+
+        # Run syn-par
+        with self.assertRaises(SystemExit) as cm:  # type: ignore
+            CLIDriver().main(args=[
+                "syn-par", # action
+                "-p", config_path,
+                "--syn_rundir", syn_rundir,
+                "--par_rundir", par_rundir
+            ])
+        self.assertEqual(cm.exception.code, 0)
+
+        # Check that the syn-to-par generated par input and the syn-par
+        # generated par input are the same, modulo any synthesis.outputs.*
+        # settings since they don't matter for par input.
+        with open(syn_to_par_out_path, "r") as f:
+            with open(os.path.join(syn_rundir, "par-input.json"), "r") as f2:
+                syn_to_par_output = json.loads(f.read())
+                syn_to_par_output = dict(filter(lambda i: "synthesis.outputs." not in i[0], syn_to_par_output.items()))
+                syn_par_output = json.loads(f2.read())
+                syn_par_output = dict(filter(lambda i: "synthesis.outputs." not in i[0], syn_par_output.items()))
+                self.assertEqual(syn_to_par_output, syn_par_output)
 
         # Cleanup
         shutil.rmtree(syn_rundir)
