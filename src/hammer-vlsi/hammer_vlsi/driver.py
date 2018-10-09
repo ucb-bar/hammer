@@ -159,6 +159,82 @@ class HammerDriver:
         tools = reduce(lambda a, b: a + b, list(self.tool_configs.values()))
         self.database.update_tools(tools)
 
+    def instantiate_synthesis_tool_class_from_config(self) -> Optional[Tuple[HammerSynthesisTool, str]]:
+        """
+        Create a new instance of the synthesis tool class using information
+        from the config.
+        :return: Tuple of (synthesis tool instance, synthesis tool name) or
+                 None if an error occurred.
+        """
+        # Find the synthesis/par tool and read in their configs.
+        syn_tool_name = self.database.get_setting("vlsi.core.synthesis_tool")
+        syn_tool_get = load_tool(
+            path=self.database.get_setting("vlsi.core.synthesis_tool_path"),
+            tool_name=syn_tool_name
+        )
+        if not isinstance(syn_tool_get, HammerSynthesisTool):
+            self.log.error("Synthesis tool must be a HammerSynthesisTool")
+            return None
+        return syn_tool_get, syn_tool_name
+
+    def set_up_synthesis_tool(self, syn_tool: HammerSynthesisTool,
+                              name: str, run_dir: str = "") -> bool:
+        """
+        Set up and store the given synthesis tool instance for use in this
+        driver.
+        :param syn_tool: Synthesis tool instance.
+        :param name: Short name (e.g. "yosys") of the tool instance. Typically
+                     obtained from the database.
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the
+                        run_dir passed in the HammerDriver constructor.
+        :return: True if setup was successful.
+        """
+        if self.tech is None:
+            self.log.error("Must load technology before loading synthesis tool")
+            return False
+        if run_dir == "":
+            run_dir = os.path.join(self.obj_dir, "syn-rundir")
+
+        # TODO: generate this automatically
+        syn_tool.name = name
+        syn_tool.logger = self.log.context("synthesis")
+        syn_tool.technology = self.tech
+        syn_tool.set_database(self.database)
+        syn_tool.run_dir = run_dir
+        syn_tool.hierarchical_mode = HierarchicalMode.from_str(
+            self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+        syn_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
+        syn_tool.top_module = self.database.get_setting("synthesis.inputs.top_module", nullvalue="")
+        missing_inputs = False
+        if syn_tool.top_module == "":
+            self.log.error("Top module not specified for synthesis")
+            missing_inputs = True
+        if len(syn_tool.input_files) == 0:
+            self.log.error("No input files specified for synthesis")
+            missing_inputs = True
+        if missing_inputs:
+            return False
+
+        self.syn_tool = syn_tool
+        self.tool_configs["synthesis"] = syn_tool.get_config()
+        self.update_tool_configs()
+        return True
+
+    def load_synthesis_tool(self, run_dir: str = "") -> bool:
+        """
+        Load the synthesis tool based on the given database.
+
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
+                        constructor.
+        :return: True if synthesis tool loading was successful, False otherwise.
+        """
+        config_result = self.instantiate_synthesis_tool_class_from_config()
+        if config_result is None:
+            return False
+        else:
+            (syn_tool, name) = config_result
+            return self.set_up_synthesis_tool(syn_tool, name, run_dir)
+
     def load_par_tool(self, run_dir: str = "") -> bool:
         """
         Load the place and route tool based on the given database.
@@ -196,57 +272,6 @@ class HammerDriver:
         self.par_tool = par_tool
 
         self.tool_configs["par"] = par_tool.get_config()
-        self.update_tool_configs()
-        return True
-
-    def load_synthesis_tool(self, run_dir: str = "") -> bool:
-        """
-        Load the synthesis tool based on the given database.
-
-        :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
-                        constructor.
-        :return: True if synthesis tool loading was successful, False otherwise.
-        """
-        if self.tech is None:
-            self.log.error("Must load technology before loading synthesis tool")
-            return False
-
-        if run_dir == "":
-            run_dir = os.path.join(self.obj_dir, "syn-rundir")
-
-        # Find the synthesis/par tool and read in their configs.
-        syn_tool_name = self.database.get_setting("vlsi.core.synthesis_tool")
-        syn_tool_get = load_tool(
-            path=self.database.get_setting("vlsi.core.synthesis_tool_path"),
-            tool_name=syn_tool_name
-        )
-        if not isinstance(syn_tool_get, HammerSynthesisTool):
-            self.log.error("Synthesis tool must be a HammerSynthesisTool")
-            return False
-        # TODO: generate this automatically
-        syn_tool = syn_tool_get  # type: HammerSynthesisTool
-        syn_tool.name = syn_tool_name
-        syn_tool.logger = self.log.context("synthesis")
-        syn_tool.technology = self.tech
-        syn_tool.set_database(self.database)
-        syn_tool.run_dir = run_dir
-        syn_tool.hierarchical_mode = HierarchicalMode.from_str(self.database.get_setting("vlsi.inputs.hierarchical.mode"))
-
-        syn_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
-        syn_tool.top_module = self.database.get_setting("synthesis.inputs.top_module", nullvalue="")
-        missing_inputs = False
-        if syn_tool.top_module == "":
-            self.log.error("Top module not specified for synthesis")
-            missing_inputs = True
-        if len(syn_tool.input_files) == 0:
-            self.log.error("No input files specified for synthesis")
-            missing_inputs = True
-        if missing_inputs:
-            return False
-
-        self.syn_tool = syn_tool
-
-        self.tool_configs["synthesis"] = syn_tool.get_config()
         self.update_tool_configs()
         return True
 
