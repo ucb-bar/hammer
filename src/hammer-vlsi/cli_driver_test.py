@@ -154,6 +154,54 @@ class CLIDriverTest(unittest.TestCase):
         shutil.rmtree(syn_rundir)
         shutil.rmtree(par_rundir)
 
+    def test_syn_to_par_improper(self) -> None:
+        """
+        Test that appropriate error messages are raised when syn-to-par
+        is used on a config that does not have outputs.
+        """
+
+        # Set up some temporary folders for the unit test.
+        syn_rundir = tempfile.mkdtemp()
+        par_rundir = tempfile.mkdtemp()
+
+        # Generate a config for testing.
+        top_module = "dummy"
+        config_path = os.path.join(syn_rundir, "run_config.json")
+        log_path = os.path.join(syn_rundir, "log.txt")
+        self.generate_dummy_config(syn_rundir, config_path, top_module)
+
+        # Testing artefact: since we're running the main() call in the same
+        # process we have to control the outputs a bit.
+        from hammer_logging import HammerVLSILogging
+        old_buffering = HammerVLSILogging.enable_buffering
+        old_colour = HammerVLSILogging.enable_colour
+        HammerVLSILogging.enable_buffering = True
+        HammerVLSILogging.enable_colour = False
+        HammerVLSILogging.output_buffer.clear()
+
+        # Running syn-to-par on a not-output config should fail.
+        with self.assertRaises(SystemExit) as cm:  # type: ignore
+            CLIDriver().main(args=[
+                "syn-to-par",  # action
+                "-p", config_path,
+                "--log", log_path,
+                "--syn_rundir", syn_rundir,
+                "--par_rundir", par_rundir
+            ])
+        self.assertEqual(cm.exception.code, 1)
+
+        log = list(HammerVLSILogging.output_buffer)
+        HammerVLSILogging.enable_buffering = old_buffering
+        HammerVLSILogging.output_buffer.clear()
+        HammerVLSILogging.enable_colour = old_colour
+
+        self.assertTrue(
+            len(list(filter(lambda str: "Input config does not appear to contain valid synthesis outputs" in str, log))))
+
+        # Cleanup
+        shutil.rmtree(syn_rundir)
+        shutil.rmtree(par_rundir)
+
     def test_syn_to_par_same_as_syn_par(self) -> None:
         """
         Test that syn-par generates the same par input as calling syn,
