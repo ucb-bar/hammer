@@ -188,7 +188,7 @@ class HammerDriver:
         """
         Set up and store the given synthesis tool instance for use in this
         driver.
-        :param syn_tool: Synthesis tool instance.
+        :param syn_tool: Tool instance.
         :param name: Short name (e.g. "yosys") of the tool instance. Typically
                      obtained from the database.
         :param run_dir: Directory to use for the tool run_dir. Defaults to the
@@ -198,6 +198,7 @@ class HammerDriver:
         if self.tech is None:
             self.log.error("Must load technology before loading synthesis tool")
             return False
+
         if run_dir == "":
             run_dir = os.path.join(self.obj_dir, "syn-rundir")
 
@@ -211,6 +212,8 @@ class HammerDriver:
             self.database.get_setting("vlsi.inputs.hierarchical.mode"))
         syn_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
         syn_tool.top_module = self.database.get_setting("synthesis.inputs.top_module", nullvalue="")
+
+        # TODO: automate this based on the definitions
         missing_inputs = False
         if syn_tool.top_module == "":
             self.log.error("Top module not specified for synthesis")
@@ -223,6 +226,43 @@ class HammerDriver:
 
         self.syn_tool = syn_tool
         self.tool_configs["synthesis"] = syn_tool.get_config()
+        self.update_tool_configs()
+        return True
+
+    def set_up_par_tool(self, par_tool: HammerPlaceAndRouteTool,
+                        name: str, run_dir: str = "") -> bool:
+        """
+        Set up and store the given place-and-route tool instance for use in this
+        driver.
+        :param par_tool: Tool instance.
+        :param name: Short name (e.g. "yosys") of the tool instance. Typically
+                     obtained from the database.
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the
+                        run_dir passed in the HammerDriver constructor.
+        :return: True if setup was successful.
+        """
+        if self.tech is None:
+            self.log.error("Must load technology before loading par tool")
+            return False
+
+        if run_dir == "":
+            run_dir = os.path.join(self.obj_dir, "par-rundir")
+
+        par_tool.name = name
+        par_tool.logger = self.log.context("par")
+        par_tool.technology = self.tech
+        par_tool.set_database(self.database)
+        par_tool.run_dir = run_dir
+        par_tool.hierarchical_mode = HierarchicalMode.from_str(
+            self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+
+        # TODO: automate this based on the definitions
+        par_tool.input_files = self.database.get_setting("par.inputs.input_files")
+        par_tool.top_module = self.database.get_setting("par.inputs.top_module")
+        par_tool.post_synth_sdc = self.database.get_setting("par.inputs.post_synth_sdc", nullvalue="")
+
+        self.par_tool = par_tool
+        self.tool_configs["par"] = par_tool.get_config()
         self.update_tool_configs()
         return True
 
@@ -250,37 +290,13 @@ class HammerDriver:
                         constructor.
         :return: True if successful, false otherwise
         """
-        if self.tech is None:
-            self.log.error("Must load technology before loading par tool")
+        config_result = self.instantiate_tool_from_config("par", HammerPlaceAndRouteTool)
+        if config_result is None:
             return False
-
-        if run_dir == "":
-            run_dir = os.path.join(self.obj_dir, "par-rundir")
-
-        par_tool_name = self.database.get_setting("vlsi.core.par_tool")
-        par_tool_get = load_tool(
-            path=self.database.get_setting("vlsi.core.par_tool_path"),
-            tool_name=par_tool_name
-        )
-        assert isinstance(par_tool_get, HammerPlaceAndRouteTool), "Par tool must be a HammerPlaceAndRouteTool"
-        par_tool = par_tool_get  # type: HammerPlaceAndRouteTool
-        par_tool.name = par_tool_name
-        par_tool.logger = self.log.context("par")
-        par_tool.technology = self.tech
-        par_tool.set_database(self.database)
-        par_tool.run_dir = run_dir
-        par_tool.hierarchical_mode = HierarchicalMode.from_str(self.database.get_setting("vlsi.inputs.hierarchical.mode"))
-
-        # TODO: automate this based on the definitions
-        par_tool.input_files = self.database.get_setting("par.inputs.input_files")
-        par_tool.top_module = self.database.get_setting("par.inputs.top_module")
-        par_tool.post_synth_sdc = self.database.get_setting("par.inputs.post_synth_sdc", nullvalue="")
-
-        self.par_tool = par_tool
-
-        self.tool_configs["par"] = par_tool.get_config()
-        self.update_tool_configs()
-        return True
+        else:
+            (par_tool, name) = config_result
+            assert isinstance(par_tool, HammerPlaceAndRouteTool)
+            return self.set_up_par_tool(par_tool, name, run_dir)
 
     def set_post_custom_syn_tool_hooks(self, hooks: List[HammerToolHookAction]) -> None:
         """
