@@ -316,23 +316,28 @@ class HammerDriver:
         return run_succeeded, output_config
 
     @staticmethod
-    def synthesis_output_to_par_input(output_dict: dict) -> dict:
+    def synthesis_output_to_par_input(output_dict: dict) -> Optional[dict]:
         """
         Generate the appropriate inputs for running place-and-route from the
         outputs of synthesis run.
         Does not merge the results with any project dictionaries.
         :param output_dict: Dict containing synthesis.outputs.*
-        :return: par.inputs.* settings generated from output_dict
+        :return: par.inputs.* settings generated from output_dict,
+                 or None if output_dict was invalid
         """
-        output_files = deeplist(output_dict["synthesis.outputs.output_files"])
-        result = {
-            "par.inputs.input_files": output_files,
-            "par.inputs.top_module": output_dict["synthesis.inputs.top_module"],
-            "vlsi.builtins.is_complete": False
-        }  # type: Dict[str, Any]
-        if "synthesis.outputs.sdc" in output_dict:
-            result["par.inputs.post_synth_sdc"] = output_dict["synthesis.outputs.sdc"]
-        return result
+        try:
+            output_files = deeplist(output_dict["synthesis.outputs.output_files"])
+            result = {
+                "par.inputs.input_files": output_files,
+                "par.inputs.top_module": output_dict["synthesis.inputs.top_module"],
+                "vlsi.builtins.is_complete": False
+            }  # type: Dict[str, Any]
+            if "synthesis.outputs.sdc" in output_dict:
+                result["par.inputs.post_synth_sdc"] = output_dict["synthesis.outputs.sdc"]
+            return result
+        except KeyError:
+            # KeyError means that the given dictionary is missing output keys.
+            return None
 
     def run_par(self, hook_actions: Optional[List[HammerToolHookAction]] = None, force_override: bool = False) -> Tuple[
         bool, dict]:
