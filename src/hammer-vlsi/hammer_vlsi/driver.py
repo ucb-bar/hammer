@@ -16,6 +16,7 @@ from hammer_utils import *
 
 import hammer_config
 import hammer_tech
+from .hammer_tool import HammerTool
 from .hooks import HammerToolHookAction
 from .hammer_vlsi_impl import HammerVLSISettings, HammerPlaceAndRouteTool, HammerSynthesisTool, \
     HierarchicalMode, load_tool, PlacementConstraint
@@ -159,23 +160,28 @@ class HammerDriver:
         tools = reduce(lambda a, b: a + b, list(self.tool_configs.values()))
         self.database.update_tools(tools)
 
-    def instantiate_synthesis_tool_class_from_config(self) -> Optional[Tuple[HammerSynthesisTool, str]]:
+    def instantiate_tool_from_config(self, tool_type: str,
+                                     required_type: Optional[type] = None) -> Optional[Tuple[HammerTool, str]]:
         """
-        Create a new instance of the synthesis tool class using information
-        from the config.
-        :return: Tuple of (synthesis tool instance, synthesis tool name) or
+        Create a new instance of the given tool using information from the config.
+        :param tool_type: Tool type. e.g. if "par", then this will look in
+                          vlsi.core.par_tool/vlsi.core.par_tool_path.
+        :param required_type: (optional) Check that the instantiated tool is the given type.
+        :return: Tuple of (tool instance, tool name) or
                  None if an error occurred.
         """
-        # Find the synthesis/par tool and read in their configs.
-        syn_tool_name = self.database.get_setting("vlsi.core.synthesis_tool")
-        syn_tool_get = load_tool(
-            path=self.database.get_setting("vlsi.core.synthesis_tool_path"),
-            tool_name=syn_tool_name
+        # Find the tool and read in their configs.
+        tool_name = self.database.get_setting("vlsi.core.{tool_type}_tool".format(tool_type=tool_type))
+        tool_get = load_tool(
+            path=self.database.get_setting("vlsi.core.{tool_type}_tool_path".format(tool_type=tool_type)),
+            tool_name=tool_name
         )
-        if not isinstance(syn_tool_get, HammerSynthesisTool):
-            self.log.error("Synthesis tool must be a HammerSynthesisTool")
-            return None
-        return syn_tool_get, syn_tool_name
+        if required_type is not None:
+            if not isinstance(tool_get, required_type):
+                self.log.error("{tool_type} tool's type is incorrect: got {got}".format(tool_type=tool_type,
+                                                                                        got=str(type(tool_get))))
+                return None
+        return tool_get, tool_name
 
     def set_up_synthesis_tool(self, syn_tool: HammerSynthesisTool,
                               name: str, run_dir: str = "") -> bool:
@@ -228,11 +234,12 @@ class HammerDriver:
                         constructor.
         :return: True if synthesis tool loading was successful, False otherwise.
         """
-        config_result = self.instantiate_synthesis_tool_class_from_config()
+        config_result = self.instantiate_tool_from_config("synthesis", HammerSynthesisTool)
         if config_result is None:
             return False
         else:
             (syn_tool, name) = config_result
+            assert isinstance(syn_tool, HammerSynthesisTool)
             return self.set_up_synthesis_tool(syn_tool, name, run_dir)
 
     def load_par_tool(self, run_dir: str = "") -> bool:
