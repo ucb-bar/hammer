@@ -224,12 +224,12 @@ class HammerTechnology:
             if os.path.exists(tech_blob_path):
                 with open(tech_blob_path) as f:
                     json_str = f.read()
-                    return HammerTechnology.load_from_json(technology_name, json_str, path)
+                    return HammerTechnology.load_from_json(technology_name, json_str, os.path.dirname(tech_blob_path))
             tech_blob_path = os.path.join(path, technology_name, "%s.tech.yaml" % technology_name)
             if os.path.exists(tech_blob_path):
                 with open(tech_blob_path) as f:
                     yaml_str = f.read()
-                    return HammerTechnology.load_from_yaml(technology_name, yaml_str, path)
+                    return HammerTechnology.load_from_yaml(technology_name, yaml_str, os.path.dirname(tech_blob_path))
         return None
 
     @classmethod
