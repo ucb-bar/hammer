@@ -72,9 +72,12 @@ class HammerDriver:
         self.obj_dir = options.obj_dir  # type: str
 
         # Load in builtins.
+        builtins_path = os.path.join(HammerVLSISettings.hammer_vlsi_path, "builtins.yml")
+        if not os.path.exists(builtins_path):
+            raise FileNotFoundError("hammer-vlsi builtin settings not found. Did you call HammerVLSISettings.set_hammer_vlsi_path_from_environment()?")
+
         self.database.update_builtins([
-            hammer_config.load_config_from_file(os.path.join(HammerVLSISettings.hammer_vlsi_path, "builtins.yml"),
-                                                strict=True),
+            hammer_config.load_config_from_file(builtins_path, strict=True),
             HammerVLSISettings.get_config()
         ])
 
