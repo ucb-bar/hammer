@@ -324,8 +324,9 @@ class HammerDriver:
         :param output_dict: Dict containing synthesis.outputs.*
         :return: par.inputs.* settings generated from output_dict
         """
+        output_files = deeplist(output_dict["synthesis.outputs.output_files"])
         result = {
-            "par.inputs.input_files": output_dict["synthesis.outputs.output_files"],
+            "par.inputs.input_files": output_files,
             "par.inputs.top_module": output_dict["synthesis.inputs.top_module"],
             "vlsi.builtins.is_complete": False
         }  # type: Dict[str, Any]
