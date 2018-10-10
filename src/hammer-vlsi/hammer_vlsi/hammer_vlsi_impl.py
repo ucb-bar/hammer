@@ -612,11 +612,13 @@ class SynopsysTool(HasSDCSupport, HammerTool):
         Get the list of environment variables required for this tool.
         Note to subclasses: remember to include variables from super().env_vars!
         """
-        return {
+        result = dict(super().env_vars)
+        result.update({
             "SNPSLMD_LICENSE_FILE": self.get_setting("synopsys.SNPSLMD_LICENSE_FILE"),
             # TODO: this is actually a Mentor Graphics licence, not sure why the old dc scripts depend on it.
             "MGLS_LICENSE_FILE": self.get_setting("synopsys.MGLS_LICENSE_FILE")
-        }
+        })
+        return result
 
     def version_number(self, version: str) -> int:
         """
