@@ -353,8 +353,7 @@ class HammerDriver:
         try:
             output_config = deepdict(self.syn_tool.export_config_outputs())
             if output_config.get("vlsi.builtins.is_complete", True):
-                # TODO: should we soften this message?
-                self.log.fatal(
+                self.log.error(
                     "The synthesis plugin is mis-written; "
                     "it did not mark its output dictionary as output-only "
                     "or did not call super().export_config_outputs(). "
@@ -423,8 +422,7 @@ class HammerDriver:
         try:
             output_config = deepdict(self.par_tool.export_config_outputs())
             if output_config.get("vlsi.builtins.is_complete", True):
-                # TODO: should we soften this message?
-                self.log.fatal(
+                self.log.error(
                     "The place-and-route plugin is mis-written; "
                     "it did not mark its output dictionary as output-only "
                     "or did not call super().export_config_outputs(). "
