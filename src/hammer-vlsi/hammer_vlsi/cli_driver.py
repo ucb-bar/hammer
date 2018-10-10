@@ -106,6 +106,7 @@ class CLIDriver:
     def action_map(self) -> Dict[str, CLIActionType]:
         """Return the mapping of valid actions -> functions for each action of the command-line driver."""
         return add_dicts({
+            "dump": self.dump_action,
             "synthesis": self.synthesis_action,
             "syn": self.synthesis_action,
             "par": self.par_action,
@@ -118,6 +119,13 @@ class CLIDriver:
             "syn_par": self.synthesis_par_action,
             "syn-par": self.synthesis_par_action
         }, self.all_hierarchical_actions)
+
+    @staticmethod
+    def dump_action(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        """
+        Just dump the parsed project configuration as the output.
+        """
+        return driver.project_config
 
     def get_extra_synthesis_hooks(self) -> List[HammerToolHookAction]:
         """
