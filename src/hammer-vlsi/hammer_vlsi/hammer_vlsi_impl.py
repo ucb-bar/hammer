@@ -411,7 +411,7 @@ class CadenceTool(HasSDCSupport, HammerTool):
             tmp.update(new)
             return tmp
 
-        return reduce(update_dict, list_of_vars + [cadence_vars], {})
+        return reduce(update_dict, [dict(super().env_vars)] + list_of_vars + [cadence_vars], {})
 
     def version_number(self, version: str) -> int:
         """
