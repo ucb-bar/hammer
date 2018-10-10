@@ -6,6 +6,7 @@
 *.log
 *rundir/
 /*.json
+src/test/output.json
 
 # Sphinx/doc junk
 doc/_build/
