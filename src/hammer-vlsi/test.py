@@ -15,7 +15,7 @@ import hammer_tech
 from hammer_logging import Level, HammerVLSIFileLogger
 from hammer_logging import HammerVLSILogging
 
-from typing import Dict, List, TypeVar, Union, Optional, Callable, Any
+from typing import Dict, List, TypeVar, Union, Optional, Callable, Any, Tuple
 
 import os
 import tempfile
@@ -96,6 +96,23 @@ class HammerToolTestHelpers:
     """
     Helper functions to aid in the testing of IP library filtering/processing.
     """
+
+    @staticmethod
+    def create_tech_dir(tech_name: str) -> Tuple[str, str]:
+        """
+        Create a temporary folder for a test technology.
+        Note: the caller is responsible for removing the tech_dir_base folder
+        after use!
+        :param tech_name: Technology name (e.g. "saed32")
+        :return: Tuple of create tech_dir and tech_dir_base (which the caller
+                 must delete)
+        """
+        tech_dir_base = tempfile.mkdtemp()
+        tech_dir = os.path.join(tech_dir_base, tech_name)
+        os.mkdir(tech_dir)
+
+        return tech_dir, tech_dir_base
+
     @staticmethod
     def write_tech_json(tech_json_filename: str, postprocessing_func: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None) -> None:
         # TODO: use a structured way of creating it when arrays actually work!
@@ -270,20 +287,16 @@ installs:
       base var: ""  # means relative to tech dir
 libraries: []
         """
-        tech_dir = tempfile.mkdtemp()
-        os.mkdir(tech_dir + "/dummy28")
-        tech_yaml_filename = tech_dir + "/dummy28/dummy28.tech.yaml"
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+
+        tech_yaml_filename = os.path.join(tech_dir, "dummy28.tech.yml")
         with open(tech_yaml_filename, "w") as f:
             f.write(tech_yaml)
-        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
-        if tech_opt is None:
-            self.assertTrue(False, "Unable to load technology")
-        else:
-            tech = tech_opt # type: hammer_tech.HammerTechnology
+        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
+        self.assertFalse(tech_opt is None, "Unable to load technology")
 
         # Cleanup
-        shutil.rmtree(tech_dir)
-
+        shutil.rmtree(tech_dir_base)
 
     def test_gds_map_file(self) -> None:
         """
@@ -291,9 +304,8 @@ libraries: []
         """
         import hammer_config
 
-        tech_dir = tempfile.mkdtemp()
-        os.mkdir(tech_dir + "/dummy28")
-        tech_json_filename = tech_dir + "/dummy28/dummy28.tech.json"
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
 
         def add_gds_map(d: Dict[str, Any]) -> Dict[str, Any]:
             r = deepdict(d)
@@ -301,7 +313,7 @@ libraries: []
             return r
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, add_gds_map)
-        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
+        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
         if tech_opt is None:
             self.assertTrue(False, "Unable to load technology")
         else:
@@ -335,14 +347,14 @@ libraries: []
         self.assertEqual(tool.get_gds_map_file(), '{tech}/gds_map_file'.format(tech=tech_dir))
 
         # Cleanup
-        shutil.rmtree(tech_dir)
+        shutil.rmtree(tech_dir_base)
 
         # Create a new technology with no GDS map file.
-        tech_dir = tempfile.mkdtemp()
-        os.mkdir(tech_dir + "/dummy28")
-        tech_json_filename = tech_dir + "/dummy28/dummy28.tech.json"
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
         HammerToolTestHelpers.write_tech_json(tech_json_filename)
-        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
+        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
         if tech_opt is None:
             self.assertTrue(False, "Unable to load technology")
         else:
@@ -359,7 +371,7 @@ libraries: []
         self.assertEqual(tool.get_gds_map_file(), None)
 
         # Cleanup
-        shutil.rmtree(tech_dir)
+        shutil.rmtree(tech_dir_base)
 
 
 class HammerToolTest(unittest.TestCase):
@@ -369,11 +381,10 @@ class HammerToolTest(unittest.TestCase):
         """
         import hammer_config
 
-        tech_dir = tempfile.mkdtemp()
-        os.mkdir(tech_dir + "/dummy28")
-        tech_json_filename = tech_dir + "/dummy28/dummy28.tech.json"
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
         HammerToolTestHelpers.write_tech_json(tech_json_filename)
-        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
+        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
         if tech_opt is None:
             self.assertTrue(False, "Unable to load technology")
         else:
@@ -409,7 +420,7 @@ class HammerToolTest(unittest.TestCase):
         ])
 
         # Cleanup
-        shutil.rmtree(tech_dir)
+        shutil.rmtree(tech_dir_base)
         shutil.rmtree(test.run_dir)
 
     def test_timing_lib_ecsm_filter(self) -> None:
@@ -418,9 +429,8 @@ class HammerToolTest(unittest.TestCase):
         """
         import hammer_config
 
-        tech_dir = tempfile.mkdtemp()
-        os.mkdir(tech_dir + "/dummy28")
-        tech_json_filename = tech_dir + "/dummy28/dummy28.tech.json"
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
         tech_json = {
             "name": "dummy28",
             "installs": [
@@ -452,7 +462,7 @@ class HammerToolTest(unittest.TestCase):
         }
         with open(tech_json_filename, "w") as f:
             f.write(json.dumps(tech_json, indent=4))
-        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
+        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
         if tech_opt is None:
             self.assertTrue(False, "Unable to load technology")
         else:
@@ -484,7 +494,7 @@ class HammerToolTest(unittest.TestCase):
         })
 
         # Cleanup
-        shutil.rmtree(tech_dir)
+        shutil.rmtree(tech_dir_base)
         shutil.rmtree(test.run_dir)
 
     def test_read_extra_libs(self) -> None:
@@ -493,11 +503,10 @@ class HammerToolTest(unittest.TestCase):
         """
         import hammer_config
 
-        tech_dir = tempfile.mkdtemp()
-        os.mkdir(tech_dir + "/dummy28")
-        tech_json_filename = tech_dir + "/dummy28/dummy28.tech.json"
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
         HammerToolTestHelpers.write_tech_json(tech_json_filename)
-        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", [tech_dir])
+        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
         if tech_opt is None:
             self.assertTrue(False, "Unable to load technology")
         else:
@@ -602,7 +611,7 @@ class HammerToolTest(unittest.TestCase):
         self.assertEqual(Tool.filter_output, tech_lef_result + sorted(base_lib_results + extra_libs_results))
 
         # Cleanup
-        shutil.rmtree(tech_dir)
+        shutil.rmtree(tech_dir_base)
         shutil.rmtree(test.run_dir)
 
     def test_create_enter_script(self) -> None:

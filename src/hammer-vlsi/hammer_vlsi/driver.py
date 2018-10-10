@@ -121,19 +121,25 @@ class HammerDriver:
         self.database.update_project(self.project_configs)
 
     def load_technology(self, cache_dir: str = "") -> None:
-        tech_str = self.database.get_setting("vlsi.core.technology") # type: str
+        tech_str = self.database.get_setting("vlsi.core.technology")  # type: str
 
         if cache_dir == "":
             cache_dir = os.path.join(self.obj_dir, "tech-%s-cache" % tech_str)
 
-        tech_paths = self.database.get_setting("vlsi.core.technology_path")
+        tech_paths = list(self.database.get_setting("vlsi.core.technology_path"))  # type: List[str]
 
         self.log.info("Loading technology '{0}'".format(tech_str))
-        tech_opt = hammer_tech.HammerTechnology.load_from_dir(tech_str, tech_paths)  # type: Optional[hammer_tech.HammerTechnology]
+        tech_opt = None  # type: Optional[hammer_tech.HammerTechnology]
+        for base_path in tech_paths:
+            path = os.path.join(base_path, tech_str)
+            tech_opt = hammer_tech.HammerTechnology.load_from_dir(tech_str, path)
+            if tech_opt is not None:
+                break
         if tech_opt is None:
-            self.log.fatal("Technology {0} not found or missing .tech.[json/yaml]!".format(tech_str))
+            self.log.fatal("Technology {0} not found or missing .tech.[json/yml]!".format(tech_str))
+            return
         else:
-            tech = tech_opt # type: hammer_tech.HammerTechnology
+            tech = tech_opt  # type: hammer_tech.HammerTechnology
         # Update database as soon as possible since e.g. extract_technology_files could use those settings
         self.database.update_technology(tech.get_config())
         tech.logger = self.log.context("tech")
