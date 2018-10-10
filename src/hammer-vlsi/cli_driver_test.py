@@ -11,6 +11,7 @@ import shutil
 import tempfile
 from typing import Any, Callable, Dict, Optional
 
+from hammer_logging.test import HammerLoggingCaptureContext
 from hammer_vlsi import CLIDriver, HammerDriver
 
 import unittest
@@ -170,33 +171,18 @@ class CLIDriverTest(unittest.TestCase):
         log_path = os.path.join(syn_rundir, "log.txt")
         self.generate_dummy_config(syn_rundir, config_path, top_module)
 
-        # Testing artefact: since we're running the main() call in the same
-        # process we have to control the outputs a bit.
-        from hammer_logging import HammerVLSILogging
-        old_buffering = HammerVLSILogging.enable_buffering
-        old_colour = HammerVLSILogging.enable_colour
-        HammerVLSILogging.enable_buffering = True
-        HammerVLSILogging.enable_colour = False
-        HammerVLSILogging.output_buffer.clear()
-
-        # Running syn-to-par on a not-output config should fail.
-        with self.assertRaises(SystemExit) as cm:  # type: ignore
-            CLIDriver().main(args=[
-                "syn-to-par",  # action
-                "-p", config_path,
-                "--log", log_path,
-                "--syn_rundir", syn_rundir,
-                "--par_rundir", par_rundir
-            ])
-        self.assertEqual(cm.exception.code, 1)
-
-        log = list(HammerVLSILogging.output_buffer)
-        HammerVLSILogging.enable_buffering = old_buffering
-        HammerVLSILogging.output_buffer.clear()
-        HammerVLSILogging.enable_colour = old_colour
-
-        self.assertTrue(
-            len(list(filter(lambda str: "Input config does not appear to contain valid synthesis outputs" in str, log))))
+        with HammerLoggingCaptureContext() as c:
+            # Running syn-to-par on a not-output config should fail.
+            with self.assertRaises(SystemExit) as cm:  # type: ignore
+                CLIDriver().main(args=[
+                    "syn-to-par",  # action
+                    "-p", config_path,
+                    "--log", log_path,
+                    "--syn_rundir", syn_rundir,
+                    "--par_rundir", par_rundir
+                ])
+            self.assertEqual(cm.exception.code, 1)
+        self.assertTrue(c.log_contains("Input config does not appear to contain valid synthesis outputs"))
 
         # Cleanup
         shutil.rmtree(syn_rundir)
