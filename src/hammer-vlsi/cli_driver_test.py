@@ -11,6 +11,7 @@ import shutil
 import tempfile
 from typing import Any, Callable, Dict, Optional
 
+import hammer_config
 from hammer_logging.test import HammerLoggingCaptureContext
 from hammer_vlsi import CLIDriver, HammerDriver
 
@@ -279,6 +280,46 @@ class CLIDriverTest(unittest.TestCase):
         # Cleanup
         shutil.rmtree(syn_rundir)
         shutil.rmtree(par_rundir)
+
+    def test_dump(self) -> None:
+        """
+        Test that dump works properly.
+        """
+        # Set up some temporary folders for the unit test.
+        syn_rundir = tempfile.mkdtemp()
+
+        # Generate a config for testing.
+        top_module = "dummy"
+        output_path = os.path.join(syn_rundir, "output.json")
+        config_packed_path = os.path.join(syn_rundir, "run_config_packed.json")
+        config_path = os.path.join(syn_rundir, "run_config.json")
+        self.generate_dummy_config(syn_rundir, config_packed_path, top_module)
+        # Equivalent config to above but not unpacked
+        with open(config_packed_path, "r") as f:
+            unpacked_config = hammer_config.reverse_unpack(json.loads(f.read()))
+        with open(config_path, "w") as f:
+            f.write(json.dumps(unpacked_config, indent=4))
+
+        # Check that running the CLIDriver executes successfully (code 0).
+        with self.assertRaises(SystemExit) as cm:  # type: ignore
+            CLIDriver().main(args=[
+                "dump",  # action
+                "-p", config_path,
+                "--output", output_path,
+                "--syn_rundir", syn_rundir,
+                "--par_rundir", syn_rundir
+            ])
+        self.assertEqual(cm.exception.code, 0)
+
+        # Check that dumped output should be same as what we read in.
+        with open(output_path, "r") as f:
+            dumped_output = json.loads(f.read())
+        with open(config_packed_path, "r") as f:
+            packed_output = json.loads(f.read())
+        self.assertEqual(packed_output, dumped_output)
+
+        # Cleanup
+        shutil.rmtree(syn_rundir)
 
     def test_override_actions(self) -> None:
         """
