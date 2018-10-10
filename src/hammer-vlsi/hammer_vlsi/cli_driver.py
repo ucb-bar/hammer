@@ -219,6 +219,7 @@ class CLIDriver:
                     return None
                 else:
                     post_load_func_checked(driver)
+                assert driver.syn_tool is not None, "load_synthesis_tool was successful"
                 success, output = driver.run_synthesis(extra_hooks)
                 dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output-full.json"),
@@ -229,6 +230,7 @@ class CLIDriver:
                     return None
                 else:
                     post_load_func_checked(driver)
+                assert driver.par_tool is not None, "load_par_tool was successful"
                 success, output = driver.run_par(extra_hooks)
                 dump_config_to_json_file(os.path.join(driver.par_tool.run_dir, "par-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.par_tool.run_dir, "par-output-full.json"),
