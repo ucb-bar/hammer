@@ -23,6 +23,7 @@ import sys
 # Special key used for meta directives which require config paths like prependlocal.
 CONFIG_PATH_KEY = "_config_path"
 
+
 def unpack(config_dict: dict, prefix: str = "") -> dict:
     """
     Unpack the given config_dict, flattening key names recursively.
@@ -57,6 +58,35 @@ def unpack(config_dict: dict, prefix: str = "") -> dict:
             output_dict.update(unpack(value, real_prefix + key))
         else:
             output_dict[real_prefix + key] = value
+    return output_dict
+
+
+def reverse_unpack(input_dict: dict) -> dict:
+    """
+    Reverse the effects of unpack(). Mainly useful for testing purposes.
+    >>> p = reverse_unpack({"a.b": 1})
+    >>> p == {"a": {"b": 1}}
+    True
+    :param input: Unpacked input_dict dictionary
+    :return: Packed equivalent of input_dict
+    """
+    output_dict = {}  # type: Dict[str, Any]
+
+    def get_subdict(parts: List[str], current_root: dict) -> dict:
+        if len(parts) == 0:
+            return current_root
+        else:
+            if parts[0] not in current_root:
+                current_root[parts[0]] = {}
+            return get_subdict(parts[1:], current_root[parts[0]])
+
+    for key, value in input_dict.items():
+        key_parts = key.split(".")
+        if len(key_parts) >= 1:
+            containing_dict = get_subdict(key_parts[:-1], output_dict)
+        else:
+            assert False, "Cannot have blank key"
+        containing_dict[key_parts[-1]] = value
     return output_dict
 
 
