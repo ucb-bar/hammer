@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-#  hammer_logging.py
 #  Hammer logging code.
 #
 #  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
@@ -9,7 +8,6 @@
 from functools import reduce
 from enum import Enum
 from typing import Callable, Iterable, List, NamedTuple, Type
-
 
 class Level(Enum):
     """
