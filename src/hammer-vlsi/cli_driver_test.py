@@ -90,7 +90,7 @@ class CLIDriverTest(unittest.TestCase):
         # synthesis output should NOT keep other settings
         with open(syn_out_path, "r") as f:
             syn_output = json.loads(f.read())
-            self.assertEqual(syn_output["synthesis.outputs.output_files"], [])
+            self.assertEqual(syn_output["synthesis.outputs.output_files"], ["/dev/null"])
             self.assertFalse("vlsi.core.technology" in syn_output)
         # Generated par input should have other settings
         with open(syn_to_par_out_path, "r") as f:
@@ -143,7 +143,7 @@ class CLIDriverTest(unittest.TestCase):
         # synthesis full output should keep other settings
         with open(syn_out_full_path, "r") as f:
             syn_output = json.loads(f.read())
-            self.assertEqual(syn_output["synthesis.outputs.output_files"], [])
+            self.assertEqual(syn_output["synthesis.outputs.output_files"], ["/dev/null"])
             self.assertEqual(syn_output["vlsi.core.technology"], "nop")
         # Generated par input should have other settings
         with open(syn_to_par_out_path, "r") as f:
@@ -263,12 +263,12 @@ class CLIDriverTest(unittest.TestCase):
         # Check that the synthesis output and par input configs got dumped.
         with open(os.path.join(syn_rundir, "syn-output.json"), "r") as f:
             syn_output = json.loads(f.read())
-            self.assertEqual(syn_output["synthesis.outputs.output_files"], [])
+            self.assertEqual(syn_output["synthesis.outputs.output_files"], ["/dev/null"])
             # syn-output should NOT keep other settings
             self.assertFalse("vlsi.core.technology" in syn_output)
         with open(os.path.join(syn_rundir, "syn-output-full.json"), "r") as f:
             syn_output_full = json.loads(f.read())
-            self.assertEqual(syn_output_full["synthesis.outputs.output_files"], [])
+            self.assertEqual(syn_output_full["synthesis.outputs.output_files"], ["/dev/null"])
             # syn-output-full should preserve other settings
             self.assertEqual(syn_output_full["vlsi.core.technology"], "nop")
         with open(os.path.join(syn_rundir, "par-input.json"), "r") as f:

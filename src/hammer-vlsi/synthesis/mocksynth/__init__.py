@@ -37,8 +37,7 @@ class MockSynth(HammerSynthesisTool, DummyHammerTool):
         ])
 
     def fill_outputs(self) -> bool:
-        # This tool doesn't really have outputs
-        self.output_files = []
+        self.output_files = list(self.input_files)
         return True
 
     def step1(self) -> bool:
