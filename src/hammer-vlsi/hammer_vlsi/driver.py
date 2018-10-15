@@ -256,10 +256,21 @@ class HammerDriver:
         par_tool.hierarchical_mode = HierarchicalMode.from_str(
             self.database.get_setting("vlsi.inputs.hierarchical.mode"))
 
+        missing_inputs = False
+
         # TODO: automate this based on the definitions
-        par_tool.input_files = self.database.get_setting("par.inputs.input_files")
-        par_tool.top_module = self.database.get_setting("par.inputs.top_module")
+        par_tool.input_files = list(self.database.get_setting("par.inputs.input_files"))
+        par_tool.top_module = self.database.get_setting("par.inputs.top_module", nullvalue="")
         par_tool.post_synth_sdc = self.database.get_setting("par.inputs.post_synth_sdc", nullvalue="")
+
+        if len(par_tool.input_files) == 0:
+            self.log.error("No input files specified for par")
+            missing_inputs = True
+        if par_tool.top_module == "":
+            self.log.error("No top module specified for par")
+            missing_inputs = True
+        if missing_inputs:
+            return False
 
         self.par_tool = par_tool
         self.tool_configs["par"] = par_tool.get_config()
