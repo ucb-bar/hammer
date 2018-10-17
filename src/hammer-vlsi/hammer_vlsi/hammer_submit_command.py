@@ -29,17 +29,22 @@ class HammerSubmitCommand:
     @abstractmethod
     def read_settings(self, tool_namespace: str, database: HammerDatabase) -> None:
         """
-        Implement this in subclasses to read the HammerDatabase settings into meaningful class variables.
+        Read the HammerDatabase settings into meaningful class variables.
 
-        :param tool_namespace: The hammer tool namespace (e.g. "synthesis" or "par")
-        :param database: The HammerDatabase object
+        :param tool_namespace: The tool namespace to use when querying the HammerDatabase (e.g. "synthesis" or "par")
+        :param database: The HammerDatabase object with tool settings
         """
         pass
 
 
     @staticmethod
     def get(tool_namespace: str, database: HammerDatabase):
-        """ TODO document this """
+        """
+        Get a concrete instance of a HammerSubmitCommand for a tool
+
+        :param tool_namespace: The tool namespace to use when querying the HammerDatabase (e.g. "synthesis" or "par")
+        :param database: The HammerDatabase object with tool settings
+        """
 
         submit_command_mode = database.get_setting(tool_namespace + ".submit_command", nullvalue="none")
         if submit_command_mode == "none" or submit_command_mode == "bare":
@@ -73,12 +78,12 @@ class HammerBareSubmitCommand(HammerSubmitCommand):
             prog_args = remaining_args[0:ARG_DISPLAY_LEN-1] + "..."
         prog_tag = prog_name + " " + prog_args
 
-        output_buf = ""
-
         logger.debug("Executing subprocess: " + ' '.join(args))
         subprocess_logger = logger.context("Exec " + prog_tag)
         proc = subprocess.Popen(args, shell=False, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, env=env, cwd=cwd)
         atexit.register(proc.kill)
+
+        output_buf = ""
         # Log output and also capture output at the same time.
         while True:
             line = proc.stdout.readline().decode("utf-8")
@@ -96,6 +101,10 @@ class HammerBareSubmitCommand(HammerSubmitCommand):
 
 class HammerLSFSubmitCommand(HammerSubmitCommand):
 
+    # TODO list:
+    #  - we should have a submit_command.lsf.global_settings field (this will allow us to have an lsf.yml file with most of the settings that won't change)
+    #  - we need to log the command output
+
     @property
     def bsub_binary(self) -> str:
         """ Get the LSF bsub binary location """
@@ -107,6 +116,8 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
     @bsub_binary.setter
     def bsub_binary(self, value: str) -> None:
         """ Set the LSF bsub binary location """
+        if value == "" or value is None:
+            raise ValueError("bsub_binary cannot be empty or null")
         self._bsub_binary = value
 
     @property
@@ -115,7 +126,7 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
         try:
             return self._num_cpus
         except AttributeError:
-            raise ValueError("Did not set the number of CPUs to use")
+            raise ValueError("Did not set the number of CPUs to use (0 for unspecified)")
 
     @num_cpus.setter
     def num_cpus(self, value: int) -> None:
@@ -128,7 +139,7 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
         try:
             return self._queue
         except AttributeError:
-            return None # use the default queue
+            raise ValueError("Did not set the queue to use (can be None)")
 
     @queue.setter
     def queue(self, value: str) -> None:
@@ -150,26 +161,59 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
         self._extra_args = value
 
     def read_settings(self, tool_namespace: str, database: HammerDatabase) -> None:
-        """
-        Read in LSF settings
-
-        TODO
-        """
-        pass
-
+        self.bsub_binary = database.get_setting(tool_namespace + ".submit_command_settings.bsub_binary", nullvalue="")
+        try:
+            self.num_cpus = int(database.get_setting(tool_namespace + ".submit_command_settings.num_cpus", nullvalue=0))
+        except KeyError:
+            self.num_cpus = 0
+        try:
+            self.queue = database.get_setting(tool_namespace + ".submit_command_settings.queue", nullvalue=None)
+        except KeyError:
+            self.queue = None
+        self.extra_args = database.get_setting(tool_namespace + ".submit_command_settings.extra_args", nullvalue=[]) # type: List[str]
 
     def bsub_args(self) -> List[str]:
-        args = [self.bsub_binary, "-K", "-n", "%d" % self.num_cpus] # always use -K to block
-        args.extend(self.extra_args)
+        args = [self.bsub_binary, "-K"] # always use -K to block
         if self.queue is not None:
             args.extend(["-q", self.queue])
-        # TODO add more options as APIs (num_cpus, etc)
+        if self.num_cpus > 0:
+            args.extend(["-n", "%d" % self.num_cpus])
+        args.extend(self.extra_args)
         return args
 
     def submit(self, args: List[str], env: Dict[str,str], logger: HammerVLSILoggingContext, cwd: str = None) -> str:
-        # TODO how to grab stdout/stderr from the LSF process without using temporary files?
-        logger.debug("Executing subprocess: " + ' '.join(self.bsub_args()) + '"' + ' '.join(args) + '"')
+        # TODO fix output capturing
+
+        # Short version for easier display in the log.
+        PROG_NAME_LEN = 14 # Capture last 14 characters of the command name
+        ARG_DISPLAY_LEN = 16 # How many characters of args to display after prog_name
+        if len(args[0]) <= PROG_NAME_LEN:
+            prog_name = args[0]
+        else:
+            prog_name = "..." + args[0][len(args[0])-PROG_NAME_LEN:]
+        remaining_args = " ".join(args[1:])
+        if len(remaining_args) < ARG_DISPLAY_LEN:
+            prog_args = remaining_args
+        else:
+            prog_args = remaining_args[0:ARG_DISPLAY_LEN-1] + "..."
+        prog_tag = prog_name + " " + prog_args
+
+        logger.debug("Executing subprocess: " + ' '.join(self.bsub_args()) + ' "' + ' '.join(args) + '"')
+        subprocess_logger = logger.context("Exec " + prog_tag)
         proc = subprocess.Popen(self.bsub_args() + [' '.join(args)], shell=False, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, env=env, cwd=cwd)
         atexit.register(proc.kill)
+
+        output_buf = ""
+        # Log output and also capture output at the same time.
+        while True:
+            line = proc.stdout.readline().decode("utf-8")
+            if line != '':
+                subprocess_logger.debug(line.rstrip())
+                output_buf += line
+            else:
+                break
+        # TODO: check errors
+
+        return output_buf
 
         return ""
