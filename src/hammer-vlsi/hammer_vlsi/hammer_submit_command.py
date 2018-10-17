@@ -9,6 +9,7 @@ import atexit
 import subprocess
 from typing import Callable, Iterable, List, NamedTuple, Optional, Dict, Any, Union
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, HammerVLSILoggingContext
+from hammer_config import HammerDatabase
 
 class HammerSubmitCommand:
 
@@ -24,6 +25,39 @@ class HammerSubmitCommand:
         :return: The command output
         """
         pass
+
+    @abstractmethod
+    def read_settings(self, tool_namespace: str, database: HammerDatabase) -> None:
+        """
+        Implement this in subclasses to read the HammerDatabase settings into meaningful class variables.
+
+        :param tool_namespace: The hammer tool namespace (e.g. "synthesis" or "par")
+        :param database: The HammerDatabase object
+        """
+        pass
+
+
+    @staticmethod
+    def get(tool_namespace: str, database: HammerDatabase):
+        """ TODO document this """
+        # check the keys we need to use and set them to None if they're not there
+        if not (database.has_setting(tool_namespace + ".submit_command")):
+            database.set_setting(tool_namespace + ".submit_command", None)
+        if not (database.has_setting(tool_namespace + ".submit_command_settings")):
+            database.set_setting(tool_namespace + ".submit_command_settings", None)
+
+        name = database.get_setting(tool_namespace + ".submit_command", nullvalue="none")
+
+        if name == "none" or name == "bare":
+            if database.get_setting(tool_namespace + ".submit_command_settings", nullvalue="") != "":
+                raise ValueError("Unexpected " + tool_namespace + ".submit_command_settings for HammerBareSubmitCommand. Did you forget to set " + tool_namespace + ".submit_command?")
+            return HammerBareSubmitCommand()
+        elif name == "lsf":
+            submit_command = HammerLSFSubmitCommand()
+            submit_command.read_settings(tool_namespace, database)
+            return submit_command
+        else:
+            raise NotImplementedError("Submit command key for " + tool_namespace + ": " + name + " is not implemented")
 
 
 class HammerBareSubmitCommand(HammerSubmitCommand):
@@ -69,6 +103,9 @@ class HammerBareSubmitCommand(HammerSubmitCommand):
         # TODO: check errors
 
         return output_buf
+
+    def read_settings(self, tool_namespace: str, database: HammerDatabase) -> None:
+        assert("Should never get here")
 
 class HammerLSFSubmitCommand(HammerSubmitCommand):
 
@@ -124,6 +161,15 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
     def extra_args(self, value: List[str]) -> None:
         """ Set the extra LSF args to use """
         self._extra_args = value
+
+    def read_settings(self, tool_namespace: str, database: HammerDatabase) -> None:
+        """
+        Read in LSF settings
+
+        TODO
+        """
+        pass
+
 
     def bsub_args(self) -> List[str]:
         args = [self.bsub_binary, "-K", "-n", "%d" % self.num_cpus] # always use -K to block

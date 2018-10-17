@@ -21,6 +21,7 @@ from .hooks import HammerToolHookAction
 from .hammer_vlsi_impl import HammerVLSISettings, HammerPlaceAndRouteTool, HammerSynthesisTool, \
     HierarchicalMode, load_tool, PlacementConstraint
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, HammerVLSILoggingContext
+from .hammer_submit_command import HammerSubmitCommand
 
 __all__ = ['HammerDriverOptions', 'HammerDriver']
 
@@ -212,6 +213,7 @@ class HammerDriver:
             self.database.get_setting("vlsi.inputs.hierarchical.mode"))
         syn_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
         syn_tool.top_module = self.database.get_setting("synthesis.inputs.top_module", nullvalue="")
+        syn_tool.submit_command = HammerSubmitCommand.get("synthesis", self.database)
 
         # TODO: automate this based on the definitions
         missing_inputs = False
@@ -255,6 +257,7 @@ class HammerDriver:
         par_tool.run_dir = run_dir
         par_tool.hierarchical_mode = HierarchicalMode.from_str(
             self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+        par_tool.submit_command = HammerSubmitCommand.get("par", self.database)
 
         missing_inputs = False
 

@@ -337,8 +337,7 @@ class HammerTool(metaclass=ABCMeta):
         try:
             return self._submit_command
         except AttributeError:
-            # If this value isn't set, just return the bare submit command
-            return HammerBareSubmitCommand()
+            raise ValueError("Internal error: technology not set by hammer-vlsi")
 
     @submit_command.setter
     def submit_command(self, value: HammerSubmitCommand) -> None:
