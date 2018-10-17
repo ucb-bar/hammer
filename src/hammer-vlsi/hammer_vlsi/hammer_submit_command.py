@@ -40,50 +40,37 @@ class HammerSubmitCommand:
     @staticmethod
     def get(tool_namespace: str, database: HammerDatabase):
         """ TODO document this """
-        # check the keys we need to use and set them to None if they're not there
-        if not (database.has_setting(tool_namespace + ".submit_command")):
-            database.set_setting(tool_namespace + ".submit_command", None)
-        if not (database.has_setting(tool_namespace + ".submit_command_settings")):
-            database.set_setting(tool_namespace + ".submit_command_settings", None)
 
-        name = database.get_setting(tool_namespace + ".submit_command", nullvalue="none")
-
-        if name == "none" or name == "bare":
+        submit_command_mode = database.get_setting(tool_namespace + ".submit_command", nullvalue="none")
+        if submit_command_mode == "none" or submit_command_mode == "bare":
             if database.get_setting(tool_namespace + ".submit_command_settings", nullvalue="") != "":
                 raise ValueError("Unexpected " + tool_namespace + ".submit_command_settings for HammerBareSubmitCommand. Did you forget to set " + tool_namespace + ".submit_command?")
             return HammerBareSubmitCommand()
-        elif name == "lsf":
+        elif submit_command_mode == "lsf":
             submit_command = HammerLSFSubmitCommand()
             submit_command.read_settings(tool_namespace, database)
             return submit_command
         else:
-            raise NotImplementedError("Submit command key for " + tool_namespace + ": " + name + " is not implemented")
+            raise NotImplementedError("Submit command key for " + tool_namespace + ": " + submit_command_mode + " is not implemented")
 
 
 class HammerBareSubmitCommand(HammerSubmitCommand):
 
     def submit(self, args: List[str], env: Dict[str,str], logger: HammerVLSILoggingContext, cwd: str = None) -> str:
-        """
-        Submit the job to the job submission system. This function MUST block until the command is complete.
-        This implementation just runs the command on the host.
+        # Just run the command on this host.
 
-        :param args: Command-line to run; each item in the list is one token. The first token should be the command to run.
-        :param env: The environment variables to set for the command
-        :param logger: The logging context
-        :param cwd: Working directory (leave as None to use the current working directory).
-        :return: The command output
-        """
         # Short version for easier display in the log.
         PROG_NAME_LEN = 14 # Capture last 14 characters of the command name
+        ARG_DISPLAY_LEN = 16 # How many characters of args to display after prog_name
         if len(args[0]) <= PROG_NAME_LEN:
             prog_name = args[0]
         else:
             prog_name = "..." + args[0][len(args[0])-PROG_NAME_LEN:]
         remaining_args = " ".join(args[1:])
-        if len(remaining_args) <= 15:
+        if len(remaining_args) < ARG_DISPLAY_LEN:
             prog_args = remaining_args
         else:
-            prog_args = remaining_args[0:15] + "..."
+            prog_args = remaining_args[0:ARG_DISPLAY_LEN-1] + "..."
         prog_tag = prog_name + " " + prog_args
 
         output_buf = ""
@@ -105,7 +92,7 @@ class HammerBareSubmitCommand(HammerSubmitCommand):
         return output_buf
 
     def read_settings(self, tool_namespace: str, database: HammerDatabase) -> None:
-        assert("Should never get here")
+        assert("Should never get here; bare submission command does not have settings")
 
 class HammerLSFSubmitCommand(HammerSubmitCommand):
 
@@ -124,7 +111,7 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
 
     @property
     def num_cpus(self) -> int:
-        """ Get the LSF queue to use """
+        """ Get the number of CPUs to use """
         try:
             return self._num_cpus
         except AttributeError:
@@ -132,7 +119,7 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
 
     @num_cpus.setter
     def num_cpus(self, value: int) -> None:
-        """ Set the LSF queue to use """
+        """ Set the number of CPUs to use """
         self._num_cpus = value # type: int
 
     @property

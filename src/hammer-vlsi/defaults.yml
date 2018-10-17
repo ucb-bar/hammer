@@ -190,7 +190,6 @@ synthesis.inputs:
   # Set to null to not specify from the JSON.
   top_module: null
 
-
 # Specific inputs for the place and route tool.
 # These inputs are the generic inputs; specific tools ("CAD junk") may require
 # additional inputs.
@@ -225,3 +224,10 @@ par.inputs:
   # the final GDS.
   # type: bool
   gds_merge: false
+
+# The submit command to use. "none", "bare", or null will run on the current host. See hammer_submit_command.py for other options.
+synthesis.submit_command: "none"
+synthesis.submit_command_settings: null
+par.submit_command: "none"
+par.submit_command_settings: null
+
