@@ -183,7 +183,7 @@ vlsi.submit:
   # This should be a List[Dict[str, Dict[str, Any]]]. The list substitutes settings in order of appearance, and the first Dict key is the command.
   # The second dict key is the name of that command's setting, followed by whatever type it takes.
   settings: [
-    { "none": {"foo": null} } # TODO: {"foo": null} should be {} but there is a parser bug here
+    { "none": {} }
     ]
 
 # Specific inputs for the synthesis tool.
