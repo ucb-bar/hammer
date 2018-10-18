@@ -179,12 +179,10 @@ vlsi.inputs:
 
 vlsi.submit:
   # The submit command to use. "none", "local", or null will run on the current host. See hammer_submit_command.py for other options.
-  command: "none"
+  command: "local"
   # This should be a List[Dict[str, Dict[str, Any]]]. The list substitutes settings in order of appearance, and the first Dict key is the command.
   # The second dict key is the name of that command's setting, followed by whatever type it takes.
-  settings: [
-    { "none": {} }
-    ]
+  settings: []
 
 # Specific inputs for the synthesis tool.
 # These inputs are the generic inputs; specific tools ("CAD junk") may require
