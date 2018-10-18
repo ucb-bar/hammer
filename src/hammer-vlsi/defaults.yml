@@ -177,6 +177,15 @@ vlsi.inputs:
   # type: List[str]
   dont_use_list: []
 
+vlsi.submit:
+  # The submit command to use. "none", "local", or null will run on the current host. See hammer_submit_command.py for other options.
+  command: "none"
+  # This should be a List[Dict[str, Dict[str, Any]]]. The list substitutes settings in order of appearance, and the first Dict key is the command.
+  # The second dict key is the name of that command's setting, followed by whatever type it takes.
+  settings: [
+    { "none": {"foo": null} } # TODO: {"foo": null} should be {} but there is a parser bug here
+    ]
+
 # Specific inputs for the synthesis tool.
 # These inputs are the generic inputs; specific tools ("CAD junk") may require
 # additional inputs.
@@ -189,6 +198,13 @@ synthesis.inputs:
   # Top RTL module.
   # Set to null to not specify from the JSON.
   top_module: null
+
+# inherit settings from vlsi.submit but allow us to override them
+synthesis.submit:
+  command: "${vlsi.submit.command}"
+  command_meta: dynamicsubst
+  settings: []
+  settings_meta: append
 
 # Specific inputs for the place and route tool.
 # These inputs are the generic inputs; specific tools ("CAD junk") may require
@@ -225,9 +241,9 @@ par.inputs:
   # type: bool
   gds_merge: false
 
-# The submit command to use. "none", "bare", or null will run on the current host. See hammer_submit_command.py for other options.
-synthesis.submit_command: "none"
-synthesis.submit_command_settings: null
-par.submit_command: "none"
-par.submit_command_settings: null
-
+# inherit settings from vlsi.submit but allow us to override them
+par.submit:
+  command: "${vlsi.submit.command}"
+  command_meta: dynamicsubst
+  settings: []
+  settings_meta: append

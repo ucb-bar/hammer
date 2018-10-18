@@ -26,7 +26,7 @@ from .hooks import HammerToolHookAction, HammerToolStep, HammerStepFunction, Hoo
 
 from .hammer_vlsi_impl import HierarchicalMode, LibraryFilter, HammerToolPauseException
 from .units import TimeValue, VoltageValue, TemperatureValue
-from .hammer_submit_command import HammerSubmitCommand
+from .submit_command import HammerSubmitCommand
 from hammer_utils import (add_lists, check_function_type, get_or_else, in_place_unique,
                           optional_map, reduce_named, reduce_list_str)
 

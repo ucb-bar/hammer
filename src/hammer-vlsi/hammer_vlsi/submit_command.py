@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# hammer_submit_command.py
+# submit_command.py
 #
 
 from abc import ABCMeta, abstractmethod
 import atexit
 import subprocess
+import hammer_utils
 from typing import Callable, Iterable, List, NamedTuple, Optional, Dict, Any, Union
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, HammerVLSILoggingContext
 from hammer_config import HammerDatabase
+from functools import reduce
 
 class HammerSubmitCommand:
 
@@ -27,18 +29,18 @@ class HammerSubmitCommand:
         pass
 
     @abstractmethod
-    def read_settings(self, tool_namespace: str, database: HammerDatabase) -> None:
+    def read_settings(self, settings: Dict[str, Any], tool_namespace: str) -> None:
         """
-        Read the HammerDatabase settings into meaningful class variables.
+        Read the settings object (a Dict[str, Any]) into meaningful class variables
 
-        :param tool_namespace: The tool namespace to use when querying the HammerDatabase (e.g. "synthesis" or "par")
-        :param database: The HammerDatabase object with tool settings
+        :param settings: A Dict[str, Any] comprising the settings for this command
+        :param tool_namespace: The namespace for the tool (useful for logging)
         """
         pass
 
 
     @staticmethod
-    def get(tool_namespace: str, database: HammerDatabase):
+    def get(tool_namespace: str, database: HammerDatabase) -> "HammerSubmitCommand":
         """
         Get a concrete instance of a HammerSubmitCommand for a tool
 
@@ -46,20 +48,29 @@ class HammerSubmitCommand:
         :param database: The HammerDatabase object with tool settings
         """
 
-        submit_command_mode = database.get_setting(tool_namespace + ".submit_command", nullvalue="none")
-        if submit_command_mode == "none" or submit_command_mode == "bare":
-            if database.get_setting(tool_namespace + ".submit_command_settings", nullvalue="") != "":
-                raise ValueError("Unexpected " + tool_namespace + ".submit_command_settings for HammerBareSubmitCommand. Did you forget to set " + tool_namespace + ".submit_command?")
-            return HammerBareSubmitCommand()
+        submit_command_mode = database.get_setting(tool_namespace + ".submit.command", nullvalue="none")
+        submit_command_settings = database.get_setting(tool_namespace + ".submit.settings", nullvalue=[]) # type: List[Dict[str, Dict[str, Any]]]
+
+        # Settings is a List[Dict[str, Dict[str, Any]]] object. The first Dict key is the submit command name.
+        # Its value is a Dict[str, Any] comprising the settings for that command.
+        # The top-level list elements are merged from 0 to the last index, with later indices overriding previous entries.
+        def combine_settings(settings: List[Dict[str, Dict[str, Any]]], key: str) -> Dict[str, Any]:
+            return reduce(hammer_utils.add_dicts, map(lambda d: d[key], settings))
+
+        submit_command = None # type: Optional[HammerSubmitCommand]
+        if submit_command_mode == "none" or submit_command_mode == "local":
+            # Do not read the options, return immediately
+            return HammerLocalSubmitCommand()
         elif submit_command_mode == "lsf":
             submit_command = HammerLSFSubmitCommand()
-            submit_command.read_settings(tool_namespace, database)
-            return submit_command
         else:
             raise NotImplementedError("Submit command key for " + tool_namespace + ": " + submit_command_mode + " is not implemented")
 
+        submit_command.read_settings(combine_settings(submit_command_settings, submit_command_mode), tool_namespace)
+        return submit_command
 
-class HammerBareSubmitCommand(HammerSubmitCommand):
+
+class HammerLocalSubmitCommand(HammerSubmitCommand):
 
     def submit(self, args: List[str], env: Dict[str,str], logger: HammerVLSILoggingContext, cwd: str = None) -> str:
         # Just run the command on this host.
@@ -96,13 +107,12 @@ class HammerBareSubmitCommand(HammerSubmitCommand):
 
         return output_buf
 
-    def read_settings(self, tool_namespace: str, database: HammerDatabase) -> None:
-        assert("Should never get here; bare submission command does not have settings")
+    def read_settings(self, settings: Dict[str, Any], tool_namespace: str) -> None:
+        assert("Should never get here; local submission command does not have settings")
 
 class HammerLSFSubmitCommand(HammerSubmitCommand):
 
     # TODO list:
-    #  - we should have a submit_command.lsf.global_settings field (this will allow us to have an lsf.yml file with most of the settings that won't change)
     #  - we need to log the command output
 
     @property
@@ -121,17 +131,17 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
         self._bsub_binary = value
 
     @property
-    def num_cpus(self) -> int:
+    def num_cpus(self) -> Optional[int]:
         """ Get the number of CPUs to use """
         try:
             return self._num_cpus
         except AttributeError:
-            raise ValueError("Did not set the number of CPUs to use (0 for unspecified)")
+            raise ValueError("Did not set the number of CPUs to use (can be None)")
 
     @num_cpus.setter
     def num_cpus(self, value: int) -> None:
         """ Set the number of CPUs to use """
-        self._num_cpus = value # type: int
+        self._num_cpus = value # type: Optional[int]
 
     @property
     def queue(self) -> Optional[str]:
@@ -144,7 +154,7 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
     @queue.setter
     def queue(self, value: str) -> None:
         """ Set the LSF queue to use """
-        self._queue = value # type: str
+        self._queue = value # type: Optional[str]
 
     @property
     def extra_args(self) -> List[str]:
@@ -152,31 +162,36 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
         try:
             return self._extra_args
         except AttributeError:
-            # Use no extra args if empty
-            return [] # type : List[str]
+            raise ValueError("Did not set the extra_args to use (can be [])")
 
     @extra_args.setter
     def extra_args(self, value: List[str]) -> None:
         """ Set the extra LSF args to use """
         self._extra_args = value
 
-    def read_settings(self, tool_namespace: str, database: HammerDatabase) -> None:
-        self.bsub_binary = database.get_setting(tool_namespace + ".submit_command_settings.bsub_binary", nullvalue="")
+    def read_settings(self, settings: Dict[str, Any], tool_name):
         try:
-            self.num_cpus = int(database.get_setting(tool_namespace + ".submit_command_settings.num_cpus", nullvalue=0))
+            self.bsub_binary = settings["bsub_binary"]
         except KeyError:
-            self.num_cpus = 0
+            raise ValueError("Missing mandatory LSF setting bsub_binary for tool %s", tool_name)
         try:
-            self.queue = database.get_setting(tool_namespace + ".submit_command_settings.queue", nullvalue=None)
+            self.num_cpus = settings["num_cpus"] # type: Optional[int]
+        except KeyError:
+            self.num_cpus = None
+        try:
+            self.queue = settings["queue"] # type: Optional[str]
         except KeyError:
             self.queue = None
-        self.extra_args = database.get_setting(tool_namespace + ".submit_command_settings.extra_args", nullvalue=[]) # type: List[str]
+        try:
+            self.extra_args = settings["extra_args"] # type: List[str]
+        except KeyError:
+            self.extra_args = [] # type: List[str]
 
     def bsub_args(self) -> List[str]:
         args = [self.bsub_binary, "-K"] # always use -K to block
         if self.queue is not None:
             args.extend(["-q", self.queue])
-        if self.num_cpus > 0:
+        if self.num_cpus is not None:
             args.extend(["-n", "%d" % self.num_cpus])
         args.extend(self.extra_args)
         return args

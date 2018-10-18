@@ -21,7 +21,7 @@ from .hooks import HammerToolHookAction
 from .hammer_vlsi_impl import HammerVLSISettings, HammerPlaceAndRouteTool, HammerSynthesisTool, \
     HierarchicalMode, load_tool, PlacementConstraint
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, HammerVLSILoggingContext
-from .hammer_submit_command import HammerSubmitCommand
+from .submit_command import HammerSubmitCommand
 
 __all__ = ['HammerDriverOptions', 'HammerDriver']
 
