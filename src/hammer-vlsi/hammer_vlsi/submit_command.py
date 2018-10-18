@@ -49,7 +49,9 @@ class HammerSubmitCommand:
         """
 
         submit_command_mode = database.get_setting(tool_namespace + ".submit.command", nullvalue="none")
-        submit_command_settings = database.get_setting(tool_namespace + ".submit.settings", nullvalue=[]) # type: List[Dict[str, Dict[str, Any]]]
+        # TODO This is sketchy
+        submit_command_settings = database.get_setting("vlsi.submit.settings", nullvalue=[]) + \
+            database.get_setting(tool_namespace + ".submit.settings", nullvalue=[]) # type: List[Dict[str, Dict[str, Any]]]
 
         # Settings is a List[Dict[str, Dict[str, Any]]] object. The first Dict key is the submit command name.
         # Its value is a Dict[str, Any] comprising the settings for that command.
@@ -173,7 +175,7 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
         try:
             self.bsub_binary = settings["bsub_binary"]
         except KeyError:
-            raise ValueError("Missing mandatory LSF setting bsub_binary for tool %s", tool_name)
+            raise ValueError("Missing mandatory LSF setting bsub_binary for tool %s" % tool_name)
         try:
             self.num_cpus = settings["num_cpus"] # type: Optional[int]
         except KeyError:
