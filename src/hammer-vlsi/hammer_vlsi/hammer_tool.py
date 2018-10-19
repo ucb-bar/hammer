@@ -1341,10 +1341,9 @@ class HammerTool(metaclass=ABCMeta):
         assert isinstance(manual_dont_use_list, list), "vlsi.inputs.dont_use_list must be a list"
 
         # tech_dont_use_list will only be used in auto and append mode
-        tech_dont_use_list_raw = self.technology.config.dont_use_list  # type: Optional[List[str]]
-        tech_dont_use_list = tech_dont_use_list_raw if tech_dont_use_list_raw is not None else []  # type: List[str]
-        assert isinstance(tech_dont_use_list, list), "The technology's don't use list must be a list"
+        tech_dont_use_list = get_or_else(self.technology.dont_use_list, [])  # type: List[str]
 
+        # Default to auto (use tech_dont_use_list).
         dont_use_list = tech_dont_use_list  # type: List[str]
 
         if dont_use_mode == "auto":
@@ -1352,9 +1351,7 @@ class HammerTool(metaclass=ABCMeta):
         elif dont_use_mode == "manual":
             dont_use_list = manual_dont_use_list
         elif dont_use_mode == "append":
-            # The strange operator on the tech list is to work around the subset of
-            # methods implemented by the jsonschema generator
-            dont_use_list = tech_dont_use_list[:] + manual_dont_use_list
+            dont_use_list = tech_dont_use_list + manual_dont_use_list
         else:
             self.logger.error(
                 "Invalid dont_use_mode {mode}. Using auto dont use list.".format(mode=dont_use_mode))
