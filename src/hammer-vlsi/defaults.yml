@@ -159,10 +159,11 @@ vlsi.inputs:
   placement_constraints: []
 
   # Don't use list mode. (str)
-  # Specifies how where to get the list of cells to not use.
+  # Specifies where to get the list of cells to not use.
   # Valid options:
   # auto - Use the technology plugin's value for the don't use list
   # manual - Use the list from the variable below, overriding the technology plugin
+  # append - Append the manual list to the technology plugin's list
   dont_use_mode: auto
   # Optional: List of cells to mark as don't use
   # type: List[str]

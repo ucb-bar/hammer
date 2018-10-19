@@ -416,6 +416,14 @@ libraries: []
 
         self.assertEqual(tool.get_dont_use_list(), tool.technology.config.dont_use_list)
 
+        # Test that append mode for dont_use_mode works if the everyone has a dont use list.
+        database.update_project([{
+            'vlsi.inputs.dont_use_mode': 'append',
+            'vlsi.inputs.dont_use_list': ['cell3']
+        }])
+
+        self.assertEqual(tool.get_dont_use_list(), ['cell1', 'cell2', 'cell3'])
+
         # Cleanup
         shutil.rmtree(tech_dir_base)
 
