@@ -16,6 +16,7 @@ from .yaml2json import load_yaml # grumble grumble
 
 from functools import reduce
 import json
+import numbers
 import os
 import re
 import sys
@@ -138,6 +139,27 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
     def meta_subst(config_dict: dict, key: str, value: Any) -> None:
         config_dict[key] = perform_subst(value)
 
+    def meta_crossref(config_dict: dict, key: str, value: Any) -> None:
+        """
+        Copy the contents of the referenced key for use as this key's value.
+        If the reference is a list, then apply the crossref for each element
+        of the list.
+        """
+        if type(value) == str:
+            config_dict[key] = config_dict[value]
+        elif type(value) == list:
+            def check_and_get(k: Any) -> Any:
+                if not isinstance(k, str):
+                    raise ValueError("crossref (if used with lists) can only be used only with lists of strings")
+                else:
+                    return config_dict[k]
+            config_dict[key] = list(map(check_and_get, value))
+        elif isinstance(value, numbers.Number):
+            # bools are instances of numbers.Number for some weird reason
+            raise ValueError("crossref cannot be used with numbers and bools")
+        else:
+            raise NotImplementedError("crossref not implemented on other types yet")
+
     def meta_transclude(config_dict: dict, key: str, value: Any) -> None:
         """Transclude the contents of the file pointed to by value."""
         assert isinstance(value, str), "Path to file for transclusion must be a string"
@@ -176,6 +198,8 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
         'append': meta_append,
         'subst': meta_subst,
         'dynamicsubst': make_meta_dynamic('dynamicsubst'),
+        'crossref': meta_crossref,
+        'dynamiccrossref': make_meta_dynamic('dynamiccrossref'),
         'transclude': meta_transclude,
         'dynamictransclude': make_meta_dynamic('dynamictransclude'),
         'json2list': meta_json2list,
