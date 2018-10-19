@@ -1338,15 +1338,17 @@ class HammerTool(metaclass=ABCMeta):
 
         # dont_use_list will only be used in manual and append mode
         manual_dont_use_list = self.get_setting("vlsi.inputs.dont_use_list")  # type: List[str]
+        assert isinstance(manual_dont_use_list, list), "vlsi.inputs.dont_use_list must be a list"
 
         # tech_dont_use_list will only be used in auto and append mode
         tech_dont_use_list_raw = self.technology.config.dont_use_list  # type: Optional[List[str]]
         tech_dont_use_list = tech_dont_use_list_raw if tech_dont_use_list_raw is not None else []  # type: List[str]
+        assert isinstance(tech_dont_use_list, list), "The technology's don't use list must be a list"
 
-        dont_use_list = []  # type: List[str]
+        dont_use_list = tech_dont_use_list  # type: List[str]
 
         if dont_use_mode == "auto":
-            dont_use_list = tech_dont_use_list
+            pass
         elif dont_use_mode == "manual":
             dont_use_list = manual_dont_use_list
         elif dont_use_mode == "append":
@@ -1356,7 +1358,6 @@ class HammerTool(metaclass=ABCMeta):
         else:
             self.logger.error(
                 "Invalid dont_use_mode {mode}. Using auto dont use list.".format(mode=dont_use_mode))
-            dont_use_list = tech_dont_use_list
 
         return dont_use_list
 

@@ -376,7 +376,7 @@ libraries: []
 
     def test_dont_use_list(self) -> None:
         """
-        Test that don't use list support works as expected.
+        Test that "don't use" list support works as expected.
         """
         import hammer_config
 
@@ -392,8 +392,9 @@ libraries: []
         tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
         if tech_opt is None:
             self.assertTrue(False, "Unable to load technology")
+            return
         else:
-            tech = tech_opt # type: hammer_tech.HammerTechnology
+            tech = tech_opt  # type: hammer_tech.HammerTechnology
         tech.cache_dir = tech_dir
 
         tool = DummyTool()
@@ -408,7 +409,7 @@ libraries: []
         }])
         self.assertEqual(tool.get_dont_use_list(), ['cell1'])
 
-        # Test that auto mode for dont_use_mode works if the technology has a dont use list.
+        # Test that auto mode for dont_use_mode works if the technology has a "don't use" list.
         database.update_project([{
             'vlsi.inputs.dont_use_mode': 'auto',
             'vlsi.inputs.dont_use_list': []
@@ -416,7 +417,7 @@ libraries: []
 
         self.assertEqual(tool.get_dont_use_list(), tool.technology.config.dont_use_list)
 
-        # Test that append mode for dont_use_mode works if the everyone has a dont use list.
+        # Test that append mode for dont_use_mode works if the everyone has a "don't use" list.
         database.update_project([{
             'vlsi.inputs.dont_use_mode': 'append',
             'vlsi.inputs.dont_use_list': ['cell3']
@@ -441,7 +442,7 @@ libraries: []
 
         tool.technology = tech
 
-        # Test that auto mode for dont use list works if the technology has no dont use list file.
+        # Test that auto mode for don't use list works if the technology has no don't use list file.
         database.update_project([{
             'vlsi.inputs.dont_use_mode': 'auto',
             'vlsi.inputs.dont_use_list': []
