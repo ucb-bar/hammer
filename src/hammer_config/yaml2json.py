@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+#  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 import os
 import sys
@@ -34,17 +34,21 @@ def convertArrays(o):
 
     Adapted from https://raw.githubusercontent.com/vasil9v/yaml2json.py/c4cfa408bbab4f1a0cd3661d121237030f6bc0ca/yaml2json.py
     """
-    allNums = True
-    if type(o) == type([]):
+    if type(o) == list:
         for i in range(len(o)):
             o[i] = convertArrays(o[i])
         return o
-    if type(o) == type({}):
-        # make sure each key is an int
-        for i in o:
-            o[i] = convertArrays(o[i])
-            if type(i) != type(1):
-                allNums = False
+    if type(o) == dict:
+        allNums = True  # type: bool
+        if len(o) == 0:
+            # Don't convert anything if the dictionary is empty
+            allNums = False
+        else:
+            # Check if it's the case that each key is an int
+            for i in o:
+                o[i] = convertArrays(o[i])
+                if type(i) != int:
+                    allNums = False
         # if so, convert it to an array
         if allNums:
             k = o.keys()

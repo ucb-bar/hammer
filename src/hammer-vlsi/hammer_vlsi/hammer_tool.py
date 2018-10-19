@@ -90,10 +90,17 @@ class HammerTool(metaclass=ABCMeta):
     def export_config_outputs(self) -> Dict[str, Any]:
         """
         Export the outputs of this tool to a config.
+        By default, this just adds a flag to indicate that the output fragment
+        is output-only/not complete.
+
+        Warning: any subclasses must call this method in the base class
+        so that all output configs get added correctly.
 
         :return: Config dictionary of the outputs of this tool.
         """
-        return {}
+        return {
+            "vlsi.builtins.is_complete": False
+        }
 
     @abstractmethod
     def tool_config_prefix(self) -> str:

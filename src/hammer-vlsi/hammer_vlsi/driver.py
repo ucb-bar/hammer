@@ -7,7 +7,7 @@
 #  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 from functools import reduce
-from typing import NamedTuple, List, Optional, Tuple, Dict, Set
+from typing import NamedTuple, List, Optional, Tuple, Dict, Set, Any
 
 import datetime
 import os
@@ -16,6 +16,7 @@ from hammer_utils import *
 
 import hammer_config
 import hammer_tech
+from .hammer_tool import HammerTool
 from .hooks import HammerToolHookAction
 from .hammer_vlsi_impl import HammerVLSISettings, HammerPlaceAndRouteTool, HammerSynthesisTool, \
     HierarchicalMode, load_tool, PlacementConstraint
@@ -72,9 +73,12 @@ class HammerDriver:
         self.obj_dir = options.obj_dir  # type: str
 
         # Load in builtins.
+        builtins_path = os.path.join(HammerVLSISettings.hammer_vlsi_path, "builtins.yml")
+        if not os.path.exists(builtins_path):
+            raise FileNotFoundError("hammer-vlsi builtin settings not found. Did you call HammerVLSISettings.set_hammer_vlsi_path_from_environment()?")
+
         self.database.update_builtins([
-            hammer_config.load_config_from_file(os.path.join(HammerVLSISettings.hammer_vlsi_path, "builtins.yml"),
-                                                strict=True),
+            hammer_config.load_config_from_file(builtins_path, strict=True),
             HammerVLSISettings.get_config()
         ])
 
@@ -156,13 +160,86 @@ class HammerDriver:
         tools = reduce(lambda a, b: a + b, list(self.tool_configs.values()))
         self.database.update_tools(tools)
 
-    def load_par_tool(self, run_dir: str = "") -> bool:
+    def instantiate_tool_from_config(self, tool_type: str,
+                                     required_type: Optional[type] = None) -> Optional[Tuple[HammerTool, str]]:
         """
-        Load the place and route tool based on the given database.
+        Create a new instance of the given tool using information from the config.
+        :param tool_type: Tool type. e.g. if "par", then this will look in
+                          vlsi.core.par_tool/vlsi.core.par_tool_path.
+        :param required_type: (optional) Check that the instantiated tool is the given type.
+        :return: Tuple of (tool instance, tool name) or
+                 None if an error occurred.
+        """
+        # Find the tool and read in their configs.
+        tool_name = self.database.get_setting("vlsi.core.{tool_type}_tool".format(tool_type=tool_type))
+        tool_get = load_tool(
+            path=self.database.get_setting("vlsi.core.{tool_type}_tool_path".format(tool_type=tool_type)),
+            tool_name=tool_name
+        )
+        if required_type is not None:
+            if not isinstance(tool_get, required_type):
+                self.log.error("{tool_type} tool's type is incorrect: got {got}".format(tool_type=tool_type,
+                                                                                        got=str(type(tool_get))))
+                return None
+        return tool_get, tool_name
 
-        :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
-                        constructor.
-        :return: True if successful, false otherwise
+    def set_up_synthesis_tool(self, syn_tool: HammerSynthesisTool,
+                              name: str, run_dir: str = "") -> bool:
+        """
+        Set up and store the given synthesis tool instance for use in this
+        driver.
+        :param syn_tool: Tool instance.
+        :param name: Short name (e.g. "yosys") of the tool instance. Typically
+                     obtained from the database.
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the
+                        run_dir passed in the HammerDriver constructor.
+        :return: True if setup was successful.
+        """
+        if self.tech is None:
+            self.log.error("Must load technology before loading synthesis tool")
+            return False
+
+        if run_dir == "":
+            run_dir = os.path.join(self.obj_dir, "syn-rundir")
+
+        # TODO: generate this automatically
+        syn_tool.name = name
+        syn_tool.logger = self.log.context("synthesis")
+        syn_tool.technology = self.tech
+        syn_tool.set_database(self.database)
+        syn_tool.run_dir = run_dir
+        syn_tool.hierarchical_mode = HierarchicalMode.from_str(
+            self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+        syn_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
+        syn_tool.top_module = self.database.get_setting("synthesis.inputs.top_module", nullvalue="")
+
+        # TODO: automate this based on the definitions
+        missing_inputs = False
+        if syn_tool.top_module == "":
+            self.log.error("Top module not specified for synthesis")
+            missing_inputs = True
+        if len(syn_tool.input_files) == 0:
+            self.log.error("No input files specified for synthesis")
+            missing_inputs = True
+        if missing_inputs:
+            return False
+
+        self.syn_tool = syn_tool
+        self.tool_configs["synthesis"] = syn_tool.get_config()
+        self.update_tool_configs()
+        return True
+
+    def set_up_par_tool(self, par_tool: HammerPlaceAndRouteTool,
+                        name: str, run_dir: str = "") -> bool:
+        """
+        Set up and store the given place-and-route tool instance for use in this
+        driver.
+        :param par_tool: Tool instance.
+        :param name: Short name (e.g. "yosys") of the tool instance. Typically
+                     obtained from the database.
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the
+                        run_dir passed in the HammerDriver constructor.
+        :return: True if setup was successful.
         """
         if self.tech is None:
             self.log.error("Must load technology before loading par tool")
@@ -171,27 +248,31 @@ class HammerDriver:
         if run_dir == "":
             run_dir = os.path.join(self.obj_dir, "par-rundir")
 
-        par_tool_name = self.database.get_setting("vlsi.core.par_tool")
-        par_tool_get = load_tool(
-            path=self.database.get_setting("vlsi.core.par_tool_path"),
-            tool_name=par_tool_name
-        )
-        assert isinstance(par_tool_get, HammerPlaceAndRouteTool), "Par tool must be a HammerPlaceAndRouteTool"
-        par_tool = par_tool_get  # type: HammerPlaceAndRouteTool
-        par_tool.name = par_tool_name
+        par_tool.name = name
         par_tool.logger = self.log.context("par")
         par_tool.technology = self.tech
         par_tool.set_database(self.database)
         par_tool.run_dir = run_dir
-        par_tool.hierarchical_mode = HierarchicalMode.from_str(self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+        par_tool.hierarchical_mode = HierarchicalMode.from_str(
+            self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+
+        missing_inputs = False
 
         # TODO: automate this based on the definitions
-        par_tool.input_files = self.database.get_setting("par.inputs.input_files")
-        par_tool.top_module = self.database.get_setting("par.inputs.top_module")
+        par_tool.input_files = list(self.database.get_setting("par.inputs.input_files"))
+        par_tool.top_module = self.database.get_setting("par.inputs.top_module", nullvalue="")
         par_tool.post_synth_sdc = self.database.get_setting("par.inputs.post_synth_sdc", nullvalue="")
 
-        self.par_tool = par_tool
+        if len(par_tool.input_files) == 0:
+            self.log.error("No input files specified for par")
+            missing_inputs = True
+        if par_tool.top_module == "":
+            self.log.error("No top module specified for par")
+            missing_inputs = True
+        if missing_inputs:
+            return False
 
+        self.par_tool = par_tool
         self.tool_configs["par"] = par_tool.get_config()
         self.update_tool_configs()
         return True
@@ -204,48 +285,29 @@ class HammerDriver:
                         constructor.
         :return: True if synthesis tool loading was successful, False otherwise.
         """
-        if self.tech is None:
-            self.log.error("Must load technology before loading synthesis tool")
+        config_result = self.instantiate_tool_from_config("synthesis", HammerSynthesisTool)
+        if config_result is None:
             return False
+        else:
+            (syn_tool, name) = config_result
+            assert isinstance(syn_tool, HammerSynthesisTool)
+            return self.set_up_synthesis_tool(syn_tool, name, run_dir)
 
-        if run_dir == "":
-            run_dir = os.path.join(self.obj_dir, "syn-rundir")
+    def load_par_tool(self, run_dir: str = "") -> bool:
+        """
+        Load the place and route tool based on the given database.
 
-        # Find the synthesis/par tool and read in their configs.
-        syn_tool_name = self.database.get_setting("vlsi.core.synthesis_tool")
-        syn_tool_get = load_tool(
-            path=self.database.get_setting("vlsi.core.synthesis_tool_path"),
-            tool_name=syn_tool_name
-        )
-        if not isinstance(syn_tool_get, HammerSynthesisTool):
-            self.log.error("Synthesis tool must be a HammerSynthesisTool")
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
+                        constructor.
+        :return: True if successful, false otherwise
+        """
+        config_result = self.instantiate_tool_from_config("par", HammerPlaceAndRouteTool)
+        if config_result is None:
             return False
-        # TODO: generate this automatically
-        syn_tool = syn_tool_get  # type: HammerSynthesisTool
-        syn_tool.name = syn_tool_name
-        syn_tool.logger = self.log.context("synthesis")
-        syn_tool.technology = self.tech
-        syn_tool.set_database(self.database)
-        syn_tool.run_dir = run_dir
-        syn_tool.hierarchical_mode = HierarchicalMode.from_str(self.database.get_setting("vlsi.inputs.hierarchical.mode"))
-
-        syn_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
-        syn_tool.top_module = self.database.get_setting("synthesis.inputs.top_module", nullvalue="")
-        missing_inputs = False
-        if syn_tool.top_module == "":
-            self.log.error("Top module not specified for synthesis")
-            missing_inputs = True
-        if len(syn_tool.input_files) == 0:
-            self.log.error("No input files specified for synthesis")
-            missing_inputs = True
-        if missing_inputs:
-            return False
-
-        self.syn_tool = syn_tool
-
-        self.tool_configs["synthesis"] = syn_tool.get_config()
-        self.update_tool_configs()
-        return True
+        else:
+            (par_tool, name) = config_result
+            assert isinstance(par_tool, HammerPlaceAndRouteTool)
+            return self.set_up_par_tool(par_tool, name, run_dir)
 
     def set_post_custom_syn_tool_hooks(self, hooks: List[HammerToolHookAction]) -> None:
         """
@@ -269,6 +331,7 @@ class HammerDriver:
             Tuple[bool, dict]:
         """
         Run synthesis based on the given database.
+        The output config dict returned does NOT have a copy of the input config settings.
 
         :param hook_actions: List of hook actions, or leave as None to use the hooks sets in set_synthesis_hooks.
                              Hooks from set_synthesis_hooks, if present, will be appended afterwards.
@@ -294,11 +357,19 @@ class HammerDriver:
             # Allow the flow to keep running, just in case.
             # TODO: make this an option
 
-        # Record output from the syn_tool into the JSON output.
-        output_config = deepdict(self.project_config)
+        # Record output from the tool into the JSON output.
+        # Note: the output config dict is NOT complete
+        output_config = {}  # type: Dict[str, Any]
         # TODO(edwardw): automate this
         try:
-            output_config.update(self.syn_tool.export_config_outputs())
+            output_config = deepdict(self.syn_tool.export_config_outputs())
+            if output_config.get("vlsi.builtins.is_complete", True):
+                self.log.error(
+                    "The synthesis plugin is mis-written; "
+                    "it did not mark its output dictionary as output-only "
+                    "or did not call super().export_config_outputs(). "
+                    "Subsequent commands might not behave correctly.")
+                output_config["vlsi.builtins.is_complete"] = False
         except ValueError as e:
             self.log.fatal(e.args[0])
             return False, {}
@@ -306,20 +377,34 @@ class HammerDriver:
         return run_succeeded, output_config
 
     @staticmethod
-    def generate_par_inputs_from_synthesis(config_in: dict) -> dict:
-        """Generate the appropriate inputs for running place-and-route from the outputs of synthesis run."""
-        output_dict = deepdict(config_in)
-        # Plug in the outputs of synthesis into the par inputs.
-        output_dict["par.inputs.input_files"] = output_dict["synthesis.outputs.output_files"]
-        output_dict["par.inputs.top_module"] = output_dict["synthesis.inputs.top_module"]
-        if "synthesis.outputs.sdc" in output_dict:
-            output_dict["par.inputs.post_synth_sdc"] = output_dict["synthesis.outputs.sdc"]
-        return output_dict
+    def synthesis_output_to_par_input(output_dict: dict) -> Optional[dict]:
+        """
+        Generate the appropriate inputs for running place-and-route from the
+        outputs of synthesis run.
+        Does not merge the results with any project dictionaries.
+        :param output_dict: Dict containing synthesis.outputs.*
+        :return: par.inputs.* settings generated from output_dict,
+                 or None if output_dict was invalid
+        """
+        try:
+            output_files = deeplist(output_dict["synthesis.outputs.output_files"])
+            result = {
+                "par.inputs.input_files": output_files,
+                "par.inputs.top_module": output_dict["synthesis.inputs.top_module"],
+                "vlsi.builtins.is_complete": False
+            }  # type: Dict[str, Any]
+            if "synthesis.outputs.sdc" in output_dict:
+                result["par.inputs.post_synth_sdc"] = output_dict["synthesis.outputs.sdc"]
+            return result
+        except KeyError:
+            # KeyError means that the given dictionary is missing output keys.
+            return None
 
     def run_par(self, hook_actions: Optional[List[HammerToolHookAction]] = None, force_override: bool = False) -> Tuple[
         bool, dict]:
         """
         Run place and route based on the given database.
+        The output config dict returned does NOT have a copy of the input config settings.
         """
         if self.par_tool is None:
             self.log.error("Must load par tool before calling run_par")
@@ -341,11 +426,19 @@ class HammerDriver:
             # Allow the flow to keep running, just in case.
             # TODO: make this an option
 
-        # Record output from the syn_tool into the JSON output.
-        output_config = deepdict(self.project_config)
+        # Record output from the tool into the JSON output.
+        # Note: the output config dict is NOT complete
+        output_config = {}  # type: Dict[str, Any]
         # TODO(edwardw): automate this
         try:
-            output_config.update(self.par_tool.export_config_outputs())
+            output_config = deepdict(self.par_tool.export_config_outputs())
+            if output_config.get("vlsi.builtins.is_complete", True):
+                self.log.error(
+                    "The place-and-route plugin is mis-written; "
+                    "it did not mark its output dictionary as output-only "
+                    "or did not call super().export_config_outputs(). "
+                    "Subsequent commands might not behave correctly.")
+                output_config["vlsi.builtins.is_complete"] = False
         except ValueError as e:
             self.log.fatal(e.args[0])
             return False, {}

@@ -21,7 +21,8 @@ import os
 import tempfile
 import unittest
 
-from hammer_utils import deepdict
+from hammer_logging.test import HammerLoggingCaptureContext
+from hammer_utils import deepdict, deeplist
 
 
 class HammerVLSILoggingTest(unittest.TestCase):
@@ -729,9 +730,53 @@ export lol=abc"cat"
 """.strip(), enter_script.strip()
         )
 
+    def test_bad_export_config_outputs(self) -> None:
+        """
+        Test that a plugin that fails to call super().export_config_outputs()
+        is caught.
+        """
+        self.assertTrue(hammer_vlsi.HammerVLSISettings.set_hammer_vlsi_path_from_environment(),
+                             "hammer_vlsi_path must exist")
+        tmpdir = tempfile.mkdtemp()
+        proj_config = os.path.join(tmpdir, "config.json")
+
+        with open(proj_config, "w") as f:
+            f.write(json.dumps({
+                "vlsi.core.technology": "nop",
+                "vlsi.core.synthesis_tool": "nop",
+                "vlsi.core.par_tool": "nop",
+                "synthesis.inputs.top_module": "dummy",
+                "synthesis.inputs.input_files": ("/dev/null",)
+            }, indent=4))
+
+        class BadExportTool(hammer_vlsi.HammerSynthesisTool, DummyTool):
+            def export_config_outputs(self) -> Dict[str, Any]:
+                # Deliberately forget to call super().export_config_outputs
+                return {
+                    'extra': 'value'
+                }
+
+            def fill_outputs(self) -> bool:
+                self.output_files = deeplist(self.input_files)
+                return True
+
+        driver = hammer_vlsi.HammerDriver(
+            hammer_vlsi.HammerDriver.get_default_driver_options()._replace(project_configs=[
+                proj_config
+            ]))
+
+        syn_tool = BadExportTool()
+        syn_tool.tool_dir = tmpdir
+        driver.set_up_synthesis_tool(syn_tool, "bad_tool", run_dir=tmpdir)
+        with HammerLoggingCaptureContext() as c:
+            driver.run_synthesis()
+        self.assertTrue(c.log_contains("did not call super().export_config_outputs()"))
+
+        # Cleanup
+        shutil.rmtree(tmpdir)
+
 
 T = TypeVar('T')
-
 
 class HammerToolHooksTestContext:
     def __init__(self, test: unittest.TestCase) -> None:
