@@ -1333,7 +1333,8 @@ class HammerTool(metaclass=ABCMeta):
         manual_dont_use_list = self.get_setting("vlsi.inputs.dont_use_list") # type: List[str]
 
         # tech_dont_use_list will only be used in auto mode
-        tech_dont_use_list = self.technology.config.dont_use_list  # type: List[str]
+        tech_dont_use_list_raw = self.technology.config.dont_use_list  # type: Optional[List[str]]
+        tech_dont_use_list = tech_dont_use_list_raw if tech_dont_use_list_raw is not None else []  # type: List[str]
 
         if dont_use_mode == "auto":
             dont_use_list = tech_dont_use_list

@@ -373,6 +373,75 @@ libraries: []
         # Cleanup
         shutil.rmtree(tech_dir_base)
 
+    def test_dont_use_list(self) -> None:
+        """
+        Test that don't use list support works as expected.
+        """
+        import hammer_config
+
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+
+        def add_dont_use_list(d: Dict[str, Any]) -> Dict[str, Any]:
+            r = deepdict(d)
+            r.update({"dont use list": ["cell1", "cell2"]})
+            return r
+
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_dont_use_list)
+        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
+        if tech_opt is None:
+            self.assertTrue(False, "Unable to load technology")
+        else:
+            tech = tech_opt # type: hammer_tech.HammerTechnology
+        tech.cache_dir = tech_dir
+
+        tool = DummyTool()
+        tool.technology = tech
+        database = hammer_config.HammerDatabase()
+        tool.set_database(database)
+
+        # Test that manual mode for dont_use_mode works.
+        database.update_project([{
+            'vlsi.inputs.dont_use_mode': 'manual',
+            'vlsi.inputs.dont_use_list': ['cell1']
+        }])
+        self.assertEqual(tool.get_dont_use_list(), ['cell1'])
+
+        # Test that auto mode for dont_use_mode works if the technology has a dont use list.
+        database.update_project([{
+            'vlsi.inputs.dont_use_mode': 'auto',
+            'vlsi.inputs.dont_use_list': []
+        }])
+
+        self.assertEqual(tool.get_dont_use_list(), tool.technology.config.dont_use_list)
+
+        # Cleanup
+        shutil.rmtree(tech_dir_base)
+
+        # Create a new technology with no dont use list
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+        HammerToolTestHelpers.write_tech_json(tech_json_filename)
+        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
+        if tech_opt is None:
+            self.assertTrue(False, "Unable to load technology")
+        else:
+            tech = tech_opt
+        tech.cache_dir = tech_dir
+
+        tool.technology = tech
+
+        # Test that auto mode for dont use list works if the technology has no dont use list file.
+        database.update_project([{
+            'vlsi.inputs.dont_use_mode': 'auto',
+            'vlsi.inputs.dont_use_list': []
+        }])
+        self.assertEqual(tool.get_dont_use_list(), [])
+
+        # Cleanup
+        shutil.rmtree(tech_dir_base)
+
 
 class HammerToolTest(unittest.TestCase):
     def test_read_libs(self) -> None:
