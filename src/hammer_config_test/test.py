@@ -260,6 +260,24 @@ my:
         self.assertEqual(db.get_setting("bools"), [False, True])
         self.assertEqual(db.get_setting("indirect.numbers"), False)
 
+    def test_meta_dynamiccrossref(self) -> None:
+        """
+        Test that dynamic crossref works.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+my:
+    numbers: ["1", "2", "3"]
+    """, is_yaml=True)
+        meta = hammer_config.load_config_from_string("""
+numbers: "my.numbers"
+numbers_meta: crossref
+dynamic.numbers: "numbers"
+dynamic.numbers_meta: dynamiccrossref
+    """, is_yaml=True)
+        db.update_core([base, meta])
+        self.assertEqual(db.get_setting("dynamic.numbers"), ["1", "2", "3"])
+
     def test_meta_crossref_errors(self) -> None:
         """
         Test that the meta attribute "crossref" raises errors appropriately.
