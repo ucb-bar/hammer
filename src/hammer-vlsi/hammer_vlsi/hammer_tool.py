@@ -1329,21 +1329,21 @@ class HammerTool(metaclass=ABCMeta):
 
     def get_dont_use_list(self) -> List[str]:
         """
-        Get a dont use list in accordance with settings in the Hammer IR.
-        Return a list of cells to mark as dont use.
+        Get a "don't use" list in accordance with settings in the Hammer IR.
+        Return a list of cells to mark as "don't use".
         :return: A list of cells to avoid using.
         """
         # Mode can be auto, manual, or append
         dont_use_mode = str(self.get_setting("vlsi.inputs.dont_use_mode"))  # type: str
 
         # dont_use_list will only be used in manual and append mode
-        manual_dont_use_list = self.get_setting("vlsi.inputs.dont_use_list") # type: List[str]
+        manual_dont_use_list = self.get_setting("vlsi.inputs.dont_use_list")  # type: List[str]
 
         # tech_dont_use_list will only be used in auto and append mode
         tech_dont_use_list_raw = self.technology.config.dont_use_list  # type: Optional[List[str]]
         tech_dont_use_list = tech_dont_use_list_raw if tech_dont_use_list_raw is not None else []  # type: List[str]
 
-        dont_use_list = [] # type: List[str]
+        dont_use_list = []  # type: List[str]
 
         if dont_use_mode == "auto":
             dont_use_list = tech_dont_use_list
