@@ -604,6 +604,33 @@ class CadenceTool(HasSDCSupport, HammerTool):
 
         return "\n".join(mmmc_output)
 
+    def generate_dont_use_commands(self) -> List[str]:
+        """
+        Generate a list of dont_use commands for Cadence tools.
+        """
+
+        def map_cell(in_cell: str) -> str:
+            # "*/" is needed for "get_db lib_cells <cell_expression>"
+            if in_cell.startswith("*/"):
+                mapped_cell = in_cell  # type: str
+            else:
+                mapped_cell = "*/" + in_cell
+
+            # Check for cell existence first to avoid Genus erroring out.
+            get_db_str = "[get_db lib_cells {mapped_cell}]".format(mapped_cell=mapped_cell)
+            # Escaped version for puts.
+            get_db_str_escaped = get_db_str.replace('[', '\[').replace(']', '\]')
+            return """
+puts "set_dont_use {get_db_str_escaped}"
+if {{ {get_db_str} ne "" }} {{
+    set_dont_use {get_db_str}
+}} else {{
+    puts "WARNING: cell {mapped_cell} was not found for set_dont_use"
+}}
+            """.format(get_db_str=get_db_str, get_db_str_escaped=get_db_str_escaped, mapped_cell=mapped_cell)
+
+        return list(map(map_cell, self.get_dont_use_list()))
+
 class SynopsysTool(HasSDCSupport, HammerTool):
     """Mix-in trait with functions useful for Synopsys-based tools."""
     @property

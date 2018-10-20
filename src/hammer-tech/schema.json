@@ -155,6 +155,13 @@
     "gds map file" : {
       "type" : "string"
     },
+    "dont use list" : {
+      "type" : "array",
+      "items" : {
+        "title" : "Cell",
+        "type" : "string"
+      }
+    },
     "tarballs" : {
       "type" : "array",
       "items" : {
