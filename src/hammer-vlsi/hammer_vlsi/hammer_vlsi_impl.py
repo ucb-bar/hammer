@@ -615,7 +615,17 @@ class CadenceTool(HasSDCSupport, HammerTool):
                 mapped_cell = in_cell  # type: str
             else:
                 mapped_cell = "*/" + in_cell
-            return "set_dont_use [get_db lib_cells {mapped_cell}]".format(mapped_cell=mapped_cell)
+
+            # Check for cell existence first to avoid Genus erroring out.
+            get_db_str = "[get_db lib_cells {mapped_cell}]".format(mapped_cell=mapped_cell)
+            return """
+puts "set_dont_use {get_db_str}"
+if {{ {get_db_str} ne "" }} {{
+    set_dont_use {get_db_str}
+}} else {{
+    puts "WARNING: cell {mapped_cell} was not found for set_dont_use"
+}}
+            """.format(get_db_str=get_db_str, mapped_cell=mapped_cell)
 
         return list(map(map_cell, self.get_dont_use_list()))
 
