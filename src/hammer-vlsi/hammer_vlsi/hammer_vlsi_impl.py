@@ -618,14 +618,16 @@ class CadenceTool(HasSDCSupport, HammerTool):
 
             # Check for cell existence first to avoid Genus erroring out.
             get_db_str = "[get_db lib_cells {mapped_cell}]".format(mapped_cell=mapped_cell)
+            # Escaped version for puts.
+            get_db_str_escaped = get_db_str.replace('[', '\[').replace(']', '\]')
             return """
-puts "set_dont_use {get_db_str}"
+puts "set_dont_use {get_db_str_escaped}"
 if {{ {get_db_str} ne "" }} {{
     set_dont_use {get_db_str}
 }} else {{
     puts "WARNING: cell {mapped_cell} was not found for set_dont_use"
 }}
-            """.format(get_db_str=get_db_str, mapped_cell=mapped_cell)
+            """.format(get_db_str=get_db_str, get_db_str_escaped=get_db_str_escaped, mapped_cell=mapped_cell)
 
         return list(map(map_cell, self.get_dont_use_list()))
 
