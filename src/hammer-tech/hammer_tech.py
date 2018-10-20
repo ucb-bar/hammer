@@ -282,6 +282,20 @@ class HammerTechnology:
         return hammer_config.load_config_from_defaults(self.path)
 
     @property
+    def dont_use_list(self) -> Optional[List[str]]:
+        """
+        Get the list of blacklisted ("don't use") cells.
+        :return: List of "don't use" cells, or None if the technology does not define such a list.
+        """
+        dont_use_list_raw = self.config.dont_use_list  # type: Optional[List[str]]
+        if dont_use_list_raw is None:
+            return None
+        else:
+            # Work around the weird objects implemented by the jsonschema generator.
+            dont_use_list = list(map(lambda x: str(x), list(dont_use_list_raw)))
+            return dont_use_list
+
+    @property
     def extracted_tarballs_dir(self) -> str:
         """Return the path to a folder under self.path where extracted tarballs are stored/cached."""
         return os.path.join(self.cache_dir, "extracted")

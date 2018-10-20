@@ -158,6 +158,25 @@ vlsi.inputs:
   # - "power" - This obstruction type stops only power routing/straps inside it
   placement_constraints: []
 
+  # Don't use list mode. (str)
+  # Specifies where to get the list of cells to not use.
+  # These cells can be specified in a number of ways:
+  # - "MY_CELL" (cell MY_CELL in any library)
+  # - "*/MY_CELL" (cell MY_CELL in any library)
+  # - "*CELL" (any cell that ends with CELL in any library)
+  # - "*_CELL_*" (any cell that matches the wildcard *_CELL_* in any library)
+  # - "CELL_*_IVX" (any cell that matches the wildcard CELL_*_IVX in any library)
+  # - "MY_LIB/*" (any cell under the library MY_LIB)
+  # - "MY_LIB/CELL*" (any cell that matches the wildcard CELL* under the library MY_LIB)
+  # Valid options:
+  # auto - Use the technology plugin's value for the don't use list
+  # manual - Use the list from the variable below, overriding the technology plugin
+  # append - Append the manual list to the technology plugin's list
+  dont_use_mode: auto
+  # Optional: List of cells to mark as don't use
+  # type: List[str]
+  dont_use_list: []
+
 # Specific inputs for the synthesis tool.
 # These inputs are the generic inputs; specific tools ("CAD junk") may require
 # additional inputs.
