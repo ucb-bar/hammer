@@ -229,6 +229,96 @@ a.b.c_meta: append
         db.update_environment([])
         self.assertEqual(db.get_setting("a.b.c"), ["test"])
 
+    def test_meta_crossref(self) -> None:
+        """
+        Test that the meta attribute "crossref" works.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+my:
+    numbers: ["1", "2", "3"]
+    dichotomy: false
+    unity: true
+    world: ["world"]
+"target_key": "my.dichotomy"
+""", is_yaml=True)
+        meta = hammer_config.load_config_from_string("""
+{
+  "just.numbers": "my.numbers",
+  "just.numbers_meta": "crossref",
+  "copies.numbers": ["my.numbers", "my.world"],
+  "copies.numbers_meta": "crossref",
+  "bools": ["my.dichotomy", "my.unity"],
+  "bools_meta": "crossref",
+  "indirect.numbers": "${target_key}",
+  "indirect.numbers_meta": ["subst", "crossref"]
+}
+""", is_yaml=False)
+        db.update_core([base, meta])
+        self.assertEqual(db.get_setting("just.numbers"), ["1", "2", "3"])
+        self.assertEqual(db.get_setting("copies.numbers"), [["1", "2", "3"], ["world"]])
+        self.assertEqual(db.get_setting("bools"), [False, True])
+        self.assertEqual(db.get_setting("indirect.numbers"), False)
+
+    def test_meta_dynamiccrossref(self) -> None:
+        """
+        Test that dynamic crossref works.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+my:
+    numbers: ["1", "2", "3"]
+    """, is_yaml=True)
+        meta = hammer_config.load_config_from_string("""
+numbers: "my.numbers"
+numbers_meta: crossref
+dynamic.numbers: "numbers"
+dynamic.numbers_meta: dynamiccrossref
+    """, is_yaml=True)
+        db.update_core([base, meta])
+        self.assertEqual(db.get_setting("dynamic.numbers"), ["1", "2", "3"])
+
+    def test_meta_crossref_errors(self) -> None:
+        """
+        Test that the meta attribute "crossref" raises errors appropriately.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+my:
+    numbers: ["1", "2", "3"]
+    dichotomy: false
+    unity: true
+    world: ["world"]
+"target_key": "my.dichotomy"
+""", is_yaml=True)
+        with self.assertRaises(ValueError):
+            meta = hammer_config.load_config_from_string("""
+{
+  "no_crossrefing_using_int": 123,
+  "no_crossrefing_using_int_meta": "crossref"
+}
+""", is_yaml=False)
+            db.update_core([base, meta])
+            db.get_setting("no_crossrefing_using_int")
+        with self.assertRaises(ValueError):
+            meta = hammer_config.load_config_from_string("""
+{
+  "no_crossrefing_using_bool": false,
+  "no_crossrefing_using_bool_meta": "crossref"
+}
+""", is_yaml=False)
+            db.update_core([base, meta])
+            db.get_setting("no_crossrefing_using_bool")
+        with self.assertRaises(ValueError):
+            meta = hammer_config.load_config_from_string("""
+{
+  "bad_list": [1, 2],
+  "bad_list_meta": "crossref"
+}
+""", is_yaml=False)
+            db.update_core([base, meta])
+            db.get_setting("bad_list")
+
     def test_meta_prependlocal(self):
         """
         Test that the meta attribute "prependlocal" works.
