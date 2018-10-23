@@ -7,7 +7,7 @@
 from abc import ABCMeta, abstractmethod
 import atexit
 import subprocess
-import hammer_utils
+from hammer_utils import add_dicts, get_or_else
 from typing import Callable, Iterable, List, NamedTuple, Optional, Dict, Any, Union
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, HammerVLSILoggingContext
 from hammer_config import HammerDatabase
@@ -29,11 +29,11 @@ class HammerSubmitCommand:
         pass
 
     @abstractmethod
-    def read_settings(self, settings: Dict[str, Any], tool_namespace: str) -> None:
+    def read_settings(self, d: Dict[str, Any], tool_namespace: str) -> None:
         """
         Read the settings object (a Dict[str, Any]) into meaningful class variables
 
-        :param settings: A Dict[str, Any] comprising the settings for this command
+        :param d: A Dict[str, Any] comprising the settings for this command
         :param tool_namespace: The namespace for the tool (useful for logging)
         """
         pass
@@ -57,7 +57,7 @@ class HammerSubmitCommand:
         # Its value is a Dict[str, Any] comprising the settings for that command.
         # The top-level list elements are merged from 0 to the last index, with later indices overriding previous entries.
         def combine_settings(settings: List[Dict[str, Dict[str, Any]]], key: str) -> Dict[str, Any]:
-            return reduce(hammer_utils.add_dicts, map(lambda d: d[key], settings))
+            return reduce(add_dicts, map(lambda d: d[key], settings))
 
         submit_command = None # type: Optional[HammerSubmitCommand]
         if submit_command_mode == "none" or submit_command_mode == "local":
@@ -109,8 +109,40 @@ class HammerLocalSubmitCommand(HammerSubmitCommand):
 
         return output_buf
 
-    def read_settings(self, settings: Dict[str, Any], tool_namespace: str) -> None:
+    def read_settings(self, d: Dict[str, Any], tool_namespace: str) -> None:
         assert("Should never get here; local submission command does not have settings")
+
+class HammerLSFSettings(NamedTuple('HammerLSFSettings', [
+    ('bsub_binary', str),
+    ('num_cpus', Optional[int]),
+    ('queue', Optional[str]),
+    ('extra_args', List[str])
+])):
+    __slots__ = ()
+
+
+    @staticmethod
+    def from_setting(d: Dict[str, Any]) -> "HammerLSFSettings":
+        try:
+            bsub_binary = d["bsub_binary"]
+        except KeyError:
+            raise ValueError("Missing mandatory key bsub_binary for LSF settings.")
+        try:
+            num_cpus = d["num_cpus"]
+        except KeyError:
+            num_cpus = None
+        try:
+            queue = d["queue"]
+        except KeyError:
+            queue = None
+
+        return HammerLSFSettings(
+            bsub_binary = bsub_binary,
+            num_cpus = num_cpus,
+            queue = queue,
+            extra_args = get_or_else(d["extra_args"], [])
+        )
+
 
 class HammerLSFSubmitCommand(HammerSubmitCommand):
 
@@ -118,84 +150,31 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
     #  - we need to log the command output
 
     @property
-    def bsub_binary(self) -> str:
-        """ Get the LSF bsub binary location """
+    def settings(self) -> HammerLSFSettings:
         try:
-            return self._bsub_binary
+            return self._settings
         except AttributeError:
-            raise ValueError("LSF bsub binary location not set")
+            raise ValueError("Nothing set for settings yet")
 
-    @bsub_binary.setter
-    def bsub_binary(self, value: str) -> None:
-        """ Set the LSF bsub binary location """
-        if value == "" or value is None:
-            raise ValueError("bsub_binary cannot be empty or null")
-        self._bsub_binary = value
+    @settings.setter
+    def settings(self, value: HammerLSFSettings) -> None:
+        """
+        Set the settings class variable
 
-    @property
-    def num_cpus(self) -> Optional[int]:
-        """ Get the number of CPUs to use """
-        try:
-            return self._num_cpus
-        except AttributeError:
-            raise ValueError("Did not set the number of CPUs to use (can be None)")
+        :param value: The HammerLSFSettings NapedTuple to use
+        """
+        self._settings = value
 
-    @num_cpus.setter
-    def num_cpus(self, value: int) -> None:
-        """ Set the number of CPUs to use """
-        self._num_cpus = value # type: Optional[int]
-
-    @property
-    def queue(self) -> Optional[str]:
-        """ Get the LSF queue to use """
-        try:
-            return self._queue
-        except AttributeError:
-            raise ValueError("Did not set the queue to use (can be None)")
-
-    @queue.setter
-    def queue(self, value: str) -> None:
-        """ Set the LSF queue to use """
-        self._queue = value # type: Optional[str]
-
-    @property
-    def extra_args(self) -> List[str]:
-        """ Get the extra LSF args to use """
-        try:
-            return self._extra_args
-        except AttributeError:
-            raise ValueError("Did not set the extra_args to use (can be [])")
-
-    @extra_args.setter
-    def extra_args(self, value: List[str]) -> None:
-        """ Set the extra LSF args to use """
-        self._extra_args = value
-
-    def read_settings(self, settings: Dict[str, Any], tool_name):
-        try:
-            self.bsub_binary = settings["bsub_binary"]
-        except KeyError:
-            raise ValueError("Missing mandatory LSF setting bsub_binary for tool %s" % tool_name)
-        try:
-            self.num_cpus = settings["num_cpus"] # type: Optional[int]
-        except KeyError:
-            self.num_cpus = None
-        try:
-            self.queue = settings["queue"] # type: Optional[str]
-        except KeyError:
-            self.queue = None
-        try:
-            self.extra_args = settings["extra_args"] # type: List[str]
-        except KeyError:
-            self.extra_args = [] # type: List[str]
+    def read_settings(self, d: Dict[str, Any], tool_name) -> None:
+        self.settings = HammerLSFSettings.from_setting(d)
 
     def bsub_args(self) -> List[str]:
-        args = [self.bsub_binary, "-K"] # always use -K to block
-        if self.queue is not None:
-            args.extend(["-q", self.queue])
-        if self.num_cpus is not None:
-            args.extend(["-n", "%d" % self.num_cpus])
-        args.extend(self.extra_args)
+        args = [self.settings.bsub_binary, "-K"] # always use -K to block
+        if self.settings.queue is not None:
+            args.extend(["-q", self.settings.queue])
+        if self.settings.num_cpus is not None:
+            args.extend(["-n", "%d" % self.settings.num_cpus])
+        args.extend(self.settings.extra_args)
         return args
 
     def submit(self, args: List[str], env: Dict[str,str], logger: HammerVLSILoggingContext, cwd: str = None) -> str:
