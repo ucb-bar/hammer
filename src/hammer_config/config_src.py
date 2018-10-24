@@ -19,7 +19,6 @@ import json
 import numbers
 import os
 import re
-import sys
 
 # Special key used for meta directives which require config paths like prependlocal.
 _CONFIG_PATH_KEY = "_config_path"
