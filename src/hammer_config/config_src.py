@@ -23,6 +23,25 @@ import re
 # Special key used for meta directives which require config paths like prependlocal.
 _CONFIG_PATH_KEY = "_config_path"
 
+# Special key used to keep track of the next available integer suffix to avoid
+# duplicate keys.
+_NEXT_FREE_INDEX_KEY = "_next_free_index"
+
+
+def _get_next_free_index(d: dict) -> int:
+    """
+    Get the next free index in the given dictionary.
+    Side effect: increments the next free index stored in the dictionary by 1.
+    If the key does not exist, create it and set it to 2, and return 1.
+    :param d: Dictionary to find the next free index in.
+    :return: Next free index.
+    """
+    if _NEXT_FREE_INDEX_KEY not in d:
+        d[_NEXT_FREE_INDEX_KEY] = 1
+    next_index = int(d[_NEXT_FREE_INDEX_KEY])
+    d[_NEXT_FREE_INDEX_KEY] = next_index + 1
+    return next_index
+
 
 # Miscellaneous parameters involved in executing a meta directive.
 class MetaDirectiveParams(NamedTuple('MetaDirectiveParams', [
@@ -375,7 +394,7 @@ class HammerDatabase:
     @staticmethod
     def internal_keys() -> Set[str]:
         """Internal keys that shouldn't show up in any final config."""
-        return {_CONFIG_PATH_KEY}
+        return {_CONFIG_PATH_KEY, _NEXT_FREE_INDEX_KEY}
 
     def get_config(self) -> dict:
         """
