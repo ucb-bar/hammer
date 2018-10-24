@@ -12,6 +12,7 @@ from numbers import Number
 
 import hammer_vlsi
 import hammer_tech
+import hammer_config
 from hammer_logging import Level, HammerVLSIFileLogger
 from hammer_logging import HammerVLSILogging
 
@@ -22,8 +23,7 @@ import tempfile
 import unittest
 
 from hammer_logging.test import HammerLoggingCaptureContext
-from hammer_utils import deepdict, deeplist
-
+from hammer_utils import deepdict, deeplist, get_or_else
 
 class HammerVLSILoggingTest(unittest.TestCase):
     def test_colours(self):
@@ -791,7 +791,7 @@ class HammerToolHooksTestContext:
     def __init__(self, test: unittest.TestCase) -> None:
         self.test = test  # type: unittest.TestCase
         self.temp_dir = ""  # type: str
-        self._driver = None  # type: Optional[hammer_vlsi.HammerDriver]
+        self._driver = None # type: Optional[hammer_vlsi.HammerDriver]
 
     # Helper property to check that the driver did get initialized.
     @property
@@ -1050,6 +1050,120 @@ class HammerToolHooksTest(unittest.TestCase):
                     self.assertEqual(self.read(file), "HelloWorld")
                 else:
                     self.assertFalse(os.path.exists(file))
+
+class HammerSubmitCommandTestContext:
+
+    def __init__(self, test: unittest.TestCase, cmd_type: str) -> None:
+        self.echo_command_args = ["go", "bears", "!"]
+        self.echo_command = ["echo"] + self.echo_command_args
+        self.test = test # type unittest.TestCase
+        self.logger = HammerVLSILogging.context("")
+        self._driver = None # type: Optional[hammer_vlsi.HammerDriver]
+        if cmd_type not in ["lsf", "local"]:
+            raise NotImplementedError("Have not built a test for %s yet" % cmd_type)
+        self._cmd_type = cmd_type
+        self._submit_command = None # type: Optional[hammer_vlsi.HammerSubmitCommand]
+
+    # Helper property to check that the driver did get initialized.
+    @property
+    def driver(self) -> hammer_vlsi.HammerDriver:
+        assert self._driver is not None, "HammerDriver must be initialized before use"
+        return self._driver
+
+    # Helper property to check that the submit command did get initialized.
+    @property
+    def submit_command(self) -> hammer_vlsi.HammerSubmitCommand:
+        assert self._submit_command is not None, "HammerSubmitCommand must be initialized before use"
+        return self._submit_command
+
+    def __enter__(self) -> "HammerSubmitCommandTestContext":
+        """Initialize context by creating the temp_dir, driver, and loading mocksynth."""
+        self.test.assertTrue(hammer_vlsi.HammerVLSISettings.set_hammer_vlsi_path_from_environment(),
+                        "hammer_vlsi_path must exist")
+        temp_dir = tempfile.mkdtemp()
+        json_path = os.path.join(temp_dir, "project.json")
+        json_content = {
+            "vlsi.core.synthesis_tool": "mocksynth",
+            "vlsi.core.technology": "nop",
+            "synthesis.inputs.top_module": "dummy",
+            "synthesis.inputs.input_files": ("/dev/null",),
+            "synthesis.mocksynth.temp_folder": temp_dir,
+            "synthesis.submit.command": self._cmd_type
+        }
+        if self._cmd_type is "lsf":
+            json_content.update({
+                "synthesis.submit.settings": [{"lsf": {
+                    "queue": "myqueue",
+                    "num_cpus": 4,
+                    "bsub_binary": os.path.join(os.path.dirname(os.path.abspath(__file__)),"..","test","mock_bsub.sh"),
+                    "extra_args": ("-R", "myresources")
+                }}]
+            })
+
+        with open(json_path, "w") as f:
+            f.write(json.dumps(json_content, indent=4))
+
+        options = hammer_vlsi.HammerDriverOptions(
+            environment_configs=[],
+            project_configs=[json_path],
+            log_file=os.path.join(temp_dir, "log.txt"),
+            obj_dir=temp_dir
+        )
+        self.temp_dir = temp_dir
+        self._driver = hammer_vlsi.HammerDriver(options)
+        self._submit_command = hammer_vlsi.HammerSubmitCommand.get("synthesis", self.database)
+        return self
+
+    def __exit__(self, type, value, traceback) -> bool:
+        """Clean up the context by removing the temp_dir."""
+        shutil.rmtree(self.temp_dir)
+        # Return True (normal execution) if no exception occurred.
+        return True if type is None else False
+
+    @property
+    def database(self) -> hammer_config.HammerDatabase:
+        return self.driver.database
+
+    @property
+    def env(self) -> Dict[str,str]:
+        return {}
+
+
+class HammerSubmitCommandTest(unittest.TestCase):
+
+    def create_context(self, cmd_type: str) -> HammerSubmitCommandTestContext:
+        return HammerSubmitCommandTestContext(self, cmd_type)
+
+    def test_local_submit(self) -> None:
+        """ Test that a local submission produces the desired output """
+        with self.create_context("local") as c:
+            cmd = c.submit_command
+            output = cmd.submit(c.echo_command, c.env, c.logger).splitlines()
+
+            self.assertEqual(output[0],' '.join(c.echo_command_args))
+
+
+    def test_lsf_submit(self) -> None:
+        """ Test that an LSF submission produces the desired output """
+        with self.create_context("lsf") as c:
+            cmd = c.submit_command
+            assert isinstance(cmd, hammer_vlsi.HammerLSFSubmitCommand)
+            output = cmd.submit(c.echo_command, c.env, c.logger).splitlines()
+
+            self.assertEqual(output[0],"BLOCKING is: 1")
+            self.assertEqual(output[1],"QUEUE is: %s" % get_or_else(cmd.settings.queue, ""))
+            self.assertEqual(output[2],"NUMCPU is: %d" % get_or_else(cmd.settings.num_cpus, 0))
+
+            extra = cmd.settings.extra_args
+            has_resource = 0
+            if "-R" in extra:
+                has_resource = 1
+                self.assertEqual(output[3],"RESOURCE is: %s" % extra[extra.index("-R") + 1])
+            else:
+                raise NotImplementedError("You forgot to test the extra_args!")
+
+            self.assertEqual(output[3 + has_resource],"COMMAND is: %s" % ' '.join(c.echo_command))
+            self.assertEqual(output[4 + has_resource],' '.join(c.echo_command_args))
 
 
 if __name__ == '__main__':
