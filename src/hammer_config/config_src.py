@@ -485,9 +485,10 @@ def combine_configs(configs: Iterable[dict]) -> dict:
 
     final_dict = update_and_expand_meta(expanded_config, dynamic_metas)
 
-    # Remove the temporary key used for path metas.
-    if _CONFIG_PATH_KEY in final_dict:
-        del final_dict[_CONFIG_PATH_KEY]
+    # Remove any temporary keys.
+    for key in HammerDatabase.internal_keys():
+        if key in final_dict:
+            del final_dict[key]
 
     return final_dict
 
