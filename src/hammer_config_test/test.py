@@ -3,14 +3,13 @@
 #
 #  Unit tests for the hammer_config module.
 #
-#  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
-import tempfile
-
-import hammer_config
-
-import unittest
+#  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 import os
+import tempfile
+import unittest
+
+import hammer_config
 
 
 class HammerDatabaseTest(unittest.TestCase):
@@ -491,6 +490,31 @@ foo:
         db.update_core([base, meta])
         self.assertEqual(db.get_setting("foo.bar.base_test"), "local_path")
         self.assertEqual(db.get_setting("foo.bar.meta_test"), "meta/config/path/local_path")
+
+    def test_multiple_dynamic_metas(self) -> None:
+        """
+        Test multiple dynamic metas applied at once.
+        Note that this is unsupported at the moment.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+hello1: "abc"
+hello2: "def"
+base: "hello1"
+test: "${base}"
+test_meta: ["dynamicsubst", "dynamiccrossref"]
+    """, is_yaml=True)
+        meta = hammer_config.load_config_from_string("""
+{
+    "base": "hello2"
+}
+    """, is_yaml=False)
+        db.update_core([base, meta])
+        with self.assertRaises(ValueError) as cm:
+            self.assertEqual(db.get_setting("base"), "hello2")
+            self.assertEqual(db.get_setting("test"), "def")
+        msg = cm.exception.args[0]
+        self.assertTrue("Overriding a dynamic meta with another dynamic meta is not currently supported" in msg)
 
     def test_meta_append_bad(self):
         """
