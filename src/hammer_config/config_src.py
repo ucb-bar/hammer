@@ -183,6 +183,22 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
         def meta_dynamic(config_dict: dict, key: str, value: Any) -> None:
             # Do nothing at this stage, since we need to deal with dynamicsubst only after
             # everything has been bound.
+
+            # If overriding a variable that already has a dynamic meta,
+            # error out since this isn't supported yet.
+            if key in config_dict:
+                if (key + "_meta") in config_dict:
+                    prev_meta_raw = config_dict[key + "_meta"]
+                    prev_meta = ""  # type: str
+                    if isinstance(prev_meta, list):
+                        prev_meta = str(prev_meta_raw[0])
+                    else:
+                        prev_meta = str(prev_meta_raw)
+
+                    if prev_meta.startswith("dynamic"):
+                        raise ValueError(
+                            "Overriding a dynamic meta with another dynamic meta is not currently supported")
+
             config_dict[key] = value
             config_dict[key + "_meta"] = dynamic_meta
 
