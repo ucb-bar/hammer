@@ -454,7 +454,7 @@ food:
 
     def test_meta_as_array_1(self):
         """
-        Test that meta attributes that are an array.
+        Test meta attributes that are an array.
         """
         db = hammer_config.HammerDatabase()
         base = hammer_config.load_config_from_string("""
@@ -474,7 +474,7 @@ foo:
 
     def test_meta_subst_and_prependlocal(self):
         """
-        Test that meta attributes that are an array.
+        Test meta attributes that are an array.
         """
         db = hammer_config.HammerDatabase()
         base = hammer_config.load_config_from_string("""
