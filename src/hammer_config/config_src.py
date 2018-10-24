@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+#  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
 #
 #  Build the configuration database from a series of JSON config files.
 #  Dumps the output in JSON format to standard output.
@@ -22,7 +22,7 @@ import re
 import sys
 
 # Special key used for meta directives which require config paths like prependlocal.
-CONFIG_PATH_KEY = "_config_path"
+_CONFIG_PATH_KEY = "_config_path"
 
 
 def unpack(config_dict: dict, prefix: str = "") -> dict:
@@ -191,7 +191,7 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
 
     def meta_prependlocal(config_dict: dict, key: str, value) -> None:
         """Prepend the local path of the config dict."""
-        config_dict[key] = os.path.join(meta_dict[CONFIG_PATH_KEY], str(value))
+        config_dict[key] = os.path.join(meta_dict[_CONFIG_PATH_KEY], str(value))
 
     # Lookup table of meta functions.
     meta_directive_functions = {
@@ -286,7 +286,7 @@ class HammerDatabase:
     @staticmethod
     def internal_keys() -> Set[str]:
         """Internal keys that shouldn't show up in any final config."""
-        return {CONFIG_PATH_KEY}
+        return {_CONFIG_PATH_KEY}
 
     def get_config(self) -> dict:
         """
@@ -402,7 +402,7 @@ def load_config_from_string(contents: str, is_yaml: bool, path: str = "unspecifi
     :return: Loaded config dictionary, unpacked.
     """
     unpacked = unpack(load_yaml(contents) if is_yaml else json.loads(contents))
-    unpacked[CONFIG_PATH_KEY] = path
+    unpacked[_CONFIG_PATH_KEY] = path
     return unpacked
 
 
@@ -487,8 +487,8 @@ def combine_configs(configs: Iterable[dict]) -> dict:
     final_dict = update_and_expand_meta(expanded_config, dynamic_metas)
 
     # Remove the temporary key used for path metas.
-    if CONFIG_PATH_KEY in final_dict:
-        del final_dict[CONFIG_PATH_KEY]
+    if _CONFIG_PATH_KEY in final_dict:
+        del final_dict[_CONFIG_PATH_KEY]
 
     return final_dict
 
