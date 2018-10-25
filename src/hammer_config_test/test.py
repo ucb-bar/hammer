@@ -154,7 +154,7 @@ style: "waterfall"
         self.assertEqual(db.get_setting("foo.later"), "later")
         self.assertEqual(db.get_setting("foo.methodology"), "agile design")
 
-    def test_meta_append(self):
+    def test_meta_append(self) -> None:
         """
         Test that the meta attribute "append" works.
         """
