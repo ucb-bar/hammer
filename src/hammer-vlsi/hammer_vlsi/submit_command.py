@@ -59,7 +59,7 @@ class HammerSubmitCommand:
         # Its value is a Dict[str, Any] comprising the settings for that command.
         # The top-level list elements are merged from 0 to the last index, with later indices overriding previous entries.
         def combine_settings(settings: List[Dict[str, Dict[str, Any]]], key: str) -> Dict[str, Any]:
-            return reduce(add_dicts, map(lambda d: d[key], settings))
+            return reduce(add_dicts, map(lambda d: d[key], settings), {})
 
         submit_command = None # type: Optional[HammerSubmitCommand]
         if submit_command_mode == "none" or submit_command_mode == "local":
@@ -125,6 +125,8 @@ class HammerLSFSettings(NamedTuple('HammerLSFSettings', [
 
     @staticmethod
     def from_setting(d: Dict[str, Any]) -> "HammerLSFSettings":
+        if not isinstance(d, dict):
+            raise ValueError("Must be a dictionary")
         try:
             bsub_binary = d["bsub_binary"]
         except KeyError:
