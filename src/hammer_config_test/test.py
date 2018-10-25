@@ -514,7 +514,7 @@ test_meta: ["dynamicsubst", "dynamiccrossref"]
             self.assertEqual(db.get_setting("base"), "hello2")
             self.assertEqual(db.get_setting("test"), "def")
         msg = cm.exception.args[0]
-        self.assertTrue("Overriding a dynamic meta with another dynamic meta is not currently supported" in msg)
+        self.assertTrue("Multiple dynamic directives in a single directive array not supported yet" in msg)
 
     def test_meta_append_bad(self):
         """
@@ -552,6 +552,7 @@ foo:
         Test that load_yaml works with empty dictionaries.
         """
         self.assertEqual(hammer_config.load_yaml("x: {}"), {"x": {}})
+
 
 if __name__ == '__main__':
     unittest.main()
