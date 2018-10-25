@@ -243,6 +243,31 @@ foo:
         self.assertEqual(db.get_setting("foo.twelve"), "whatever")
         self.assertEqual(db.get_setting("later"), "whatever")
 
+    def test_meta_repeated_dynamic(self) -> None:
+        """
+        Test that repeated applications of a dynamic command work.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+base_str: "hello"
+derivative_str: "${base_str}"
+derivative_str_meta: "dynamicsubst"
+        """, is_yaml=True)
+        config1 = hammer_config.load_config_from_string("""
+{
+    "derivative_str": "${derivative_str}_1",
+    "derivative_str_meta": "dynamicsubst"
+}
+        """, is_yaml=True)
+        config2 = hammer_config.load_config_from_string("""
+{
+    "derivative_str": "${derivative_str}_2",
+    "derivative_str_meta": "dynamicsubst"
+}
+        """, is_yaml=True)
+        db.update_core([base, config1, config2])
+        self.assertEqual(db.get_setting("derivative_str"), "hello_1_2")
+
     def test_repeated_updates(self) -> None:
         """
         Test that repeated updates don't cause duplicates.

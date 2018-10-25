@@ -9,7 +9,7 @@
 
 # pylint: disable=invalid-name
 
-from typing import Iterable, List, Union, Callable, Any, Dict, Set, NamedTuple, Tuple
+from typing import Iterable, List, Union, Callable, Any, Dict, Set, NamedTuple, Tuple, Optional
 
 from hammer_utils import deepdict, topological_sort
 from .yaml2json import load_yaml  # grumble grumble
@@ -68,7 +68,16 @@ class MetaDirective(NamedTuple('MetaDirective', [
     # ['a', 'b'].
     # def target_settings(key: str, value: Any) -> List[str]:
     #     ...
-    ('target_settings', Callable[[str, Any], List[str]])
+    ('target_settings', Callable[[str, Any], List[str]]),
+    # Function which takes in the key and value for a meta directive and
+    # changes its value so that any references to a particular target key
+    # is changed to another.
+    # It turns a tuple of (new value, new meta type).
+    # The target_key must be one of the keys in target_settings.
+    # Returns None if the target_key was not found or could not be replaced.
+    # def rename_target(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[Tuple[Any, str]]:
+    #     ...
+    ('rename_target', Callable[[str, Any, str, str], Optional[Tuple[Any, str]]])
 ])):
     __slots__ = ()
 
@@ -82,7 +91,7 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
     directives = {}  # type: Dict[str, MetaDirective]
 
     # Helper functions to implement each meta directive.
-    def meta_append(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
+    def append_action(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
         if key not in config_dict:
             config_dict[key] = []
 
@@ -92,11 +101,19 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
             raise ValueError("Trying to append to list %s with non-list %s" % (key, str(value)))
         config_dict[key] += value
 
-    # append depends only on itself
-    directives['append'] = MetaDirective(action=meta_append,
-                                         target_settings=lambda key, value: [key])
+    def append_rename(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[Tuple[Any, str]]:
+        raise NotImplementedError()
 
-    def meta_subst(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
+    # append depends only on itself
+    directives['append'] = MetaDirective(action=append_action,
+                                         target_settings=lambda key, value: [key],
+                                         rename_target=append_rename)
+
+    def subst_str(input_str: str, replacement_func: Callable[[str], str]) -> str:
+        """Substitute ${...}"""
+        return re.sub(__VARIABLE_EXPANSION_REGEX, lambda x: replacement_func(x.group(1)), input_str)
+
+    def subst_action(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
         def perform_subst(value: Union[str, List[str]]) -> Union[str, List[str]]:
             """
             Perform substitutions for the given value.
@@ -105,17 +122,12 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
             :param value: String or list
             :return: String or list but with everything substituted.
             """
-
-            def subst_str(input_str: str) -> str:
-                """Substitute ${...}"""
-                return re.sub(__VARIABLE_EXPANSION_REGEX, lambda x: config_dict[x.group(1)], input_str)
-
             newval = ""  # type: Union[str, List[str]]
 
             if isinstance(value, list):
-                newval = list(map(subst_str, value))
+                newval = list(map(lambda input_str: subst_str(input_str, lambda key: config_dict[key]), value))
             else:
-                newval = subst_str(value)
+                newval = subst_str(value, lambda key: config_dict[key])
             return newval
 
         config_dict[key] = perform_subst(value)
@@ -131,8 +143,18 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
 
         return output_vars
 
-    directives['subst'] = MetaDirective(action=meta_subst,
-                                        target_settings=subst_targets)
+    def subst_rename(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[Tuple[Any, str]]:
+        assert isinstance(value, str)
+
+        if target_setting not in subst_targets(key, value):
+            return None
+
+        new_value = subst_str(value, lambda key: "${" + replacement_setting + "}" if key == target_setting else key)
+        return new_value, "subst"
+
+    directives['subst'] = MetaDirective(action=subst_action,
+                                        target_settings=subst_targets,
+                                        rename_target=subst_rename)
 
     def crossref_check_and_cast(k: Any) -> str:
         if not isinstance(k, str):
@@ -140,7 +162,7 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
         else:
             return k
 
-    def meta_crossref(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
+    def crossref_action(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
         """
         Copy the contents of the referenced key for use as this key's value.
         If the reference is a list, then apply the crossref for each element
@@ -170,38 +192,58 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
         else:
             raise NotImplementedError("crossref not implemented on other types yet")
 
-    directives['crossref'] = MetaDirective(action=meta_crossref,
-                                           target_settings=crossref_targets)
+    def crossref_rename(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[
+        Tuple[Any, str]]:
+        raise NotImplementedError()
 
-    def meta_transclude(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
+    directives['crossref'] = MetaDirective(action=crossref_action,
+                                           target_settings=crossref_targets,
+                                           rename_target=crossref_rename)
+
+    def transclude_action(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
         """Transclude the contents of the file pointed to by value."""
         assert isinstance(value, str), "Path to file for transclusion must be a string"
         with open(value, "r") as f:
             file_contents = str(f.read())
         config_dict[key] = file_contents
 
-    # transclude depends on external files, not other settings.
-    directives['transclude'] = MetaDirective(action=meta_transclude,
-                                             target_settings=lambda key, value: [])
+    def transclude_rename(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[
+        Tuple[Any, str]]:
+        raise NotImplementedError()
 
-    def meta_json2list(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
+    # transclude depends on external files, not other settings.
+    directives['transclude'] = MetaDirective(action=transclude_action,
+                                             target_settings=lambda key, value: [],
+                                             rename_target=transclude_rename)
+
+    def json2list_action(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
         """Turn the value of the key (JSON list) into a list."""
         assert isinstance(value, str), "json2list requires a JSON string that is a list"
         parsed = json.loads(value)
         assert isinstance(parsed, list), "json2list requires a JSON string that is a list"
         config_dict[key] = parsed
 
-    # json2list does not depend on anything
-    directives['json2list'] = MetaDirective(action=meta_json2list,
-                                            target_settings=lambda key, value: [])
+    def json2list_rename(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[
+        Tuple[Any, str]]:
+        raise NotImplementedError()
 
-    def meta_prependlocal(config_dict: dict, key: str, value, params: MetaDirectiveParams) -> None:
+    # json2list does not depend on anything
+    directives['json2list'] = MetaDirective(action=json2list_action,
+                                            target_settings=lambda key, value: [],
+                                            rename_target=json2list_rename)
+
+    def prependlocal_action(config_dict: dict, key: str, value, params: MetaDirectiveParams) -> None:
         """Prepend the local path of the config dict."""
         config_dict[key] = os.path.join(params.meta_path, str(value))
 
+    def prependlocal_rename(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[
+        Tuple[Any, str]]:
+        raise NotImplementedError()
+
     # prependlocal does not depend on anything in config_dict.
-    directives['prependlocal'] = MetaDirective(action=meta_prependlocal,
-                                               target_settings=lambda key, value: [])
+    directives['prependlocal'] = MetaDirective(action=prependlocal_action,
+                                               target_settings=lambda key, value: [],
+                                               rename_target=prependlocal_rename)
 
     return directives
 
@@ -325,14 +367,41 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
                 else:
                     seen_dynamic = True
 
-                # Check if this dynamic meta references itself.
-                for target_setting in get_meta_directives()[dynamic_base_meta_type].target_settings(setting, meta_dict[setting]):
-                    if setting == target_setting:
-                        raise NotImplementedError()
+                update_dict = {}  # type: dict
 
-                # Store it into newdict and skip processing now.
-                newdict[setting] = meta_dict[setting]
-                newdict[setting + "_meta"] = meta_type
+                # Check if this dynamic meta references itself by checking if any of its targets is itself.
+                targets = get_meta_directives()[dynamic_base_meta_type].target_settings(setting, meta_dict[setting])
+                if len(list(filter(lambda x: x == setting, targets))) > 0:
+                    # If it does, rename this dynamic meta to reference a new base.
+                    # e.g. if a (dict 2) -> a (dict 1), rename "a (dict 1)" to a_1.
+                    next_index = _get_next_free_index(newdict)
+                    new_base_setting = "{setting}_{index}".format(
+                        setting=setting,
+                        index=next_index)
+                    new_value_meta = get_meta_directives()[dynamic_base_meta_type].rename_target(setting,
+                                                                                               meta_dict[setting],
+                                                                                               setting,
+                                                                                               new_base_setting)  # type: Optional[Tuple[Any, str]]
+                    if new_value_meta is None:
+                        raise ValueError(
+                            "Failed to rename dynamic setting which depends on itself ({})".format(setting))
+                    else:
+                        new_value, new_meta = new_value_meta
+
+                    # Rename base setting to new_base_setting, and add the new setting.
+                    update_dict.update({
+                        new_base_setting: newdict[setting],
+                        new_base_setting + "_meta": newdict[setting + "_meta"],
+                        setting: new_value,
+                        setting + "_meta": "dynamic" + new_meta # these are dynamic metas
+                    })
+                else:
+                    # Store it into newdict and skip processing now.
+                    update_dict.update({
+                        setting: meta_dict[setting],
+                        setting + "_meta": meta_type
+                    })
+                newdict.update(update_dict)
                 continue
             else:
                 if seen_dynamic:
