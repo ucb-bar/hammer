@@ -542,25 +542,22 @@ def combine_configs(configs: Iterable[dict]) -> dict:
 
     meta_len = len("_meta")
     for meta_key in meta_keys:
-        setting = meta_key[:-meta_len] # type: str
-        meta_type = expanded_config[meta_key] # type: str
+        setting = meta_key[:-meta_len]  # type: str
+        dynamic_meta_type = expanded_config[meta_key]  # type: str
 
-        assert meta_type.startswith("dynamic"), "Should have only dynamic metas left now"
+        assert dynamic_meta_type.startswith("dynamic"), "Should have only dynamic metas left now"
 
         # Create dynamic_metas without the dynamic part.
         # e.g. what used to be a dynamicsubst just becomes a plain subst since everything is fully resolved now.
-        dynamic_metas[meta_key] = meta_type[len("dynamic"):]
-        dynamic_metas[setting] = expanded_config[setting] # copy over the template too
+        meta_type = dynamic_meta_type[len("dynamic"):]
+        dynamic_metas[meta_key] = meta_type
+        dynamic_metas[setting] = expanded_config[setting]  # copy over the template too
 
-        # Just check that we don't reference any other dynamicsubst variables for now.
+        # Just check that we don't reference any other dynamic settings for now.
         # We can always go to a DAG tree later if need be.
-        if meta_type == "dynamicsubst":
-            matches = re.finditer(__VARIABLE_EXPANSION_REGEX, expanded_config[setting], re.DOTALL)
-            for match in matches:
-                target_var = match.group(1)
-                # Ensure that the target variable isn't also a dynamicsubst variable.
-                if target_var + "_meta" in expanded_config_orig: # make sure the order in which we delete doesn't affect this search
-                    raise ValueError("dynamicsubst variable referencing another dynamic variable not supported yet")
+        for target_var in get_meta_directives()[meta_type].target_settings(setting, expanded_config[setting]):
+            if target_var + "_meta" in expanded_config_orig:  # make sure the order in which we delete doesn't affect this search
+                raise ValueError("dynamic setting referencing another dynamic setting not supported yet")
 
         # Delete from expanded_config
         del expanded_config[meta_key]
