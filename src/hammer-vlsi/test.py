@@ -1051,18 +1051,19 @@ class HammerToolHooksTest(unittest.TestCase):
                 else:
                     self.assertFalse(os.path.exists(file))
 
+
 class HammerSubmitCommandTestContext:
 
     def __init__(self, test: unittest.TestCase, cmd_type: str) -> None:
         self.echo_command_args = ["go", "bears", "!"]
         self.echo_command = ["echo"] + self.echo_command_args
-        self.test = test # type unittest.TestCase
+        self.test = test  # type unittest.TestCase
         self.logger = HammerVLSILogging.context("")
-        self._driver = None # type: Optional[hammer_vlsi.HammerDriver]
+        self._driver = None  # type: Optional[hammer_vlsi.HammerDriver]
         if cmd_type not in ["lsf", "local"]:
             raise NotImplementedError("Have not built a test for %s yet" % cmd_type)
         self._cmd_type = cmd_type
-        self._submit_command = None # type: Optional[hammer_vlsi.HammerSubmitCommand]
+        self._submit_command = None  # type: Optional[hammer_vlsi.HammerSubmitCommand]
 
     # Helper property to check that the driver did get initialized.
     @property
@@ -1079,7 +1080,7 @@ class HammerSubmitCommandTestContext:
     def __enter__(self) -> "HammerSubmitCommandTestContext":
         """Initialize context by creating the temp_dir, driver, and loading mocksynth."""
         self.test.assertTrue(hammer_vlsi.HammerVLSISettings.set_hammer_vlsi_path_from_environment(),
-                        "hammer_vlsi_path must exist")
+                             "hammer_vlsi_path must exist")
         temp_dir = tempfile.mkdtemp()
         json_path = os.path.join(temp_dir, "project.json")
         json_content = {
@@ -1095,7 +1096,8 @@ class HammerSubmitCommandTestContext:
                 "synthesis.submit.settings": [{"lsf": {
                     "queue": "myqueue",
                     "num_cpus": 4,
-                    "bsub_binary": os.path.join(os.path.dirname(os.path.abspath(__file__)),"..","test","mock_bsub.sh"),
+                    "bsub_binary": os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "test",
+                                                "mock_bsub.sh"),
                     "extra_args": ("-R", "myresources")
                 }}]
             })
@@ -1125,7 +1127,7 @@ class HammerSubmitCommandTestContext:
         return self.driver.database
 
     @property
-    def env(self) -> Dict[str,str]:
+    def env(self) -> Dict[str, str]:
         return {}
 
 
@@ -1140,8 +1142,7 @@ class HammerSubmitCommandTest(unittest.TestCase):
             cmd = c.submit_command
             output = cmd.submit(c.echo_command, c.env, c.logger).splitlines()
 
-            self.assertEqual(output[0],' '.join(c.echo_command_args))
-
+            self.assertEqual(output[0], ' '.join(c.echo_command_args))
 
     def test_lsf_submit(self) -> None:
         """ Test that an LSF submission produces the desired output """
@@ -1150,20 +1151,20 @@ class HammerSubmitCommandTest(unittest.TestCase):
             assert isinstance(cmd, hammer_vlsi.HammerLSFSubmitCommand)
             output = cmd.submit(c.echo_command, c.env, c.logger).splitlines()
 
-            self.assertEqual(output[0],"BLOCKING is: 1")
-            self.assertEqual(output[1],"QUEUE is: %s" % get_or_else(cmd.settings.queue, ""))
-            self.assertEqual(output[2],"NUMCPU is: %d" % get_or_else(cmd.settings.num_cpus, 0))
+            self.assertEqual(output[0], "BLOCKING is: 1")
+            self.assertEqual(output[1], "QUEUE is: %s" % get_or_else(cmd.settings.queue, ""))
+            self.assertEqual(output[2], "NUMCPU is: %d" % get_or_else(cmd.settings.num_cpus, 0))
 
             extra = cmd.settings.extra_args
             has_resource = 0
             if "-R" in extra:
                 has_resource = 1
-                self.assertEqual(output[3],"RESOURCE is: %s" % extra[extra.index("-R") + 1])
+                self.assertEqual(output[3], "RESOURCE is: %s" % extra[extra.index("-R") + 1])
             else:
                 raise NotImplementedError("You forgot to test the extra_args!")
 
-            self.assertEqual(output[3 + has_resource],"COMMAND is: %s" % ' '.join(c.echo_command))
-            self.assertEqual(output[4 + has_resource],' '.join(c.echo_command_args))
+            self.assertEqual(output[3 + has_resource], "COMMAND is: %s" % ' '.join(c.echo_command))
+            self.assertEqual(output[4 + has_resource], ' '.join(c.echo_command_args))
 
 
 if __name__ == '__main__':

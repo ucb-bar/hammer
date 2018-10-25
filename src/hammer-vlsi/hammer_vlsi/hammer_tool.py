@@ -324,8 +324,7 @@ class HammerTool(metaclass=ABCMeta):
     @technology.setter
     def technology(self, value: hammer_tech.HammerTechnology) -> None:
         """Set the HammerTechnology currently in use."""
-        self._technology = value # type: hammer_tech.HammerTechnology
-
+        self._technology = value  # type: hammer_tech.HammerTechnology
 
     @property
     def submit_command(self) -> HammerSubmitCommand:
@@ -347,7 +346,6 @@ class HammerTool(metaclass=ABCMeta):
         :value: HammerSubmitCommand instance
         """
         self._submit_command = value
-
 
     @property
     def logger(self) -> HammerVLSILoggingContext:

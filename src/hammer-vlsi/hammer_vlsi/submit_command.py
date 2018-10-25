@@ -15,10 +15,11 @@ from functools import reduce
 
 __all__ = ['HammerSubmitCommand', 'HammerLocalSubmitCommand', 'HammerLSFSettings', 'HammerLSFSubmitCommand']
 
+
 class HammerSubmitCommand:
 
     @abstractmethod
-    def submit(self, args: List[str], env: Dict[str,str], logger: HammerVLSILoggingContext, cwd: str = None) -> str:
+    def submit(self, args: List[str], env: Dict[str, str], logger: HammerVLSILoggingContext, cwd: str = None) -> str:
         """
         Submit the job to the job submission system. This function MUST block until the command is complete.
 
@@ -40,7 +41,6 @@ class HammerSubmitCommand:
         """
         pass
 
-
     @staticmethod
     def get(tool_namespace: str, database: HammerDatabase) -> "HammerSubmitCommand":
         """
@@ -53,7 +53,8 @@ class HammerSubmitCommand:
         submit_command_mode = database.get_setting(tool_namespace + ".submit.command", nullvalue="none")
         # TODO This is sketchy
         submit_command_settings = database.get_setting("vlsi.submit.settings", nullvalue=[]) + \
-            database.get_setting(tool_namespace + ".submit.settings", nullvalue=[]) # type: List[Dict[str, Dict[str, Any]]]
+                                  database.get_setting(tool_namespace + ".submit.settings",
+                                                       nullvalue=[])  # type: List[Dict[str, Dict[str, Any]]]
 
         # Settings is a List[Dict[str, Dict[str, Any]]] object. The first Dict key is the submit command name.
         # Its value is a Dict[str, Any] comprising the settings for that command.
@@ -61,14 +62,15 @@ class HammerSubmitCommand:
         def combine_settings(settings: List[Dict[str, Dict[str, Any]]], key: str) -> Dict[str, Any]:
             return reduce(add_dicts, map(lambda d: d[key], settings), {})
 
-        submit_command = None # type: Optional[HammerSubmitCommand]
+        submit_command = None  # type: Optional[HammerSubmitCommand]
         if submit_command_mode == "none" or submit_command_mode == "local":
             # Do not read the options, return immediately
             return HammerLocalSubmitCommand()
         elif submit_command_mode == "lsf":
             submit_command = HammerLSFSubmitCommand()
         else:
-            raise NotImplementedError("Submit command key for " + tool_namespace + ": " + submit_command_mode + " is not implemented")
+            raise NotImplementedError(
+                "Submit command key for " + tool_namespace + ": " + submit_command_mode + " is not implemented")
 
         submit_command.read_settings(combine_settings(submit_command_settings, submit_command_mode), tool_namespace)
         return submit_command
@@ -76,21 +78,21 @@ class HammerSubmitCommand:
 
 class HammerLocalSubmitCommand(HammerSubmitCommand):
 
-    def submit(self, args: List[str], env: Dict[str,str], logger: HammerVLSILoggingContext, cwd: str = None) -> str:
+    def submit(self, args: List[str], env: Dict[str, str], logger: HammerVLSILoggingContext, cwd: str = None) -> str:
         # Just run the command on this host.
 
         # Short version for easier display in the log.
-        PROG_NAME_LEN = 14 # Capture last 14 characters of the command name
-        ARG_DISPLAY_LEN = 16 # How many characters of args to display after prog_name
+        PROG_NAME_LEN = 14  # Capture last 14 characters of the command name
+        ARG_DISPLAY_LEN = 16  # How many characters of args to display after prog_name
         if len(args[0]) <= PROG_NAME_LEN:
             prog_name = args[0]
         else:
-            prog_name = "..." + args[0][len(args[0])-PROG_NAME_LEN:]
+            prog_name = "..." + args[0][len(args[0]) - PROG_NAME_LEN:]
         remaining_args = " ".join(args[1:])
         if len(remaining_args) < ARG_DISPLAY_LEN:
             prog_args = remaining_args
         else:
-            prog_args = remaining_args[0:ARG_DISPLAY_LEN-1] + "..."
+            prog_args = remaining_args[0:ARG_DISPLAY_LEN - 1] + "..."
         prog_tag = prog_name + " " + prog_args
 
         logger.debug("Executing subprocess: " + ' '.join(args))
@@ -112,7 +114,8 @@ class HammerLocalSubmitCommand(HammerSubmitCommand):
         return output_buf
 
     def read_settings(self, d: Dict[str, Any], tool_namespace: str) -> None:
-        assert("Should never get here; local submission command does not have settings")
+        assert ("Should never get here; local submission command does not have settings")
+
 
 class HammerLSFSettings(NamedTuple('HammerLSFSettings', [
     ('bsub_binary', str),
@@ -121,7 +124,6 @@ class HammerLSFSettings(NamedTuple('HammerLSFSettings', [
     ('extra_args', List[str])
 ])):
     __slots__ = ()
-
 
     @staticmethod
     def from_setting(d: Dict[str, Any]) -> "HammerLSFSettings":
@@ -141,10 +143,10 @@ class HammerLSFSettings(NamedTuple('HammerLSFSettings', [
             queue = None
 
         return HammerLSFSettings(
-            bsub_binary = bsub_binary,
-            num_cpus = num_cpus,
-            queue = queue,
-            extra_args = get_or_else(d["extra_args"], [])
+            bsub_binary=bsub_binary,
+            num_cpus=num_cpus,
+            queue=queue,
+            extra_args=get_or_else(d["extra_args"], [])
         )
 
 
@@ -173,7 +175,7 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
         self.settings = HammerLSFSettings.from_setting(d)
 
     def bsub_args(self) -> List[str]:
-        args = [self.settings.bsub_binary, "-K"] # always use -K to block
+        args = [self.settings.bsub_binary, "-K"]  # always use -K to block
         if self.settings.queue is not None:
             args.extend(["-q", self.settings.queue])
         if self.settings.num_cpus is not None:
@@ -181,26 +183,27 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
         args.extend(self.settings.extra_args)
         return args
 
-    def submit(self, args: List[str], env: Dict[str,str], logger: HammerVLSILoggingContext, cwd: str = None) -> str:
+    def submit(self, args: List[str], env: Dict[str, str], logger: HammerVLSILoggingContext, cwd: str = None) -> str:
         # TODO fix output capturing
 
         # Short version for easier display in the log.
-        PROG_NAME_LEN = 14 # Capture last 14 characters of the command name
-        ARG_DISPLAY_LEN = 16 # How many characters of args to display after prog_name
+        PROG_NAME_LEN = 14  # Capture last 14 characters of the command name
+        ARG_DISPLAY_LEN = 16  # How many characters of args to display after prog_name
         if len(args[0]) <= PROG_NAME_LEN:
             prog_name = args[0]
         else:
-            prog_name = "..." + args[0][len(args[0])-PROG_NAME_LEN:]
+            prog_name = "..." + args[0][len(args[0]) - PROG_NAME_LEN:]
         remaining_args = " ".join(args[1:])
         if len(remaining_args) < ARG_DISPLAY_LEN:
             prog_args = remaining_args
         else:
-            prog_args = remaining_args[0:ARG_DISPLAY_LEN-1] + "..."
+            prog_args = remaining_args[0:ARG_DISPLAY_LEN - 1] + "..."
         prog_tag = prog_name + " " + prog_args
 
         logger.debug("Executing subprocess: " + ' '.join(self.bsub_args()) + ' "' + ' '.join(args) + '"')
         subprocess_logger = logger.context("Exec " + prog_tag)
-        proc = subprocess.Popen(self.bsub_args() + [' '.join(args)], shell=False, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, env=env, cwd=cwd)
+        proc = subprocess.Popen(self.bsub_args() + [' '.join(args)], shell=False, stderr=subprocess.STDOUT,
+                                stdout=subprocess.PIPE, env=env, cwd=cwd)
         atexit.register(proc.kill)
 
         output_buf = ""
