@@ -119,6 +119,7 @@ class HammerLocalSubmitCommand(HammerSubmitCommand):
 
 class HammerLSFSettings(NamedTuple('HammerLSFSettings', [
     ('bsub_binary', str),
+    ('bkill_binary', str),
     ('num_cpus', Optional[int]),
     ('queue', Optional[str]),
     ('extra_args', List[str])
@@ -134,6 +135,10 @@ class HammerLSFSettings(NamedTuple('HammerLSFSettings', [
         except KeyError:
             raise ValueError("Missing mandatory key bsub_binary for LSF settings.")
         try:
+            bkill_binary = d["bkill_binary"]
+        except KeyError:
+            raise ValueError("Missing mandatory key bkill_binary for LSF settings.")
+        try:
             num_cpus = d["num_cpus"]
         except KeyError:
             num_cpus = None
@@ -144,6 +149,7 @@ class HammerLSFSettings(NamedTuple('HammerLSFSettings', [
 
         return HammerLSFSettings(
             bsub_binary=bsub_binary,
+            bkill_binary=bkill_binary,
             num_cpus=num_cpus,
             queue=queue,
             extra_args=get_or_else(d["extra_args"], [])
@@ -183,6 +189,9 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
         args.extend(self.settings.extra_args)
         return args
 
+    def kill(self, job_num) -> None:
+        proc = subprocess.Popen([self.settings.bkill_binary, job_num])
+
     def submit(self, args: List[str], env: Dict[str, str], logger: HammerVLSILoggingContext, cwd: str = None) -> str:
         # TODO fix output capturing
 
@@ -213,6 +222,9 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
             if line != '':
                 subprocess_logger.debug(line.rstrip())
                 output_buf += line
+                if 'submitted to queue' in line:
+                    job_num = line.split(' ')[1][1:-1]  # Parsing out "Job <12355> submitted to queue <normal>.
+                    atexit.register(self.kill, job_num)
             else:
                 break
         # TODO: check errors
