@@ -94,7 +94,8 @@ def main(args):
             # TODO: model more CAD junk
 
             # e.g. par-rundir/TopModuleILMDir/mmmc/ilm_data/TopModule. Has a bunch of files TopModule_postRoute*
-            InterfaceVar("output_ilms", "List[ILMStruct]", "(optional) output ILM information for hierarchical mode")
+            InterfaceVar("output_ilms", "List[ILMStruct]", "(optional) output ILM information for hierarchical mode"),
+            InterfaceVar("output_gds", "str", "path to the output GDS file")
 
             # TODO: add individual parts of the ILM (e.g. verilog, sdc, spef, etc) for cross-tool compatibility?
         ]
