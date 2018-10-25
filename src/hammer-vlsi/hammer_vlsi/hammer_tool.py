@@ -7,14 +7,12 @@
 #  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 from abc import ABCMeta, abstractmethod
-import atexit
 from functools import reduce
 import inspect
 from numbers import Number
 import os
 import re
 import shlex
-import subprocess
 from typing import Callable, Iterable, List, Tuple, Optional, Dict, Any, Union, Set, cast, NamedTuple
 import warnings
 
@@ -28,6 +26,7 @@ from .hooks import HammerToolHookAction, HammerToolStep, HammerStepFunction, Hoo
 
 from .hammer_vlsi_impl import HierarchicalMode, LibraryFilter, HammerToolPauseException
 from .units import TimeValue, VoltageValue, TemperatureValue
+from .submit_command import HammerSubmitCommand
 from hammer_utils import (add_lists, check_function_type, get_or_else, in_place_unique,
                           optional_map, reduce_named, reduce_list_str)
 
@@ -73,7 +72,6 @@ class ExtraLibrary(NamedTuple('ExtraLibrary', [
         lib_copied = hammer_tech.copy_library(self.library)  # type: hammer_tech.Library
         lib_copied.extra_prefixes = get_or_else(optional_map(self.prefix, lambda p: [p]), [])
         return lib_copied
-
 
 class HammerTool(metaclass=ABCMeta):
     # Interface methods.
@@ -326,7 +324,28 @@ class HammerTool(metaclass=ABCMeta):
     @technology.setter
     def technology(self, value: hammer_tech.HammerTechnology) -> None:
         """Set the HammerTechnology currently in use."""
-        self._technology = value # type: hammer_tech.HammerTechnology
+        self._technology = value  # type: hammer_tech.HammerTechnology
+
+    @property
+    def submit_command(self) -> HammerSubmitCommand:
+        """
+        Get the submit command used by this tool
+
+        :return HammerSubmitCommand instance
+        """
+        try:
+            return self._submit_command
+        except AttributeError:
+            raise ValueError("Internal error: technology not set by hammer-vlsi")
+
+    @submit_command.setter
+    def submit_command(self, value: HammerSubmitCommand) -> None:
+        """
+        Set the submit command used by this tool
+
+        :value: HammerSubmitCommand instance
+        """
+        self._submit_command = value
 
     @property
     def logger(self) -> HammerVLSILoggingContext:
@@ -947,35 +966,8 @@ class HammerTool(metaclass=ABCMeta):
         :param cwd: Working directory (leave as None to use the current working directory).
         :return: Output from the command or an error message.
         """
-        self.logger.debug("Executing subprocess: " + ' '.join(args))
 
-        # Short version for easier display in the log.
-        PROG_NAME_LEN = 14 # Capture last 14 characters of the command name
-        if len(args[0]) <= PROG_NAME_LEN:
-            prog_name = args[0]
-        else:
-            prog_name = "..." + args[0][len(args[0])-PROG_NAME_LEN:]
-        remaining_args = " ".join(args[1:])
-        if len(remaining_args) <= 15:
-            prog_args = remaining_args
-        else:
-            prog_args = remaining_args[0:15] + "..."
-        prog_tag = prog_name + " " + prog_args
-        subprocess_logger = self.logger.context("Exec " + prog_tag)
-
-        proc = subprocess.Popen(args, shell=False, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, env=self._subprocess_env, cwd=cwd)
-        atexit.register(proc.kill)
-        # Log output and also capture output at the same time.
-        output_buf = ""
-        while True:
-            line = proc.stdout.readline().decode("utf-8")
-            if line != '':
-                subprocess_logger.debug(line.rstrip())
-                output_buf += line
-            else:
-                break
-        # TODO: check errors
-        return line
+        return self.submit_command.submit(args, self._subprocess_env, self.logger, cwd)
 
     # Common convenient filters useful to many different tools.
     @staticmethod
