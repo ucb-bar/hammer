@@ -296,13 +296,20 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
             # If it's a dynamic meta, skip it for now since they are lazily
             # processed at the very end.
             if meta_type.startswith("dynamic"):
-                if meta_type[len("dynamic"):] not in get_meta_directives():
+                dynamic_base_meta_type = meta_type[len("dynamic"):]
+
+                if dynamic_base_meta_type not in get_meta_directives():
                     raise ValueError("The type of dynamic meta variable %s is not supported (%s)" % (meta_key, meta_type))
 
                 if seen_dynamic:
                     raise ValueError("Multiple dynamic directives in a single directive array not supported yet")
                 else:
                     seen_dynamic = True
+
+                # Check if this dynamic meta references itself.
+                for target_setting in get_meta_directives()[dynamic_base_meta_type].target_settings(setting, meta_dict[setting]):
+                    if setting == target_setting:
+                        raise NotImplementedError()
 
                 # Store it into newdict and skip processing now.
                 newdict[setting] = meta_dict[setting]
