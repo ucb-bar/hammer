@@ -202,7 +202,6 @@ synthesis.submit:
   command: "${vlsi.submit.command}"
   command_meta: dynamicsubst
   settings: []
-  settings_meta: append
 
 # Specific inputs for the place and route tool.
 # These inputs are the generic inputs; specific tools ("CAD junk") may require
@@ -244,4 +243,3 @@ par.submit:
   command: "${vlsi.submit.command}"
   command_meta: dynamicsubst
   settings: []
-  settings_meta: append
