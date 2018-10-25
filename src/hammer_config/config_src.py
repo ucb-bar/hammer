@@ -9,12 +9,12 @@
 
 # pylint: disable=invalid-name
 
-from typing import Iterable, List, Union, Callable, Any, Dict, Set
+from typing import Iterable, List, Union, Callable, Any, Dict, Set, NamedTuple
 
 from hammer_utils import deepdict
 from .yaml2json import load_yaml  # grumble grumble
 
-from functools import reduce
+from functools import reduce, lru_cache
 import json
 import numbers
 import os
@@ -22,6 +22,169 @@ import re
 
 # Special key used for meta directives which require config paths like prependlocal.
 _CONFIG_PATH_KEY = "_config_path"
+
+
+# Miscellaneous parameters involved in executing a meta directive.
+class MetaDirectiveParams(NamedTuple('MetaDirectiveParams', [
+    # Path of the config that contained the meta directive.
+    # Used mainly for prependlocal.
+    ('meta_path', str)
+])):
+    __slots__ = ()
+
+
+# Represents a meta directive in the Hammer configuration system.
+class MetaDirective(NamedTuple('MetaDirective', [
+    # Action which executes/implements this meta directive.
+    # config_dict is the base dictionary
+    # key is the key of the meta directive
+    # value is the value of that key
+    # params contains miscellaneous parameters required to execute meta directives.
+    # def action(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
+    #     ...
+    ('action', Callable[[dict, str, Any, MetaDirectiveParams], None]),
+    # Function which takes in the key and value for a meta directive and
+    # returns a list of settings it depends on.
+    # e.g. for subst, a value of "${a}${b}" would return
+    # ['a', 'b'].
+    # def target_settings(key: str, value: Any) -> List[str]:
+    #     ...
+    ('target_settings', Callable[[str, Any], List[str]])
+])):
+    __slots__ = ()
+
+
+@lru_cache(maxsize=2)
+def get_meta_directives() -> Dict[str, MetaDirective]:
+    """
+    Get all meta directives available.
+    :return: Meta directives indexed by action (e.g. "subst").
+    """
+    directives = {}  # type: Dict[str, MetaDirective]
+
+    # Helper functions to implement each meta directive.
+    def meta_append(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
+        if key not in config_dict:
+            config_dict[key] = []
+
+        if not isinstance(config_dict[key], list):
+            raise ValueError("Trying to append to non-list setting %s" % (key))
+        if not isinstance(value, list):
+            raise ValueError("Trying to append to list %s with non-list %s" % (key, str(value)))
+        config_dict[key] += value
+
+    # append depends only on itself
+    directives['append'] = MetaDirective(action=meta_append,
+                                         target_settings=lambda key, value: [key])
+
+    def meta_subst(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
+        def perform_subst(value: Union[str, List[str]]) -> Union[str, List[str]]:
+            """
+            Perform substitutions for the given value.
+            If value is a string, perform substitutions in the string. If value is a list, then perform substitutions
+            in every string in the list.
+            :param value: String or list
+            :return: String or list but with everything substituted.
+            """
+
+            def subst_str(input_str: str) -> str:
+                """Substitute ${...}"""
+                return re.sub(__VARIABLE_EXPANSION_REGEX, lambda x: config_dict[x.group(1)], input_str)
+
+            newval = ""  # type: Union[str, List[str]]
+
+            if isinstance(value, list):
+                newval = list(map(subst_str, value))
+            else:
+                newval = subst_str(value)
+            return newval
+
+        config_dict[key] = perform_subst(value)
+
+    def subst_targets(key: str, value: Any) -> List[str]:
+        assert isinstance(value, str)
+
+        output_vars = []  # type: List[str]
+
+        matches = re.finditer(__VARIABLE_EXPANSION_REGEX, value, re.DOTALL)
+        for match in matches:
+            output_vars.append(match.group(1))
+
+        return output_vars
+
+    directives['subst'] = MetaDirective(action=meta_subst,
+                                        target_settings=subst_targets)
+
+    def crossref_check_and_cast(k: Any) -> str:
+        if not isinstance(k, str):
+            raise ValueError("crossref (if used with lists) can only be used only with lists of strings")
+        else:
+            return k
+
+    def meta_crossref(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
+        """
+        Copy the contents of the referenced key for use as this key's value.
+        If the reference is a list, then apply the crossref for each element
+        of the list.
+        """
+        if type(value) == str:
+            config_dict[key] = config_dict[value]
+        elif type(value) == list:
+            def check_and_get(k: Any) -> Any:
+                return config_dict[crossref_check_and_cast(k)]
+
+            config_dict[key] = list(map(check_and_get, value))
+        elif isinstance(value, numbers.Number):
+            # bools are instances of numbers.Number for some weird reason
+            raise ValueError("crossref cannot be used with numbers and bools")
+        else:
+            raise NotImplementedError("crossref not implemented on other types yet")
+
+    def crossref_targets(key: str, value: Any) -> List[str]:
+        if type(value) == str:
+            return [value]
+        elif type(value) == list:
+            return list(map(crossref_check_and_cast, value))
+        elif isinstance(value, numbers.Number):
+            # bools are instances of numbers.Number for some weird reason
+            raise ValueError("crossref cannot be used with numbers and bools")
+        else:
+            raise NotImplementedError("crossref not implemented on other types yet")
+
+    directives['crossref'] = MetaDirective(action=meta_crossref,
+                                           target_settings=crossref_targets)
+
+    def meta_transclude(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
+        """Transclude the contents of the file pointed to by value."""
+        assert isinstance(value, str), "Path to file for transclusion must be a string"
+        with open(value, "r") as f:
+            file_contents = str(f.read())
+        config_dict[key] = file_contents
+
+    # transclude depends on external files, not other settings.
+    directives['transclude'] = MetaDirective(action=meta_transclude,
+                                             target_settings=lambda key, value: [])
+
+    def meta_json2list(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
+        """Turn the value of the key (JSON list) into a list."""
+        assert isinstance(value, str), "json2list requires a JSON string that is a list"
+        parsed = json.loads(value)
+        assert isinstance(parsed, list), "json2list requires a JSON string that is a list"
+        config_dict[key] = parsed
+
+    # json2list does not depend on anything
+    directives['json2list'] = MetaDirective(action=meta_json2list,
+                                            target_settings=lambda key, value: [])
+
+    def meta_prependlocal(config_dict: dict, key: str, value, params: MetaDirectiveParams) -> None:
+        """Prepend the local path of the config dict."""
+        config_dict[key] = os.path.join(params.meta_path, str(value))
+
+    # prependlocal does not depend on anything in config_dict.
+    directives['prependlocal'] = MetaDirective(action=meta_prependlocal,
+                                               target_settings=lambda key, value: [])
+
+    return directives
 
 
 def unpack(config_dict: dict, prefix: str = "") -> dict:
@@ -102,130 +265,12 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
     :param meta_dict: Dictionary with potentially new meta directives.
     :return: New dictionary with meta_dict updating config_dict.
     """
-
-    def perform_subst(value: Union[str, List[str]]) -> Union[str, List[str]]:
-        """
-        Perform substitutions for the given value.
-        If value is a string, perform substitutions in the string. If value is a list, then perform substitutions
-        in every string in the list.
-        :param value: String or list
-        :return: String or list but with everything substituted.
-        """
-
-        def subst_str(input_str: str) -> str:
-            """Substitute ${...}"""
-            return re.sub(__VARIABLE_EXPANSION_REGEX, lambda x: config_dict[x.group(1)], input_str)
-
-        newval = ""  # type: Union[str, List[str]]
-
-        if isinstance(value, list):
-            newval = list(map(subst_str, value))
-        else:
-            newval = subst_str(value)
-        return newval
-
-    # Helper functions to implement each meta directive.
-    def meta_append(config_dict: dict, key: str, value: Any) -> None:
-        if key not in config_dict:
-            config_dict[key] = []
-
-        if not isinstance(config_dict[key], list):
-            raise ValueError("Trying to append to non-list setting %s" % (key))
-        if not isinstance(value, list):
-            raise ValueError("Trying to append to list %s with non-list %s" % (key, str(value)))
-        config_dict[key] += value
-
-    def meta_subst(config_dict: dict, key: str, value: Any) -> None:
-        config_dict[key] = perform_subst(value)
-
-    def meta_crossref(config_dict: dict, key: str, value: Any) -> None:
-        """
-        Copy the contents of the referenced key for use as this key's value.
-        If the reference is a list, then apply the crossref for each element
-        of the list.
-        """
-        if type(value) == str:
-            config_dict[key] = config_dict[value]
-        elif type(value) == list:
-            def check_and_get(k: Any) -> Any:
-                if not isinstance(k, str):
-                    raise ValueError("crossref (if used with lists) can only be used only with lists of strings")
-                else:
-                    return config_dict[k]
-            config_dict[key] = list(map(check_and_get, value))
-        elif isinstance(value, numbers.Number):
-            # bools are instances of numbers.Number for some weird reason
-            raise ValueError("crossref cannot be used with numbers and bools")
-        else:
-            raise NotImplementedError("crossref not implemented on other types yet")
-
-    def meta_transclude(config_dict: dict, key: str, value: Any) -> None:
-        """Transclude the contents of the file pointed to by value."""
-        assert isinstance(value, str), "Path to file for transclusion must be a string"
-        with open(value, "r") as f:
-            file_contents = str(f.read())
-        config_dict[key] = file_contents
-
-    def meta_json2list(config_dict: dict, key: str, value: Any) -> None:
-        """Turn the value of the key (JSON list) into a list."""
-        assert isinstance(value, str), "json2list requires a JSON string that is a list"
-        parsed = json.loads(value)
-        assert isinstance(parsed, list), "json2list requires a JSON string that is a list"
-        config_dict[key] = parsed
-
-    def make_meta_dynamic(dynamic_meta: str) -> Callable[[dict, str, Any], None]:
-        """
-        Create a meta_dynamicFOO function.
-        :param dynamic_meta: Dynamic meta type e.g. "dynamicsubst"
-        :return: A function for meta_directive_functions.
-        """
-
-        def meta_dynamic(config_dict: dict, key: str, value: Any) -> None:
-            # Do nothing at this stage, since we need to deal with dynamicsubst only after
-            # everything has been bound.
-
-            # If overriding a variable that already has a dynamic meta,
-            # error out since this isn't supported yet.
-            if key in config_dict:
-                if (key + "_meta") in config_dict:
-                    prev_meta_raw = config_dict[key + "_meta"]
-                    prev_meta = ""  # type: str
-                    if isinstance(prev_meta, list):
-                        prev_meta = str(prev_meta_raw[0])
-                    else:
-                        prev_meta = str(prev_meta_raw)
-
-                    if prev_meta.startswith("dynamic"):
-                        raise ValueError(
-                            "Overriding a dynamic meta with another dynamic meta is not currently supported")
-
-            config_dict[key] = value
-            config_dict[key + "_meta"] = dynamic_meta
-
-        return meta_dynamic
-
-    def meta_prependlocal(config_dict: dict, key: str, value) -> None:
-        """Prepend the local path of the config dict."""
-        config_dict[key] = os.path.join(meta_dict[_CONFIG_PATH_KEY], str(value))
-
-    # Lookup table of meta functions.
-    meta_directive_functions = {
-        'append': meta_append,
-        'subst': meta_subst,
-        'dynamicsubst': make_meta_dynamic('dynamicsubst'),
-        'crossref': meta_crossref,
-        'dynamiccrossref': make_meta_dynamic('dynamiccrossref'),
-        'transclude': meta_transclude,
-        'dynamictransclude': make_meta_dynamic('dynamictransclude'),
-        'json2list': meta_json2list,
-        'dynamicjson2list': make_meta_dynamic('dynamicjson2list'),
-        'prependlocal': meta_prependlocal
-    }  # type: Dict[str, Callable[[dict, str, Any], None]]
+    assert isinstance(config_dict, dict)
+    assert isinstance(meta_dict, dict)
 
     newdict = deepdict(config_dict)
 
     # Find meta directives.
-    assert isinstance(meta_dict, dict)
     meta_dict = deepdict(meta_dict)  # create a copy so we can remove items.
     meta_dict_keys = list(meta_dict.keys())
     meta_keys = filter(lambda k: k.endswith("_meta"), meta_dict_keys)
@@ -243,14 +288,36 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
             meta_directives = meta_type_from_dict
 
         # Process each meta type in order.
+        seen_dynamic = False  # type: bool
         for meta_type in meta_directives:
             if not isinstance(meta_type, str):
                 raise TypeError("meta_type was not a string: " + repr(meta_type))
+
+            # If it's a dynamic meta, skip it for now since they are lazily
+            # processed at the very end.
+            if meta_type.startswith("dynamic"):
+                if meta_type[len("dynamic"):] not in get_meta_directives():
+                    raise ValueError("The type of dynamic meta variable %s is not supported (%s)" % (meta_key, meta_type))
+
+                if seen_dynamic:
+                    raise ValueError("Multiple dynamic directives in a single directive array not supported yet")
+                else:
+                    seen_dynamic = True
+
+                # Store it into newdict and skip processing now.
+                newdict[setting] = meta_dict[setting]
+                newdict[setting + "_meta"] = meta_type
+                continue
+            else:
+                if seen_dynamic:
+                    raise ValueError("Cannot use a non-dynamic meta directive after a dynamic one")
+
             try:
-                meta_func = meta_directive_functions[meta_type]
+                meta_func = get_meta_directives()[meta_type].action
             except KeyError:
                 raise ValueError("The type of meta variable %s is not supported (%s)" % (meta_key, meta_type))
-            meta_func(newdict, setting, meta_dict[setting])
+            meta_func(newdict, setting, meta_dict[setting],
+                      MetaDirectiveParams(meta_path=meta_dict.get(_CONFIG_PATH_KEY, "unspecified")))
             # Update meta_dict if there are multiple meta directives.
             meta_dict[setting] = newdict[setting]
 
