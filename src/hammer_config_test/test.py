@@ -154,35 +154,6 @@ style: "waterfall"
         self.assertEqual(db.get_setting("foo.later"), "later")
         self.assertEqual(db.get_setting("foo.methodology"), "agile design")
 
-    def test_meta_dynamicsubst_other_dynamicsubst(self):
-        """
-        Check that a dynamicsubst which references other dynamicsubst errors for now.
-        """
-        """
-        Test that the meta attribute "dynamicsubst" works.
-        """
-        db = hammer_config.HammerDatabase()
-        base = hammer_config.load_config_from_string("""
-foo:
-    flash: "yes"
-    one: "1"
-    two: "2"
-    lolcat: ""
-    twelve: "${lolcat}"
-    twelve_meta: dynamicsubst
-""", is_yaml=True)
-        project = hammer_config.load_config_from_string("""
-{
-  "lolcat": "whatever",
-  "later": "${foo.twelve}",
-  "later_meta": "dynamicsubst"
-}
-""", is_yaml=False)
-        db.update_core([base])
-        db.update_project([project])
-        with self.assertRaises(ValueError):
-            print(db.get_config())
-
     def test_meta_append(self):
         """
         Test that the meta attribute "append" works.
@@ -205,6 +176,72 @@ foo:
         db.update_core([base, meta])
         self.assertEqual(db.get_setting("foo.bar.dac"), "current_weighted")
         self.assertEqual(db.get_setting("foo.bar.dsl"), ["scala", "python"])
+
+    def test_meta_dynamic_referencing_other_dynamic(self) -> None:
+        """
+        Test that dynamic settings can reference other dynamic settings.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+global: "hello world"
+tool1:
+    common: "${global} tool1"
+    common_meta: "dynamicsubst"
+    a: "${tool1.common} abc"
+    a_meta: "dynamicsubst"
+    b: "${tool1.common} bcd"
+    b_meta: "dynamicsubst"
+tool2:
+    common: "${global} tool2"
+    common_meta: "dynamicsubst"
+    x: "${tool2.common} xyz"
+    x_meta: "dynamicsubst"
+    z: "${tool2.common} zyx"
+    z_meta: "dynamicsubst"
+conglomerate: "${tool1.common} + ${tool2.common}"
+conglomerate_meta: "dynamicsubst"
+""", is_yaml=True)
+        meta = hammer_config.load_config_from_string("""
+{
+  "global": "foobar"
+}
+""", is_yaml=False)
+        db.update_core([base, meta])
+        self.assertEqual(db.get_setting("global"), "foobar")
+        self.assertEqual(db.get_setting("tool1.common"), "foobar tool1")
+        self.assertEqual(db.get_setting("tool1.a"), "foobar tool1 abc")
+        self.assertEqual(db.get_setting("tool1.b"), "foobar tool1 bcd")
+        self.assertEqual(db.get_setting("tool2.common"), "foobar tool2")
+        self.assertEqual(db.get_setting("tool2.x"), "foobar tool2 xyz")
+        self.assertEqual(db.get_setting("tool2.z"), "foobar tool2 zyx")
+        self.assertEqual(db.get_setting("conglomerate"), "foobar tool1 + foobar tool2")
+
+    def test_meta_dynamicsubst_other_dynamicsubst(self) -> None:
+        """
+        Check that a dynamicsubst which references other dynamicsubst works.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo:
+    flash: "yes"
+    one: "1"
+    two: "2"
+    lolcat: ""
+    twelve: "${lolcat}"
+    twelve_meta: dynamicsubst
+    """, is_yaml=True)
+        project = hammer_config.load_config_from_string("""
+{
+  "lolcat": "whatever",
+  "later": "${foo.twelve}",
+  "later_meta": "dynamicsubst"
+}
+    """, is_yaml=False)
+        db.update_core([base])
+        db.update_project([project])
+        self.assertEqual(db.get_setting("lolcat"), "whatever")
+        self.assertEqual(db.get_setting("foo.twelve"), "whatever")
+        self.assertEqual(db.get_setting("later"), "whatever")
 
     def test_repeated_updates(self) -> None:
         """

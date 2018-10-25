@@ -9,9 +9,9 @@
 
 # pylint: disable=invalid-name
 
-from typing import Iterable, List, Union, Callable, Any, Dict, Set, NamedTuple
+from typing import Iterable, List, Union, Callable, Any, Dict, Set, NamedTuple, Tuple
 
-from hammer_utils import deepdict
+from hammer_utils import deepdict, topological_sort
 from .yaml2json import load_yaml  # grumble grumble
 
 from functools import reduce, lru_cache
@@ -530,15 +530,19 @@ def combine_configs(configs: Iterable[dict]) -> dict:
     :param handle_meta: Handle meta configs?
     :return: A loaded config dictionary.
     """
-    expanded_config_reduce = reduce(update_and_expand_meta, configs, {}) # type: dict
-    expanded_config = deepdict(expanded_config_reduce) # type: dict
-    expanded_config_orig = deepdict(expanded_config) # type: dict
+    expanded_config_reduce = reduce(update_and_expand_meta, configs, {})  # type: dict
+    expanded_config = deepdict(expanded_config_reduce)  # type: dict
+    expanded_config_orig = deepdict(expanded_config)  # type: dict
 
     # Now, we need to handle dynamic* metas.
     dynamic_metas = {}
 
     meta_dict_keys = list(expanded_config.keys())
     meta_keys = list(filter(lambda k: k.endswith("_meta"), meta_dict_keys))
+
+    # Graph to keep track of which dynamic settings depend on others.
+    # key1 -> key2 means key2 depends on key1
+    graph = {}  # type: Dict[str, Tuple[List[str], List[str]]]
 
     meta_len = len("_meta")
     for meta_key in meta_keys:
@@ -553,17 +557,50 @@ def combine_configs(configs: Iterable[dict]) -> dict:
         dynamic_metas[meta_key] = meta_type
         dynamic_metas[setting] = expanded_config[setting]  # copy over the template too
 
-        # Just check that we don't reference any other dynamic settings for now.
-        # We can always go to a DAG tree later if need be.
+        # Build the graph of which dynamic settings depend on what.
+
+        # Always ensure that this dynamic setting's node exists even if it has no dependencies.
+        if setting not in graph:
+            graph[setting] = ([], [])
+
         for target_var in get_meta_directives()[meta_type].target_settings(setting, expanded_config[setting]):
-            if target_var + "_meta" in expanded_config_orig:  # make sure the order in which we delete doesn't affect this search
-                raise ValueError("dynamic setting referencing another dynamic setting not supported yet")
+            # Make sure the order in which we delete doesn't affect this
+            # search, since expanded_config might have some deleted stuff.
+            if target_var + "_meta" in expanded_config_orig:
+                # Add a dependency for target -> this setting
+                if target_var not in graph:
+                    graph[target_var] = ([], [])
+                graph[target_var][0].append(setting)
+                graph[setting][1].append(target_var)
+            else:
+                # The target setting that this depends on is not a dynamic setting.
+                pass
 
         # Delete from expanded_config
         del expanded_config[meta_key]
         del expanded_config[setting]
 
-    final_dict = update_and_expand_meta(expanded_config, dynamic_metas)
+    if len(graph) > 0:
+        # Find all the starting nodes (no incoming edges).
+        starting_nodes = list(
+            map(lambda key_val: key_val[0], filter(lambda key_val: len(key_val[1][1]) == 0, graph.items())))
+
+        if len(starting_nodes) == 0:
+            raise ValueError("There appears to be a loop of dynamic settings")
+
+        # List of settings to expand first according to topological sort.
+        settings_ordered = topological_sort(graph, starting_nodes)  # type: List[str]
+
+        def combine_meta(config_dict: dict, meta_setting: str) -> dict:
+            # Merge in the metas in the given order.
+            return update_and_expand_meta(config_dict, {
+                meta_setting: dynamic_metas[meta_setting],
+                meta_setting + "_meta": dynamic_metas[meta_setting + "_meta"]
+            })
+
+        final_dict = reduce(combine_meta, settings_ordered, expanded_config)  # type: dict
+    else:
+        final_dict = deepdict(expanded_config)
 
     # Remove any temporary keys.
     for key in HammerDatabase.internal_keys():
@@ -571,6 +608,7 @@ def combine_configs(configs: Iterable[dict]) -> dict:
             del final_dict[key]
 
     return final_dict
+
 
 def load_config_from_paths(config_paths: Iterable[str], strict: bool = False) -> List[dict]:
     """
