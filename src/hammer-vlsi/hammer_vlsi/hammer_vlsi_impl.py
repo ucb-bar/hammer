@@ -247,6 +247,7 @@ class HammerPlaceAndRouteTool(HammerTool):
     def export_config_outputs(self) -> Dict[str, Any]:
         outputs = deepdict(super().export_config_outputs())
         outputs["par.outputs.output_ilms"] = list(map(lambda s: s.to_setting(), self.output_ilms))
+        outputs["par.outputs.output_gds"] = str(self.output_gds)
         return outputs
 
     ### Generated interface HammerPlaceAndRouteTool ###
@@ -329,6 +330,25 @@ class HammerPlaceAndRouteTool(HammerTool):
         if not (isinstance(value, List)):
             raise TypeError("output_ilms must be a List[ILMStruct]")
         self.attr_setter("_output_ilms", value)
+
+    @property
+    def output_gds(self) -> str:
+        """
+        Get the path to the output GDS file.
+
+        :return: The path to the output GDS file.
+        """
+        try:
+            return self.attr_getter("_output_gds", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the path to the output GDS file yet")
+
+    @output_gds.setter
+    def output_gds(self, value: str) -> None:
+        """Set the path to the output GDS file."""
+        if not (isinstance(value, str)):
+            raise TypeError("output_gds must be a str")
+        self.attr_setter("_output_gds", value)
 
 
 class HasSDCSupport(HammerTool):
