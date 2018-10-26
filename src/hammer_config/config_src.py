@@ -394,7 +394,8 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
         if isinstance(meta_type_from_dict, str):
             meta_directives = [meta_type_from_dict]
         else:
-            assert isinstance(meta_type_from_dict, List)
+            if not isinstance(meta_type_from_dict, list):
+                raise ValueError("A meta directive must either be a string or a list of strings")
             meta_directives = meta_type_from_dict
 
         # Process each meta type in order.
