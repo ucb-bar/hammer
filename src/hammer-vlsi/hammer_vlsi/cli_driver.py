@@ -221,6 +221,9 @@ class CLIDriver:
                     post_load_func_checked(driver)
                 assert driver.syn_tool is not None, "load_synthesis_tool was successful"
                 success, output = driver.run_synthesis(extra_hooks)
+                if not success:
+                    driver.log.error("Synthesis tool did not succeed")
+                    return None
                 dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output-full.json"),
                                          self.get_full_config(driver, output))
@@ -232,6 +235,9 @@ class CLIDriver:
                     post_load_func_checked(driver)
                 assert driver.par_tool is not None, "load_par_tool was successful"
                 success, output = driver.run_par(extra_hooks)
+                if not success:
+                    driver.log.error("Place-and-route tool did not succeed")
+                    return None
                 dump_config_to_json_file(os.path.join(driver.par_tool.run_dir, "par-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.par_tool.run_dir, "par-output-full.json"),
                                          self.get_full_config(driver, output))
