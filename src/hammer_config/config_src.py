@@ -194,7 +194,21 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
 
     def crossref_rename(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[
         Tuple[Any, str]]:
-        raise NotImplementedError()
+        def change_if_target(x: str) -> str:
+            if x == target_setting:
+                return replacement_setting
+            else:
+                return x
+
+        if type(value) == str:
+            return [change_if_target(value)], "crossref"
+        elif type(value) == list:
+            return list(map(change_if_target, map(crossref_check_and_cast, value))), "crossref"
+        elif isinstance(value, numbers.Number):
+            # bools are instances of numbers.Number for some weird reason
+            raise ValueError("crossref cannot be used with numbers and bools")
+        else:
+            raise NotImplementedError("crossref not implemented on other types yet")
 
     directives['crossref'] = MetaDirective(action=crossref_action,
                                            target_settings=crossref_targets,
