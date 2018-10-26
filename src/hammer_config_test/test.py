@@ -590,9 +590,9 @@ foo:
         self.assertEqual(db.get_setting("foo.twelve"), "whatever")
         self.assertEqual(db.get_setting("later"), "whatever")
 
-    def test_meta_repeated_dynamic(self) -> None:
+    def test_self_reference_dynamicsubst(self) -> None:
         """
-        Test that repeated applications of a dynamic command work.
+        Test that self-referencing dynamic subst works.
         """
         db = hammer_config.HammerDatabase()
         base = hammer_config.load_config_from_string("""
@@ -614,6 +614,32 @@ derivative_str_meta: "dynamicsubst"
         """, is_yaml=True)
         db.update_core([base, config1, config2])
         self.assertEqual(db.get_setting("derivative_str"), "hello_1_2")
+
+    def test_self_reference_dynamiccrossref(self) -> None:
+        """
+        Test that self-referencing dynamic crossref works.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+base: "hello"
+derivative: "base"
+derivative_meta: "dynamiccrossref"
+        """, is_yaml=True)
+        config1 = hammer_config.load_config_from_string("""
+{
+    "derivative": "derivative",
+    "derivative_meta": "dynamiccrossref"
+}
+        """, is_yaml=True)
+        config2 = hammer_config.load_config_from_string("""
+{
+    "base": "tower",
+    "derivative": "derivative",
+    "derivative_meta": "dynamiccrossref"
+}
+        """, is_yaml=True)
+        db.update_core([base, config1, config2])
+        self.assertEqual(db.get_setting("base"), "tower")
 
 
 if __name__ == '__main__':
