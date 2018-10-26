@@ -51,9 +51,7 @@ class HammerSubmitCommand:
         """
 
         submit_command_mode = database.get_setting(tool_namespace + ".submit.command", nullvalue="none")
-        # TODO This is sketchy
-        submit_command_settings = database.get_setting("vlsi.submit.settings", nullvalue=[]) + \
-                                  database.get_setting(tool_namespace + ".submit.settings",
+        submit_command_settings = database.get_setting(tool_namespace + ".submit.settings",
                                                        nullvalue=[])  # type: List[Dict[str, Dict[str, Any]]]
 
         # Settings is a List[Dict[str, Dict[str, Any]]] object. The first Dict key is the submit command name.
