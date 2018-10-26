@@ -14,7 +14,7 @@ import hammer_config
 
 class HammerDatabaseTest(unittest.TestCase):
 
-    def test_overriding(self):
+    def test_overriding(self) -> None:
         """
         Test that we can add a project first and technology after and still have it override.
         """
@@ -24,7 +24,7 @@ class HammerDatabaseTest(unittest.TestCase):
         db.update_technology([{"tech.x": "bar"}])
         self.assertEqual(db.get_setting("tech.x"), "foo")
 
-    def test_unpacking(self):
+    def test_unpacking(self) -> None:
         """
         Test that input configs get unpacked.
         """
@@ -39,7 +39,7 @@ foo:
         self.assertEqual(db.get_setting("foo.bar.adc"), "yes")
         self.assertEqual(db.get_setting("foo.bar.dac"), "no")
 
-    def test_no_config_junk(self):
+    def test_no_config_junk(self) -> None:
         """Test that no _config_path junk variables get left behind."""
         db = hammer_config.HammerDatabase()
         db.update_core([hammer_config.load_config_from_string("key1: value1", is_yaml=True)])
@@ -70,7 +70,7 @@ a.b.c_meta: append
         db.update_environment([])
         self.assertEqual(db.get_setting("a.b.c"), ["test"])
 
-    def test_meta_json2list(self):
+    def test_meta_json2list(self) -> None:
         """
         Test that the meta attribute "json2list" works.
         """
@@ -91,7 +91,7 @@ foo:
         self.assertEqual(db.get_setting("foo.max"), "min")
         self.assertEqual(db.get_setting("foo.pipeline"), ["1", "2"])
 
-    def test_meta_dynamicjson2list(self):
+    def test_meta_dynamicjson2list(self) -> None:
         """
         Test that the meta attribute "dynamicjson2list" works.
         """
@@ -113,7 +113,7 @@ foo:
         self.assertEqual(db.get_setting("foo.max"), "min")
         self.assertEqual(db.get_setting("foo.pipeline"), ["1", "2"])
 
-    def test_meta_subst(self):
+    def test_meta_subst(self) -> None:
         """
         Test that the meta attribute "subst" works.
         """
@@ -137,7 +137,7 @@ foo:
         self.assertEqual(db.get_setting("foo.pipeline"), "yesman")
         self.assertEqual(db.get_setting("foo.uint"), ["1", "2"])
 
-    def test_meta_dynamicsubst(self):
+    def test_meta_dynamicsubst(self) -> None:
         """
         Test that the meta attribute "dynamicsubst" works.
         """
@@ -307,7 +307,7 @@ my:
             db.update_core([base, meta])
             db.get_setting("bad_list")
 
-    def test_meta_prependlocal(self):
+    def test_meta_prependlocal(self) -> None:
         """
         Test that the meta attribute "prependlocal" works.
         """
@@ -336,7 +336,7 @@ foo:
         self.assertEqual(db.get_setting("foo.bar.base_test"), "base/config/path/local_path")
         self.assertEqual(db.get_setting("foo.bar.meta_test"), "meta/config/path/local_path")
 
-    def test_meta_transclude(self):
+    def test_meta_transclude(self) -> None:
         """
         Test that the meta attribute "transclude" works.
         """
@@ -370,7 +370,7 @@ chips:
         self.assertEqual(db.get_setting("chips.bear"), "yeah")
         self.assertEqual(db.get_setting("chips.tree"), file_contents)
 
-    def test_meta_transclude_prependlocal(self):
+    def test_meta_transclude_prependlocal(self) -> None:
         """
         Test that the meta attribute "transclude" works with "prependlocal".
         """
@@ -405,7 +405,7 @@ chips:
         self.assertEqual(db.get_setting("chips.bear"), "yeah")
         self.assertEqual(db.get_setting("chips.tree"), os.path.join(local_path, file_contents))
 
-    def test_meta_transclude_subst(self):
+    def test_meta_transclude_subst(self) -> None:
         """
         Test that the meta attribute "transclude" works with "subst".
         """
@@ -440,7 +440,7 @@ food:
 
         self.assertEqual(db.get_setting("food.announcement"), file_contents_sol)
 
-    def test_meta_as_array_1(self):
+    def test_meta_as_array_1(self) -> None:
         """
         Test meta attributes that are an array.
         """
@@ -460,7 +460,7 @@ foo:
         self.assertEqual(db.get_setting("foo.bar.base_test"), "local_path")
         self.assertEqual(db.get_setting("foo.bar.meta_test"), "local_path")
 
-    def test_meta_subst_and_prependlocal(self):
+    def test_meta_subst_and_prependlocal(self) -> None:
         """
         Test meta attributes that are an array.
         """
