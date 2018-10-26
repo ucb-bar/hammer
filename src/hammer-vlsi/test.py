@@ -1099,7 +1099,12 @@ class HammerSubmitCommandTestContext:
                     "bsub_binary": os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "test",
                                                 "mock_bsub.sh"),
                     "extra_args": ("-R", "myresources")
-                }}]
+                }}],
+                "synthesis.submit.settings_meta": "dynamicappend",
+                "vlsi.submit.settings": [
+                    {"lsf": {"num_cpus": 8}}
+                ],
+                "vlsi.submit.settings_meta": "dynamicappend"
             })
 
         with open(json_path, "w") as f:
