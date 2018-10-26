@@ -505,7 +505,7 @@ test_meta: ["dynamicsubst", "dynamiccrossref"]
         msg = cm.exception.args[0]
         self.assertTrue("Multiple dynamic directives in a single directive array not supported yet" in msg)
 
-    def test_meta_append_bad(self):
+    def test_meta_append_bad(self) -> None:
         """
         Test that the meta attribute "append" catches bad inputs.
         """
@@ -607,6 +607,44 @@ foo:
         self.assertEqual(db.get_setting("lolcat"), "whatever")
         self.assertEqual(db.get_setting("foo.twelve"), "whatever")
         self.assertEqual(db.get_setting("later"), "whatever")
+
+    def test_meta_dynamiccrossappend_with_dynamiccrossref(self) -> None:
+        """
+        Test that dynamic crossappend works with dynamic crossref in one file.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+global: ["hello", "world", "scala"]
+tool_1: "global"
+tool_1_meta: "dynamiccrossref"
+tool: ["tool_1", ["python"]]
+tool_meta: "dynamiccrossappend"
+""", is_yaml=True)
+        db.update_core([base])
+        self.assertEqual(db.get_setting("global"), ["hello", "world", "scala"])
+        self.assertEqual(db.get_setting("tool"), ["hello", "world", "scala", "python"])
+
+    def test_meta_dynamicappend_with_dynamiccrossref_2(self) -> None:
+        """
+        Test that dynamic "append" works with dynamic crossref.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+global: ["hello", "world"]
+tool: "global"
+tool_meta: "dynamiccrossref"
+""", is_yaml=True)
+        meta = hammer_config.load_config_from_string("""
+{
+  "global": ["scala"],
+  "global_meta": "append",
+  "tool": ["python"],
+  "tool_meta": "dynamicappend"
+}
+""", is_yaml=False)
+        db.update_core([base, meta])
+        self.assertEqual(db.get_setting("global"), ["hello", "world", "scala"])
+        self.assertEqual(db.get_setting("tool"), ["hello", "world", "scala", "python"])
 
     def test_self_reference_dynamicsubst(self) -> None:
         """
