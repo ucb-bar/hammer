@@ -48,6 +48,28 @@ foo:
         for key in hammer_config.HammerDatabase.internal_keys():
             self.assertFalse(db.has_setting(key), "Should not have internal key " + key)
 
+    def test_repeated_updates(self) -> None:
+        """
+        Test that repeated updates don't cause duplicates.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+a.b:
+  c: []
+""", is_yaml=True)
+        meta = hammer_config.load_config_from_string("""
+a.b.c: ["test"]
+a.b.c_meta: append
+""", is_yaml=True)
+        db.update_core([base])
+        self.assertEqual(db.get_setting("a.b.c"), [])
+        db.update_project([meta])
+        self.assertEqual(db.get_setting("a.b.c"), ["test"])
+        db.update_technology([])
+        self.assertEqual(db.get_setting("a.b.c"), ["test"])
+        db.update_environment([])
+        self.assertEqual(db.get_setting("a.b.c"), ["test"])
+
     def test_meta_json2list(self):
         """
         Test that the meta attribute "json2list" works.
@@ -177,27 +199,23 @@ foo:
         self.assertEqual(db.get_setting("foo.bar.dac"), "current_weighted")
         self.assertEqual(db.get_setting("foo.bar.dsl"), ["scala", "python"])
 
-    def test_repeated_updates(self) -> None:
+    def test_meta_crossappend(self) -> None:
         """
-        Test that repeated updates don't cause duplicates.
+        Test that the meta attribute "crossappend" works.
         """
         db = hammer_config.HammerDatabase()
         base = hammer_config.load_config_from_string("""
-a.b:
-  c: []
+foo.bar.dsl: ["scala"]
 """, is_yaml=True)
         meta = hammer_config.load_config_from_string("""
-a.b.c: ["test"]
-a.b.c_meta: append
-""", is_yaml=True)
-        db.update_core([base])
-        self.assertEqual(db.get_setting("a.b.c"), [])
-        db.update_project([meta])
-        self.assertEqual(db.get_setting("a.b.c"), ["test"])
-        db.update_technology([])
-        self.assertEqual(db.get_setting("a.b.c"), ["test"])
-        db.update_environment([])
-        self.assertEqual(db.get_setting("a.b.c"), ["test"])
+{
+  "foo.bar.languages": ["foo.bar.dsl", ["python"]],
+  "foo.bar.languages_meta": "crossappend"
+}
+""", is_yaml=False)
+        db.update_core([base, meta])
+        self.assertEqual(db.get_setting("foo.bar.dsl"), ["scala"])
+        self.assertEqual(db.get_setting("foo.bar.languages"), ["scala", "python"])
 
     def test_meta_crossref(self) -> None:
         """
@@ -640,6 +658,31 @@ derivative_meta: "dynamiccrossref"
         """, is_yaml=True)
         db.update_core([base, config1, config2])
         self.assertEqual(db.get_setting("base"), "tower")
+
+    def test_self_reference_dynamicappend(self) -> None:
+        """
+        Test that dynamic "append" works.
+        Note that append is always self-referencing.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+global: ["hello", "world"]
+""", is_yaml=True)
+        config1 = hammer_config.load_config_from_string("""
+{
+  "global": ["scala"],
+  "global_meta": "dynamicappend"
+}
+""", is_yaml=False)
+        config2 = hammer_config.load_config_from_string("""
+{
+  "global": ["python"],
+  "global_meta": "dynamicappend"
+}
+""", is_yaml=False)
+        db.update_core([base, config1])
+        db.update_project([config2])
+        self.assertEqual(db.get_setting("global"), ["hello", "world", "scala", "python"])
 
 
 if __name__ == '__main__':

@@ -102,12 +102,44 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
         config_dict[key] += value
 
     def append_rename(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[Tuple[Any, str]]:
-        raise NotImplementedError()
+        return [replacement_setting, value], "crossappend"
 
     # append depends only on itself
     directives['append'] = MetaDirective(action=append_action,
                                          target_settings=lambda key, value: [key],
                                          rename_target=append_rename)
+
+    def crossappend_decode(value) -> Tuple[str, list]:
+        assert isinstance(value, list), "crossappend takes a list of two elements"
+        assert len(value) == 2, "crossappend takes a list of two elements"
+        target_setting = value[0]  # type: str
+        append_value = value[1]  # type: list
+        assert isinstance(target_setting, str), "crossappend target setting must be a string"
+        assert isinstance(append_value, list), "crossappend must append a list"
+        return target_setting, append_value
+
+    # crossappend takes a list that has two elements.
+    # The first is the target list (the list to append to), and the second is
+    # a list to append to the target list.
+    # e.g. if base has ["1"] and crossappend has ["1", ["2", "3"]], the result
+    # is ["1", "2", "3"].
+    def crossappend_action(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
+        target_setting, append_value = crossappend_decode(value)
+        config_dict[key] = config_dict[target_setting] + append_value
+
+    def crossappend_targets(key: str, value: Any) -> List[str]:
+        target_setting, append_value = crossappend_decode(value)
+        return [target_setting]
+
+    def crossappend_rename(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[
+        Tuple[Any, str]]:
+        crossappend_target, append_value = crossappend_decode(value)
+        return [replacement_setting if crossappend_target == target_setting else crossappend_target,
+                append_value], "crossappend"
+
+    directives['crossappend'] = MetaDirective(action=crossappend_action,
+                                              target_settings=crossappend_targets,
+                                              rename_target=crossappend_rename)
 
     def subst_str(input_str: str, replacement_func: Callable[[str], str]) -> str:
         """Substitute ${...}"""
@@ -408,10 +440,13 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
                     # Rename base setting to new_base_setting, and add the new setting.
                     update_dict.update({
                         new_base_setting: newdict[setting],
-                        new_base_setting + "_meta": newdict[setting + "_meta"],
                         setting: new_value,
-                        setting + "_meta": "dynamic" + new_meta # these are dynamic metas
+                        setting + "_meta": "dynamic" + new_meta  # these are dynamic metas
                     })
+                    if setting + "_meta" in newdict:
+                        update_dict.update({
+                            new_base_setting + "_meta": newdict[setting + "_meta"]
+                        })
                 else:
                     # Store it into newdict and skip processing now.
                     update_dict.update({
