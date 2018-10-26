@@ -223,7 +223,8 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
 
     def transclude_rename(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[
         Tuple[Any, str]]:
-        raise NotImplementedError()
+        # This meta directive doesn't depend on any settings
+        return value, "transclude"
 
     # transclude depends on external files, not other settings.
     directives['transclude'] = MetaDirective(action=transclude_action,
@@ -239,7 +240,8 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
 
     def json2list_rename(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[
         Tuple[Any, str]]:
-        raise NotImplementedError()
+        # This meta directive doesn't depend on any settings
+        return value, "json2list"
 
     # json2list does not depend on anything
     directives['json2list'] = MetaDirective(action=json2list_action,
@@ -252,7 +254,8 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
 
     def prependlocal_rename(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[
         Tuple[Any, str]]:
-        raise NotImplementedError()
+        # This meta directive doesn't depend on any settings
+        return value, "prependlocal"
 
     # prependlocal does not depend on anything in config_dict.
     directives['prependlocal'] = MetaDirective(action=prependlocal_action,
