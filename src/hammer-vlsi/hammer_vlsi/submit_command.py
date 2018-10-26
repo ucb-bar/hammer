@@ -204,7 +204,6 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
         subprocess_logger = logger.context("Exec " + prog_tag)
         proc = subprocess.Popen(self.bsub_args() + [' '.join(args)], shell=False, stderr=subprocess.STDOUT,
                                 stdout=subprocess.PIPE, env=env, cwd=cwd)
-        atexit.register(proc.terminate)
 
         output_buf = ""
         # Log output and also capture output at the same time.
