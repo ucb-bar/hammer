@@ -19,7 +19,7 @@ from .driver import HammerDriver, HammerDriverOptions
 
 from typing import List, Dict, Tuple, Any, Callable, Optional
 
-from hammer_utils import add_dicts, deeplist, deepdict, get_or_else, check_function_type
+from hammer_utils import add_dicts, deeplist, deepdict, get_or_else, assert_function_type
 
 
 def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callable[[str], None]) -> List[str]:
@@ -66,7 +66,7 @@ def check_CLIActionType_type(func: CLIActionType) -> None:
     Check that the given CLIActionType obeys its function type signature.
     Raises TypeError if the function is of the incorrect type.
     """
-    check_function_type(func, [HammerDriver, Callable[[str], None]], Optional[dict])
+    assert_function_type(func, [HammerDriver, Callable[[str], None]], Optional[dict])
 
 
 class CLIDriver:

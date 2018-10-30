@@ -7,12 +7,12 @@
 #  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 import copy
-from functools import reduce
 import inspect
+from functools import reduce
 from typing import List, Any, Set, Dict, Tuple, TypeVar, Callable, Iterable, Optional
 
 __all__ = ['deepdict', 'deeplist', 'add_lists', 'add_dicts', 'reverse_dict', 'in_place_unique', 'topological_sort',
-           'reduce_named', 'get_or_else', 'optional_map', 'check_function_type']
+           'reduce_named', 'get_or_else', 'optional_map', 'assert_function_type', 'check_function_type']
 
 
 def deepdict(x: dict) -> dict:
@@ -188,13 +188,26 @@ def optional_map(optional: Optional[_T], func: Callable[[_T], _U]) -> Optional[_
         return func(optional)
 
 
-def check_function_type(function: Callable, args: List[type], return_type: type) -> None:
+def assert_function_type(function: Callable, args: List[type], return_type: type) -> None:
     """
-    Check that the given function obeys its function type signature.
+    Assert that the given function obeys its function type signature.
     Raises TypeError if the function is of the incorrect type.
     :param function: Function to typecheck
     :param args: List of arguments to the function
     :param return_type: Return type
+    """
+    ret = check_function_type(function, args, return_type)
+    if ret is not None:
+        raise TypeError(ret)
+
+
+def check_function_type(function: Callable, args: List[type], return_type: type) -> Optional[str]:
+    """
+    Check that the given function obeys its function type signature.
+    :param function: Function to typecheck
+    :param args: List of arguments to the function
+    :param return_type: Return type
+    :return: None if the function obeys its type signature, or an error message if the function is of the incorrect type.
     """
 
     def msg(cause: str) -> str:
@@ -268,20 +281,21 @@ def check_function_type(function: Callable, args: List[type], return_type: type)
             del inspected_args[0]
 
     if len(inspected_args) != len(args):
-        raise TypeError(msg(
-            "Too many arguments - got {got}, expected {expected}".format(got=len(inspected_args), expected=len(args))))
+        return msg(
+            "Too many arguments - got {got}, expected {expected}".format(got=len(inspected_args), expected=len(args)))
     else:
         for i, (inspected_var_name, expected) in list(enumerate(zip(inspected_args, args))):
             inspected = annotations[inspected_var_name]
             if not compare_types(inspected, expected):
                 inspected_name = get_name_from_type(inspected)
                 expected_name = get_name_from_type(expected)
-                raise TypeError(msg(
-                    "For argument {i}, got {got}, expected {expected}".format(i=i, got=inspected_name,
-                                                                              expected=expected_name)))
+                return msg("For argument {i}, got {got}, expected {expected}".format(i=i, got=inspected_name,
+                                                                                     expected=expected_name))
     inspected_return = annotations['return']
     if not compare_types(inspected_return, return_type):
         inspected_return_name = get_name_from_type(inspected_return)
         return_type_name = get_name_from_type(return_type)
-        raise TypeError(msg("Got return type {got}, expected {expected}".format(got=inspected_return_name,
-                                                                                expected=return_type_name)))
+        return msg(
+            "Got return type {got}, expected {expected}".format(got=inspected_return_name, expected=return_type_name))
+
+    return None
