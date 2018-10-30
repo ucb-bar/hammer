@@ -17,9 +17,9 @@ from .hammer_vlsi_impl import HammerTool, HammerVLSISettings
 from .hooks import HammerToolHookAction
 from .driver import HammerDriver, HammerDriverOptions
 
-from typing import List, Dict, Tuple, Any, Callable, Optional
+from typing import List, Dict, Tuple, Any, Callable, Optional, Union, cast
 
-from hammer_utils import add_dicts, deeplist, deepdict, get_or_else, assert_function_type
+from hammer_utils import add_dicts, deeplist, deepdict, get_or_else, check_function_type
 
 
 def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callable[[str], None]) -> List[str]:
@@ -57,8 +57,27 @@ def dump_config_to_json_file(output_path: str, config: dict) -> None:
         f.write(json.dumps(config, indent=4))
 
 
-# Type signature of a CLIDriver action.
-CLIActionType = Callable[[HammerDriver, Callable[[str], None]], Optional[dict]]
+# Type signature of a CLIDriver action that returns a config dictionary.
+CLIActionConfigType = Callable[[HammerDriver, Callable[[str], None]], Optional[dict]]
+
+# Type signature of a CLIDriver action that returns a raw string.
+CLIActionStringType = Callable[[HammerDriver, Callable[[str], None]], Optional[str]]
+
+# CLIDriver action types.
+CLIActionType = Union[CLIActionConfigType, CLIActionStringType]
+
+
+# We cannot use isinstance() with CLIActionConfigType directly:
+# "Parameterized generics cannot be used with class or instance checks"
+
+def is_config_action(func: CLIActionType) -> bool:
+    """Return True if the given function is a CLIActionConfigType."""
+    return check_function_type(func, [HammerDriver, Callable[[str], None]], Optional[dict]) is None
+
+
+def is_string_action(func: CLIActionType) -> bool:
+    """Return True if the given function is a CLIActionConfigType."""
+    return check_function_type(func, [HammerDriver, Callable[[str], None]], Optional[str]) is None
 
 
 def check_CLIActionType_type(func: CLIActionType) -> None:
@@ -66,7 +85,17 @@ def check_CLIActionType_type(func: CLIActionType) -> None:
     Check that the given CLIActionType obeys its function type signature.
     Raises TypeError if the function is of the incorrect type.
     """
-    assert_function_type(func, [HammerDriver, Callable[[str], None]], Optional[dict])
+    config_check = check_function_type(func, [HammerDriver, Callable[[str], None]], Optional[dict])
+    if config_check is None:
+        return
+
+    string_check = check_function_type(func, [HammerDriver, Callable[[str], None]], Optional[str])
+    if string_check is None:
+        return
+
+    raise TypeError(
+        "func does not appear to be a CLIActionType. Check for config returned {config}; check for string returned {string}".format(
+            config=config_check, string=string_check))
 
 
 class CLIDriver:
@@ -86,22 +115,22 @@ class CLIDriver:
         if hasattr(self, "synthesis_action"):
             check_CLIActionType_type(self.synthesis_action)  # type: ignore
         else:
-            self.synthesis_action = self.create_synthesis_action([])  # type: CLIActionType
+            self.synthesis_action = self.create_synthesis_action([])  # type: CLIActionConfigType
         if hasattr(self, "par_action"):
             check_CLIActionType_type(self.par_action)  # type: ignore
         else:
-            self.par_action = self.create_par_action([])  # type: CLIActionType
+            self.par_action = self.create_par_action([])  # type: CLIActionConfigType
         if hasattr(self, "synthesis_par_action"):
             check_CLIActionType_type(self.synthesis_par_action)  # type: ignore
         else:
-            self.synthesis_par_action = self.create_synthesis_par_action(self.synthesis_action, self.par_action)  # type: CLIActionType
+            self.synthesis_par_action = self.create_synthesis_par_action(self.synthesis_action, self.par_action)  # type: CLIActionConfigType
 
-        # Dictionaries of module-CLIActionType for hierarchical flows.
+        # Dictionaries of module-CLIActionConfigType for hierarchical flows.
         # See all_hierarchical_actions() below.
-        self.hierarchical_synthesis_actions = {}  # type: Dict[str, CLIActionType]
-        self.hierarchical_par_actions = {}  # type: Dict[str, CLIActionType]
-        self.hierarchical_synthesis_par_actions = {}  # type: Dict[str, CLIActionType]
-        self.hierarchical_auto_action = None  # type: Optional[CLIActionType]
+        self.hierarchical_synthesis_actions = {}  # type: Dict[str, CLIActionConfigType]
+        self.hierarchical_par_actions = {}  # type: Dict[str, CLIActionConfigType]
+        self.hierarchical_synthesis_par_actions = {}  # type: Dict[str, CLIActionConfigType]
+        self.hierarchical_auto_action = None  # type: Optional[CLIActionConfigType]
 
     def action_map(self) -> Dict[str, CLIActionType]:
         """Return the mapping of valid actions -> functions for each action of the command-line driver."""
@@ -145,7 +174,7 @@ class CLIDriver:
                                 pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
                                 post_load_func: Optional[Callable[[HammerDriver], None]] = None,
                                 post_run_func: Optional[Callable[[HammerDriver], None]] = None
-                                ) -> CLIActionType:
+                                ) -> CLIActionConfigType:
         hooks = self.get_extra_synthesis_hooks() + custom_hooks  # type: List[HammerToolHookAction]
         return self.create_action("synthesis", hooks if len(hooks) > 0 else None,
                                   pre_action_func, post_load_func, post_run_func)
@@ -153,7 +182,7 @@ class CLIDriver:
     def create_par_action(self, custom_hooks: List[HammerToolHookAction],
                           pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
                           post_load_func: Optional[Callable[[HammerDriver], None]] = None,
-                          post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionType:
+                          post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
         hooks = self.get_extra_par_hooks() + custom_hooks  # type: List[HammerToolHookAction]
         return self.create_action("par", hooks if len(hooks) > 0 else None,
                                   pre_action_func, post_load_func, post_run_func)
@@ -187,7 +216,7 @@ class CLIDriver:
                       extra_hooks: Optional[List[HammerToolHookAction]],
                       pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
                       post_load_func: Optional[Callable[[HammerDriver], None]] = None,
-                      post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionType:
+                      post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
         """
         Create an action function for the action_map.
 
@@ -258,7 +287,7 @@ class CLIDriver:
         else:
             return self.get_full_config(driver, par_input_only)
 
-    def create_synthesis_par_action(self, synthesis_action: CLIActionType, par_action: CLIActionType) -> CLIActionType:
+    def create_synthesis_par_action(self, synthesis_action: CLIActionConfigType, par_action: CLIActionConfigType) -> CLIActionConfigType:
         """
         Create a parameterizable synthesis_par action for the CLIDriver.
 
@@ -293,7 +322,7 @@ class CLIDriver:
 
     ### Hierarchical stuff ###
     @property
-    def all_hierarchical_actions(self) -> Dict[str, CLIActionType]:
+    def all_hierarchical_actions(self) -> Dict[str, CLIActionConfigType]:
         """
         Return a list of hierarchical actions if the given project configuration is a hierarchical design.
         Set when the driver is first created in args_to_driver.
@@ -301,11 +330,11 @@ class CLIDriver:
 
         :return: Dictionary of actions to use (could be empty).
         """
-        actions = {}  # type: Dict[str, CLIActionType]
+        actions = {}  # type: Dict[str, CLIActionConfigType]
         if self.hierarchical_auto_action is not None:
             actions.update({"auto": self.hierarchical_auto_action})
 
-        def add_variants(templates: List[str], block: str, action: CLIActionType) -> None:
+        def add_variants(templates: List[str], block: str, action: CLIActionConfigType) -> None:
             """Just add the given action using the name templates."""
             for template in templates:
                 name = template.format(block=block)
@@ -355,37 +384,37 @@ class CLIDriver:
 
     # The following functions are present for further user customizability.
 
-    def get_hierarchical_synthesis_action(self, module: str) -> CLIActionType:
+    def get_hierarchical_synthesis_action(self, module: str) -> CLIActionConfigType:
         """
         Get the action associated with hierarchical synthesis for the given module (in hierarchical flows).
         """
         return self.hierarchical_synthesis_actions[module]
 
-    def set_hierarchical_synthesis_action(self, module: str, action: CLIActionType) -> None:
+    def set_hierarchical_synthesis_action(self, module: str, action: CLIActionConfigType) -> None:
         """
         Set the action associated with hierarchical synthesis for the given module (in hierarchical flows).
         """
         self.hierarchical_synthesis_actions[module] = action
 
-    def get_hierarchical_par_action(self, module: str) -> CLIActionType:
+    def get_hierarchical_par_action(self, module: str) -> CLIActionConfigType:
         """
         Get the action associated with hierarchical par for the given module (in hierarchical flows).
         """
         return self.hierarchical_par_actions[module]
 
-    def set_hierarchical_par_action(self, module: str, action: CLIActionType) -> None:
+    def set_hierarchical_par_action(self, module: str, action: CLIActionConfigType) -> None:
         """
         Set the action associated with hierarchical par for the given module (in hierarchical flows).
         """
         self.hierarchical_par_actions[module] = action
 
-    def get_hierarchical_synthesis_par_action(self, module: str) -> CLIActionType:
+    def get_hierarchical_synthesis_par_action(self, module: str) -> CLIActionConfigType:
         """
         Get the action associated with hierarchical syn_par for the given module (in hierarchical flows).
         """
         return self.hierarchical_synthesis_par_actions[module]
 
-    def set_hierarchical_synthesis_par_action(self, module: str, action: CLIActionType) -> None:
+    def set_hierarchical_synthesis_par_action(self, module: str, action: CLIActionConfigType) -> None:
         """
         Set the action associated with hierarchical syn_par for the given module (in hierarchical flows).
         """
@@ -602,19 +631,29 @@ class CLIDriver:
             print("Valid actions are: {actions}".format(actions=", ".join(self.valid_actions())), file=sys.stderr)
             return 1
 
-        output_config = self.action_map()[action](driver, errors.append)
-        if output_config is None:
+        action_func = self.action_map()[action]
+        output_str = None  # type: Optional[str]
+        if is_config_action(action_func):
+            action_func = cast(CLIActionConfigType, action_func)
+            output_config = action_func(driver, errors.append)  # type: Optional[dict]
+            if output_config is not None:
+                output_str = json.dumps(output_config, indent=4)
+        elif is_string_action(action_func):
+            action_func = cast(CLIActionStringType, action_func)
+            output_str = action_func(driver, errors.append)
+        else:
+            raise NotImplementedError("Invalid action function")
+        if output_str is None:
             print("Action {action} failed with errors".format(action=action), file=sys.stderr)
             for err in errors:
                 print(err, file=sys.stderr)
             return 1
         else:
-            # Dump output config for modular composition of hammer-vlsi runs.
-            output_json = json.dumps(output_config, indent=4)
             with open(args["output"], "w") as f:
-                f.write(output_json)
-            print(output_json)
+                f.write(output_str)
+            print(output_str)
             return 0
+
 
     def main(self, args: Optional[List[str]] = None) -> None:
         """
