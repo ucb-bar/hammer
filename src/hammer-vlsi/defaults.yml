@@ -71,6 +71,15 @@ vlsi.technology:
   # Extra libraries are added at the end of the library list, in the event that order matters.
   extra_libraries: []
 
+  # Extra information about macro sizes.
+  # type: List[MacroSize]
+  # MacroSize is a struct with the following fields:
+  # - library (str): IP library of the macro. Leave blank if unknown
+  # - name (str): Name of the macro block
+  # - width (float): Width of the macro in um
+  # - height (float): Height of the macro in um
+  extra_macro_sizes: []
+
 cadence:
   # Path to the folder with defaults.yml for common Cadence settings.
   common_path: "${vlsi.builtins.hammer_vlsi_path}/common/cadence"
