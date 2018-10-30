@@ -13,6 +13,7 @@ from typing import Any, Callable, Iterable, List, NamedTuple, Optional, Tuple
 
 import hammer_config
 import python_jsonschema_objects  # type: ignore
+
 from hammer_config import load_yaml
 from hammer_logging import HammerVLSILoggingContext
 from hammer_utils import (LEFUtils, add_lists, deeplist, get_or_else,
@@ -202,6 +203,34 @@ class ExtraLibrary(NamedTuple('ExtraLibrary', [
         return lib_copied
 
 
+# Struct that holds information about the size of a macro.
+# See defaults.yml.
+class MacroSize(NamedTuple('MacroSize', [
+    ('library', str),
+    ('name', str),
+    ('width', float),
+    ('height', float)
+])):
+    __slots__ = ()
+
+    def to_setting(self) -> dict:
+        return {
+            'library': self.library,
+            'name': self.name,
+            'width': str(self.width),
+            'height': str(self.height)
+        }
+
+    @staticmethod
+    def from_setting(d: dict) -> "MacroSize":
+        return MacroSize(
+            library=str(d['library']),
+            name=str(d['name']),
+            width=float(d['width']),
+            height=float(d['height'])
+        )
+
+
 class HammerTechnology:
     # Properties.
     @property
@@ -383,6 +412,78 @@ class HammerTechnology:
         :return: List of technology-defined libraries with any extra prefixes if present.
         """
         return list(self.config.libraries)
+
+    def get_extra_macro_sizes(self) -> List[MacroSize]:
+        """
+        Get the list of extra macro sizes from the config.
+        See vlsi.technology.extra_macro_sizes in defaults.yml.
+        :return: List of extra macro sizes.
+        """
+        if not self.has_setting("vlsi.technology.extra_macro_sizes"):
+            # If the key doesn't exist we can safely say there are none.
+            return []
+
+        extra_macro_sizes = self.get_setting("vlsi.technology.extra_macro_sizes")
+        if not isinstance(extra_macro_sizes, list):
+            raise ValueError("extra_macro_sizes was not a list")
+        else:
+            return list(map(MacroSize.from_setting, extra_macro_sizes))
+
+    def get_tech_macro_sizes(self) -> List[MacroSize]:
+        """
+        Compile a list of all macros which have size information, using LEF files.
+        This also considers any extra IP libraries.
+        :return: List of all macros' size information.
+        """
+
+        # Enhance lef_filter to also extract the name of the library.
+        def extraction_func(lib: "Library", paths: List[str]) -> List[str]:
+            assert len(paths) == 1, "paths_func above returns only one item"
+            # For type checker
+            lib_name = lib.name  # type: ignore
+            if lib_name is None:
+                name = ""
+            else:
+                name = str(lib_name)
+            return [json.dumps([paths[0], name])]
+
+        lef_filter_plus = filters.lef_filter._replace(extraction_func=extraction_func)
+
+        lef_names_filenames_serialized = self.process_library_filter(filt=lef_filter_plus,
+                                                                     pre_filts=self.default_pre_filters(),
+                                                                     output_func=HammerTechnologyUtils.to_plain_item,
+                                                                     must_exist=True)
+
+        result = []  # type: List[MacroSize]
+
+        for serialized in lef_names_filenames_serialized:
+            lef_filename, name = json.loads(serialized)
+            with open(lef_filename, 'r') as f:
+                lef_file_contents = str(f.read())
+            sizes = LEFUtils.get_sizes(lef_file_contents)
+            if len(sizes) == 0:
+                continue
+
+            if name == "":
+                self.logger.warning(
+                    "No name is set for the library containing {lef_filename}".format(lef_filename=lef_filename))
+
+            for s in sizes:
+                result.append(MacroSize(
+                    library=name,
+                    name=s[0],
+                    width=s[1],
+                    height=s[2]
+                ))
+
+        return result
+
+    def get_macro_sizes(self) -> List[MacroSize]:
+        """
+        Get the list of all macro blocks' sizes for export to other tools.
+        :return: List of all macro sizes.
+        """
+        return self.get_extra_macro_sizes() + self.get_tech_macro_sizes()
 
     def prepend_dir_path(self, path: str, lib: Optional[Library] = None) -> str:
         """
