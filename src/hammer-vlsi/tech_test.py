@@ -12,6 +12,7 @@ import unittest
 from test import HammerToolTestHelpers, DummyTool, HasGetTech
 from typing import Any, Dict, List
 
+from hammer_logging import HammerVLSILogging
 import hammer_tech
 from hammer_tech import LibraryFilter
 from hammer_utils import deepdict
@@ -336,6 +337,61 @@ libraries: []
             'vlsi.inputs.dont_use_list': []
         }])
         self.assertEqual(tool.get_dont_use_list(), [])
+
+        # Cleanup
+        shutil.rmtree(tech_dir_base)
+
+    def test_macro_sizes(self) -> None:
+        """
+        Test that getting macro sizes works as expected.
+        """
+        import hammer_config
+
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+
+        def add_lib_with_lef(d: Dict[str, Any]) -> Dict[str, Any]:
+            with open(os.path.join(tech_dir, 'my_vendor_lib.lef'), 'w') as f:
+                f.write("""VERSION 5.8 ;
+BUSBITCHARS "[]" ;
+DIVIDERCHAR "/" ;
+
+MACRO my_awesome_macro
+  CLASS BLOCK ;
+  ORIGIN -0.435 607.525 ;
+  FOREIGN my_awesome_macro 0.435 -607.525 ;
+  SIZE 810.522 BY 607.525 ;
+  SYMMETRY X Y R90 ;
+END my_awesome_macro
+
+END LIBRARY
+                """)
+            r = deepdict(d)
+            r['libraries'].append({
+                'name': 'my_vendor_lib',
+                'lef file': 'test/my_vendor_lib.lef'
+            })
+            return r
+
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_lib_with_lef)
+        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
+        if tech_opt is None:
+            self.assertTrue(False, "Unable to load technology")
+            return
+        else:
+            tech = tech_opt  # type: hammer_tech.HammerTechnology
+        tech.cache_dir = tech_dir
+
+        tech.logger = HammerVLSILogging.context("")
+
+        database = hammer_config.HammerDatabase()
+        tech.set_database(database)
+
+        # Test that macro sizes can be read out of the LEF.
+        self.assertEqual(tech.get_macro_sizes(), [
+            hammer_tech.MacroSize(library='my_vendor_lib', name='my_awesome_macro',
+                                  width=810.522, height=607.525)
+        ])
 
         # Cleanup
         shutil.rmtree(tech_dir_base)
