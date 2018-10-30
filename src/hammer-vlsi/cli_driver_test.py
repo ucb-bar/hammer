@@ -20,12 +20,13 @@ import unittest
 
 class CLIDriverTest(unittest.TestCase):
     @staticmethod
-    def generate_dummy_config(syn_rundir: str, config_path: str, top_module: str) -> Dict[str, Any]:
+    def generate_dummy_config(syn_rundir: str, config_path: str, top_module: str, postprocessing_func: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None) -> Dict[str, Any]:
         """
         Generate and write a dummy config to the given path.
         :param syn_rundir: Directory to set as the synthesis rundir.
         :param config_path: Path to which to write the config.
         :param top_module: Module to set as the top module.
+        :param postprocessing_func: Optional function to modify/add to the config.
         :return: Config dictionary that was written.
         """
         config = {
@@ -36,6 +37,9 @@ class CLIDriverTest(unittest.TestCase):
             "synthesis.inputs.input_files": ("/dev/null",),
             "synthesis.mocksynth.temp_folder": syn_rundir
         }  # type: Dict[str, Any]
+
+        if postprocessing_func is not None:
+            config = postprocessing_func(config)
 
         with open(config_path, "w") as f:
             f.write(json.dumps(config, indent=4))
