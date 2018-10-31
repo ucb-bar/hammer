@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-#  utils.py
 #  Misc utils/functions for hammer_vlsi.
 #
 #  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
