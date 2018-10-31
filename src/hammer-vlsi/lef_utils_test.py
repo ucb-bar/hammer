@@ -5,9 +5,7 @@
 #
 #  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
-from typing import Iterable, Tuple, Any
-
-from hammer_vlsi import LEFUtils
+from hammer_utils import LEFUtils
 
 import unittest
 
