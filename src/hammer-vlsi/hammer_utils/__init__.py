@@ -9,6 +9,7 @@ import copy
 import inspect
 from functools import reduce
 from typing import List, Any, Set, Dict, Tuple, TypeVar, Callable, Iterable, Optional
+from enum import Enum, unique
 
 from .verilog_utils import *
 from .lef_utils import *
@@ -302,3 +303,23 @@ def check_function_type(function: Callable, args: List[type], return_type: type)
             "Got return type {got}, expected {expected}".format(got=inspected_return_name, expected=return_type_name))
 
     return None
+
+# Contributors: Be sure to add to this list if you need to call get_filetype
+@unique
+class HammerFiletype(Enum):
+    NONE = 0
+    SPICE = 1
+    VERILOG = 2
+
+def get_filetype(filename: str) -> HammerFiletype:
+    split = filename.split(".")
+    if len(split) == 1:
+        return HammerFiletype.NONE
+    extension = split[-1]
+    if extension in ["sp", "spi", "nl", "cir", "spice", "cdl"]:
+        return HammerFiletype.SPICE
+    elif extension in ["v", "sv", "vh"]:
+        return HammerFiletype.VERILOG
+    else:
+        raise NotImplementedError("Unknown file extension: {e}. Please update {f}!".format(e=extension, f=__file__))
+
