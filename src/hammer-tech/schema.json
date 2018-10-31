@@ -165,6 +165,12 @@
         "type" : "string"
       }
     },
+    "additional drc text" : {
+        "type" : "string"
+    },
+    "additional lvs text" : {
+        "type" : "string"
+    },
     "tarballs" : {
       "type" : "array",
       "items" : {
