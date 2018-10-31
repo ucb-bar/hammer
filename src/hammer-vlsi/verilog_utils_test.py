@@ -3,10 +3,11 @@
 #
 #  Tests for hammer-vlsi
 #
-#  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
+
 from typing import Iterable, Tuple, Any
 
-from hammer_vlsi import VerilogUtils
+from hammer_utils import VerilogUtils
 
 import unittest
 

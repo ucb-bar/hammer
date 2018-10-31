@@ -10,7 +10,11 @@ import inspect
 from functools import reduce
 from typing import List, Any, Set, Dict, Tuple, TypeVar, Callable, Iterable, Optional
 
-__all__ = ['deepdict', 'deeplist', 'add_lists', 'add_dicts', 'reverse_dict', 'in_place_unique', 'topological_sort',
+from .verilog_utils import *
+from .lef_utils import *
+
+__all__ = ['VerilogUtils', 'LEFUtils',
+           'deepdict', 'deeplist', 'add_lists', 'add_dicts', 'reverse_dict', 'in_place_unique', 'topological_sort',
            'reduce_named', 'get_or_else', 'optional_map', 'assert_function_type', 'check_function_type']
 
 
