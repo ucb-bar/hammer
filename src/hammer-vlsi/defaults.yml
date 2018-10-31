@@ -246,3 +246,47 @@ par.submit:
   command_meta: dynamicsubst
   settings: "vlsi.submit.settings"
   settings_meta: dynamiccrossref
+
+# DRC settings
+drc.inputs:
+  # Top RTL module.
+  top_module: null
+
+  # Input layout file
+  # Typically a GDSII file from the place and route tool
+  layout_file: null
+
+  # Valid modes are auto, manual, prepend, and append
+  additional_drc_text_mode: "auto"
+  # Custom DRC command text to add after the boilerplate commands at the top of the run file
+  additional_drc_text: ""
+
+# inherit settings from vlsi.submit but allow us to override them
+drc.submit:
+  command: "${vlsi.submit.command}"
+  command_meta: dynamicsubst
+  settings: "vlsi.submit.settings"
+  settings_meta: dynamiccrossref
+
+# LVS settings
+lvs.inputs:
+  # Top RTL module.
+  top_module: null
+
+  # Input layout file
+  # Typically a GDSII file from the place and route tool
+  layout_file: null
+
+  # Input list of schematic files
+  schematic_files: []
+
+  # Valid modes are auto, manual, prepend, and append
+  additional_lvs_text_mode: "auto"
+  # Custom LVS command text to add after the boilerplate commands at the top of the run file
+  additional_lvs_text: ""
+
+lvs.submit:
+  command: "${vlsi.submit.command}"
+  command_meta: dynamicsubst
+  settings: "vlsi.submit.settings"
+  settings_meta: dynamiccrossref

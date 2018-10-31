@@ -15,7 +15,7 @@ import os
 import sys
 from typing import Callable, Iterable, List, NamedTuple, Optional, Dict, Any, Union
 
-from hammer_utils import reverse_dict, deepdict, optional_map
+from hammer_utils import reverse_dict, deepdict, optional_map, get_or_else
 
 from .constraints import *
 
@@ -248,6 +248,10 @@ class HammerPlaceAndRouteTool(HammerTool):
         outputs = deepdict(super().export_config_outputs())
         outputs["par.outputs.output_ilms"] = list(map(lambda s: s.to_setting(), self.output_ilms))
         outputs["par.outputs.output_gds"] = str(self.output_gds)
+        outputs["par.outputs.output_netlist"] = str(self.output_netlist)
+        outputs["par.outputs.power_nets"] = list(self.power_nets)
+        outputs["par.outputs.ground_nets"] = list(self.ground_nets)
+        outputs["par.outputs.hcells_list"] = list(self.hcells_list)
         return outputs
 
     ### Generated interface HammerPlaceAndRouteTool ###
@@ -349,6 +353,363 @@ class HammerPlaceAndRouteTool(HammerTool):
         if not (isinstance(value, str)):
             raise TypeError("output_gds must be a str")
         self.attr_setter("_output_gds", value)
+
+    @property
+    def output_netlist(self) -> str:
+        """
+        Get the path to the output netlist file.
+
+        :return: The path to the output netlist file.
+        """
+        try:
+            return self.attr_getter("_output_netlist", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the path to the output netlist file yet")
+
+    @output_netlist.setter
+    def output_netlist(self, value: str) -> None:
+        """Set the path to the output netlist file."""
+        if not (isinstance(value, str)):
+            raise TypeError("output_netlist must be a str")
+        self.attr_setter("_output_netlist", value)
+
+    @property
+    def power_nets(self) -> List[str]:
+        """
+        Get the list of power.
+
+        :return: The list of power.
+        """
+        try:
+            return self.attr_getter("_power_nets", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the list of power yet")
+
+    @power_nets.setter
+    def power_nets(self, value: List[str]) -> None:
+        """Set the list of power."""
+        if not (isinstance(value, List)):
+            raise TypeError("power_nets must be a List[str]")
+        self.attr_setter("_power_nets", value)
+
+
+    @property
+    def ground_nets(self) -> List[str]:
+        """
+        Get the list of ground nets in the design.
+
+        :return: The list of ground nets in the design.
+        """
+        try:
+            return self.attr_getter("_ground_nets", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the list of ground nets in the design yet")
+
+    @ground_nets.setter
+    def ground_nets(self, value: List[str]) -> None:
+        """Set the list of ground nets in the design."""
+        if not (isinstance(value, List)):
+            raise TypeError("ground_nets must be a List[str]")
+        self.attr_setter("_ground_nets", value)
+
+
+    @property
+    def hcells_list(self) -> List[str]:
+        """
+        Get the list of hierarchical cells for LVS.
+
+        :return: The list of hierarchical cells for LVS.
+        """
+        try:
+            return self.attr_getter("_hcells_list", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the list of hierarchical cells for LVS yet")
+
+    @hcells_list.setter
+    def hcells_list(self, value: List[str]) -> None:
+        """Set the list of hierarchical cells for LVS."""
+        if not (isinstance(value, List)):
+            raise TypeError("hcells_list must be a List[str]")
+        self.attr_setter("_hcells_list", value)
+
+class HammerSignoffTool(HammerTool):
+    @abstractmethod
+    def fill_outputs(self) -> bool:
+        pass
+
+    ### Inputs ###
+
+    @property
+    def top_module(self) -> str:
+        """
+        Get the top-level module.
+
+        :return: The top-level module.
+        """
+        try:
+            return self.attr_getter("_top_module", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the top-level module yet")
+
+    @top_module.setter
+    def top_module(self, value: str) -> None:
+        """Set the top-level module."""
+        if not (isinstance(value, str)):
+            raise TypeError("top_module must be a str")
+        self.attr_setter("_top_module", value)
+
+    ### Outputs ###
+    @abstractmethod
+    def signoff_results(self) -> int:
+        """ Return the number of issues raised by the signoff tool (0 = all checks pass) """
+        pass
+
+class HammerDRCTool(HammerSignoffTool):
+
+    @abstractmethod
+    def fill_outputs(self) -> bool:
+        pass
+
+    ### Inputs ###
+
+    @abstractmethod
+    def waived_drc_rules(self) -> List[str]:
+        # TODO [John] how to waive specific instances of DRC rules, rather than blanket waivers
+        # TODO [John] should this go in the YAML file?
+        """
+        Get the list of waived DRC rule names.
+
+        :return: The list of waived DRC rule names.
+        """
+        pass
+
+    def get_additional_drc_text(self) -> str:
+        """ Get the additional custom DRC command text to add after the boilerplate commands at the top of the DRC run file. """
+
+        # Mode can be auto, manual, append, or prepend
+        add_drc_text_mode = str(self.get_setting("drc.inputs.additional_drc_text_mode"))
+
+        # manul_add_drc_text will only be used in manual, append, and prepend modes
+        manual_add_drc_text = str(self.get_setting("drc.inputs.additional_drc_text"))
+
+        # tech_add_drc_text will only be used in auto, append, and prepend modes
+        tech_add_drc_text = get_or_else(self.technology.additional_drc_text, "") # type: str
+
+        # Default to auto (use tech_add_drc_text)
+        add_drc_text = tech_add_drc_text
+
+        if add_drc_text_mode == "auto":
+            pass
+        elif add_drc_text_mode == "manual":
+            add_drc_text = manual_add_drc_text
+        elif add_drc_text_mode == "append":
+            add_drc_text = tech_add_drc_text + manual_add_drc_text
+        elif add_drc_text_mode == "prepend":
+            add_drc_text = manual_add_drc_text + tech_add_drc_text
+        else:
+            self.logger.error(
+                "Invalid additional_drc_text_mode {mode}. Using auto.".format(mode=add_drc_text_mode))
+
+        return add_drc_text
+
+    @property
+    def layout_file(self) -> str:
+        """
+        Get the input layout file (e.g. *.gds)
+
+        :return: The input layout file (e.g. *.gds)
+        """
+        try:
+            return self.attr_getter("_layout_file", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the input layout file (e.g. *.gds) yet")
+
+    @layout_file.setter
+    def layout_file(self, value: str) -> None:
+        """ Set the input layout file (e.g. *.gds)"""
+        if not (isinstance(value, str)):
+            raise TypeError("layout_file must be a str")
+        self.attr_setter("_layout_file", value)
+
+    ### Outputs ###
+
+    @abstractmethod
+    def drc_results_pre_waived(self) -> Dict[str, int]:
+        """ Return a Dict mapping the DRC check name to an error count (pre-waivers). """
+        pass
+
+    def signoff_results(self) -> int:
+        """ Return the count of unwaived DRC errors. """
+        return reduce(lambda a, b: a + b, self.drc_results().values())
+
+    def drc_results(self) -> Dict[str, int]:
+        """ Return a Dict mapping the DRC check name to an error count (with waivers). """
+        return {k: 0 if k in self.waived_drc_rules() else int(v) for k, v in self.drc_results_pre_waived()}
+
+
+class HammerLVSTool(HammerSignoffTool):
+    @abstractmethod
+    def fill_outputs(self) -> bool:
+        pass
+
+    ### Inputs ###
+
+    @abstractmethod
+    def waived_erc_rules(self) -> List[str]:
+        # TODO [John] how to waive specific instances of ERC rules, rather than blanket waivers
+        # TODO [John] should this go in the YAML file?
+        """
+        Get the list of waived ERC rule names.
+
+        :return: The list of waived ERC rule names.
+        """
+        pass
+
+    @property
+    def layout_file(self) -> str:
+        """
+        Get the input layout file (e.g. *.gds)
+
+        :return: The input layout file (e.g. *.gds)
+        """
+        try:
+            return self.attr_getter("_layout_file", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the input layout file (e.g. *.gds) yet")
+
+    @layout_file.setter
+    def layout_file(self, value: str) -> None:
+        """ Set the input layout file (e.g. *.gds)"""
+        if not (isinstance(value, str)):
+            raise TypeError("layout_file must be a str")
+        self.attr_setter("_layout_file", value)
+
+    @property
+    def schematic_files(self) -> List[str]:
+        """
+        Get the collection of schematic files (e.g. *.v or *.sp).
+
+        :return: The collection of schematic files (e.g. *.v or *.sp).
+        """
+        try:
+            return self.attr_getter("_schematic_files", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the collection of schematic files (e.g. *.v or *.sp) yet")
+
+    @schematic_files.setter
+    def schematic_files(self, value: List[str]) -> None:
+        """Set the collection of schematic files (e.g. *.v or *.sp)."""
+        if not (isinstance(value, List)):
+            raise TypeError("schematic_files must be a List[str]")
+        self.attr_setter("_schematic_files", value)
+
+    @property
+    def power_nets(self) -> List[str]:
+        """
+        Get a list of power nets used in the design
+
+        :return: The list of power nets used in the design
+        """
+        try:
+            return self.attr_getter("_power_nets", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the list of power nets used in the design yet")
+
+    @power_nets.setter
+    def power_nets(self, value: List[str]) -> None:
+        """ Set the input power nets used in the design"""
+        if not (isinstance(value, List)):
+            raise TypeError("power_nets must be a List[str]")
+        self.attr_setter("_power_nets", value)
+
+    @property
+    def ground_nets(self) -> List[str]:
+        """
+        Get a list of ground nets used in the design
+
+        :return: The list of ground nets used in the design
+        """
+        try:
+            return self.attr_getter("_ground_nets", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the list of ground nets used in the design yet")
+
+    @ground_nets.setter
+    def ground_nets(self, value: List[str]) -> None:
+        """ Set the input ground nets used in the design"""
+        if not (isinstance(value, List)):
+            raise TypeError("ground_nets must be a List[str]")
+        self.attr_setter("_ground_nets", value)
+
+    @property
+    def hcells_list(self) -> List[str]:
+        """
+        Get the list of hierarchical cells for LVS.
+
+        :return: The list of hierarchical cells for LVS.
+        """
+        try:
+            return self.attr_getter("_hcells_list", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the list of hierarchical cells for LVS yet")
+
+    @hcells_list.setter
+    def hcells_list(self, value: List[str]) -> None:
+        """Set the list of hierarchical cells for LVS."""
+        if not (isinstance(value, list)):
+            raise TypeError("hcells_list must be a List[str]")
+        self.attr_setter("_hcells_list", value)
+
+
+    ### Outputs ###
+
+    @abstractmethod
+    def erc_results_pre_waived(self) -> Dict[str, int]:
+        """ Return a Dict mapping the ERC check name to an error count (pre-waivers). """
+        pass
+
+    def signoff_results(self) -> int:
+        """ Return the count of unwaived ERC errors and LVS errors. """
+        return reduce(lambda a, b: a + b, self.erc_results().values()) + len(self.lvs_results())
+
+    def erc_results(self) -> Dict[str, int]:
+        """ Return a Dict mapping the ERC check name to an error count (with waivers). """
+        return {k: 0 if k in self.waived_erc_rules() else int(v) for k, v in self.erc_results_pre_waived()}
+
+    @abstractmethod
+    def lvs_results(self) -> List[str]:
+        """ Return the LVS issue descriptions for each issue. An empty list means LVS passes. """
+        pass
+
+    def get_additional_lvs_text(self) -> str:
+        """ Get the additional custom DRC command text to add after the boilerplate commands at the top of the LVS run file. """
+
+        # Mode can be auto, manual, append, or prepend
+        add_lvs_text_mode = str(self.get_setting("lvs.inputs.additional_lvs_text_mode"))
+
+        # manul_add_lvs_text will only be used in manual, append, and prepend modes
+        manual_add_lvs_text = str(self.get_setting("lvs.inputs.additional_lvs_text"))
+
+        # tech_add_lvs_text will only be used in auto, append, and prepend modes
+        tech_add_lvs_text = get_or_else(self.technology.additional_lvs_text, "") # type: str
+
+        # Default to auto (use tech_add_lvs_text)
+        add_lvs_text = tech_add_lvs_text
+
+        if add_lvs_text_mode == "auto":
+            pass
+        elif add_lvs_text_mode == "manual":
+            add_lvs_text = manual_add_lvs_text
+        elif add_lvs_text_mode == "append":
+            add_lvs_text = tech_add_lvs_text + manual_add_lvs_text
+        elif add_lvs_text_mode == "prepend":
+            add_lvs_text = manual_add_lvs_text + tech_add_lvs_text
+        else:
+            self.logger.error(
+                "Invalid additional_lvs_text_mode {mode}. Using auto.".format(mode=add_lvs_text_mode))
+
+        return add_lvs_text
+
 
 
 class HasSDCSupport(HammerTool):
@@ -694,6 +1055,39 @@ class SynopsysTool(HasSDCSupport, HammerTool):
             raise FileNotFoundError("Expected reference methodology tarball not found at %s. Use the Synopsys RM generator <https://solvnet.synopsys.com/rmgen> to generate a DC reference methodology. If these tarballs have been pre-downloaded, you can set synopsys.rm_dir instead of generating them yourself." % (synopsys_rm_tarball))
         else:
             return synopsys_rm_tarball
+
+class MentorTool(HammerTool):
+    """ Mix-in trait with functions useful for Mentor-Graphics-based tools. """
+    @property
+    def env_vars(self) -> Dict[str, str]:
+        """
+        Get the list of environment variables required for this tool.
+        Note to subclasses: remember to include variables from super().env_vars!
+        """
+        result = dict(super().env_vars)
+        result.update({
+            "MGLS_LICENSE_FILE": self.get_setting("mentor.MGLS_LICENSE_FILE")
+        })
+        return result
+
+    def version_number(self, version: str) -> int:
+        """
+        Assumes versions look like NAME-YYYY.MM-SPMINOR.
+        Assumes less than 100 minor versions.
+        """
+        return 0 # TODO john
+
+class MentorCalibreTool(MentorTool):
+    """ Mix-in trait for Mentor's Calibre tool suite. """
+    @property
+    def env_vars(self) -> Dict[str, str]:
+        """
+        Get the list of environment variables required for this tool.
+        Note to subclasses: remember to include variables from super().env_vars!
+        """
+        # TODO MGC_HOME
+        return super().env_vars
+
 
 def load_tool(tool_name: str, path: Iterable[str]) -> HammerTool:
     """

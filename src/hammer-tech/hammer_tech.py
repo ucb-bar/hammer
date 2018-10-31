@@ -296,6 +296,22 @@ class HammerTechnology:
             return dont_use_list
 
     @property
+    def additional_drc_text(self) -> str:
+        add_drc_text_raw = self.config.additional_drc_text
+        if add_drc_text_raw is None:
+            return ""
+        else:
+            return str(add_drc_text_raw)
+
+    @property
+    def additional_lvs_text(self) -> str:
+        add_lvs_text_raw = self.config.additional_lvs_text
+        if add_lvs_text_raw is None:
+            return ""
+        else:
+            return str(add_lvs_text_raw)
+
+    @property
     def extracted_tarballs_dir(self) -> str:
         """Return the path to a folder under self.path where extracted tarballs are stored/cached."""
         return os.path.join(self.cache_dir, "extracted")
