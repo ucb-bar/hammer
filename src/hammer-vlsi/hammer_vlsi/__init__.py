@@ -22,6 +22,8 @@ from .driver import *
 
 from .verilog_utils import *
 
+from .lef_utils import *
+
 from .cli_driver import CLIDriver
 
 from .submit_command import *
