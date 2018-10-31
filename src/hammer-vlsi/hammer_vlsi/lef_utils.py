@@ -26,9 +26,31 @@ class LEFUtils:
 
         output = []  # type: List[Tuple[str, float, float]]
 
+        in_propertydefinitions = False  # type: bool
         in_macro = None  # type: Optional[str]
         found_size = False  # type: bool
         for line in lines:
+            # Check for PROPERTYDEFINITIONS statement
+            regex = "^\s*PROPERTYDEFINITIONS"
+            regex_search = re.search(regex, line)
+
+            if regex_search:
+                if in_macro:
+                    raise ValueError("Found PROPERTYDEFINITIONS inside MACRO")
+                if in_propertydefinitions:
+                    raise ValueError("Found PROPERTYDEFINITIONS inside PROPERTYDEFINITIONS")
+                else:
+                    in_propertydefinitions = True
+
+            # Just wait for the end of PROPERTYDEFINITIONS
+            if in_propertydefinitions:
+                # Check for "END PROPERTYDEFINITIONS"
+                regex = "END PROPERTYDEFINITIONS"
+                if re.search(regex, line) is not None:
+                    # END found
+                    in_propertydefinitions = False
+                continue
+
             # Check for MACRO statement
             regex = "MACRO\s+([a-zA-Z0-9_]+)"
             regex_search = re.search(regex, line)
