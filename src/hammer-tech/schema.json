@@ -65,6 +65,9 @@
           "lef file" : {
             "type" : "string"
           },
+          "spice file" : {
+            "type" : "string"
+          },
           "gds file" : {
             "type" : "string"
           },

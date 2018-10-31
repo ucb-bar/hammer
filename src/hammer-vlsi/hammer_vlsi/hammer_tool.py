@@ -1185,6 +1185,22 @@ class HammerTool(metaclass=ABCMeta):
 
         return LibraryFilter.new("tlu_min", "TLU+ min cap db", is_file=True, extraction_func=select_tlu_min_cap)
 
+    @property
+    def spice_filter(self) -> LibraryFilter:
+        """
+        Select SPICE files
+        """
+
+        def filter_func(lib: hammer_tech.Library) -> bool:
+            return lib.spice_file is not None
+
+        def extraction_func(lib: hammer_tech.Library) -> List[str]:
+            assert lib.spice_file is not None
+            return [lib.spice_file]
+
+        return LibraryFilter.new("spice", "SPICE files", is_file=True, filter_func=filter_func, extraction_func=extraction_func)
+
+
     def process_library_filter(self, pre_filts: List[Callable[[hammer_tech.Library], bool]], filt: LibraryFilter, output_func: Callable[[str, LibraryFilter], List[str]],
                                must_exist: bool = True) -> List[str]:
         """
