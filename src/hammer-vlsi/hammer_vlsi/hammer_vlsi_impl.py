@@ -474,8 +474,8 @@ class HammerDRCTool(HammerSignoffTool):
 
     @abstractmethod
     def waived_drc_rules(self) -> List[str]:
-        # TODO [John] how to waive specific instances of DRC rules, rather than blanket waivers
-        # TODO [John] should this go in the YAML file?
+        # TODO(johnwright) how to waive specific instances of DRC rules, rather than blanket waivers
+        # TODO(johnwright) should this go in the YAML file?
         """
         Get the list of waived DRC rule names.
 
@@ -556,8 +556,8 @@ class HammerLVSTool(HammerSignoffTool):
 
     @abstractmethod
     def waived_erc_rules(self) -> List[str]:
-        # TODO [John] how to waive specific instances of ERC rules, rather than blanket waivers
-        # TODO [John] should this go in the YAML file?
+        # TODO(johnwright) how to waive specific instances of ERC rules, rather than blanket waivers
+        # TODO(johnwright) should this go in the YAML file?
         """
         Get the list of waived ERC rule names.
 

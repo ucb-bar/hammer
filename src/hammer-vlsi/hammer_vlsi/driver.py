@@ -610,7 +610,7 @@ class HammerDriver:
             result = {
                 "lvs.inputs.top_module": output_dict["par.inputs.top_module"],
                 "lvs.inputs.layout_file": output_dict["par.outputs.output_gds"],
-                "lvs.inputs.schematic_files": [output_dict["par.outputs.output_netlist"]], #TODO john add ILM netlists
+                "lvs.inputs.schematic_files": [output_dict["par.outputs.output_netlist"]], # TODO(johnwright) add ILM netlists
                 "lvs.inputs.power_nets": output_dict["par.outputs.power_nets"],
                 "lvs.inputs.ground_nets": output_dict["par.outputs.ground_nets"],
                 "lvs.inputs.hcells_list": output_dict["par.outputs.hcells_list"],
