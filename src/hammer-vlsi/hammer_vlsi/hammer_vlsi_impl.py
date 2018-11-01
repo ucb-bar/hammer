@@ -487,7 +487,7 @@ class HammerDRCTool(HammerSignoffTool):
         pass
 
     @abstractmethod
-    def waived_drc_rules(self) -> List[str]:
+    def globally_waived_drc_rules(self) -> List[str]:
         # TODO(johnwright) how to waive specific instances of DRC rules, rather than blanket waivers
         # TODO(johnwright) should this go in the YAML file?
         """
@@ -537,7 +537,7 @@ class HammerDRCTool(HammerSignoffTool):
 
     def drc_results(self) -> Dict[str, int]:
         """ Return a Dict mapping the DRC check name to an error count (with waivers). """
-        return {k: 0 if k in self.waived_drc_rules() else int(v) for k, v in self.drc_results_pre_waived()}
+        return {k: 0 if k in self.globally_waived_drc_rules() else int(v) for k, v in self.drc_results_pre_waived()}
 
     ### Generated interface HammerDRCTool ###
     ### DO NOT MODIFY THIS CODE, EDIT generate_properties.py INSTEAD ###
@@ -592,7 +592,7 @@ class HammerLVSTool(HammerSignoffTool):
         pass
 
     @abstractmethod
-    def waived_erc_rules(self) -> List[str]:
+    def globally_waived_erc_rules(self) -> List[str]:
         # TODO(johnwright) how to waive specific instances of ERC rules, rather than blanket waivers
         # TODO(johnwright) should this go in the YAML file?
         """
@@ -613,7 +613,7 @@ class HammerLVSTool(HammerSignoffTool):
 
     def erc_results(self) -> Dict[str, int]:
         """ Return a Dict mapping the ERC check name to an error count (with waivers). """
-        return {k: 0 if k in self.waived_erc_rules() else int(v) for k, v in self.erc_results_pre_waived()}
+        return {k: 0 if k in self.globally_waived_erc_rules() else int(v) for k, v in self.erc_results_pre_waived()}
 
     @abstractmethod
     def lvs_results(self) -> List[str]:
