@@ -33,7 +33,7 @@ MACRO my_awesome_macro
       LAYER M1 ;
         RECT 42.91 -325.521 43.557 -325.021 ;
     END
-  END c0
+  END my_pin
   OBS
     LAYER M1 ;
       RECT 810.077 -335.587 810.957 -334.707 ;
