@@ -158,6 +158,7 @@ class HammerSynthesisTool(HammerTool):
         return outputs
 
     ### Generated interface HammerSynthesisTool ###
+    ### DO NOT MODIFY THIS CODE, EDIT generate_properties.py INSTEAD ###
     ### Inputs ###
 
     @property
@@ -179,6 +180,7 @@ class HammerSynthesisTool(HammerTool):
             raise TypeError("input_files must be a List[str]")
         self.attr_setter("_input_files", value)
 
+
     @property
     def top_module(self) -> str:
         """
@@ -197,6 +199,7 @@ class HammerSynthesisTool(HammerTool):
         if not (isinstance(value, str)):
             raise TypeError("top_module must be a str")
         self.attr_setter("_top_module", value)
+
 
     ### Outputs ###
 
@@ -219,6 +222,7 @@ class HammerSynthesisTool(HammerTool):
             raise TypeError("output_files must be a List[str]")
         self.attr_setter("_output_files", value)
 
+
     @property
     def output_sdc(self) -> str:
         """
@@ -238,6 +242,9 @@ class HammerSynthesisTool(HammerTool):
             raise TypeError("output_sdc must be a str")
         self.attr_setter("_output_sdc", value)
 
+    ### END Generated interface HammerSynthesisTool ###
+    ### Generated interface HammerSynthesisTool ###
+
 
 class HammerPlaceAndRouteTool(HammerTool):
     @abstractmethod
@@ -255,6 +262,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         return outputs
 
     ### Generated interface HammerPlaceAndRouteTool ###
+    ### DO NOT MODIFY THIS CODE, EDIT generate_properties.py INSTEAD ###
     ### Inputs ###
 
     @property
@@ -276,6 +284,7 @@ class HammerPlaceAndRouteTool(HammerTool):
             raise TypeError("input_files must be a List[str]")
         self.attr_setter("_input_files", value)
 
+
     @property
     def top_module(self) -> str:
         """
@@ -295,6 +304,7 @@ class HammerPlaceAndRouteTool(HammerTool):
             raise TypeError("top_module must be a str")
         self.attr_setter("_top_module", value)
 
+
     @property
     def post_synth_sdc(self) -> Optional[str]:
         """
@@ -313,6 +323,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         if not (isinstance(value, str) or (value is None)):
             raise TypeError("post_synth_sdc must be a Optional[str]")
         self.attr_setter("_post_synth_sdc", value)
+
 
     ### Outputs ###
 
@@ -335,6 +346,7 @@ class HammerPlaceAndRouteTool(HammerTool):
             raise TypeError("output_ilms must be a List[ILMStruct]")
         self.attr_setter("_output_ilms", value)
 
+
     @property
     def output_gds(self) -> str:
         """
@@ -354,6 +366,7 @@ class HammerPlaceAndRouteTool(HammerTool):
             raise TypeError("output_gds must be a str")
         self.attr_setter("_output_gds", value)
 
+
     @property
     def output_netlist(self) -> str:
         """
@@ -372,6 +385,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         if not (isinstance(value, str)):
             raise TypeError("output_netlist must be a str")
         self.attr_setter("_output_netlist", value)
+
 
     @property
     def power_nets(self) -> List[str]:
@@ -432,6 +446,8 @@ class HammerPlaceAndRouteTool(HammerTool):
             raise TypeError("hcells_list must be a List[str]")
         self.attr_setter("_hcells_list", value)
 
+    ### END Generated interface HammerPlaceAndRouteTool ###
+
 class HammerSignoffTool(HammerTool):
     @abstractmethod
     def fill_outputs(self) -> bool:
@@ -469,8 +485,6 @@ class HammerDRCTool(HammerSignoffTool):
     @abstractmethod
     def fill_outputs(self) -> bool:
         pass
-
-    ### Inputs ###
 
     @abstractmethod
     def waived_drc_rules(self) -> List[str]:
@@ -512,27 +526,6 @@ class HammerDRCTool(HammerSignoffTool):
 
         return add_drc_text
 
-    @property
-    def layout_file(self) -> str:
-        """
-        Get the input layout file (e.g. *.gds)
-
-        :return: The input layout file (e.g. *.gds)
-        """
-        try:
-            return self.attr_getter("_layout_file", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the input layout file (e.g. *.gds) yet")
-
-    @layout_file.setter
-    def layout_file(self, value: str) -> None:
-        """ Set the input layout file (e.g. *.gds)"""
-        if not (isinstance(value, str)):
-            raise TypeError("layout_file must be a str")
-        self.attr_setter("_layout_file", value)
-
-    ### Outputs ###
-
     @abstractmethod
     def drc_results_pre_waived(self) -> Dict[str, int]:
         """ Return a Dict mapping the DRC check name to an error count (pre-waivers). """
@@ -546,13 +539,57 @@ class HammerDRCTool(HammerSignoffTool):
         """ Return a Dict mapping the DRC check name to an error count (with waivers). """
         return {k: 0 if k in self.waived_drc_rules() else int(v) for k, v in self.drc_results_pre_waived()}
 
+    ### Generated interface HammerDRCTool ###
+    ### DO NOT MODIFY THIS CODE, EDIT generate_properties.py INSTEAD ###
+    ### Inputs ###
+
+    @property
+    def layout_file(self) -> str:
+        """
+        Get the path to the input layout file (e.g. a *.gds).
+
+        :return: The path to the input layout file (e.g. a *.gds).
+        """
+        try:
+            return self.attr_getter("_layout_file", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the path to the input layout file (e.g. a *.gds) yet")
+
+    @layout_file.setter
+    def layout_file(self, value: str) -> None:
+        """Set the path to the input layout file (e.g. a *.gds)."""
+        if not (isinstance(value, str)):
+            raise TypeError("layout_file must be a str")
+        self.attr_setter("_layout_file", value)
+
+    @property
+    def top_module(self) -> str:
+        """
+        Get the top RTL module.
+
+        :return: The top RTL module.
+        """
+        try:
+            return self.attr_getter("_top_module", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the top RTL module yet")
+
+    @top_module.setter
+    def top_module(self, value: str) -> None:
+        """Set the top RTL module."""
+        if not (isinstance(value, str)):
+            raise TypeError("top_module must be a str")
+        self.attr_setter("_top_module", value)
+
+
+    ### Outputs ###
+    ### END Generated interface HammerDRCTool ###
+
 
 class HammerLVSTool(HammerSignoffTool):
     @abstractmethod
     def fill_outputs(self) -> bool:
         pass
-
-    ### Inputs ###
 
     @abstractmethod
     def waived_erc_rules(self) -> List[str]:
@@ -564,104 +601,6 @@ class HammerLVSTool(HammerSignoffTool):
         :return: The list of waived ERC rule names.
         """
         pass
-
-    @property
-    def layout_file(self) -> str:
-        """
-        Get the input layout file (e.g. *.gds)
-
-        :return: The input layout file (e.g. *.gds)
-        """
-        try:
-            return self.attr_getter("_layout_file", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the input layout file (e.g. *.gds) yet")
-
-    @layout_file.setter
-    def layout_file(self, value: str) -> None:
-        """ Set the input layout file (e.g. *.gds)"""
-        if not (isinstance(value, str)):
-            raise TypeError("layout_file must be a str")
-        self.attr_setter("_layout_file", value)
-
-    @property
-    def schematic_files(self) -> List[str]:
-        """
-        Get the collection of schematic files (e.g. *.v or *.sp).
-
-        :return: The collection of schematic files (e.g. *.v or *.sp).
-        """
-        try:
-            return self.attr_getter("_schematic_files", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the collection of schematic files (e.g. *.v or *.sp) yet")
-
-    @schematic_files.setter
-    def schematic_files(self, value: List[str]) -> None:
-        """Set the collection of schematic files (e.g. *.v or *.sp)."""
-        if not (isinstance(value, List)):
-            raise TypeError("schematic_files must be a List[str]")
-        self.attr_setter("_schematic_files", value)
-
-    @property
-    def power_nets(self) -> List[str]:
-        """
-        Get a list of power nets used in the design
-
-        :return: The list of power nets used in the design
-        """
-        try:
-            return self.attr_getter("_power_nets", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the list of power nets used in the design yet")
-
-    @power_nets.setter
-    def power_nets(self, value: List[str]) -> None:
-        """ Set the input power nets used in the design"""
-        if not (isinstance(value, List)):
-            raise TypeError("power_nets must be a List[str]")
-        self.attr_setter("_power_nets", value)
-
-    @property
-    def ground_nets(self) -> List[str]:
-        """
-        Get a list of ground nets used in the design
-
-        :return: The list of ground nets used in the design
-        """
-        try:
-            return self.attr_getter("_ground_nets", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the list of ground nets used in the design yet")
-
-    @ground_nets.setter
-    def ground_nets(self, value: List[str]) -> None:
-        """ Set the input ground nets used in the design"""
-        if not (isinstance(value, List)):
-            raise TypeError("ground_nets must be a List[str]")
-        self.attr_setter("_ground_nets", value)
-
-    @property
-    def hcells_list(self) -> List[str]:
-        """
-        Get the list of hierarchical cells for LVS.
-
-        :return: The list of hierarchical cells for LVS.
-        """
-        try:
-            return self.attr_getter("_hcells_list", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the list of hierarchical cells for LVS yet")
-
-    @hcells_list.setter
-    def hcells_list(self, value: List[str]) -> None:
-        """Set the list of hierarchical cells for LVS."""
-        if not (isinstance(value, list)):
-            raise TypeError("hcells_list must be a List[str]")
-        self.attr_setter("_hcells_list", value)
-
-
-    ### Outputs ###
 
     @abstractmethod
     def erc_results_pre_waived(self) -> Dict[str, int]:
@@ -710,6 +649,132 @@ class HammerLVSTool(HammerSignoffTool):
 
         return add_lvs_text
 
+    ### Generated interface HammerLVSTool ###
+    ### DO NOT MODIFY THIS CODE, EDIT generate_properties.py INSTEAD ###
+    ### Inputs ###
+
+    @property
+    def layout_file(self) -> str:
+        """
+        Get the path to the input layout file (e.g. a *.gds).
+
+        :return: The path to the input layout file (e.g. a *.gds).
+        """
+        try:
+            return self.attr_getter("_layout_file", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the path to the input layout file (e.g. a *.gds) yet")
+
+    @layout_file.setter
+    def layout_file(self, value: str) -> None:
+        """Set the path to the input layout file (e.g. a *.gds)."""
+        if not (isinstance(value, str)):
+            raise TypeError("layout_file must be a str")
+        self.attr_setter("_layout_file", value)
+
+
+    @property
+    def schematic_files(self) -> List[str]:
+        """
+        Get the path to the input SPICE or Verilog schematic files (e.g. *.v or *.spi).
+
+        :return: The path to the input SPICE or Verilog schematic files (e.g. *.v or *.spi).
+        """
+        try:
+            return self.attr_getter("_schematic_files", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the path to the input SPICE or Verilog schematic files (e.g. *.v or *.spi) yet")
+
+    @schematic_files.setter
+    def schematic_files(self, value: List[str]) -> None:
+        """Set the path to the input SPICE or Verilog schematic files (e.g. *.v or *.spi)."""
+        if not (isinstance(value, List)):
+            raise TypeError("schematic_files must be a List[str]")
+        self.attr_setter("_schematic_files", value)
+
+
+    @property
+    def top_module(self) -> str:
+        """
+        Get the top RTL module.
+
+        :return: The top RTL module.
+        """
+        try:
+            return self.attr_getter("_top_module", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the top RTL module yet")
+
+    @top_module.setter
+    def top_module(self, value: str) -> None:
+        """Set the top RTL module."""
+        if not (isinstance(value, str)):
+            raise TypeError("top_module must be a str")
+        self.attr_setter("_top_module", value)
+
+
+    @property
+    def power_nets(self) -> List[str]:
+        """
+        Get the list of all the power nets in the design.
+
+        :return: The list of all the power nets in the design.
+        """
+        try:
+            return self.attr_getter("_power_nets", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the list of all the power nets in the design yet")
+
+    @power_nets.setter
+    def power_nets(self, value: List[str]) -> None:
+        """Set the list of all the power nets in the design."""
+        if not (isinstance(value, List)):
+            raise TypeError("power_nets must be a List[str]")
+        self.attr_setter("_power_nets", value)
+
+
+    @property
+    def ground_nets(self) -> List[str]:
+        """
+        Get the list of all the ground nets in the design.
+
+        :return: The list of all the ground nets in the design.
+        """
+        try:
+            return self.attr_getter("_ground_nets", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the list of all the ground nets in the design yet")
+
+    @ground_nets.setter
+    def ground_nets(self, value: List[str]) -> None:
+        """Set the list of all the ground nets in the design."""
+        if not (isinstance(value, List)):
+            raise TypeError("ground_nets must be a List[str]")
+        self.attr_setter("_ground_nets", value)
+
+
+    @property
+    def hcells_list(self) -> List[str]:
+        """
+        Get the list of cells to explicitly map hierarchically in LVS.
+
+        :return: The list of cells to explicitly map hierarchically in LVS.
+        """
+        try:
+            return self.attr_getter("_hcells_list", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the list of cells to explicitly map hierarchically in LVS yet")
+
+    @hcells_list.setter
+    def hcells_list(self, value: List[str]) -> None:
+        """Set the list of cells to explicitly map hierarchically in LVS."""
+        if not (isinstance(value, List)):
+            raise TypeError("hcells_list must be a List[str]")
+        self.attr_setter("_hcells_list", value)
+
+
+    ### Outputs ###
+    ### END Generated interface HammerLVSTool ###
 
 
 class HasSDCSupport(HammerTool):
