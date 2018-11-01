@@ -6,31 +6,29 @@
 #
 #  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
-from abc import ABCMeta, abstractmethod
-from functools import reduce
 import inspect
-from numbers import Number
 import os
 import re
 import shlex
-from typing import Callable, Iterable, List, Tuple, Optional, Dict, Any, Union, Set, cast, NamedTuple
-import warnings
+from abc import ABCMeta, abstractmethod
+from functools import reduce
+from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, cast
 
 import hammer_config
 import hammer_tech
-
 from hammer_logging import HammerVLSILoggingContext
+from hammer_tech import LibraryFilter
+from hammer_utils import (add_lists, assert_function_type, get_or_else,
+                          optional_map)
+
 from .constraints import *
-
-from .hooks import HammerToolHookAction, HammerToolStep, HammerStepFunction, HookLocation
-
-from .hammer_vlsi_impl import HierarchicalMode, LibraryFilter, HammerToolPauseException
-from .units import TimeValue, VoltageValue, TemperatureValue
+from .hammer_vlsi_impl import HammerToolPauseException, HierarchicalMode
+from .hooks import (HammerStepFunction, HammerToolHookAction, HammerToolStep,
+                    HookLocation)
 from .submit_command import HammerSubmitCommand
-from hammer_utils import (add_lists, assert_function_type, get_or_else, in_place_unique,
-                          optional_map, reduce_named, reduce_list_str)
+from .units import TemperatureValue, TimeValue, VoltageValue
 
-__all__ = ['HammerTool', 'ExtraLibrary']
+__all__ = ['HammerTool']
 
 
 def make_raw_hammer_tool_step(func: HammerStepFunction, name: str) -> HammerToolStep:
@@ -43,35 +41,6 @@ def check_hammer_step_function(func: HammerStepFunction) -> None:
     """Internal alias for checking HammerStepFunction signatures."""
     assert_function_type(func, args=[HammerTool], return_type=bool)
 
-
-# Struct that holds an extra library and possible prefix.
-class ExtraLibrary(NamedTuple('ExtraLibrary', [
-    ('prefix', Optional[hammer_tech.PathPrefix]),
-    ('library', hammer_tech.Library)
-])):
-    __slots__ = ()
-
-    def to_setting(self) -> dict:
-        raise NotImplementedError("No clean implementation for JSON export of library yet")
-
-    @staticmethod
-    def from_setting(d: dict) -> "ExtraLibrary":
-        prefix = None
-        if "prefix" in d:
-            prefix = hammer_tech.PathPrefix.from_setting(d["prefix"])
-        return ExtraLibrary(
-            prefix=prefix,
-            library=hammer_tech.HammerTechnology.parse_library(d["library"])
-        )
-
-    def store_into_library(self) -> hammer_tech.Library:
-        """
-        Store the prefix into extra_prefixes of the library, and return a new copy.
-        :return: A copy of the library in this ExtraPrefix with the prefix stored in extra_prefixes, if one exists.
-        """
-        lib_copied = hammer_tech.copy_library(self.library)  # type: hammer_tech.Library
-        lib_copied.extra_prefixes = get_or_else(optional_map(self.prefix, lambda p: [p]), [])
-        return lib_copied
 
 class HammerTool(metaclass=ABCMeta):
     # Interface methods.
@@ -792,99 +761,6 @@ class HammerTool(metaclass=ABCMeta):
                 error = True
         return not error
 
-    def get_extra_libraries(self) -> List[ExtraLibrary]:
-        """
-        Get the list of extra libraries from the config.
-        See vlsi.technology.extra_libraries in defaults.yml.
-        :return: List of extra libraries.
-        """
-        if not self._database.has_setting("vlsi.technology.extra_libraries"):
-            # If the key doesn't exist we can safely say there are no extra libraries.
-            return []
-
-        extra_libs = self.get_setting("vlsi.technology.extra_libraries")
-        if not isinstance(extra_libs, list):
-            raise ValueError("extra_libraries was not a list")
-        else:
-            return list(map(ExtraLibrary.from_setting, extra_libs))
-
-    def get_available_libraries(self) -> List[hammer_tech.Library]:
-        """
-        Get all available IP libraries. Currently this consists of IP libraries from the technology as well as
-        extra IP libraries specified in the config (see get_extra_libraries).
-        :return: List of all available IP libraries.
-        """
-        return list(self.technology.tech_defined_libraries) + list(
-            map(lambda el: el.store_into_library(), self.get_extra_libraries()))
-
-    # TODO: should some of these live in hammer_tech instead?
-    def filter_and_select_libs(self,
-                               lib_filters: List[Callable[[hammer_tech.Library], bool]] = [],
-                               sort_func: Optional[Callable[[hammer_tech.Library], Union[Number, str, tuple]]] = None,
-                               extraction_func: Callable[[hammer_tech.Library], List[str]] = None,
-                               extra_funcs: List[Callable[[str], str]] = [],
-                               ) -> List[str]:
-        """
-        Generate a list by filtering the list of libraries and selecting some parts of it.
-
-        :param lib_filters: Filters to filter the list of libraries before selecting desired results from them.
-                            e.g. remove libraries of the wrong type
-        :param sort_func: Sort function to re-order the resultant components.
-                          e.g. put stdcell libraries before any other libraries
-        :param extraction_func: Function to call to extract the desired component of the lib.
-                                e.g. turns the library into the ".lib" file corresponding to that library
-        :param extra_funcs: List of extra functions to call before wrapping them in the arg prefixes.
-
-        :return: List generated from list of libraries
-        """
-        if extraction_func is None:
-            raise TypeError("extraction_func is required")
-
-        filtered_libs = reduce_named(
-            sequence=lib_filters,
-            initial=self.get_available_libraries(),
-            function=lambda libs, func: filter(func, libs)
-        )  # type: List[hammer_tech.Library]
-
-        if sort_func is not None:
-            filtered_libs = sorted(filtered_libs, key=sort_func)
-
-        def extract_and_prepend_path(lib: hammer_tech.Library) -> List[str]:
-            """
-            Call extraction_func on this library and then prepend to the resultant paths.
-            """
-            assert extraction_func is not None  # type checker technicality for above
-            paths = extraction_func(lib)
-            return list(map(lambda path: self.technology.prepend_dir_path(path, lib), paths))
-
-        lib_results_nested = list(map(extract_and_prepend_path, filtered_libs))  # type: List[List[str]]
-        empty = []  # type: List[str]
-        lib_results = reduce_list_str(add_lists, lib_results_nested, empty)  # type: List[str]
-
-        # Uniquify results.
-        # TODO: think about whether this really belongs here and whether we always need to uniquify.
-        # This is here to get stuff working since some CAD tools dislike duplicated arguments (e.g. duplicated stdcell
-        # lib, etc).
-        in_place_unique(lib_results)
-
-        lib_results_with_extra_funcs = reduce(lambda arr, extra_func: list(map(extra_func, arr)), extra_funcs, lib_results)
-
-        return lib_results_with_extra_funcs
-
-    def filter_for_supplies(self, lib: hammer_tech.Library) -> bool:
-        """Function to help filter a list of libraries to find libraries which have matching supplies.
-        Will also use libraries with no supplies annotation.
-
-        :param lib: Library to check
-        :return: True if the supplies of this library match the inputs for this run, False otherwise.
-        """
-        if lib.supplies is None:
-            # TODO: add some sort of wildcard value for supplies for libraries which _actually_ should
-            # always be used.
-            self.logger.warning("Lib %s has no supplies annotation! Using anyway." % (lib.serialize()))
-            return True
-        return self.get_setting("vlsi.inputs.supplies.VDD") == lib.supplies.VDD and self.get_setting("vlsi.inputs.supplies.GND") == lib.supplies.GND
-
     def filter_for_mmmc(self, voltage: VoltageValue, temp: TemperatureValue) -> Callable[[hammer_tech.Library],bool]:
         """
         Selecting libraries that match given temp and voltage.
@@ -904,30 +780,6 @@ class HammerTool(metaclass=ABCMeta):
             else:
                 return False
         return extraction_func
-
-    @staticmethod
-    def make_check_isdir(description: str = "Path") -> Callable[[str], str]:
-        """
-        Utility function to generate functions which check whether a path exists.
-        """
-        def check_isdir(path: str) -> str:
-            if not os.path.isdir(path):
-                raise ValueError("%s %s is not a directory or does not exist" % (description, path))
-            else:
-                return path
-        return check_isdir
-
-    @staticmethod
-    def make_check_isfile(description: str = "File") -> Callable[[str], str]:
-        """
-        Utility function to generate functions which check whether a path exists.
-        """
-        def check_isfile(path: str) -> str:
-            if not os.path.isfile(path):
-                raise ValueError("%s %s is not a file or does not exist" % (description, path))
-            else:
-                return path
-        return check_isfile
 
     @staticmethod
     def replace_tcl_set(variable: str, value: str, tcl_path: str, quotes: bool = True) -> None:
@@ -971,15 +823,6 @@ class HammerTool(metaclass=ABCMeta):
 
     # Common convenient filters useful to many different tools.
     @staticmethod
-    def create_nonempty_check(description: str) -> Callable[[List[str]], List[str]]:
-        def check_nonempty(l: List[str]) -> List[str]:
-            if len(l) == 0:
-                raise ValueError("Must have at least one " + description)
-            else:
-                return l
-        return check_nonempty
-
-    @staticmethod
     def to_command_line_args(lib_item: str, filt: LibraryFilter) -> List[str]:
         """
         Generate command-line args in the form --<filt.tag> <lib_item>.
@@ -992,296 +835,6 @@ class HammerTool(metaclass=ABCMeta):
         Generate plain outputs in the form of <lib_item1> <lib_item2> ...
         """
         return [lib_item]
-
-    @property
-    def timing_db_filter(self) -> LibraryFilter:
-        """
-        Selecting Synopsys timing libraries (.db). Prefers CCS if available; picks NLDM as a fallback.
-        """
-
-        def extraction_func(lib: hammer_tech.Library) -> List[str]:
-            # Choose ccs if available, if not, nldm.
-            if lib.ccs_library_file is not None:
-                return [lib.ccs_library_file]
-            elif lib.nldm_library_file is not None:
-                return [lib.nldm_library_file]
-            else:
-                return []
-
-        return LibraryFilter.new("timing_db", "CCS/NLDM timing lib (Synopsys .db)", extraction_func=extraction_func,
-                                 is_file=True)
-
-    @property
-    def liberty_lib_filter(self) -> LibraryFilter:
-        """
-        Select ASCII liberty (.lib) timing libraries. Prefers CCS if available; picks NLDM as a fallback.
-        """
-        warnings.warn("Use timing_lib_filter instead", DeprecationWarning, stacklevel=2)
-
-        def extraction_func(lib: hammer_tech.Library) -> List[str]:
-            # Choose ccs if available, if not, nldm.
-            if lib.ccs_liberty_file is not None:
-                return [lib.ccs_liberty_file]
-            elif lib.nldm_liberty_file is not None:
-                return [lib.nldm_liberty_file]
-            else:
-                return []
-
-        return LibraryFilter.new("timing_lib", "CCS/NLDM timing lib (ASCII .lib)",
-                                 extraction_func=extraction_func, is_file=True)
-
-    @property
-    def timing_lib_filter(self) -> LibraryFilter:
-        """
-        Select ASCII .lib timing libraries. Prefers CCS if available; picks NLDM as a fallback.
-        """
-
-        def extraction_func(lib: hammer_tech.Library) -> List[str]:
-            # Choose ccs if available, if not, nldm.
-            if lib.ccs_liberty_file is not None:
-                return [lib.ccs_liberty_file]
-            elif lib.nldm_liberty_file is not None:
-                return [lib.nldm_liberty_file]
-            else:
-                return []
-
-        return LibraryFilter.new("timing_lib", "CCS/NLDM timing lib (ASCII .lib)",
-                                 extraction_func=extraction_func, is_file=True)
-
-    @property
-    def timing_lib_with_ecsm_filter(self) -> LibraryFilter:
-        """
-        Select ASCII .lib timing libraries. Prefers ECSM, then CCS, then NLDM if multiple are present for
-        a single given .lib.
-        """
-
-        def extraction_func(lib: hammer_tech.Library) -> List[str]:
-            if lib.ecsm_liberty_file is not None:
-                return [lib.ecsm_liberty_file]
-            elif lib.ccs_liberty_file is not None:
-                return [lib.ccs_liberty_file]
-            elif lib.nldm_liberty_file is not None:
-                return [lib.nldm_liberty_file]
-            else:
-                return []
-
-        return LibraryFilter.new("timing_lib_with_ecsm", "ECSM/CCS/NLDM timing lib (liberty ASCII .lib)",
-                                 extraction_func=extraction_func, is_file=True)
-
-    @property
-    def qrc_tech_filter(self) -> LibraryFilter:
-        """
-        Selecting qrc RC Corner tech (qrcTech) files.
-        """
-
-        def extraction_func(lib: hammer_tech.Library) -> List[str]:
-            if lib.qrc_techfile is not None:
-                return [lib.qrc_techfile]
-            else:
-                return []
-
-        return LibraryFilter.new("qrc", "qrc RC corner tech file",
-                                 extraction_func=extraction_func, is_file=True)
-
-    @property
-    def verilog_synth_filter(self) -> LibraryFilter:
-        """
-        Selecting verilog_synth files which are synthesizable wrappers (e.g. for SRAM) which are needed in some
-        technologies.
-        """
-
-        def extraction_func(lib: hammer_tech.Library) -> List[str]:
-            if lib.verilog_synth is not None:
-                return [lib.verilog_synth]
-            else:
-                return []
-
-        return LibraryFilter.new("verilog_synth", "Synthesizable Verilog wrappers",
-                                 extraction_func=extraction_func, is_file=True)
-
-    @property
-    def lef_filter(self) -> LibraryFilter:
-        """
-        Select LEF files for physical layout.
-        """
-
-        def filter_func(lib: hammer_tech.Library) -> bool:
-            return lib.lef_file is not None
-
-        def extraction_func(lib: hammer_tech.Library) -> List[str]:
-            assert lib.lef_file is not None
-            return [lib.lef_file]
-
-        def sort_func(lib: hammer_tech.Library):
-            if lib.provides is not None:
-                for provided in lib.provides:
-                    if provided.lib_type is not None and provided.lib_type == "technology":
-                        return 0  # put the technology LEF in front
-            return 100  # put it behind
-
-        return LibraryFilter.new("lef", "LEF physical design layout library", is_file=True, filter_func=filter_func,
-                                 extraction_func=extraction_func, sort_func=sort_func)
-
-    @property
-    def gds_filter(self) -> LibraryFilter:
-        """
-        Select GDS files for opaque physical information.
-        """
-
-        def filter_func(lib: hammer_tech.Library) -> bool:
-            return lib.gds_file is not None
-
-        def extraction_func(lib: hammer_tech.Library) -> List[str]:
-            assert lib.gds_file is not None
-            return [lib.gds_file]
-
-        return LibraryFilter.new("gds", "GDS opaque physical design layout", is_file=True, filter_func=filter_func,
-                                 extraction_func=extraction_func)
-
-    @property
-    def milkyway_lib_dir_filter(self) -> LibraryFilter:
-        def select_milkyway_lib(lib: hammer_tech.Library) -> List[str]:
-            if lib.milkyway_lib_in_dir is not None:
-                return [os.path.dirname(lib.milkyway_lib_in_dir)]
-            else:
-                return []
-
-        return LibraryFilter.new("milkyway_dir", "Milkyway lib", is_file=False, extraction_func=select_milkyway_lib)
-
-    @property
-    def milkyway_techfile_filter(self) -> LibraryFilter:
-        """Select milkyway techfiles."""
-
-        def select_milkyway_tfs(lib: hammer_tech.Library) -> List[str]:
-            if lib.milkyway_techfile is not None:
-                return [lib.milkyway_techfile]
-            else:
-                return []
-
-        return LibraryFilter.new("milkyway_tf", "Milkyway techfile", is_file=True, extraction_func=select_milkyway_tfs,
-                                 extra_post_filter_funcs=[self.create_nonempty_check("Milkyway techfile")])
-
-    @property
-    def tlu_max_cap_filter(self) -> LibraryFilter:
-        """TLU+ max cap filter."""
-
-        def select_tlu_max_cap(lib: hammer_tech.Library) -> List[str]:
-            if lib.tluplus_files is not None and lib.tluplus_files.max_cap is not None:
-                return [lib.tluplus_files.max_cap]
-            else:
-                return []
-
-        return LibraryFilter.new("tlu_max", "TLU+ max cap db", is_file=True, extraction_func=select_tlu_max_cap)
-
-    @property
-    def tlu_min_cap_filter(self) -> LibraryFilter:
-        """TLU+ min cap filter."""
-
-        def select_tlu_min_cap(lib: hammer_tech.Library) -> List[str]:
-            if lib.tluplus_files is not None and lib.tluplus_files.min_cap is not None:
-                return [lib.tluplus_files.min_cap]
-            else:
-                return []
-
-        return LibraryFilter.new("tlu_min", "TLU+ min cap db", is_file=True, extraction_func=select_tlu_min_cap)
-
-    @property
-    def spice_filter(self) -> LibraryFilter:
-        """
-        Select SPICE files
-        """
-
-        def filter_func(lib: hammer_tech.Library) -> bool:
-            return lib.spice_file is not None
-
-        def extraction_func(lib: hammer_tech.Library) -> List[str]:
-            assert lib.spice_file is not None
-            return [lib.spice_file]
-
-        return LibraryFilter.new("spice", "SPICE files", is_file=True, filter_func=filter_func, extraction_func=extraction_func)
-
-
-    def process_library_filter(self, pre_filts: List[Callable[[hammer_tech.Library], bool]], filt: LibraryFilter, output_func: Callable[[str, LibraryFilter], List[str]],
-                               must_exist: bool = True) -> List[str]:
-        """
-        Process the given library filter and return a list of items from that library filter with any extra
-        post-processing.
-
-        - Get a list of lib items
-        - Run any extra_post_filter_funcs (if needed)
-        - For every lib item in each lib items, run output_func
-
-        :param pre_filts: List of functions with which to pre-filter the libraries. Each function must return true
-                          in order for this library to be used.
-        :param filt: LibraryFilter to check against the list.
-        :param output_func: Function which processes the outputs, taking in the filtered lib and the library filter
-                            which generated it.
-        :param must_exist: Must each library item actually exist? Default: True (yes, they must exist)
-        :return: Resultant items from the filter and post-processed. (e.g. --timing foo.db --timing bar.db)
-        """
-        if must_exist:
-            existence_check_func = self.make_check_isfile(filt.description) if filt.is_file else self.make_check_isdir(
-                filt.description)
-        else:
-            existence_check_func = lambda x: x  # everything goes
-
-        lib_filters = pre_filts
-        if filt.filter_func is not None:
-            lib_filters.append(filt.filter_func)
-        lib_items = self.filter_and_select_libs(
-            lib_filters=lib_filters,
-            sort_func=filt.sort_func,
-            extraction_func=filt.extraction_func,
-            extra_funcs=[existence_check_func])  # type: List[str]
-
-        # Quickly check that lib_items is actually a List[str].
-        if not isinstance(lib_items, List):
-            raise TypeError("lib_items is not a List[str], but a " + str(type(lib_items)))
-        for i in lib_items:
-            if not isinstance(i, str):
-                raise TypeError("lib_items is a List but not a List[str]")
-
-        # Apply any list-level functions.
-        after_post_filter = reduce_named(
-            sequence=filt.extra_post_filter_funcs,
-            initial=lib_items,
-            function=lambda libs, func: func(list(libs)),
-        )
-
-        # Finally, apply any output functions.
-        # e.g. turning foo.db into ["--timing", "foo.db"].
-        after_output_functions = list(map(lambda item: output_func(item, filt), after_post_filter))
-
-        # Concatenate lists of List[str] together.
-        return reduce_list_str(add_lists, after_output_functions, [])
-
-    def read_libs(self, library_types: Iterable[LibraryFilter], output_func: Callable[[str, LibraryFilter], List[str]],
-            pre_filters: Optional[List[Callable[[hammer_tech.Library],bool]]] = None,
-            must_exist: bool = True) -> List[str]:
-        """
-        Read the given libraries and return a list of strings according to some output format.
-
-        :param library_types: List of libraries to filter, specified as a list of LibraryFilter elements.
-        :param output_func: Function which processes the outputs, taking in the filtered lib and the library filter
-                            which generated it.
-        :param pre_filters: List of additional filter functions to use to filter the list of libraries.
-        :param must_exist: Must each library item actually exist? Default: True (yes, they must exist)
-        :return: List of filtered libraries processed according output_func.
-        """
-
-        if pre_filters is None:
-            pre_filts = [self.filter_for_supplies]  # type: List[Callable[[hammer_tech.Library], bool]]
-        else:
-            assert isinstance(pre_filters, List)
-            pre_filts = pre_filters
-
-        return reduce_list_str(
-            add_lists,
-            map(
-                lambda lib: self.process_library_filter(pre_filts=pre_filts, filt=lib, output_func=output_func, must_exist=must_exist),
-                library_types
-            )
-        )
 
     # TODO: these helper functions might get a bit out of hand, put them somewhere more organized?
     def get_clock_ports(self) -> List[ClockPort]:
@@ -1451,5 +1004,3 @@ class HammerTool(metaclass=ABCMeta):
         """
         output_buffer.append("""puts "{0}" """.format(cmd.replace('"', '\"')))
         output_buffer.append(cmd)
-
-
