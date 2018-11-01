@@ -9,6 +9,7 @@
 from collections import namedtuple
 import sys
 
+import os
 import re
 
 InterfaceVar = namedtuple("InterfaceVar", 'name type desc')
@@ -64,11 +65,13 @@ def {var_name}(self, value: {var_type}) -> None:
 
     output = []
     output.append("### Generated interface %s ###" % (interface.module))
+    output.append("### DO NOT MODIFY THIS CODE, EDIT %s INSTEAD ###" % (os.path.basename(__file__)))
     output.append("### Inputs ###")
     output.extend(generate_from_list(template, interface.inputs))
     output.append("")
     output.append("### Outputs ###")
     output.extend(generate_from_list(template, interface.outputs))
+    output.append("### END Generated interface %s ###" % (interface.module))
     return output
 
 def main(args):
@@ -105,10 +108,34 @@ def main(args):
         ]
     )
 
+    HammerDRCTool = Interface(module="HammerDRCTool",
+        inputs=[
+            InterfaceVar("layout_file", "str", "path to the input layout file (e.g. a *.gds)"),
+            InterfaceVar("top_module", "str", "top RTL module")
+        ],
+        outputs=[]
+    )
+
+    HammerLVSTool = Interface(module="HammerLVSTool",
+        inputs=[
+            InterfaceVar("layout_file", "str", "path to the input layout file (e.g. a *.gds)"),
+            InterfaceVar("schematic_files", "List[str]", "path to the input SPICE or Verilog schematic files (e.g. *.v or *.spi)"),
+            InterfaceVar("top_module", "str", "top RTL module"),
+            InterfaceVar("power_nets", "List[str]", "list of all the power nets in the design"),
+            InterfaceVar("ground_nets", "List[str]", "list of all the ground nets in the design"),
+            InterfaceVar("hcells_list", "List[str]", "list of cells to explicitly map hierarchically in LVS")
+        ],
+        outputs=[]
+    )
+
     output = []
     output.extend(generate_interface(HammerSynthesisTool))
     output.append("")
     output.extend(generate_interface(HammerPlaceAndRouteTool))
+    output.append("")
+    output.extend(generate_interface(HammerDRCTool))
+    output.append("")
+    output.extend(generate_interface(HammerLVSTool))
     print("\n".join(output))
  
     return 0
