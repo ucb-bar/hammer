@@ -116,16 +116,6 @@ class HammerToolTestHelpers:
 
     @staticmethod
     def write_tech_json(tech_json_filename: str, postprocessing_func: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None) -> None:
-        # TODO: use a structured way of creating it when arrays actually work!
-        # Currently the subelements of the array don't get recursively "validated", so the underscores don't disappear, etc.
-        # ~ tech_json_obj = hammer_tech.TechJSON(name="dummy28")
-        # ~ tech_json_obj.libraries = [
-        # ~ hammer_tech.Library(milkyway_techfile="soy"),
-        # ~ hammer_tech.Library(milkyway_techfile="coconut"),
-        # ~ hammer_tech.Library(openaccess_techfile="juice"),
-        # ~ hammer_tech.Library(openaccess_techfile="tea")
-        # ~ ]
-        # ~ tech_json = tech_json_obj.serialize()
         tech_json = {
             "name": "dummy28",
             "installs": [
