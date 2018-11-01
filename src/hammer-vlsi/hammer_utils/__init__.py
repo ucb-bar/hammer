@@ -307,11 +307,20 @@ def check_function_type(function: Callable, args: List[type], return_type: type)
 # Contributors: Be sure to add to this list if you need to call get_filetype
 @unique
 class HammerFiletype(Enum):
+    """
+    An enum class containing the file types that Hammer knows/cares about
+    """
     NONE = 0
     SPICE = 1
     VERILOG = 2
 
 def get_filetype(filename: str) -> HammerFiletype:
+    """
+    Return an enumerated HammerFiletype object by parsing the file extension of the given filename.
+
+    :param filename: The filename to parse
+    :return: The enumerated file type
+    """
     split = filename.split(".")
     if len(split) == 1:
         return HammerFiletype.NONE
