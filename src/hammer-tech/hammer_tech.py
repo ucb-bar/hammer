@@ -5,19 +5,28 @@
 #
 #  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
 
-from abc import ABCMeta, abstractmethod
 import json
 import os
 import subprocess
-from typing import Any, Callable, List, NamedTuple, Optional, Union
+from abc import ABCMeta, abstractmethod
+from functools import reduce
+from numbers import Number
+from typing import Any, Callable, Iterable, List, NamedTuple, Optional, Union
 
 import hammer_config
-
-from hammer_logging import HammerVLSILoggingContext
-
 import python_jsonschema_objects  # type: ignore
-from hammer_utils import deeplist, get_or_else, optional_map
 from hammer_config import load_yaml
+from hammer_logging import HammerVLSILoggingContext
+from hammer_utils import (LEFUtils, add_lists, deeplist, get_or_else,
+                          in_place_unique, optional_map, reduce_list_str,
+                          reduce_named)
+
+from library_filter import LibraryFilter
+from filters import LibraryFilterHolder
+
+# Holds the list of pre-implemented filters.
+# Access it like hammer_tech.filters.lef_filter
+filters = LibraryFilterHolder()
 
 builder = python_jsonschema_objects.ObjectBuilder(json.loads(open(os.path.dirname(__file__) + "/schema.json").read()))
 ns = builder.build_classes()
@@ -164,6 +173,37 @@ def library_from_json(json: str) -> Library:
     return Library.from_json(json)
 
 
+# Struct that holds an extra library and possible prefix.
+class ExtraLibrary(NamedTuple('ExtraLibrary', [
+    ('prefix', Optional[PathPrefix]),
+    ('library', Library)
+])):
+    __slots__ = ()
+
+    def to_setting(self) -> dict:
+        raise NotImplementedError("No clean implementation for JSON export of library yet")
+
+    @staticmethod
+    def from_setting(d: dict) -> "ExtraLibrary":
+        prefix = None
+        if "prefix" in d:
+            prefix = PathPrefix.from_setting(d["prefix"])
+        return ExtraLibrary(
+            prefix=prefix,
+            library=HammerTechnology.parse_library(d["library"])
+        )
+
+    def store_into_library(self) -> Library:
+        """
+        Store the prefix into extra_prefixes of the library, and return a new copy.
+        :return: A copy of the library in this ExtraPrefix with the prefix stored in extra_prefixes, if one exists.
+        """
+        lib_copied = copy_library(self.library)  # type: Library
+        extra_prefixes = get_or_else(optional_map(self.prefix, lambda p: [p]), [])  # type: List[LibraryPrefix]
+        lib_copied.extra_prefixes = extra_prefixes  # type: ignore
+        return lib_copied
+
+
 class HammerTechnology:
     # Properties.
     @property
@@ -269,13 +309,22 @@ class HammerTechnology:
         """Set the settings database for use by the tool."""
         self._database = database  # type: hammer_config.HammerDatabase
 
-    def get_setting(self, key: str):
+    def is_database_set(self) -> bool:
+        """Return True if the settings database has been set for use by the tool."""
+        return hasattr(self, "_database")
+
+    def get_setting(self, key: str) -> Any:
         """Get a particular setting from the database.
         """
         try:
             return self._database.get(key)
         except AttributeError:
             raise ValueError("Internal error: no database set by hammer-vlsi")
+
+    def has_setting(self, key: str) -> bool:
+        """Check if a setting exists in the database.
+        """
+        return self._database.has_setting(key)
 
     def get_config(self) -> List[dict]:
         """Get the hammer configuration for this technology. Not to be confused with the ".tech.json" which self.config refers to."""
@@ -429,3 +478,203 @@ class HammerTechnology:
                 os.makedirs(target_path, exist_ok=True)  # Make sure it exists or tar will not be happy.
                 subprocess.check_call("tar -xf %s -C %s" % (tarball_path, target_path), shell=True)
                 subprocess.check_call("chmod u+rwX -R %s" % (target_path), shell=True)
+
+    def get_extra_libraries(self) -> List[ExtraLibrary]:
+        """
+        Get the list of extra libraries from the config.
+        See vlsi.technology.extra_libraries in defaults.yml.
+        :return: List of extra libraries.
+        """
+        if not self.has_setting("vlsi.technology.extra_libraries"):
+            # If the key doesn't exist we can safely say there are no extra libraries.
+            return []
+
+        extra_libs = self.get_setting("vlsi.technology.extra_libraries")
+        if not isinstance(extra_libs, list):
+            raise ValueError("extra_libraries was not a list")
+        else:
+            return list(map(ExtraLibrary.from_setting, extra_libs))
+
+    def get_available_libraries(self) -> List[Library]:
+        """
+        Get all available IP libraries. Currently this consists of IP libraries from the technology as well as
+        extra IP libraries specified in the config (see get_extra_libraries).
+        :return: List of all available IP libraries.
+        """
+        return list(self.tech_defined_libraries) + list(
+            map(lambda el: el.store_into_library(), self.get_extra_libraries()))
+
+    def filter_and_select_libs(self,
+                               lib_filters: List[Callable[[Library], bool]] = [],
+                               sort_func: Optional[
+                                   Callable[[Library], Union[Number, str, tuple]]] = None,
+                               extraction_func: Callable[[Library], List[str]] = None,
+                               extra_funcs: List[Callable[[str], str]] = [],
+                               ) -> List[str]:
+        """
+        Generate a list by filtering the list of libraries and selecting some parts of it.
+
+        :param lib_filters: Filters to filter the list of libraries before selecting desired results from them.
+                            e.g. remove libraries of the wrong type
+        :param sort_func: Sort function to re-order the resultant components.
+                          e.g. put stdcell libraries before any other libraries
+        :param extraction_func: Function to call to extract the desired component of the lib.
+                                e.g. turns the library into the ".lib" file corresponding to that library
+        :param extra_funcs: List of extra functions to call before wrapping them in the arg prefixes.
+
+        :return: List generated from list of libraries
+        """
+        if extraction_func is None:
+            raise TypeError("extraction_func is required")
+
+        filtered_libs = reduce_named(
+            sequence=lib_filters,
+            initial=self.get_available_libraries(),
+            function=lambda libs, func: filter(func, libs)
+        )  # type: List[Library]
+
+        if sort_func is not None:
+            filtered_libs = sorted(filtered_libs, key=sort_func)
+
+        def extract_and_prepend_path(lib: Library) -> List[str]:
+            """
+            Call extraction_func on this library and then prepend to the resultant paths.
+            """
+            assert extraction_func is not None  # type checker technicality for above
+            paths = extraction_func(lib)
+            return list(map(lambda path: self.prepend_dir_path(path, lib), paths))
+
+        lib_results_nested = list(map(extract_and_prepend_path, filtered_libs))  # type: List[List[str]]
+        empty = []  # type: List[str]
+        lib_results = reduce_list_str(add_lists, lib_results_nested, empty)  # type: List[str]
+
+        # Uniquify results.
+        # TODO: think about whether this really belongs here and whether we always need to uniquify.
+        # This is here to get stuff working since some CAD tools dislike duplicated arguments (e.g. duplicated stdcell
+        # lib, etc).
+        in_place_unique(lib_results)
+
+        lib_results_with_extra_funcs = reduce(lambda arr, extra_func: list(map(extra_func, arr)), extra_funcs,
+                                              lib_results)
+
+        return lib_results_with_extra_funcs
+
+    def process_library_filter(self, pre_filts: List[Callable[[Library], bool]], filt: LibraryFilter, output_func: Callable[[str, LibraryFilter], List[str]],
+                               must_exist: bool = True) -> List[str]:
+        """
+        Process the given library filter and return a list of items from that library filter with any extra
+        post-processing.
+
+        - Get a list of lib items
+        - Run any extra_post_filter_funcs (if needed)
+        - For every lib item in each lib items, run output_func
+
+        :param pre_filts: List of functions with which to pre-filter the libraries. Each function must return true
+                          in order for this library to be used.
+        :param filt: LibraryFilter to check against the list.
+        :param output_func: Function which processes the outputs, taking in the filtered lib and the library filter
+                            which generated it.
+        :param must_exist: Must each library item actually exist? Default: True (yes, they must exist)
+        :return: Resultant items from the filter and post-processed. (e.g. --timing foo.db --timing bar.db)
+        """
+        if must_exist:
+            existence_check_func = self.make_check_isfile(filt.description) if filt.is_file else self.make_check_isdir(
+                filt.description)
+        else:
+            existence_check_func = lambda x: x  # everything goes
+
+        lib_filters = pre_filts
+        if filt.filter_func is not None:
+            lib_filters.append(filt.filter_func)
+        lib_items = self.filter_and_select_libs(
+            lib_filters=lib_filters,
+            sort_func=filt.sort_func,
+            extraction_func=filt.extraction_func,
+            extra_funcs=[existence_check_func])  # type: List[str]
+
+        # Quickly check that lib_items is actually a List[str].
+        if not isinstance(lib_items, List):
+            raise TypeError("lib_items is not a List[str], but a " + str(type(lib_items)))
+        for i in lib_items:
+            if not isinstance(i, str):
+                raise TypeError("lib_items is a List but not a List[str]")
+
+        # Apply any list-level functions.
+        after_post_filter = reduce_named(
+            sequence=filt.extra_post_filter_funcs,
+            initial=lib_items,
+            function=lambda libs, func: func(list(libs)),
+        )
+
+        # Finally, apply any output functions.
+        # e.g. turning foo.db into ["--timing", "foo.db"].
+        after_output_functions = list(map(lambda item: output_func(item, filt), after_post_filter))
+
+        # Concatenate lists of List[str] together.
+        return reduce_list_str(add_lists, after_output_functions, [])
+
+    def read_libs(self, library_types: Iterable[LibraryFilter], output_func: Callable[[str, LibraryFilter], List[str]],
+            pre_filters: Optional[List[Callable[[Library],bool]]] = None,
+            must_exist: bool = True) -> List[str]:
+        """
+        Read the given libraries and return a list of strings according to some output format.
+
+        :param library_types: List of libraries to filter, specified as a list of LibraryFilter elements.
+        :param output_func: Function which processes the outputs, taking in the filtered lib and the library filter
+                            which generated it.
+        :param pre_filters: List of additional filter functions to use to filter the list of libraries.
+        :param must_exist: Must each library item actually exist? Default: True (yes, they must exist)
+        :return: List of filtered libraries processed according output_func.
+        """
+
+        if pre_filters is None:
+            pre_filts = [self.filter_for_supplies]  # type: List[Callable[[Library], bool]]
+        else:
+            assert isinstance(pre_filters, List)
+            pre_filts = pre_filters
+
+        return reduce_list_str(
+            add_lists,
+            map(
+                lambda lib: self.process_library_filter(pre_filts=pre_filts, filt=lib, output_func=output_func, must_exist=must_exist),
+                library_types
+            )
+        )
+
+    def filter_for_supplies(self, lib: Library) -> bool:
+        """Function to help filter a list of libraries to find libraries which have matching supplies.
+        Will also use libraries with no supplies annotation.
+
+        :param lib: Library to check
+        :return: True if the supplies of this library match the inputs for this run, False otherwise.
+        """
+        if lib.supplies is None:
+            # TODO: add some sort of wildcard value for supplies for libraries which _actually_ should
+            # always be used.
+            self.logger.warning("Lib %s has no supplies annotation! Using anyway." % (lib.serialize()))
+            return True
+        return self.get_setting("vlsi.inputs.supplies.VDD") == lib.supplies.VDD and self.get_setting("vlsi.inputs.supplies.GND") == lib.supplies.GND
+
+    @staticmethod
+    def make_check_isdir(description: str = "Path") -> Callable[[str], str]:
+        """
+        Utility function to generate functions which check whether a path exists.
+        """
+        def check_isdir(path: str) -> str:
+            if not os.path.isdir(path):
+                raise ValueError("%s %s is not a directory or does not exist" % (description, path))
+            else:
+                return path
+        return check_isdir
+
+    @staticmethod
+    def make_check_isfile(description: str = "File") -> Callable[[str], str]:
+        """
+        Utility function to generate functions which check whether a path exists.
+        """
+        def check_isfile(path: str) -> str:
+            if not os.path.isfile(path):
+                raise ValueError("%s %s is not a file or does not exist" % (description, path))
+            else:
+                return path
+        return check_isfile

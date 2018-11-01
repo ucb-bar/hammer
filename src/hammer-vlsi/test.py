@@ -6,24 +6,22 @@
 #  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 import json
-import shutil
-from abc import abstractmethod, ABCMeta
-from numbers import Number
-
-import hammer_vlsi
-import hammer_tech
-import hammer_config
-from hammer_logging import Level, HammerVLSIFileLogger
-from hammer_logging import HammerVLSILogging
-
-from typing import Dict, List, TypeVar, Union, Optional, Callable, Any, Tuple
-
 import os
+import shutil
 import tempfile
 import unittest
+from abc import ABCMeta, abstractmethod
+from numbers import Number
+from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Union
 
+import hammer_config
+import hammer_tech
+import hammer_vlsi
+from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, Level
 from hammer_logging.test import HammerLoggingCaptureContext
+from hammer_tech import LibraryFilter
 from hammer_utils import deepdict, deeplist, get_or_else
+
 
 class HammerVLSILoggingTest(unittest.TestCase):
     def test_colours(self):
@@ -154,7 +152,7 @@ class HammerToolTestHelpers:
             f.write(json.dumps(tech_json, indent=4))
 
     @staticmethod
-    def make_test_filter() -> hammer_vlsi.LibraryFilter:
+    def make_test_filter() -> LibraryFilter:
         """
         Make a test filter that returns libraries with openaccess techfiles with libraries that provide 'technology'
         in lib_type first, with the rest sorted by the openaccess techfile.
@@ -175,7 +173,7 @@ class HammerToolTestHelpers:
             else:
                 return (1, str(lib.openaccess_techfile))
 
-        return hammer_vlsi.LibraryFilter.new(
+        return LibraryFilter.new(
             filter_func=filter_func,
             extraction_func=extraction_func,
             tag="test", description="Test filter",
@@ -257,14 +255,14 @@ class HammerTechnologyTest(unittest.TestCase):
             tech.prepend_dir_path("badprefix/file")
 
         # Check that a lib's custom prefix works
-        from hammer_vlsi.hammer_tool import ExtraLibrary
+        from hammer_tech import ExtraLibrary
         lib = ExtraLibrary(
             library=hammer_tech.library_from_json("""{"milkyway techfile": "custom/chair"}"""),
             prefix=hammer_tech.PathPrefix(
                 prefix="custom",
                 path="/tmp/custom"
             )
-        ).store_into_library()
+        ).store_into_library()  # type: hammer_tech.Library
         self.assertEqual("{0}/hat".format("/tmp/custom"), tech.prepend_dir_path("custom/hat", lib))
 
     def test_yaml_tech_file(self) -> None:
@@ -456,24 +454,28 @@ class HammerToolTest(unittest.TestCase):
         tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
         if tech_opt is None:
             self.assertTrue(False, "Unable to load technology")
+            return
         else:
             tech = tech_opt # type: hammer_tech.HammerTechnology
         tech.cache_dir = tech_dir
+        tech.logger = HammerVLSILogging.context("")
 
         class Tool(SingleStepTool):
             def step(self) -> bool:
                 def test_tool_format(lib, filt) -> List[str]:
                     return ["drink {0}".format(lib)]
 
-                self._read_lib_output = self.read_libs([self.milkyway_techfile_filter], test_tool_format, must_exist=False)
+                self._read_lib_output = tech.read_libs([hammer_tech.filters.milkyway_techfile_filter], test_tool_format, must_exist=False)
 
-                self._test_filter_output = self.read_libs([HammerToolTestHelpers.make_test_filter()], test_tool_format, must_exist=False)
+                self._test_filter_output = tech.read_libs([HammerToolTestHelpers.make_test_filter()], test_tool_format, must_exist=False)
                 return True
         test = Tool()
         test.logger = HammerVLSILogging.context("")
         test.run_dir = tempfile.mkdtemp()
         test.technology = tech
-        test.set_database(hammer_config.HammerDatabase())
+        database = hammer_config.HammerDatabase()
+        test.set_database(database)
+        tech.set_database(database)
         test.run()
 
         # Don't care about ordering here.
@@ -534,15 +536,17 @@ class HammerToolTest(unittest.TestCase):
         tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
         if tech_opt is None:
             self.assertTrue(False, "Unable to load technology")
+            return
         else:
             tech = tech_opt # type: hammer_tech.HammerTechnology
         tech.cache_dir = tech_dir
+        tech.logger = HammerVLSILogging.context("")
 
         class Tool(SingleStepTool):
             lib_outputs = []  # type: List[str]
 
             def step(self) -> bool:
-                Tool.lib_outputs = self.read_libs([self.timing_lib_with_ecsm_filter], self.to_plain_item,
+                Tool.lib_outputs = tech.read_libs([hammer_tech.filters.timing_lib_with_ecsm_filter], self.to_plain_item,
                                                        must_exist=False)
                 return True
 
@@ -551,6 +555,7 @@ class HammerToolTest(unittest.TestCase):
         test.run_dir = tempfile.mkdtemp()
         test.technology = tech
         test.set_database(hammer_config.HammerDatabase())
+        tech.set_database(hammer_config.HammerDatabase())
         test.run()
 
         # Check that the ecsm-based filter prioritized ecsm -> ccs -> nldm.
@@ -578,9 +583,11 @@ class HammerToolTest(unittest.TestCase):
         tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
         if tech_opt is None:
             self.assertTrue(False, "Unable to load technology")
+            return
         else:
             tech = tech_opt # type: hammer_tech.HammerTechnology
         tech.cache_dir = tech_dir
+        tech.logger = HammerVLSILogging.context("tech")
 
         class Tool(hammer_vlsi.DummyHammerTool):
             lib_output = []  # type: List[str]
@@ -596,9 +603,9 @@ class HammerToolTest(unittest.TestCase):
                 def test_tool_format(lib, filt) -> List[str]:
                     return ["drink {0}".format(lib)]
 
-                Tool.lib_output = self.read_libs([self.milkyway_techfile_filter], test_tool_format, must_exist=False)
+                Tool.lib_output = tech.read_libs([hammer_tech.filters.milkyway_techfile_filter], test_tool_format, must_exist=False)
 
-                Tool.filter_output = self.read_libs([HammerToolTestHelpers.make_test_filter()], test_tool_format,
+                Tool.filter_output = tech.read_libs([HammerToolTestHelpers.make_test_filter()], test_tool_format,
                                                     must_exist=False)
                 return True
 
@@ -649,6 +656,7 @@ class HammerToolTest(unittest.TestCase):
             ]
         }])
         test.set_database(database)
+        tech.set_database(database)
         test.run()
 
         # Not testing ordering in this assertion.
