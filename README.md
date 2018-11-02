@@ -7,7 +7,14 @@ Stable numbered releses can be bound below:
 
 Releases: https://github.com/ucb-bar/hammer/releases
 
-More documentation is forthcoming.
+Documentation
+=============
+Here are links to various pieces of documentation currently available:
+
+* [Core Hammer settings](src/hammer-vlsi/defaults.yml)
+* [Documentation for hammer-vlsi](src/hammer-vlsi/README.md)
+* [Hammer technology library schema](src/hammer-tech/schema.json)
+* For CAD tool settings, please see the relevant `defaults.yml` for those plugins.
 
 Setup
 =====
