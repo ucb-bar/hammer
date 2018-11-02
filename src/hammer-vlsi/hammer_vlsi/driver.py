@@ -625,7 +625,11 @@ class HammerDriver:
         bool, dict]:
         """
         Run DRC on a given database.
-        TODO fill me in
+
+        :param hook_actions: List of hook actions, or leave as None to use the hooks sets in set_drc_hooks.
+                             Hooks from set_drc_hooks, if present, will be appended afterwards.
+        :param force_override: Set to true to overwrite instead of append.
+        :return: Tuple of (success, output config dict)
         """
         if self.drc_tool is None:
             self.log.error("Must load DRC tool before calling run_drc")
@@ -646,8 +650,7 @@ class HammerDriver:
             # Allow the flow to keep running, just in case
 
         # Record output from the drc_tool into the JSON output
-        # John: Do we need this??
-        output_config = deepdict(self.project_config)
+        output_config = {}  # type: Dict[str, Any]
         try:
             output_config.update(self.drc_tool.export_config_outputs())
         except ValueError as e:
@@ -661,7 +664,11 @@ class HammerDriver:
         bool, dict]:
         """
         Run LVS on a given database.
-        TODO fill me in
+
+        :param hook_actions: List of hook actions, or leave as None to use the hooks sets in set_lvs_hooks.
+                             Hooks from set_lvs_hooks, if present, will be appended afterwards.
+        :param force_override: Set to true to overwrite instead of append.
+        :return: Tuple of (success, output config dict)
         """
         if self.lvs_tool is None:
             self.log.error("Must load LVS tool before calling run_lvs")
@@ -682,8 +689,7 @@ class HammerDriver:
             # Allow the flow to keep running, just in case
 
         # Record output from the lvs_tool into the JSON output
-        # John: Do we need this??
-        output_config = deepdict(self.project_config)
+        output_config = {}  # type: Dict[str, Any]
         try:
             output_config.update(self.lvs_tool.export_config_outputs())
         except ValueError as e:
