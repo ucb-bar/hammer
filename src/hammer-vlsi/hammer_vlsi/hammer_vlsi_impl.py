@@ -1150,7 +1150,6 @@ class MentorCalibreTool(MentorTool):
         Get the list of environment variables required for this tool.
         Note to subclasses: remember to include variables from super().env_vars!
         """
-        # TODO MGC_HOME
         return super().env_vars
 
 
