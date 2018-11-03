@@ -569,6 +569,7 @@ class HammerDRCTool(HammerSignoffTool):
             raise TypeError("layout_file must be a str")
         self.attr_setter("_layout_file", value)
 
+
     @property
     def top_module(self) -> str:
         """

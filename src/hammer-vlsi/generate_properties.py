@@ -14,7 +14,7 @@ import re
 
 InterfaceVar = namedtuple("InterfaceVar", 'name type desc')
 
-Interface = namedtuple("Interface", 'module inputs outputs')
+Interface = namedtuple("Interface", 'module filename inputs outputs')
 
 def isinstance_check(t: str) -> str:
     return "isinstance(value, {t})".format(t=t)
@@ -43,39 +43,51 @@ def generate_from_list(template: str, lst):
 
 def generate_interface(interface: Interface):
     template = """
-@property
-def {var_name}(self) -> {var_type}:
-    \"""
-    Get the {var_desc}.
+    @property
+    def {var_name}(self) -> {var_type}:
+        \"""
+        Get the {var_desc}.
 
-    :return: The {var_desc}.
-    \"""
-    try:
-        return self.attr_getter("_{var_name}", None)
-    except AttributeError:
-        [[attr_error_logic]]
+        :return: The {var_desc}.
+        \"""
+        try:
+            return self.attr_getter("_{var_name}", None)
+        except AttributeError:
+            [[attr_error_logic]]
 
-@{var_name}.setter
-def {var_name}(self, value: {var_type}) -> None:
-    \"""Set the {var_desc}.\"""
-    if not ({var_type_instance_check}):
-        raise TypeError("{var_name} must be a {var_type}")
-    self.attr_setter("_{var_name}", value)
+    @{var_name}.setter
+    def {var_name}(self, value: {var_type}) -> None:
+        \"""Set the {var_desc}.\"""
+        if not ({var_type_instance_check}):
+            raise TypeError("{var_name} must be a {var_type}")
+        self.attr_setter("_{var_name}", value)
 """
+    start_key = "    ### Generated interface %s ###" % (interface.module)
+    end_key =   "    ### END Generated interface %s ###" % (interface.module)
 
     output = []
-    output.append("### Generated interface %s ###" % (interface.module))
-    output.append("### DO NOT MODIFY THIS CODE, EDIT %s INSTEAD ###" % (os.path.basename(__file__)))
-    output.append("### Inputs ###")
+    output.append(start_key)
+    output.append("    ### DO NOT MODIFY THIS CODE, EDIT %s INSTEAD ###" % (os.path.basename(__file__)))
+    output.append("    ### Inputs ###")
     output.extend(generate_from_list(template, interface.inputs))
     output.append("")
-    output.append("### Outputs ###")
+    output.append("    ### Outputs ###")
     output.extend(generate_from_list(template, interface.outputs))
-    output.append("### END Generated interface %s ###" % (interface.module))
-    return output
+    output.append(end_key)
+
+    filename = os.path.join(os.path.dirname(__file__), interface.filename)
+
+    contents = ""
+    with open(filename, "r") as f:
+        contents = f.read()
+
+    with open(filename, "w") as f:
+        f.write(re.sub(re.escape(start_key) + ".*" + re.escape(end_key), "\n".join(output), contents, flags=re.MULTILINE | re.DOTALL))
+
 
 def main(args):
     HammerSynthesisTool = Interface(module="HammerSynthesisTool",
+        filename="hammer_vlsi/hammer_vlsi_impl.py",
         inputs=[
             InterfaceVar("input_files", "List[str]", "input collection of source RTL files (e.g. *.v)"),
             InterfaceVar("top_module", "str", "top-level module")
@@ -88,6 +100,7 @@ def main(args):
     )
 
     HammerPlaceAndRouteTool = Interface(module="HammerPlaceAndRouteTool",
+        filename="hammer_vlsi/hammer_vlsi_impl.py",
         inputs=[
             InterfaceVar("input_files", "List[str]", "input post-synthesis netlist files"),
             InterfaceVar("top_module", "str", "top RTL module"),
@@ -109,6 +122,7 @@ def main(args):
     )
 
     HammerDRCTool = Interface(module="HammerDRCTool",
+        filename="hammer_vlsi/hammer_vlsi_impl.py",
         inputs=[
             InterfaceVar("layout_file", "str", "path to the input layout file (e.g. a *.gds)"),
             InterfaceVar("top_module", "str", "top RTL module")
@@ -117,6 +131,7 @@ def main(args):
     )
 
     HammerLVSTool = Interface(module="HammerLVSTool",
+        filename="hammer_vlsi/hammer_vlsi_impl.py",
         inputs=[
             InterfaceVar("layout_file", "str", "path to the input layout file (e.g. a *.gds)"),
             InterfaceVar("schematic_files", "List[str]", "path to the input SPICE or Verilog schematic files (e.g. *.v or *.spi)"),
@@ -128,16 +143,11 @@ def main(args):
         outputs=[]
     )
 
-    output = []
-    output.extend(generate_interface(HammerSynthesisTool))
-    output.append("")
-    output.extend(generate_interface(HammerPlaceAndRouteTool))
-    output.append("")
-    output.extend(generate_interface(HammerDRCTool))
-    output.append("")
-    output.extend(generate_interface(HammerLVSTool))
-    print("\n".join(output))
- 
+    generate_interface(HammerSynthesisTool)
+    generate_interface(HammerPlaceAndRouteTool)
+    generate_interface(HammerDRCTool)
+    generate_interface(HammerLVSTool)
+
     return 0
 
 if __name__ == '__main__':
