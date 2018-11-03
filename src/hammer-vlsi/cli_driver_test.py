@@ -13,7 +13,9 @@ from typing import Any, Callable, Dict, Optional
 
 import hammer_config
 from hammer_logging.test import HammerLoggingCaptureContext
+from hammer_tech import MacroSize
 from hammer_vlsi import CLIDriver, HammerDriver
+from hammer_utils import deepdict
 
 import unittest
 
@@ -321,6 +323,51 @@ class CLIDriverTest(unittest.TestCase):
         with open(config_packed_path, "r") as f:
             packed_output = json.loads(f.read())
         self.assertEqual(packed_output, dumped_output)
+
+        # Cleanup
+        shutil.rmtree(syn_rundir)
+
+    def test_dump_macrosizes(self) -> None:
+        """
+        Test that dump-macrosizes works properly.
+        """
+        # Set up some temporary folders for the unit test.
+        syn_rundir = tempfile.mkdtemp()
+
+        # Generate a config for testing.
+        top_module = "dummy"
+        output_path = os.path.join(syn_rundir, "output.json")
+        config_path = os.path.join(syn_rundir, "run_config.json")
+
+        my_size = MacroSize(
+            library='my_lib',
+            name='my_cell',
+            width=100.0,
+            height=100.0
+        )
+
+        def add_macro_sizes(d: Dict[str, Any]) -> Dict[str, Any]:
+            output = deepdict(d)
+            output["vlsi.technology.extra_macro_sizes"] = [my_size.to_setting()]
+            return output
+
+        self.generate_dummy_config(syn_rundir, config_path, top_module, postprocessing_func=add_macro_sizes)
+
+        # Check that running the CLIDriver executes successfully (code 0).
+        with self.assertRaises(SystemExit) as cm:  # type: ignore
+            CLIDriver().main(args=[
+                "dump-macrosizes",  # action
+                "-p", config_path,
+                "--output", output_path,
+                "--syn_rundir", syn_rundir,
+                "--par_rundir", syn_rundir
+            ])
+        self.assertEqual(cm.exception.code, 0)
+
+        # Check that dumped output should be same as what we read in.
+        with open(output_path, "r") as f:
+            dumped_output = json.loads(f.read())
+            self.assertEqual(dumped_output, [my_size.to_setting()])
 
         # Cleanup
         shutil.rmtree(syn_rundir)
