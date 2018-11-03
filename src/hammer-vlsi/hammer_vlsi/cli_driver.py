@@ -149,6 +149,8 @@ class CLIDriver:
         """Return the mapping of valid actions -> functions for each action of the command-line driver."""
         return add_dicts({
             "dump": self.dump_action,
+            "dump-macrosizes": self.dump_macrosizes_action,
+            "dump_macrosizes": self.dump_macrosizes_action,
             "synthesis": self.synthesis_action,
             "syn": self.synthesis_action,
             "par": self.par_action,
@@ -174,6 +176,14 @@ class CLIDriver:
         Just dump the parsed project configuration as the output.
         """
         return driver.project_config
+
+    @staticmethod
+    def dump_macrosizes_action(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[str]:
+        """
+        Dump macro size information.
+        """
+        macro_json = list(map(lambda m: m.to_setting(), driver.tech.get_macro_sizes()))
+        return json.dumps(macro_json, indent=4)
 
     def get_extra_synthesis_hooks(self) -> List[HammerToolHookAction]:
         """
