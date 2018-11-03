@@ -9,7 +9,7 @@
 from hammer_vlsi import HammerPlaceAndRouteTool, DummyHammerTool
 
 
-class Nop(HammerPlaceAndRouteTool, DummyHammerTool):
+class NopPlaceAndRoute(HammerPlaceAndRouteTool, DummyHammerTool):
     def fill_outputs(self) -> bool:
         self.output_ilms = []
         self.output_gds = "/dev/null"
@@ -20,4 +20,4 @@ class Nop(HammerPlaceAndRouteTool, DummyHammerTool):
         return True
 
 
-tool = Nop
+tool = NopPlaceAndRoute

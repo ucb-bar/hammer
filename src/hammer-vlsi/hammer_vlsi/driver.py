@@ -392,7 +392,7 @@ class HammerDriver:
         lvs_tool.logger = self.log.context("lvs")
         lvs_tool.technology = self.tech
         lvs_tool.set_database(self.database)
-        lvs_tool.submit_command = HammerSubmitCommand.get("drc", self.database)
+        lvs_tool.submit_command = HammerSubmitCommand.get("lvs", self.database)
         lvs_tool.run_dir = run_dir
         # TODO hierarchical
 

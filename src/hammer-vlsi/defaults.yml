@@ -25,12 +25,28 @@ vlsi.core:
   par_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/par"]
   par_tool_path_meta: subst
 
+  # Path(s) to drc tools.
+  # Add the built-in path to drc tools.
+  drc_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/drc"]
+  drc_tool_path_meta: subst
+
+  # Path(s) to lvs tools.
+  # Add the built-in path to lvs tools.
+  lvs_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/lvs"]
+  lvs_tool_path_meta: subst
+
   # Synthesis tool to use.
   # Currently we can choose from a selection of built-in tools which hammer-vlsi supports.
   synthesis_tool: "nop"
 
   # Place and route tool to use.
   par_tool: "nop"
+
+  # DRC tool to use
+  drc_tool: "nop_drc"
+
+  # LVS tool to use
+  lvs_tool: "nop_lvs"
 
   # Maximum threads to use in a CAD tool invocation.
   max_threads: 1

@@ -100,9 +100,9 @@ def main(args):
             InterfaceVar("output_ilms", "List[ILMStruct]", "(optional) output ILM information for hierarchical mode"),
             InterfaceVar("output_gds", "str", "path to the output GDS file"),
             InterfaceVar("output_netlist", "str", "path to the output netlist file"),
-            InterfaceVar("power_nets", "List[str]", "list of power"),
-            InterfaceVar("ground_nets", "List[str]", "list of ground nets in the design"),
-            InterfaceVar("hcells_list", "List[str]", "list of hierarchical cells for LVS")
+            InterfaceVar("power_nets", "List[str]", "list of all the power nets in the design"),
+            InterfaceVar("ground_nets", "List[str]", "list of all the ground nets in the design"),
+            InterfaceVar("hcells_list", "List[str]", "list of cells to explicitly map hierarchically in LVS")
 
             # TODO: add individual parts of the ILM (e.g. verilog, sdc, spef, etc) for cross-tool compatibility?
         ]
