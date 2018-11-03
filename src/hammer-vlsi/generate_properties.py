@@ -11,6 +11,7 @@ import sys
 
 import os
 import re
+import argparse
 
 InterfaceVar = namedtuple("InterfaceVar", 'name type desc')
 
@@ -41,7 +42,7 @@ def generate_from_list(template: str, lst):
                                var_type_instance_check=var_type_instance_check)
     return map(format_var, lst)
 
-def generate_interface(interface: Interface):
+def generate_interface(interface: Interface, dry_run: bool):
     template = """
     @property
     def {var_name}(self) -> {var_type}:
@@ -81,11 +82,21 @@ def generate_interface(interface: Interface):
     with open(filename, "r") as f:
         contents = f.read()
 
-    with open(filename, "w") as f:
-        f.write(re.sub(re.escape(start_key) + ".*" + re.escape(end_key), "\n".join(output), contents, flags=re.MULTILINE | re.DOTALL))
+    new_contents = re.sub(re.escape(start_key) + ".*" + re.escape(end_key), "\n".join(output), contents, flags=re.MULTILINE | re.DOTALL)
+    if dry_run:
+        print(new_contents)
+    else:
+        with open(filename, "w") as f:
+            f.write(new_contents)
+
 
 
 def main(args):
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', "--dry_run", action="store_true", required=False)
+    parsed_args = parser.parse_args(args[1:])
+
     HammerSynthesisTool = Interface(module="HammerSynthesisTool",
         filename="hammer_vlsi/hammer_vlsi_impl.py",
         inputs=[
@@ -143,10 +154,11 @@ def main(args):
         outputs=[]
     )
 
-    generate_interface(HammerSynthesisTool)
-    generate_interface(HammerPlaceAndRouteTool)
-    generate_interface(HammerDRCTool)
-    generate_interface(HammerLVSTool)
+    dry_run = parsed_args.dry_run
+    generate_interface(HammerSynthesisTool, dry_run)
+    generate_interface(HammerPlaceAndRouteTool, dry_run)
+    generate_interface(HammerDRCTool, dry_run)
+    generate_interface(HammerLVSTool, dry_run)
 
     return 0
 
