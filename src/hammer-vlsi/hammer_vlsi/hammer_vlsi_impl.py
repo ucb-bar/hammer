@@ -533,7 +533,7 @@ class HammerDRCTool(HammerSignoffTool):
 
     def signoff_results(self) -> int:
         """ Return the count of unwaived DRC errors. """
-        return reduce(lambda a, b: a + b, self.drc_results().values())
+        return sum(self.drc_results().values())
 
     def drc_results(self) -> Dict[str, int]:
         """ Return a Dict mapping the DRC check name to an error count (with waivers). """
@@ -609,7 +609,7 @@ class HammerLVSTool(HammerSignoffTool):
 
     def signoff_results(self) -> int:
         """ Return the count of unwaived ERC errors and LVS errors. """
-        return reduce(lambda a, b: a + b, self.erc_results().values()) + len(self.lvs_results())
+        return sum(self.erc_results().values()) + len(self.lvs_results())
 
     def erc_results(self) -> Dict[str, int]:
         """ Return a Dict mapping the ERC check name to an error count (with waivers). """
