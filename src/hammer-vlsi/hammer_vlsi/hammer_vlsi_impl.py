@@ -390,18 +390,18 @@ class HammerPlaceAndRouteTool(HammerTool):
     @property
     def power_nets(self) -> List[str]:
         """
-        Get the list of power.
+        Get the list of all the power nets in the design.
 
-        :return: The list of power.
+        :return: The list of all the power nets in the design.
         """
         try:
             return self.attr_getter("_power_nets", None)
         except AttributeError:
-            raise ValueError("Nothing set for the list of power yet")
+            raise ValueError("Nothing set for the list of all the power nets in the design yet")
 
     @power_nets.setter
     def power_nets(self, value: List[str]) -> None:
-        """Set the list of power."""
+        """Set the list of all the power nets in the design."""
         if not (isinstance(value, List)):
             raise TypeError("power_nets must be a List[str]")
         self.attr_setter("_power_nets", value)
@@ -410,18 +410,18 @@ class HammerPlaceAndRouteTool(HammerTool):
     @property
     def ground_nets(self) -> List[str]:
         """
-        Get the list of ground nets in the design.
+        Get the list of all the ground nets in the design.
 
-        :return: The list of ground nets in the design.
+        :return: The list of all the ground nets in the design.
         """
         try:
             return self.attr_getter("_ground_nets", None)
         except AttributeError:
-            raise ValueError("Nothing set for the list of ground nets in the design yet")
+            raise ValueError("Nothing set for the list of all the ground nets in the design yet")
 
     @ground_nets.setter
     def ground_nets(self, value: List[str]) -> None:
-        """Set the list of ground nets in the design."""
+        """Set the list of all the ground nets in the design."""
         if not (isinstance(value, List)):
             raise TypeError("ground_nets must be a List[str]")
         self.attr_setter("_ground_nets", value)
@@ -430,18 +430,18 @@ class HammerPlaceAndRouteTool(HammerTool):
     @property
     def hcells_list(self) -> List[str]:
         """
-        Get the list of hierarchical cells for LVS.
+        Get the list of cells to explicitly map hierarchically in LVS.
 
-        :return: The list of hierarchical cells for LVS.
+        :return: The list of cells to explicitly map hierarchically in LVS.
         """
         try:
             return self.attr_getter("_hcells_list", None)
         except AttributeError:
-            raise ValueError("Nothing set for the list of hierarchical cells for LVS yet")
+            raise ValueError("Nothing set for the list of cells to explicitly map hierarchically in LVS yet")
 
     @hcells_list.setter
     def hcells_list(self, value: List[str]) -> None:
-        """Set the list of hierarchical cells for LVS."""
+        """Set the list of cells to explicitly map hierarchically in LVS."""
         if not (isinstance(value, List)):
             raise TypeError("hcells_list must be a List[str]")
         self.attr_setter("_hcells_list", value)
@@ -477,7 +477,13 @@ class HammerSignoffTool(HammerTool):
     ### Outputs ###
     @abstractmethod
     def signoff_results(self) -> int:
-        """ Return the number of issues raised by the signoff tool (0 = all checks pass) """
+        """
+        Return the number of issues raised by the signoff tool (0 = all checks pass).
+        Individual tools extending HammerSignoffTool should implement their own *_results methods that provide tool-specific information,
+        and then pass a meaningful count of issues to their implementation of this method.
+
+        :return: The number of signoff issues raised by the tool
+        """
         pass
 
 class HammerDRCTool(HammerSignoffTool):
@@ -537,7 +543,8 @@ class HammerDRCTool(HammerSignoffTool):
 
     def drc_results(self) -> Dict[str, int]:
         """ Return a Dict mapping the DRC check name to an error count (with waivers). """
-        return {k: 0 if k in self.globally_waived_drc_rules() else int(v) for k, v in self.drc_results_pre_waived()}
+        res = self.drc_results_pre_waived()
+        return {k: 0 if k in self.globally_waived_drc_rules() else int(res[k]) for k in res}
 
     ### Generated interface HammerDRCTool ###
     ### DO NOT MODIFY THIS CODE, EDIT generate_properties.py INSTEAD ###
@@ -613,7 +620,8 @@ class HammerLVSTool(HammerSignoffTool):
 
     def erc_results(self) -> Dict[str, int]:
         """ Return a Dict mapping the ERC check name to an error count (with waivers). """
-        return {k: 0 if k in self.globally_waived_erc_rules() else int(v) for k, v in self.erc_results_pre_waived()}
+        res = self.erc_results_pre_waived()
+        return {k: 0 if k in self.globally_waived_erc_rules() else int(res[k]) for k in res}
 
     @abstractmethod
     def lvs_results(self) -> List[str]:
@@ -621,7 +629,7 @@ class HammerLVSTool(HammerSignoffTool):
         pass
 
     def get_additional_lvs_text(self) -> str:
-        """ Get the additional custom DRC command text to add after the boilerplate commands at the top of the LVS run file. """
+        """ Get the additional custom LVS command text to add after the boilerplate commands at the top of the LVS run file. """
 
         # Mode can be auto, manual, append, or prepend
         add_lvs_text_mode = str(self.get_setting("lvs.inputs.additional_lvs_text_mode"))
