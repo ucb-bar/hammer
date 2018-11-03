@@ -1140,7 +1140,9 @@ class MentorTool(HammerTool):
         Assumes versions look like NAME-YYYY.MM-SPMINOR.
         Assumes less than 100 minor versions.
         """
-        return 0 # TODO john
+        # TODO(johnwright)
+        # We currently do not support Calibre versions
+        return 0
 
 class MentorCalibreTool(MentorTool):
     """ Mix-in trait for Mentor's Calibre tool suite. """
