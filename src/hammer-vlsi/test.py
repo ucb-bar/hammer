@@ -1161,6 +1161,93 @@ class HammerSubmitCommandTest(unittest.TestCase):
             self.assertEqual(output[3 + has_resource], "COMMAND is: %s" % ' '.join(c.echo_command))
             self.assertEqual(output[4 + has_resource], ' '.join(c.echo_command_args))
 
+class HammerSignoffToolTestContext:
+
+    def __init__(self, test: unittest.TestCase, tool_type: str) -> None:
+        self.test = test  # type unittest.TestCase
+        self.logger = HammerVLSILogging.context("")
+        self._driver = None  # type: Optional[hammer_vlsi.HammerDriver]
+        if tool_type not in ["drc", "lvs"]:
+            raise NotImplementedError("Have not created a test for %s yet" % (tool_type))
+        self._tool_type = tool_type
+
+    # Helper property to check that the driver did get initialized.
+    @property
+    def driver(self) -> hammer_vlsi.HammerDriver:
+        assert self._driver is not None, "HammerDriver must be initialized before use"
+        return self._driver
+
+    def __enter__(self) -> "HammerSignoffToolTestContext":
+        """Initialize context by creating the temp_dir, driver, and loading the signoff tool."""
+        self.test.assertTrue(hammer_vlsi.HammerVLSISettings.set_hammer_vlsi_path_from_environment(),
+                             "hammer_vlsi_path must exist")
+        temp_dir = tempfile.mkdtemp()
+        json_path = os.path.join(temp_dir, "project.json")
+        json_content = {
+            "vlsi.core.technology": "nop",
+            "%s.inputs.top_module" % self._tool_type: "dummy",
+            "%s.inputs.layout_file" % self._tool_type: "/dev/null",
+            "%s.temp_folder" % self._tool_type: temp_dir,
+            "%s.submit.command" % self._tool_type: "local"
+        } # type: Dict[str, Any]
+        if self._tool_type is "lvs":
+            json_content.update({
+                "lvs.inputs.schematic_files": ["/dev/null"],
+                "lvs.inputs.power_nets": ["VDD"],
+                "lvs.inputs.ground_nets": ["VSS"],
+                "lvs.inputs.hcells_list": []
+            })
+
+        with open(json_path, "w") as f:
+            f.write(json.dumps(json_content, indent=4))
+
+        options = hammer_vlsi.HammerDriverOptions(
+            environment_configs=[],
+            project_configs=[json_path],
+            log_file=os.path.join(temp_dir, "log.txt"),
+            obj_dir=temp_dir
+        )
+        self._driver = hammer_vlsi.HammerDriver(options)
+        self.temp_dir = temp_dir
+        return self
+
+    def __exit__(self, type, value, traceback) -> bool:
+        """Clean up the context by removing the temp_dir."""
+        shutil.rmtree(self.temp_dir)
+        # Return True (normal execution) if no exception occurred.
+        return True if type is None else False
+
+    @property
+    def env(self) -> Dict[str, str]:
+        return {}
+
+class HammerDRCToolTest(unittest.TestCase):
+
+    def create_context(self) -> HammerSignoffToolTestContext:
+        return HammerSignoffToolTestContext(self, "drc")
+
+    def test_get_results(self) -> None:
+        """ Test that a local submission produces the desired output """
+        with self.create_context() as c:
+            self.assertTrue(c.driver.load_drc_tool())
+            self.assertTrue(c.driver.run_drc())
+            assert(isinstance(c.driver.drc_tool, hammer_vlsi.HammerDRCTool))
+            # This magic 15 should be the sum of the two unwaived DRC violation counts hardcoded in drc/nop.py
+            self.assertEqual(c.driver.drc_tool.signoff_results(), 15)
+
+class HammerLVSToolTest(unittest.TestCase):
+
+    def create_context(self) -> HammerSignoffToolTestContext:
+        return HammerSignoffToolTestContext(self, "lvs")
+
+    def test_get_results(self) -> None:
+        """ Test that a local submission produces the desired output """
+        with self.create_context() as c:
+            self.assertTrue(c.driver.load_lvs_tool())
+            self.assertTrue(c.driver.run_lvs())
+            assert(isinstance(c.driver.lvs_tool, hammer_vlsi.HammerLVSTool))
+            # This magic 16 should be the sum of the two unwaived ERC violation counts and the LVS violation hardcoded in lvs/nop.py
+            self.assertEqual(c.driver.lvs_tool.signoff_results(), 16)
 
 if __name__ == '__main__':
     unittest.main()
