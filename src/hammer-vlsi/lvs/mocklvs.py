@@ -2,7 +2,7 @@ from hammer_vlsi import HammerLVSTool, DummyHammerTool
 from typing import List, Dict
 
 
-class NopLVS(HammerLVSTool, DummyHammerTool):
+class MockLVS(HammerLVSTool, DummyHammerTool):
     def fill_outputs(self) -> bool:
         return True
 
@@ -16,4 +16,4 @@ class NopLVS(HammerLVSTool, DummyHammerTool):
         return ["VDD is connected to VSS"]
 
 
-tool = NopLVS
+tool = MockLVS
