@@ -1230,12 +1230,13 @@ class HammerDRCToolTest(unittest.TestCase):
         return HammerSignoffToolTestContext(self, "drc")
 
     def test_get_results(self) -> None:
-        """ Test that a local submission produces the desired output """
+        """ Test that a local submission produces the desired output."""
         with self.create_context() as c:
             self.assertTrue(c.driver.load_drc_tool())
             self.assertTrue(c.driver.run_drc())
             assert isinstance(c.driver.drc_tool, hammer_vlsi.HammerDRCTool)
-            # This magic 15 should be the sum of the two unwaived DRC violation counts hardcoded in drc/nop.py
+            # This magic 15 should be the sum of the two unwaived DRC violation
+            # counts hardcoded in drc/mockdrc.py.
             self.assertEqual(c.driver.drc_tool.signoff_results(), 15)
 
 
@@ -1245,12 +1246,13 @@ class HammerLVSToolTest(unittest.TestCase):
         return HammerSignoffToolTestContext(self, "lvs")
 
     def test_get_results(self) -> None:
-        """ Test that a local submission produces the desired output """
+        """ Test that a local submission produces the desired output."""
         with self.create_context() as c:
             self.assertTrue(c.driver.load_lvs_tool())
             self.assertTrue(c.driver.run_lvs())
             assert isinstance(c.driver.lvs_tool, hammer_vlsi.HammerLVSTool)
-            # This magic 16 should be the sum of the two unwaived ERC violation counts and the LVS violation hardcoded in lvs/nop.py
+            # This magic 16 should be the sum of the two unwaived ERC violation
+            # counts and the LVS violation hardcoded in lvs/mocklvs.py.
             self.assertEqual(c.driver.lvs_tool.signoff_results(), 16)
 
 
