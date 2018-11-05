@@ -338,7 +338,7 @@ class HammerDriver:
             tool_name=drc_tool_name
         )
         assert isinstance(drc_tool_get, HammerDRCTool), "DRC tool must be a HammerDRCTool"
-        drc_tool = drc_tool_get # type: HammerDRCTool
+        drc_tool = drc_tool_get  # type: HammerDRCTool
         drc_tool.name = drc_tool_name
         drc_tool.logger = self.log.context("drc")
         drc_tool.technology = self.tech
@@ -365,7 +365,6 @@ class HammerDriver:
         self.update_tool_configs()
         return True
 
-
     def load_lvs_tool(self, run_dir: str = "") -> bool:
         """
         Loads an LVS tool on a given database
@@ -387,14 +386,14 @@ class HammerDriver:
             tool_name=lvs_tool_name
         )
         assert isinstance(lvs_tool_get, HammerLVSTool), "LVS tool must be a HammerLVSTool"
-        lvs_tool = lvs_tool_get # type: HammerLVSTool
+        lvs_tool = lvs_tool_get  # type: HammerLVSTool
         lvs_tool.name = lvs_tool_name
         lvs_tool.logger = self.log.context("lvs")
         lvs_tool.technology = self.tech
         lvs_tool.set_database(self.database)
         lvs_tool.submit_command = HammerSubmitCommand.get("lvs", self.database)
         lvs_tool.run_dir = run_dir
-        # TODO hierarchical
+        # TODO: support hierarchical
 
         lvs_tool.schematic_files = self.database.get_setting("lvs.inputs.schematic_files", nullvalue=[])
         lvs_tool.layout_file = self.database.get_setting("lvs.inputs.layout_file", nullvalue="")
@@ -610,7 +609,8 @@ class HammerDriver:
             result = {
                 "lvs.inputs.top_module": output_dict["par.inputs.top_module"],
                 "lvs.inputs.layout_file": output_dict["par.outputs.output_gds"],
-                "lvs.inputs.schematic_files": [output_dict["par.outputs.output_netlist"]], # TODO(johnwright) add ILM netlists
+                "lvs.inputs.schematic_files": [output_dict["par.outputs.output_netlist"]],
+                # TODO(johnwright): add ILM netlists
                 "lvs.inputs.power_nets": output_dict["par.outputs.power_nets"],
                 "lvs.inputs.ground_nets": output_dict["par.outputs.ground_nets"],
                 "lvs.inputs.hcells_list": output_dict["par.outputs.hcells_list"],
@@ -658,7 +658,6 @@ class HammerDriver:
             return False, {}
 
         return run_succeeded, output_config
-
 
     def run_lvs(self, hook_actions: Optional[List[HammerToolHookAction]] = None, force_override: bool = False) -> Tuple[
         bool, dict]:
