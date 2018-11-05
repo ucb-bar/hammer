@@ -3,7 +3,7 @@
 #
 #  generate_properties.py
 #  
-#  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+#  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
 #  Helper script to generate properties for hammer-vlsi tool classes.
 
 from collections import namedtuple
@@ -17,8 +17,10 @@ InterfaceVar = namedtuple("InterfaceVar", 'name type desc')
 
 Interface = namedtuple("Interface", 'module filename inputs outputs')
 
+
 def isinstance_check(t: str) -> str:
     return "isinstance(value, {t})".format(t=t)
+
 
 def generate_from_list(template: str, lst):
     def format_var(var):
@@ -39,8 +41,10 @@ def generate_from_list(template: str, lst):
         t = template.replace("[[attr_error_logic]]", attr_error_logic)
 
         return t.format(var_name=var.name, var_type=var.type, var_desc=var.desc,
-                               var_type_instance_check=var_type_instance_check)
+                        var_type_instance_check=var_type_instance_check)
+
     return map(format_var, lst)
+
 
 def generate_interface(interface: Interface, dry_run: bool):
     template = """
@@ -64,7 +68,7 @@ def generate_interface(interface: Interface, dry_run: bool):
         self.attr_setter("_{var_name}", value)
 """
     start_key = "    ### Generated interface %s ###" % (interface.module)
-    end_key =   "    ### END Generated interface %s ###" % (interface.module)
+    end_key = "    ### END Generated interface %s ###" % (interface.module)
 
     output = []
     output.append(start_key)
@@ -82,7 +86,8 @@ def generate_interface(interface: Interface, dry_run: bool):
     with open(filename, "r") as f:
         contents = f.read()
 
-    new_contents = re.sub(re.escape(start_key) + ".*" + re.escape(end_key), "\n".join(output), contents, flags=re.MULTILINE | re.DOTALL)
+    new_contents = re.sub(re.escape(start_key) + ".*" + re.escape(end_key), "\n".join(output), contents,
+                          flags=re.MULTILINE | re.DOTALL)
     if dry_run:
         print(new_contents)
     else:
@@ -90,69 +95,78 @@ def generate_interface(interface: Interface, dry_run: bool):
             f.write(new_contents)
 
 
-
 def main(args):
-
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', "--dry_run", action="store_true", required=False)
     parsed_args = parser.parse_args(args[1:])
 
     HammerSynthesisTool = Interface(module="HammerSynthesisTool",
-        filename="hammer_vlsi/hammer_vlsi_impl.py",
-        inputs=[
-            InterfaceVar("input_files", "List[str]", "input collection of source RTL files (e.g. *.v)"),
-            InterfaceVar("top_module", "str", "top-level module")
-        ],
-        outputs=[
-            InterfaceVar("output_files", "List[str]", "output collection of mapped (post-synthesis) RTL files"),
-            InterfaceVar("output_sdc", "str", "(optional) output post-synthesis SDC constraints file")
-            # TODO: model CAD junk
-        ]
-    )
+                                    filename="hammer_vlsi/hammer_vlsi_impl.py",
+                                    inputs=[
+                                        InterfaceVar("input_files", "List[str]",
+                                                     "input collection of source RTL files (e.g. *.v)"),
+                                        InterfaceVar("top_module", "str", "top-level module")
+                                    ],
+                                    outputs=[
+                                        InterfaceVar("output_files", "List[str]",
+                                                     "output collection of mapped (post-synthesis) RTL files"),
+                                        InterfaceVar("output_sdc", "str",
+                                                     "(optional) output post-synthesis SDC constraints file")
+                                        # TODO: model CAD junk
+                                    ]
+                                    )
 
     HammerPlaceAndRouteTool = Interface(module="HammerPlaceAndRouteTool",
-        filename="hammer_vlsi/hammer_vlsi_impl.py",
-        inputs=[
-            InterfaceVar("input_files", "List[str]", "input post-synthesis netlist files"),
-            InterfaceVar("top_module", "str", "top RTL module"),
-            InterfaceVar("post_synth_sdc", "Optional[str]", "(optional) input post-synthesis SDC constraint file")
-        ],
-        outputs=[
-            # TODO: model more CAD junk
+                                        filename="hammer_vlsi/hammer_vlsi_impl.py",
+                                        inputs=[
+                                            InterfaceVar("input_files", "List[str]",
+                                                         "input post-synthesis netlist files"),
+                                            InterfaceVar("top_module", "str", "top RTL module"),
+                                            InterfaceVar("post_synth_sdc", "Optional[str]",
+                                                         "(optional) input post-synthesis SDC constraint file")
+                                        ],
+                                        outputs=[
+                                            # TODO: model more CAD junk
 
-            # e.g. par-rundir/TopModuleILMDir/mmmc/ilm_data/TopModule. Has a bunch of files TopModule_postRoute*
-            InterfaceVar("output_ilms", "List[ILMStruct]", "(optional) output ILM information for hierarchical mode"),
-            InterfaceVar("output_gds", "str", "path to the output GDS file"),
-            InterfaceVar("output_netlist", "str", "path to the output netlist file"),
-            InterfaceVar("power_nets", "List[str]", "list of all the power nets in the design"),
-            InterfaceVar("ground_nets", "List[str]", "list of all the ground nets in the design"),
-            InterfaceVar("hcells_list", "List[str]", "list of cells to explicitly map hierarchically in LVS")
+                                            # e.g. par-rundir/TopModuleILMDir/mmmc/ilm_data/TopModule. Has a bunch of files TopModule_postRoute*
+                                            InterfaceVar("output_ilms", "List[ILMStruct]",
+                                                         "(optional) output ILM information for hierarchical mode"),
+                                            InterfaceVar("output_gds", "str", "path to the output GDS file"),
+                                            InterfaceVar("output_netlist", "str", "path to the output netlist file"),
+                                            InterfaceVar("power_nets", "List[str]",
+                                                         "list of all the power nets in the design"),
+                                            InterfaceVar("ground_nets", "List[str]",
+                                                         "list of all the ground nets in the design"),
+                                            InterfaceVar("hcells_list", "List[str]",
+                                                         "list of cells to explicitly map hierarchically in LVS")
 
-            # TODO: add individual parts of the ILM (e.g. verilog, sdc, spef, etc) for cross-tool compatibility?
-        ]
-    )
+                                            # TODO: add individual parts of the ILM (e.g. verilog, sdc, spef, etc) for cross-tool compatibility?
+                                        ]
+                                        )
 
     HammerDRCTool = Interface(module="HammerDRCTool",
-        filename="hammer_vlsi/hammer_vlsi_impl.py",
-        inputs=[
-            InterfaceVar("layout_file", "str", "path to the input layout file (e.g. a *.gds)"),
-            InterfaceVar("top_module", "str", "top RTL module")
-        ],
-        outputs=[]
-    )
+                              filename="hammer_vlsi/hammer_vlsi_impl.py",
+                              inputs=[
+                                  InterfaceVar("layout_file", "str", "path to the input layout file (e.g. a *.gds)"),
+                                  InterfaceVar("top_module", "str", "top RTL module")
+                              ],
+                              outputs=[]
+                              )
 
     HammerLVSTool = Interface(module="HammerLVSTool",
-        filename="hammer_vlsi/hammer_vlsi_impl.py",
-        inputs=[
-            InterfaceVar("layout_file", "str", "path to the input layout file (e.g. a *.gds)"),
-            InterfaceVar("schematic_files", "List[str]", "path to the input SPICE or Verilog schematic files (e.g. *.v or *.spi)"),
-            InterfaceVar("top_module", "str", "top RTL module"),
-            InterfaceVar("power_nets", "List[str]", "list of all the power nets in the design"),
-            InterfaceVar("ground_nets", "List[str]", "list of all the ground nets in the design"),
-            InterfaceVar("hcells_list", "List[str]", "list of cells to explicitly map hierarchically in LVS")
-        ],
-        outputs=[]
-    )
+                              filename="hammer_vlsi/hammer_vlsi_impl.py",
+                              inputs=[
+                                  InterfaceVar("layout_file", "str", "path to the input layout file (e.g. a *.gds)"),
+                                  InterfaceVar("schematic_files", "List[str]",
+                                               "path to the input SPICE or Verilog schematic files (e.g. *.v or *.spi)"),
+                                  InterfaceVar("top_module", "str", "top RTL module"),
+                                  InterfaceVar("power_nets", "List[str]", "list of all the power nets in the design"),
+                                  InterfaceVar("ground_nets", "List[str]", "list of all the ground nets in the design"),
+                                  InterfaceVar("hcells_list", "List[str]",
+                                               "list of cells to explicitly map hierarchically in LVS")
+                              ],
+                              outputs=[]
+                              )
 
     dry_run = parsed_args.dry_run
     generate_interface(HammerSynthesisTool, dry_run)
@@ -161,6 +175,7 @@ def main(args):
     generate_interface(HammerLVSTool, dry_run)
 
     return 0
+
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
