@@ -1161,6 +1161,7 @@ class HammerSubmitCommandTest(unittest.TestCase):
             self.assertEqual(output[3 + has_resource], "COMMAND is: %s" % ' '.join(c.echo_command))
             self.assertEqual(output[4 + has_resource], ' '.join(c.echo_command_args))
 
+
 class HammerSignoffToolTestContext:
 
     def __init__(self, test: unittest.TestCase, tool_type: str) -> None:
@@ -1189,7 +1190,7 @@ class HammerSignoffToolTestContext:
             "%s.inputs.layout_file" % self._tool_type: "/dev/null",
             "%s.temp_folder" % self._tool_type: temp_dir,
             "%s.submit.command" % self._tool_type: "local"
-        } # type: Dict[str, Any]
+        }  # type: Dict[str, Any]
         if self._tool_type is "lvs":
             json_content.update({
                 "lvs.inputs.schematic_files": ["/dev/null"],
@@ -1221,6 +1222,7 @@ class HammerSignoffToolTestContext:
     def env(self) -> Dict[str, str]:
         return {}
 
+
 class HammerDRCToolTest(unittest.TestCase):
 
     def create_context(self) -> HammerSignoffToolTestContext:
@@ -1231,9 +1233,10 @@ class HammerDRCToolTest(unittest.TestCase):
         with self.create_context() as c:
             self.assertTrue(c.driver.load_drc_tool())
             self.assertTrue(c.driver.run_drc())
-            assert(isinstance(c.driver.drc_tool, hammer_vlsi.HammerDRCTool))
+            assert (isinstance(c.driver.drc_tool, hammer_vlsi.HammerDRCTool))
             # This magic 15 should be the sum of the two unwaived DRC violation counts hardcoded in drc/nop.py
             self.assertEqual(c.driver.drc_tool.signoff_results(), 15)
+
 
 class HammerLVSToolTest(unittest.TestCase):
 
@@ -1245,9 +1248,10 @@ class HammerLVSToolTest(unittest.TestCase):
         with self.create_context() as c:
             self.assertTrue(c.driver.load_lvs_tool())
             self.assertTrue(c.driver.run_lvs())
-            assert(isinstance(c.driver.lvs_tool, hammer_vlsi.HammerLVSTool))
+            assert (isinstance(c.driver.lvs_tool, hammer_vlsi.HammerLVSTool))
             # This magic 16 should be the sum of the two unwaived ERC violation counts and the LVS violation hardcoded in lvs/nop.py
             self.assertEqual(c.driver.lvs_tool.signoff_results(), 16)
+
 
 if __name__ == '__main__':
     unittest.main()

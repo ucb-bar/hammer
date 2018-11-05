@@ -304,6 +304,7 @@ def check_function_type(function: Callable, args: List[type], return_type: type)
 
     return None
 
+
 # Contributors: Be sure to add to this list if you need to call get_filetype
 @unique
 class HammerFiletype(Enum):
@@ -313,6 +314,7 @@ class HammerFiletype(Enum):
     NONE = 0
     SPICE = 1
     VERILOG = 2
+
 
 def get_filetype(filename: str) -> HammerFiletype:
     """
@@ -331,4 +333,3 @@ def get_filetype(filename: str) -> HammerFiletype:
         return HammerFiletype.VERILOG
     else:
         raise NotImplementedError("Unknown file extension: {e}. Please update {f}!".format(e=extension, f=__file__))
-
