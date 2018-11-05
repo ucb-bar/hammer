@@ -49,5 +49,11 @@ fi
 if [ -f ../hammer-vlsi/par/innovus/__init__.py ]; then
     call_mypy ../hammer-vlsi/par/innovus/__init__.py
 fi
+if [ -f ../hammer-vlsi/drc/calibre/__init__.py ]; then
+    call_mypy ../hammer-vlsi/drc/calibre/__init__.py
+fi
+if [ -f ../hammer-vlsi/lvs/calibre/__init__.py ]; then
+    call_mypy ../hammer-vlsi/lvs/calibre/__init__.py
+fi
 
 exit $err
