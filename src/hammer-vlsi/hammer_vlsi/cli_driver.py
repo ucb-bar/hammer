@@ -133,15 +133,16 @@ class CLIDriver:
         if hasattr(self, "synthesis_par_action"):
             check_CLIActionType_type(self.synthesis_par_action)  # type: ignore
         else:
-            self.synthesis_par_action = self.create_synthesis_par_action(self.synthesis_action, self.par_action)  # type: CLIActionConfigType
+            self.synthesis_par_action = self.create_synthesis_par_action(self.synthesis_action,
+                                                                         self.par_action)  # type: CLIActionConfigType
 
         # Dictionaries of module-CLIActionConfigType for hierarchical flows.
         # See all_hierarchical_actions() below.
         self.hierarchical_synthesis_actions = {}  # type: Dict[str, CLIActionConfigType]
         self.hierarchical_par_actions = {}  # type: Dict[str, CLIActionConfigType]
         self.hierarchical_synthesis_par_actions = {}  # type: Dict[str, CLIActionConfigType]
-        self.hierarchical_drc_actions = {} # type: Dict[str, CLIActionConfigType]
-        self.hierarchical_lvs_actions = {} # type: Dict[str, CLIActionConfigType]
+        self.hierarchical_drc_actions = {}  # type: Dict[str, CLIActionConfigType]
+        self.hierarchical_lvs_actions = {}  # type: Dict[str, CLIActionConfigType]
         self.hierarchical_auto_action = None  # type: Optional[CLIActionConfigType]
 
     def action_map(self) -> Dict[str, CLIActionType]:

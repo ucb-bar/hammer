@@ -1,6 +1,5 @@
-
 from hammer_vlsi import HammerDRCTool, DummyHammerTool
-from typing import Callable, Iterable, List, NamedTuple, Optional, Dict, Any, Union
+from typing import List, Dict
 
 
 class NopDRC(HammerDRCTool, DummyHammerTool):
