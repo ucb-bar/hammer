@@ -1203,4 +1203,3 @@ def load_tool(tool_name: str, path: Iterable[str]) -> HammerTool:
     tool = tool_class()
     tool.tool_dir = os.path.dirname(os.path.abspath(mod.__file__))
     return tool
-
