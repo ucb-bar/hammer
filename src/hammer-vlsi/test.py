@@ -1186,6 +1186,7 @@ class HammerSignoffToolTestContext:
         json_path = os.path.join(temp_dir, "project.json")
         json_content = {
             "vlsi.core.technology": "nop",
+            "vlsi.core.%s_tool" % self._tool_type: "mock%s" % self._tool_type,
             "%s.inputs.top_module" % self._tool_type: "dummy",
             "%s.inputs.layout_file" % self._tool_type: "/dev/null",
             "%s.temp_folder" % self._tool_type: temp_dir,
@@ -1233,7 +1234,7 @@ class HammerDRCToolTest(unittest.TestCase):
         with self.create_context() as c:
             self.assertTrue(c.driver.load_drc_tool())
             self.assertTrue(c.driver.run_drc())
-            assert (isinstance(c.driver.drc_tool, hammer_vlsi.HammerDRCTool))
+            assert isinstance(c.driver.drc_tool, hammer_vlsi.HammerDRCTool)
             # This magic 15 should be the sum of the two unwaived DRC violation counts hardcoded in drc/nop.py
             self.assertEqual(c.driver.drc_tool.signoff_results(), 15)
 
@@ -1248,7 +1249,7 @@ class HammerLVSToolTest(unittest.TestCase):
         with self.create_context() as c:
             self.assertTrue(c.driver.load_lvs_tool())
             self.assertTrue(c.driver.run_lvs())
-            assert (isinstance(c.driver.lvs_tool, hammer_vlsi.HammerLVSTool))
+            assert isinstance(c.driver.lvs_tool, hammer_vlsi.HammerLVSTool)
             # This magic 16 should be the sum of the two unwaived ERC violation counts and the LVS violation hardcoded in lvs/nop.py
             self.assertEqual(c.driver.lvs_tool.signoff_results(), 16)
 

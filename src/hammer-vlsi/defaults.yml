@@ -42,11 +42,11 @@ vlsi.core:
   # Place and route tool to use.
   par_tool: "nop"
 
-  # DRC tool to use
-  drc_tool: "nop_drc"
+  # DRC tool to use.
+  drc_tool: "nop"
 
-  # LVS tool to use
-  lvs_tool: "nop_lvs"
+  # LVS tool to use.
+  lvs_tool: "nop"
 
   # Maximum threads to use in a CAD tool invocation.
   max_threads: 1

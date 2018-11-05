@@ -2,7 +2,7 @@ from hammer_vlsi import HammerDRCTool, DummyHammerTool
 from typing import List, Dict
 
 
-class NopDRC(HammerDRCTool, DummyHammerTool):
+class MockDRC(HammerDRCTool, DummyHammerTool):
     def fill_outputs(self) -> bool:
         return True
 
@@ -13,4 +13,4 @@ class NopDRC(HammerDRCTool, DummyHammerTool):
         return {"unwaived_error_0": 5, "unwaived_error_1": 10, "waived_error": 9}
 
 
-tool = NopDRC
+tool = MockDRC
