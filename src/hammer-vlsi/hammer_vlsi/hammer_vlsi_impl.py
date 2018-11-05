@@ -1176,6 +1176,14 @@ def load_tool(tool_name: str, path: Iterable[str]) -> HammerTool:
     for p in path:
         sys.path.insert(0, p)
     try:
+        # import_module loads/caches modules into sys.modules, so if
+        # another module with the same name (but different sys.path) is loaded,
+        # import_module won't look in sys.path again.
+        # We need to remove this module from sys.modules to get import_module
+        # to load the modules from sys.path.
+        # See https://docs.python.org/3/library/importlib.html
+        if tool_name in sys.modules:
+            del sys.modules[tool_name]
         mod = importlib.import_module(tool_name)
     except ImportError:
         raise ValueError("No such tool " + tool_name)
