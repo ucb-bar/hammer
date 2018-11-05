@@ -6,12 +6,12 @@
 #  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
 #  Helper script to generate properties for hammer-vlsi tool classes.
 
-from collections import namedtuple
-import sys
-
+import argparse
 import os
 import re
-import argparse
+import sys
+from collections import namedtuple
+from typing import Dict
 
 InterfaceVar = namedtuple("InterfaceVar", 'name type desc')
 
@@ -22,7 +22,7 @@ def isinstance_check(t: str) -> str:
     return "isinstance(value, {t})".format(t=t)
 
 
-def generate_from_list(template: str, lst):
+def generate_from_list(template: str, lst) -> list:
     def format_var(var):
         attr_error_logic = """raise ValueError("Nothing set for the {var_desc} yet")"""
 
@@ -43,10 +43,18 @@ def generate_from_list(template: str, lst):
         return t.format(var_name=var.name, var_type=var.type, var_desc=var.desc,
                         var_type_instance_check=var_type_instance_check)
 
-    return map(format_var, lst)
+    return list(map(format_var, lst))
 
 
-def generate_interface(interface: Interface, dry_run: bool):
+# Cache of files being modified.
+file_cache = {}  # type: Dict[str, str]
+
+
+def get_full_filename(filename: str) -> str:
+    return os.path.join(os.path.dirname(__file__), filename)
+
+
+def generate_interface(interface: Interface) -> None:
     template = """
     @property
     def {var_name}(self) -> {var_type}:
@@ -80,24 +88,24 @@ def generate_interface(interface: Interface, dry_run: bool):
     output.extend(generate_from_list(template, interface.outputs))
     output.append(end_key)
 
-    filename = os.path.join(os.path.dirname(__file__), interface.filename)
+    filename = get_full_filename(interface.filename)
 
-    contents = ""
-    with open(filename, "r") as f:
-        contents = f.read()
+    if filename not in file_cache:
+        with open(filename, "r") as f:
+            file_cache[filename] = str(f.read())
+    contents = file_cache[filename]
 
     new_contents = re.sub(re.escape(start_key) + ".*" + re.escape(end_key), "\n".join(output), contents,
                           flags=re.MULTILINE | re.DOTALL)
-    if dry_run:
-        print(new_contents)
-    else:
-        with open(filename, "w") as f:
-            f.write(new_contents)
+
+    file_cache[filename] = new_contents
 
 
-def main(args):
+def main(args) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', "--dry_run", action="store_true", required=False)
+    parser.add_argument("-f", "--file", required=False, default="",
+                        help='File to write/print. If unset, will write/print all files.')
     parsed_args = parser.parse_args(args[1:])
 
     HammerSynthesisTool = Interface(module="HammerSynthesisTool",
@@ -169,10 +177,29 @@ def main(args):
                               )
 
     dry_run = parsed_args.dry_run
-    generate_interface(HammerSynthesisTool, dry_run)
-    generate_interface(HammerPlaceAndRouteTool, dry_run)
-    generate_interface(HammerDRCTool, dry_run)
-    generate_interface(HammerLVSTool, dry_run)
+    selected_file = str(parsed_args.file)
+
+    generate_interface(HammerSynthesisTool)
+    generate_interface(HammerPlaceAndRouteTool)
+    generate_interface(HammerDRCTool)
+    generate_interface(HammerLVSTool)
+
+    if selected_file == "":
+        # Export all files
+        for filename, contents in file_cache.items():
+            if dry_run:
+                print(contents)
+            else:
+                with open(filename, "w") as f:
+                    f.write(contents)
+    else:
+        # Export selected file
+        contents = file_cache[get_full_filename(selected_file)]
+        if dry_run:
+            print(contents)
+        else:
+            with open(filename, "w") as f:
+                f.write(contents)
 
     return 0
 
