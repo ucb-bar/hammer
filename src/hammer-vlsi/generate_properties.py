@@ -186,9 +186,10 @@ def main(args) -> int:
 
     if selected_file == "":
         # Export all files
+        # print without extra newline
         for filename, contents in file_cache.items():
             if dry_run:
-                print(contents)
+                print(contents, end='')
             else:
                 with open(filename, "w") as f:
                     f.write(contents)
@@ -196,7 +197,7 @@ def main(args) -> int:
         # Export selected file
         contents = file_cache[get_full_filename(selected_file)]
         if dry_run:
-            print(contents)
+            print(contents, end='')
         else:
             with open(filename, "w") as f:
                 f.write(contents)
