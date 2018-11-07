@@ -217,9 +217,9 @@ synthesis.inputs:
 # inherit settings from vlsi.submit but allow us to override them
 synthesis.submit:
   command: "${vlsi.submit.command}"
-  command_meta: dynamicsubst
+  command_meta: lazysubst
   settings: "vlsi.submit.settings"
-  settings_meta: dynamiccrossref
+  settings_meta: lazycrossref
 
 # Specific inputs for the place and route tool.
 # These inputs are the generic inputs; specific tools ("CAD junk") may require
@@ -259,9 +259,9 @@ par.inputs:
 # inherit settings from vlsi.submit but allow us to override them
 par.submit:
   command: "${vlsi.submit.command}"
-  command_meta: dynamicsubst
+  command_meta: lazysubst
   settings: "vlsi.submit.settings"
-  settings_meta: dynamiccrossref
+  settings_meta: lazycrossref
 
 # DRC settings
 drc.inputs:
@@ -280,9 +280,9 @@ drc.inputs:
 # inherit settings from vlsi.submit but allow us to override them
 drc.submit:
   command: "${vlsi.submit.command}"
-  command_meta: dynamicsubst
+  command_meta: lazysubst
   settings: "vlsi.submit.settings"
-  settings_meta: dynamiccrossref
+  settings_meta: lazycrossref
 
 # LVS settings
 lvs.inputs:
@@ -303,6 +303,6 @@ lvs.inputs:
 
 lvs.submit:
   command: "${vlsi.submit.command}"
-  command_meta: dynamicsubst
+  command_meta: lazysubst
   settings: "vlsi.submit.settings"
-  settings_meta: dynamiccrossref
+  settings_meta: lazycrossref
