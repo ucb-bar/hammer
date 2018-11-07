@@ -91,9 +91,9 @@ foo:
         self.assertEqual(db.get_setting("foo.max"), "min")
         self.assertEqual(db.get_setting("foo.pipeline"), ["1", "2"])
 
-    def test_meta_dynamicjson2list(self) -> None:
+    def test_meta_lazyjson2list(self) -> None:
         """
-        Test that the meta attribute "dynamicjson2list" works.
+        Test that the meta attribute "lazyjson2list" works.
         """
         db = hammer_config.HammerDatabase()
         base = hammer_config.load_config_from_string("""
@@ -101,7 +101,7 @@ foo:
     flash: "yes"
     max: "min"
     pipeline: "[]"
-    pipeline_meta: "dynamicjson2list"
+    pipeline_meta: "lazyjson2list"
 """, is_yaml=True)
         meta = hammer_config.load_config_from_string("""
 {
@@ -137,9 +137,9 @@ foo:
         self.assertEqual(db.get_setting("foo.pipeline"), "yesman")
         self.assertEqual(db.get_setting("foo.uint"), ["1", "2"])
 
-    def test_meta_dynamicsubst(self) -> None:
+    def test_meta_lazysubst(self) -> None:
         """
-        Test that the meta attribute "dynamicsubst" works.
+        Test that the meta attribute "lazysubst" works.
         """
         db = hammer_config.HammerDatabase()
         base = hammer_config.load_config_from_string("""
@@ -155,11 +155,11 @@ style: "waterfall"
   "foo.pipeline_meta": "subst",
   "foo.reg": "Wire",
   "foo.reginit": "${foo.reg}Init",
-  "foo.reginit_meta": "dynamicsubst",
+  "foo.reginit_meta": "lazysubst",
   "foo.later": "${later}",
-  "foo.later_meta": "dynamicsubst",
+  "foo.later_meta": "lazysubst",
   "foo.methodology": "${style} design",
-  "foo.methodology_meta": "dynamicsubst"
+  "foo.methodology_meta": "lazysubst"
 }
 """, is_yaml=False)
         project = hammer_config.load_config_from_string("""
@@ -248,9 +248,9 @@ my:
         self.assertEqual(db.get_setting("bools"), [False, True])
         self.assertEqual(db.get_setting("indirect.numbers"), False)
 
-    def test_meta_dynamiccrossref(self) -> None:
+    def test_meta_lazycrossref(self) -> None:
         """
-        Test that dynamic crossref works.
+        Test that lazy crossref works.
         """
         db = hammer_config.HammerDatabase()
         base = hammer_config.load_config_from_string("""
@@ -260,11 +260,11 @@ my:
         meta = hammer_config.load_config_from_string("""
 numbers: "my.numbers"
 numbers_meta: crossref
-dynamic.numbers: "numbers"
-dynamic.numbers_meta: dynamiccrossref
+lazy.numbers: "numbers"
+lazy.numbers_meta: lazycrossref
     """, is_yaml=True)
         db.update_core([base, meta])
-        self.assertEqual(db.get_setting("dynamic.numbers"), ["1", "2", "3"])
+        self.assertEqual(db.get_setting("lazy.numbers"), ["1", "2", "3"])
 
     def test_meta_crossref_errors(self) -> None:
         """
@@ -480,9 +480,9 @@ foo:
         self.assertEqual(db.get_setting("foo.bar.base_test"), "local_path")
         self.assertEqual(db.get_setting("foo.bar.meta_test"), "meta/config/path/local_path")
 
-    def test_multiple_dynamic_metas(self) -> None:
+    def test_multiple_lazy_metas(self) -> None:
         """
-        Test multiple dynamic metas applied at once.
+        Test multiple lazy metas applied at once.
         Note that this is unsupported at the moment.
         """
         db = hammer_config.HammerDatabase()
@@ -491,7 +491,7 @@ hello1: "abc"
 hello2: "def"
 base: "hello1"
 test: "${base}"
-test_meta: ["dynamicsubst", "dynamiccrossref"]
+test_meta: ["lazysubst", "lazycrossref"]
     """, is_yaml=True)
         meta = hammer_config.load_config_from_string("""
 {
@@ -503,7 +503,7 @@ test_meta: ["dynamicsubst", "dynamiccrossref"]
             self.assertEqual(db.get_setting("base"), "hello2")
             self.assertEqual(db.get_setting("test"), "def")
         msg = cm.exception.args[0]
-        self.assertTrue("Multiple dynamic directives in a single directive array not supported yet" in msg)
+        self.assertTrue("Multiple lazy directives in a single directive array not supported yet" in msg)
 
     def test_meta_append_bad(self) -> None:
         """
@@ -542,29 +542,29 @@ foo:
         """
         self.assertEqual(hammer_config.load_yaml("x: {}"), {"x": {}})
 
-    def test_meta_dynamic_referencing_other_dynamic(self) -> None:
+    def test_meta_lazy_referencing_other_lazy(self) -> None:
         """
-        Test that dynamic settings can reference other dynamic settings.
+        Test that lazy settings can reference other lazy settings.
         """
         db = hammer_config.HammerDatabase()
         base = hammer_config.load_config_from_string("""
 global: "hello world"
 tool1:
     common: "${global} tool1"
-    common_meta: "dynamicsubst"
+    common_meta: "lazysubst"
     a: "${tool1.common} abc"
-    a_meta: "dynamicsubst"
+    a_meta: "lazysubst"
     b: "${tool1.common} bcd"
-    b_meta: "dynamicsubst"
+    b_meta: "lazysubst"
 tool2:
     common: "${global} tool2"
-    common_meta: "dynamicsubst"
+    common_meta: "lazysubst"
     x: "${tool2.common} xyz"
-    x_meta: "dynamicsubst"
+    x_meta: "lazysubst"
     z: "${tool2.common} zyx"
-    z_meta: "dynamicsubst"
+    z_meta: "lazysubst"
 conglomerate: "${tool1.common} + ${tool2.common}"
-conglomerate_meta: "dynamicsubst"
+conglomerate_meta: "lazysubst"
 """, is_yaml=True)
         meta = hammer_config.load_config_from_string("""
 {
@@ -581,9 +581,9 @@ conglomerate_meta: "dynamicsubst"
         self.assertEqual(db.get_setting("tool2.z"), "foobar tool2 zyx")
         self.assertEqual(db.get_setting("conglomerate"), "foobar tool1 + foobar tool2")
 
-    def test_meta_dynamicsubst_other_dynamicsubst(self) -> None:
+    def test_meta_lazysubst_other_lazysubst(self) -> None:
         """
-        Check that a dynamicsubst which references other dynamicsubst works.
+        Check that a lazysubst which references other lazysubst works.
         """
         db = hammer_config.HammerDatabase()
         base = hammer_config.load_config_from_string("""
@@ -593,13 +593,13 @@ foo:
     two: "2"
     lolcat: ""
     twelve: "${lolcat}"
-    twelve_meta: dynamicsubst
+    twelve_meta: lazysubst
     """, is_yaml=True)
         project = hammer_config.load_config_from_string("""
 {
   "lolcat": "whatever",
   "later": "${foo.twelve}",
-  "later_meta": "dynamicsubst"
+  "later_meta": "lazysubst"
 }
     """, is_yaml=False)
         db.update_core([base])
@@ -608,98 +608,98 @@ foo:
         self.assertEqual(db.get_setting("foo.twelve"), "whatever")
         self.assertEqual(db.get_setting("later"), "whatever")
 
-    def test_meta_dynamiccrossappend_with_dynamiccrossref(self) -> None:
+    def test_meta_lazycrossappend_with_lazycrossref(self) -> None:
         """
-        Test that dynamic crossappend works with dynamic crossref in one file.
+        Test that lazy crossappend works with lazy crossref in one file.
         """
         db = hammer_config.HammerDatabase()
         base = hammer_config.load_config_from_string("""
 global: ["hello", "world", "scala"]
 tool_1: "global"
-tool_1_meta: "dynamiccrossref"
+tool_1_meta: "lazycrossref"
 tool: ["tool_1", ["python"]]
-tool_meta: "dynamiccrossappend"
+tool_meta: "lazycrossappend"
 """, is_yaml=True)
         db.update_core([base])
         self.assertEqual(db.get_setting("global"), ["hello", "world", "scala"])
         self.assertEqual(db.get_setting("tool"), ["hello", "world", "scala", "python"])
 
-    def test_meta_dynamicappend_with_dynamiccrossref_2(self) -> None:
+    def test_meta_lazyappend_with_lazycrossref_2(self) -> None:
         """
-        Test that dynamic "append" works with dynamic crossref.
+        Test that lazy "append" works with lazy crossref.
         """
         db = hammer_config.HammerDatabase()
         base = hammer_config.load_config_from_string("""
 global: ["hello", "world"]
 tool: "global"
-tool_meta: "dynamiccrossref"
+tool_meta: "lazycrossref"
 """, is_yaml=True)
         meta = hammer_config.load_config_from_string("""
 {
   "global": ["scala"],
   "global_meta": "append",
   "tool": ["python"],
-  "tool_meta": "dynamicappend"
+  "tool_meta": "lazyappend"
 }
 """, is_yaml=False)
         db.update_core([base, meta])
         self.assertEqual(db.get_setting("global"), ["hello", "world", "scala"])
         self.assertEqual(db.get_setting("tool"), ["hello", "world", "scala", "python"])
 
-    def test_self_reference_dynamicsubst(self) -> None:
+    def test_self_reference_lazysubst(self) -> None:
         """
-        Test that self-referencing dynamic subst works.
+        Test that self-referencing lazy subst works.
         """
         db = hammer_config.HammerDatabase()
         base = hammer_config.load_config_from_string("""
 base_str: "hello"
 derivative_str: "${base_str}"
-derivative_str_meta: "dynamicsubst"
+derivative_str_meta: "lazysubst"
         """, is_yaml=True)
         config1 = hammer_config.load_config_from_string("""
 {
     "derivative_str": "${derivative_str}_1",
-    "derivative_str_meta": "dynamicsubst"
+    "derivative_str_meta": "lazysubst"
 }
         """, is_yaml=True)
         config2 = hammer_config.load_config_from_string("""
 {
     "derivative_str": "${derivative_str}_2",
-    "derivative_str_meta": "dynamicsubst"
+    "derivative_str_meta": "lazysubst"
 }
         """, is_yaml=True)
         db.update_core([base, config1, config2])
         self.assertEqual(db.get_setting("derivative_str"), "hello_1_2")
 
-    def test_self_reference_dynamiccrossref(self) -> None:
+    def test_self_reference_lazycrossref(self) -> None:
         """
-        Test that self-referencing dynamic crossref works.
+        Test that self-referencing lazy crossref works.
         """
         db = hammer_config.HammerDatabase()
         base = hammer_config.load_config_from_string("""
 base: "hello"
 derivative: "base"
-derivative_meta: "dynamiccrossref"
+derivative_meta: "lazycrossref"
         """, is_yaml=True)
         config1 = hammer_config.load_config_from_string("""
 {
     "derivative": "derivative",
-    "derivative_meta": "dynamiccrossref"
+    "derivative_meta": "lazycrossref"
 }
         """, is_yaml=True)
         config2 = hammer_config.load_config_from_string("""
 {
     "base": "tower",
     "derivative": "derivative",
-    "derivative_meta": "dynamiccrossref"
+    "derivative_meta": "lazycrossref"
 }
         """, is_yaml=True)
         db.update_core([base, config1, config2])
         self.assertEqual(db.get_setting("base"), "tower")
 
-    def test_self_reference_dynamicappend(self) -> None:
+    def test_self_reference_lazyappend(self) -> None:
         """
-        Test that dynamic "append" works.
+        Test that lazy "append" works.
         Note that append is always self-referencing.
         """
         db = hammer_config.HammerDatabase()
@@ -709,13 +709,13 @@ global: ["hello", "world"]
         config1 = hammer_config.load_config_from_string("""
 {
   "global": ["scala"],
-  "global_meta": "dynamicappend"
+  "global_meta": "lazyappend"
 }
 """, is_yaml=False)
         config2 = hammer_config.load_config_from_string("""
 {
   "global": ["python"],
-  "global_meta": "dynamicappend"
+  "global_meta": "lazyappend"
 }
 """, is_yaml=False)
         db.update_core([base, config1])

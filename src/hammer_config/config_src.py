@@ -399,42 +399,48 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
             meta_directives = meta_type_from_dict
 
         # Process each meta type in order.
-        seen_dynamic = False  # type: bool
+        seen_lazy = False  # type: bool
         for meta_type in meta_directives:
             if not isinstance(meta_type, str):
                 raise TypeError("meta_type was not a string: " + repr(meta_type))
 
-            # If it's a dynamic meta, skip it for now since they are lazily
+            # If it's a lazy meta, skip it for now since they are lazily
             # processed at the very end.
             if meta_type.startswith("dynamic"):
-                dynamic_base_meta_type = meta_type[len("dynamic"):]
+                raise ValueError(
+                    "Found meta type {meta_type}. "
+                    "Dynamic meta directives were renamed to lazy meta directives after issue #134. "
+                    "Please change your metas from dynamic* to lazy*".format(
+                        meta_type=meta_type))
+            if meta_type.startswith("lazy"):
+                lazy_base_meta_type = meta_type[len("lazy"):]
 
-                if dynamic_base_meta_type not in get_meta_directives():
-                    raise ValueError("The type of dynamic meta variable %s is not supported (%s)" % (meta_key, meta_type))
+                if lazy_base_meta_type not in get_meta_directives():
+                    raise ValueError("The type of lazy meta variable %s is not supported (%s)" % (meta_key, meta_type))
 
-                if seen_dynamic:
-                    raise ValueError("Multiple dynamic directives in a single directive array not supported yet")
+                if seen_lazy:
+                    raise ValueError("Multiple lazy directives in a single directive array not supported yet")
                 else:
-                    seen_dynamic = True
+                    seen_lazy = True
 
                 update_dict = {}  # type: dict
 
-                # Check if this dynamic meta references itself by checking if any of its targets is itself.
-                targets = get_meta_directives()[dynamic_base_meta_type].target_settings(setting, meta_dict[setting])
+                # Check if this lazy meta references itself by checking if any of its targets is itself.
+                targets = get_meta_directives()[lazy_base_meta_type].target_settings(setting, meta_dict[setting])
                 if len(list(filter(lambda x: x == setting, targets))) > 0:
-                    # If it does, rename this dynamic meta to reference a new base.
+                    # If it does, rename this lazy meta to reference a new base.
                     # e.g. if a (dict 2) -> a (dict 1), rename "a (dict 1)" to a_1.
                     next_index = _get_next_free_index(newdict)
                     new_base_setting = "{setting}_{index}".format(
                         setting=setting,
                         index=next_index)
-                    new_value_meta = get_meta_directives()[dynamic_base_meta_type].rename_target(setting,
-                                                                                               meta_dict[setting],
-                                                                                               setting,
-                                                                                               new_base_setting)  # type: Optional[Tuple[Any, str]]
+                    new_value_meta = get_meta_directives()[lazy_base_meta_type].rename_target(setting,
+                                                                                              meta_dict[setting],
+                                                                                              setting,
+                                                                                              new_base_setting)  # type: Optional[Tuple[Any, str]]
                     if new_value_meta is None:
                         raise ValueError(
-                            "Failed to rename dynamic setting which depends on itself ({})".format(setting))
+                            "Failed to rename lazy setting which depends on itself ({})".format(setting))
                     else:
                         new_value, new_meta = new_value_meta
 
@@ -442,7 +448,7 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
                     update_dict.update({
                         new_base_setting: newdict[setting],
                         setting: new_value,
-                        setting + "_meta": "dynamic" + new_meta  # these are dynamic metas
+                        setting + "_meta": "lazy" + new_meta  # these are lazy metas
                     })
                     if setting + "_meta" in newdict:
                         update_dict.update({
@@ -457,8 +463,8 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
                 newdict.update(update_dict)
                 continue
             else:
-                if seen_dynamic:
-                    raise ValueError("Cannot use a non-dynamic meta directive after a dynamic one")
+                if seen_lazy:
+                    raise ValueError("Cannot use a non-lazy meta directive after a lazy one")
 
             try:
                 meta_func = get_meta_directives()[meta_type].action
@@ -494,7 +500,7 @@ class HammerDatabase:
     - technology
     - environment
     - project
-    - runtime (settings dynamically updated during the run a hammer run)
+    - runtime (settings lazyally updated during the run a hammer run)
     """
 
     def __init__(self) -> None:
@@ -682,32 +688,32 @@ def combine_configs(configs: Iterable[dict]) -> dict:
     expanded_config = deepdict(expanded_config_reduce)  # type: dict
     expanded_config_orig = deepdict(expanded_config)  # type: dict
 
-    # Now, we need to handle dynamic* metas.
-    dynamic_metas = {}
+    # Now, we need to handle lazy* metas.
+    lazy_metas = {}
 
     meta_dict_keys = list(expanded_config.keys())
     meta_keys = list(filter(lambda k: k.endswith("_meta"), meta_dict_keys))
 
-    # Graph to keep track of which dynamic settings depend on others.
+    # Graph to keep track of which lazy settings depend on others.
     # key1 -> key2 means key2 depends on key1
     graph = {}  # type: Dict[str, Tuple[List[str], List[str]]]
 
     meta_len = len("_meta")
     for meta_key in meta_keys:
         setting = meta_key[:-meta_len]  # type: str
-        dynamic_meta_type = expanded_config[meta_key]  # type: str
+        lazy_meta_type = expanded_config[meta_key]  # type: str
 
-        assert dynamic_meta_type.startswith("dynamic"), "Should have only dynamic metas left now"
+        assert lazy_meta_type.startswith("lazy"), "Should have only lazy metas left now"
 
-        # Create dynamic_metas without the dynamic part.
-        # e.g. what used to be a dynamicsubst just becomes a plain subst since everything is fully resolved now.
-        meta_type = dynamic_meta_type[len("dynamic"):]
-        dynamic_metas[meta_key] = meta_type
-        dynamic_metas[setting] = expanded_config[setting]  # copy over the template too
+        # Create lazy_metas without the lazy part.
+        # e.g. what used to be a lazysubst just becomes a plain subst since everything is fully resolved now.
+        meta_type = lazy_meta_type[len("lazy"):]
+        lazy_metas[meta_key] = meta_type
+        lazy_metas[setting] = expanded_config[setting]  # copy over the template too
 
-        # Build the graph of which dynamic settings depend on what.
+        # Build the graph of which lazy settings depend on what.
 
-        # Always ensure that this dynamic setting's node exists even if it has no dependencies.
+        # Always ensure that this lazy setting's node exists even if it has no dependencies.
         if setting not in graph:
             graph[setting] = ([], [])
 
@@ -721,7 +727,7 @@ def combine_configs(configs: Iterable[dict]) -> dict:
                 graph[target_var][0].append(setting)
                 graph[setting][1].append(target_var)
             else:
-                # The target setting that this depends on is not a dynamic setting.
+                # The target setting that this depends on is not a lazy setting.
                 pass
 
         # Delete from expanded_config
@@ -734,7 +740,7 @@ def combine_configs(configs: Iterable[dict]) -> dict:
             map(lambda key_val: key_val[0], filter(lambda key_val: len(key_val[1][1]) == 0, graph.items())))
 
         if len(starting_nodes) == 0:
-            raise ValueError("There appears to be a loop of dynamic settings")
+            raise ValueError("There appears to be a loop of lazy settings")
 
         # List of settings to expand first according to topological sort.
         settings_ordered = topological_sort(graph, starting_nodes)  # type: List[str]
@@ -742,8 +748,8 @@ def combine_configs(configs: Iterable[dict]) -> dict:
         def combine_meta(config_dict: dict, meta_setting: str) -> dict:
             # Merge in the metas in the given order.
             return update_and_expand_meta(config_dict, {
-                meta_setting: dynamic_metas[meta_setting],
-                meta_setting + "_meta": dynamic_metas[meta_setting + "_meta"]
+                meta_setting: lazy_metas[meta_setting],
+                meta_setting + "_meta": lazy_metas[meta_setting + "_meta"]
             })
 
         final_dict = reduce(combine_meta, settings_ordered, expanded_config)  # type: dict
@@ -772,6 +778,7 @@ def load_config_from_paths(config_paths: Iterable[str], strict: bool = False) ->
     sorted_paths = sorted(config_paths, key=lambda x: x.endswith(".json"))
 
     return list(map(lambda path: load_config_from_file(path, strict), sorted_paths))
+
 
 def load_config_from_defaults(path: str, strict: bool = False) -> List[dict]:
     """
