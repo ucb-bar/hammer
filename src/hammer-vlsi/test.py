@@ -1098,11 +1098,11 @@ class HammerSubmitCommandTestContext:
                                                 "mock_bsub.sh"),
                     "extra_args": ("-R", "myresources")
                 }}],
-                "synthesis.submit.settings_meta": "dynamicappend",
+                "synthesis.submit.settings_meta": "lazyappend",
                 "vlsi.submit.settings": [
                     {"lsf": {"num_cpus": 8}}
                 ],
-                "vlsi.submit.settings_meta": "dynamicappend"
+                "vlsi.submit.settings_meta": "lazyappend"
             })
 
         with open(json_path, "w") as f:
