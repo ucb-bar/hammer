@@ -16,7 +16,8 @@ from .lef_utils import *
 
 __all__ = ['VerilogUtils', 'LEFUtils',
            'deepdict', 'deeplist', 'add_lists', 'add_dicts', 'reverse_dict', 'in_place_unique', 'topological_sort',
-           'reduce_named', 'get_or_else', 'optional_map', 'assert_function_type', 'check_function_type']
+           'reduce_named', 'reduce_list_str', 'get_or_else', 'optional_map', 'assert_function_type',
+           'check_function_type']
 
 
 def deepdict(x: dict) -> dict:
