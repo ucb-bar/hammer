@@ -6,7 +6,9 @@
 #  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 from numbers import Number
-from typing import TYPE_CHECKING, Any, Callable, List, NamedTuple, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, List, NamedTuple, Optional, Tuple, Union
+
+from hammer_utils import get_or_else
 
 if TYPE_CHECKING:
     # grumble grumble, we need a better Library class generator
@@ -24,14 +26,22 @@ if TYPE_CHECKING:
         @property
         def verilog_synth(self) -> Optional[str]: pass
 
+PathsFunctionType = Callable[["Library"], List[str]]
+ExtractionFunctionType = Callable[["Library", List[str]], List[str]]
+
 
 class LibraryFilter(NamedTuple('LibraryFilter', [
     ('tag', str),
     ('description', str),
     # Is the resulting string intended to be a file?
     ('is_file', bool),
-    # Function to extract desired string(s) out of the library.
-    ('extraction_func', Callable[["Library"], List[str]]),
+    # Function to extract desired path(s) out of the library.
+    # Returns either a list of library-relative paths.
+    ('paths_func', PathsFunctionType),
+    # Function to extract desired string(s) out of the library, given full
+    # paths and the Library.
+    # Returns a list of strings.
+    ('extraction_func', Optional[ExtractionFunctionType]),
     # Additional filter function to use to exclude possible libraries.
     ('filter_func', Optional[Callable[["Library"], bool]]),
     # Sort function to control the order in which outputs are listed
@@ -49,15 +59,20 @@ class LibraryFilter(NamedTuple('LibraryFilter', [
     @staticmethod
     def new(
             tag: str, description: str, is_file: bool,
-            extraction_func: Callable[["Library"], List[str]],
+            paths_func: PathsFunctionType,
+            extraction_func: Optional[ExtractionFunctionType] = None,
             filter_func: Optional[Callable[["Library"], bool]] = None,
             sort_func: Optional[Callable[["Library"], Union[Number, str, tuple]]] = None,
-            extra_post_filter_funcs: List[Callable[[List[str]], List[str]]] = []) -> "LibraryFilter":
+            extra_post_filter_funcs: Optional[List[Callable[[List[str]], List[str]]]] = None) -> "LibraryFilter":
         """Convenience "constructor" with some default arguments."""
+
+        # TODO(edwardw): call runtime checks here!!!
+
         return LibraryFilter(
             tag, description, is_file,
+            paths_func,
             extraction_func,
             filter_func,
             sort_func,
-            list(extra_post_filter_funcs)
+            list(get_or_else(extra_post_filter_funcs, []))
         )

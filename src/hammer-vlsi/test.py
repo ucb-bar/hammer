@@ -160,7 +160,7 @@ class HammerToolTestHelpers:
         def filter_func(lib: hammer_tech.Library) -> bool:
             return lib.openaccess_techfile is not None
 
-        def extraction_func(lib: hammer_tech.Library) -> List[str]:
+        def paths_func(lib: hammer_tech.Library) -> List[str]:
             assert lib.openaccess_techfile is not None
             return [lib.openaccess_techfile]
 
@@ -175,7 +175,7 @@ class HammerToolTestHelpers:
 
         return LibraryFilter.new(
             filter_func=filter_func,
-            extraction_func=extraction_func,
+            paths_func=paths_func,
             tag="test", description="Test filter",
             is_file=True,
             sort_func=sort_func
@@ -212,6 +212,76 @@ class HammerTechnologyTest(unittest.TestCase):
     """
     Tests for the Hammer technology library (hammer_tech).
     """
+
+    def test_filters_with_extra_extraction(self) -> None:
+        """
+        Test that filters whose extraction functions return extra (non-path)
+        metadata.
+        """
+        import hammer_config
+
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+
+        def add_dont_use_list(d: Dict[str, Any]) -> Dict[str, Any]:
+            r = deepdict(d)
+            r["libraries"].append({
+                "name": "abcdef",
+                "milkyway techfile": "test/abcdef.tf"
+            })
+            return r
+
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_dont_use_list)
+        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
+        if tech_opt is None:
+            self.assertTrue(False, "Unable to load technology")
+            return
+        else:
+            tech = tech_opt  # type: hammer_tech.HammerTechnology
+        tech.cache_dir = tech_dir
+
+        def filter_func(lib: hammer_tech.Library) -> bool:
+            return lib.milkyway_techfile is not None
+
+        def paths_func(lib: hammer_tech.Library) -> List[str]:
+            assert lib.milkyway_techfile is not None
+            return [lib.milkyway_techfile]
+
+        def extraction_func(lib: hammer_tech.Library, paths: List[str]) -> List[str]:
+            assert len(paths) == 1
+            if lib.name is None:
+                name = ""
+            else:
+                name = str(lib.name)
+            return [json.dumps({"path": paths[0], "name": name}, indent=4)]
+
+        def sort_func(lib: hammer_tech.Library):
+            assert lib.milkyway_techfile is not None
+            return lib.milkyway_techfile
+
+        filter = LibraryFilter.new("metatest", "Test filter that extracts metadata",
+                                   is_file=True, filter_func=filter_func,
+                                   paths_func=paths_func,
+                                   extraction_func=extraction_func,
+                                   sort_func=sort_func)
+
+        database = hammer_config.HammerDatabase()
+        tech.set_database(database)
+        raw = tech.process_library_filter(pre_filts=[], filt=filter,
+                                          must_exist=False,
+                                          output_func=lambda str, _: [str])
+
+        outputs = list(map(lambda s: json.loads(s), raw))
+        self.assertEqual(outputs,
+                         [
+                             {"path": tech.prepend_dir_path("test/abcdef.tf"), "name": "abcdef"},
+                             {"path": tech.prepend_dir_path("test/coconut"), "name": ""},
+                             {"path": tech.prepend_dir_path("test/soy"), "name": ""}
+                         ])
+
+        # Cleanup
+        shutil.rmtree(tech_dir_base)
+
     def test_extra_prefixes(self) -> None:
         """
         Test that extra_prefixes works properly as a property.

@@ -43,7 +43,7 @@ class LibraryFilterHolder:
         Selecting Synopsys timing libraries (.db). Prefers CCS if available; picks NLDM as a fallback.
         """
 
-        def extraction_func(lib: "Library") -> List[str]:
+        def paths_func(lib: "Library") -> List[str]:
             # Choose ccs if available, if not, nldm.
             if lib.ccs_library_file is not None:
                 return [lib.ccs_library_file]
@@ -52,7 +52,7 @@ class LibraryFilterHolder:
             else:
                 return []
 
-        return LibraryFilter.new("timing_db", "CCS/NLDM timing lib (Synopsys .db)", extraction_func=extraction_func,
+        return LibraryFilter.new("timing_db", "CCS/NLDM timing lib (Synopsys .db)", paths_func=paths_func,
                                  is_file=True)
 
     @property
@@ -62,7 +62,7 @@ class LibraryFilterHolder:
         """
         warnings.warn("Use timing_lib_filter instead", DeprecationWarning, stacklevel=2)
 
-        def extraction_func(lib: "Library") -> List[str]:
+        def paths_func(lib: "Library") -> List[str]:
             # Choose ccs if available, if not, nldm.
             if lib.ccs_liberty_file is not None:
                 return [lib.ccs_liberty_file]
@@ -72,7 +72,7 @@ class LibraryFilterHolder:
                 return []
 
         return LibraryFilter.new("timing_lib", "CCS/NLDM timing lib (ASCII .lib)",
-                                 extraction_func=extraction_func, is_file=True)
+                                 paths_func=paths_func, is_file=True)
 
     @property
     def timing_lib_filter(self) -> LibraryFilter:
@@ -80,7 +80,7 @@ class LibraryFilterHolder:
         Select ASCII .lib timing libraries. Prefers CCS if available; picks NLDM as a fallback.
         """
 
-        def extraction_func(lib: "Library") -> List[str]:
+        def paths_func(lib: "Library") -> List[str]:
             # Choose ccs if available, if not, nldm.
             if lib.ccs_liberty_file is not None:
                 return [lib.ccs_liberty_file]
@@ -90,7 +90,7 @@ class LibraryFilterHolder:
                 return []
 
         return LibraryFilter.new("timing_lib", "CCS/NLDM timing lib (ASCII .lib)",
-                                 extraction_func=extraction_func, is_file=True)
+                                 paths_func=paths_func, is_file=True)
 
     @property
     def timing_lib_with_ecsm_filter(self) -> LibraryFilter:
@@ -99,7 +99,7 @@ class LibraryFilterHolder:
         a single given .lib.
         """
 
-        def extraction_func(lib: "Library") -> List[str]:
+        def paths_func(lib: "Library") -> List[str]:
             if lib.ecsm_liberty_file is not None:
                 return [lib.ecsm_liberty_file]
             elif lib.ccs_liberty_file is not None:
@@ -110,7 +110,7 @@ class LibraryFilterHolder:
                 return []
 
         return LibraryFilter.new("timing_lib_with_ecsm", "ECSM/CCS/NLDM timing lib (liberty ASCII .lib)",
-                                 extraction_func=extraction_func, is_file=True)
+                                 paths_func=paths_func, is_file=True)
 
     @property
     def qrc_tech_filter(self) -> LibraryFilter:
@@ -118,14 +118,14 @@ class LibraryFilterHolder:
         Selecting qrc RC Corner tech (qrcTech) files.
         """
 
-        def extraction_func(lib: "Library") -> List[str]:
+        def paths_func(lib: "Library") -> List[str]:
             if lib.qrc_techfile is not None:
                 return [lib.qrc_techfile]
             else:
                 return []
 
         return LibraryFilter.new("qrc", "qrc RC corner tech file",
-                                 extraction_func=extraction_func, is_file=True)
+                                 paths_func=paths_func, is_file=True)
 
     @property
     def verilog_synth_filter(self) -> LibraryFilter:
@@ -134,14 +134,14 @@ class LibraryFilterHolder:
         technologies.
         """
 
-        def extraction_func(lib: "Library") -> List[str]:
+        def paths_func(lib: "Library") -> List[str]:
             if lib.verilog_synth is not None:
                 return [lib.verilog_synth]
             else:
                 return []
 
         return LibraryFilter.new("verilog_synth", "Synthesizable Verilog wrappers",
-                                 extraction_func=extraction_func, is_file=True)
+                                 paths_func=paths_func, is_file=True)
 
     @property
     def lef_filter(self) -> LibraryFilter:
@@ -152,7 +152,7 @@ class LibraryFilterHolder:
         def filter_func(lib: "Library") -> bool:
             return lib.lef_file is not None
 
-        def extraction_func(lib: "Library") -> List[str]:
+        def paths_func(lib: "Library") -> List[str]:
             assert lib.lef_file is not None
             return [lib.lef_file]
 
@@ -164,7 +164,7 @@ class LibraryFilterHolder:
             return 100  # put it behind
 
         return LibraryFilter.new("lef", "LEF physical design layout library", is_file=True, filter_func=filter_func,
-                                 extraction_func=extraction_func, sort_func=sort_func)
+                                 paths_func=paths_func, sort_func=sort_func)
 
     @property
     def gds_filter(self) -> LibraryFilter:
@@ -175,12 +175,12 @@ class LibraryFilterHolder:
         def filter_func(lib: "Library") -> bool:
             return lib.gds_file is not None
 
-        def extraction_func(lib: "Library") -> List[str]:
+        def paths_func(lib: "Library") -> List[str]:
             assert lib.gds_file is not None
             return [lib.gds_file]
 
         return LibraryFilter.new("gds", "GDS opaque physical design layout", is_file=True, filter_func=filter_func,
-                                 extraction_func=extraction_func)
+                                 paths_func=paths_func)
 
     @property
     def spice_filter(self) -> LibraryFilter:
@@ -191,12 +191,12 @@ class LibraryFilterHolder:
         def filter_func(lib: "Library") -> bool:
             return lib.spice_file is not None
 
-        def extraction_func(lib: "Library") -> List[str]:
+        def paths_func(lib: "Library") -> List[str]:
             assert lib.spice_file is not None
             return [lib.spice_file]
 
         return LibraryFilter.new("spice", "SPICE files", is_file=True, filter_func=filter_func,
-                                 extraction_func=extraction_func)
+                                 paths_func=paths_func)
 
     @property
     def milkyway_lib_dir_filter(self) -> LibraryFilter:
@@ -206,7 +206,7 @@ class LibraryFilterHolder:
             else:
                 return []
 
-        return LibraryFilter.new("milkyway_dir", "Milkyway lib", is_file=False, extraction_func=select_milkyway_lib)
+        return LibraryFilter.new("milkyway_dir", "Milkyway lib", is_file=False, paths_func=select_milkyway_lib)
 
     @property
     def milkyway_techfile_filter(self) -> LibraryFilter:
@@ -218,7 +218,7 @@ class LibraryFilterHolder:
             else:
                 return []
 
-        return LibraryFilter.new("milkyway_tf", "Milkyway techfile", is_file=True, extraction_func=select_milkyway_tfs,
+        return LibraryFilter.new("milkyway_tf", "Milkyway techfile", is_file=True, paths_func=select_milkyway_tfs,
                                  extra_post_filter_funcs=[self.create_nonempty_check("Milkyway techfile")])
 
     @property
@@ -231,7 +231,7 @@ class LibraryFilterHolder:
             else:
                 return []
 
-        return LibraryFilter.new("tlu_max", "TLU+ max cap db", is_file=True, extraction_func=select_tlu_max_cap)
+        return LibraryFilter.new("tlu_max", "TLU+ max cap db", is_file=True, paths_func=select_tlu_max_cap)
 
     @property
     def tlu_min_cap_filter(self) -> LibraryFilter:
@@ -243,4 +243,4 @@ class LibraryFilterHolder:
             else:
                 return []
 
-        return LibraryFilter.new("tlu_min", "TLU+ min cap db", is_file=True, extraction_func=select_tlu_min_cap)
+        return LibraryFilter.new("tlu_min", "TLU+ min cap db", is_file=True, paths_func=select_tlu_min_cap)
