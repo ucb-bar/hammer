@@ -21,7 +21,7 @@ from hammer_utils import (LEFUtils, add_lists, deeplist, get_or_else,
                           in_place_unique, optional_map, reduce_list_str,
                           reduce_named)
 
-from library_filter import LibraryFilter
+from library_filter import LibraryFilter, ExtractionFunctionType, PathsFunctionType
 from filters import LibraryFilterHolder
 
 # Holds the list of pre-implemented filters.
@@ -506,9 +506,10 @@ class HammerTechnology:
 
     def filter_and_select_libs(self,
                                lib_filters: List[Callable[[Library], bool]] = [],
+                               paths_func: Optional[PathsFunctionType] = None,
+                               extraction_func: Optional[ExtractionFunctionType] = None,
                                sort_func: Optional[
                                    Callable[[Library], Union[Number, str, tuple]]] = None,
-                               extraction_func: Callable[[Library], List[str]] = None,
                                extra_funcs: List[Callable[[str], str]] = [],
                                ) -> List[str]:
         """
@@ -516,16 +517,17 @@ class HammerTechnology:
 
         :param lib_filters: Filters to filter the list of libraries before selecting desired results from them.
                             e.g. remove libraries of the wrong type
-        :param sort_func: Sort function to re-order the resultant components.
-                          e.g. put stdcell libraries before any other libraries
+        :param paths_func: Function to extract desired paths from library.
         :param extraction_func: Function to call to extract the desired component of the lib.
                                 e.g. turns the library into the ".lib" file corresponding to that library
+        :param sort_func: Sort function to re-order the resultant components.
+                          e.g. put stdcell libraries before any other libraries
         :param extra_funcs: List of extra functions to call before wrapping them in the arg prefixes.
 
         :return: List generated from list of libraries
         """
-        if extraction_func is None:
-            raise TypeError("extraction_func is required")
+        if paths_func is None:
+            raise TypeError("paths_func is required")
 
         filtered_libs = reduce_named(
             sequence=lib_filters,
@@ -536,13 +538,22 @@ class HammerTechnology:
         if sort_func is not None:
             filtered_libs = sorted(filtered_libs, key=sort_func)
 
+        def identity_extraction_func(lib: "Library", paths: List[str]) -> List[str]:
+            return paths
+
+        # If no extraction function was specified, use the identity extraction
+        # function.
+        local_extraction_func = get_or_else(extraction_func, identity_extraction_func)
+
         def extract_and_prepend_path(lib: Library) -> List[str]:
             """
-            Call extraction_func on this library and then prepend to the resultant paths.
+            Call paths_func, prepend to the resultant paths, and then call
+            extraction_func to get final outputs.
             """
-            assert extraction_func is not None  # type checker technicality for above
-            paths = extraction_func(lib)
-            return list(map(lambda path: self.prepend_dir_path(path, lib), paths))
+            assert paths_func is not None  # type checker technicality for above
+            paths = paths_func(lib)
+            full_paths = list(map(lambda path: self.prepend_dir_path(path, lib), paths))
+            return local_extraction_func(lib, full_paths)
 
         lib_results_nested = list(map(extract_and_prepend_path, filtered_libs))  # type: List[List[str]]
         empty = []  # type: List[str]
@@ -559,7 +570,9 @@ class HammerTechnology:
 
         return lib_results_with_extra_funcs
 
-    def process_library_filter(self, pre_filts: List[Callable[[Library], bool]], filt: LibraryFilter, output_func: Callable[[str, LibraryFilter], List[str]],
+    def process_library_filter(self, pre_filts: List[Callable[[Library], bool]],
+                               filt: LibraryFilter,
+                               output_func: Callable[[str, LibraryFilter], List[str]],
                                must_exist: bool = True) -> List[str]:
         """
         Process the given library filter and return a list of items from that library filter with any extra
@@ -588,8 +601,9 @@ class HammerTechnology:
             lib_filters.append(filt.filter_func)
         lib_items = self.filter_and_select_libs(
             lib_filters=lib_filters,
-            sort_func=filt.sort_func,
+            paths_func=filt.paths_func,
             extraction_func=filt.extraction_func,
+            sort_func=filt.sort_func,
             extra_funcs=[existence_check_func])  # type: List[str]
 
         # Quickly check that lib_items is actually a List[str].
