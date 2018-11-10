@@ -259,7 +259,19 @@ def check_function_type(function: Callable, args: List[type], return_type: type)
         WARNING: this method is in no way complete/exhaustive
         """
         import typing
-        if a == dict and b == typing.Dict:
+
+        if isinstance(a, str) and isinstance(b, str):
+            # Two strings (e.g. if both are stringly-typed mypy annotations).
+            # Just check if they are identical.
+            return a == b
+        elif isinstance(a, str) and isinstance(b, type):
+            # A string and a type.
+            # Likely the first is a mypy stringly-typed annotation and the
+            # second one a real type.
+            # Check that the name of the real type is the same as the
+            # stringly-typed one.
+            return a == b.__name__
+        elif a == dict and b == typing.Dict:
             return True
         elif is_union(a) and is_union(b):  # type: ignore
             if len(a.__args__) == len(b.__args__):  # type: ignore

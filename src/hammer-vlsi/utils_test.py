@@ -88,6 +88,15 @@ class UtilsTest(unittest.TestCase):
 
         assert_function_type(test7, [Union[int, float]], Union[bool, str])
 
+        # Check that stringly-typed annotations work.
+        def test8(a: "int") -> "list":
+            return [a + a]
+
+        assert_function_type(test8, ["int"], "list")  # type: ignore
+        assert_function_type(test8, ["int"], list)  # type: ignore
+        assert_function_type(test8, [int], "list")  # type: ignore
+        assert_function_type(test8, [int], list)
+
         with self.assertRaises(TypeError):
             # Different # of arguments
             assert_function_type(test1, [int, int], str)
