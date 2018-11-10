@@ -5,7 +5,7 @@
 #
 #  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
-from typing import Dict, Tuple, List, Optional
+from typing import Dict, Tuple, List, Optional, Union
 
 from hammer_utils import topological_sort, get_or_else, optional_map, assert_function_type
 
@@ -81,6 +81,12 @@ class UtilsTest(unittest.TestCase):
             return {"a": a}
 
         assert_function_type(test6, [int], Optional[Dict])
+
+        # Check that Union types get handled properly.
+        def test7(a: Union[int, float]) -> Union[bool, str]:
+            return str(a)
+
+        assert_function_type(test7, [Union[int, float]], Union[bool, str])
 
         with self.assertRaises(TypeError):
             # Different # of arguments
