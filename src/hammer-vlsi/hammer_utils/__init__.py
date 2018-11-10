@@ -255,7 +255,7 @@ def check_function_type(function: Callable, args: List[type], return_type: type)
     def compare_types_internal(a: Any, b: Any) -> bool:
         """
         Comparing types is also complicated.
-        Particularly when you have native Python times and mypy types floating around at once.
+        Particularly when you have native Python types and mypy types floating around at once.
         WARNING: this method is in no way complete/exhaustive
         """
         import typing
