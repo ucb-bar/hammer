@@ -23,6 +23,9 @@
         "title" : "Library",
         "type" : "object",
         "properties" : {
+          "name" : {
+            "type" : "string"
+          },
           "ccs liberty file" : {
             "type" : "string"
           },
