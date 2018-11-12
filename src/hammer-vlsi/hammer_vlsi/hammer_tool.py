@@ -1186,6 +1186,18 @@ class HammerTool(metaclass=ABCMeta):
 
         return LibraryFilter.new("tlu_min", "TLU+ min cap db", is_file=True, extraction_func=select_tlu_min_cap)
 
+    @property
+    def tlu_map_file_filter(self) -> LibraryFilter:
+        """Select tlu map files."""
+
+        def select_tlu_map_file(lib: hammer_tech.Library) -> List[str]:
+            if lib.tluplus_map_file is not None:
+                return [lib.tluplus_map_file]
+            else:
+                return []
+
+        return LibraryFilter.new("tlu_map", "TLU+ map file", is_file=True, extraction_func=select_tlu_map_file)
+
     def process_library_filter(self, pre_filts: List[Callable[[hammer_tech.Library], bool]], filt: LibraryFilter, output_func: Callable[[str, LibraryFilter], List[str]],
                                must_exist: bool = True) -> List[str]:
         """
