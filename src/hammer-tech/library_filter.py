@@ -8,7 +8,7 @@
 from numbers import Number
 from typing import TYPE_CHECKING, Any, Callable, List, NamedTuple, Optional, Tuple, Union
 
-from hammer_utils import get_or_else
+from hammer_utils import get_or_else, assert_function_type
 
 if TYPE_CHECKING:
     # grumble grumble, we need a better Library class generator
@@ -27,7 +27,30 @@ if TYPE_CHECKING:
         def verilog_synth(self) -> Optional[str]: pass
 
 PathsFunctionType = Callable[["Library"], List[str]]
+
+
+def check_paths_func(func: PathsFunctionType) -> None:
+    """
+    Check that the given function obeys the paths_func type specification.
+    """
+    assert_function_type(func, ["Library"], List[str])  # type: ignore
+
+
 ExtractionFunctionType = Callable[["Library", List[str]], List[str]]
+
+
+def check_extraction_func(func: ExtractionFunctionType) -> None:
+    """
+    Check that the given function obeys the paths_func type specification.
+    """
+    assert_function_type(func, ["Library", List[str]], List[str])  # type: ignore
+
+
+def check_filter_func(func: Callable[["Library"], bool]) -> None:
+    """
+    Check that the given function obeys the filter_func type specification.
+    """
+    assert_function_type(func, ["Library"], bool)  # type: ignore
 
 
 class LibraryFilter(NamedTuple('LibraryFilter', [
@@ -66,7 +89,11 @@ class LibraryFilter(NamedTuple('LibraryFilter', [
             extra_post_filter_funcs: Optional[List[Callable[[List[str]], List[str]]]] = None) -> "LibraryFilter":
         """Convenience "constructor" with some default arguments."""
 
-        # TODO(edwardw): call runtime checks here!!!
+        check_paths_func(paths_func)
+        if extraction_func is not None:
+            check_extraction_func(extraction_func)
+        if filter_func is not None:
+            check_filter_func(filter_func)
 
         return LibraryFilter(
             tag, description, is_file,
