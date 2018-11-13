@@ -570,8 +570,9 @@ class HammerTechnology:
 
         return lib_results_with_extra_funcs
 
-    def process_library_filter(self, pre_filts: List[Callable[[Library], bool]],
+    def process_library_filter(self,
                                filt: LibraryFilter,
+                               pre_filts: List[Callable[[Library], bool]],
                                output_func: Callable[[str, LibraryFilter], List[str]],
                                must_exist: bool = True) -> List[str]:
         """
@@ -582,9 +583,9 @@ class HammerTechnology:
         - Run any extra_post_filter_funcs (if needed)
         - For every lib item in each lib items, run output_func
 
+        :param filt: LibraryFilter to check against all libraries.
         :param pre_filts: List of functions with which to pre-filter the libraries. Each function must return true
                           in order for this library to be used.
-        :param filt: LibraryFilter to check against the list.
         :param output_func: Function which processes the outputs, taking in the filtered lib and the library filter
                             which generated it.
         :param must_exist: Must each library item actually exist? Default: True (yes, they must exist)
@@ -628,24 +629,23 @@ class HammerTechnology:
         return reduce_list_str(add_lists, after_output_functions, [])
 
     def read_libs(self, library_types: Iterable[LibraryFilter], output_func: Callable[[str, LibraryFilter], List[str]],
-            pre_filters: Optional[List[Callable[[Library],bool]]] = None,
-            must_exist: bool = True) -> List[str]:
+                  extra_pre_filters: Optional[List[Callable[[Library], bool]]] = None,
+                  must_exist: bool = True) -> List[str]:
         """
         Read the given libraries and return a list of strings according to some output format.
 
         :param library_types: List of libraries to filter, specified as a list of LibraryFilter elements.
         :param output_func: Function which processes the outputs, taking in the filtered lib and the library filter
                             which generated it.
-        :param pre_filters: List of additional filter functions to use to filter the list of libraries.
+        :param extra_pre_filters: List of additional filter functions to use to filter the list of libraries.
         :param must_exist: Must each library item actually exist? Default: True (yes, they must exist)
         :return: List of filtered libraries processed according output_func.
         """
 
-        if pre_filters is None:
-            pre_filts = [self.filter_for_supplies]  # type: List[Callable[[Library], bool]]
-        else:
-            assert isinstance(pre_filters, List)
-            pre_filts = pre_filters
+        pre_filts = self.default_pre_filters()  # type: List[Callable[[Library], bool]]
+        if extra_pre_filters is not None:
+            assert isinstance(extra_pre_filters, List)
+            pre_filts += extra_pre_filters
 
         return reduce_list_str(
             add_lists,
@@ -654,6 +654,13 @@ class HammerTechnology:
                 library_types
             )
         )
+
+    def default_pre_filters(self) -> List[Callable[[Library], bool]]:
+        """
+        Get the list of default pre-filters to pre-filter out IP libraries
+        before processing a LibraryFilter.
+        """
+        return [self.filter_for_supplies]
 
     def filter_for_supplies(self, lib: Library) -> bool:
         """Function to help filter a list of libraries to find libraries which have matching supplies.
