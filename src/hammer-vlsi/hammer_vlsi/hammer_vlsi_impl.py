@@ -856,11 +856,11 @@ class CadenceTool(HasSDCSupport, HammerTool):
         pre_filters = optional_map(corner, lambda c: [self.filter_for_mmmc(voltage=c.voltage,
                                                                            temp=c.temp)])  # type: Optional[List[Callable[[hammer_tech.Library],bool]]]
 
-        lib_args = self.technology.read_libs([hammer_tech.filters.timing_lib_with_ecsm_filter], self.to_plain_item, pre_filters=pre_filters)
+        lib_args = self.technology.read_libs([hammer_tech.filters.timing_lib_with_ecsm_filter], self.to_plain_item, extra_pre_filters=pre_filters)
         return " ".join(lib_args)
 
     def get_mmmc_qrc(self, corner: MMMCCorner) -> str:
-        lib_args = self.technology.read_libs([hammer_tech.filters.qrc_tech_filter],self.to_plain_item, pre_filters=[
+        lib_args = self.technology.read_libs([hammer_tech.filters.qrc_tech_filter], self.to_plain_item, extra_pre_filters=[
             self.filter_for_mmmc(voltage=corner.voltage, temp=corner.temp)])
         return " ".join(lib_args)
 
