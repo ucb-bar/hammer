@@ -9,9 +9,7 @@ import json
 import os
 import subprocess
 from abc import ABCMeta, abstractmethod
-from functools import reduce
-from numbers import Number
-from typing import Any, Callable, Iterable, List, NamedTuple, Optional, Union
+from typing import Any, Callable, Iterable, List, NamedTuple, Optional, Tuple
 
 import hammer_config
 import python_jsonschema_objects  # type: ignore
@@ -21,7 +19,7 @@ from hammer_utils import (LEFUtils, add_lists, deeplist, get_or_else,
                           in_place_unique, optional_map, reduce_list_str,
                           reduce_named)
 
-from library_filter import LibraryFilter, ExtractionFunctionType, PathsFunctionType
+from library_filter import LibraryFilter
 from filters import LibraryFilterHolder
 
 # Holds the list of pre-implemented filters.
@@ -504,77 +502,12 @@ class HammerTechnology:
         return list(self.tech_defined_libraries) + list(
             map(lambda el: el.store_into_library(), self.get_extra_libraries()))
 
-    def filter_and_select_libs(self,
-                               lib_filters: List[Callable[[Library], bool]] = [],
-                               paths_func: Optional[PathsFunctionType] = None,
-                               extraction_func: Optional[ExtractionFunctionType] = None,
-                               sort_func: Optional[
-                                   Callable[[Library], Union[Number, str, tuple]]] = None,
-                               extra_funcs: List[Callable[[str], str]] = [],
-                               ) -> List[str]:
-        """
-        Generate a list by filtering the list of libraries and selecting some parts of it.
-
-        :param lib_filters: Filters to filter the list of libraries before selecting desired results from them.
-                            e.g. remove libraries of the wrong type
-        :param paths_func: Function to extract desired paths from library.
-        :param extraction_func: Function to call to extract the desired component of the lib.
-                                e.g. turns the library into the ".lib" file corresponding to that library
-        :param sort_func: Sort function to re-order the resultant components.
-                          e.g. put stdcell libraries before any other libraries
-        :param extra_funcs: List of extra functions to call before wrapping them in the arg prefixes.
-
-        :return: List generated from list of libraries
-        """
-        if paths_func is None:
-            raise TypeError("paths_func is required")
-
-        filtered_libs = reduce_named(
-            sequence=lib_filters,
-            initial=self.get_available_libraries(),
-            function=lambda libs, func: filter(func, libs)
-        )  # type: List[Library]
-
-        if sort_func is not None:
-            filtered_libs = sorted(filtered_libs, key=sort_func)
-
-        def identity_extraction_func(lib: "Library", paths: List[str]) -> List[str]:
-            return paths
-
-        # If no extraction function was specified, use the identity extraction
-        # function.
-        local_extraction_func = get_or_else(extraction_func, identity_extraction_func)
-
-        def extract_and_prepend_path(lib: Library) -> List[str]:
-            """
-            Call paths_func, prepend to the resultant paths, and then call
-            extraction_func to get final outputs.
-            """
-            assert paths_func is not None  # type checker technicality for above
-            paths = paths_func(lib)
-            full_paths = list(map(lambda path: self.prepend_dir_path(path, lib), paths))
-            return local_extraction_func(lib, full_paths)
-
-        lib_results_nested = list(map(extract_and_prepend_path, filtered_libs))  # type: List[List[str]]
-        empty = []  # type: List[str]
-        lib_results = reduce_list_str(add_lists, lib_results_nested, empty)  # type: List[str]
-
-        # Uniquify results.
-        # TODO: think about whether this really belongs here and whether we always need to uniquify.
-        # This is here to get stuff working since some CAD tools dislike duplicated arguments (e.g. duplicated stdcell
-        # lib, etc).
-        in_place_unique(lib_results)
-
-        lib_results_with_extra_funcs = reduce(lambda arr, extra_func: list(map(extra_func, arr)), extra_funcs,
-                                              lib_results)
-
-        return lib_results_with_extra_funcs
-
     def process_library_filter(self,
                                filt: LibraryFilter,
                                pre_filts: List[Callable[[Library], bool]],
                                output_func: Callable[[str, LibraryFilter], List[str]],
-                               must_exist: bool = True) -> List[str]:
+                               must_exist: bool = True,
+                               uniquify: bool = True) -> List[str]:
         """
         Process the given library filter and return a list of items from that library filter with any extra
         post-processing.
@@ -589,35 +522,71 @@ class HammerTechnology:
         :param output_func: Function which processes the outputs, taking in the filtered lib and the library filter
                             which generated it.
         :param must_exist: Must each library item actually exist? Default: True (yes, they must exist)
+        :param uniquify: Must uniqify the list of output files. Default: True
         :return: Resultant items from the filter and post-processed. (e.g. --timing foo.db --timing bar.db)
         """
-        if must_exist:
+
+        # First, filter the list of available libraries with pre_filts and the library itself.
+        lib_filters = pre_filts + get_or_else(optional_map(filt.filter_func, lambda x: [x]), [])
+
+        filtered_libs = list(reduce_named(
+            sequence=lib_filters,
+            initial=self.get_available_libraries(),
+            function=lambda libs, func: filter(func, libs)
+        ))  # type: List[Library]
+
+        # Next, sort the list of libraries if a sort function exists.
+        if filt.sort_func is not None:
+            filtered_libs = sorted(filtered_libs, key=filt.sort_func)
+
+        # Next, extract paths and prepend them to get the real paths.
+        def get_and_prepend_path(lib: Library) -> Tuple[Library, List[str]]:
+            paths = filt.paths_func(lib)
+            full_paths = list(map(lambda path: self.prepend_dir_path(path, lib), paths))
+            return lib, full_paths
+
+        libs_and_paths = list(map(get_and_prepend_path, filtered_libs))  # type: List[Tuple[Library, List[str]]]
+
+        # Existence checks for paths.
+        def check_lib_and_paths(inp: Tuple[Library, List[str]]) -> Tuple[Library, List[str]]:
+            lib = inp[0]  # type: Library
+            paths = inp[1]  # type: List[str]
             existence_check_func = self.make_check_isfile(filt.description) if filt.is_file else self.make_check_isdir(
                 filt.description)
-        else:
-            existence_check_func = lambda x: x  # everything goes
+            paths = list(map(existence_check_func, paths))
+            return lib, paths
 
-        lib_filters = pre_filts
-        if filt.filter_func is not None:
-            lib_filters.append(filt.filter_func)
-        lib_items = self.filter_and_select_libs(
-            lib_filters=lib_filters,
-            paths_func=filt.paths_func,
-            extraction_func=filt.extraction_func,
-            sort_func=filt.sort_func,
-            extra_funcs=[existence_check_func])  # type: List[str]
+        if must_exist:
+            libs_and_paths = list(map(check_lib_and_paths, libs_and_paths))
 
-        # Quickly check that lib_items is actually a List[str].
-        if not isinstance(lib_items, List):
-            raise TypeError("lib_items is not a List[str], but a " + str(type(lib_items)))
-        for i in lib_items:
+        # Now call the extraction function to get a final list of strings.
+
+        # If no extraction function was specified, use the identity extraction
+        # function.
+        def identity_extraction_func(lib: "Library", paths: List[str]) -> List[str]:
+            return paths
+        extraction_func = get_or_else(filt.extraction_func, identity_extraction_func)
+
+        output_list = reduce_list_str(add_lists, list(map(lambda t: extraction_func(t[0], t[1]), libs_and_paths)))  # type: List[str]
+
+        # Quickly check that it is actually a List[str].
+        if not isinstance(output_list, List):
+            raise TypeError("output_list is not a List[str], but a " + str(type(output_list)))
+        for i in output_list:
             if not isinstance(i, str):
-                raise TypeError("lib_items is a List but not a List[str]")
+                raise TypeError("output_list is a List but not a List[str]")
+
+        # Uniquify results.
+        # TODO: think about whether this really belongs here and whether we always need to uniquify.
+        # This is here to get stuff working since some CAD tools dislike duplicated arguments (e.g. duplicated stdcell
+        # lib, etc).
+        if uniquify:
+            in_place_unique(output_list)
 
         # Apply any list-level functions.
         after_post_filter = reduce_named(
             sequence=filt.extra_post_filter_funcs,
-            initial=lib_items,
+            initial=output_list,
             function=lambda libs, func: func(list(libs)),
         )
 
