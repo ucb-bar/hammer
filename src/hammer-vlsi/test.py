@@ -282,6 +282,47 @@ class HammerTechnologyTest(unittest.TestCase):
         # Cleanup
         shutil.rmtree(tech_dir_base)
 
+    def test_process_library_filter_removes_duplicates(self) -> None:
+        """
+        Test that process_library_filter removes duplicates.
+        """
+        import hammer_config
+
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+
+        def add_duplicates(d: Dict[str, Any]) -> Dict[str, Any]:
+            r = deepdict(d)
+            r["libraries"].append({
+                "name": "abcdef",
+                "gds file": "test/abcdef.gds"
+            })
+            r["libraries"].append({
+                "name": "abcdef2",
+                "gds file": "test/abcdef.gds"
+            })
+            return r
+
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_duplicates)
+        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
+        if tech_opt is None:
+            self.assertTrue(False, "Unable to load technology")
+            return
+        else:
+            tech = tech_opt  # type: hammer_tech.HammerTechnology
+        tech.cache_dir = tech_dir
+
+        database = hammer_config.HammerDatabase()
+        tech.set_database(database)
+        outputs = tech.process_library_filter(pre_filts=[], filt=hammer_tech.filters.gds_filter,
+                                          must_exist=False,
+                                          output_func=lambda str, _: [str])
+
+        self.assertEqual(outputs, ["{0}/abcdef.gds".format(tech_dir)])
+
+        # Cleanup
+        shutil.rmtree(tech_dir_base)
+
     def test_extra_prefixes(self) -> None:
         """
         Test that extra_prefixes works properly as a property.
