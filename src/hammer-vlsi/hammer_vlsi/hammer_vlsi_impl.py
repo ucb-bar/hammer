@@ -856,12 +856,16 @@ class CadenceTool(HasSDCSupport, HammerTool):
         pre_filters = optional_map(corner, lambda c: [self.filter_for_mmmc(voltage=c.voltage,
                                                                            temp=c.temp)])  # type: Optional[List[Callable[[hammer_tech.Library],bool]]]
 
-        lib_args = self.technology.read_libs([hammer_tech.filters.timing_lib_with_ecsm_filter], self.to_plain_item, extra_pre_filters=pre_filters)
+        lib_args = self.technology.read_libs([hammer_tech.filters.timing_lib_with_ecsm_filter],
+                                             hammer_tech.HammerTechnologyUtils.to_plain_item,
+                                             extra_pre_filters=pre_filters)
         return " ".join(lib_args)
 
     def get_mmmc_qrc(self, corner: MMMCCorner) -> str:
-        lib_args = self.technology.read_libs([hammer_tech.filters.qrc_tech_filter], self.to_plain_item, extra_pre_filters=[
-            self.filter_for_mmmc(voltage=corner.voltage, temp=corner.temp)])
+        lib_args = self.technology.read_libs([hammer_tech.filters.qrc_tech_filter],
+                                             hammer_tech.HammerTechnologyUtils.to_plain_item,
+                                             extra_pre_filters=[
+                                                 self.filter_for_mmmc(voltage=corner.voltage, temp=corner.temp)])
         return " ".join(lib_args)
 
     def get_qrc_tech(self) -> str:
@@ -872,7 +876,7 @@ class CadenceTool(HasSDCSupport, HammerTool):
         """
         lib_args = self.technology.read_libs([
             hammer_tech.filters.qrc_tech_filter
-        ], self.to_plain_item)
+        ], hammer_tech.HammerTechnologyUtils.to_plain_item)
         return " ".join(lib_args)
 
     def generate_mmmc_script(self) -> str:
