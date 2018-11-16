@@ -657,8 +657,9 @@ class HammerToolTest(unittest.TestCase):
             lib_outputs = []  # type: List[str]
 
             def step(self) -> bool:
-                Tool.lib_outputs = tech.read_libs([hammer_tech.filters.timing_lib_with_ecsm_filter], self.to_plain_item,
-                                                       must_exist=False)
+                Tool.lib_outputs = tech.read_libs([hammer_tech.filters.timing_lib_with_ecsm_filter],
+                                                  hammer_tech.HammerTechnologyUtils.to_plain_item,
+                                                  must_exist=False)
                 return True
 
         test = Tool()

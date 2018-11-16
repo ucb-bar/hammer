@@ -667,4 +667,25 @@ class HammerTechnology:
                 raise ValueError("%s %s is not a file or does not exist" % (description, path))
             else:
                 return path
+
         return check_isfile
+
+
+class HammerTechnologyUtils:
+    """
+    Utility/helper functions for HammerTechnology.
+    """
+
+    @staticmethod
+    def to_command_line_args(lib_item: str, filt: LibraryFilter) -> List[str]:
+        """
+        Generate command-line args in the form --<filt.tag> <lib_item>.
+        """
+        return ["--" + filt.tag, lib_item]
+
+    @staticmethod
+    def to_plain_item(lib_item: str, filt: LibraryFilter) -> List[str]:
+        """
+        Generate plain outputs in the form of <lib_item1> <lib_item2> ...
+        """
+        return [lib_item]
