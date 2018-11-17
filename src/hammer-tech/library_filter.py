@@ -59,7 +59,7 @@ class LibraryFilter(NamedTuple('LibraryFilter', [
     # Is the resulting string intended to be a file?
     ('is_file', bool),
     # Function to extract desired path(s) out of the library.
-    # Returns either a list of library-relative paths.
+    # Returns a list of library-relative paths.
     ('paths_func', PathsFunctionType),
     # Function to extract desired string(s) out of the library, given full
     # paths and the Library.
