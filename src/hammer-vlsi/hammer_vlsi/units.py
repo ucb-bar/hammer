@@ -9,15 +9,15 @@
 from abc import abstractmethod
 import sys
 try:
-    from abc import ABC
+    from abc import ABC  # pylint: disable=ungrouped-imports
 except ImportError:
     if sys.version_info.major == 3 and sys.version_info.minor < 4:
         # Python compatibility: 3.3
         # Python 3.3 and below don't have abc.ABC
-        import abc
+        import abc  # pylint: disable=ungrouped-imports
         ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})  # type: ignore
 
-from typing import Optional, TypeVar, overload
+from typing import Optional, TypeVar
 
 from hammer_utils import get_or_else
 
@@ -73,27 +73,30 @@ class ValueWithUnit(ABC):
         """
         Create a value from parsing the given string.
         :param value: Value encoded in the given string.
-        :param prefix: If value does not have a prefix (e.g. "0.25"), then use the given prefix, or the default prefix
-                       defined by the class if one is not specified.
+        :param prefix: If value does not have a prefix (e.g. "0.25"), then use
+                       the given prefix, or the default prefix defined by the
+                       class if one is not specified.
         """
         import re
 
         default_prefix = get_or_else(prefix, self.default_prefix)
 
         regex = r"^(-?[\d.]+) *(.*){}$".format(re.escape(self.unit))
-        m = re.search(regex, value)
-        if m is None:
+        match = re.search(regex, value)
+        if match is None:
             try:
                 num = str(float(value))
                 value_prefix = default_prefix
             except ValueError:
-                raise ValueError("Malformed {type} value {value}".format(type=self.unit_type, value=value))
+                raise ValueError("Malformed {type} value {value}".format(type=self.unit_type,
+                                                                         value=value))
         else:
-            num = m.group(1)
-            value_prefix = m.group(2)
+            num = match.group(1)
+            value_prefix = match.group(2)
 
         if num.count('.') > 1 or len(value_prefix) > 1:
-            raise ValueError("Malformed {type} value {value}".format(type=self.unit_type, value=value))
+            raise ValueError("Malformed {type} value {value}".format(type=self.unit_type,
+                                                                     value=value))
 
         if value_prefix not in self._prefix_table:
             raise ValueError("Bad prefix for {value}".format(value=value))
@@ -116,7 +119,7 @@ class ValueWithUnit(ABC):
             letter_prefix = "" if prefix == "" else prefix[0]
 
         retval = self._value * (self._prefix / self._prefix_table[letter_prefix])
-        if round_zeroes:
+        if round_zeroes:  # pylint: disable=no-else-return
             return round(retval, 3)
         else:
             return retval
@@ -132,12 +135,16 @@ class ValueWithUnit(ABC):
         return "%g" % (self.value_in_units(prefix, round_zeroes)) + " " + prefix
 
     # Comparison operators.
-    # Note that mypy doesn't properly support type checking on equality operators so the type of __eq__ is object :(
+    # Note that mypy doesn't properly support type checking on equality
+    # operators so the type of __eq__ is object :(
     # As a result, the operators' (e.g. __eq__) 'other' type can't be _TT.
-    # Therefore, we implement the operators themselves separately and then wrap them in the special operators.
+    # Therefore, we implement the operators themselves separately and then wrap
+    # them in the special operators.
     # See https://github.com/python/mypy/issues/1271
+    # Disable useless pylint checks for the following methods.
+    # pylint: disable=unidiomatic-typecheck
 
-    def eq(self: _TT, other: _TT) -> bool:
+    def eq(self: _TT, other: _TT) -> bool:  # pylint: disable=invalid-name
         """
         Compare equality of this value with another.
         The types must match.
@@ -153,7 +160,7 @@ class ValueWithUnit(ABC):
         """
         return self.eq(other)  # type: ignore
 
-    def ne(self: _TT, other: _TT) -> bool:
+    def ne(self: _TT, other: _TT) -> bool:  # pylint: disable=invalid-name
         """
         Compare inequality of this value with another.
         The types must match.

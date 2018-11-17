@@ -6,14 +6,17 @@
 #
 #  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
+# pylint: disable=bad-continuation
+
 from enum import Enum
 from typing import Dict, NamedTuple, Optional, List, Any
 
 from hammer_utils import reverse_dict
 from .units import TimeValue, VoltageValue, TemperatureValue
 
-__all__ = ['ILMStruct', 'ClockPort', 'OutputLoadConstraint', 'ObstructionType', 'PlacementConstraintType', 'Margins',
-           'PlacementConstraint', 'MMMCCornerType', 'MMMCCorner']
+__all__ = ['ILMStruct', 'ClockPort', 'OutputLoadConstraint', 'ObstructionType',
+           'PlacementConstraintType', 'Margins', 'PlacementConstraint',
+           'MMMCCornerType', 'MMMCCorner']
 
 
 # Struct that holds various paths related to ILMs.
@@ -70,11 +73,11 @@ class ObstructionType(Enum):
         }
 
     @staticmethod
-    def from_str(x: str) -> "ObstructionType":
+    def from_str(input_str: str) -> "ObstructionType":
         try:
-            return ObstructionType.__mapping()[x]
+            return ObstructionType.__mapping()[input_str]
         except KeyError:
-            raise ValueError("Invalid obstruction type: " + str(x))
+            raise ValueError("Invalid obstruction type: " + str(input_str))
 
     def __str__(self) -> str:
         return reverse_dict(ObstructionType.__mapping())[self]
@@ -100,11 +103,11 @@ class PlacementConstraintType(Enum):
         }
 
     @staticmethod
-    def from_str(x: str) -> "PlacementConstraintType":
+    def from_str(input_str: str) -> "PlacementConstraintType":
         try:
-            return PlacementConstraintType.__mapping()[x]
+            return PlacementConstraintType.__mapping()[input_str]
         except KeyError:
-            raise ValueError("Invalid placement constraint type: " + str(x))
+            raise ValueError("Invalid placement constraint type: " + str(input_str))
 
     def __str__(self) -> str:
         return reverse_dict(PlacementConstraintType.__mapping())[self]
@@ -135,7 +138,8 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
 
     @staticmethod
     def from_dict(constraint: dict) -> "PlacementConstraint":
-        constraint_type = PlacementConstraintType.from_str(str(constraint["type"]))
+        constraint_type = PlacementConstraintType.from_str(
+            str(constraint["type"]))
         margins = None  # type: Optional[Margins]
         orientation = None  # type: Optional[str]
         layers = None  # type: Optional[List[str]]
@@ -152,13 +156,13 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             orientation = str(constraint["orientation"])
         if "layers" in constraint:
             layers = []
-            for l in constraint["layers"]:
-                layers.append(str(l))
+            for layer in constraint["layers"]:
+                layers.append(str(layer))
         if "obs_types" in constraint:
             obs_types = []
             types = constraint["obs_types"]
-            for t in types:
-                obs_types.append(ObstructionType.from_str(str(t)))
+            for obs_type in types:
+                obs_types.append(ObstructionType.from_str(str(obs_type)))
         return PlacementConstraint(
             path=str(constraint["path"]),
             type=constraint_type,
@@ -203,15 +207,15 @@ class MMMCCornerType(Enum):
     Extra = 3
 
     @staticmethod
-    def from_string(s: str) -> "MMMCCornerType":
-        if s == "setup":
+    def from_string(input_str: str) -> "MMMCCornerType":
+        if input_str == "setup":  # pylint: disable=no-else-return
             return MMMCCornerType.Setup
-        elif s == "hold":
+        elif input_str == "hold":
             return MMMCCornerType.Hold
-        elif s == "extra":
+        elif input_str == "extra":
             return MMMCCornerType.Extra
         else:
-            raise ValueError("Invalid mmmc corner type '{}'".format(s))
+            raise ValueError("Invalid MMMC corner type '{}'".format(input_str))
 
 
 MMMCCorner = NamedTuple('MMMCCorner', [

@@ -13,7 +13,7 @@ __all__ = ['HammerStepFunction', 'HammerToolStep', 'HookLocation', 'HammerToolHo
 
 # Necessary for mypy to learn about HammerTool.
 if TYPE_CHECKING:
-    from .hammer_tool import HammerTool
+    from .hammer_tool import HammerTool  # pylint: disable=unused-import
 
 HammerStepFunction = Callable[['HammerTool'], bool]
 
@@ -34,7 +34,8 @@ class HookLocation(Enum):
     ResumePostStep = 21
 
 
-# An hook action. Actions can insert new steps before or after an existing one, or replace an existing stage.
+# An hook action. Actions can insert new steps before or after an existing one,
+# or replace an existing stage.
 # Note: hook actions are executed in the order provided.
 HammerToolHookAction = NamedTuple('HammerToolHookAction', [
     # Where/what to do
