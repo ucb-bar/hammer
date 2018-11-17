@@ -567,7 +567,7 @@ class HammerTechnology:
             return paths
         extraction_func = get_or_else(filt.extraction_func, identity_extraction_func)
 
-        output_list = reduce_list_str(add_lists, list(map(lambda t: extraction_func(t[0], t[1]), libs_and_paths)))  # type: List[str]
+        output_list = reduce_list_str(add_lists, list(map(lambda t: extraction_func(t[0], t[1]), libs_and_paths)), [])  # type: List[str]
 
         # Quickly check that it is actually a List[str].
         if not isinstance(output_list, List):
