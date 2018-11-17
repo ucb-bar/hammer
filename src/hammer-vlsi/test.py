@@ -223,7 +223,7 @@ class HammerTechnologyTest(unittest.TestCase):
         tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
         tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
 
-        def add_dont_use_list(d: Dict[str, Any]) -> Dict[str, Any]:
+        def add_named_library(d: Dict[str, Any]) -> Dict[str, Any]:
             r = deepdict(d)
             r["libraries"].append({
                 "name": "abcdef",
@@ -231,7 +231,7 @@ class HammerTechnologyTest(unittest.TestCase):
             })
             return r
 
-        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_dont_use_list)
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_named_library)
         tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
         if tech_opt is None:
             self.assertTrue(False, "Unable to load technology")
@@ -269,7 +269,7 @@ class HammerTechnologyTest(unittest.TestCase):
         tech.set_database(database)
         raw = tech.process_library_filter(pre_filts=[], filt=filter,
                                           must_exist=False,
-                                          output_func=lambda str, _: [str])
+                                          output_func=hammer_tech.HammerTechnologyUtils.to_plain_item)
 
         outputs = list(map(lambda s: json.loads(s), raw))
         self.assertEqual(outputs,
