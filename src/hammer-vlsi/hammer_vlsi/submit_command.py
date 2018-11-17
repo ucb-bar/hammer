@@ -2,28 +2,35 @@
 # -*- coding: utf-8 -*-
 #
 # submit_command.py
-#
+# Hammer job submit command APIs.
 
-from abc import ABCMeta, abstractmethod
+# pylint: disable=bad-continuation
+
 import atexit
 import subprocess
-from hammer_utils import add_dicts, get_or_else
-from typing import Callable, Iterable, List, NamedTuple, Optional, Dict, Any, Union
-from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, HammerVLSILoggingContext
-from hammer_config import HammerDatabase
+from abc import abstractmethod
 from functools import reduce
+from typing import Any, Dict, List, NamedTuple, Optional
 
-__all__ = ['HammerSubmitCommand', 'HammerLocalSubmitCommand', 'HammerLSFSettings', 'HammerLSFSubmitCommand']
+from hammer_config import HammerDatabase
+from hammer_logging import HammerVLSILoggingContext
+from hammer_utils import add_dicts, get_or_else
+
+__all__ = ['HammerSubmitCommand', 'HammerLocalSubmitCommand',
+           'HammerLSFSettings', 'HammerLSFSubmitCommand']
 
 
 class HammerSubmitCommand:
 
     @abstractmethod
-    def submit(self, args: List[str], env: Dict[str, str], logger: HammerVLSILoggingContext, cwd: str = None) -> str:
+    def submit(self, args: List[str], env: Dict[str, str],
+               logger: HammerVLSILoggingContext, cwd: str = None) -> str:
         """
-        Submit the job to the job submission system. This function MUST block until the command is complete.
+        Submit the job to the job submission system. This function MUST block
+        until the command is complete.
 
-        :param args: Command-line to run; each item in the list is one token. The first token should be the command to run.
+        :param args: Command-line to run; each item in the list is one token.
+                     The first token should be the command to run.
         :param env: The environment variables to set for the command
         :param logger: The logging context
         :param cwd: Working directory (leave as None to use the current working directory).
@@ -32,12 +39,12 @@ class HammerSubmitCommand:
         pass
 
     @abstractmethod
-    def read_settings(self, d: Dict[str, Any], tool_namespace: str) -> None:
+    def read_settings(self, settings: Dict[str, Any], tool_namespace: str) -> None:
         """
-        Read the settings object (a Dict[str, Any]) into meaningful class variables
+        Read the settings object (a Dict[str, Any]) into meaningful class variables.
 
-        :param d: A Dict[str, Any] comprising the settings for this command
-        :param tool_namespace: The namespace for the tool (useful for logging)
+        :param settings: A Dict[str, Any] comprising the settings for this command.
+        :param tool_namespace: The namespace for the tool (useful for logging).
         """
         pass
 
@@ -46,56 +53,78 @@ class HammerSubmitCommand:
         """
         Get a concrete instance of a HammerSubmitCommand for a tool
 
-        :param tool_namespace: The tool namespace to use when querying the HammerDatabase (e.g. "synthesis" or "par")
+        :param tool_namespace: The tool namespace to use when querying the
+                               HammerDatabase (e.g. "synthesis" or "par").
         :param database: The HammerDatabase object with tool settings
         """
 
-        submit_command_mode = database.get_setting(tool_namespace + ".submit.command", nullvalue="none")
+        submit_command_mode = database.get_setting(tool_namespace + ".submit.command",
+                                                   nullvalue="none")
+        # pylint: disable=line-too-long
         submit_command_settings = database.get_setting(tool_namespace + ".submit.settings",
                                                        nullvalue=[])  # type: List[Dict[str, Dict[str, Any]]]
 
-        # Settings is a List[Dict[str, Dict[str, Any]]] object. The first Dict key is the submit command name.
+        # Settings is a List[Dict[str, Dict[str, Any]]] object. The first Dict
+        # key is the submit command name.
         # Its value is a Dict[str, Any] comprising the settings for that command.
-        # The top-level list elements are merged from 0 to the last index, with later indices overriding previous entries.
+        # The top-level list elements are merged from 0 to the last index, with
+        # later indices overriding previous entries.
         def combine_settings(settings: List[Dict[str, Dict[str, Any]]], key: str) -> Dict[str, Any]:
             return reduce(add_dicts, map(lambda d: d[key], settings), {})
 
         submit_command = None  # type: Optional[HammerSubmitCommand]
-        if submit_command_mode == "none" or submit_command_mode == "local":
+        if submit_command_mode in {"none", "local"}:  # pylint: disable=no-else-return
             # Do not read the options, return immediately
             return HammerLocalSubmitCommand()
         elif submit_command_mode == "lsf":
             submit_command = HammerLSFSubmitCommand()
         else:
             raise NotImplementedError(
-                "Submit command key for " + tool_namespace + ": " + submit_command_mode + " is not implemented")
+                "Submit command key for {0}: {1} is not implemented".format(
+                    tool_namespace, submit_command_mode))
 
-        submit_command.read_settings(combine_settings(submit_command_settings, submit_command_mode), tool_namespace)
+        submit_command.read_settings(
+            combine_settings(submit_command_settings, submit_command_mode),
+            tool_namespace)
         return submit_command
+
+    @staticmethod
+    def get_program_tag(args: List[str], program_name_length: int = 14,
+                        arg_display_len: int = 16) -> str:
+        """
+        Get a short "tag" of the program for easier display in the log.
+        :param args: Arguments for subprocess
+        :param program_name_length: Capture last 14 (default) characters of
+                                    the command name.
+        :param arg_display_len: How many characters of args to display after prog_name
+        :return: Short tag of the program.
+        """
+        if len(args[0]) <= program_name_length:
+            prog_name = args[0]
+        else:
+            prog_name = "..." + args[0][len(args[0]) - program_name_length:]
+
+        remaining_args = " ".join(args[1:])
+        if len(remaining_args) < arg_display_len:
+            prog_args = remaining_args
+        else:
+            prog_args = remaining_args[0:arg_display_len - 1] + "..."
+
+        return prog_name + " " + prog_args
 
 
 class HammerLocalSubmitCommand(HammerSubmitCommand):
 
-    def submit(self, args: List[str], env: Dict[str, str], logger: HammerVLSILoggingContext, cwd: str = None) -> str:
+    def submit(self, args: List[str], env: Dict[str, str],
+               logger: HammerVLSILoggingContext, cwd: str = None) -> str:
         # Just run the command on this host.
 
-        # Short version for easier display in the log.
-        PROG_NAME_LEN = 14  # Capture last 14 characters of the command name
-        ARG_DISPLAY_LEN = 16  # How many characters of args to display after prog_name
-        if len(args[0]) <= PROG_NAME_LEN:
-            prog_name = args[0]
-        else:
-            prog_name = "..." + args[0][len(args[0]) - PROG_NAME_LEN:]
-        remaining_args = " ".join(args[1:])
-        if len(remaining_args) < ARG_DISPLAY_LEN:
-            prog_args = remaining_args
-        else:
-            prog_args = remaining_args[0:ARG_DISPLAY_LEN - 1] + "..."
-        prog_tag = prog_name + " " + prog_args
+        prog_tag = self.get_program_tag(args)
 
         logger.debug("Executing subprocess: " + ' '.join(args))
         subprocess_logger = logger.context("Exec " + prog_tag)
-        proc = subprocess.Popen(args, shell=False, stderr=subprocess.STDOUT, stdout=subprocess.PIPE, env=env, cwd=cwd)
+        proc = subprocess.Popen(args, shell=False, stderr=subprocess.STDOUT,
+                                stdout=subprocess.PIPE, env=env, cwd=cwd)
         atexit.register(proc.kill)
 
         output_buf = ""
@@ -111,8 +140,8 @@ class HammerLocalSubmitCommand(HammerSubmitCommand):
 
         return output_buf
 
-    def read_settings(self, d: Dict[str, Any], tool_namespace: str) -> None:
-        assert ("Should never get here; local submission command does not have settings")
+    def read_settings(self, settings: Dict[str, Any], tool_namespace: str) -> None:
+        assert False, "Should never get here; local submission command does not have settings"
 
 
 class HammerLSFSettings(NamedTuple('HammerLSFSettings', [
@@ -124,19 +153,19 @@ class HammerLSFSettings(NamedTuple('HammerLSFSettings', [
     __slots__ = ()
 
     @staticmethod
-    def from_setting(d: Dict[str, Any]) -> "HammerLSFSettings":
-        if not isinstance(d, dict):
+    def from_setting(settings: Dict[str, Any]) -> "HammerLSFSettings":
+        if not isinstance(settings, dict):
             raise ValueError("Must be a dictionary")
         try:
-            bsub_binary = d["bsub_binary"]
+            bsub_binary = settings["bsub_binary"]
         except KeyError:
             raise ValueError("Missing mandatory key bsub_binary for LSF settings.")
         try:
-            num_cpus = d["num_cpus"]
+            num_cpus = settings["num_cpus"]
         except KeyError:
             num_cpus = None
         try:
-            queue = d["queue"]
+            queue = settings["queue"]
         except KeyError:
             queue = None
 
@@ -144,21 +173,19 @@ class HammerLSFSettings(NamedTuple('HammerLSFSettings', [
             bsub_binary=bsub_binary,
             num_cpus=num_cpus,
             queue=queue,
-            extra_args=get_or_else(d["extra_args"], [])
+            extra_args=get_or_else(settings["extra_args"], [])
         )
 
 
 class HammerLSFSubmitCommand(HammerSubmitCommand):
 
-    # TODO list:
-    #  - we need to log the command output
+    # TODO(johnwright): log the command output
 
     @property
     def settings(self) -> HammerLSFSettings:
-        try:
-            return self._settings
-        except AttributeError:
+        if not hasattr(self, "_settings"):
             raise ValueError("Nothing set for settings yet")
+        return getattr(self, "_settings")
 
     @settings.setter
     def settings(self, value: HammerLSFSettings) -> None:
@@ -167,10 +194,10 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
 
         :param value: The HammerLSFSettings NapedTuple to use
         """
-        self._settings = value
+        setattr(self, "_settings", value)
 
-    def read_settings(self, d: Dict[str, Any], tool_name) -> None:
-        self.settings = HammerLSFSettings.from_setting(d)
+    def read_settings(self, settings: Dict[str, Any], tool_namespace: str) -> None:  # pylint: disable=unused-argument
+        self.settings = HammerLSFSettings.from_setting(settings)
 
     def bsub_args(self) -> List[str]:
         args = [self.settings.bsub_binary, "-K"]  # always use -K to block
@@ -181,26 +208,18 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
         args.extend(self.settings.extra_args)
         return args
 
-    def submit(self, args: List[str], env: Dict[str, str], logger: HammerVLSILoggingContext, cwd: str = None) -> str:
+    def submit(self, args: List[str], env: Dict[str, str],
+               logger: HammerVLSILoggingContext, cwd: str = None) -> str:
         # TODO fix output capturing
 
-        # Short version for easier display in the log.
-        PROG_NAME_LEN = 14  # Capture last 14 characters of the command name
-        ARG_DISPLAY_LEN = 16  # How many characters of args to display after prog_name
-        if len(args[0]) <= PROG_NAME_LEN:
-            prog_name = args[0]
-        else:
-            prog_name = "..." + args[0][len(args[0]) - PROG_NAME_LEN:]
-        remaining_args = " ".join(args[1:])
-        if len(remaining_args) < ARG_DISPLAY_LEN:
-            prog_args = remaining_args
-        else:
-            prog_args = remaining_args[0:ARG_DISPLAY_LEN - 1] + "..."
-        prog_tag = prog_name + " " + prog_args
+        prog_tag = self.get_program_tag(args)
 
-        logger.debug("Executing subprocess: " + ' '.join(self.bsub_args()) + ' "' + ' '.join(args) + '"')
+        subprocess_format_str = 'Executing subprocess: {bsub_args} "{args}"'
+        logger.debug(subprocess_format_str.format(bsub_args=' '.join(self.bsub_args()),
+                                                  args=' '.join(args)))
         subprocess_logger = logger.context("Exec " + prog_tag)
-        proc = subprocess.Popen(self.bsub_args() + [' '.join(args)], shell=False, stderr=subprocess.STDOUT,
+        proc = subprocess.Popen(self.bsub_args() + [' '.join(args)],
+                                shell=False, stderr=subprocess.STDOUT,
                                 stdout=subprocess.PIPE, env=env, cwd=cwd)
 
         output_buf = ""
@@ -215,5 +234,3 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
         # TODO: check errors
 
         return output_buf
-
-        return ""
