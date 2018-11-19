@@ -146,6 +146,10 @@
               }
             }
           },
+          "tluplus map file": {
+            "title" : "TLUPlusMapFile",
+            "type" : "string"
+          },
           "verilog sim" : {
             "type" : "string"
           },

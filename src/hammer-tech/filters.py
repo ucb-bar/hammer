@@ -244,3 +244,13 @@ class LibraryFilterHolder:
                 return []
 
         return LibraryFilter.new("tlu_min", "TLU+ min cap db", is_file=True, paths_func=select_tlu_min_cap)
+
+    @property
+    def tlu_map_file_filter(self) -> LibraryFilter:
+        """Select tlu map files."""
+        def select_tlu_map_file(lib: "Library") -> List[str]:
+            if lib.tluplus_map_file is not None:
+                return [lib.tluplus_map_file]
+            else:
+                return []
+        return LibraryFilter.new("tlu_map", "TLU+ map file", is_file=True, paths_func=select_tlu_map_file)
