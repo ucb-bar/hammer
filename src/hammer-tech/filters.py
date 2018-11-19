@@ -223,7 +223,7 @@ class LibraryFilterHolder:
 
     @property
     def tlu_max_cap_filter(self) -> LibraryFilter:
-        """TLU+ max cap filter."""
+        """Select TLU+ max cap files."""
 
         def select_tlu_max_cap(lib: "Library") -> List[str]:
             if lib.tluplus_files is not None and lib.tluplus_files.max_cap is not None:
@@ -235,7 +235,7 @@ class LibraryFilterHolder:
 
     @property
     def tlu_min_cap_filter(self) -> LibraryFilter:
-        """TLU+ min cap filter."""
+        """Select TLU+ min cap files."""
 
         def select_tlu_min_cap(lib: "Library") -> List[str]:
             if lib.tluplus_files is not None and lib.tluplus_files.min_cap is not None:
@@ -247,7 +247,7 @@ class LibraryFilterHolder:
 
     @property
     def tlu_map_file_filter(self) -> LibraryFilter:
-        """Select tlu map files."""
+        """Select TLU+ map files."""
         def select_tlu_map_file(lib: "Library") -> List[str]:
             if lib.tluplus_map_file is not None:
                 return [lib.tluplus_map_file]
