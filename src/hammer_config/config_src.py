@@ -121,8 +121,8 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
     # crossappend takes a list that has two elements.
     # The first is the target list (the list to append to), and the second is
     # a list to append to the target list.
-    # e.g. if base has ["1"] and crossappend has ["1", ["2", "3"]], the result
-    # is ["1", "2", "3"].
+    # e.g. if base has ["1"] and crossappend has ["base", ["2", "3"]], then
+    # the result will be ["1", "2", "3"].
     def crossappend_action(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
         target_setting, append_value = crossappend_decode(value)
         config_dict[key] = config_dict[target_setting] + append_value
