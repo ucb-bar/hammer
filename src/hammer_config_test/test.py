@@ -217,6 +217,25 @@ foo.bar.dsl: ["scala"]
         self.assertEqual(db.get_setting("foo.bar.dsl"), ["scala"])
         self.assertEqual(db.get_setting("foo.bar.languages"), ["scala", "python"])
 
+    def test_meta_crossappendref(self) -> None:
+        """
+        Test that the meta attribute "crossappendref" works.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo.bar.dsl: ["scala"]
+snakes: ["python"]
+""", is_yaml=True)
+        meta = hammer_config.load_config_from_string("""
+{
+  "foo.bar.languages": ["foo.bar.dsl", "snakes"],
+  "foo.bar.languages_meta": "crossappendref"
+}
+""", is_yaml=False)
+        db.update_core([base, meta])
+        self.assertEqual(db.get_setting("foo.bar.dsl"), ["scala"])
+        self.assertEqual(db.get_setting("foo.bar.languages"), ["scala", "python"])
+
     def test_meta_crossref(self) -> None:
         """
         Test that the meta attribute "crossref" works.
@@ -607,6 +626,53 @@ foo:
         self.assertEqual(db.get_setting("lolcat"), "whatever")
         self.assertEqual(db.get_setting("foo.twelve"), "whatever")
         self.assertEqual(db.get_setting("later"), "whatever")
+
+    def test_meta_lazycrossappendref(self) -> None:
+        """
+        Test that lazy crossappendref works.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+global: ["hello", "world", "scala"]
+tool_1: "global"
+tool_1_meta: "lazycrossref"
+snakes: ["python"]
+tool: ["tool_1", "snakes"]
+tool_meta: "lazycrossappendref"
+""", is_yaml=True)
+        db.update_core([base])
+        self.assertEqual(db.get_setting("global"), ["hello", "world", "scala"])
+        self.assertEqual(db.get_setting("tool"), ["hello", "world", "scala", "python"])
+
+    def test_meta_lazycrossappendref_prepend_local(self) -> None:
+        """
+        Test that lazy crossappendref works to prepend the local path.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+# These lines are present to test that the dependency graph with
+# crossappendref is correct.
+# If crossappendref doesn't declare a dependency, aaa* might not be recognized
+# as a dependency of test.
+aaa0: "tmp.tmptmp"
+aaa0_meta: lazycrossref
+aaa1: "tmp.tmptmp"
+aaa1_meta: lazycrossref
+test: ["aaa0", "aaa1"]
+test_meta: "lazycrossappendref"
+
+base: ["bin", "usr_bin"]
+tmp.tmptmp2: "myfolder"
+tmp.tmptmp2_meta: "prependlocal"
+tmp.tmptmp: ["tmp.tmptmp2"]
+tmp.tmptmp_meta: "lazycrossref"
+paths: ["base", "tmp.tmptmp"]
+paths_meta: "lazycrossappendref"
+""", is_yaml=True, path="opt")
+        db.update_core([base])
+        self.assertEqual(db.get_setting("base"), ["bin", "usr_bin"])
+        self.assertEqual(db.get_setting("paths"), ["bin", "usr_bin", "opt/myfolder"])
+        self.assertEqual(db.get_setting("test"), ["opt/myfolder", "opt/myfolder"])
 
     def test_meta_lazycrossappend_with_lazycrossref(self) -> None:
         """
