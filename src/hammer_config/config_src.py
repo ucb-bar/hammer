@@ -739,6 +739,9 @@ def combine_configs(configs: Iterable[dict]) -> dict:
         starting_nodes = list(
             map(lambda key_val: key_val[0], filter(lambda key_val: len(key_val[1][1]) == 0, graph.items())))
 
+        # Sort starting nodes for determinism.
+        starting_nodes = sorted(starting_nodes)
+
         if len(starting_nodes) == 0:
             raise ValueError("There appears to be a loop of lazy settings")
 
