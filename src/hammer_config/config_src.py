@@ -109,7 +109,7 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
                                          target_settings=lambda key, value: [key],
                                          rename_target=append_rename)
 
-    def crossappend_decode(value) -> Tuple[str, list]:
+    def crossappend_decode(value: Any) -> Tuple[str, list]:
         assert isinstance(value, list), "crossappend takes a list of two elements"
         assert len(value) == 2, "crossappend takes a list of two elements"
         target_setting = value[0]  # type: str
@@ -140,6 +140,44 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
     directives['crossappend'] = MetaDirective(action=crossappend_action,
                                               target_settings=crossappend_targets,
                                               rename_target=crossappend_rename)
+
+    def crossappendref_decode(value: Any) -> Tuple[str, str]:
+        assert isinstance(value, list), "crossappendref takes a list of two elements"
+        assert len(value) == 2, "crossappendref takes a list of two elements"
+        target_key = value[0]  # type: str
+        append_key = value[1]  # type: str
+        assert isinstance(target_key, str), "crossappendref target setting must be a string"
+        assert isinstance(append_key, str), "crossappend append list setting must be a string"
+        return target_key, append_key
+
+    # crossappendref takes a list that has two elements.
+    # The first is the target list (the list to append to), and the second is
+    # a setting that contains a list to append.
+    # e.g. if base has ["1"], app has ["2", "3"], and crossappend has ["base", "app"], the result
+    # is ["1", "2", "3"].
+    def crossappendref_action(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
+        target_setting, append_setting = crossappendref_decode(value)
+        config_dict[key] = config_dict[target_setting] + config_dict[append_setting]
+
+    def crossappendref_targets(key: str, value: Any) -> List[str]:
+        target_setting, append_setting = crossappendref_decode(value)
+        return [target_setting, append_setting]
+
+    def crossappendref_rename(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[
+        Tuple[Any, str]]:
+        target, append = crossappendref_decode(value)
+
+        def replace_if_target_setting(setting: str) -> str:
+            """Helper function to replace the given setting with the
+            replacement if it is equal to target_setting."""
+            return replacement_setting if setting == target_setting else setting
+
+        return [replace_if_target_setting(target),
+                replace_if_target_setting(append)], "crossappendref"
+
+    directives['crossappendref'] = MetaDirective(action=crossappendref_action,
+                                                 target_settings=crossappendref_targets,
+                                                 rename_target=crossappendref_rename)
 
     def subst_str(input_str: str, replacement_func: Callable[[str], str]) -> str:
         """Substitute ${...}"""
