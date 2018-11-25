@@ -1056,6 +1056,34 @@ if {{ {get_db_str} ne "" }} {{
 
         return list(map(map_cell, self.get_dont_use_list()))
 
+    def generate_power_spec_commands(self) -> List[str]:
+        """
+        Generate commands to load a power specification for Cadence tools.
+        """
+
+        power_spec_mode = self.get_setting("vlsi.inputs.power_spec_mode")  # type: str
+        if power_spec_mode == "empty":
+            return []
+        elif power_spec_mode == "auto":
+            raise NotImplementedError("Automatic generation of power specifications is not supported yet.")
+            return []
+        elif power_spec_mode == "manual":
+            pass
+        else:
+            self.logger.error("Invalid power specification mode '{mode}', using 'empty'.".format(mode=power_spec_mode))
+            return []
+        power_spec_type = self.get_setting("vlsi.inputs.power_spec_type")
+        if power_spec_type == "cpf":
+            pass # Has the same argument name
+        elif power_spec_type == "upf":
+            power_spec_type = "1801"
+        else:
+            self.logger.error("Invalid power specification type '{tpe}' only 'cpf' or 'upf' supported".format(tpe=power_spec_type))
+            return []
+        power_spec_path = self.get_setting("vlsi.inputs.power_spec_path") # type: str
+        return ["read_power_intent -{tpe} {path}".format(tpe=power_spec_type,path=power_spec_path),
+                "commit_power_intent"]
+
 class SynopsysTool(HasSDCSupport, HammerTool):
     """Mix-in trait with functions useful for Synopsys-based tools."""
     @property
