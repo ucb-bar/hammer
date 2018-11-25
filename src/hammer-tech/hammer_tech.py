@@ -643,9 +643,10 @@ class HammerTechnology:
             # always be used.
             self.logger.warning("Lib %s has no supplies annotation! Using anyway." % (lib.serialize()))
             return True
-        # If we are using MMMC assume all libraries will be used
-        # TODO: Read the corners and filter out libraries that don't match any of them
-        #  Requires a refactor because MMMCCorner parsing is only in HammerTool now
+        # If we are using MMMC assume all libraries will be used.
+        # TODO: Read the corners and filter out libraries that don't match any of them.
+        # Requires a refactor because MMMCCorner parsing is only in HammerTool now.
+        # See issue #275.
         if self.get_setting("vlsi.inputs.mmmc_corners"):
             return True
         return self.get_setting("vlsi.inputs.supplies.VDD") == lib.supplies.VDD and self.get_setting("vlsi.inputs.supplies.GND") == lib.supplies.GND
