@@ -1061,35 +1061,39 @@ if {{ {get_db_str} ne "" }} {{
         Generate commands to load a power specification for Cadence tools.
         """
 
-        power_spec_mode = self.get_setting("vlsi.inputs.power_spec_mode")  # type: str
+        power_spec_mode = str(self.get_setting("vlsi.inputs.power_spec_mode"))  # type: str
         if power_spec_mode == "empty":
             return []
         elif power_spec_mode == "auto":
             raise NotImplementedError("Automatic generation of power specifications is not supported yet.")
-            return []
         elif power_spec_mode == "manual":
             pass
         else:
-            self.logger.error("Invalid power specification mode '{mode}', using 'empty'.".format(mode=power_spec_mode))
+            self.logger.error("Invalid power specification mode '{mode}'; using 'empty'.".format(mode=power_spec_mode))
             return []
-        power_spec_type = self.get_setting("vlsi.inputs.power_spec_type")  # type: str
+
+        # Manual power spec
+        power_spec_type = str(self.get_setting("vlsi.inputs.power_spec_type"))  # type: str
         power_spec_arg = ""  # type: str
         if power_spec_type == "cpf":
             power_spec_arg = "cpf"
         elif power_spec_type == "upf":
             power_spec_arg = "1801"
         else:
-            self.logger.error("Invalid power specification type '{tpe}' only 'cpf' or 'upf' supported".format(tpe=power_spec_type))
+            self.logger.error(
+                "Invalid power specification type '{tpe}'; only 'cpf' or 'upf' supported".format(tpe=power_spec_type))
             return []
-        power_spec_contents = self.get_setting("vlsi.inputs.power_spec_contents")  # type: str
+        power_spec_contents = str(self.get_setting("vlsi.inputs.power_spec_contents"))  # type: str
         power_spec_file = os.path.join(self.run_dir, "power_spec.{tpe}".format(tpe=power_spec_type))
         with open(power_spec_file, "w") as f:
             f.write(power_spec_contents)
-        return ["read_power_intent -{arg} {path}".format(arg=power_spec_arg,path=power_spec_file),
+        return ["read_power_intent -{arg} {path}".format(arg=power_spec_arg, path=power_spec_file),
                 "commit_power_intent"]
+
 
 class SynopsysTool(HasSDCSupport, HammerTool):
     """Mix-in trait with functions useful for Synopsys-based tools."""
+
     @property
     def env_vars(self) -> Dict[str, str]:
         """
