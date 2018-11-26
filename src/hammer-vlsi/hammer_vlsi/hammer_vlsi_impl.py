@@ -1072,16 +1072,20 @@ if {{ {get_db_str} ne "" }} {{
         else:
             self.logger.error("Invalid power specification mode '{mode}', using 'empty'.".format(mode=power_spec_mode))
             return []
-        power_spec_type = self.get_setting("vlsi.inputs.power_spec_type")
+        power_spec_type = self.get_setting("vlsi.inputs.power_spec_type")  # type: str
+        power_spec_arg = ""  # type: str
         if power_spec_type == "cpf":
-            pass # Has the same argument name
+            power_spec_arg = "cpf"
         elif power_spec_type == "upf":
-            power_spec_type = "1801"
+            power_spec_arg = "1801"
         else:
             self.logger.error("Invalid power specification type '{tpe}' only 'cpf' or 'upf' supported".format(tpe=power_spec_type))
             return []
-        power_spec_path = self.get_setting("vlsi.inputs.power_spec_path") # type: str
-        return ["read_power_intent -{tpe} {path}".format(tpe=power_spec_type,path=power_spec_path),
+        power_spec_contents = self.get_setting("vlsi.inputs.power_spec_contents")  # type: str
+        power_spec_file = os.path.join(self.run_dir, "power_spec.{tpe}".format(tpe=power_spec_type))
+        with open(power_spec_file, "w") as f:
+            f.write(power_spec_contents)
+        return ["read_power_intent -{arg} {path}".format(arg=power_spec_arg,path=power_spec_file),
                 "commit_power_intent"]
 
 class SynopsysTool(HasSDCSupport, HammerTool):
