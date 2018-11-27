@@ -27,18 +27,21 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
         Test that filters whose extraction functions return extra (non-path)
         metadata.
         """
+
+        # pylint: disable=too-many-locals
+
         import hammer_config
 
         tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
         tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
 
         def add_named_library(in_dict: Dict[str, Any]) -> Dict[str, Any]:
-            r = deepdict(in_dict)
-            r["libraries"].append({
+            out_dict = deepdict(in_dict)
+            out_dict["libraries"].append({
                 "name": "abcdef",
                 "milkyway techfile": "test/abcdef.tf"
             })
-            return r
+            return out_dict
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, add_named_library)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
@@ -63,19 +66,20 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
             assert lib.milkyway_techfile is not None
             return lib.milkyway_techfile
 
-        filter = LibraryFilter.new("metatest", "Test filter that extracts metadata",
-                                   is_file=True, filter_func=filter_func,
-                                   paths_func=paths_func,
-                                   extraction_func=extraction_func,
-                                   sort_func=sort_func)
+        test_filter = LibraryFilter.new("metatest", "Test filter that extracts metadata",
+                                        is_file=True, filter_func=filter_func,
+                                        paths_func=paths_func,
+                                        extraction_func=extraction_func,
+                                        sort_func=sort_func)
 
         database = hammer_config.HammerDatabase()
         tech.set_database(database)
-        raw = tech.process_library_filter(pre_filts=[], filt=filter,
+        raw = tech.process_library_filter(pre_filts=[], filt=test_filter,
                                           must_exist=False,
                                           output_func=hammer_tech.HammerTechnologyUtils.to_plain_item)
 
-        outputs = list(map(lambda s: json.loads(s), raw))
+        # Disable false positive from pylint
+        outputs = list(map(lambda s: json.loads(s), raw))  # pylint: disable=unnecessary-lambda
         self.assertEqual(outputs,
                          [
                              {"path": tech.prepend_dir_path("test/abcdef.tf"), "name": "abcdef"},
@@ -142,6 +146,9 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
         self.assertEqual(lib.extra_prefixes, prefixes_orig)
 
     def test_prepend_dir_path(self) -> None:
+        """
+        Test that the technology library can prepend directories correctly.
+        """
         tech_json = {
             "name": "My Technology Library",
             "installs": [
@@ -189,7 +196,7 @@ libraries: []
         tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
 
         tech_yaml_filename = os.path.join(tech_dir, "dummy28.tech.yml")
-        with open(tech_yaml_filename, "w") as f:
+        with open(tech_yaml_filename, "w") as f:  # pylint: disable=invalid-name
             f.write(tech_yaml)
         tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
         self.assertFalse(tech_opt is None, "Unable to load technology")
@@ -207,9 +214,9 @@ libraries: []
         tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
 
         def add_gds_map(in_dict: Dict[str, Any]) -> Dict[str, Any]:
-            r = deepdict(in_dict)
-            r.update({"gds map file": "test/gds_map_file"})
-            return r
+            out_dict = deepdict(in_dict)
+            out_dict.update({"gds map file": "test/gds_map_file"})
+            return out_dict
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, add_gds_map)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
@@ -274,9 +281,9 @@ libraries: []
         tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
 
         def add_dont_use_list(in_dict: Dict[str, Any]) -> Dict[str, Any]:
-            r = deepdict(in_dict)
-            r.update({"dont use list": ["cell1", "cell2"]})
-            return r
+            out_dict = deepdict(in_dict)
+            out_dict.update({"dont use list": ["cell1", "cell2"]})
+            return out_dict
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, add_dont_use_list)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
