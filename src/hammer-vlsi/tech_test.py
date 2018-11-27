@@ -9,7 +9,7 @@ import json
 import os
 import shutil
 import unittest
-from test import HammerToolTestHelpers, DummyTool
+from test import HammerToolTestHelpers, DummyTool, HasGetTech
 from typing import Any, Dict, List
 
 import hammer_tech
@@ -17,7 +17,7 @@ from hammer_tech import LibraryFilter
 from hammer_utils import deepdict
 
 
-class HammerTechnologyTest(unittest.TestCase):
+class HammerTechnologyTest(HasGetTech, unittest.TestCase):
     """
     Tests for the Hammer technology library (hammer_tech).
     """
@@ -41,12 +41,7 @@ class HammerTechnologyTest(unittest.TestCase):
             return r
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, add_named_library)
-        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
-        if tech_opt is None:
-            self.assertTrue(False, "Unable to load technology")
-            return
-        else:
-            tech = tech_opt  # type: hammer_tech.HammerTechnology
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
         def filter_func(lib: hammer_tech.Library) -> bool:
@@ -113,12 +108,7 @@ class HammerTechnologyTest(unittest.TestCase):
             return out_dict
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, add_duplicates)
-        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
-        if tech_opt is None:
-            self.assertTrue(False, "Unable to load technology")
-            return
-        else:
-            tech = tech_opt  # type: hammer_tech.HammerTechnology
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
         database = hammer_config.HammerDatabase()
@@ -222,11 +212,7 @@ libraries: []
             return r
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, add_gds_map)
-        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
-        if tech_opt is None:
-            self.assertTrue(False, "Unable to load technology")
-        else:
-            tech = tech_opt  # type: hammer_tech.HammerTechnology
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
         tool = DummyTool()
@@ -263,11 +249,7 @@ libraries: []
 
         tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
         HammerToolTestHelpers.write_tech_json(tech_json_filename)
-        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
-        if tech_opt is None:
-            self.assertTrue(False, "Unable to load technology")
-        else:
-            tech = tech_opt
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
         tool.technology = tech
@@ -297,12 +279,7 @@ libraries: []
             return r
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, add_dont_use_list)
-        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
-        if tech_opt is None:
-            self.assertTrue(False, "Unable to load technology")
-            return
-        else:
-            tech = tech_opt  # type: hammer_tech.HammerTechnology
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
         tool = DummyTool()
@@ -341,11 +318,7 @@ libraries: []
 
         tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
         HammerToolTestHelpers.write_tech_json(tech_json_filename)
-        tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
-        if tech_opt is None:
-            self.assertTrue(False, "Unable to load technology")
-        else:
-            tech = tech_opt
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
         tool.technology = tech
