@@ -6,6 +6,7 @@ err=0
 trap 'err=1' ERR
 
 python3 ../hammer-vlsi/test.py
+python3 ../hammer-vlsi/tech_test.py
 python3 ../hammer-vlsi/cli_driver_test.py
 python3 ../hammer-vlsi/utils_test.py
 python3 ../hammer-vlsi/units_test.py
