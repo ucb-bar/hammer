@@ -1,0 +1,21 @@
+[FORMAT]
+max-line-length=120
+
+[REPORTS]
+
+# Output a text report
+output-format=text
+
+# Don't write reports to the filesystem by default
+files-output=no
+
+# Display a nice report/summary block at the end of runs
+reports=yes
+
+[MESSAGES CONTROL]
+
+# Disable no-else-return since it's sometimes clearer to use else
+# Also emulates a functional programming style
+# Disable len-as-condition since len(lst) == 0 is more clear on types
+# where as if <var> is confusing since it's not clear what <var> is.
+disable=no-else-return,len-as-condition
