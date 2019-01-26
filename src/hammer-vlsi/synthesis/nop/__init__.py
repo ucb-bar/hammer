@@ -21,4 +21,10 @@ class NopSynth(HammerSynthesisTool):
         self.output_files = []
         return True
 
+    def tool_config_prefix(self) -> str:
+        return ""
+
+    def version_number(self) -> int:
+        return 0
+
 tool = NopSynth
