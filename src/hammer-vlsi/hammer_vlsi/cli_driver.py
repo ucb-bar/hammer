@@ -444,6 +444,7 @@ class CLIDriver:
         verilogs = args['verilog']
         if isinstance(verilogs, List) and len(verilogs) > 0:
             config.update({'synthesis.inputs.input_files': list(verilogs)})
+            config.update({'par.inputs.input_files': list(verilogs)})
 
         # Top module.
         # (optional, since it can also be specified from JSON)
