@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
+# See LICENSE for license details.
+#
 #  cli_driver.py
-#  
-#  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
 #
 #  CLI driver class for the Hammer VLSI abstraction.
 

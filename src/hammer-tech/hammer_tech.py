@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
+# See LICENSE for license details.
+#
 #  Python interface to the hammer technology abstraction.
 #
-#  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 import json
 import os

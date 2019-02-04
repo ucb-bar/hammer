@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
+# See LICENSE for license details.
+#
 #  lef_utils.py
 #  Misc LEF utilities
 #  TODO: use a LEF library when this becomes complex enough.
 #
-#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 import re
 from typing import List, Optional, Tuple

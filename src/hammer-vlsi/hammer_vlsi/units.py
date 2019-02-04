@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
+# See LICENSE for license details.
+#
 #  units.py
 #  Unit classes/functions for hammer_vlsi.
 #
-#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 from abc import abstractmethod
 import sys

@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
+# See LICENSE for license details.
+#
 #  rectify-path
-#  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
 #
 #  Rectify recursively all the given keys which end in a given suffix (default
 #  "_path").

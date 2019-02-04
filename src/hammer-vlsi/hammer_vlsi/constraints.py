@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
+# See LICENSE for license details.
+#
 #  constraints.py
 #  Data structures for various types of Hammer IR constraints.
 #
-#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 # pylint: disable=bad-continuation
 

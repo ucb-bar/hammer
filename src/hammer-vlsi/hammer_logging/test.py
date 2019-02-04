@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
+# See LICENSE for license details.
+#
 #  Test helper code for Hammer logging.
 #  This is considered a part of Hammer internals.
 #
-#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 from typing import List
 

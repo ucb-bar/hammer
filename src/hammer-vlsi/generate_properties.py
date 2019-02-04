@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
+# See LICENSE for license details.
+#
 #  generate_properties.py
-#  
-#  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
+#
 #  Helper script to generate properties for hammer-vlsi tool classes.
 
 import argparse

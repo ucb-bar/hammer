@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
+# See LICENSE for license details.
+#
 #  driver.py
 #  HammerDriver and related code.
 #
-#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 from functools import reduce
 from typing import NamedTuple, List, Optional, Tuple, Dict, Set, Any

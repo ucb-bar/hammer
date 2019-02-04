@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
+# See LICENSE for license details.
+#
 #  Unit tests for the hammer_config module.
 #
-#  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 import os
 import tempfile

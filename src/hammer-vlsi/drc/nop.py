@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
+# See LICENSE for license details.
+#
 #  nop.py
 #  No-op DRC tool.
 #
-#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 from hammer_vlsi import HammerDRCTool, DummyHammerTool
 from typing import List, Dict

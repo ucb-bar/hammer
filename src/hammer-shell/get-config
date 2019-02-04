@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
+# See LICENSE for license details.
+#
 #  get-config
-#  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
 #
 #  Read a config from either the given JSON database (if present) or the HAMMER_DATABASE environment variable.
 

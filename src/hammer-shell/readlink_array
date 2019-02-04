@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
+# See LICENSE for license details.
+#
 # Older versions of readlink, like readlink 8.4, don't support multiple
 # arguments to readlink.
 # This script is meant to emulate that behaviour on those systems.
 # Usage:
 # readlink_array foo bar baz == readlink -f foo bar baz
-#
-#  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
 #
 
 from __future__ import print_function

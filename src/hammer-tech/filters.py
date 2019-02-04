@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-#  A collection of pre-implemented LibraryFilters.
+# See LICENSE for license details.
 #
-#  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
+#  A collection of pre-implemented LibraryFilters.
 
 import os
 import warnings

@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
+# See LICENSE for license details.
+#
 #  hooks.py
 #  Classes and functions related to Hammer hooks.
 #
-#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 from enum import Enum
 from typing import Callable, NamedTuple, Optional, TYPE_CHECKING

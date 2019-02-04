@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+# See LICENSE for license details.
 # Build all contribs automatically.
 # TODO: find some way to do this automatically
 

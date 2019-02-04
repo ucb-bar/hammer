@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
+# See LICENSE for license details.
+#
 #  verilog_utils.py
 #  Misc Verilog utilities (*shudders*)
 #
-#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 import re
 

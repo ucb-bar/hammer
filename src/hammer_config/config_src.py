@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
+# See LICENSE for license details.
 #
 #  Build the configuration database from a series of JSON config files.
 #  Dumps the output in JSON format to standard output.

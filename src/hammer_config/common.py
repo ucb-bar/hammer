@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+# See LICENSE for license details.
 
 class HammerConfigError(Exception):
     pass

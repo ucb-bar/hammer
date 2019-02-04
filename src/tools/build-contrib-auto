@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+# See LICENSE for license details.
 # Build a certain prebuilt binary contrib automatically by reading
 # metadata from Makefile.tools
 # Respects PLSI_MAKEFLAGS and PLSI_MAKEFILES (see makeplsi for documentation).

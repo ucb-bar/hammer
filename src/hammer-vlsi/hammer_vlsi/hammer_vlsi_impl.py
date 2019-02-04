@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
+# See LICENSE for license details.
+#
 #  hammer_vlsi_impl.py
 #  hammer-vlsi implementation file. Users should import hammer_vlsi instead.
 #
-#  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 from abc import abstractmethod
 from enum import Enum

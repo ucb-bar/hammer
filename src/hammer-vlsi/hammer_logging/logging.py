@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
+# See LICENSE for license details.
+#
 #  Hammer logging code.
 #
-#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
 
 from functools import reduce
 from enum import Enum
