@@ -575,6 +575,26 @@ class HammerDriver:
         return run_succeeded, output_config
 
     @staticmethod
+    def par_output_to_syn_input(output_dict: dict) -> Optional[dict]:
+        """
+        Generate the appropriate inputs for running the next level of synthesis from the
+        outputs of par run in a hierarchical flow.
+        Does not merge the results with any project dictionaries.
+        :param output_dict: Dict containing par.outputs.*
+        :return: vlsi.inputs.* settings generated from output_dict,
+                 or None if output_dict was invalid
+        """
+        try:
+            result = {
+                "vlsi.inputs.ilms": output_dict["par.outputs.output_ilms"],
+                "vlsi.builtins.is_complete": False
+            }  # type: Dict[str, Any]
+            return result
+        except KeyError:
+            # KeyError means that the given dictionary is missing output keys.
+            return None
+
+    @staticmethod
     def par_output_to_drc_input(output_dict: dict) -> Optional[dict]:
         """
         Generate the appropriate inputs for running DRC from the
