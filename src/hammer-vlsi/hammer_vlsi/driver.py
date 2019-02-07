@@ -709,6 +709,7 @@ class HammerDriver:
         hier_source = str(self.database.get_setting(hier_source_key))
         hier_modules = {}  # type: Dict[str, List[str]]
         hier_placement_constraints = {}  # type: Dict[str, List[PlacementConstraint]]
+        hier_constraints = {}  # type: Dict[str, List[Dict]]
         if hier_source == "none":
             pass
         elif hier_source == "manual":
@@ -722,6 +723,9 @@ class HammerDriver:
             combined_raw_placement_dict = reduce(add_dicts, list_of_placement_constraints)
             hier_placement_constraints = {key: list(map(PlacementConstraint.from_dict, lst))
                                           for key, lst in combined_raw_placement_dict.items()}
+            list_of_hier_constraints = self.database.get_setting(
+                    "vlsi.inputs.hierarchical.constraints") # type: List[Dict]
+            hier_constraints = reduce(add_dicts, list_of_hier_constraints)
         elif hier_source == "from_placement":
             raise NotImplementedError("Generation from placement not implemented yet")
         else:
@@ -777,10 +781,12 @@ class HammerDriver:
             else:
                 assert "Should not get here"
 
-            output.append((module, {
+            constraint_dict = {
                 "vlsi.inputs.hierarchical.mode": str(mode),
                 "synthesis.inputs.top_module": module,
                 "vlsi.inputs.placement_constraints": list(map(PlacementConstraint.to_dict, hier_placement_constraints[module]))
-            }))
+            }
+            constraint_dict = reduce(add_dicts, hier_constraints.get(module,[]), constraint_dict)
+            output.append((module, constraint_dict))
 
         return output
