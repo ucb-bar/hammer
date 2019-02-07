@@ -24,4 +24,4 @@ The [documentation for hammer-vlsi](src/hammer-vlsi/README.md) has system requir
 History
 =======
 
-The Hammer project builds upon the legacy of the [PLSI project by Palmer Dabbelt](https://www2.eecs.berkeley.edu/Pubs/TechRpts/2017/EECS-2017-77.html). PLSI was a previous project which aimed to build a portable VLSI flow, and the Hammer project is grateful for the feedback and lessons learned which provided valuable insight which ultimately led to the design and software architecture of Hammer as it is now.
+The Hammer project builds upon the legacy of the [PLSI project by Palmer Dabbelt](https://www2.eecs.berkeley.edu/Pubs/TechRpts/2017/EECS-2017-77.html), a previous project which aimed to build a portable VLSI flow. The Hammer project is grateful for the feedback and lessons learned which provided valuable insight that ultimately led to the design and software architecture of Hammer as it is now.
