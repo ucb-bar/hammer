@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-#  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
-#
 #  Build the configuration database from a series of JSON config files.
 #  Dumps the output in JSON format to standard output.
 #  See README.config for more details.
+#
+#  See LICENSE for licence details.
 
 # pylint: disable=invalid-name
 

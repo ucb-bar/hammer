@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 #
 #  generate_properties.py
-#  
-#  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
+#
 #  Helper script to generate properties for hammer-vlsi tool classes.
+#
+#  See LICENSE for licence details.
 
 import argparse
 import os

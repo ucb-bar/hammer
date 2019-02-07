@@ -4,7 +4,7 @@
 #  nop.py
 #  No-op place and route tool.
 #
-#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
+#  See LICENSE for licence details.
 
 from hammer_vlsi import HammerPlaceAndRouteTool, DummyHammerTool
 

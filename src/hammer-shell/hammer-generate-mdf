@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-# Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
+# -*- coding: utf-8 -*-
+#
+#  hammer-generate-mdf
+#  Helper script to generate an MDF description of a memory from a
+#  ReplSeqMem config file.
+#
+#  See LICENSE for licence details.
 
 import argparse
 from collections import namedtuple

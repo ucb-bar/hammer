@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
+#  filters.py
 #  A collection of pre-implemented LibraryFilters.
 #
-#  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
+#  See LICENSE for licence details.
 
 import os
 import warnings

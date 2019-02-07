@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+#  Common code shared between all Vivado plugins.
+#
+#  See LICENSE for licence details.
+
 from typing import Dict, List, Optional
 
 import os

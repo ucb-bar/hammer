@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-#  Mock hammer-vlsi synthesis plugin to help test Hammer infrastructure without
-#  proprietary/NDAed tools.
+#  Mock hammer-vlsi synthesis plugin to help test Hammer infrastructure
+#  without proprietary/NDAed tools.
 #  NOT FOR EXTERNAL/PUBLIC USE.
 #
-#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
+#  See LICENSE for licence details.
 
 from hammer_vlsi import HammerSynthesisTool, DummyHammerTool, HammerToolStep, deepdict
 

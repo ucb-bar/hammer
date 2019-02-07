@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-#  Tests for hammer-vlsi
+#  Verilog-related tests for hammer-vlsi.
 #
-#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
+#  See LICENSE for licence details.
 
 from typing import Iterable, Tuple, Any
 
