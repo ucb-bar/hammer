@@ -3,7 +3,7 @@
 #
 #  Tests for LEF utils.
 #
-#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
+#  See LICENSE for licence details.
 
 from hammer_utils import LEFUtils
 

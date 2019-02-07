@@ -2,10 +2,9 @@
 # -*- coding: utf-8 -*-
 #
 #  cli_driver.py
-#  
-#  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
-#
 #  CLI driver class for the Hammer VLSI abstraction.
+#
+#  See LICENSE for licence details.
 
 import argparse
 import json

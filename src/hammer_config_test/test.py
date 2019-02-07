@@ -3,7 +3,7 @@
 #
 #  Unit tests for the hammer_config module.
 #
-#  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
+#  See LICENSE for licence details.
 
 import os
 import tempfile

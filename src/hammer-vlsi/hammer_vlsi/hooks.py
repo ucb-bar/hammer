@@ -4,7 +4,7 @@
 #  hooks.py
 #  Classes and functions related to Hammer hooks.
 #
-#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
+#  See LICENSE for licence details.
 
 from enum import Enum
 from typing import Callable, NamedTuple, Optional, TYPE_CHECKING

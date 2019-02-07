@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 #
 #  get-config
-#  Copyright 2017 Edward Wang <edward.c.wang@compdigitec.com>
 #
 #  Read a config from either the given JSON database (if present) or the HAMMER_DATABASE environment variable.
+#
+#  See LICENSE for licence details.
 
 # pylint: disable=invalid-name
 

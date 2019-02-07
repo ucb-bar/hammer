@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+#  mockdrc.py
+#  Mock DRC tool for testing.
+#
+#  See LICENSE for licence details.
+
 from hammer_vlsi import HammerDRCTool, DummyHammerTool
 from typing import List, Dict
 

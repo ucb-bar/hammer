@@ -4,7 +4,7 @@
 #  hammer_vlsi_impl.py
 #  hammer-vlsi implementation file. Users should import hammer_vlsi instead.
 #
-#  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
+#  See LICENSE for licence details.
 
 from abc import abstractmethod
 from enum import Enum

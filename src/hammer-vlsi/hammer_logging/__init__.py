@@ -3,7 +3,7 @@
 #
 #  Hammer logging code.
 #
-#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
+#  See LICENSE for licence details.
 
 __all__ = ['HammerVLSIFileLogger', 'HammerVLSILogging', 'HammerVLSILoggingContext', 'Level']
 

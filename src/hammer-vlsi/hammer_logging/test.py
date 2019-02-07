@@ -4,7 +4,7 @@
 #  Test helper code for Hammer logging.
 #  This is considered a part of Hammer internals.
 #
-#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
+#  See LICENSE for licence details.
 
 from typing import List
 
