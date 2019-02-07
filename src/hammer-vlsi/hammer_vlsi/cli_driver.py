@@ -675,7 +675,28 @@ class CLIDriver:
 
         # Hierarchical support.
         # Generate synthesis and par actions for each module above.
-        hierarchical_settings = driver.get_hierarchical_settings()
+        hierarchical_settings, dependency_graph = driver.get_hierarchical_settings()
+
+        # Create Makefile for brittle but simple re-run
+        with open(os.path.join(obj_dir, "Makefile"), "w") as f:
+            # TODO: systematically pass all options that were originally passed (at least obj_dir)
+            for mod, deps in dependency_graph.items():
+                target_deps = " ".join(list(map(lambda x: "syn-par-{m}".format(m=x), deps[1])))
+                cmd = os.path.abspath(sys.argv[0])
+                o_dir = os.path.abspath(obj_dir)
+                if(len(deps[1]) != 0):
+                  f.write("syn-par-{m}: {o}/syn-input-{m}.json\n".format(m=mod,d=target_deps,o=o_dir))
+                else:
+                  f.write("syn-par-{m}:\n".format(m=mod,d=target_deps,o=o_dir))
+                f.write("\t{h} -e {e} -p {p} --obj_dir {o} syn-par-{m}\n".format(h=cmd, e=" -e ".join(list(map(os.path.abspath,env_configs))),
+                    p=" -p ".join(list(map(os.path.abspath, project_configs))) if len(deps[1]) == 0 else "syn-input-{m}.json".format(m=mod), m=mod,
+                    o=o_dir))
+                if(len(deps[1]) != 0):
+                    f.write("{o}/syn-input-{m}.json: {d}\n".format(m=mod, d=target_deps, o=o_dir))
+                    f.write("\t{h} -e {e} -p {p} --obj_dir {o} -o {o}/syn-input-{m}.json hier-syn-to-par\n".format(h=cmd, e=" -e ".join(list(map(os.path.abspath, env_configs))),
+                        p=" -p ".join(list(map(lambda x: "par-{m}/par-output.json".format(m=x), deps[1]))), m=mod,
+                        o=o_dir))
+
 
         for module_iter, config_iter in hierarchical_settings:
             def create_actions(module: str, config: dict) -> None:

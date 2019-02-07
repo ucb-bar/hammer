@@ -707,7 +707,7 @@ class HammerDriver:
 
         return run_succeeded, output_config
 
-    def get_hierarchical_settings(self) -> List[Tuple[str, dict]]:
+    def get_hierarchical_settings(self) -> Tuple[List[Tuple[str, dict]], Dict[str, Tuple[List[str], List[str]]]]:
         """
         Read settings from the database, determine leaf/hierarchical modules, an order of execution, and return an
         ordered list (from leaf to top) of modules and associated config snippets needed to run syn+par for that module
@@ -804,4 +804,4 @@ class HammerDriver:
             constraint_dict = reduce(add_dicts, hier_constraints.get(module, []), constraint_dict)
             output.append((module, constraint_dict))
 
-        return output
+        return output, dependency_graph
