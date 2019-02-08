@@ -3,7 +3,7 @@
 #
 #  Tests for unit classes.
 #
-#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
+#  See LICENSE for licence details.
 
 import unittest
 

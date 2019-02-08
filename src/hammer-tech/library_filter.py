@@ -1,9 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
+#  library_filter.py
 #  hammer-tech library filter.
 #
-#  Copyright 2017-2018 Edward Wang <edward.c.wang@compdigitec.com>
+#  See LICENSE for licence details.
 
 from numbers import Number
 from typing import TYPE_CHECKING, Any, Callable, List, NamedTuple, Optional, Tuple, Union

@@ -4,7 +4,7 @@
 #  nop.py
 #  No-op LVS tool.
 #
-#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
+#  See LICENSE for licence details.
 
 from hammer_vlsi import HammerLVSTool, DummyHammerTool
 from typing import List, Dict

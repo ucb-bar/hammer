@@ -4,7 +4,7 @@
 #  verilog_utils.py
 #  Misc Verilog utilities (*shudders*)
 #
-#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
+#  See LICENSE for licence details.
 
 import re
 

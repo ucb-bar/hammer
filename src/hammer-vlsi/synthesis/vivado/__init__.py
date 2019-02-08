@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+#  Vivado synthesis plugin for Hammer.
+#
+#  See LICENSE for licence details.
+
 from typing import List, Optional
 
 import os

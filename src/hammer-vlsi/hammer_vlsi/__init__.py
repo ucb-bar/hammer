@@ -4,7 +4,7 @@
 #  hammer_vlsi.py
 #  Main entry point to the hammer_vlsi library.
 #
-#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
+#  See LICENSE for licence details.
 
 # Just import everything that the public hammer_vlsi module should see.
 

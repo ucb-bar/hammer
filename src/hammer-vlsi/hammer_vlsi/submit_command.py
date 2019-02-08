@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# submit_command.py
-# Hammer job submit command APIs.
+#  submit_command.py
+#  Hammer job submit command APIs.
+#
+#  See LICENSE for licence details.
 
 # pylint: disable=bad-continuation
 

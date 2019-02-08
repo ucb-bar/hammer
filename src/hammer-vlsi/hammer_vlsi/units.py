@@ -4,7 +4,7 @@
 #  units.py
 #  Unit classes/functions for hammer_vlsi.
 #
-#  Copyright 2018 Edward Wang <edward.c.wang@compdigitec.com>
+#  See LICENSE for licence details.
 
 from abc import abstractmethod
 import sys
