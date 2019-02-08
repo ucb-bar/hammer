@@ -123,6 +123,11 @@ vlsi.inputs:
     # Should be a list along the lines of [{"module1": <list of PlacementConstraint structs>}].
     manual_placement_constraints: []
 
+    # Manual hierarchical constraints. Overrides generic constraints on a per module basis.
+    # Should be a list along the lines of [{"module1": <list of other hammer constraints>}].
+    # For example [{"mod1": [vlsi.inputs.default_output_load: 2], "mod2": [vlsi.inputs.clocks:<clock constraints>] }].
+    constraints: []
+
   # ILMs for hierarchical mode.
   # ILM struct (ILMStruct) members:
   # dir (str) - directory to the ILMs (...ILMDir)
