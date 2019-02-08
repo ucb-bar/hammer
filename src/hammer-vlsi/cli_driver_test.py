@@ -337,20 +337,24 @@ class CLIDriverTest(unittest.TestCase):
         # Generate a config for testing.
         top_module = "dummy"
         config_path = os.path.join(syn_rundir, "run_config.json")
+
         def add_hier(d: Dict[str, Any]) -> Dict[str, Any]:
             output = deepdict(d)
-            dummyPlacement = PlacementConstraint.from_dict({"path":"dummy","type":"dummy","x":"0","y":"0","width":"0","height":"0"}).to_dict()
+            dummyPlacement = PlacementConstraint.from_dict(
+                {"path": "dummy", "type": "dummy", "x": "0", "y": "0", "width": "0", "height": "0"}).to_dict()
             output["vlsi.inputs.default_output_load"] = 1
             output["vlsi.inputs.hierarchical.top_module"] = top_module
             output["vlsi.inputs.hierarchical.flat"] = "hierarchical"
             output["vlsi.inputs.hierarchical.config_source"] = "manual"
-            output["vlsi.inputs.hierarchical.manual_modules"] = [{"mod1": ["m1s1", "m1s2"], "mod2": ["m2s1"], top_module: ["mod1", "mod2"]}]
+            output["vlsi.inputs.hierarchical.manual_modules"] = [
+                {"mod1": ["m1s1", "m1s2"], "mod2": ["m2s1"], top_module: ["mod1", "mod2"]}]
             output["vlsi.inputs.hierarchical.manual_placement_constraints"] = [{"mod1": [dummyPlacement]}, {"mod2": [dummyPlacement]}, {"m1s1": [dummyPlacement]},
-                    {"m1s2": [dummyPlacement]}, {"m2s1": [dummyPlacement]}, {top_module: [dummyPlacement]}]
+                                                                               {"m1s2": [dummyPlacement]}, {"m2s1": [dummyPlacement]}, {top_module: [dummyPlacement]}]
             output["vlsi.inputs.hierarchical.constraints"] = [{"mod1": [{"vlsi.inputs.default_output_load": 2}]},
-                    {"m2s1": [{"vlsi.inputs.default_output_load": 3}]}]
+                                                              {"m2s1": [{"vlsi.inputs.default_output_load": 3}]}]
             return output
-        self.generate_dummy_config(syn_rundir, config_path, top_module, postprocessing_func=add_hier)
+        self.generate_dummy_config(
+            syn_rundir, config_path, top_module, postprocessing_func=add_hier)
 
         # Check that running the CLIDriver executes successfully (code 0).
         with self.assertRaises(SystemExit) as cm:  # type: ignore
