@@ -408,17 +408,6 @@ class CLIDriverTest(unittest.TestCase):
 
         def add_hier(d: Dict[str, Any]) -> Dict[str, Any]:
             output = deepdict(d)
-            dummy_placement = PlacementConstraint(
-                path="dummy",
-                type=PlacementConstraintType.Dummy,
-                x=0.0,
-                y=0.0,
-                width=10.0,
-                height=10.0,
-                orientation=None,
-                margins=None,
-                layers=None,
-                obs_types=None).to_dict()
             output["vlsi.inputs.default_output_load"] = 1
             output["vlsi.inputs.hierarchical.top_module"] = top_module
             output["vlsi.inputs.hierarchical.flat"] = "hierarchical"
