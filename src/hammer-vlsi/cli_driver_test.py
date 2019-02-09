@@ -394,6 +394,56 @@ class CLIDriverTest(unittest.TestCase):
         # Cleanup
         shutil.rmtree(syn_rundir)
 
+    def test_hier_dump_empty_constraints(self) -> None:
+        """
+        Test that hierarchical settings work properly even when no constraints
+        are given.
+        """
+        # Set up some temporary folders for the unit test.
+        syn_rundir = tempfile.mkdtemp()
+
+        # Generate a config for testing.
+        top_module = "dummy"
+        config_path = os.path.join(syn_rundir, "run_config.json")
+
+        def add_hier(d: Dict[str, Any]) -> Dict[str, Any]:
+            output = deepdict(d)
+            dummy_placement = PlacementConstraint(
+                path="dummy",
+                type=PlacementConstraintType.Dummy,
+                x=0.0,
+                y=0.0,
+                width=10.0,
+                height=10.0,
+                orientation=None,
+                margins=None,
+                layers=None,
+                obs_types=None).to_dict()
+            output["vlsi.inputs.default_output_load"] = 1
+            output["vlsi.inputs.hierarchical.top_module"] = top_module
+            output["vlsi.inputs.hierarchical.flat"] = "hierarchical"
+            output["vlsi.inputs.hierarchical.config_source"] = "manual"
+            output["vlsi.inputs.hierarchical.manual_modules"] = [
+                {"mod1": ["m1s1", "m1s2"], "mod2": ["m2s1"], top_module: ["mod1", "mod2"]}]
+            output["vlsi.inputs.hierarchical.manual_placement_constraints"] = []
+            output["vlsi.inputs.hierarchical.constraints"] = []
+            return output
+
+        self.generate_dummy_config(
+            syn_rundir, config_path, top_module, postprocessing_func=add_hier)
+
+        # Check that running the CLIDriver executes successfully (code 0).
+        with self.assertRaises(SystemExit) as cm:  # type: ignore
+            CLIDriver().main(args=[
+                "auto",  # action
+                "-p", config_path,
+                "--obj_dir", syn_rundir
+            ])
+        self.assertEqual(cm.exception.code, 0)
+
+        # Cleanup
+        shutil.rmtree(syn_rundir)
+
     def test_dump_macrosizes(self) -> None:
         """
         Test that dump-macrosizes works properly.
