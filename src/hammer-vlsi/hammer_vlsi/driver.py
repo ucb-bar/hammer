@@ -722,7 +722,7 @@ class HammerDriver:
                 "vlsi.inputs.hierarchical.manual_placement_constraints")  # type: List[Dict]
             assert isinstance(list_of_placement_constraints, list)
             hier_modules = reduce(add_dicts, list_of_hier_modules)
-            combined_raw_placement_dict = reduce(add_dicts, list_of_placement_constraints, {})
+            combined_raw_placement_dict = reduce(add_dicts, list_of_placement_constraints, {})  # type: Dict[str, dict]
             hier_placement_constraints = {key: list(map(PlacementConstraint.from_dict, lst))
                                           for key, lst in combined_raw_placement_dict.items()}
             list_of_hier_constraints = self.database.get_setting(
