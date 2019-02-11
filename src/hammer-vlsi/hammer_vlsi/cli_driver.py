@@ -485,6 +485,24 @@ class CLIDriver:
         """
         return dict()
 
+    def get_extra_hierarchical_drc_hooks(self) -> Dict[str, List[HammerToolHookAction]]:
+        """
+        Return a list of extra hierarchical DRC hooks in this project.
+        To be overridden by subclasses.
+
+        :return: Dictionary of (module name, list of hooks)
+        """
+        return dict()
+
+    def get_extra_hierarchical_lvs_hooks(self) -> Dict[str, List[HammerToolHookAction]]:
+        """
+        Return a list of extra hierarchical LVS hooks in this project.
+        To be overridden by subclasses.
+
+        :return: Dictionary of (module name, list of hooks)
+        """
+        return dict()
+
     # The following functions are present for further user customizability.
 
     def get_hierarchical_synthesis_action(self, module: str) -> CLIActionConfigType:
@@ -671,6 +689,20 @@ class CLIDriver:
                     base_project_config[0] = deeplist(driver.project_configs)
                     d.update_project_configs(deeplist(base_project_config[0]) + [config])
 
+                def drc_pre_func(d: HammerDriver) -> None:
+                    self.drc_rundir = os.path.join(d.obj_dir, "drc-{module}".format(
+                        module=module))  # TODO(edwardw): fix this ugly os.path.join; it doesn't belong here.
+                    # TODO(edwardw): remove ugly hack to store stuff in parent context
+                    base_project_config[0] = deeplist(driver.project_configs)
+                    d.update_project_configs(deeplist(base_project_config[0]) + [config])
+
+                def lvs_pre_func(d: HammerDriver) -> None:
+                    self.lvs_rundir = os.path.join(d.obj_dir, "lvs-{module}".format(
+                        module=module))  # TODO(edwardw): fix this ugly os.path.join; it doesn't belong here.
+                    # TODO(edwardw): remove ugly hack to store stuff in parent context
+                    base_project_config[0] = deeplist(driver.project_configs)
+                    d.update_project_configs(deeplist(base_project_config[0]) + [config])
+
                 def post_run(d: HammerDriver, rundir: str) -> None:
                     # Write out the configs used/generated for logging/debugging.
                     with open(os.path.join(rundir, "full_config.json"), "w") as f:
@@ -688,6 +720,12 @@ class CLIDriver:
                 def par_post_run(d: HammerDriver) -> None:
                     post_run(d, get_or_else(self.par_rundir, ""))
 
+                def drc_post_run(d: HammerDriver) -> None:
+                    post_run(d, get_or_else(self.drc_rundir, ""))
+
+                def lvs_post_run(d: HammerDriver) -> None:
+                    post_run(d, get_or_else(self.lvs_rundir, ""))
+
                 syn_action = self.create_synthesis_action(self.get_extra_hierarchical_synthesis_hooks().get(module, []),
                                                           pre_action_func=syn_pre_func, post_load_func=None,
                                                           post_run_func=syn_post_run)
@@ -698,6 +736,14 @@ class CLIDriver:
                 self.set_hierarchical_par_action(module, par_action)
                 syn_par_action = self.create_synthesis_par_action(synthesis_action=syn_action, par_action=par_action)
                 self.set_hierarchical_synthesis_par_action(module, syn_par_action)
+                drc_action = self.create_drc_action(self.get_extra_hierarchical_drc_hooks().get(module, []),
+                                                    pre_action_func=drc_pre_func, post_load_func=None,
+                                                    post_run_func=drc_post_run)
+                self.set_hierarchical_drc_action(module, drc_action)
+                lvs_action = self.create_lvs_action(self.get_extra_hierarchical_lvs_hooks().get(module, []),
+                                                    pre_action_func=lvs_pre_func, post_load_func=None,
+                                                    post_run_func=lvs_post_run)
+                self.set_hierarchical_lvs_action(module, lvs_action)
 
             create_actions(module_iter, config_iter)
 
