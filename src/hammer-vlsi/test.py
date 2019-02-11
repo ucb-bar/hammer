@@ -862,6 +862,7 @@ class HammerSubmitCommandTestContext:
                 "synthesis.submit.settings": [{"lsf": {
                     "queue": "myqueue",
                     "num_cpus": 4,
+                    "log_file": "test_log.log",
                     "bsub_binary": os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "test",
                                                 "mock_bsub.sh"),
                     "extra_args": ("-R", "myresources")
@@ -925,17 +926,18 @@ class HammerSubmitCommandTest(unittest.TestCase):
             self.assertEqual(output[0], "BLOCKING is: 1")
             self.assertEqual(output[1], "QUEUE is: %s" % get_or_else(cmd.settings.queue, ""))
             self.assertEqual(output[2], "NUMCPU is: %d" % get_or_else(cmd.settings.num_cpus, 0))
+            self.assertEqual(output[3], "OUTPUT is: %s" % get_or_else(cmd.settings.log_file, ""))
 
             extra = cmd.settings.extra_args
             has_resource = 0
             if "-R" in extra:
                 has_resource = 1
-                self.assertEqual(output[3], "RESOURCE is: %s" % extra[extra.index("-R") + 1])
+                self.assertEqual(output[4], "RESOURCE is: %s" % extra[extra.index("-R") + 1])
             else:
                 raise NotImplementedError("You forgot to test the extra_args!")
 
-            self.assertEqual(output[3 + has_resource], "COMMAND is: %s" % ' '.join(c.echo_command))
-            self.assertEqual(output[4 + has_resource], ' '.join(c.echo_command_args))
+            self.assertEqual(output[4 + has_resource], "COMMAND is: %s" % ' '.join(c.echo_command))
+            self.assertEqual(output[5 + has_resource], ' '.join(c.echo_command_args))
 
 
 class HammerSignoffToolTestContext:
