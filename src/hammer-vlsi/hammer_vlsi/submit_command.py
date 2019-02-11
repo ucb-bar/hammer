@@ -10,6 +10,7 @@
 
 import atexit
 import subprocess
+import datetime
 from abc import abstractmethod
 from functools import reduce
 from typing import Any, Dict, List, NamedTuple, Optional
@@ -203,6 +204,7 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
 
     def bsub_args(self) -> List[str]:
         args = [self.settings.bsub_binary, "-K"]  # always use -K to block
+        args.extend(["-o", datetime.datetime.now().strftime("hammer-vlsi-bsub-%Y%m%d-%H%M%S.log")])  # always use -o to output to a file
         if self.settings.queue is not None:
             args.extend(["-q", self.settings.queue])
         if self.settings.num_cpus is not None:
