@@ -21,6 +21,11 @@ case $key in
     shift
     shift
     ;;
+    -o)
+    OUTPUT="$2"
+    shift
+    shift
+    ;;
     -K)
     BLOCKING=1
     shift
@@ -35,6 +40,7 @@ done
 if [ ! -z "$BLOCKING" ]; then echo "BLOCKING is: $BLOCKING"; fi
 if [ ! -z "$QUEUE" ]; then echo "QUEUE is: $QUEUE"; fi
 if [ ! -z "$NUMCPU" ]; then echo "NUMCPU is: $NUMCPU"; fi
+if [ ! -z "$OUTPUT" ]; then echo "OUTPUT is: $OUTPUT"; fi
 if [ ! -z "$RESOURCE" ]; then echo "RESOURCE is: $RESOURCE"; fi
 echo "COMMAND is: ${POSITIONAL[@]}"
 exec ${POSITIONAL[@]}

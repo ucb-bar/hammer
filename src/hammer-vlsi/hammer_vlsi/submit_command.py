@@ -10,6 +10,7 @@
 
 import atexit
 import subprocess
+import datetime
 from abc import abstractmethod
 from functools import reduce
 from typing import Any, Dict, List, NamedTuple, Optional
@@ -150,6 +151,7 @@ class HammerLSFSettings(NamedTuple('HammerLSFSettings', [
     ('bsub_binary', str),
     ('num_cpus', Optional[int]),
     ('queue', Optional[str]),
+    ('log_file', Optional[str]),
     ('extra_args', List[str])
 ])):
     __slots__ = ()
@@ -170,11 +172,16 @@ class HammerLSFSettings(NamedTuple('HammerLSFSettings', [
             queue = settings["queue"]
         except KeyError:
             queue = None
+        try:
+            log_file = settings["log_file"]
+        except KeyError:
+            log_file = None
 
         return HammerLSFSettings(
             bsub_binary=bsub_binary,
             num_cpus=num_cpus,
             queue=queue,
+            log_file=log_file,
             extra_args=get_or_else(settings["extra_args"], [])
         )
 
@@ -203,6 +210,8 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
 
     def bsub_args(self) -> List[str]:
         args = [self.settings.bsub_binary, "-K"]  # always use -K to block
+        args.extend(["-o", self.settings.log_file if self.settings.log_file is not None else
+            datetime.datetime.now().strftime("hammer-vlsi-bsub-%Y%m%d-%H%M%S.log")])  # always use -o to log to a file
         if self.settings.queue is not None:
             args.extend(["-q", self.settings.queue])
         if self.settings.num_cpus is not None:

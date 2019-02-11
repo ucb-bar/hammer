@@ -716,16 +716,18 @@ class HammerDriver:
             list_of_hier_modules = self.database.get_setting(
                 "vlsi.inputs.hierarchical.manual_modules")  # type: List[Dict]
             assert isinstance(list_of_hier_modules, list)
+            if len(list_of_hier_modules) == 0:
+                raise ValueError("No hierarchical modules defined manually in manual hierarchical mode")
             list_of_placement_constraints = self.database.get_setting(
                 "vlsi.inputs.hierarchical.manual_placement_constraints")  # type: List[Dict]
             assert isinstance(list_of_placement_constraints, list)
             hier_modules = reduce(add_dicts, list_of_hier_modules)
-            combined_raw_placement_dict = reduce(add_dicts, list_of_placement_constraints)
+            combined_raw_placement_dict = reduce(add_dicts, list_of_placement_constraints, {})  # type: Dict[str, dict]
             hier_placement_constraints = {key: list(map(PlacementConstraint.from_dict, lst))
                                           for key, lst in combined_raw_placement_dict.items()}
             list_of_hier_constraints = self.database.get_setting(
                     "vlsi.inputs.hierarchical.constraints") # type: List[Dict]
-            hier_constraints = reduce(add_dicts, list_of_hier_constraints)
+            hier_constraints = reduce(add_dicts, list_of_hier_constraints, {})
         elif hier_source == "from_placement":
             raise NotImplementedError("Generation from placement not implemented yet")
         else:
@@ -738,6 +740,8 @@ class HammerDriver:
         leaf_modules = set()  # type: Set[str]
         intermediate_modules = set()  # type: Set[str]
         top_module = str(self.database.get_setting("vlsi.inputs.hierarchical.top_module"))
+        if top_module == "" or top_module == "null":
+            raise ValueError("Cannot have a hierarchical flow if the top module is not set")
 
         # Node + outgoing edges (nodes that depend on us) + incoming edges (nodes we depend on)
         dependency_graph = {}  # type: Dict[str, Tuple[List[str], List[str]]]
@@ -784,9 +788,10 @@ class HammerDriver:
             constraint_dict = {
                 "vlsi.inputs.hierarchical.mode": str(mode),
                 "synthesis.inputs.top_module": module,
-                "vlsi.inputs.placement_constraints": list(map(PlacementConstraint.to_dict, hier_placement_constraints[module]))
+                "vlsi.inputs.placement_constraints": list(
+                    map(PlacementConstraint.to_dict, hier_placement_constraints.get(module, [])))
             }
-            constraint_dict = reduce(add_dicts, hier_constraints.get(module,[]), constraint_dict)
+            constraint_dict = reduce(add_dicts, hier_constraints.get(module, []), constraint_dict)
             output.append((module, constraint_dict))
 
         return output
