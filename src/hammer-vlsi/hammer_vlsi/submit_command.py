@@ -211,7 +211,7 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
     def bsub_args(self) -> List[str]:
         args = [self.settings.bsub_binary, "-K"]  # always use -K to block
         args.extend(["-o", self.settings.log_file if self.settings.log_file is not None else
-                           datetime.datetime.now().strftime("hammer-vlsi-bsub-%Y%m%d-%H%M%S.log")])  # always use -o to output to a file
+            datetime.datetime.now().strftime("hammer-vlsi-bsub-%Y%m%d-%H%M%S.log")])  # always use -o to log to a file
         if self.settings.queue is not None:
             args.extend(["-q", self.settings.queue])
         if self.settings.num_cpus is not None:
