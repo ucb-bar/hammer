@@ -127,6 +127,51 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
         # Cleanup
         shutil.rmtree(tech_dir_base)
 
+    def test_tarballs_not_extracted(self) -> None:
+        """
+        Test that tarballs that are not pre-extracted work fine.
+        """
+        import hammer_config
+
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+
+        # Add defaults to specify tarball_dir.
+        with open(os.path.join(tech_dir, "defaults.json"), "w") as f:
+            f.write(json.dumps({
+                "technology.dummy28.tarball_dir": tech_dir
+            }))
+
+        # Add tarball to .tech.json and use it.
+        def add_tarballs(in_dict: Dict[str, Any]) -> Dict[str, Any]:
+            out_dict = deepdict(in_dict)
+            del out_dict["installs"]
+            out_dict["tarballs"] = [{
+                "path": "foobar.tar.gz",
+                "homepage": "http://www.example.com/tarballs",
+                "base var": "technology.dummy28.tarball_dir"
+            }]
+            out_dict["libraries"] = [{
+                "name": "abcdef",
+                "gds file": "foobar.tar.gz/test.gds"
+            }]
+            return out_dict
+
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_tarballs)
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
+        tech.cache_dir = tech_dir
+
+        database = hammer_config.HammerDatabase()
+        tech.set_database(database)
+        outputs = tech.process_library_filter(pre_filts=[], filt=hammer_tech.filters.gds_filter,
+                                              must_exist=False,
+                                              output_func=lambda str, _: [str])
+
+        self.assertEqual(outputs, ["{0}/extracted/foobar.tar.gz/test.gds".format(tech_dir)])
+
+        # Cleanup
+        shutil.rmtree(tech_dir_base)
+
     def test_extra_prefixes(self) -> None:
         """
         Test that extra_prefixes works properly as a property.
