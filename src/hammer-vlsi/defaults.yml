@@ -80,6 +80,14 @@ vlsi.technology:
   # - height (float): Height of the macro in um
   extra_macro_sizes: []
 
+  # Path where tarballs have been extracted.
+  # type: Optional[str]
+  # For example, if the technology plugin defines a tarball foobar.tar.gz,
+  # and this is set to /opt/test, then /opt/test/foobar.tar.gz/ should contain
+  # the extracted contents of foobar.tar.gz.
+  # If this is not specified, then the tarballs will be extracted to obj/<tech_dir>/extracted/.
+  extracted_tarballs_dir: null
+
 cadence:
   # Path to the folder with defaults.yml for common Cadence settings.
   common_path: "${vlsi.builtins.hammer_vlsi_path}/common/cadence"
