@@ -395,3 +395,7 @@ END LIBRARY
 
         # Cleanup
         shutil.rmtree(tech_dir_base)
+
+
+if __name__ == '__main__':
+    unittest.main()
