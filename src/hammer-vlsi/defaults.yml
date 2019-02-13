@@ -82,6 +82,9 @@ vlsi.technology:
 
   # Path where tarballs have been extracted.
   # type: Optional[str]
+  # Note: this setting can be specified per-technology using
+  # technology.<tag>.extracted_tarballs_dir as well.
+  # The technology-specific setting takes precedence if it exists.
   # For example, if the technology plugin defines a tarball foobar.tar.gz,
   # and this is set to /opt/test, then /opt/test/foobar.tar.gz/ should contain
   # the extracted contents of foobar.tar.gz.

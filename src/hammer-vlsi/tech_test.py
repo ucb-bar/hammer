@@ -221,6 +221,41 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
         # Cleanup
         shutil.rmtree(tech_dir_base)
 
+    def test_tarballs_pre_extracted_tech_specific(self) -> None:
+        """
+        Test that tarballs that are pre-extracted and specified using a
+        tech-specific setting work.
+        """
+        import hammer_config
+
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+
+        # Add defaults to specify tarball_dir.
+        with open(os.path.join(tech_dir, "defaults.json"), "w") as f:
+            f.write(json.dumps({
+                "technology.dummy28.tarball_dir": tech_dir,
+                "vlsi.technology.extracted_tarballs_dir": "/should/not/be/used",
+                "technology.dummy28.extracted_tarballs_dir": tech_dir_base
+            }))
+
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, self.add_tarballs)
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
+        tech.cache_dir = tech_dir
+
+        database = hammer_config.HammerDatabase()
+        database.update_technology(tech.get_config())
+        HammerVLSISettings.load_builtins_and_core(database)
+        tech.set_database(database)
+        outputs = tech.process_library_filter(pre_filts=[], filt=hammer_tech.filters.gds_filter,
+                                              must_exist=False,
+                                              output_func=lambda str, _: [str])
+
+        self.assertEqual(outputs, ["{0}/foobar.tar.gz/test.gds".format(tech_dir_base)])
+
+        # Cleanup
+        shutil.rmtree(tech_dir_base)
+
     def test_extra_prefixes(self) -> None:
         """
         Test that extra_prefixes works properly as a property.
