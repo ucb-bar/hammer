@@ -391,7 +391,11 @@ class HammerTechnology:
     @property
     def extracted_tarballs_dir(self) -> str:
         """Return the path to a folder under self.path where extracted tarballs are stored/cached."""
-        return os.path.join(self.cache_dir, "extracted")
+        extracted_tarballs_dir_setting = str(self.get_setting("vlsi.technology.extracted_tarballs_dir"))  # type: str
+        if extracted_tarballs_dir_setting == "null":
+            return os.path.join(self.cache_dir, "extracted")
+        else:
+            return extracted_tarballs_dir_setting
 
     @staticmethod
     def parse_library(lib: dict) -> Library:

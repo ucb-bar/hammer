@@ -9,6 +9,8 @@ import json
 import os
 import shutil
 import unittest
+
+from hammer_vlsi import HammerVLSISettings
 from test import HammerToolTestHelpers, DummyTool, HasGetTech
 from typing import Any, Dict, List
 
@@ -22,6 +24,10 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
     """
     Tests for the Hammer technology library (hammer_tech).
     """
+
+    def setUp(self) -> None:
+        # Make sure the HAMMER_VLSI path is set correctly.
+        self.assertTrue(HammerVLSISettings.set_hammer_vlsi_path_from_environment())
 
     def test_filters_with_extra_extraction(self) -> None:
         """
@@ -127,6 +133,29 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
         # Cleanup
         shutil.rmtree(tech_dir_base)
 
+    @staticmethod
+    def add_tarballs(in_dict: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Helper method to take an input .tech.json and transform it for
+        tarball tests.
+        It replaces the source files with a single tarball and replaces
+        the libraries with a single library that uses said tarball.
+        :param in_dict: Input tech schema
+        :return: Output tech schema for tarball tests
+        """
+        out_dict = deepdict(in_dict)
+        del out_dict["installs"]
+        out_dict["tarballs"] = [{
+            "path": "foobar.tar.gz",
+            "homepage": "http://www.example.com/tarballs",
+            "base var": "technology.dummy28.tarball_dir"
+        }]
+        out_dict["libraries"] = [{
+            "name": "abcdef",
+            "gds file": "foobar.tar.gz/test.gds"
+        }]
+        return out_dict
+
     def test_tarballs_not_extracted(self) -> None:
         """
         Test that tarballs that are not pre-extracted work fine.
@@ -142,32 +171,52 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
                 "technology.dummy28.tarball_dir": tech_dir
             }))
 
-        # Add tarball to .tech.json and use it.
-        def add_tarballs(in_dict: Dict[str, Any]) -> Dict[str, Any]:
-            out_dict = deepdict(in_dict)
-            del out_dict["installs"]
-            out_dict["tarballs"] = [{
-                "path": "foobar.tar.gz",
-                "homepage": "http://www.example.com/tarballs",
-                "base var": "technology.dummy28.tarball_dir"
-            }]
-            out_dict["libraries"] = [{
-                "name": "abcdef",
-                "gds file": "foobar.tar.gz/test.gds"
-            }]
-            return out_dict
-
-        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_tarballs)
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, self.add_tarballs)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
         database = hammer_config.HammerDatabase()
+        database.update_technology(tech.get_config())
+        HammerVLSISettings.load_builtins_and_core(database)
         tech.set_database(database)
         outputs = tech.process_library_filter(pre_filts=[], filt=hammer_tech.filters.gds_filter,
                                               must_exist=False,
                                               output_func=lambda str, _: [str])
 
         self.assertEqual(outputs, ["{0}/extracted/foobar.tar.gz/test.gds".format(tech_dir)])
+
+        # Cleanup
+        shutil.rmtree(tech_dir_base)
+
+    def test_tarballs_pre_extracted(self) -> None:
+        """
+        Test that tarballs that are pre-extracted also work as expected.
+        """
+        import hammer_config
+
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+
+        # Add defaults to specify tarball_dir.
+        with open(os.path.join(tech_dir, "defaults.json"), "w") as f:
+            f.write(json.dumps({
+                "technology.dummy28.tarball_dir": tech_dir,
+                "vlsi.technology.extracted_tarballs_dir": tech_dir_base
+            }))
+
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, self.add_tarballs)
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
+        tech.cache_dir = tech_dir
+
+        database = hammer_config.HammerDatabase()
+        database.update_technology(tech.get_config())
+        HammerVLSISettings.load_builtins_and_core(database)
+        tech.set_database(database)
+        outputs = tech.process_library_filter(pre_filts=[], filt=hammer_tech.filters.gds_filter,
+                                              must_exist=False,
+                                              output_func=lambda str, _: [str])
+
+        self.assertEqual(outputs, ["{0}/foobar.tar.gz/test.gds".format(tech_dir_base)])
 
         # Cleanup
         shutil.rmtree(tech_dir_base)
