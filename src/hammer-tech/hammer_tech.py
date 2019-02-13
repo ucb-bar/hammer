@@ -390,7 +390,19 @@ class HammerTechnology:
 
     @property
     def extracted_tarballs_dir(self) -> str:
-        """Return the path to a folder under self.path where extracted tarballs are stored/cached."""
+        """
+        Return the path to a folder with extracted tarballs.
+        If no pre-extracted dir is specified, then it will be under
+        self.path.
+        See defaults.yml.
+        """
+        tech_setting_key = "technology.{name}.extracted_tarballs_dir".format(name=self.name)
+        if self.has_setting(tech_setting_key):
+            tech_setting = str(self.get_setting(tech_setting_key))  # type: str
+            if tech_setting != "null":
+                return tech_setting
+
+        # No tech setting
         extracted_tarballs_dir_setting = str(self.get_setting("vlsi.technology.extracted_tarballs_dir"))  # type: str
         if extracted_tarballs_dir_setting == "null":
             return os.path.join(self.cache_dir, "extracted")
