@@ -74,21 +74,6 @@
           "gds file" : {
             "type" : "string"
           },
-          "metal layers" : {
-            "type" : "array",
-            "items" : {
-              "title" : "MetalLayer",
-              "type" : "object",
-              "properties" : {
-                "name" : {
-                  "type" : "string"
-                },
-                "preferred routing direction" : {
-                  "type" : "string"
-                }
-              }
-            }
-          },
           "milkyway lib in dir" : {
             "type" : "string"
           },
@@ -194,7 +179,64 @@
             "type" : "string"
           }
         },
-        "additionalProperties" : false
+        "additionalproperties" : false
+      }
+    },
+    "stackups" : {
+      "type" : "array",
+      "items" : {
+        "title" : "Stackup",
+        "type" : "object",
+        "additionalproperties" : false,
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "metals" : {
+            "type" : "array",
+            "items" : {
+              "title" : "Metal",
+              "type" : "object",
+              "additionalproperties" : false,
+              "properties" : {
+                "name" : {
+                  "type" : "string"
+                },
+                "index" : {
+                  "type" : "integer"
+                },
+                "direction" : {
+                  "type" : "string"
+                },
+                "min_width" : {
+                  "type" : "number"
+                },
+                "pitch" : {
+                  "type" : "number"
+                },
+                "offset" : {
+                  "type" : "number"
+                },
+                "power_strap_widths_and_spacings" : {
+                  "type" : "array",
+                  "items" : {
+                    "title" : "WidthSpacingTuple",
+                    "type" : "object",
+                    "additionalproperties" : false,
+                    "properties" : {
+                      "width_at_least" : {
+                        "type" : "number"
+                      },
+                      "min_spacing" : {
+                        "type" : "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }
