@@ -18,6 +18,7 @@ from hammer_logging import HammerVLSILogging
 import hammer_tech
 from hammer_tech import LibraryFilter
 from hammer_utils import deepdict
+from stackup import Stackup, Metal, WidthSpacingTuple
 
 
 class HammerTechnologyTest(HasGetTech, unittest.TestCase):
@@ -525,6 +526,163 @@ END LIBRARY
         # Cleanup
         shutil.rmtree(tech_dir_base)
 
+class StackupTestHelper:
+
+    # TODO when the manufacturing grid concept exists, update this
+    @staticmethod
+    def mfr_grid() -> float:
+        return 0.001
+
+    @staticmethod
+    def snap(f: float) -> float:
+        return float(round(f / StackupTestHelper.mfr_grid())) * StackupTestHelper.mfr_grid()
+
+    @staticmethod
+    def index_to_min_width_fn(index: int) -> float:
+        assert index > 0
+        return StackupTestHelper.snap(0.05 * (1 if (index < 3) else (2 if (index < 5) else 5)))
+
+    @staticmethod
+    def index_to_min_pitch_fn(index: int) -> float:
+        return StackupTestHelper.snap((StackupTestHelper.index_to_min_width_fn(index) * 9.0) / 5.0)
+
+    @staticmethod
+    def index_to_offset_fn(index: int) -> float:
+        return StackupTestHelper.snap(0.04)
+
+    @staticmethod
+    def create_wst_list(index: int) -> List[Dict[str, float]]:
+        base_w = StackupTestHelper.index_to_min_width_fn(index)
+        base_s = StackupTestHelper.index_to_min_pitch_fn(index) - base_w
+        wst = []
+        for x in range(5):
+            wst.append({"width_at_least": StackupTestHelper.snap(float(x) * base_w * 3),
+                        "min_spacing": StackupTestHelper.snap(float(x+1) * base_s) })
+        return wst
+
+    @staticmethod
+    def create_test_metal(index: int) -> Dict[str, Any]:
+        output = {}
+        output["name"] = "M{}".format(index)
+        output["index"] = index
+        output["direction"] = "vertical" if (index % 2 == 1) else "horizontal"
+        output["min_width"] = StackupTestHelper.index_to_min_width_fn(index)
+        output["pitch"] = StackupTestHelper.index_to_min_pitch_fn(index)
+        output["offset"] = StackupTestHelper.index_to_offset_fn(index)
+        output["power_strap_widths_and_spacings"] = StackupTestHelper.create_wst_list(index)
+        return output
+
+    @staticmethod
+    def create_test_stackup_dict(num_metals: int) -> Dict[str, Any]:
+        output = {}
+        output["name"] = "StackupWith{}Metals".format(num_metals)
+        output["metals"] = []
+        for x in range(num_metals):
+            output["metals"].append(StackupTestHelper.create_test_metal(x+1))
+        return output
+
+    @staticmethod
+    def create_test_stackup_list() -> List["Stackup"]:
+        output = []
+        for x in range(5,8):
+            output.append(Stackup.from_setting(StackupTestHelper.create_test_stackup_dict(x)))
+            for m in output[-1].metals:
+                assert m.grid_unit() == StackupTestHelper.mfr_grid(), "FIXME: the unit grid is different between the tests and metals"
+        return output
+
+
+class StackupTest(unittest.TestCase):
+    """
+    Tests for the Stackup APIs in stackup.py
+    """
+
+    # Test that a T W T wire is correctly sized
+    # This will pass if the wide wire does not have a spacing DRC violation to surrounding minimum-sized wires and is within a single unit grid
+    # This method is not allowed to round the wire, so simply adding a manufacturing grid should suffice to "fail" DRC
+    def test_twt_wire(self) -> None:
+        # Generate multiple stackups, but we'll only use the largest for this test
+        stackup = StackupTestHelper.create_test_stackup_list()[-1]
+        for m in stackup.metals:
+            # Try with 1 track (this should return a minimum width wire)
+            w, s, o = m.get_width_spacing_start_twt(1)
+            self.assertEqual(w, m.min_width)
+            self.assertEqual(s, m.snap(m.pitch - w))
+
+            # e.g. 2 tracks:
+            # | | | |
+            # T  W  T
+            # e.g. 4 tracks:
+            # | | | | | |
+            # T  --W--  T
+            for num_tracks in range(2,40):
+                w, s, o = m.get_width_spacing_start_twt(num_tracks)
+                # Check that the resulting spacing is the min spacing
+                self.assertTrue(s >= m.get_spacing_for_width(w))
+                # Check that there is no DRC
+                self.assertGreaterEqual(m.snap(m.pitch * (num_tracks + 1)), m.snap(m.min_width + s*2 + w))
+                # Check that if we increase the width slightly we get a DRC violation
+                w = m.snap(w + (m.grid_unit()*2))
+                s = m.get_spacing_for_width(w)
+                self.assertLess(m.snap(m.pitch * (num_tracks + 1)), m.snap(m.min_width + s*2 + w))
+
+    # Test that a T W W T wire is correctly sized
+    # This will pass if the wide wire does not have a spacing DRC violation to surrounding minimum-sized wires and is within a single unit grid
+    # This method is not allowed to round the wire, so simply adding a manufacturing grid should suffice to "fail" DRC
+    def test_twwt_wire(self) -> None:
+        # Generate multiple stackups, but we'll only use the largest for this test
+        stackup = StackupTestHelper.create_test_stackup_list()[-1]
+        for m in stackup.metals:
+            # Try with 1 track (this should return a minimum width wire)
+            w, s, o = m.get_width_spacing_start_twwt(1)
+            self.assertEqual(w, m.min_width)
+            self.assertEqual(s, m.snap(m.pitch - w))
+
+            # e.g. 2 tracks:
+            # | | | | | |
+            # T  W   W  T
+            # e.g. 4 tracks:
+            # | | | | | | | | | |
+            # T  --W--   --W--  T
+            for num_tracks in range(2,40):
+                w, s, o = m.get_width_spacing_start_twwt(num_tracks)
+                # Check that the resulting spacing is the min spacing
+                self.assertGreaterEqual(s, m.get_spacing_for_width(w))
+                # Check that there is no DRC
+                self.assertGreaterEqual(m.snap(m.pitch * (2*num_tracks + 1)), m.snap(m.min_width + s*3 + w*2))
+                # Check that if we increase the width slightly we get a DRC violation
+                w = w + (m.grid_unit()*2)
+                s = m.get_spacing_for_width(w)
+                self.assertLess(m.snap(m.pitch * (2*num_tracks + 1)), m.snap(m.min_width + s*3 + w*2))
+
+
+    def test_min_spacing_for_width(self) -> None:
+        # Generate multiple stackups, but we'll only use the largest for this test
+        stackup = StackupTestHelper.create_test_stackup_list()[-1]
+        for m in stackup.metals:
+            # generate some widths:
+            for x in [1.0, 2.0, 3.4, 4.5, 5.25, 50.2]:
+                # coerce to a manufacturing grid, this is just a test data point
+                w = m.snap(x * m.min_width)
+                s = m.get_spacing_for_width(w)
+                for wst in m.power_strap_widths_and_spacings:
+                    if w >= wst.width_at_least:
+                        self.assertGreaterEqual(s, wst.min_spacing)
+
+    def test_get_spacing_from_pitch(self) -> None:
+        # Generate multiple stackups, but we'll only use the largest for this test
+        stackup = StackupTestHelper.create_test_stackup_list()[-1]
+        for m in stackup.metals:
+            # generate some widths:
+            for x in range(0, 100000, 5):
+                # Generate a test data point
+                p = m.snap((m.grid_unit() * x) + m.pitch)
+                s = m.min_spacing_from_pitch(p)
+                w = m.snap(p - s)
+                # Check that we don't violate DRC
+                self.assertGreaterEqual(p, m.snap(w + m.get_spacing_for_width(w)))
+                # Check that the wire is as large as possible by growing it
+                w = m.snap(w + (m.grid_unit()*2))
+                self.assertLess(p, m.snap(w + m.get_spacing_for_width(w)))
 
 if __name__ == '__main__':
     unittest.main()

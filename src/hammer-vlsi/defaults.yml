@@ -12,7 +12,7 @@ vlsi.core:
 
   # Technology node dimension (nm) to use.
   # Some tools change what they do as this changes.
-  # TODO: move this to vlsi.technology
+  # TODO: move this to vlsi.technology (or technology.core) ucb-bar/hammer#317
   node: 32
 
   # Path(s) to synthesis tools.
@@ -51,6 +51,7 @@ vlsi.core:
   # Maximum threads to use in a CAD tool invocation.
   max_threads: 1
 
+# TODO ucb-bar/hammer#317 move these to technology.core (discussion to be had)
 vlsi.technology:
   # Placement site for macros. (Optional[str])
   # Typically specified in standard cell LEFs.
@@ -367,3 +368,18 @@ lvs.submit:
   command_meta: lazysubst
   settings: "vlsi.submit.settings"
   settings_meta: lazycrossref
+
+technology.core:
+    # Key name for the technology stackup
+    # This should exist in the stackups list in the tech json
+    # type: string
+    stackup: null
+    # This should specify the TOPMOST metal layer the standard cells use for power rails
+    # Note that this is not usually stackup specific; it is based on the std cell library
+    # type: string
+    sd_cell_rail_layer: null
+    # This is used to provide a reference master for generating standard cell rails
+    # Can be a wildcard/glob
+    # type: string
+    tap_cell_rail_reference: null
+
