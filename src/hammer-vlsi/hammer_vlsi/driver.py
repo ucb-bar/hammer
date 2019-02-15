@@ -74,18 +74,8 @@ class HammerDriver:
         # Store the run dir.
         self.obj_dir = options.obj_dir  # type: str
 
-        # Load in builtins.
-        builtins_path = os.path.join(HammerVLSISettings.hammer_vlsi_path, "builtins.yml")
-        if not os.path.exists(builtins_path):
-            raise FileNotFoundError("hammer-vlsi builtin settings not found. Did you call HammerVLSISettings.set_hammer_vlsi_path_from_environment()?")
-
-        self.database.update_builtins([
-            hammer_config.load_config_from_file(builtins_path, strict=True),
-            HammerVLSISettings.get_config()
-        ])
-
-        # Read in core defaults.
-        self.database.update_core(hammer_config.load_config_from_defaults(HammerVLSISettings.hammer_vlsi_path))
+        # Load builtins and core into the database.
+        HammerVLSISettings.load_builtins_and_core(self.database)
 
         # Read in the environment config for paths to CAD tools, etc.
         for config in options.environment_configs:
@@ -573,6 +563,26 @@ class HammerDriver:
             return False, {}
 
         return run_succeeded, output_config
+
+    @staticmethod
+    def par_output_to_syn_input(output_dict: dict) -> Optional[dict]:
+        """
+        Generate the appropriate inputs for running the next level of synthesis from the
+        outputs of par run in a hierarchical flow.
+        Does not merge the results with any project dictionaries.
+        :param output_dict: Dict containing par.outputs.*
+        :return: vlsi.inputs.* settings generated from output_dict,
+                 or None if output_dict was invalid
+        """
+        try:
+            result = {
+                "vlsi.inputs.ilms": output_dict["par.outputs.output_ilms"],
+                "vlsi.builtins.is_complete": False
+            }  # type: Dict[str, Any]
+            return result
+        except KeyError:
+            # KeyError means that the given dictionary is missing output keys.
+            return None
 
     @staticmethod
     def par_output_to_drc_input(output_dict: dict) -> Optional[dict]:

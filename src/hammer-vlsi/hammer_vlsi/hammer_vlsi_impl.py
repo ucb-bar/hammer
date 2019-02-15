@@ -15,6 +15,7 @@ import os
 import sys
 from typing import Callable, Iterable, List, NamedTuple, Optional, Dict, Any, Union
 
+import hammer_config
 from hammer_utils import reverse_dict, deepdict, optional_map, get_or_else
 
 from .constraints import *
@@ -89,7 +90,25 @@ class HammerVLSISettings:
             cls.hammer_vlsi_path = os.environ["HAMMER_VLSI"]
             return True
 
+    @classmethod
+    def load_builtins_and_core(cls, database: hammer_config.HammerDatabase) -> None:
+        """
+        Helper function that loads builtins and core into a HammerDatabase.
+        """
 
+        # Load in builtins.
+        builtins_path = os.path.join(cls.hammer_vlsi_path, "builtins.yml")
+        if not os.path.exists(builtins_path):
+            raise FileNotFoundError(
+                "hammer-vlsi builtin settings not found. Did you call HammerVLSISettings.set_hammer_vlsi_path_from_environment()?")
+
+        database.update_builtins([
+            hammer_config.load_config_from_file(builtins_path, strict=True),
+            HammerVLSISettings.get_config()
+        ])
+
+        # Read in core defaults.
+        database.update_core(hammer_config.load_config_from_defaults(cls.hammer_vlsi_path, strict=True))
 
 
 from .hammer_tool import HammerTool, HammerToolStep
@@ -220,6 +239,7 @@ class HammerPlaceAndRouteTool(HammerTool):
     def export_config_outputs(self) -> Dict[str, Any]:
         outputs = deepdict(super().export_config_outputs())
         outputs["par.outputs.output_ilms"] = list(map(lambda s: s.to_setting(), self.output_ilms))
+        outputs["par.outputs.output_ilms_meta"] = "append"
         outputs["par.outputs.output_gds"] = str(self.output_gds)
         outputs["par.outputs.output_netlist"] = str(self.output_netlist)
         outputs["par.outputs.power_nets"] = list(self.power_nets)
