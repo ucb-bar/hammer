@@ -144,7 +144,8 @@ class HammerLocalSubmitCommand(HammerSubmitCommand):
         return output_buf
 
     def read_settings(self, settings: Dict[str, Any], tool_namespace: str) -> None:
-        assert False, "Should never get here; local submission command does not have settings"
+        # Should never get here
+        raise ValueError("Local submission command does not have settings")
 
 
 class HammerLSFSettings(NamedTuple('HammerLSFSettings', [
