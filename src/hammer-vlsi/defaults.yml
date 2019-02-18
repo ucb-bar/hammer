@@ -187,11 +187,11 @@ vlsi.inputs:
   # the clock edge.
   # Each item in the list should be a struct with the following members:
   # name (str) - Name of the I/O being delayed.
-  # delay (TimeValue) - Delay applied to the I/O.
   # clock (str) - Name of the clock that this delay is based on.
   # direction (str) - Gives the direction of the I/O. Should be one of:
   # - "input"
   # - "output"
+  # delay (TimeValue) - Delay applied to the I/O.
   delays: []
 
   # List of placement constraints.
