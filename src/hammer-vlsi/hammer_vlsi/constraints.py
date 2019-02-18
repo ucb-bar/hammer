@@ -63,12 +63,38 @@ OutputLoadConstraint = NamedTuple('OutputLoadConstraint', [
 ])
 
 
-DelayConstraint = NamedTuple('DelayConstraint', [
+class DelayConstraint(NamedTuple('DelayConstraint', [
     ('name', str),
     ('clock', str),
     ('direction', str),
     ('delay', TimeValue)
-])
+])):
+    __slots__ = ()
+
+    def __new__(cls, name: str, clock: str, direction: str, delay: TimeValue) -> "DelayConstraint":
+        if direction not in ("input", "output"):
+            raise ValueError("Invalid direction {direction}".format(direction=direction))
+        return super().__new__(cls, name, clock, direction, delay)
+
+    @staticmethod
+    def from_dict(delay_src: Dict[str, Any]) -> "DelayConstraint":
+        direction = str(delay_src["direction"])
+        if direction not in ("input", "output"):
+            raise ValueError("Invalid direction {direction}".format(direction=direction))
+        return DelayConstraint(
+            name=str(delay_src["name"]),
+            clock=str(delay_src["clock"]),
+            direction=direction,
+            delay=TimeValue(delay_src["delay"])
+        )
+
+    def to_dict(self) -> dict:
+        return {
+            "name": self.name,
+            "clock": self.clock,
+            "direction": self.direction,
+            "delay": self.delay.str_value_in_units("ns", round_zeroes=False)
+        }
 
 
 class ObstructionType(Enum):
