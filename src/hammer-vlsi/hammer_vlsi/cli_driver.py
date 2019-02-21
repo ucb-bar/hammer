@@ -693,8 +693,8 @@ class CLIDriver:
                     o=o_dir))
                 if(len(deps[1]) != 0):
                     f.write("{o}/syn-input-{m}.json: {d}\n".format(m=mod, d=target_deps, o=o_dir))
-                    f.write("\t{h} -e {e} -p {p} --obj_dir {o} -o {o}/syn-input-{m}.json hier-syn-to-par\n".format(h=cmd, e=" -e ".join(list(map(os.path.abspath, env_configs))),
-                        p=" -p ".join(list(map(lambda x: "par-{m}/par-output.json".format(m=x), deps[1]))), m=mod,
+                    f.write("\t{h} -e {e} -p {p} --obj_dir {o} -o {o}/syn-input-{m}.json hier-par-to-syn\n".format(h=cmd, e=" -e ".join(list(map(os.path.abspath, env_configs))),
+                        p=" -p ".join(list(map(lambda x: "{o}/par-{m}/par-output-full.json".format(m=x,o=o_dir), deps[1]))), m=mod,
                         o=o_dir))
 
 
