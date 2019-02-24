@@ -562,7 +562,7 @@ class StackupTestHelper:
 
     @staticmethod
     def create_test_metal(index: int) -> Dict[str, Any]:
-        output = {}
+        output = {} # type: Dict[str, Any]
         output["name"] = "M{}".format(index)
         output["index"] = index
         output["direction"] = "vertical" if (index % 2 == 1) else "horizontal"
@@ -574,7 +574,7 @@ class StackupTestHelper:
 
     @staticmethod
     def create_test_stackup_dict(num_metals: int) -> Dict[str, Any]:
-        output = {}
+        output = {} # type: Dict[str, Any]
         output["name"] = "StackupWith{}Metals".format(num_metals)
         output["metals"] = []
         for x in range(num_metals):
