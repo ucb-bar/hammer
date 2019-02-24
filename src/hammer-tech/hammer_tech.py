@@ -23,7 +23,7 @@ from hammer_utils import (LEFUtils, add_lists, deeplist, get_or_else,
 
 from library_filter import LibraryFilter
 from filters import LibraryFilterHolder
-from stackup import Stackup
+from stackup import RoutingDirection, WidthSpacingTuple, Metal, Stackup
 
 # Holds the list of pre-implemented filters.
 # Access it like hammer_tech.filters.lef_filter
@@ -795,10 +795,9 @@ class HammerTechnology:
 
         return check_isfile
 
-
-    def get_stackup_by_name(self, name: str) -> "Stackup":
+    def get_stackup_by_name(self, name: str) -> Stackup:
         """
-        Returns the stackup details for the given key
+        Return the stackup details for the given key.
         """
         if self.config.stackups is not None:
             for item in list(self.config.stackups):
