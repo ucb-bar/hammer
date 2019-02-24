@@ -16,9 +16,8 @@ from typing import Any, Dict, List
 
 from hammer_logging import HammerVLSILogging
 import hammer_tech
-from hammer_tech import LibraryFilter
+from hammer_tech import LibraryFilter, Stackup, Metal, WidthSpacingTuple
 from hammer_utils import deepdict
-from stackup import Stackup, Metal, WidthSpacingTuple
 
 
 class HammerTechnologyTest(HasGetTech, unittest.TestCase):
@@ -587,7 +586,7 @@ class StackupTestHelper:
         for x in range(5,8):
             output.append(Stackup.from_setting(StackupTestHelper.create_test_stackup_dict(x)))
             for m in output[-1].metals:
-                assert m.grid_unit() == StackupTestHelper.mfr_grid(), "FIXME: the unit grid is different between the tests and metals"
+                assert m.grid_unit == StackupTestHelper.mfr_grid(), "FIXME: the unit grid is different between the tests and metals"
         return output
 
 
@@ -621,7 +620,7 @@ class StackupTest(unittest.TestCase):
                 # Check that there is no DRC
                 self.assertGreaterEqual(m.snap(m.pitch * (num_tracks + 1)), m.snap(m.min_width + s*2 + w))
                 # Check that if we increase the width slightly we get a DRC violation
-                w = m.snap(w + (m.grid_unit()*2))
+                w = m.snap(w + (m.grid_unit*2))
                 s = m.get_spacing_for_width(w)
                 self.assertLess(m.snap(m.pitch * (num_tracks + 1)), m.snap(m.min_width + s*2 + w))
 
@@ -650,7 +649,7 @@ class StackupTest(unittest.TestCase):
                 # Check that there is no DRC
                 self.assertGreaterEqual(m.snap(m.pitch * (2*num_tracks + 1)), m.snap(m.min_width + s*3 + w*2))
                 # Check that if we increase the width slightly we get a DRC violation
-                w = w + (m.grid_unit()*2)
+                w = w + (m.grid_unit*2)
                 s = m.get_spacing_for_width(w)
                 self.assertLess(m.snap(m.pitch * (2*num_tracks + 1)), m.snap(m.min_width + s*3 + w*2))
 
@@ -675,13 +674,13 @@ class StackupTest(unittest.TestCase):
             # generate some widths:
             for x in range(0, 100000, 5):
                 # Generate a test data point
-                p = m.snap((m.grid_unit() * x) + m.pitch)
+                p = m.snap((m.grid_unit * x) + m.pitch)
                 s = m.min_spacing_from_pitch(p)
                 w = m.snap(p - s)
                 # Check that we don't violate DRC
                 self.assertGreaterEqual(p, m.snap(w + m.get_spacing_for_width(w)))
                 # Check that the wire is as large as possible by growing it
-                w = m.snap(w + (m.grid_unit()*2))
+                w = m.snap(w + (m.grid_unit*2))
                 self.assertLess(p, m.snap(w + m.get_spacing_for_width(w)))
 
 if __name__ == '__main__':

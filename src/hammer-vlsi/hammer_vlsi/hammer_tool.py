@@ -934,7 +934,7 @@ class HammerTool(metaclass=ABCMeta):
             output.append(corn)
         return output
 
-    def get_stackup(self) -> "Stackup":
+    def get_stackup(self) -> Stackup:
         """
         Get the stackup provided by the technology key
         """
