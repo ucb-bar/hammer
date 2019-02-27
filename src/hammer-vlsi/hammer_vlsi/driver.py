@@ -18,7 +18,6 @@ import hammer_config
 import hammer_tech
 from .hammer_tool import HammerTool
 from .hooks import HammerToolHookAction
-# TODO(daniel)
 from .hammer_vlsi_impl import HammerVLSISettings, HammerPlaceAndRouteTool, HammerSynthesisTool, \
     HammerSignoffTool, HammerDRCTool, HammerLVSTool, HammerSRAMGeneratorTool, HammerSimTool, \
     HierarchicalMode, load_tool, PlacementConstraint, SRAMParameters, ILMStruct

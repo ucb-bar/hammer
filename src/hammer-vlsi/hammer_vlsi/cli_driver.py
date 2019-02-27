@@ -300,7 +300,7 @@ class CLIDriver:
         hooks = self.get_extra_lvs_hooks() + custom_hooks  # type: List[HammerToolHookAction]
         return self.create_action("lvs", hooks if len(hooks) > 0 else None,
                                   pre_action_func, post_load_func, post_run_func)
-    # TODO(daniel)
+
     def create_sim_action(self, custom_hooks: List[HammerToolHookAction],
                           pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
                           post_load_func: Optional[Callable[[HammerDriver], None]] = None,
