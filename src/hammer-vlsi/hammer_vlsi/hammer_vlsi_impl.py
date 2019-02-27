@@ -1170,17 +1170,33 @@ class SynopsysTool(HasSDCSupport, HammerTool):
 
 class MentorTool(HammerTool):
     """ Mix-in trait with functions useful for Mentor-Graphics-based tools. """
+
+    @property
+    def config_dirs(self) -> List[str]:
+        # Override this to pull in Mentor-common configs.
+        return [self.get_setting("mentor.common_path")] + super().config_dirs
+
     @property
     def env_vars(self) -> Dict[str, str]:
         """
         Get the list of environment variables required for this tool.
         Note to subclasses: remember to include variables from super().env_vars!
         """
-        result = dict(super().env_vars)
-        result.update({
+        # Use the base extra_env_variables and ensure that our custom variables are on top.
+        list_of_vars = self.get_setting("mentor.extra_env_vars")  # type: List[Dict[str, Any]]
+        assert isinstance(list_of_vars, list)
+
+        mentor_vars = {
             "MGLS_LICENSE_FILE": self.get_setting("mentor.MGLS_LICENSE_FILE")
-        })
-        return result
+            "MENTOR_HOME": self.get_setting("mentor.mentor_home")
+        }
+
+        def update_dict(old: dict, new: dict) -> dict:
+            tmp = deepdict(old)
+            tmp.update(new)
+            return tmp
+
+        return reduce(update_dict, [dict(super().env_vars)] + list_of_vars + [mentor_vars], {})
 
     def version_number(self, version: str) -> int:
         """
