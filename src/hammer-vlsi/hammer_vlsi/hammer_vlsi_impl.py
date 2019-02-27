@@ -859,12 +859,7 @@ class CadenceTool(HasSDCSupport, HammerTool):
             "CADENCE_HOME": self.get_setting("cadence.cadence_home")
         }
 
-        def update_dict(old: dict, new: dict) -> dict:
-            tmp = deepdict(old)
-            tmp.update(new)
-            return tmp
-
-        return reduce(update_dict, [dict(super().env_vars)] + list_of_vars + [cadence_vars], {})
+        return reduce(add_dicts, [dict(super().env_vars)] + list_of_vars + [cadence_vars], {})
 
     def version_number(self, version: str) -> int:
         """
@@ -1191,12 +1186,7 @@ class MentorTool(HammerTool):
             "MENTOR_HOME": self.get_setting("mentor.mentor_home")
         }
 
-        def update_dict(old: dict, new: dict) -> dict:
-            tmp = deepdict(old)
-            tmp.update(new)
-            return tmp
-
-        return reduce(update_dict, [dict(super().env_vars)] + list_of_vars + [mentor_vars], {})
+        return reduce(add_dicts, [dict(super().env_vars)] + list_of_vars + [mentor_vars], {})
 
     def version_number(self, version: str) -> int:
         """
