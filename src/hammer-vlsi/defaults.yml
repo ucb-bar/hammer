@@ -67,6 +67,9 @@ vlsi.core:
   # Sim tool to use.
   sim_tool: "nop"
 
+  # Sim tool to use.
+  sim_tool: "nop"
+
   # Maximum threads to use in a CAD tool invocation.
   max_threads: 1
 
@@ -588,6 +591,7 @@ sim.inputs:
   csrc: []
   # Benchmarks to run on simulator
   benchmarks: []
+  timescale: null 
   
 sim.submit:
   command: "${vlsi.submit.command}"

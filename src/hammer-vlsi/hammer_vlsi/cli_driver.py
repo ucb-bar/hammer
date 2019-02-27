@@ -243,13 +243,6 @@ class CLIDriver:
         """
         return list()
 
-    def get_extra_sim_hooks(self) -> List[HammerToolHookAction]:
-        """
-        Return a list of extra simulation hooks in this project.
-        To be overridden by subclasses.
-        """
-        return list()
-
     def create_synthesis_action(self, custom_hooks: List[HammerToolHookAction],
                                 pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
                                 post_load_func: Optional[Callable[[HammerDriver], None]] = None,
