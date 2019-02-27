@@ -18,6 +18,7 @@ import hammer_config
 import hammer_tech
 from .hammer_tool import HammerTool
 from .hooks import HammerToolHookAction
+# TODO(daniel)
 from .hammer_vlsi_impl import HammerVLSISettings, HammerPlaceAndRouteTool, HammerSynthesisTool, \
     HammerSignoffTool, HammerDRCTool, HammerLVSTool, HammerSRAMGeneratorTool, HammerSimTool, \
     HierarchicalMode, load_tool, PlacementConstraint, SRAMParameters, ILMStruct
@@ -103,7 +104,7 @@ class HammerDriver:
         self.drc_tool = None  # type: Optional[HammerDRCTool]
         self.lvs_tool = None  # type: Optional[HammerLVSTool]
         self.sram_generator_tool = None  # type: Optional[HammerSRAMGeneratorTool]
-        self.sim_tool = None  # type: Optional[HammerSimTool] # TODO(daniel)
+        self.sim_tool = None  # type: Optional[HammerSimTool]
 
         # Initialize tool hooks. Used to specify resume/pause hooks after custom hooks have been registered.
         self.post_custom_syn_tool_hooks = []  # type: List[HammerToolHookAction]
