@@ -16,7 +16,7 @@ import sys
 from typing import Callable, Iterable, List, NamedTuple, Optional, Dict, Any, Union
 
 import hammer_config
-from hammer_utils import reverse_dict, deepdict, optional_map, get_or_else
+from hammer_utils import reverse_dict, deepdict, optional_map, get_or_else, add_dicts
 
 from .constraints import *
 
