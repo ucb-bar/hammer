@@ -111,6 +111,7 @@ class CLIDriver:
         self.drc_rundir = ""  # type: Optional[str]
         self.lvs_rundir = ""  # type: Optional[str]
         self.sram_generator_rundir = ""  # type: Optional[str]
+        self.sim_rundir = ""  #type: Otional[str]
 
         # If a subclass has defined these, don't clobber them in init
         # since the subclass still uses this init function.
@@ -139,6 +140,11 @@ class CLIDriver:
         else:
             self.synthesis_par_action = self.create_synthesis_par_action(self.synthesis_action,
                                                                          self.par_action)  # type: CLIActionConfigType
+        # TODO(daniel)
+        if hasattr(self, "sim_action"):
+            check_CLIActionType_type(self.sim_action)
+        else:
+            self.sim_action = self.create_sim_action([])
 
         # Dictionaries of module-CLIActionConfigType for hierarchical flows.
         # See all_hierarchical_actions() below.
@@ -175,7 +181,9 @@ class CLIDriver:
             "par_to_lvs": self.par_to_lvs_action,
             "par-to-lvs": self.par_to_lvs_action,
             "drc": self.drc_action,
-            "lvs": self.lvs_action
+            "lvs": self.lvs_action,
+            "sim": self.sim_action,  # TODO(daniel)
+            "simulation": self.sim_action
         }, self.all_hierarchical_actions)
 
     @staticmethod
@@ -224,6 +232,13 @@ class CLIDriver:
     def get_extra_sram_generator_hooks(self) -> List[HammerToolHookAction]:
         """
         Return a list of extra SRAM generation hooks in this project.
+        To be overriden by subclasses.
+        """
+        return list()
+
+    def get_extra_sim_hooks(self) -> List[HammerToolHookAction]:
+        """
+        Return a list of extra simulation hooks in this project.
         To be overridden by subclasses.
         """
         return list()
@@ -284,6 +299,14 @@ class CLIDriver:
                           post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
         hooks = self.get_extra_lvs_hooks() + custom_hooks  # type: List[HammerToolHookAction]
         return self.create_action("lvs", hooks if len(hooks) > 0 else None,
+                                  pre_action_func, post_load_func, post_run_func)
+    # TODO(daniel)
+    def create_sim_action(self, custom_hooks: List[HammerToolHookAction],
+                          pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_load_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
+        hooks = self.get_extra_sim_hooks() + custom_hooks  # type: List[HammerToolHookAction]
+        return self.create_action("sim", hooks if len(hooks) > 0 else None,
                                   pre_action_func, post_load_func, post_run_func)
 
     def create_sram_generator_action(self, custom_hooks: List[HammerToolHookAction],
@@ -373,6 +396,13 @@ class CLIDriver:
                 else:
                     post_load_func_checked(driver)
                 success, output = driver.run_sram_generator(extra_hooks)
+                post_run_func_checked(driver)
+            elif action_type == "sim":
+                if not driver.load_sim_tool(get_or_else(self.sim_rundir, "")):
+                    return None
+                else:
+                    post_load_func_checked(driver)
+                success, output = driver.run_sim(extra_hooks)
                 post_run_func_checked(driver)
             else:
                 raise ValueError("Invalid action_type = " + str(action_type))
@@ -684,6 +714,8 @@ class CLIDriver:
         self.par_rundir = get_nonempty_str(args['par_rundir'])
         self.drc_rundir = get_nonempty_str(args['drc_rundir'])
         self.lvs_rundir = get_nonempty_str(args['lvs_rundir'])
+        # TODO(daniel)
+        self.sim_rundir = get_nonempty_str(args['sim_rundir'])
 
         # Stage control: from/to
         from_step = get_nonempty_str(args['from_step'])
@@ -899,6 +931,9 @@ class CLIDriver:
                             help='(optional) Directory to store DRC results in')
         parser.add_argument("--lvs_rundir", required=False, default="",
                             help='(optional) Directory to store LVS results in')
+        # TODO(daniel)
+        parser.add_argument("--sim_rundir", required=False, default="",
+                            help='(optional) Directory to store simulation results in')
         # Optional arguments for step control.
         parser.add_argument("--from_step", dest="from_step", required=False,
                             help="Run the given action from the given step (inclusive).")

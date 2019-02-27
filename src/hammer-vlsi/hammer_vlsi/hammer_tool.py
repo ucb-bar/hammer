@@ -225,6 +225,8 @@ class HammerTool(metaclass=ABCMeta):
         try:
             return self._rundir
         except AttributeError:
+            return self._rundir
+        except AttributeError:
             raise ValueError("Internal error: run dir location not set by hammer-vlsi")
 
     @run_dir.setter
@@ -948,8 +950,6 @@ class HammerTool(metaclass=ABCMeta):
         """
         ilms = self.get_setting("vlsi.inputs.ilms")  # type: List[dict]
         assert isinstance(ilms, list)
-        return list(map(ILMStruct.from_setting, ilms))
-
     def get_output_load_constraints(self) -> List[OutputLoadConstraint]:
         """
         Get a list of output load constraints as specified in the config.
