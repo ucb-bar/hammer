@@ -64,6 +64,9 @@ vlsi.core:
   # Sim tool to use.
   sim_tool: "nop"
 
+  # Sim tool to use.
+  sim_tool: "nop"
+
   # Maximum threads to use in a CAD tool invocation.
   max_threads: 1
 
@@ -579,7 +582,6 @@ sim.inputs:
   defines: []
   # Cross compiler options
   compiler_opts: []
-  #compiler_opts_meta: lazysubst
   # Simulation timescale
   timescale: null 
   csrc: []

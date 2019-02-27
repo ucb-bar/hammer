@@ -232,6 +232,13 @@ class CLIDriver:
     def get_extra_sram_generator_hooks(self) -> List[HammerToolHookAction]:
         """
         Return a list of extra SRAM generation hooks in this project.
+        To be overriden by subclasses.
+        """
+        return list()
+
+    def get_extra_sim_hooks(self) -> List[HammerToolHookAction]:
+        """
+        Return a list of extra simulation hooks in this project.
         To be overridden by subclasses.
         """
         return list()
