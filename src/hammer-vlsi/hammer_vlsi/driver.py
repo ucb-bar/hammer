@@ -750,7 +750,7 @@ class HammerDriver:
         leaf_modules = set()  # type: Set[str]
         intermediate_modules = set()  # type: Set[str]
         top_module = str(self.database.get_setting("vlsi.inputs.hierarchical.top_module"))
-        if top_module == "" or top_module == "null":
+        if top_module == "" or top_module is None:
             raise ValueError("Cannot have a hierarchical flow if the top module is not set")
 
         # Node + outgoing edges (nodes that depend on us) + incoming edges (nodes we depend on)

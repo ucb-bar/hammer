@@ -590,7 +590,7 @@ class HammerDatabase:
         """Alias for has_setting()."""
         return self.has_setting(item)
 
-    def get_setting(self, key: str, nullvalue: Any = "null") -> Any:
+    def get_setting(self, key: str, nullvalue: Any = None) -> Any:
         """
         Retrieve the given key.
 
