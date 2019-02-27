@@ -902,6 +902,53 @@ class HammerDriver:
         #    self.log.fatal(e.args[0])
         #    return False, {}
 
+    def run_sim(self, hook_actions: Optional[List[HammerToolHookAction]] = None, force_override: bool = False) -> \
+            Tuple[bool, dict]:
+        """
+        Run simulation based on the given database.
+        The output config dict returned does NOT have a copy of the input config settings.
+
+        :param hook_actions: List of hook actions, or leave as None to use the hooks sets in set_simulation_hooks.
+                             Hooks from set_simulation_hooks, if present, will be appended afterwards.
+        :param force_override: Set to true to overwrite instead of append.
+        :return: Tuple of (success, output config dict)
+        """
+        if self.sim_tool is None:
+            self.log.error("Must load simulation tool before calling run_sim")
+            return False, {}
+
+        # TODO: think about artifact storage?
+        self.log.info("Starting simulation with tool '%s'" % (self.sim_tool.name))
+        if hook_actions is None:
+            hooks_to_use = self.post_custom_sim_tool_hooks
+        else:
+            if force_override:
+                hooks_to_use = hook_actions
+            else:
+                hooks_to_use = hook_actions + self.post_custom_sim_tool_hooks
+
+        run_succeeded = self.sim_tool.run(hooks_to_use)
+        if not run_succeeded:
+            self.log.error("Simulation tool %s failed! Please check its output." % self.sim_tool.name)
+            # Allow the flow to keep running, just in case.
+            # TODO: make this an option
+
+        # Record output from the tool into the JSON output.
+        # Note: the output config dict is NOT complete
+        output_config = {}  # type: Dict[str, Any]
+        #try:
+        #    output_config = deepdict(self.sim_tool.export_config_outputs())
+        #    if output_config.get("vlsi.builtins.is_complete", True):
+        #        self.log.error(
+        #            "The simulation plugin is mis-written; "
+        #            "it did not mark its output dictionary as output-only "
+        #            "or did not call super().export_config_outputs(). "
+        #            "Subsequent commands might not behave correctly.")
+        #        output_config["vlsi.builtins.is_complete"] = False
+        #except ValueError as e:
+        #    self.log.fatal(e.args[0])
+        #    return False, {}
+
         return run_succeeded, output_config
 
     def get_hierarchical_settings(self) -> List[Tuple[str, dict]]:
