@@ -35,6 +35,12 @@ vlsi.core:
   lvs_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/lvs"]
   lvs_tool_path_meta: subst
 
+  # TODO(daniel)
+  # Path(s) to sim tools.
+  # Add the built-in path to sim tools
+  sim_tool_path: ["${vlsi.builtins.hammer_vlsi_path/sim"]
+  sim_tool_path_meta: subst
+
   # Synthesis tool to use.
   # Currently we can choose from a selection of built-in tools which hammer-vlsi supports.
   synthesis_tool: "nop"
@@ -47,6 +53,10 @@ vlsi.core:
 
   # LVS tool to use.
   lvs_tool: "nop"
+
+  # TODO(daniel)
+  # Sim tool to use.
+  sim_tool: "nop"
 
   # Maximum threads to use in a CAD tool invocation.
   max_threads: 1
@@ -427,3 +437,39 @@ technology.core:
     # Can be a wildcard/glob
     # type: string
     tap_cell_rail_reference: null
+
+# TODO(daniel)
+sim.inputs:
+  # Top RTL module
+  top_module: null
+  # top_module_config: null
+  input_files: []
+  # Debug option
+  debug: false
+  # Black box command line option escape hatch
+  options: [] 
+  # Define options
+  defines: []
+  # Cross compiler options
+  compiler_opts: []
+  # Simulation timescale
+  timescale: null 
+  
+  
+  # List of input stimuli (ie. riscv tests, waveform, etc.)
+  #stimuli: []
+  # Debug option to enable vcd generation
+  #debug: null
+  # List of options and sources used for the simulator call
+  #defines: []
+  #compiler_opts: []
+  #bb_vsrcs: []
+  #sim_vsrcs: []
+  #sim_csrcs: []
+  #added_opts: []
+  
+sim.submit:
+  command: "${vlsi.submit.command}"
+  command_meta: lazysubst
+  settings: "vlsi.submit.settings"
+  settings_meta: lazycrossref
