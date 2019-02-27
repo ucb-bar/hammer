@@ -1187,7 +1187,7 @@ class MentorTool(HammerTool):
         assert isinstance(list_of_vars, list)
 
         mentor_vars = {
-            "MGLS_LICENSE_FILE": self.get_setting("mentor.MGLS_LICENSE_FILE")
+            "MGLS_LICENSE_FILE": self.get_setting("mentor.MGLS_LICENSE_FILE"),
             "MENTOR_HOME": self.get_setting("mentor.mentor_home")
         }
 
