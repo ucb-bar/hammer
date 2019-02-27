@@ -399,13 +399,13 @@ class HammerTechnology:
         """
         tech_setting_key = "technology.{name}.extracted_tarballs_dir".format(name=self.name)
         if self.has_setting(tech_setting_key):
-            tech_setting = str(self.get_setting(tech_setting_key))  # type: str
-            if tech_setting != "null":
+            tech_setting = self.get_setting(tech_setting_key)  # type: Optional[str]
+            if tech_setting is not None:
                 return tech_setting
 
         # No tech setting
-        extracted_tarballs_dir_setting = str(self.get_setting("vlsi.technology.extracted_tarballs_dir"))  # type: str
-        if extracted_tarballs_dir_setting == "null":
+        extracted_tarballs_dir_setting = self.get_setting("vlsi.technology.extracted_tarballs_dir")  # type: Optional[str]
+        if extracted_tarballs_dir_setting is None:
             return os.path.join(self.cache_dir, "extracted")
         else:
             return extracted_tarballs_dir_setting

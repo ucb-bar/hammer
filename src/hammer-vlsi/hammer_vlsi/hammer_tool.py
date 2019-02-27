@@ -695,7 +695,7 @@ class HammerTool(metaclass=ABCMeta):
         """Get the config for this tool."""
         return reduce(add_lists, map(lambda path: hammer_config.load_config_from_defaults(path), self.config_dirs))
 
-    def get_setting(self, key: str, nullvalue: Optional[str] = None) -> Any:
+    def get_setting(self, key: str, nullvalue: Any = None) -> Any:
         """
         Get a particular setting from the database.
 
@@ -703,10 +703,7 @@ class HammerTool(metaclass=ABCMeta):
         :param nullvalue: Value to return in case of null (leave as None to use the default).
         """
         try:
-            if nullvalue is None:
-                return self._database.get_setting(key)
-            else:
-                return self._database.get_setting(key, nullvalue)
+            return self._database.get_setting(key, nullvalue)
         except AttributeError:
             raise ValueError("Internal error: no database set by hammer-vlsi")
 
