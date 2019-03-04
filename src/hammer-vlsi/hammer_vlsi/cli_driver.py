@@ -187,7 +187,7 @@ class CLIDriver:
             "par_to_lvs": self.par_to_lvs_action,
             "par-to-lvs": self.par_to_lvs_action,
             "drc": self.drc_action,
-            "lvs": self.lvs_action
+            "lvs": self.lvs_action,
             "formal": self.formal_action,
             "power": self.power_action
         }, self.all_hierarchical_actions)
