@@ -16,21 +16,21 @@ class ModuleSpec(NamedTuple('ModuleSpec', [
 ])):
     __slots__ = ()
 
-class PathSpec(NamedTuple('PathSpec', [
+class PortSpec(NamedTuple('PortSpec', [
     ('path', List[str])
 ])):
     __slots__ = ()
 
 class TimingPathSpec(NamedTuple('TimingPathSpec', [
-    ('to', Optional[PathSpec]),
-    ('from', Optional[PathSpec]),
-    ('through', Optional[PathSpec])
+    ('to', Optional[PortSpec]),
+    ('from', Optional[PortSpec]),
+    ('through', Optional[PortSpec])
 ])):
     __slots__ = ()
 
 class CriticalPathEntry(NamedTuple('CriticalPathEntry', [
     ('module', ModuleSpec),
-    ('clock', Optional[PathSpec]),
+    ('clock', Optional[PortSpec]), # TODO make this connect to HammerIR clock entry somehow (HammerClockSpec??)
     ('target', Optional[float]),
     ('value', Optional[float])
 ])):
@@ -38,11 +38,12 @@ class CriticalPathEntry(NamedTuple('CriticalPathEntry', [
 
     @staticmethod
     def from_ir(ir: Dict[str, Union[str, List[str]]]) -> CriticalPathEntry:
+        # Not yet implemented
         pass
 
 class TimingPathEntry(NamedTuple('TimingPathEntry', [
     ('timing_path', TimingPathSpec),
-    ('clock', Optional[PathSpec]),
+    ('clock', Optional[PortSpec]), # TODO same as above
     ('target', Optional[float]),
     ('value', Optional[float])
 ])):
@@ -50,20 +51,23 @@ class TimingPathEntry(NamedTuple('TimingPathEntry', [
 
     @staticmethod
     def from_ir(ir: Dict[str, Union[str, List[str]]]) -> TimingPathEntry:
+        # Not yet implemented
         pass
 
 class ModuleAreaEntry(NamedTuple('ModuleAreaEntry', [
-    ('module', TimingPathSpec),
+    ('module', ModuleSpec),
     ('value', Optional[float])
 ])):
     __slots__ = ()
 
     @staticmethod
     def from_ir(ir: Dict[str, Union[str, List[str]]]) -> ModuleAreaEntry:
+        # Not yet implemented
         pass
 
+# TODO document this
 MetricsDBEntry = Union[CriticalPathEntry, TimingPathEntry, ModuleAreaEntry]
-SupportMap = Dict[str, Callable[MetricsDBEntry, List[str]]
+SupportMap = Dict[str, Callable[Tuple[str, MetricsDBEntry], List[str]]
 
 FromIRMap = {
     "critical path": CriticalPathEntry.from_ir,
@@ -116,7 +120,7 @@ class HasMetricSupport(HammerTool):
                     entry = FromIRMap[mtype](testcase_data) # type: MetricsDBEntry
                     db.create_entry(key, entry)
                 else:
-                    raise ValueError("Metric IR field <{}> is not supported. Did you forget to update FromIRMap?")
+                    raise ValueError("Metric IR field <{}> is not supported. Did you forget to update FromIRMap?".format(mtype))
         return db
 
     def generate_metric_requests_from_db(self, db: MetricsDB) -> List[str]:
@@ -124,7 +128,7 @@ class HasMetricSupport(HammerTool):
         for key in db.entries:
             entry = db.get_entry(key)
             if self._is_supported(entry):
-                output.extend(self._support_map[entry.__class__.__name__](entry))
+                output.extend(self._support_map[entry.__class__.__name__](key, entry))
         return output
 
     def generate_metric_requests_from_ir(self, ir: Union[str, file]) -> List[str]:
