@@ -24,6 +24,9 @@ class PortSpec(NamedTuple('PortSpec', [
 ])):
     __slots__ = ()
 
+# TODO document me
+IRType = Dict[str, Union[str, List[str]]]
+
 # I would like to call these "to" and "from" but "from" is a keyword in python
 class TimingPathSpec(NamedTuple('TimingPathSpec', [
     ('start', Optional[PortSpec]),
@@ -43,7 +46,7 @@ class CriticalPathEntry(NamedTuple('CriticalPathEntry', [
     __slots__ = ()
 
     @staticmethod
-    def from_ir(ir: Dict[str, Union[str, List[str]]]) -> CriticalPathEntry:
+    def from_ir(ir: IRType) -> CriticalPathEntry:
         # Not yet implemented
         pass
 
@@ -56,7 +59,7 @@ class TimingPathEntry(NamedTuple('TimingPathEntry', [
     __slots__ = ()
 
     @staticmethod
-    def from_ir(ir: Dict[str, Union[str, List[str]]]) -> TimingPathEntry:
+    def from_ir(ir: IRType) -> TimingPathEntry:
         # Not yet implemented
         pass
 
@@ -67,7 +70,7 @@ class ModuleAreaEntry(NamedTuple('ModuleAreaEntry', [
     __slots__ = ()
 
     @staticmethod
-    def from_ir(ir: Dict[str, Union[str, List[str]]]) -> ModuleAreaEntry:
+    def from_ir(ir: IRType) -> ModuleAreaEntry:
         # Not yet implemented
         pass
 
@@ -80,7 +83,7 @@ FromIRMap = {
     "critical path": CriticalPathEntry.from_ir,
     "timing path": TimingPathEntry.from_ir,
     "area": ModuleAreaEntry.from_ir
-} # type: Dict[str, Callable[[Dict[str, Union[str, List[str]]]], MetricsDBEntry]]
+} # type: Dict[str, Callable[[IRType], MetricsDBEntry]]
 
 class MetricsDB:
 
