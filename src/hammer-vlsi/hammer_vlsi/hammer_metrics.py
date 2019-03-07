@@ -19,10 +19,18 @@ class ModuleSpec(NamedTuple('ModuleSpec', [
 ])):
     __slots__ = ()
 
+    @staticmethod
+    def from_str(s: str) -> ModuleSpec:
+        return ModuleSpec(s.split("/"))
+
 class PortSpec(NamedTuple('PortSpec', [
     ('path', List[str])
 ])):
     __slots__ = ()
+
+    @staticmethod
+    def from_str(s: str) -> PortSpec:
+        return PortSpec(s.split("/"))
 
 # TODO document me
 IRType = Dict[str, Union[str, List[str]]]
@@ -35,7 +43,19 @@ class TimingPathSpec(NamedTuple('TimingPathSpec', [
 ])):
     __slots__ = ()
 
-    # TODO assert that one of the 3 values is not None
+    @staticmethod
+    def from_ir(ir: IRType) -> TimingPathSpec:
+        start = ir["start"] if "start" in ir else ""
+        end = ir["end"] if "end" in ir else ""
+        through = ir["through"] if "through" in ir else ""
+        assert isinstance(start, str)
+        assert isinstance(end, str)
+        assert isinstance(through, str)
+        startspec = PortSpec.from_str(start) if "start" in ir else None
+        endspec = PortSpec.from_str(end) if "end" in ir else None
+        throughspec = PortSpec.from_str(through) if "through" in ir else None
+        assert startspec is not None or endspec is not None or throughspec is not None, "At least one of start, end, or through must not be None"
+        return TimingPathSpec(startspec, endspec, throughspec)
 
 class CriticalPathEntry(NamedTuple('CriticalPathEntry', [
     ('module', ModuleSpec),
@@ -47,8 +67,18 @@ class CriticalPathEntry(NamedTuple('CriticalPathEntry', [
 
     @staticmethod
     def from_ir(ir: IRType) -> CriticalPathEntry:
-        # Not yet implemented
-        pass
+        try:
+            module = ir["module"]
+            clock = ir["clock"] if "clock" in ir else ""
+            assert isinstance(module, str)
+            assert isinstance(clock, str)
+            return CriticalPathEntry(
+                ModuleSpec.from_str(module),
+                PortSpec.from_str(clock) if "clock" in ir else None,
+                None,
+                None)
+        except:
+            raise ValueError("Invalid IR for CriticalPathEntry: {}".format(ir))
 
 class TimingPathEntry(NamedTuple('TimingPathEntry', [
     ('timing_path', TimingPathSpec),
@@ -60,8 +90,16 @@ class TimingPathEntry(NamedTuple('TimingPathEntry', [
 
     @staticmethod
     def from_ir(ir: IRType) -> TimingPathEntry:
-        # Not yet implemented
-        pass
+        try:
+            clock = ir["clock"] if "clock" in ir else ""
+            assert isinstance(clock, str)
+            return TimingPathEntry(
+                TimingPathSpec.from_ir(ir),
+                PortSpec.from_str(clock) if "clock" in ir else None,
+                None,
+                None)
+        except:
+            raise ValueError("Invalid IR for TimingPathEntry: {}".format(ir))
 
 class ModuleAreaEntry(NamedTuple('ModuleAreaEntry', [
     ('module', ModuleSpec),
@@ -71,8 +109,14 @@ class ModuleAreaEntry(NamedTuple('ModuleAreaEntry', [
 
     @staticmethod
     def from_ir(ir: IRType) -> ModuleAreaEntry:
-        # Not yet implemented
-        pass
+        try:
+            mod = ir["module"]
+            assert isinstance(mod, str)
+            return ModuleAreaEntry(
+                ModuleSpec.from_str(mod),
+                None)
+        except:
+            raise ValueError("Invalid IR for TimingPathEntry: {}".format(ir))
 
 # TODO document this
 MetricsDBEntry = Union[CriticalPathEntry, TimingPathEntry, ModuleAreaEntry]
