@@ -7,8 +7,11 @@
 #
 #  See LICENSE for licence details.
 
-from hammer_util import add_dicts
-from typing import NamedTuple, Optional, List, Any, Dict, Callable
+from hammer_utils import add_dicts
+from hammer_vlsi import HammerTool
+from abc import abstractmethod
+from typing import NamedTuple, Optional, List, Any, Dict, Callable, Union, TextIO
+from functools import reduce
 import yaml
 
 class ModuleSpec(NamedTuple('ModuleSpec', [
@@ -21,12 +24,15 @@ class PortSpec(NamedTuple('PortSpec', [
 ])):
     __slots__ = ()
 
+# I would like to call these "to" and "from" but "from" is a keyword in python
 class TimingPathSpec(NamedTuple('TimingPathSpec', [
-    ('to', Optional[PortSpec]),
-    ('from', Optional[PortSpec]),
+    ('start', Optional[PortSpec]),
+    ('end', Optional[PortSpec]),
     ('through', Optional[PortSpec])
 ])):
     __slots__ = ()
+
+    # TODO assert that one of the 3 values is not None
 
 class CriticalPathEntry(NamedTuple('CriticalPathEntry', [
     ('module', ModuleSpec),
@@ -67,13 +73,14 @@ class ModuleAreaEntry(NamedTuple('ModuleAreaEntry', [
 
 # TODO document this
 MetricsDBEntry = Union[CriticalPathEntry, TimingPathEntry, ModuleAreaEntry]
-SupportMap = Dict[str, Callable[Tuple[str, MetricsDBEntry], List[str]]
+#SupportMap = Dict[str, Callable[[str, MetricsDBEntry], List[str]]]
+SupportMap = Dict[str, Callable[[str, Any], List[str]]]
 
 FromIRMap = {
     "critical path": CriticalPathEntry.from_ir,
     "timing path": TimingPathEntry.from_ir,
     "area": ModuleAreaEntry.from_ir
-}
+} # type: Dict[str, Callable[[Dict[str, Union[str, List[str]]]], MetricsDBEntry]]
 
 class MetricsDB:
 
@@ -100,12 +107,12 @@ class HasMetricSupport(HammerTool):
 
     @property
     def _support_map(self) -> SupportMap:
-        return {} # type: SupportMap
+        return {}
 
     def _is_supported(self, entry: MetricsDBEntry) -> bool:
-        return (entry.__class__ in _support_map)
+        return (entry.__class__ in self._support_map)
 
-    def create_metrics_db_from_ir(self, ir: Union[str, file]) -> MetricsDB:
+    def create_metrics_db_from_ir(self, ir: Union[str, TextIO]) -> MetricsDB:
         # convert to a dict
         y = yaml.load(ir)
         # create a db
@@ -113,9 +120,9 @@ class HasMetricSupport(HammerTool):
         if self.namespace in y:
             testcases = y[self.namespace]
             for testcase in testcases:
-                key = "{}.{}".format(self.namespace, self.testcase)
+                key = "{}.{}".format(self.namespace, testcase)
                 testcase_data = testcases[testcase]
-                mtype = testcase_data["type"] # type: Dict[str, Union[str, List[str]]]
+                mtype = testcase_data["type"] # type: str
                 if mtype in FromIRMap:
                     entry = FromIRMap[mtype](testcase_data) # type: MetricsDBEntry
                     db.create_entry(key, entry)
@@ -124,14 +131,14 @@ class HasMetricSupport(HammerTool):
         return db
 
     def generate_metric_requests_from_db(self, db: MetricsDB) -> List[str]:
-        output = []
+        output = [] # type: List[str]
         for key in db.entries:
             entry = db.get_entry(key)
             if self._is_supported(entry):
                 output.extend(self._support_map[entry.__class__.__name__](key, entry))
         return output
 
-    def generate_metric_requests_from_ir(self, ir: Union[str, file]) -> List[str]:
+    def generate_metric_requests_from_ir(self, ir: Union[str, TextIO]) -> List[str]:
         return self.generate_metric_requests_from_db(self.create_metrics_db_from_ir(ir))
 
     # This will be the key phrase used in the IR
@@ -144,27 +151,29 @@ class HasAreaMetricSupport(HasMetricSupport):
 
     @property
     def _support_map(self) -> SupportMap:
-        return reduce(add_dicts, [super()._support_map, {
+        x = reduce(add_dicts, [super()._support_map, {
             'ModuleAreaEntry': self.get_module_area
-        }])
+        }]) # type: SupportMap
+        return x
 
     @abstractmethod
-    def get_module_area(self, key: str, module: ModuleSpec) -> List[str]:
+    def get_module_area(self, key: str, entry: ModuleAreaEntry) -> List[str]:
         pass
 
 class HasTimingPathMetricSupport(HasMetricSupport):
 
     @property
     def _support_map(self) -> SupportMap:
-        return reduce(add_dicts, [super()._support_map, {
+        x = reduce(add_dicts, [super()._support_map, {
             'CriticalPathEntry': self.get_critical_path,
             'TimingPathEntry': self.get_timing_path
-        }])
+        }]) # type: SupportMap
+        return x
 
     @abstractmethod
-    def get_critical_path(self, key: str, module: ModuleSpec) -> List[str]:
+    def get_critical_path(self, key: str, entry: CriticalPathEntry) -> List[str]:
         pass
 
     @abstractmethod
-    def get_timing_path(self, key: str, timing_path: TimingPathSpec) -> List[str]:
+    def get_timing_path(self, key: str, entry: TimingPathEntry) -> List[str]:
         pass
