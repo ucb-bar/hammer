@@ -972,23 +972,49 @@ class HasCPFSupport(HammerTool):
 class HammerFormalLECTool(HammerTool):
     ### Generated interface HammerFormalLECTool ###
     @property
-    def input_files(self) -> List[str]:
+    def top_module(self) -> str:
         """
-        Get the input collection of source RTL files (e.g. *.v).
+        Get the top-level module.
 
-        :return: The input collection of source RTL files (e.g. *.v).
+        :return: The top-level module.
         """
         try:
-            return self.attr_getter("_input_files", None)
+            return self.attr_getter("_top_module", None)
         except AttributeError:
-            raise ValueError("Nothing set for the input collection of source RTL files (e.g. *.v) yet")
+            raise ValueError("Nothing set for the top-level module yet")
 
-    @input_files.setter
-    def input_files(self, value: List[str]) -> None:
-        """Set the input collection of source RTL files (e.g. *.v)."""
+    @top_module.setter
+    def top_module(self, value: str) -> None:
+        """Set the top-level module."""
+        if not isinstance(value, str):
+            raise TypeError("top_module must be a str")
+        self.attr_setter("_top_module", value)
+
+    @property
+    def reference(self) -> List[str]:
+        try:
+            return self.attr_getter("_reference", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the reference verilog files")
+
+    @reference.setter
+    def reference(self, value: List[str]) -> None:
         if not (isinstance(value, List)):
-            raise TypeError("input_files must be a List[str]")
-        self.attr_setter("_input_files", value)
+            raise TypeError("reference must be a List[str]")
+        self.attr_setter("_reference", value)
+
+    @property
+    def implementation(self) -> List[str]:
+        try:
+            return self.attr_getter("_implementation", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the implementation verilog files")
+
+    @implementation.setter
+    def implementation(self, value: List[str]) -> None:
+        if not (isinstance(value, List)):
+            raise TypeError("implementation must be a List[str]")
+        self.attr_setter("_implementation", value)
 
 
 class HammerPowerTool(HammerTool):

@@ -711,12 +711,15 @@ class CLIDriver:
         if isinstance(verilogs, List) and len(verilogs) > 0:
             config.update({'synthesis.inputs.input_files': list(verilogs)})
             config.update({'par.inputs.input_files': list(verilogs)})
+            config.update({'power.inputs.input_files': list(verilogs)})
 
         # Top module.
         # (optional, since it can also be specified from JSON)
         top_module = get_nonempty_str(args['top'])
         if top_module is not None:
             config['synthesis.inputs.top_module'] = top_module
+            config['formal.inputs.top_module'] = top_module
+            config['power.inputs.top_module'] = top_module
 
         # Waveform files
         waveforms = args['waveform']

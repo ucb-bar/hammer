@@ -541,6 +541,18 @@ sram_generator.submit:
   settings: "vlsi.submit.settings"
   settings_meta: lazycrossref
 
+formal.submit:
+  command: "${vlsi.submit.command}"
+  command_meta: lazysubst
+  settings: "vlsi.submit.settings"
+  settings_meta: lazycrossref
+
+power.submit:
+  command: "${vlsi.submit.command}"
+  command_meta: lazysubst
+  settings: "vlsi.submit.settings"
+  settings_meta: lazycrossref
+
 technology.core:
     # Key name for the technology stackup
     # This should exist in the stackups list in the tech json

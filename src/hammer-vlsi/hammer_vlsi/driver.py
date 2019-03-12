@@ -481,12 +481,19 @@ class HammerDriver:
         formal_tool = formal_tool_get  # type: HammerFormalLECTool
         formal_tool.name = formal_tool_name
         formal_tool.logger = self.log.context("formal")
+        formal_tool.technology = self.tech
         formal_tool.set_database(self.database)
+        formal_tool.submit_command = HammerSubmitCommand.get("formal", self.database)
         formal_tool.run_dir = run_dir
 
-        formal_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
-        if len(formal_tool.input_files) < 2:
-            self.log.error("There must be at least two input files for formal tools: reference and implementation")
+        formal_tool.top_module = self.database.get_setting("formal.inputs.top_module", nullvalue="")
+        formal_tool.reference = self.database.get_setting("formal.inputs.reference")
+        if not formal_tool.reference:
+            self.log.error("There must be reference files")
+            return False
+        formal_tool.implementation = self.database.get_setting("formal.inputs.implementation")
+        if not formal_tool.implementation:
+            self.log.error("There must be implementation files")
             return False
 
         self.formal_tool = formal_tool
@@ -520,11 +527,12 @@ class HammerDriver:
         power_tool.logger = self.log.context("power")
         power_tool.technology = self.tech
         power_tool.set_database(self.database)
+        power_tool.submit_command = HammerSubmitCommand.get("power", self.database)
         power_tool.run_dir = run_dir
 
         # TODO: better way to get input files?
-        power_tool.top_module = self.database.get_setting("synthesis.inputs.top_module", nullvalue="")
-        power_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
+        power_tool.top_module = self.database.get_setting("power.inputs.top_module", nullvalue="")
+        power_tool.input_files = self.database.get_setting("power.inputs.input_files")
         if len(power_tool.input_files) == 0:
             self.log.error("No verilog files specified for power analysis tools")
             return False
