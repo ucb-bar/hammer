@@ -834,11 +834,15 @@ class HammerTool(metaclass=ABCMeta):
                 clock = clock._replace(path=clock_port["path"])
             if "uncertainty" in clock_port:
                 clock = clock._replace(uncertainty=TimeValue(clock_port["uncertainty"]))
+            generated = None  # type: Optional[bool]
             if "generated" in clock_port:
-                clock = clock._replace(generated=clock_port["generated"],
+                generated = bool(clock_port["generated"])
+                if generated:
+                    clock = clock._replace(
                         source_path=clock_port["source_path"],
                         divisor=int(clock_port["divisor"])
-                        )
+                    )
+            clock = clock._replace(generated=generated)
             output.append(clock)
         return output
 
