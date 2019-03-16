@@ -332,11 +332,11 @@ par:
   # Valid options are:
   # - blank - Specify no power straps
   # - manual - Specify the contents of a manual TCL script to use, specified in power_straps_script_contents.
-  # - generate - Generate power straps from config/IR. (not implemented yet)
+  # - generate - Generate power straps from Hammer IR.
   power_straps_mode: blank
   power_straps_script_contents: null
 
-  # If power_straps_mode is generate, which method to use.
+  # If power_straps_mode is 'generate', which method to use.
   # Currently, the valid options are:
   # - by_tracks - Specify the power strap plan per layer in terms of tracks
   generate_power_straps_method: "by_tracks"
