@@ -13,15 +13,24 @@ from abc import abstractmethod
 from typing import NamedTuple, Optional, List, Any, Dict, Callable, Union, TextIO
 from functools import reduce
 import yaml
+import copy
+import os
 
+# Note: Do not include the top module in the module spec
+# e.g. [] = root
+#      ['inst1'] = inst at first level of hierarchy
 class ModuleSpec(NamedTuple('ModuleSpec', [
     ('path', List[str])
 ])):
     __slots__ = ()
 
     @staticmethod
-    def from_str(s: str) -> ModuleSpec:
-        return ModuleSpec(s.split("/"))
+    def from_str(s: str) -> 'ModuleSpec':
+        return ModuleSpec(list(filter(lambda x: x != '', s.split("/"))))
+
+    @property
+    def is_top(self) -> bool:
+        return len(self.path) == 0
 
 class PortSpec(NamedTuple('PortSpec', [
     ('path', List[str])
@@ -29,8 +38,8 @@ class PortSpec(NamedTuple('PortSpec', [
     __slots__ = ()
 
     @staticmethod
-    def from_str(s: str) -> PortSpec:
-        return PortSpec(s.split("/"))
+    def from_str(s: str) -> 'PortSpec':
+        return PortSpec(list(filter(lambda x: x != '', s.split("/"))))
 
 # TODO document me
 IRType = Dict[str, Union[str, List[str]]]
@@ -44,7 +53,7 @@ class TimingPathSpec(NamedTuple('TimingPathSpec', [
     __slots__ = ()
 
     @staticmethod
-    def from_ir(ir: IRType) -> TimingPathSpec:
+    def from_ir(ir: IRType) -> 'TimingPathSpec':
         start = ir["start"] if "start" in ir else ""
         end = ir["end"] if "end" in ir else ""
         through = ir["through"] if "through" in ir else ""
@@ -66,7 +75,7 @@ class CriticalPathEntry(NamedTuple('CriticalPathEntry', [
     __slots__ = ()
 
     @staticmethod
-    def from_ir(ir: IRType) -> CriticalPathEntry:
+    def from_ir(ir: IRType) -> 'CriticalPathEntry':
         try:
             module = ir["module"]
             clock = ir["clock"] if "clock" in ir else ""
@@ -89,7 +98,7 @@ class TimingPathEntry(NamedTuple('TimingPathEntry', [
     __slots__ = ()
 
     @staticmethod
-    def from_ir(ir: IRType) -> TimingPathEntry:
+    def from_ir(ir: IRType) -> 'TimingPathEntry':
         try:
             clock = ir["clock"] if "clock" in ir else ""
             assert isinstance(clock, str)
@@ -108,7 +117,7 @@ class ModuleAreaEntry(NamedTuple('ModuleAreaEntry', [
     __slots__ = ()
 
     @staticmethod
-    def from_ir(ir: IRType) -> ModuleAreaEntry:
+    def from_ir(ir: IRType) -> 'ModuleAreaEntry':
         try:
             mod = ir["module"]
             assert isinstance(mod, str)
@@ -157,11 +166,14 @@ class HasMetricSupport(HammerTool):
         return {}
 
     def _is_supported(self, entry: MetricsDBEntry) -> bool:
-        return (entry.__class__ in self._support_map)
+        return (entry.__class__.__name__ in self._support_map)
 
     def create_metrics_db_from_ir(self, ir: Union[str, TextIO]) -> MetricsDB:
         # convert to a dict
-        y = yaml.load(ir)
+        y = yaml.load(ir) # type: Optional[Dict[Str, Any]]
+        if y is None:
+            y = {}
+        assert(isinstance(y, dict))
         # create a db
         db = MetricsDB()
         if self.namespace in y:
@@ -169,6 +181,8 @@ class HasMetricSupport(HammerTool):
             for testcase in testcases:
                 key = "{}.{}".format(self.namespace, testcase)
                 testcase_data = testcases[testcase]
+                if "type" not in testcase_data:
+                    raise ValueError("Missing \"type\" field in testcase {}".format(testcase))
                 mtype = testcase_data["type"] # type: str
                 if mtype in FromIRMap:
                     entry = FromIRMap[mtype](testcase_data) # type: MetricsDBEntry
@@ -188,6 +202,12 @@ class HasMetricSupport(HammerTool):
     def generate_metric_requests_from_ir(self, ir: Union[str, TextIO]) -> List[str]:
         return self.generate_metric_requests_from_db(self.create_metrics_db_from_ir(ir))
 
+    def generate_metric_requests_from_file(self, filename: str) -> List[str]:
+        if not os.path.isfile(filename):
+            raise ValueError("Metrics IR file {} does not exist or is not a file".format(filename))
+        with open(filename, "r") as f:
+            return self.generate_metric_requests_from_ir(f)
+
     # This will be the key phrase used in the IR
     @property
     @abstractmethod
@@ -198,9 +218,10 @@ class HasAreaMetricSupport(HasMetricSupport):
 
     @property
     def _support_map(self) -> SupportMap:
-        x = reduce(add_dicts, [super()._support_map, {
+        x = copy.deepcopy(super()._support_map) # type: SupportMap
+        x.update({
             'ModuleAreaEntry': self.get_module_area
-        }]) # type: SupportMap
+        })
         return x
 
     @abstractmethod
@@ -211,10 +232,11 @@ class HasTimingPathMetricSupport(HasMetricSupport):
 
     @property
     def _support_map(self) -> SupportMap:
-        x = reduce(add_dicts, [super()._support_map, {
+        x = copy.deepcopy(super()._support_map) # type: SupportMap
+        x.update({
             'CriticalPathEntry': self.get_critical_path,
             'TimingPathEntry': self.get_timing_path
-        }]) # type: SupportMap
+        })
         return x
 
     @abstractmethod
