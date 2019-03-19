@@ -395,6 +395,10 @@ drc.inputs:
   # Custom DRC command text to add after the boilerplate commands at the top of the run file
   additional_drc_text: ""
 
+vlsi.metrics:
+  # path to the metrics IR input (o1ptional string)
+  input_path: null
+
 # inherit settings from vlsi.submit but allow us to override them
 drc.submit:
   command: "${vlsi.submit.command}"

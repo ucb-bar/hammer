@@ -170,7 +170,7 @@ class HasMetricSupport(HammerTool):
 
     def create_metrics_db_from_ir(self, ir: Union[str, TextIO]) -> MetricsDB:
         # convert to a dict
-        y = yaml.load(ir) # type: Optional[Dict[Str, Any]]
+        y = yaml.load(ir) # type: Optional[Dict[str, Any]]
         if y is None:
             y = {}
         assert(isinstance(y, dict))
