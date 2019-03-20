@@ -28,6 +28,9 @@ class ModuleSpec(NamedTuple('ModuleSpec', [
     def from_str(s: str) -> 'ModuleSpec':
         return ModuleSpec(list(filter(lambda x: x != '', s.split("/"))))
 
+    def append(self, child: str) -> 'ModuleSpec':
+        return ModuleSpec(self.path + [child])
+
     @property
     def is_top(self) -> bool:
         return len(self.path) == 0
@@ -138,10 +141,59 @@ FromIRMap = {
     "area": ModuleAreaEntry.from_ir
 } # type: Dict[str, Callable[[IRType], MetricsDBEntry]]
 
+class ModuleTree:
+
+    index = 0
+
+    def __init__(self):
+        self._children = {} # type: Dict[str, ModuleTree]
+        self._rename_id = index
+        ModuleTree.index += 1
+        self._no_ungroup = False
+        # More properties go here
+
+    def get_or_create_node(self, name: str) -> 'ModuleTree':
+        if name in self._children:
+            return self._children[name]
+        else:
+            node = ModuleTree()
+            self._children[name] = node
+            return node
+
+    def get_no_ungroup_paths(self, prefix: Optional[ModuleSpec] = None) -> List[ModuleSpec]:
+        result = [] # type: List[ModuleSpec]
+        for name, child in self._children.items():
+            new_prefix = ModuleSpec([name])
+            if prefix is not None:
+                new_prefix = prefix.append(name)
+            if child.get_no_ungroup:
+                result.append(new_prefix)
+            result.extend(child.get_no_ungroup_paths(new_prefix))
+        return result
+
+    def add_module(self, m: ModuleSpec) -> 'ModuleTree':
+        child = self.get_or_create_node(m.path[0])
+        if len(m.path) > 1:
+            return child.add_module(ModuleSpec(m.path[1:]))
+        else:
+            return child
+
+    @property
+    def get_no_ungroup(self) -> bool:
+        return self._no_ungroup
+
+    def set_no_ungroup(self, val: bool = True) -> None:
+        self._no_ungroup = val
+
+    @property
+    def is_leaf(self) -> bool:
+        return len(self._children) == 0
+
 class MetricsDB:
 
     def __init__(self):
         self._db = {} # type: Dict[str, MetricsDBEntry]
+        self._tree = ModuleTree()
 
     def create_entry(self, key: str, entry: MetricsDBEntry) -> None:
         if key in self._db:
@@ -158,6 +210,10 @@ class MetricsDB:
     @property
     def entries(self) -> Dict[str, MetricsDBEntry]:
         return self._db
+
+    @property
+    def module_tree(self) -> ModuleTree:
+        return self._tree
 
 class HasMetricSupport(HammerTool):
 
