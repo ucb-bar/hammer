@@ -176,6 +176,19 @@ style: "waterfall"
         self.assertEqual(db.get_setting("foo.later"), "later")
         self.assertEqual(db.get_setting("foo.methodology"), "agile design")
 
+    def test_meta_lazysubst_array(self) -> None:
+        """
+        Check that lazysubst works correctly with an array.
+        """
+        db = hammer_config.HammerDatabase()
+        d = hammer_config.load_config_from_string("""
+        target: "foo"
+        array: ["${target}bar"]
+        array_meta: lazysubst
+        """, is_yaml=True)
+        db.update_core([d])
+        self.assertEqual(db.get_setting("array"), ["foobar"])
+
     def test_meta_append(self) -> None:
         """
         Test that the meta attribute "append" works.

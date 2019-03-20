@@ -203,13 +203,25 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
         config_dict[key] = perform_subst(value)
 
     def subst_targets(key: str, value: Any) -> List[str]:
-        assert isinstance(value, str)
+        # subst can operate on either a string or a list
+
+        # subst_strings is e.g. ["${a} 1", "${b} 2"]
+        subst_strings = []  # type: List[str]
+        if isinstance(value, str):
+            subst_strings.append(value)
+        elif isinstance(value, list):
+            for i in value:
+                assert isinstance(i, str)
+            subst_strings = value
+        else:
+            raise ValueError("subst must operate on a str or List[str]; got {0} instead".format(value))
 
         output_vars = []  # type: List[str]
 
-        matches = re.finditer(__VARIABLE_EXPANSION_REGEX, value, re.DOTALL)
-        for match in matches:
-            output_vars.append(match.group(1))
+        for subst_value in subst_strings:
+            matches = re.finditer(__VARIABLE_EXPANSION_REGEX, subst_value, re.DOTALL)
+            for match in matches:
+                output_vars.append(match.group(1))
 
         return output_vars
 
