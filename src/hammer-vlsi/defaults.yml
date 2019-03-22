@@ -585,6 +585,7 @@ sim.inputs:
   defines: []
   # Cross compiler options
   compiler_opts: []
+  #compiler_opts_meta: lazysubst
   # Simulation timescale
   timescale: null
   # C source files 
@@ -592,6 +593,7 @@ sim.inputs:
   # Benchmarks to run on simulator
   benchmarks: []
   timescale: null 
+  csrc: []
   
 sim.submit:
   command: "${vlsi.submit.command}"
