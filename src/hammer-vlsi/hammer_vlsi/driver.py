@@ -19,8 +19,8 @@ import hammer_tech
 from .hammer_tool import HammerTool
 from .hooks import HammerToolHookAction
 from .hammer_vlsi_impl import HammerVLSISettings, HammerPlaceAndRouteTool, HammerSynthesisTool, \
-    HammerSignoffTool, HammerDRCTool, HammerLVSTool, \
-    HierarchicalMode, load_tool, PlacementConstraint
+    HammerSignoffTool, HammerDRCTool, HammerLVSTool, HammerSRAMCompilerTool, \
+    HierarchicalMode, load_tool, PlacementConstraint, SRAMParameters
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, HammerVLSILoggingContext
 from .submit_command import HammerSubmitCommand
 
@@ -102,12 +102,14 @@ class HammerDriver:
         self.par_tool = None  # type: Optional[HammerPlaceAndRouteTool]
         self.drc_tool = None  # type: Optional[HammerDRCTool]
         self.lvs_tool = None  # type: Optional[HammerLVSTool]
+        self.gen_srams_tool = None  # type: Optional[HammerSRAMCompilerTool]
 
         # Initialize tool hooks. Used to specify resume/pause hooks after custom hooks have been registered.
         self.post_custom_syn_tool_hooks = []  # type: List[HammerToolHookAction]
         self.post_custom_par_tool_hooks = []  # type: List[HammerToolHookAction]
         self.post_custom_drc_tool_hooks = []  # type: List[HammerToolHookAction]
         self.post_custom_lvs_tool_hooks = []  # type: List[HammerToolHookAction]
+        self.post_custom_gen_srams_tool_hooks = []  # type: List[HammerToolHookAction]
 
     @property
     def project_config(self) -> dict:
@@ -410,6 +412,48 @@ class HammerDriver:
         self.update_tool_configs()
         return True
 
+    def load_gen_srams_tool(self, run_dir: str = "") -> bool:
+        """
+        Loads an SRAM Compiler tool on a given database
+
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
+                        constructor.
+        :return: True if SRAM Compiler tool loading was successful, False otherwise.
+        """
+        if self.tech is None:
+            self.log.error("Must load technology before loading SRAM Compiler tool")
+            return False
+
+        if run_dir == "":
+            run_dir = os.path.join(self.obj_dir, "gen_srams-rundir")
+
+        gen_srams_tool_name = self.database.get_setting("vlsi.core.gen_srams_tool")
+        gen_srams_tool_get = load_tool(
+            path=self.database.get_setting("vlsi.core.gen_srams_tool_path"),
+            tool_name=gen_srams_tool_name
+        )
+        assert isinstance(gen_srams_tool_get, HammerSRAMCompilerTool), "SRAM Compiler tool must be a HammerSRAMCompilerTool"
+        gen_srams_tool = gen_srams_tool_get  # type: HammerSRAMCompilerTool
+        gen_srams_tool.name = gen_srams_tool_name
+        gen_srams_tool.logger = self.log.context("gen_srams")
+        gen_srams_tool.technology = self.tech
+        gen_srams_tool.set_database(self.database)
+        gen_srams_tool.submit_command = HammerSubmitCommand.get("gen_srams", self.database)
+        gen_srams_tool.run_dir = run_dir
+        raw_params = self.database.get_setting("vlsi.inputs.sram_parameters",nullvalue=[])
+        sram_params = list(map(lambda p: SRAMParameters.from_setting(p), raw_params))
+        gen_srams_tool.input_parameters = sram_params
+        # TODO: support hierarchical?
+
+        if len(gen_srams_tool.input_parameters) == 0:
+            self.log.warning("No SRAM parameters specified, no SRAMs will be generated.")
+
+        self.gen_srams_tool = gen_srams_tool
+
+        self.tool_configs["gen_srams"] = gen_srams_tool.get_config()
+        self.update_tool_configs()
+        return True
+
     def set_post_custom_syn_tool_hooks(self, hooks: List[HammerToolHookAction]) -> None:
         """
         Set the extra list of hooks used for control flow (resume/pause) in run_synthesis.
@@ -701,6 +745,44 @@ class HammerDriver:
         output_config = {}  # type: Dict[str, Any]
         try:
             output_config.update(self.lvs_tool.export_config_outputs())
+        except ValueError as e:
+            self.log.fatal(e.args[0])
+            return False, {}
+
+        return run_succeeded, output_config
+
+    def run_gen_srams(self, hook_actions: Optional[List[HammerToolHookAction]] = None, force_override: bool = False) -> Tuple[
+        bool, dict]:
+        """
+        Run SRAM Compiler on a given database.
+
+        :param hook_actions: List of hook actions, or leave as None to use the hooks sets in set_gen_srams_hooks.
+                             Hooks from set_gen_srams_hooks, if present, will be appended afterwards.
+        :param force_override: Set to true to overwrite instead of append.
+        :return: Tuple of (success, output config dict)
+        """
+        if self.gen_srams_tool is None:
+            self.log.error("Must load SRAM Compiler tool before calling run_gen_srams")
+            return False, {}
+
+        self.log.info("Starting SRAM Compiler with tool '%s'" % (self.gen_srams_tool.name))
+
+        if hook_actions is None:
+            hooks_to_use = self.post_custom_gen_srams_tool_hooks
+        elif force_override:
+            hooks_to_use = hook_actions
+        else:
+            hooks_to_use = hook_actions + self.post_custom_gen_srams_tool_hooks
+
+        run_succeeded = self.gen_srams_tool.run(hooks_to_use)
+        if not run_succeeded:
+            self.log.error("SRAM Compiler tool %s failed! Please check its output." % self.gen_srams_tool.name)
+            # Allow the flow to keep running, just in case
+
+        # Record output from the gen_srams_tool into the JSON output
+        output_config = {}  # type: Dict[str, Any]
+        try:
+            output_config.update(self.gen_srams_tool.export_config_outputs())
         except ValueError as e:
             self.log.fatal(e.args[0])
             return False, {}
