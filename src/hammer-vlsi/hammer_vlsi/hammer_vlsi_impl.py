@@ -1454,7 +1454,7 @@ class HammerSimTool(HammerTool):
         try:
             return self.attr_getter("_compiler_opts", None)
         except AttributeError:
-            raise ValueError("Nothing set for the simulation comiler options")
+            raise ValueError("Nothing set for the simulation compiler options")
 
     @compiler_opts.setter
     def compiler_opts(self, value: List[str]) -> None:
@@ -1482,6 +1482,24 @@ class HammerSimTool(HammerTool):
             raise TypeError("timescale must be a str")
         self.attr_setter("_timescale", value)
 
+    @property
+    def csrc(self) -> str:
+        """
+        Get the simulation c sources.
+
+        :return: The simulation c sources.
+        """
+        try:
+            return self.attr_getter("_csrc", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the csrc")
+
+    @csrc.setter
+    def csrc(self, value: str) -> None:
+        """Set the c source input files."""
+        if not (isinstance(value, List[str])):
+            raise TypeError("csrc must be a List[str]")
+        self.attr_setter("_csrc", value)
 
 
 class HasSDCSupport(HammerTool):
