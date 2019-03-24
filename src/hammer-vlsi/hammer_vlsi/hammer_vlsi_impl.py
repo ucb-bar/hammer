@@ -18,7 +18,7 @@ from typing import Callable, Iterable, List, NamedTuple, Optional, Dict, Any, Un
 
 import hammer_config
 from hammer_utils import reverse_dict, deepdict, optional_map, get_or_else, add_dicts
-from hammer_tech import ExtraLibrary
+from hammer_tech import Library, ExtraLibrary
 
 from .constraints import *
 
@@ -193,7 +193,7 @@ class HammerSRAMCompilerTool(HammerTool):
     def export_config_outputs(self) -> Dict[str, Any]:
         outputs = deepdict(super().export_config_outputs())
         simple_ex = []
-        for ex in self.output_libraries:
+        for ex in self.output_libraries: # type: ExtraLibrary
             simple_lib = json.loads(ex.library.serialize())
             if(ex.prefix == None):
                 new_ex = {"library": simple_lib}
@@ -208,12 +208,12 @@ class HammerSRAMCompilerTool(HammerTool):
     # in TSMC16 you can generate only ever generate a single SRAM per run but can
     # generate multiple corners at once
     def generate_all_srams_and_corners(self) -> bool:
-        srams = reduce(list.__add__, list(map(lambda c: self.generate_all_srams(c), self.get_mmmc_corners()))) 
+        srams = reduce(list.__add__, list(map(lambda c: self.generate_all_srams(c), self.get_mmmc_corners()))) # type: List[ExtraLibrary]
         self.output_libraries = srams
         return True
 
     def generate_all_srams(self, corner: MMMCCorner) -> List[ExtraLibrary]:
-        srams = list(map(lambda p: self.generate_sram(p, corner), self.input_parameters))
+        srams = list(map(lambda p: self.generate_sram(p, corner), self.input_parameters)) # type: List[ExtraLibrary]
         return srams
 
     # Run compiler for a single sram and corner
