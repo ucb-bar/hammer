@@ -35,10 +35,10 @@ vlsi.core:
   lvs_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/lvs"]
   lvs_tool_path_meta: subst
 
-  # Path(s) to lvs tools.
-  # Add the built-in path to lvs tools.
-  gen_srams_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/lvs"]
-  gen_srams_tool_path_meta: subst
+  # Path(s) to sram generator tools.
+  # Add the built-in path to sram generator tools.
+  sram_generator_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/sram_generator"]
+  sram_generator_tool_path_meta: subst
 
   # Synthesis tool to use.
   # Currently we can choose from a selection of built-in tools which hammer-vlsi supports.
@@ -53,8 +53,8 @@ vlsi.core:
   # LVS tool to use.
   lvs_tool: "nop"
 
-  # SRAM Compiler tool to use.
-  gen_srams_tool: "nop"
+  # SRAM Generator tool to use.
+  sram_generator_tool: "nop"
 
   # Maximum threads to use in a CAD tool invocation.
   max_threads: 1
@@ -426,7 +426,7 @@ lvs.submit:
   settings_meta: lazycrossref
 
 # inherit settings from vlsi.submit but allow us to override them
-gen_srams.submit:
+sram_generator.submit:
   command: "${vlsi.submit.command}"
   command_meta: lazysubst
   settings: "vlsi.submit.settings"

@@ -110,14 +110,14 @@ class CLIDriver:
         self.par_rundir = ""  # type: Optional[str]
         self.drc_rundir = ""  # type: Optional[str]
         self.lvs_rundir = ""  # type: Optional[str]
-        self.gen_srams_rundir = ""  # type: Optional[str]
+        self.sram_generator_rundir = ""  # type: Optional[str]
 
         # If a subclass has defined these, don't clobber them in init
         # since the subclass still uses this init function.
-        if hasattr(self, "gen_srams_action"):
-            check_CLIActionType_type(self.gen_srams_action)  # type: ignore
+        if hasattr(self, "sram_generator_action"):
+            check_CLIActionType_type(self.sram_generator_action)  # type: ignore
         else:
-            self.gen_srams_action = self.create_gen_srams_action([])  # type: CLIActionConfigType
+            self.sram_generator_action = self.create_sram_generator_action([])  # type: CLIActionConfigType
         if hasattr(self, "synthesis_action"):
             check_CLIActionType_type(self.synthesis_action)  # type: ignore
         else:
@@ -155,8 +155,8 @@ class CLIDriver:
             "dump": self.dump_action,
             "dump-macrosizes": self.dump_macrosizes_action,
             "dump_macrosizes": self.dump_macrosizes_action,
-            "gen-srams": self.gen_srams_action,
-            "gen_srams": self.gen_srams_action,
+            "sram-generator": self.sram_generator_action,
+            "sram_generator": self.sram_generator_action,
             "synthesis": self.synthesis_action,
             "syn": self.synthesis_action,
             "par": self.par_action,
@@ -221,7 +221,7 @@ class CLIDriver:
         """
         return list()
 
-    def get_extra_gen_srams_hooks(self) -> List[HammerToolHookAction]:
+    def get_extra_sram_generator_hooks(self) -> List[HammerToolHookAction]:
         """
         Return a list of extra SRAM generation hooks in this project.
         To be overridden by subclasses.
@@ -286,12 +286,12 @@ class CLIDriver:
         return self.create_action("lvs", hooks if len(hooks) > 0 else None,
                                   pre_action_func, post_load_func, post_run_func)
 
-    def create_gen_srams_action(self, custom_hooks: List[HammerToolHookAction],
+    def create_sram_generator_action(self, custom_hooks: List[HammerToolHookAction],
                           pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
                           post_load_func: Optional[Callable[[HammerDriver], None]] = None,
                           post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
-        hooks = self.get_extra_gen_srams_hooks() + custom_hooks  # type: List[HammerToolHookAction]
-        return self.create_action("gen_srams", hooks if len(hooks) > 0 else None,
+        hooks = self.get_extra_sram_generator_hooks() + custom_hooks  # type: List[HammerToolHookAction]
+        return self.create_action("sram_generator", hooks if len(hooks) > 0 else None,
                                   pre_action_func, post_load_func, post_run_func)
 
     def create_action(self, action_type: str,
@@ -367,12 +367,12 @@ class CLIDriver:
                     post_load_func_checked(driver)
                 success, output = driver.run_lvs(extra_hooks)
                 post_run_func_checked(driver)
-            elif action_type == "gen_srams":
-                if not driver.load_gen_srams_tool(get_or_else(self.gen_srams_rundir, "")):
+            elif action_type == "sram_generator":
+                if not driver.load_sram_generator_tool(get_or_else(self.sram_generator_rundir, "")):
                     return None
                 else:
                     post_load_func_checked(driver)
-                success, output = driver.run_gen_srams(extra_hooks)
+                success, output = driver.run_sram_generator(extra_hooks)
                 post_run_func_checked(driver)
             else:
                 raise ValueError("Invalid action_type = " + str(action_type))

@@ -132,8 +132,8 @@ class DummyHammerTool(HammerTool):
     def steps(self) -> List[HammerToolStep]:
         return []
 
-class HammerSRAMCompilerTool(HammerTool):
-    ### Generated interface HammerSRAMCompilerTool ###
+class HammerSRAMGeneratorTool(HammerTool):
+    ### Generated interface HammerSRAMGeneratorTool ###
     ### DO NOT MODIFY THIS CODE, EDIT generate_properties.py INSTEAD ###
     ### Inputs ###
 
@@ -178,7 +178,7 @@ class HammerSRAMCompilerTool(HammerTool):
             raise TypeError("output_libraries must be a List[ExtraLibrary]")
         self.attr_setter("_output_libraries", value)
 
-    ### END Generated interface HammerSRAMCompilerTool ###
+    ### END Generated interface HammerSRAMGeneratorTool ###
 
     @property
     def steps(self) -> List[HammerToolStep]:

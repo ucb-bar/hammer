@@ -45,7 +45,8 @@ class ILMStruct(NamedTuple('ILMStruct', [
             lef=str(ilm["lef"])
         )
 
-#Transliterated-ish from SRAMGroup in MDF
+# Transliterated-ish from SRAMGroup in MDF
+# TODO: Convert this is to use the HammerIR library once #330 is resolved
 class SRAMParameters(NamedTuple('SRAMParameters', [
     ('name', str),
     ('family', str),
