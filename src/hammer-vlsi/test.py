@@ -19,7 +19,7 @@ import hammer_tech
 import hammer_vlsi
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, Level
 from hammer_logging.test import HammerLoggingCaptureContext
-from hammer_tech import LibraryFilter
+from hammer_tech import LibraryFilter, Library, ExtraLibrary
 from hammer_utils import deeplist, get_or_else
 
 
