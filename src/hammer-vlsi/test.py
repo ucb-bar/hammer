@@ -1111,7 +1111,8 @@ class HammerSRAMGeneratorToolTest(unittest.TestCase):
           assert isinstance(output_libs, list)
           # Should have an sram for each corner(2) and parameter(2) for a total of 4
           self.assertEqual(len(output_libs),4)
-          gds_names = list(map(lambda lib: lib.gds_file, map(lambda ex: ex.library, output_libs))) # type: List[str]
+          libs = list(map(lambda ex: ex.library, output_libs)) # type: List[Library]
+          gds_names = list(map(lambda lib: lib.gds_file, libs)) # type: ignore # These are actually List[str]
           self.assertEqual(set(gds_names), set([
             "sram32x32_0.5V_0.0C.gds",
             "sram32x32_1.5V_125.0C.gds",
