@@ -1049,8 +1049,8 @@ class HammerSRAMGeneratorToolTestContext:
         assert self._driver is not None, "HammerDriver must be initialized before use"
         return self._driver
 
-    def __enter__(self) -> "HammerSignoffToolTestContext":
-        """Initialize context by creating the temp_dir, driver, and loading the signoff tool."""
+    def __enter__(self) -> "HammerSRAMGeneratorToolTestContext":
+        """Initialize context by creating the temp_dir, driver, and loading the sram_generator tool."""
         self.test.assertTrue(hammer_vlsi.HammerVLSISettings.set_hammer_vlsi_path_from_environment(),
                              "hammer_vlsi_path must exist")
         temp_dir = tempfile.mkdtemp()
@@ -1107,7 +1107,7 @@ class HammerSRAMGeneratorToolTest(unittest.TestCase):
           self.assertTrue(c.driver.load_sram_generator_tool())
           self.assertTrue(c.driver.run_sram_generator())
           assert isinstance(c.driver.sram_generator_tool, hammer_vlsi.HammerSRAMGeneratorTool)
-          output_libs = c.driver.sram_generator_tool.output_libraries
+          output_libs = c.driver.sram_generator_tool.output_libraries # type: List[ExtraLibrary]
           assert isinstance(output_libs, list)
           # Should have an sram for each corner(2) and parameter(2) for a total of 4
           self.assertEqual(len(output_libs),4)
