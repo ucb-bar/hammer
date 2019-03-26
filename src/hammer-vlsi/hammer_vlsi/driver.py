@@ -438,9 +438,6 @@ class HammerDriver:
         sram_generator_tool.logger = self.log.context("sram_generator")
         sram_generator_tool.technology = self.tech
         sram_generator_tool.set_database(self.database)
-        print(sram_generator_tool_name)
-        print(sram_generator_tool_get)
-        print(self.database.get_database_json())
         sram_generator_tool.submit_command = HammerSubmitCommand.get("sram_generator", self.database)
         sram_generator_tool.run_dir = run_dir
         raw_params = self.database.get_setting("vlsi.inputs.sram_parameters",nullvalue=[])
