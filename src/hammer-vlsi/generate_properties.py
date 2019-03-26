@@ -153,6 +153,18 @@ def main(args) -> int:
                                         ]
                                         )
 
+    HammerSRAMGeneratorTool = Interface(module="HammerSRAMGeneratorTool",
+                                       filename="hammer_vlsi/hammer_vlsi_impl.py",
+                                       inputs=[
+                                           InterfaceVar("input_parameters", "List[SRAMParameters]",
+                                                        "input sram parameters to be generated")
+                                           ],
+                                       outputs=[
+                                           InterfaceVar("output_libraries", "List[ExtraLibrary]",
+                                                        "list of the hammer tech libraries corresponding to generated srams")
+                                           ]
+                                       )
+
     HammerDRCTool = Interface(module="HammerDRCTool",
                               filename="hammer_vlsi/hammer_vlsi_impl.py",
                               inputs=[
@@ -184,6 +196,7 @@ def main(args) -> int:
     generate_interface(HammerPlaceAndRouteTool)
     generate_interface(HammerDRCTool)
     generate_interface(HammerLVSTool)
+    generate_interface(HammerSRAMGeneratorTool)
 
     if selected_file == "":
         # Export all files

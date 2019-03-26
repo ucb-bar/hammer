@@ -14,7 +14,7 @@ from typing import Dict, NamedTuple, Optional, List, Any
 from hammer_utils import reverse_dict
 from .units import TimeValue, VoltageValue, TemperatureValue
 
-__all__ = ['ILMStruct', 'ClockPort', 'OutputLoadConstraint',
+__all__ = ['ILMStruct', 'SRAMParameters', 'ClockPort', 'OutputLoadConstraint',
            'DelayConstraint', 'ObstructionType', 'PlacementConstraintType',
            'Margins', 'PlacementConstraint', 'MMMCCornerType', 'MMMCCorner']
 
@@ -45,6 +45,32 @@ class ILMStruct(NamedTuple('ILMStruct', [
             lef=str(ilm["lef"])
         )
 
+# Transliterated-ish from SRAMGroup in MDF
+# TODO: Convert this is to use the HammerIR library once #330 is resolved
+class SRAMParameters(NamedTuple('SRAMParameters', [
+    ('name', str),
+    ('family', str),
+    ('depth', int),
+    ('width', int),
+    ('mask', bool),
+    ('vt', str),
+    ('mux', int)
+    ])):
+
+    __slots__ = ()
+
+    @staticmethod
+    def from_setting(d: dict) -> "SRAMParameters":
+        # pylint: disable=missing-docstring
+        return SRAMParameters(
+            name=str(d["name"]),
+            family=str(d["family"]),
+            depth=int(d["depth"]),
+            width=int(d["width"]),
+            mask=bool(d["mask"]),
+            vt=str(d["vt"]),
+            mux=int(d["mux"])
+        )
 
 ClockPort = NamedTuple('ClockPort', [
     ('name', str),

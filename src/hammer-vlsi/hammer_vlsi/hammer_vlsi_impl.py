@@ -13,10 +13,12 @@ import importlib
 from numbers import Number
 import os
 import sys
+import json
 from typing import Callable, Iterable, List, NamedTuple, Optional, Dict, Any, Union
 
 import hammer_config
 from hammer_utils import reverse_dict, deepdict, optional_map, get_or_else, add_dicts
+from hammer_tech import Library, ExtraLibrary
 
 from .constraints import *
 
@@ -129,6 +131,95 @@ class DummyHammerTool(HammerTool):
     @property
     def steps(self) -> List[HammerToolStep]:
         return []
+
+class HammerSRAMGeneratorTool(HammerTool):
+    ### Generated interface HammerSRAMGeneratorTool ###
+    ### DO NOT MODIFY THIS CODE, EDIT generate_properties.py INSTEAD ###
+    ### Inputs ###
+
+    @property
+    def input_parameters(self) -> List[SRAMParameters]:
+        """
+        Get the input sram parameters to be generated.
+
+        :return: The input sram parameters to be generated.
+        """
+        try:
+            return self.attr_getter("_input_parameters", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the input sram parameters to be generated yet")
+
+    @input_parameters.setter
+    def input_parameters(self, value: List[SRAMParameters]) -> None:
+        """Set the input sram parameters to be generated."""
+        if not (isinstance(value, List)):
+            raise TypeError("input_parameters must be a List[SRAMParameters]")
+        self.attr_setter("_input_parameters", value)
+
+
+    ### Outputs ###
+
+    @property
+    def output_libraries(self) -> List[ExtraLibrary]:
+        """
+        Get the list of the hammer tech libraries corresponding to generated srams.
+
+        :return: The list of the hammer tech libraries corresponding to generated srams.
+        """
+        try:
+            return self.attr_getter("_output_libraries", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the list of the hammer tech libraries corresponding to generated srams yet")
+
+    @output_libraries.setter
+    def output_libraries(self, value: List[ExtraLibrary]) -> None:
+        """Set the list of the hammer tech libraries corresponding to generated srams."""
+        if not (isinstance(value, List)):
+            raise TypeError("output_libraries must be a List[ExtraLibrary]")
+        self.attr_setter("_output_libraries", value)
+
+    ### END Generated interface HammerSRAMGeneratorTool ###
+
+    @property
+    def steps(self) -> List[HammerToolStep]:
+        steps = [
+            self.generate_all_srams_and_corners
+            ]
+        return self.make_steps_from_methods(steps)
+
+    def fill_outputs(self) -> bool:
+        return True #we fill in output_libraries in generate_all_srams_and_corners
+
+    def export_config_outputs(self) -> Dict[str, Any]:
+        outputs = deepdict(super().export_config_outputs())
+        simple_ex = []
+        for ex in self.output_libraries: # type: ExtraLibrary
+            simple_lib = json.loads(ex.library.serialize())
+            if(ex.prefix == None):
+                new_ex = {"library": simple_lib}
+            else:
+                new_ex = {"prefix": ex.prefix, "library": simple_lib}
+            simple_ex.append(new_ex)
+        outputs["vlsi.technology.extra_libraries"] = simple_ex
+        outputs["vlsi.technology.extra_libraries_meta"] = "append"
+        return outputs
+
+    #TODO: Is this the right way for these two generate_all methods to work
+    # in TSMC16 you can generate only ever generate a single SRAM per run but can
+    # generate multiple corners at once
+    def generate_all_srams_and_corners(self) -> bool:
+        srams = reduce(list.__add__, list(map(lambda c: self.generate_all_srams(c), self.get_mmmc_corners()))) # type: List[ExtraLibrary]
+        self.output_libraries = srams
+        return True
+
+    def generate_all_srams(self, corner: MMMCCorner) -> List[ExtraLibrary]:
+        srams = list(map(lambda p: self.generate_sram(p, corner), self.input_parameters)) # type: List[ExtraLibrary]
+        return srams
+
+    # Run compiler for a single sram and corner
+    @abstractmethod
+    def generate_sram(self, params: SRAMParameters, corner: MMMCCorner) -> ExtraLibrary:
+        pass
 
 class HammerSynthesisTool(HammerTool):
     @abstractmethod
