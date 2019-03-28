@@ -452,7 +452,6 @@ sim.inputs:
   defines: []
   # Cross compiler options
   compiler_opts: []
-  #compiler_opts_meta: lazysubst
   # Simulation timescale
   timescale: null 
   csrc: []
