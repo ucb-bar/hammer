@@ -35,46 +35,43 @@ class ModuleSpec(NamedTuple('ModuleSpec', [
     def is_top(self) -> bool:
         return len(self.path) == 0
 
+    @property
+    def to_str(self) -> str:
+        return "/".join(self.path)
+
 class PortSpec(NamedTuple('PortSpec', [
-    ('path', List[str])
+    ('module', ModuleSpec),
+    ('port', str)
 ])):
     __slots__ = ()
 
     @staticmethod
     def from_str(s: str) -> 'PortSpec':
-        return PortSpec(list(filter(lambda x: x != '', s.split("/"))))
+        tmp = s.split(':')
+        if len(tmp) != 2:
+            raise ValueError("Invalid port spec: " + s)
+        mod = ModuleSpec.from_str(tmp[0])
+        return PortSpec(mod, tmp[1])
+
+    @property
+    def to_str(self) -> str:
+        return self.module.to_str + ":" + self.port
 
 # TODO document me
 IRType = Dict[str, Union[str, List[str]]]
 
-# I would like to call these "to" and "from" but "from" is a keyword in python
-class TimingPathSpec(NamedTuple('TimingPathSpec', [
-    ('start', Optional[PortSpec]),
-    ('end', Optional[PortSpec]),
-    ('through', Optional[PortSpec])
-])):
-    __slots__ = ()
+class MetricsDBEntry:
 
-    @staticmethod
-    def from_ir(ir: IRType) -> 'TimingPathSpec':
-        start = ir["start"] if "start" in ir else ""
-        end = ir["end"] if "end" in ir else ""
-        through = ir["through"] if "through" in ir else ""
-        assert isinstance(start, str)
-        assert isinstance(end, str)
-        assert isinstance(through, str)
-        startspec = PortSpec.from_str(start) if "start" in ir else None
-        endspec = PortSpec.from_str(end) if "end" in ir else None
-        throughspec = PortSpec.from_str(through) if "through" in ir else None
-        assert startspec is not None or endspec is not None or throughspec is not None, "At least one of start, end, or through must not be None"
-        return TimingPathSpec(startspec, endspec, throughspec)
+    @abstractmethod
+    def register(self, db: 'MetricsDB') -> None:
+        pass
 
 class CriticalPathEntry(NamedTuple('CriticalPathEntry', [
     ('module', ModuleSpec),
     ('clock', Optional[PortSpec]), # TODO make this connect to HammerIR clock entry somehow (HammerClockSpec??)
     ('target', Optional[float]),
     ('value', Optional[float])
-])):
+]), MetricsDBEntry):
     __slots__ = ()
 
     @staticmethod
@@ -92,31 +89,13 @@ class CriticalPathEntry(NamedTuple('CriticalPathEntry', [
         except:
             raise ValueError("Invalid IR for CriticalPathEntry: {}".format(ir))
 
-class TimingPathEntry(NamedTuple('TimingPathEntry', [
-    ('timing_path', TimingPathSpec),
-    ('clock', Optional[PortSpec]), # TODO same as above
-    ('target', Optional[float]),
-    ('value', Optional[float])
-])):
-    __slots__ = ()
-
-    @staticmethod
-    def from_ir(ir: IRType) -> 'TimingPathEntry':
-        try:
-            clock = ir["clock"] if "clock" in ir else ""
-            assert isinstance(clock, str)
-            return TimingPathEntry(
-                TimingPathSpec.from_ir(ir),
-                PortSpec.from_str(clock) if "clock" in ir else None,
-                None,
-                None)
-        except:
-            raise ValueError("Invalid IR for TimingPathEntry: {}".format(ir))
+    def register(self, db: 'MetricsDB') -> None:
+        db.module_tree.add_module(self.module)
 
 class ModuleAreaEntry(NamedTuple('ModuleAreaEntry', [
     ('module', ModuleSpec),
     ('value', Optional[float])
-])):
+]), MetricsDBEntry):
     __slots__ = ()
 
     @staticmethod
@@ -128,16 +107,18 @@ class ModuleAreaEntry(NamedTuple('ModuleAreaEntry', [
                 ModuleSpec.from_str(mod),
                 None)
         except:
-            raise ValueError("Invalid IR for TimingPathEntry: {}".format(ir))
+            raise ValueError("Invalid IR for ModuleAreaEntry: {}".format(ir))
+
+    def register(self, db: 'MetricsDB') -> None:
+        db.module_tree.add_module(self.module)
 
 # TODO document this
-MetricsDBEntry = Union[CriticalPathEntry, TimingPathEntry, ModuleAreaEntry]
+#MetricsDBEntry = Union[CriticalPathEntry, ModuleAreaEntry]
 #SupportMap = Dict[str, Callable[[str, MetricsDBEntry], List[str]]]
 SupportMap = Dict[str, Callable[[str, Any], List[str]]]
 
 FromIRMap = {
     "critical path": CriticalPathEntry.from_ir,
-    "timing path": TimingPathEntry.from_ir,
     "area": ModuleAreaEntry.from_ir
 } # type: Dict[str, Callable[[IRType], MetricsDBEntry]]
 
@@ -147,7 +128,7 @@ class ModuleTree:
 
     def __init__(self):
         self._children = {} # type: Dict[str, ModuleTree]
-        self._rename_id = index
+        self._rename_id = ModuleTree.index
         ModuleTree.index += 1
         self._no_ungroup = False
         # More properties go here
@@ -192,24 +173,32 @@ class ModuleTree:
 class MetricsDB:
 
     def __init__(self):
-        self._db = {} # type: Dict[str, MetricsDBEntry]
+        self._db = {} # type: Dict[str, Dict[str, MetricsDBEntry]]
         self._tree = ModuleTree()
 
-    def create_entry(self, key: str, entry: MetricsDBEntry) -> None:
-        if key in self._db:
+    def create_entry(self, namespace: str, key: str, entry: MetricsDBEntry) -> None:
+        if namespace not in self._db:
+            self._db[namespace] = {} # type = Dict[str, MetricsDBEntry]
+        if key in self._db[namespace]:
             raise ValueError("Duplicate entry in MetricsDB: {}".format(key))
         else:
-            self._db[key] = entry
+            self._db[namespace][key] = entry
 
-    def get_entry(self, key: str) -> MetricsDBEntry:
-        if key in self._db:
-            return self._db[key]
+
+    def get_entry(self, namespace: str, key: str) -> MetricsDBEntry:
+        if namespace in self._db:
+            if key in self._db[namespace]:
+                return self._db[namespace][key]
+            else:
+                raise ValueError("Entry not found in MetricsDB: {}".format(key))
         else:
-            raise ValueError("Entry not found in MetricsDB: {}".format(key))
+            raise ValueError("Namespace not found in MetricsDB: {}".format(namespace))
 
-    @property
-    def entries(self) -> Dict[str, MetricsDBEntry]:
-        return self._db
+    def entries(self, namespace: str) -> Dict[str, MetricsDBEntry]:
+        if namespace in self._db:
+            return self._db[namespace]
+        else:
+            raise ValueError("Namespace not found in MetricsDB: {}".format(namespace))
 
     @property
     def module_tree(self) -> ModuleTree:
@@ -232,25 +221,25 @@ class HasMetricSupport(HammerTool):
         assert(isinstance(y, dict))
         # create a db
         db = MetricsDB()
-        if self.namespace in y:
-            testcases = y[self.namespace]
+        for namespace in y:
+            testcases = y[namespace]
             for testcase in testcases:
-                key = "{}.{}".format(self.namespace, testcase)
+                key = "{}.{}".format(namespace, testcase)
                 testcase_data = testcases[testcase]
                 if "type" not in testcase_data:
                     raise ValueError("Missing \"type\" field in testcase {}".format(testcase))
                 mtype = testcase_data["type"] # type: str
                 if mtype in FromIRMap:
                     entry = FromIRMap[mtype](testcase_data) # type: MetricsDBEntry
-                    db.create_entry(key, entry)
+                    db.create_entry(namespace, key, entry)
                 else:
                     raise ValueError("Metric IR field <{}> is not supported. Did you forget to update FromIRMap?".format(mtype))
         return db
 
     def generate_metric_requests_from_db(self, db: MetricsDB) -> List[str]:
         output = [] # type: List[str]
-        for key in db.entries:
-            entry = db.get_entry(key)
+        for key in db.entries(self.namespace):
+            entry = db.get_entry(self.namespace, key)
             if self._is_supported(entry):
                 output.extend(self._support_map[entry.__class__.__name__](key, entry))
         return output
@@ -274,7 +263,7 @@ class HasAreaMetricSupport(HasMetricSupport):
 
     @property
     def _support_map(self) -> SupportMap:
-        x = copy.deepcopy(super()._support_map) # type: SupportMap
+        x = copy.copy(super()._support_map) # type: SupportMap
         x.update({
             'ModuleAreaEntry': self.get_module_area
         })
@@ -288,10 +277,9 @@ class HasTimingPathMetricSupport(HasMetricSupport):
 
     @property
     def _support_map(self) -> SupportMap:
-        x = copy.deepcopy(super()._support_map) # type: SupportMap
+        x = copy.copy(super()._support_map) # type: SupportMap
         x.update({
-            'CriticalPathEntry': self.get_critical_path,
-            'TimingPathEntry': self.get_timing_path
+            'CriticalPathEntry': self.get_critical_path
         })
         return x
 
@@ -299,6 +287,3 @@ class HasTimingPathMetricSupport(HasMetricSupport):
     def get_critical_path(self, key: str, entry: CriticalPathEntry) -> List[str]:
         pass
 
-    @abstractmethod
-    def get_timing_path(self, key: str, entry: TimingPathEntry) -> List[str]:
-        pass
