@@ -468,23 +468,12 @@ sim.inputs:
   defines: []
   # Cross compiler options
   compiler_opts: []
-  #compiler_opts_meta: lazysubst
   # Simulation timescale
-  timescale: null 
+  timescale: null
+  # C source files 
   csrc: []
-  
-  
-  # List of input stimuli (ie. riscv tests, waveform, etc.)
-  #stimuli: []
-  # Debug option to enable vcd generation
-  #debug: null
-  # List of options and sources used for the simulator call
-  #defines: []
-  #compiler_opts: []
-  #bb_vsrcs: []
-  #sim_vsrcs: []
-  #sim_csrcs: []
-  #added_opts: []
+  # Benchmarks to run on simulator
+  benchmarks: []
   
 sim.submit:
   command: "${vlsi.submit.command}"

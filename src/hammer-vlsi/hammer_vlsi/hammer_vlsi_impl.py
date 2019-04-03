@@ -21,6 +21,7 @@ from hammer_utils import reverse_dict, deepdict, optional_map, get_or_else, add_
 from hammer_tech import Library, ExtraLibrary
 
 from .constraints import *
+from .units import TimeValue
 
 
 class HierarchicalMode(Enum):
@@ -863,7 +864,12 @@ class HammerLVSTool(HammerSignoffTool):
     ### END Generated interface HammerLVSTool ###
 
 
-# TODO(daniel)
+#class HammerSimTool(HammerTool):
+#    
+#    @abstractmethod
+#    def fill_outputs(self) -> bool:
+#        pass
+
 class HammerSimTool(HammerTool):
   
     #@abstractmethod
@@ -1007,7 +1013,7 @@ class HammerSimTool(HammerTool):
         self.attr_setter("_timescale", value)
 
     @property
-    def csrc(self) -> str:
+    def csrc(self) -> List[str]:
         """
         Get the simulation c sources.
 
@@ -1019,11 +1025,30 @@ class HammerSimTool(HammerTool):
             raise ValueError("Nothing set for the csrc")
 
     @csrc.setter
-    def csrc(self, value: str) -> None:
+    def csrc(self, value: List[str]) -> None:
         """Set the c source input files."""
         if not (isinstance(value, List[str])):
             raise TypeError("csrc must be a List[str]")
         self.attr_setter("_csrc", value)
+
+    @property
+    def benchmarks(self) -> List[str]:
+        """
+        Get the benchmarks to run with the simulator.
+
+        :return: The benchmarks to run with the simulator.
+        """
+        try:
+            return self.attr_getter("_benchmarks", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the benchmarks")
+
+    @benchmarks.setter
+    def benchmarks(self, value: List[str]) -> None:
+        """Set the benchmarks to run with the simulator."""
+        if not (isinstance(value, List[str])):
+            raise TypeError("benchmarks must be a List[str]")
+        self.attr_setter("_benchmarks", value)
 
 
 class HasSDCSupport(HammerTool):
