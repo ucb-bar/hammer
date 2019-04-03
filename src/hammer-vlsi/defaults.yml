@@ -588,8 +588,6 @@ sim.inputs:
   csrc: []
   # Benchmarks to run on simulator
   benchmarks: []
-  timescale: null 
-  csrc: []
   
 sim.submit:
   command: "${vlsi.submit.command}"
