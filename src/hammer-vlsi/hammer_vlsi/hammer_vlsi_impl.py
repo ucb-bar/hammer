@@ -205,7 +205,7 @@ class HammerSRAMGeneratorTool(HammerTool):
         return outputs
 
     #TODO: Is this the right way for these two generate_all methods to work
-    # in TSMC16 you can generate only ever generate a single SRAM per run but can
+    # in techX16 you can generate only ever generate a single SRAM per run but can
     # generate multiple corners at once
     def generate_all_srams_and_corners(self) -> bool:
         srams = reduce(list.__add__, list(map(lambda c: self.generate_all_srams(c), self.get_mmmc_corners()))) # type: List[ExtraLibrary]
