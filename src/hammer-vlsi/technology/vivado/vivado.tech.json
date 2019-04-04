@@ -10,7 +10,7 @@
       "family": "blk_mem_gen_stubs",
       "_comment": "Wrapper modules wrapping pre-generated Xilinx Block RAMs. TODO: replace these with actual generated RAMs",
       "provide script": "src/tools/technology/vivado-srams",
-      "depend script": "src/tools/technology/tsmc28hpm-generate_mc_deps"
+      "depend script": "src/tools/technology/techX28-generate_mc_deps"
     }
   ]
 }
