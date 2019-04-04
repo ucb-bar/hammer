@@ -460,7 +460,6 @@ technology.core:
     # type: string
     tap_cell_rail_reference: null
 
-# TODO(daniel)
 sim.inputs:
   # Top RTL module
   top_module: null
@@ -480,6 +479,8 @@ sim.inputs:
   csrc: []
   # Benchmarks to run on simulator
   benchmarks: []
+  # Flags to run with the simulator
+  exec_flags: []
   
 sim.submit:
   command: "${vlsi.submit.command}"

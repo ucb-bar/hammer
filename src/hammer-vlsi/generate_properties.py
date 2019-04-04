@@ -200,7 +200,8 @@ def main(args) -> int:
                                   InterfaceVar("compiler_opts", "List[str]", "list of C compiler options for the simulation tool"),
                                   InterfaceVar("timescale", "str", "simulation timescale"),
                                   InterfaceVar("csrc", "List[str]", "paths to C source files"),
-                                  InterfaceVar("benchmarks", "List[str]", "benchmarks to run on simulator")
+                                  InterfaceVar("benchmarks", "List[str]", "benchmarks to run on simulator"),
+                                  InterfaceVar("exec_flags", "List[str]", "flags to run with the simulator")
                                   ],
                                   outputs=[]
                                   )

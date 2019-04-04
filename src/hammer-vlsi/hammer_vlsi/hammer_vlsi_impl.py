@@ -1050,6 +1050,24 @@ class HammerSimTool(HammerTool):
             raise TypeError("benchmarks must be a List[str]")
         self.attr_setter("_benchmarks", value)
 
+    @property
+    def exec_flags(self) -> List[str]:
+        """
+        Get the flags to run with the simulator.
+
+        :return: The flags to run with the simulator.
+        """
+        try:
+            return self.attr_getter("_exec_flags", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the exec_flags")
+
+    @exec_flags.setter
+    def exec_flags(self, value: List[str]) -> None:
+        """Set the flags to run with the simulator."""
+        if not (isinstance(value, List[str])):
+            raise TypeError("exec_flags must be a List[str]")
+        self.attr_setter("_exec_flags", value)
 
 class HasSDCSupport(HammerTool):
     """Mix-in trait with functions useful for tools with SDC-style
