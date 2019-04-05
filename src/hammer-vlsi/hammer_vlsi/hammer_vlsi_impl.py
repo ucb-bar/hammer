@@ -874,7 +874,7 @@ class HasSDCSupport(HammerTool):
         clocks = self.get_clock_ports()
         for clock in clocks:
             # TODO: FIXME This assumes that library units are always in ns!!!
-            if clock.generated is not None:
+            if get_or_else(clock.generated, False):
                 output.append("create_generated_clock -name {n} -source {m_path} -divide_by {div} {path}".
                         format(n=clock.name, m_path=clock.source_path, div=clock.divisor, path=clock.path))
             elif clock.path is not None:
