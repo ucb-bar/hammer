@@ -973,8 +973,6 @@ class HammerSignoffToolTestContext:
         if self._tool_type is "lvs":
             json_content.update({
                 "lvs.inputs.schematic_files": ["/dev/null"],
-                "lvs.inputs.power_nets": ["VDD"],
-                "lvs.inputs.ground_nets": ["VSS"],
                 "lvs.inputs.hcells_list": []
             })
 
