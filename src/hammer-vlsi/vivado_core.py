@@ -23,11 +23,6 @@ class VivadoCommon(HammerTool, metaclass=ABCMeta):
         new_dict = deepdict(super().env_vars)
         return new_dict
 
-    @property
-    @abstractmethod
-    def top_module(self) -> str:
-        pass
-
     def append(self, cmd: str) -> None:
         self.tcl_append(cmd, self.output)
 

@@ -113,8 +113,7 @@ def main(args) -> int:
                                     filename="hammer_vlsi/hammer_vlsi_impl.py",
                                     inputs=[
                                         InterfaceVar("input_files", "List[str]",
-                                                     "input collection of source RTL files (e.g. *.v)"),
-                                        InterfaceVar("top_module", "str", "top-level module")
+                                                     "input collection of source RTL files (e.g. *.v)")
                                     ],
                                     outputs=[
                                         InterfaceVar("output_files", "List[str]",
@@ -130,7 +129,6 @@ def main(args) -> int:
                                         inputs=[
                                             InterfaceVar("input_files", "List[str]",
                                                          "input post-synthesis netlist files"),
-                                            InterfaceVar("top_module", "str", "top RTL module"),
                                             InterfaceVar("post_synth_sdc", "Optional[str]",
                                                          "(optional) input post-synthesis SDC constraint file")
                                         ],
@@ -164,8 +162,7 @@ def main(args) -> int:
     HammerDRCTool = Interface(module="HammerDRCTool",
                               filename="hammer_vlsi/hammer_vlsi_impl.py",
                               inputs=[
-                                  InterfaceVar("layout_file", "str", "path to the input layout file (e.g. a *.gds)"),
-                                  InterfaceVar("top_module", "str", "top RTL module")
+                                  InterfaceVar("layout_file", "str", "path to the input layout file (e.g. a *.gds)")
                               ],
                               outputs=[]
                               )
@@ -176,7 +173,6 @@ def main(args) -> int:
                                   InterfaceVar("layout_file", "str", "path to the input layout file (e.g. a *.gds)"),
                                   InterfaceVar("schematic_files", "List[str]",
                                                "path to the input SPICE or Verilog schematic files (e.g. *.v or *.spi)"),
-                                  InterfaceVar("top_module", "str", "top RTL module"),
                                   InterfaceVar("hcells_list", "List[str]",
                                                "list of cells to explicitly map hierarchically in LVS")
                               ],

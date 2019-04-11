@@ -317,6 +317,25 @@ class HammerTool(metaclass=ABCMeta):
         self._submit_command = value
 
     @property
+    def top_module(self) -> str:
+        """
+        Get the top-level module.
+
+        :return: The top-level module.
+        """
+        try:
+            return self.attr_getter("_top_module", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the top-level module yet")
+
+    @top_module.setter
+    def top_module(self, value: str) -> None:
+        """Set the top-level module."""
+        if not (isinstance(value, str)):
+            raise TypeError("top_module must be a str")
+        self.attr_setter("_top_module", value)
+
+    @property
     def logger(self) -> HammerVLSILoggingContext:
         """Get the logger for this tool."""
         try:

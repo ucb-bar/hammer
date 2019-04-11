@@ -258,26 +258,6 @@ class HammerSynthesisTool(HammerTool):
         self.attr_setter("_input_files", value)
 
 
-    @property
-    def top_module(self) -> str:
-        """
-        Get the top-level module.
-
-        :return: The top-level module.
-        """
-        try:
-            return self.attr_getter("_top_module", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the top-level module yet")
-
-    @top_module.setter
-    def top_module(self, value: str) -> None:
-        """Set the top-level module."""
-        if not (isinstance(value, str)):
-            raise TypeError("top_module must be a str")
-        self.attr_setter("_top_module", value)
-
-
     ### Outputs ###
 
     @property
@@ -359,26 +339,6 @@ class HammerPlaceAndRouteTool(HammerTool):
         if not (isinstance(value, List)):
             raise TypeError("input_files must be a List[str]")
         self.attr_setter("_input_files", value)
-
-
-    @property
-    def top_module(self) -> str:
-        """
-        Get the top RTL module.
-
-        :return: The top RTL module.
-        """
-        try:
-            return self.attr_getter("_top_module", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the top RTL module yet")
-
-    @top_module.setter
-    def top_module(self, value: str) -> None:
-        """Set the top RTL module."""
-        if not (isinstance(value, str)):
-            raise TypeError("top_module must be a str")
-        self.attr_setter("_top_module", value)
 
 
     @property
@@ -491,25 +451,6 @@ class HammerSignoffTool(HammerTool):
 
     ### Inputs ###
 
-    @property
-    def top_module(self) -> str:
-        """
-        Get the top-level module.
-
-        :return: The top-level module.
-        """
-        try:
-            return self.attr_getter("_top_module", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the top-level module yet")
-
-    @top_module.setter
-    def top_module(self, value: str) -> None:
-        """Set the top-level module."""
-        if not (isinstance(value, str)):
-            raise TypeError("top_module must be a str")
-        self.attr_setter("_top_module", value)
-
     ### Outputs ###
     @abstractmethod
     def signoff_results(self) -> int:
@@ -604,26 +545,6 @@ class HammerDRCTool(HammerSignoffTool):
         if not (isinstance(value, str)):
             raise TypeError("layout_file must be a str")
         self.attr_setter("_layout_file", value)
-
-
-    @property
-    def top_module(self) -> str:
-        """
-        Get the top RTL module.
-
-        :return: The top RTL module.
-        """
-        try:
-            return self.attr_getter("_top_module", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the top RTL module yet")
-
-    @top_module.setter
-    def top_module(self, value: str) -> None:
-        """Set the top RTL module."""
-        if not (isinstance(value, str)):
-            raise TypeError("top_module must be a str")
-        self.attr_setter("_top_module", value)
 
 
     ### Outputs ###
@@ -736,26 +657,6 @@ class HammerLVSTool(HammerSignoffTool):
         if not (isinstance(value, List)):
             raise TypeError("schematic_files must be a List[str]")
         self.attr_setter("_schematic_files", value)
-
-
-    @property
-    def top_module(self) -> str:
-        """
-        Get the top RTL module.
-
-        :return: The top RTL module.
-        """
-        try:
-            return self.attr_getter("_top_module", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the top RTL module yet")
-
-    @top_module.setter
-    def top_module(self, value: str) -> None:
-        """Set the top RTL module."""
-        if not (isinstance(value, str)):
-            raise TypeError("top_module must be a str")
-        self.attr_setter("_top_module", value)
 
 
     @property
