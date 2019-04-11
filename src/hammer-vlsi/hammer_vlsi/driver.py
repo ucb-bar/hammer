@@ -390,8 +390,6 @@ class HammerDriver:
         lvs_tool.schematic_files = self.database.get_setting("lvs.inputs.schematic_files", nullvalue=[])
         lvs_tool.layout_file = self.database.get_setting("lvs.inputs.layout_file", nullvalue="")
         lvs_tool.top_module = self.database.get_setting("lvs.inputs.top_module", nullvalue="")
-        lvs_tool.power_nets = self.database.get_setting("lvs.inputs.power_nets", nullvalue=[])
-        lvs_tool.ground_nets = self.database.get_setting("lvs.inputs.ground_nets", nullvalue=[])
         lvs_tool.hcells_list = self.database.get_setting("lvs.inputs.hcells_list", nullvalue=[])
         missing_inputs = False
         if lvs_tool.top_module == "":
@@ -665,8 +663,6 @@ class HammerDriver:
                 "lvs.inputs.layout_file": output_dict["par.outputs.output_gds"],
                 "lvs.inputs.schematic_files": [output_dict["par.outputs.output_netlist"]],
                 # TODO(johnwright): add ILM netlists
-                "lvs.inputs.power_nets": output_dict["par.outputs.power_nets"],
-                "lvs.inputs.ground_nets": output_dict["par.outputs.ground_nets"],
                 "lvs.inputs.hcells_list": output_dict["par.outputs.hcells_list"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]

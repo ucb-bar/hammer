@@ -846,6 +846,30 @@ class HammerTool(metaclass=ABCMeta):
             output.append(clock)
         return output
 
+    def get_all_supplies(self, key: str) -> List[Supply]:
+        supplies = self.get_setting(key)
+        output = []  # type: List[Supply]
+        for raw_supply in supplies:
+            supply = Supply(name=raw_supply['name'],pin=None,tie=None)
+            if 'pin' in raw_supply:
+                supply = supply._replace(pin=raw_supply['pin'])
+            if 'tie' in raw_supply:
+                supply = supply._replace(tie=raw_supply['tie'])
+            output.append(supply)
+        return output
+
+    def get_all_power_nets(self) -> List[Supply]:
+        return self.get_all_supplies("vlsi.inputs.supplies.power")
+
+    def get_independent_power_nets(self) -> List[Supply]:
+        return list(filter(lambda x: x.tie is None, self.get_all_power_nets()))
+
+    def get_all_ground_nets(self) -> List[Supply]:
+        return self.get_all_supplies("vlsi.inputs.supplies.ground")
+
+    def get_independent_ground_nets(self) -> List[Supply]:
+        return list(filter(lambda x: x.tie is None, self.get_all_ground_nets()))
+
     def get_gds_map_file(self) -> Optional[str]:
         """
         Get a GDS map in accordance with settings in the Hammer IR.

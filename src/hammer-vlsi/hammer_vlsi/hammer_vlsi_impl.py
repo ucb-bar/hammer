@@ -21,6 +21,7 @@ from hammer_utils import reverse_dict, deepdict, optional_map, get_or_else, add_
 from hammer_tech import Library, ExtraLibrary
 
 from .constraints import *
+from .units import VoltageValue
 
 
 class HierarchicalMode(Enum):
@@ -333,8 +334,6 @@ class HammerPlaceAndRouteTool(HammerTool):
         outputs["par.outputs.output_ilms_meta"] = "append"
         outputs["par.outputs.output_gds"] = str(self.output_gds)
         outputs["par.outputs.output_netlist"] = str(self.output_netlist)
-        outputs["par.outputs.power_nets"] = list(self.power_nets)
-        outputs["par.outputs.ground_nets"] = list(self.ground_nets)
         outputs["par.outputs.hcells_list"] = list(self.hcells_list)
         return outputs
 
@@ -462,46 +461,6 @@ class HammerPlaceAndRouteTool(HammerTool):
         if not (isinstance(value, str)):
             raise TypeError("output_netlist must be a str")
         self.attr_setter("_output_netlist", value)
-
-
-    @property
-    def power_nets(self) -> List[str]:
-        """
-        Get the list of all the power nets in the design.
-
-        :return: The list of all the power nets in the design.
-        """
-        try:
-            return self.attr_getter("_power_nets", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the list of all the power nets in the design yet")
-
-    @power_nets.setter
-    def power_nets(self, value: List[str]) -> None:
-        """Set the list of all the power nets in the design."""
-        if not (isinstance(value, List)):
-            raise TypeError("power_nets must be a List[str]")
-        self.attr_setter("_power_nets", value)
-
-
-    @property
-    def ground_nets(self) -> List[str]:
-        """
-        Get the list of all the ground nets in the design.
-
-        :return: The list of all the ground nets in the design.
-        """
-        try:
-            return self.attr_getter("_ground_nets", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the list of all the ground nets in the design yet")
-
-    @ground_nets.setter
-    def ground_nets(self, value: List[str]) -> None:
-        """Set the list of all the ground nets in the design."""
-        if not (isinstance(value, List)):
-            raise TypeError("ground_nets must be a List[str]")
-        self.attr_setter("_ground_nets", value)
 
 
     @property
@@ -800,46 +759,6 @@ class HammerLVSTool(HammerSignoffTool):
 
 
     @property
-    def power_nets(self) -> List[str]:
-        """
-        Get the list of all the power nets in the design.
-
-        :return: The list of all the power nets in the design.
-        """
-        try:
-            return self.attr_getter("_power_nets", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the list of all the power nets in the design yet")
-
-    @power_nets.setter
-    def power_nets(self, value: List[str]) -> None:
-        """Set the list of all the power nets in the design."""
-        if not (isinstance(value, List)):
-            raise TypeError("power_nets must be a List[str]")
-        self.attr_setter("_power_nets", value)
-
-
-    @property
-    def ground_nets(self) -> List[str]:
-        """
-        Get the list of all the ground nets in the design.
-
-        :return: The list of all the ground nets in the design.
-        """
-        try:
-            return self.attr_getter("_ground_nets", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the list of all the ground nets in the design yet")
-
-    @ground_nets.setter
-    def ground_nets(self, value: List[str]) -> None:
-        """Set the list of all the ground nets in the design."""
-        if not (isinstance(value, List)):
-            raise TypeError("ground_nets must be a List[str]")
-        self.attr_setter("_ground_nets", value)
-
-
-    @property
     def hcells_list(self) -> List[str]:
         """
         Get the list of cells to explicitly map hierarchically in LVS.
@@ -861,6 +780,59 @@ class HammerLVSTool(HammerSignoffTool):
 
     ### Outputs ###
     ### END Generated interface HammerLVSTool ###
+
+class HasUPFSupport(HammerTool):
+    """Mix-in trait with functions useful for tools with UPF style power
+    constraints"""
+    @property
+    def upf_power_specification(self) -> str:
+        raise NotImplementedError("Automatic generation of UPF power specifications is not supported yet.")
+
+class HasCPFSupport(HammerTool):
+    """Mix-in trait with functions useful for tools with CPF style power
+    constraints"""
+    @property
+    def cpf_power_specification(self) -> str:
+        output = [] # type: List[str]
+        # Just names
+        domain = "AO"
+        condition = "nominal"
+        mode = "aon"
+        # Header
+        output.append("set_cpf_version 1.0e")
+        output.append("set_hierarchy_separator /")
+
+        output.append("set_design {t}".format(t=self.top_module))
+        # Define power and ground nets
+        power_nets = self.get_all_power_nets() # type: List[Supply]
+        ground_nets = self.get_all_ground_nets() # type: List[Supply]
+        vdd = VoltageValue(self.get_setting("vlsi.inputs.supplies.VDD")) # type: VoltageValue
+        output.append("create_power_nets -nets {{ {p} }} -voltage {v}".
+                format(p=" ".join(map(lambda x: x.name, power_nets)), v=vdd.value))
+        output.append("create_ground_nets -nets {{ {g} }}".
+                format(g=" ".join(map(lambda x: x.name, ground_nets))))
+
+        # Define power domain and connections
+        output.append("create_power_domain -name {d} -default".format(d=domain))
+        # Assume primary power are first in list
+        output.append("update_power_domain -name {d} -primary_power_net {pp} -primary_ground_net {pg}".
+                format(d=domain, pp=power_nets[0].name, pg=ground_nets[0].name))
+        # Assuming that all power/ground nets correspond to pins
+        for pg_net in (power_nets+ground_nets):
+            if(pg_net.pin != None):
+                output.append("create_global_connection -domain {d} -net {n} -pins {p}".
+                        format(d=domain, n=pg_net.name, p=pg_net.pin))
+
+        # Create nominal operation condtion and power mode
+        output.append("create_nominal_condition -name {c} -voltage {v}".
+                format(c=condition, v=vdd.value))
+        output.append("create_power_mode -name {m} -default -domain_conditions {{{d}@{c}}}".
+                format(m=mode, d=domain, c=condition))
+
+        # Footer
+        output.append("end_design")
+
+        return "\n".join(output)
 
 
 class HasSDCSupport(HammerTool):
@@ -927,7 +899,7 @@ class HasSDCSupport(HammerTool):
         pass
 
 
-class CadenceTool(HasSDCSupport, HammerTool):
+class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, HammerTool):
     """Mix-in trait with functions useful for Cadence-based tools."""
 
     @property
@@ -1179,18 +1151,6 @@ if {{ {get_db_str} ne "" }} {{
         Generate commands to load a power specification for Cadence tools.
         """
 
-        power_spec_mode = str(self.get_setting("vlsi.inputs.power_spec_mode"))  # type: str
-        if power_spec_mode == "empty":
-            return []
-        elif power_spec_mode == "auto":
-            raise NotImplementedError("Automatic generation of power specifications is not supported yet.")
-        elif power_spec_mode == "manual":
-            pass
-        else:
-            self.logger.error("Invalid power specification mode '{mode}'; using 'empty'.".format(mode=power_spec_mode))
-            return []
-
-        # Manual power spec
         power_spec_type = str(self.get_setting("vlsi.inputs.power_spec_type"))  # type: str
         power_spec_arg = ""  # type: str
         if power_spec_type == "cpf":
@@ -1201,7 +1161,23 @@ if {{ {get_db_str} ne "" }} {{
             self.logger.error(
                 "Invalid power specification type '{tpe}'; only 'cpf' or 'upf' supported".format(tpe=power_spec_type))
             return []
-        power_spec_contents = str(self.get_setting("vlsi.inputs.power_spec_contents"))  # type: str
+
+        power_spec_contents = ""  # type: str
+        power_spec_mode = str(self.get_setting("vlsi.inputs.power_spec_mode"))  # type: str
+        if power_spec_mode == "empty":
+            return []
+        elif power_spec_mode == "auto":
+            if power_spec_type == "cpf":
+                power_spec_contents = self.cpf_power_specification
+            elif power_spec_type == "upf":
+                power_spec_contents = self.upf_power_specification
+        elif power_spec_mode == "manual":
+            power_spec_contents = str(self.get_setting("vlsi.inputs.power_spec_contents"))
+        else:
+            self.logger.error("Invalid power specification mode '{mode}'; using 'empty'.".format(mode=power_spec_mode))
+            return []
+
+        # Write the power spec contents to file and include it
         power_spec_file = os.path.join(self.run_dir, "power_spec.{tpe}".format(tpe=power_spec_type))
         with open(power_spec_file, "w") as f:
             f.write(power_spec_contents)

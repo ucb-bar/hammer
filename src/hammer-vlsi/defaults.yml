@@ -108,10 +108,21 @@ cadence:
 # General VLSI inputs.
 # These will vary per run of hammer-vlsi.
 vlsi.inputs:
-  # Supply voltages.
+  # Supply voltages and names
+  # Supply Struct:
+  #   name (str) - The name of your supply's net
+  #   pin (Optional[str]) - The cell pin that this net should drive, no pins are connected when omitted
+  #   tie (Optional[str]) - Another supply this supply is tied to. Nets with this set will  not end up in your final layout.
+  # power (List(Supply)): A list of of all power net(s) in the design
+  # ground (List(Supply)): A list of all ground net(s) in the design
+  # VDD (str): The default voltage of the primary power net
+  # GND (str): The default voltage of the primary ground net
   supplies:
+    power: [{name: "VDD", pin: "VDD"}]
+    ground: [{name: "VSS", pin: "VSS"}]
     VDD: "0.85 V"
     GND: "0 V"
+
 
   hierarchical:
     # Hierarchical par mode. (str)
