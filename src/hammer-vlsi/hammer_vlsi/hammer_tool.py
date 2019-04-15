@@ -889,6 +889,17 @@ class HammerTool(metaclass=ABCMeta):
     def get_independent_ground_nets(self) -> List[Supply]:
         return list(filter(lambda x: x.tie is None, self.get_all_ground_nets()))
 
+    def get_bumps(self) -> Optional[BumpsDefinition]:
+        bumps = self.get_setting("vlsi.inputs.bumps")
+        if bumps is None or bumps == "null":
+            return None
+        assignments = []  # type: List[BumpAssignment]
+        for raw_assign in bumps["assignments"]:
+            assignments.append(BumpAssignment(name=raw_assign["name"],
+                x=raw_assign["x"], y=raw_assign["y"]))
+        return BumpsDefinition(x=bumps["x"], y=bumps["y"] ,pitch=bumps["pitch"],
+            cell=bumps["cell"], assignments=assignments)
+
     def get_gds_map_file(self) -> Optional[str]:
         """
         Get a GDS map in accordance with settings in the Hammer IR.

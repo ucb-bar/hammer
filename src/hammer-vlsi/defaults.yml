@@ -277,6 +277,22 @@ vlsi.inputs:
   # SRAM Parameters
   sram_parameters: []
 
+  # Bumps settings struct, Optional
+  # Currently only support rectangular, evenly-spaced grids
+  # Bumps are numbered starting with 1,1 in the lower left
+  # Unassigned bumps will be removed, special name "+NC", leaves bump unconnected
+  # setting top-level bummps to null corresponds to a no bump chip
+  bumps: null
+  # BumpsDefinition struct members
+  # - x (int) - number of bumps in the x dimension
+  # - y (int) - number of bumps in the y dimension
+  # - pitch (float) - pitch of bumps in microns
+  # - cell (str) - Name of bump cell
+  # assignments - List of BumpAssignment structs
+  #  - name (str) - The name of the net being assigned to a bump
+  #  - x (int) - The X coordinate of the bump assigned to this net
+  #  - y (int) - The Y coordinate of the bump assigned to this net
+
 vlsi.submit:
   # The submit command to use. "none", "local", or null will run on the current host. See hammer_submit_command.py for other options.
   command: "local"
