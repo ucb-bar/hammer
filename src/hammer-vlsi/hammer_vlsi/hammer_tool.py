@@ -891,7 +891,7 @@ class HammerTool(metaclass=ABCMeta):
 
     def get_bumps(self) -> Optional[BumpsDefinition]:
         bumps = self.get_setting("vlsi.inputs.bumps")
-        if bumps is None or bumps == "null":
+        if bumps is None:
             return None
         assignments = []  # type: List[BumpAssignment]
         for raw_assign in bumps["assignments"]:
