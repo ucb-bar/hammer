@@ -896,6 +896,7 @@ class HammerTool(metaclass=ABCMeta):
         elif bumps_mode != "manual":
             self.logger.error("Invalid bumps_mode:{m}, only empty or manual supported. Assuming empty.".format(
                 m=bumps_mode))
+            return None
         assignments = []  # type: List[BumpAssignment]
         for raw_assign in self.get_setting("vlsi.inputs.bumps.assignments"):
             name = None if not "name" in raw_assign else raw_assign["name"]

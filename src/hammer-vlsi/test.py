@@ -568,9 +568,23 @@ export lol=abc"cat"
          test.run_dir = tempfile.mkdtemp()
          test.technology = tech
          database = hammer_config.HammerDatabase()
+         # Check bad mode string doesn't look at null dict
+         settings = """
+{
+     "vlsi.inputs.bumps_mode": "auto"
+}
+"""
+         database.update_project([hammer_config.load_config_from_string(settings, is_yaml=False)])
+         test.set_database(database)
+
+         with HammerLoggingCaptureContext() as c:
+             my_bumps = test.get_bumps()
+         self.assertTrue(c.log_contains("Invalid bumps_mode"))
+         assert my_bumps is None, "Invalid bumps_mode should assume empty bumps"
+
          settings = """
  {
-     "vlsi.inputs.bumps_mode": "auto",
+     "vlsi.inputs.bumps_mode": "manual",
      "vlsi.inputs.bumps": {
                      "x": 14,
                      "y": 14,
@@ -591,8 +605,9 @@ export lol=abc"cat"
          database.update_project([hammer_config.load_config_from_string(settings, is_yaml=False)])
          test.set_database(database)
 
-         # TODO: We expect 1 warning and 1 error, check this somehow
-         my_bumps = test.get_bumps()
+         with HammerLoggingCaptureContext() as c:
+             my_bumps = test.get_bumps()
+         self.assertTrue(c.log_contains("Invalid bump assignment"))
          assert my_bumps is not None
          # Only one of the assignments is invalid so the above 7 becomes 6
          self.assertEqual(len(my_bumps.assignments), 6)
