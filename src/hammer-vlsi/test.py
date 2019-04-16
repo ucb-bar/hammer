@@ -593,6 +593,7 @@ export lol=abc"cat"
 
          # TODO: We expect 1 warning and 1 error, check this somehow
          my_bumps = test.get_bumps()
+         assert my_bumps is not None
          # Only one of the assignments is invalid so the above 7 becomes 6
          self.assertEqual(len(my_bumps.assignments), 6)
 
