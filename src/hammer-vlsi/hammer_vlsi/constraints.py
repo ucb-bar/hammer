@@ -80,7 +80,8 @@ Supply = NamedTuple('Supply', [
 ])
 
 BumpAssignment = NamedTuple('BumpAssignment', [
-    ('name', str),
+    ('name', Optional[str]),
+    ('no_connect', Optional[bool]),
     ('x', int),
     ('y', int)
 ])

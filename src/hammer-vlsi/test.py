@@ -550,6 +550,56 @@ export lol=abc"cat"
         # Cleanup
         shutil.rmtree(tmpdir)
 
+    def test_bumps(self) -> None:
+         """
+         Test that HammerTool bump support works.
+         """
+         import hammer_config
+
+         tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+         tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+         HammerToolTestHelpers.write_tech_json(tech_json_filename)
+         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
+         tech.cache_dir = tech_dir
+         tech.logger = HammerVLSILogging.context("")
+
+         test = DummyTool()
+         test.logger = HammerVLSILogging.context("")
+         test.run_dir = tempfile.mkdtemp()
+         test.technology = tech
+         database = hammer_config.HammerDatabase()
+         settings = """
+ {
+     "vlsi.inputs.bumps_mode": "auto",
+     "vlsi.inputs.bumps": {
+                     "x": 14,
+                     "y": 14,
+                     "pitch": 200,
+                     "cell": "MY_REDACTED_BUMP_CELL",
+                     "assignments": [
+                         {"name": "reset", "x": 5, "y": 3},
+                         {"no_connect": true, "x": 5, "y": 4},
+                         {"name": "VDD", "x": 2, "y": 1},
+                         {"name": "VSS", "x": 1, "y": 1},
+                         {"name": "VSS", "no_connect": true, "x": 2, "y": 2},
+                         {"x": 3, "y": 3},
+                         {"name": "VSS", "x": 14, "y": 14}
+                     ]
+                 }
+ }
+ """
+         database.update_project([hammer_config.load_config_from_string(settings, is_yaml=False)])
+         test.set_database(database)
+
+         # TODO: We expect 1 warning and 1 error, check this somehow
+         my_bumps = test.get_bumps()
+         # Only one of the assignments is invalid so the above 7 becomes 6
+         self.assertEqual(len(my_bumps.assignments), 6)
+
+         # Cleanup
+         shutil.rmtree(tech_dir_base)
+         shutil.rmtree(test.run_dir)
+
 
 T = TypeVar('T')
 
