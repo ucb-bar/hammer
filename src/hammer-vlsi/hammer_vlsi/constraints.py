@@ -14,7 +14,8 @@ from typing import Dict, NamedTuple, Optional, List, Any
 from hammer_utils import reverse_dict
 from .units import TimeValue, VoltageValue, TemperatureValue
 
-__all__ = ['ILMStruct', 'SRAMParameters', 'Supply', 'ClockPort', 'OutputLoadConstraint',
+__all__ = ['ILMStruct', 'SRAMParameters', 'Supply', 'BumpAssignment',
+           'BumpsDefinition', 'ClockPort', 'OutputLoadConstraint',
            'DelayConstraint', 'ObstructionType', 'PlacementConstraintType',
            'Margins', 'PlacementConstraint', 'MMMCCornerType', 'MMMCCorner']
 
@@ -76,6 +77,21 @@ Supply = NamedTuple('Supply', [
     ('name', str),
     ('pin', Optional[str]),
     ('tie', Optional[str])
+])
+
+BumpAssignment = NamedTuple('BumpAssignment', [
+    ('name', Optional[str]),
+    ('no_connect', Optional[bool]),
+    ('x', int),
+    ('y', int)
+])
+
+BumpsDefinition = NamedTuple('BumpsDefinition', [
+    ('x', int),
+    ('y', int),
+    ('pitch', float),
+    ('cell', str),
+    ('assignments', List[BumpAssignment])
 ])
 
 ClockPort = NamedTuple('ClockPort', [

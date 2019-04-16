@@ -889,6 +889,31 @@ class HammerTool(metaclass=ABCMeta):
     def get_independent_ground_nets(self) -> List[Supply]:
         return list(filter(lambda x: x.tie is None, self.get_all_ground_nets()))
 
+    def get_bumps(self) -> Optional[BumpsDefinition]:
+        bumps_mode = self.get_setting("vlsi.inputs.bumps_mode")
+        if bumps_mode == "empty":
+            return None
+        elif bumps_mode != "manual":
+            self.logger.error("Invalid bumps_mode:{m}, only empty or manual supported. Assuming empty.".format(
+                m=bumps_mode))
+            return None
+        assignments = []  # type: List[BumpAssignment]
+        for raw_assign in self.get_setting("vlsi.inputs.bumps.assignments"):
+            name = None if not "name" in raw_assign else raw_assign["name"]
+            no_con = False if not "no_connect" in raw_assign else raw_assign["no_connect"]
+            x = raw_assign["x"]
+            y = raw_assign["y"]
+            if name is None and not no_con:
+                self.logger.warning("Invalid bump assignment, neither name nor no_connect specified for bump {x},{y}. Assuming it should be unassigned".format(
+                    x=x, y=y))
+            else:
+                assignments.append(BumpAssignment(name=name, no_connect=no_con,
+                    x=x, y=y))
+        return BumpsDefinition(x=self.get_setting("vlsi.inputs.bumps.x"),
+            y=self.get_setting("vlsi.inputs.bumps.y"),
+            pitch=self.get_setting("vlsi.inputs.bumps.pitch"),
+            cell=self.get_setting("vlsi.inputs.bumps.cell"), assignments=assignments)
+
     def get_gds_map_file(self) -> Optional[str]:
         """
         Get a GDS map in accordance with settings in the Hammer IR.
