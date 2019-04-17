@@ -234,6 +234,8 @@ vlsi.inputs:
   # y (float) - y coordinate in um
   # width (float) - width in um
   # height (float) - height in um
+  # top_layer (str) - Optional: Specifies the highest layer used by this hardmacro
+  #   If specified will be used to keep other wires away from this hardmacro
   # layers (List[str]) - Optional: only used for obstruction type. 
   #   If specified, a list of strings that enumerates layer(s) blocked by the obstruction otherwise all layers are blocked
   # obs_types (List[str]) - Required for obstruction type. A list of one or more of the following:
