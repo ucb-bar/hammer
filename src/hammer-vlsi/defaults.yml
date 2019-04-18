@@ -67,6 +67,11 @@ vlsi.technology:
   # Required for some CAD tools to function properly.
   placement_site: null
 
+  # Top cut/via layer for blockage under bumps. (Optional[str])
+  # Only used if using vlsi.inputs.bumps
+  # TODO: remove this after stackup supports vias ucb-bar/hammer#354
+  bump_block_cut_layer: null
+
   # Extra semiconductor IP libraries/stdcell libs/hard macros. (List[ExtraLibrary])
   # Used for non-technology-vendor-provided custom IP blocks.
   # ExtraLibrary is a struct with two fields:
@@ -108,10 +113,21 @@ cadence:
 # General VLSI inputs.
 # These will vary per run of hammer-vlsi.
 vlsi.inputs:
-  # Supply voltages.
+  # Supply voltages and names
+  # Supply Struct:
+  #   name (str) - The name of your supply's net
+  #   pin (Optional[str]) - The cell pin that this net should drive, no pins are connected when omitted
+  #   tie (Optional[str]) - Another supply this supply is tied to. Nets with this set will  not end up in your final layout.
+  # power (List(Supply)): A list of of all power net(s) in the design
+  # ground (List(Supply)): A list of all ground net(s) in the design
+  # VDD (str): The default voltage of the primary power net
+  # GND (str): The default voltage of the primary ground net
   supplies:
+    power: [{name: "VDD", pin: "VDD"}]
+    ground: [{name: "VSS", pin: "VSS"}]
     VDD: "0.85 V"
     GND: "0 V"
+
 
   hierarchical:
     # Hierarchical par mode. (str)
@@ -265,6 +281,29 @@ vlsi.inputs:
 
   # SRAM Parameters
   sram_parameters: []
+
+  # Bumps settings mode. (str)
+  # Specifies how to setup the bumps for your design.
+  # Currently only support rectangular, evenly-spaced grids
+  # Bumps are numbered starting with 1,1 in the lower left
+  # Unassigned bumps will be removed, bumps with no_connect set will be present but unconnected
+  # Valid options:
+  # manual - Use the bumps struct to create and assign bumps
+  # empty - Do not add any bumps
+  bumps_mode: empty
+  # Bumps settings struct only required if above key is set to manual
+  bumps: null
+  # BumpsDefinition struct members
+  # - x (int) - number of bumps in the x dimension
+  # - y (int) - number of bumps in the y dimension
+  # - pitch (float) - pitch of bumps in microns
+  # - cell (str) - Name of bump cell
+  # assignments - List of BumpAssignment structs. You must specify one of name or no_connect.
+  # If both are specified the bump will be left unconnected
+  #  - name (Optional[str]) - The name of the net being assigned to a bump
+  #  - no_connect (Optional[bool]) - If True the bump will be present but unconnected
+  #  - x (int) - The X coordinate of the bump assigned to this net
+  #  - y (int) - The Y coordinate of the bump assigned to this net
 
 vlsi.submit:
   # The submit command to use. "none", "local", or null will run on the current host. See hammer_submit_command.py for other options.
