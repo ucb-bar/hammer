@@ -7,6 +7,8 @@
 
 import copy
 import inspect
+import os
+import errno
 from functools import reduce
 from typing import List, Any, Set, Dict, Tuple, TypeVar, Callable, Iterable, Optional
 from enum import Enum, unique
@@ -346,3 +348,13 @@ def get_filetype(filename: str) -> HammerFiletype:
         return HammerFiletype.VERILOG
     else:
         raise NotImplementedError("Unknown file extension: {e}. Please update {f}!".format(e=extension, f=__file__))
+
+
+def mkdir_p(filepath: str) -> None:
+    try:
+        os.makedirs(filepath)
+    except OSError as exc:
+        if exc.errno == errno.EEXIST and os.path.isdir(filepath):
+            pass
+        else:
+            raise

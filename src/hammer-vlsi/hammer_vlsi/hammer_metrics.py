@@ -7,7 +7,7 @@
 #
 #  See LICENSE for licence details.
 
-from hammer_utils import add_dicts
+from hammer_utils import add_dicts, get_or_else
 from hammer_vlsi import HammerTool
 from abc import abstractmethod
 from typing import NamedTuple, Optional, List, Any, Dict, Callable, Union, TextIO
@@ -66,6 +66,14 @@ class MetricsDBEntry:
     def register(self, db: 'MetricsDB') -> None:
         pass
 
+    @abstractmethod
+    def update(self, d: Dict[str, Any]) -> 'MetricsDBEntry':
+        pass
+
+    @abstractmethod
+    def to_dict(self) -> Dict[str, Any]:
+        pass
+
 class CriticalPathEntry(NamedTuple('CriticalPathEntry', [
     ('module', ModuleSpec),
     ('clock', Optional[PortSpec]), # TODO make this connect to HammerIR clock entry somehow (HammerClockSpec??)
@@ -89,8 +97,26 @@ class CriticalPathEntry(NamedTuple('CriticalPathEntry', [
         except:
             raise ValueError("Invalid IR for CriticalPathEntry: {}".format(ir))
 
+    @staticmethod
+    def type_string() -> str:
+        return 'critical path'
+
+    def to_dict(self) -> Dict[str, Any]:
+        d = {}
+        d['type'] = self.__class__.type_string()
+        d['module'] = self.module.to_str
+        d['clock'] = self.clock.to_str
+        d['target'] = str(get_or_else(self.target, "null"))
+        d['value'] = str(get_or_else(self.value, "null"))
+        return d
+
     def register(self, db: 'MetricsDB') -> None:
         db.module_tree.add_module(self.module)
+
+    def update(self, d: Dict[str, Any]) -> MetricsDBEntry:
+        target = d['target'] if 'target' in d else self.target
+        value = d['value'] if 'value' in d else self.value
+        return CriticalPathEntry(self.module, self.clock, target, value)
 
 class ModuleAreaEntry(NamedTuple('ModuleAreaEntry', [
     ('module', ModuleSpec),
@@ -109,8 +135,23 @@ class ModuleAreaEntry(NamedTuple('ModuleAreaEntry', [
         except:
             raise ValueError("Invalid IR for ModuleAreaEntry: {}".format(ir))
 
+    @staticmethod
+    def type_string() -> str:
+        return 'area'
+
+    def to_dict(self) -> Dict[str, Any]:
+        d = {}
+        d['type'] = self.__class__.type_string()
+        d['module'] = self.module.to_str
+        d['value'] = str(get_or_else(self.value, "null"))
+        return d
+
     def register(self, db: 'MetricsDB') -> None:
         db.module_tree.add_module(self.module)
+
+    def update(self, d: Dict[str, Any]) -> MetricsDBEntry:
+        value = d['value'] if 'value' in d else self.value
+        return ModuleAreaEntry(self.module, value)
 
 # TODO document this
 #MetricsDBEntry = Union[CriticalPathEntry, ModuleAreaEntry]
@@ -118,8 +159,8 @@ class ModuleAreaEntry(NamedTuple('ModuleAreaEntry', [
 SupportMap = Dict[str, Callable[[str, Any], List[str]]]
 
 FromIRMap = {
-    "critical path": CriticalPathEntry.from_ir,
-    "area": ModuleAreaEntry.from_ir
+    CriticalPathEntry.type_string(): CriticalPathEntry.from_ir,
+    ModuleAreaEntry.type_string(): ModuleAreaEntry.from_ir
 } # type: Dict[str, Callable[[IRType], MetricsDBEntry]]
 
 class ModuleTree:
@@ -184,7 +225,6 @@ class MetricsDB:
         else:
             self._db[namespace][key] = entry
 
-
     def get_entry(self, namespace: str, key: str) -> MetricsDBEntry:
         if namespace in self._db:
             if key in self._db[namespace]:
@@ -194,11 +234,31 @@ class MetricsDB:
         else:
             raise ValueError("Namespace not found in MetricsDB: {}".format(namespace))
 
+    def update_entry(self, namespace: str, key: str, d: Dict[str, Any]) -> MetricsDBEntry:
+        if namespace in self._db:
+            if key in self._db[namespace]:
+                self._db[namespace][key] = self._db[namespace][key].update(d)
+                return self._db[namespace][key]
+            else:
+                raise ValueError("Entry not found in MetricsDB: {}".format(key))
+        else:
+            raise ValueError("Namespace not found in MetricsDB: {}".format(namespace))
+
+
     def entries(self, namespace: str) -> Dict[str, MetricsDBEntry]:
         if namespace in self._db:
             return self._db[namespace]
         else:
             raise ValueError("Namespace not found in MetricsDB: {}".format(namespace))
+
+    def serialize(self) -> str:
+        d = {}
+        for namespace in self._db:
+            d[namespace] = {}
+            for testcase in self._db[namespace]:
+                d[namespace][testcase] = self._db[namespace][testcase].to_dict()
+        return yaml.dump(d)
+
 
     @property
     def module_tree(self) -> ModuleTree:
@@ -224,14 +284,13 @@ class HasMetricSupport(HammerTool):
         for namespace in y:
             testcases = y[namespace]
             for testcase in testcases:
-                key = "{}.{}".format(namespace, testcase)
                 testcase_data = testcases[testcase]
                 if "type" not in testcase_data:
                     raise ValueError("Missing \"type\" field in testcase {}".format(testcase))
                 mtype = testcase_data["type"] # type: str
                 if mtype in FromIRMap:
                     entry = FromIRMap[mtype](testcase_data) # type: MetricsDBEntry
-                    db.create_entry(namespace, key, entry)
+                    db.create_entry(namespace, testcase, entry)
                 else:
                     raise ValueError("Metric IR field <{}> is not supported. Did you forget to update FromIRMap?".format(mtype))
         return db
@@ -245,7 +304,9 @@ class HasMetricSupport(HammerTool):
         return output
 
     def generate_metric_requests_from_ir(self, ir: Union[str, TextIO]) -> List[str]:
-        return self.generate_metric_requests_from_db(self.create_metrics_db_from_ir(ir))
+        # TODO initialize this elsewhere
+        self.metrics_db = self.create_metrics_db_from_ir(ir)
+        return self.generate_metric_requests_from_db(self.metrics_db)
 
     def generate_metric_requests_from_file(self, filename: str) -> List[str]:
         if not os.path.isfile(filename):
@@ -258,6 +319,11 @@ class HasMetricSupport(HammerTool):
     @abstractmethod
     def namespace(self) -> str:
         pass
+
+    def read_results_into_db(self, d: Dict[str, Any]) -> str:
+        for testcase in d:
+            testcase_data = d[testcase]
+            self.metrics_db.update_entry(self.namespace, testcase, testcase_data)
 
 class HasAreaMetricSupport(HasMetricSupport):
 
