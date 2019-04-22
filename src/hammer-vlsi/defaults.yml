@@ -328,6 +328,16 @@ synthesis.inputs:
   # Set to null to not specify from the JSON.
   top_module: null
 
+# Syntheis tool settings
+synthesis:
+  # Clock gating mode.
+  # type: str
+  # This tells the tool how to handle clock gating.
+  # Valid options:
+  # auto - Turn on automatic clock gating inference in CAD tools.
+  # empty - Do not do any clock gating.
+  clock_gating_mode: auto
+
 # inherit settings from vlsi.submit but allow us to override them
 synthesis.submit:
   command: "${vlsi.submit.command}"
