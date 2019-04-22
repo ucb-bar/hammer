@@ -334,7 +334,7 @@ synthesis:
   # type: str
   # This tells the tool how to handle clock gating.
   # Valid options:
-  # auto - Turn the tools automatic clock gating inference on.
+  # auto - Turn on automatic clock gating inference in CAD tools.
   # empty - Do not do any clock gating.
   clock_gating_mode: auto
 
