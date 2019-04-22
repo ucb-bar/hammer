@@ -234,6 +234,8 @@ vlsi.inputs:
   # y (float) - y coordinate in um
   # width (float) - width in um
   # height (float) - height in um
+  # top_layer (str) - Optional: Specifies the highest layer used by this hardmacro
+  #   If specified will be used to keep other wires away from this hardmacro
   # layers (List[str]) - Optional: only used for obstruction type. 
   #   If specified, a list of strings that enumerates layer(s) blocked by the obstruction otherwise all layers are blocked
   # obs_types (List[str]) - Required for obstruction type. A list of one or more of the following:
@@ -386,6 +388,10 @@ par:
   power_straps_mode: blank
   power_straps_script_contents: null
 
+  # Spacing around blocks and hardmacros in microns
+  # Used by power straps and floorplanning
+  blockage_spacing: 0.0
+
   # If power_straps_mode is 'generate', which method to use.
   # Currently, the valid options are:
   # - by_tracks - Specify the power strap plan per layer in terms of tracks
@@ -397,7 +403,8 @@ par:
     by_tracks:
       # Spacing from end of strap to a block or blockage
       # Overrideable by appending _<layer name>
-      blockage_spacing: 0.0
+      blockage_spacing: "par.blockage_spacing"
+      blockage_spacing_meta: lazycrossref
 
       # Number of routing tracks to be consumed by an individual strap
       # Overrideable by appending _<layer name>

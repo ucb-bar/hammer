@@ -217,6 +217,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
     ('height', float),
     ('orientation', Optional[str]),
     ('margins', Optional[Margins]),
+    ('top_layer', Optional[str]),
     ('layers', Optional[List[str]]),
     ('obs_types', Optional[List[ObstructionType]])
 ])):
@@ -228,6 +229,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             str(constraint["type"]))
         margins = None  # type: Optional[Margins]
         orientation = None  # type: Optional[str]
+        top_layer = None  # type: Optional[str]
         layers = None  # type: Optional[List[str]]
         obs_types = None  # type: Optional[List[ObstructionType]]
         if constraint_type == PlacementConstraintType.TopLevel:
@@ -240,6 +242,8 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             )
         if "orientation" in constraint:
             orientation = str(constraint["orientation"])
+        if "top_layer" in constraint:
+            top_layer = str(constraint["top_layer"])
         if "layers" in constraint:
             layers = []
             for layer in constraint["layers"]:
@@ -258,6 +262,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             height=float(constraint["height"]),
             orientation=orientation,
             margins=margins,
+            top_layer=top_layer,
             layers=layers,
             obs_types=obs_types
         )
@@ -280,6 +285,8 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
                 "right": self.margins.right,
                 "top": self.margins.top
             }})
+        if self.top_layer is not None:
+            output.update({"top_layer": self.top_layer})
         if self.layers is not None:
             output.update({"layers": self.layers})
         if self.obs_types is not None:

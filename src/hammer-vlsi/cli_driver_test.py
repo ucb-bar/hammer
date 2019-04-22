@@ -349,6 +349,7 @@ class CLIDriverTest(unittest.TestCase):
                 height=10.0,
                 orientation=None,
                 margins=None,
+                top_layer=None,
                 layers=None,
                 obs_types=None).to_dict()
             output["vlsi.inputs.default_output_load"] = 1
