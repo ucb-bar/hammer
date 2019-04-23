@@ -294,18 +294,22 @@ vlsi.inputs:
   # empty - Do not add any bumps
   bumps_mode: empty
   # Bumps settings struct only required if above key is set to manual
-  bumps: null
   # BumpsDefinition struct members
   # - x (int) - number of bumps in the x dimension
   # - y (int) - number of bumps in the y dimension
   # - pitch (float) - pitch of bumps in microns
   # - cell (str) - Name of bump cell
+  bumps.x: 0
+  bumps.y: 0
+  bumps.pitch: 0.0
+  bumps.cell: null
   # assignments - List of BumpAssignment structs. You must specify one of name or no_connect.
   # If both are specified the bump will be left unconnected
   #  - name (Optional[str]) - The name of the net being assigned to a bump
   #  - no_connect (Optional[bool]) - If True the bump will be present but unconnected
   #  - x (int) - The X coordinate of the bump assigned to this net
   #  - y (int) - The Y coordinate of the bump assigned to this net
+  bumps.assignments: []
 
 vlsi.submit:
   # The submit command to use. "none", "local", or null will run on the current host. See hammer_submit_command.py for other options.
