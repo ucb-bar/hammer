@@ -14,13 +14,16 @@ from abc import ABCMeta, abstractmethod
 from numbers import Number
 from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Union
 
+import tech_test
+
 import hammer_config
 import hammer_tech
 import hammer_vlsi
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, Level
 from hammer_logging.test import HammerLoggingCaptureContext
 from hammer_tech import LibraryFilter, Library, ExtraLibrary
-from hammer_utils import deeplist, get_or_else
+from hammer_utils import deeplist, deepdict, get_or_else
+
 
 
 class HasGetTech(unittest.TestCase):
@@ -611,6 +614,80 @@ export lol=abc"cat"
          assert my_bumps is not None
          # Only one of the assignments is invalid so the above 7 becomes 6
          self.assertEqual(len(my_bumps.assignments), 6)
+
+         # Cleanup
+         shutil.rmtree(tech_dir_base)
+         shutil.rmtree(test.run_dir)
+
+    def test_pins(self) -> None:
+         """
+         Test that HammerTool pin placement support works.
+         """
+         import hammer_config
+
+         tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+         tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+         def add_stackup(in_dict: Dict[str, Any]) -> Dict[str, Any]:
+            out_dict = deepdict(in_dict)
+            out_dict["stackups"] = [tech_test.StackupTestHelper.create_test_stackup_dict(8)]
+            return out_dict
+         HammerToolTestHelpers.write_tech_json(tech_json_filename, add_stackup)
+         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
+         tech.cache_dir = tech_dir
+         tech.logger = HammerVLSILogging.context("")
+
+         test = DummyTool()
+         test.logger = HammerVLSILogging.context("")
+         test.run_dir = tempfile.mkdtemp()
+         test.technology = tech
+         database = hammer_config.HammerDatabase()
+         # Check bad mode string doesn't look at null dict
+         settings = """
+{
+     "vlsi.inputs.pin_mode": "auto"
+}
+"""
+         database.update_project([hammer_config.load_config_from_string(settings, is_yaml=False)])
+         test.set_database(database)
+
+         with HammerLoggingCaptureContext() as c:
+             my_pins = test.get_pin_assignments()
+         self.assertTrue(c.log_contains("Invalid pin_mode"))
+         assert len(my_pins) == 0, "Invalid pin_mode should assume empty pins"
+
+         settings = """
+ {
+     "technology.core.stackup": "StackupWith8Metals",
+     "vlsi.inputs.pin_mode": "generated",
+     "vlsi.inputs.pin.assignments": [
+                         {"pins": "*", "side": "top", "layers": ["M5", "M3"]},
+                         {"pins": "*", "side": "bottom", "layers": ["M5"]},
+                         {"pins": "*", "side": "left", "layers": ["M4"]},
+                         {"pins": "*", "side": "right", "layers": ["M2"]},
+                         {"pins": "bad_side", "side": "right", "layers": ["M3"]},
+                         {"pins": "tx_n tx_p", "macro": true},
+                         {"pins": "bad_tx_n", "macro": true, "layers": ["M7"]},
+                         {"pins": "tx_n tx_p", "macro": true, "side": "right", "layers": ["M7"]},
+                         {"pins": "tx_n tx_p", "macro": true, "side": "right"},
+                         {"pins": "*", "layers": ["M2"]},
+                         {"pins": "*", "side": "bottom"},
+                         {"pins": "no_layers"},
+                         {"pins": "wrong_side", "side": "upsidedown", "layers": ["M2"]}
+                     ]
+ }
+ """
+         database.update_project([hammer_config.load_config_from_string(settings, is_yaml=False)])
+         test.set_database(database)
+
+         with HammerLoggingCaptureContext() as c:
+             my_pins = test.get_pin_assignments()
+         self.assertTrue(c.log_contains("Pins bad_side assigned layers "))
+         self.assertTrue(c.log_contains("Pins bad_tx_n assigned as a macro pin with layers"))
+         self.assertTrue(c.log_contains("Pins no_layers assigned without layers"))
+         self.assertTrue(c.log_contains("Pins wrong_side have invalid side"))
+         assert my_pins is not None
+         # Only one of the assignments is invalid so the above 7 becomes 6
+         self.assertEqual(len(my_pins), 9)
 
          # Cleanup
          shutil.rmtree(tech_dir_base)

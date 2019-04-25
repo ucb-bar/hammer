@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, ca
 import hammer_config
 import hammer_tech
 from hammer_logging import HammerVLSILoggingContext
-from hammer_tech import LibraryFilter, Stackup
+from hammer_tech import LibraryFilter, Stackup, RoutingDirection
 from hammer_utils import (add_lists, assert_function_type, get_or_else,
                           optional_map)
 
@@ -913,6 +913,49 @@ class HammerTool(metaclass=ABCMeta):
             y=self.get_setting("vlsi.inputs.bumps.y"),
             pitch=self.get_setting("vlsi.inputs.bumps.pitch"),
             cell=self.get_setting("vlsi.inputs.bumps.cell"), assignments=assignments)
+
+    def get_pin_assignments(self) -> List[PinAssignment]:
+        """
+        Get a list of pin assignments in accordance with settings in the Hammer IR.
+        :return: A potentially empty list of PinAssigments.
+        """
+        pin_mode = str(self.get_setting("vlsi.inputs.pin_mode"))  # type: str
+        if pin_mode == "none":
+            return []
+        elif pin_mode != "generated":
+            self.logger.error(
+                "Invalid pin_mode {mode}. Using none pin mode.".format(mode=pin_mode))
+            return []
+
+        # Generated pin mode needs to ingest the assignments
+        assigns = []  # type: List[PinAssignment]
+        for raw_assign in self.get_setting("vlsi.inputs.pin.assignments"):
+            pins = str(raw_assign["pins"])  # type: str
+            side = None if not "side" in raw_assign else raw_assign["side"]
+            if not (side == None or side == "top" or side == "bottom" or side == "right" or side == "left") :
+                self.logger.warning("Pins {p} have invalid side {s}. Assuming pins will be handled by CAD tool.".format(p=pins, s=side))
+                continue
+            macro = False if not "macro" in raw_assign else raw_assign["macro"]
+            layers = [] if not "layers" in raw_assign else raw_assign["layers"]
+            if macro:
+                if len(layers) != 0 or side != None:
+                    self.logger.warning("Pins {p} assigned as a macro pin with layers or side. Assuming pins are macro pins and ignoring layers and side.".format(p=pins))
+                    assigns.append(PinAssignment(pins=pins, side=None, layers=[], macro=macro))
+                    continue
+            else:
+                if len(layers) == 0 or side == None:
+                    self.logger.warning("Pins {p} assigned without layers or side. Assuming pins will be handled by CAD tool.".format(p=pins))
+                    # No pin appended
+                    continue
+            stackup = self.get_stackup()
+            for layer in layers:
+                direction = stackup.get_metal(layer).direction
+                if not((direction == RoutingDirection.Horizontal and (side == "left" or side == "right")) or
+                       (direction == RoutingDirection.Vertical and (side == "top" or side == "bottom")) or
+                       (direction == RoutingDirection.Redistribution)):
+                    self.logger.error("Pins {p} assigned layers {l} that do not match the direction of their side {s}. This is very likely to cause issues.".format(p=pins, l=layers, s=side))
+            assigns.append(PinAssignment(pins=pins, side=side, layers=layers, macro=macro))
+        return assigns
 
     def get_gds_map_file(self) -> Optional[str]:
         """

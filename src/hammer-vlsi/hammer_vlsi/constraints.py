@@ -14,10 +14,11 @@ from typing import Dict, NamedTuple, Optional, List, Any
 from hammer_utils import reverse_dict
 from .units import TimeValue, VoltageValue, TemperatureValue
 
-__all__ = ['ILMStruct', 'SRAMParameters', 'Supply', 'BumpAssignment',
-           'BumpsDefinition', 'ClockPort', 'OutputLoadConstraint',
-           'DelayConstraint', 'ObstructionType', 'PlacementConstraintType',
-           'Margins', 'PlacementConstraint', 'MMMCCornerType', 'MMMCCorner']
+__all__ = ['ILMStruct', 'SRAMParameters', 'Supply', 'PinAssignment',
+           'BumpAssignment', 'BumpsDefinition', 'ClockPort',
+           'OutputLoadConstraint', 'DelayConstraint', 'ObstructionType',
+           'PlacementConstraintType', 'Margins', 'PlacementConstraint',
+           'MMMCCornerType', 'MMMCCorner']
 
 
 # Struct that holds various paths related to ILMs.
@@ -77,6 +78,13 @@ Supply = NamedTuple('Supply', [
     ('name', str),
     ('pin', Optional[str]),
     ('tie', Optional[str])
+])
+
+PinAssignment = NamedTuple('PinAssignment', [
+    ('pins', str),
+    ('side', Optional[str]),
+    ('layers', Optional[List[str]]),
+    ('macro', Optional[bool])
 ])
 
 BumpAssignment = NamedTuple('BumpAssignment', [
