@@ -5,20 +5,25 @@
 #
 #  See LICENSE for licence details.
 
+# TODO: move this file out of hammer_vlsi.
+# See issue #318.
+
 import json
 import os
 import shutil
 import unittest
 
 from hammer_vlsi import HammerVLSISettings
-from test import HammerToolTestHelpers, DummyTool, HasGetTech
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from hammer_logging import HammerVLSILogging
 import hammer_tech
 from hammer_tech import LibraryFilter, Stackup, Metal, WidthSpacingTuple
 from hammer_utils import deepdict
 from decimal import Decimal
+
+from test_tool_utils import HammerToolTestHelpers, DummyTool
+from tech_test_utils import HasGetTech
 
 
 class HammerTechnologyTest(HasGetTech, unittest.TestCase):
