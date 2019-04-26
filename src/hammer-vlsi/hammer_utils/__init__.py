@@ -10,14 +10,10 @@ import inspect
 from functools import reduce
 from typing import List, Any, Set, Dict, Tuple, TypeVar, Callable, Iterable, Optional
 from enum import Enum, unique
+from decimal import Decimal
 
 from .verilog_utils import *
 from .lef_utils import *
-
-__all__ = ['VerilogUtils', 'LEFUtils',
-           'deepdict', 'deeplist', 'add_lists', 'add_dicts', 'reverse_dict', 'in_place_unique', 'topological_sort',
-           'reduce_named', 'reduce_list_str', 'get_or_else', 'optional_map', 'assert_function_type',
-           'check_function_type']
 
 
 def deepdict(x: dict) -> dict:
@@ -99,6 +95,10 @@ def in_place_unique(items: List[Any]) -> None:
         else:
             seen.add(item)
             i += 1
+
+
+def coerce_to_grid(num: float, grid: Decimal) -> Decimal:
+    return Decimal(round(num / float(grid))) * grid
 
 
 def topological_sort(graph: Dict[str, Tuple[List[str], List[str]]], starting_nodes: List[str]) -> List[str]:
