@@ -220,7 +220,7 @@ class Site(NamedTuple('Site', [
     __slots__ = ()
 
     @staticmethod
-    def from_setting(grid_unit: Decimal, d: dict) -> "Site":
+    def from_setting(grid_unit: Decimal, d: Dict[str, Any]) -> "Site":
         """
         Return a new Site
 
