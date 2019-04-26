@@ -230,8 +230,8 @@ class Site(NamedTuple('Site', [
         """
         return Site(
             name=str(d["name"]),
-            x=coerce_to_grid(grid_unit, d["x"]),
-            y=coerce_to_grid(grid_unit, d["y"])
+            x=coerce_to_grid(d["x"], grid_unit),
+            y=coerce_to_grid(d["y"], grid_unit)
         )
 
 
