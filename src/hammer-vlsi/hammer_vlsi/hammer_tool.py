@@ -932,7 +932,7 @@ class HammerTool(metaclass=ABCMeta):
         for raw_assign in self.get_setting("vlsi.inputs.pin.assignments"):
             pins = str(raw_assign["pins"])  # type: str
             side = None if not "side" in raw_assign else raw_assign["side"]
-            if not (side == None or side == "top" or side == "bottom" or side == "right" or side == "left") :
+            if not (side is None or side == "top" or side == "bottom" or side == "right" or side == "left") :
                 self.logger.warning("Pins {p} have invalid side {s}. Assuming pins will be handled by CAD tool.".format(p=pins, s=side))
                 continue
             macro = False if not "macro" in raw_assign else raw_assign["macro"]
