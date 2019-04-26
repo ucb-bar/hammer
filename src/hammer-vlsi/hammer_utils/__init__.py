@@ -101,6 +101,50 @@ def coerce_to_grid(num: float, grid: Decimal) -> Decimal:
     return Decimal(round(num / float(grid))) * grid
 
 
+def gcd(*values: int) -> int:
+    """
+    Return the greatest common divisor of a series of ints
+
+    :param values: The values of which to compute the GCD
+    :return: The GCD
+    """
+    assert len(values) > 0
+    if len(values) == 1:
+        return values[0]
+    elif len(values) == 2:
+        a = values[0]
+        b = values[1]
+        while b > 0:
+            a, b =  b, a % b
+        return a
+    else:
+        return gcd(values[0], gcd(*values[1:]))
+
+def lcm(*values: int) -> int:
+    """
+    Return the least common multiple of a series of ints
+
+    :param values: The values of which to compute the LCM
+    :return: The LCM
+    """
+    assert len(values) > 0
+    if len(values) == 1:
+        return values[0]
+    elif len(values) == 2:
+        return int((values[0] * values[1]) / gcd(*values))
+    else:
+        return lcm(values[0], lcm(*values[1:]))
+
+def lcm_grid(grid: Decimal, *values: Decimal) -> Decimal:
+    """
+    Return the least common multiple of a series of decimal values on a provided grid
+
+    :param grid: The unit grid
+    :param values: The values of which to compute the LCM
+    :return: The LCM
+    """
+    return grid * lcm(*map(lambda x: int(x/grid), values))
+
 def topological_sort(graph: Dict[str, Tuple[List[str], List[str]]], starting_nodes: List[str]) -> List[str]:
     """
     Perform a topological sort on the graph and return a valid ordering.
