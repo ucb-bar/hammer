@@ -914,6 +914,129 @@ class HammerTool(metaclass=ABCMeta):
             pitch=self.get_setting("vlsi.inputs.bumps.pitch"),
             cell=self.get_setting("vlsi.inputs.bumps.cell"), assignments=assignments)
 
+    def generate_floorplan_viz(self) -> None:
+        viz = self.get_setting("pcb.generic.viz")
+        if viz in ["all", "bumps"]:
+            fsvg = open(os.path.join(self.run_dir, 'floorplan.svg'), 'w')
+            fsvg.write("""<?xml version="1.0"?>
+            <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n""")
+
+            title_height = 100
+            fp_consts = self.get_placement_constraints()
+            for const in fp_consts:
+                if const.type == PlacementConstraintType.TopLevel:
+                    top_module = const.path
+                    fp_width = const.width
+                    fp_height = const.height
+                    fp_margins = const.margins
+
+            fsvg.write("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%f\" height=\"%f\">\n" % (fp_width+1, fp_height+title_height+1))
+
+            # style
+            fsvg.write("""<defs><style type="text/css">
+            rect {
+              stroke: #000000;
+              fill:   #ffffff;
+            }
+            .macro_path {
+              font-family: sans-serif;
+              font-weight: bold;
+              font-size: 12pt;
+            }
+            .bump_name {
+              font-family: sans-serif;
+              font-weight: bold;
+              font-size: 10pt;
+            }
+            .bump_num {
+              font-family: sans-serif;
+              font-weight: bold;
+              font-size: 10pt;
+            }
+            #chip_name {
+              font-family: sans-serif;
+              font-weight: bold;
+              font-size: 40pt;
+            }
+            .macro {
+              fill: #aaaaaa;
+            }
+            .power {
+              fill: #ff4040;
+            }
+            .ground {
+              fill: #ffa500;
+            }
+            .signal {
+              fill: #4040ff;
+            }
+            </style></defs>\n""")
+
+            # Print chip name on top, bbox, and core area rects
+            fsvg.write("<g>\n")
+            fsvg.write("<rect x=\"1\" y=\"{}\" width=\"{}\" height=\"{}\" id=\"die\"/>\n".format(title_height, fp_width, fp_height))
+            fsvg.write("<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" id=\"core\"/>\n".format(fp_margins.left+1, title_height+fp_margins.top, fp_width-fp_margins.left-fp_margins.right, fp_height-fp_margins.top-fp_margins.bottom))
+            fsvg.write("<text x=\"{}\" y=\"{}\" text-anchor=\"middle\" alignment-baseline=\"middle\" id=\"chip_name\">{}</text>\n".format(fp_width/2, title_height/2, top_module))
+
+            translate = "translate({} {})".format(1, title_height)
+            macro_rects = "<g transform=\"{}\">\n".format(translate)
+            macro_text = "<g transform=\"{}\">\n".format(translate)
+
+            for m in fp_consts:
+                if m.path != top_module and viz == "all":
+                    macro_rects += "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" class=\"macro\" />\n".format(m.x, fp_height-m.y-m.height, m.width, m.height)
+                    macro_text += "<text text-anchor=\"middle\" x=\"{}\" y=\"{}\" class=\"macro_path\">{}</text>\n".format(m.x+m.width/2, fp_height-m.y-m.height/2, m.path)
+
+            fsvg.write(macro_rects)
+            fsvg.write("</g>\n")
+            fsvg.write(macro_text)
+            fsvg.write("</g>\n")
+
+            bumps = self.get_bumps()
+            if bumps is None:
+                self.logger.error("Not using bumps API, skipping drawing bumps")
+            else:
+                bp = bumps.pitch
+                x_os = (fp_width-(bumps.x-1)*bp)/2.0
+                y_os = (fp_height-(bumps.y-1)*bp)/2.0
+                fsvg.write("<text x=\"{}\" y=\"{}\" text-anchor=\"start\" class=\"bump_name\">bump pitch = {}</text>\n".format(x_os, title_height/2, bp))
+                bump_circles = "<g transform=\"{}\">\n".format(translate)
+                bump_text = "<g transform=\"{}\">\n".format(translate)
+                bump_x = "<g transform=\"{}\">\n".format(translate)
+                bump_y = "<g transform=\"{}\">\n".format(translate)
+
+                for b in bumps.assignments:
+                    bump_type = 'signal'
+                    if b.name in [net.name for net in self.get_all_power_nets()]:
+                        bump_type = 'power'
+                    elif b.name in [net.name for net in self.get_all_ground_nets()]:
+                        bump_type = 'ground'
+
+                    #TODO: get the bump radius from the bump LEF instead of just naively making it bump pitch/4
+                    bump_circles += "<circle cx=\"{}\" cy=\"{}\" r=\"{}\" class=\"{}\" />\n".format(x_os+(b.x-1)*bp, fp_height-y_os-(b.y-1)*bp, bp/4, bump_type)
+                    bump_text += "<text text-anchor=\"middle\" x=\"{}\" y=\"{}\" class=\"bump_name\">{}</text>\n".format(x_os+(b.x-1)*bp, fp_height-y_os-(b.y-1)*bp, b.name)
+
+                for i in range(bumps.x):
+                    if(i % 5 == 0):
+                        bump_x += "<text text-anchor=\"middle\" x=\"{}\" y=\"{}\" class=\"bump_num\">{}</text>\n".format(x_os+i*bp, fp_height-10, i+1)
+                        bump_x += "<text text-anchor=\"middle\" x=\"{}\" y=\"{}\" class=\"bump_num\">{}</text>\n".format(x_os+i*bp, 10, i+1)
+                for i in range(bumps.y):
+                    if(i % 5 == 0):
+                        bump_y += "<text text-anchor=\"start\" x=\"{}\" y=\"{}\" class=\"bump_num\">{}</text>\n".format(10, fp_height-y_os-i*bp, i+1)
+                        bump_y += "<text text-anchor=\"end\" x=\"{}\" y=\"{}\" class=\"bump_num\">{}</text>\n".format(fp_width-10, fp_height-y_os-i*bp, i+1)
+
+                fsvg.write(bump_circles)
+                fsvg.write("</g>\n")
+                fsvg.write(bump_text)
+                fsvg.write("</g>\n")
+                fsvg.write(bump_x)
+                fsvg.write("</g>\n")
+                fsvg.write(bump_y)
+                fsvg.write("</g>\n")
+
+            fsvg.write("</g>\n</svg>\n")
+            fsvg.close()
+
     def get_gds_map_file(self) -> Optional[str]:
         """
         Get a GDS map in accordance with settings in the Hammer IR.

@@ -484,3 +484,9 @@ technology.core:
     # Can be a wildcard/glob
     # type: string
     tap_cell_rail_reference: null
+
+pcb.generic:
+  # Writes a floorplan.svg file
+  # Valid modes are bumps or all (includes macro placement boxes)
+  # type: string
+  viz: null
