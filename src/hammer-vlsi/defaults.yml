@@ -323,7 +323,9 @@ vlsi.inputs:
   pin:
     # List of PinAssignment Structs.
     #   You must specify pins and one of either preplaced or layers and side.
-    # - pins (str) - The name(s) of pins that will be assigned.
+    # - pins (str) - The name(s) of pins that will be assigned. All current backends support
+    #   * as wildcards in the pin names. So "*" for all pins or "io_tl_a*" for all pins that
+    #   start with "io_tl_a".
     # - side (Optional[str]) - The side of the chip/block these pins will be placed along.
     #   One of "left", "right", "top", "bottom"
     # - layers (Optional[List[str]]) - The metal layers that these pins will be placed on.
