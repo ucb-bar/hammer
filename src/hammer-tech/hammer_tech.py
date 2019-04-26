@@ -211,7 +211,7 @@ class Site(NamedTuple('Site', [
     ('y', Decimal)
 ])):
     """
-    A standard cell site, which is the minimum unit of x and y dimenions a standard cell can have.
+    A standard cell site, which is the minimum unit of x and y dimensions a standard cell can have.
 
     name: The name of this site (usually something like "core")
     x: The x dimension
