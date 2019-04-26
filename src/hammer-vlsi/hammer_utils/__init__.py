@@ -98,6 +98,13 @@ def in_place_unique(items: List[Any]) -> None:
 
 
 def coerce_to_grid(num: float, grid: Decimal) -> Decimal:
+    """
+    Coerce a floating-point number to the nearest multiple of the provided grid
+
+    :param num: The input floating-point number
+    :param grid: The decimal grid value to which num should be coerced
+    :return: A decimal number on-grid
+    """
     return Decimal(round(num / float(grid))) * grid
 
 
