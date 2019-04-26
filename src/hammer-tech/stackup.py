@@ -337,3 +337,15 @@ class Stackup(NamedTuple('Stackup', [
             if m.name == name:
                 return m
         raise ValueError("Metal named %s is not defined in stackup %s" % (name, self.name))
+
+    def get_metal_by_index(self, index: int) -> Metal:
+        """
+        Get a given metal layer by index.
+
+        :param index: Index of the metal layer
+        :return: A metal layer object
+        """
+        for m in self.metals:
+            if m.index == index:
+                return m
+        raise ValueError("Metal with index %d is not defined in stackup %s" % (index, self.name))

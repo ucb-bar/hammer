@@ -14,10 +14,11 @@ from typing import Dict, NamedTuple, Optional, List, Any
 from hammer_utils import reverse_dict
 from .units import TimeValue, VoltageValue, TemperatureValue
 
-__all__ = ['ILMStruct', 'SRAMParameters', 'Supply', 'BumpAssignment',
-           'BumpsDefinition', 'ClockPort', 'OutputLoadConstraint',
-           'DelayConstraint', 'ObstructionType', 'PlacementConstraintType',
-           'Margins', 'PlacementConstraint', 'MMMCCornerType', 'MMMCCorner']
+__all__ = ['ILMStruct', 'SRAMParameters', 'Supply', 'PinAssignment',
+           'BumpAssignment', 'BumpsDefinition', 'ClockPort',
+           'OutputLoadConstraint', 'DelayConstraint', 'ObstructionType',
+           'PlacementConstraintType', 'Margins', 'PlacementConstraint',
+           'MMMCCornerType', 'MMMCCorner']
 
 
 # Struct that holds various paths related to ILMs.
@@ -77,6 +78,13 @@ Supply = NamedTuple('Supply', [
     ('name', str),
     ('pin', Optional[str]),
     ('tie', Optional[str])
+])
+
+PinAssignment = NamedTuple('PinAssignment', [
+    ('pins', str),
+    ('side', Optional[str]),
+    ('layers', Optional[List[str]]),
+    ('preplaced', Optional[bool])
 ])
 
 BumpAssignment = NamedTuple('BumpAssignment', [
@@ -217,6 +225,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
     ('height', float),
     ('orientation', Optional[str]),
     ('margins', Optional[Margins]),
+    ('top_layer', Optional[str]),
     ('layers', Optional[List[str]]),
     ('obs_types', Optional[List[ObstructionType]])
 ])):
@@ -228,6 +237,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             str(constraint["type"]))
         margins = None  # type: Optional[Margins]
         orientation = None  # type: Optional[str]
+        top_layer = None  # type: Optional[str]
         layers = None  # type: Optional[List[str]]
         obs_types = None  # type: Optional[List[ObstructionType]]
         if constraint_type == PlacementConstraintType.TopLevel:
@@ -240,6 +250,8 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             )
         if "orientation" in constraint:
             orientation = str(constraint["orientation"])
+        if "top_layer" in constraint:
+            top_layer = str(constraint["top_layer"])
         if "layers" in constraint:
             layers = []
             for layer in constraint["layers"]:
@@ -258,6 +270,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             height=float(constraint["height"]),
             orientation=orientation,
             margins=margins,
+            top_layer=top_layer,
             layers=layers,
             obs_types=obs_types
         )
@@ -280,6 +293,8 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
                 "right": self.margins.right,
                 "top": self.margins.top
             }})
+        if self.top_layer is not None:
+            output.update({"top_layer": self.top_layer})
         if self.layers is not None:
             output.update({"layers": self.layers})
         if self.obs_types is not None:
