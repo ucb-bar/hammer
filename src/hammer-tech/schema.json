@@ -1,8 +1,10 @@
 {
   "title" : "TechJSON",
   "type" : "object",
-  "grid_unit" : "string",
   "properties" : {
+    "grid_unit" : {
+      "type" : "string"
+    },
     "installs" : {
       "type" : "array",
       "items" : {
