@@ -204,7 +204,7 @@ class CLIDriver:
         """
         Dump macro size information.
         """
-        macro_json = list(map(lambda m: m.to_setting(), driver.tech.get_macro_sizes()))
+        macro_json = list(map(lambda m: m.to_setting(), driver.tech.get_macro_sizes()))  # type: ignore
         return json.dumps(macro_json, cls=HammerJSONEncoder, indent=4)
 
     def get_extra_synthesis_hooks(self) -> List[HammerToolHookAction]:
