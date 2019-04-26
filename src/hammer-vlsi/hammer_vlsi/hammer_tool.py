@@ -922,7 +922,9 @@ class HammerTool(metaclass=ABCMeta):
         pin_mode = str(self.get_setting("vlsi.inputs.pin_mode"))  # type: str
         if pin_mode == "none":
             return []
-        elif pin_mode != "generated":
+        elif pin_mode == "generated":
+            pass
+        else:
             self.logger.error(
                 "Invalid pin_mode {mode}. Using none pin mode.".format(mode=pin_mode))
             return []
