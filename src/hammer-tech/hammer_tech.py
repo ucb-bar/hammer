@@ -860,6 +860,9 @@ class HammerTechnology:
             raise ValueError("Tech JSON does not specify any sites")
 
     def get_placement_site(self) -> Site:
+        """
+        Return the default placement site defined by the hammer setting "vlsi.technology.placement_site"
+        """
         return self.get_site_by_name(self.get_setting("vlsi.technology.placement_site"))
 
 
