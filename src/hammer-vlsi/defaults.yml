@@ -312,6 +312,30 @@ vlsi.inputs:
     #  - y (int) - The Y coordinate of the bump assigned to this net
     assignments: []
 
+  # Pin placement mode. (str)
+  # Specifies how to arrange pins for your design.
+  # Valid options:
+  # none - This mode lets the CAD tool do whatever it wants (providing no constraints).
+  #   Typically this is sane but unpredictable.
+  # generated - Use the assignments list below
+  # auto - (not implemented yet) looks at the hierarchy and guess where pins should go
+  pin_mode: none
+  pin:
+    # List of PinAssignment Structs.
+    #   You must specify pins and one of either preplaced or layers and side.
+    # - pins (str) - The name(s) of pins that will be assigned. All current backends support
+    #   * as wildcards in the pin names. So "*" for all pins or "io_tl_a*" for all pins that
+    #   start with "io_tl_a".
+    # - side (Optional[str]) - The side of the chip/block these pins will be placed along.
+    #   One of "left", "right", "top", "bottom"
+    # - layers (Optional[List[str]]) - The metal layers that these pins will be placed on.
+    # - preplaced (Optional[bool]) - If true, these pins are preplaced by some internal block or macro.
+    #   This is telling the tool that these pins are on an internal block and I want them
+    #   "placed" where they are currently on the internal block. This can be used for IP
+    #   that directly connects to bumps, or signals that will be connected by abutment,
+    #   and much more.
+    assignments: []
+
 vlsi.submit:
   # The submit command to use. "none", "local", or null will run on the current host. See hammer_submit_command.py for other options.
   command: "local"
