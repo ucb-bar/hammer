@@ -937,15 +937,15 @@ class HammerTool(metaclass=ABCMeta):
             if not (side is None or side == "top" or side == "bottom" or side == "right" or side == "left") :
                 self.logger.warning("Pins {p} have invalid side {s}. Assuming pins will be handled by CAD tool.".format(p=pins, s=side))
                 continue
-            preplaced = False if not "preplaced" in raw_assign else raw_assign["preplaced"]
+            preplaced = raw_assign.get("preplaced", False)
             layers = [] if not "layers" in raw_assign else raw_assign["layers"]
             if preplaced:
-                if len(layers) != 0 or side != None:
+                if len(layers) != 0 or side is not None:
                     self.logger.warning("Pins {p} assigned as a preplaced pin with layers or side. Assuming pins are preplaced pins and ignoring layers and side.".format(p=pins))
                     assigns.append(PinAssignment(pins=pins, side=None, layers=[], preplaced=preplaced))
                     continue
             else:
-                if len(layers) == 0 or side == None:
+                if len(layers) == 0 or side is None:
                     self.logger.warning("Pins {p} assigned without layers or side. Assuming pins will be handled by CAD tool.".format(p=pins))
                     # No pin appended
                     continue
