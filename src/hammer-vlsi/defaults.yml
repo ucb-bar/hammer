@@ -318,7 +318,7 @@ vlsi.inputs:
   # none - This mode lets the CAD tool do whatever it wants (providing no constraints).
   #   Typically this is sane but unpredictable.
   # generated - Use the assignments list below
-  # auto - is unsupported but should look at hierarchy and guess where pins should go
+  # auto - (not implemented yet) looks at the hierarchy and guess where pins should go
   pin_mode: none
   pin:
     # List of PinAssignment Structs.
