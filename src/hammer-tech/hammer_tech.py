@@ -10,7 +10,7 @@ import json
 import os
 import subprocess
 from abc import ABCMeta, abstractmethod
-from typing import Any, Callable, Iterable, List, NamedTuple, Optional, Tuple
+from typing import Any, Callable, Iterable, List, NamedTuple, Optional, Tuple. Dict
 from decimal import Decimal
 
 import hammer_config
