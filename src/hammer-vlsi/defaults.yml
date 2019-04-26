@@ -324,7 +324,7 @@ vlsi.inputs:
     # List of PinAssignment Structs.
     #   You must specify pins and one of either macro or layers and side.
     # - pins (str) - The name(s) of pins that will be assigned.
-    # - side (Optional[str]) - The side of the chip/block these pins will be palced along.
+    # - side (Optional[str]) - The side of the chip/block these pins will be placed along.
     #   One of "left", "right", "top", "bottom"
     # - layers (Optional[List[str]]) - The metal layers that these pins will be placed on.
     # - macro (Optional[bool]) - If true this pins come from an internal macro
