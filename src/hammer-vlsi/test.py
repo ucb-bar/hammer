@@ -10,11 +10,11 @@ import os
 import shutil
 import tempfile
 import unittest
-from abc import ABCMeta, abstractmethod
-from numbers import Number
 from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Union
 
-import tech_test
+from tech_test import StackupTestHelper
+from tech_test_utils import HasGetTech
+from test_tool_utils import HammerToolTestHelpers, DummyTool, SingleStepTool
 
 import hammer_config
 import hammer_tech
@@ -23,23 +23,6 @@ from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, Level
 from hammer_logging.test import HammerLoggingCaptureContext
 from hammer_tech import LibraryFilter, Library, ExtraLibrary
 from hammer_utils import deeplist, deepdict, get_or_else
-
-
-
-class HasGetTech(unittest.TestCase):
-    """
-    Helper mix-in that adds the convenience function get_tech.
-    """
-
-    def get_tech(self, tech_opt: Optional[hammer_tech.HammerTechnology]) -> hammer_tech.HammerTechnology:
-        """
-        Get the technology from the input parameter or raise an assertion.
-        :param tech_opt: Result of HammerTechnology.load_from_dir()
-        :return: Technology library or assertion will be raised.
-        """
-        self.assertTrue(tech_opt is not None, "Technology must be loaded")
-        assert tech_opt is not None  # type checking
-        return tech_opt
 
 
 class HammerVLSILoggingTest(unittest.TestCase):
@@ -109,122 +92,6 @@ class HammerVLSILoggingTest(unittest.TestCase):
         # Remove temp file
         os.remove(path)
 
-
-class HammerToolTestHelpers:
-    """
-    Helper functions to aid in the testing of IP library filtering/processing.
-    """
-
-    @staticmethod
-    def create_tech_dir(tech_name: str) -> Tuple[str, str]:
-        """
-        Create a temporary folder for a test technology.
-        Note: the caller is responsible for removing the tech_dir_base folder
-        after use!
-        :param tech_name: Technology name (e.g. "saed32")
-        :return: Tuple of create tech_dir and tech_dir_base (which the caller
-                 must delete)
-        """
-        tech_dir_base = tempfile.mkdtemp()
-        tech_dir = os.path.join(tech_dir_base, tech_name)
-        os.mkdir(tech_dir)
-
-        return tech_dir, tech_dir_base
-
-    @staticmethod
-    def write_tech_json(tech_json_filename: str, postprocessing_func: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None) -> None:
-        tech_json = {
-            "name": "dummy28",
-            "installs": [
-                {
-                    "path": "test",
-                    "base var": ""  # means relative to tech dir
-                }
-            ],
-            "libraries": [
-                {"milkyway techfile": "test/soy"},
-                {"openaccess techfile": "test/juice"},
-                {"milkyway techfile": "test/coconut"},
-                {
-                    "openaccess techfile": "test/orange",
-                    "provides": [
-                        {"lib_type": "stdcell"}
-                    ]
-                },
-                {
-                    "openaccess techfile": "test/grapefruit",
-                    "provides": [
-                        {"lib_type": "stdcell"}
-                    ]
-                },
-                {
-                    "openaccess techfile": "test/tea",
-                    "provides": [
-                        {"lib_type": "technology"}
-                    ]
-                },
-            ]
-        }  # type: Dict[str, Any]
-        if postprocessing_func is not None:
-            tech_json = postprocessing_func(tech_json)
-        with open(tech_json_filename, "w") as f:
-            f.write(json.dumps(tech_json, indent=4))
-
-    @staticmethod
-    def make_test_filter() -> LibraryFilter:
-        """
-        Make a test filter that returns libraries with openaccess techfiles with libraries that provide 'technology'
-        in lib_type first, with the rest sorted by the openaccess techfile.
-        """
-        def filter_func(lib: hammer_tech.Library) -> bool:
-            return lib.openaccess_techfile is not None
-
-        def paths_func(lib: hammer_tech.Library) -> List[str]:
-            assert lib.openaccess_techfile is not None
-            return [lib.openaccess_techfile]
-
-        def sort_func(lib: hammer_tech.Library) -> Union[Number, str, tuple]:
-            assert lib.openaccess_techfile is not None
-            if lib.provides is not None and len(
-                    list(filter(lambda x: x is not None and x.lib_type == "technology", lib.provides))) > 0:
-                # Put technology first
-                return (0, "")
-            else:
-                return (1, str(lib.openaccess_techfile))
-
-        return LibraryFilter.new(
-            filter_func=filter_func,
-            paths_func=paths_func,
-            tag="test", description="Test filter",
-            is_file=True,
-            sort_func=sort_func
-        )
-
-
-class SingleStepTool(hammer_vlsi.DummyHammerTool, metaclass=ABCMeta):
-    """
-    Helper class to define a single-step tool in tests.
-    """
-    @property
-    def steps(self) -> List[hammer_vlsi.HammerToolStep]:
-        return self.make_steps_from_methods([
-            self.step
-        ])
-
-    @abstractmethod
-    def step(self) -> bool:
-        """
-        Implement this method for the single step.
-        :return: True if the step passed
-        """
-        pass
-
-class DummyTool(SingleStepTool):
-    """
-    A dummy tool that does nothing and always passes.
-    """
-    def step(self) -> bool:
-        return True
 
 class HammerToolTest(HasGetTech, unittest.TestCase):
     def test_read_libs(self) -> None:
@@ -629,7 +496,7 @@ export lol=abc"cat"
          tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
          def add_stackup(in_dict: Dict[str, Any]) -> Dict[str, Any]:
             out_dict = deepdict(in_dict)
-            out_dict["stackups"] = [tech_test.StackupTestHelper.create_test_stackup_dict(8)]
+            out_dict["stackups"] = [StackupTestHelper.create_test_stackup_dict(8)]
             return out_dict
          HammerToolTestHelpers.write_tech_json(tech_json_filename, add_stackup)
          tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))

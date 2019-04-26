@@ -5,13 +5,15 @@
 #
 #  See LICENSE for licence details.
 
+# TODO: move this file out of hammer_vlsi.
+# See issue #318.
+
 import json
 import os
 import shutil
 import unittest
 
 from hammer_vlsi import HammerVLSISettings
-import test
 from typing import Any, Dict, List, Optional
 
 from hammer_logging import HammerVLSILogging
@@ -19,15 +21,14 @@ import hammer_tech
 from hammer_tech import LibraryFilter, Stackup, Metal, WidthSpacingTuple
 from hammer_utils import deepdict
 
+from test_tool_utils import HammerToolTestHelpers, DummyTool
+from tech_test_utils import HasGetTech
 
-class HammerTechnologyTest(unittest.TestCase):
+
+class HammerTechnologyTest(HasGetTech, unittest.TestCase):
     """
     Tests for the Hammer technology library (hammer_tech).
     """
-
-    # Workaround for not being able to mix-in test.HasGetTech directly
-    def get_tech(self, tech_opt: Optional[hammer_tech.HammerTechnology]) -> hammer_tech.HammerTechnology:
-        return test.HasGetTech.get_tech(self, tech_opt) # type: ignore
 
     def setUp(self) -> None:
         # Make sure the HAMMER_VLSI path is set correctly.
@@ -43,7 +44,7 @@ class HammerTechnologyTest(unittest.TestCase):
 
         import hammer_config
 
-        tech_dir, tech_dir_base = test.HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
         tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
 
         def add_named_library(in_dict: Dict[str, Any]) -> Dict[str, Any]:
@@ -54,7 +55,7 @@ class HammerTechnologyTest(unittest.TestCase):
             })
             return out_dict
 
-        test.HammerToolTestHelpers.write_tech_json(tech_json_filename, add_named_library)
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_named_library)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
@@ -107,7 +108,7 @@ class HammerTechnologyTest(unittest.TestCase):
         """
         import hammer_config
 
-        tech_dir, tech_dir_base = test.HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
         tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
 
         def add_duplicates(in_dict: Dict[str, Any]) -> Dict[str, Any]:
@@ -122,7 +123,7 @@ class HammerTechnologyTest(unittest.TestCase):
             })
             return out_dict
 
-        test.HammerToolTestHelpers.write_tech_json(tech_json_filename, add_duplicates)
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_duplicates)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
@@ -166,7 +167,7 @@ class HammerTechnologyTest(unittest.TestCase):
         """
         import hammer_config
 
-        tech_dir, tech_dir_base = test.HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
         tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
 
         # Add defaults to specify tarball_dir.
@@ -175,7 +176,7 @@ class HammerTechnologyTest(unittest.TestCase):
                 "technology.dummy28.tarball_dir": tech_dir
             }))
 
-        test.HammerToolTestHelpers.write_tech_json(tech_json_filename, self.add_tarballs)
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, self.add_tarballs)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
@@ -198,7 +199,7 @@ class HammerTechnologyTest(unittest.TestCase):
         """
         import hammer_config
 
-        tech_dir, tech_dir_base = test.HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
         tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
 
         # Add defaults to specify tarball_dir.
@@ -208,7 +209,7 @@ class HammerTechnologyTest(unittest.TestCase):
                 "vlsi.technology.extracted_tarballs_dir": tech_dir_base
             }))
 
-        test.HammerToolTestHelpers.write_tech_json(tech_json_filename, self.add_tarballs)
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, self.add_tarballs)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
@@ -232,7 +233,7 @@ class HammerTechnologyTest(unittest.TestCase):
         """
         import hammer_config
 
-        tech_dir, tech_dir_base = test.HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
         tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
 
         # Add defaults to specify tarball_dir.
@@ -243,7 +244,7 @@ class HammerTechnologyTest(unittest.TestCase):
                 "technology.dummy28.extracted_tarballs_dir": tech_dir_base
             }))
 
-        test.HammerToolTestHelpers.write_tech_json(tech_json_filename, self.add_tarballs)
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, self.add_tarballs)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
@@ -327,7 +328,7 @@ installs:
       base var: ""  # means relative to tech dir
 libraries: []
         """
-        tech_dir, tech_dir_base = test.HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
 
         tech_yaml_filename = os.path.join(tech_dir, "dummy28.tech.yml")
         with open(tech_yaml_filename, "w") as f:  # pylint: disable=invalid-name
@@ -344,7 +345,7 @@ libraries: []
         """
         import hammer_config
 
-        tech_dir, tech_dir_base = test.HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
         tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
 
         def add_gds_map(in_dict: Dict[str, Any]) -> Dict[str, Any]:
@@ -352,11 +353,11 @@ libraries: []
             out_dict.update({"gds map file": "test/gds_map_file"})
             return out_dict
 
-        test.HammerToolTestHelpers.write_tech_json(tech_json_filename, add_gds_map)
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_gds_map)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
-        tool = test.DummyTool()
+        tool = DummyTool()
         tool.technology = tech
         database = hammer_config.HammerDatabase()
         tool.set_database(database)
@@ -386,10 +387,10 @@ libraries: []
         shutil.rmtree(tech_dir_base)
 
         # Create a new technology with no GDS map file.
-        tech_dir, tech_dir_base = test.HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
 
         tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
-        test.HammerToolTestHelpers.write_tech_json(tech_json_filename)
+        HammerToolTestHelpers.write_tech_json(tech_json_filename)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
@@ -411,7 +412,7 @@ libraries: []
         """
         import hammer_config
 
-        tech_dir, tech_dir_base = test.HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
         tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
 
         def add_dont_use_list(in_dict: Dict[str, Any]) -> Dict[str, Any]:
@@ -419,11 +420,11 @@ libraries: []
             out_dict.update({"dont use list": ["cell1", "cell2"]})
             return out_dict
 
-        test.HammerToolTestHelpers.write_tech_json(tech_json_filename, add_dont_use_list)
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_dont_use_list)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
-        tool = test.DummyTool()
+        tool = DummyTool()
         tool.technology = tech
         database = hammer_config.HammerDatabase()
         tool.set_database(database)
@@ -455,10 +456,10 @@ libraries: []
         shutil.rmtree(tech_dir_base)
 
         # Create a new technology with no dont use list
-        tech_dir, tech_dir_base = test.HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
 
         tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
-        test.HammerToolTestHelpers.write_tech_json(tech_json_filename)
+        HammerToolTestHelpers.write_tech_json(tech_json_filename)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
@@ -480,7 +481,7 @@ libraries: []
         """
         import hammer_config
 
-        tech_dir, tech_dir_base = test.HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
         tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
 
         def add_lib_with_lef(d: Dict[str, Any]) -> Dict[str, Any]:
@@ -506,7 +507,7 @@ END LIBRARY
             })
             return r
 
-        test.HammerToolTestHelpers.write_tech_json(tech_json_filename, add_lib_with_lef)
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_lib_with_lef)
         tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
         if tech_opt is None:
             self.assertTrue(False, "Unable to load technology")
