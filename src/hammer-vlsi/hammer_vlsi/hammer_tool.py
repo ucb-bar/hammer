@@ -923,6 +923,9 @@ class HammerTool(metaclass=ABCMeta):
 
             title_height = 100
             fp_consts = self.get_placement_constraints()
+            if fp_consts == []:
+                self.logger.error("No placement constraints defined, skipping drawing floorplan svg")
+                return
             for const in fp_consts:
                 if const.type == PlacementConstraintType.TopLevel:
                     top_module = const.path
