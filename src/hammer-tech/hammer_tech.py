@@ -20,7 +20,7 @@ from hammer_config import load_yaml
 from hammer_logging import HammerVLSILoggingContext
 from hammer_utils import (LEFUtils, add_lists, deeplist, get_or_else,
                           in_place_unique, optional_map, reduce_list_str,
-                          reduce_named)
+                          reduce_named, coerce_to_grid)
 
 from library_filter import LibraryFilter
 from filters import LibraryFilterHolder
