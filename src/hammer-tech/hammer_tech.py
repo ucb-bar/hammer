@@ -204,6 +204,56 @@ class ExtraLibrary(NamedTuple('ExtraLibrary', [
         lib_copied.extra_prefixes = extra_prefixes  # type: ignore
         return lib_copied
 
+class Site(NamedTuple('Site', [
+    ('name', str),
+    ('x', float),
+    ('y', float)
+])):
+    """
+    A standard cell site, which is the minimum unit of x and y dimenions a standard cell can have.
+
+    name: The name of this site (usually something like "core")
+    x: The x dimension
+    y: The y dimension
+    """
+    __slots__ = ()
+
+    @property
+    def grid_unit(self) -> float:
+        """
+        Return the manufacturing grid unit.
+
+        TODO: this assumes a manufacturing grid of 0.001
+        """
+        return 0.001
+
+    def snap(self, num: float) -> float:
+        """
+        Snap a number to the grid unit.
+
+        TODO: internally represent numbers as integers or fixed-point to
+        obviate the need for this (see #319).
+
+        :param num: Number to snap
+        :return: Number snapped to grid_unit
+        """
+        return float(round(num / self.grid_unit)) * self.grid_unit
+
+    @staticmethod
+    def from_setting(d: dict) -> "Site":
+        """
+        Return a new Site
+
+        :param d: A dictionary with the keys "name", "x", and "y"
+        :return: A Site
+        """
+        return Site(
+            name=str(d["name"]),
+            x=float(d["x"]),
+            y=float(d["y"])
+        )
+
+
 
 # Struct that holds information about the size of a macro.
 # See defaults.yml.
@@ -806,6 +856,21 @@ class HammerTechnology:
             raise ValueError("Stackup named %s is not defined in tech JSON" % name)
         else:
             raise ValueError("Tech JSON does not specify any stackups")
+
+    def get_site_by_name(self, name: str) -> Site:
+        """
+        Return the site for the given key.
+        """
+        if self.config.sites is not None:
+            for item in list(self.config.sites):
+                if item["name"] == name:
+                    return Site.from_setting(item)
+            raise ValueError("Site named %s is not defined in tech JSON" % name)
+        else:
+            raise ValueError("Tech JSON does not specify any sites")
+
+    def get_placement_site(self) -> Site:
+        return self.get_site_by_name(self.get_setting("vlsi.technology.placement_site"))
 
 
 class HammerTechnologyUtils:
