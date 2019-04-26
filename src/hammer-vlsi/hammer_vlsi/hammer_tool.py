@@ -975,7 +975,7 @@ class HammerTool(metaclass=ABCMeta):
             # Print chip name on top, bbox, and core area rects
             fsvg.write("<g>\n")
             fsvg.write("<rect x=\"1\" y=\"{}\" width=\"{}\" height=\"{}\" id=\"die\"/>\n".format(title_height, fp_width, fp_height))
-            fsvg.write("<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" id=\"core\"/>\n".format(fp_margins.left+1, title_height+fp_margins.top, fp_width-fp_margins.left-fp_margins.right, fp_height-fp_margins.top-fp_margins.bottom))
+            fsvg.write("<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" id=\"core\"/>\n".format(getattr(fp_margins, "left", 0)+1, title_height+getattr(fp_margins, "top", 0), fp_width-getattr(fp_margins, "left", 0)-getattr(fp_margins, "right", 0), fp_height-getattr(fp_margins, "top", 0)-getattr(fp_margins, "bottom", 0)))
             fsvg.write("<text x=\"{}\" y=\"{}\" text-anchor=\"middle\" alignment-baseline=\"middle\" id=\"chip_name\">{}</text>\n".format(fp_width/2, title_height/2, top_module))
 
             translate = "translate({} {})".format(1, title_height)
