@@ -322,13 +322,16 @@ vlsi.inputs:
   pin_mode: none
   pin:
     # List of PinAssignment Structs.
-    #   You must specify pins and one of either macro or layers and side.
+    #   You must specify pins and one of either preplaced or layers and side.
     # - pins (str) - The name(s) of pins that will be assigned.
     # - side (Optional[str]) - The side of the chip/block these pins will be placed along.
     #   One of "left", "right", "top", "bottom"
     # - layers (Optional[List[str]]) - The metal layers that these pins will be placed on.
-    # - macro (Optional[bool]) - If true this pins come from an internal macro
-    #   and should just be noted as such without placing them.
+    # - preplaced (Optional[bool]) - If true, these pins are preplaced by some internal block or macro.
+    #   This is telling the tool that these pins are on an internal block and I want them
+    #   "placed" where they are currently on the internal block. This can be used for IP
+    #   that directly connects to bumps, or signals that will be connected by abutment,
+    #   and much more.
     assignments: []
 
 vlsi.submit:

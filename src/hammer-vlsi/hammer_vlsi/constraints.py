@@ -84,7 +84,7 @@ PinAssignment = NamedTuple('PinAssignment', [
     ('pins', str),
     ('side', Optional[str]),
     ('layers', Optional[List[str]]),
-    ('macro', Optional[bool])
+    ('preplaced', Optional[bool])
 ])
 
 BumpAssignment = NamedTuple('BumpAssignment', [

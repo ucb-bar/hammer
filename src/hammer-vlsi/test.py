@@ -665,10 +665,10 @@ export lol=abc"cat"
                          {"pins": "*", "side": "left", "layers": ["M4"]},
                          {"pins": "*", "side": "right", "layers": ["M2"]},
                          {"pins": "bad_side", "side": "right", "layers": ["M3"]},
-                         {"pins": "tx_n tx_p", "macro": true},
-                         {"pins": "bad_tx_n", "macro": true, "layers": ["M7"]},
-                         {"pins": "tx_n tx_p", "macro": true, "side": "right", "layers": ["M7"]},
-                         {"pins": "tx_n tx_p", "macro": true, "side": "right"},
+                         {"pins": "tx_n tx_p", "preplaced": true},
+                         {"pins": "bad_tx_n", "preplaced": true, "layers": ["M7"]},
+                         {"pins": "tx_n tx_p", "preplaced": true, "side": "right", "layers": ["M7"]},
+                         {"pins": "tx_n tx_p", "preplaced": true, "side": "right"},
                          {"pins": "*", "layers": ["M2"]},
                          {"pins": "*", "side": "bottom"},
                          {"pins": "no_layers"},
@@ -682,7 +682,7 @@ export lol=abc"cat"
          with HammerLoggingCaptureContext() as c:
              my_pins = test.get_pin_assignments()
          self.assertTrue(c.log_contains("Pins bad_side assigned layers "))
-         self.assertTrue(c.log_contains("Pins bad_tx_n assigned as a macro pin with layers"))
+         self.assertTrue(c.log_contains("Pins bad_tx_n assigned as a preplaced pin with layers"))
          self.assertTrue(c.log_contains("Pins no_layers assigned without layers"))
          self.assertTrue(c.log_contains("Pins wrong_side have invalid side"))
          assert my_pins is not None

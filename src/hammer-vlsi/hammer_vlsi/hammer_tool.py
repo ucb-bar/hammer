@@ -937,12 +937,12 @@ class HammerTool(metaclass=ABCMeta):
             if not (side is None or side == "top" or side == "bottom" or side == "right" or side == "left") :
                 self.logger.warning("Pins {p} have invalid side {s}. Assuming pins will be handled by CAD tool.".format(p=pins, s=side))
                 continue
-            macro = False if not "macro" in raw_assign else raw_assign["macro"]
+            preplaced = False if not "preplaced" in raw_assign else raw_assign["preplaced"]
             layers = [] if not "layers" in raw_assign else raw_assign["layers"]
-            if macro:
+            if preplaced:
                 if len(layers) != 0 or side != None:
-                    self.logger.warning("Pins {p} assigned as a macro pin with layers or side. Assuming pins are macro pins and ignoring layers and side.".format(p=pins))
-                    assigns.append(PinAssignment(pins=pins, side=None, layers=[], macro=macro))
+                    self.logger.warning("Pins {p} assigned as a preplaced pin with layers or side. Assuming pins are preplaced pins and ignoring layers and side.".format(p=pins))
+                    assigns.append(PinAssignment(pins=pins, side=None, layers=[], preplaced=preplaced))
                     continue
             else:
                 if len(layers) == 0 or side == None:
@@ -952,11 +952,12 @@ class HammerTool(metaclass=ABCMeta):
             stackup = self.get_stackup()
             for layer in layers:
                 direction = stackup.get_metal(layer).direction
-                if not((direction == RoutingDirection.Horizontal and (side == "left" or side == "right")) or
-                       (direction == RoutingDirection.Vertical and (side == "top" or side == "bottom")) or
-                       (direction == RoutingDirection.Redistribution)):
+                is_horizontal = direction == RoutingDirection.Horizontal and (side == "left" or side == "right")
+                is_vertical = direction == RoutingDirection.Vertical and (side == "top" or side == "bottom")
+                is_redis = direction == RoutingDirection.Redistribution
+                if not (is_horizontal or is_vertical or is_redis):
                     self.logger.error("Pins {p} assigned layers {l} that do not match the direction of their side {s}. This is very likely to cause issues.".format(p=pins, l=layers, s=side))
-            assigns.append(PinAssignment(pins=pins, side=side, layers=layers, macro=macro))
+            assigns.append(PinAssignment(pins=pins, side=side, layers=layers, preplaced=preplaced))
         return assigns
 
     def get_gds_map_file(self) -> Optional[str]:
