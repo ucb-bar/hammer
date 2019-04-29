@@ -107,6 +107,20 @@ def coerce_to_grid(num: float, grid: Decimal) -> Decimal:
     """
     return Decimal(round(num / float(grid))) * grid
 
+def check_on_grid(num: Union[float, Decimal], grid: Decimal) -> Decimal:
+    """
+    Checks if a number is an integer multiple of a specified grid unit.
+    This supports floats and Decimals, although support for floats will eventually be removed.
+    Removal of float support will be in ucb-bar/hammer#376
+
+    :param num: The number to check
+    :param grid: The decimal grid value on which to check number
+    :return: True if num is on-grid, False otherwise
+    """
+    # TODO(johnwright) Remove float support in ucb-bar/hammer#376
+    num_dec = num if isinstance(num, Decimal) else coerce_to_grid(num)
+    assert isinstance(num_dec, Decimal)
+    return Decimal(int(num / grid)) == (num / grid)
 
 def gcd(*values: int) -> int:
     """

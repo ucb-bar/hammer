@@ -51,6 +51,20 @@ class UtilsTest(unittest.TestCase):
         self.assertNotEqual(optional_map("88", str_to_num), "880")
         self.assertEqual(optional_map("42", str_to_num), 420)
 
+    def test_coerce_to_grid(self) -> None:
+        self.assertEqual(coerce_to_grid(1.23, Decimal("0.1")), Decimal("1.2"))
+        self.assertEqual(coerce_to_grid(1.23, Decimal("0.01")), Decimal("1.23"))
+        self.assertEqual(coerce_to_grid(200, Decimal("10"), Decimal("200"))
+
+    def test_check_on_grid(self) -> None:
+        self.assertTrue(check_on_grid(Decimal("1.23"), Decimal("0.01")))
+        self.assertFalse(check_on_grid(Decimal("1.23"), Decimal("0.1")))
+        self.assertTrue(check_on_grid(Decimal("1.20"), Decimal("0.1")))
+        self.assertTrue(check_on_grid(Decimal("1.20"), Decimal("0.03")))
+        self.assertFalse(check_on_grid(Decimal("1.20"), Decimal("0.07")))
+        self.assertTrue(check_on_grid(Decimal("2000"), Decimal("10")))
+        self.assertFalse(check_on_grid(Decimal("2000"), Decimal("13")))
+
     def test_gcd(self) -> None:
         self.assertEqual(gcd(1,2,3), 1)
         self.assertEqual(gcd(4,6,8), 2)
