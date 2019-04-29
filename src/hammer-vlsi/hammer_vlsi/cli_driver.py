@@ -506,7 +506,7 @@ class CLIDriver:
 
         return actions
 
-    def get_extra_hierarchical_synthesis_hooks(self) -> Dict[str, List[HammerToolHookAction]]:
+    def get_extra_hierarchical_synthesis_hooks(self, driver: HammerDriver) -> Dict[str, List[HammerToolHookAction]]:
         """
         Return a list of extra hierarchical synthesis hooks in this project.
         To be overridden by subclasses.
@@ -515,7 +515,7 @@ class CLIDriver:
         """
         return dict()
 
-    def get_extra_hierarchical_par_hooks(self) -> Dict[str, List[HammerToolHookAction]]:
+    def get_extra_hierarchical_par_hooks(self, driver: HammerDriver) -> Dict[str, List[HammerToolHookAction]]:
         """
         Return a list of extra hierarchical place and route hooks in this project.
         To be overridden by subclasses.
@@ -524,7 +524,7 @@ class CLIDriver:
         """
         return dict()
 
-    def get_extra_hierarchical_drc_hooks(self) -> Dict[str, List[HammerToolHookAction]]:
+    def get_extra_hierarchical_drc_hooks(self, driver: HammerDriver) -> Dict[str, List[HammerToolHookAction]]:
         """
         Return a list of extra hierarchical DRC hooks in this project.
         To be overridden by subclasses.
@@ -533,7 +533,7 @@ class CLIDriver:
         """
         return dict()
 
-    def get_extra_hierarchical_lvs_hooks(self) -> Dict[str, List[HammerToolHookAction]]:
+    def get_extra_hierarchical_lvs_hooks(self, driver: HammerDriver) -> Dict[str, List[HammerToolHookAction]]:
         """
         Return a list of extra hierarchical LVS hooks in this project.
         To be overridden by subclasses.
@@ -765,21 +765,21 @@ class CLIDriver:
                 def lvs_post_run(d: HammerDriver) -> None:
                     post_run(d, get_or_else(self.lvs_rundir, ""))
 
-                syn_action = self.create_synthesis_action(self.get_extra_hierarchical_synthesis_hooks().get(module, []),
+                syn_action = self.create_synthesis_action(self.get_extra_hierarchical_synthesis_hooks(driver).get(module, []),
                                                           pre_action_func=syn_pre_func, post_load_func=None,
                                                           post_run_func=syn_post_run)
                 self.set_hierarchical_synthesis_action(module, syn_action)
-                par_action = self.create_par_action(self.get_extra_hierarchical_par_hooks().get(module, []),
+                par_action = self.create_par_action(self.get_extra_hierarchical_par_hooks(driver).get(module, []),
                                                     pre_action_func=par_pre_func, post_load_func=None,
                                                     post_run_func=par_post_run)
                 self.set_hierarchical_par_action(module, par_action)
                 syn_par_action = self.create_synthesis_par_action(synthesis_action=syn_action, par_action=par_action)
                 self.set_hierarchical_synthesis_par_action(module, syn_par_action)
-                drc_action = self.create_drc_action(self.get_extra_hierarchical_drc_hooks().get(module, []),
+                drc_action = self.create_drc_action(self.get_extra_hierarchical_drc_hooks(driver).get(module, []),
                                                     pre_action_func=drc_pre_func, post_load_func=None,
                                                     post_run_func=drc_post_run)
                 self.set_hierarchical_drc_action(module, drc_action)
-                lvs_action = self.create_lvs_action(self.get_extra_hierarchical_lvs_hooks().get(module, []),
+                lvs_action = self.create_lvs_action(self.get_extra_hierarchical_lvs_hooks(driver).get(module, []),
                                                     pre_action_func=lvs_pre_func, post_load_func=None,
                                                     post_run_func=lvs_post_run)
                 self.set_hierarchical_lvs_action(module, lvs_action)
