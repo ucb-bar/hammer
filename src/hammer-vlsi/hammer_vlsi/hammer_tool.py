@@ -960,6 +960,23 @@ class HammerTool(metaclass=ABCMeta):
             assigns.append(PinAssignment(pins=pins, side=side, layers=layers, preplaced=preplaced))
         return assigns
 
+    def get_pin_metals(self) -> List[Metal]:
+        """
+        Get a list of the layer objects used by the current block's pins.
+        Returns an empty list if there are no pins or if the hammer pin API is not used.
+
+        :return: A potentially empty list of Metal objects
+        """
+        # This could probably be written more functional-y but this works for now.
+        metals = []  # type: List[Metal]
+        for raw_assign in self.get_setting("vlsi.inputs.pin.assignments"):
+            layers = [] if not "layers" in raw_assign else raw_assign["layers"]
+            for layer in layers:
+                metal = self.get_stackup().get_metal(layer)
+                if metal not in metals:
+                    metals.append(metal)
+        return metals
+
     def get_gds_map_file(self) -> Optional[str]:
         """
         Get a GDS map in accordance with settings in the Hammer IR.
