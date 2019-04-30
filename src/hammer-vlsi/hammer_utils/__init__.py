@@ -8,7 +8,7 @@
 import copy
 import inspect
 from functools import reduce
-from typing import List, Any, Set, Dict, Tuple, TypeVar, Callable, Iterable, Optional
+from typing import List, Any, Set, Dict, Tuple, TypeVar, Callable, Iterable, Optional, Union
 from enum import Enum, unique
 from decimal import Decimal
 
@@ -107,7 +107,7 @@ def coerce_to_grid(num: float, grid: Decimal) -> Decimal:
     """
     return Decimal(round(num / float(grid))) * grid
 
-def check_on_grid(num: Union[float, Decimal], grid: Decimal) -> Decimal:
+def check_on_grid(num: Union[float, Decimal], grid: Decimal) -> bool:
     """
     Checks if a number is an integer multiple of a specified grid unit.
     This supports floats and Decimals, although support for floats will eventually be removed.
@@ -118,9 +118,9 @@ def check_on_grid(num: Union[float, Decimal], grid: Decimal) -> Decimal:
     :return: True if num is on-grid, False otherwise
     """
     # TODO(johnwright) Remove float support in ucb-bar/hammer#376
-    num_dec = num if isinstance(num, Decimal) else coerce_to_grid(num)
+    num_dec = num if isinstance(num, Decimal) else coerce_to_grid(num, Decimal("0.001"))
     assert isinstance(num_dec, Decimal)
-    return Decimal(int(num / grid)) == (num / grid)
+    return Decimal(int(num_dec / grid)) == (num_dec / grid)
 
 def gcd(*values: int) -> int:
     """
