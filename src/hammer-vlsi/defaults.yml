@@ -456,7 +456,7 @@ par:
 
       # The first track to contain a power stripe
       # Overrideable by appending _<layer name>
-      # TODO(johnwright) include an auto-center option
+      # TODO(johnwright): include an auto-center option
       track_start: 0
 
       # Number of routing tracks between sets of straps (0 is recommended)
