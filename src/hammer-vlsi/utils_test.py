@@ -54,6 +54,7 @@ class UtilsTest(unittest.TestCase):
     def test_coerce_to_grid(self) -> None:
         self.assertEqual(coerce_to_grid(1.23, Decimal("0.1")), Decimal("1.2"))
         self.assertEqual(coerce_to_grid(1.23, Decimal("0.01")), Decimal("1.23"))
+        self.assertEqual(coerce_to_grid(1.227, Decimal("0.01")), Decimal("1.23"))
         self.assertEqual(coerce_to_grid(200, Decimal("10")), Decimal("200"))
 
     def test_check_on_grid(self) -> None:
