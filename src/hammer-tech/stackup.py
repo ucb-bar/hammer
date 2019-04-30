@@ -110,7 +110,8 @@ class Metal(NamedTuple('Metal', [
     """
     A metal layer and some basic info about it.
 
-    grid_unit: The fixed-point decimal value of a minimum grid unit (e.g. 1nm = 0.001)
+    grid_unit: The fixed-point decimal value of a minimum grid unit (e.g. 1nm = 0.001).
+               For most technologies, this comes from the technology plugin and is the same for all layers.
     name: Metal layer name (e.g. M1, M2).
     index: The order in the stackup (lower is closer to the substrate).
     direction: The preferred routing direction of this metal layer, or
@@ -131,7 +132,7 @@ class Metal(NamedTuple('Metal', [
         """
         Return a Metal object from a dict with keys "name", "index", "direction", "min_width", "pitch", "offset", and "power_strap_widths_and_spacings"
 
-        :param grid_unit: The manufacturing grid unit in nm
+        :param grid_unit: The manufacturing grid unit in um
         :param d: A dict containing the keys "name", "index", "direction", "min_width", "pitch", "offset", and "power_strap_widths_and_spacings"
         """
         return Metal(
