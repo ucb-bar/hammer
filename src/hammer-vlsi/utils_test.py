@@ -9,7 +9,7 @@ from typing import Dict, Tuple, List, Optional, Union
 from decimal import Decimal
 
 from hammer_utils import (topological_sort, get_or_else, optional_map, assert_function_type,
-                          gcd, lcm, lcm_grid)
+                          gcd, lcm, lcm_grid, coerce_to_grid, check_on_grid)
 
 import unittest
 
@@ -54,7 +54,7 @@ class UtilsTest(unittest.TestCase):
     def test_coerce_to_grid(self) -> None:
         self.assertEqual(coerce_to_grid(1.23, Decimal("0.1")), Decimal("1.2"))
         self.assertEqual(coerce_to_grid(1.23, Decimal("0.01")), Decimal("1.23"))
-        self.assertEqual(coerce_to_grid(200, Decimal("10"), Decimal("200"))
+        self.assertEqual(coerce_to_grid(200, Decimal("10")), Decimal("200"))
 
     def test_check_on_grid(self) -> None:
         self.assertTrue(check_on_grid(Decimal("1.23"), Decimal("0.01")))
