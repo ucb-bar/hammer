@@ -434,15 +434,7 @@ par:
   # If power_straps_mode is 'generate', which method to use.
   # Currently, the valid options are:
   # - by_tracks - Specify the power strap plan per layer in terms of tracks
-  # - by_tracks_hier - Only valid for hierarchical blocks- uses the top-level by_tracks to determine parameters
   generate_power_straps_method: "by_tracks"
-
-  # Default settings for power strap generation modes
-  # Keys are the valid values of the 'generate_power_straps_method' key above
-  generate_power_straps_options:
-    by_tracks_hier:
-      # Layers to put power pins on (this is currently the only overrideable API)
-      pin_layers: []
 
     by_tracks:
       # Spacing from end of strap to a block or blockage
