@@ -8,6 +8,7 @@
 import copy
 import inspect
 import math
+import sys
 from functools import reduce
 from typing import List, Any, Set, Dict, Tuple, TypeVar, Callable, Iterable, Optional, Union
 from enum import Enum, unique
@@ -131,7 +132,6 @@ def gcd(*values: int) -> int:
     :return: The GCD
     """
     assert len(values) > 0
-    import sys
     # 3.5 moves fractional.gcd to math.gcd
     if sys.version_info.major == 3 and sys.version_info.minor < 5:
         import fractional
@@ -297,7 +297,6 @@ def check_function_type(function: Callable, args: List[type], return_type: type)
         """Return true if 't' is a Union type."""
         import typing
         if not hasattr(t, "__origin__"):
-            import sys
             if sys.version_info.major == 3 and sys.version_info.minor == 5 and sys.version_info.micro <= 2:
                 # Python compatibility: <3.5.2
 
