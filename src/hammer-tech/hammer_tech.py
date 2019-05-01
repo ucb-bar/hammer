@@ -213,7 +213,7 @@ class Site(NamedTuple('Site', [
     """
     A standard cell site, which is the minimum unit of x and y dimensions a standard cell can have.
 
-    name: The name of this site (usually something like "core")
+    name: The name of this site (often something like "core") as defined in the tech and standard cell LEFs
     x: The x dimension
     y: The y dimension
     """

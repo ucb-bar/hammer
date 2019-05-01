@@ -7,6 +7,7 @@
 
 import copy
 import inspect
+import math
 from functools import reduce
 from typing import List, Any, Set, Dict, Tuple, TypeVar, Callable, Iterable, Optional, Union
 from enum import Enum, unique
@@ -130,16 +131,7 @@ def gcd(*values: int) -> int:
     :return: The GCD
     """
     assert len(values) > 0
-    if len(values) == 1:
-        return values[0]
-    elif len(values) == 2:
-        a = values[0]
-        b = values[1]
-        while b > 0:
-            a, b =  b, a % b
-        return a
-    else:
-        return gcd(values[0], gcd(*values[1:]))
+    return reduce(math.gcd, values)
 
 def lcm(*values: int) -> int:
     """
@@ -149,12 +141,7 @@ def lcm(*values: int) -> int:
     :return: The LCM
     """
     assert len(values) > 0
-    if len(values) == 1:
-        return values[0]
-    elif len(values) == 2:
-        return int((values[0] * values[1]) / gcd(*values))
-    else:
-        return lcm(values[0], lcm(*values[1:]))
+    return reduce(lambda x, y: (x * y) // math.gcd(x, y), values)
 
 def lcm_grid(grid: Decimal, *values: Decimal) -> Decimal:
     """
@@ -164,7 +151,7 @@ def lcm_grid(grid: Decimal, *values: Decimal) -> Decimal:
     :param values: The values of which to compute the LCM
     :return: The LCM
     """
-    return grid * lcm(*map(lambda x: int(x/grid), values))
+    return grid * lcm(*map(lambda x: int(x / grid), values))
 
 def topological_sort(graph: Dict[str, Tuple[List[str], List[str]]], starting_nodes: List[str]) -> List[str]:
     """
