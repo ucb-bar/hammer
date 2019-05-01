@@ -131,6 +131,11 @@ def gcd(*values: int) -> int:
     :return: The GCD
     """
     assert len(values) > 0
+    import sys
+    # 3.5 moves fractional.gcd to math.gcd
+    if sys.version_info.major == 3 and sys.version_info.minor < 5:
+        import fractional
+        return reduce(fractional.gcd, values)
     return reduce(math.gcd, values)
 
 def lcm(*values: int) -> int:
@@ -141,6 +146,10 @@ def lcm(*values: int) -> int:
     :return: The LCM
     """
     assert len(values) > 0
+    # 3.5 moves fractional.gcd to math.gcd
+    if sys.version_info.major == 3 and sys.version_info.minor < 5:
+        import fractional
+        return reduce(lambda x, y: (x * y) // fractional.gcd(x, y), values)
     return reduce(lambda x, y: (x * y) // math.gcd(x, y), values)
 
 def lcm_grid(grid: Decimal, *values: Decimal) -> Decimal:
