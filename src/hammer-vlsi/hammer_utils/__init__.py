@@ -136,7 +136,8 @@ def gcd(*values: int) -> int:
     if sys.version_info.major == 3 and sys.version_info.minor < 5:
         import fractional
         return reduce(fractional.gcd, values)
-    return reduce(math.gcd, values)
+    else:
+        return reduce(math.gcd, values)
 
 def lcm(*values: int) -> int:
     """
@@ -150,7 +151,8 @@ def lcm(*values: int) -> int:
     if sys.version_info.major == 3 and sys.version_info.minor < 5:
         import fractional
         return reduce(lambda x, y: (x * y) // fractional.gcd(x, y), values)
-    return reduce(lambda x, y: (x * y) // math.gcd(x, y), values)
+    else:
+        return reduce(lambda x, y: (x * y) // math.gcd(x, y), values)
 
 def lcm_grid(grid: Decimal, *values: Decimal) -> Decimal:
     """
