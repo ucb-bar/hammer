@@ -132,10 +132,10 @@ def gcd(*values: int) -> int:
     :return: The GCD
     """
     assert len(values) > 0
-    # 3.5 moves fractional.gcd to math.gcd
+    # 3.5 moves fractions.gcd to math.gcd
     if sys.version_info.major == 3 and sys.version_info.minor < 5:
-        import fractional
-        return reduce(fractional.gcd, values)
+        import fractions
+        return reduce(fractions.gcd, values)
     else:
         return reduce(math.gcd, values)
 
@@ -147,10 +147,10 @@ def lcm(*values: int) -> int:
     :return: The LCM
     """
     assert len(values) > 0
-    # 3.5 moves fractional.gcd to math.gcd
+    # 3.5 moves fractions.gcd to math.gcd
     if sys.version_info.major == 3 and sys.version_info.minor < 5:
-        import fractional
-        return reduce(lambda x, y: (x * y) // fractional.gcd(x, y), values)
+        import fractions
+        return reduce(lambda x, y: (x * y) // fractions.gcd(x, y), values)
     else:
         return reduce(lambda x, y: (x * y) // math.gcd(x, y), values)
 
