@@ -449,6 +449,11 @@ par:
       # Overrideable by appending _<layer name>
       track_width: 5
 
+      # The first track to contain a power stripe
+      # Overrideable by appending _<layer name>
+      # TODO(johnwright): include an auto-center option
+      track_start: 0
+
       # Number of routing tracks between sets of straps (0 is recommended)
       # Overrideable by appending _<layer name>
       track_spacing: 0
@@ -456,6 +461,9 @@ par:
       # Ratio of total routing tracks to dedicate to power straps, which is used to calculate set pitch
       # Overrideable by appending _<layer name>
       power_utilization: 0.1
+
+      # Layers to put power pins on
+      pin_layers: []
 
       # List of layers on which to place power straps (std cell rail layer is implied- do not include it)
       # Not overrideable

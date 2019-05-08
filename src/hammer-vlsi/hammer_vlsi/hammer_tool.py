@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, ca
 import hammer_config
 import hammer_tech
 from hammer_logging import HammerVLSILoggingContext
-from hammer_tech import LibraryFilter, Stackup, RoutingDirection
+from hammer_tech import LibraryFilter, Stackup, RoutingDirection, Metal
 from hammer_utils import (add_lists, assert_function_type, get_or_else,
                           optional_map)
 
