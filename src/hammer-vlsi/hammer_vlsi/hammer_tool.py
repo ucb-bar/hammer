@@ -1020,7 +1020,7 @@ class HammerTool(metaclass=ABCMeta):
                     bump_text += "<text text-anchor=\"middle\" x=\"{}\" y=\"{}\" class=\"bump_name\">{}</text>\n".format(x_os+(b.x-1)*bp, fp_height-y_os-(b.y-1)*bp, b.name)
 
                 for i in range(bumps.x):
-                    if(i % 5 == 0):
+                    if((i+1) % 5 == 0):
                         bump_x += "<text text-anchor=\"middle\" x=\"{}\" y=\"{}\" class=\"bump_num\">{}</text>\n".format(x_os+i*bp, fp_height-10, i+1)
                         bump_x += "<text text-anchor=\"middle\" x=\"{}\" y=\"{}\" class=\"bump_num\">{}</text>\n".format(x_os+i*bp, 10, i+1)
                 for i in range(bumps.y):
