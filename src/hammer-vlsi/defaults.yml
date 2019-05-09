@@ -528,13 +528,13 @@ sram_generator.submit:
 technology.core:
     # Key name for the technology stackup
     # This should exist in the stackups list in the tech json
-    # type: string
+    # type: str
     stackup: null
     # This should specify the TOPMOST metal layer the standard cells use for power rails
     # Note that this is not usually stackup specific; it is based on the std cell library
-    # type: string
-    sd_cell_rail_layer: null
+    # type: str
+    std_cell_rail_layer: null
     # This is used to provide a reference master for generating standard cell rails
     # Can be a wildcard/glob
-    # type: string
+    # type: str
     tap_cell_rail_reference: null
