@@ -275,7 +275,8 @@ vlsi.inputs:
   # how many power nets you have, what their names and voltages are, as well as
   # how many domains you have and what their relation is.
   # Valid options:
-  # auto - Hammer will generate a power specification based on other settings.
+  # auto - Hammer will generate a power specification based on other settings,
+  #        including vlsi.inputs.supplies.
   # manual - Use the value given in power_spec_contents with type given in power_spec_type
   # empty - Do not use any power specification
   power_spec_mode: empty
