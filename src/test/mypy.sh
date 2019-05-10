@@ -37,6 +37,9 @@ call_mypy ../hammer-vlsi/par/mockpar/__init__.py
 call_mypy ../hammer-vlsi/drc/*.py
 call_mypy ../hammer-vlsi/lvs/*.py
 
+# Scala library
+call_mypy ../../hammer_ir/scalalib/test/*.py
+
 # Plugins which may or may not exist
 if [ -f ../hammer-vlsi/synthesis/dc/__init__.py ]; then
     call_mypy ../hammer-vlsi/synthesis/dc/__init__.py

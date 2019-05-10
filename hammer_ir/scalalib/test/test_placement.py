@@ -32,7 +32,6 @@ def run_scala(scala: str) -> None:
 prep()
 
 # Generate some constraints
-# TODO(edwardw): test optional stuff
 c1 = PlacementConstraint(
     path="Top/rtl/a/b",
     type=PlacementConstraintType.Placement,
@@ -46,6 +45,12 @@ c1 = PlacementConstraint(
     layers=None,
     obs_types=None
 )
+
+# TODO(edwardw): the optional parameters are only valid for certain
+# types of constraints.
+# e.g. orientation is only valid for hardmacros
+# e.g. obs_types is only valid for obstructions
+# We need to create some extra testcases to capture those usecases.
 
 # Export to JSON
 with open("tmp_c1.json", "w") as f:
