@@ -236,7 +236,7 @@ vlsi.inputs:
   # y (float) - y coordinate in um
   # width (float) - width in um
   # height (float) - height in um
-  # margins (Dict[str, float]) - margins for the top-level module (only). Contains the following keys:
+  # margins (Optional[Margins]) - margins for the top-level module (i.e. only only for a toplevel constraint). Contains the following keys:
   # - "left" - margin from the left side of the core PNR area to the edge of the chip
   # - "right" - margin from the right side of the core PNR area to the edge of the chip
   # - "top" - margin from the top side of the core PNR area to the edge of the chip
