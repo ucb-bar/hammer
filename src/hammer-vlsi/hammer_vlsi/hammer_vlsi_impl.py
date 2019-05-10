@@ -476,17 +476,22 @@ class HammerPlaceAndRouteTool(HammerTool):
         if method == "by_tracks":
             # By default put straps everywhere
             bbox = None # type: Optional[List[Decimal]]
-            weights = [1] # TODO this will change when implementing multiple power domains
             namespace = "par.generate_power_straps_options.by_tracks"
             layers = self.get_setting("{}.strap_layers".format(namespace))
             pin_layers = self.get_setting("{}.pin_layers".format(namespace))
             ground_net_names = list(map(lambda x: x.name, self.get_independent_ground_nets()))  # type: List[str]
             power_net_names = list(map(lambda x: x.name, self.get_independent_power_nets()))  # type: List[str]
+            def get_weight(s: Supply) -> int:
+                # Check that it's not None
+                assert isinstance(s.weight, int)
+                return s.weight
+            weights = list(map(get_weight, self.get_independent_power_nets()))  # type: List[int]
+            assert len(ground_net_names) == 1, "FIXME, I am assuming there's only 1 ground net"
             return self.specify_all_power_straps_by_tracks(layers, ground_net_names[0], power_net_names, weights, bbox, pin_layers)
         else:
             raise NotImplementedError("Power strap generation method %s is not implemented" % method)
 
-    def specify_power_straps_by_tracks(self, layer_name: str, bottom_via_layer: str, blockage_spacing: Decimal, track_pitch: int, track_width: int, track_spacing: int, track_start: int, track_offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool) -> List[str]:
+    def specify_power_straps_by_tracks(self, layer_name: str, bottom_via_layer: str, blockage_spacing: Decimal, track_pitch: int, track_width: int, track_spacing: int, track_start: int, track_offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool, layer_is_all_power: bool) -> List[str]:
         """
         Generate a list of TCL commands that will create power straps on a given layer by specifying the desired track consumption.
         This method assumes that power straps are built bottom-up, starting with standard cell rails.
@@ -501,6 +506,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         :param bbox: The optional (2N)-point bounding box of the area to generate straps. By default the entire core area is used.
         :param nets: A list of power nets to create (e.g. ["VDD", "VSS"], ["VDDA", "VSS", "VDDB"], ... etc.).
         :param add_pins: True if pins are desired on this layer; False otherwise.
+        :param layer_is_all_power: True if there will be no signal wires on this layer.
         :return: A list of TCL commands that will generate power straps.
         """
         # Note: even track_widths will be snapped to a half-track
@@ -510,10 +516,9 @@ class HammerPlaceAndRouteTool(HammerTool):
         spacing = Decimal(0)
         strap_offset = Decimal(0)
         if track_spacing == 0:
-            # If the track_pitch is equal to 2 * track_width, then we are at 100%.
-            # This results in us wanting to do a uniform strap pattern, so we can just calculate the
+            # An all-power (100% utilization) layer results in us wanting to do a uniform strap pattern, so we can just calculate the
             # maximum width and minimum spacing from the desired pitch, instead of using TWWT.
-            if track_pitch == (track_width * 2):
+            if layer_is_all_power:
                 one_strap_pitch = track_width * layer.pitch
                 spacing, width = layer.min_spacing_and_max_width_from_pitch(one_strap_pitch)
                 strap_start = spacing / 2 + layer.offset
@@ -537,22 +542,20 @@ class HammerPlaceAndRouteTool(HammerTool):
 
         :param layer_names: The list of metal layer names on which to create straps.
         :param ground_net: The name of the ground net in this design. Only 1 ground net is supported.
-        :param power_nets: A list of power nets to create (not ground). Currently only supports 1 (e.g. ["VDD"]).
+        :param power_nets: A list of power nets to create (not ground).
         :param power_weights: Specifies the power strap placement pattern for multiple-domain designs (e.g. ["VDDA", "VDDB"] with [2, 1] will produce 2 VDDA straps for ever 1 VDDB strap).
         :param bbox: The optional (2N)-point bounding box of the area to generate straps. By default the entire core area is used.
         :param pin_layers: A list of layers on which to place pins
         :return: A list of TCL commands that will generate power straps.
         """
         assert len(power_nets) == len(power_weights)
-        if len(power_nets) > 1:
-            raise NotImplementedError("FIXME: I don't yet support multiple power domains")
 
         # Do some sanity checking
         for l in pin_layers:
             assert l in layer_names, "Pin layer {} must be in power strap layers".format(l)
 
-        # TODO when implementing multiple power domains, this needs to change based on the floorplan
-        output = self.specify_std_cell_power_straps(bbox, [ground_net, power_nets[0]])
+        # TODO does the CPF help this, or do we need to be more explicit about the bbox for each domain
+        output = self.specify_std_cell_power_straps(bbox, [ground_net] + power_nets)
         bottom_via_layer = self.get_setting("technology.core.std_cell_rail_layer")
         last = self.get_stackup().get_metal(bottom_via_layer)
         for layer_name in layer_names:
@@ -569,8 +572,19 @@ class HammerPlaceAndRouteTool(HammerTool):
             offset = layer.offset # TODO this is relaxable if we can auto-recalculate this based on hierarchical setting
 
             add_pins = layer_name in pin_layers
-            nets = [ground_net, power_nets[0]] # TODO this needs to change when implementing multiple power domains
-            output.extend(self.specify_power_straps_by_tracks(layer_name, last.name, blockage_spacing, track_pitch, track_width, track_spacing, track_start, offset, bbox, nets, add_pins))
+            # For multiple domains, we'll stripe them like this:
+            # 2:1 :   A A B A A B ...
+            # 3:1 :   A A A B A A A B ...
+            # 3:2 :   A A A B B A A A B B ...
+            # 2:2:1 : A A B B C A A B B C ...
+            sum_weights = sum(power_weights)
+            # If the power + ground tracks are equal to the pitch, we have no signals
+            layer_is_all_power = (2 * track_width) == track_pitch
+            for i in range(sum_weights):
+                nets = [ground_net, power_nets[i]]
+                group_offset = offset + track_pitch * i * layer.pitch
+                group_pitch = sum_weights * track_pitch
+                output.extend(self.specify_power_straps_by_tracks(layer_name, last.name, blockage_spacing, group_pitch, track_width, track_spacing, track_start, group_offset, bbox, nets, add_pins, layer_is_all_power))
             last = layer
         return output
 
@@ -578,7 +592,7 @@ class HammerPlaceAndRouteTool(HammerTool):
 
     def _power_straps_check_index(self, layer_name: str) -> None:
         next_index = self.get_stackup().get_metal(layer_name).index
-        assert next_index > self._power_straps_last_index, "Must construct power straps from bottom to top"
+        assert next_index >= self._power_straps_last_index, "Must construct power straps from bottom to top"
         self._power_straps_last_index = next_index
 
     def _get_by_tracks_metal_setting(self, key: str, layer_name: str) -> Any:

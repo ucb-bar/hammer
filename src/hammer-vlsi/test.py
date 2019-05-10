@@ -1374,6 +1374,107 @@ class HammerPowerStrapsTest(HasGetTech, unittest.TestCase):
                 else:
                     assert False, "Got the wrong layer_name: {}".format(layer_name)
 
+    def test_multiple_domains(self) -> None:
+        """ Tests multiple power domains """
+        # TODO clean this up a bit
+
+        strap_layers = ["M4", "M5", "M8"]
+        pin_layers = ["M8"]
+        track_width = 8
+        track_spacing = 0
+        power_utilization = 0.2
+        power_utilization_M8 = 1.0
+
+        straps_options = {
+            "vlsi.inputs.supplies": {
+                "power": [{"name": "VDD", "pin": "VDD"}, {"name": "VDD2", "pin": "VDD2"}],
+                "ground": [{"name": "VSS", "pin": "VSS"}],
+                "VDD": "1.00 V",
+                "GND": "0 V"
+            },
+            "par.power_straps_mode": "generate",
+            "par.generate_power_straps_method": "by_tracks",
+            "par.generate_power_straps_options.by_tracks": {
+                "strap_layers": strap_layers,
+                "pin_layers": pin_layers,
+                "track_width": track_width,
+                "track_spacing": track_spacing,
+                "power_utilization": power_utilization,
+                "power_utilization_M8": power_utilization_M8
+            }
+        }
+
+        with HammerPowerStrapsTestContext(self, straps_options) as c:
+            success, par_output = c.driver.run_par()
+            self.assertTrue(success)
+
+            par_tool = c.driver.par_tool
+            # It's surpringly annoying to import mockpar.MockPlaceAndRoute, which is the class
+            # that contains the parse_mock_power_straps_file() method, so we're just ignoring
+            # that particular part of this
+            assert isinstance(par_tool, hammer_vlsi.HammerPlaceAndRouteTool)
+            stackup = par_tool.get_stackup()
+            entries = par_tool.parse_mock_power_straps_file()  # type: ignore
+            entries  # type: List[Dict[str, Any]]
+
+            # There should be 1 std cell rail definition and 2 straps per layer (total 7)
+            self.assertEqual(len(entries), 7)
+
+            first_M5 = True
+            first_M8 = True
+            offset_M5 = Decimal(0)
+            offset_M8 = Decimal(0)
+            for entry in entries:
+                c.logger.debug("Power strap entry:" + str(entry))
+                layer_name = entry["layer_name"]
+                if layer_name == "M1":
+                    # Standard cell rails
+                    self.assertEqual(entry["tap_cell_name"], "FakeTapCell")
+                    self.assertEqual(entry["bbox"], [])
+                    self.assertEqual(entry["nets"], ["VSS", "VDD", "VDD2"])
+                    continue
+
+                strap_width = Decimal(entry["width"])
+                strap_spacing = Decimal(entry["spacing"])
+                strap_pitch = Decimal(entry["pitch"])
+                strap_offset = Decimal(entry["offset"])
+                metal = stackup.get_metal(layer_name)
+                min_width = metal.min_width
+                group_track_pitch = strap_pitch / metal.pitch
+                used_tracks = round(Decimal(strap_offset + strap_width + strap_spacing + strap_width + strap_offset) / metal.pitch) - 1
+                if layer_name == "M4":
+                    # This is just here to keep the straps from asserting due to a direction issue
+                    pass
+                elif layer_name == "M5":
+                    # Test 2 domains
+                    self.assertEqual(entry["bbox"], [])
+                    if first_M5:
+                        first_M5 = False
+                        self.assertEqual(entry["nets"], ["VSS", "VDD"])
+                        offset_M5 = strap_offset
+                    else:
+                        self.assertEqual(entry["nets"], ["VSS", "VDD2"])
+                        self.assertEqual(strap_offset, (strap_pitch / 2) + offset_M5)
+                    # TODO more tests in a future PR
+                elif layer_name == "M8":
+                    # Test 100% with two domains
+                    self.assertEqual(entry["bbox"], [])
+                    # Test that the pitch does consume the right number of tracks
+                    # This will be twice as large as the single-domain case because we'll offset another set
+                    required_pitch = Decimal(track_width * 4) * metal.pitch
+                    self.assertEqual(strap_pitch, required_pitch)
+                    if first_M8:
+                        first_M8 = False
+                        self.assertEqual(entry["nets"], ["VSS", "VDD"])
+                        offset_M8 = strap_offset
+                    else:
+                        self.assertEqual(entry["nets"], ["VSS", "VDD2"])
+                        self.assertEqual(strap_offset, (strap_pitch / 2) + offset_M8)
+                    # TODO more tests in a future PR
+                else:
+                    assert False, "Got the wrong layer_name: {}".format(layer_name)
+
+
 
 if __name__ == '__main__':
     unittest.main()
