@@ -1,0 +1,5 @@
+out/
+*.jar
+amm
+mill
+test/tmp_*
