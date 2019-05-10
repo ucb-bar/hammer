@@ -582,6 +582,15 @@ class StackupTestHelper:
         return output
 
     @staticmethod
+    def create_test_site_dict() -> Dict[str, Any]:
+        output = {} # type: Dict[str, Any]
+        output["name"] = "CoreSite"
+        # Make a 9-track horizontal std cell core site
+        output["y"] = StackupTestHelper.create_test_metal(1)["pitch"] * 9
+        output["x"] = StackupTestHelper.create_test_metal(2)["pitch"]
+        return output
+
+    @staticmethod
     def create_test_stackup_list() -> List["Stackup"]:
         output = []
         for x in range(5,8):
