@@ -15,9 +15,10 @@ import os
 import sys
 import json
 from typing import Callable, Iterable, List, NamedTuple, Optional, Dict, Any, Union
+from decimal import Decimal
 
 import hammer_config
-from hammer_utils import reverse_dict, deepdict, optional_map, get_or_else, add_dicts
+from hammer_utils import reverse_dict, deepdict, optional_map, get_or_else, add_dicts, coerce_to_grid
 from hammer_tech import Library, ExtraLibrary
 
 from .constraints import *
@@ -444,6 +445,28 @@ class HammerPlaceAndRouteTool(HammerTool):
 
     ### END Generated interface HammerPlaceAndRouteTool ###
 
+    def create_power_straps_tcl(self) -> List[str]:
+        """
+        Create power straps TCL commands depending on the mode.
+        """
+        output = []  # type: List[str]
+
+        power_straps_mode = str(self.get_setting("par.power_straps_mode"))
+        if power_straps_mode == "manual":
+            power_straps_script_contents = str(self.get_setting("par.power_straps_script_contents"))
+            # TODO(edwardw): proper source locators/SourceInfo
+            output.append("# Power straps script manually specified from HAMMER")
+            output.extend(power_straps_script_contents.split("\n"))
+        elif power_straps_mode == "generate":
+            output.extend(self.generate_power_straps_tcl())
+        else:
+            if power_straps_mode != "blank":
+                self.logger.error(
+                    "Invalid power_straps_mode {mode}. Using blank power straps script.".format(mode=power_straps_mode))
+            # Write blank power straps
+            output.append("# Blank power straps script specified from HAMMER")
+        return output
+
     def generate_power_straps_tcl(self) -> List[str]:
         """
         Generate a TCL script to create power straps from the config/IR.
@@ -487,10 +510,18 @@ class HammerPlaceAndRouteTool(HammerTool):
         spacing = Decimal(0)
         strap_offset = Decimal(0)
         if track_spacing == 0:
-            width, spacing, strap_start = layer.get_width_spacing_start_twwt(track_width, force_even=True)
+            # If the track_pitch is equal to 2 * track_width, then we are at 100%.
+            # This results in us wanting to do a uniform strap pattern, so we can just calculate the
+            # maximum width and minimum spacing from the desired pitch, instead of using TWWT.
+            if track_pitch == (track_width * 2):
+                one_strap_pitch = track_width * layer.pitch
+                spacing, width = layer.min_spacing_and_max_width_from_pitch(one_strap_pitch)
+                strap_start = spacing / 2 + layer.offset
+            else:
+                width, spacing, strap_start = layer.get_width_spacing_start_twwt(track_width, force_even=True)
         else:
             width, spacing, strap_start = layer.get_width_spacing_start_twt(track_width)
-            spacing = 2*spacing + track_spacing * layer.pitch - layer.min_width
+            spacing = 2*spacing + (track_spacing - 1) * layer.pitch + layer.min_width
         offset = track_offset + track_start * layer.pitch + strap_start
         return self.specify_power_straps(layer_name, bottom_via_layer, blockage_spacing, pitch, width, spacing, offset, bbox, nets, add_pins)
 
@@ -542,6 +573,13 @@ class HammerPlaceAndRouteTool(HammerTool):
             output.extend(self.specify_power_straps_by_tracks(layer_name, last.name, blockage_spacing, track_pitch, track_width, track_spacing, track_start, offset, bbox, nets, add_pins))
             last = layer
         return output
+
+    _power_straps_last_index = -1
+
+    def _power_straps_check_index(self, layer_name: str) -> None:
+        next_index = self.get_stackup().get_metal(layer_name).index
+        assert next_index > self._power_straps_last_index, "Must construct power straps from bottom to top"
+        self._power_straps_last_index = next_index
 
     def _get_by_tracks_metal_setting(self, key: str, layer_name: str) -> Any:
         """
@@ -600,7 +638,9 @@ class HammerPlaceAndRouteTool(HammerTool):
         :param add_pins: True if pins are desired on this layer; False otherwise.
         :return: A list of TCL commands that will generate power straps.
         """
-        pass
+        # This should get overriden but be sure to use this check in your implementations
+        self._power_straps_check_index(layer_name)
+        return []
 
     @abstractmethod
     def specify_std_cell_power_straps(self, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
@@ -615,7 +655,10 @@ class HammerPlaceAndRouteTool(HammerTool):
         :param nets: A list of power net names (e.g. ["VDD", "VSS"]).
         :return: A list of TCL commands that will generate power straps on rails.
         """
-        pass
+        # This should get overriden but be sure to use this check in your implementations
+        layer_name = self.get_setting("technology.core.std_cell_rail_layer")
+        self._power_straps_check_index(layer_name)
+        return []
 
 
 class HammerSignoffTool(HammerTool):
