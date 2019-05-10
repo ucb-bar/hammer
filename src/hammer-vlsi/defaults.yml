@@ -221,7 +221,7 @@ vlsi.inputs:
   # delay (TimeValue) - Delay applied to the I/O.
   delays: []
 
-  # List of placement constraints.
+  # List of placement constraints for floorplanning.
   # Each item is a struct member:
   # path (str) - Path to the given instance
   # type (str) - One of the following:
@@ -236,6 +236,11 @@ vlsi.inputs:
   # y (float) - y coordinate in um
   # width (float) - width in um
   # height (float) - height in um
+  # margins (Optional[Margins]) - margins for the top-level module (i.e. only only for a toplevel constraint). Contains the following keys:
+  # - "left" - margin from the left side of the core PNR area to the edge of the chip
+  # - "right" - margin from the right side of the core PNR area to the edge of the chip
+  # - "top" - margin from the top side of the core PNR area to the edge of the chip
+  # - "bottom" - margin from the bottom side of the core PNR area to the edge of the chip
   # top_layer (str) - Optional: Specifies the highest layer used by this hardmacro
   #   If specified will be used to keep other wires away from this hardmacro
   # layers (List[str]) - Optional: only used for obstruction type. 
@@ -270,7 +275,7 @@ vlsi.inputs:
   # how many power nets you have, what their names and voltages are, as well as
   # how many domains you have and what their relation is.
   # Valid options:
-  # auto - Hammer will generate a power specification based on other settings. Currently unimplemented
+  # auto - Hammer will generate a power specification based on other settings.
   # manual - Use the value given in power_spec_contents with type given in power_spec_type
   # empty - Do not use any power specification
   power_spec_mode: empty
