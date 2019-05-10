@@ -221,7 +221,7 @@ vlsi.inputs:
   # delay (TimeValue) - Delay applied to the I/O.
   delays: []
 
-  # List of placement constraints for florplanning.
+  # List of placement constraints for floorplanning.
   # Each item is a struct member:
   # path (str) - Path to the given instance
   # type (str) - One of the following:
