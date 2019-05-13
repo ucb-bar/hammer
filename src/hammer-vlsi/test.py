@@ -25,6 +25,39 @@ from hammer_logging.test import HammerLoggingCaptureContext
 from hammer_tech import LibraryFilter, Library, ExtraLibrary
 from hammer_utils import deeplist, deepdict, add_dicts, get_or_else
 
+class SDCDummyTool(hammer_vlsi.HasSDCSupport, DummyTool):
+    @property
+    def post_synth_sdc(self) -> Optional[str]:
+        return None
+
+class SDCTest(unittest.TestCase):
+    def setUp(self) -> None:
+        # Make sure the HAMMER_VLSI path is set correctly.
+        self.assertTrue(hammer_vlsi.HammerVLSISettings.set_hammer_vlsi_path_from_environment())
+
+    def test_custom_sdc_constraints(self):
+        """
+        Test that custom raw SDC constraints work.
+        """
+        str1 = "create_clock foo -name myclock -period 10.0"
+        str2 = "set_clock_uncertainty 0.123 [get_clocks myclock]"
+        inputs = {
+            "vlsi.inputs.custom_sdc_constraints": [
+                str1,
+                str2
+            ]
+        }
+
+        tool = SDCDummyTool()
+        database = hammer_config.HammerDatabase()
+        hammer_vlsi.HammerVLSISettings.load_builtins_and_core(database)
+        database.update_project([inputs])
+        tool.set_database(database)
+
+        constraints = tool.sdc_pin_constraints.split("\n")
+        self.assertTrue(str1 in constraints)
+        self.assertTrue(str2 in constraints)
+
 class HammerVLSILoggingTest(unittest.TestCase):
     def test_colours(self):
         """
