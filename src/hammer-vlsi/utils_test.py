@@ -6,8 +6,10 @@
 #  See LICENSE for licence details.
 
 from typing import Dict, Tuple, List, Optional, Union
+from decimal import Decimal
 
-from hammer_utils import topological_sort, get_or_else, optional_map, assert_function_type
+from hammer_utils import (topological_sort, get_or_else, optional_map, assert_function_type,
+                          gcd, lcm, lcm_grid, coerce_to_grid, check_on_grid)
 
 import unittest
 
@@ -48,6 +50,45 @@ class UtilsTest(unittest.TestCase):
         self.assertEqual(optional_map("88", str_to_num), 880)
         self.assertNotEqual(optional_map("88", str_to_num), "880")
         self.assertEqual(optional_map("42", str_to_num), 420)
+
+    def test_coerce_to_grid(self) -> None:
+        self.assertEqual(coerce_to_grid(1.23, Decimal("0.1")), Decimal("1.2"))
+        self.assertEqual(coerce_to_grid(1.23, Decimal("0.01")), Decimal("1.23"))
+        self.assertEqual(coerce_to_grid(1.227, Decimal("0.01")), Decimal("1.23"))
+        self.assertEqual(coerce_to_grid(200, Decimal("10")), Decimal("200"))
+        self.assertEqual(coerce_to_grid(1.0/3.0, Decimal("0.001")), Decimal("0.333"))
+
+    def test_check_on_grid(self) -> None:
+        self.assertTrue(check_on_grid(Decimal("1.23"), Decimal("0.01")))
+        self.assertFalse(check_on_grid(Decimal("1.23"), Decimal("0.1")))
+        self.assertTrue(check_on_grid(Decimal("1.20"), Decimal("0.1")))
+        self.assertTrue(check_on_grid(Decimal("1.20"), Decimal("0.03")))
+        self.assertFalse(check_on_grid(Decimal("1.20"), Decimal("0.07")))
+        self.assertTrue(check_on_grid(Decimal("2000"), Decimal("10")))
+        self.assertFalse(check_on_grid(Decimal("2000"), Decimal("13")))
+
+    def test_gcd(self) -> None:
+        self.assertEqual(gcd(1,2,3), 1)
+        self.assertEqual(gcd(4,6,8), 2)
+        self.assertEqual(gcd(3,6), 3)
+        self.assertEqual(gcd(17), 17)
+        self.assertEqual(gcd(1033, 1999), 1)
+        self.assertEqual(gcd(1024, 4096), 1024)
+
+    def test_lcm(self) -> None:
+        self.assertEqual(lcm(1,2,3), 6)
+        self.assertEqual(lcm(4,6,8), 24)
+        self.assertEqual(lcm(3,6), 6)
+        self.assertEqual(lcm(17), 17)
+        self.assertEqual(lcm(1033, 1999), 2064967)
+        self.assertEqual(lcm(1024, 4096), 4096)
+
+    def test_lcm_grid(self) -> None:
+        unit = Decimal("0.001")
+        self.assertEqual(lcm_grid(unit, Decimal("1.234")), Decimal("1.234"))
+        self.assertEqual(lcm_grid(unit, Decimal("0.09"), Decimal("0.08")), Decimal("0.72"))
+        self.assertEqual(lcm_grid(unit, Decimal("0.003"), Decimal("0.005"), Decimal("0.11")), Decimal("0.33"))
+        self.assertEqual(lcm_grid(unit, Decimal("0.245"), Decimal("0.013"), Decimal("0.002")), Decimal("6.37"))
 
     def test_check_function_type(self) -> None:
         def test1(x: int) -> str:

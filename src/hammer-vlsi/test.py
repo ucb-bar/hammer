@@ -11,6 +11,7 @@ import shutil
 import tempfile
 import unittest
 from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Union
+from decimal import Decimal
 
 from tech_test import StackupTestHelper
 from tech_test_utils import HasGetTech
@@ -22,8 +23,7 @@ import hammer_vlsi
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, Level
 from hammer_logging.test import HammerLoggingCaptureContext
 from hammer_tech import LibraryFilter, Library, ExtraLibrary
-from hammer_utils import deeplist, deepdict, get_or_else
-
+from hammer_utils import deeplist, deepdict, add_dicts, get_or_else
 
 class HammerVLSILoggingTest(unittest.TestCase):
     def test_colours(self):
@@ -529,7 +529,7 @@ export lol=abc"cat"
         test.set_database(database)
 
         with HammerLoggingCaptureContext() as c:
-         my_pins = test.get_pin_assignments()
+            my_pins = test.get_pin_assignments()
 
         # For a correct configuration, there should be no warnings
         # or errors.
@@ -1182,6 +1182,299 @@ class HammerSRAMGeneratorToolTest(unittest.TestCase):
             "sram32x32_1.5V_125.0C.gds",
             "sram64x128_0.5V_0.0C.gds",
             "sram64x128_1.5V_125.0C.gds"]))
+
+class HammerPowerStrapsTestContext:
+    def __init__(self, test: unittest.TestCase, strap_options: Dict[str, Any]) -> None:
+        self.logger = HammerVLSILogging.context()
+        self.strap_options = strap_options  # type: Dict[str, Any]
+        self.test = test  # type: unittest.TestCase
+        self.temp_dir = ""  # type: str
+        self.power_straps_tcl = ""  # type: str
+        self._driver = None # type: Optional[hammer_vlsi.HammerDriver]
+
+    # Helper property to check that the driver did get initialized.
+    @property
+    def driver(self) -> hammer_vlsi.HammerDriver:
+        assert self._driver is not None, "HammerDriver must be initialized before use"
+        return self._driver
+
+    def __enter__(self) -> "HammerPowerStrapsTestContext":
+        """Initialize context by creating the temp_dir, driver, and loading mockpar."""
+        self.test.assertTrue(hammer_vlsi.HammerVLSISettings.set_hammer_vlsi_path_from_environment(),
+                        "hammer_vlsi_path must exist")
+        temp_dir = tempfile.mkdtemp()
+        json_path = os.path.join(temp_dir, "project.json")
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+        def add_stackup_and_site(in_dict: Dict[str, Any]) -> Dict[str, Any]:
+            out_dict = deepdict(in_dict)
+            out_dict["stackups"] = [StackupTestHelper.create_test_stackup_dict(8)]
+            out_dict["sites"] = [StackupTestHelper.create_test_site_dict()]
+            out_dict["grid_unit"] = str(StackupTestHelper.mfr_grid())
+            return out_dict
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_stackup_and_site)
+        with open(json_path, "w") as f:
+            f.write(json.dumps(add_dicts({
+                "vlsi.core.par_tool": "mockpar",
+                "vlsi.core.technology": "dummy28",
+                "vlsi.core.node": "28",
+                "vlsi.core.placement_site": "CoreSite",
+                "vlsi.core.technology_path": [os.path.join(tech_dir, '..')],
+                "vlsi.core.technology_path_meta": "append",
+                "par.inputs.top_module": "dummy",
+                "par.inputs.input_files": ("/dev/null",),
+                "technology.core.stackup": "StackupWith8Metals",
+                "technology.core.std_cell_rail_layer": "M1",
+                "technology.core.tap_cell_rail_reference": "FakeTapCell",
+                "par.mockpar.temp_folder": temp_dir
+            }, self.strap_options), indent=4))
+        options = hammer_vlsi.HammerDriverOptions(
+            environment_configs=[],
+            project_configs=[json_path],
+            log_file=os.path.join(temp_dir, "log.txt"),
+            obj_dir=temp_dir
+        )
+        self.temp_dir = temp_dir
+        self._driver = hammer_vlsi.HammerDriver(options)
+        self.test.assertTrue(self.driver.load_par_tool())
+        return self
+
+    def __exit__(self, type, value, traceback) -> bool:
+        """Clean up the context by removing the temp_dir."""
+        shutil.rmtree(self.temp_dir)
+        # Return True (normal execution) if no exception occurred.
+        return True if type is None else False
+
+
+class HammerPowerStrapsTest(HasGetTech, unittest.TestCase):
+
+    def test_simple_by_tracks_power_straps(self) -> None:
+        """ Creates simple power straps using the by_tracks method """
+        # TODO clean this up a bit
+
+        strap_layers = ["M4", "M5", "M6", "M7", "M8"]
+        pin_layers = ["M7", "M8"]
+        track_width = 4
+        track_width_M7 = 8
+        track_width_M8 = 10
+        track_spacing = 0
+        track_spacing_M6 = 1
+        power_utilization = 0.2
+        power_utilization_M8 = 1.0
+        track_offset_M5 = 1
+
+        # VSS comes before VDD
+        nets = ["VSS", "VDD"]
+
+        straps_options = {
+            "vlsi.inputs.supplies": {
+                "power": [{"name": "VDD", "pin": "VDD"}],
+                "ground": [{"name": "VSS", "pin": "VSS"}],
+                "VDD": "1.00 V",
+                "GND": "0 V"
+            },
+            "par.power_straps_mode": "generate",
+            "par.generate_power_straps_method": "by_tracks",
+            "par.generate_power_straps_options.by_tracks": {
+                "strap_layers": strap_layers,
+                "pin_layers": pin_layers,
+                "track_width": track_width,
+                "track_width_M7": track_width_M7,
+                "track_width_M8": track_width_M8,
+                "track_spacing": track_spacing,
+                "track_spacing_M6": track_spacing_M6,
+                "power_utilization": power_utilization,
+                "power_utilization_M8": power_utilization_M8,
+                "track_offset_M5": track_offset_M5
+            }
+        }
+
+        with HammerPowerStrapsTestContext(self, straps_options) as c:
+            success, par_output = c.driver.run_par()
+            self.assertTrue(success)
+
+            par_tool = c.driver.par_tool
+            # It's surpringly annoying to import mockpar.MockPlaceAndRoute, which is the class
+            # that contains the parse_mock_power_straps_file() method, so we're just ignoring
+            # that particular part of this
+            assert isinstance(par_tool, hammer_vlsi.HammerPlaceAndRouteTool)
+            stackup = par_tool.get_stackup()
+            entries = par_tool.parse_mock_power_straps_file()  # type: ignore
+            entries  # type: List[Dict[str, Any]]
+
+            for entry in entries:
+                c.logger.debug("Power strap entry:" + str(entry))
+                layer_name = entry["layer_name"]
+                if layer_name == "M1":
+                    # Standard cell rails
+                    self.assertEqual(entry["tap_cell_name"], "FakeTapCell")
+                    self.assertEqual(entry["bbox"], [])
+                    self.assertEqual(entry["nets"], nets)
+                    continue
+
+                strap_width = Decimal(entry["width"])
+                strap_spacing = Decimal(entry["spacing"])
+                strap_pitch = Decimal(entry["pitch"])
+                strap_offset = Decimal(entry["offset"])
+                metal = stackup.get_metal(layer_name)
+                min_width = metal.min_width
+                group_track_pitch = strap_pitch / metal.pitch
+                used_tracks = round(Decimal(strap_offset + strap_width + strap_spacing + strap_width + strap_offset) / metal.pitch) - 1
+                if layer_name == "M4":
+                    self.assertEqual(entry["bbox"], [])
+                    self.assertEqual(entry["nets"], nets)
+                    # TODO more tests in a future PR
+                elif layer_name == "M5":
+                    self.assertEqual(entry["bbox"], [])
+                    self.assertEqual(entry["nets"], nets)
+                    # Check that the requested tracks equals the used tracks
+                    requested_tracks = track_width * 2 + track_spacing
+                    self.assertEqual(used_tracks, requested_tracks)
+                    # Spacing should be at least the min spacing
+                    min_spacing = metal.get_spacing_for_width(strap_width)
+                    self.assertGreaterEqual(strap_spacing, min_spacing)
+                    # TODO more tests in a future PR
+                elif layer_name == "M6":
+                    self.assertEqual(entry["bbox"], [])
+                    self.assertEqual(entry["nets"], nets)
+                    # This is a sanity check that we didn't accidentally change something up above
+                    self.assertEqual(track_spacing_M6, 1)
+                    # We should be able to fit a track in between the stripes because track_spacing_M6 == 1
+                    wire_to_strap_spacing = (strap_spacing - min_width) / 2
+                    min_spacing = metal.get_spacing_for_width(strap_width)
+                    self.assertGreaterEqual(wire_to_strap_spacing, min_spacing)
+                    # Check that the requested tracks equals the used tracks
+                    requested_tracks = track_width * 2 + track_spacing_M6
+                    self.assertEqual(used_tracks, requested_tracks)
+                    # Spacing should be at least the min spacing
+                    min_spacing = metal.get_spacing_for_width(strap_width)
+                    self.assertGreaterEqual(wire_to_strap_spacing, min_spacing)
+                    # TODO more tests in a future PR
+                elif layer_name == "M7":
+                    self.assertEqual(entry["bbox"], [])
+                    self.assertEqual(entry["nets"], nets)
+                    # TODO more tests in a future PR
+                elif layer_name == "M8":
+                    other_spacing = strap_pitch - (2 * strap_width) - strap_spacing
+                    # Track spacing should be 0
+                    self.assertEqual(track_spacing, 0)
+                    # Test that the power straps are symmetric
+                    self.assertEqual(other_spacing, strap_spacing)
+                    # Spacing should be at least the min spacing
+                    min_spacing = metal.get_spacing_for_width(strap_width)
+                    self.assertGreaterEqual(other_spacing, min_spacing)
+                    # Test that a slightly larger strap would be a DRC violation
+                    new_spacing = metal.get_spacing_for_width(strap_width + metal.grid_unit)
+                    new_pitch = (strap_width + metal.grid_unit + new_spacing) * 2
+                    self.assertLess(strap_pitch, new_pitch)
+                    # Test that the pitch does consume the right number of tracks
+                    required_pitch = Decimal(track_width_M8 * 2) * metal.pitch
+                    # 100% power utilzation should produce straps that consume 2*strap_width + strap_spacing tracks
+                    self.assertEqual(strap_pitch, required_pitch)
+                else:
+                    assert False, "Got the wrong layer_name: {}".format(layer_name)
+
+    def test_multiple_domains(self) -> None:
+        """ Tests multiple power domains """
+        # TODO clean this up a bit
+
+        strap_layers = ["M4", "M5", "M8"]
+        pin_layers = ["M8"]
+        track_width = 8
+        track_spacing = 0
+        power_utilization = 0.2
+        power_utilization_M8 = 1.0
+
+        straps_options = {
+            "vlsi.inputs.supplies": {
+                "power": [{"name": "VDD", "pin": "VDD"}, {"name": "VDD2", "pin": "VDD2"}],
+                "ground": [{"name": "VSS", "pin": "VSS"}],
+                "VDD": "1.00 V",
+                "GND": "0 V"
+            },
+            "par.power_straps_mode": "generate",
+            "par.generate_power_straps_method": "by_tracks",
+            "par.generate_power_straps_options.by_tracks": {
+                "strap_layers": strap_layers,
+                "pin_layers": pin_layers,
+                "track_width": track_width,
+                "track_spacing": track_spacing,
+                "power_utilization": power_utilization,
+                "power_utilization_M8": power_utilization_M8
+            }
+        }
+
+        with HammerPowerStrapsTestContext(self, straps_options) as c:
+            success, par_output = c.driver.run_par()
+            self.assertTrue(success)
+
+            par_tool = c.driver.par_tool
+            # It's surpringly annoying to import mockpar.MockPlaceAndRoute, which is the class
+            # that contains the parse_mock_power_straps_file() method, so we're just ignoring
+            # that particular part of this
+            assert isinstance(par_tool, hammer_vlsi.HammerPlaceAndRouteTool)
+            stackup = par_tool.get_stackup()
+            entries = par_tool.parse_mock_power_straps_file()  # type: ignore
+            entries  # type: List[Dict[str, Any]]
+
+            # There should be 1 std cell rail definition and 2 straps per layer (total 7)
+            self.assertEqual(len(entries), 7)
+
+            first_M5 = True
+            first_M8 = True
+            offset_M5 = Decimal(0)
+            offset_M8 = Decimal(0)
+            for entry in entries:
+                c.logger.debug("Power strap entry:" + str(entry))
+                layer_name = entry["layer_name"]
+                if layer_name == "M1":
+                    # Standard cell rails
+                    self.assertEqual(entry["tap_cell_name"], "FakeTapCell")
+                    self.assertEqual(entry["bbox"], [])
+                    self.assertEqual(entry["nets"], ["VSS", "VDD", "VDD2"])
+                    continue
+
+                strap_width = Decimal(entry["width"])
+                strap_spacing = Decimal(entry["spacing"])
+                strap_pitch = Decimal(entry["pitch"])
+                strap_offset = Decimal(entry["offset"])
+                metal = stackup.get_metal(layer_name)
+                min_width = metal.min_width
+                group_track_pitch = strap_pitch / metal.pitch
+                used_tracks = round(Decimal(strap_offset + strap_width + strap_spacing + strap_width + strap_offset) / metal.pitch) - 1
+                if layer_name == "M4":
+                    # This is just here to keep the straps from asserting due to a direction issue
+                    pass
+                elif layer_name == "M5":
+                    # Test 2 domains
+                    self.assertEqual(entry["bbox"], [])
+                    if first_M5:
+                        first_M5 = False
+                        self.assertEqual(entry["nets"], ["VSS", "VDD"])
+                        offset_M5 = strap_offset
+                    else:
+                        self.assertEqual(entry["nets"], ["VSS", "VDD2"])
+                        self.assertEqual(strap_offset, (strap_pitch / 2) + offset_M5)
+                    # TODO more tests in a future PR
+                elif layer_name == "M8":
+                    # Test 100% with two domains
+                    self.assertEqual(entry["bbox"], [])
+                    # Test that the pitch does consume the right number of tracks
+                    # This will be twice as large as the single-domain case because we'll offset another set
+                    required_pitch = Decimal(track_width * 4) * metal.pitch
+                    self.assertEqual(strap_pitch, required_pitch)
+                    if first_M8:
+                        first_M8 = False
+                        self.assertEqual(entry["nets"], ["VSS", "VDD"])
+                        offset_M8 = strap_offset
+                    else:
+                        self.assertEqual(entry["nets"], ["VSS", "VDD2"])
+                        self.assertEqual(strap_offset, (strap_pitch / 2) + offset_M8)
+                    # TODO more tests in a future PR
+                else:
+                    assert False, "Got the wrong layer_name: {}".format(layer_name)
+
+
 
 if __name__ == '__main__':
     unittest.main()
