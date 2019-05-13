@@ -1019,7 +1019,7 @@ class HasSDCSupport(HammerTool):
                 name=delay.name
             ))
 
-        # Custom pin constraints that are verbatim appended
+        # Custom sdc constraints that are verbatim appended
         for custom in self.get_setting("vlsi.inputs.custom_sdc_constraints"):
             output.append(str(custom))
 
