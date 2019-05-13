@@ -223,6 +223,10 @@ vlsi.inputs:
   # delay (TimeValue) - Delay applied to the I/O.
   delays: []
 
+  # List of custom sdc constraints to use. (List[str])
+  # These are appended after all other generated constraints (clock, pin, delay, load, etc.).
+  custom_sdc_constraints: []
+
   # List of placement constraints for floorplanning.
   # Each item is a struct member:
   # path (str) - Path to the given instance
