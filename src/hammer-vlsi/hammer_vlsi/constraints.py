@@ -26,7 +26,9 @@ class ILMStruct(NamedTuple('ILMStruct', [
     ('dir', str),
     ('data_dir', str),
     ('module', str),
-    ('lef', str)
+    ('lef', str),
+    ('gds', str),
+    ('netlist', str)
 ])):
     __slots__ = ()
 
@@ -35,7 +37,9 @@ class ILMStruct(NamedTuple('ILMStruct', [
             "dir": self.dir,
             "data_dir": self.data_dir,
             "module": self.module,
-            "lef": self.lef
+            "lef": self.lef,
+            "gds": self.gds,
+            "netlist": self.netlist
         }
 
     @staticmethod
@@ -44,7 +48,9 @@ class ILMStruct(NamedTuple('ILMStruct', [
             dir=str(ilm["dir"]),
             data_dir=str(ilm["data_dir"]),
             module=str(ilm["module"]),
-            lef=str(ilm["lef"])
+            lef=str(ilm["lef"]),
+            gds=str(ilm["gds"]),
+            netlist=str(ilm["netlist"])
         )
 
 # Transliterated-ish from SRAMGroup in MDF
@@ -77,7 +83,8 @@ class SRAMParameters(NamedTuple('SRAMParameters', [
 Supply = NamedTuple('Supply', [
     ('name', str),
     ('pin', Optional[str]),
-    ('tie', Optional[str])
+    ('tie', Optional[str]),
+    ('weight', Optional[int])
 ])
 
 PinAssignment = NamedTuple('PinAssignment', [

@@ -10,7 +10,8 @@ import json
 import os
 import subprocess
 from abc import ABCMeta, abstractmethod
-from typing import Any, Callable, Iterable, List, NamedTuple, Optional, Tuple
+from typing import Any, Callable, Iterable, List, NamedTuple, Optional, Tuple, Dict
+from decimal import Decimal
 
 import hammer_config
 import python_jsonschema_objects  # type: ignore
@@ -19,7 +20,7 @@ from hammer_config import load_yaml
 from hammer_logging import HammerVLSILoggingContext
 from hammer_utils import (LEFUtils, add_lists, deeplist, get_or_else,
                           in_place_unique, optional_map, reduce_list_str,
-                          reduce_named)
+                          reduce_named, coerce_to_grid)
 
 from library_filter import LibraryFilter
 from filters import LibraryFilterHolder
@@ -203,6 +204,36 @@ class ExtraLibrary(NamedTuple('ExtraLibrary', [
         extra_prefixes = get_or_else(optional_map(self.prefix, lambda p: [p]), [])  # type: List[LibraryPrefix]
         lib_copied.extra_prefixes = extra_prefixes  # type: ignore
         return lib_copied
+
+class Site(NamedTuple('Site', [
+    ('name', str),
+    ('x', Decimal),
+    ('y', Decimal)
+])):
+    """
+    A standard cell site, which is the minimum unit of x and y dimensions a standard cell can have.
+
+    name: The name of this site (often something like "core") as defined in the tech and standard cell LEFs
+    x: The x dimension
+    y: The y dimension
+    """
+    __slots__ = ()
+
+    @staticmethod
+    def from_setting(grid_unit: Decimal, d: Dict[str, Any]) -> "Site":
+        """
+        Return a new Site
+
+        :param grid_unit: The manufacturing grid unit in nm
+        :param d: A dictionary with the keys "name", "x", and "y"
+        :return: A Site
+        """
+        return Site(
+            name=str(d["name"]),
+            x=coerce_to_grid(d["x"], grid_unit),
+            y=coerce_to_grid(d["y"], grid_unit)
+        )
+
 
 
 # Struct that holds information about the size of a macro.
@@ -802,10 +833,37 @@ class HammerTechnology:
         if self.config.stackups is not None:
             for item in list(self.config.stackups):
                 if item["name"] == name:
-                    return Stackup.from_setting(item)
+                    return Stackup.from_setting(self.get_grid_unit(), item)
             raise ValueError("Stackup named %s is not defined in tech JSON" % name)
         else:
             raise ValueError("Tech JSON does not specify any stackups")
+
+    def get_grid_unit(self) -> Decimal:
+        """
+        Return the manufacturing grid unit.
+        """
+        if self.config.grid_unit is not None:
+            return Decimal(self.config.grid_unit)
+        else:
+            raise ValueError("Tech JSON does not specify a manufacturing grid unit")
+
+    def get_site_by_name(self, name: str) -> Site:
+        """
+        Return the site for the given key.
+        """
+        if self.config.sites is not None:
+            for item in list(self.config.sites):
+                if item["name"] == name:
+                    return Site.from_setting(self.get_grid_unit(), item)
+            raise ValueError("Site named %s is not defined in tech JSON" % name)
+        else:
+            raise ValueError("Tech JSON does not specify any sites")
+
+    def get_placement_site(self) -> Site:
+        """
+        Return the default placement site defined by the hammer setting "vlsi.technology.placement_site"
+        """
+        return self.get_site_by_name(self.get_setting("vlsi.technology.placement_site"))
 
 
 class HammerTechnologyUtils:

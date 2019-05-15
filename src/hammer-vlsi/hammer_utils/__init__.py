@@ -7,17 +7,15 @@
 
 import copy
 import inspect
+import math
+import sys
 from functools import reduce
-from typing import List, Any, Set, Dict, Tuple, TypeVar, Callable, Iterable, Optional
+from typing import List, Any, Set, Dict, Tuple, TypeVar, Callable, Iterable, Optional, Union
 from enum import Enum, unique
+from decimal import Decimal
 
 from .verilog_utils import *
 from .lef_utils import *
-
-__all__ = ['VerilogUtils', 'LEFUtils',
-           'deepdict', 'deeplist', 'add_lists', 'add_dicts', 'reverse_dict', 'in_place_unique', 'topological_sort',
-           'reduce_named', 'reduce_list_str', 'get_or_else', 'optional_map', 'assert_function_type',
-           'check_function_type']
 
 
 def deepdict(x: dict) -> dict:
@@ -100,6 +98,71 @@ def in_place_unique(items: List[Any]) -> None:
             seen.add(item)
             i += 1
 
+
+def coerce_to_grid(num: float, grid: Decimal) -> Decimal:
+    """
+    Coerce a floating-point number to the nearest multiple of the provided grid
+
+    :param num: The input floating-point number
+    :param grid: The decimal grid value to which num should be coerced
+    :return: A decimal number on-grid
+    """
+    return Decimal(round(num / float(grid))) * grid
+
+def check_on_grid(num: Union[float, Decimal], grid: Decimal) -> bool:
+    """
+    Checks if a number is an integer multiple of a specified grid unit.
+    This supports floats and Decimals, although support for floats will eventually be removed.
+    Removal of float support will be in ucb-bar/hammer#376
+
+    :param num: The number to check
+    :param grid: The decimal grid value on which to check number
+    :return: True if num is on-grid, False otherwise
+    """
+    # TODO(johnwright) Remove float support in ucb-bar/hammer#376
+    num_dec = num if isinstance(num, Decimal) else coerce_to_grid(num, Decimal("0.001"))
+    assert isinstance(num_dec, Decimal)
+    return Decimal(int(num_dec / grid)) == (num_dec / grid)
+
+def gcd(*values: int) -> int:
+    """
+    Return the greatest common divisor of a series of ints
+
+    :param values: The values of which to compute the GCD
+    :return: The GCD
+    """
+    assert len(values) > 0
+    # 3.5 moves fractions.gcd to math.gcd
+    if sys.version_info.major == 3 and sys.version_info.minor < 5:
+        import fractions
+        return reduce(fractions.gcd, values)
+    else:
+        return reduce(math.gcd, values)
+
+def lcm(*values: int) -> int:
+    """
+    Return the least common multiple of a series of ints
+
+    :param values: The values of which to compute the LCM
+    :return: The LCM
+    """
+    assert len(values) > 0
+    # 3.5 moves fractions.gcd to math.gcd
+    if sys.version_info.major == 3 and sys.version_info.minor < 5:
+        import fractions
+        return reduce(lambda x, y: (x * y) // fractions.gcd(x, y), values)
+    else:
+        return reduce(lambda x, y: (x * y) // math.gcd(x, y), values)
+
+def lcm_grid(grid: Decimal, *values: Decimal) -> Decimal:
+    """
+    Return the least common multiple of a series of decimal values on a provided grid
+
+    :param grid: The unit grid
+    :param values: The values of which to compute the LCM
+    :return: The LCM
+    """
+    return grid * lcm(*map(lambda x: int(x / grid), values))
 
 def topological_sort(graph: Dict[str, Tuple[List[str], List[str]]], starting_nodes: List[str]) -> List[str]:
     """
@@ -236,7 +299,6 @@ def check_function_type(function: Callable, args: List[type], return_type: type)
         """Return true if 't' is a Union type."""
         import typing
         if not hasattr(t, "__origin__"):
-            import sys
             if sys.version_info.major == 3 and sys.version_info.minor == 5 and sys.version_info.micro <= 2:
                 # Python compatibility: <3.5.2
 

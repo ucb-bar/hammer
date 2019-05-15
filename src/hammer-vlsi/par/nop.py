@@ -7,6 +7,8 @@
 #  See LICENSE for licence details.
 
 from hammer_vlsi import HammerPlaceAndRouteTool, DummyHammerTool
+from typing import List, Optional
+from decimal import Decimal
 
 
 class NopPlaceAndRoute(HammerPlaceAndRouteTool, DummyHammerTool):
@@ -16,6 +18,12 @@ class NopPlaceAndRoute(HammerPlaceAndRouteTool, DummyHammerTool):
         self.output_netlist = "/dev/null"
         self.hcells_list = []
         return True
+
+    def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool) -> List[str]:
+        return []
+
+    def specify_std_cell_power_straps(self, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
+        return []
 
 
 tool = NopPlaceAndRoute

@@ -33,6 +33,7 @@ call_mypy ../hammer-vlsi/synthesis/vivado/__init__.py
 call_mypy ../hammer-vlsi/synthesis/nop.py
 call_mypy ../hammer-vlsi/par/nop.py
 call_mypy ../hammer-vlsi/par/vivado/__init__.py
+call_mypy ../hammer-vlsi/par/mockpar/__init__.py
 call_mypy ../hammer-vlsi/drc/*.py
 call_mypy ../hammer-vlsi/lvs/*.py
 

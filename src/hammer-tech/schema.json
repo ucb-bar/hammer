@@ -2,6 +2,9 @@
   "title" : "TechJSON",
   "type" : "object",
   "properties" : {
+    "grid_unit" : {
+      "type" : "string"
+    },
     "installs" : {
       "type" : "array",
       "items" : {
@@ -180,6 +183,25 @@
           }
         },
         "additionalproperties" : false
+      }
+    },
+    "sites" : {
+      "type" : "array",
+      "items" : {
+        "title" : "Site",
+        "type" : "object",
+        "additionalproperties" : false,
+        "properties" : {
+          "name" : {
+            "type" : "string"
+          },
+          "x" : {
+            "type" : "number"
+          },
+          "y" : {
+            "type" : "number"
+          }
+        }
       }
     },
     "stackups" : {

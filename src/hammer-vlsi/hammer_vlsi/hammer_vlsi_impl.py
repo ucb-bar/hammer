@@ -15,9 +15,10 @@ import os
 import sys
 import json
 from typing import Callable, Iterable, List, NamedTuple, Optional, Dict, Any, Union
+from decimal import Decimal
 
 import hammer_config
-from hammer_utils import reverse_dict, deepdict, optional_map, get_or_else, add_dicts
+from hammer_utils import reverse_dict, deepdict, optional_map, get_or_else, add_dicts, coerce_to_grid
 from hammer_tech import Library, ExtraLibrary
 
 from .constraints import *
@@ -444,6 +445,236 @@ class HammerPlaceAndRouteTool(HammerTool):
 
     ### END Generated interface HammerPlaceAndRouteTool ###
 
+    def create_power_straps_tcl(self) -> List[str]:
+        """
+        Create power straps TCL commands depending on the mode.
+        """
+        output = []  # type: List[str]
+
+        power_straps_mode = str(self.get_setting("par.power_straps_mode"))
+        if power_straps_mode == "manual":
+            power_straps_script_contents = str(self.get_setting("par.power_straps_script_contents"))
+            # TODO(edwardw): proper source locators/SourceInfo
+            output.append("# Power straps script manually specified from HAMMER")
+            output.extend(power_straps_script_contents.split("\n"))
+        elif power_straps_mode == "generate":
+            output.extend(self.generate_power_straps_tcl())
+        else:
+            if power_straps_mode != "blank":
+                self.logger.error(
+                    "Invalid power_straps_mode {mode}. Using blank power straps script.".format(mode=power_straps_mode))
+            # Write blank power straps
+            output.append("# Blank power straps script specified from HAMMER")
+        return output
+
+    def generate_power_straps_tcl(self) -> List[str]:
+        """
+        Generate a TCL script to create power straps from the config/IR.
+        :return: Power straps TCL script.
+        """
+        method = self.get_setting("par.generate_power_straps_method")
+        if method == "by_tracks":
+            # By default put straps everywhere
+            bbox = None # type: Optional[List[Decimal]]
+            namespace = "par.generate_power_straps_options.by_tracks"
+            layers = self.get_setting("{}.strap_layers".format(namespace))
+            pin_layers = self.get_setting("{}.pin_layers".format(namespace))
+            ground_net_names = list(map(lambda x: x.name, self.get_independent_ground_nets()))  # type: List[str]
+            power_net_names = list(map(lambda x: x.name, self.get_independent_power_nets()))  # type: List[str]
+            def get_weight(s: Supply) -> int:
+                # Check that it's not None
+                assert isinstance(s.weight, int)
+                return s.weight
+            weights = list(map(get_weight, self.get_independent_power_nets()))  # type: List[int]
+            assert len(ground_net_names) == 1, "FIXME, I am assuming there's only 1 ground net"
+            return self.specify_all_power_straps_by_tracks(layers, ground_net_names[0], power_net_names, weights, bbox, pin_layers)
+        else:
+            raise NotImplementedError("Power strap generation method %s is not implemented" % method)
+
+    def specify_power_straps_by_tracks(self, layer_name: str, bottom_via_layer: str, blockage_spacing: Decimal, track_pitch: int, track_width: int, track_spacing: int, track_start: int, track_offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool, layer_is_all_power: bool) -> List[str]:
+        """
+        Generate a list of TCL commands that will create power straps on a given layer by specifying the desired track consumption.
+        This method assumes that power straps are built bottom-up, starting with standard cell rails.
+
+        :param layer_name: The layer name of the metal on which to create straps.
+        :param bottom_via_layer_name: The layer name of the lowest metal layer down to which to drop vias.
+        :param blockage_spacing: The minimum spacing between the end of a strap and the beginning of a macro or blockage.
+        :param track_pitch: The integer pitch between groups of power straps (i.e. from left edge of strap A to the next left edge of strap A) in units of the routing pitch.
+        :param track_width: The desired number of routing tracks to consume by a single power strap.
+        :param track_spacing: The desired number of USABLE routing tracks between power straps. It is recommended to leave this at 0 except to fix DRC issues.
+        :param track_start: The index of the first track to start using for power straps relative to the bounding box.
+        :param bbox: The optional (2N)-point bounding box of the area to generate straps. By default the entire core area is used.
+        :param nets: A list of power nets to create (e.g. ["VDD", "VSS"], ["VDDA", "VSS", "VDDB"], ... etc.).
+        :param add_pins: True if pins are desired on this layer; False otherwise.
+        :param layer_is_all_power: True if there will be no signal wires on this layer.
+        :return: A list of TCL commands that will generate power straps.
+        """
+        # Note: even track_widths will be snapped to a half-track
+        layer = self.get_stackup().get_metal(layer_name)
+        pitch = track_pitch * layer.pitch
+        width = Decimal(0)
+        spacing = Decimal(0)
+        strap_offset = Decimal(0)
+        if track_spacing == 0:
+            # An all-power (100% utilization) layer results in us wanting to do a uniform strap pattern, so we can just calculate the
+            # maximum width and minimum spacing from the desired pitch, instead of using TWWT.
+            if layer_is_all_power:
+                one_strap_pitch = track_width * layer.pitch
+                spacing, width = layer.min_spacing_and_max_width_from_pitch(one_strap_pitch)
+                strap_start = spacing / 2 + layer.offset
+            else:
+                width, spacing, strap_start = layer.get_width_spacing_start_twwt(track_width, force_even=True)
+        else:
+            width, spacing, strap_start = layer.get_width_spacing_start_twt(track_width)
+            spacing = 2*spacing + (track_spacing - 1) * layer.pitch + layer.min_width
+        offset = track_offset + track_start * layer.pitch + strap_start
+        return self.specify_power_straps(layer_name, bottom_via_layer, blockage_spacing, pitch, width, spacing, offset, bbox, nets, add_pins)
+
+    def specify_all_power_straps_by_tracks(self, layer_names: List[str], ground_net: str, power_nets: List[str], power_weights: List[int], bbox: Optional[List[Decimal]], pin_layers: List[str]) -> List[str]:
+        """
+        Generate a list of TCL commands that will create power straps on a given set of layers by specifying the desired per-track track consumption and utilization.
+        This will build standard cell power strap rails first. Layer-specific parameters are read from the hammer config:
+            - par.generate_power_straps_options.by_tracks.blockage_spacing
+            - par.generate_power_straps_options.by_tracks.track_width
+            - par.generate_power_straps_options.by_tracks.track_spacing
+            - par.generate_power_straps_options.by_tracks.power_utilization
+        These settings are all overridable by appending an underscore followed by the metal name (e.g. power_utilization_M3).
+
+        :param layer_names: The list of metal layer names on which to create straps.
+        :param ground_net: The name of the ground net in this design. Only 1 ground net is supported.
+        :param power_nets: A list of power nets to create (not ground).
+        :param power_weights: Specifies the power strap placement pattern for multiple-domain designs (e.g. ["VDDA", "VDDB"] with [2, 1] will produce 2 VDDA straps for ever 1 VDDB strap).
+        :param bbox: The optional (2N)-point bounding box of the area to generate straps. By default the entire core area is used.
+        :param pin_layers: A list of layers on which to place pins
+        :return: A list of TCL commands that will generate power straps.
+        """
+        assert len(power_nets) == len(power_weights)
+
+        # Do some sanity checking
+        for l in pin_layers:
+            assert l in layer_names, "Pin layer {} must be in power strap layers".format(l)
+
+        # TODO does the CPF help this, or do we need to be more explicit about the bbox for each domain
+        output = self.specify_std_cell_power_straps(bbox, [ground_net] + power_nets)
+        bottom_via_layer = self.get_setting("technology.core.std_cell_rail_layer")
+        last = self.get_stackup().get_metal(bottom_via_layer)
+        for layer_name in layer_names:
+            layer = self.get_stackup().get_metal(layer_name)
+            assert layer.index > last.index, "Must build power straps bottom-up"
+            if last.direction == layer.direction:
+                raise ValueError("Layers {a} and {b} run in the same direction, but have no power straps between them.".format(a=last.name, b=layer.name))
+
+            blockage_spacing = coerce_to_grid(float(self._get_by_tracks_metal_setting("blockage_spacing", layer_name)), layer.grid_unit)
+            track_width = int(self._get_by_tracks_metal_setting("track_width", layer_name))
+            track_spacing = int(self._get_by_tracks_metal_setting("track_spacing", layer_name))
+            track_start = int(self._get_by_tracks_metal_setting("track_start", layer_name))
+            track_pitch = self._get_by_tracks_track_pitch(layer_name)
+            offset = layer.offset # TODO this is relaxable if we can auto-recalculate this based on hierarchical setting
+
+            add_pins = layer_name in pin_layers
+            # For multiple domains, we'll stripe them like this:
+            # 2:1 :   A A B A A B ...
+            # 3:1 :   A A A B A A A B ...
+            # 3:2 :   A A A B B A A A B B ...
+            # 2:2:1 : A A B B C A A B B C ...
+            sum_weights = sum(power_weights)
+            # If the power + ground tracks are equal to the pitch, we have no signals
+            layer_is_all_power = (2 * track_width) == track_pitch
+            for i in range(sum_weights):
+                nets = [ground_net, power_nets[i]]
+                group_offset = offset + track_pitch * i * layer.pitch
+                group_pitch = sum_weights * track_pitch
+                output.extend(self.specify_power_straps_by_tracks(layer_name, last.name, blockage_spacing, group_pitch, track_width, track_spacing, track_start, group_offset, bbox, nets, add_pins, layer_is_all_power))
+            last = layer
+        return output
+
+    _power_straps_last_index = -1
+
+    def _power_straps_check_index(self, layer_name: str) -> None:
+        next_index = self.get_stackup().get_metal(layer_name).index
+        assert next_index >= self._power_straps_last_index, "Must construct power straps from bottom to top"
+        self._power_straps_last_index = next_index
+
+    def _get_by_tracks_metal_setting(self, key: str, layer_name: str) -> Any:
+        """
+        Return the metal setting used by the by_tracks power strap generation method.
+        This will return the value from the provided key in the par.generate_power_straps.by_tracks namespace,
+        which can be overridden for a specific metal layer by appending _<layer name>.
+
+        :param key: The base key name (e.g. track_spacing). Do not include the namespace or metal override.
+        :return: The value associated with the key, after applying any metal overrides
+        """
+        default = "par.generate_power_straps_options.by_tracks." + key
+        override = default + "_" + layer_name
+        try:
+            return self.get_setting(override)
+        except KeyError:
+            try:
+                return self.get_setting(default)
+            except KeyError:
+                raise ValueError("No value set for key {}".format(default))
+
+    def _get_by_tracks_track_pitch(self, layer_name: str) -> int:
+        """
+        Returns the track pitch used by the by_tracks power rail generation method
+
+        :param layer_name: The string name of the metal layer
+        :return: The power strap group pitch in tracks
+        """
+        track_width = int(self._get_by_tracks_metal_setting("track_width", layer_name))
+        track_spacing = int(self._get_by_tracks_metal_setting("track_spacing", layer_name))
+        power_utilization = float(self._get_by_tracks_metal_setting("power_utilization", layer_name))
+
+        assert power_utilization > 0.0
+        assert power_utilization <= 1.0
+
+        # Calculate how many tracks we consume
+        # This strategy uses pairs of power and ground
+        consumed_tracks = 2 * track_width + track_spacing
+        return round(consumed_tracks / power_utilization)
+
+    @abstractmethod
+    def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool) -> List[str]:
+        """
+        Generate a list of TCL commands that will create power straps on a given layer.
+        This is a low-level, cad-tool-specific API. It is designed to be called by higher-level methods, so calling this directly is not recommended.
+        This method assumes that power straps are built bottom-up, starting with standard cell rails.
+
+        :param layer_name: The layer name of the metal on which to create straps.
+        :param bottom_via_layer_name: The layer name of the lowest metal layer down to which to drop vias.
+        :param blockage_spacing: The minimum spacing between the end of a strap and the beginning of a macro or blockage.
+        :param pitch: The pitch between groups of power straps (i.e. from left edge of strap A to the next left edge of strap A).
+        :param width: The width of each strap in a group.
+        :param spacing: The spacing between straps in a group.
+        :param offset: The offset to start the first group.
+        :param bbox: The optional (2N)-point bounding box of the area to generate straps. By default the entire core area is used.
+        :param nets: A list of power nets to create (e.g. ["VDD", "VSS"], ["VDDA", "VSS", "VDDB"],  ... etc.).
+        :param add_pins: True if pins are desired on this layer; False otherwise.
+        :return: A list of TCL commands that will generate power straps.
+        """
+        # This should get overriden but be sure to use this check in your implementations
+        self._power_straps_check_index(layer_name)
+        return []
+
+    @abstractmethod
+    def specify_std_cell_power_straps(self, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
+        """
+        Generate a list of TCL commands that build the low-level standard cell power strap rails.
+        This is a low-level, cad-tool-specific API. It is designed to be called by higher-level methods, so calling this directly is not recommended.
+        This will create power straps based on technology.core.tap_cell_rail_reference.
+        The layer is set by technology.core.std_cell_rail_layer, which should be the highest metal layer in the std cell rails.
+        This method should be called before any calls to specify_power_straps.
+
+        :param bbox: The optional (2N)-point bounding box of the area to generate straps. By default the entire core area is used.
+        :param nets: A list of power net names (e.g. ["VDD", "VSS"]).
+        :return: A list of TCL commands that will generate power straps on rails.
+        """
+        # This should get overriden but be sure to use this check in your implementations
+        layer_name = self.get_setting("technology.core.std_cell_rail_layer")
+        self._power_straps_check_index(layer_name)
+        return []
+
+
 class HammerSignoffTool(HammerTool):
     @abstractmethod
     def fill_outputs(self) -> bool:
@@ -787,6 +1018,12 @@ class HasSDCSupport(HammerTool):
                 direction=delay.direction,
                 name=delay.name
             ))
+
+        # Custom sdc constraints that are verbatim appended
+        custom_sdc_constraints = self.get_setting("vlsi.inputs.custom_sdc_constraints")  # type: List[str]
+        for custom in custom_sdc_constraints:
+            output.append(str(custom))
+
         return "\n".join(output)
 
     @property

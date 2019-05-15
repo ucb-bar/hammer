@@ -17,7 +17,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, ca
 import hammer_config
 import hammer_tech
 from hammer_logging import HammerVLSILoggingContext
-from hammer_tech import LibraryFilter, Stackup, RoutingDirection
+from hammer_tech import LibraryFilter, Stackup, RoutingDirection, Metal
 from hammer_utils import (add_lists, assert_function_type, get_or_else,
                           optional_map)
 
@@ -869,11 +869,13 @@ class HammerTool(metaclass=ABCMeta):
         supplies = self.get_setting(key)
         output = []  # type: List[Supply]
         for raw_supply in supplies:
-            supply = Supply(name=raw_supply['name'],pin=None,tie=None)
+            supply = Supply(name=raw_supply['name'], pin=None, tie=None, weight=1)
             if 'pin' in raw_supply:
                 supply = supply._replace(pin=raw_supply['pin'])
             if 'tie' in raw_supply:
                 supply = supply._replace(tie=raw_supply['tie'])
+            if 'weight' in raw_supply:
+                supply = supply._replace(weight=raw_supply['weight'])
             output.append(supply)
         return output
 

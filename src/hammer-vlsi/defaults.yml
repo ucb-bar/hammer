@@ -118,6 +118,8 @@ vlsi.inputs:
   #   name (str) - The name of your supply's net
   #   pin (Optional[str]) - The cell pin that this net should drive, no pins are connected when omitted
   #   tie (Optional[str]) - Another supply this supply is tied to. Nets with this set will  not end up in your final layout.
+  #   weight (Optional[int]) - The weight of this supply when building power straps (larger number = more straps).
+  #     Not used for grounds. Mandatory, but defaults to 1 if omitted.
   # power (List(Supply)): A list of of all power net(s) in the design
   # ground (List(Supply)): A list of all ground net(s) in the design
   # VDD (str): The default voltage of the primary power net
@@ -170,6 +172,8 @@ vlsi.inputs:
   # data_dir (str) - data directory to the ILMs (...ILMDir/mmmc/...)
   # module (str) - module name for the ILM
   # lef (str) - path to the LEF file
+  # gds (str) - path to the GDS file
+  # netlist (str) - path to the netlist file
   ilms: []
 
   # Muli-mode multi-corner setups, overrides supplies
@@ -219,7 +223,11 @@ vlsi.inputs:
   # delay (TimeValue) - Delay applied to the I/O.
   delays: []
 
-  # List of placement constraints.
+  # List of custom sdc constraints to use. (List[str])
+  # These are appended after all other generated constraints (clock, pin, delay, load, etc.).
+  custom_sdc_constraints: []
+
+  # List of placement constraints for floorplanning.
   # Each item is a struct member:
   # path (str) - Path to the given instance
   # type (str) - One of the following:
@@ -234,6 +242,11 @@ vlsi.inputs:
   # y (float) - y coordinate in um
   # width (float) - width in um
   # height (float) - height in um
+  # margins (Optional[Margins]) - margins for the top-level module (i.e. only only for a toplevel constraint). Contains the following keys:
+  # - "left" - margin from the left side of the core PNR area to the edge of the chip
+  # - "right" - margin from the right side of the core PNR area to the edge of the chip
+  # - "top" - margin from the top side of the core PNR area to the edge of the chip
+  # - "bottom" - margin from the bottom side of the core PNR area to the edge of the chip
   # top_layer (str) - Optional: Specifies the highest layer used by this hardmacro
   #   If specified will be used to keep other wires away from this hardmacro
   # layers (List[str]) - Optional: only used for obstruction type. 
@@ -268,7 +281,8 @@ vlsi.inputs:
   # how many power nets you have, what their names and voltages are, as well as
   # how many domains you have and what their relation is.
   # Valid options:
-  # auto - Hammer will generate a power specification based on other settings. Currently unimplemented
+  # auto - Hammer will generate a power specification based on other settings,
+  #        including vlsi.inputs.supplies.
   # manual - Use the value given in power_spec_contents with type given in power_spec_type
   # empty - Do not use any power specification
   power_spec_mode: empty
@@ -449,6 +463,11 @@ par:
       # Overrideable by appending _<layer name>
       track_width: 5
 
+      # The first track to contain a power stripe
+      # Overrideable by appending _<layer name>
+      # TODO(johnwright): include an auto-center option
+      track_start: 0
+
       # Number of routing tracks between sets of straps (0 is recommended)
       # Overrideable by appending _<layer name>
       track_spacing: 0
@@ -456,6 +475,9 @@ par:
       # Ratio of total routing tracks to dedicate to power straps, which is used to calculate set pitch
       # Overrideable by appending _<layer name>
       power_utilization: 0.1
+
+      # Layers to put power pins on
+      pin_layers: []
 
       # List of layers on which to place power straps (std cell rail layer is implied- do not include it)
       # Not overrideable
@@ -520,15 +542,15 @@ sram_generator.submit:
 technology.core:
     # Key name for the technology stackup
     # This should exist in the stackups list in the tech json
-    # type: string
+    # type: str
     stackup: null
     # This should specify the TOPMOST metal layer the standard cells use for power rails
     # Note that this is not usually stackup specific; it is based on the std cell library
-    # type: string
-    sd_cell_rail_layer: null
+    # type: str
+    std_cell_rail_layer: null
     # This is used to provide a reference master for generating standard cell rails
     # Can be a wildcard/glob
-    # type: string
+    # type: str
     tap_cell_rail_reference: null
 
 pcb.generic:
