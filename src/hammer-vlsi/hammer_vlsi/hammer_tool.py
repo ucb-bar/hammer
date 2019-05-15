@@ -948,6 +948,11 @@ class HammerTool(metaclass=ABCMeta):
               font-weight: bold;
               font-size: 12pt;
             }
+            .obs_path {
+              font-family: sans-serif;
+              font-weight: bold;
+              font-size: 10pt;
+            }
             .bump_name {
               font-family: sans-serif;
               font-weight: bold;
@@ -965,6 +970,9 @@ class HammerTool(metaclass=ABCMeta):
             }
             .macro {
               fill: #aaaaaa;
+            }
+            .obs {
+              fill: #ffff00;
             }
             .power {
               fill: #ff4040;
@@ -986,15 +994,24 @@ class HammerTool(metaclass=ABCMeta):
             translate = "translate({} {})".format(1, title_height)
             macro_rects = "<g transform=\"{}\">\n".format(translate)
             macro_text = "<g transform=\"{}\">\n".format(translate)
+            obs_rects = "<g transform=\"{}\">\n".format(translate)
+            obs_text = "<g transform=\"{}\">\n".format(translate)
 
-            for m in fp_consts:
-                if m.path != top_module and viz == "all":
-                    macro_rects += "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" class=\"macro\" />\n".format(m.x, fp_height-m.y-m.height, m.width, m.height)
-                    macro_text += "<text text-anchor=\"middle\" x=\"{}\" y=\"{}\" class=\"macro_path\">{}</text>\n".format(m.x+m.width/2, fp_height-m.y-m.height/2, m.path)
+            for c in fp_consts:
+                if c.type in ['placement', 'hardmacro', 'hierarchical'] and viz == "all":
+                    macro_rects += "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" class=\"macro\" />\n".format(c.x, fp_height-c.y-c.height, c.width, c.height)
+                    macro_text += "<text text-anchor=\"middle\" x=\"{}\" y=\"{}\" class=\"macro_path\">{}</text>\n".format(c.x+c.width/2, fp_height-c.y-c.height/2, c.path)
+                elif c.type == 'obstruction':
+                    obs_rects += "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" class=\"obs\" />\n".format(c.x, fp_height-c.y-c.height, c.width, c.height)
+                    obs_text += "<text text-anchor=\"middle\" x=\"{}\" y=\"{}\" class=\"obs_path\">{}</text>\n".format(c.x+c.width/2, fp_height-c.y-c.height/2, c.path)
 
             fsvg.write(macro_rects)
             fsvg.write("</g>\n")
             fsvg.write(macro_text)
+            fsvg.write("</g>\n")
+            fsvg.write(obs_rects)
+            fsvg.write("</g>\n")
+            fsvg.write(obs_text)
             fsvg.write("</g>\n")
 
             bumps = self.get_bumps()
