@@ -20,7 +20,7 @@ __all__ = ['ILMStruct', 'SRAMParameters', 'Supply', 'PinAssignment',
            'BumpAssignment', 'BumpsDefinition', 'ClockPort',
            'OutputLoadConstraint', 'DelayConstraint', 'ObstructionType',
            'PlacementConstraintType', 'Margins', 'PlacementConstraint',
-           'MMMCCornerType', 'MMMCCorner']
+           'MMMCCornerType', 'MMMCCorner', 'PinAssignmentError', 'PinAssignmentPreplacedError']
 
 
 # Struct that holds various paths related to ILMs.
@@ -82,6 +82,7 @@ class SRAMParameters(NamedTuple('SRAMParameters', [
             mux=int(d["mux"])
         )
 
+
 Supply = NamedTuple('Supply', [
     ('name', str),
     ('pin', Optional[str]),
@@ -89,12 +90,80 @@ Supply = NamedTuple('Supply', [
     ('weight', Optional[int])
 ])
 
-PinAssignment = NamedTuple('PinAssignment', [
+
+class PinAssignmentError(ValueError):
+    """Exception raised from parsing an invalid PinAssignment object."""
+
+
+class PinAssignmentPreplacedError(PinAssignmentError):
+    """Exception raised from parsing a preplaced pin with extraneous information."""
+
+    def __init__(self, pin: "PinAssignment") -> None:
+        self.pin = pin
+
+    def __str__(self) -> str:
+        return "Pins {p} assigned as a preplaced pin with layers or side. Assuming pins are preplaced pins and ignoring layers and side.".format(
+            p=self.pin.pins)
+
+
+class PinAssignment(NamedTuple('PinAssignment', [
     ('pins', str),
     ('side', Optional[str]),
     ('layers', Optional[List[str]]),
-    ('preplaced', Optional[bool])
-])
+    ('preplaced', bool)
+])):
+    __slots__ = ()
+
+    @staticmethod
+    def from_dict(raw_assign: Dict[str, Any]) -> "PinAssignment":
+        pins = str(raw_assign["pins"])  # type: str
+
+        side = None  # type: Optional[str]
+        if "side" in raw_assign:
+            raw_side = raw_assign["side"]  # type: str
+            assert isinstance(raw_side, str), "side must be a str"
+
+            if raw_side == "top" or raw_side == "bottom" or raw_side == "right" or raw_side == "left":
+                side = raw_side
+            else:
+                raise PinAssignmentError(
+                    "Pins {p} have invalid side {s}. Assuming pins will be handled by CAD tool.".format(p=pins,
+                                                                                                        s=raw_side))
+
+        preplaced = raw_assign.get("preplaced", False)  # type: bool
+        assert isinstance(preplaced, bool), "preplaced must be a bool"
+
+        layers = [] if not "layers" in raw_assign else raw_assign["layers"]  # type: List[str]
+        assert isinstance(layers, list), "layers must be a List[str]"
+        for layer in layers:
+            assert isinstance(layer, str), "layers must be a List[str]"
+
+        if preplaced:
+            if len(layers) > 0 or side is not None:
+                raise PinAssignmentPreplacedError(PinAssignment(pins=pins, side=None, layers=[], preplaced=preplaced))
+        else:
+            if len(layers) == 0 or side is None:
+                raise PinAssignmentError(
+                    "Pins {p} assigned without layers or side. Assuming pins will be handled by CAD tool.".format(
+                        p=pins))
+        return PinAssignment(
+            pins=pins,
+            side=side,
+            layers=layers,
+            preplaced=preplaced
+        )
+
+    def to_dict(self) -> dict:
+        base = {
+            "pins": self.pins,
+            "preplaced": self.preplaced
+        }  # type: Dict[str, Any]
+        if self.side is not None:
+            base['side'] = self.side
+        if self.layers is not None:
+            base['layers'] = self.layers
+        return base
+
 
 BumpAssignment = NamedTuple('BumpAssignment', [
     ('name', Optional[str]),
