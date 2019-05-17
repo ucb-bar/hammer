@@ -541,6 +541,7 @@ export lol=abc"cat"
         test.run_dir = tempfile.mkdtemp()
         test.technology = tech
         database = hammer_config.HammerDatabase()
+        hammer_vlsi.HammerVLSISettings.load_builtins_and_core(database)
 
         settings = """
         {
@@ -575,6 +576,125 @@ export lol=abc"cat"
         shutil.rmtree(tech_dir_base)
         shutil.rmtree(test.run_dir)
 
+    def test_pin_modes(self) -> None:
+        """
+        Test that both full_auto and semi_auto pin modes work.
+        """
+        import hammer_config
+
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+        def add_stackup(in_dict: Dict[str, Any]) -> Dict[str, Any]:
+            out_dict = deepdict(in_dict)
+            out_dict["stackups"] = [StackupTestHelper.create_test_stackup_dict(8)]
+            return out_dict
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_stackup)
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
+        tech.cache_dir = tech_dir
+        tech.logger = HammerVLSILogging.context("")
+
+        test = DummyTool()
+        test.logger = HammerVLSILogging.context("")
+        test.run_dir = tempfile.mkdtemp()
+        test.technology = tech
+        database = hammer_config.HammerDatabase()
+        hammer_vlsi.HammerVLSISettings.load_builtins_and_core(database)
+
+        # Full-auto config should work in full_auto
+        settings = """
+        {
+        "technology.core.stackup": "StackupWith8Metals",
+        "vlsi.inputs.pin_mode": "generated",
+        "vlsi.inputs.pin.generate_mode": "full_auto",
+        "vlsi.inputs.pin.assignments": [
+                     {"pins": "foo*", "side": "top", "layers": ["M5", "M3"]},
+                     {"pins": "tx_n", "preplaced": true},
+                     {"pins": "rx_n", "side": "left", "layers": ["M6"]}
+                 ]
+        }
+        """
+        database.update_project([hammer_config.load_config_from_string(settings, is_yaml=False)])
+        test.set_database(database)
+
+        with HammerLoggingCaptureContext() as c:
+            my_pins = test.get_pin_assignments()
+
+        self.assertEqual(len(c.logs), 0)
+        assert my_pins is not None
+        self.assertEqual(len(my_pins), 3)
+
+        # Full-auto config should also work in semi_auto
+        settings = """
+        {
+        "technology.core.stackup": "StackupWith8Metals",
+        "vlsi.inputs.pin_mode": "generated",
+        "vlsi.inputs.pin.generate_mode": "semi_auto",
+        "vlsi.inputs.pin.assignments": [
+                     {"pins": "foo*", "side": "top", "layers": ["M5", "M3"]},
+                     {"pins": "tx_n", "preplaced": true},
+                     {"pins": "rx_n", "side": "left", "layers": ["M6"]}
+                 ]
+        }
+        """
+        database.update_project([hammer_config.load_config_from_string(settings, is_yaml=False)])
+        test.set_database(database)
+
+        with HammerLoggingCaptureContext() as c:
+            my_pins = test.get_pin_assignments()
+
+        self.assertEqual(len(c.logs), 0)
+        assert my_pins is not None
+        self.assertEqual(len(my_pins), 3)
+
+        # Semi-auto config should work in semi_auto
+        settings = """
+        {
+        "technology.core.stackup": "StackupWith8Metals",
+        "vlsi.inputs.pin_mode": "generated",
+        "vlsi.inputs.pin.generate_mode": "semi_auto",
+        "vlsi.inputs.pin.assignments": [
+                     {"pins": "foo*", "side": "top", "layers": ["M5", "M3"]},
+                     {"pins": "tx_n", "preplaced": true},
+                     {"pins": "rx_n", "side": "left", "layers": ["M6"], "width": 888.8}
+                 ]
+        }
+        """
+        database.update_project([hammer_config.load_config_from_string(settings, is_yaml=False)])
+        test.set_database(database)
+
+        with HammerLoggingCaptureContext() as c:
+            my_pins = test.get_pin_assignments()
+
+        self.assertEqual(len(c.logs), 0)
+        assert my_pins is not None
+        self.assertEqual(len(my_pins), 3)
+
+        # Semi-auto config should give errors in full_auto
+        settings = """
+        {
+        "technology.core.stackup": "StackupWith8Metals",
+        "vlsi.inputs.pin_mode": "generated",
+        "vlsi.inputs.pin.generate_mode": "full_auto",
+        "vlsi.inputs.pin.assignments": [
+                     {"pins": "foo*", "side": "top", "layers": ["M5", "M3"]},
+                     {"pins": "tx_n", "preplaced": true},
+                     {"pins": "rx_n", "side": "left", "layers": ["M6"], "width": 888.8}
+                 ]
+        }
+        """
+        database.update_project([hammer_config.load_config_from_string(settings, is_yaml=False)])
+        test.set_database(database)
+
+        with HammerLoggingCaptureContext() as c:
+            my_pins = test.get_pin_assignments()
+
+        self.assertEqual(len(c.logs), 1)
+        self.assertTrue("width requires semi_auto" in c.logs[0])
+
+        # Cleanup
+        shutil.rmtree(tech_dir_base)
+        shutil.rmtree(test.run_dir)
+
     def test_pins(self) -> None:
         """
         Test that HammerTool pin placement support works.
@@ -597,6 +717,7 @@ export lol=abc"cat"
         test.run_dir = tempfile.mkdtemp()
         test.technology = tech
         database = hammer_config.HammerDatabase()
+        hammer_vlsi.HammerVLSISettings.load_builtins_and_core(database)
         # Check bad mode string doesn't look at null dict
         settings = """
 {

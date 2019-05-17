@@ -932,11 +932,20 @@ class HammerTool(metaclass=ABCMeta):
                 "Invalid pin_mode {mode}. Using none pin mode.".format(mode=pin_mode))
             return []
 
+        generate_mode = str(self.get_setting("vlsi.inputs.pin.generate_mode"))
+        if generate_mode not in ("full_auto", "semi_auto"):
+            raise ValueError("Invalid generate_mode {}".format(generate_mode))
+        semi_auto = generate_mode == "semi_auto"
+
         # Generated pin mode needs to ingest the assignments
         assigns = []  # type: List[PinAssignment]
         for raw_assign in self.get_setting("vlsi.inputs.pin.assignments"):
             try:
-                pin = PinAssignment.from_dict(raw_assign)
+                pin = PinAssignment.from_dict(raw_assign, semi_auto)
+            except PinAssignmentSemiAutoError as e:
+                # Raise this as an error
+                self.logger.error("Semi-auto pin assigment feature used without enabling semi_auto mode: " + str(e))
+                continue
             except PinAssignmentPreplacedError as e:
                 # Accept the pin assignment and ignore extra information
                 self.logger.warning(str(e))
