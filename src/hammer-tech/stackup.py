@@ -279,6 +279,7 @@ class Metal(NamedTuple('Metal', [
         """
         widths_and_spacings = self.power_strap_widths_and_spacings
         spacing = widths_and_spacings[0].min_spacing
+        assert self.pitch - self.min_width == spacing, "Tech plugin is malformed for metal {}, the minimum spacing in the width-spacing list must be the same as (pitch - min_width).".format(self.name)
         # the T W W T pattern contains two wires (W2) and 3 spaces (S3)
         s3w2 = ((2 * tracks) + 1) * self.pitch - self.min_width
         width = (s3w2 - spacing * 3) / 2

@@ -528,6 +528,8 @@ class HammerPlaceAndRouteTool(HammerTool):
             width, spacing, strap_start = layer.get_width_spacing_start_twt(track_width)
             spacing = 2*spacing + (track_spacing - 1) * layer.pitch + layer.min_width
         offset = track_offset + track_start * layer.pitch + strap_start
+        assert width > Decimal(0), "Width must be greater than zero. You probably have a malformed tech plugin on layer {}.".format(layer_name)
+        assert spacing > Decimal(0), "Spacing must be greater than zero. You probably have a malformed tech plugin on layer {}.".format(layer_name)
         return self.specify_power_straps(layer_name, bottom_via_layer, blockage_spacing, pitch, width, spacing, offset, bbox, nets, add_pins)
 
     def specify_all_power_straps_by_tracks(self, layer_names: List[str], ground_net: str, power_nets: List[str], power_weights: List[int], bbox: Optional[List[Decimal]], pin_layers: List[str]) -> List[str]:
