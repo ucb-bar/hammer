@@ -98,7 +98,8 @@ BumpAssignment = NamedTuple('BumpAssignment', [
     ('name', Optional[str]),
     ('no_connect', Optional[bool]),
     ('x', int),
-    ('y', int)
+    ('y', int),
+    ('custom_cell', Optional[str])
 ])
 
 BumpsDefinition = NamedTuple('BumpsDefinition', [
