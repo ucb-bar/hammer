@@ -324,7 +324,7 @@ vlsi.inputs:
     #  - no_connect (Optional[bool]) - If True the bump will be present but unconnected
     #  - x (Decimal) - The X coordinate of the bump assigned to this net
     #  - y (Decimal) - The Y coordinate of the bump assigned to this net
-    #  - custom_cell (Optional[str[) - Cell name (MACRO name) of a custom bump cell in place of the default for this bump. You must also specify the LEF and GDS for this bump in extra_libraries.
+    #  - custom_cell (Optional[str]) - Cell name (MACRO name) of a custom bump cell in place of the default for this bump. You must also specify the LEF and GDS for this bump in extra_libraries.
     assignments: []
 
   # Pin placement mode. (str)
