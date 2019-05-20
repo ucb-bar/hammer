@@ -20,7 +20,7 @@ from .hammer_tool import HammerTool
 from .hooks import HammerToolHookAction
 from .hammer_vlsi_impl import HammerVLSISettings, HammerPlaceAndRouteTool, HammerSynthesisTool, \
     HammerSignoffTool, HammerDRCTool, HammerLVSTool, HammerSRAMGeneratorTool, \
-    HierarchicalMode, load_tool, PlacementConstraint, SRAMParameters
+    HierarchicalMode, load_tool, PlacementConstraint, SRAMParameters, ILMStruct
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, HammerVLSILoggingContext
 from .submit_command import HammerSubmitCommand
 
@@ -390,7 +390,7 @@ class HammerDriver:
         lvs_tool.layout_file = self.database.get_setting("lvs.inputs.layout_file", nullvalue="")
         lvs_tool.top_module = self.database.get_setting("lvs.inputs.top_module", nullvalue="")
         lvs_tool.hcells_list = self.database.get_setting("lvs.inputs.hcells_list", nullvalue=[])
-        lvs_tool.ilms = self.database.get_setting("lvs.inputs.ilms", nullvalue=[])
+        lvs_tool.ilms = list(map(lambda x: ILMStruct.from_setting(x), self.database.get_setting("lvs.inputs.ilms", nullvalue=[])))
         missing_inputs = False
         if lvs_tool.top_module == "":
             self.log.error("Top module not specified for LVS")
