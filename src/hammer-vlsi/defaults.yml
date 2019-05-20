@@ -188,6 +188,7 @@ vlsi.inputs:
   mmmc_corners: []
 
   # Clock ports of the top-level module.
+  # type: List[ClockPort]
   # TODO: support multiply_by in generated clocks
   # Clock struct members:
   # name (str) - Name of the clock port.
@@ -316,14 +317,15 @@ vlsi.inputs:
     y: 0
     # pitch (float) - pitch of bumps in microns
     pitch: 0.0
-    # cell (str) - Name of bump cell
+    # cell (str) - Name of the default bump cell
     cell: ""
     # assignments - List of BumpAssignment structs. You must specify one of name or no_connect.
     # If both are specified the bump will be left unconnected
     #  - name (Optional[str]) - The name of the net being assigned to a bump
     #  - no_connect (Optional[bool]) - If True the bump will be present but unconnected
-    #  - x (int) - The X coordinate of the bump assigned to this net
-    #  - y (int) - The Y coordinate of the bump assigned to this net
+    #  - x (Decimal) - The X coordinate of the bump assigned to this net
+    #  - y (Decimal) - The Y coordinate of the bump assigned to this net
+    #  - custom_cell (Optional[str]) - Cell name (MACRO name) of a custom bump cell in place of the default for this bump. You must also specify the LEF and GDS for this bump in extra_libraries.
     assignments: []
 
   # Pin placement mode. (str)
