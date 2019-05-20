@@ -97,8 +97,8 @@ PinAssignment = NamedTuple('PinAssignment', [
 BumpAssignment = NamedTuple('BumpAssignment', [
     ('name', Optional[str]),
     ('no_connect', Optional[bool]),
-    ('x', int),
-    ('y', int),
+    ('x', float),
+    ('y', float),
     ('custom_cell', Optional[str])
 ])
 
