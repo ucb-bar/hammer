@@ -188,6 +188,7 @@ vlsi.inputs:
   mmmc_corners: []
 
   # Clock ports of the top-level module.
+  # type: List[ClockPort]
   # TODO: support multiply_by in generated clocks
   # Clock struct members:
   # name (str) - Name of the clock port.
