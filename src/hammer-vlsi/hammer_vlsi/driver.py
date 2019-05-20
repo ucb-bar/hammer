@@ -385,12 +385,12 @@ class HammerDriver:
         lvs_tool.set_database(self.database)
         lvs_tool.submit_command = HammerSubmitCommand.get("lvs", self.database)
         lvs_tool.run_dir = run_dir
-        # TODO: support hierarchical
 
         lvs_tool.schematic_files = self.database.get_setting("lvs.inputs.schematic_files", nullvalue=[])
         lvs_tool.layout_file = self.database.get_setting("lvs.inputs.layout_file", nullvalue="")
         lvs_tool.top_module = self.database.get_setting("lvs.inputs.top_module", nullvalue="")
         lvs_tool.hcells_list = self.database.get_setting("lvs.inputs.hcells_list", nullvalue=[])
+        lvs_tool.ilms = self.database.get_setting("lvs.inputs.ilms", nullvalue=[])
         missing_inputs = False
         if lvs_tool.top_module == "":
             self.log.error("Top module not specified for LVS")
@@ -662,7 +662,7 @@ class HammerDriver:
                 "lvs.inputs.top_module": output_dict["par.inputs.top_module"],
                 "lvs.inputs.layout_file": output_dict["par.outputs.output_gds"],
                 "lvs.inputs.schematic_files": [output_dict["par.outputs.output_netlist"]],
-                # TODO(johnwright): add ILM netlists
+                "lvs.inputs.ilms": output_dict["par.outputs.output_ilms"],
                 "lvs.inputs.hcells_list": output_dict["par.outputs.hcells_list"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]

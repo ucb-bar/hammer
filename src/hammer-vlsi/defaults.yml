@@ -521,6 +521,9 @@ lvs.inputs:
   # Input list of schematic files
   schematic_files: []
 
+  # Input list of ILMStructs
+  ilms: []
+
   # Valid modes are auto, manual, prepend, and append
   additional_lvs_text_mode: "auto"
   # Custom LVS command text to add after the boilerplate commands at the top of the run file
