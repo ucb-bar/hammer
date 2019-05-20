@@ -914,9 +914,9 @@ class HammerLVSTool(HammerSignoffTool):
     @property
     def ilms(self) -> List[ILMStruct]:
         """
-        Get the (optional) output ILM information for hierarchical mode.
+        Get the (optional) input ILM information for hierarchical mode.
 
-        :return: The (optional) output ILM information for hierarchical mode.
+        :return: The (optional) input ILM information for hierarchical mode.
         """
         try:
             return self.attr_getter("_ilms", None)
