@@ -911,21 +911,22 @@ class HammerLVSTool(HammerSignoffTool):
             raise TypeError("hcells_list must be a List[str]")
         self.attr_setter("_hcells_list", value)
 
+
     @property
     def ilms(self) -> List[ILMStruct]:
         """
-        Get the (optional) input ILM information for hierarchical mode.
+        Get the list of (optional) input ILM information for hierarchical mode.
 
-        :return: The (optional) input ILM information for hierarchical mode.
+        :return: The list of (optional) input ILM information for hierarchical mode.
         """
         try:
             return self.attr_getter("_ilms", None)
         except AttributeError:
-            raise ValueError("Nothing set for the (optional) input ILM information for hierarchical mode yet")
+            raise ValueError("Nothing set for the list of (optional) input ILM information for hierarchical mode yet")
 
     @ilms.setter
     def ilms(self, value: List[ILMStruct]) -> None:
-        """Set the (optional) input ILM information for hierarchical mode."""
+        """Set the list of (optional) input ILM information for hierarchical mode."""
         if not (isinstance(value, List)):
             raise TypeError("ilms must be a List[ILMStruct]")
         self.attr_setter("_ilms", value)
