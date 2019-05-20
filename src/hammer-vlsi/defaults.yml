@@ -322,8 +322,8 @@ vlsi.inputs:
     # If both are specified the bump will be left unconnected
     #  - name (Optional[str]) - The name of the net being assigned to a bump
     #  - no_connect (Optional[bool]) - If True the bump will be present but unconnected
-    #  - x (int) - The X coordinate of the bump assigned to this net
-    #  - y (int) - The Y coordinate of the bump assigned to this net
+    #  - x (float) - The X coordinate of the bump assigned to this net
+    #  - y (float) - The Y coordinate of the bump assigned to this net
     #  - custom_cell (Optional[str[) - Cell name (MACRO name) of a custom bump cell in place of the default for this bump. You must also specify the LEF and GDS for this bump in extra_libraries.
     assignments: []
 
