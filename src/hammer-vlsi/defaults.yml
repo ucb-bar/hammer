@@ -437,10 +437,10 @@ par:
 
   # Power straps configuration.
   # Valid options are:
-  # - blank - Specify no power straps
+  # - empty - Specify no power straps
   # - manual - Specify the contents of a manual TCL script to use, specified in power_straps_script_contents.
   # - generate - Generate power straps from Hammer IR.
-  power_straps_mode: blank
+  power_straps_mode: empty
   power_straps_script_contents: null
 
   # Spacing around blocks and hardmacros in microns
