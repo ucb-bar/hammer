@@ -460,7 +460,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         elif power_straps_mode == "generate":
             output.extend(self.generate_power_straps_tcl())
         else:
-            if power_straps_mode != "blank":
+            if power_straps_mode != "empty":
                 self.logger.error(
                     "Invalid power_straps_mode {mode}. Using blank power straps script.".format(mode=power_straps_mode))
             # Write blank power straps
