@@ -28,6 +28,10 @@ from .hooks import (HammerStepFunction, HammerToolHookAction, HammerToolStep,
 from .submit_command import HammerSubmitCommand
 from .units import TemperatureValue, TimeValue, VoltageValue
 
+from enum import Enum
+
+from hammer_utils import reverse_dict
+
 __all__ = ['HammerTool']
 
 
@@ -1128,3 +1132,33 @@ class HammerTool(metaclass=ABCMeta):
         """
         output_buffer.append("""puts "{0}" """.format(cmd.replace('"', '\"')))
         output_buffer.append(cmd)
+class ModeType(Enum):
+    Auto = 1
+    Empty = 2
+    Manual = 3
+    Generate = 4
+    Generated = 5
+    Append = 6
+    Prepend = 7
+
+    @classmethod
+    def __mapping(cls) -> Dict[str, "ModeType"]:
+        return {
+            "auto": ModeType.Auto,
+            "empty": ModeType.Empty,
+            "manual": ModeType.Manual,
+            "generate": ModeType.Generated,
+            "generated": ModeType.Generate,
+            "append": ModeType.Append,
+            "prepend": ModeType.Prepend
+        }
+
+    @staticmethod
+    def from_str(input_str: str) -> "ModeType":
+        try:
+            return ModeType.__mapping()[input_str]
+        except KeyError:
+            raise ValueError("Invalid mode type: " + str(input_str))
+
+    def __str__(self) -> str:
+        return reverse_dict(ModeType.__mapping())[self]
