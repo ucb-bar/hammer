@@ -481,8 +481,7 @@ par:
       # Layers to put power pins on
       pin_layers: []
 
-      # List of layers on which to place power straps (std cell rail layer is implied- do not include it)
-      # Not overrideable
+      # List of layers on which to place power straps (std cell rail layer is implied - do not include it)
       strap_layers: []
 
 mentor:
