@@ -1131,6 +1131,7 @@ class HammerTool(metaclass=ABCMeta):
         """
         output_buffer.append("""puts "{0}" """.format(cmd.replace('"', '\"')))
         output_buffer.append(cmd)
+
 class ModeType(Enum):
     Auto = 1
     Empty = 2
