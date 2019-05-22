@@ -1323,7 +1323,7 @@ if {{ {get_db_str} ne "" }} {{
             return []
 
         power_spec_contents = ""  # type: str
-        power_spec_mode = ModeType.from_str(str(self.get_setting("vlsi.inputs.power_spec_mode")))  # type: ModeType Enum
+        power_spec_mode = ModeType.from_str(str(self.get_setting("vlsi.inputs.power_spec_mode")))  # type: ModeType
         if power_spec_mode == ModeType.Empty:
             return []
         elif power_spec_mode == ModeType.Auto:

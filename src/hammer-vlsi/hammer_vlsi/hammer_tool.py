@@ -973,7 +973,7 @@ class HammerTool(metaclass=ABCMeta):
         :return: Fully-resolved path to GDS map file or None.
         """
         # Mode can be auto, empty, or manual
-        gds_map_mode = ModeType.from_str(str(self.get_setting("par.inputs.gds_map_mode")))  # type: ModeType Enum
+        gds_map_mode = ModeType.from_str(str(self.get_setting("par.inputs.gds_map_mode")))  # type: ModeType
 
         # gds_map_file will only be used in manual mode
         # Not including the map_file flag includes all layers but with no specific layer numbers
