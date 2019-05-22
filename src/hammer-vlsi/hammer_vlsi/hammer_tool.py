@@ -895,10 +895,10 @@ class HammerTool(metaclass=ABCMeta):
         return list(filter(lambda x: x.tie is None, self.get_all_ground_nets()))
 
     def get_bumps(self) -> Optional[BumpsDefinition]:
-        bumps_mode = self.get_setting("vlsi.inputs.bumps_mode")
-        if bumps_mode == "empty":
+        bumps_mode = ModeType.from_str(self.get_setting("vlsi.inputs.bumps_mode")) #Type: ModeType Enum
+        if bumps_mode == ModeType.Empty:
             return None
-        elif bumps_mode != "manual":
+        elif bumps_mode != ModeType.Manual:
             self.logger.error("Invalid bumps_mode:{m}, only empty or manual supported. Assuming empty.".format(
                 m=bumps_mode))
             return None
@@ -973,7 +973,7 @@ class HammerTool(metaclass=ABCMeta):
         :return: Fully-resolved path to GDS map file or None.
         """
         # Mode can be auto, empty, or manual
-        gds_map_mode = str(self.get_setting("par.inputs.gds_map_mode"))  # type: str
+        gds_map_mode = ModeType.from_str(str(self.get_setting("par.inputs.gds_map_mode")))  # type: ModeType Enum
 
         # gds_map_file will only be used in manual mode
         # Not including the map_file flag includes all layers but with no specific layer numbers
@@ -986,11 +986,11 @@ class HammerTool(metaclass=ABCMeta):
             tech_map_file_raw) if tech_map_file_raw is not None else None  # type: Optional[str]
         tech_map_file = optional_map(tech_map_file_optional, lambda p: self.technology.prepend_dir_path(p))
 
-        if gds_map_mode == "auto":
+        if gds_map_mode == ModeType.Auto:
             map_file = tech_map_file
-        elif gds_map_mode == "manual":
+        elif gds_map_mode == ModeType.Manual:
             map_file = manual_map_file
-        elif gds_map_mode == "empty":
+        elif gds_map_mode == ModeType.Empty:
             map_file = None
         else:
             self.logger.error(
@@ -1135,10 +1135,7 @@ class ModeType(Enum):
     Auto = 1
     Empty = 2
     Manual = 3
-    Generate = 4
-    Generated = 5
-    Append = 6
-    Prepend = 7
+    Generated = 4
 
     @classmethod
     def __mapping(cls) -> Dict[str, "ModeType"]:
@@ -1146,10 +1143,7 @@ class ModeType(Enum):
             "auto": ModeType.Auto,
             "empty": ModeType.Empty,
             "manual": ModeType.Manual,
-            "generate": ModeType.Generated,
             "generated": ModeType.Generate,
-            "append": ModeType.Append,
-            "prepend": ModeType.Prepend
         }
 
     @staticmethod
@@ -1161,4 +1155,3 @@ class ModeType(Enum):
 
     def __str__(self) -> str:
         return reverse_dict(ModeType.__mapping())[self]
-
