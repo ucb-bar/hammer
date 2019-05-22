@@ -1143,7 +1143,7 @@ class ModeType(Enum):
             "auto": ModeType.Auto,
             "empty": ModeType.Empty,
             "manual": ModeType.Manual,
-            "generated": ModeType.Generate,
+            "generated": ModeType.Generated,
         }
 
     @staticmethod
