@@ -895,7 +895,7 @@ class HammerTool(metaclass=ABCMeta):
         return list(filter(lambda x: x.tie is None, self.get_all_ground_nets()))
 
     def get_bumps(self) -> Optional[BumpsDefinition]:
-        bumps_mode = ModeType.from_str(self.get_setting("vlsi.inputs.bumps_mode")) #Type: ModeType Enum
+        bumps_mode = ModeType.from_str(self.get_setting("vlsi.inputs.bumps_mode"))  # type: ModeType
         if bumps_mode == ModeType.Empty:
             return None
         elif bumps_mode != ModeType.Manual:
