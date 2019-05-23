@@ -864,14 +864,8 @@ class HammerLVSTool(HammerSignoffTool):
     ### END Generated interface HammerLVSTool ###
 
 
-#class HammerSimTool(HammerTool):
-#    
-#    @abstractmethod
-#    def fill_outputs(self) -> bool:
-#        pass
-
 class HammerSimTool(HammerTool):
-  
+
     #@abstractmethod
     #def fill_outputs(self) -> bool:
     #  pass
@@ -916,7 +910,7 @@ class HammerSimTool(HammerTool):
         if not (isinstance(value, str)):
             raise TypeError("top_module must be a str")
         self.attr_setter("_top_module", value)
- 
+
     @property
     def options(self) -> List[str]:
         """
@@ -1068,6 +1062,25 @@ class HammerSimTool(HammerTool):
         if not (isinstance(value, List[str])):
             raise TypeError("exec_flags must be a List[str]")
         self.attr_setter("_exec_flags", value)
+
+    @property
+    def tcl_scripts(self) -> List[str]:
+        """
+        Get the TCL scripts to run.
+
+        :return: The TCL scripts to run.
+        """
+        try:
+            return self.attr_getter("_tcl_scripts", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the tcl_scripts")
+
+    @tcl_scripts.setter
+    def tcl_scripts(self, value: List[str]) -> None:
+        """Set the TCL scripts to run."""
+        if not (isinstance(value, List[str])):
+            raise TypeError("tcl_scripts must be a List[str]")
+        self.attr_setter("_tcl_scripts", value)
 
 class HasSDCSupport(HammerTool):
     """Mix-in trait with functions useful for tools with SDC-style
