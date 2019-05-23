@@ -26,6 +26,8 @@ if TYPE_CHECKING:
         def spice_file(self) -> Optional[str]: pass
         @property
         def verilog_synth(self) -> Optional[str]: pass
+        @property
+        def verilog_sim(self) -> Optional[str]: pass
 
 PathsFunctionType = Callable[["Library"], List[str]]
 

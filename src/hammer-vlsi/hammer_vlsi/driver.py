@@ -475,6 +475,7 @@ class HammerDriver:
         sim_tool.logger = self.log.context("sim")
         sim_tool.set_database(self.database)
         sim_tool.run_dir = run_dir
+        sim_tool.technology = self.tech
         sim_tool.input_files = self.database.get_setting("sim.inputs.input_files")
         sim_tool.top_module = self.database.get_setting("sim.inputs.top_module", nullvalue="")
         sim_tool.submit_command = HammerSubmitCommand.get("sim", self.database)
@@ -624,6 +625,30 @@ class HammerDriver:
             }  # type: Dict[str, Any]
             if "synthesis.outputs.sdc" in output_dict:
                 result["par.inputs.post_synth_sdc"] = output_dict["synthesis.outputs.sdc"]
+            return result
+        except KeyError:
+            # KeyError means that the given dictionary is missing output keys.
+            return None
+
+    @staticmethod
+    def synthesis_output_to_sim_input(output_dict: dict) -> Optional[dict]:
+        """
+        Generate the appropriate inputs for running gate level simulations from the
+        outputs of synthesis run.
+        Does not merge the results with any project dictionaries.
+        :param output_dict: Dict containing synthesis.outputs.*
+        :return: sim.gl-syn.inputs.* settings generated from output_dict,
+                 or None if output_dict was invalid
+        """
+        try:
+            output_files = deeplist(output_dict["synthesis.outputs.output_files"])
+            result = {
+                "sim.inputs.gl-syn.input_files": output_files,
+                "sim.inputs.top_module": output_dict["synthesis.inputs.top_module"],
+                "vlsi.builtins.is_complete": False
+            }  # type: Dict[str, Any]
+            if "synthesis.outputs.sdc" in output_dict:
+                result["sim.inputs.gl-syn.post_synth_sdc"] = output_dict["synthesis.outputs.sdc"]
             return result
         except KeyError:
             # KeyError means that the given dictionary is missing output keys.

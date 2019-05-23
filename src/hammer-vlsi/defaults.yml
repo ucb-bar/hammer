@@ -589,7 +589,22 @@ sim.inputs:
   benchmarks: []
   # Flags to run with the simulator
   exec_flags: []
-  
+  # List of TCL scripts to execute in a vcs call
+  tcl_scripts: []
+
+  # Valid options are:
+  #   "rtl" for rtl level simulation
+  #   "gl-syn" for gate level post-synthesis simulation
+  #   "gl-par" for gate level post-par simulation
+  level: "rtl"
+
+  gl-syn:
+    input_files: []
+    post_synth_sdc: null
+    time_annotated: false
+    defines: ["GATE_LEVEL"]
+    options: []
+
 sim.submit:
   command: "${vlsi.submit.command}"
   command_meta: lazysubst
