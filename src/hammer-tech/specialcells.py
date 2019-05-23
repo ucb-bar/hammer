@@ -8,6 +8,7 @@
 
 from enum import Enum
 from typing import List, NamedTuple, Tuple, Dict, Optional
+from hammer_utils import reverse_dict
 from decimal import Decimal
 
 class CellType(Enum):
@@ -17,7 +18,7 @@ class CellType(Enum):
     StdFiller = 4
 
     @classmethod
-    def __mapping(cls) -> Dict[str, "RoutingDirection"]:
+    def __mapping(cls) -> Dict[str, "CellType"]:
         return {
             "tiecell": CellType.TieCell,
             "endcap": CellType.EndCap,
@@ -34,7 +35,7 @@ class CellType(Enum):
             raise ValueError("Invalid CellType: " + str(input_str))
 
     def __str__(self) -> str:
-        return reverse_dict(RoutingDirection.__mapping())[self]
+        return reverse_dict(CellType.__mapping())[self]
 
 
 class SpecialCell(NamedTuple('SpecialCell', [

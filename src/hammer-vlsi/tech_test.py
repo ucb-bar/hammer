@@ -558,11 +558,11 @@ END LIBRARY
 
         self.assertEqual(tool.technology.get_special_cell_by_type(CellType.TieCell),
                 [SpecialCell(name="cell1", cell_type=CellType.TieCell, size=None),
-                 SpecialCell(name="cell2", cell_type=CellType.TieCell, size=1.5)
+                 SpecialCell(name="cell2", cell_type=CellType.TieCell, size=Decimal(1.5))
                 ])
 
         self.assertEqual(tool.technology.get_special_cell_by_type(CellType.IOFiller),
-                [SpecialCell(name="cell3", cell_type=CellType.IOFiller, size=0.5),
+                [SpecialCell(name="cell3", cell_type=CellType.IOFiller, size=Decimal(0.5)),
                 ])
 
         self.assertEqual(tool.technology.get_special_cell_by_type(CellType.StdFiller),
