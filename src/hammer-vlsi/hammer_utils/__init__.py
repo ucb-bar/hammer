@@ -364,7 +364,7 @@ def check_function_type(function: Callable, args: List[type], return_type: type)
             "Too many arguments - got {got}, expected {expected}".format(got=len(inspected_args), expected=len(args)))
     else:
         for i, (inspected_var_name, expected) in list(enumerate(zip(inspected_args, args))):
-            inspected = annotations[inspected_var_name]
+            inspected = annotations.get(inspected_var_name, None)
             if not compare_types(inspected, expected):
                 inspected_name = get_name_from_type(inspected)
                 expected_name = get_name_from_type(expected)
