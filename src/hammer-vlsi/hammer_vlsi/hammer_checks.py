@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-#  hammer_vlsi_impl.py
-#  hammer-vlsi implementation file. Users should import hammer_vlsi instead.
+#  hammer_checks.py
+#  Automated rule checks for constraints
 #
 #  See LICENSE for licence details.
 

@@ -12,6 +12,7 @@ import re
 import shlex
 from abc import ABCMeta, abstractmethod
 from functools import reduce
+import itertools
 from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, cast
 
 import hammer_config
@@ -916,6 +917,15 @@ class HammerTool(metaclass=ABCMeta):
             y=self.get_setting("vlsi.inputs.bumps.y"),
             pitch=self.get_setting("vlsi.inputs.bumps.pitch"),
             cell=self.get_setting("vlsi.inputs.bumps.cell"), assignments=assignments)
+
+    def get_pin_metals(self) -> List[Metal]:
+        """
+        Get a list of the metal layers on which there are pins.
+        :return: A potentially empty list of Metals
+        """
+        layers = filter(lambda x: x is not None, list(map(lambda x: x.layers, self.get_pin_assignments())))  # type: List[List[str]]
+        flat_layers = list(set(itertools.chain.from_iterable(layers)))
+        return list(map(self.get_stackup().get_metal, flat_layers))
 
     def get_pin_assignments(self) -> List[PinAssignment]:
         """

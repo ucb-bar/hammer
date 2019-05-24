@@ -23,8 +23,6 @@ from hammer_tech import Library, ExtraLibrary
 
 from .constraints import *
 from .units import VoltageValue
-from .hammer_checks import *
-
 
 class HierarchicalMode(Enum):
     Flat = 1
