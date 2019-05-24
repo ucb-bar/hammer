@@ -923,7 +923,13 @@ class HammerTool(metaclass=ABCMeta):
         Get a list of the metal layers on which there are pins.
         :return: A potentially empty list of Metals
         """
-        layers = filter(lambda x: x is not None, list(map(lambda x: x.layers, self.get_pin_assignments())))  # type: List[List[str]]
+        # This function works around mypy not liking filtering Nones out of a List[Optional[...]]
+        def get_pin_layer(pa: PinAssignment) -> List[str]:
+            l = []  # type: List[str]
+            if pa.layers is not None:
+                l = pa.layers
+            return l
+        layers = list(map(get_pin_layer, self.get_pin_assignments()))  # type: List[List[str]]
         flat_layers = list(set(itertools.chain.from_iterable(layers)))
         return list(map(self.get_stackup().get_metal, flat_layers))
 
