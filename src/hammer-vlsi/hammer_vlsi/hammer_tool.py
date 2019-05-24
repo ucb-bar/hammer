@@ -895,7 +895,7 @@ class HammerTool(metaclass=ABCMeta):
         return list(filter(lambda x: x.tie is None, self.get_all_ground_nets()))
 
     def get_bumps(self) -> Optional[BumpsDefinition]:
-        bumps_mode = ModeType.from_str(self.get_setting("vlsi.inputs.bumps_mode"))  # type: ModeType
+        bumps_mode = self.get_mode_setting("vlsi.inputs.bumps_mode") #type: ModeType
         if bumps_mode == ModeType.Empty:
             return None
         elif bumps_mode != ModeType.Manual:
@@ -973,7 +973,7 @@ class HammerTool(metaclass=ABCMeta):
         :return: Fully-resolved path to GDS map file or None.
         """
         # Mode can be auto, empty, or manual
-        gds_map_mode = ModeType.from_str(str(self.get_setting("par.inputs.gds_map_mode")))  # type: ModeType
+        gds_map_mode = self.get_mode_setting("par.inputs.gds_map_mode") #type: ModeType
 
         # gds_map_file will only be used in manual mode
         # Not including the map_file flag includes all layers but with no specific layer numbers
@@ -1132,6 +1132,15 @@ class HammerTool(metaclass=ABCMeta):
         output_buffer.append("""puts "{0}" """.format(cmd.replace('"', '\"')))
         output_buffer.append(cmd)
 
+    def get_mode_setting(self, setting: str) -> ModeType:
+        """
+        Create a ModeType object based on the mode settings.
+
+        :param setting: Key of the setting to receive.
+        :return: ModeType, can be auto, empty, manual or generated.
+        """
+        return ModeType.from_str(self.get_setting(setting))
+
 class ModeType(Enum):
     Auto = 1
     Empty = 2
@@ -1156,3 +1165,5 @@ class ModeType(Enum):
 
     def __str__(self) -> str:
         return reverse_dict(ModeType.__mapping())[self]
+
+

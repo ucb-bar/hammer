@@ -23,7 +23,6 @@ from hammer_tech import Library, ExtraLibrary
 
 from .constraints import *
 from .units import VoltageValue
-from .hammer_tool import ModeType
 
 class HierarchicalMode(Enum):
     Flat = 1
@@ -1323,7 +1322,7 @@ if {{ {get_db_str} ne "" }} {{
             return []
 
         power_spec_contents = ""  # type: str
-        power_spec_mode = ModeType.from_str(str(self.get_setting("vlsi.inputs.power_spec_mode")))  # type: ModeType
+        power_spec_mode = self.get_mode_setting("par.inputs.gds_map_mode")
         if power_spec_mode == ModeType.Empty:
             return []
         elif power_spec_mode == ModeType.Auto:
