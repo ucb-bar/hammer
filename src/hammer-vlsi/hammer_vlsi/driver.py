@@ -6,7 +6,7 @@
 #
 #  See LICENSE for licence details.
 
-from functools import reduce
+from functools import reduce, partial
 from typing import NamedTuple, List, Optional, Tuple, Dict, Set, Any
 
 import datetime
@@ -16,6 +16,7 @@ from hammer_utils import *
 
 import hammer_config
 import hammer_tech
+from hammer_tech import MacroSize
 from .hammer_tool import HammerTool
 from .hooks import HammerToolHookAction
 from .hammer_vlsi_impl import HammerVLSISettings, HammerPlaceAndRouteTool, HammerSynthesisTool, \
@@ -798,6 +799,10 @@ class HammerDriver:
         hier_modules = {}  # type: Dict[str, List[str]]
         hier_placement_constraints = {}  # type: Dict[str, List[PlacementConstraint]]
         hier_constraints = {}  # type: Dict[str, List[Dict]]
+
+        list_of_hard_macros = self.database.get_setting("vlsi.technology.extra_macro_sizes")  # type: List[Dict]
+        hard_macros = list(map(MacroSize.from_setting, list_of_hard_macros))
+
         if hier_source == "none":
             pass
         elif hier_source == "manual":
@@ -806,12 +811,26 @@ class HammerDriver:
             assert isinstance(list_of_hier_modules, list)
             if len(list_of_hier_modules) == 0:
                 raise ValueError("No hierarchical modules defined manually in manual hierarchical mode")
+            hier_modules = reduce(add_dicts, list_of_hier_modules)
+
             list_of_placement_constraints = self.database.get_setting(
                 "vlsi.inputs.hierarchical.manual_placement_constraints")  # type: List[Dict]
             assert isinstance(list_of_placement_constraints, list)
-            hier_modules = reduce(add_dicts, list_of_hier_modules)
-            combined_raw_placement_dict = reduce(add_dicts, list_of_placement_constraints, {})  # type: Dict[str, dict]
-            hier_placement_constraints = {key: list(map(PlacementConstraint.from_dict, lst))
+            combined_raw_placement_dict = reduce(add_dicts, list_of_placement_constraints, {})  # type: Dict[str, List[Dict[str, Any]]]
+
+            def get_toplevel(d: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+                results = list(filter(lambda x: x["type"] == "toplevel", d))
+                if len(results) == 0:
+                    return None
+                else:
+                    return results[-1]
+
+            toplevels_opt = {k: get_toplevel(v) for k, v in combined_raw_placement_dict.items()}  # type: Dict[str, Optional[Dict[str, Any]]]
+            toplevels = {k: v for k, v in toplevels_opt.items() if v is not None}  # type: Dict[str, Dict[str, Any]]
+            hier_macros = list(map(lambda x: MacroSize(library="", name=x[0], width=x[1]["width"], height=x[1]["height"]), toplevels.items()))
+            masters = hard_macros + hier_macros
+
+            hier_placement_constraints = {key: list(map(partial(PlacementConstraint.from_dict, masters), lst))
                                           for key, lst in combined_raw_placement_dict.items()}
             list_of_hier_constraints = self.database.get_setting(
                     "vlsi.inputs.hierarchical.constraints") # type: List[Dict]

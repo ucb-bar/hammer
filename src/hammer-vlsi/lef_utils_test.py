@@ -6,6 +6,7 @@
 #  See LICENSE for licence details.
 
 from hammer_utils import LEFUtils
+from decimal import Decimal
 
 import unittest
 
@@ -42,7 +43,7 @@ MACRO my_awesome_macro
 END my_awesome_macro
 
 END LIBRARY"""
-        self.assertEqual(LEFUtils.get_sizes(lef_source), [("my_awesome_macro", 810.522, 607.525)])
+        self.assertEqual(LEFUtils.get_sizes(lef_source), [("my_awesome_macro", Decimal("810.522"), Decimal("607.525"))])
 
         lef_multiple_macros = """
 VERSION 5.6 ;
@@ -111,8 +112,8 @@ END MY_CELL_1
 END LIBRARY
         """
         self.assertEqual(LEFUtils.get_sizes(lef_multiple_macros), [
-            ("MY_CELL_0", 2.718, 3.141),
-            ("MY_CELL_1", 3.000, 3.000)
+            ("MY_CELL_0", Decimal("2.718"), Decimal("3.141")),
+            ("MY_CELL_1", Decimal("3.000"), Decimal("3.000"))
         ])
 
 

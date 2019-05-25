@@ -11,7 +11,7 @@ import os
 import re
 import shlex
 from abc import ABCMeta, abstractmethod
-from functools import reduce
+from functools import reduce, partial
 from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, cast
 
 import hammer_config
@@ -1033,7 +1033,9 @@ class HammerTool(metaclass=ABCMeta):
         """
         constraints = self.get_setting("vlsi.inputs.placement_constraints")
         assert isinstance(constraints, list)
-        return list(map(PlacementConstraint.from_dict, constraints))
+        # At this point, the optional width/height placement constraints have been resolved,
+        # so there is no need to pass the masters in here.
+        return list(map(partial(PlacementConstraint.from_dict, []), constraints))
 
     def get_mmmc_corners(self) -> List[MMMCCorner]:
         """

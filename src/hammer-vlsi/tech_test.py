@@ -525,7 +525,7 @@ END LIBRARY
         # Test that macro sizes can be read out of the LEF.
         self.assertEqual(tech.get_macro_sizes(), [
             hammer_tech.MacroSize(library='my_vendor_lib', name='my_awesome_macro',
-                                  width=810.522, height=607.525)
+                                  width=Decimal("810.522"), height=Decimal("607.525"))
         ])
 
         # Cleanup
