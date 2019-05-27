@@ -333,7 +333,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             matches = list(filter(lambda x: x.name == master, masters))
             if len(matches) > 0:
                 width_check = matches[0].width
-                height_check = matches[1].height
+                height_check = matches[0].height
             else:
                 raise ValueError("Could not find a master for hierarchical cell {} in masters list.".format(master))
         elif constraint_type == PlacementConstraintType.HardMacro:
