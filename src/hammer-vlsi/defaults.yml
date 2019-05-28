@@ -360,19 +360,48 @@ vlsi.inputs:
   # auto - (not implemented yet) looks at the hierarchy and guess where pins should go
   pin_mode: none
   pin:
+    # Pin generation modes.
+    # type: str
+    # Valid options are:
+    # - full_auto: auto-place minimum-width pins (intended for digital signals) along a side. This option is the default.
+    # - semi_auto: enables the auto-place features above but also optionally allows pin width, depth, and locations to
+    #   be manually specified.
+    generate_mode: full_auto
+
     # List of PinAssignment Structs.
     #   You must specify pins and one of either preplaced or layers and side.
     # - pins (str) - The name(s) of pins that will be assigned. All current backends support
     #   * as wildcards in the pin names. So "*" for all pins or "io_tl_a*" for all pins that
     #   start with "io_tl_a".
     # - side (Optional[str]) - The side of the chip/block these pins will be placed along.
-    #   One of "left", "right", "top", "bottom"
+    #   One of:
+    #   - left, right, top, bottom
+    #   - internal: creates an internal pin with `location` as its *center*.
+    #     Requires the semi_auto pin generation mode.
+    #   If left unspecified, the CAD tool may choose an arbitrary side to use (likely the closest side).
     # - layers (Optional[List[str]]) - The metal layers that these pins will be placed on.
     # - preplaced (Optional[bool]) - If true, these pins are preplaced by some internal block or macro.
     #   This is telling the tool that these pins are on an internal block and I want them
     #   "placed" where they are currently on the internal block. This can be used for IP
     #   that directly connects to bumps, or signals that will be connected by abutment,
     #   and much more.
+    # - location (Optional[Tuple[float, float]]) - specifies the *center* (x, y) location of the pin on the specified
+    #   edge.
+    #   If side is one of left/right/top/bottom, this specifies the point that lies on the edge that is used for
+    #   width/depth control. Below is an example of location if side is "top":
+    #
+    #   -------X------- (chip/block edge)
+    #   |             |
+    #   ---------------
+    #
+    #   If side is "internal", then this specifies the absolute *center* of the
+    #   Requires the semi_auto pin generation mode.
+    # - width (Optional[float]) - specifies a custom width for the pin. The width direction is orthogonal to the routing
+    #   direction.
+    #   Requires the semi_auto pin generation mode.
+    # - depth (Optional[float]) - specifies a custom depth for the pin. The depth direction is parallel to the routing
+    #   direction.
+    #   Requires the semi_auto pin generation mode.
     assignments: []
 
 vlsi.submit:

@@ -932,35 +932,43 @@ class HammerTool(metaclass=ABCMeta):
                 "Invalid pin_mode {mode}. Using none pin mode.".format(mode=pin_mode))
             return []
 
+        generate_mode = str(self.get_setting("vlsi.inputs.pin.generate_mode"))
+        if generate_mode not in ("full_auto", "semi_auto"):
+            raise ValueError("Invalid generate_mode {}".format(generate_mode))
+        semi_auto = generate_mode == "semi_auto"
+
         # Generated pin mode needs to ingest the assignments
         assigns = []  # type: List[PinAssignment]
         for raw_assign in self.get_setting("vlsi.inputs.pin.assignments"):
-            pins = str(raw_assign["pins"])  # type: str
-            side = None if not "side" in raw_assign else raw_assign["side"]
-            if not (side is None or side == "top" or side == "bottom" or side == "right" or side == "left") :
-                self.logger.warning("Pins {p} have invalid side {s}. Assuming pins will be handled by CAD tool.".format(p=pins, s=side))
+            try:
+                pin = PinAssignment.from_dict(raw_assign, semi_auto)
+            except PinAssignmentSemiAutoError as e:
+                # Raise this as an error
+                self.logger.error("Semi-auto pin assigment feature used without enabling semi_auto mode: " + str(e))
                 continue
-            preplaced = raw_assign.get("preplaced", False)
-            layers = [] if not "layers" in raw_assign else raw_assign["layers"]
-            if preplaced:
-                if len(layers) != 0 or side is not None:
-                    self.logger.warning("Pins {p} assigned as a preplaced pin with layers or side. Assuming pins are preplaced pins and ignoring layers and side.".format(p=pins))
-                    assigns.append(PinAssignment(pins=pins, side=None, layers=[], preplaced=preplaced))
-                    continue
-            else:
-                if len(layers) == 0 or side is None:
-                    self.logger.warning("Pins {p} assigned without layers or side. Assuming pins will be handled by CAD tool.".format(p=pins))
-                    # No pin appended
-                    continue
-            stackup = self.get_stackup()
-            for layer in layers:
-                direction = stackup.get_metal(layer).direction
-                is_horizontal = direction == RoutingDirection.Horizontal and (side == "left" or side == "right")
-                is_vertical = direction == RoutingDirection.Vertical and (side == "top" or side == "bottom")
-                is_redis = direction == RoutingDirection.Redistribution
-                if not (is_horizontal or is_vertical or is_redis):
-                    self.logger.error("Pins {p} assigned layers {l} that do not match the direction of their side {s}. This is very likely to cause issues.".format(p=pins, l=layers, s=side))
-            assigns.append(PinAssignment(pins=pins, side=side, layers=layers, preplaced=preplaced))
+            except PinAssignmentPreplacedError as e:
+                # Accept the pin assignment and ignore extra information
+                self.logger.warning(str(e))
+                assigns.append(e.pin)
+                continue
+            except PinAssignmentError as e:
+                # Ignore the invalid pin
+                self.logger.warning(str(e))
+                continue
+
+            if pin.layers is not None:
+                stackup = self.get_stackup()
+                for layer in pin.layers:
+                    direction = stackup.get_metal(layer).direction
+                    is_horizontal = direction == RoutingDirection.Horizontal and (
+                                pin.side == "left" or pin.side == "right")
+                    is_vertical = direction == RoutingDirection.Vertical and (pin.side == "top" or pin.side == "bottom")
+                    is_redis = direction == RoutingDirection.Redistribution
+                    if not (is_horizontal or is_vertical or is_redis):
+                        self.logger.error(
+                            "Pins {p} assigned layers {l} that do not match the direction of their side {s}. This is very likely to cause issues.".format(
+                                p=pin.pins, l=pin.layers, s=pin.side))
+            assigns.append(pin)
         return assigns
 
     def get_gds_map_file(self) -> Optional[str]:

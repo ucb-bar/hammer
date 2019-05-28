@@ -7,11 +7,12 @@
 #  See LICENSE for licence details.
 
 # pylint: disable=bad-continuation
-
+import operator
 from enum import Enum
-from typing import Dict, NamedTuple, Optional, List, Any
+from functools import reduce
+from typing import Dict, NamedTuple, Optional, List, Any, Tuple, Union, cast
 
-from hammer_utils import reverse_dict, add_dicts
+from hammer_utils import reverse_dict, get_or_else, add_dicts
 from hammer_tech import MacroSize
 from .units import TimeValue, VoltageValue, TemperatureValue
 
@@ -21,7 +22,8 @@ __all__ = ['ILMStruct', 'SRAMParameters', 'Supply', 'PinAssignment',
            'BumpAssignment', 'BumpsDefinition', 'ClockPort',
            'OutputLoadConstraint', 'DelayConstraint', 'ObstructionType',
            'PlacementConstraintType', 'Margins', 'PlacementConstraint',
-           'MMMCCornerType', 'MMMCCorner']
+           'MMMCCornerType', 'MMMCCorner', 'PinAssignmentError', 'PinAssignmentPreplacedError',
+           'PinAssignmentSemiAutoError']
 
 
 # Struct that holds various paths related to ILMs.
@@ -56,6 +58,7 @@ class ILMStruct(NamedTuple('ILMStruct', [
             netlist=str(ilm["netlist"])
         )
 
+
 # Transliterated-ish from SRAMGroup in MDF
 # TODO: Convert this is to use the HammerIR library once #330 is resolved
 class SRAMParameters(NamedTuple('SRAMParameters', [
@@ -66,8 +69,7 @@ class SRAMParameters(NamedTuple('SRAMParameters', [
     ('mask', bool),
     ('vt', str),
     ('mux', int)
-    ])):
-
+])):
     __slots__ = ()
 
     @staticmethod
@@ -83,6 +85,7 @@ class SRAMParameters(NamedTuple('SRAMParameters', [
             mux=int(d["mux"])
         )
 
+
 Supply = NamedTuple('Supply', [
     ('name', str),
     ('pin', Optional[str]),
@@ -90,12 +93,144 @@ Supply = NamedTuple('Supply', [
     ('weight', Optional[int])
 ])
 
-PinAssignment = NamedTuple('PinAssignment', [
+
+class PinAssignmentError(ValueError):
+    """Exception raised from parsing an invalid PinAssignment object."""
+
+
+class PinAssignmentSemiAutoError(PinAssignmentError):
+    """Exception raised from parsing a PinAssignment that requires semi-auto features without explicitly enabing
+    them."""
+
+
+class PinAssignmentPreplacedError(PinAssignmentError):
+    """Exception raised from parsing a preplaced pin with extraneous information."""
+
+    def __init__(self, pin: "PinAssignment") -> None:
+        self.pin = pin
+
+    def __str__(self) -> str:
+        return "Pins {p} assigned as a preplaced pin with layers or side. Assuming pins are preplaced pins and ignoring layers and side.".format(
+            p=self.pin.pins)
+
+
+class PinAssignment(NamedTuple('PinAssignment', [
     ('pins', str),
     ('side', Optional[str]),
     ('layers', Optional[List[str]]),
-    ('preplaced', Optional[bool])
-])
+    ('preplaced', bool),
+    ('location', Optional[Tuple[float, float]]),
+    ('width', Optional[float]),
+    ('depth', Optional[float])
+])):
+    __slots__ = ()
+
+    def __new__(cls, pins: str, side: Optional[str] = None, layers: Optional[List[str]] = None,
+                preplaced: Optional[bool] = None,
+                location: Optional[Tuple[float, float]] = None, width: Optional[float] = None,
+                depth: Optional[float] = None) -> "PinAssignment":
+        return super().__new__(cls, pins, side, layers, get_or_else(preplaced, False), location, width, depth)
+
+    @staticmethod
+    def create(pins: str, side: Optional[str] = None, layers: Optional[List[str]] = None,
+                preplaced: Optional[bool] = None,
+                location: Optional[Tuple[float, float]] = None, width: Optional[float] = None,
+                depth: Optional[float] = None) -> "PinAssignment":
+        """
+        Static method that works around the fact that mypy gets very confused at
+        the custom constructor above that defines default arguments.
+        """
+        return PinAssignment(pins, side, layers, get_or_else(preplaced, False), location, width, depth)
+
+    @staticmethod
+    def from_dict(raw_assign: Dict[str, Any], semi_auto: bool = True) -> "PinAssignment":
+        pins = str(raw_assign["pins"])  # type: str
+
+        side = None  # type: Optional[str]
+        if "side" in raw_assign:
+            raw_side = raw_assign["side"]  # type: str
+            assert isinstance(raw_side, str), "side must be a str"
+
+            if raw_side in ("top", "bottom", "right", "left", "internal"):
+                side = raw_side
+                if side == "internal" and not semi_auto:
+                    raise PinAssignmentSemiAutoError("side set to internal")
+            else:
+                raise PinAssignmentError(
+                    "Pins {p} have invalid side {s}. Assuming pins will be handled by CAD tool.".format(p=pins,
+                                                                                                        s=raw_side))
+
+        preplaced = raw_assign.get("preplaced", False)  # type: bool
+        assert isinstance(preplaced, bool), "preplaced must be a bool"
+
+        location = None  # type: Optional[Tuple[float, float]]
+        if "location" in raw_assign:
+            location_raw = raw_assign["location"]  # type: Union[List[float], Tuple[float, float]]
+            assert len(location_raw) == 2, "location must be a Optional[Tuple[float, float]]"
+            assert isinstance(location_raw[0], float), "location must be a Optional[Tuple[float, float]]"
+            assert isinstance(location_raw[1], float), "location must be a Optional[Tuple[float, float]]"
+            location = (location_raw[0], location_raw[1])
+        if not semi_auto and location is not None:
+            raise PinAssignmentSemiAutoError("location requires semi_auto")
+
+        width = raw_assign.get("width", None)  # type: Optional[float]
+        if width is not None:
+            assert isinstance(width, float), "width must be a float"
+        if not semi_auto and width is not None:
+            raise PinAssignmentSemiAutoError("width requires semi_auto")
+
+        depth = raw_assign.get("depth", None)  # type: Optional[float]
+        if depth is not None:
+            assert isinstance(depth, float), "depth must be a float"
+        if not semi_auto and depth is not None:
+            raise PinAssignmentSemiAutoError("depth requires semi_auto")
+
+        layers = None  # type: Optional[List[str]]
+        if "layers" in raw_assign:
+            raw_layers = raw_assign["layers"]  # type: List[str]
+            assert isinstance(raw_layers, list), "layers must be a List[str]"
+            for layer in "layers":
+                assert isinstance(layer, str), "layers must be a List[str]"
+            layers = raw_layers
+
+        if preplaced:
+            should_be_none = reduce(operator.and_, map(lambda x: x is None, [side, location, width, depth]))
+            if len(get_or_else(layers, cast(List[str], []))) > 0 or not should_be_none:
+                raise PinAssignmentPreplacedError(
+                    PinAssignment(pins=pins, side=None, layers=[], preplaced=preplaced, location=None, width=None,
+                                  depth=None))
+        else:
+            if len(get_or_else(layers, cast(List[str], []))) == 0 or side is None:
+                raise PinAssignmentError(
+                    "Pins {p} assigned without layers or side. Assuming pins will be handled by CAD tool.".format(
+                        p=pins))
+        return PinAssignment(
+            pins=pins,
+            side=side,
+            layers=layers,
+            preplaced=preplaced,
+            location=location,
+            width=width,
+            depth=depth
+        )
+
+    def to_dict(self) -> dict:
+        base = {
+            "pins": self.pins,
+            "preplaced": self.preplaced
+        }  # type: Dict[str, Any]
+        if self.side is not None:
+            base['side'] = self.side
+        if self.layers is not None:
+            base['layers'] = self.layers
+        if self.location is not None:
+            base['location'] = self.location
+        if self.width is not None:
+            base['width'] = self.width
+        if self.depth is not None:
+            base['depth'] = self.depth
+        return base
+
 
 BumpAssignment = NamedTuple('BumpAssignment', [
     ('name', Optional[str]),
@@ -122,7 +257,6 @@ ClockPort = NamedTuple('ClockPort', [
     ('source_path', Optional[str]),
     ('divisor', Optional[int])
 ])
-
 
 OutputLoadConstraint = NamedTuple('OutputLoadConstraint', [
     ('name', str),
