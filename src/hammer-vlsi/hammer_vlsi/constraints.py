@@ -11,7 +11,7 @@
 from enum import Enum
 from typing import Dict, NamedTuple, Optional, List, Any
 
-from hammer_utils import reverse_dict
+from hammer_utils import reverse_dict, add_dicts
 from hammer_tech import MacroSize
 from .units import TimeValue, VoltageValue, TemperatureValue
 
@@ -243,10 +243,101 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
 ])):
     __slots__ = ()
 
+
     @staticmethod
-    def from_dict(masters: List[MacroSize], constraint: dict) -> "PlacementConstraint":
-        constraint_type = PlacementConstraintType.from_str(
-            str(constraint["type"]))
+    def _get_master(constraint_type: PlacementConstraintType, constraint: dict) -> Optional[str]:
+        """
+        A helper method to retrieve the master key from a constraint dict. This is broken out into its own function because it's
+        used in multiple methods. The master key is mandatory for Hierarchical constraint, optional for HardMacro constraints,
+        and disallowed otherwise.
+
+        :param constraint_type: A PlacementConstraintType object describing the type of constraint
+        :param constraint: A dict that may or may not contain a master key
+        :return: The value pointed to by master or None, if allowed by the constraint type
+        """
+        # This field is mandatory for Hierarchical constraints
+        # This field is optional for HardMacro constraints
+        # This field is disallowed otherwise
+        master = None  # type: Optional[str]
+        if "master" in constraint:
+            if constraint_type not in [PlacementConstraintType.Hierarchical, PlacementConstraintType.HardMacro]:
+                raise ValueError("Constraints other than Hierarchical and HardMacro must not contain master: {}".format(constraint))
+            master = str(constraint["master"])
+        else:
+            if constraint_type == PlacementConstraintType.Hierarchical:
+                raise ValueError("Hierarchical constraint must contain master: {}".format(constraint))
+        return master
+
+    @staticmethod
+    def from_masters_and_dict(masters: List[MacroSize], constraint: dict) -> "PlacementConstraint":
+        """
+        Create a PlacementConstraint tuple from a constraint dict and a list of masters. This method differs from from_dict by
+        allowing the width and height to be auto-filled from a list of masters for the Hierarchical and HardMacro constraint types.
+
+        :param masters: A list of MacroSize tuples containing cell macro definitions
+        :param constraint: A dict containing information to be parsed into a PlacementConstraint tuple
+        :return: A PlacementConstraint tuple
+        """
+
+        constraint_type = PlacementConstraintType.from_str(str(constraint["type"]))
+        master = PlacementConstraint._get_master(constraint_type, constraint)
+
+        checked_types = [PlacementConstraintType.Hierarchical, PlacementConstraintType.HardMacro]
+        width_check = None  # type: Optional[Decimal]
+        height_check = None  # type: Optional[Decimal]
+        # Get the "Master" values
+        if constraint_type == PlacementConstraintType.Hierarchical:
+            # This should be true given the code above, but sanity check anyway
+            assert master is not None
+            matches = list(filter(lambda x: x.name == master, masters))
+            if len(matches) > 0:
+                width_check = matches[0].width
+                height_check = matches[0].height
+            else:
+                raise ValueError("Could not find a master for hierarchical cell {} in masters list.".format(master))
+        elif constraint_type == PlacementConstraintType.HardMacro:
+            # TODO(johnwright) for now we're allowing HardMacros to be flexible- checks are performed if the data exists, but otherwise
+            # we will "trust" the provided width and height. They aren't actually used, so this is not super important at the moment.
+            # ucb-bar/hammer#414
+            if master is not None:
+                matches = list(filter(lambda x: x.name == master, masters))
+                if len(matches) > 0:
+                    width_check = matches[0].width
+                    height_check = matches[0].height
+        else:
+            assert constraint_type not in checked_types, "Should not get here; update checked_types."
+
+        width = None
+        height = None
+
+        if "width" in constraint:
+            width = Decimal(str(constraint["width"]))
+        else:
+            width = width_check
+
+        if "height" in constraint:
+            height = Decimal(str(constraint["height"]))
+        else:
+            height = height_check
+
+        # Perform the check
+        if constraint_type in checked_types:
+            if height != height_check and height_check is not None:
+                raise ValueError("Optional height value {} must equal the master value {} for constraint: {}".format(height, height_check, constraint))
+            if width != width_check and width_check is not None:
+                raise ValueError("Optional width value {} must equal the master value {} for constraint: {}".format(width, width_check, constraint))
+
+        updated_constraint = constraint
+        if width is not None:
+            updated_constraint = add_dicts(constraint, {'width': width})
+        if height is not None:
+            updated_constraint = add_dicts(constraint, {'height': height})
+
+        return PlacementConstraint.from_dict(updated_constraint)
+
+    @staticmethod
+    def from_dict(constraint: dict) -> "PlacementConstraint":
+        constraint_type = PlacementConstraintType.from_str(str(constraint["type"]))
 
         ### Margins ###
         # This field is mandatory in TopLevel constraints
@@ -311,73 +402,29 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
                 raise ValueError("Obstruction constraint must contain obs_types: {}".format(constraint))
 
         ### Master ###
-        # This field is mandatory for Hierarchical constraints
-        # This field is optional for HardMacro constraints
-        # This field is disallowed otherwise
-        master = None  # type: Optional[str]
-        if "master" in constraint:
-            if constraint_type not in [PlacementConstraintType.Hierarchical, PlacementConstraintType.HardMacro]:
-                raise ValueError("Constraints other than Hierarchical and HardMacro must not contain master: {}".format(constraint))
-            master = str(constraint["master"])
-        else:
-            if constraint_type == PlacementConstraintType.Hierarchical:
-                raise ValueError("Hierarchical constraint must contain master: {}".format(constraint))
+        master = PlacementConstraint._get_master(constraint_type, constraint)
 
         ### Width & height ###
-        # These fields are mandatory for Dummy, Placement, TopLevel, and Obstruction constraints
-        # These fields are optional for HardMacro and Hierarchical constraints
-        #   If omitted, they are copied from the master definition (HardMacro) or hierarchical top-level width and height (Hierarchical).
-        #   If present, they must match the values that would otherwise be automatically input.
-        checked_types = [PlacementConstraintType.Hierarchical, PlacementConstraintType.HardMacro]
-        width_check = None  # type: Optional[Decimal]
-        height_check = None  # type: Optional[Decimal]
-        # Get the "Master" values
-        if constraint_type == PlacementConstraintType.Hierarchical:
-            # This should be true given the code above, but sanity check anyway
-            assert master is not None
-            matches = list(filter(lambda x: x.name == master, masters))
-            if len(matches) > 0:
-                width_check = matches[0].width
-                height_check = matches[0].height
-            else:
-                raise ValueError("Could not find a master for hierarchical cell {} in masters list.".format(master))
-        elif constraint_type == PlacementConstraintType.HardMacro:
-            # TODO(johnwright) for now we're allowing HardMacros to be flexible- checks are performed if the data exists, but otherwise
-            # we will "trust" the provided width and height. They aren't actually used, so this is not super important at the moment.
-            if master is not None:
-                matches = list(filter(lambda x: x.name == master, masters))
-                if len(matches) > 0:
-                    width_check = matches[0].width
-                    height_check = matches[0].height
-        else:
-            assert constraint_type not in checked_types, "Should not get here; update checked_types."
-
-        width = Decimal(-1)
-        height = Decimal(-1)
-
+        # These fields are mandatory for Hierarchical, Dummy, Placement, TopLevel, and Obstruction constraints
+        # These fields are optional for HardMacro constraints
+        # TODO(ucb-bar/hammer#414) make them mandatory for HardMacro once there's a more robust way of automatically getting that data into hammer
+        # This is not None because we don't want to make width optional for the reason above
+        width = Decimal(0)
         if "width" in constraint:
-            width = Decimal(str(constraint["width"]))
+            width = Decimal(constraint["width"])
         else:
-            if constraint_type not in checked_types:
-                raise ValueError("Constraints other than Hierarchical and HardMacro must contain width: {}".format(constraint))
-            assert isinstance(width_check, Decimal)
-            width = width_check
+            # TODO(ucb-bar/hammer#414) remove this allowance and just raise the error
+            if constraint_type != PlacementConstraintType.HardMacro:
+                raise ValueError("Non-HardMacro constraint must contain a width: {}".format(constraint))
 
+        # This is not None because we don't want to make height optional for the reason above
+        height = Decimal(0)
         if "height" in constraint:
-            height = Decimal(str(constraint["height"]))
+            height = Decimal(constraint["height"])
         else:
-            if constraint_type not in checked_types:
-                raise ValueError("Constraints other than Hierarchical and HardMacro must contain height: {}".format(constraint))
-            assert isinstance(height_check, Decimal)
-            height = height_check
-
-        # Perform the check
-        if constraint_type in checked_types:
-            # TODO(johnwright) see comment above, we are skipping the checks if height_check and width_check are None
-            if height != height_check and height_check is not None:
-                raise ValueError("Optional height value {} must equal the master value {} for constraint: {}".format(height, height_check, constraint))
-            if width != width_check and width_check is not None:
-                raise ValueError("Optional width value {} must equal the master value {} for constraint: {}".format(width, width_check, constraint))
+            # TODO(ucb-bar/hammer#414) remove this allowance and just raise the error
+            if constraint_type != PlacementConstraintType.HardMacro:
+                raise ValueError("Non-HardMacro constraint must contain a height: {}".format(constraint))
 
         ### X & Y coordinates ###
         # These fields are mandatory in all constraints
