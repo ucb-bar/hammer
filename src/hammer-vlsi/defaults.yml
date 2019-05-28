@@ -241,8 +241,17 @@ vlsi.inputs:
   #   - "hardmacro" (places this hard macro at a particular spot)
   #   - "hierarchical" (marks this instance as part of hierarchical place and route)
   #   - "obstruction" (creates a blockage at a particular spot; see obs_types)
-  # orientation (Optional[str]) - The orientation (MX, MY, R0, R90, R180, R270)
+  # orientation (Optional[str]) - The orientation
   # - Optional for all types
+  # - Valid options:
+  #   - "r0"   (standard orientation)
+  #   - "r90"  (rotated 90 degrees clockwise)
+  #   - "r180" (rotated 180 degrees)
+  #   - "r270" (rotated 270 degrees clockwise; equivalent to -90 degrees counterclockwise)
+  #   - "mx"   (mirrored about the x-axis)
+  #   - "mx90" (mirrored about the x-axis, then rotated 90 degrees clockwise)
+  #   - "my"   (mirrored about the y-axis)
+  #   - "my90" (mirrored about the y-axis, then rotated 90 degrees clockwise)
   # x (float) - x coordinate in um
   # - Required for all types
   # y (float) - y coordinate in um
@@ -256,10 +265,10 @@ vlsi.inputs:
   # margins (Optional[Margins]) - margins for the top-level module.
   # - Required for toplevel, disallowed otherwise
   # - Contains the following keys:
-  #   - "left" - margin from the left side of the core PNR area to the edge of the chip
-  #   - "right" - margin from the right side of the core PNR area to the edge of the chip
-  #   - "top" - margin from the top side of the core PNR area to the edge of the chip
-  #   - "bottom" - margin from the bottom side of the core PNR area to the edge of the chip
+  #   - "left"   (margin from the left side of the core PNR area to the edge of the chip)
+  #   - "right"  (margin from the right side of the core PNR area to the edge of the chip)
+  #   - "top"    (margin from the top side of the core PNR area to the edge of the chip)
+  #   - "bottom" (margin from the bottom side of the core PNR area to the edge of the chip)
   # top_layer (str) - Specifies the highest layer used by this hierarchical or hardmacro, used to keep other wires away
   # - Optional for hierarchical and hardmacro
   # layers (List[str]) - A list of strings that enumerates layer(s) blocked by the obstruction otherwise all layers are blocked
