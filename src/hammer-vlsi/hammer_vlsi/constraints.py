@@ -360,6 +360,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         else:
             if constraint_type not in checked_types:
                 raise ValueError("Constraints other than Hierarchical and HardMacro must contain width: {}".format(constraint))
+            assert isinstance(width_check, Decimal)
             width = width_check
 
         if "height" in constraint:
@@ -367,6 +368,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         else:
             if constraint_type not in checked_types:
                 raise ValueError("Constraints other than Hierarchical and HardMacro must contain height: {}".format(constraint))
+            assert isinstance(height_check, Decimal)
             height = height_check
 
         # Perform the check
