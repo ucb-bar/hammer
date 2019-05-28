@@ -253,7 +253,8 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         # This field is disallowed otherwise
         margins = None  # type: Optional[Margins]
         if "margins" in constraint:
-            assert constraint_type == PlacementConstraintType.TopLevel, "Non-TopLevel constraint must not contain margins: {}".format(constraint)
+            if constraint_type != PlacementConstraintType.TopLevel:
+                raise ValueError("Non-TopLevel constraint must not contain margins: {}".format(constraint))
             margins_dict = constraint["margins"]
             margins = Margins(
                 left=Decimal(str(margins_dict["left"])),
@@ -262,22 +263,25 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
                 top=Decimal(str(margins_dict["top"]))
             )
         else:
-            assert constraint_type != PlacementConstraintType.TopLevel, "TopLevel constraint must contain margins: {}".format(constraint)
+            if constraint_type == PlacementConstraintType.TopLevel:
+                raise ValueError("TopLevel constraint must contain margins: {}".format(constraint))
 
         ### Orientation ###
         # This field is disallowed in TopLevel constraints
         # This field is optional otherwise
         orientation = None  # type: Optional[str]
         if "orientation" in constraint:
-            assert constraint_type != PlacementConstraintType.TopLevel, "Non-TopLevel constraint must not contain orientation: {}".format(constraint)
+            if constraint_type == PlacementConstraintType.TopLevel:
+                raise ValueError("Non-TopLevel constraint must not contain orientation: {}".format(constraint))
             orientation = str(constraint["orientation"])
 
         ### Top layer ###
-        # This field is optional in HardMacro constraints
+        # This field is optional in Hierarchical and HardMacro constraints
         # This field is disallowed otherwise
         top_layer = None  # type: Optional[str]
         if "top_layer" in constraint:
-            assert constraint_type == PlacementConstraintType.HardMacro, "Non-HardMacro constraint must not contain top_layer: {}".format(constraint)
+            if constraint_type not in [PlacementConstraintType.Hierarchical, PlacementConstraintType.HardMacro]:
+                raise ValueError("Constraints other than Hierarchical and HardMacro must not contain top_layer: {}".format(constraint))
             top_layer = str(constraint["top_layer"])
 
         ### Layers ###
@@ -285,7 +289,8 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         # This field is disallowed otherwise
         layers = None  # type: Optional[List[str]]
         if "layers" in constraint:
-            assert constraint_type == PlacementConstraintType.Obstruction, "Non-Obstruction constraint must not contain layers: {}".format(constraint)
+            if constraint_type != PlacementConstraintType.Obstruction:
+                raise ValueError("Non-Obstruction constraint must not contain layers: {}".format(constraint))
             layers = []
             for layer in constraint["layers"]:
                 layers.append(str(layer))
@@ -295,13 +300,15 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         # This field is disallowed otherwise
         obs_types = None  # type: Optional[List[ObstructionType]]
         if "obs_types" in constraint:
-            assert constraint_type == PlacementConstraintType.Obstruction, "Non-Obstruction constraint must not contain obs_types: {}".format(constraint)
+            if constraint_type != PlacementConstraintType.Obstruction:
+                raise ValueError("Non-Obstruction constraint must not contain obs_types: {}".format(constraint))
             obs_types = []
             types = constraint["obs_types"]
             for obs_type in types:
                 obs_types.append(ObstructionType.from_str(str(obs_type)))
         else:
-            assert constraint_type != PlacementConstraintType.Obstruction, "Obstruction constraint must contain obs_types: {}".format(constraint)
+            if constraint_type == PlacementConstraintType.Obstruction:
+                raise ValueError("Obstruction constraint must contain obs_types: {}".format(constraint))
 
         ### Master ###
         # This field is mandatory for Hierarchical constraints
@@ -309,10 +316,12 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         # This field is disallowed otherwise
         master = None  # type: Optional[str]
         if "master" in constraint:
-            assert constraint_type in [PlacementConstraintType.Hierarchical, PlacementConstraintType.HardMacro], "Constraints other than Hierarchical and HardMacro must not contain master: {}".format(constraint)
-            master = constraint["master"]
+            if constraint_type not in [PlacementConstraintType.Hierarchical, PlacementConstraintType.HardMacro]:
+                raise ValueError("Constraints other than Hierarchical and HardMacro must not contain master: {}".format(constraint))
+            master = str(constraint["master"])
         else:
-            assert constraint_type != PlacementConstraintType.Hierarchical, "Hierarchical constraint must contain master: {}".format(constraint)
+            if constraint_type == PlacementConstraintType.Hierarchical:
+                raise ValueError("Hierarchical constraint must contain master: {}".format(constraint))
 
         ### Width & height ###
         # These fields are mandatory for Dummy, Placement, TopLevel, and Obstruction constraints
@@ -348,23 +357,30 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         if "width" in constraint:
             width = Decimal(str(constraint["width"]))
         else:
-            assert constraint_type in checked_types, "Constraints other than Hierarchical and HardMacro must contain width: {}".format(constraint)
+            if constraint_type not in checked_types:
+                raise ValueError("Constraints other than Hierarchical and HardMacro must contain width: {}".format(constraint))
             width = width_check
 
         if "height" in constraint:
             height = Decimal(str(constraint["height"]))
         else:
-            assert constraint_type in checked_types, "Constraints other than Hierarchical and HardMacro must contain height: {}".format(constraint)
+            if constraint_type not in checked_types:
+                raise ValueError("Constraints other than Hierarchical and HardMacro must contain height: {}".format(constraint))
             height = height_check
 
         # Perform the check
         if constraint_type in checked_types:
-            assert height == height_check, "Optional height value {} for constraint must equal the master value: {} for constraint {}".format(height, height_check, constraint)
-            assert width == width_check, "Optional width value {} for constraint must equal the master value: {} for constraint {}".format(width, width_check, constraint)
+            if height != height_check:
+                raise ValueError("Optional height value {} must equal the master value {} for constraint: {}".format(height, height_check, constraint))
+            if width != width_check:
+                raise ValueError("Optional width value {} must equal the master value {} for constraint: {}".format(width, width_check, constraint))
 
         ### X & Y coordinates ###
         # These fields are mandatory in all constraints
-        assert "x" in constraint, "Constraint must contain an x coordinate: {}".format(constraint)
+        if "x" not in constraint:
+            raise ValueError("Constraint must contain an x coordinate: {}".format(constraint))
+        if "y" not in constraint:
+            raise ValueError("Constraint must contain an y coordinate: {}".format(constraint))
         x = Decimal(str(constraint["x"]))
         y = Decimal(str(constraint["y"]))
 
