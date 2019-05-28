@@ -328,13 +328,9 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         # These fields are optional for HardMacro and Hierarchical constraints
         #   If omitted, they are copied from the master definition (HardMacro) or hierarchical top-level width and height (Hierarchical).
         #   If present, they must match the values that would otherwise be automatically input.
-
-        # TODO(johnwright) eventually support HardMacro LEF parsing. I think this would look like including a list of cells in the library definition,
-        #   which would allow us to reverse lookup what LEF to parse for the individual cells that we want to check (and assert if it's wrong).
-        #checked_types = [PlacementConstraintType.Hierarchical, PlacementConstraintType.HardMacro]
-        checked_types = [PlacementConstraintType.Hierarchical]
-        width_check = Decimal(-1)
-        height_check = Decimal(-1)
+        checked_types = [PlacementConstraintType.Hierarchical, PlacementConstraintType.HardMacro]
+        width_check = None  # type: Optional[Decimal]
+        height_check = None  # type: Optional[Decimal]
         # Get the "Master" values
         if constraint_type == PlacementConstraintType.Hierarchical:
             # This should be true given the code above, but sanity check anyway
@@ -346,8 +342,13 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             else:
                 raise ValueError("Could not find a master for hierarchical cell {} in masters list.".format(master))
         elif constraint_type == PlacementConstraintType.HardMacro:
-            # For now we're going to punt on this (see TODO above)
-            pass
+            # TODO(johnwright) for now we're allowing HardMacros to be flexible- checks are performed if the data exists, but otherwise
+            # we will "trust" the provided width and height. They aren't actually used, so this is not super important at the moment.
+            if master is not None:
+                matches = list(filter(lambda x: x.name == master, masters))
+                if len(matches) > 0:
+                    width_check = matches[0].width
+                    height_check = matches[0].height
         else:
             assert constraint_type not in checked_types, "Should not get here; update checked_types."
 
@@ -370,9 +371,10 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
 
         # Perform the check
         if constraint_type in checked_types:
-            if height != height_check:
+            # TODO(johnwright) see comment above, we are skipping the checks if height_check and width_check are None
+            if height != height_check and height_check is not None:
                 raise ValueError("Optional height value {} must equal the master value {} for constraint: {}".format(height, height_check, constraint))
-            if width != width_check:
+            if width != width_check and width_check is not None:
                 raise ValueError("Optional width value {} must equal the master value {} for constraint: {}".format(width, width_check, constraint))
 
         ### X & Y coordinates ###
