@@ -560,7 +560,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         rail_layer = self.get_stackup().get_metal(rail_layer_name)
         blockage_spacing = coerce_to_grid(float(self._get_by_tracks_metal_setting("blockage_spacing", rail_layer_name)), rail_layer.grid_unit)
         # TODO does the CPF help this, or do we need to be more explicit about the bbox for each domain
-        output = self.specify_std_cell_power_straps(bbox, [ground_net] + power_nets)
+        output = self.specify_std_cell_power_straps(blockage_spacing, bbox, [ground_net] + power_nets)
         # The layer to via down to
         bottom_via_layer = rail_layer_name
         # The last layer we used
