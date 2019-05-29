@@ -556,11 +556,15 @@ class HammerPlaceAndRouteTool(HammerTool):
         for l in pin_layers:
             assert l in layer_names, "Pin layer {} must be in power strap layers".format(l)
 
-        bottom_via_layer = self.get_setting("technology.core.std_cell_rail_layer")
-        last = self.get_stackup().get_metal(bottom_via_layer)
-        blockage_spacing = coerce_to_grid(float(self._get_by_tracks_metal_setting("blockage_spacing", bottom_via_layer)), layer.grid_unit)
+        rail_layer_name = self.get_setting("technology.core.std_cell_rail_layer")
+        rail_layer = self.get_stackup().get_metal(bottom_via_layer)
+        blockage_spacing = coerce_to_grid(float(self._get_by_tracks_metal_setting("blockage_spacing", rail_layer_name)), rail_layer.grid_unit)
         # TODO does the CPF help this, or do we need to be more explicit about the bbox for each domain
         output = self.specify_std_cell_power_straps(bbox, [ground_net] + power_nets)
+        # The layer to via down to
+        bottom_via_layer = rail_layer_name
+        # The last layer we used
+        last = rail_layer
         for layer_name in layer_names:
             layer = self.get_stackup().get_metal(layer_name)
             assert layer.index > last.index, "Must build power straps bottom-up"
