@@ -24,7 +24,6 @@ from hammer_tech import Library, ExtraLibrary
 from .constraints import *
 from .units import VoltageValue
 
-
 class HierarchicalMode(Enum):
     Flat = 1
     Leaf = 2
@@ -1329,15 +1328,15 @@ if {{ {get_db_str} ne "" }} {{
             return []
 
         power_spec_contents = ""  # type: str
-        power_spec_mode = str(self.get_setting("vlsi.inputs.power_spec_mode"))  # type: str
-        if power_spec_mode == "empty":
+        power_spec_mode = self.get_mode_setting("par.inputs.gds_map_mode")
+        if power_spec_mode == ModeType.Empty:
             return []
-        elif power_spec_mode == "auto":
+        elif power_spec_mode == ModeType.Auto:
             if power_spec_type == "cpf":
                 power_spec_contents = self.cpf_power_specification
             elif power_spec_type == "upf":
                 power_spec_contents = self.upf_power_specification
-        elif power_spec_mode == "manual":
+        elif power_spec_mode == ModeType.Manual:
             power_spec_contents = str(self.get_setting("vlsi.inputs.power_spec_contents"))
         else:
             self.logger.error("Invalid power specification mode '{mode}'; using 'empty'.".format(mode=power_spec_mode))
