@@ -66,7 +66,7 @@ class MockPlaceAndRoute(HammerPlaceAndRouteTool, DummyHammerTool):
         }
         return [json.dumps(output_dict)]
 
-    def specify_std_cell_power_straps(self, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
+    def specify_std_cell_power_straps(self, blockage_spacing: Decimal, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
         layer_name = self.get_setting("technology.core.std_cell_rail_layer")
         self._power_straps_check_index(layer_name)
         output_dict = {
