@@ -14,8 +14,9 @@ from abc import ABCMeta, abstractmethod
 from typing import Any, Callable, Iterable, List, NamedTuple, Optional, Tuple, Dict
 from decimal import Decimal
 
-import hammer_config
 import python_jsonschema_objects  # type: ignore
+import hammer_jsonschema_objects
+import hammer_config
 
 from hammer_config import load_yaml, HammerJSONEncoder
 from hammer_logging import HammerVLSILoggingContext

@@ -25,7 +25,7 @@ call_mypy ../hammer-shell/get-config
 
 # Testing code
 call_mypy ../hammer-vlsi/*test.py
-call_mypy ../hammer_config_test/test.py
+call_mypy ../hammer_config/config_test.py
 
 # Plugins
 call_mypy ../hammer-vlsi/synthesis/mocksynth/__init__.py

@@ -1,16 +1,15 @@
-[submodule "src/tools/firrtl"]
-	path = src/tools/firrtl
-	url = https://github.com/ucb-bar/firrtl.git
-[submodule "src/tools/pyyaml"]
-	path = src/tools/pyyaml
-	url = https://github.com/edwardcwang/pyyaml_plsi.git
-[submodule "src/python-jsonschema-objects"]
-	path = src/python-jsonschema-objects
-	url = https://github.com/edwardcwang/python-jsonschema-objects.git
-	branch = hammer-201710
-[submodule "src/jsonschema"]
-	path = src/jsonschema
-	url = https://github.com/edwardcwang/jsonschema.git
-[submodule "src/tools/gdspy"]
-	path = src/tools/gdspy
-	url = https://github.com/heitzmann/gdspy.git
+[submodule "src/contrib/pyyaml"]
+	path = src/contrib/pyyaml
+	url = https://github.com/yaml/pyyaml
+[submodule "src/contrib/python-jsonschema-objects"]
+	path = src/contrib/python-jsonschema-objects
+	url = https://github.com/cwacek/python-jsonschema-objects
+[submodule "src/contrib/jsonschema"]
+	path = src/contrib/jsonschema
+	url = https://github.com/Julian/jsonschema
+[submodule "src/contrib/gdspy"]
+	path = src/contrib/gdspy
+	url = https://github.com/heitzmann/gdspy
+[submodule "src/contrib/firrtl"]
+	path = src/contrib/gdspy
+	url = https://github.com/freechipsproject/firrtl/
