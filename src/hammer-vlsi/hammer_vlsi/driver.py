@@ -835,7 +835,7 @@ class HammerDriver:
             # This filters out all of the Nones to get only hierarchical modules with toplevel placement constraints
             toplevels = {k: v for k, v in toplevels_opt.items() if v is not None}  # type: Dict[str, Dict[str, Any]]
             # This converts each dict entry into a MacroSize tuple, which should now represent all hierarchical modules
-            hier_macros = list(map(lambda x: MacroSize(library="", name=x[0], width=x[1]["width"], height=x[1]["height"]), toplevels.items()))
+            hier_macros = [MacroSize(library="", name=x[0], width=x[1]["width"], height=x[1]["height"]) for x in toplevels.items()]
             masters = hard_macros + hier_macros
 
             hier_placement_constraints = {key: list(map(partial(PlacementConstraint.from_masters_and_dict, masters), lst))

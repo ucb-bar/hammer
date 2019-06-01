@@ -353,12 +353,38 @@ class PlacementConstraintType(Enum):
 
 
 # For the top-level chip size constraint, set the margin from core area to left/bottom/right/top.
-Margins = NamedTuple('Margins', [
+class Margins(NamedTuple('Margins', [
     ('left', Decimal),
     ('bottom', Decimal),
     ('right', Decimal),
     ('top', Decimal)
-])
+])):
+
+    @staticmethod
+    def from_dict(d: dict) -> "Margins":
+        return Margins(
+            left=Decimal(str(d["left"])),
+            bottom=Decimal(str(d["bottom"])),
+            right=Decimal(str(d["right"])),
+            top=Decimal(str(d["top"]))
+        )
+
+    @staticmethod
+    def empty() -> "Margins":
+        return Margins(
+            left=Decimal(0),
+            bottom=Decimal(0),
+            right=Decimal(0),
+            top=Decimal(0)
+        )
+
+    def to_dict(self) -> dict:
+        return {
+            "left": self.left,
+            "bottom": self.bottom,
+            "right": self.right,
+            "top": self.top
+        }
 
 
 class PlacementConstraint(NamedTuple('PlacementConstraint', [
@@ -423,7 +449,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         if constraint_type == PlacementConstraintType.Hierarchical:
             # This should be true given the code above, but sanity check anyway
             assert master is not None
-            matches = list(filter(lambda x: x.name == master, masters))
+            matches = [x for x in masters if x.name == master]
             if len(matches) > 0:
                 width_check = matches[0].width
                 height_check = matches[0].height
@@ -434,7 +460,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             # we will "trust" the provided width and height. They aren't actually used, so this is not super important at the moment.
             # ucb-bar/hammer#414
             if master is not None:
-                matches = list(filter(lambda x: x.name == master, masters))
+                matches = [x for x in masters if x.name == master]
                 if len(matches) > 0:
                     width_check = matches[0].width
                     height_check = matches[0].height
@@ -463,9 +489,9 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
 
         updated_constraint = constraint
         if width is not None:
-            updated_constraint = add_dicts(constraint, {'width': width})
+            updated_constraint = add_dicts(updated_constraint, {'width': width})
         if height is not None:
-            updated_constraint = add_dicts(constraint, {'height': height})
+            updated_constraint = add_dicts(updated_constraint, {'height': height})
 
         return PlacementConstraint.from_dict(updated_constraint)
 
@@ -481,12 +507,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             if constraint_type != PlacementConstraintType.TopLevel:
                 raise ValueError("Non-TopLevel constraint must not contain margins: {}".format(constraint))
             margins_dict = constraint["margins"]
-            margins = Margins(
-                left=Decimal(str(margins_dict["left"])),
-                bottom=Decimal(str(margins_dict["bottom"])),
-                right=Decimal(str(margins_dict["right"])),
-                top=Decimal(str(margins_dict["top"]))
-            )
+            margins = Margins.from_dict(margins_dict)
         else:
             if constraint_type == PlacementConstraintType.TopLevel:
                 raise ValueError("TopLevel constraint must contain margins: {}".format(constraint))
@@ -595,13 +616,10 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         }  # type: Dict[str, Any]
         if self.orientation is not None:
             output.update({"orientation": self.orientation})
+        if self.master is not None:
+            output.update({"master": self.master})
         if self.margins is not None:
-            output.update({"margins": {
-                "left": self.margins.left,
-                "bottom": self.margins.bottom,
-                "right": self.margins.right,
-                "top": self.margins.top
-            }})
+            output.update({"margins": self.margins.to_dict()})
         if self.top_layer is not None:
             output.update({"top_layer": self.top_layer})
         if self.layers is not None:
