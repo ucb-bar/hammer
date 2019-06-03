@@ -241,8 +241,8 @@ class Site(NamedTuple('Site', [
 class MacroSize(NamedTuple('MacroSize', [
     ('library', str),
     ('name', str),
-    ('width', float),
-    ('height', float)
+    ('width', Decimal),
+    ('height', Decimal)
 ])):
     __slots__ = ()
 
@@ -259,8 +259,8 @@ class MacroSize(NamedTuple('MacroSize', [
         return MacroSize(
             library=str(d['library']),
             name=str(d['name']),
-            width=float(d['width']),
-            height=float(d['height'])
+            width=Decimal(str(d['width'])),
+            height=Decimal(str(d['height']))
         )
 
 

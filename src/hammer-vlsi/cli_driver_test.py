@@ -9,6 +9,7 @@ import json
 import os
 import shutil
 import tempfile
+from decimal import Decimal
 from typing import Any, Callable, Dict, Optional
 
 import hammer_config
@@ -343,10 +344,11 @@ class CLIDriverTest(unittest.TestCase):
             dummy_placement = PlacementConstraint(
                 path="dummy",
                 type=PlacementConstraintType.Dummy,
-                x=0.0,
-                y=0.0,
-                width=10.0,
-                height=10.0,
+                x=Decimal("0"),
+                y=Decimal("0"),
+                width=Decimal("10"),
+                height=Decimal("10"),
+                master=None,
                 orientation=None,
                 margins=None,
                 top_layer=None,
@@ -449,8 +451,8 @@ class CLIDriverTest(unittest.TestCase):
         my_size = MacroSize(
             library='my_lib',
             name='my_cell',
-            width=100.0,
-            height=100.0
+            width=Decimal("100"),
+            height=Decimal("100")
         )
 
         def add_macro_sizes(d: Dict[str, Any]) -> Dict[str, Any]:

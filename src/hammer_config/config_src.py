@@ -9,6 +9,7 @@
 
 # pylint: disable=invalid-name
 
+from decimal import Decimal
 from typing import Iterable, List, Union, Callable, Any, Dict, Set, NamedTuple, Tuple, Optional
 
 from hammer_utils import deepdict, topological_sort
@@ -19,6 +20,14 @@ import json
 import numbers
 import os
 import re
+
+# A heler class that writes Decimals as strings
+class HammerJSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, Decimal):
+            # from https://stackoverflow.com/questions/1960516/python-json-serialize-a-decimal-object
+            return float(o)
+        return super(HammerJSONEncoder, self).default(o)
 
 # Special key used for meta directives which require config paths like prependlocal.
 _CONFIG_PATH_KEY = "_config_path"
@@ -588,7 +597,8 @@ class HammerDatabase:
     def get_database_json(self) -> str:
         """Get the database (get_config) in JSON form as a string.
         """
-        return json.dumps(self.get_config(), sort_keys=True, indent=4, separators=(',', ': '))
+        # The cls=HammerJSONEncoder enables writing Decimals
+        return json.dumps(self.get_config(), cls=HammerJSONEncoder, sort_keys=True, indent=4, separators=(',', ': '))
 
     def get(self, key: str) -> Any:
         """Alias for get_setting()."""
