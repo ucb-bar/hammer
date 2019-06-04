@@ -1466,7 +1466,7 @@ class HammerPowerStrapsTestContext:
                 "technology.core.std_cell_rail_layer": "M1",
                 "technology.core.tap_cell_rail_reference": "FakeTapCell",
                 "par.mockpar.temp_folder": temp_dir
-            }, cls=HammerJSONEncoder, self.strap_options), indent=4))
+            }, self.strap_options), cls=HammerJSONEncoder, indent=4))
         options = hammer_vlsi.HammerDriverOptions(
             environment_configs=[],
             project_configs=[json_path],
