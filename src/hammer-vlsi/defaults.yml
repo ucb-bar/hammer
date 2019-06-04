@@ -40,6 +40,11 @@ vlsi.core:
   sram_generator_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/sram_generator"]
   sram_generator_tool_path_meta: subst
 
+  # Path(s) to PCB deliverable tools.
+  # Add the built-in path to PCB deliverable tools.
+  pcb_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/pcb"]
+  pcb_tool_path_meta: subst
+
   # Synthesis tool to use.
   # Currently we can choose from a selection of built-in tools which hammer-vlsi supports.
   synthesis_tool: "nop"
@@ -55,6 +60,10 @@ vlsi.core:
 
   # SRAM Generator tool to use.
   sram_generator_tool: "nop"
+
+  # PCB deliverable tool to use.
+  # PCB deliverables include footprints, symbols, etc.
+  pcb_tool: "generic"
 
   # Maximum threads to use in a CAD tool invocation.
   max_threads: 1
@@ -350,7 +359,8 @@ vlsi.inputs:
     #  - no_connect (Optional[bool]) - If True the bump will be present but unconnected
     #  - x (Decimal) - The X coordinate of the bump assigned to this net
     #  - y (Decimal) - The Y coordinate of the bump assigned to this net
-    #  - group (Optional[str]) - The group name for the bumps, e.g. for creating schematic symbols
+    #  - group (Optional[str]) - The group name for the bumps
+    #                          - The schematic symbol generator will put all bumps in a group on the same part or sub-component.
     #  - custom_cell (Optional[str]) - Cell name (MACRO name) of a custom bump cell in place of the default for this bump. You must also specify the LEF and GDS for this bump in extra_libraries.
     assignments: []
 
@@ -362,7 +372,7 @@ vlsi.inputs:
   # - "A00"   (Like A0, but all bumps will have the same number of digits, with leading 0s appended if needed.
   #            E.g. if there are 555 columns, The top row will start at A000 and end at A554)
   # - "A01"   (Like A00, but numbers start at 1)
-  # - "Index" (Just returns a single number in the order the bumps are listed- useful for non-grid designs)
+  # - "index" (Just returns a single number in the order the bumps are listed- useful for non-grid designs)
   # type: str
   bumps_pin_naming_scheme: "A1"
 
@@ -611,6 +621,20 @@ sram_generator.submit:
   settings: "vlsi.submit.settings"
   settings_meta: lazycrossref
 
+# PCB deliverable settings.
+pcb.inputs:
+  # Top RTL module.
+  top_module: null
+
+pcb.submit:
+  # Submission command settings
+  # inherit settings from vlsi.submit but allow us to override them
+  command: "${vlsi.submit.command}"
+  command_meta: lazysubst
+  settings: "vlsi.submit.settings"
+  settings_meta: lazycrossref
+
+
 technology.core:
     # Key name for the technology stackup
     # This should exist in the stackups list in the tech json
@@ -624,3 +648,15 @@ technology.core:
     # Can be a wildcard/glob
     # type: str
     tap_cell_rail_reference: null
+
+technology.pcb:
+  # Desired pad opening diameter (in post-shrink um)
+  # Typically this should be defined in the technology plugin, assuming everyone will use the same pad and board strategy
+  # type: Decimal
+  bump_pad_opening_diameter: null
+
+  # Desired pad metal diameter (in post-shrink um)
+  # Typically this should be defined in the technology plugin, assuming everyone will use the same pad and board strategy
+  # type: Decimal
+  bump_pad_metal_diameter: null
+

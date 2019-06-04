@@ -1422,6 +1422,111 @@ class HammerSRAMGeneratorToolTest(unittest.TestCase):
             "sram64x128_0.5V_0.0C.gds",
             "sram64x128_1.5V_125.0C.gds"]))
 
+class HammerPCBDeliverableToolTestContext:
+    def __init__(self, test: unittest.TestCase) -> None:
+        self.test = test  # type unittest.TestCase
+        self.logger = HammerVLSILogging.context("")
+        self._driver = None  # type: Optional[hammer_vlsi.HammerDriver]
+
+    # Helper property to check that the driver did get initialized.
+    @property
+    def driver(self) -> hammer_vlsi.HammerDriver:
+        assert self._driver is not None, "HammerDriver must be initialized before use"
+        return self._driver
+
+    def __enter__(self) -> "HammerPCBDeliverableToolTestContext":
+        """Initialize context by creating the temp_dir, driver, and loading the sram_generator tool."""
+        self.test.assertTrue(hammer_vlsi.HammerVLSISettings.set_hammer_vlsi_path_from_environment(),
+                             "hammer_vlsi_path must exist")
+        temp_dir = tempfile.mkdtemp()
+        json_path = os.path.join(temp_dir, "project.json")
+        json_content = {
+            "vlsi.core.technology": "nop",
+            "vlsi.core.pcb_tool": "generic",
+            "pcb.inputs.top_module": "dummy",
+            "pcb.submit.command": "local",
+            "vlsi.inputs.bumps_mode": "manual",
+            "vlsi.inputs.bumps": {
+                "x": 5,
+                "y": 4,
+                "pitch": "123.4",
+                "cell": "dummybump",
+                "assignments": [
+                    {"name": "reset", "x": 1, "y": 1},
+                    {"name": "clock", "x": 2, "y": 1},
+                    {"name": "VDD", "x": 3, "y": 1},
+                    {"name": "VDD", "x": 4, "y": 1},
+                    {"name": "VSS", "x": 5, "y": 1},
+                    {"name": "data[0]", "x": 1, "y": 2},
+                    {"name": "data[1]", "x": 2, "y": 2},
+                    {"name": "data[2]", "x": 3, "y": 2},
+                    {"name": "VSS", "x": 4, "y": 2},
+                    {"name": "VDD", "x": 5, "y": 2},
+                    {"name": "data[3]", "x": 1, "y": 3},
+                    {"name": "valid", "x": 2, "y": 3},
+                    {"name": "ready", "x": 3, "y": 3},
+                    {"name": "NC", "x": 4, "y": 3, "no_connect": True},
+                    {"name": "VSS", "x": 5, "y": 3},
+                    {"name": "VDD", "x": 1, "y": 4},
+                    {"name": "VSS", "x": 2, "y": 4},
+                    {"name": "VDD", "x": 3, "y": 4},
+                    {"name": "VSS", "x": 4, "y": 4}
+                    # Note 5,4 is left out intentionally
+                ]
+            },
+            "pcb.generic.footprint_type": "PADS-V9",
+            "pcb.generic.schematic_symbol_type": "AltiumCSV",
+            "technology.pcb.bump_pad_opening_diameter": "60",
+            "technology.pcb.bump_pad_metal_diameter": "75"
+        }  # type: Dict[str, Any]
+
+        with open(json_path, "w") as f:
+            f.write(json.dumps(json_content, cls=HammerJSONEncoder, indent=4))
+
+        options = hammer_vlsi.HammerDriverOptions(
+            environment_configs=[],
+            project_configs=[json_path],
+            log_file=os.path.join(temp_dir, "log.txt"),
+            obj_dir=temp_dir
+        )
+        self._driver = hammer_vlsi.HammerDriver(options)
+        self.temp_dir = temp_dir
+        return self
+
+    def __exit__(self, type, value, traceback) -> bool:
+        """Clean up the context by removing the temp_dir."""
+        shutil.rmtree(self.temp_dir)
+        # Return True (normal execution) if no exception occurred.
+        return True if type is None else False
+
+    @property
+    def env(self) -> Dict[str, str]:
+        return {}
+
+class HammerGenericPCBToolTest(unittest.TestCase):
+    def create_context(self) -> HammerPCBDeliverableToolTestContext:
+        return HammerPCBDeliverableToolTestContext(self)
+
+    def test_deliverables_exist(self) -> None:
+        """
+        Test that a PADS-V9 footprint, Altium CSV, and pads CSV are created.
+        This doesn't check the correctness of the deliverables.
+        """
+        with self.create_context() as c:
+            self.assertTrue(c.driver.load_pcb_tool())
+            self.assertTrue(c.driver.run_pcb())
+            # Ignoring the type of this for the same reason as the power straps stuff below.
+            # It's hard to get the concrete type of this tool that contains the methods used below.
+            assert isinstance(c.driver.pcb_tool, hammer_vlsi.HammerPCBDeliverableTool)
+            self.assertTrue(os.path.exists(c.driver.pcb_tool.output_footprint_filename))  # type: ignore
+            self.assertTrue(os.path.exists(c.driver.pcb_tool.output_footprint_csv_filename))  # type: ignore
+            self.assertTrue(os.path.exists(c.driver.pcb_tool.output_schematic_symbol_filename))  # type: ignore
+
+    # TODO add more checks:
+    # - footprint pads should be mirrored relative to GDS
+    # - Blank bumps should not show up
+    # - test grouping
+
 class HammerPowerStrapsTestContext:
     def __init__(self, test: unittest.TestCase, strap_options: Dict[str, Any]) -> None:
         self.logger = HammerVLSILogging.context()

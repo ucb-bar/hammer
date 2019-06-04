@@ -1480,3 +1480,56 @@ def load_tool(tool_name: str, path: Iterable[str]) -> HammerTool:
     tool = tool_class()
     tool.tool_dir = os.path.dirname(os.path.abspath(mod.__file__))
     return tool
+
+
+class HammerPCBDeliverableTool(HammerTool):
+    @abstractmethod
+    def fill_outputs(self) -> bool:
+        pass
+
+    ### Generated interface HammerPCBDeliverableTool ###
+    ### DO NOT MODIFY THIS CODE, EDIT generate_properties.py INSTEAD ###
+    ### Inputs ###
+
+    ### Outputs ###
+
+    @property
+    def output_footprints(self) -> List[str]:
+        """
+        Get the list of the PCB footprint files for the project.
+
+        :return: The list of the PCB footprint files for the project.
+        """
+        try:
+            return self.attr_getter("_output_footprints", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the list of the PCB footprint files for the project yet")
+
+    @output_footprints.setter
+    def output_footprints(self, value: List[str]) -> None:
+        """Set the list of the PCB footprint files for the project."""
+        if not (isinstance(value, List)):
+            raise TypeError("output_footprints must be a List[str]")
+        self.attr_setter("_output_footprints", value)
+
+
+    @property
+    def output_schematic_symbols(self) -> List[str]:
+        """
+        Get the list of the PCB schematic symbol files for the project.
+
+        :return: The list of the PCB schematic symbol files for the project.
+        """
+        try:
+            return self.attr_getter("_output_schematic_symbols", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the list of the PCB schematic symbol files for the project yet")
+
+    @output_schematic_symbols.setter
+    def output_schematic_symbols(self, value: List[str]) -> None:
+        """Set the list of the PCB schematic symbol files for the project."""
+        if not (isinstance(value, List)):
+            raise TypeError("output_schematic_symbols must be a List[str]")
+        self.attr_setter("_output_schematic_symbols", value)
+
+    ### END Generated interface HammerPCBDeliverableTool ###

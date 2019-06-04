@@ -915,7 +915,7 @@ class HammerTool(metaclass=ABCMeta):
                     x=x, y=y, group=group, custom_cell=cell))
         return BumpsDefinition(x=self.get_setting("vlsi.inputs.bumps.x"),
             y=self.get_setting("vlsi.inputs.bumps.y"),
-            pitch=self.get_setting("vlsi.inputs.bumps.pitch"),
+            pitch=Decimal(str(self.get_setting("vlsi.inputs.bumps.pitch"))),
             cell=self.get_setting("vlsi.inputs.bumps.cell"), assignments=assignments)
 
     def get_pin_assignments(self) -> List[PinAssignment]:

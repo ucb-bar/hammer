@@ -1,0 +1,22 @@
+# Configuration options and defaults for the generic PCB deliverable tool
+# The values specified in this file are the defaults.
+
+# A catch-all for generic PCB deliverables that needn't be in a separate plugin
+pcb.generic:
+
+  # Footprint type
+  # Currently only supports PADS-V9
+  # See ftp://ftp.freecalypso.org/pub/CAD/PADS/pdfdocs/Plib_ASCII.pdf
+  # type: str
+  footprint_type: "PADS-V9"
+
+  # Schematic symbol type
+  # Currently only supports AltiumCSV
+  # type: str
+  schematic_symbol_type: "AltiumCSV"
+
+  # Version string
+  # This does nothing, but is required by HammerTool
+  # type: str
+  version: "1.0"
+
