@@ -113,6 +113,7 @@ class CLIDriver:
         self.drc_rundir = ""  # type: Optional[str]
         self.lvs_rundir = ""  # type: Optional[str]
         self.sram_generator_rundir = ""  # type: Optional[str]
+        self.pcb_rundir = ""  # type: Optional[str]
 
         # If a subclass has defined these, don't clobber them in init
         # since the subclass still uses this init function.
@@ -120,6 +121,10 @@ class CLIDriver:
             check_CLIActionType_type(self.sram_generator_action)  # type: ignore
         else:
             self.sram_generator_action = self.create_sram_generator_action([])  # type: CLIActionConfigType
+        if hasattr(self, "pcb_action"):
+            check_CLIActionType_type(self.pcb_action)  # type: ignore
+        else:
+            self.pcb_action = self.create_pcb_action([])  # type: CLIActionConfigType
         if hasattr(self, "synthesis_action"):
             check_CLIActionType_type(self.synthesis_action)  # type: ignore
         else:
@@ -159,6 +164,7 @@ class CLIDriver:
             "dump_macrosizes": self.dump_macrosizes_action,
             "sram-generator": self.sram_generator_action,
             "sram_generator": self.sram_generator_action,
+            "pcb": self.pcb_action,
             "synthesis": self.synthesis_action,
             "syn": self.synthesis_action,
             "par": self.par_action,
@@ -230,6 +236,13 @@ class CLIDriver:
         """
         return list()
 
+    def get_extra_pcb_hooks(self) -> List[HammerToolHookAction]:
+        """
+        Return a list of extra PCB deliverable hooks in this project.
+        To be overridden by subclasses.
+        """
+        return list()
+
     def create_synthesis_action(self, custom_hooks: List[HammerToolHookAction],
                                 pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
                                 post_load_func: Optional[Callable[[HammerDriver], None]] = None,
@@ -294,6 +307,14 @@ class CLIDriver:
                           post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
         hooks = self.get_extra_sram_generator_hooks() + custom_hooks  # type: List[HammerToolHookAction]
         return self.create_action("sram_generator", hooks if len(hooks) > 0 else None,
+                                  pre_action_func, post_load_func, post_run_func)
+
+    def create_pcb_action(self, custom_hooks: List[HammerToolHookAction],
+                          pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_load_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
+        hooks = self.get_extra_pcb_hooks() + custom_hooks  # type: List[HammerToolHookAction]
+        return self.create_action("pcb", hooks if len(hooks) > 0 else None,
                                   pre_action_func, post_load_func, post_run_func)
 
     def create_action(self, action_type: str,
@@ -375,6 +396,13 @@ class CLIDriver:
                 else:
                     post_load_func_checked(driver)
                 success, output = driver.run_sram_generator(extra_hooks)
+                post_run_func_checked(driver)
+            elif action_type == "pcb":
+                if not driver.load_pcb_tool(get_or_else(self.pcb_rundir, "")):
+                    return None
+                else:
+                    post_load_func_checked(driver)
+                success, output = driver.run_pcb(extra_hooks)
                 post_run_func_checked(driver)
             else:
                 raise ValueError("Invalid action_type = " + str(action_type))
