@@ -45,7 +45,7 @@ class CLIDriverTest(unittest.TestCase):
             config = postprocessing_func(config)
 
         with open(config_path, "w") as f:
-            f.write(json.dumps(config, indent=4))
+            f.write(json.dumps(config, cls=HammerJSONEncoder, indent=4))
 
         return config
 
@@ -305,7 +305,7 @@ class CLIDriverTest(unittest.TestCase):
         with open(config_packed_path, "r") as f:
             unpacked_config = hammer_config.reverse_unpack(json.loads(f.read()))
         with open(config_path, "w") as f:
-            f.write(json.dumps(unpacked_config, indent=4))
+            f.write(json.dumps(unpacked_config, cls=HammerJSONEncoder, indent=4))
 
         # Check that running the CLIDriver executes successfully (code 0).
         with self.assertRaises(SystemExit) as cm:  # type: ignore

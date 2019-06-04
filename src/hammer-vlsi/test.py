@@ -18,6 +18,7 @@ from tech_test_utils import HasGetTech
 from test_tool_utils import HammerToolTestHelpers, DummyTool, SingleStepTool
 
 import hammer_config
+from hammer_config import HammerJSONEncoder
 import hammer_tech
 import hammer_vlsi
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, Level
@@ -212,7 +213,7 @@ class HammerToolTest(HasGetTech, unittest.TestCase):
             ]
         }
         with open(tech_json_filename, "w") as f:
-            f.write(json.dumps(tech_json, indent=4))
+            f.write(json.dumps(tech_json, cls=HammerJSONEncoder, indent=4))
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
         tech.logger = HammerVLSILogging.context("")
@@ -425,7 +426,7 @@ export lol=abc"cat"
                 "vlsi.core.par_tool": "nop",
                 "synthesis.inputs.top_module": "dummy",
                 "synthesis.inputs.input_files": ("/dev/null",)
-            }, indent=4))
+            }, cls=HammerJSONEncoder, indent=4))
 
         class BadExportTool(hammer_vlsi.HammerSynthesisTool, DummyTool):
             def export_config_outputs(self) -> Dict[str, Any]:
@@ -803,7 +804,7 @@ export lol=abc"cat"
                 ]
             }
         with open(proj_config, "w") as f:
-            f.write(json.dumps(settings, indent=4))
+            f.write(json.dumps(settings, cls=HammerJSONEncoder, indent=4))
 
         driver = hammer_vlsi.HammerDriver(
             hammer_vlsi.HammerDriver.get_default_driver_options()._replace(project_configs=[
@@ -838,7 +839,7 @@ export lol=abc"cat"
                 ]
 
         with open(proj_config, "w") as f:
-            f.write(json.dumps(settings, indent=4))
+            f.write(json.dumps(settings, cls=HammerJSONEncoder, indent=4))
 
         driver = hammer_vlsi.HammerDriver(
             hammer_vlsi.HammerDriver.get_default_driver_options()._replace(project_configs=[
@@ -882,7 +883,7 @@ class HammerToolHooksTestContext:
                 "synthesis.inputs.top_module": "dummy",
                 "synthesis.inputs.input_files": ("/dev/null",),
                 "synthesis.mocksynth.temp_folder": temp_dir
-            }, indent=4))
+            }, cls=HammerJSONEncoder, indent=4))
         options = hammer_vlsi.HammerDriverOptions(
             environment_configs=[],
             project_configs=[json_path],
@@ -1179,7 +1180,7 @@ class HammerSubmitCommandTestContext:
             })
 
         with open(json_path, "w") as f:
-            f.write(json.dumps(json_content, indent=4))
+            f.write(json.dumps(json_content, cls=HammerJSONEncoder, indent=4))
 
         options = hammer_vlsi.HammerDriverOptions(
             environment_configs=[],
@@ -1281,7 +1282,7 @@ class HammerSignoffToolTestContext:
             })
 
         with open(json_path, "w") as f:
-            f.write(json.dumps(json_content, indent=4))
+            f.write(json.dumps(json_content, cls=HammerJSONEncoder, indent=4))
 
         options = hammer_vlsi.HammerDriverOptions(
             environment_configs=[],
@@ -1376,7 +1377,7 @@ class HammerSRAMGeneratorToolTestContext:
             })
 
         with open(json_path, "w") as f:
-            f.write(json.dumps(json_content, indent=4))
+            f.write(json.dumps(json_content, cls=HammerJSONEncoder, indent=4))
 
         options = hammer_vlsi.HammerDriverOptions(
             environment_configs=[],
@@ -1465,7 +1466,7 @@ class HammerPowerStrapsTestContext:
                 "technology.core.std_cell_rail_layer": "M1",
                 "technology.core.tap_cell_rail_reference": "FakeTapCell",
                 "par.mockpar.temp_folder": temp_dir
-            }, self.strap_options), indent=4))
+            }, cls=HammerJSONEncoder, self.strap_options), indent=4))
         options = hammer_vlsi.HammerDriverOptions(
             environment_configs=[],
             project_configs=[json_path],

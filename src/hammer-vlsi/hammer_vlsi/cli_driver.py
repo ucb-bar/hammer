@@ -747,7 +747,7 @@ class CLIDriver:
                 def post_run(d: HammerDriver, rundir: str) -> None:
                     # Write out the configs used/generated for logging/debugging.
                     with open(os.path.join(rundir, "full_config.json"), "w") as f:
-                        new_output_json = json.dumps(d.project_config, indent=4)
+                        new_output_json = json.dumps(d.project_config, cls=HammerJSONEncoder, indent=4)
                         f.write(new_output_json)
                     with open(os.path.join(rundir, "module_config.json"), "w") as f:
                         new_output_json = json.dumps(config, cls=HammerJSONEncoder, indent=4)
@@ -808,7 +808,7 @@ class CLIDriver:
                     b, ext = os.path.splitext(args["output"])
                     new_output_filename = "{base}-{module}{ext}".format(base=b, module=module, ext=ext)
                     with open(new_output_filename, "w") as f:
-                        new_output_json = json.dumps(new_output, indent=4)
+                        new_output_json = json.dumps(new_output, cls=HammerJSONEncoder, indent=4)
                         f.write(new_output_json)
                     log.info("Output JSON: " + str(new_output))
 
@@ -818,7 +818,7 @@ class CLIDriver:
                     }
                     new_ilm_filename = "{base}-{module}_ilm{ext}".format(base=b, module=module, ext=ext)
                     with open(new_ilm_filename, "w") as f:
-                        json_content = json.dumps(new_ilm, indent=4)
+                        json_content = json.dumps(new_ilm, cls=HammerJSONEncoder, indent=4)
                         f.write(json_content)
                     log.info("New input ILM JSON written to " + new_ilm_filename)
                     driver.update_project_configs(driver.project_configs + [new_ilm])
@@ -853,7 +853,7 @@ class CLIDriver:
             action_func = cast(CLIActionConfigType, action_func)
             output_config = action_func(driver, errors.append)  # type: Optional[dict]
             if output_config is not None:
-                output_str = json.dumps(output_config, indent=4)
+                output_str = json.dumps(output_config, cls=HammerJSONEncoder, indent=4)
         elif is_string_action(action_func):
             action_func = cast(CLIActionStringType, action_func)
             output_str = action_func(driver, errors.append)
