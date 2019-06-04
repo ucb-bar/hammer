@@ -452,7 +452,7 @@ class HammerTechnology:
             raise TypeError("lib must be a dict")
 
         # Convert the dict to JSON...
-        return Library.from_json(json.dumps(lib), cls=HammerJSONEncoder)
+        return Library.from_json(json.dumps(lib, cls=HammerJSONEncoder))
 
     @property
     def tech_defined_libraries(self) -> List[Library]:
