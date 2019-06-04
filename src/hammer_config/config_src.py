@@ -21,7 +21,8 @@ import numbers
 import os
 import re
 
-# A heler class that writes Decimals as strings
+# A helper class that writes Decimals as strings
+# TODO(ucb-bar/hammer#378) get rid of this and serialize units
 class HammerJSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, Decimal):
