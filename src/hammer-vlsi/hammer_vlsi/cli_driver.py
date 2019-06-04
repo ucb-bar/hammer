@@ -20,6 +20,8 @@ from typing import List, Dict, Tuple, Any, Callable, Optional, Union, cast
 
 from hammer_utils import add_dicts, deeplist, deepdict, get_or_else, check_function_type
 
+from hammer_config import HammerJSONEncoder
+
 
 def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callable[[str], None]) -> List[str]:
     """Parse a possibly null list of files, validate the existence of each file, and return a list of paths (possibly
@@ -53,7 +55,7 @@ def dump_config_to_json_file(output_path: str, config: dict) -> None:
     :param config: Config dictionary to dump
     """
     with open(output_path, "w") as f:
-        f.write(json.dumps(config, indent=4))
+        f.write(json.dumps(config, cls=HammerJSONEncoder, indent=4))
 
 
 # Type signature of a CLIDriver action that returns a config dictionary.
@@ -191,7 +193,7 @@ class CLIDriver:
         Dump macro size information.
         """
         macro_json = list(map(lambda m: m.to_setting(), driver.tech.get_macro_sizes()))
-        return json.dumps(macro_json, indent=4)
+        return json.dumps(macro_json, cls=HammerJSONEncoder, indent=4)
 
     def get_extra_synthesis_hooks(self) -> List[HammerToolHookAction]:
         """
@@ -748,7 +750,7 @@ class CLIDriver:
                         new_output_json = json.dumps(d.project_config, indent=4)
                         f.write(new_output_json)
                     with open(os.path.join(rundir, "module_config.json"), "w") as f:
-                        new_output_json = json.dumps(config, indent=4)
+                        new_output_json = json.dumps(config, cls=HammerJSONEncoder, indent=4)
                         f.write(new_output_json)
 
                     d.update_project_configs(deeplist(base_project_config[0]))
