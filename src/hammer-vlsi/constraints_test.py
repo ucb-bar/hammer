@@ -10,7 +10,8 @@ from decimal import Decimal
 from hammer_utils import add_dicts
 from hammer_tech import MacroSize
 from hammer_vlsi import DelayConstraint, ClockPort, DummyHammerTool, PinAssignment, PinAssignmentError, \
-    PinAssignmentSemiAutoError, PlacementConstraint, PlacementConstraintType, Margins
+    PinAssignmentSemiAutoError, PlacementConstraint, PlacementConstraintType, Margins, \
+    BumpAssignment, BumpsDefinition, BumpsPinNamingScheme
 from hammer_vlsi.units import TimeValue
 
 import unittest
@@ -100,6 +101,92 @@ vlsi.inputs.clocks:
             source_path=None,
             divisor=None
         ))
+
+class BumpsTest(unittest.TestCase):
+    def test_bump_naming(self) -> None:
+        assignments = [
+            BumpAssignment(name="foo",no_connect=False,x=Decimal(1),y=Decimal(1),group=None,custom_cell=None),
+            BumpAssignment(name="bar",no_connect=False,x=Decimal(3),y=Decimal(1),group=None,custom_cell=None),
+            BumpAssignment(name="baz",no_connect=True,x=Decimal(4),y=Decimal(1),group=None,custom_cell=None),
+            BumpAssignment(name="qux",no_connect=False,x=Decimal(22),y=Decimal(204),group=None,custom_cell=None),
+            BumpAssignment(name="quux",no_connect=False,x=Decimal(204),y=Decimal(204),group=None,custom_cell=None),
+            BumpAssignment(name="alice",no_connect=False,x=Decimal(2),y=Decimal(204),group=None,custom_cell=None),
+            BumpAssignment(name="bob",no_connect=False,x=Decimal(204),y=Decimal(22),group=None,custom_cell=None),
+            BumpAssignment(name="VDD",no_connect=False,x=Decimal(203),y=Decimal(21),group=None,custom_cell=None),
+            BumpAssignment(name="VSS",no_connect=False,x=Decimal(202),y=Decimal(20),group=None,custom_cell=None)
+        ]
+        definition = BumpsDefinition(x=204,y=204,pitch=Decimal("1.23"),cell="bumpcell",assignments=assignments)
+
+        for a in assignments:
+            if a.name == "foo":
+                self.assertEqual(BumpsPinNamingScheme.A0.name_bump(definition, a), "KD203")
+                self.assertEqual(BumpsPinNamingScheme.A1.name_bump(definition, a), "KD204")
+                self.assertEqual(BumpsPinNamingScheme.A00.name_bump(definition, a), "KD203")
+                self.assertEqual(BumpsPinNamingScheme.A01.name_bump(definition, a), "KD204")
+                self.assertEqual(BumpsPinNamingScheme.Index.name_bump(definition, a), "1")
+            elif a.name == "bar":
+                self.assertEqual(BumpsPinNamingScheme.A0.name_bump(definition, a), "KD201")
+                self.assertEqual(BumpsPinNamingScheme.A1.name_bump(definition, a), "KD202")
+                self.assertEqual(BumpsPinNamingScheme.A00.name_bump(definition, a), "KD201")
+                self.assertEqual(BumpsPinNamingScheme.A01.name_bump(definition, a), "KD202")
+                self.assertEqual(BumpsPinNamingScheme.Index.name_bump(definition, a), "2")
+            elif a.name == "baz":
+                self.assertEqual(BumpsPinNamingScheme.A0.name_bump(definition, a), "KD200")
+                self.assertEqual(BumpsPinNamingScheme.A1.name_bump(definition, a), "KD201")
+                self.assertEqual(BumpsPinNamingScheme.A00.name_bump(definition, a), "KD200")
+                self.assertEqual(BumpsPinNamingScheme.A01.name_bump(definition, a), "KD201")
+                self.assertEqual(BumpsPinNamingScheme.Index.name_bump(definition, a), "3")
+            elif a.name == "qux":
+                self.assertEqual(BumpsPinNamingScheme.A0.name_bump(definition, a), "A182")
+                self.assertEqual(BumpsPinNamingScheme.A1.name_bump(definition, a), "A183")
+                self.assertEqual(BumpsPinNamingScheme.A00.name_bump(definition, a), "A182")
+                self.assertEqual(BumpsPinNamingScheme.A01.name_bump(definition, a), "A183")
+                self.assertEqual(BumpsPinNamingScheme.Index.name_bump(definition, a), "4")
+            elif a.name == "quux":
+                self.assertEqual(BumpsPinNamingScheme.A0.name_bump(definition, a), "A0")
+                self.assertEqual(BumpsPinNamingScheme.A1.name_bump(definition, a), "A1")
+                self.assertEqual(BumpsPinNamingScheme.A00.name_bump(definition, a), "A000")
+                self.assertEqual(BumpsPinNamingScheme.A01.name_bump(definition, a), "A001")
+                self.assertEqual(BumpsPinNamingScheme.Index.name_bump(definition, a), "5")
+            elif a.name == "alice":
+                self.assertEqual(BumpsPinNamingScheme.A0.name_bump(definition, a), "A202")
+                self.assertEqual(BumpsPinNamingScheme.A1.name_bump(definition, a), "A203")
+                self.assertEqual(BumpsPinNamingScheme.A00.name_bump(definition, a), "A202")
+                self.assertEqual(BumpsPinNamingScheme.A01.name_bump(definition, a), "A203")
+                self.assertEqual(BumpsPinNamingScheme.Index.name_bump(definition, a), "6")
+            elif a.name == "bob":
+                self.assertEqual(BumpsPinNamingScheme.A0.name_bump(definition, a), "JC0")
+                self.assertEqual(BumpsPinNamingScheme.A1.name_bump(definition, a), "JC1")
+                self.assertEqual(BumpsPinNamingScheme.A00.name_bump(definition, a), "JC000")
+                self.assertEqual(BumpsPinNamingScheme.A01.name_bump(definition, a), "JC001")
+                self.assertEqual(BumpsPinNamingScheme.Index.name_bump(definition, a), "7")
+            elif a.name == "VDD":
+                self.assertEqual(BumpsPinNamingScheme.A0.name_bump(definition, a), "JD1")
+                self.assertEqual(BumpsPinNamingScheme.A1.name_bump(definition, a), "JD2")
+                self.assertEqual(BumpsPinNamingScheme.A00.name_bump(definition, a), "JD001")
+                self.assertEqual(BumpsPinNamingScheme.A01.name_bump(definition, a), "JD002")
+                self.assertEqual(BumpsPinNamingScheme.Index.name_bump(definition, a), "8")
+            elif a.name == "VSS":
+                self.assertEqual(BumpsPinNamingScheme.A0.name_bump(definition, a), "JE2")
+                self.assertEqual(BumpsPinNamingScheme.A1.name_bump(definition, a), "JE3")
+                self.assertEqual(BumpsPinNamingScheme.A00.name_bump(definition, a), "JE002")
+                self.assertEqual(BumpsPinNamingScheme.A01.name_bump(definition, a), "JE003")
+                self.assertEqual(BumpsPinNamingScheme.Index.name_bump(definition, a), "9")
+
+        assignments = [
+            BumpAssignment(name="foo",no_connect=False,x=Decimal(1),y=Decimal(1),group=None,custom_cell=None)
+        ]
+        definition = BumpsDefinition(x=420,y=420,pitch=Decimal("1.23"),cell="bumpcell",assignments=assignments)
+        self.assertEqual(BumpsPinNamingScheme.A1.name_bump(definition, assignments[0]), "YY420")
+
+        definition = BumpsDefinition(x=421,y=421,pitch=Decimal("1.23"),cell="bumpcell",assignments=assignments)
+        self.assertEqual(BumpsPinNamingScheme.A1.name_bump(definition, assignments[0]), "AAA421")
+
+        definition = BumpsDefinition(x=8420,y=8420,pitch=Decimal("1.23"),cell="bumpcell",assignments=assignments)
+        self.assertEqual(BumpsPinNamingScheme.A1.name_bump(definition, assignments[0]), "YYY8420")
+
+        definition = BumpsDefinition(x=8421,y=8421,pitch=Decimal("1.23"),cell="bumpcell",assignments=assignments)
+        self.assertEqual(BumpsPinNamingScheme.A1.name_bump(definition, assignments[0]), "AAAA8421")
 
 
 class DelayConstraintTest(unittest.TestCase):
