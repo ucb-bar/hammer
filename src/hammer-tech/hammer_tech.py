@@ -838,6 +838,26 @@ class HammerTechnology:
         else:
             raise ValueError("Tech JSON does not specify any stackups")
 
+    def get_shrink_factor(self) -> Decimal:
+        """
+        Return the manufacturing shrink factor.
+        """
+        if self.config.shrink_factor is not None:
+            return Decimal(self.config.shrink_factor)
+        else:
+            # TODO(johnwright) Warn the user that we are using a default shrink factor (they should update their tech plugin)
+            return Decimal(1)
+
+    def get_post_shrink_length(self, length: Decimal) -> Decimal:
+        """
+        Convert a drawn dimension into a manufactured (post-shrink) dimension.
+
+        :param length: The drawn length
+        :return: The post-shrink length
+        """
+        # TODO(ucb-bar/hammer#378) use hammer units for length and area
+        return self.get_shrink_factor() * length
+
     def get_grid_unit(self) -> Decimal:
         """
         Return the manufacturing grid unit.
