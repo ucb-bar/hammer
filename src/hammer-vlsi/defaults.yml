@@ -350,8 +350,22 @@ vlsi.inputs:
     #  - no_connect (Optional[bool]) - If True the bump will be present but unconnected
     #  - x (Decimal) - The X coordinate of the bump assigned to this net
     #  - y (Decimal) - The Y coordinate of the bump assigned to this net
+    #  - group (Optional[str]) - The group name for the bumps, e.g. for creating schematic symbols
     #  - custom_cell (Optional[str]) - Cell name (MACRO name) of a custom bump cell in place of the default for this bump. You must also specify the LEF and GDS for this bump in extra_libraries.
     assignments: []
+
+  # Naming scheme for the bumps' actual physical pin designators
+  # Valid options are
+  # - "A0"    (Use letters for rows, skipping I, O, Q, S, X, and Z. After Y is AA, AB, AC ...
+  #            Use numbers for columns, starting at 0, with no leading 0s (0-9, then 10, 11, ...))
+  # - "A1"    (Like A0, but numbers start at 1)
+  # - "A00"   (Like A0, but all bumps will have the same number of digits, with leading 0s appended if needed.
+  #            E.g. if there are 555 columns, The top row will start at A000 and end at A554)
+  # - "A01"   (Like A00, but numbers start at 1)
+  # - "Index" (Just returns a single number in the order the bumps are listed- useful for non-grid designs)
+  # type: str
+  bumps_pin_naming_scheme: "A1"
+
 
   # Pin placement mode. (str)
   # Specifies how to arrange pins for your design.

@@ -17,14 +17,8 @@ from hammer_tech import MacroSize
 from .units import TimeValue, VoltageValue, TemperatureValue
 
 from decimal import Decimal
-
-__all__ = ['ILMStruct', 'SRAMParameters', 'Supply', 'PinAssignment',
-           'BumpAssignment', 'BumpsDefinition', 'ClockPort',
-           'OutputLoadConstraint', 'DelayConstraint', 'ObstructionType',
-           'PlacementConstraintType', 'Margins', 'PlacementConstraint',
-           'MMMCCornerType', 'MMMCCorner', 'PinAssignmentError', 'PinAssignmentPreplacedError',
-           'PinAssignmentSemiAutoError']
-
+import math
+import string
 
 # Struct that holds various paths related to ILMs.
 class ILMStruct(NamedTuple('ILMStruct', [
@@ -237,6 +231,7 @@ BumpAssignment = NamedTuple('BumpAssignment', [
     ('no_connect', Optional[bool]),
     ('x', Decimal),
     ('y', Decimal),
+    ('group', Optional[str]),
     ('custom_cell', Optional[str])
 ])
 
@@ -247,6 +242,95 @@ BumpsDefinition = NamedTuple('BumpsDefinition', [
     ('cell', str),
     ('assignments', List[BumpAssignment])
 ])
+
+class BumpsPinNamingScheme(Enum):
+    A0 = 0
+    A1 = 1
+    A00 = 2
+    A01 = 3
+    Index = 4
+
+    @classmethod
+    def __mapping(cls) -> Dict[str, "BumpsPinNamingScheme"]:
+        return {
+            "A0": BumpsPinNamingScheme.A0,
+            "A1": BumpsPinNamingScheme.A1,
+            "A00": BumpsPinNamingScheme.A00,
+            "A01": BumpsPinNamingScheme.A01,
+            "index": BumpsPinNamingScheme.Index
+        }
+
+    @staticmethod
+    def from_str(input_str: str) -> "BumpsPinNamingScheme":
+        try:
+            return BumpsPinNamingScheme.__mapping()[input_str]
+        except KeyError:
+            raise ValueError("Invalid bumps pin naming scheme: " + str(input_str))
+
+    def __str__(self) -> str:
+        return reverse_dict(BumpsPinNamingScheme.__mapping())[self]
+
+    def name_bump(self, definition: BumpsDefinition, assignment: BumpAssignment) -> str:
+        # Skip I, O, Q, S, X, and Z
+        skips = list('IOQSXZ')
+        letters = [x for x in list(string.ascii_uppercase) if x not in skips]
+        radix = len(letters)
+        # Sanity check
+        assert radix == 20
+
+        col = int(assignment.x)
+        row = int(assignment.y)
+
+
+        if self == BumpsPinNamingScheme.Index:
+            # This raises a ValueError if the entry is not in the list, which shouldn't happen except to devs
+            return str(definition.assignments.index(assignment) + 1)
+
+        else:
+            # A0, A1, A00, or A01
+            if Decimal(col) != assignment.x or Decimal(row) != assignment.y:
+                raise ValueError("This bump naming scheme does not support fractional x and y assignments: x={x}, y={y}. Implement this, or increase the pitch and use blowouts.".format(x=assignment.x, y=assignment.y))
+
+            # Top right in GDS-land is A0 or A1 (this is top-left in board-land)
+            col = definition.x - col
+            row = definition.y - row
+
+            row_str = str(letters[row % radix])
+            row = row // radix
+            # This math gets funky, because leading letters are worth 1 more digit (blank is 0 for leadings, but A is 0 for non-leading digits)
+            while row > 0:
+                row = row - 1
+                row_str = str(letters[row % radix]) + row_str
+                row = row // radix
+
+            col_offs = 0
+            pad_zero = False
+
+            if self == BumpsPinNamingScheme.A0:
+                pass
+            elif self == BumpsPinNamingScheme.A1:
+                col_offs = 1
+            elif self == BumpsPinNamingScheme.A00:
+                pad_zero = True
+            elif self == BumpsPinNamingScheme.A01:
+                col_offs = 1
+                pad_zero = True
+            else:
+                assert False, "should not get here"
+
+            # Add the offset for A1 and A01
+            col = col + col_offs
+
+            # calculate the number of zeros we need
+            max_value = definition.x - 1 + col_offs
+            num_digits = math.ceil(math.log(max_value)/math.log(10))
+
+            col_str = str(col)
+            # use the zero padding if applicable
+            if pad_zero:
+                col_str = ("{:0" + str(num_digits) + "d}").format(col)
+
+            return row_str + col_str
 
 ClockPort = NamedTuple('ClockPort', [
     ('name', str),
