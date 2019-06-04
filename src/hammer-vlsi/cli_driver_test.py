@@ -13,6 +13,7 @@ from decimal import Decimal
 from typing import Any, Callable, Dict, Optional
 
 import hammer_config
+from hammer_config import HammerJSONEncoder
 from hammer_logging.test import HammerLoggingCaptureContext
 from hammer_tech import MacroSize
 from hammer_vlsi import CLIDriver, HammerDriver, PlacementConstraint, PlacementConstraintType
