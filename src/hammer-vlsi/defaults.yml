@@ -620,47 +620,95 @@ technology.core:
     # type: str
     tap_cell_rail_reference: null
 
+# Specific inputs for the simulation tool.
+# These inputs will vary based on if the simulation is for RTL, post synthesis, or post PAR.
+# There may be HAMMER simulation tool plugins available that include common simulator flags and inputs that can be modified/augmented for the user's needs.
 sim.inputs:
-  # Top RTL module
+  # Top RTL module for simulation
+  # type: str
   top_module: null
-  # top_module_config: null
-  input_files: []
-  # Debug option
-  debug: false
-  # Black box command line option escape hatch
-  options: [] 
-  # Define options
-  defines: []
-  # C compiler options
-  compiler_opts: []
-  # Simulation timescale
-  timescale: null
-  # C source files 
-  csrc: []
-  # Benchmarks to run on simulator
-  benchmarks: []
-  # Flags to run with the simulator
-  exec_flags: []
-  # List of TCL scripts to execute in a vcs call
-  tcl_scripts: []
 
+  # Input files for simulation including verilog sources, testharness/testbench, etc.
+  # type: List[str]
+  input_files: []
+
+  # Debug option that enables VCD generation from simulation
+  # type: bool
+  debug: false
+
+  # Permissive options for the simulator generation
+  # type: List[str]
+  # These options will appear as plain string option additions when generating the simulation executable
+  options: []
+
+  # Define options passed when generating the simulation executable
+  # type: List[str]
+  # For example: when passed to VCS, each define in the input list will be added as "+define+" + {define}
+  defines: []
+
+  # C compiler options used when generating the simulation executable
+  # type: List[str]
+  # For example: when passed to VCS, each compiler_opt will be added as "-CC " + {compiler_opt}
+  compiler_opts: []
+
+  # Simulation timescale
+  # type: str
+  # This is passed as a plain string
+  # For example, for VCS, timescale may be set as "sim.inputs.timescale: '1ns/10ps' which would be passed as "-timescale=1ns/10ps" 
+  timescale: null
+
+  # C source files passed when generatin the simulation executable
+  # type: List[str[
+  # These files will be passed like the verilog input files
+  csrc: []
+
+  # Benchmarks to run with the simulator executable 
+  # type: List[str]
+  # This is a list of paths to benchmark binaries that will be run with the simulator to test the design if the testbench requires it.
+  # For example, this may be a RISCV binary like rv64ui-p-simple.
+  # If left empty, the simulation will execute as normal.
+  benchmarks: []
+
+  # Flags to run with the simulator
+  # type: List[str]
+  # Each string in this list will be passed as an option when actually executing the simulation executable generated from the previous arguments.
+  exec_flags: []
+
+  # Path to the access.tab file used for gate level simulations
+  # type: str
+  # This file will include a list of the sequential element standard cells in the design.
+  # This file will automatically be generated when a design is synthesized/PAR'd by HAMMER, and will be passed to the sim tool by running the HAMMER action 'syn_to_sim'
   access_file: ""
+
+  # Path to the force_regs.ucli file that is used to set sequential element output state at the beginning of the simulation
+  # type: str
+  # This file will include the hierarchical path in the design to each sequential element followed by its output pin and its desired inital state.
+  # This file will automatically be generated when a design is synthesized/PAR'd by HAMMER, and will be passed to the sim tool by running the HAMMER action 'syn_to_sim'
   force_regs_file: ""
 
+  # Hierarchical path to the top level instance of the "dut" from the testbench.
+  # type: str
+  # For example, this will be used to generate the hierarchical path through the testbench and DUT to each sequential element in the design.
   tb_dut: "dut"  
 
+  # Simulation mode for simulation at different levels of the VLSI flow
   # Valid options are:
   #   "rtl" for rtl level simulation
   #   "gl-syn" for gate level post-synthesis simulation
   #   "gl-par" for gate level post-par simulation
   level: "rtl"
 
-  gl-syn:
-    input_files: []
-    post_synth_sdc: null
-    time_annotated: false
-    defines: []
-    options: []
+  # TO BE ADDED:
+  #
+  ## Determines whether or not the simulation executable that is generated with the above inputs will actually be executed with the given flags or if the executable will just be generated in the specified run directory.
+  ## type: bool
+  # execute_sim: True
+  #
+  ## Turns time annotated sim on or off
+  ## type: bool
+  ## If set to False, the sim will be purely functional, regardless of the simulation "level".
+  ## If set to True, the sim will be time annotated based on synthesis or PAR results.
+  # time_annotated: False
 
 sim.submit:
   command: "${vlsi.submit.command}"
