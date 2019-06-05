@@ -146,7 +146,6 @@ class CLIDriver:
             check_CLIActionType_type(self.sim_action)
         else:
             self.sim_action = self.create_sim_action([])
-        #TODO (daniel)
         if hasattr(self, "synthesis_sim_action"):
             check_CLIActionType_type(self.synthesis_sim_action)
         else:
@@ -188,7 +187,7 @@ class CLIDriver:
             "par-to-lvs": self.par_to_lvs_action,
             "drc": self.drc_action,
             "lvs": self.lvs_action,
-            "sim": self.sim_action,  # TODO(daniel)
+            "sim": self.sim_action,
             "simulation": self.sim_action,
             "synthesis_to_sim": self.synthesis_to_sim_action,
             "synthesis-to-sim": self.synthesis_to_sim_action,
@@ -309,14 +308,6 @@ class CLIDriver:
                           post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
         hooks = self.get_extra_lvs_hooks() + custom_hooks  # type: List[HammerToolHookAction]
         return self.create_action("lvs", hooks if len(hooks) > 0 else None,
-                                  pre_action_func, post_load_func, post_run_func)
-    # TODO(daniel)
-    def create_sim_action(self, custom_hooks: List[HammerToolHookAction],
-                          pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
-                          post_load_func: Optional[Callable[[HammerDriver], None]] = None,
-                          post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
-        hooks = self.get_extra_sim_hooks() + custom_hooks  # type: List[HammerToolHookAction]
-        return self.create_action("sim", hooks if len(hooks) > 0 else None,
                                   pre_action_func, post_load_func, post_run_func)
 
     def create_sim_action(self, custom_hooks: List[HammerToolHookAction],
@@ -773,7 +764,6 @@ class CLIDriver:
         self.par_rundir = get_nonempty_str(args['par_rundir'])
         self.drc_rundir = get_nonempty_str(args['drc_rundir'])
         self.lvs_rundir = get_nonempty_str(args['lvs_rundir'])
-        # TODO(daniel)
         self.sim_rundir = get_nonempty_str(args['sim_rundir'])
 
         # Stage control: from/to
@@ -990,7 +980,6 @@ class CLIDriver:
                             help='(optional) Directory to store DRC results in')
         parser.add_argument("--lvs_rundir", required=False, default="",
                             help='(optional) Directory to store LVS results in')
-        # TODO(daniel)
         parser.add_argument("--sim_rundir", required=False, default="",
                             help='(optional) Directory to store simulation results in')
         # Optional arguments for step control.

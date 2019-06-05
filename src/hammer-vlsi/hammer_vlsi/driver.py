@@ -19,7 +19,6 @@ import hammer_tech
 from hammer_tech import MacroSize
 from .hammer_tool import HammerTool
 from .hooks import HammerToolHookAction
-# TODO(daniel)
 from .hammer_vlsi_impl import HammerVLSISettings, HammerPlaceAndRouteTool, HammerSynthesisTool, \
     HammerSignoffTool, HammerDRCTool, HammerLVSTool, HammerSRAMGeneratorTool, HammerSimTool, \
     HierarchicalMode, load_tool, PlacementConstraint, SRAMParameters, ILMStruct
@@ -550,7 +549,6 @@ class HammerDriver:
         """
         self.post_custom_lvs_tool_hooks = list(hooks)
 
-    # TODO(daniel)
     def set_post_custom_sim_tool_hooks(self, hooks: List[HammerToolHookAction]) -> None:
         """
         Set the extra list of hooks used for control flow (resume/pause) in run_sim.
@@ -646,7 +644,6 @@ class HammerDriver:
         try:
             output_files = deeplist(output_dict["synthesis.outputs.output_files"])
             result = {
-                #"sim.inputs.gl-syn.input_files": output_files,
                 "sim.inputs.input_files": output_files,
                 "sim.inputs.input_files_meta": "append",
                 "sim.inputs.top_module": output_dict["synthesis.inputs.top_module"],
