@@ -14,8 +14,9 @@ from abc import ABCMeta, abstractmethod
 from typing import Any, Callable, Iterable, List, NamedTuple, Optional, Tuple, Dict
 from decimal import Decimal
 
-import hammer_config
 import python_jsonschema_objects  # type: ignore
+import hammer_jsonschema_objects
+import hammer_config
 
 from hammer_config import load_yaml, HammerJSONEncoder
 from hammer_logging import HammerVLSILoggingContext
@@ -30,6 +31,7 @@ from stackup import RoutingDirection, WidthSpacingTuple, Metal, Stackup
 # Holds the list of pre-implemented filters.
 # Access it like hammer_tech.filters.lef_filter
 filters = LibraryFilterHolder()
+
 
 builder = python_jsonschema_objects.ObjectBuilder(json.loads(open(os.path.dirname(__file__) + "/schema.json").read()))
 ns = builder.build_classes()

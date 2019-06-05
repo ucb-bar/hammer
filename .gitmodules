@@ -1,13 +1,3 @@
 [submodule "src/tools/firrtl"]
 	path = src/tools/firrtl
 	url = https://github.com/ucb-bar/firrtl.git
-[submodule "src/tools/pyyaml"]
-	path = src/tools/pyyaml
-	url = https://github.com/edwardcwang/pyyaml_plsi.git
-[submodule "src/python-jsonschema-objects"]
-	path = src/python-jsonschema-objects
-	url = https://github.com/edwardcwang/python-jsonschema-objects.git
-	branch = hammer-201710
-[submodule "src/jsonschema"]
-	path = src/jsonschema
-	url = https://github.com/edwardcwang/jsonschema.git
