@@ -8,6 +8,7 @@
 #  See LICENSE for licence details.
 
 from hammer_vlsi import HammerPlaceAndRouteTool, DummyHammerTool, HammerToolStep, deepdict
+from hammer_config import HammerJSONEncoder
 
 from typing import Dict, List, Any, Optional
 from decimal import Decimal
@@ -64,9 +65,9 @@ class MockPlaceAndRoute(HammerPlaceAndRouteTool, DummyHammerTool):
             "nets": list(map(str, nets)),
             "add_pins": add_pins
         }
-        return [json.dumps(output_dict)]
+        return [json.dumps(output_dict, cls=HammerJSONEncoder)]
 
-    def specify_std_cell_power_straps(self, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
+    def specify_std_cell_power_straps(self, blockage_spacing: Decimal, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
         layer_name = self.get_setting("technology.core.std_cell_rail_layer")
         self._power_straps_check_index(layer_name)
         output_dict = {
@@ -75,7 +76,7 @@ class MockPlaceAndRoute(HammerPlaceAndRouteTool, DummyHammerTool):
             "bbox": [] if bbox is None else list(map(str, bbox)),
             "nets": list(map(str, nets))
         }
-        return [json.dumps(output_dict)]
+        return [json.dumps(output_dict, cls=HammerJSONEncoder)]
 
     def fill_outputs(self) -> bool:
         self.output_gds = "/dev/null"

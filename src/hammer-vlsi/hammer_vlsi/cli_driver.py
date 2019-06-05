@@ -20,6 +20,8 @@ from typing import List, Dict, Tuple, Any, Callable, Optional, Union, cast
 
 from hammer_utils import add_dicts, deeplist, deepdict, get_or_else, check_function_type
 
+from hammer_config import HammerJSONEncoder
+
 
 def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callable[[str], None]) -> List[str]:
     """Parse a possibly null list of files, validate the existence of each file, and return a list of paths (possibly
@@ -53,7 +55,7 @@ def dump_config_to_json_file(output_path: str, config: dict) -> None:
     :param config: Config dictionary to dump
     """
     with open(output_path, "w") as f:
-        f.write(json.dumps(config, indent=4))
+        f.write(json.dumps(config, cls=HammerJSONEncoder, indent=4))
 
 
 # Type signature of a CLIDriver action that returns a config dictionary.
@@ -207,7 +209,7 @@ class CLIDriver:
         Dump macro size information.
         """
         macro_json = list(map(lambda m: m.to_setting(), driver.tech.get_macro_sizes()))
-        return json.dumps(macro_json, indent=4)
+        return json.dumps(macro_json, cls=HammerJSONEncoder, indent=4)
 
     def get_extra_synthesis_hooks(self) -> List[HammerToolHookAction]:
         """
@@ -834,10 +836,10 @@ class CLIDriver:
                 def post_run(d: HammerDriver, rundir: str) -> None:
                     # Write out the configs used/generated for logging/debugging.
                     with open(os.path.join(rundir, "full_config.json"), "w") as f:
-                        new_output_json = json.dumps(d.project_config, indent=4)
+                        new_output_json = json.dumps(d.project_config, cls=HammerJSONEncoder, indent=4)
                         f.write(new_output_json)
                     with open(os.path.join(rundir, "module_config.json"), "w") as f:
-                        new_output_json = json.dumps(config, indent=4)
+                        new_output_json = json.dumps(config, cls=HammerJSONEncoder, indent=4)
                         f.write(new_output_json)
 
                     d.update_project_configs(deeplist(base_project_config[0]))
@@ -895,7 +897,7 @@ class CLIDriver:
                     b, ext = os.path.splitext(args["output"])
                     new_output_filename = "{base}-{module}{ext}".format(base=b, module=module, ext=ext)
                     with open(new_output_filename, "w") as f:
-                        new_output_json = json.dumps(new_output, indent=4)
+                        new_output_json = json.dumps(new_output, cls=HammerJSONEncoder, indent=4)
                         f.write(new_output_json)
                     log.info("Output JSON: " + str(new_output))
 
@@ -905,7 +907,7 @@ class CLIDriver:
                     }
                     new_ilm_filename = "{base}-{module}_ilm{ext}".format(base=b, module=module, ext=ext)
                     with open(new_ilm_filename, "w") as f:
-                        json_content = json.dumps(new_ilm, indent=4)
+                        json_content = json.dumps(new_ilm, cls=HammerJSONEncoder, indent=4)
                         f.write(json_content)
                     log.info("New input ILM JSON written to " + new_ilm_filename)
                     driver.update_project_configs(driver.project_configs + [new_ilm])
@@ -940,7 +942,7 @@ class CLIDriver:
             action_func = cast(CLIActionConfigType, action_func)
             output_config = action_func(driver, errors.append)  # type: Optional[dict]
             if output_config is not None:
-                output_str = json.dumps(output_config, indent=4)
+                output_str = json.dumps(output_config, cls=HammerJSONEncoder, indent=4)
         elif is_string_action(action_func):
             action_func = cast(CLIActionStringType, action_func)
             output_str = action_func(driver, errors.append)

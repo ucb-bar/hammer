@@ -8,7 +8,7 @@
 from typing import Dict, Tuple, List, Optional, Union
 from decimal import Decimal
 
-from hammer_utils import (topological_sort, get_or_else, optional_map, assert_function_type,
+from hammer_utils import (topological_sort, get_or_else, optional_map, assert_function_type, check_function_type,
                           gcd, lcm, lcm_grid, coerce_to_grid, check_on_grid)
 
 import unittest
@@ -137,6 +137,14 @@ class UtilsTest(unittest.TestCase):
         assert_function_type(test8, ["int"], list)  # type: ignore
         assert_function_type(test8, [int], "list")  # type: ignore
         assert_function_type(test8, [int], list)
+
+        # Check that untyped arguments don't crash.
+        def test9(x) -> str:
+            return str(x)
+
+        test9_return = check_function_type(test9, [int], str)
+        assert test9_return is not None
+        self.assertTrue("incorrect signature" in test9_return)
 
         with self.assertRaises(TypeError):
             # Different # of arguments

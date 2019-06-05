@@ -16,7 +16,7 @@ from decimal import Decimal
 import hammer_config
 import python_jsonschema_objects  # type: ignore
 
-from hammer_config import load_yaml
+from hammer_config import load_yaml, HammerJSONEncoder
 from hammer_logging import HammerVLSILoggingContext
 from hammer_utils import (LEFUtils, add_lists, deeplist, get_or_else,
                           in_place_unique, optional_map, reduce_list_str,
@@ -241,8 +241,8 @@ class Site(NamedTuple('Site', [
 class MacroSize(NamedTuple('MacroSize', [
     ('library', str),
     ('name', str),
-    ('width', float),
-    ('height', float)
+    ('width', Decimal),
+    ('height', Decimal)
 ])):
     __slots__ = ()
 
@@ -259,8 +259,8 @@ class MacroSize(NamedTuple('MacroSize', [
         return MacroSize(
             library=str(d['library']),
             name=str(d['name']),
-            width=float(d['width']),
-            height=float(d['height'])
+            width=Decimal(str(d['width'])),
+            height=Decimal(str(d['height']))
         )
 
 
@@ -363,7 +363,7 @@ class HammerTechnology:
         :param yaml_str: yaml string to use as the technology yaml
         :param path: Path to set as the technology folder (e.g. foo/bar/technology/saed32)
         """
-        return HammerTechnology.load_from_json(technology_name, json.dumps(load_yaml(yaml_str)), path)
+        return HammerTechnology.load_from_json(technology_name, json.dumps(load_yaml(yaml_str), cls=HammerJSONEncoder), path)
 
     def set_database(self, database: hammer_config.HammerDatabase) -> None:
         """Set the settings database for use by the tool."""
@@ -452,7 +452,7 @@ class HammerTechnology:
             raise TypeError("lib must be a dict")
 
         # Convert the dict to JSON...
-        return Library.from_json(json.dumps(lib))
+        return Library.from_json(json.dumps(lib, cls=HammerJSONEncoder))
 
     @property
     def tech_defined_libraries(self) -> List[Library]:
@@ -494,7 +494,7 @@ class HammerTechnology:
                 name = ""
             else:
                 name = str(lib_name)
-            return [json.dumps([paths[0], name])]
+            return [json.dumps([paths[0], name], cls=HammerJSONEncoder)]
 
         lef_filter_plus = filters.lef_filter._replace(extraction_func=extraction_func)
 

@@ -20,6 +20,7 @@ from hammer_logging import HammerVLSILogging
 import hammer_tech
 from hammer_tech import LibraryFilter, Stackup, Metal, WidthSpacingTuple
 from hammer_utils import deepdict
+from hammer_config import HammerJSONEncoder
 from decimal import Decimal
 
 from test_tool_utils import HammerToolTestHelpers, DummyTool
@@ -73,7 +74,7 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
                 name = ""
             else:
                 name = str(lib.name)
-            return [json.dumps({"path": paths[0], "name": name}, indent=4)]
+            return [json.dumps({"path": paths[0], "name": name}, cls=HammerJSONEncoder, indent=4)]
 
         def sort_func(lib: hammer_tech.Library):
             assert lib.milkyway_techfile is not None
@@ -175,7 +176,7 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
         with open(os.path.join(tech_dir, "defaults.json"), "w") as f:
             f.write(json.dumps({
                 "technology.dummy28.tarball_dir": tech_dir
-            }))
+            }, cls=HammerJSONEncoder))
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, self.add_tarballs)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
@@ -208,7 +209,7 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
             f.write(json.dumps({
                 "technology.dummy28.tarball_dir": tech_dir,
                 "vlsi.technology.extracted_tarballs_dir": tech_dir_base
-            }))
+            }, cls=HammerJSONEncoder))
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, self.add_tarballs)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
@@ -243,7 +244,7 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
                 "technology.dummy28.tarball_dir": tech_dir,
                 "vlsi.technology.extracted_tarballs_dir": "/should/not/be/used",
                 "technology.dummy28.extracted_tarballs_dir": tech_dir_base
-            }))
+            }, cls=HammerJSONEncoder))
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, self.add_tarballs)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
@@ -297,7 +298,7 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
         }
 
         tech_dir = "/tmp/path"  # should not be used
-        tech = hammer_tech.HammerTechnology.load_from_json("dummy28", json.dumps(tech_json, indent=2), tech_dir)
+        tech = hammer_tech.HammerTechnology.load_from_json("dummy28", json.dumps(tech_json, cls=HammerJSONEncoder, indent=2), tech_dir)
 
         # Check that a tech-provided prefix works fine
         self.assertEqual("{0}/water".format(tech_dir), tech.prepend_dir_path("test/water"))
@@ -525,7 +526,7 @@ END LIBRARY
         # Test that macro sizes can be read out of the LEF.
         self.assertEqual(tech.get_macro_sizes(), [
             hammer_tech.MacroSize(library='my_vendor_lib', name='my_awesome_macro',
-                                  width=810.522, height=607.525)
+                                  width=Decimal("810.522"), height=Decimal("607.525"))
         ])
 
         # Cleanup

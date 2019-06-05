@@ -18,6 +18,7 @@ from tech_test_utils import HasGetTech
 from test_tool_utils import HammerToolTestHelpers, DummyTool, SingleStepTool
 
 import hammer_config
+from hammer_config import HammerJSONEncoder
 import hammer_tech
 import hammer_vlsi
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, Level
@@ -212,7 +213,7 @@ class HammerToolTest(HasGetTech, unittest.TestCase):
             ]
         }
         with open(tech_json_filename, "w") as f:
-            f.write(json.dumps(tech_json, indent=4))
+            f.write(json.dumps(tech_json, cls=HammerJSONEncoder, indent=4))
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
         tech.logger = HammerVLSILogging.context("")
@@ -425,7 +426,7 @@ export lol=abc"cat"
                 "vlsi.core.par_tool": "nop",
                 "synthesis.inputs.top_module": "dummy",
                 "synthesis.inputs.input_files": ("/dev/null",)
-            }, indent=4))
+            }, cls=HammerJSONEncoder, indent=4))
 
         class BadExportTool(hammer_vlsi.HammerSynthesisTool, DummyTool):
             def export_config_outputs(self) -> Dict[str, Any]:
@@ -541,6 +542,7 @@ export lol=abc"cat"
         test.run_dir = tempfile.mkdtemp()
         test.technology = tech
         database = hammer_config.HammerDatabase()
+        hammer_vlsi.HammerVLSISettings.load_builtins_and_core(database)
 
         settings = """
         {
@@ -575,6 +577,125 @@ export lol=abc"cat"
         shutil.rmtree(tech_dir_base)
         shutil.rmtree(test.run_dir)
 
+    def test_pin_modes(self) -> None:
+        """
+        Test that both full_auto and semi_auto pin modes work.
+        """
+        import hammer_config
+
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+        def add_stackup(in_dict: Dict[str, Any]) -> Dict[str, Any]:
+            out_dict = deepdict(in_dict)
+            out_dict["stackups"] = [StackupTestHelper.create_test_stackup_dict(8)]
+            return out_dict
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_stackup)
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
+        tech.cache_dir = tech_dir
+        tech.logger = HammerVLSILogging.context("")
+
+        test = DummyTool()
+        test.logger = HammerVLSILogging.context("")
+        test.run_dir = tempfile.mkdtemp()
+        test.technology = tech
+        database = hammer_config.HammerDatabase()
+        hammer_vlsi.HammerVLSISettings.load_builtins_and_core(database)
+
+        # Full-auto config should work in full_auto
+        settings = """
+        {
+        "technology.core.stackup": "StackupWith8Metals",
+        "vlsi.inputs.pin_mode": "generated",
+        "vlsi.inputs.pin.generate_mode": "full_auto",
+        "vlsi.inputs.pin.assignments": [
+                     {"pins": "foo*", "side": "top", "layers": ["M5", "M3"]},
+                     {"pins": "tx_n", "preplaced": true},
+                     {"pins": "rx_n", "side": "left", "layers": ["M6"]}
+                 ]
+        }
+        """
+        database.update_project([hammer_config.load_config_from_string(settings, is_yaml=False)])
+        test.set_database(database)
+
+        with HammerLoggingCaptureContext() as c:
+            my_pins = test.get_pin_assignments()
+
+        self.assertEqual(len(c.logs), 0)
+        assert my_pins is not None
+        self.assertEqual(len(my_pins), 3)
+
+        # Full-auto config should also work in semi_auto
+        settings = """
+        {
+        "technology.core.stackup": "StackupWith8Metals",
+        "vlsi.inputs.pin_mode": "generated",
+        "vlsi.inputs.pin.generate_mode": "semi_auto",
+        "vlsi.inputs.pin.assignments": [
+                     {"pins": "foo*", "side": "top", "layers": ["M5", "M3"]},
+                     {"pins": "tx_n", "preplaced": true},
+                     {"pins": "rx_n", "side": "left", "layers": ["M6"]}
+                 ]
+        }
+        """
+        database.update_project([hammer_config.load_config_from_string(settings, is_yaml=False)])
+        test.set_database(database)
+
+        with HammerLoggingCaptureContext() as c:
+            my_pins = test.get_pin_assignments()
+
+        self.assertEqual(len(c.logs), 0)
+        assert my_pins is not None
+        self.assertEqual(len(my_pins), 3)
+
+        # Semi-auto config should work in semi_auto
+        settings = """
+        {
+        "technology.core.stackup": "StackupWith8Metals",
+        "vlsi.inputs.pin_mode": "generated",
+        "vlsi.inputs.pin.generate_mode": "semi_auto",
+        "vlsi.inputs.pin.assignments": [
+                     {"pins": "foo*", "side": "top", "layers": ["M5", "M3"]},
+                     {"pins": "tx_n", "preplaced": true},
+                     {"pins": "rx_n", "side": "left", "layers": ["M6"], "width": 888.8}
+                 ]
+        }
+        """
+        database.update_project([hammer_config.load_config_from_string(settings, is_yaml=False)])
+        test.set_database(database)
+
+        with HammerLoggingCaptureContext() as c:
+            my_pins = test.get_pin_assignments()
+
+        self.assertEqual(len(c.logs), 0)
+        assert my_pins is not None
+        self.assertEqual(len(my_pins), 3)
+
+        # Semi-auto config should give errors in full_auto
+        settings = """
+        {
+        "technology.core.stackup": "StackupWith8Metals",
+        "vlsi.inputs.pin_mode": "generated",
+        "vlsi.inputs.pin.generate_mode": "full_auto",
+        "vlsi.inputs.pin.assignments": [
+                     {"pins": "foo*", "side": "top", "layers": ["M5", "M3"]},
+                     {"pins": "tx_n", "preplaced": true},
+                     {"pins": "rx_n", "side": "left", "layers": ["M6"], "width": 888.8}
+                 ]
+        }
+        """
+        database.update_project([hammer_config.load_config_from_string(settings, is_yaml=False)])
+        test.set_database(database)
+
+        with HammerLoggingCaptureContext() as c:
+            my_pins = test.get_pin_assignments()
+
+        self.assertEqual(len(c.logs), 1)
+        self.assertTrue("width requires semi_auto" in c.logs[0])
+
+        # Cleanup
+        shutil.rmtree(tech_dir_base)
+        shutil.rmtree(test.run_dir)
+
     def test_pins(self) -> None:
         """
         Test that HammerTool pin placement support works.
@@ -597,6 +718,7 @@ export lol=abc"cat"
         test.run_dir = tempfile.mkdtemp()
         test.technology = tech
         database = hammer_config.HammerDatabase()
+        hammer_vlsi.HammerVLSISettings.load_builtins_and_core(database)
         # Check bad mode string doesn't look at null dict
         settings = """
 {
@@ -649,6 +771,90 @@ export lol=abc"cat"
         shutil.rmtree(tech_dir_base)
         shutil.rmtree(test.run_dir)
 
+    def test_hierarchical_width_height(self) -> None:
+        """
+        Test that hierarchical placements correctly propagate width and height.
+        """
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+        def add_stackup(in_dict: Dict[str, Any]) -> Dict[str, Any]:
+            out_dict = deepdict(in_dict)
+            out_dict["stackups"] = [StackupTestHelper.create_test_stackup_dict(8)]
+            return out_dict
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_stackup)
+        tmpdir = tempfile.mkdtemp()
+        proj_config = os.path.join(tmpdir, "config.json")
+
+        settings = {
+                "vlsi.core.technology": "dummy28",
+                "vlsi.inputs.hierarchical.mode": "hierarchical",
+                "vlsi.inputs.hierarchical.top_module": "TopMod",
+                "vlsi.inputs.hierarchical.config_source": "manual",
+                "vlsi.inputs.hierarchical.manual_modules": [{"TopMod": ["SubModA", "SubModB"]}],
+                "vlsi.inputs.hierarchical.manual_placement_constraints": [
+                    {"TopMod": [
+                        {"path": "top", "type": "toplevel", "x": 0, "y": 0, "width": 1234, "height": 7890, "margins": {"left": 1, "top": 2, "right": 3, "bottom": 4}},
+                        {"path": "top/C", "type": "placement", "x": 2, "y": 102, "width": 30, "height": 40},
+                        {"path": "top/B", "type": "hierarchical", "x": 10, "y": 30, "master": "SubModB"},
+                        {"path": "top/A", "type": "hierarchical", "x": 200, "y": 120, "master": "SubModA"}]},
+                    {"SubModA": [
+                        {"path": "a", "type": "toplevel", "x": 0, "y": 0, "width": 100, "height": 200, "margins": {"left": 0, "top": 0, "right": 0, "bottom": 0}}]},
+                    {"SubModB": [
+                        {"path": "b", "type": "toplevel", "x": 0, "y": 0, "width": 340, "height": 160, "margins": {"left": 0, "top": 0, "right": 0, "bottom": 0}}]}
+                ]
+            }
+        with open(proj_config, "w") as f:
+            f.write(json.dumps(settings, cls=HammerJSONEncoder, indent=4))
+
+        driver = hammer_vlsi.HammerDriver(
+            hammer_vlsi.HammerDriver.get_default_driver_options()._replace(project_configs=[
+                proj_config
+            ]))
+
+        # This should not assert
+        hier_settings = driver.get_hierarchical_settings()
+
+        top_constraints = [x[1]["vlsi.inputs.placement_constraints"] for x in hier_settings if x[0] == "TopMod"][0]
+        print(top_constraints)
+        a = [x for x in top_constraints if x["type"] == "hierarchical" and x["master"] == "SubModA"][0]
+        b = [x for x in top_constraints if x["type"] == "hierarchical" and x["master"] == "SubModB"][0]
+        print(a)
+        # Note that Decimals get serialized as strings
+        self.assertEqual(a["width"], "100")
+        self.assertEqual(a["height"], "200")
+        self.assertEqual(b["width"], "340")
+        self.assertEqual(b["height"], "160")
+
+        # Corrupt SubModA's width and heights
+        settings["vlsi.inputs.hierarchical.manual_placement_constraints"] = [
+                    {"TopMod": [
+                        {"path": "top", "type": "toplevel", "x": 0, "y": 0, "width": 1234, "height": 7890, "margins": {"left": 1, "top": 2, "right": 3, "bottom": 4}},
+                        {"path": "top/C", "type": "placement", "x": 2, "y": 102, "width": 30, "height": 40},
+                        {"path": "top/B", "type": "hierarchical", "x": 10, "y": 30, "master": "SubModB"},
+                        {"path": "top/A", "type": "hierarchical", "x": 200, "y": 120, "width": 123, "height": 456, "master": "SubModA"}]},
+                    {"SubModA": [
+                        {"path": "a", "type": "toplevel", "x": 0, "y": 0, "width": 100, "height": 200, "margins": {"left": 0, "top": 0, "right": 0, "bottom": 0}}]},
+                    {"SubModB": [
+                        {"path": "b", "type": "toplevel", "x": 0, "y": 0, "width": 340, "height": 160, "margins": {"left": 0, "top": 0, "right": 0, "bottom": 0}}]}
+                ]
+
+        with open(proj_config, "w") as f:
+            f.write(json.dumps(settings, cls=HammerJSONEncoder, indent=4))
+
+        driver = hammer_vlsi.HammerDriver(
+            hammer_vlsi.HammerDriver.get_default_driver_options()._replace(project_configs=[
+                proj_config
+            ]))
+
+
+        # This should assert because we mismatched SubModA's width and height with the master values
+        with self.assertRaises(ValueError):
+            hier_settings = driver.get_hierarchical_settings()
+
+        # Cleanup
+        shutil.rmtree(tech_dir_base)
+        shutil.rmtree(tmpdir)
+
 
 T = TypeVar('T')
 
@@ -677,7 +883,7 @@ class HammerToolHooksTestContext:
                 "synthesis.inputs.top_module": "dummy",
                 "synthesis.inputs.input_files": ("/dev/null",),
                 "synthesis.mocksynth.temp_folder": temp_dir
-            }, indent=4))
+            }, cls=HammerJSONEncoder, indent=4))
         options = hammer_vlsi.HammerDriverOptions(
             environment_configs=[],
             project_configs=[json_path],
@@ -974,7 +1180,7 @@ class HammerSubmitCommandTestContext:
             })
 
         with open(json_path, "w") as f:
-            f.write(json.dumps(json_content, indent=4))
+            f.write(json.dumps(json_content, cls=HammerJSONEncoder, indent=4))
 
         options = hammer_vlsi.HammerDriverOptions(
             environment_configs=[],
@@ -1076,7 +1282,7 @@ class HammerSignoffToolTestContext:
             })
 
         with open(json_path, "w") as f:
-            f.write(json.dumps(json_content, indent=4))
+            f.write(json.dumps(json_content, cls=HammerJSONEncoder, indent=4))
 
         options = hammer_vlsi.HammerDriverOptions(
             environment_configs=[],
@@ -1171,7 +1377,7 @@ class HammerSRAMGeneratorToolTestContext:
             })
 
         with open(json_path, "w") as f:
-            f.write(json.dumps(json_content, indent=4))
+            f.write(json.dumps(json_content, cls=HammerJSONEncoder, indent=4))
 
         options = hammer_vlsi.HammerDriverOptions(
             environment_configs=[],
@@ -1260,7 +1466,7 @@ class HammerPowerStrapsTestContext:
                 "technology.core.std_cell_rail_layer": "M1",
                 "technology.core.tap_cell_rail_reference": "FakeTapCell",
                 "par.mockpar.temp_folder": temp_dir
-            }, self.strap_options), indent=4))
+            }, self.strap_options), cls=HammerJSONEncoder, indent=4))
         options = hammer_vlsi.HammerDriverOptions(
             environment_configs=[],
             project_configs=[json_path],

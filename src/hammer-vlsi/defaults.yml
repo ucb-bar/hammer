@@ -242,31 +242,54 @@ vlsi.inputs:
   # List of placement constraints for floorplanning.
   # Each item is a struct member:
   # path (str) - Path to the given instance
-  # type (str) - One of the following:
-  # - "dummy" (does nothing with this constraint)
-  # - "placement" (creates a placement constraint for an instance)
-  # - "toplevel" (top-level chip dimensions; may only occur once, for the top-level module)
-  # - "hardmacro" (places this hard macro at a particular spot)
-  # - "hierarchical" (marks this instance as part of hierarchical place and route)
-  # - "obstruction" (creates a blockage at a particular spot; see obs_types)
-  # TODO(edwardw): add rotation
+  # - Required for all types
+  # type (str) - The type of placement constraint
+  # - Required for all types
+  # - One of the following:
+  #   - "dummy" (does nothing with this constraint)
+  #   - "placement" (creates a placement constraint for an instance)
+  #   - "toplevel" (top-level chip dimensions; may only occur once, for the top-level module)
+  #   - "hardmacro" (places this hard macro at a particular spot)
+  #   - "hierarchical" (marks this instance as part of hierarchical place and route)
+  #   - "obstruction" (creates a blockage at a particular spot; see obs_types)
+  # orientation (Optional[str]) - The orientation
+  # - Optional for all types
+  # - Valid options:
+  #   - "r0"   (standard orientation)
+  #   - "r90"  (rotated 90 degrees clockwise)
+  #   - "r180" (rotated 180 degrees)
+  #   - "r270" (rotated 270 degrees clockwise; equivalent to -90 degrees counterclockwise)
+  #   - "mx"   (mirrored about the x-axis)
+  #   - "mx90" (mirrored about the x-axis, then rotated 90 degrees clockwise)
+  #   - "my"   (mirrored about the y-axis)
+  #   - "my90" (mirrored about the y-axis, then rotated 90 degrees clockwise)
   # x (float) - x coordinate in um
+  # - Required for all types
   # y (float) - y coordinate in um
+  # - Required for all types
   # width (float) - width in um
+  # - Required for all types, but can be auto-filled for hierarchical and hardmacro if left blank
   # height (float) - height in um
-  # margins (Optional[Margins]) - margins for the top-level module (i.e. only only for a toplevel constraint). Contains the following keys:
-  # - "left" - margin from the left side of the core PNR area to the edge of the chip
-  # - "right" - margin from the right side of the core PNR area to the edge of the chip
-  # - "top" - margin from the top side of the core PNR area to the edge of the chip
-  # - "bottom" - margin from the bottom side of the core PNR area to the edge of the chip
-  # top_layer (str) - Optional: Specifies the highest layer used by this hardmacro
-  #   If specified will be used to keep other wires away from this hardmacro
-  # layers (List[str]) - Optional: only used for obstruction type. 
-  #   If specified, a list of strings that enumerates layer(s) blocked by the obstruction otherwise all layers are blocked
-  # obs_types (List[str]) - Required for obstruction type. A list of one or more of the following:
-  # - "place" - This obstruction type stops the placement of standard cells inside it
-  # - "route" - This obstruction type stops all routing inside it
-  # - "power" - This obstruction type stops only power routing/straps inside it
+  # - Required for all types, but can be auto-filled for hierarchical and hardmacro if left blank
+  # master (Optional[str]) - The master module name of the hierarchical or hardmacro constraint
+  # - Required for hierarchical and optional for hardmacro, disallowed otherwise
+  # margins (Optional[Margins]) - margins for the top-level module.
+  # - Required for toplevel, disallowed otherwise
+  # - Contains the following keys:
+  #   - "left"   (margin from the left side of the core PNR area to the edge of the chip)
+  #   - "right"  (margin from the right side of the core PNR area to the edge of the chip)
+  #   - "top"    (margin from the top side of the core PNR area to the edge of the chip)
+  #   - "bottom" (margin from the bottom side of the core PNR area to the edge of the chip)
+  # top_layer (str) - Specifies the highest layer used by this hierarchical or hardmacro, used to keep other wires away
+  # - Optional for hierarchical and hardmacro
+  # layers (List[str]) - A list of strings that enumerates layer(s) blocked by the obstruction otherwise all layers are blocked
+  # - Required for the obstruction type, disallowed otherwise
+  # obs_types (List[str]) - A list of the types of obstructions for the given geometry
+  # - Required for the obstruction type, disallowed otherwise
+  # - A list of one or more of the following:
+  #   - "place" - This obstruction type stops the placement of standard cells inside it
+  #   - "route" - This obstruction type stops all routing inside it
+  #   - "power" - This obstruction type stops only power routing/straps inside it
   placement_constraints: []
 
   # Don't use list mode. (str)
@@ -348,19 +371,48 @@ vlsi.inputs:
   # auto - (not implemented yet) looks at the hierarchy and guess where pins should go
   pin_mode: none
   pin:
+    # Pin generation modes.
+    # type: str
+    # Valid options are:
+    # - full_auto: auto-place minimum-width pins (intended for digital signals) along a side. This option is the default.
+    # - semi_auto: enables the auto-place features above but also optionally allows pin width, depth, and locations to
+    #   be manually specified.
+    generate_mode: full_auto
+
     # List of PinAssignment Structs.
     #   You must specify pins and one of either preplaced or layers and side.
     # - pins (str) - The name(s) of pins that will be assigned. All current backends support
     #   * as wildcards in the pin names. So "*" for all pins or "io_tl_a*" for all pins that
     #   start with "io_tl_a".
     # - side (Optional[str]) - The side of the chip/block these pins will be placed along.
-    #   One of "left", "right", "top", "bottom"
+    #   One of:
+    #   - left, right, top, bottom
+    #   - internal: creates an internal pin with `location` as its *center*.
+    #     Requires the semi_auto pin generation mode.
+    #   If left unspecified, the CAD tool may choose an arbitrary side to use (likely the closest side).
     # - layers (Optional[List[str]]) - The metal layers that these pins will be placed on.
     # - preplaced (Optional[bool]) - If true, these pins are preplaced by some internal block or macro.
     #   This is telling the tool that these pins are on an internal block and I want them
     #   "placed" where they are currently on the internal block. This can be used for IP
     #   that directly connects to bumps, or signals that will be connected by abutment,
     #   and much more.
+    # - location (Optional[Tuple[float, float]]) - specifies the *center* (x, y) location of the pin on the specified
+    #   edge.
+    #   If side is one of left/right/top/bottom, this specifies the point that lies on the edge that is used for
+    #   width/depth control. Below is an example of location if side is "top":
+    #
+    #   -------X------- (chip/block edge)
+    #   |             |
+    #   ---------------
+    #
+    #   If side is "internal", then this specifies the absolute *center* of the
+    #   Requires the semi_auto pin generation mode.
+    # - width (Optional[float]) - specifies a custom width for the pin. The width direction is orthogonal to the routing
+    #   direction.
+    #   Requires the semi_auto pin generation mode.
+    # - depth (Optional[float]) - specifies a custom depth for the pin. The depth direction is parallel to the routing
+    #   direction.
+    #   Requires the semi_auto pin generation mode.
     assignments: []
 
 vlsi.submit:

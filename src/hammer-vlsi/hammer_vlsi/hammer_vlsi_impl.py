@@ -596,10 +596,15 @@ class HammerPlaceAndRouteTool(HammerTool):
         for l in pin_layers:
             assert l in layer_names, "Pin layer {} must be in power strap layers".format(l)
 
+        rail_layer_name = self.get_setting("technology.core.std_cell_rail_layer")
+        rail_layer = self.get_stackup().get_metal(rail_layer_name)
+        blockage_spacing = coerce_to_grid(float(self._get_by_tracks_metal_setting("blockage_spacing", rail_layer_name)), rail_layer.grid_unit)
         # TODO does the CPF help this, or do we need to be more explicit about the bbox for each domain
-        output = self.specify_std_cell_power_straps(bbox, [ground_net] + power_nets)
-        bottom_via_layer = self.get_setting("technology.core.std_cell_rail_layer")
-        last = self.get_stackup().get_metal(bottom_via_layer)
+        output = self.specify_std_cell_power_straps(blockage_spacing, bbox, [ground_net] + power_nets)
+        # The layer to via down to
+        bottom_via_layer = rail_layer_name
+        # The last layer we used
+        last = rail_layer
         for layer_name in layer_names:
             layer = self.get_stackup().get_metal(layer_name)
             assert layer.index > last.index, "Must build power straps bottom-up"
@@ -699,7 +704,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         return []
 
     @abstractmethod
-    def specify_std_cell_power_straps(self, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
+    def specify_std_cell_power_straps(self, blockage_spacing: Decimal, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
         """
         Generate a list of TCL commands that build the low-level standard cell power strap rails.
         This is a low-level, cad-tool-specific API. It is designed to be called by higher-level methods, so calling this directly is not recommended.
@@ -707,6 +712,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         The layer is set by technology.core.std_cell_rail_layer, which should be the highest metal layer in the std cell rails.
         This method should be called before any calls to specify_power_straps.
 
+        :param blockage_spacing: The spacing to leave between the end of a stripe and a macro or routing blockage.
         :param bbox: The optional (2N)-point bounding box of the area to generate straps. By default the entire core area is used.
         :param nets: A list of power net names (e.g. ["VDD", "VSS"]).
         :return: A list of TCL commands that will generate power straps on rails.

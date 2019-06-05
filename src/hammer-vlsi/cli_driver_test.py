@@ -9,9 +9,11 @@ import json
 import os
 import shutil
 import tempfile
+from decimal import Decimal
 from typing import Any, Callable, Dict, Optional
 
 import hammer_config
+from hammer_config import HammerJSONEncoder
 from hammer_logging.test import HammerLoggingCaptureContext
 from hammer_tech import MacroSize
 from hammer_vlsi import CLIDriver, HammerDriver, PlacementConstraint, PlacementConstraintType
@@ -44,7 +46,7 @@ class CLIDriverTest(unittest.TestCase):
             config = postprocessing_func(config)
 
         with open(config_path, "w") as f:
-            f.write(json.dumps(config, indent=4))
+            f.write(json.dumps(config, cls=HammerJSONEncoder, indent=4))
 
         return config
 
@@ -304,7 +306,7 @@ class CLIDriverTest(unittest.TestCase):
         with open(config_packed_path, "r") as f:
             unpacked_config = hammer_config.reverse_unpack(json.loads(f.read()))
         with open(config_path, "w") as f:
-            f.write(json.dumps(unpacked_config, indent=4))
+            f.write(json.dumps(unpacked_config, cls=HammerJSONEncoder, indent=4))
 
         # Check that running the CLIDriver executes successfully (code 0).
         with self.assertRaises(SystemExit) as cm:  # type: ignore
@@ -343,10 +345,11 @@ class CLIDriverTest(unittest.TestCase):
             dummy_placement = PlacementConstraint(
                 path="dummy",
                 type=PlacementConstraintType.Dummy,
-                x=0.0,
-                y=0.0,
-                width=10.0,
-                height=10.0,
+                x=Decimal("0"),
+                y=Decimal("0"),
+                width=Decimal("10"),
+                height=Decimal("10"),
+                master=None,
                 orientation=None,
                 margins=None,
                 top_layer=None,
@@ -449,8 +452,8 @@ class CLIDriverTest(unittest.TestCase):
         my_size = MacroSize(
             library='my_lib',
             name='my_cell',
-            width=100.0,
-            height=100.0
+            width=Decimal("100"),
+            height=Decimal("100")
         )
 
         def add_macro_sizes(d: Dict[str, Any]) -> Dict[str, Any]:
