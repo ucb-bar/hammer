@@ -479,6 +479,8 @@ class HammerDriver:
         sim_tool.input_files = self.database.get_setting("sim.inputs.input_files")
         sim_tool.top_module = self.database.get_setting("sim.inputs.top_module", nullvalue="")
         sim_tool.submit_command = HammerSubmitCommand.get("sim", self.database)
+        sim_tool.access_file = self.database.get_setting("sim.inputs.access_file")
+        sim_tool.force_regs_file = self.database.get_setting("sim.inputs.force_regs_file")
 
         missing_inputs = False
         if sim_tool.top_module == "":
@@ -643,8 +645,12 @@ class HammerDriver:
         try:
             output_files = deeplist(output_dict["synthesis.outputs.output_files"])
             result = {
-                "sim.inputs.gl-syn.input_files": output_files,
+                #"sim.inputs.gl-syn.input_files": output_files,
+                "sim.inputs.input_files": output_files,
+                "sim.inputs.input_files_meta": "append",
                 "sim.inputs.top_module": output_dict["synthesis.inputs.top_module"],
+                "sim.inputs.access_file": output_dict["synthesis.outputs.access"],
+                "sim.inputs.force_regs_file": output_dict["synthesis.outputs.force_regs"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             if "synthesis.outputs.sdc" in output_dict:

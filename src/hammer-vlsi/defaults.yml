@@ -579,7 +579,7 @@ sim.inputs:
   options: [] 
   # Define options
   defines: []
-  # Cross compiler options
+  # C compiler options
   compiler_opts: []
   # Simulation timescale
   timescale: null
@@ -592,6 +592,11 @@ sim.inputs:
   # List of TCL scripts to execute in a vcs call
   tcl_scripts: []
 
+  access_file: ""
+  force_regs_file: ""
+
+  tb_dut: "dut"  
+
   # Valid options are:
   #   "rtl" for rtl level simulation
   #   "gl-syn" for gate level post-synthesis simulation
@@ -602,7 +607,7 @@ sim.inputs:
     input_files: []
     post_synth_sdc: null
     time_annotated: false
-    defines: ["GATE_LEVEL"]
+    defines: []
     options: []
 
 sim.submit:

@@ -119,7 +119,11 @@ def main(args) -> int:
                                         InterfaceVar("output_files", "List[str]",
                                                      "output collection of mapped (post-synthesis) RTL files"),
                                         InterfaceVar("output_sdc", "str",
-                                                     "(optional) output post-synthesis SDC constraints file")
+                                                     "(optional) output post-synthesis SDC constraints file"),
+                                        InterfaceVar("output_access", "str",
+                                                     "output access file for gate level simulation"),
+                                        InterfaceVar("output_force_regs", "str",
+                                                     "output force regs tcl file for gate level simulation register initialization")
                                         # TODO: model CAD junk
                                     ]
                                     )
@@ -186,18 +190,11 @@ def main(args) -> int:
                               inputs=[
                                   InterfaceVar("top_module", "str", "top RTL module"),
                                   InterfaceVar("input_files", "List[str]", "paths to input verilog files"),
-                                  InterfaceVar("debug", "bool", "enable debug option for VCD generation"),
-                                  InterfaceVar("options", "List[str]", "list of command line flags for the simulation tool"),
-                                  InterfaceVar("defines", "List[str]", "list of command line define flags for the simulation tool"),
-                                  InterfaceVar("compiler_opts", "List[str]", "list of C compiler options for the simulation tool"),
-                                  InterfaceVar("timescale", "str", "simulation timescale"),
-                                  InterfaceVar("csrc", "List[str]", "paths to C source files"),
-                                  InterfaceVar("benchmarks", "List[str]", "benchmarks to run on simulator"),
-                                  InterfaceVar("exec_flags", "List[str]", "flags to run with the simulator"),
-                                  InterfaceVar("tcl_scripts", "List[str]", "tcl scripts to run with the simulation")
-                                  ],
-                                  outputs=[]
-                                  )
+                                  InterfaceVar("access_file", "str", "access tab file for gate level simulation"),
+                                  InterfaceVar("find_regs_file", "str", "find regs file for initialization in gate level simulation")
+                              ],
+                              outputs=[]
+                              )
 
     dry_run = parsed_args.dry_run
     selected_file = str(parsed_args.file)

@@ -300,6 +300,46 @@ class HammerSynthesisTool(HammerTool):
             raise TypeError("output_sdc must be a str")
         self.attr_setter("_output_sdc", value)
 
+
+    @property
+    def output_access(self) -> str:
+        """
+        Get the output access file for gate level simulation.
+
+        :return: The output access file for gate level simulation.
+        """
+        try:
+            return self.attr_getter("_output_access", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the output access file for gate level simulation yet")
+
+    @output_access.setter
+    def output_access(self, value: str) -> None:
+        """Set the output access file for gate level simulation."""
+        if not (isinstance(value, str)):
+            raise TypeError("output_access must be a str")
+        self.attr_setter("_output_access", value)
+
+
+    @property
+    def output_force_regs(self) -> str:
+        """
+        Get the output force regs tcl file for gate level simulation register initialization.
+
+        :return: The output force regs tcl file for gate level simulation register initialization.
+        """
+        try:
+            return self.attr_getter("_output_force_regs", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the output force regs tcl file for gate level simulation register initialization yet")
+
+    @output_force_regs.setter
+    def output_force_regs(self, value: str) -> None:
+        """Set the output force regs tcl file for gate level simulation register initialization."""
+        if not (isinstance(value, str)):
+            raise TypeError("output_force_regs must be a str")
+        self.attr_setter("_output_force_regs", value)
+
     ### END Generated interface HammerSynthesisTool ###
     ### Generated interface HammerSynthesisTool ###
 
@@ -935,6 +975,104 @@ class HammerLVSTool(HammerSignoffTool):
     ### Outputs ###
     ### END Generated interface HammerLVSTool ###
 
+
+class HammerSimTool(HammerTool):
+
+    #@abstractmethod
+    #def fill_outputs(self) -> bool:
+    #  pass
+
+    # export_config_outputs not necessary because not passing anything downstream?
+
+    ### Generated interface HammerSimTool ###
+    ### DO NOT MODIFY THIS CODE, EDIT generate_properties.py INSTEAD ###
+    ### Inputs ###
+
+    @property
+    def top_module(self) -> str:
+        """
+        Get the top RTL module.
+
+        :return: The top RTL module.
+        """
+        try:
+            return self.attr_getter("_top_module", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the top RTL module yet")
+
+    @top_module.setter
+    def top_module(self, value: str) -> None:
+        """Set the top RTL module."""
+        if not (isinstance(value, str)):
+            raise TypeError("top_module must be a str")
+        self.attr_setter("_top_module", value)
+
+
+    @property
+    def input_files(self) -> List[str]:
+        """
+        Get the paths to input verilog files.
+
+        :return: The paths to input verilog files.
+        """
+        try:
+            return self.attr_getter("_input_files", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the paths to input verilog files yet")
+
+    @input_files.setter
+    def input_files(self, value: List[str]) -> None:
+        """Set the paths to input verilog files."""
+        if not (isinstance(value, List)):
+            raise TypeError("input_files must be a List[str]")
+        self.attr_setter("_input_files", value)
+
+
+    @property
+    def access_file(self) -> str:
+        """
+        Get the access tab file for gate level simulation.
+
+        :return: The access tab file for gate level simulation.
+        """
+        try:
+            return self.attr_getter("_access_file", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the access tab file for gate level simulation yet")
+
+    @access_file.setter
+    def access_file(self, value: str) -> None:
+        """Set the access tab file for gate level simulation."""
+        if not (isinstance(value, str)):
+            raise TypeError("access_file must be a str")
+        self.attr_setter("_access_file", value)
+
+
+    @property
+    def find_regs_file(self) -> str:
+        """
+        Get the find regs file for initialization in gate level simulation.
+
+        :return: The find regs file for initialization in gate level simulation.
+        """
+        try:
+            return self.attr_getter("_find_regs_file", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the find regs file for initialization in gate level simulation yet")
+
+    @find_regs_file.setter
+    def find_regs_file(self, value: str) -> None:
+        """Set the find regs file for initialization in gate level simulation."""
+        if not (isinstance(value, str)):
+            raise TypeError("find_regs_file must be a str")
+        self.attr_setter("_find_regs_file", value)
+
+
+    ### Outputs ###
+    ### END Generated interface HammerSimTool ###
+    ### Generated interface HammerSimTool ###
+
+
 class HasUPFSupport(HammerTool):
     """Mix-in trait with functions useful for tools with UPF style power
     constraints"""
@@ -988,223 +1126,7 @@ class HasCPFSupport(HammerTool):
 
         return "\n".join(output)
 
-class HammerSimTool(HammerTool):
 
-    #@abstractmethod
-    #def fill_outputs(self) -> bool:
-    #  pass
-
-    # export_config_outputs not necessary because not passing anything downstream?
-
-    @property
-    def input_files(self) -> List[str]:
-        """
-        Get the simulation input files.
-
-        :return: The simulation input files.
-        """
-        try:
-            return self.attr_getter("_input_files", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the simulation input files yet")
-
-    @input_files.setter
-    def input_files(self, value: List[str]) -> None:
-        """Set the simulation input files."""
-        if not (isinstance(value, List)):
-            raise TypeError("input_files must be a List[str]")
-        self.attr_setter("_input_files", value)
-
-
-    @property
-    def top_module(self) -> str:
-        """
-        Get the top RTL module.
-
-        :return: The top RTL module.
-        """
-        try:
-            return self.attr_getter("_top_module", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the top RTL module yet")
-
-    @top_module.setter
-    def top_module(self, value: str) -> None:
-        """Set the top RTL module."""
-        if not (isinstance(value, str)):
-            raise TypeError("top_module must be a str")
-        self.attr_setter("_top_module", value)
-
-    @property
-    def options(self) -> List[str]:
-        """
-        Get the additional simulation options.
-
-        :return: The list of additional simulation options.
-        """
-        try:
-            return self.attr_getter("_options", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the additional simulation options")
-
-    @options.setter
-    def options(self, value: List[str]) -> None:
-        """Set the additional simulation options."""
-        if not (isinstance(value, List[str])):
-            raise TypeError("options must be a List")
-        self.attr_setter("_options", value)
-
-    @property
-    def debug(self) -> bool:
-        """
-        Get the debug flag.
-
-        :return: The debug flag boolean.
-        """
-        try:
-            return self.attr_getter("_debug", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the simulation debug flag")
-
-    @debug.setter
-    def debug(self, value: bool) -> None:
-        """Set the simulation input files."""
-        if not (isinstance(value, bool)):
-            raise TypeError("debug must be a bool")
-        self.attr_setter("_debug", value)
-
-    @property
-    def defines(self) -> List[str]:
-        """
-        Get the simulation defines.
-
-        :return: The list of simulation defines.
-        """
-        try:
-            return self.attr_getter("_defines", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the simulation defines")
-
-    @defines.setter
-    def defines(self, value: List[str]) -> None:
-        """Set the simulation defines."""
-        if not (isinstance(value, List[str])):
-            raise TypeError("defines must be a List")
-        self.attr_setter("_defines", value)
-
-    @property
-    def compiler_opts(self) -> List[str]:
-        """
-        Get the simulation compiler options.
-
-        :return: The list of simulation compiler options.
-        """
-        try:
-            return self.attr_getter("_compiler_opts", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the simulation compiler options")
-
-    @compiler_opts.setter
-    def compiler_opts(self, value: List[str]) -> None:
-        """Set the simulation compiler options."""
-        if not (isinstance(value, List[str])):
-            raise TypeError("compiler_opts must be a List")
-        self.attr_setter("_compiler_opts", value)
-
-    @property
-    def timescale(self) -> str:
-        """
-        Get the simulation timescale.
-
-        :return: The simulation timecale..
-        """
-        try:
-            return self.attr_getter("_timescale", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the simulation timescale")
-
-    @timescale.setter
-    def timescale(self, value: str) -> None:
-        """Set the simulation input files."""
-        if not (isinstance(value, str)):
-            raise TypeError("timescale must be a str")
-        self.attr_setter("_timescale", value)
-
-    @property
-    def csrc(self) -> List[str]:
-        """
-        Get the simulation c sources.
-
-        :return: The simulation c sources.
-        """
-        try:
-            return self.attr_getter("_csrc", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the csrc")
-
-    @csrc.setter
-    def csrc(self, value: List[str]) -> None:
-        """Set the c source input files."""
-        if not (isinstance(value, List[str])):
-            raise TypeError("csrc must be a List[str]")
-        self.attr_setter("_csrc", value)
-
-    @property
-    def benchmarks(self) -> List[str]:
-        """
-        Get the benchmarks to run with the simulator.
-
-        :return: The benchmarks to run with the simulator.
-        """
-        try:
-            return self.attr_getter("_benchmarks", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the benchmarks")
-
-    @benchmarks.setter
-    def benchmarks(self, value: List[str]) -> None:
-        """Set the benchmarks to run with the simulator."""
-        if not (isinstance(value, List[str])):
-            raise TypeError("benchmarks must be a List[str]")
-        self.attr_setter("_benchmarks", value)
-
-    @property
-    def exec_flags(self) -> List[str]:
-        """
-        Get the flags to run with the simulator.
-
-        :return: The flags to run with the simulator.
-        """
-        try:
-            return self.attr_getter("_exec_flags", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the exec_flags")
-
-    @exec_flags.setter
-    def exec_flags(self, value: List[str]) -> None:
-        """Set the flags to run with the simulator."""
-        if not (isinstance(value, List[str])):
-            raise TypeError("exec_flags must be a List[str]")
-        self.attr_setter("_exec_flags", value)
-
-    @property
-    def tcl_scripts(self) -> List[str]:
-        """
-        Get the TCL scripts to run.
-
-        :return: The TCL scripts to run.
-        """
-        try:
-            return self.attr_getter("_tcl_scripts", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the tcl_scripts")
-
-    @tcl_scripts.setter
-    def tcl_scripts(self, value: List[str]) -> None:
-        """Set the TCL scripts to run."""
-        if not (isinstance(value, List[str])):
-            raise TypeError("tcl_scripts must be a List[str]")
-        self.attr_setter("_tcl_scripts", value)
 
 class HasSDCSupport(HammerTool):
     """Mix-in trait with functions useful for tools with SDC-style
@@ -1227,477 +1149,6 @@ class HasSDCSupport(HammerTool):
         if not (isinstance(value, List[str])):
             raise TypeError("benchmarks must be a List[str]")
         self.attr_setter("_benchmarks", value)
-
-
-# TODO(daniel)
-class HammerSimTool(HammerTool):
-
-    #@abstractmethod
-    #def fill_outputs(self) -> bool:
-    #  pass
-
-    # export_config_outputs not necessary because not passing anything downstream?
-
-    @property
-    def input_files(self) -> List[str]:
-        """
-        Get the simulation input files.
-
-        :return: The simulation input files.
-        """
-        try:
-            return self.attr_getter("_input_files", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the simulation input files yet")
-
-    @input_files.setter
-    def input_files(self, value: List[str]) -> None:
-        """Set the simulation input files."""
-        if not (isinstance(value, List)):
-            raise TypeError("input_files must be a List[str]")
-        self.attr_setter("_input_files", value)
-
-
-    @property
-    def top_module(self) -> str:
-        """
-        Get the top RTL module.
-
-        :return: The top RTL module.
-        """
-        try:
-            return self.attr_getter("_top_module", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the top RTL module yet")
-
-    @top_module.setter
-    def top_module(self, value: str) -> None:
-        """Set the top RTL module."""
-        if not (isinstance(value, str)):
-            raise TypeError("top_module must be a str")
-        self.attr_setter("_top_module", value)
-
-    @property
-    def options(self) -> List[str]:
-        """
-        Get the additional simulation options.
-
-        :return: The list of additional simulation options.
-        """
-        try:
-            return self.attr_getter("_options", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the additional simulation options")
-
-    @options.setter
-    def options(self, value: List[str]) -> None:
-        """Set the additional simulation options."""
-        if not (isinstance(value, List[str])):
-            raise TypeError("options must be a List")
-        self.attr_setter("_options", value)
-
-    @property
-    def debug(self) -> bool:
-        """
-        Get the debug flag.
-
-        :return: The debug flag boolean.
-        """
-        try:
-            return self.attr_getter("_debug", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the simulation debug flag")
-
-    @debug.setter
-    def debug(self, value: bool) -> None:
-        """Set the simulation input files."""
-        if not (isinstance(value, bool)):
-            raise TypeError("debug must be a bool")
-        self.attr_setter("_debug", value)
-
-    @property
-    def defines(self) -> List[str]:
-        """
-        Get the simulation defines.
-
-        :return: The list of simulation defines.
-        """
-        try:
-            return self.attr_getter("_defines", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the simulation defines")
-
-    @defines.setter
-    def defines(self, value: List[str]) -> None:
-        """Set the simulation defines."""
-        if not (isinstance(value, List[str])):
-            raise TypeError("defines must be a List")
-        self.attr_setter("_defines", value)
-
-    @property
-    def compiler_opts(self) -> List[str]:
-        """
-        Get the simulation compiler options.
-
-        :return: The list of simulation compiler options.
-        """
-        try:
-            return self.attr_getter("_compiler_opts", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the simulation compiler options")
-
-    @compiler_opts.setter
-    def compiler_opts(self, value: List[str]) -> None:
-        """Set the simulation compiler options."""
-        if not (isinstance(value, List[str])):
-            raise TypeError("compiler_opts must be a List")
-        self.attr_setter("_compiler_opts", value)
-
-    @property
-    def timescale(self) -> str:
-        """
-        Get the simulation timescale.
-
-        :return: The simulation timecale..
-        """
-        try:
-            return self.attr_getter("_timescale", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the simulation timescale")
-
-    @timescale.setter
-    def timescale(self, value: str) -> None:
-        """Set the simulation input files."""
-        if not (isinstance(value, str)):
-            raise TypeError("timescale must be a str")
-        self.attr_setter("_timescale", value)
-
-    @property
-    def csrc(self) -> str:
-        """
-        Get the simulation c sources.
-
-        :return: The simulation c sources.
-        """
-        try:
-            return self.attr_getter("_csrc", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the csrc")
-
-    @csrc.setter
-    def csrc(self, value: str) -> None:
-        """Set the c source input files."""
-        if not (isinstance(value, List[str])):
-            raise TypeError("csrc must be a List[str]")
-        self.attr_setter("_csrc", value)
-
-
-# TODO(daniel)
-class HammerSimTool(HammerTool):
-
-    #@abstractmethod
-    #def fill_outputs(self) -> bool:
-    #  pass
-
-    # export_config_outputs not necessary because not passing anything downstream?
-
-    @property
-    def input_files(self) -> List[str]:
-        """
-        Get the simulation input files.
-
-        :return: The simulation input files.
-        """
-        try:
-            return self.attr_getter("_input_files", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the simulation input files yet")
-
-    @input_files.setter
-    def input_files(self, value: List[str]) -> None:
-        """Set the simulation input files."""
-        if not (isinstance(value, List)):
-            raise TypeError("input_files must be a List[str]")
-        self.attr_setter("_input_files", value)
-
-
-    @property
-    def top_module(self) -> str:
-        """
-        Get the top RTL module.
-
-        :return: The top RTL module.
-        """
-        try:
-            return self.attr_getter("_top_module", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the top RTL module yet")
-
-    @top_module.setter
-    def top_module(self, value: str) -> None:
-        """Set the top RTL module."""
-        if not (isinstance(value, str)):
-            raise TypeError("top_module must be a str")
-        self.attr_setter("_top_module", value)
-
-    @property
-    def options(self) -> List[str]:
-        """
-        Get the additional simulation options.
-
-        :return: The list of additional simulation options.
-        """
-        try:
-            return self.attr_getter("_options", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the additional simulation options")
-
-    @options.setter
-    def options(self, value: List[str]) -> None:
-        """Set the additional simulation options."""
-        if not (isinstance(value, List[str])):
-            raise TypeError("options must be a List")
-        self.attr_setter("_options", value)
-
-    @property
-    def debug(self) -> bool:
-        """
-        Get the debug flag.
-
-        :return: The debug flag boolean.
-        """
-        try:
-            return self.attr_getter("_debug", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the simulation debug flag")
-
-    @debug.setter
-    def debug(self, value: bool) -> None:
-        """Set the simulation input files."""
-        if not (isinstance(value, bool)):
-            raise TypeError("debug must be a bool")
-        self.attr_setter("_debug", value)
-
-    @property
-    def defines(self) -> List[str]:
-        """
-        Get the simulation defines.
-
-        :return: The list of simulation defines.
-        """
-        try:
-            return self.attr_getter("_defines", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the simulation defines")
-
-    @defines.setter
-    def defines(self, value: List[str]) -> None:
-        """Set the simulation defines."""
-        if not (isinstance(value, List[str])):
-            raise TypeError("defines must be a List")
-        self.attr_setter("_defines", value)
-
-    @property
-    def compiler_opts(self) -> List[str]:
-        """
-        Get the simulation compiler options.
-
-        :return: The list of simulation compiler options.
-        """
-        try:
-            return self.attr_getter("_compiler_opts", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the simulation compiler options")
-
-    @compiler_opts.setter
-    def compiler_opts(self, value: List[str]) -> None:
-        """Set the simulation compiler options."""
-        if not (isinstance(value, List[str])):
-            raise TypeError("compiler_opts must be a List")
-        self.attr_setter("_compiler_opts", value)
-
-    @property
-    def timescale(self) -> str:
-        """
-        Get the simulation timescale.
-
-        :return: The simulation timecale..
-        """
-        try:
-            return self.attr_getter("_timescale", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the simulation timescale")
-
-    @timescale.setter
-    def timescale(self, value: str) -> None:
-        """Set the simulation input files."""
-        if not (isinstance(value, str)):
-            raise TypeError("timescale must be a str")
-        self.attr_setter("_timescale", value)
-
-    @property
-    def csrc(self) -> str:
-        """
-        Get the simulation c sources.
-
-        :return: The simulation c sources.
-        """
-        try:
-            return self.attr_getter("_csrc", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the csrc")
-
-    @csrc.setter
-    def csrc(self, value: str) -> None:
-        """Set the c source input files."""
-        if not (isinstance(value, List[str])):
-            raise TypeError("csrc must be a List[str]")
-        self.attr_setter("_csrc", value)
-
-
-# TODO(daniel)
-class HammerSimTool(HammerTool):
-
-    #@abstractmethod
-    #def fill_outputs(self) -> bool:
-    #  pass
-
-    # export_config_outputs not necessary because not passing anything downstream?
-
-    @property
-    def input_files(self) -> List[str]:
-        """
-        Get the simulation input files.
-
-        :return: The simulation input files.
-        """
-        try:
-            return self.attr_getter("_input_files", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the simulation input files yet")
-
-    @input_files.setter
-    def input_files(self, value: List[str]) -> None:
-        """Set the simulation input files."""
-        if not (isinstance(value, List)):
-            raise TypeError("input_files must be a List[str]")
-        self.attr_setter("_input_files", value)
-
-
-    @property
-    def top_module(self) -> str:
-        """
-        Get the top RTL module.
-
-        :return: The top RTL module.
-        """
-        try:
-            return self.attr_getter("_top_module", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the top RTL module yet")
-
-    @top_module.setter
-    def top_module(self, value: str) -> None:
-        """Set the top RTL module."""
-        if not (isinstance(value, str)):
-            raise TypeError("top_module must be a str")
-        self.attr_setter("_top_module", value)
-
-    @property
-    def options(self) -> List[str]:
-        """
-        Get the additional simulation options.
-
-        :return: The list of additional simulation options.
-        """
-        try:
-            return self.attr_getter("_options", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the additional simulation options")
-
-    @options.setter
-    def options(self, value: List[str]) -> None:
-        """Set the additional simulation options."""
-        if not (isinstance(value, List[str])):
-            raise TypeError("options must be a List")
-        self.attr_setter("_options", value)
-
-    @property
-    def debug(self) -> bool:
-        """
-        Get the debug flag.
-
-        :return: The debug flag boolean.
-        """
-        try:
-            return self.attr_getter("_debug", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the simulation debug flag")
-
-    @debug.setter
-    def debug(self, value: bool) -> None:
-        """Set the simulation input files."""
-        if not (isinstance(value, bool)):
-            raise TypeError("debug must be a bool")
-        self.attr_setter("_debug", value)
-
-    @property
-    def defines(self) -> List[str]:
-        """
-        Get the simulation defines.
-
-        :return: The list of simulation defines.
-        """
-        try:
-            return self.attr_getter("_defines", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the simulation defines")
-
-    @defines.setter
-    def defines(self, value: List[str]) -> None:
-        """Set the simulation defines."""
-        if not (isinstance(value, List[str])):
-            raise TypeError("defines must be a List")
-        self.attr_setter("_defines", value)
-
-    @property
-    def compiler_opts(self) -> List[str]:
-        """
-        Get the simulation compiler options.
-
-        :return: The list of simulation compiler options.
-        """
-        try:
-            return self.attr_getter("_compiler_opts", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the simulation comiler options")
-
-    @compiler_opts.setter
-    def compiler_opts(self, value: List[str]) -> None:
-        """Set the simulation compiler options."""
-        if not (isinstance(value, List[str])):
-            raise TypeError("compiler_opts must be a List")
-        self.attr_setter("_compiler_opts", value)
-
-    @property
-    def timescale(self) -> str:
-        """
-        Get the simulation timescale.
-
-        :return: The simulation timecale..
-        """
-        try:
-            return self.attr_getter("_timescale", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the simulation timescale")
-
-    @timescale.setter
-    def timescale(self, value: str) -> None:
-        """Set the simulation input files."""
-        if not (isinstance(value, str)):
-            raise TypeError("timescale must be a str")
-        self.attr_setter("_timescale", value)
-
 
 
 class HasSDCSupport(HammerTool):
