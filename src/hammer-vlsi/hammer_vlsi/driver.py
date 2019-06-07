@@ -468,6 +468,10 @@ class HammerDriver:
         :return: True if setup was successful.
         """
 
+        if self.tech is None:
+            self.log.error("Must load technology before loading sim tool")
+            return False
+
         if run_dir == "":
             run_dir = os.path.join(self.obj_dir, "sim-rundir")
 
@@ -881,6 +885,8 @@ class HammerDriver:
         except ValueError as e:
             self.log.fatal(e.args[0])
             return False, {}
+
+        return run_succeeded, output_config
 
     def run_sim(self, hook_actions: Optional[List[HammerToolHookAction]] = None, force_override: bool = False) -> \
             Tuple[bool, dict]:

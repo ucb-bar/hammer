@@ -521,7 +521,7 @@ class CLIDriver:
 
                 # Dump both synthesis output and par input for debugging/resuming.
                 assert driver.syn_tool is not None, "Syn tool must exist since we ran synthesis_action successfully"
-                dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "sim-input.json"), par_input)
+                dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "sim-input.json"), sim_input)
 
                 # Use new sim input and run simulation.
                 driver.update_project_configs([sim_input])
