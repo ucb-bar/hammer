@@ -271,7 +271,9 @@ vlsi.inputs:
   # - Required for all types, but can be auto-filled for hierarchical and hardmacro if left blank
   # height (float) - height in um
   # - Required for all types, but can be auto-filled for hierarchical and hardmacro if left blank
-  # master (Optional[str]) - The master module name of the hierarchical or hardmacro constraint
+  # master (Optional[str]) - The master module name of the hierarchical or hardmacro constraint.
+  #                          For example, if this hardmacro is an instance of "my_amplifier", this
+  #                          field should be set to "my_amplifier".
   # - Required for hierarchical and optional for hardmacro, disallowed otherwise
   # margins (Optional[Margins]) - margins for the top-level module.
   # - Required for toplevel, disallowed otherwise
