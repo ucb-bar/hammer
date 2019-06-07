@@ -113,7 +113,7 @@ class CLIDriver:
         self.drc_rundir = ""  # type: Optional[str]
         self.lvs_rundir = ""  # type: Optional[str]
         self.sram_generator_rundir = ""  # type: Optional[str]
-        self.sim_rundir = ""  #type: Otional[str]
+        self.sim_rundir = ""  # type: Optional[str]
 
         # If a subclass has defined these, don't clobber them in init
         # since the subclass still uses this init function.
@@ -143,13 +143,13 @@ class CLIDriver:
             self.synthesis_par_action = self.create_synthesis_par_action(self.synthesis_action,
                                                                          self.par_action)  # type: CLIActionConfigType
         if hasattr(self, "sim_action"):
-            check_CLIActionType_type(self.sim_action)
+            check_CLIActionType_type(self.sim_action)  # type: ignore
         else:
-            self.sim_action = self.create_sim_action([])
+            self.sim_action = self.create_sim_action([])  # type: CLIActionConfigType
         if hasattr(self, "synthesis_sim_action"):
-            check_CLIActionType_type(self.synthesis_sim_action)
+            check_CLIActionType_type(self.synthesis_sim_action)  # type: ignore
         else:
-            self.synthesis_sim_action = self.create_synthesis_sim_action(self.synthesis_action, self.sim_action)
+            self.synthesis_sim_action = self.create_synthesis_sim_action(self.synthesis_action, self.sim_action)  # type: CLIActionConfigType
 
         # Dictionaries of module-CLIActionConfigType for hierarchical flows.
         # See all_hierarchical_actions() below.

@@ -120,10 +120,10 @@ def main(args) -> int:
                                                      "output collection of mapped (post-synthesis) RTL files"),
                                         InterfaceVar("output_sdc", "str",
                                                      "(optional) output post-synthesis SDC constraints file"),
-                                        InterfaceVar("output_access", "str",
-                                                     "output access file for gate level simulation"),
-                                        InterfaceVar("output_force_regs", "str",
-                                                     "output force regs tcl file for gate level simulation register initialization")
+                                        InterfaceVar("output_all_regs", "List[str]",
+                                                     "output list of all registers in the design with output pin for gate level simulation"),
+                                        InterfaceVar("output_seq_cells", "List[str]",
+                                                     "output collection of all sequential standard cells in design")
                                         # TODO: model CAD junk
                                     ]
                                     )
@@ -190,8 +190,8 @@ def main(args) -> int:
                               inputs=[
                                   InterfaceVar("top_module", "str", "top RTL module"),
                                   InterfaceVar("input_files", "List[str]", "paths to input verilog files"),
-                                  InterfaceVar("access_file", "str", "access tab file for gate level simulation"),
-                                  InterfaceVar("find_regs_file", "str", "find regs file for initialization in gate level simulation")
+                                  InterfaceVar("all_regs", "List[str]", "list of all registers in the design with output pin"),
+                                  InterfaceVar("seq_cells", "List[str]", "collection of all sequential standard cells in design")
                               ],
                               outputs=[]
                               )

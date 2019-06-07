@@ -302,43 +302,43 @@ class HammerSynthesisTool(HammerTool):
 
 
     @property
-    def output_access(self) -> str:
+    def output_all_regs(self) -> List[str]:
         """
-        Get the output access file for gate level simulation.
+        Get the output list of all registers in the design with output pin for gate level simulation.
 
-        :return: The output access file for gate level simulation.
+        :return: The output list of all registers in the design with output pin for gate level simulation.
         """
         try:
-            return self.attr_getter("_output_access", None)
+            return self.attr_getter("_output_all_regs", None)
         except AttributeError:
-            raise ValueError("Nothing set for the output access file for gate level simulation yet")
+            raise ValueError("Nothing set for the output list of all registers in the design with output pin for gate level simulation yet")
 
-    @output_access.setter
-    def output_access(self, value: str) -> None:
-        """Set the output access file for gate level simulation."""
-        if not (isinstance(value, str)):
-            raise TypeError("output_access must be a str")
-        self.attr_setter("_output_access", value)
+    @output_all_regs.setter
+    def output_all_regs(self, value: List[str]) -> None:
+        """Set the output list of all registers in the design with output pin for gate level simulation."""
+        if not (isinstance(value, List)):
+            raise TypeError("output_all_regs must be a List[str]")
+        self.attr_setter("_output_all_regs", value)
 
 
     @property
-    def output_force_regs(self) -> str:
+    def output_seq_cells(self) -> List[str]:
         """
-        Get the output force regs tcl file for gate level simulation register initialization.
+        Get the output collection of all sequential standard cells in design.
 
-        :return: The output force regs tcl file for gate level simulation register initialization.
+        :return: The output collection of all sequential standard cells in design.
         """
         try:
-            return self.attr_getter("_output_force_regs", None)
+            return self.attr_getter("_output_seq_cells", None)
         except AttributeError:
-            raise ValueError("Nothing set for the output force regs tcl file for gate level simulation register initialization yet")
+            raise ValueError("Nothing set for the output collection of all sequential standard cells in design yet")
 
-    @output_force_regs.setter
-    def output_force_regs(self, value: str) -> None:
-        """Set the output force regs tcl file for gate level simulation register initialization."""
-        if not (isinstance(value, str)):
-            raise TypeError("output_force_regs must be a str")
-        self.attr_setter("_output_force_regs", value)
+    @output_seq_cells.setter
+    def output_seq_cells(self, value: List[str]) -> None:
+        """Set the output collection of all sequential standard cells in design."""
+        if not (isinstance(value, List)):
+            raise TypeError("output_seq_cells must be a List[str]")
+        self.attr_setter("_output_seq_cells", value)
 
     ### END Generated interface HammerSynthesisTool ###
     ### Generated interface HammerSynthesisTool ###
@@ -1035,43 +1035,43 @@ class HammerSimTool(HammerTool):
 
 
     @property
-    def access_file(self) -> str:
+    def all_regs(self) -> List[str]:
         """
-        Get the access tab file for gate level simulation.
+        Get the list of all registers in the design with output pin.
 
-        :return: The access tab file for gate level simulation.
+        :return: The list of all registers in the design with output pin.
         """
         try:
-            return self.attr_getter("_access_file", None)
+            return self.attr_getter("_all_regs", None)
         except AttributeError:
-            raise ValueError("Nothing set for the access tab file for gate level simulation yet")
+            raise ValueError("Nothing set for the list of all registers in the design with output pin yet")
 
-    @access_file.setter
-    def access_file(self, value: str) -> None:
-        """Set the access tab file for gate level simulation."""
-        if not (isinstance(value, str)):
-            raise TypeError("access_file must be a str")
-        self.attr_setter("_access_file", value)
+    @all_regs.setter
+    def all_regs(self, value: List[str]) -> None:
+        """Set the list of all registers in the design with output pin."""
+        if not (isinstance(value, List)):
+            raise TypeError("all_regs must be a List[str]")
+        self.attr_setter("_all_regs", value)
 
 
     @property
-    def find_regs_file(self) -> str:
+    def seq_cells(self) -> List[str]:
         """
-        Get the find regs file for initialization in gate level simulation.
+        Get the collection of all sequential standard cells in design.
 
-        :return: The find regs file for initialization in gate level simulation.
+        :return: The collection of all sequential standard cells in design.
         """
         try:
-            return self.attr_getter("_find_regs_file", None)
+            return self.attr_getter("_seq_cells", None)
         except AttributeError:
-            raise ValueError("Nothing set for the find regs file for initialization in gate level simulation yet")
+            raise ValueError("Nothing set for the collection of all sequential standard cells in design yet")
 
-    @find_regs_file.setter
-    def find_regs_file(self, value: str) -> None:
-        """Set the find regs file for initialization in gate level simulation."""
-        if not (isinstance(value, str)):
-            raise TypeError("find_regs_file must be a str")
-        self.attr_setter("_find_regs_file", value)
+    @seq_cells.setter
+    def seq_cells(self, value: List[str]) -> None:
+        """Set the collection of all sequential standard cells in design."""
+        if not (isinstance(value, List)):
+            raise TypeError("seq_cells must be a List[str]")
+        self.attr_setter("_seq_cells", value)
 
 
     ### Outputs ###
@@ -1085,6 +1085,7 @@ class HasUPFSupport(HammerTool):
     @property
     def upf_power_specification(self) -> str:
         raise NotImplementedError("Automatic generation of UPF power specifications is not supported yet.")
+
 
 class HasCPFSupport(HammerTool):
     """Mix-in trait with functions useful for tools with CPF style power
@@ -1131,30 +1132,6 @@ class HasCPFSupport(HammerTool):
         output.append("end_design")
 
         return "\n".join(output)
-
-
-
-class HasSDCSupport(HammerTool):
-    """Mix-in trait with functions useful for tools with SDC-style
-    constraints."""
-    @property
-    def benchmarks(self) -> List[str]:
-        """
-        Get the benchmarks to run with the simulator.
-
-        :return: The benchmarks to run with the simulator.
-        """
-        try:
-            return self.attr_getter("_benchmarks", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the benchmarks")
-
-    @benchmarks.setter
-    def benchmarks(self, value: List[str]) -> None:
-        """Set the benchmarks to run with the simulator."""
-        if not (isinstance(value, List[str])):
-            raise TypeError("benchmarks must be a List[str]")
-        self.attr_setter("_benchmarks", value)
 
 class HasSDCSupport(HammerTool):
     """Mix-in trait with functions useful for tools with SDC-style

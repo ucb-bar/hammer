@@ -479,8 +479,8 @@ class HammerDriver:
         sim_tool.input_files = self.database.get_setting("sim.inputs.input_files")
         sim_tool.top_module = self.database.get_setting("sim.inputs.top_module", nullvalue="")
         sim_tool.submit_command = HammerSubmitCommand.get("sim", self.database)
-        sim_tool.access_file = self.database.get_setting("sim.inputs.access_file")
-        sim_tool.force_regs_file = self.database.get_setting("sim.inputs.force_regs_file")
+        sim_tool.all_regs = self.database.get_setting("sim.inputs.all_regs")
+        sim_tool.seq_cells = self.database.get_setting("sim.inputs.seq_cells")
 
         missing_inputs = False
         if sim_tool.top_module == "":
@@ -643,16 +643,18 @@ class HammerDriver:
         """
         try:
             output_files = deeplist(output_dict["synthesis.outputs.output_files"])
+            #all_regs = deeplist(output_dict["synthesis.outputs.all_regs"])
+            #seq_cells = deeplist(output_dict["synthesis.outputs.seq_cells"])
             result = {
                 "sim.inputs.input_files": output_files,
                 "sim.inputs.input_files_meta": "append",
                 "sim.inputs.top_module": output_dict["synthesis.inputs.top_module"],
-                "sim.inputs.access_file": output_dict["synthesis.outputs.access"],
-                "sim.inputs.force_regs_file": output_dict["synthesis.outputs.force_regs"],
+                "sim.inputs.all_regs": output_dict["synthesis.outputs.all_regs"],
+                "sim.inputs.seq_cells": output_dict["synthesis.outputs.seq_cells"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
-            if "synthesis.outputs.sdc" in output_dict:
-                result["sim.inputs.gl-syn.post_synth_sdc"] = output_dict["synthesis.outputs.sdc"]
+            #if "synthesis.outputs.sdc" in output_dict:
+            #    result["sim.inputs.gl-syn.post_synth_sdc"] = output_dict["synthesis.outputs.sdc"]
             return result
         except KeyError:
             # KeyError means that the given dictionary is missing output keys.
