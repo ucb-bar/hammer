@@ -45,9 +45,153 @@ python_jsonschema_objects.classbuilder.ProtocolBase.__getattr__ = _monkey__getat
 
 
 # monkey patch HammerProtocolBase
-make_property = python_jsonschema_objects.classbuilder.make_property
 logger = python_jsonschema_objects.classbuilder.logger
 ProtocolBase = python_jsonschema_objects.classbuilder.ProtocolBase
+
+
+# legacy make_property patch
+class TypeProxy(object):
+
+    def __init__(self, types):
+        self._types = types
+
+    def __call__(self, *a, **kw):
+        validation_errors = []
+        valid_types = self._types
+        for klass in valid_types:
+            logger.debug(util.lazy_format(
+                "Attempting to instantiate {0} as {1}",
+                self.__class__, klass))
+            try:
+                obj = klass(*a, **kw)
+                obj.validate()
+            except TypeError as e:
+                validation_errors.append((klass, e))
+            except validators.ValidationError as e:
+                validation_errors.append((klass, e))
+            else:
+                return obj
+
+        else:  # We got nothing
+            raise validators.ValidationError(
+                "Unable to instantiate any valid types: \n"
+                "".join("{0}: {1}\n".format(k, e) for k, e in validation_errors)
+            )
+
+
+def make_property(prop, info, desc=""):
+    def getprop(self):
+        try:
+            return self._properties[prop]
+        except KeyError:
+            raise AttributeError("No such attribute")
+
+    def setprop(self, val):
+        if isinstance(info['type'], (list, tuple)):
+            ok = False
+            errors = []
+            type_checks = []
+
+            for typ in info['type']:
+              if not isinstance(typ, dict):
+                type_checks.append(typ)
+                continue
+              typ = next(t
+                         for n, t in validators.SCHEMA_TYPE_MAPPING
+                         if typ['type'] == t)
+              if typ is None:
+                  typ = type(None)
+              if isinstance(typ, (list, tuple)):
+                  type_checks.extend(typ)
+              else:
+                  type_checks.append(typ)
+
+            for typ in type_checks:
+                if isinstance(val, typ):
+                    ok = True
+                    break
+                elif hasattr(typ, 'isLiteralClass'):
+                    try:
+                        validator = typ(val)
+                    except Exception as e:
+                        errors.append(
+                            "Failed to coerce to '{0}': {1}".format(typ, e))
+                        pass
+                    else:
+                        validator.validate()
+                        ok = True
+                        break
+                elif util.safe_issubclass(typ, ProtocolBase):
+                    # force conversion- thus the val rather than validator assignment
+                    try:
+                        val = typ(**util.coerce_for_expansion(val))
+                    except Exception as e:
+                        errors.append(
+                            "Failed to coerce to '{0}': {1}".format(typ, e))
+                        pass
+                    else:
+                        val.validate()
+                        ok = True
+                        break
+                elif util.safe_issubclass(typ, python_jsonschema_objects.wrapper_types.ArrayWrapper):
+                    try:
+                        val = typ(val)
+                    except Exception as e:
+                        errors.append(
+                            "Failed to coerce to '{0}': {1}".format(typ, e))
+                        pass
+                    else:
+                        val.validate()
+                        ok = True
+                        break
+
+            if not ok:
+                errstr = "\n".join(errors)
+                raise validators.ValidationError(
+                    "Object must be one of {0}: \n{1}".format(info['type'], errstr))
+
+        elif info['type'] == 'array':
+            val = info['validator'](val)
+            val.validate()
+
+        elif util.safe_issubclass(info['type'],
+                                  python_jsonschema_objects.wrapper_types.ArrayWrapper):
+            # An array type may have already been converted into an ArrayValidator
+            val = info['type'](val)
+            val.validate()
+
+        elif getattr(info['type'], 'isLiteralClass', False) is True:
+            if not isinstance(val, info['type']):
+                validator = info['type'](val)
+            validator.validate()
+
+        elif util.safe_issubclass(info['type'], ProtocolBase):
+            if not isinstance(val, info['type']):
+                val = info['type'](**util.coerce_for_expansion(val))
+
+            val.validate()
+
+        elif isinstance(info['type'], TypeProxy):
+            val = info['type'](val)
+
+        elif info['type'] is None:
+            # This is the null value
+            if val is not None:
+                raise validators.ValidationError(
+                    "None is only valid value for null")
+
+        else:
+            raise TypeError("Unknown object type: '{0}'".format(info['type']))
+
+        self._properties[prop] = val
+
+    def delprop(self):
+        if prop in self.__required__:
+            raise AttributeError("'%s' is required" % prop)
+        else:
+            del self._properties[prop]
+
+    return property(getprop, setprop, delprop, desc)
 
 
 class HammerClassBuilder(python_jsonschema_objects.classbuilder.ClassBuilder):
