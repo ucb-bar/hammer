@@ -658,9 +658,9 @@ sim.inputs:
   # This is passed as a plain string
   # For example, for VCS, timescale may be set as "sim.inputs.timescale: '1ns/10ps' which would be passed as "-timescale=1ns/10ps" 
   timescale: null
-
+  
   # C source files passed when generatin the simulation executable
-  # type: List[str[
+  # type: List[str]
   # These files will be passed like the verilog input files
   csrc: []
 
@@ -725,8 +725,6 @@ sim.inputs:
   ## If set to False, the sim will be purely functional, regardless of the simulation "level".
   ## If set to True, the sim will be time annotated based on synthesis or PAR results.
   # time_annotated: False
-  #
-  # force_reg_val: 0
 
 sim.submit:
   command: "${vlsi.submit.command}"

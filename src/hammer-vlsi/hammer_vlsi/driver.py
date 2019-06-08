@@ -647,13 +647,12 @@ class HammerDriver:
         """
         try:
             output_files = deeplist(output_dict["synthesis.outputs.output_files"])
-            #all_regs = deeplist(output_dict["synthesis.outputs.all_regs"])
-            #seq_cells = deeplist(output_dict["synthesis.outputs.seq_cells"])
+            all_regs = deeplist(output_dict["synthesis.outputs.all_regs"])
             result = {
                 "sim.inputs.input_files": output_files,
                 "sim.inputs.input_files_meta": "append",
                 "sim.inputs.top_module": output_dict["synthesis.inputs.top_module"],
-                "sim.inputs.all_regs": output_dict["synthesis.outputs.all_regs"],
+                "sim.inputs.all_regs": all_regs,
                 "sim.inputs.seq_cells": output_dict["synthesis.outputs.seq_cells"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]

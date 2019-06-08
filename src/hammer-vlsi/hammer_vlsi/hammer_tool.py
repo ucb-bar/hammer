@@ -1077,7 +1077,7 @@ class HammerTool(metaclass=ABCMeta):
         """
         ilms = self.get_setting("vlsi.inputs.ilms")  # type: List[dict]
         assert isinstance(ilms, list)
-        return list(map(ILMStruct.from_stting, ilms))
+        return list(map(ILMStruct.from_setting, ilms))
 
     def get_output_load_constraints(self) -> List[OutputLoadConstraint]:
         """
