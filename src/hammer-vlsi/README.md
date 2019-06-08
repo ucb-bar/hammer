@@ -13,12 +13,16 @@ System requirements:
 - python3 in the $PATH
 - hammer-shell in the $PATH
 
-- hammer_config, python-jsonschema-objects, hammer-tech, hammer-vlsi in $PYTHONPATH
-- HAMMER_PYYAML_PATH set to pyyaml/lib3 or pyyaml in $PYTHONPATH
-- HAMMER_HOME set to hammer repo root
-- HAMMER_VLSI path set to $HAMMER_HOME/src/hammer-vlsi
+- Here are 2 different method to install dependencies:
+  - For people prefer to `pip` to manage own dependencies, `requirements.txt` is in the root directory. (`python3 -m pip install -r requirements.txt --user`)
+  - For people prefer to use `git submodule`, 3rd party libraries are located in `src/contrib`, and `sourceme.sh` can handle that for you.
 
-See [sourceme.sh](sourceme.sh) for an example of in-tree use of hammer/hammer-vlsi.
+- `hammer_config`, `python-jsonschema-objects`, `hammer-tech`, `hammer-vlsi` in $PYTHONPATH
+- `HAMMER_PYYAML_PATH` set to `pyyaml/lib3` or `pyyaml` in `$PYTHONPATH`
+- `HAMMER_HOME` set to hammer repo root
+- `HAMMER_VLSI` path set to `$HAMMER_HOME/src/hammer-vlsi`
+
+See [sourceme.sh](sourceme.sh) for an example of in-tree use of `hammer/hammer-vlsi`.
 
 Environment Check
 =================

@@ -16,4 +16,3 @@ python3 ../hammer-vlsi/lef_utils_test.py
 python3 ../hammer_config/config_test.py
 
 test $err = 0 # Return non-zero if any command failed
-#TODO: use pytest to handle this

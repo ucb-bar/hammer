@@ -32,7 +32,6 @@ from stackup import RoutingDirection, WidthSpacingTuple, Metal, Stackup
 # Access it like hammer_tech.filters.lef_filter
 filters = LibraryFilterHolder()
 
-
 builder = python_jsonschema_objects.ObjectBuilder(json.loads(open(os.path.dirname(__file__) + "/schema.json").read()))
 ns = builder.build_classes()
 

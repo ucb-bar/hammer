@@ -1,3 +1,12 @@
 [submodule "src/tools/firrtl"]
 	path = src/tools/firrtl
 	url = https://github.com/ucb-bar/firrtl.git
+[submodule "src/contrib/pyyaml"]
+	path = src/contrib/pyyaml
+	url = https://github.com/yaml/pyyaml
+[submodule "src/contrib/python-jsonschema-objects"]
+	path = src/contrib/python-jsonschema-objects
+	url = https://github.com/cwacek/python-jsonschema-objects
+[submodule "src/contrib/jsonschema"]
+	path = src/contrib/jsonschema
+	url = https://github.com/Julian/jsonschema

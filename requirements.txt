@@ -1,0 +1,6 @@
+enum34==1.1.6
+jsonschema==3.0.1
+pytest==4.4.2
+python-jsonschema-objects==0.3.7
+PyYAML==5.1.1
+typing==3.6.6
