@@ -6,7 +6,7 @@
 #
 #  See LICENSE for licence details.
 
-from functools import reduce
+from functools import reduce, partial
 from typing import NamedTuple, List, Optional, Tuple, Dict, Set, Any
 
 import datetime
@@ -16,10 +16,11 @@ from hammer_utils import *
 
 import hammer_config
 import hammer_tech
+from hammer_tech import MacroSize
 from .hammer_tool import HammerTool
 from .hooks import HammerToolHookAction
 from .hammer_vlsi_impl import HammerVLSISettings, HammerPlaceAndRouteTool, HammerSynthesisTool, \
-    HammerSignoffTool, HammerDRCTool, HammerLVSTool, HammerSRAMGeneratorTool, \
+    HammerSignoffTool, HammerDRCTool, HammerLVSTool, HammerSRAMGeneratorTool, HammerPCBDeliverableTool, \
     HierarchicalMode, load_tool, PlacementConstraint, SRAMParameters, ILMStruct
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, HammerVLSILoggingContext
 from .submit_command import HammerSubmitCommand
@@ -110,6 +111,7 @@ class HammerDriver:
         self.post_custom_drc_tool_hooks = []  # type: List[HammerToolHookAction]
         self.post_custom_lvs_tool_hooks = []  # type: List[HammerToolHookAction]
         self.post_custom_sram_generator_tool_hooks = []  # type: List[HammerToolHookAction]
+        self.post_custom_pcb_tool_hooks = []  # type: List[HammerToolHookAction]
 
     @property
     def project_config(self) -> dict:
@@ -452,6 +454,42 @@ class HammerDriver:
         self.update_tool_configs()
         return True
 
+    def load_pcb_tool(self, run_dir: str = "") -> bool:
+        """
+        Load the PCB deliverable tool based on the given database.
+
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
+                        constructor.
+        :return: True if successful, false otherwise
+        """
+        if self.tech is None:
+            self.log.error("Must load technology before loading PCB deliverable tool")
+            return False
+
+        if run_dir == "":
+            run_dir = os.path.join(self.obj_dir, "pcb-rundir")
+
+        pcb_tool_name = self.database.get_setting("vlsi.core.pcb_tool")
+        pcb_tool_get = load_tool(
+            path=self.database.get_setting("vlsi.core.pcb_tool_path"),
+            tool_name=pcb_tool_name
+        )
+        assert isinstance(pcb_tool_get, HammerPCBDeliverableTool), "PCB deliverable tool must be a HammerPCBDeliverableTool"
+        pcb_tool = pcb_tool_get  # type: HammerPCBDeliverableTool
+        pcb_tool.name = pcb_tool_name
+        pcb_tool.logger = self.log.context("pcb")
+        pcb_tool.technology = self.tech
+        pcb_tool.set_database(self.database)
+        pcb_tool.top_module = self.database.get_setting("pcb.inputs.top_module", nullvalue="")
+        pcb_tool.submit_command = HammerSubmitCommand.get("pcb", self.database)
+        pcb_tool.run_dir = run_dir
+
+        self.pcb_tool = pcb_tool
+
+        self.tool_configs["pcb"] = pcb_tool.get_config()
+        self.update_tool_configs()
+        return True
+
     def set_post_custom_syn_tool_hooks(self, hooks: List[HammerToolHookAction]) -> None:
         """
         Set the extra list of hooks used for control flow (resume/pause) in run_synthesis.
@@ -785,6 +823,44 @@ class HammerDriver:
 
         return run_succeeded, output_config
 
+    def run_pcb(self, hook_actions: Optional[List[HammerToolHookAction]] = None, force_override: bool = False) -> Tuple[
+        bool, dict]:
+        """
+        Run the PCB deliverable generation tool
+
+        :param hook_actions: List of hook actions, or leave as None to use the hooks sets in set_pcb_hooks.
+                             Hooks from set_pcb_hooks, if present, will be appended afterwards.
+        :param force_override: Set to true to overwrite instead of append.
+        :return: Tuple of (success, output config dict)
+        """
+        if self.pcb_tool is None:
+            self.log.error("Must load PCB deliverable tool before calling run_pcb")
+            return False, {}
+
+        self.log.info("Starting PCB deliverable generation with tool '%s'" % (self.pcb_tool.name))
+
+        if hook_actions is None:
+            hooks_to_use = self.post_custom_pcb_tool_hooks
+        elif force_override:
+            hooks_to_use = hook_actions
+        else:
+            hooks_to_use = hook_actions + self.post_custom_pcb_tool_hooks
+
+        run_succeeded = self.pcb_tool.run(hooks_to_use)
+        if not run_succeeded:
+            self.log.error("PCB deliverable tool %s failed! Please check its output." % self.pcb_tool.name)
+            # Allow the flow to keep running, just in case
+
+        # Record output from the pcb_tool into the JSON output
+        output_config = {}  # type: Dict[str, Any]
+        try:
+            output_config.update(self.pcb_tool.export_config_outputs())
+        except ValueError as e:
+            self.log.fatal(e.args[0])
+            return False, {}
+
+        return run_succeeded, output_config
+
     def get_hierarchical_settings(self) -> List[Tuple[str, dict]]:
         """
         Read settings from the database, determine leaf/hierarchical modules, an order of execution, and return an
@@ -798,6 +874,11 @@ class HammerDriver:
         hier_modules = {}  # type: Dict[str, List[str]]
         hier_placement_constraints = {}  # type: Dict[str, List[PlacementConstraint]]
         hier_constraints = {}  # type: Dict[str, List[Dict]]
+
+        # This is retrieving the list of hard macro sizes to be used when creating PlacementConstraint tuples later
+        list_of_hard_macros = self.database.get_setting("vlsi.technology.extra_macro_sizes")  # type: List[Dict]
+        hard_macros = list(map(MacroSize.from_setting, list_of_hard_macros))
+
         if hier_source == "none":
             pass
         elif hier_source == "manual":
@@ -806,12 +887,33 @@ class HammerDriver:
             assert isinstance(list_of_hier_modules, list)
             if len(list_of_hier_modules) == 0:
                 raise ValueError("No hierarchical modules defined manually in manual hierarchical mode")
+            hier_modules = reduce(add_dicts, list_of_hier_modules)
+
             list_of_placement_constraints = self.database.get_setting(
                 "vlsi.inputs.hierarchical.manual_placement_constraints")  # type: List[Dict]
             assert isinstance(list_of_placement_constraints, list)
-            hier_modules = reduce(add_dicts, list_of_hier_modules)
-            combined_raw_placement_dict = reduce(add_dicts, list_of_placement_constraints, {})  # type: Dict[str, dict]
-            hier_placement_constraints = {key: list(map(PlacementConstraint.from_dict, lst))
+            combined_raw_placement_dict = reduce(add_dicts, list_of_placement_constraints, {})  # type: Dict[str, List[Dict[str, Any]]]
+
+            # This helper function filters only the dict containing the toplevel placement constraint, if any, from the provided list of dicts.
+            # If the list does not contain a toplevel constraint, it returns None.
+            def get_toplevel(d: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+                results = list(filter(lambda x: x["type"] == "toplevel", d))
+                if len(results) == 0:
+                    return None
+                else:
+                    return results[-1]
+
+            # Use the above helper method to filter down the combined raw placement dict into a dict:
+            # - keys are hierarchical module name
+            # - values are dicts containing toplevel constraints or None
+            toplevels_opt = {k: get_toplevel(v) for k, v in combined_raw_placement_dict.items()}  # type: Dict[str, Optional[Dict[str, Any]]]
+            # This filters out all of the Nones to get only hierarchical modules with toplevel placement constraints
+            toplevels = {k: v for k, v in toplevels_opt.items() if v is not None}  # type: Dict[str, Dict[str, Any]]
+            # This converts each dict entry into a MacroSize tuple, which should now represent all hierarchical modules
+            hier_macros = [MacroSize(library="", name=x[0], width=x[1]["width"], height=x[1]["height"]) for x in toplevels.items()]
+            masters = hard_macros + hier_macros
+
+            hier_placement_constraints = {key: list(map(partial(PlacementConstraint.from_masters_and_dict, masters), lst))
                                           for key, lst in combined_raw_placement_dict.items()}
             list_of_hier_constraints = self.database.get_setting(
                     "vlsi.inputs.hierarchical.constraints") # type: List[Dict]

@@ -18,6 +18,7 @@ from tech_test_utils import HasGetTech
 from test_tool_utils import HammerToolTestHelpers, DummyTool, SingleStepTool
 
 import hammer_config
+from hammer_config import HammerJSONEncoder
 import hammer_tech
 import hammer_vlsi
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, Level
@@ -212,7 +213,7 @@ class HammerToolTest(HasGetTech, unittest.TestCase):
             ]
         }
         with open(tech_json_filename, "w") as f:
-            f.write(json.dumps(tech_json, indent=4))
+            f.write(json.dumps(tech_json, cls=HammerJSONEncoder, indent=4))
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
         tech.logger = HammerVLSILogging.context("")
@@ -425,7 +426,7 @@ export lol=abc"cat"
                 "vlsi.core.par_tool": "nop",
                 "synthesis.inputs.top_module": "dummy",
                 "synthesis.inputs.input_files": ("/dev/null",)
-            }, indent=4))
+            }, cls=HammerJSONEncoder, indent=4))
 
         class BadExportTool(hammer_vlsi.HammerSynthesisTool, DummyTool):
             def export_config_outputs(self) -> Dict[str, Any]:
@@ -770,6 +771,90 @@ export lol=abc"cat"
         shutil.rmtree(tech_dir_base)
         shutil.rmtree(test.run_dir)
 
+    def test_hierarchical_width_height(self) -> None:
+        """
+        Test that hierarchical placements correctly propagate width and height.
+        """
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+        def add_stackup(in_dict: Dict[str, Any]) -> Dict[str, Any]:
+            out_dict = deepdict(in_dict)
+            out_dict["stackups"] = [StackupTestHelper.create_test_stackup_dict(8)]
+            return out_dict
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_stackup)
+        tmpdir = tempfile.mkdtemp()
+        proj_config = os.path.join(tmpdir, "config.json")
+
+        settings = {
+                "vlsi.core.technology": "dummy28",
+                "vlsi.inputs.hierarchical.mode": "hierarchical",
+                "vlsi.inputs.hierarchical.top_module": "TopMod",
+                "vlsi.inputs.hierarchical.config_source": "manual",
+                "vlsi.inputs.hierarchical.manual_modules": [{"TopMod": ["SubModA", "SubModB"]}],
+                "vlsi.inputs.hierarchical.manual_placement_constraints": [
+                    {"TopMod": [
+                        {"path": "top", "type": "toplevel", "x": 0, "y": 0, "width": 1234, "height": 7890, "margins": {"left": 1, "top": 2, "right": 3, "bottom": 4}},
+                        {"path": "top/C", "type": "placement", "x": 2, "y": 102, "width": 30, "height": 40},
+                        {"path": "top/B", "type": "hierarchical", "x": 10, "y": 30, "master": "SubModB"},
+                        {"path": "top/A", "type": "hierarchical", "x": 200, "y": 120, "master": "SubModA"}]},
+                    {"SubModA": [
+                        {"path": "a", "type": "toplevel", "x": 0, "y": 0, "width": 100, "height": 200, "margins": {"left": 0, "top": 0, "right": 0, "bottom": 0}}]},
+                    {"SubModB": [
+                        {"path": "b", "type": "toplevel", "x": 0, "y": 0, "width": 340, "height": 160, "margins": {"left": 0, "top": 0, "right": 0, "bottom": 0}}]}
+                ]
+            }
+        with open(proj_config, "w") as f:
+            f.write(json.dumps(settings, cls=HammerJSONEncoder, indent=4))
+
+        driver = hammer_vlsi.HammerDriver(
+            hammer_vlsi.HammerDriver.get_default_driver_options()._replace(project_configs=[
+                proj_config
+            ]))
+
+        # This should not assert
+        hier_settings = driver.get_hierarchical_settings()
+
+        top_constraints = [x[1]["vlsi.inputs.placement_constraints"] for x in hier_settings if x[0] == "TopMod"][0]
+        print(top_constraints)
+        a = [x for x in top_constraints if x["type"] == "hierarchical" and x["master"] == "SubModA"][0]
+        b = [x for x in top_constraints if x["type"] == "hierarchical" and x["master"] == "SubModB"][0]
+        print(a)
+        # Note that Decimals get serialized as strings
+        self.assertEqual(a["width"], "100")
+        self.assertEqual(a["height"], "200")
+        self.assertEqual(b["width"], "340")
+        self.assertEqual(b["height"], "160")
+
+        # Corrupt SubModA's width and heights
+        settings["vlsi.inputs.hierarchical.manual_placement_constraints"] = [
+                    {"TopMod": [
+                        {"path": "top", "type": "toplevel", "x": 0, "y": 0, "width": 1234, "height": 7890, "margins": {"left": 1, "top": 2, "right": 3, "bottom": 4}},
+                        {"path": "top/C", "type": "placement", "x": 2, "y": 102, "width": 30, "height": 40},
+                        {"path": "top/B", "type": "hierarchical", "x": 10, "y": 30, "master": "SubModB"},
+                        {"path": "top/A", "type": "hierarchical", "x": 200, "y": 120, "width": 123, "height": 456, "master": "SubModA"}]},
+                    {"SubModA": [
+                        {"path": "a", "type": "toplevel", "x": 0, "y": 0, "width": 100, "height": 200, "margins": {"left": 0, "top": 0, "right": 0, "bottom": 0}}]},
+                    {"SubModB": [
+                        {"path": "b", "type": "toplevel", "x": 0, "y": 0, "width": 340, "height": 160, "margins": {"left": 0, "top": 0, "right": 0, "bottom": 0}}]}
+                ]
+
+        with open(proj_config, "w") as f:
+            f.write(json.dumps(settings, cls=HammerJSONEncoder, indent=4))
+
+        driver = hammer_vlsi.HammerDriver(
+            hammer_vlsi.HammerDriver.get_default_driver_options()._replace(project_configs=[
+                proj_config
+            ]))
+
+
+        # This should assert because we mismatched SubModA's width and height with the master values
+        with self.assertRaises(ValueError):
+            hier_settings = driver.get_hierarchical_settings()
+
+        # Cleanup
+        shutil.rmtree(tech_dir_base)
+        shutil.rmtree(tmpdir)
+
 
 T = TypeVar('T')
 
@@ -798,7 +883,7 @@ class HammerToolHooksTestContext:
                 "synthesis.inputs.top_module": "dummy",
                 "synthesis.inputs.input_files": ("/dev/null",),
                 "synthesis.mocksynth.temp_folder": temp_dir
-            }, indent=4))
+            }, cls=HammerJSONEncoder, indent=4))
         options = hammer_vlsi.HammerDriverOptions(
             environment_configs=[],
             project_configs=[json_path],
@@ -1095,7 +1180,7 @@ class HammerSubmitCommandTestContext:
             })
 
         with open(json_path, "w") as f:
-            f.write(json.dumps(json_content, indent=4))
+            f.write(json.dumps(json_content, cls=HammerJSONEncoder, indent=4))
 
         options = hammer_vlsi.HammerDriverOptions(
             environment_configs=[],
@@ -1197,7 +1282,7 @@ class HammerSignoffToolTestContext:
             })
 
         with open(json_path, "w") as f:
-            f.write(json.dumps(json_content, indent=4))
+            f.write(json.dumps(json_content, cls=HammerJSONEncoder, indent=4))
 
         options = hammer_vlsi.HammerDriverOptions(
             environment_configs=[],
@@ -1292,7 +1377,7 @@ class HammerSRAMGeneratorToolTestContext:
             })
 
         with open(json_path, "w") as f:
-            f.write(json.dumps(json_content, indent=4))
+            f.write(json.dumps(json_content, cls=HammerJSONEncoder, indent=4))
 
         options = hammer_vlsi.HammerDriverOptions(
             environment_configs=[],
@@ -1336,6 +1421,111 @@ class HammerSRAMGeneratorToolTest(unittest.TestCase):
             "sram32x32_1.5V_125.0C.gds",
             "sram64x128_0.5V_0.0C.gds",
             "sram64x128_1.5V_125.0C.gds"]))
+
+class HammerPCBDeliverableToolTestContext:
+    def __init__(self, test: unittest.TestCase) -> None:
+        self.test = test  # type unittest.TestCase
+        self.logger = HammerVLSILogging.context("")
+        self._driver = None  # type: Optional[hammer_vlsi.HammerDriver]
+
+    # Helper property to check that the driver did get initialized.
+    @property
+    def driver(self) -> hammer_vlsi.HammerDriver:
+        assert self._driver is not None, "HammerDriver must be initialized before use"
+        return self._driver
+
+    def __enter__(self) -> "HammerPCBDeliverableToolTestContext":
+        """Initialize context by creating the temp_dir, driver, and loading the sram_generator tool."""
+        self.test.assertTrue(hammer_vlsi.HammerVLSISettings.set_hammer_vlsi_path_from_environment(),
+                             "hammer_vlsi_path must exist")
+        temp_dir = tempfile.mkdtemp()
+        json_path = os.path.join(temp_dir, "project.json")
+        json_content = {
+            "vlsi.core.technology": "nop",
+            "vlsi.core.pcb_tool": "generic",
+            "pcb.inputs.top_module": "dummy",
+            "pcb.submit.command": "local",
+            "vlsi.inputs.bumps_mode": "manual",
+            "vlsi.inputs.bumps": {
+                "x": 5,
+                "y": 4,
+                "pitch": "123.4",
+                "cell": "dummybump",
+                "assignments": [
+                    {"name": "reset", "x": 1, "y": 1},
+                    {"name": "clock", "x": 2, "y": 1},
+                    {"name": "VDD", "x": 3, "y": 1},
+                    {"name": "VDD", "x": 4, "y": 1},
+                    {"name": "VSS", "x": 5, "y": 1},
+                    {"name": "data[0]", "x": 1, "y": 2},
+                    {"name": "data[1]", "x": 2, "y": 2},
+                    {"name": "data[2]", "x": 3, "y": 2},
+                    {"name": "VSS", "x": 4, "y": 2},
+                    {"name": "VDD", "x": 5, "y": 2},
+                    {"name": "data[3]", "x": 1, "y": 3},
+                    {"name": "valid", "x": 2, "y": 3},
+                    {"name": "ready", "x": 3, "y": 3},
+                    {"name": "NC", "x": 4, "y": 3, "no_connect": True},
+                    {"name": "VSS", "x": 5, "y": 3},
+                    {"name": "VDD", "x": 1, "y": 4},
+                    {"name": "VSS", "x": 2, "y": 4},
+                    {"name": "VDD", "x": 3, "y": 4},
+                    {"name": "VSS", "x": 4, "y": 4}
+                    # Note 5,4 is left out intentionally
+                ]
+            },
+            "pcb.generic.footprint_type": "PADS-V9",
+            "pcb.generic.schematic_symbol_type": "AltiumCSV",
+            "technology.pcb.bump_pad_opening_diameter": "60",
+            "technology.pcb.bump_pad_metal_diameter": "75"
+        }  # type: Dict[str, Any]
+
+        with open(json_path, "w") as f:
+            f.write(json.dumps(json_content, cls=HammerJSONEncoder, indent=4))
+
+        options = hammer_vlsi.HammerDriverOptions(
+            environment_configs=[],
+            project_configs=[json_path],
+            log_file=os.path.join(temp_dir, "log.txt"),
+            obj_dir=temp_dir
+        )
+        self._driver = hammer_vlsi.HammerDriver(options)
+        self.temp_dir = temp_dir
+        return self
+
+    def __exit__(self, type, value, traceback) -> bool:
+        """Clean up the context by removing the temp_dir."""
+        shutil.rmtree(self.temp_dir)
+        # Return True (normal execution) if no exception occurred.
+        return True if type is None else False
+
+    @property
+    def env(self) -> Dict[str, str]:
+        return {}
+
+class HammerGenericPCBToolTest(unittest.TestCase):
+    def create_context(self) -> HammerPCBDeliverableToolTestContext:
+        return HammerPCBDeliverableToolTestContext(self)
+
+    def test_deliverables_exist(self) -> None:
+        """
+        Test that a PADS-V9 footprint, Altium CSV, and pads CSV are created.
+        This doesn't check the correctness of the deliverables.
+        """
+        with self.create_context() as c:
+            self.assertTrue(c.driver.load_pcb_tool())
+            self.assertTrue(c.driver.run_pcb())
+            # Ignoring the type of this for the same reason as the power straps stuff below.
+            # It's hard to get the concrete type of this tool that contains the methods used below.
+            assert isinstance(c.driver.pcb_tool, hammer_vlsi.HammerPCBDeliverableTool)
+            self.assertTrue(os.path.exists(c.driver.pcb_tool.output_footprint_filename))  # type: ignore
+            self.assertTrue(os.path.exists(c.driver.pcb_tool.output_footprint_csv_filename))  # type: ignore
+            self.assertTrue(os.path.exists(c.driver.pcb_tool.output_schematic_symbol_filename))  # type: ignore
+
+    # TODO add more checks:
+    # - footprint pads should be mirrored relative to GDS
+    # - Blank bumps should not show up
+    # - test grouping
 
 class HammerPowerStrapsTestContext:
     def __init__(self, test: unittest.TestCase, strap_options: Dict[str, Any]) -> None:
@@ -1381,7 +1571,7 @@ class HammerPowerStrapsTestContext:
                 "technology.core.std_cell_rail_layer": "M1",
                 "technology.core.tap_cell_rail_reference": "FakeTapCell",
                 "par.mockpar.temp_folder": temp_dir
-            }, self.strap_options), indent=4))
+            }, self.strap_options), cls=HammerJSONEncoder, indent=4))
         options = hammer_vlsi.HammerDriverOptions(
             environment_configs=[],
             project_configs=[json_path],

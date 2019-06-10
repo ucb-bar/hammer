@@ -14,6 +14,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import hammer_tech
 from hammer_tech import LibraryFilter
+from hammer_config import HammerJSONEncoder
 import hammer_vlsi
 
 
@@ -109,7 +110,7 @@ class HammerToolTestHelpers:
         if postprocessing_func is not None:
             tech_json = postprocessing_func(tech_json)
         with open(tech_json_filename, "w") as f:  # pylint: disable=invalid-name
-            f.write(json.dumps(tech_json, indent=4))
+            f.write(json.dumps(tech_json, cls=HammerJSONEncoder, indent=4))
 
     @staticmethod
     def make_test_filter() -> LibraryFilter:

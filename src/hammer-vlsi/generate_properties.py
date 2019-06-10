@@ -181,6 +181,17 @@ def main(args) -> int:
                               outputs=[]
                               )
 
+    HammerPCBDeliverableTool = Interface(module="HammerPCBDeliverableTool",
+                                       filename="hammer_vlsi/hammer_vlsi_impl.py",
+                                       inputs=[],
+                                       outputs=[
+                                           InterfaceVar("output_footprints", "List[str]",
+                                                        "list of the PCB footprint files for the project"),
+                                           InterfaceVar("output_schematic_symbols", "List[str]",
+                                                        "list of the PCB schematic symbol files for the project"),
+                                           ]
+                                       )
+
     dry_run = parsed_args.dry_run
     selected_file = str(parsed_args.file)
 
@@ -189,6 +200,7 @@ def main(args) -> int:
     generate_interface(HammerDRCTool)
     generate_interface(HammerLVSTool)
     generate_interface(HammerSRAMGeneratorTool)
+    generate_interface(HammerPCBDeliverableTool)
 
     if selected_file == "":
         # Export all files

@@ -40,6 +40,11 @@ vlsi.core:
   sram_generator_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/sram_generator"]
   sram_generator_tool_path_meta: subst
 
+  # Path(s) to PCB deliverable tools.
+  # Add the built-in path to PCB deliverable tools.
+  pcb_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/pcb"]
+  pcb_tool_path_meta: subst
+
   # Synthesis tool to use.
   # Currently we can choose from a selection of built-in tools which hammer-vlsi supports.
   synthesis_tool: "nop"
@@ -55,6 +60,10 @@ vlsi.core:
 
   # SRAM Generator tool to use.
   sram_generator_tool: "nop"
+
+  # PCB deliverable tool to use.
+  # PCB deliverables include footprints, symbols, etc.
+  pcb_tool: "generic"
 
   # Maximum threads to use in a CAD tool invocation.
   max_threads: 1
@@ -231,31 +240,56 @@ vlsi.inputs:
   # List of placement constraints for floorplanning.
   # Each item is a struct member:
   # path (str) - Path to the given instance
-  # type (str) - One of the following:
-  # - "dummy" (does nothing with this constraint)
-  # - "placement" (creates a placement constraint for an instance)
-  # - "toplevel" (top-level chip dimensions; may only occur once, for the top-level module)
-  # - "hardmacro" (places this hard macro at a particular spot)
-  # - "hierarchical" (marks this instance as part of hierarchical place and route)
-  # - "obstruction" (creates a blockage at a particular spot; see obs_types)
-  # TODO(edwardw): add rotation
+  # - Required for all types
+  # type (str) - The type of placement constraint
+  # - Required for all types
+  # - One of the following:
+  #   - "dummy" (does nothing with this constraint)
+  #   - "placement" (creates a placement constraint for an instance)
+  #   - "toplevel" (top-level chip dimensions; may only occur once, for the top-level module)
+  #   - "hardmacro" (places this hard macro at a particular spot)
+  #   - "hierarchical" (marks this instance as part of hierarchical place and route)
+  #   - "obstruction" (creates a blockage at a particular spot; see obs_types)
+  # orientation (Optional[str]) - The orientation
+  # - Optional for all types
+  # - Valid options:
+  #   - "r0"   (standard orientation)
+  #   - "r90"  (rotated 90 degrees clockwise)
+  #   - "r180" (rotated 180 degrees)
+  #   - "r270" (rotated 270 degrees clockwise; equivalent to -90 degrees counterclockwise)
+  #   - "mx"   (mirrored about the x-axis)
+  #   - "mx90" (mirrored about the x-axis, then rotated 90 degrees clockwise)
+  #   - "my"   (mirrored about the y-axis)
+  #   - "my90" (mirrored about the y-axis, then rotated 90 degrees clockwise)
   # x (float) - x coordinate in um
+  # - Required for all types
   # y (float) - y coordinate in um
+  # - Required for all types
   # width (float) - width in um
+  # - Required for all types, but can be auto-filled for hierarchical and hardmacro if left blank
   # height (float) - height in um
-  # margins (Optional[Margins]) - margins for the top-level module (i.e. only only for a toplevel constraint). Contains the following keys:
-  # - "left" - margin from the left side of the core PNR area to the edge of the chip
-  # - "right" - margin from the right side of the core PNR area to the edge of the chip
-  # - "top" - margin from the top side of the core PNR area to the edge of the chip
-  # - "bottom" - margin from the bottom side of the core PNR area to the edge of the chip
-  # top_layer (str) - Optional: Specifies the highest layer used by this hardmacro
-  #   If specified will be used to keep other wires away from this hardmacro
-  # layers (List[str]) - Optional: only used for obstruction type. 
-  #   If specified, a list of strings that enumerates layer(s) blocked by the obstruction otherwise all layers are blocked
-  # obs_types (List[str]) - Required for obstruction type. A list of one or more of the following:
-  # - "place" - This obstruction type stops the placement of standard cells inside it
-  # - "route" - This obstruction type stops all routing inside it
-  # - "power" - This obstruction type stops only power routing/straps inside it
+  # - Required for all types, but can be auto-filled for hierarchical and hardmacro if left blank
+  # master (Optional[str]) - The master module name of the hierarchical or hardmacro constraint.
+  #                          For example, if this hardmacro is an instance of "my_amplifier", this
+  #                          field should be set to "my_amplifier".
+  # - Required for hierarchical and optional for hardmacro, disallowed otherwise
+  # margins (Optional[Margins]) - margins for the top-level module.
+  # - Required for toplevel, disallowed otherwise
+  # - Contains the following keys:
+  #   - "left"   (margin from the left side of the core PNR area to the edge of the chip)
+  #   - "right"  (margin from the right side of the core PNR area to the edge of the chip)
+  #   - "top"    (margin from the top side of the core PNR area to the edge of the chip)
+  #   - "bottom" (margin from the bottom side of the core PNR area to the edge of the chip)
+  # top_layer (str) - Specifies the highest layer used by this hierarchical or hardmacro, used to keep other wires away
+  # - Optional for hierarchical and hardmacro
+  # layers (List[str]) - A list of strings that enumerates layer(s) blocked by the obstruction otherwise all layers are blocked
+  # - Required for the obstruction type, disallowed otherwise
+  # obs_types (List[str]) - A list of the types of obstructions for the given geometry
+  # - Required for the obstruction type, disallowed otherwise
+  # - A list of one or more of the following:
+  #   - "place" - This obstruction type stops the placement of standard cells inside it
+  #   - "route" - This obstruction type stops all routing inside it
+  #   - "power" - This obstruction type stops only power routing/straps inside it
   placement_constraints: []
 
   # Don't use list mode. (str)
@@ -325,8 +359,23 @@ vlsi.inputs:
     #  - no_connect (Optional[bool]) - If True the bump will be present but unconnected
     #  - x (Decimal) - The X coordinate of the bump assigned to this net
     #  - y (Decimal) - The Y coordinate of the bump assigned to this net
+    #  - group (Optional[str]) - The group name for the bumps
+    #                          - The schematic symbol generator will put all bumps in a group on the same part or sub-component.
     #  - custom_cell (Optional[str]) - Cell name (MACRO name) of a custom bump cell in place of the default for this bump. You must also specify the LEF and GDS for this bump in extra_libraries.
     assignments: []
+
+  # Naming scheme for the bumps' actual physical pin designators
+  # Valid options are
+  # - "A0"    (Use letters for rows, skipping I, O, Q, S, X, and Z. After Y is AA, AB, AC ...
+  #            Use numbers for columns, starting at 0, with no leading 0s (0-9, then 10, 11, ...))
+  # - "A1"    (Like A0, but numbers start at 1)
+  # - "A00"   (Like A0, but all bumps will have the same number of digits, with leading 0s appended if needed.
+  #            E.g. if there are 555 columns, The top row will start at A000 and end at A554)
+  # - "A01"   (Like A00, but numbers start at 1)
+  # - "index" (Just returns a single number in the order the bumps are listed- useful for non-grid designs)
+  # type: str
+  bumps_pin_naming_scheme: "A1"
+
 
   # Pin placement mode. (str)
   # Specifies how to arrange pins for your design.
@@ -587,6 +636,20 @@ sram_generator.submit:
   settings: "vlsi.submit.settings"
   settings_meta: lazycrossref
 
+# PCB deliverable settings.
+pcb.inputs:
+  # Top RTL module.
+  top_module: null
+
+pcb.submit:
+  # Submission command settings
+  # inherit settings from vlsi.submit but allow us to override them
+  command: "${vlsi.submit.command}"
+  command_meta: lazysubst
+  settings: "vlsi.submit.settings"
+  settings_meta: lazycrossref
+
+
 technology.core:
     # Key name for the technology stackup
     # This should exist in the stackups list in the tech json
@@ -600,3 +663,15 @@ technology.core:
     # Can be a wildcard/glob
     # type: str
     tap_cell_rail_reference: null
+
+technology.pcb:
+  # Desired pad opening diameter (in post-shrink um)
+  # Typically this should be defined in the technology plugin, assuming everyone will use the same pad and board strategy
+  # type: Decimal
+  bump_pad_opening_diameter: null
+
+  # Desired pad metal diameter (in post-shrink um)
+  # Typically this should be defined in the technology plugin, assuming everyone will use the same pad and board strategy
+  # type: Decimal
+  bump_pad_metal_diameter: null
+

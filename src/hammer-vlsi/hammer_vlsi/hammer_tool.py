@@ -905,16 +905,17 @@ class HammerTool(metaclass=ABCMeta):
             no_con = False if not "no_connect" in raw_assign else raw_assign["no_connect"]
             x = raw_assign["x"]
             y = raw_assign["y"]
+            group = None if not "group" in raw_assign else raw_assign["group"]
             cell = None if not "custom_cell" in raw_assign else raw_assign["custom_cell"]
             if name is None and not no_con:
                 self.logger.warning("Invalid bump assignment, neither name nor no_connect specified for bump {x},{y}. Assuming it should be unassigned".format(
                     x=x, y=y))
             else:
                 assignments.append(BumpAssignment(name=name, no_connect=no_con,
-                    x=x, y=y, custom_cell=cell))
+                    x=x, y=y, group=group, custom_cell=cell))
         return BumpsDefinition(x=self.get_setting("vlsi.inputs.bumps.x"),
             y=self.get_setting("vlsi.inputs.bumps.y"),
-            pitch=self.get_setting("vlsi.inputs.bumps.pitch"),
+            pitch=Decimal(str(self.get_setting("vlsi.inputs.bumps.pitch"))),
             cell=self.get_setting("vlsi.inputs.bumps.cell"), assignments=assignments)
 
     def get_pin_assignments(self) -> List[PinAssignment]:
@@ -1072,6 +1073,8 @@ class HammerTool(metaclass=ABCMeta):
         """
         constraints = self.get_setting("vlsi.inputs.placement_constraints")
         assert isinstance(constraints, list)
+        # At this point, the optional width/height placement constraints have been resolved,
+        # so there is no need to pass the masters in here, meaning we can use from_dict.
         return list(map(PlacementConstraint.from_dict, constraints))
 
     def get_mmmc_corners(self) -> List[MMMCCorner]:

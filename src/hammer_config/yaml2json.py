@@ -102,6 +102,7 @@ def load_yaml(yamlStr: str) -> dict:
     :return: A dictionary object representing the yaml database.
     """
     obj = convertArrays(yaml.safe_load(yamlStr))
+    # Note we are not using HammerJSONEncoder here to avoid a circular dependency, but this should never need have Decimals
     obj2 = json.loads(json.dumps(obj))
     if not compare(obj, obj2):
         raise ValueError("YAML -> JSON structures don't match: %s and %s do not match" % (str(obj), str(obj2)))
