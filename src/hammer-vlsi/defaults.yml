@@ -454,6 +454,21 @@ par.inputs:
   # type: bool
   gds_merge: false
 
+  # Physical only cells mode.
+  # type: str
+  # The list of physical only cells are cells which don't have a logic function.
+  # They won't have a spice circuit for instance.
+  # This is currently only used for what cells to exclude from the LVS netlist, which
+  # requires spice circuits for all cells.
+  # Valid options:
+  # auto - Use the technology plugin's value for the physical cell list.
+  # manual - Read the physical cell list from the variable below, overriding the technology plugin.
+  # append - Append the manual list to the technology plugin's list
+  physical_only_cells_mode: auto
+  # List of cells that are only physical.
+  # type List[str]
+  physical_only_cells_list: []
+
 # Place-and-route settings
 par:
   # Submission command settings
