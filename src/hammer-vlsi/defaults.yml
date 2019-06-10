@@ -457,9 +457,9 @@ par.inputs:
   # Physical only cells mode.
   # type: str
   # The list of physical only cells are cells which don't have a logic function.
-  # They won't have a spice circuit for instance.
+  # They won't have a SPICE circuit for instance.
   # This is currently only used for what cells to exclude from the LVS netlist, which
-  # requires spice circuits for all cells.
+  # requires SPICE circuits for all cells.
   # Valid options:
   # auto - Use the technology plugin's value for the physical cell list.
   # manual - Read the physical cell list from the variable below, overriding the technology plugin.

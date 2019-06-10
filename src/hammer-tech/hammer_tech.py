@@ -407,7 +407,7 @@ class HammerTechnology:
     @property
     def physical_only_cells_list(self) -> Optional[List[str]]:
         """
-        Get the list of physical only  cells.
+        Get the list of physical only cells.
         :return: List of physical only cells, or None if the technology does not define such a list.
         """
         physical_only_cells_list_raw = self.config.physical_only_cells_list  # type: Optional[List[str]]
@@ -415,7 +415,7 @@ class HammerTechnology:
             return None
         else:
             # Work around the weird objects implemented by the jsonschema generator.
-            physical_only_cells_list = list(map(lambda x: str(x), list(physical_only_cells_list_raw)))
+            physical_only_cells_list = [str(x) for x in physical_only_cells_list_raw]
             return physical_only_cells_list
 
     @property
