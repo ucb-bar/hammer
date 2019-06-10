@@ -1005,6 +1005,37 @@ class HammerTool(metaclass=ABCMeta):
 
         return map_file
 
+    def get_physical_only_cells(self) -> List[str]:
+        """
+        Get a list of physical only cells in accordance with settings in the Hammer IR.
+        Return a list of cells which are physical only.
+        :return: A list of physical only cells.
+        """
+        # Mode can be auto, manual, or append
+        physical_only_cells_mode = str(self.get_setting("par.inputs.physical_only_cells_mode"))  # type: str
+
+        # physical_only_cells_list will only be used in manual and append mode
+        manual_physical_only_cells_list = self.get_setting("par.inputs.physical_only_cells_list")  # type: List[str]
+        assert isinstance(manual_physical_only_cells_list, list), "par.inputs.physical_only_cells_list must be a list"
+
+        # tech_physical_only_cells_list will only be used in auto and append mode
+        tech_physical_only_cells_list = get_or_else(self.technology.physical_only_cells_list, [])  # type: List[str]
+
+        # Default to auto (use tech_physical_only_cells_list).
+        physical_only_cells_list = tech_physical_only_cells_list  # type: List[str]
+
+        if physical_only_cells_mode == "auto":
+            pass
+        elif physical_only_cells_mode == "manual":
+            physical_only_cells_list = manual_physical_only_cells_list
+        elif physical_only_cells_mode == "append":
+            physical_only_cells_list = tech_physical_only_cells_list + manual_physical_only_cells_list
+        else:
+            self.logger.error(
+                "Invalid physical_only_cells_mode {mode}. Using auto physical only cells list.".format(mode=physical_only_cells_mode))
+
+        return physical_only_cells_list
+
     def get_dont_use_list(self) -> List[str]:
         """
         Get a "don't use" list in accordance with settings in the Hammer IR.
