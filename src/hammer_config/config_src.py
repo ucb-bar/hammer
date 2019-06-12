@@ -713,7 +713,7 @@ def load_config_from_file(filename: str, strict: bool = False) -> dict:
     :param strict: Set to true to error if the file is not found.
     :return: Loaded config dictionary, unpacked.
     """
-    if filename.endswith(".yml"):
+    if filename.endswith(".yml") or filename.endswith(".yaml"):
         is_yaml = True
     elif filename.endswith(".json"):
         is_yaml = False
