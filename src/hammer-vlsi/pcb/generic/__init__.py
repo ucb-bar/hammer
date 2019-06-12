@@ -9,8 +9,9 @@
 import os
 import datetime
 import re
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from decimal import Decimal
+from hammer_utils import um2mm
 
 from hammer_vlsi import HammerPCBDeliverableTool, HammerToolStep, BumpsPinNamingScheme, BumpsDefinition, BumpAssignment
 
@@ -32,6 +33,7 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
         steps = [
             self.create_footprint_csv,
             self.create_footprint,
+            self.create_bom_builder_pindata_txt,
             self.create_schematic_symbols
         ]
         return self.make_steps_from_methods(steps)
@@ -49,6 +51,10 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
     def output_schematic_symbol_filename(self) -> str:
         # change this when supporting other types
         return os.path.join(self.run_dir, "{top}-symbol.csv".format(top=self.top_module))
+
+    @property
+    def output_bom_builder_pindata_filename(self) -> str:
+        return os.path.join(self.run_dir, "{top}-pindata.txt".format(top=self.top_module))
 
     @property
     def footprint_name(self) -> str:
@@ -76,7 +82,6 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
         else:
             return Decimal(str(diameter))
 
-
     @property
     def bump_pad_metal_diameter(self) -> Decimal:
         """
@@ -88,22 +93,79 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
         else:
             return Decimal(str(diameter))
 
-    def create_footprint_csv(self) -> bool:
+    def get_bumps_and_assignments(self) -> Tuple[BumpsDefinition, List[BumpAssignment]]:
         """
-        Create a CSV of the bump map to be easily read into your spreadsheet editor of choice.
-
-        :return: True if successful
+        Helper method to get non-Optional versions of the bumps definition and bumps assignment list.
         """
-
         bumps = self.get_bumps()
         if bumps is None:
-            raise ValueError("There must be bumps in order to generate a footprint!")
+            raise ValueError("There must be a bumps definition in order to generate to generate PCB deliverables!")
         assert isinstance(bumps, BumpsDefinition)
 
         assignments = bumps.assignments
         if assignments is None:
-            raise ValueError("There must be at least 1 bump in order to generate a footprint!")
+            raise ValueError("There must be at least 1 bump in order to generate PCB deliverables!")
         assert isinstance(assignments, list)
+
+        if bumps.x < 1 or bumps.y < 1 or len(bumps.assignments) < 1:
+            raise ValueError("There must be at least 1 bump in order to generate PCB deliverables!")
+
+        return (bumps, assignments)
+
+    def create_bom_builder_pindata_txt(self) -> bool:
+        """
+        Creates a PINDATA.txt file that is consumed by the BOMBuilder tool to create a package.
+        BOMBuilder is part of the PartSync tool suite: http://www.partsync.com/
+        """
+
+        bumps, assignments = self.get_bumps_and_assignments()
+        naming_scheme = self.naming_scheme
+
+        # Sort the bumps
+        sorted_assignments = naming_scheme.sort_by_name(bumps, assignments)
+
+        # Use post-shrink pitch
+        pitch = self.technology.get_post_shrink_length(bumps.pitch)
+
+        # There is no meaningful verion for this file
+        # Set the units to metric (mm)
+        output = "VER 0.0\nUNIT M\n"
+        x_offset = ((1 - bumps.x) * pitch) / 2  # type: Decimal
+        y_offset = ((1 - bumps.y) * pitch) / 2  # type: Decimal
+        for bump in sorted_assignments:
+            # note that the flip-chip mirroring happens here
+            name = naming_scheme.name_bump(bumps, bump)
+            x = um2mm((bumps.x - bump.x) * pitch + x_offset, 3)
+            y = um2mm((bump.y - 1) * pitch + y_offset, 3)
+            # Fields in order (with valid options):
+            # Name
+            # X position (mm)
+            # Y position (mm)
+            # Shape (RND or RECT)
+            # Width (mm)
+            # Height (mm)
+            # Side (TOP or BOT)
+            # Connection offset X (mm)
+            # Connection offset Y (mm)
+            # Lead type (0 = signal pin, 1 = mounting hole, 2 = shield)
+            # Hole lock (T = true, F = false)
+            # Plated/Not Plated (P = Plated, N = Not plated)
+            output += "{name:<6} {x:>10.3f} {y:>10.3f} RND {w:0.3f} {w:0.3f} NONE SMT TOP 0 0 0 F P\n".format(name=name, x=x, y=y, w=self.bump_pad_metal_diameter)
+
+        with open(self.output_bom_builder_pindata_filename, "w") as f:
+            f.write(output)
+
+        return True
+
+    def create_footprint_csv(self) -> bool:
+        """
+        Create a CSV of the bump map to be easily read into your spreadsheet editor of choice.
+        This will fail silently with non-integer bump assignment coordinates (they'll be ignored).
+
+        :return: True if successful
+        """
+
+        bumps, assignments = self.get_bumps_and_assignments()
 
         output = ""
         for y in range(bumps.y,0,-1):
@@ -120,7 +182,6 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
 
         return True
 
-
     def create_footprint(self) -> bool:
         """
         Create the footprint type requested by pcb.generic.footprint_type. Currently only supports PADS-V9,
@@ -132,22 +193,7 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
         if footprint_type != "PADS-V9":
             raise NotImplementedError("Unsupported footprint type: {}".format(footprint_type))
 
-        bumps = self.get_bumps()
-        if bumps is None:
-            raise ValueError("There must be bumps in order to generate a footprint!")
-        assert isinstance(bumps, BumpsDefinition)
-
-        assignments = bumps.assignments
-        if assignments is None:
-            raise ValueError("There must be at least 1 bump in order to generate a footprint!")
-        assert isinstance(assignments, list)
-
-        if bumps.x < 1 or bumps.y < 1 or len(bumps.assignments) < 1:
-            raise ValueError("There must be at least 1 bump in order to generate a footprint!")
-
-        # helper to round a um unit to um and then convert it to mm
-        def um2mm(n: Decimal) -> Decimal:
-            return Decimal(round(n))/1000
+        bumps, assignments = self.get_bumps_and_assignments()
 
         # Use post-shrink pitch
         pitch = self.technology.get_post_shrink_length(bumps.pitch)
@@ -183,12 +229,12 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
 
         # we'll dog-ear the outline to indicate the reference bump in the top left
         # x and y are in mm, not um
-        output += "{x} {y}\n".format(x=um2mm(-outline_width/2),           y=um2mm(-outline_height/2))
-        output += "{x} {y}\n".format(x=um2mm(-outline_width/2),           y=um2mm( outline_height/2 - 2*pitch))
-        output += "{x} {y}\n".format(x=um2mm(-outline_width/2 + 2*pitch), y=um2mm( outline_height/2))
-        output += "{x} {y}\n".format(x=um2mm( outline_width/2),           y=um2mm( outline_height/2))
-        output += "{x} {y}\n".format(x=um2mm( outline_width/2),           y=um2mm(-outline_height/2))
-        output += "{x} {y}\n".format(x=um2mm(-outline_width/2),           y=um2mm(-outline_height/2))
+        output += "{x} {y}\n".format(x=um2mm(-outline_width/2, 3),           y=um2mm(-outline_height/2, 3))
+        output += "{x} {y}\n".format(x=um2mm(-outline_width/2, 3),           y=um2mm( outline_height/2 - 2*pitch, 3))
+        output += "{x} {y}\n".format(x=um2mm(-outline_width/2 + 2*pitch, 3), y=um2mm( outline_height/2, 3))
+        output += "{x} {y}\n".format(x=um2mm( outline_width/2, 3),           y=um2mm( outline_height/2, 3))
+        output += "{x} {y}\n".format(x=um2mm( outline_width/2, 3),           y=um2mm(-outline_height/2, 3))
+        output += "{x} {y}\n".format(x=um2mm(-outline_width/2, 3),           y=um2mm(-outline_height/2, 3))
 
         # create all of the terminals
         x_offset = ((1 - bumps.x) * pitch) / 2  # type: Decimal
@@ -196,8 +242,8 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
         naming_scheme = self.naming_scheme
         for bump in bumps.assignments:
             # note that the flip-chip mirroring happens here
-            x = um2mm((bumps.x - bump.x) * pitch + x_offset)
-            y = um2mm((bump.y - 1) * pitch + y_offset)
+            x = um2mm((bumps.x - bump.x) * pitch + x_offset, 3)
+            y = um2mm((bump.y - 1) * pitch + y_offset, 3)
             label = naming_scheme.name_bump(bumps, bump)
             output += "T{x} {y} {x} {y} {label}\n".format(x=x, y=y, label=label)
 
@@ -210,7 +256,7 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
         # -2=top layer
         # diameter
         # R=round pad
-        output += "-2 {dia} R\n".format(dia=um2mm(self.bump_pad_opening_diameter))
+        output += "-2 {dia} R\n".format(dia=um2mm(self.bump_pad_opening_diameter, 3))
         # -1=all inner layers
         # 0=no pad
         # R=round pad
@@ -239,15 +285,7 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
         if schematic_symbol_type != "AltiumCSV":
             raise NotImplementedError("Unsupported schematic symbool type: {}".format(schematic_symbol_type))
 
-        bumps = self.get_bumps()
-        if bumps is None:
-            raise ValueError("There must be bumps in order to generate a footprint!")
-        assert isinstance(bumps, BumpsDefinition)
-
-        assignments = bumps.assignments
-        if assignments is None:
-            raise ValueError("There must be at least 1 bump in order to generate a footprint!")
-        assert isinstance(assignments, list)
+        bumps, assignments = self.get_bumps_and_assignments()
 
         naming_scheme = self.naming_scheme
         groups = {}  # type: Dict[str, List[BumpAssignment]]
