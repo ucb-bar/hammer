@@ -535,8 +535,8 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             assert master is not None
             matches = [x for x in masters if x.name == master]
             if len(matches) > 0:
-                width_check = matches[0].width
-                height_check = matches[0].height
+                width_check = Decimal(str(matches[0].width))
+                height_check = Decimal(str(matches[0].height))
             else:
                 raise ValueError("Could not find a master for hierarchical cell {} in masters list.".format(master))
         elif constraint_type == PlacementConstraintType.HardMacro:
@@ -546,8 +546,8 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             if master is not None:
                 matches = [x for x in masters if x.name == master]
                 if len(matches) > 0:
-                    width_check = matches[0].width
-                    height_check = matches[0].height
+                    width_check = Decimal(str(matches[0].width))
+                    height_check = Decimal(str(matches[0].height))
         else:
             assert constraint_type not in checked_types, "Should not get here; update checked_types."
 
@@ -650,7 +650,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         # This is not None because we don't want to make width optional for the reason above
         width = Decimal(0)
         if "width" in constraint:
-            width = Decimal(constraint["width"])
+            width = Decimal(str(constraint["width"]))
         else:
             # TODO(ucb-bar/hammer#414) remove this allowance and just raise the error
             if constraint_type != PlacementConstraintType.HardMacro:
@@ -659,7 +659,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         # This is not None because we don't want to make height optional for the reason above
         height = Decimal(0)
         if "height" in constraint:
-            height = Decimal(constraint["height"])
+            height = Decimal(str(constraint["height"]))
         else:
             # TODO(ucb-bar/hammer#414) remove this allowance and just raise the error
             if constraint_type != PlacementConstraintType.HardMacro:
