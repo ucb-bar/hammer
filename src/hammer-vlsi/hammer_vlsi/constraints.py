@@ -479,6 +479,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
     ('width', Decimal),
     ('height', Decimal),
     ('master', Optional[str]),
+    ('create', Optional[bool]),
     ('orientation', Optional[str]),
     ('margins', Optional[Margins]),
     ('top_layer', Optional[str]),
@@ -643,6 +644,14 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         ### Master ###
         master = PlacementConstraint._get_master(constraint_type, constraint)
 
+        ### Create ###
+        create = None  # type: Optional[bool]
+        if "create" in constraint:
+            if constraint_type != PlacementConstraintType.HardMacro:
+                raise ValueError("Non-HardMacro constraint must not contain create: {}".format(constraint))
+            create = constraint["create"]
+            assert isinstance(create, bool)
+
         ### Width & height ###
         # These fields are mandatory for Hierarchical, Dummy, Placement, TopLevel, and Obstruction constraints
         # These fields are optional for HardMacro constraints
@@ -702,6 +711,8 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             output.update({"orientation": self.orientation})
         if self.master is not None:
             output.update({"master": self.master})
+        if self.create is not None:
+            output.update({"create": self.create})
         if self.margins is not None:
             output.update({"margins": self.margins.to_dict()})
         if self.top_layer is not None:

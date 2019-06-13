@@ -273,6 +273,8 @@ vlsi.inputs:
   #                          For example, if this hardmacro is an instance of "my_amplifier", this
   #                          field should be set to "my_amplifier".
   # - Required for hierarchical and optional for hardmacro, disallowed otherwise
+  # create (Optional[bool]) - Create an instance that does not exist
+  # - Optional for hardmacro, disallowed otherwise
   # margins (Optional[Margins]) - margins for the top-level module.
   # - Required for toplevel, disallowed otherwise
   # - Contains the following keys:
