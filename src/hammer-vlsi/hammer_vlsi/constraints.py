@@ -479,7 +479,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
     ('width', Decimal),
     ('height', Decimal),
     ('master', Optional[str]),
-    ('create', Optional[bool]),
+    ('create_physical', Optional[bool]),
     ('orientation', Optional[str]),
     ('margins', Optional[Margins]),
     ('top_layer', Optional[str]),
@@ -644,17 +644,17 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         ### Master ###
         master = PlacementConstraint._get_master(constraint_type, constraint)
 
-        ### Create ###
+        ### Create physical ###
         # This field is optional in HardMacro constraints
         # This field is disallowed otherwise
-        create = None  # type: Optional[bool]
-        if "create" in constraint:
+        create_physical = None  # type: Optional[bool]
+        if "create_physical" in constraint:
             if constraint_type != PlacementConstraintType.HardMacro:
-                raise ValueError("Non-HardMacro constraint must not contain create: {}".format(constraint))
+                raise ValueError("Non-HardMacro constraint must not contain create_physical: {}".format(constraint))
             if master is None:
                 raise ValueError("HardMacro specifying a constraint must also specify a master: {}".format(constraint))
-            create = constraint["create"]
-            assert isinstance(create, bool)
+            create_physical = constraint["create_physical"]
+            assert isinstance(create_physical, bool)
 
 
         ### Width & height ###
@@ -696,7 +696,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             width=width,
             height=height,
             master=master,
-            create=create,
+            create_physical=create_physical,
             orientation=orientation,
             margins=margins,
             top_layer=top_layer,
@@ -717,8 +717,8 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             output.update({"orientation": self.orientation})
         if self.master is not None:
             output.update({"master": self.master})
-        if self.create is not None:
-            output.update({"create": self.create})
+        if self.create_physical is not None:
+            output.update({"create_physical": self.create_physical})
         if self.margins is not None:
             output.update({"margins": self.margins.to_dict()})
         if self.top_layer is not None:
