@@ -645,12 +645,17 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         master = PlacementConstraint._get_master(constraint_type, constraint)
 
         ### Create ###
+        # This field is optional in HardMacro constraints
+        # This field is disallowed otherwise
         create = None  # type: Optional[bool]
         if "create" in constraint:
             if constraint_type != PlacementConstraintType.HardMacro:
                 raise ValueError("Non-HardMacro constraint must not contain create: {}".format(constraint))
+            if master is None:
+                raise ValueError("HardMacro specifying a constraint must also specify a master: {}".format(constraint))
             create = constraint["create"]
             assert isinstance(create, bool)
+
 
         ### Width & height ###
         # These fields are mandatory for Hierarchical, Dummy, Placement, TopLevel, and Obstruction constraints
