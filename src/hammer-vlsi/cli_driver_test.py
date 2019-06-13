@@ -350,6 +350,7 @@ class CLIDriverTest(unittest.TestCase):
                 width=Decimal("10"),
                 height=Decimal("10"),
                 master=None,
+                create=None,
                 orientation=None,
                 margins=None,
                 top_layer=None,

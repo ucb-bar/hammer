@@ -696,6 +696,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             width=width,
             height=height,
             master=master,
+            create=create,
             orientation=orientation,
             margins=margins,
             top_layer=top_layer,
