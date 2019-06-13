@@ -479,6 +479,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
     ('width', Decimal),
     ('height', Decimal),
     ('master', Optional[str]),
+    ('create_physical', Optional[bool]),
     ('orientation', Optional[str]),
     ('margins', Optional[Margins]),
     ('top_layer', Optional[str]),
@@ -643,6 +644,19 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         ### Master ###
         master = PlacementConstraint._get_master(constraint_type, constraint)
 
+        ### Create physical ###
+        # This field is optional in HardMacro constraints
+        # This field is disallowed otherwise
+        create_physical = None  # type: Optional[bool]
+        if "create_physical" in constraint:
+            if constraint_type != PlacementConstraintType.HardMacro:
+                raise ValueError("Non-HardMacro constraint must not contain create_physical: {}".format(constraint))
+            if master is None:
+                raise ValueError("HardMacro specifying a constraint must also specify a master: {}".format(constraint))
+            create_physical = constraint["create_physical"]
+            assert isinstance(create_physical, bool)
+
+
         ### Width & height ###
         # These fields are mandatory for Hierarchical, Dummy, Placement, TopLevel, and Obstruction constraints
         # These fields are optional for HardMacro constraints
@@ -682,6 +696,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             width=width,
             height=height,
             master=master,
+            create_physical=create_physical,
             orientation=orientation,
             margins=margins,
             top_layer=top_layer,
@@ -702,6 +717,8 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             output.update({"orientation": self.orientation})
         if self.master is not None:
             output.update({"master": self.master})
+        if self.create_physical is not None:
+            output.update({"create_physical": self.create_physical})
         if self.margins is not None:
             output.update({"margins": self.margins.to_dict()})
         if self.top_layer is not None:
