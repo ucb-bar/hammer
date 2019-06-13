@@ -414,8 +414,10 @@ def um2mm(length: Decimal, prec: int) -> Decimal:
     :param prec: The number of digits after the decimal place to use
     :return: A length in millimeters
     """
-    mm = length/Decimal(1000)
-    p = decimal.DefaultContext.power(10, prec)
-    # I would use .quantize(...) here, but it doesn't seem to work for quantization values > 1 (only 1, .1, .01, ...)
-    return (mm*p).to_integral_exact()/p
+    with decimal.localcontext() as c:
+        c.rounding = decimal.ROUND_HALF_UP
+        mm = length/Decimal(1000)
+        p = c.power(10, prec)
+        # I would use .quantize(...) here, but it doesn't seem to work for quantization values > 1 (only 1, .1, .01, ...)
+        return (mm*p).to_integral_exact()/p
 

@@ -208,7 +208,7 @@ class BumpsTest(unittest.TestCase):
         self.assertEqual(sorted_assignments, [assignments[x] for x in sorted(idxs)])
 
         sorted_assignments = BumpsPinNamingScheme.A0.sort_by_name(definition, assignments)
-        self.assertEqual(sorted_assignments, [assignments[x] for x in [0, 1, 2, 8, 7, 6, 5, 3, 4]])
+        self.assertEqual(sorted_assignments, [assignments[x] for x in [4, 3, 5, 6, 7, 8, 2, 1 0])
 
 
 class DelayConstraintTest(unittest.TestCase):

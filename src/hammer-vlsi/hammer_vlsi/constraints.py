@@ -289,7 +289,7 @@ class BumpsPinNamingScheme(Enum):
             def sortkey(assignment: BumpAssignment) -> int:
                 # This deterministically names bumps, so we can just figure out the order by looking
                 # at x and y
-                return int(definition.x * (definition.y - assignment.y) + assignment.x)
+                return int(definition.x * (definition.y - assignment.y) + (definition.x - assignment.x + 1))
             return sorted(assignments, key=sortkey)
         else:
             assert False, "Should not get here; a developer messed up."
