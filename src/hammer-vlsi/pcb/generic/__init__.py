@@ -150,7 +150,7 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
             # Lead type (0 = signal pin, 1 = mounting hole, 2 = shield)
             # Hole lock (T = true, F = false)
             # Plated/Not Plated (P = Plated, N = Not plated)
-            output += "{name:<6} {x:>10.3f} {y:>10.3f} RND {w:0.3f} {w:0.3f} NONE SMT TOP 0 0 0 F P\n".format(name=name, x=x, y=y, w=self.bump_pad_metal_diameter)
+            output += "{name:<6} {x:>10.3f} {y:>10.3f} RND {w:0.3f} {w:0.3f} NONE SMT TOP 0 0 0 F P\n".format(name=name, x=x, y=y, w=um2mm(self.bump_pad_metal_diameter, 3))
 
         with open(self.output_bom_builder_pindata_filename, "w") as f:
             f.write(output)
