@@ -1727,7 +1727,7 @@ class HammerSimToolTestContext:
         assert self._driver is not None, "HammerDriver must be initialized before use"
         return self._driver
 
-    def __enter__(self) -> "HammerSimTestContext":
+    def __enter__(self) -> "HammerSimToolTestContext":
         """Initialize context by creating the temp_dir, driver, and loading mocksim."""
         self.test.assertTrue(hammer_vlsi.HammerVLSISettings.set_hammer_vlsi_path_from_environment(),
                                 "hammer_vlsi_path must exist")
