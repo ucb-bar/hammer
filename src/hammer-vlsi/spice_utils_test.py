@@ -6,7 +6,7 @@
 #  See LICENSE for licence details.
 
 from inspect import cleandoc
-from typing import Iterable, Tuple, Any, Dict, List
+from typing import Iterable, Tuple, Any, Dict, List, Set
 
 from hammer_utils import SpiceUtils
 
