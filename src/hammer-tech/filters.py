@@ -180,7 +180,7 @@ class LibraryFilterHolder:
             assert lib.verilog_sim is not None
             return [lib.verilog_sim]
 
-        return LibraryFilter.new("verilog_sim", "VSIM gate level sim verilog sources", is_file=True, filter_func=filter_func, paths_func=paths_func)
+        return LibraryFilter.new("verilog_sim", "Gate-level verilog sources", is_file=True, filter_func=filter_func, paths_func=paths_func)
 
     @property
     def gds_filter(self) -> LibraryFilter:
