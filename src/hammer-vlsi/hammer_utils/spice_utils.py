@@ -13,16 +13,16 @@ from enum import Enum
 class SpiceUtils:
 
     # Multilines in spice start with a + character
-    multiline_pattern = re.compile("(?:\s*\n\+)+\s*", flags=re.DOTALL)
-    module_def_pattern = re.compile("^(\.subckt\s+)(?P<dname>[^\s]+)(\s+.*)$", flags=re.IGNORECASE|re.MULTILINE)
-    module_inst_pattern = re.compile("^(x.*?\s)(?P<mname>[^\s]+)(\s*)$", flags=re.IGNORECASE|re.MULTILINE)
-    end_module_pattern = re.compile("^\.ends.*$", flags=re.IGNORECASE|re.MULTILINE)
-    tokens = [
-        ('SUBCKT', module_def_pattern.pattern),
-        ('ENDS', end_module_pattern.pattern),
-        ('INST', module_inst_pattern.pattern)
+    MultilinePattern = re.compile("(?:\s*\n\+)+\s*", flags=re.DOTALL)
+    ModuleDefPattern = re.compile("^(\.subckt\s+)(?P<dname>[^\s]+)(\s+.*)$", flags=re.IGNORECASE|re.MULTILINE)
+    ModuleInstPattern = re.compile("^(x.*?\s)(?P<mname>[^\s]+)(\s*)$", flags=re.IGNORECASE|re.MULTILINE)
+    EndModulePattern = re.compile("^\.ends.*$", flags=re.IGNORECASE|re.MULTILINE)
+    Tokens = [
+        ('SUBCKT', ModuleDefPattern.pattern),
+        ('ENDS', EndModulePattern.pattern),
+        ('INST', ModuleInstPattern.pattern)
     ]
-    token_regex = re.compile('|'.join('(?P<%s>%s)' % t for t in tokens), flags=re.IGNORECASE|re.MULTILINE)
+    TokenRegex = re.compile('|'.join('(?P<%s>%s)' % t for t in Tokens), flags=re.IGNORECASE|re.MULTILINE)
 
     @staticmethod
     def uniquify_spice(sources: List[str]) -> List[str]:
@@ -87,7 +87,7 @@ class SpiceUtils:
         in_module = False
         module_name = ""
         tree = {}  # type: Dict[str, Set[str]]
-        for m in SpiceUtils.token_regex.finditer(s):
+        for m in SpiceUtils.TokenRegex.finditer(s):
             kind = m.lastgroup
             if kind == 'SUBCKT':
                 module_name = m.group("dname")
@@ -124,7 +124,7 @@ class SpiceUtils:
             else:
                 return m.group(0)
 
-        return SpiceUtils.module_inst_pattern.sub(repl_fn, SpiceUtils.module_def_pattern.sub(repl_fn, source))
+        return SpiceUtils.ModuleInstPattern.sub(repl_fn, SpiceUtils.ModuleDefPattern.sub(repl_fn, source))
 
     @staticmethod
     def remove_multilines(s: str) -> str:
@@ -134,7 +134,7 @@ class SpiceUtils:
         :param s: The SPICE source
         :return: SPICE source without multiline statements
         """
-        return SpiceUtils.multiline_pattern.sub(" ", s)
+        return SpiceUtils.MultilinePattern.sub(" ", s)
 
 
 
