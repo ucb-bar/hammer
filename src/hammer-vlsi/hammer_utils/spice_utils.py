@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 #  spice_utils.py
-#  Misc Verilog utilities
+#  Misc SPICE utilities
 #
 #  See LICENSE for licence details.
 
