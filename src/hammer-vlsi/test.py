@@ -1521,6 +1521,7 @@ class HammerGenericPCBToolTest(unittest.TestCase):
             self.assertTrue(os.path.exists(c.driver.pcb_tool.output_footprint_filename))  # type: ignore
             self.assertTrue(os.path.exists(c.driver.pcb_tool.output_footprint_csv_filename))  # type: ignore
             self.assertTrue(os.path.exists(c.driver.pcb_tool.output_schematic_symbol_filename))  # type: ignore
+            self.assertTrue(os.path.exists(c.driver.pcb_tool.output_bom_builder_pindata_filename))  # type: ignore
 
     # TODO add more checks:
     # - footprint pads should be mirrored relative to GDS

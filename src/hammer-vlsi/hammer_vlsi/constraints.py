@@ -270,6 +270,30 @@ class BumpsPinNamingScheme(Enum):
     def __str__(self) -> str:
         return reverse_dict(BumpsPinNamingScheme.__mapping())[self]
 
+    def sort_by_name(self, definition: BumpsDefinition, assignments: List[BumpAssignment]) -> List[BumpAssignment]:
+        """
+        Sort a list of bump assignments for a given bump definition by their name in a human-readable way.
+
+        :param definition: The bumps definition
+        :param assignments: The list of bump assignments which may or may not be equivalent to definition.assignments
+        :return: A sorted list of bump assignments
+        """
+        bpns = BumpsPinNamingScheme
+        if self == bpns.Index:
+            def sortkey(assignment: BumpAssignment) -> int:
+                # It's possible that the assignments list here is not the same as the definition list,
+                # so we need to figure out what the actual name is before sorting
+                return int(self.name_bump(definition, assignment))
+            return sorted(assignments, key=sortkey)
+        elif self in [bpns.A0, bpns.A1, bpns.A00, bpns.A01]:
+            def sortkey(assignment: BumpAssignment) -> int:
+                # This deterministically names bumps, so we can just figure out the order by looking
+                # at x and y
+                return int(definition.x * (definition.y - assignment.y) + (definition.x - assignment.x + 1))
+            return sorted(assignments, key=sortkey)
+        else:
+            assert False, "Should not get here; a developer messed up."
+
     def name_bump(self, definition: BumpsDefinition, assignment: BumpAssignment) -> str:
         # Skip I, O, Q, S, X, and Z
         skips = list('IOQSXZ')
@@ -282,12 +306,13 @@ class BumpsPinNamingScheme(Enum):
         row = int(assignment.y)
 
 
-        if self == BumpsPinNamingScheme.Index:
+        bpns = BumpsPinNamingScheme
+        if self == bpns.Index:
             # This raises a ValueError if the entry is not in the list, which shouldn't happen except to devs
             return str(definition.assignments.index(assignment) + 1)
 
-        else:
-            # A0, A1, A00, or A01
+        elif self in [bpns.A0, bpns.A1, bpns.A00, bpns.A01]:
+
             if Decimal(col) != assignment.x or Decimal(row) != assignment.y:
                 raise ValueError("This bump naming scheme does not support fractional x and y assignments: x={x}, y={y}. Implement this, or increase the pitch and use blowouts.".format(x=assignment.x, y=assignment.y))
 
@@ -331,6 +356,8 @@ class BumpsPinNamingScheme(Enum):
                 col_str = ("{:0" + str(num_digits) + "d}").format(col)
 
             return row_str + col_str
+        else:
+            assert False, "Should not get here; a developer messed up"
 
 ClockPort = NamedTuple('ClockPort', [
     ('name', str),

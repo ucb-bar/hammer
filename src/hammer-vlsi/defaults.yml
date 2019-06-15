@@ -63,6 +63,8 @@ vlsi.core:
 
   # PCB deliverable tool to use.
   # PCB deliverables include footprints, symbols, etc.
+  # For the exact deliverables produced, please see the deliverable tool's documentation.
+  # For the default 'generic' tool, the list of artefacts can be found in src/hammer-vlsi/pcb/generic/__init__.py
   pcb_tool: "generic"
 
   # Maximum threads to use in a CAD tool invocation.

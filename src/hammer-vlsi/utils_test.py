@@ -9,7 +9,7 @@ from typing import Dict, Tuple, List, Optional, Union
 from decimal import Decimal
 
 from hammer_utils import (topological_sort, get_or_else, optional_map, assert_function_type, check_function_type,
-                          gcd, lcm, lcm_grid, coerce_to_grid, check_on_grid)
+                          gcd, lcm, lcm_grid, coerce_to_grid, check_on_grid, um2mm)
 
 import unittest
 
@@ -161,6 +161,16 @@ class UtilsTest(unittest.TestCase):
         with self.assertRaises(TypeError):
             # Entirely different
             assert_function_type(test3, [], dict)
+
+    def test_um2mm(self) -> None:
+
+        self.assertEqual(Decimal("1.234"), um2mm(Decimal("1234"), 3))
+        self.assertEqual(Decimal("1.235"), um2mm(Decimal("1234.5"), 3))
+        self.assertEqual(Decimal("1.23"), um2mm(Decimal("1230"), 3))
+        self.assertEqual(Decimal("1.23"), um2mm(Decimal("1230"), 2))
+        self.assertEqual(Decimal("0.01"), um2mm(Decimal("5"), 2))
+        self.assertEqual(Decimal("0"), um2mm(Decimal("4"), 2))
+        self.assertEqual(Decimal("40"), um2mm(Decimal("41235"), -1))
 
 
 if __name__ == '__main__':
