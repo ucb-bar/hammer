@@ -1064,8 +1064,25 @@ class HasSDCSupport(HammerTool):
         """
         pass
 
+class TCLTool(HammerTool):
+    """Mix-in trait for tools which consume a flat TCL file as input"""
 
-class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, HammerTool):
+    @property
+    def output(self) -> List[str]:
+        """
+        Buffered output to be put in <name>.tcl
+        """
+        return self.attr_getter("_output", [])
+
+    # Python doesn't have Scala's nice currying syntax (e.g. val newfunc = func(_, fixed_arg))
+    def verbose_append(self, cmd: str, clean: bool = False) -> None:
+        self.verbose_tcl_append(cmd, self.output, clean)
+
+    def append(self, cmd: str, clean: bool = False) -> None:
+        self.tcl_append(cmd, self.output, clean)
+
+
+class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTool):
     """Mix-in trait with functions useful for Cadence-based tools."""
 
     @property

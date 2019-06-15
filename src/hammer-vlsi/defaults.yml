@@ -275,6 +275,8 @@ vlsi.inputs:
   #                          For example, if this hardmacro is an instance of "my_amplifier", this
   #                          field should be set to "my_amplifier".
   # - Required for hierarchical and optional for hardmacro, disallowed otherwise
+  # create_physical (Optional[bool]) - Create an instance of a physical-only cell that does not exist in addition to placing it
+  # - Optional for hardmacro, disallowed otherwise
   # margins (Optional[Margins]) - margins for the top-level module.
   # - Required for toplevel, disallowed otherwise
   # - Contains the following keys:

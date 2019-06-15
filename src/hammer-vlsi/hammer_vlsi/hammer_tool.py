@@ -13,6 +13,7 @@ import shlex
 from abc import ABCMeta, abstractmethod
 from functools import reduce
 from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, cast
+from inspect import cleandoc
 
 import hammer_config
 import hammer_tech
@@ -1151,22 +1152,25 @@ class HammerTool(metaclass=ABCMeta):
                 f.write("\n".join(content_lines))
 
     @staticmethod
-    def tcl_append(cmd: str, output_buffer: List[str]) -> None:
+    def tcl_append(cmd: str, output_buffer: List[str], clean: bool = False) -> None:
         """
         Helper function to echo and run a command.
 
         :param cmd: TCL command to run
-        :param output_buffer: Buffer in which to enqueue the resulting TCL lines.
+        :param output_buffer: Buffer in which to enqueue the resulting TCL lines
+        :param clean: True if you want to trim the leading indendation from the string, False otherwise
         """
-        output_buffer.append(cmd)
+        output_buffer.append(cleandoc(cmd) if clean else cmd)
 
     @staticmethod
-    def verbose_tcl_append(cmd: str, output_buffer: List[str]) -> None:
+    def verbose_tcl_append(cmd: str, output_buffer: List[str], clean: bool = False) -> None:
         """
         Helper function to echo and run a command.
 
         :param cmd: TCL command to run
-        :param output_buffer: Buffer in which to enqueue the resulting TCL lines.
+        :param output_buffer: Buffer in which to enqueue the resulting TCL lines
+        :param clean: True if you want to trim the leading indendation from the string, False otherwise
         """
-        output_buffer.append("""puts "{0}" """.format(cmd.replace('"', '\"')))
-        output_buffer.append(cmd)
+        cleaned = cleandoc(cmd) if clean else cmd
+        output_buffer.append("""puts "{0}" """.format(cleaned.replace('"', '\"')))
+        output_buffer.append(cleaned)
