@@ -1,0 +1,19 @@
+# Settings for the asap7 technology to be overriden by the project.
+technology.asap7:
+  # Path to the directory which contains all the asap7 tarballs (e.g. ASAP7_PDKandLIB.tar)
+  tarball_dir: "ASAP7_PDKandLIB_v1p5"
+
+# Set some defaults for this technology.
+# For quick performance evaluations, use the typical voltage+temperature corners.
+# Nominal voltage for 32nm technology is 1.05V and is the only voltage provided
+# for normal SRAMs.
+# TODO: add default temperature corners.
+vlsi:
+  # Technology dimension
+  # TODO: add more technology files to make some CAD tools happy with the actual number of 32nm
+  core.node: 7
+  inputs:
+    # Supply voltages.
+    supplies:
+      VDD: "0.7 V"
+      GND: "0 V"

@@ -1,0 +1,66 @@
+{
+  "name": "ASAP7 Library",
+  "grid_unit": "0.001",
+  "tarballs": [
+    {
+      "path": "asap7PDK_r1p5.tar.bz2",
+      "homepage": "http://asap.asu.edu/asap/",
+      "base var": "technology.asap7.tarball_dir"
+    },
+    {
+      "path": "asap7libs_24.tar.bz2",
+      "homepage": "http://asap.asu.edu/asap/",
+      "base var": "technology.asap7.tarball_dir"
+    }
+  ],
+
+  "installs": [
+    {
+      "path": "asap7",
+      "base var": "technology.asap7.install_dir"
+    },
+    {
+      "path": "plugin_dir",
+      "base var": ""
+    }
+  ],
+  "libraries": [
+    {
+      "lef file": "asap7/asap7libs_24/lef/scaled/asap7sc7p5t_24_R_4x_170912.lef",
+      "provides": [
+        {
+          "lib_type": "technology"
+        }
+      ]
+    },
+    {
+      // TODO: what's the difference between (AO SIMPLE INVBUF OA SEQ)?
+      // TODO: not sure nldm or ccs delay module.
+      "nldm library file": "asap7/asap7libs_24/lib/asap7sc7p5t_24_SIMPLE_RVT_TT.lib",
+      "verilog sim": "asap7/asap7libs_24/verilog/asap7sc7p5t_24_SIMPLE_RVT_TT.v",
+      "milkyway lib in dir": "asap7/.../mylib/lib",
+      // TODO: which lef should I use, `techlef_misc` or `lef/scaled`?
+      "lef file": "asap7/asap7libs_24/lef/scaled/asap7sc7p5t_24_R_4x_170912.lef",
+      "gds file": "asap7/asap7libs_24/gds/asap7sc7p5t_24.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        // TODO: this temperature is from asap7/asap7libs_24/cdl/pex/asap7sc7p5t_24_SIMPLE_RVT.sp
+        "temperature": "25 C"
+      },
+      "supplies": {
+        "VDD": "0.70 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          // TODO: not "LL" here? maybe LVT?
+          "vt": "RVT"
+        }
+      ],
+    }
+  ],
+  "stackups": [],
+  "sites": []
+}
