@@ -719,6 +719,16 @@ class HammerDRCTool(HammerSignoffTool):
         """
         pass
 
+    def drc_rules_to_run(self) -> List[str]:
+        """
+        Return a list of the specific DRC rules to run. If empty, run all rules (the default).
+
+        :return: A list of DRC rules to run or an empty list if running all rules
+        """
+        res = self.get_setting("drc.inputs.drc_rules_to_run", [])  # type: List[str]
+        assert isinstance(res, list)
+        return res
+
     def get_additional_drc_text(self) -> str:
         """ Get the additional custom DRC command text to add after the boilerplate commands at the top of the DRC run file. """
 
