@@ -235,7 +235,6 @@ class Site(NamedTuple('Site', [
         )
 
 
-
 # Struct that holds information about the size of a macro.
 # See defaults.yml.
 class MacroSize(NamedTuple('MacroSize', [
@@ -263,6 +262,51 @@ class MacroSize(NamedTuple('MacroSize', [
             height=Decimal(str(d['height']))
         )
 
+# Struct that holds information about DRC decks.
+class DRCDeck(NamedTuple('DRCDeck', [
+    ('tool_name', str),
+    ('name', str),
+    ('path', str)
+])):
+    __slots__ = ()
+
+    def to_setting(self) -> dict:
+        return {
+            'tool name': self.tool_name,
+            'name': self.name,
+            'width': str(self.path),
+        }
+
+    @staticmethod
+    def from_setting(d: dict) -> "DRCDeck":
+        return DRCDeck(
+            tool_name=str(d['tool name']),
+            name=str(d['name']),
+            path=str(d['path'])
+        )
+
+# Struct that holds information about LVS decks.
+class LVSDeck(NamedTuple('LVSDeck', [
+    ('tool_name', str),
+    ('name', str),
+    ('path', str)
+])):
+    __slots__ = ()
+
+    def to_setting(self) -> dict:
+        return {
+            'tool name': self.tool_name,
+            'name': self.name,
+            'width': str(self.path),
+        }
+
+    @staticmethod
+    def from_setting(d: dict) -> "LVSDeck":
+        return LVSDeck(
+            tool_name=str(d['tool name']),
+            name=str(d['name']),
+            path=str(d['path'])
+        )
 
 class HammerTechnology:
     # Properties.
@@ -401,7 +445,7 @@ class HammerTechnology:
             return None
         else:
             # Work around the weird objects implemented by the jsonschema generator.
-            dont_use_list = list(map(lambda x: str(x), list(dont_use_list_raw)))
+            dont_use_list = list(map(str, list(dont_use_list_raw)))
             return dont_use_list
 
     @property
@@ -433,6 +477,24 @@ class HammerTechnology:
             return ""
         else:
             return str(add_lvs_text_raw)
+
+    def get_lvs_decks_for_tool(self, tool_name: str) -> List[LVSDeck]:
+        """
+        Return the LVS decks for the given tool.
+        """
+        if self.config.lvs_decks is not None:
+            return [LVSDeck.from_setting(x) for x in list(self.config.lvs_decks) if x["tool name"] == tool_name]
+        else:
+            raise ValueError("Tech JSON does not specify any LVS decks")
+
+    def get_drc_decks_for_tool(self, tool_name: str) -> List[DRCDeck]:
+        """
+        Return the DRC decks for the given tool.
+        """
+        if self.config.drc_decks is not None:
+            return [DRCDeck.from_setting(x) for x in list(self.config.drc_decks) if x["tool name"] == tool_name]
+        else:
+            raise ValueError("Tech JSON does not specify any DRC decks")
 
     @property
     def extracted_tarballs_dir(self) -> str:
@@ -910,6 +972,7 @@ class HammerTechnology:
         """
         return self.get_site_by_name(self.get_setting("vlsi.technology.placement_site"))
 
+    
 
 class HammerTechnologyUtils:
     """

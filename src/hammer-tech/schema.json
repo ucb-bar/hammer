@@ -170,11 +170,43 @@
         "type" : "string"
       }
     },
-    "additional drc text" : {
-        "type" : "string"
+    "drc decks" : {
+      "type" : "array",
+      "items" : {
+        "type" : "object",
+        "title" : "DRCDeck",
+        "properties" : {
+          "tool name" : {
+            "type" : "string"
+          },
+          "deck name" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          }
+        },
+        "additionalproperties" : false
+      }
     },
-    "additional lvs text" : {
-        "type" : "string"
+    "lvs decks" : {
+      "type" : "array",
+      "items" : {
+        "type" : "object",
+        "title" : "LVSDeck",
+        "properties" : {
+          "tool name" : {
+            "type" : "string"
+          },
+          "deck name" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          }
+        },
+        "additionalproperties" : false
+      }
     },
     "tarballs" : {
       "type" : "array",
