@@ -17,6 +17,7 @@ from .hooks import HammerToolHookAction
 from .driver import HammerDriver, HammerDriverOptions
 
 from typing import List, Dict, Tuple, Any, Callable, Optional, Union, cast
+import textwrap
 
 from hammer_utils import add_dicts, deeplist, deepdict, get_or_else, check_function_type
 
@@ -159,6 +160,8 @@ class CLIDriver:
     def action_map(self) -> Dict[str, CLIActionType]:
         """Return the mapping of valid actions -> functions for each action of the command-line driver."""
         return add_dicts({
+            "build": self.make_build_inputs,
+            "build-inputs": self.make_build_inputs,
             "dump": self.dump_action,
             "dump-macrosizes": self.dump_macrosizes_action,
             "dump_macrosizes": self.dump_macrosizes_action,
@@ -855,6 +858,77 @@ class CLIDriver:
             self.hierarchical_auto_action = auto_action
 
         return driver, errors
+
+    @staticmethod
+    def make_build_inputs(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        """
+        TODO
+        """
+        build_system_key = "vlsi.core.build_system"
+        build_system = str(driver.database.get_setting(build_system_key, "none"))
+        dependency_graph = driver.get_hierarchical_dependency_graph()
+        if build_system == "none":
+            pass
+        elif build_system == "make":
+            makefile = os.path.join(driver.obj_dir, "hammer.d")
+            default_dependencies = driver.options.project_configs + driver.options.environment_configs
+            default_dependencies.extend(list(driver.database.get_setting("synthesis.inputs.input_files", [])))
+            # Resolve the canonical path for each dependency
+            default_dependencies = [os.path.realpath(x) for x in default_dependencies]
+            output = ""
+            output += "HAMMER_EXEC ?= {}\n".format(os.path.realpath(sys.argv[0]))
+            output += "HAMMER_DEPENDENCIES ?= {}\n\n".format(" ".join(default_dependencies))
+            if not dependency_graph:
+                # Flat flow
+                # TODO
+                raise NotImplementedError("Haven't implemented this yet")
+            else:
+                # Hierarchical flow
+                for node, edges in dependency_graph.items():
+                    env_confs = " ".join(["-e " + os.path.realpath(x) for x in driver.options.environment_configs])
+                    syn_in = " ".join(["-p " + os.path.realpath(x) for x in driver.options.project_configs])
+                    in_edges = edges[0]
+                    out_edges = edges[1]
+                    deps = "$(HAMMER_DEPENDENCIES)"
+                    if len(out_edges) > 0:
+                        deps = " ".join(["par-" + x for x in out_edges])
+
+                    # TODO make this DRY
+                    obj_dir = os.path.realpath(driver.obj_dir)
+                    syn_run_dir = os.path.join(obj_dir, "syn-rundir")
+                    par_run_dir = os.path.join(obj_dir, "par-rundir")
+                    syn_timestamp = os.path.join(syn_run_dir, "timestamp")
+                    par_timestamp = os.path.join(par_run_dir, "timestamp")
+
+                    syn_out = os.path.join(syn_run_dir, "syn-output.json")
+                    par_in = os.path.join(par_run_dir, "par-input.json")
+                    par_out = os.path.join(par_run_dir, "par-output.json")
+
+                    output += textwrap.dedent("""
+                        .PHONY: syn-{node}
+                        syn-{node}: {syn_timestamp}
+
+                        {syn_timestamp}: {deps}
+                        \t$(HAMMER_EXEC) {env_confs} {syn_in} -o {syn_out} --obj_dir {obj_dir} syn-{node}
+                        \ttime > $@
+
+                        .PHONY: par-{node}
+                        par-{node}: {par_timestamp}
+
+                        {par_timestamp}: {syn_timestamp}
+                        \t$(HAMMER_EXEC) {env_confs} {syn_out} -o {par_in} --obj_dir syn-to-par-{node}
+                        \t$(HAMMER_EXEC) {env_confs} {par_in} --obj_dir {obj_dir} par-{node}
+                        \ttime > $@
+                        """.format(node=node, syn_timestamp=syn_timestamp, par_timestamp=par_timestamp,
+                        env_confs=env_confs, obj_dir=obj_dir, deps=deps,
+                        syn_in=syn_in, syn_out=syn_out, par_in=par_in, par_out=par_out))
+
+            with open(makefile, "w") as f:
+                f.write(output)
+        else:
+            raise ValueError("Unsupported build system: {}".format(build_system))
+
+        return dependency_graph
 
     def run_main_parsed(self, args: dict) -> int:
         """

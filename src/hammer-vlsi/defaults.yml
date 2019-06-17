@@ -15,6 +15,11 @@ vlsi.core:
   # TODO: move this to vlsi.technology (or technology.core) ucb-bar/hammer#317
   node: 32
 
+  # Build system to use, if any.
+  # This is used to auto-generate a build file, if desired. It is not required to run hammer.
+  # Valid options are "none" or "make"
+  build_system: "make"
+
   # Path(s) to synthesis tools.
   # Add the built-in path to synthesis tools.
   synthesis_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/synthesis"]
