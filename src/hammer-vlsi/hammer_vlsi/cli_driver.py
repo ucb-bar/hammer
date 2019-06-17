@@ -895,8 +895,8 @@ class CLIDriver:
 
                     # TODO make this DRY
                     obj_dir = os.path.realpath(driver.obj_dir)
-                    syn_run_dir = os.path.join(obj_dir, "syn-rundir")
-                    par_run_dir = os.path.join(obj_dir, "par-rundir")
+                    syn_run_dir = os.path.join(obj_dir, "syn-" + node)
+                    par_run_dir = os.path.join(obj_dir, "par-" + node)
                     syn_timestamp = os.path.join(syn_run_dir, "timestamp")
                     par_timestamp = os.path.join(par_run_dir, "timestamp")
 
