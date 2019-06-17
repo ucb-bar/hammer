@@ -862,10 +862,14 @@ class CLIDriver:
     @staticmethod
     def make_build_inputs(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
         """
-        TODO
+        Generate the build tool artifacts for this flow, specified by the "vlsi.core.build_system" key.
+        This currently only supports nothing ("none") or Makefile ("make").
+
+        :param driver: The HammerDriver object which has parsed the configs specified by -p
+        :param append_error_func: The function to use to append an error (unused).
+
         """
-        build_system_key = "vlsi.core.build_system"
-        build_system = str(driver.database.get_setting(build_system_key, "none"))
+        build_system = str(driver.database.get_setting("vlsi.core.build_system", "none"))
         dependency_graph = driver.get_hierarchical_dependency_graph()
         if build_system == "none":
             pass
@@ -897,31 +901,51 @@ class CLIDriver:
                     obj_dir = os.path.realpath(driver.obj_dir)
                     syn_run_dir = os.path.join(obj_dir, "syn-" + node)
                     par_run_dir = os.path.join(obj_dir, "par-" + node)
-                    syn_timestamp = os.path.join(syn_run_dir, "timestamp")
-                    par_timestamp = os.path.join(par_run_dir, "timestamp")
+                    drc_run_dir = os.path.join(obj_dir, "drc-" + node)
+                    lvs_run_dir = os.path.join(obj_dir, "lvs-" + node)
 
                     syn_out = os.path.join(syn_run_dir, "syn-output.json")
                     par_in = os.path.join(par_run_dir, "par-input.json")
                     par_out = os.path.join(par_run_dir, "par-output.json")
+                    drc_in = os.path.join(drc_run_dir, "drc-input.json")
+                    drc_out = os.path.join(drc_run_dir, "drc-output.json")
+                    lvs_in = os.path.join(lvs_run_dir, "lvs-input.json")
+                    lvs_out = os.path.join(lvs_run_dir, "lvs-output.json")
 
                     output += textwrap.dedent("""
-                        .PHONY: syn-{node}
-                        syn-{node}: {syn_timestamp}
+                        ####################################################################################
+                        ## Steps for {node}
+                        ####################################################################################
+                        .PHONY: syn-{node} par-{node} drc-{node} lvs-{node}
+                        syn-{node}: {syn_out}
+                        par-{node}: {par_out}
+                        drc-{node}: {drc_out}
+                        lvs-{node}: {lvs_out}
 
-                        {syn_timestamp}: {deps}
+                        {syn_out}: {deps}
                         \t$(HAMMER_EXEC) {env_confs} {syn_in} -o {syn_out} --obj_dir {obj_dir} syn-{node}
-                        \ttime > $@
 
-                        .PHONY: par-{node}
-                        par-{node}: {par_timestamp}
-
-                        {par_timestamp}: {syn_timestamp}
+                        {par_in}: {syn_out}
                         \t$(HAMMER_EXEC) {env_confs} {syn_out} -o {par_in} --obj_dir syn-to-par-{node}
-                        \t$(HAMMER_EXEC) {env_confs} {par_in} --obj_dir {obj_dir} par-{node}
-                        \ttime > $@
-                        """.format(node=node, syn_timestamp=syn_timestamp, par_timestamp=par_timestamp,
-                        env_confs=env_confs, obj_dir=obj_dir, deps=deps,
-                        syn_in=syn_in, syn_out=syn_out, par_in=par_in, par_out=par_out))
+
+                        {par_out}: {par_in}
+                        \t$(HAMMER_EXEC) {env_confs} {par_in} -o {par_out} --obj_dir {obj_dir} par-{node}
+
+                        {drc_in}: {par_out}
+                        \t$(HAMMER_EXEC) {env_confs} {par_out} -o {drc_in} --obj_dir par-to-drc-{node}
+
+                        {drc_out}: {drc_in}
+                        \t$(HAMMER_EXEC) {env_confs} {drc_in} -o {drc_out} --obj_dir {obj_dir} drc-{node}
+
+                        {lvs_in}: {par_out}
+                        \t$(HAMMER_EXEC) {env_confs} {par_out} -o {lvs_in} --obj_dir par-to-lvs-{node}
+
+                        {lvs_out}: {lvs_in}
+                        \t$(HAMMER_EXEC) {env_confs} {lvs_in} -o {lvs_out} --obj_dir {obj_dir} lvs-{node}
+
+                        """.format(node=node, env_confs=env_confs, obj_dir=obj_dir, deps=deps,
+                        syn_in=syn_in, syn_out=syn_out, par_in=par_in, par_out=par_out,
+                        drc_in=drc_in, drc_out=drc_out, lvs_in=lvs_in, lvs_out=lvs_out))
 
             with open(makefile, "w") as f:
                 f.write(output)
