@@ -963,7 +963,7 @@ class CLIDriver:
                     lvs_in = os.path.join(lvs_run_dir, "lvs-input.json")
                     lvs_out = os.path.join(lvs_run_dir, "lvs-output-full.json")
 
-                    output += make_text.format(suffix="-"+node, header=node, env_confs=env_confs, obj_dir=obj_dir, deps=deps,
+                    output += make_text.format(suffix="-"+node, mod=node, env_confs=env_confs, obj_dir=obj_dir, deps=deps,
                         syn_in=syn_in, syn_out=syn_out, par_in=par_in, par_out=par_out,
                         drc_in=drc_in, drc_out=drc_out, lvs_in=lvs_in, lvs_out=lvs_out)
 
