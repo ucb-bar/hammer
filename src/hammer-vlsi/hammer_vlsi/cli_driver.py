@@ -881,10 +881,26 @@ class CLIDriver:
             default_dependencies = [os.path.realpath(x) for x in default_dependencies]
             output = "HAMMER_EXEC ?= {}\n".format(os.path.realpath(sys.argv[0]))
             output += "HAMMER_DEPENDENCIES ?= {}\n\n".format(" ".join(default_dependencies))
+            deps = "$(HAMMER_DEPENDENCIES)"
             # Get the confs passed into this execution
             env_confs = " ".join(["-e " + os.path.realpath(x) for x in driver.options.environment_configs])
-            syn_in = " ".join(["-p " + os.path.realpath(x) for x in driver.options.project_configs])
+            proj_confs = " ".join(["-p " + os.path.realpath(x) for x in driver.options.project_configs])
             obj_dir = os.path.realpath(driver.obj_dir)
+
+            # Global steps that are the same for hier or flat
+            pcb_run_dir = os.path.join(obj_dir, "pcb-rundir")
+            pcb_out = os.path.join(pcb_run_dir, "pcb-output-full.json")
+            output += textwrap.dedent("""
+                ####################################################################################
+                ## Global steps
+                ####################################################################################
+                .PHONY: pcb
+                pcb: {pcb_out}
+
+                {pcb_out}: {deps}
+                \t$(HAMMER_EXEC) {env_confs} {syn_in} --obj_dir {obj_dir} pcb
+
+                """.format(pcb_out=pcb_out, deps=deps, env_confs=env_confs, syn_in=proj_confs, obj_dir=obj_dir))
 
             make_text = textwrap.dedent("""
                 ####################################################################################
@@ -921,7 +937,6 @@ class CLIDriver:
 
             if not dependency_graph:
                 # Flat flow
-                deps = "$(HAMMER_DEPENDENCIES)"
                 top_module = str(driver.database.get_setting("synthesis.inputs.top_module"))
 
                 # TODO make this DRY
@@ -930,6 +945,7 @@ class CLIDriver:
                 drc_run_dir = os.path.join(obj_dir, "drc-rundir")
                 lvs_run_dir = os.path.join(obj_dir, "lvs-rundir")
 
+                syn_in = proj_confs
                 syn_out = os.path.join(syn_run_dir, "syn-output-full.json")
                 par_in = os.path.join(obj_dir, "par-input.json")
                 par_out = os.path.join(par_run_dir, "par-output-full.json")
@@ -945,6 +961,7 @@ class CLIDriver:
                 # Hierarchical flow
                 for node, edges in dependency_graph.items():
                     out_edges = edges[1]
+                    # need to revert this each time
                     deps = "$(HAMMER_DEPENDENCIES)"
                     if len(out_edges) > 0:
                         deps = " ".join(["par-" + x for x in out_edges])
@@ -955,6 +972,7 @@ class CLIDriver:
                     drc_run_dir = os.path.join(obj_dir, "drc-" + node)
                     lvs_run_dir = os.path.join(obj_dir, "lvs-" + node)
 
+                    syn_in = proj_confs
                     syn_out = os.path.join(syn_run_dir, "syn-output-full.json")
                     par_in = os.path.join(obj_dir, "par-{}-input.json".format(node))
                     par_out = os.path.join(par_run_dir, "par-output-full.json")
