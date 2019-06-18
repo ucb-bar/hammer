@@ -870,7 +870,7 @@ class CLIDriver:
         """
         build_system = str(driver.database.get_setting("vlsi.core.build_system", "none"))
         if build_system in BuildSystems:
-            return BuildSystems[build_system](driver, append_error_func)
+            return BuildSystems[build_system](driver)
         else:
             raise ValueError("Unsupported build system: {}".format(build_system))
 
