@@ -506,6 +506,66 @@ class HammerPlaceAndRouteTool(HammerTool):
             raise TypeError("hcells_list must be a List[str]")
         self.attr_setter("_hcells_list", value)
 
+
+    @property
+    def output_all_regs(self) -> List[str]:
+        """
+        Get the output list of all registers in the design with output pin for gate level simulation.
+
+        :return: The output list of all registers in the design with output pin for gate level simulation.
+        """
+        try:
+            return self.attr_getter("_output_all_regs", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the output list of all registers in the design with output pin for gate level simulation yet")
+
+    @output_all_regs.setter
+    def output_all_regs(self, value: List[str]) -> None:
+        """Set the output list of all registers in the design with output pin for gate level simulation."""
+        if not (isinstance(value, List)):
+            raise TypeError("output_all_regs must be a List[str]")
+        self.attr_setter("_output_all_regs", value)
+
+
+    @property
+    def output_seq_cells(self) -> List[str]:
+        """
+        Get the output collection of all sequential standard cells in design.
+
+        :return: The output collection of all sequential standard cells in design.
+        """
+        try:
+            return self.attr_getter("_output_seq_cells", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the output collection of all sequential standard cells in design yet")
+
+    @output_seq_cells.setter
+    def output_seq_cells(self, value: List[str]) -> None:
+        """Set the output collection of all sequential standard cells in design."""
+        if not (isinstance(value, List)):
+            raise TypeError("output_seq_cells must be a List[str]")
+        self.attr_setter("_output_seq_cells", value)
+
+
+    @property
+    def output_sdf(self) -> str:
+        """
+        Get the output SDF file to be read for timing annotated gate level sims.
+
+        :return: The output SDF file to be read for timing annotated gate level sims.
+        """
+        try:
+            return self.attr_getter("_output_sdf", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the output SDF file to be read for timing annotated gate level sims yet")
+
+    @output_sdf.setter
+    def output_sdf(self, value: str) -> None:
+        """Set the output SDF file to be read for timing annotated gate level sims."""
+        if not (isinstance(value, str)):
+            raise TypeError("output_sdf must be a str")
+        self.attr_setter("_output_sdf", value)
+
     ### END Generated interface HammerPlaceAndRouteTool ###
 
     def create_power_straps_tcl(self) -> List[str]:
