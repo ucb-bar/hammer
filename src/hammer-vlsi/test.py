@@ -1606,7 +1606,8 @@ class HammerPowerStrapsTest(HasGetTech, unittest.TestCase):
         track_spacing_M6 = 1
         power_utilization = 0.2
         power_utilization_M8 = 1.0
-        track_offset_M5 = 1
+        track_start_M5 = 1
+        track_offset_M5 = 1.2
 
         # VSS comes before VDD
         nets = ["VSS", "VDD"]
@@ -1630,6 +1631,7 @@ class HammerPowerStrapsTest(HasGetTech, unittest.TestCase):
                 "track_spacing_M6": track_spacing_M6,
                 "power_utilization": power_utilization,
                 "power_utilization_M8": power_utilization_M8,
+                "track_start_M5": track_start_M5,
                 "track_offset_M5": track_offset_M5
             }
         }
@@ -1664,7 +1666,9 @@ class HammerPowerStrapsTest(HasGetTech, unittest.TestCase):
                 metal = stackup.get_metal(layer_name)
                 min_width = metal.min_width
                 group_track_pitch = strap_pitch / metal.pitch
-                used_tracks = round(Decimal(strap_offset + strap_width + strap_spacing + strap_width + strap_offset) / metal.pitch) - 1
+                track_offset = Decimal(str(track_offset_M5)) if layer_name == "M5" else Decimal(0)
+                track_start = Decimal(str(track_start_M5)) if layer_name == "M5" else Decimal(0)
+                used_tracks = round(Decimal(strap_offset + strap_width + strap_spacing + strap_width + strap_offset - 2 * (track_offset + track_start * metal.pitch)) / metal.pitch) - 1
                 if layer_name == "M4":
                     self.assertEqual(entry["bbox"], [])
                     self.assertEqual(entry["nets"], nets)
@@ -1674,6 +1678,9 @@ class HammerPowerStrapsTest(HasGetTech, unittest.TestCase):
                     self.assertEqual(entry["nets"], nets)
                     # Check that the requested tracks equals the used tracks
                     requested_tracks = track_width * 2 + track_spacing
+                    print(metal.pitch)
+                    print(track_width)
+                    print(track_spacing)
                     self.assertEqual(used_tracks, requested_tracks)
                     # Spacing should be at least the min spacing
                     min_spacing = metal.get_spacing_for_width(strap_width)
