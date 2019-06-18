@@ -160,8 +160,8 @@ class CLIDriver:
     def action_map(self) -> Dict[str, CLIActionType]:
         """Return the mapping of valid actions -> functions for each action of the command-line driver."""
         return add_dicts({
-            "build": self.make_build_inputs,
-            "build-inputs": self.make_build_inputs,
+            "build": self.generate_build_inputs,
+            "build-inputs": self.generate_build_inputs,
             "dump": self.dump_action,
             "dump-macrosizes": self.dump_macrosizes_action,
             "dump_macrosizes": self.dump_macrosizes_action,
@@ -860,7 +860,7 @@ class CLIDriver:
         return driver, errors
 
     @staticmethod
-    def make_build_inputs(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+    def generate_build_inputs(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
         """
         Generate the build tool artifacts for this flow, specified by the "vlsi.core.build_system" key.
 

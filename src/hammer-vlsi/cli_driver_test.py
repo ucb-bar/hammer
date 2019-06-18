@@ -16,7 +16,7 @@ import hammer_config
 from hammer_config import HammerJSONEncoder
 from hammer_logging.test import HammerLoggingCaptureContext
 from hammer_tech import MacroSize
-from hammer_vlsi import CLIDriver, HammerDriver, PlacementConstraint, PlacementConstraintType
+from hammer_vlsi import CLIDriver, HammerDriver, HammerDriverOptions, HammerVLSISettings, PlacementConstraint, PlacementConstraintType
 from hammer_utils import deepdict
 
 import unittest
@@ -530,6 +530,98 @@ class CLIDriverTest(unittest.TestCase):
                 def synthesis_action(self, bad: int) -> dict:  # type: ignore
                     return {bad: "bad"}
             BadOverride()
+
+
+class HammerBuildSystemsTest(unittest.TestCase):
+
+    def test_flat_makefile(self) -> None:
+        tmpdir = tempfile.mkdtemp()
+        proj_config = os.path.join(tmpdir, "config.json")
+
+        config_dict = {}
+
+        settings = {
+                "vlsi.core.technology": "nop",
+                "vlsi.core.build_system": "make",
+                "synthesis.inputs.top_module": "TopMod"
+            }
+        with open(proj_config, "w") as f:
+            f.write(json.dumps(settings, cls=HammerJSONEncoder, indent=4))
+
+        options = HammerDriverOptions(
+            environment_configs=[],
+            project_configs=[proj_config],
+            log_file=os.path.join(tmpdir, "log.txt"),
+            obj_dir=tmpdir
+        )
+
+        self.assertTrue(HammerVLSISettings.set_hammer_vlsi_path_from_environment(),
+            "hammer_vlsi_path must exist")
+        driver = HammerDriver(options)
+
+        CLIDriver.generate_build_inputs(driver, lambda x: None)
+
+        d_file = os.path.join(driver.obj_dir, "hammer.d")
+        self.assertTrue(os.path.exists(d_file))
+
+        contents = open(d_file).readlines()
+
+        # TODO: Actually check the contents of hammer.d
+
+        # Cleanup
+        shutil.rmtree(tmpdir)
+
+    def test_hier_makefile(self) -> None:
+        tmpdir = tempfile.mkdtemp()
+        proj_config = os.path.join(tmpdir, "config.json")
+
+        config_dict = {}
+
+        settings = {
+                "vlsi.core.technology": "nop",
+                "vlsi.core.build_system": "make",
+                "vlsi.inputs.hierarchical.mode": "hierarchical",
+                "vlsi.inputs.hierarchical.top_module": "TopMod",
+                "vlsi.inputs.hierarchical.config_source": "manual",
+                "vlsi.inputs.hierarchical.manual_modules": [{"TopMod": ["SubModA", "SubModB"]}],
+                "vlsi.inputs.hierarchical.manual_placement_constraints": [
+                    {"TopMod": [
+                        {"path": "top", "type": "toplevel", "x": 0, "y": 0, "width": 1234, "height": 7890, "margins": {"left": 1, "top": 2, "right": 3, "bottom": 4}},
+                        {"path": "top/C", "type": "placement", "x": 2, "y": 102, "width": 30, "height": 40},
+                        {"path": "top/B", "type": "hierarchical", "x": 10, "y": 30, "master": "SubModB"},
+                        {"path": "top/A", "type": "hierarchical", "x": 200, "y": 120, "master": "SubModA"}]},
+                    {"SubModA": [
+                        {"path": "a", "type": "toplevel", "x": 0, "y": 0, "width": 100, "height": 200, "margins": {"left": 0, "top": 0, "right": 0, "bottom": 0}}]},
+                    {"SubModB": [
+                        {"path": "b", "type": "toplevel", "x": 0, "y": 0, "width": 340, "height": 160, "margins": {"left": 0, "top": 0, "right": 0, "bottom": 0}}]}
+                ]
+            }
+        with open(proj_config, "w") as f:
+            f.write(json.dumps(settings, cls=HammerJSONEncoder, indent=4))
+
+        options = HammerDriverOptions(
+            environment_configs=[],
+            project_configs=[proj_config],
+            log_file=os.path.join(tmpdir, "log.txt"),
+            obj_dir=tmpdir
+        )
+
+        self.assertTrue(HammerVLSISettings.set_hammer_vlsi_path_from_environment(),
+            "hammer_vlsi_path must exist")
+        driver = HammerDriver(options)
+
+        CLIDriver.generate_build_inputs(driver, lambda x: None)
+
+        d_file = os.path.join(driver.obj_dir, "hammer.d")
+        self.assertTrue(os.path.exists(d_file))
+
+        contents = open(d_file).readlines()
+
+        # TODO: Actually check the contents of hammer.d
+
+        # Cleanup
+        shutil.rmtree(tmpdir)
+
 
 
 if __name__ == '__main__':

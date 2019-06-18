@@ -1824,10 +1824,6 @@ class HammerPowerStrapsTest(HasGetTech, unittest.TestCase):
                     assert False, "Got the wrong layer_name: {}".format(layer_name)
 
 
-class HammerBuildSystemsTest(unittest.TestCase):
-
-    pass
-
 
 if __name__ == '__main__':
     unittest.main()
