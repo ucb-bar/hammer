@@ -917,7 +917,7 @@ class CLIDriver:
                 {lvs_out}: {lvs_in}
                 \t$(HAMMER_EXEC) {env_confs} {lvs_in} -o {lvs_out} --obj_dir {obj_dir} lvs{suffix}
 
-                """
+                """)
 
             if not dependency_graph:
                 # Flat flow
