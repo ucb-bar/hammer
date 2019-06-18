@@ -705,23 +705,24 @@ sim.inputs:
   # type: List[str]
   seq_cells: []
 
+  sdf_file: ""
+
   # Simulation force value used for register initialization for gate level sims
   # type: int
   # TODO: add random initialization option
   force_val: 0
 
+  # Turns time annotated sim on or off
+  # type: bool
+  # If set to False, the sim will be purely functional, regardless of the simulation "level".
+  # If set to True, the sim will be time annotated based on synthesis or PAR results.
+  timing_annotated: False
 
   # TO BE ADDED:
   #
   ## Determines whether or not the simulation executable that is generated with the above inputs will actually be executed with the given flags or if the executable will just be generated in the specified run directory.
   ## type: bool
   # execute_sim: True
-  #
-  ## Turns time annotated sim on or off
-  ## type: bool
-  ## If set to False, the sim will be purely functional, regardless of the simulation "level".
-  ## If set to True, the sim will be time annotated based on synthesis or PAR results.
-  # time_annotated: False
 
 sim.submit:
   command: "${vlsi.submit.command}"
