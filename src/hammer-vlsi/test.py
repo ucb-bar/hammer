@@ -1678,9 +1678,6 @@ class HammerPowerStrapsTest(HasGetTech, unittest.TestCase):
                     self.assertEqual(entry["nets"], nets)
                     # Check that the requested tracks equals the used tracks
                     requested_tracks = track_width * 2 + track_spacing
-                    print(metal.pitch)
-                    print(track_width)
-                    print(track_spacing)
                     self.assertEqual(used_tracks, requested_tracks)
                     # Spacing should be at least the min spacing
                     min_spacing = metal.get_spacing_for_width(strap_width)
