@@ -538,8 +538,6 @@ class HammerBuildSystemsTest(unittest.TestCase):
         tmpdir = tempfile.mkdtemp()
         proj_config = os.path.join(tmpdir, "config.json")
 
-        config_dict = {}
-
         settings = {
                 "vlsi.core.technology": "nop",
                 "vlsi.core.build_system": "make",
@@ -574,8 +572,6 @@ class HammerBuildSystemsTest(unittest.TestCase):
     def test_hier_makefile(self) -> None:
         tmpdir = tempfile.mkdtemp()
         proj_config = os.path.join(tmpdir, "config.json")
-
-        config_dict = {}
 
         settings = {
                 "vlsi.core.technology": "nop",
