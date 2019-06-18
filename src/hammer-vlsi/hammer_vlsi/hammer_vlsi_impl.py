@@ -340,6 +340,26 @@ class HammerSynthesisTool(HammerTool):
             raise TypeError("output_seq_cells must be a List[str]")
         self.attr_setter("_output_seq_cells", value)
 
+
+    @property
+    def output_sdf(self) -> str:
+        """
+        Get the output SDF file to be read for timing annotated gate level sims.
+
+        :return: The output SDF file to be read for timing annotated gate level sims.
+        """
+        try:
+            return self.attr_getter("_output_sdf", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the output SDF file to be read for timing annotated gate level sims yet")
+
+    @output_sdf.setter
+    def output_sdf(self, value: str) -> None:
+        """Set the output SDF file to be read for timing annotated gate level sims."""
+        if not (isinstance(value, str)):
+            raise TypeError("output_sdf must be a str")
+        self.attr_setter("_output_sdf", value)
+
     ### END Generated interface HammerSynthesisTool ###
     ### Generated interface HammerSynthesisTool ###
 
@@ -356,6 +376,9 @@ class HammerPlaceAndRouteTool(HammerTool):
         outputs["par.outputs.output_gds"] = str(self.output_gds)
         outputs["par.outputs.output_netlist"] = str(self.output_netlist)
         outputs["par.outputs.hcells_list"] = list(self.hcells_list)
+        outputs["par.outputs.seq_cells"] = self.output_seq_cells
+        outputs["par.outputs.all_regs"] = self.output_all_regs
+        outputs["par.outputs.output_sdf"] = self.output_sdf
         return outputs
 
     ### Generated interface HammerPlaceAndRouteTool ###
@@ -989,8 +1012,6 @@ class HammerSimTool(HammerTool):
     #def fill_outputs(self) -> bool:
     #  pass
 
-    # export_config_outputs not necessary because not passing anything downstream?
-
     ### Generated interface HammerSimTool ###
     ### DO NOT MODIFY THIS CODE, EDIT generate_properties.py INSTEAD ###
     ### Inputs ###
@@ -1073,6 +1094,26 @@ class HammerSimTool(HammerTool):
         if not (isinstance(value, List)):
             raise TypeError("seq_cells must be a List[str]")
         self.attr_setter("_seq_cells", value)
+
+
+    @property
+    def sdf_file(self) -> str:
+        """
+        Get the SDF file for timing annotated gate level sims.
+
+        :return: The SDF file for timing annotated gate level sims.
+        """
+        try:
+            return self.attr_getter("_sdf_file", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the SDF file for timing annotated gate level sims yet")
+
+    @sdf_file.setter
+    def sdf_file(self, value: str) -> None:
+        """Set the SDF file for timing annotated gate level sims."""
+        if not (isinstance(value, str)):
+            raise TypeError("sdf_file must be a str")
+        self.attr_setter("_sdf_file", value)
 
 
     ### Outputs ###

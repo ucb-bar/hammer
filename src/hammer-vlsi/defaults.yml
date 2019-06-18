@@ -775,6 +775,8 @@ sim.inputs:
   # type: List[str]
   seq_cells: []
 
+  sdf_file: ""
+
   # Simulation force value used for register initialization for gate level sims
   # type: int
   # TODO: add random initialization option

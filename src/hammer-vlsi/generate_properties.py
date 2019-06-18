@@ -123,7 +123,9 @@ def main(args) -> int:
                                         InterfaceVar("output_all_regs", "List[str]",
                                                      "output list of all registers in the design with output pin for gate level simulation"),
                                         InterfaceVar("output_seq_cells", "List[str]",
-                                                     "output collection of all sequential standard cells in design")
+                                                     "output collection of all sequential standard cells in design"),
+                                        InterfaceVar("output_sdf", "str",
+                                                     "output SDF file to be read for timing annotated gate level sims")
                                         # TODO: model CAD junk
                                     ]
                                     )
@@ -134,7 +136,7 @@ def main(args) -> int:
                                             InterfaceVar("input_files", "List[str]",
                                                          "input post-synthesis netlist files"),
                                             InterfaceVar("post_synth_sdc", "Optional[str]",
-                                                         "(optional) input post-synthesis SDC constraint file")
+                                                         "(optional) input post-synthesis SDC constraint file"),
                                         ],
                                         outputs=[
                                             # TODO: model more CAD junk
@@ -145,8 +147,13 @@ def main(args) -> int:
                                             InterfaceVar("output_gds", "str", "path to the output GDS file"),
                                             InterfaceVar("output_netlist", "str", "path to the output netlist file"),
                                             InterfaceVar("hcells_list", "List[str]",
-                                                         "list of cells to explicitly map hierarchically in LVS")
-
+                                                         "list of cells to explicitly map hierarchically in LVS"),
+                                            InterfaceVar("output_all_regs", "List[str]",
+                                                     "output list of all registers in the design with output pin for gate level simulation"),
+                                            InterfaceVar("output_seq_cells", "List[str]",
+                                                     "output collection of all sequential standard cells in design"),
+                                            InterfaceVar("output_sdf", "str",
+                                                     "output SDF file to be read for timing annotated gate level sims")
                                             # TODO: add individual parts of the ILM (e.g. verilog, sdc, spef, etc) for cross-tool compatibility?
                                         ]
                                         )
@@ -191,7 +198,8 @@ def main(args) -> int:
                                   InterfaceVar("top_module", "str", "top RTL module"),
                                   InterfaceVar("input_files", "List[str]", "paths to input verilog files"),
                                   InterfaceVar("all_regs", "List[str]", "list of all registers in the design with output pin"),
-                                  InterfaceVar("seq_cells", "List[str]", "collection of all sequential standard cells in design")
+                                  InterfaceVar("seq_cells", "List[str]", "collection of all sequential standard cells in design"),
+                                  InterfaceVar("sdf_file", "str", "SDF file for timing annotated gate level sims")
                               ],
                               outputs=[]
                               )

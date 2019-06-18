@@ -486,6 +486,7 @@ class HammerDriver:
         sim_tool.submit_command = HammerSubmitCommand.get("sim", self.database)
         sim_tool.all_regs = self.database.get_setting("sim.inputs.all_regs")
         sim_tool.seq_cells = self.database.get_setting("sim.inputs.seq_cells")
+        sim_tool.sdf_file = self.database.get_setting("sim.inputs.sdf_file")
 
         missing_inputs = False
         if sim_tool.top_module == "":
@@ -682,7 +683,7 @@ class HammerDriver:
         outputs of synthesis run.
         Does not merge the results with any project dictionaries.
         :param output_dict: Dict containing synthesis.outputs.*
-        :return: sim.gl-syn.inputs.* settings generated from output_dict,
+        :return: sim.inputs.* settings generated from output_dict,
                  or None if output_dict was invalid
         """
         try:
@@ -694,10 +695,36 @@ class HammerDriver:
                 "sim.inputs.top_module": output_dict["synthesis.inputs.top_module"],
                 "sim.inputs.all_regs": all_regs,
                 "sim.inputs.seq_cells": output_dict["synthesis.outputs.seq_cells"],
+                "sim.inputs.sdf_file": output_dict["synthesis.outputs.output_sdf"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
-            #if "synthesis.outputs.sdc" in output_dict:
-            #    result["sim.inputs.gl-syn.post_synth_sdc"] = output_dict["synthesis.outputs.sdc"]
+            return result
+        except KeyError:
+            # KeyError means that the given dictionary is missing output keys.
+            return None
+
+    @staticmethod
+    def par_output_to_sim_input(output_dict: dict) -> Optional[dict]:
+        """
+        Generate the appropriate inputs for running gate level simulations from the
+        outputs of par run.
+        Does not merge the results with any project dictionaries.
+        :param output_dict: Dict containing synthesis.outputs.*
+        :return: sim.inputs.* settings generated from output_dict,
+                 or None if output_dict was invalid
+        """
+        try:
+            output_files = deeplist(output_dict["par.outputs.output_files"])
+            all_regs = deeplist(output_dict["par.outputs.all_regs"])
+            result = {
+                "sim.inputs.input_files": output_files,
+                "sim.inputs.input_files_meta": "append",
+                "sim.inputs.top_module": output_dict["par.inputs.top_module"],
+                "sim.inputs.all_regs": all_regs,
+                "sim.inputs.seq_cells": output_dict["par.outputs.seq_cells"],
+                "sim.inputs.sdf_file": output_dict["par.outputs.output_sdf"],
+                "vlsi.builtins.is_complete": False
+            }  # type: Dict[str, Any]
             return result
         except KeyError:
             # KeyError means that the given dictionary is missing output keys.
