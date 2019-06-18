@@ -567,6 +567,10 @@ par:
       # TODO(johnwright): include an auto-center option
       track_start: 0
 
+      # Absolute offset for straps relative to the design bounding box origin
+      # Overrideable by appending _<layer name>
+      track_offset: 0
+
       # Number of routing tracks between sets of straps (0 is recommended)
       # Overrideable by appending _<layer name>
       track_spacing: 0
