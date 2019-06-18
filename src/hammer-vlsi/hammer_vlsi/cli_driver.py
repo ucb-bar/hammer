@@ -900,22 +900,22 @@ class CLIDriver:
                 \t$(HAMMER_EXEC) {env_confs} {syn_in} --obj_dir {obj_dir} syn{suffix}
 
                 {par_in}: {syn_out}
-                \t$(HAMMER_EXEC) {env_confs} {syn_out} -o {par_in} --obj_dir syn-to-par{suffix}
+                \t$(HAMMER_EXEC) {env_confs} -p {syn_out} -o {par_in} --obj_dir syn-to-par{suffix}
 
                 {par_out}: {par_in}
-                \t$(HAMMER_EXEC) {env_confs} {par_in} --obj_dir {obj_dir} par{suffix}
+                \t$(HAMMER_EXEC) {env_confs} -p {par_in} --obj_dir {obj_dir} par{suffix}
 
                 {drc_in}: {par_out}
-                \t$(HAMMER_EXEC) {env_confs} {par_out} -o {drc_in} --obj_dir par-to-drc{suffix}
+                \t$(HAMMER_EXEC) {env_confs} -p {par_out} -o {drc_in} --obj_dir par-to-drc{suffix}
 
                 {drc_out}: {drc_in}
-                \t$(HAMMER_EXEC) {env_confs} {drc_in} --obj_dir {obj_dir} drc{suffix}
+                \t$(HAMMER_EXEC) {env_confs} -p {drc_in} --obj_dir {obj_dir} drc{suffix}
 
                 {lvs_in}: {par_out}
-                \t$(HAMMER_EXEC) {env_confs} {par_out} -o {lvs_in} --obj_dir par-to-lvs{suffix}
+                \t$(HAMMER_EXEC) {env_confs} -p {par_out} -o {lvs_in} --obj_dir par-to-lvs{suffix}
 
                 {lvs_out}: {lvs_in}
-                \t$(HAMMER_EXEC) {env_confs} {lvs_in} --obj_dir {obj_dir} lvs{suffix}
+                \t$(HAMMER_EXEC) {env_confs} -p {lvs_in} --obj_dir {obj_dir} lvs{suffix}
 
                 """)
 
@@ -931,11 +931,11 @@ class CLIDriver:
                 lvs_run_dir = os.path.join(obj_dir, "lvs-rundir")
 
                 syn_out = os.path.join(syn_run_dir, "syn-output-full.json")
-                par_in = os.path.join(par_run_dir, "par-input.json")
+                par_in = os.path.join(obj_dir, "par-input.json")
                 par_out = os.path.join(par_run_dir, "par-output-full.json")
-                drc_in = os.path.join(drc_run_dir, "drc-input.json")
+                drc_in = os.path.join(obj_dir, "drc-input.json")
                 drc_out = os.path.join(drc_run_dir, "drc-output-full.json")
-                lvs_in = os.path.join(lvs_run_dir, "lvs-input.json")
+                lvs_in = os.path.join(obj_dir, "lvs-input.json")
                 lvs_out = os.path.join(lvs_run_dir, "lvs-output-full.json")
 
                 output += make_text.format(suffix="", mod=top_module, env_confs=env_confs, obj_dir=obj_dir, deps=deps,
@@ -956,11 +956,11 @@ class CLIDriver:
                     lvs_run_dir = os.path.join(obj_dir, "lvs-" + node)
 
                     syn_out = os.path.join(syn_run_dir, "syn-output-full.json")
-                    par_in = os.path.join(par_run_dir, "par-input.json")
+                    par_in = os.path.join(obj_dir, "par-{}-input.json".format(node))
                     par_out = os.path.join(par_run_dir, "par-output-full.json")
-                    drc_in = os.path.join(drc_run_dir, "drc-input.json")
+                    drc_in = os.path.join(obj_dir, "drc-{}-input.json".format(node))
                     drc_out = os.path.join(drc_run_dir, "drc-output-full.json")
-                    lvs_in = os.path.join(lvs_run_dir, "lvs-input.json")
+                    lvs_in = os.path.join(obj_dir, "lvs-{}-input.json".format(node))
                     lvs_out = os.path.join(lvs_run_dir, "lvs-output-full.json")
 
                     output += make_text.format(suffix="-"+node, mod=node, env_confs=env_confs, obj_dir=obj_dir, deps=deps,
