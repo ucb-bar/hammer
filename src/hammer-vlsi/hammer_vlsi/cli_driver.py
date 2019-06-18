@@ -900,19 +900,19 @@ class CLIDriver:
                 \t$(HAMMER_EXEC) {env_confs} {syn_in} --obj_dir {obj_dir} syn{suffix}
 
                 {par_in}: {syn_out}
-                \t$(HAMMER_EXEC) {env_confs} -p {syn_out} -o {par_in} --obj_dir syn-to-par{suffix}
+                \t$(HAMMER_EXEC) {env_confs} -p {syn_out} -o {par_in} --obj_dir {obj_dir} syn-to-par{suffix}
 
                 {par_out}: {par_in}
                 \t$(HAMMER_EXEC) {env_confs} -p {par_in} --obj_dir {obj_dir} par{suffix}
 
                 {drc_in}: {par_out}
-                \t$(HAMMER_EXEC) {env_confs} -p {par_out} -o {drc_in} --obj_dir par-to-drc{suffix}
+                \t$(HAMMER_EXEC) {env_confs} -p {par_out} -o {drc_in} --obj_dir {obj_dir} par-to-drc{suffix}
 
                 {drc_out}: {drc_in}
                 \t$(HAMMER_EXEC) {env_confs} -p {drc_in} --obj_dir {obj_dir} drc{suffix}
 
                 {lvs_in}: {par_out}
-                \t$(HAMMER_EXEC) {env_confs} -p {par_out} -o {lvs_in} --obj_dir par-to-lvs{suffix}
+                \t$(HAMMER_EXEC) {env_confs} -p {par_out} -o {lvs_in} --obj_dir {obj_dir} par-to-lvs{suffix}
 
                 {lvs_out}: {lvs_in}
                 \t$(HAMMER_EXEC) {env_confs} -p {lvs_in} --obj_dir {obj_dir} lvs{suffix}
