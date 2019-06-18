@@ -940,7 +940,7 @@ class CLIDriver:
 
                 output += make_text.format(suffix="", mod=top_module, env_confs=env_confs, obj_dir=obj_dir, deps=deps,
                     syn_in=syn_in, syn_out=syn_out, par_in=par_in, par_out=par_out,
-                    drc_in=drc_in, drc_out=drc_out, lvs_in=lvs_in, lvs_out=lvs_out))
+                    drc_in=drc_in, drc_out=drc_out, lvs_in=lvs_in, lvs_out=lvs_out)
             else:
                 # Hierarchical flow
                 for node, edges in dependency_graph.items():
@@ -965,7 +965,7 @@ class CLIDriver:
 
                     output += make_text.format(suffix="-"+node, header=node, env_confs=env_confs, obj_dir=obj_dir, deps=deps,
                         syn_in=syn_in, syn_out=syn_out, par_in=par_in, par_out=par_out,
-                        drc_in=drc_in, drc_out=drc_out, lvs_in=lvs_in, lvs_out=lvs_out))
+                        drc_in=drc_in, drc_out=drc_out, lvs_in=lvs_in, lvs_out=lvs_out)
 
             with open(makefile, "w") as f:
                 f.write(output)
