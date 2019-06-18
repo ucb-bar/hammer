@@ -869,7 +869,9 @@ class HammerDriver:
 
     def get_hierarchical_dependency_graph(self) -> Dict[str, Tuple[List[str], List[str]]]:
         """
-        TODO
+        Return the dependency graph for this build if it is hierarchical, or an empty dict if it is flat.
+
+        :return: The dependency graph.
         """
         return self._hierarchical_helper()[1]
 
