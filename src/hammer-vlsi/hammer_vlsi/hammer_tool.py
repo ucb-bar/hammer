@@ -13,6 +13,7 @@ import shlex
 from abc import ABCMeta, abstractmethod
 from functools import reduce
 from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, cast
+from inspect import cleandoc
 
 import hammer_config
 import hammer_tech
@@ -907,16 +908,17 @@ class HammerTool(metaclass=ABCMeta):
             no_con = False if not "no_connect" in raw_assign else raw_assign["no_connect"]
             x = raw_assign["x"]
             y = raw_assign["y"]
+            group = None if not "group" in raw_assign else raw_assign["group"]
             cell = None if not "custom_cell" in raw_assign else raw_assign["custom_cell"]
             if name is None and not no_con:
                 self.logger.warning("Invalid bump assignment, neither name nor no_connect specified for bump {x},{y}. Assuming it should be unassigned".format(
                     x=x, y=y))
             else:
                 assignments.append(BumpAssignment(name=name, no_connect=no_con,
-                    x=x, y=y, custom_cell=cell))
+                    x=x, y=y, group=group, custom_cell=cell))
         return BumpsDefinition(x=self.get_setting("vlsi.inputs.bumps.x"),
             y=self.get_setting("vlsi.inputs.bumps.y"),
-            pitch=self.get_setting("vlsi.inputs.bumps.pitch"),
+            pitch=Decimal(str(self.get_setting("vlsi.inputs.bumps.pitch"))),
             cell=self.get_setting("vlsi.inputs.bumps.cell"), assignments=assignments)
 
     def get_pin_assignments(self) -> List[PinAssignment]:
@@ -1005,6 +1007,37 @@ class HammerTool(metaclass=ABCMeta):
             map_file = tech_map_file
 
         return map_file
+
+    def get_physical_only_cells(self) -> List[str]:
+        """
+        Get a list of physical only cells in accordance with settings in the Hammer IR.
+        Return a list of cells which are physical only.
+        :return: A list of physical only cells.
+        """
+        # Mode can be auto, manual, or append
+        physical_only_cells_mode = str(self.get_setting("par.inputs.physical_only_cells_mode"))  # type: str
+
+        # physical_only_cells_list will only be used in manual and append mode
+        manual_physical_only_cells_list = self.get_setting("par.inputs.physical_only_cells_list")  # type: List[str]
+        assert isinstance(manual_physical_only_cells_list, list), "par.inputs.physical_only_cells_list must be a list"
+
+        # tech_physical_only_cells_list will only be used in auto and append mode
+        tech_physical_only_cells_list = get_or_else(self.technology.physical_only_cells_list, [])  # type: List[str]
+
+        # Default to auto (use tech_physical_only_cells_list).
+        physical_only_cells_list = tech_physical_only_cells_list  # type: List[str]
+
+        if physical_only_cells_mode == "auto":
+            pass
+        elif physical_only_cells_mode == "manual":
+            physical_only_cells_list = manual_physical_only_cells_list
+        elif physical_only_cells_mode == "append":
+            physical_only_cells_list = tech_physical_only_cells_list + manual_physical_only_cells_list
+        else:
+            self.logger.error(
+                "Invalid physical_only_cells_mode {mode}. Using auto physical only cells list.".format(mode=physical_only_cells_mode))
+
+        return physical_only_cells_list
 
     def get_dont_use_list(self) -> List[str]:
         """
@@ -1121,22 +1154,25 @@ class HammerTool(metaclass=ABCMeta):
                 f.write("\n".join(content_lines))
 
     @staticmethod
-    def tcl_append(cmd: str, output_buffer: List[str]) -> None:
+    def tcl_append(cmd: str, output_buffer: List[str], clean: bool = False) -> None:
         """
         Helper function to echo and run a command.
 
         :param cmd: TCL command to run
-        :param output_buffer: Buffer in which to enqueue the resulting TCL lines.
+        :param output_buffer: Buffer in which to enqueue the resulting TCL lines
+        :param clean: True if you want to trim the leading indendation from the string, False otherwise
         """
-        output_buffer.append(cmd)
+        output_buffer.append(cleandoc(cmd) if clean else cmd)
 
     @staticmethod
-    def verbose_tcl_append(cmd: str, output_buffer: List[str]) -> None:
+    def verbose_tcl_append(cmd: str, output_buffer: List[str], clean: bool = False) -> None:
         """
         Helper function to echo and run a command.
 
         :param cmd: TCL command to run
-        :param output_buffer: Buffer in which to enqueue the resulting TCL lines.
+        :param output_buffer: Buffer in which to enqueue the resulting TCL lines
+        :param clean: True if you want to trim the leading indendation from the string, False otherwise
         """
-        output_buffer.append("""puts "{0}" """.format(cmd.replace('"', '\"')))
-        output_buffer.append(cmd)
+        cleaned = cleandoc(cmd) if clean else cmd
+        output_buffer.append("""puts "{0}" """.format(cleaned.replace('"', '\"')))
+        output_buffer.append(cleaned)

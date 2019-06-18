@@ -405,6 +405,20 @@ class HammerTechnology:
             return dont_use_list
 
     @property
+    def physical_only_cells_list(self) -> Optional[List[str]]:
+        """
+        Get the list of physical only cells.
+        :return: List of physical only cells, or None if the technology does not define such a list.
+        """
+        physical_only_cells_list_raw = self.config.physical_only_cells_list  # type: Optional[List[str]]
+        if physical_only_cells_list_raw is None:
+            return None
+        else:
+            # Work around the weird objects implemented by the jsonschema generator.
+            physical_only_cells_list = [str(x) for x in physical_only_cells_list_raw]
+            return physical_only_cells_list
+
+    @property
     def additional_drc_text(self) -> str:
         add_drc_text_raw = self.config.additional_drc_text
         if add_drc_text_raw is None:
@@ -837,6 +851,26 @@ class HammerTechnology:
             raise ValueError("Stackup named %s is not defined in tech JSON" % name)
         else:
             raise ValueError("Tech JSON does not specify any stackups")
+
+    def get_shrink_factor(self) -> Decimal:
+        """
+        Return the manufacturing shrink factor.
+        """
+        if self.config.shrink_factor is not None:
+            return Decimal(self.config.shrink_factor)
+        else:
+            # TODO(johnwright) Warn the user that we are using a default shrink factor (they should update their tech plugin)
+            return Decimal(1)
+
+    def get_post_shrink_length(self, length: Decimal) -> Decimal:
+        """
+        Convert a drawn dimension into a manufactured (post-shrink) dimension.
+
+        :param length: The drawn length
+        :return: The post-shrink length
+        """
+        # TODO(ucb-bar/hammer#378) use hammer units for length and area
+        return self.get_shrink_factor() * length
 
     def get_grid_unit(self) -> Decimal:
         """

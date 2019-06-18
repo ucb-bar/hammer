@@ -408,6 +408,75 @@ libraries: []
         # Cleanup
         shutil.rmtree(tech_dir_base)
 
+    def test_physical_only_cells_list(self) -> None:
+        """
+        Test that physical only cells list support works as expected.
+        """
+        import hammer_config
+
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+
+        def add_physical_only_cells_list(in_dict: Dict[str, Any]) -> Dict[str, Any]:
+            out_dict = deepdict(in_dict)
+            out_dict.update({"physical only cells list": ["cell1", "cell2"]})
+            return out_dict
+
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_physical_only_cells_list)
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
+        tech.cache_dir = tech_dir
+
+        tool = DummyTool()
+        tool.technology = tech
+        database = hammer_config.HammerDatabase()
+        tool.set_database(database)
+
+        # Test that manual mode for physical_only_cells_mode works.
+        database.update_project([{
+            'par.inputs.physical_only_cells_mode': 'manual',
+            'par.inputs.physical_only_cells_list': ['cell1']
+        }])
+        self.assertEqual(tool.get_physical_only_cells(), ['cell1'])
+
+        # Test that auto mode for physical_only_cells_mode works if the technology has a physical only cells list.
+        database.update_project([{
+            'par.inputs.physical_only_cells_mode': 'auto',
+            'par.inputs.physical_only_cells_list': []
+        }])
+
+        self.assertEqual(tool.get_physical_only_cells(), tool.technology.config.physical_only_cells_list)
+
+        # Test that append mode for physical_only_cells_mode works if the everyone has a physical only cells list.
+        database.update_project([{
+            'par.inputs.physical_only_cells_mode': 'append',
+            'par.inputs.physical_only_cells_list': ['cell3']
+        }])
+
+        self.assertEqual(tool.get_physical_only_cells(), ['cell1', 'cell2', 'cell3'])
+
+        # Cleanup
+        shutil.rmtree(tech_dir_base)
+
+        # Create a new technology with no physical_only_cells list
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+        HammerToolTestHelpers.write_tech_json(tech_json_filename)
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
+        tech.cache_dir = tech_dir
+
+        tool.technology = tech
+
+        # Test that auto mode for physical only cells list works if the technology has no physical only cells list file.
+        database.update_project([{
+            'par.inputs.physical_only_cells_mode': 'auto',
+            'par.inputs.physical_only_cells_list': []
+        }])
+        self.assertEqual(tool.get_physical_only_cells(), [])
+
+        # Cleanup
+        shutil.rmtree(tech_dir_base)
+
     def test_dont_use_list(self) -> None:
         """
         Test that "don't use" list support works as expected.

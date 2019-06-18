@@ -616,6 +616,7 @@ class HammerPlaceAndRouteTool(HammerTool):
             track_spacing = int(self._get_by_tracks_metal_setting("track_spacing", layer_name))
             track_start = int(self._get_by_tracks_metal_setting("track_start", layer_name))
             track_pitch = self._get_by_tracks_track_pitch(layer_name)
+            track_offset = Decimal(str(self._get_by_tracks_metal_setting("track_offset", layer_name)))
             offset = layer.offset # TODO this is relaxable if we can auto-recalculate this based on hierarchical setting
 
             add_pins = layer_name in pin_layers
@@ -629,7 +630,7 @@ class HammerPlaceAndRouteTool(HammerTool):
             layer_is_all_power = (2 * track_width) == track_pitch
             for i in range(sum_weights):
                 nets = [ground_net, power_nets[i]]
-                group_offset = offset + track_pitch * i * layer.pitch
+                group_offset = offset + track_offset + track_pitch * i * layer.pitch
                 group_pitch = sum_weights * track_pitch
                 output.extend(self.specify_power_straps_by_tracks(layer_name, last.name, blockage_spacing, group_pitch, track_width, track_spacing, track_start, group_offset, bbox, nets, add_pins, layer_is_all_power))
             last = layer
@@ -1202,8 +1203,25 @@ class HasSDCSupport(HammerTool):
         """
         pass
 
+class TCLTool(HammerTool):
+    """Mix-in trait for tools which consume a flat TCL file as input"""
 
-class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, HammerTool):
+    @property
+    def output(self) -> List[str]:
+        """
+        Buffered output to be put in <name>.tcl
+        """
+        return self.attr_getter("_output", [])
+
+    # Python doesn't have Scala's nice currying syntax (e.g. val newfunc = func(_, fixed_arg))
+    def verbose_append(self, cmd: str, clean: bool = False) -> None:
+        self.verbose_tcl_append(cmd, self.output, clean)
+
+    def append(self, cmd: str, clean: bool = False) -> None:
+        self.tcl_append(cmd, self.output, clean)
+
+
+class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTool):
     """Mix-in trait with functions useful for Cadence-based tools."""
 
     @property
@@ -1618,3 +1636,56 @@ def load_tool(tool_name: str, path: Iterable[str]) -> HammerTool:
     tool = tool_class()
     tool.tool_dir = os.path.dirname(os.path.abspath(mod.__file__))
     return tool
+
+
+class HammerPCBDeliverableTool(HammerTool):
+    @abstractmethod
+    def fill_outputs(self) -> bool:
+        pass
+
+    ### Generated interface HammerPCBDeliverableTool ###
+    ### DO NOT MODIFY THIS CODE, EDIT generate_properties.py INSTEAD ###
+    ### Inputs ###
+
+    ### Outputs ###
+
+    @property
+    def output_footprints(self) -> List[str]:
+        """
+        Get the list of the PCB footprint files for the project.
+
+        :return: The list of the PCB footprint files for the project.
+        """
+        try:
+            return self.attr_getter("_output_footprints", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the list of the PCB footprint files for the project yet")
+
+    @output_footprints.setter
+    def output_footprints(self, value: List[str]) -> None:
+        """Set the list of the PCB footprint files for the project."""
+        if not (isinstance(value, List)):
+            raise TypeError("output_footprints must be a List[str]")
+        self.attr_setter("_output_footprints", value)
+
+
+    @property
+    def output_schematic_symbols(self) -> List[str]:
+        """
+        Get the list of the PCB schematic symbol files for the project.
+
+        :return: The list of the PCB schematic symbol files for the project.
+        """
+        try:
+            return self.attr_getter("_output_schematic_symbols", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the list of the PCB schematic symbol files for the project yet")
+
+    @output_schematic_symbols.setter
+    def output_schematic_symbols(self, value: List[str]) -> None:
+        """Set the list of the PCB schematic symbol files for the project."""
+        if not (isinstance(value, List)):
+            raise TypeError("output_schematic_symbols must be a List[str]")
+        self.attr_setter("_output_schematic_symbols", value)
+
+    ### END Generated interface HammerPCBDeliverableTool ###

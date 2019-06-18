@@ -45,6 +45,11 @@ vlsi.core:
   sim_tool_path: ["${vlsi.builtins.hammer_vlsi_path/sim"]
   sim_tool_path_meta: subst
 
+  # Path(s) to PCB deliverable tools.
+  # Add the built-in path to PCB deliverable tools.
+  pcb_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/pcb"]
+  pcb_tool_path_meta: subst
+
   # Synthesis tool to use.
   # Currently we can choose from a selection of built-in tools which hammer-vlsi supports.
   synthesis_tool: "nop"
@@ -63,6 +68,12 @@ vlsi.core:
   
   # Sim tool to use.
   sim_tool: "nop"
+
+  # PCB deliverable tool to use.
+  # PCB deliverables include footprints, symbols, etc.
+  # For the exact deliverables produced, please see the deliverable tool's documentation.
+  # For the default 'generic' tool, the list of artefacts can be found in src/hammer-vlsi/pcb/generic/__init__.py
+  pcb_tool: "generic"
 
   # Maximum threads to use in a CAD tool invocation.
   max_threads: 1
@@ -272,6 +283,8 @@ vlsi.inputs:
   #                          For example, if this hardmacro is an instance of "my_amplifier", this
   #                          field should be set to "my_amplifier".
   # - Required for hierarchical and optional for hardmacro, disallowed otherwise
+  # create_physical (Optional[bool]) - Create an instance of a physical-only cell that does not exist in addition to placing it
+  # - Optional for hardmacro, disallowed otherwise
   # margins (Optional[Margins]) - margins for the top-level module.
   # - Required for toplevel, disallowed otherwise
   # - Contains the following keys:
@@ -358,8 +371,23 @@ vlsi.inputs:
     #  - no_connect (Optional[bool]) - If True the bump will be present but unconnected
     #  - x (Decimal) - The X coordinate of the bump assigned to this net
     #  - y (Decimal) - The Y coordinate of the bump assigned to this net
+    #  - group (Optional[str]) - The group name for the bumps
+    #                          - The schematic symbol generator will put all bumps in a group on the same part or sub-component.
     #  - custom_cell (Optional[str]) - Cell name (MACRO name) of a custom bump cell in place of the default for this bump. You must also specify the LEF and GDS for this bump in extra_libraries.
     assignments: []
+
+  # Naming scheme for the bumps' actual physical pin designators
+  # Valid options are
+  # - "A0"    (Use letters for rows, skipping I, O, Q, S, X, and Z. After Y is AA, AB, AC ...
+  #            Use numbers for columns, starting at 0, with no leading 0s (0-9, then 10, 11, ...))
+  # - "A1"    (Like A0, but numbers start at 1)
+  # - "A00"   (Like A0, but all bumps will have the same number of digits, with leading 0s appended if needed.
+  #            E.g. if there are 555 columns, The top row will start at A000 and end at A554)
+  # - "A01"   (Like A00, but numbers start at 1)
+  # - "index" (Just returns a single number in the order the bumps are listed- useful for non-grid designs)
+  # type: str
+  bumps_pin_naming_scheme: "A1"
+
 
   # Pin placement mode. (str)
   # Specifies how to arrange pins for your design.
@@ -487,6 +515,21 @@ par.inputs:
   # type: bool
   gds_merge: false
 
+  # Physical only cells mode.
+  # type: str
+  # The list of physical only cells are cells which don't have a logic function.
+  # They won't have a SPICE circuit for instance.
+  # This is currently only used for what cells to exclude from the LVS netlist, which
+  # requires SPICE circuits for all cells.
+  # Valid options:
+  # auto - Use the technology plugin's value for the physical cell list.
+  # manual - Read the physical cell list from the variable below, overriding the technology plugin.
+  # append - Append the manual list to the technology plugin's list
+  physical_only_cells_mode: auto
+  # List of cells that are only physical.
+  # type List[str]
+  physical_only_cells_list: []
+
 # Place-and-route settings
 par:
   # Submission command settings
@@ -507,6 +550,7 @@ par:
 
   # Spacing around blocks and hardmacros in microns
   # Used by power straps and floorplanning
+  # type: Decimal
   blockage_spacing: 0.0
 
   # If power_straps_mode is 'generate', which method to use.
@@ -520,30 +564,42 @@ par:
     by_tracks:
       # Spacing from end of strap to a block or blockage
       # Overrideable by appending _<layer name>
+      # type: Decimal
       blockage_spacing: "par.blockage_spacing"
       blockage_spacing_meta: lazycrossref
 
       # Number of routing tracks to be consumed by an individual strap
       # Overrideable by appending _<layer name>
+      # type: int
       track_width: 5
 
       # The first track to contain a power stripe
       # Overrideable by appending _<layer name>
+      # type: int
       # TODO(johnwright): include an auto-center option
       track_start: 0
 
+      # Absolute offset for straps relative to the design bounding box origin
+      # Overrideable by appending _<layer name>
+      # type: Decimal
+      track_offset: 0.0
+
       # Number of routing tracks between sets of straps (0 is recommended)
       # Overrideable by appending _<layer name>
+      # type: int
       track_spacing: 0
 
       # Ratio of total routing tracks to dedicate to power straps, which is used to calculate set pitch
       # Overrideable by appending _<layer name>
+      # type: float
       power_utilization: 0.1
 
       # Layers to put power pins on
+      # type: List[str]
       pin_layers: []
 
       # List of layers on which to place power straps (std cell rail layer is implied - do not include it)
+      # type: List[str]
       strap_layers: []
 
 mentor:
@@ -604,6 +660,20 @@ sram_generator.submit:
   command_meta: lazysubst
   settings: "vlsi.submit.settings"
   settings_meta: lazycrossref
+
+# PCB deliverable settings.
+pcb.inputs:
+  # Top RTL module.
+  top_module: null
+
+pcb.submit:
+  # Submission command settings
+  # inherit settings from vlsi.submit but allow us to override them
+  command: "${vlsi.submit.command}"
+  command_meta: lazysubst
+  settings: "vlsi.submit.settings"
+  settings_meta: lazycrossref
+
 
 technology.core:
     # Key name for the technology stackup
@@ -725,3 +795,15 @@ sim.submit:
   command_meta: lazysubst
   settings: "vlsi.submit.settings"
   settings_meta: lazycrossref
+
+technology.pcb:
+  # Desired pad opening diameter (in post-shrink um)
+  # Typically this should be defined in the technology plugin, assuming everyone will use the same pad and board strategy
+  # type: Decimal
+  bump_pad_opening_diameter: null
+
+  # Desired pad metal diameter (in post-shrink um)
+  # Typically this should be defined in the technology plugin, assuming everyone will use the same pad and board strategy
+  # type: Decimal
+  bump_pad_metal_diameter: null
+

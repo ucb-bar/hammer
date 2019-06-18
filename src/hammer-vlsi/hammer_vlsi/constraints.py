@@ -17,14 +17,8 @@ from hammer_tech import MacroSize
 from .units import TimeValue, VoltageValue, TemperatureValue
 
 from decimal import Decimal
-
-__all__ = ['ILMStruct', 'SRAMParameters', 'Supply', 'PinAssignment',
-           'BumpAssignment', 'BumpsDefinition', 'ClockPort',
-           'OutputLoadConstraint', 'DelayConstraint', 'ObstructionType',
-           'PlacementConstraintType', 'Margins', 'PlacementConstraint',
-           'MMMCCornerType', 'MMMCCorner', 'PinAssignmentError', 'PinAssignmentPreplacedError',
-           'PinAssignmentSemiAutoError']
-
+import math
+import string
 
 # Struct that holds various paths related to ILMs.
 class ILMStruct(NamedTuple('ILMStruct', [
@@ -237,6 +231,7 @@ BumpAssignment = NamedTuple('BumpAssignment', [
     ('no_connect', Optional[bool]),
     ('x', Decimal),
     ('y', Decimal),
+    ('group', Optional[str]),
     ('custom_cell', Optional[str])
 ])
 
@@ -247,6 +242,122 @@ BumpsDefinition = NamedTuple('BumpsDefinition', [
     ('cell', str),
     ('assignments', List[BumpAssignment])
 ])
+
+class BumpsPinNamingScheme(Enum):
+    A0 = 0
+    A1 = 1
+    A00 = 2
+    A01 = 3
+    Index = 4
+
+    @classmethod
+    def __mapping(cls) -> Dict[str, "BumpsPinNamingScheme"]:
+        return {
+            "A0": BumpsPinNamingScheme.A0,
+            "A1": BumpsPinNamingScheme.A1,
+            "A00": BumpsPinNamingScheme.A00,
+            "A01": BumpsPinNamingScheme.A01,
+            "index": BumpsPinNamingScheme.Index
+        }
+
+    @staticmethod
+    def from_str(input_str: str) -> "BumpsPinNamingScheme":
+        try:
+            return BumpsPinNamingScheme.__mapping()[input_str]
+        except KeyError:
+            raise ValueError("Invalid bumps pin naming scheme: " + str(input_str))
+
+    def __str__(self) -> str:
+        return reverse_dict(BumpsPinNamingScheme.__mapping())[self]
+
+    def sort_by_name(self, definition: BumpsDefinition, assignments: List[BumpAssignment]) -> List[BumpAssignment]:
+        """
+        Sort a list of bump assignments for a given bump definition by their name in a human-readable way.
+
+        :param definition: The bumps definition
+        :param assignments: The list of bump assignments which may or may not be equivalent to definition.assignments
+        :return: A sorted list of bump assignments
+        """
+        bpns = BumpsPinNamingScheme
+        if self == bpns.Index:
+            def sortkey(assignment: BumpAssignment) -> int:
+                # It's possible that the assignments list here is not the same as the definition list,
+                # so we need to figure out what the actual name is before sorting
+                return int(self.name_bump(definition, assignment))
+            return sorted(assignments, key=sortkey)
+        elif self in [bpns.A0, bpns.A1, bpns.A00, bpns.A01]:
+            def sortkey(assignment: BumpAssignment) -> int:
+                # This deterministically names bumps, so we can just figure out the order by looking
+                # at x and y
+                return int(definition.x * (definition.y - assignment.y) + (definition.x - assignment.x + 1))
+            return sorted(assignments, key=sortkey)
+        else:
+            assert False, "Should not get here; a developer messed up."
+
+    def name_bump(self, definition: BumpsDefinition, assignment: BumpAssignment) -> str:
+        # Skip I, O, Q, S, X, and Z
+        skips = list('IOQSXZ')
+        letters = [x for x in list(string.ascii_uppercase) if x not in skips]
+        radix = len(letters)
+        # Sanity check
+        assert radix == 20
+
+        col = int(assignment.x)
+        row = int(assignment.y)
+
+
+        bpns = BumpsPinNamingScheme
+        if self == bpns.Index:
+            # This raises a ValueError if the entry is not in the list, which shouldn't happen except to devs
+            return str(definition.assignments.index(assignment) + 1)
+
+        elif self in [bpns.A0, bpns.A1, bpns.A00, bpns.A01]:
+
+            if Decimal(col) != assignment.x or Decimal(row) != assignment.y:
+                raise ValueError("This bump naming scheme does not support fractional x and y assignments: x={x}, y={y}. Implement this, or increase the pitch and use blowouts.".format(x=assignment.x, y=assignment.y))
+
+            # Top right in GDS-land is A0 or A1 (this is top-left in board-land)
+            col = definition.x - col
+            row = definition.y - row
+
+            row_str = str(letters[row % radix])
+            row = row // radix
+            # This math gets funky, because leading letters are worth 1 more digit (blank is 0 for leadings, but A is 0 for non-leading digits)
+            while row > 0:
+                row = row - 1
+                row_str = str(letters[row % radix]) + row_str
+                row = row // radix
+
+            col_offs = 0
+            pad_zero = False
+
+            if self == BumpsPinNamingScheme.A0:
+                pass
+            elif self == BumpsPinNamingScheme.A1:
+                col_offs = 1
+            elif self == BumpsPinNamingScheme.A00:
+                pad_zero = True
+            elif self == BumpsPinNamingScheme.A01:
+                col_offs = 1
+                pad_zero = True
+            else:
+                assert False, "should not get here"
+
+            # Add the offset for A1 and A01
+            col = col + col_offs
+
+            # calculate the number of zeros we need
+            max_value = definition.x - 1 + col_offs
+            num_digits = math.ceil(math.log(max_value)/math.log(10))
+
+            col_str = str(col)
+            # use the zero padding if applicable
+            if pad_zero:
+                col_str = ("{:0" + str(num_digits) + "d}").format(col)
+
+            return row_str + col_str
+        else:
+            assert False, "Should not get here; a developer messed up"
 
 ClockPort = NamedTuple('ClockPort', [
     ('name', str),
@@ -395,6 +506,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
     ('width', Decimal),
     ('height', Decimal),
     ('master', Optional[str]),
+    ('create_physical', Optional[bool]),
     ('orientation', Optional[str]),
     ('margins', Optional[Margins]),
     ('top_layer', Optional[str]),
@@ -451,8 +563,8 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             assert master is not None
             matches = [x for x in masters if x.name == master]
             if len(matches) > 0:
-                width_check = matches[0].width
-                height_check = matches[0].height
+                width_check = Decimal(str(matches[0].width))
+                height_check = Decimal(str(matches[0].height))
             else:
                 raise ValueError("Could not find a master for hierarchical cell {} in masters list.".format(master))
         elif constraint_type == PlacementConstraintType.HardMacro:
@@ -462,8 +574,8 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             if master is not None:
                 matches = [x for x in masters if x.name == master]
                 if len(matches) > 0:
-                    width_check = matches[0].width
-                    height_check = matches[0].height
+                    width_check = Decimal(str(matches[0].width))
+                    height_check = Decimal(str(matches[0].height))
         else:
             assert constraint_type not in checked_types, "Should not get here; update checked_types."
 
@@ -559,6 +671,19 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         ### Master ###
         master = PlacementConstraint._get_master(constraint_type, constraint)
 
+        ### Create physical ###
+        # This field is optional in HardMacro constraints
+        # This field is disallowed otherwise
+        create_physical = None  # type: Optional[bool]
+        if "create_physical" in constraint:
+            if constraint_type != PlacementConstraintType.HardMacro:
+                raise ValueError("Non-HardMacro constraint must not contain create_physical: {}".format(constraint))
+            if master is None:
+                raise ValueError("HardMacro specifying a constraint must also specify a master: {}".format(constraint))
+            create_physical = constraint["create_physical"]
+            assert isinstance(create_physical, bool)
+
+
         ### Width & height ###
         # These fields are mandatory for Hierarchical, Dummy, Placement, TopLevel, and Obstruction constraints
         # These fields are optional for HardMacro constraints
@@ -566,7 +691,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         # This is not None because we don't want to make width optional for the reason above
         width = Decimal(0)
         if "width" in constraint:
-            width = Decimal(constraint["width"])
+            width = Decimal(str(constraint["width"]))
         else:
             # TODO(ucb-bar/hammer#414) remove this allowance and just raise the error
             if constraint_type != PlacementConstraintType.HardMacro:
@@ -575,7 +700,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         # This is not None because we don't want to make height optional for the reason above
         height = Decimal(0)
         if "height" in constraint:
-            height = Decimal(constraint["height"])
+            height = Decimal(str(constraint["height"]))
         else:
             # TODO(ucb-bar/hammer#414) remove this allowance and just raise the error
             if constraint_type != PlacementConstraintType.HardMacro:
@@ -598,6 +723,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             width=width,
             height=height,
             master=master,
+            create_physical=create_physical,
             orientation=orientation,
             margins=margins,
             top_layer=top_layer,
@@ -618,6 +744,8 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             output.update({"orientation": self.orientation})
         if self.master is not None:
             output.update({"master": self.master})
+        if self.create_physical is not None:
+            output.update({"create_physical": self.create_physical})
         if self.margins is not None:
             output.update({"margins": self.margins.to_dict()})
         if self.top_layer is not None:

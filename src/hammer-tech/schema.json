@@ -5,6 +5,9 @@
     "grid_unit" : {
       "type" : "string"
     },
+    "shrink_factor" : {
+      "type" : "string"
+    },
     "installs" : {
       "type" : "array",
       "items" : {
@@ -152,6 +155,13 @@
     },
     "gds map file" : {
       "type" : "string"
+    },
+    "physical only cells list" : {
+      "type" : "array",
+      "items" : {
+        "title" : "Cell",
+        "type" : "string"
+      }
     },
     "dont use list" : {
       "type" : "array",

@@ -20,7 +20,7 @@ from hammer_tech import MacroSize
 from .hammer_tool import HammerTool
 from .hooks import HammerToolHookAction
 from .hammer_vlsi_impl import HammerVLSISettings, HammerPlaceAndRouteTool, HammerSynthesisTool, \
-    HammerSignoffTool, HammerDRCTool, HammerLVSTool, HammerSRAMGeneratorTool, HammerSimTool, \
+    HammerSignoffTool, HammerDRCTool, HammerLVSTool, HammerSRAMGeneratorTool, HammerPCBDeliverableTool, HammerSimTool\
     HierarchicalMode, load_tool, PlacementConstraint, SRAMParameters, ILMStruct
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, HammerVLSILoggingContext
 from .submit_command import HammerSubmitCommand
@@ -113,6 +113,7 @@ class HammerDriver:
         self.post_custom_lvs_tool_hooks = []  # type: List[HammerToolHookAction]
         self.post_custom_sram_generator_tool_hooks = []  # type: List[HammerToolHookAction]
         self.post_custom_sim_tool_hooks = []  # type: List[HammerToolHookAction]
+        self.post_custom_pcb_tool_hooks = []  # type: List[HammerToolHookAction]
 
     @property
     def project_config(self) -> dict:
@@ -516,6 +517,45 @@ class HammerDriver:
             (sim_tool, name) = config_result
             assert isinstance(sim_tool, HammerSimTool)
             return self.set_up_sim_tool(sim_tool, name, run_dir)
+
+    def load_pcb_tool(self, run_dir: str = "") -> bool:
+        """
+        Load the PCB deliverable tool based on the given database.
+
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
+                        constructor.
+        :return: True if successful, false otherwise
+        """
+        if self.tech is None:
+            self.log.error("Must load technology before loading PCB deliverable tool")
+            return False
+
+        if run_dir == "":
+            run_dir = os.path.join(self.obj_dir, "pcb-rundir")
+
+        pcb_tool_name = self.database.get_setting("vlsi.core.pcb_tool")
+        pcb_tool_get = load_tool(
+            path=self.database.get_setting("vlsi.core.pcb_tool_path"),
+            tool_name=pcb_tool_name
+        )
+        assert isinstance(pcb_tool_get, HammerPCBDeliverableTool), "PCB deliverable tool must be a HammerPCBDeliverableTool"
+        pcb_tool = pcb_tool_get  # type: HammerPCBDeliverableTool
+        pcb_tool.name = pcb_tool_name
+        pcb_tool.logger = self.log.context("pcb")
+        pcb_tool.technology = self.tech
+        pcb_tool.set_database(self.database)
+        pcb_tool.top_module = self.database.get_setting("pcb.inputs.top_module", nullvalue="")
+        if pcb_tool.top_module == "":
+            self.log.error("Top module not specified for PCB")
+            return False
+        pcb_tool.submit_command = HammerSubmitCommand.get("pcb", self.database)
+        pcb_tool.run_dir = run_dir
+
+        self.pcb_tool = pcb_tool
+
+        self.tool_configs["pcb"] = pcb_tool.get_config()
+        self.update_tool_configs()
+        return True
 
     def set_post_custom_syn_tool_hooks(self, hooks: List[HammerToolHookAction]) -> None:
         """
@@ -933,6 +973,44 @@ class HammerDriver:
         #except ValueError as e:
         #    self.log.fatal(e.args[0])
         #    return False, {}
+
+        return run_succeeded, output_config
+
+    def run_pcb(self, hook_actions: Optional[List[HammerToolHookAction]] = None, force_override: bool = False) -> Tuple[
+        bool, dict]:
+        """
+        Run the PCB deliverable generation tool
+
+        :param hook_actions: List of hook actions, or leave as None to use the hooks sets in set_pcb_hooks.
+                             Hooks from set_pcb_hooks, if present, will be appended afterwards.
+        :param force_override: Set to true to overwrite instead of append.
+        :return: Tuple of (success, output config dict)
+        """
+        if self.pcb_tool is None:
+            self.log.error("Must load PCB deliverable tool before calling run_pcb")
+            return False, {}
+
+        self.log.info("Starting PCB deliverable generation with tool '%s'" % (self.pcb_tool.name))
+
+        if hook_actions is None:
+            hooks_to_use = self.post_custom_pcb_tool_hooks
+        elif force_override:
+            hooks_to_use = hook_actions
+        else:
+            hooks_to_use = hook_actions + self.post_custom_pcb_tool_hooks
+
+        run_succeeded = self.pcb_tool.run(hooks_to_use)
+        if not run_succeeded:
+            self.log.error("PCB deliverable tool %s failed! Please check its output." % self.pcb_tool.name)
+            # Allow the flow to keep running, just in case
+
+        # Record output from the pcb_tool into the JSON output
+        output_config = {}  # type: Dict[str, Any]
+        try:
+            output_config.update(self.pcb_tool.export_config_outputs())
+        except ValueError as e:
+            self.log.fatal(e.args[0])
+            return False, {}
 
         return run_succeeded, output_config
 
