@@ -162,6 +162,7 @@ class CLIDriver:
         return add_dicts({
             "build": self.generate_build_inputs,
             "build-inputs": self.generate_build_inputs,
+            "build_inputs": self.generate_build_inputs,
             "dump": self.dump_action,
             "dump-macrosizes": self.dump_macrosizes_action,
             "dump_macrosizes": self.dump_macrosizes_action,
