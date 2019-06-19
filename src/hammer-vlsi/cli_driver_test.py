@@ -604,6 +604,9 @@ class HammerBuildSystemsTest(unittest.TestCase):
 
     def test_hier_makefile(self) -> None:
         """
+        Test that a Makefile can be correctly generated for an hierarchical design.
+        """
+        """
         Test that a Makefile for a hierarchical design is generated correctly.
         """
         tmpdir = tempfile.mkdtemp()
