@@ -9,8 +9,9 @@ import json
 import os
 import shutil
 import tempfile
+import re
 from decimal import Decimal
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import hammer_config
 from hammer_config import HammerJSONEncoder
@@ -534,6 +535,19 @@ class CLIDriverTest(unittest.TestCase):
 
 class HammerBuildSystemsTest(unittest.TestCase):
 
+    def _read_makefile_lines(self, lines: List[str]) -> Dict[str, List[str]]:
+        targets = {}  # type: Dict[str, List[str]]
+
+        for line in lines:
+            m = re.match(r"^([^.][^\s:]+)\s*:(.*)$", line)
+            if m:
+                t = m.group(1)
+                p = re.split(r"\s+", m.group(2))
+                self.assertFalse(t in targets)
+                targets[t] = p
+
+        return targets
+
     def test_flat_makefile(self) -> None:
         tmpdir = tempfile.mkdtemp()
         proj_config = os.path.join(tmpdir, "config.json")
@@ -564,7 +578,16 @@ class HammerBuildSystemsTest(unittest.TestCase):
 
         contents = open(d_file).readlines()
 
-        # TODO: Actually check the contents of hammer.d
+        targets = self._read_makefile_lines(contents)
+
+        tasks = {"pcb", "syn", "par", "drc", "lvs"}
+        expected_targets = tasks.copy()
+        expected_targets.update({os.path.join(tmpdir, x + "-rundir", x + "-output-full.json") for x in tasks})
+        expected_targets.update({os.path.join(tmpdir, x + "-input.json") for x in tasks if x not in {"syn", "pcb"}})
+
+        self.assertEqual(set(targets.keys()), set(expected_targets))
+
+        # TODO at some point we should add more tests
 
         # Cleanup
         shutil.rmtree(tmpdir)
@@ -613,7 +636,25 @@ class HammerBuildSystemsTest(unittest.TestCase):
 
         contents = open(d_file).readlines()
 
-        # TODO: Actually check the contents of hammer.d
+        targets = self._read_makefile_lines(contents)
+
+        mods = {"TopMod", "SubModA", "SubModB"}
+        expected_targets = {"pcb", os.path.join(tmpdir, "pcb-rundir", "pcb-output-full.json")}
+        expected_targets.update({"syn-" + x for x in mods})
+        expected_targets.update({"par-" + x for x in mods})
+        expected_targets.update({"lvs-" + x for x in mods})
+        expected_targets.update({"drc-" + x for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "syn-" + x, "syn-output-full.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "par-" + x, "par-output-full.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "lvs-" + x, "lvs-output-full.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "drc-" + x, "drc-output-full.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "par-" + x + "-input.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "lvs-" + x + "-input.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "drc-" + x + "-input.json") for x in mods})
+
+        self.assertEqual(set(targets.keys()), expected_targets)
+
+        # TODO at some point we should add more tests
 
         # Cleanup
         shutil.rmtree(tmpdir)
