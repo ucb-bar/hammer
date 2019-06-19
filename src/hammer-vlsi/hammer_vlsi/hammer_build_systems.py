@@ -95,7 +95,10 @@ def build_makefile(driver: HammerDriver) -> dict:
         # Redo steps
         # These intentionally break the dependency graph, but allow the flexibility to rerun a step after changing a config.
         # Hammer doesn't know what settings impact synthesis only, e.g., so these are for power-users who "know better."
-        .PHONY: redo-par{suffix} redo-drc{suffix} redo-lvs{suffix}
+        .PHONY: redo-syn{suffix} redo-par{suffix} redo-drc{suffix} redo-lvs{suffix}
+
+        redo-syn{suffix}:
+        \t$(HAMMER_EXEC) {env_confs} {syn_in} --obj_dir {obj_dir} syn{suffix}
 
         redo-par{suffix}:
         \t$(HAMMER_EXEC) {env_confs} {syn_in} -p {par_in} --obj_dir {obj_dir} par{suffix}

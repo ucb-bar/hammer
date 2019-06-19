@@ -582,7 +582,7 @@ class HammerBuildSystemsTest(unittest.TestCase):
 
         tasks = {"pcb", "syn", "par", "drc", "lvs"}
         expected_targets = tasks.copy()
-        expected_targets.update({"redo-par", "redo-drc", "redo-lvs"})
+        expected_targets.update({"redo-" + x for x in tasks if x is not "pcb"})
         expected_targets.update({os.path.join(tmpdir, x + "-rundir", x + "-output.json") for x in tasks})
         expected_targets.update({os.path.join(tmpdir, x + "-input.json") for x in tasks if x not in {"syn", "pcb"}})
 
@@ -645,6 +645,7 @@ class HammerBuildSystemsTest(unittest.TestCase):
         expected_targets.update({"par-" + x for x in mods})
         expected_targets.update({"lvs-" + x for x in mods})
         expected_targets.update({"drc-" + x for x in mods})
+        expected_targets.update({"redo-syn-" + x for x in mods})
         expected_targets.update({"redo-par-" + x for x in mods})
         expected_targets.update({"redo-lvs-" + x for x in mods})
         expected_targets.update({"redo-drc-" + x for x in mods})
