@@ -29,6 +29,47 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
     Build a Makefile include in the obj_dir called hammer.d. This is intended to be dynamically
     created and included into a top-level Makefile.
 
+    The Makefile will contain targets for the following hammer actions, as well as any necessary
+    bridge actions (xyz-to-abc):
+        - pcb
+        - syn
+        - par
+        - drc
+        - lvs
+
+    For hierarchical flows, the syn, par, drc, and lvs actions will all be suffixed with the name
+    of the hierarchical modules (e.g. syn-Top, syn-SubModA, par-SubModA, etc.). The appropriate
+    dependencies and bridge actions are automatically generated from the hierarchy provided in the
+    Hammer IR.
+
+    Additionally, "redo" steps are created (e.g. redo-par for flat designs or redo-par-Top for
+    hierarchical), which allow the user to bypass the normal Makefile dependencies and force a
+    rerun of a particular task. This is useful when the user wants to change an input Hammer IR file
+    knowing it will not affect intermediate steps in the design.
+
+    An example use case for integrating this file into a top flow is provided below. Be sure to use
+    real tabs if copying this snippet!
+
+    ```
+    TOP ?= MyTop
+    OBJ_DIR ?= $(abspath build-$(TOP))
+    INPUT_CONFS ?= foo.yaml bar.yaml baz.yaml
+
+    HAMMER_EXEC ?= ./mychip-vlsi.py
+
+    .PHONY: all
+    all: drc-$(TOP) lvs-$(TOP)
+
+    GENERATED_CONF = $(OBJ_DIR)/input.yaml
+
+    $(GENERATED_CONF):
+        echo "synthesis.inputs.top_module: $(TOP)" > $@
+        echo "pcb.inputs.top_module: $(TOP)" >> $@
+
+    $(OBJ_DIR)/hammer.d: $(GENERATED_CONF)
+        $(HAMMER_EXEC) -e env.yaml $(foreach x,$(INPUT_CONFS) $(GENERATED_CONF), -p $(x)) --obj_dir $(OBJ_DIR) build
+    ```
+
     :param driver: The HammerDriver
     :return: The dependency graph
     """
