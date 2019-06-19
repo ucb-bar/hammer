@@ -537,7 +537,7 @@ class HammerBuildSystemsTest(unittest.TestCase):
 
     def _read_targets_from_makefile(self, lines: List[str]) -> Dict[str, List[str]]:
         """
-        Helper method to read information about targets from lines of a Makefile.
+        Helper method to read information about targets from lines of a Makefile
         """
         targets = {}  # type: Dict[str, List[str]]
 
