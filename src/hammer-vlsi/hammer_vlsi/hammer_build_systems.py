@@ -68,6 +68,8 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
 
     $(OBJ_DIR)/hammer.d: $(GENERATED_CONF)
         $(HAMMER_EXEC) -e env.yaml $(foreach x,$(INPUT_CONFS) $(GENERATED_CONF), -p $(x)) --obj_dir $(OBJ_DIR) build
+
+    include $(OBJ_DIR)/hammer.d
     ```
 
     The generated Makefile has a few variables that are set if absent. This allows the user to override them without
