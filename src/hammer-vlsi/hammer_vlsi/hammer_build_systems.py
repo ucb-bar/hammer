@@ -70,6 +70,16 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         $(HAMMER_EXEC) -e env.yaml $(foreach x,$(INPUT_CONFS) $(GENERATED_CONF), -p $(x)) --obj_dir $(OBJ_DIR) build
     ```
 
+    The generated Makefile has a few variables that are set if absent. This allows the user to override them without
+    modifying hammer.d. They are listed as follows:
+        - HAMMER_EXEC: This sets the actual python executable containing the HammerDriver main() function. It is set to
+          the executable used to generate the Makefile by default.
+        - HAMMER_DEPENDENCIES: The list of dependences to use for the initial syn and pcb targets. It is set to the set
+          of all input configurations, environment settings, and input files by default.
+        - HAMMER_REDO_ARGS: This is passed to the Hammer executable for all "redo" targets. This is unset by default.
+          Its primary uses are for adding additional configuration files with -p or using the --to_step or --from_step
+          options. An example use is "make redo-par-Top HAMMER_REDO_ARGS="-p patch.yaml --from_step placement".
+
     :param driver: The HammerDriver
     :return: The dependency graph
     """
