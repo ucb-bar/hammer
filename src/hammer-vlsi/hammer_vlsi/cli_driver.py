@@ -385,6 +385,7 @@ class CLIDriver:
                     return None
                 else:
                     post_load_func_checked(driver)
+                assert driver.drc_tool is not None, "load_drc_tool was successful"
                 success, output = driver.run_drc(extra_hooks)
                 if not success:
                     driver.log.error("DRC tool did not succeed")
@@ -398,6 +399,7 @@ class CLIDriver:
                     return None
                 else:
                     post_load_func_checked(driver)
+                assert driver.lvs_tool is not None, "load_lvs_tool was successful"
                 success, output = driver.run_lvs(extra_hooks)
                 if not success:
                     driver.log.error("LVS tool did not succeed")
