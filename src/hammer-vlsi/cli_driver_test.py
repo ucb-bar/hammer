@@ -544,7 +544,7 @@ class HammerBuildSystemsTest(unittest.TestCase):
         for line in lines:
             # This regex is looking for all non-special targets (i.e. those that aren't .PHONY, .INTERMEDIATE, .SECONDARY, ...)
             # These are of the format (target_name: list of prereqs ...)
-            m = re.match(r"^([^.][^\s:]+)\s*:(.*)$", line)
+            m = re.match(r"^([^.\s:][^\s:]*)\s*:(.*)$", line)
             if m:
                 t = m.group(1)
                 p = re.split(r"\s+", m.group(2))

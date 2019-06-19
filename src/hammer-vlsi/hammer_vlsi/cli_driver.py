@@ -863,6 +863,7 @@ class CLIDriver:
     def generate_build_inputs(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
         """
         Generate the build tool artifacts for this flow, specified by the "vlsi.core.build_system" key.
+        The flow is the set of steps configured by the current HammerIR input.
 
         :param driver: The HammerDriver object which has parsed the configs specified by -p
         :param append_error_func: The function to use to append an error
@@ -870,7 +871,7 @@ class CLIDriver:
         """
         build_system = str(driver.database.get_setting("vlsi.core.build_system", "none"))
         if build_system in BuildSystems:
-            return BuildSystems[build_system](driver, append_error_Func)
+            return BuildSystems[build_system](driver, append_error_func)
         else:
             raise ValueError("Unsupported build system: {}".format(build_system))
 

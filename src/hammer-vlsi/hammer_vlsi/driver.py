@@ -869,7 +869,8 @@ class HammerDriver:
 
     def get_hierarchical_dependency_graph(self) -> Dict[str, Tuple[List[str], List[str]]]:
         """
-        Return the dependency graph for this build if it is hierarchical, or an empty dict if it is flat.
+        Return the dependency graph for this flow if it is hierarchical, or an empty dict if it is flat.
+        The flow is the set of setps configured by the current input Hammer IR.
 
         :return: The dependency graph.
         """

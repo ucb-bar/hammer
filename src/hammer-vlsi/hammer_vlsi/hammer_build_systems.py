@@ -57,9 +57,9 @@ def build_makefile(driver: HammerDriver) -> dict:
         pcb: {pcb_out}
 
         {pcb_out}: {deps}
-        \t$(HAMMER_EXEC) {env_confs} {syn_in} --obj_dir {obj_dir} pcb
+        \t$(HAMMER_EXEC) {env_confs} {all_inputs} --obj_dir {obj_dir} pcb
 
-        """.format(pcb_out=pcb_out, deps=deps, env_confs=env_confs, syn_in=proj_confs, obj_dir=obj_dir))
+        """.format(pcb_out=pcb_out, deps=deps, env_confs=env_confs, all_inputs=proj_confs, obj_dir=obj_dir))
 
     make_text = textwrap.dedent("""
         ####################################################################################
@@ -71,26 +71,27 @@ def build_makefile(driver: HammerDriver) -> dict:
         drc{suffix}: {drc_out}
         lvs{suffix}: {lvs_out}
 
+        {par_to_syn}
         {syn_out}: {deps}
-        \t$(HAMMER_EXEC) {env_confs} {syn_in} --obj_dir {obj_dir} syn{suffix}
+        \t$(HAMMER_EXEC) {env_confs} {all_inputs}{syn_in} --obj_dir {obj_dir} syn{suffix}
 
         {par_in}: {syn_out}
-        \t$(HAMMER_EXEC) {env_confs} {syn_in} -p {syn_out} -o {par_in} --obj_dir {obj_dir} syn-to-par
+        \t$(HAMMER_EXEC) {env_confs} -p {syn_out} -o {par_in} --obj_dir {obj_dir} syn-to-par
 
         {par_out}: {par_in}
-        \t$(HAMMER_EXEC) {env_confs} {syn_in} -p {par_in} --obj_dir {obj_dir} par{suffix}
+        \t$(HAMMER_EXEC) {env_confs} {all_inputs} -p {par_in} --obj_dir {obj_dir} par{suffix}
 
         {drc_in}: {par_out}
-        \t$(HAMMER_EXEC) {env_confs} {syn_in} -p {par_out} -o {drc_in} --obj_dir {obj_dir} par-to-drc
+        \t$(HAMMER_EXEC) {env_confs} -p {par_out} -o {drc_in} --obj_dir {obj_dir} par-to-drc
 
         {drc_out}: {drc_in}
-        \t$(HAMMER_EXEC) {env_confs} {syn_in} -p {drc_in} --obj_dir {obj_dir} drc{suffix}
+        \t$(HAMMER_EXEC) {env_confs} {all_inputs} -p {drc_in} --obj_dir {obj_dir} drc{suffix}
 
         {lvs_in}: {par_out}
-        \t$(HAMMER_EXEC) {env_confs} {syn_in} -p {par_out} -o {lvs_in} --obj_dir {obj_dir} par-to-lvs
+        \t$(HAMMER_EXEC) {env_confs} -p {par_out} -o {lvs_in} --obj_dir {obj_dir} par-to-lvs
 
         {lvs_out}: {lvs_in}
-        \t$(HAMMER_EXEC) {env_confs} {syn_in} -p {lvs_in} --obj_dir {obj_dir} lvs{suffix}
+        \t$(HAMMER_EXEC) {env_confs} {all_inputs} -p {lvs_in} --obj_dir {obj_dir} lvs{suffix}
 
         # Redo steps
         # These intentionally break the dependency graph, but allow the flexibility to rerun a step after changing a config.
@@ -98,16 +99,16 @@ def build_makefile(driver: HammerDriver) -> dict:
         .PHONY: redo-syn{suffix} redo-par{suffix} redo-drc{suffix} redo-lvs{suffix}
 
         redo-syn{suffix}:
-        \t$(HAMMER_EXEC) {env_confs} {syn_in} --obj_dir {obj_dir} syn{suffix}
+        \t$(HAMMER_EXEC) {env_confs} {all_inputs}{syn_in} --obj_dir {obj_dir} syn{suffix}
 
         redo-par{suffix}:
-        \t$(HAMMER_EXEC) {env_confs} {syn_in} -p {par_in} --obj_dir {obj_dir} par{suffix}
+        \t$(HAMMER_EXEC) {env_confs} {all_inputs} -p {par_in} --obj_dir {obj_dir} par{suffix}
 
         redo-drc{suffix}:
-        \t$(HAMMER_EXEC) {env_confs} {syn_in} -p {drc_in} --obj_dir {obj_dir} drc{suffix}
+        \t$(HAMMER_EXEC) {env_confs} {all_inputs} -p {drc_in} --obj_dir {obj_dir} drc{suffix}
 
         redo-lvs{suffix}:
-        \t$(HAMMER_EXEC) {env_confs} {syn_in} -p {lvs_in} --obj_dir {obj_dir} lvs{suffix}
+        \t$(HAMMER_EXEC) {env_confs} {all_inputs} -p {lvs_in} --obj_dir {obj_dir} lvs{suffix}
 
         """)
 
@@ -121,7 +122,8 @@ def build_makefile(driver: HammerDriver) -> dict:
         drc_run_dir = os.path.join(obj_dir, "drc-rundir")
         lvs_run_dir = os.path.join(obj_dir, "lvs-rundir")
 
-        syn_in = proj_confs
+        all_inputs = proj_confs
+        syn_in = ""
         syn_out = os.path.join(syn_run_dir, "syn-output.json")
         par_in = os.path.join(obj_dir, "par-input.json")
         par_out = os.path.join(par_run_dir, "par-output.json")
@@ -130,17 +132,16 @@ def build_makefile(driver: HammerDriver) -> dict:
         lvs_in = os.path.join(obj_dir, "lvs-input.json")
         lvs_out = os.path.join(lvs_run_dir, "lvs-output.json")
 
+        par_to_syn = ""
+
         output += make_text.format(suffix="", mod=top_module, env_confs=env_confs, obj_dir=obj_dir, deps=deps,
+            all_inputs=all_inputs, par_to_syn=par_to_syn,
             syn_in=syn_in, syn_out=syn_out, par_in=par_in, par_out=par_out,
             drc_in=drc_in, drc_out=drc_out, lvs_in=lvs_in, lvs_out=lvs_out)
     else:
         # Hierarchical flow
         for node, edges in dependency_graph.items():
             out_edges = edges[1]
-            # need to revert this each time
-            deps = "$(HAMMER_DEPENDENCIES)"
-            if len(out_edges) > 0:
-                deps = " ".join(["par-" + x for x in out_edges])
 
             # TODO make this DRY
             syn_run_dir = os.path.join(obj_dir, "syn-" + node)
@@ -148,7 +149,7 @@ def build_makefile(driver: HammerDriver) -> dict:
             drc_run_dir = os.path.join(obj_dir, "drc-" + node)
             lvs_run_dir = os.path.join(obj_dir, "lvs-" + node)
 
-            syn_in = proj_confs
+            all_inputs = proj_confs
             syn_out = os.path.join(syn_run_dir, "syn-output.json")
             par_in = os.path.join(obj_dir, "par-{}-input.json".format(node))
             par_out = os.path.join(par_run_dir, "par-output.json")
@@ -157,7 +158,26 @@ def build_makefile(driver: HammerDriver) -> dict:
             lvs_in = os.path.join(obj_dir, "lvs-{}-input.json".format(node))
             lvs_out = os.path.join(lvs_run_dir, "lvs-output.json")
 
+            # need to revert this each time
+            deps = "$(HAMMER_DEPENDENCIES)"
+            syn_in = ""
+            par_to_syn = ""
+            if len(out_edges) > 0:
+                deps = os.path.join(obj_dir, "syn-{}-input.json".format(node))
+                # Note: leading space is important here
+                syn_in = " -p {}".format(deps)
+                out_confs = [os.path.join(obj_dir, "par-" + x, "par-output.json") for x in out_edges]
+                prereqs = " ".join(out_confs)
+                pstring = " ".join(["-p " + x for x in out_confs])
+                par_to_syn = textwrap.dedent("""
+                    {deps}: {prereqs}
+                    \t$(HAMMER_EXEC) {env_confs} {pstring} -o {syn_in} --obj_dir {obj_dir} hier-par-to-syn
+
+                    """.format(deps=deps, prereqs=prereqs, env_confs=env_confs, pstring=pstring,
+                    syn_in=syn_in, obj_dir=obj_dir))
+
             output += make_text.format(suffix="-"+node, mod=node, env_confs=env_confs, obj_dir=obj_dir, deps=deps,
+                all_inputs=all_inputs, par_to_syn=par_to_syn,
                 syn_in=syn_in, syn_out=syn_out, par_in=par_in, par_out=par_out,
                 drc_in=drc_in, drc_out=drc_out, lvs_in=lvs_in, lvs_out=lvs_out)
 
