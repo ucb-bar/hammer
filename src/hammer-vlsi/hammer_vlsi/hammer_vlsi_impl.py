@@ -316,6 +316,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         outputs["par.outputs.output_gds"] = str(self.output_gds)
         outputs["par.outputs.output_netlist"] = str(self.output_netlist)
         outputs["par.outputs.hcells_list"] = list(self.hcells_list)
+        outputs["par.inputs.top_module"] = self.top_module
         return outputs
 
     ### Generated interface HammerPlaceAndRouteTool ###
@@ -705,6 +706,11 @@ class HammerSignoffTool(HammerTool):
 
 class HammerDRCTool(HammerSignoffTool):
 
+    def export_config_outputs(self) -> Dict[str, Any]:
+        outputs = deepdict(super().export_config_outputs())
+        outputs["drc.inputs.top_module"] = self.top_module
+        return outputs
+
     @abstractmethod
     def fill_outputs(self) -> bool:
         pass
@@ -802,6 +808,12 @@ class HammerDRCTool(HammerSignoffTool):
 
 
 class HammerLVSTool(HammerSignoffTool):
+
+    def export_config_outputs(self) -> Dict[str, Any]:
+        outputs = deepdict(super().export_config_outputs())
+        outputs["lvs.inputs.top_module"] = self.top_module
+        return outputs
+
     @abstractmethod
     def fill_outputs(self) -> bool:
         pass

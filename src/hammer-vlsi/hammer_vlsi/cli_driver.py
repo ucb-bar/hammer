@@ -15,6 +15,7 @@ import sys
 from .hammer_vlsi_impl import HammerTool, HammerVLSISettings
 from .hooks import HammerToolHookAction
 from .driver import HammerDriver, HammerDriverOptions
+from .hammer_build_systems import BuildSystems
 
 from typing import List, Dict, Tuple, Any, Callable, Optional, Union, cast
 
@@ -159,6 +160,9 @@ class CLIDriver:
     def action_map(self) -> Dict[str, CLIActionType]:
         """Return the mapping of valid actions -> functions for each action of the command-line driver."""
         return add_dicts({
+            "build": self.generate_build_inputs,
+            "build-inputs": self.generate_build_inputs,
+            "build_inputs": self.generate_build_inputs,
             "dump": self.dump_action,
             "dump-macrosizes": self.dump_macrosizes_action,
             "dump_macrosizes": self.dump_macrosizes_action,
@@ -381,14 +385,28 @@ class CLIDriver:
                     return None
                 else:
                     post_load_func_checked(driver)
+                assert driver.drc_tool is not None, "load_drc_tool was successful"
                 success, output = driver.run_drc(extra_hooks)
+                if not success:
+                    driver.log.error("DRC tool did not succeed")
+                    return None
+                dump_config_to_json_file(os.path.join(driver.drc_tool.run_dir, "drc-output.json"), output)
+                dump_config_to_json_file(os.path.join(driver.drc_tool.run_dir, "drc-output-full.json"),
+                                         self.get_full_config(driver, output))
                 post_run_func_checked(driver)
             elif action_type == "lvs":
                 if not driver.load_lvs_tool(get_or_else(self.lvs_rundir, "")):
                     return None
                 else:
                     post_load_func_checked(driver)
+                assert driver.lvs_tool is not None, "load_lvs_tool was successful"
                 success, output = driver.run_lvs(extra_hooks)
+                if not success:
+                    driver.log.error("LVS tool did not succeed")
+                    return None
+                dump_config_to_json_file(os.path.join(driver.lvs_tool.run_dir, "lvs-output.json"), output)
+                dump_config_to_json_file(os.path.join(driver.lvs_tool.run_dir, "lvs-output-full.json"),
+                                         self.get_full_config(driver, output))
                 post_run_func_checked(driver)
             elif action_type == "sram_generator":
                 if not driver.load_sram_generator_tool(get_or_else(self.sram_generator_rundir, "")):
@@ -403,6 +421,12 @@ class CLIDriver:
                 else:
                     post_load_func_checked(driver)
                 success, output = driver.run_pcb(extra_hooks)
+                if not success:
+                    driver.log.error("PCB deliverable tool did not succeed")
+                    return None
+                dump_config_to_json_file(os.path.join(driver.pcb_tool.run_dir, "pcb-output.json"), output)
+                dump_config_to_json_file(os.path.join(driver.pcb_tool.run_dir, "pcb-output-full.json"),
+                                         self.get_full_config(driver, output))
                 post_run_func_checked(driver)
             else:
                 raise ValueError("Invalid action_type = " + str(action_type))
@@ -855,6 +879,22 @@ class CLIDriver:
             self.hierarchical_auto_action = auto_action
 
         return driver, errors
+
+    @staticmethod
+    def generate_build_inputs(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        """
+        Generate the build tool artifacts for this flow, specified by the "vlsi.core.build_system" key.
+        The flow is the set of steps configured by the current HammerIR input.
+
+        :param driver: The HammerDriver object which has parsed the configs specified by -p
+        :param append_error_func: The function to use to append an error
+        :return: The diplomacy graph
+        """
+        build_system = str(driver.database.get_setting("vlsi.core.build_system", "none"))
+        if build_system in BuildSystems:
+            return BuildSystems[build_system](driver, append_error_func)
+        else:
+            raise ValueError("Unsupported build system: {}".format(build_system))
 
     def run_main_parsed(self, args: dict) -> int:
         """
