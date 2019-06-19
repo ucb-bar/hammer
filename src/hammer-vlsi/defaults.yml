@@ -605,20 +605,24 @@ drc.inputs:
   # type: str
   top_module: null
 
-  # Input layout file
-  # Typically a GDSII file from the place and route tool
+  # Input layout file.
+  # Typically a GDSII file from the place and route tool.
   # type: str
   layout_file: null
 
   # Valid modes are auto, manual, prepend, and append
   # type: str
   additional_drc_text_mode: "auto"
-  # Custom DRC command text to add after the boilerplate commands at the top of the run file
+  # Custom DRC command text to add after the boilerplate commands at the top of the run file.
   # type: str
   additional_drc_text: ""
 
-  # DRC rules to run
-  # Leaving this empty will run all rules- otherwise the rules listed will be run
+  # DRC rules to run.
+  # Leaving this empty will run all rules - otherwise, the rules listed will be run.
+  # Rule names are defined in the Design Rule Manual (DRM).
+  # Generally rules will still have the same names across DRC decks for different tool vendors from the same PDK.
+  # There is no "schema" for the DRC rule names in Hammer - while the vendors may have some pattern they use, this
+  # setting has no understanding of that.
   # type: List[str]
   drc_rules_to_run: []
 
