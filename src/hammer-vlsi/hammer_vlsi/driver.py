@@ -481,6 +481,9 @@ class HammerDriver:
         pcb_tool.technology = self.tech
         pcb_tool.set_database(self.database)
         pcb_tool.top_module = self.database.get_setting("pcb.inputs.top_module", nullvalue="")
+        if pcb_tool.top_module == "":
+            self.log.error("Top module not specified for PCB")
+            return False
         pcb_tool.submit_command = HammerSubmitCommand.get("pcb", self.database)
         pcb_tool.run_dir = run_dir
 

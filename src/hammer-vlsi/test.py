@@ -1521,6 +1521,7 @@ class HammerGenericPCBToolTest(unittest.TestCase):
             self.assertTrue(os.path.exists(c.driver.pcb_tool.output_footprint_filename))  # type: ignore
             self.assertTrue(os.path.exists(c.driver.pcb_tool.output_footprint_csv_filename))  # type: ignore
             self.assertTrue(os.path.exists(c.driver.pcb_tool.output_schematic_symbol_filename))  # type: ignore
+            self.assertTrue(os.path.exists(c.driver.pcb_tool.output_bom_builder_pindata_filename))  # type: ignore
 
     # TODO add more checks:
     # - footprint pads should be mirrored relative to GDS
@@ -1605,7 +1606,8 @@ class HammerPowerStrapsTest(HasGetTech, unittest.TestCase):
         track_spacing_M6 = 1
         power_utilization = 0.2
         power_utilization_M8 = 1.0
-        track_offset_M5 = 1
+        track_start_M5 = 1
+        track_offset_M5 = 1.2
 
         # VSS comes before VDD
         nets = ["VSS", "VDD"]
@@ -1629,6 +1631,7 @@ class HammerPowerStrapsTest(HasGetTech, unittest.TestCase):
                 "track_spacing_M6": track_spacing_M6,
                 "power_utilization": power_utilization,
                 "power_utilization_M8": power_utilization_M8,
+                "track_start_M5": track_start_M5,
                 "track_offset_M5": track_offset_M5
             }
         }
@@ -1663,7 +1666,9 @@ class HammerPowerStrapsTest(HasGetTech, unittest.TestCase):
                 metal = stackup.get_metal(layer_name)
                 min_width = metal.min_width
                 group_track_pitch = strap_pitch / metal.pitch
-                used_tracks = round(Decimal(strap_offset + strap_width + strap_spacing + strap_width + strap_offset) / metal.pitch) - 1
+                track_offset = Decimal(str(track_offset_M5)) if layer_name == "M5" else Decimal(0)
+                track_start = Decimal(str(track_start_M5)) if layer_name == "M5" else Decimal(0)
+                used_tracks = round(Decimal(strap_offset + strap_width + strap_spacing + strap_width + strap_offset - 2 * (track_offset + track_start * metal.pitch)) / metal.pitch) - 1
                 if layer_name == "M4":
                     self.assertEqual(entry["bbox"], [])
                     self.assertEqual(entry["nets"], nets)

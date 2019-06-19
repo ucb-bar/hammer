@@ -576,6 +576,7 @@ class HammerPlaceAndRouteTool(HammerTool):
             track_spacing = int(self._get_by_tracks_metal_setting("track_spacing", layer_name))
             track_start = int(self._get_by_tracks_metal_setting("track_start", layer_name))
             track_pitch = self._get_by_tracks_track_pitch(layer_name)
+            track_offset = Decimal(str(self._get_by_tracks_metal_setting("track_offset", layer_name)))
             offset = layer.offset # TODO this is relaxable if we can auto-recalculate this based on hierarchical setting
 
             add_pins = layer_name in pin_layers
@@ -589,7 +590,7 @@ class HammerPlaceAndRouteTool(HammerTool):
             layer_is_all_power = (2 * track_width) == track_pitch
             for i in range(sum_weights):
                 nets = [ground_net, power_nets[i]]
-                group_offset = offset + track_pitch * i * layer.pitch
+                group_offset = offset + track_offset + track_pitch * i * layer.pitch
                 group_pitch = sum_weights * track_pitch
                 output.extend(self.specify_power_straps_by_tracks(layer_name, last.name, blockage_spacing, group_pitch, track_width, track_spacing, track_start, group_offset, bbox, nets, add_pins, layer_is_all_power))
             last = layer
