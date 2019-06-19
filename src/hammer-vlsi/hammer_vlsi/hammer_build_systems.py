@@ -24,7 +24,7 @@ def build_noop(driver: HammerDriver, append_error_func: Callable[[str], None]) -
     return dependency_graph
 
 
-def build_makefile(driver: HammerDriver) -> dict:
+def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None]) -> dict:
     """
     Build a Makefile include in the obj_dir called hammer.d. This is intended to be dynamically
     created and included into a top-level Makefile.
