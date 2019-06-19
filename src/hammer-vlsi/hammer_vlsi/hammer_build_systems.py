@@ -48,7 +48,7 @@ def build_makefile(driver: HammerDriver) -> dict:
 
     # Global steps that are the same for hier or flat
     pcb_run_dir = os.path.join(obj_dir, "pcb-rundir")
-    pcb_out = os.path.join(pcb_run_dir, "pcb-output-full.json")
+    pcb_out = os.path.join(pcb_run_dir, "pcb-output.json")
     output += textwrap.dedent("""
         ####################################################################################
         ## Global steps
@@ -75,22 +75,36 @@ def build_makefile(driver: HammerDriver) -> dict:
         \t$(HAMMER_EXEC) {env_confs} {syn_in} --obj_dir {obj_dir} syn{suffix}
 
         {par_in}: {syn_out}
-        \t$(HAMMER_EXEC) {env_confs} -p {syn_out} -o {par_in} --obj_dir {obj_dir} syn-to-par
+        \t$(HAMMER_EXEC) {env_confs} {syn_in} -p {syn_out} -o {par_in} --obj_dir {obj_dir} syn-to-par
 
         {par_out}: {par_in}
-        \t$(HAMMER_EXEC) {env_confs} -p {par_in} --obj_dir {obj_dir} par{suffix}
+        \t$(HAMMER_EXEC) {env_confs} {syn_in} -p {par_in} --obj_dir {obj_dir} par{suffix}
 
         {drc_in}: {par_out}
-        \t$(HAMMER_EXEC) {env_confs} -p {par_out} -o {drc_in} --obj_dir {obj_dir} par-to-drc
+        \t$(HAMMER_EXEC) {env_confs} {syn_in} -p {par_out} -o {drc_in} --obj_dir {obj_dir} par-to-drc
 
         {drc_out}: {drc_in}
-        \t$(HAMMER_EXEC) {env_confs} -p {drc_in} --obj_dir {obj_dir} drc{suffix}
+        \t$(HAMMER_EXEC) {env_confs} {syn_in} -p {drc_in} --obj_dir {obj_dir} drc{suffix}
 
         {lvs_in}: {par_out}
-        \t$(HAMMER_EXEC) {env_confs} -p {par_out} -o {lvs_in} --obj_dir {obj_dir} par-to-lvs
+        \t$(HAMMER_EXEC) {env_confs} {syn_in} -p {par_out} -o {lvs_in} --obj_dir {obj_dir} par-to-lvs
 
         {lvs_out}: {lvs_in}
-        \t$(HAMMER_EXEC) {env_confs} -p {lvs_in} --obj_dir {obj_dir} lvs{suffix}
+        \t$(HAMMER_EXEC) {env_confs} {syn_in} -p {lvs_in} --obj_dir {obj_dir} lvs{suffix}
+
+        # Redo steps
+        # These intentionally break the dependency graph, but allow the flexibility to rerun a step after changing a config.
+        # Hammer doesn't know what settings impact synthesis only, e.g., so these are for power-users who "know better."
+        .PHONY: redo-par{suffix} redo-drc{suffix} redo-lvs{suffix}
+
+        redo-par{suffix}:
+        \t$(HAMMER_EXEC) {env_confs} {syn_in} -p {par_in} --obj_dir {obj_dir} par{suffix}
+
+        redo-drc{suffix}:
+        \t$(HAMMER_EXEC) {env_confs} {syn_in} -p {drc_in} --obj_dir {obj_dir} drc{suffix}
+
+        redo-lvs{suffix}:
+        \t$(HAMMER_EXEC) {env_confs} {syn_in} -p {lvs_in} --obj_dir {obj_dir} lvs{suffix}
 
         """)
 
@@ -105,13 +119,13 @@ def build_makefile(driver: HammerDriver) -> dict:
         lvs_run_dir = os.path.join(obj_dir, "lvs-rundir")
 
         syn_in = proj_confs
-        syn_out = os.path.join(syn_run_dir, "syn-output-full.json")
+        syn_out = os.path.join(syn_run_dir, "syn-output.json")
         par_in = os.path.join(obj_dir, "par-input.json")
-        par_out = os.path.join(par_run_dir, "par-output-full.json")
+        par_out = os.path.join(par_run_dir, "par-output.json")
         drc_in = os.path.join(obj_dir, "drc-input.json")
-        drc_out = os.path.join(drc_run_dir, "drc-output-full.json")
+        drc_out = os.path.join(drc_run_dir, "drc-output.json")
         lvs_in = os.path.join(obj_dir, "lvs-input.json")
-        lvs_out = os.path.join(lvs_run_dir, "lvs-output-full.json")
+        lvs_out = os.path.join(lvs_run_dir, "lvs-output.json")
 
         output += make_text.format(suffix="", mod=top_module, env_confs=env_confs, obj_dir=obj_dir, deps=deps,
             syn_in=syn_in, syn_out=syn_out, par_in=par_in, par_out=par_out,
@@ -132,13 +146,13 @@ def build_makefile(driver: HammerDriver) -> dict:
             lvs_run_dir = os.path.join(obj_dir, "lvs-" + node)
 
             syn_in = proj_confs
-            syn_out = os.path.join(syn_run_dir, "syn-output-full.json")
+            syn_out = os.path.join(syn_run_dir, "syn-output.json")
             par_in = os.path.join(obj_dir, "par-{}-input.json".format(node))
-            par_out = os.path.join(par_run_dir, "par-output-full.json")
+            par_out = os.path.join(par_run_dir, "par-output.json")
             drc_in = os.path.join(obj_dir, "drc-{}-input.json".format(node))
-            drc_out = os.path.join(drc_run_dir, "drc-output-full.json")
+            drc_out = os.path.join(drc_run_dir, "drc-output.json")
             lvs_in = os.path.join(obj_dir, "lvs-{}-input.json".format(node))
-            lvs_out = os.path.join(lvs_run_dir, "lvs-output-full.json")
+            lvs_out = os.path.join(lvs_run_dir, "lvs-output.json")
 
             output += make_text.format(suffix="-"+node, mod=node, env_confs=env_confs, obj_dir=obj_dir, deps=deps,
                 syn_in=syn_in, syn_out=syn_out, par_in=par_in, par_out=par_out,
