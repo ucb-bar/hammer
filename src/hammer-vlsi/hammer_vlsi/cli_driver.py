@@ -386,6 +386,12 @@ class CLIDriver:
                 else:
                     post_load_func_checked(driver)
                 success, output = driver.run_drc(extra_hooks)
+                if not success:
+                    driver.log.error("DRC tool did not succeed")
+                    return None
+                dump_config_to_json_file(os.path.join(driver.drc_tool.run_dir, "drc-output.json"), output)
+                dump_config_to_json_file(os.path.join(driver.drc_tool.run_dir, "drc-output-full.json"),
+                                         self.get_full_config(driver, output))
                 post_run_func_checked(driver)
             elif action_type == "lvs":
                 if not driver.load_lvs_tool(get_or_else(self.lvs_rundir, "")):
@@ -393,6 +399,12 @@ class CLIDriver:
                 else:
                     post_load_func_checked(driver)
                 success, output = driver.run_lvs(extra_hooks)
+                if not success:
+                    driver.log.error("LVS tool did not succeed")
+                    return None
+                dump_config_to_json_file(os.path.join(driver.lvs_tool.run_dir, "lvs-output.json"), output)
+                dump_config_to_json_file(os.path.join(driver.lvs_tool.run_dir, "lvs-output-full.json"),
+                                         self.get_full_config(driver, output))
                 post_run_func_checked(driver)
             elif action_type == "sram_generator":
                 if not driver.load_sram_generator_tool(get_or_else(self.sram_generator_rundir, "")):
@@ -407,6 +419,12 @@ class CLIDriver:
                 else:
                     post_load_func_checked(driver)
                 success, output = driver.run_pcb(extra_hooks)
+                if not success:
+                    driver.log.error("PCB deliverable tool did not succeed")
+                    return None
+                dump_config_to_json_file(os.path.join(driver.pcb_tool.run_dir, "pcb-output.json"), output)
+                dump_config_to_json_file(os.path.join(driver.pcb_tool.run_dir, "pcb-output-full.json"),
+                                         self.get_full_config(driver, output))
                 post_run_func_checked(driver)
             else:
                 raise ValueError("Invalid action_type = " + str(action_type))
