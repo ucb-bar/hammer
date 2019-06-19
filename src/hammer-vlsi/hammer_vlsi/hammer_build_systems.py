@@ -13,7 +13,7 @@ import sys
 import textwrap
 from typing import List, Dict, Tuple, Callable
 
-def build_noop(driver: HammerDriver) -> dict:
+def build_noop(driver: HammerDriver, append_error_func: Callable[[str], None]) -> dict:
     """
     Do nothing, just return the dependency graph.
 
@@ -169,4 +169,4 @@ def build_makefile(driver: HammerDriver) -> dict:
 BuildSystems = {
     "make": build_makefile,
     "none": build_noop
-}  # type: Dict[str, Callable[[HammerDriver], dict]]
+}  # type: Dict[str, Callable[[HammerDriver, Callable[[str], None]], dict]]

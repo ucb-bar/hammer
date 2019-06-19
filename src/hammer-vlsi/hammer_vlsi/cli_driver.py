@@ -865,12 +865,12 @@ class CLIDriver:
         Generate the build tool artifacts for this flow, specified by the "vlsi.core.build_system" key.
 
         :param driver: The HammerDriver object which has parsed the configs specified by -p
-        :param append_error_func: The function to use to append an error (unused).
+        :param append_error_func: The function to use to append an error
         :return: A build-system-specific dictionary
         """
         build_system = str(driver.database.get_setting("vlsi.core.build_system", "none"))
         if build_system in BuildSystems:
-            return BuildSystems[build_system](driver)
+            return BuildSystems[build_system](driver, append_error_Func)
         else:
             raise ValueError("Unsupported build system: {}".format(build_system))
 

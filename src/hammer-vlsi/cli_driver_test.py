@@ -535,20 +535,28 @@ class CLIDriverTest(unittest.TestCase):
 
 class HammerBuildSystemsTest(unittest.TestCase):
 
-    def _read_makefile_lines(self, lines: List[str]) -> Dict[str, List[str]]:
+    def _read_targets_from_makefile(self, lines: List[str]) -> Dict[str, List[str]]:
+        """
+        Helper method to read information about targets from lines of a Makefile
+        """
         targets = {}  # type: Dict[str, List[str]]
 
         for line in lines:
+            # This regex is looking for all non-special targets (i.e. those that aren't .PHONY, .INTERMEDIATE, .SECONDARY, ...)
+            # These are of the format (target_name: list of prereqs ...)
             m = re.match(r"^([^.][^\s:]+)\s*:(.*)$", line)
             if m:
                 t = m.group(1)
                 p = re.split(r"\s+", m.group(2))
-                self.assertFalse(t in targets)
+                self.assertFalse(t in targets, "Found duplicate target {}".format(t))
                 targets[t] = p
 
         return targets
 
     def test_flat_makefile(self) -> None:
+        """
+        Test that a Makefile for a flat design is generated correctly.
+        """
         tmpdir = tempfile.mkdtemp()
         proj_config = os.path.join(tmpdir, "config.json")
 
@@ -576,9 +584,10 @@ class HammerBuildSystemsTest(unittest.TestCase):
         d_file = os.path.join(driver.obj_dir, "hammer.d")
         self.assertTrue(os.path.exists(d_file))
 
-        contents = open(d_file).readlines()
+        with open(d_file, "r") as f:
+            contents = f.readlines()
 
-        targets = self._read_makefile_lines(contents)
+        targets = self._read_targets_from_makefile(contents)
 
         tasks = {"pcb", "syn", "par", "drc", "lvs"}
         expected_targets = tasks.copy()
@@ -594,6 +603,9 @@ class HammerBuildSystemsTest(unittest.TestCase):
         shutil.rmtree(tmpdir)
 
     def test_hier_makefile(self) -> None:
+        """
+        Test that a Makefile for a hierarchical design is generated correctly.
+        """
         tmpdir = tempfile.mkdtemp()
         proj_config = os.path.join(tmpdir, "config.json")
 
@@ -635,9 +647,10 @@ class HammerBuildSystemsTest(unittest.TestCase):
         d_file = os.path.join(driver.obj_dir, "hammer.d")
         self.assertTrue(os.path.exists(d_file))
 
-        contents = open(d_file).readlines()
+        with open(d_file, "r") as f:
+            contents = f.readlines()
 
-        targets = self._read_makefile_lines(contents)
+        targets = self._read_targets_from_makefile(contents)
 
         mods = {"TopMod", "SubModA", "SubModB"}
         expected_targets = {"pcb", os.path.join(tmpdir, "pcb-rundir", "pcb-output.json")}

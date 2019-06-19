@@ -892,7 +892,7 @@ class HammerDriver:
         hierarchically and the dependency graph. Do not call this method directly- use get_hierarchical_settings or
         get_hierarchial_dependency_graph instead.
 
-        :return: Tuple of 1. List of tuples of (module name, config snippet) and 2. The dependency graph
+        :return: Tuple of (List of tuples of (module name, config snippet), the dependency graph)
         """
         hier_source_key = "vlsi.inputs.hierarchical.config_source"
         hier_source = str(self.database.get_setting(hier_source_key))
