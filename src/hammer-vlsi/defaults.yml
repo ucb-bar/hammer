@@ -607,16 +607,25 @@ mentor:
 # DRC settings
 drc.inputs:
   # Top RTL module.
+  # type: str
   top_module: null
 
   # Input layout file
   # Typically a GDSII file from the place and route tool
+  # type: str
   layout_file: null
 
   # Valid modes are auto, manual, prepend, and append
+  # type: str
   additional_drc_text_mode: "auto"
   # Custom DRC command text to add after the boilerplate commands at the top of the run file
+  # type: str
   additional_drc_text: ""
+
+  # DRC rules to run
+  # Leaving this empty will run all rules- otherwise the rules listed will be run
+  # type: List[str]
+  drc_rules_to_run: []
 
 # inherit settings from vlsi.submit but allow us to override them
 drc.submit:
