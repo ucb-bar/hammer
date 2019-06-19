@@ -886,7 +886,7 @@ class CLIDriver:
 
         :param driver: The HammerDriver object which has parsed the configs specified by -p
         :param append_error_func: The function to use to append an error
-        :return: A build-system-specific dictionary
+        :return: The diplomacy graph
         """
         build_system = str(driver.database.get_setting("vlsi.core.build_system", "none"))
         if build_system in BuildSystems:
