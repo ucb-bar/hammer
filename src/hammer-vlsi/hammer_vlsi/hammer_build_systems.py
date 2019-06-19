@@ -81,7 +81,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
     default_dependencies = [os.path.realpath(x) for x in default_dependencies]
     output = "HAMMER_EXEC ?= {}\n".format(os.path.realpath(sys.argv[0]))
     output += "HAMMER_DEPENDENCIES ?= {}\n\n".format(" ".join(default_dependencies))
-    deps = "$(HAMMER_DEPENDENCIES)"
+    syn_deps = "$(HAMMER_DEPENDENCIES)"
     # Get the confs passed into this execution
     env_confs = " ".join(["-e " + os.path.realpath(x) for x in driver.options.environment_configs])
     proj_confs = " ".join(["-p " + os.path.realpath(x) for x in driver.options.project_configs])
@@ -97,10 +97,10 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         .PHONY: pcb
         pcb: {pcb_out}
 
-        {pcb_out}: {deps}
+        {pcb_out}: {syn_deps}
         \t$(HAMMER_EXEC) {env_confs} {all_inputs} --obj_dir {obj_dir} pcb
 
-        """.format(pcb_out=pcb_out, deps=deps, env_confs=env_confs, all_inputs=proj_confs, obj_dir=obj_dir))
+        """.format(pcb_out=pcb_out, syn_deps=syn_deps, env_confs=env_confs, all_inputs=proj_confs, obj_dir=obj_dir))
 
     make_text = textwrap.dedent("""
         ####################################################################################
@@ -113,8 +113,8 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         lvs{suffix}: {lvs_out}
 
         {par_to_syn}
-        {syn_out}: {deps}
-        \t$(HAMMER_EXEC) {env_confs} {all_inputs}{syn_in} --obj_dir {obj_dir} syn{suffix}
+        {syn_out}: {syn_deps}
+        \t$(HAMMER_EXEC) {env_confs} {all_inputs}{p_syn_in} --obj_dir {obj_dir} syn{suffix}
 
         {par_in}: {syn_out}
         \t$(HAMMER_EXEC) {env_confs} -p {syn_out} -o {par_in} --obj_dir {obj_dir} syn-to-par
@@ -140,7 +140,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         .PHONY: redo-syn{suffix} redo-par{suffix} redo-drc{suffix} redo-lvs{suffix}
 
         redo-syn{suffix}:
-        \t$(HAMMER_EXEC) {env_confs} {all_inputs}{syn_in} --obj_dir {obj_dir} syn{suffix}
+        \t$(HAMMER_EXEC) {env_confs} {all_inputs}{p_syn_in} --obj_dir {obj_dir} syn{suffix}
 
         redo-par{suffix}:
         \t$(HAMMER_EXEC) {env_confs} {all_inputs} -p {par_in} --obj_dir {obj_dir} par{suffix}
@@ -164,7 +164,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         lvs_run_dir = os.path.join(obj_dir, "lvs-rundir")
 
         all_inputs = proj_confs
-        syn_in = ""
+        p_syn_in = ""
         syn_out = os.path.join(syn_run_dir, "syn-output.json")
         par_in = os.path.join(obj_dir, "par-input.json")
         par_out = os.path.join(par_run_dir, "par-output.json")
@@ -175,9 +175,9 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
 
         par_to_syn = ""
 
-        output += make_text.format(suffix="", mod=top_module, env_confs=env_confs, obj_dir=obj_dir, deps=deps,
+        output += make_text.format(suffix="", mod=top_module, env_confs=env_confs, obj_dir=obj_dir, syn_deps=syn_deps,
             all_inputs=all_inputs, par_to_syn=par_to_syn,
-            syn_in=syn_in, syn_out=syn_out, par_in=par_in, par_out=par_out,
+            p_syn_in=p_syn_in, syn_out=syn_out, par_in=par_in, par_out=par_out,
             drc_in=drc_in, drc_out=drc_out, lvs_in=lvs_in, lvs_out=lvs_out)
     else:
         # Hierarchical flow
@@ -200,26 +200,26 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
             lvs_out = os.path.join(lvs_run_dir, "lvs-output.json")
 
             # need to revert this each time
-            deps = "$(HAMMER_DEPENDENCIES)"
-            syn_in = ""
+            syn_deps = "$(HAMMER_DEPENDENCIES)"
+            p_syn_in = ""
             par_to_syn = ""
             if len(out_edges) > 0:
-                deps = os.path.join(obj_dir, "syn-{}-input.json".format(node))
+                syn_deps = os.path.join(obj_dir, "syn-{}-input.json".format(node))
                 # Note: leading space is important here
-                syn_in = " -p {}".format(deps)
+                p_syn_in = " -p {}".format(syn_deps)
                 out_confs = [os.path.join(obj_dir, "par-" + x, "par-output.json") for x in out_edges]
                 prereqs = " ".join(out_confs)
                 pstring = " ".join(["-p " + x for x in out_confs])
                 par_to_syn = textwrap.dedent("""
-                    {deps}: {prereqs}
-                    \t$(HAMMER_EXEC) {env_confs} {pstring} -o {syn_in} --obj_dir {obj_dir} hier-par-to-syn
+                    {syn_deps}: {prereqs}
+                    \t$(HAMMER_EXEC) {env_confs} {pstring} -o {syn_deps} --obj_dir {obj_dir} hier-par-to-syn
 
-                    """.format(deps=deps, prereqs=prereqs, env_confs=env_confs, pstring=pstring,
-                    syn_in=syn_in, obj_dir=obj_dir))
+                    """.format(syn_deps=syn_deps, prereqs=prereqs, env_confs=env_confs, pstring=pstring,
+                    p_syn_in=p_syn_in, obj_dir=obj_dir))
 
-            output += make_text.format(suffix="-"+node, mod=node, env_confs=env_confs, obj_dir=obj_dir, deps=deps,
+            output += make_text.format(suffix="-"+node, mod=node, env_confs=env_confs, obj_dir=obj_dir, syn_deps=syn_deps,
                 all_inputs=all_inputs, par_to_syn=par_to_syn,
-                syn_in=syn_in, syn_out=syn_out, par_in=par_in, par_out=par_out,
+                p_syn_in=p_syn_in, syn_out=syn_out, par_in=par_in, par_out=par_out,
                 drc_in=drc_in, drc_out=drc_out, lvs_in=lvs_in, lvs_out=lvs_out)
 
     with open(makefile, "w") as f:
