@@ -316,6 +316,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         outputs["par.outputs.output_gds"] = str(self.output_gds)
         outputs["par.outputs.output_netlist"] = str(self.output_netlist)
         outputs["par.outputs.hcells_list"] = list(self.hcells_list)
+        outputs["par.inputs.top_module"] = self.top_module
         return outputs
 
     ### Generated interface HammerPlaceAndRouteTool ###
