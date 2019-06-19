@@ -89,7 +89,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
 
     # Global steps that are the same for hier or flat
     pcb_run_dir = os.path.join(obj_dir, "pcb-rundir")
-    pcb_out = os.path.join(pcb_run_dir, "pcb-output.json")
+    pcb_out = os.path.join(pcb_run_dir, "pcb-output-full.json")
     output += textwrap.dedent("""
         ####################################################################################
         ## Global steps
@@ -120,36 +120,37 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         \t$(HAMMER_EXEC) {env_confs} -p {syn_out} -o {par_in} --obj_dir {obj_dir} syn-to-par
 
         {par_out}: {par_in}
-        \t$(HAMMER_EXEC) {env_confs} {all_inputs} -p {par_in} --obj_dir {obj_dir} par{suffix}
+        \t$(HAMMER_EXEC) {env_confs} -p {par_in} --obj_dir {obj_dir} par{suffix}
 
         {drc_in}: {par_out}
         \t$(HAMMER_EXEC) {env_confs} -p {par_out} -o {drc_in} --obj_dir {obj_dir} par-to-drc
 
         {drc_out}: {drc_in}
-        \t$(HAMMER_EXEC) {env_confs} {all_inputs} -p {drc_in} --obj_dir {obj_dir} drc{suffix}
+        \t$(HAMMER_EXEC) {env_confs} -p {drc_in} --obj_dir {obj_dir} drc{suffix}
 
         {lvs_in}: {par_out}
         \t$(HAMMER_EXEC) {env_confs} -p {par_out} -o {lvs_in} --obj_dir {obj_dir} par-to-lvs
 
         {lvs_out}: {lvs_in}
-        \t$(HAMMER_EXEC) {env_confs} {all_inputs} -p {lvs_in} --obj_dir {obj_dir} lvs{suffix}
+        \t$(HAMMER_EXEC) {env_confs} -p {lvs_in} --obj_dir {obj_dir} lvs{suffix}
 
         # Redo steps
         # These intentionally break the dependency graph, but allow the flexibility to rerun a step after changing a config.
         # Hammer doesn't know what settings impact synthesis only, e.g., so these are for power-users who "know better."
+        # The HAMMER_REDO_ARGS variable allows patching in of new configurations with -p or using --to_step or --from_step, for example.
         .PHONY: redo-syn{suffix} redo-par{suffix} redo-drc{suffix} redo-lvs{suffix}
 
         redo-syn{suffix}:
-        \t$(HAMMER_EXEC) {env_confs} {all_inputs}{p_syn_in} --obj_dir {obj_dir} syn{suffix}
+        \t$(HAMMER_EXEC) {env_confs} {all_inputs}{p_syn_in} $(HAMMER_REDO_ARGS) --obj_dir {obj_dir} syn{suffix}
 
         redo-par{suffix}:
-        \t$(HAMMER_EXEC) {env_confs} {all_inputs} -p {par_in} --obj_dir {obj_dir} par{suffix}
+        \t$(HAMMER_EXEC) {env_confs} -p {par_in} $(HAMMER_REDO_ARGS) --obj_dir {obj_dir} par{suffix}
 
         redo-drc{suffix}:
-        \t$(HAMMER_EXEC) {env_confs} {all_inputs} -p {drc_in} --obj_dir {obj_dir} drc{suffix}
+        \t$(HAMMER_EXEC) {env_confs} -p {drc_in} $(HAMMER_REDO_ARGS) --obj_dir {obj_dir} drc{suffix}
 
         redo-lvs{suffix}:
-        \t$(HAMMER_EXEC) {env_confs} {all_inputs} -p {lvs_in} --obj_dir {obj_dir} lvs{suffix}
+        \t$(HAMMER_EXEC) {env_confs} -p {lvs_in} $(HAMMER_REDO_ARGS) --obj_dir {obj_dir} lvs{suffix}
 
         """)
 
@@ -165,13 +166,13 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
 
         all_inputs = proj_confs
         p_syn_in = ""
-        syn_out = os.path.join(syn_run_dir, "syn-output.json")
+        syn_out = os.path.join(syn_run_dir, "syn-output-full.json")
         par_in = os.path.join(obj_dir, "par-input.json")
-        par_out = os.path.join(par_run_dir, "par-output.json")
+        par_out = os.path.join(par_run_dir, "par-output-full.json")
         drc_in = os.path.join(obj_dir, "drc-input.json")
-        drc_out = os.path.join(drc_run_dir, "drc-output.json")
+        drc_out = os.path.join(drc_run_dir, "drc-output-full.json")
         lvs_in = os.path.join(obj_dir, "lvs-input.json")
-        lvs_out = os.path.join(lvs_run_dir, "lvs-output.json")
+        lvs_out = os.path.join(lvs_run_dir, "lvs-output-full.json")
 
         par_to_syn = ""
 
@@ -191,13 +192,13 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
             lvs_run_dir = os.path.join(obj_dir, "lvs-" + node)
 
             all_inputs = proj_confs
-            syn_out = os.path.join(syn_run_dir, "syn-output.json")
+            syn_out = os.path.join(syn_run_dir, "syn-output-full.json")
             par_in = os.path.join(obj_dir, "par-{}-input.json".format(node))
-            par_out = os.path.join(par_run_dir, "par-output.json")
+            par_out = os.path.join(par_run_dir, "par-output-full.json")
             drc_in = os.path.join(obj_dir, "drc-{}-input.json".format(node))
-            drc_out = os.path.join(drc_run_dir, "drc-output.json")
+            drc_out = os.path.join(drc_run_dir, "drc-output-full.json")
             lvs_in = os.path.join(obj_dir, "lvs-{}-input.json".format(node))
-            lvs_out = os.path.join(lvs_run_dir, "lvs-output.json")
+            lvs_out = os.path.join(lvs_run_dir, "lvs-output-full.json")
 
             # need to revert this each time
             syn_deps = "$(HAMMER_DEPENDENCIES)"
@@ -207,7 +208,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
                 syn_deps = os.path.join(obj_dir, "syn-{}-input.json".format(node))
                 # Note: leading space is important here
                 p_syn_in = " -p {}".format(syn_deps)
-                out_confs = [os.path.join(obj_dir, "par-" + x, "par-output.json") for x in out_edges]
+                out_confs = [os.path.join(obj_dir, "par-" + x, "par-output-full.json") for x in out_edges]
                 prereqs = " ".join(out_confs)
                 pstring = " ".join(["-p " + x for x in out_confs])
                 par_to_syn = textwrap.dedent("""
