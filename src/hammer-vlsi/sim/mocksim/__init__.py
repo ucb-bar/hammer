@@ -38,9 +38,11 @@ class MockSim(HammerSimTool, DummyHammerTool):
     def step1(self) -> bool:
         sim_file = os.path.join(self.run_dir, "{module}_regs.txt".format(module=self.top_module))
         with open(sim_file, "w") as f:
-            f.writeline(self.get_setting("sim.inputs.level"))
+            f.write(self.get_setting("sim.inputs.level"))
+            f.write("\n")
             for option in self.get_setting("sim.inputs.options"):
-                f.writeline(option)
+                f.write(option)
+                f.write("\n")
         return True
 
 

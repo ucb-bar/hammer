@@ -18,7 +18,9 @@ call_mypy () {
 
 # Core
 call_mypy --package hammer_vlsi
-call_mypy --package hammer_utils
+#call_mypy --package hammer_utils
+
+return
 
 # Shell
 call_mypy ../hammer-shell/get-config
