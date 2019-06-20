@@ -47,7 +47,7 @@ vlsi.core:
 
   # Path(s) to sim tools.
   # Add the built-in path to sim tools
-  sim_tool_path: ["${vlsi.builtins.hammer_vlsi_path/sim"]
+  sim_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/sim"]
   sim_tool_path_meta: subst
 
   # Path(s) to PCB deliverable tools.
