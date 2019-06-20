@@ -379,6 +379,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         outputs["par.outputs.seq_cells"] = self.output_seq_cells
         outputs["par.outputs.all_regs"] = self.output_all_regs
         outputs["par.outputs.output_sdf"] = self.output_sdf
+        outputs["par.inputs.top_module"] = self.top_module
         return outputs
 
     ### Generated interface HammerPlaceAndRouteTool ###
@@ -828,6 +829,11 @@ class HammerSignoffTool(HammerTool):
 
 class HammerDRCTool(HammerSignoffTool):
 
+    def export_config_outputs(self) -> Dict[str, Any]:
+        outputs = deepdict(super().export_config_outputs())
+        outputs["drc.inputs.top_module"] = self.top_module
+        return outputs
+
     @abstractmethod
     def fill_outputs(self) -> bool:
         pass
@@ -842,6 +848,16 @@ class HammerDRCTool(HammerSignoffTool):
         :return: The list of waived DRC rule names.
         """
         pass
+
+    def drc_rules_to_run(self) -> List[str]:
+        """
+        Return a list of the specific DRC rules to run. If empty, run all rules (the default).
+
+        :return: A list of DRC rules to run or an empty list if running all rules
+        """
+        res = self.get_setting("drc.inputs.drc_rules_to_run", [])  # type: List[str]
+        assert isinstance(res, list)
+        return res
 
     def get_additional_drc_text(self) -> str:
         """ Get the additional custom DRC command text to add after the boilerplate commands at the top of the DRC run file. """
@@ -915,6 +931,12 @@ class HammerDRCTool(HammerSignoffTool):
 
 
 class HammerLVSTool(HammerSignoffTool):
+
+    def export_config_outputs(self) -> Dict[str, Any]:
+        outputs = deepdict(super().export_config_outputs())
+        outputs["lvs.inputs.top_module"] = self.top_module
+        return outputs
+
     @abstractmethod
     def fill_outputs(self) -> bool:
         pass
