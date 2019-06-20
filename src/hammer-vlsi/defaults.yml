@@ -70,7 +70,7 @@ vlsi.core:
 
   # SRAM Generator tool to use.
   sram_generator_tool: "nop"
-  
+
   # Sim tool to use.
   sim_tool: "nop"
 
