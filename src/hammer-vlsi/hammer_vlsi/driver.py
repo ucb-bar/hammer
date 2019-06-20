@@ -269,6 +269,10 @@ class HammerDriver:
         par_tool.input_files = list(self.database.get_setting("par.inputs.input_files"))
         par_tool.top_module = self.database.get_setting("par.inputs.top_module", nullvalue="")
         par_tool.post_synth_sdc = self.database.get_setting("par.inputs.post_synth_sdc", nullvalue="")
+        par_tool.output_all_regs = []  # TODO(daniel)
+        par_tool.output_seq_cells = []  # TODO(daniel)
+        par_tool.output_sdf = ""  # TODO(daniel)
+
 
         if len(par_tool.input_files) == 0:
             self.log.error("No input files specified for par")
