@@ -80,9 +80,9 @@ class MetaDirective(NamedTuple('MetaDirective', [
     #     ...
     ('target_settings', Callable[[str, Any], List[str]]),
     # Function which takes in the key and value for a meta directive and
-    # changes its value so that any references to a particular target key
+    # changes its value so that any reference to a particular target key
     # is changed to another.
-    # It turns a tuple of (new value, new meta type).
+    # It returns a tuple of (new value, new meta type).
     # The target_key must be one of the keys in target_settings.
     # Returns None if the target_key was not found or could not be replaced.
     # def rename_target(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[Tuple[Any, str]]:
@@ -91,6 +91,36 @@ class MetaDirective(NamedTuple('MetaDirective', [
 ])):
     __slots__ = ()
 
+def deepsubst_cwd(path: str, params: MetaDirectiveParams) -> str:
+    """
+    Prepend the current working directory (of the hammer runtime) to the beginning of the
+    specified path.
+
+    :param path: The string path to which the CWD is to be prepended.
+    :param params: The MetaDirectiveParams (not used by this method).
+    :return: The path with CWD prepended.
+    """
+    # os.path.join handles the case where path is absolute
+    # "If a component is an absolute path, all previous components are thrown away and joining continues from the absolute path component."
+    return os.path.join(os.getcwd(), path)
+
+def deepsubst_local(path: str, params: MetaDirectiveParams) -> str:
+    """
+    Prepend the directory containing the config file containing this setting to the
+    beginning of the specified path.
+
+    :param path: The string path to which the local path is to be prepended.
+    :param params: The MetaDirectiveParams which contain the local path.
+    :return: The path with the local path of the config prepended.
+    """
+    # os.path.join handles the case where path is absolute
+    # "If a component is an absolute path, all previous components are thrown away and joining continues from the absolute path component."
+    return os.path.join(params.meta_path, path)
+
+DeepSubstMetaDirectives = {
+    "cwd": deepsubst_cwd,
+    "local": deepsubst_local
+}  # type: Dict[str, Callable[[str, MetaDirectiveParams], str]]
 
 @lru_cache(maxsize=2)
 def get_meta_directives() -> Dict[str, MetaDirective]:
@@ -340,7 +370,7 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
                                             target_settings=lambda key, value: [],
                                             rename_target=json2list_rename)
 
-    def prependlocal_action(config_dict: dict, key: str, value, params: MetaDirectiveParams) -> None:
+    def prependlocal_action(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
         """Prepend the local path of the config dict."""
         config_dict[key] = os.path.join(params.meta_path, str(value))
 
@@ -353,6 +383,89 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
     directives['prependlocal'] = MetaDirective(action=prependlocal_action,
                                                target_settings=lambda key, value: [],
                                                rename_target=prependlocal_rename)
+
+
+    def deepsubst_action(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
+        """
+        Perform a deep substitution on the value provided. This will replace any variables that occur in strings
+        of the form ${...} and will also do a special meta replacement on keys which end in _deepsubst_meta.
+        """
+        def do_subst(oldval: Any) -> Any:
+            if isinstance(oldval, str):
+                # This is just regular subst
+                return subst_str(oldval, lambda key: config_dict[key])
+            elif isinstance(oldval, list):
+                return list(map(do_subst, oldval))
+            elif isinstance(oldval, dict):
+                # We need to check for _deepsubst_meta here
+                newval = {}  # type: Dict
+                for k, v in oldval.items():
+                    if isinstance(k, str):
+                        if k.endswith("_deepsubst_meta"):
+                            base = k.replace("_deepsubst_meta", "")
+                            if base not in oldval:
+                                raise ValueError("Deepsubst meta key provided, but there is no matching base key: {}".format(k))
+                            # Note that we don't add the meta back to newval.
+                        else:
+                            meta_key = "{}_deepsubst_meta".format(k)
+                            if meta_key in oldval:
+                                # Do the deepsubst_meta, whatever it is.
+                                meta = oldval[meta_key]
+                                if meta in DeepSubstMetaDirectives:
+                                    if isinstance(v, str):
+                                        newval[k] = DeepSubstMetaDirectives[meta](v, params)
+                                    else:
+                                        raise ValueError("Deepsubst metas not supported on non-string values: {}".format(str(v)))
+                                else:
+                                    raise ValueError("Unknown deepsubst_meta type: {}. Valid options are [{}].".format(str(meta),
+                                        ", ".join(DeepSubstMetaDirectives.keys())))
+                            else:
+                                newval[k] = do_subst(v)
+                    else:
+                        # k is not an instance of a string.
+                        # Will this ever happen? It's possible you could have {1: "foo"}...
+                        newval[k] = do_subst(v)
+                return newval
+            else:
+                return oldval
+
+        config_dict[key] = do_subst(value)
+
+    def deepsubst_targets(key: str, value: Any) -> List[str]:
+        """
+        Look for all substitution targets (${...}) in value and return a list of the targets found.
+        """
+        if isinstance(value, str):
+            # This is just regular subst
+            return subst_targets(key, value)
+        elif isinstance(value, list) or isinstance(value, dict):
+            # Recursively find all strings
+            def find_strings(x: Union[List, Dict]) -> List[str]:
+                iterator = x  # type: Iterable[Any]
+                if isinstance(x, dict):
+                    iterator = x.values()
+
+                output = []  # type: List
+                for item in iterator:
+                    if isinstance(item, str):
+                        output.extend([s for s in subst_targets(key, item) if s not in output])
+                    elif isinstance(item, list) or isinstance(item, dict):
+                        output.extend([s for s in find_strings(item) if s not in output])
+                return output
+
+            return find_strings(value)
+        else:
+            raise ValueError("deepsubst cannot be used with this type: {}".format(type(value)))
+
+    def deepsubst_rename(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[Tuple[Any, str]]:
+        """
+        Not implemented.
+        """
+        raise NotImplementedError("Deepsubst does not support rename")
+
+    directives['deepsubst'] = MetaDirective(action=deepsubst_action,
+                                            target_settings=deepsubst_targets,
+                                            rename_target=deepsubst_rename)
 
     return directives
 
