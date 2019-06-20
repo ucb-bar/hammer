@@ -1888,7 +1888,8 @@ class HammerSimToolTest(unittest.TestCase):
             self.assertTrue(c.driver.run_sim())
 
             assert isinstance(c.driver.sim_tool, hammer_vlsi.HammerSimTool)
-            self.assertTrue(os.path.exists(c.driver.sim_tool.force_regs_file_path))
+            # Ignore typing here because this is part of the mocksim API
+            self.assertTrue(os.path.exists(c.driver.sim_tool.force_regs_file_path))  # type: ignore
 
 
 if __name__ == '__main__':
