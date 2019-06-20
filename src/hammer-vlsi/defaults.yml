@@ -741,15 +741,15 @@ sim.inputs:
   # Simulation timescale
   # type: str
   # This is passed as a plain string
-  # For example, for VCS, timescale may be set as "sim.inputs.timescale: '1ns/10ps' which would be passed as "-timescale=1ns/10ps" 
+  # For example, for VCS, timescale may be set as "sim.inputs.timescale: '1ns/10ps' which would be passed as "-timescale=1ns/10ps"
   timescale: null
-  
+
   # C source files passed when generatin the simulation executable
   # type: List[str]
   # These files will be passed like the verilog input files
   csrc: []
 
-  # Benchmarks to run with the simulator executable 
+  # Benchmarks to run with the simulator executable
   # type: List[str]
   # This is a list of paths to benchmark binaries that will be run with the simulator to test the design if the testbench requires it.
   # For example, this may be a RISCV binary like rv64ui-p-simple.
@@ -776,7 +776,7 @@ sim.inputs:
   # Hierarchical path to the top level instance of the "dut" from the testbench.
   # type: str
   # For example, this will be used to generate the hierarchical path through the testbench and DUT to each sequential element in the design.
-  tb_dut: "dut"  
+  tb_dut: "dut"
 
   # Simulation mode for simulation at different levels of the VLSI flow
   # Valid options are:
@@ -799,7 +799,7 @@ sim.inputs:
   # type: int
   # TODO: add random initialization option
   force_val: 0
-  
+
   # Turns time annotated sim on or off
   # type: bool
   # If set to False, the sim will be purely functional, regardless of the simulation "level".
