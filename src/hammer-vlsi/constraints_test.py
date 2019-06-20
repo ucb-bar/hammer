@@ -188,6 +188,28 @@ class BumpsTest(unittest.TestCase):
         definition = BumpsDefinition(x=8421,y=8421,pitch=Decimal("1.23"),cell="bumpcell",assignments=assignments)
         self.assertEqual(BumpsPinNamingScheme.A1.name_bump(definition, assignments[0]), "AAAA8421")
 
+    def test_bump_sort(self) -> None:
+        assignments = [
+            BumpAssignment(name="foo",no_connect=False,x=Decimal(1),y=Decimal(1),group=None,custom_cell=None),
+            BumpAssignment(name="bar",no_connect=False,x=Decimal(3),y=Decimal(1),group=None,custom_cell=None),
+            BumpAssignment(name="baz",no_connect=True,x=Decimal(4),y=Decimal(1),group=None,custom_cell=None),
+            BumpAssignment(name="qux",no_connect=False,x=Decimal(22),y=Decimal(204),group=None,custom_cell=None),
+            BumpAssignment(name="quux",no_connect=False,x=Decimal(204),y=Decimal(204),group=None,custom_cell=None),
+            BumpAssignment(name="alice",no_connect=False,x=Decimal(2),y=Decimal(204),group=None,custom_cell=None),
+            BumpAssignment(name="bob",no_connect=False,x=Decimal(204),y=Decimal(22),group=None,custom_cell=None),
+            BumpAssignment(name="VDD",no_connect=False,x=Decimal(203),y=Decimal(21),group=None,custom_cell=None),
+            BumpAssignment(name="VSS",no_connect=False,x=Decimal(202),y=Decimal(20),group=None,custom_cell=None)
+        ]
+        definition = BumpsDefinition(x=204,y=204,pitch=Decimal("1.23"),cell="bumpcell",assignments=assignments)
+
+        idxs = [0, 3, 6, 2, 1]
+
+        sorted_assignments = BumpsPinNamingScheme.Index.sort_by_name(definition, [assignments[x] for x in idxs])
+        self.assertEqual(sorted_assignments, [assignments[x] for x in sorted(idxs)])
+
+        sorted_assignments = BumpsPinNamingScheme.A0.sort_by_name(definition, assignments)
+        self.assertEqual(sorted_assignments, [assignments[x] for x in [4, 3, 5, 6, 7, 8, 2, 1, 0]])
+
 
 class DelayConstraintTest(unittest.TestCase):
     def test_round_trip(self) -> None:

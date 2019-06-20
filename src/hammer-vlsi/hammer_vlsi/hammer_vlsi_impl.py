@@ -316,6 +316,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         outputs["par.outputs.output_gds"] = str(self.output_gds)
         outputs["par.outputs.output_netlist"] = str(self.output_netlist)
         outputs["par.outputs.hcells_list"] = list(self.hcells_list)
+        outputs["par.inputs.top_module"] = self.top_module
         return outputs
 
     ### Generated interface HammerPlaceAndRouteTool ###
@@ -576,6 +577,7 @@ class HammerPlaceAndRouteTool(HammerTool):
             track_spacing = int(self._get_by_tracks_metal_setting("track_spacing", layer_name))
             track_start = int(self._get_by_tracks_metal_setting("track_start", layer_name))
             track_pitch = self._get_by_tracks_track_pitch(layer_name)
+            track_offset = Decimal(str(self._get_by_tracks_metal_setting("track_offset", layer_name)))
             offset = layer.offset # TODO this is relaxable if we can auto-recalculate this based on hierarchical setting
 
             add_pins = layer_name in pin_layers
@@ -589,7 +591,7 @@ class HammerPlaceAndRouteTool(HammerTool):
             layer_is_all_power = (2 * track_width) == track_pitch
             for i in range(sum_weights):
                 nets = [ground_net, power_nets[i]]
-                group_offset = offset + track_pitch * i * layer.pitch
+                group_offset = offset + track_offset + track_pitch * i * layer.pitch
                 group_pitch = sum_weights * track_pitch
                 output.extend(self.specify_power_straps_by_tracks(layer_name, last.name, blockage_spacing, group_pitch, track_width, track_spacing, track_start, group_offset, bbox, nets, add_pins, layer_is_all_power))
             last = layer
@@ -704,6 +706,11 @@ class HammerSignoffTool(HammerTool):
 
 class HammerDRCTool(HammerSignoffTool):
 
+    def export_config_outputs(self) -> Dict[str, Any]:
+        outputs = deepdict(super().export_config_outputs())
+        outputs["drc.inputs.top_module"] = self.top_module
+        return outputs
+
     @abstractmethod
     def fill_outputs(self) -> bool:
         pass
@@ -718,6 +725,16 @@ class HammerDRCTool(HammerSignoffTool):
         :return: The list of waived DRC rule names.
         """
         pass
+
+    def drc_rules_to_run(self) -> List[str]:
+        """
+        Return a list of the specific DRC rules to run. If empty, run all rules (the default).
+
+        :return: A list of DRC rules to run or an empty list if running all rules
+        """
+        res = self.get_setting("drc.inputs.drc_rules_to_run", [])  # type: List[str]
+        assert isinstance(res, list)
+        return res
 
     def get_additional_drc_text(self) -> str:
         """ Get the additional custom DRC command text to add after the boilerplate commands at the top of the DRC run file. """
@@ -791,6 +808,12 @@ class HammerDRCTool(HammerSignoffTool):
 
 
 class HammerLVSTool(HammerSignoffTool):
+
+    def export_config_outputs(self) -> Dict[str, Any]:
+        outputs = deepdict(super().export_config_outputs())
+        outputs["lvs.inputs.top_module"] = self.top_module
+        return outputs
+
     @abstractmethod
     def fill_outputs(self) -> bool:
         pass

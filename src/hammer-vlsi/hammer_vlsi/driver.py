@@ -75,6 +75,9 @@ class HammerDriver:
         # Store the run dir.
         self.obj_dir = options.obj_dir  # type: str
 
+        # Also store the options
+        self.options = options
+
         # Load builtins and core into the database.
         HammerVLSISettings.load_builtins_and_core(self.database)
 
@@ -481,6 +484,9 @@ class HammerDriver:
         pcb_tool.technology = self.tech
         pcb_tool.set_database(self.database)
         pcb_tool.top_module = self.database.get_setting("pcb.inputs.top_module", nullvalue="")
+        if pcb_tool.top_module == "":
+            self.log.error("Top module not specified for PCB")
+            return False
         pcb_tool.submit_command = HammerSubmitCommand.get("pcb", self.database)
         pcb_tool.run_dir = run_dir
 
@@ -861,6 +867,15 @@ class HammerDriver:
 
         return run_succeeded, output_config
 
+    def get_hierarchical_dependency_graph(self) -> Dict[str, Tuple[List[str], List[str]]]:
+        """
+        Return the dependency graph for this flow if it is hierarchical, or an empty dict if it is flat.
+        The flow is the set of setps configured by the current input Hammer IR.
+
+        :return: The dependency graph.
+        """
+        return self._hierarchical_helper()[1]
+
     def get_hierarchical_settings(self) -> List[Tuple[str, dict]]:
         """
         Read settings from the database, determine leaf/hierarchical modules, an order of execution, and return an
@@ -868,6 +883,17 @@ class HammerDriver:
         hierarchically.
 
         :return: List of tuples of (module name, config snippet)
+        """
+        return self._hierarchical_helper()[0]
+
+    def _hierarchical_helper(self) -> Tuple[List[Tuple[str, dict]], Dict[str, Tuple[List[str], List[str]]]]:
+        """
+        Read settings from the database, determine leaf/hierarchical modules, an order of execution, and return an
+        ordered list (from leaf to top) of modules and associated config snippets needed to run syn+par for that module
+        hierarchically and the dependency graph. Do not call this method directly- use get_hierarchical_settings or
+        get_hierarchial_dependency_graph instead.
+
+        :return: Tuple of (List of tuples of (module name, config snippet), the dependency graph)
         """
         hier_source_key = "vlsi.inputs.hierarchical.config_source"
         hier_source = str(self.database.get_setting(hier_source_key))
@@ -925,7 +951,7 @@ class HammerDriver:
 
         assert isinstance(hier_modules, dict)
         if not hier_modules:
-            return []
+            return ([], {})
 
         leaf_modules = set()  # type: Set[str]
         intermediate_modules = set()  # type: Set[str]
@@ -984,4 +1010,4 @@ class HammerDriver:
             constraint_dict = reduce(add_dicts, hier_constraints.get(module, []), constraint_dict)
             output.append((module, constraint_dict))
 
-        return output
+        return (output, dependency_graph)

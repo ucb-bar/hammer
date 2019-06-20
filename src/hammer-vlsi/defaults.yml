@@ -15,6 +15,11 @@ vlsi.core:
   # TODO: move this to vlsi.technology (or technology.core) ucb-bar/hammer#317
   node: 32
 
+  # Build system to use, if any.
+  # This is used to auto-generate a build file, if desired. It is not required to run hammer.
+  # Valid options are "none" or "make"
+  build_system: "none"
+
   # Path(s) to synthesis tools.
   # Add the built-in path to synthesis tools.
   synthesis_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/synthesis"]
@@ -63,6 +68,8 @@ vlsi.core:
 
   # PCB deliverable tool to use.
   # PCB deliverables include footprints, symbols, etc.
+  # For the exact deliverables produced, please see the deliverable tool's documentation.
+  # For the default 'generic' tool, the list of artefacts can be found in src/hammer-vlsi/pcb/generic/__init__.py
   pcb_tool: "generic"
 
   # Maximum threads to use in a CAD tool invocation.
@@ -540,6 +547,7 @@ par:
 
   # Spacing around blocks and hardmacros in microns
   # Used by power straps and floorplanning
+  # type: Decimal
   blockage_spacing: 0.0
 
   # If power_straps_mode is 'generate', which method to use.
@@ -553,30 +561,42 @@ par:
     by_tracks:
       # Spacing from end of strap to a block or blockage
       # Overrideable by appending _<layer name>
+      # type: Decimal
       blockage_spacing: "par.blockage_spacing"
       blockage_spacing_meta: lazycrossref
 
       # Number of routing tracks to be consumed by an individual strap
       # Overrideable by appending _<layer name>
+      # type: int
       track_width: 5
 
       # The first track to contain a power stripe
       # Overrideable by appending _<layer name>
+      # type: int
       # TODO(johnwright): include an auto-center option
       track_start: 0
 
+      # Absolute offset for straps relative to the design bounding box origin
+      # Overrideable by appending _<layer name>
+      # type: Decimal
+      track_offset: 0.0
+
       # Number of routing tracks between sets of straps (0 is recommended)
       # Overrideable by appending _<layer name>
+      # type: int
       track_spacing: 0
 
       # Ratio of total routing tracks to dedicate to power straps, which is used to calculate set pitch
       # Overrideable by appending _<layer name>
+      # type: float
       power_utilization: 0.1
 
       # Layers to put power pins on
+      # type: List[str]
       pin_layers: []
 
       # List of layers on which to place power straps (std cell rail layer is implied - do not include it)
+      # type: List[str]
       strap_layers: []
 
 mentor:
@@ -587,16 +607,29 @@ mentor:
 # DRC settings
 drc.inputs:
   # Top RTL module.
+  # type: str
   top_module: null
 
-  # Input layout file
-  # Typically a GDSII file from the place and route tool
+  # Input layout file.
+  # Typically a GDSII file from the place and route tool.
+  # type: str
   layout_file: null
 
   # Valid modes are auto, manual, prepend, and append
+  # type: str
   additional_drc_text_mode: "auto"
-  # Custom DRC command text to add after the boilerplate commands at the top of the run file
+  # Custom DRC command text to add after the boilerplate commands at the top of the run file.
+  # type: str
   additional_drc_text: ""
+
+  # DRC rules to run.
+  # Leaving this empty will run all rules - otherwise, the rules listed will be run.
+  # Rule names are defined in the Design Rule Manual (DRM).
+  # Generally rules will still have the same names across DRC decks for different tool vendors from the same PDK.
+  # There is no "schema" for the DRC rule names in Hammer - while the vendors may have some pattern they use, this
+  # setting has no understanding of that.
+  # type: List[str]
+  drc_rules_to_run: []
 
 # inherit settings from vlsi.submit but allow us to override them
 drc.submit:

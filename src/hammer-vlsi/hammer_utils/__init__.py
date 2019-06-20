@@ -12,6 +12,7 @@ import sys
 from functools import reduce
 from typing import List, Any, Set, Dict, Tuple, TypeVar, Callable, Iterable, Optional, Union
 from enum import Enum, unique
+import decimal
 from decimal import Decimal
 
 from .verilog_utils import *
@@ -404,3 +405,20 @@ def get_filetype(filename: str) -> HammerFiletype:
         return HammerFiletype.VERILOG
     else:
         raise NotImplementedError("Unknown file extension: {e}. Please update {f}!".format(e=extension, f=__file__))
+
+
+def um2mm(length: Decimal, prec: int) -> Decimal:
+    """
+    Convert a length in microns to millimeters with rounding.
+
+    :param length: The input length in microns
+    :param prec: The number of digits after the decimal place to use
+    :return: A length in millimeters
+    """
+    with decimal.localcontext() as c:
+        c.rounding = decimal.ROUND_HALF_UP
+        mm = length/Decimal(1000)
+        p = c.power(10, prec)
+        # I would use .quantize(...) here, but it doesn't seem to work for quantization values > 1 (only 1, .1, .01, ...)
+        return (mm*p).to_integral_exact()/p
+
