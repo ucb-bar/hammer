@@ -793,7 +793,11 @@ sim.inputs:
   # type: List[str]
   seq_cells: []
 
-  sdf_file: ""
+  # SDF File
+  # type: str
+  # Standard Delay Format file for use in timing annotated sims
+  # leave as null if not in use
+  sdf_file: null
 
   # Simulation force value used for register initialization for gate level sims
   # type: int

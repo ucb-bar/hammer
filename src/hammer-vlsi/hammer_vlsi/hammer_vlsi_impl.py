@@ -1090,9 +1090,10 @@ class HammerLVSTool(HammerSignoffTool):
 
 class HammerSimTool(HammerTool):
 
-    #@abstractmethod
-    #def fill_outputs(self) -> bool:
-    #  pass
+    # No current sim outputs, but some will be added
+    def export_config_outputs(self) -> Dict[str, Any]:
+        outputs = deepdict(super().export_config_outputs())
+        return outputs
 
     ### Generated interface HammerSimTool ###
     ### DO NOT MODIFY THIS CODE, EDIT generate_properties.py INSTEAD ###

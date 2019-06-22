@@ -218,6 +218,9 @@ class HammerDriver:
         syn_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
         syn_tool.top_module = self.database.get_setting("synthesis.inputs.top_module", nullvalue="")
         syn_tool.submit_command = HammerSubmitCommand.get("synthesis", self.database)
+        syn_tool.output_all_regs = []  # TODO(daniel)
+        syn_tool.output_seq_cells = []  # TODO(daniel)
+        syn_tool.output_sdf = self.database.get_setting("par.inputs.sdf_file", nullvalue="")
 
         # TODO: automate this based on the definitions
         missing_inputs = False
@@ -271,7 +274,7 @@ class HammerDriver:
         par_tool.post_synth_sdc = self.database.get_setting("par.inputs.post_synth_sdc", nullvalue="")
         par_tool.output_all_regs = []  # TODO(daniel)
         par_tool.output_seq_cells = []  # TODO(daniel)
-        par_tool.output_sdf = ""  # TODO(daniel)
+        par_tool.output_sdf = self.database.get_setting("par.inputs.sdf_file", nullvalue="")  # TODO(daniel)
 
 
         if len(par_tool.input_files) == 0:
@@ -995,18 +998,18 @@ class HammerDriver:
         # Record output from the tool into the JSON output.
         # Note: the output config dict is NOT complete
         output_config = {}  # type: Dict[str, Any]
-        #try:
-        #    output_config = deepdict(self.sim_tool.export_config_outputs())
-        #    if output_config.get("vlsi.builtins.is_complete", True):
-        #        self.log.error(
-        #            "The simulation plugin is mis-written; "
-        #            "it did not mark its output dictionary as output-only "
-        #            "or did not call super().export_config_outputs(). "
-        #            "Subsequent commands might not behave correctly.")
-        #        output_config["vlsi.builtins.is_complete"] = False
-        #except ValueError as e:
-        #    self.log.fatal(e.args[0])
-        #    return False, {}
+        try:
+            output_config = deepdict(self.sim_tool.export_config_outputs())
+            if output_config.get("vlsi.builtins.is_complete", True):
+                self.log.error(
+                    "The simulation plugin is mis-written; "
+                    "it did not mark its output dictionary as output-only "
+                    "or did not call super().export_config_outputs(). "
+                    "Subsequent commands might not behave correctly.")
+                output_config["vlsi.builtins.is_complete"] = False
+        except ValueError as e:
+            self.log.fatal(e.args[0])
+            return False, {}
 
         return run_succeeded, output_config
 
