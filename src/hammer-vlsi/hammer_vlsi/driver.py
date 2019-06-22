@@ -48,7 +48,7 @@ class HammerDriver:
             environment_configs=[],
             project_configs=[],
             log_file=datetime.datetime.now().strftime("hammer-vlsi-%Y%m%d-%H%M%S.log"),
-            obj_dir=HammerVLSISettings.hammer_vlsi_path
+            obj_dir=os.path.realpath(HammerVLSISettings.hammer_vlsi_path)
         )
 
     def __init__(self, options: HammerDriverOptions, extra_project_config: dict = {}) -> None:
@@ -72,7 +72,7 @@ class HammerDriver:
 
         self.log.info("Loading hammer-vlsi libraries and reading settings")
 
-        # Store the run dir.
+        # Store the run dir (this should already be canonicalized by the CLI driver).
         self.obj_dir = options.obj_dir  # type: str
 
         # Also store the options

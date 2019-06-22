@@ -852,7 +852,7 @@ class CLIDriver:
             # Try getting object dir from environment variable.
             obj_dir = get_nonempty_str(os.environ.get("HAMMER_DRIVER_OBJ_DIR", ""))
         if obj_dir is not None:
-            options = options._replace(obj_dir=obj_dir)
+            options = options._replace(obj_dir=os.path.realpath(obj_dir))
         # Syn/par rundir (optional)
         self.syn_rundir = get_nonempty_str(args['syn_rundir'])
         self.par_rundir = get_nonempty_str(args['par_rundir'])
