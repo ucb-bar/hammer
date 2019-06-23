@@ -493,7 +493,7 @@ class CLIDriver:
 
     def par_to_sim_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
         """Create a full config to run the output."""
-        par_input_only = HammerDriver.par_output_to_sim_input(driver.project_config)
+        sim_input_only = HammerDriver.par_output_to_sim_input(driver.project_config)
         if sim_input_only is None:
             driver.log.error("Input config does not appear to contain valid par outputs")
             return None

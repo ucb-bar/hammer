@@ -719,10 +719,6 @@ sim.inputs:
   # type: List[str]
   input_files: []
 
-  # Option that enables waveform generation from simulation
-  # type: bool
-  generate_waveforms: false
-
   # Permissive options for the simulator generation
   # These options will appear as plain string option additions when generating the simulation executable
   # type: List[str]
@@ -751,23 +747,6 @@ sim.inputs:
   # type: List[str]
   benchmarks: []
 
-  # Flags to run with the simulator
-  # Each string in this list will be passed as an option when actually executing the simulation executable generated from the previous arguments.
-  # type: List[str]
-  exec_flags: []
-
-  # Path to the access.tab file used for gate level simulations
-  # This file will include a list of the sequential element standard cells in the design.
-  # This file will automatically be generated when a design is synthesized/PAR'd by HAMMER, and will be passed to the sim tool by running the HAMMER action 'syn_to_sim'
-  # type: str
-  access_file: ""
-
-  # Path to the force_regs.ucli file that is used to set sequential element output state at the beginning of the simulation
-  # This file will include the hierarchical path in the design to each sequential element followed by its output pin and its desired inital state.
-  # This file will automatically be generated when a design is synthesized/PAR'd by HAMMER, and will be passed to the sim tool by running the HAMMER action 'syn_to_sim'
-  # type: str
-  force_regs_file: ""
-
   # Hierarchical path to the top level instance of the "dut" from the testbench.
   # For example, this will be used to generate the hierarchical path through the testbench and DUT to each sequential element in the design.
   # TODO(johnwright) automate this by parsing the TB verilog?
@@ -777,9 +756,8 @@ sim.inputs:
   # Simulation mode for simulation at different levels of the VLSI flow
   # Valid options are:
   #   "rtl" for rtl level simulation
-  #   "gl-syn" for gate level post-synthesis simulation
-  #   "gl-par" for gate level post-par simulation
-  # type: str
+  #   "gl" for gate level simulation
+  # type: SimulationLevel
   level: "rtl"
 
   # List of all registers in the design passed from synthesis
@@ -797,15 +775,20 @@ sim.inputs:
   sdf_file: null
 
   # Simulation force value used for register initialization for gate level sims
-  # type: int
   # TODO: add random initialization option
-  force_val: 0
+  # type: int
+  gl_register_force_value: 0
 
   # Turns time annotated sim on or off
   # type: bool
   # If set to False, the sim will be purely functional, regardless of the simulation "level".
   # If set to True, the sim will be time annotated based on synthesis or PAR results.
   timing_annotated: false
+
+  # Flags to run with the simulator
+  # Each string in this list will be passed as an option when actually executing the simulation executable generated from the previous arguments.
+  # type: List[str]
+  execution_flags: []
 
   # Determines whether or not the simulation executable that is generated with the above inputs will actually be executed with the given flags or if the executable will just be generated in the specified run directory.
   # type: bool

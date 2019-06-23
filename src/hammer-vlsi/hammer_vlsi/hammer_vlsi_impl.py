@@ -57,6 +57,27 @@ class HierarchicalMode(Enum):
         """
         return self == HierarchicalMode.Hierarchical or self == HierarchicalMode.Top
 
+class SimulationLevel(Enum):
+    RTL = 1
+    GateLevel = 2
+
+    @classmethod
+    def __mapping(cls) -> Dict[str, "SimulationLevel"]:
+        return {
+            "rtl": SimulationLevel.RTL,
+            "gl": SimulationLevel.GateLevel
+        }
+
+    @staticmethod
+    def from_str(x: str) -> "SimulationLevel":
+        try:
+            return SimulationLevel.__mapping()[x]
+        except KeyError:
+            raise ValueError("Invalid string for SimulationLevel: " + str(x))
+
+    def __str__(self) -> str:
+        return reverse_dict(SimulationLevel.__mapping())[self]
+
 class HammerToolPauseException(Exception):
     """
     Internal hammer-vlsi exception raised to indicate that a step has stopped execution of the tool.
@@ -1094,6 +1115,18 @@ class HammerSimTool(HammerTool):
     def export_config_outputs(self) -> Dict[str, Any]:
         outputs = deepdict(super().export_config_outputs())
         return outputs
+
+    @property
+    def level(self) -> SimulationLevel:
+        """Return the simulation level."""
+        return SimulationLevel.from_str(self.get_setting("sim.inputs.level"))
+
+    @property
+    def benchmarks(self) -> List[str]:
+        """Return the benchmarks to run."""
+        # TODO(ucb-bar/hammer#462) We may want to make these keys that point to a "Benchmarks" library type
+        bms = list(self.get_setting("sim.inputs.benchmarks", []))  # type: List[str]
+        return bms
 
     ### Generated interface HammerSimTool ###
     ### DO NOT MODIFY THIS CODE, EDIT generate_properties.py INSTEAD ###
