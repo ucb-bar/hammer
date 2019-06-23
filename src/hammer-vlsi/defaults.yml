@@ -760,11 +760,11 @@ sim.inputs:
   # type: SimulationLevel
   level: "rtl"
 
-  # List of all registers in the design passed from synthesis
+  # List of all registers in the design passed from synthesis or place-and-route
   # type: List[str]
   all_regs: []
 
-  # List of all sequential standard cells in the design passed from synthesis
+  # List of all sequential standard cells in the design passed from synthesis or place-and-route
   # type: List[str]
   seq_cells: []
 
