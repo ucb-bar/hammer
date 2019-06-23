@@ -199,7 +199,7 @@ def main(args) -> int:
                                   InterfaceVar("input_files", "List[str]", "paths to input verilog files"),
                                   InterfaceVar("all_regs", "List[str]", "list of all registers in the design with output pin"),
                                   InterfaceVar("seq_cells", "List[str]", "collection of all sequential standard cells in design"),
-                                  InterfaceVar("sdf_file", "str", "SDF file for timing annotated gate level sims")
+                                  InterfaceVar("sdf_file", "Optional[str]", "optional SDF file needed for timing annotated gate level sims")
                               ],
                               outputs=[]
                               )

@@ -1180,22 +1180,22 @@ class HammerSimTool(HammerTool):
 
 
     @property
-    def sdf_file(self) -> str:
+    def sdf_file(self) -> Optional[str]:
         """
-        Get the SDF file for timing annotated gate level sims.
+        Get the optional SDF file needed for timing annotated gate level sims.
 
-        :return: The SDF file for timing annotated gate level sims.
+        :return: The optional SDF file needed for timing annotated gate level sims.
         """
         try:
             return self.attr_getter("_sdf_file", None)
         except AttributeError:
-            raise ValueError("Nothing set for the SDF file for timing annotated gate level sims yet")
+            return None
 
     @sdf_file.setter
-    def sdf_file(self, value: str) -> None:
-        """Set the SDF file for timing annotated gate level sims."""
-        if not (isinstance(value, str)):
-            raise TypeError("sdf_file must be a str")
+    def sdf_file(self, value: Optional[str]) -> None:
+        """Set the optional SDF file needed for timing annotated gate level sims."""
+        if not (isinstance(value, str) or (value is None)):
+            raise TypeError("sdf_file must be a Optional[str]")
         self.attr_setter("_sdf_file", value)
 
 
