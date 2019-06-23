@@ -32,10 +32,12 @@ def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callab
         # No arguments
         pass
     elif isinstance(args_list, List):
+        # Check for file's existence before canonicalization so that we can give the user a sane error message
         for c in args_list:
             if not os.path.exists(c):
                 append_error_func("Given path %s does not exist!" % c)
-        results = list(args_list)
+        # Canonicalize the path at this point
+        results = list(map(os.path.realpath, args_list))
     else:
         append_error_func("Argument was not a list?")
     return results
