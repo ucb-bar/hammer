@@ -719,63 +719,59 @@ sim.inputs:
   # type: List[str]
   input_files: []
 
-  # Debug option that enables VCD generation from simulation
+  # Option that enables waveform generation from simulation
   # type: bool
-  debug: false
+  generate_waveforms: false
 
   # Permissive options for the simulator generation
-  # type: List[str]
   # These options will appear as plain string option additions when generating the simulation executable
+  # type: List[str]
   options: []
 
   # Define options passed when generating the simulation executable
-  # type: List[str]
   # For example: when passed to VCS, each define in the input list will be added as "+define+" + {define}
+  # type: List[str]
   defines: []
 
   # C compiler options used when generating the simulation executable
-  # type: List[str]
   # For example: when passed to VCS, each compiler_opt will be added as "-CC " + {compiler_opt}
+  # type: List[str]
   compiler_opts: []
 
   # Simulation timescale
-  # type: str
   # This is passed as a plain string
   # For example, for VCS, timescale may be set as "sim.inputs.timescale: '1ns/10ps' which would be passed as "-timescale=1ns/10ps"
+  # type: str
   timescale: null
 
-  # C source files passed when generatin the simulation executable
-  # type: List[str]
-  # These files will be passed like the verilog input files
-  csrc: []
-
   # Benchmarks to run with the simulator executable
-  # type: List[str]
   # This is a list of paths to benchmark binaries that will be run with the simulator to test the design if the testbench requires it.
   # For example, this may be a RISCV binary like rv64ui-p-simple.
   # If left empty, the simulation will execute as normal.
+  # type: List[str]
   benchmarks: []
 
   # Flags to run with the simulator
-  # type: List[str]
   # Each string in this list will be passed as an option when actually executing the simulation executable generated from the previous arguments.
+  # type: List[str]
   exec_flags: []
 
   # Path to the access.tab file used for gate level simulations
-  # type: str
   # This file will include a list of the sequential element standard cells in the design.
   # This file will automatically be generated when a design is synthesized/PAR'd by HAMMER, and will be passed to the sim tool by running the HAMMER action 'syn_to_sim'
+  # type: str
   access_file: ""
 
   # Path to the force_regs.ucli file that is used to set sequential element output state at the beginning of the simulation
-  # type: str
   # This file will include the hierarchical path in the design to each sequential element followed by its output pin and its desired inital state.
   # This file will automatically be generated when a design is synthesized/PAR'd by HAMMER, and will be passed to the sim tool by running the HAMMER action 'syn_to_sim'
+  # type: str
   force_regs_file: ""
 
   # Hierarchical path to the top level instance of the "dut" from the testbench.
-  # type: str
   # For example, this will be used to generate the hierarchical path through the testbench and DUT to each sequential element in the design.
+  # TODO(johnwright) automate this by parsing the TB verilog?
+  # type: str
   tb_dut: "dut"
 
   # Simulation mode for simulation at different levels of the VLSI flow
@@ -783,6 +779,7 @@ sim.inputs:
   #   "rtl" for rtl level simulation
   #   "gl-syn" for gate level post-synthesis simulation
   #   "gl-par" for gate level post-par simulation
+  # type: str
   level: "rtl"
 
   # List of all registers in the design passed from synthesis
