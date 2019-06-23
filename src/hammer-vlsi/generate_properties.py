@@ -124,7 +124,7 @@ def main(args) -> int:
                                                      "output list of all registers in the design with output pin for gate level simulation"),
                                         InterfaceVar("output_seq_cells", "List[str]",
                                                      "output collection of all sequential standard cells in design"),
-                                        InterfaceVar("output_sdf", "str",
+                                        InterfaceVar("sdf_file", "str",
                                                      "output SDF file to be read for timing annotated gate level sims")
                                         # TODO: model CAD junk
                                     ]
@@ -152,7 +152,7 @@ def main(args) -> int:
                                                      "output list of all registers in the design with output pin for gate level simulation"),
                                             InterfaceVar("output_seq_cells", "List[str]",
                                                      "output collection of all sequential standard cells in design"),
-                                            InterfaceVar("output_sdf", "str",
+                                            InterfaceVar("sdf_file", "str",
                                                      "output SDF file to be read for timing annotated gate level sims")
                                             # TODO: add individual parts of the ILM (e.g. verilog, sdc, spef, etc) for cross-tool compatibility?
                                         ]

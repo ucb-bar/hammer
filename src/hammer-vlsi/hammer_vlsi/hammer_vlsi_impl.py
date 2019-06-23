@@ -363,23 +363,23 @@ class HammerSynthesisTool(HammerTool):
 
 
     @property
-    def output_sdf(self) -> str:
+    def sdf_file(self) -> str:
         """
         Get the output SDF file to be read for timing annotated gate level sims.
 
         :return: The output SDF file to be read for timing annotated gate level sims.
         """
         try:
-            return self.attr_getter("_output_sdf", None)
+            return self.attr_getter("_sdf_file", None)
         except AttributeError:
             raise ValueError("Nothing set for the output SDF file to be read for timing annotated gate level sims yet")
 
-    @output_sdf.setter
-    def output_sdf(self, value: str) -> None:
+    @sdf_file.setter
+    def sdf_file(self, value: str) -> None:
         """Set the output SDF file to be read for timing annotated gate level sims."""
         if not (isinstance(value, str)):
-            raise TypeError("output_sdf must be a str")
-        self.attr_setter("_output_sdf", value)
+            raise TypeError("sdf_file must be a str")
+        self.attr_setter("_sdf_file", value)
 
     ### END Generated interface HammerSynthesisTool ###
     ### Generated interface HammerSynthesisTool ###
@@ -570,23 +570,23 @@ class HammerPlaceAndRouteTool(HammerTool):
 
 
     @property
-    def output_sdf(self) -> str:
+    def sdf_file(self) -> str:
         """
         Get the output SDF file to be read for timing annotated gate level sims.
 
         :return: The output SDF file to be read for timing annotated gate level sims.
         """
         try:
-            return self.attr_getter("_output_sdf", None)
+            return self.attr_getter("_sdf_file", None)
         except AttributeError:
             raise ValueError("Nothing set for the output SDF file to be read for timing annotated gate level sims yet")
 
-    @output_sdf.setter
-    def output_sdf(self, value: str) -> None:
+    @sdf_file.setter
+    def sdf_file(self, value: str) -> None:
         """Set the output SDF file to be read for timing annotated gate level sims."""
         if not (isinstance(value, str)):
-            raise TypeError("output_sdf must be a str")
-        self.attr_setter("_output_sdf", value)
+            raise TypeError("sdf_file must be a str")
+        self.attr_setter("_sdf_file", value)
 
     ### END Generated interface HammerPlaceAndRouteTool ###
 
