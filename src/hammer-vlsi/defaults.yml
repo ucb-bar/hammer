@@ -8,12 +8,12 @@ vlsi.core:
   technology_path_meta: subst
 
   # Technology to use. hammer-vlsi will read this and load the appropriate technology libraries.
-  technology: "asap7"
+  technology: "nop"
 
   # Technology node dimension (nm) to use.
   # Some tools change what they do as this changes.
   # TODO: move this to vlsi.technology (or technology.core) ucb-bar/hammer#317
-  node: 7
+  node: "nop"
 
   # Build system to use, if any.
   # This is used to auto-generate a build file, if desired. It is not required to run hammer.
