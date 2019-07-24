@@ -48,6 +48,7 @@ vlsi.inputs.clocks:
   generated: true
   source_path: "Top/pll/out"
   divisor: 2
+  group: "ClkGrp"
         """
         self.check_src(src, ClockPort(
             name="my_port",
@@ -56,7 +57,8 @@ vlsi.inputs.clocks:
             uncertainty=TimeValue("1 ns"),
             generated=True,
             source_path="Top/pll/out",
-            divisor=2
+            divisor=2,
+            group="ClkGrp"
         ))
 
     def test_optional_generated(self) -> None:
@@ -80,7 +82,8 @@ vlsi.inputs.clocks:
             uncertainty=TimeValue("1 ns"),
             generated=None,
             source_path=None,
-            divisor=None
+            divisor=None,
+            group=None
         ))
         src2 = """
 vlsi.inputs.clocks:
@@ -99,7 +102,8 @@ vlsi.inputs.clocks:
             uncertainty=TimeValue("1 ns"),
             generated=False,
             source_path=None,
-            divisor=None
+            divisor=None,
+            group=None
         ))
 
 class BumpsTest(unittest.TestCase):

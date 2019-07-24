@@ -215,6 +215,7 @@ vlsi.inputs:
   # source_path (str) - Required if generated. The path of the clock that this clock is generated from.
   # divisor (int) - Required if generated. The amount this generated clock is slowed from the source clock e.g. 2 => this clock will be two times slower than the source clock.
   #   We are constrained to integers by SDC.
+  # group (str) - Optional. The name of the clock group this clock belongs to. Clocks in the same group will not be marked as asynchronous.
   clocks: []
 
   # Default output pin load capacitance.

@@ -1025,6 +1025,8 @@ class HasSDCSupport(HammerTool):
     def sdc_clock_constraints(self) -> str:
         """Generate TCL fragments for top module clock constraints."""
         output = [] # type: List[str]
+        groups = {} # type: Dict[str, List[str]]
+        ungroup = [] # type: List[str]
 
         clocks = self.get_clock_ports()
         for clock in clocks:
@@ -1038,6 +1040,17 @@ class HasSDCSupport(HammerTool):
                 output.append("create_clock {0} -name {0} -period {1}".format(clock.name, clock.period.value_in_units("ns")))
             if clock.uncertainty is not None:
                 output.append("set_clock_uncertainty {1} [get_clocks {0}]".format(clock.name, clock.uncertainty.value_in_units("ns")))
+            if clock.group is not None:
+                if clock.group in groups:
+                    groups[clock.group].append(clock.name)
+                else:
+                    groups[clock.group] = [clock.name]
+            else:
+                ungroup.append(clock.name)
+        output.append("set_clock_groups -asynchronous {grouped} {ungrouped}".format(
+            grouped = " ".join(["{{ {c} }}".format(c=" ".join(clks)) for clks in groups.values()]),
+            ungrouped = " ".join(["{{ {c} }}".format(c=clk) for clk in ungroup])
+        ))
 
         output.append("\n")
         return "\n".join(output)
