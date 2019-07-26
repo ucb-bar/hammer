@@ -366,7 +366,8 @@ ClockPort = NamedTuple('ClockPort', [
     ('uncertainty', Optional[TimeValue]),
     ('generated', Optional[bool]),
     ('source_path', Optional[str]),
-    ('divisor', Optional[int])
+    ('divisor', Optional[int]),
+    ('group', Optional[str])
 ])
 
 OutputLoadConstraint = NamedTuple('OutputLoadConstraint', [
