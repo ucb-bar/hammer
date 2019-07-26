@@ -1026,7 +1026,7 @@ class HasSDCSupport(HammerTool):
         """Generate TCL fragments for top module clock constraints."""
         output = [] # type: List[str]
         groups = {} # type: Dict[str, List[str]]
-        ungroup = [] # type: List[str]
+        ungrouped_clocks = [] # type: List[str]
 
         clocks = self.get_clock_ports()
         for clock in clocks:
