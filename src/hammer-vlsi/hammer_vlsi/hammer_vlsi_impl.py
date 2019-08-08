@@ -1047,10 +1047,11 @@ class HasSDCSupport(HammerTool):
                     groups[clock.group] = [clock.name]
             else:
                 ungrouped_clocks.append(clock.name)
-        output.append("set_clock_groups -asynchronous {grouped} {ungrouped}".format(
-            grouped = " ".join(["{{ {c} }}".format(c=" ".join(clks)) for clks in groups.values()]),
-            ungrouped = " ".join(["{{ {c} }}".format(c=clk) for clk in ungrouped_clocks])
-        ))
+        if len(groups):
+            output.append("set_clock_groups -asynchronous {grouped} {ungrouped}".format(
+                    grouped = " ".join(["{{ {c} }}".format(c=" ".join(clks)) for clks in groups.values()]),
+                    ungrouped = " ".join(["{{ {c} }}".format(c=clk) for clk in ungrouped_clocks])
+                    ))
 
         output.append("\n")
         return "\n".join(output)
