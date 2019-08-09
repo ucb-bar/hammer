@@ -243,6 +243,9 @@
                 "min_width" : {
                   "type" : "number"
                 },
+                "max_width" : {
+                  "type" : "number"
+                },
                 "pitch" : {
                   "type" : "number"
                 },

@@ -102,6 +102,7 @@ class Metal(NamedTuple('Metal', [
         ('index', int),
         ('direction', RoutingDirection),
         ('min_width', Decimal),
+        ('max_width', Decimal),
         ('pitch', Decimal),
         ('offset', Decimal),
         ('power_strap_widths_and_spacings', List[WidthSpacingTuple]),
@@ -118,6 +119,7 @@ class Metal(NamedTuple('Metal', [
                RoutingDirection.Redistribution for non-routing top-level
                redistribution metals like Aluminium.
     min_width: The minimum wire width for this layer.
+    max_width: The maximum wire width for this layer.
     pitch: The minimum cross-mask pitch for this layer (NOT same-mask pitch
            for multiply-patterned layers).
     offset: The routing track offset from the origin for the first track in this layer.
@@ -132,10 +134,10 @@ class Metal(NamedTuple('Metal', [
     @staticmethod
     def from_setting(grid_unit: Decimal, d: dict) -> "Metal":
         """
-        Return a Metal object from a dict with keys "name", "index", "direction", "min_width", "pitch", "offset", and "power_strap_widths_and_spacings"
+        Return a Metal object from a dict with keys "name", "index", "direction", "min_width", "max_width", "pitch", "offset", and "power_strap_widths_and_spacings"
 
         :param grid_unit: The manufacturing grid unit in um
-        :param d: A dict containing the keys "name", "index", "direction", "min_width", "pitch", "offset", and "power_strap_widths_and_spacings"
+        :param d: A dict containing the keys "name", "index", "direction", "min_width", "max_width", "pitch", "offset", and "power_strap_widths_and_spacings"
         """
         return Metal(
             grid_unit=grid_unit,
@@ -143,6 +145,7 @@ class Metal(NamedTuple('Metal', [
             index=int(d["index"]),
             direction=RoutingDirection.from_str(d["direction"]),
             min_width=coerce_to_grid(d["min_width"], grid_unit),
+            max_width=coerce_to_grid(d["max_width"], grid_unit) if d["max_width"] else -1.0,
             pitch=coerce_to_grid(d["pitch"], grid_unit),
             offset=coerce_to_grid(d["offset"], grid_unit),
             power_strap_widths_and_spacings=WidthSpacingTuple.from_list(grid_unit, d["power_strap_widths_and_spacings"])
@@ -194,6 +197,8 @@ class Metal(NamedTuple('Metal', [
                 spacing = pitch - width
 
         width = pitch - spacing
+        if self.max_width != -1.0 and width > max_width:
+            width = self.max_width
         if width < 0:
             raise ValueError("Desired pitch {pitch} is illegal".format(pitch=pitch))
         return spacing, pitch - spacing
@@ -259,7 +264,6 @@ class Metal(NamedTuple('Metal', [
             "Assuming all min widths are even here, if not fix me")
         assert int(width / self.grid_unit) % 2 == 0, (
             "This calculation should always produce an even width")
-
         start = self.min_width / 2 + spacing
         return (width, spacing, start)
 
@@ -291,6 +295,11 @@ class Metal(NamedTuple('Metal', [
                 # we are asking for a pitch that is width-constrained
                 width = second.width_at_least - (self.grid_unit * 1)
                 spacing = (s3w2 - width * 2) / 3
+        if self.max_width != -1 and width > self.max_width:
+            # If we cannot maximize width, set it to max_width
+            width = self.max_width
+            spacing = (s3w2 - width * 2) / 3
+
         assert int(self.min_width / self.grid_unit) % 2 == 0, "Assuming all min widths are even here, if not fix me"
         start = self.min_width / 2 + spacing
         if force_even and int(width / self.grid_unit) % 2 == 1:
