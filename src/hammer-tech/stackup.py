@@ -197,7 +197,7 @@ class Metal(NamedTuple('Metal', [
                 spacing = pitch - width
 
         width = pitch - spacing
-        if self.max_width > 0.0 and width > max_width:
+        if self.max_width > 0.0 and width > self.max_width:
             width = self.max_width
         if width < 0:
             raise ValueError("Desired pitch {pitch} is illegal".format(pitch=pitch))
@@ -259,6 +259,9 @@ class Metal(NamedTuple('Metal', [
                     # odd
                     width = second.width_at_least - self.grid_unit
                 spacing = (s2w - width) / 2
+        if self.max_width > 0.0 and width > self.max_width:
+            width = self.max_width
+            spacing = (s2w - width) / 2
 
         assert int(self.min_width / self.grid_unit) % 2 == 0, (
             "Assuming all min widths are even here, if not fix me")
