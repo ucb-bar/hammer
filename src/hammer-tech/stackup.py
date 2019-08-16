@@ -145,7 +145,7 @@ class Metal(NamedTuple('Metal', [
             index=int(d["index"]),
             direction=RoutingDirection.from_str(d["direction"]),
             min_width=coerce_to_grid(d["min_width"], grid_unit),
-            max_width=coerce_to_grid(d["max_width"], grid_unit) if d["max_width"] else -1.0,
+            max_width=coerce_to_grid(d["max_width"], grid_unit),
             pitch=coerce_to_grid(d["pitch"], grid_unit),
             offset=coerce_to_grid(d["offset"], grid_unit),
             power_strap_widths_and_spacings=WidthSpacingTuple.from_list(grid_unit, d["power_strap_widths_and_spacings"])
@@ -197,7 +197,7 @@ class Metal(NamedTuple('Metal', [
                 spacing = pitch - width
 
         width = pitch - spacing
-        if self.max_width != -1.0 and width > max_width:
+        if self.max_width > 0.0 and width > max_width:
             width = self.max_width
         if width < 0:
             raise ValueError("Desired pitch {pitch} is illegal".format(pitch=pitch))
@@ -295,7 +295,7 @@ class Metal(NamedTuple('Metal', [
                 # we are asking for a pitch that is width-constrained
                 width = second.width_at_least - (self.grid_unit * 1)
                 spacing = (s3w2 - width * 2) / 3
-        if self.max_width != -1 and width > self.max_width:
+        if self.max_width > 0.0 and width > self.max_width:
             # If we cannot maximize width, set it to max_width
             width = self.max_width
             spacing = (s3w2 - width * 2) / 3
