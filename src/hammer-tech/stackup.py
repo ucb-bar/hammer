@@ -145,7 +145,7 @@ class Metal(NamedTuple('Metal', [
             index=int(d["index"]),
             direction=RoutingDirection.from_str(d["direction"]),
             min_width=coerce_to_grid(d["min_width"], grid_unit),
-            max_width=coerce_to_grid(d["max_width"], grid_unit) if 'max_width' in d else 0,
+            max_width=coerce_to_grid(d["max_width"] if "max_width" in d and d["max_width"] else 0.0, grid_unit),
             pitch=coerce_to_grid(d["pitch"], grid_unit),
             offset=coerce_to_grid(d["offset"], grid_unit),
             power_strap_widths_and_spacings=WidthSpacingTuple.from_list(grid_unit, d["power_strap_widths_and_spacings"])
