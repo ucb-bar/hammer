@@ -192,7 +192,7 @@ vlsi.inputs:
   # netlist (str) - path to the netlist file
   ilms: []
 
-  # Muli-mode multi-corner setups, overrides supplies
+  # Multi-mode multi-corner setups, overrides supplies
   # MMMC struct members:
   # name (str) - name of the corner.
   # type (str) - One of the following:
