@@ -17,6 +17,44 @@ vlsi:
     supplies:
       VDD: "0.70 V"
       GND: "0 V"
+    mmmc_corners: [
+      {
+        "name": "ss",
+        "type": "setup",
+        "voltage": "0.63 V",
+        "temp": "100 C"
+      },
+      {
+        "name": "ss",
+        "type": "hold",
+        "voltage": "0.63 V",
+        "temp": "100 C"
+      },
+      {
+        "name": "tt",
+        "type": "setup",
+        "voltage": "0.70 V",
+        "temp": "25 C"
+      },
+      {
+        "name": "tt",
+        "type": "hold",
+        "voltage": "0.70 V",
+        "temp": "25 C"
+      },
+      {
+        "name": "ff",
+        "type": "setup",
+        "voltage": "0.77 V",
+        "temp": "0 C"
+      },
+      {
+        "name": "ff",
+        "type": "hold",
+        "voltage": "0.77 V",
+        "temp": "0 C"
+      }
+    ]
 
 technology.core:
   # This key should exist in the stackups list in the tech json
