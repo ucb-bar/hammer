@@ -200,7 +200,7 @@ vlsi.inputs:
   # netlist (str) - path to the netlist file
   ilms: []
 
-  # Muli-mode multi-corner setups, overrides supplies
+  # Multi-mode multi-corner setups, overrides supplies
   # MMMC struct members:
   # name (str) - name of the corner.
   # type (str) - One of the following:
@@ -223,6 +223,8 @@ vlsi.inputs:
   # source_path (str) - Required if generated. The path of the clock that this clock is generated from.
   # divisor (int) - Required if generated. The amount this generated clock is slowed from the source clock e.g. 2 => this clock will be two times slower than the source clock.
   #   We are constrained to integers by SDC.
+  # group (str) - Optional. The name of the clock group this clock belongs to. Clocks in the same group will not be marked as asynchronous.
+  #   Clocks with no group specified will all be placed in separate groups and thus marked as asynchronous to each other and all other groups.
   clocks: []
 
   # Default output pin load capacitance.
