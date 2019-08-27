@@ -399,7 +399,6 @@ class HammerPlaceAndRouteTool(HammerTool):
         outputs["par.outputs.hcells_list"] = list(self.hcells_list)
         outputs["par.outputs.seq_cells"] = self.output_seq_cells
         outputs["par.outputs.all_regs"] = self.output_all_regs
-        outputs["par.outputs.output_sdf"] = self.output_sdf
         outputs["par.inputs.top_module"] = self.top_module
         return outputs
 
