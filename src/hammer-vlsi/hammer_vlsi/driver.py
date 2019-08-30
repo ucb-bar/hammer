@@ -20,7 +20,7 @@ from hammer_tech import MacroSize
 from .hammer_tool import HammerTool
 from .hooks import HammerToolHookAction
 from .hammer_vlsi_impl import HammerVLSISettings, HammerPlaceAndRouteTool, HammerSynthesisTool, \
-    HammerSignoffTool, HammerDRCTool, HammerLVSTool, HammerSRAMGeneratorTool, HammerPCBDeliverableTool, \
+    HammerSignoffTool, HammerDRCTool, HammerLVSTool, HammerSRAMGeneratorTool, HammerPCBDeliverableTool, HammerSimTool, \
     HierarchicalMode, load_tool, PlacementConstraint, SRAMParameters, ILMStruct
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, HammerVLSILoggingContext
 from .submit_command import HammerSubmitCommand
@@ -107,6 +107,7 @@ class HammerDriver:
         self.drc_tool = None  # type: Optional[HammerDRCTool]
         self.lvs_tool = None  # type: Optional[HammerLVSTool]
         self.sram_generator_tool = None  # type: Optional[HammerSRAMGeneratorTool]
+        self.sim_tool = None  # type: Optional[HammerSimTool]
 
         # Initialize tool hooks. Used to specify resume/pause hooks after custom hooks have been registered.
         self.post_custom_syn_tool_hooks = []  # type: List[HammerToolHookAction]
@@ -114,6 +115,7 @@ class HammerDriver:
         self.post_custom_drc_tool_hooks = []  # type: List[HammerToolHookAction]
         self.post_custom_lvs_tool_hooks = []  # type: List[HammerToolHookAction]
         self.post_custom_sram_generator_tool_hooks = []  # type: List[HammerToolHookAction]
+        self.post_custom_sim_tool_hooks = []  # type: List[HammerToolHookAction]
         self.post_custom_pcb_tool_hooks = []  # type: List[HammerToolHookAction]
 
     @property
@@ -216,6 +218,8 @@ class HammerDriver:
         syn_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
         syn_tool.top_module = self.database.get_setting("synthesis.inputs.top_module", nullvalue="")
         syn_tool.submit_command = HammerSubmitCommand.get("synthesis", self.database)
+        syn_tool.output_all_regs = []
+        syn_tool.output_seq_cells = []
 
         # TODO: automate this based on the definitions
         missing_inputs = False
@@ -267,6 +271,9 @@ class HammerDriver:
         par_tool.input_files = list(self.database.get_setting("par.inputs.input_files"))
         par_tool.top_module = self.database.get_setting("par.inputs.top_module", nullvalue="")
         par_tool.post_synth_sdc = self.database.get_setting("par.inputs.post_synth_sdc", nullvalue="")
+        par_tool.output_all_regs = []
+        par_tool.output_seq_cells = []
+
 
         if len(par_tool.input_files) == 0:
             self.log.error("No input files specified for par")
@@ -457,6 +464,69 @@ class HammerDriver:
         self.update_tool_configs()
         return True
 
+    def set_up_sim_tool(self, sim_tool: HammerSimTool,
+                              name: str, run_dir: str = "") -> bool:
+        """
+        Set up and store the given simulation tool instance for use in this
+        driver.
+        :param sim_tool: Tool instance.
+        :param name: Short name (e.g. "vcs") of the tool instance. Typically
+                     obtained from the database.
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the
+                        run_dir passed in the HammerDriver constructor.
+        :return: True if setup was successful.
+        """
+
+        if self.tech is None:
+            self.log.error("Must load technology before loading sim tool")
+            return False
+
+        if run_dir == "":
+            run_dir = os.path.join(self.obj_dir, "sim-rundir")
+
+        sim_tool.name = name
+        sim_tool.logger = self.log.context("sim")
+        sim_tool.set_database(self.database)
+        sim_tool.run_dir = run_dir
+        sim_tool.technology = self.tech
+        sim_tool.input_files = self.database.get_setting("sim.inputs.input_files")
+        sim_tool.top_module = self.database.get_setting("sim.inputs.top_module", nullvalue="")
+        sim_tool.submit_command = HammerSubmitCommand.get("sim", self.database)
+        sim_tool.all_regs = self.database.get_setting("sim.inputs.all_regs")
+        sim_tool.seq_cells = self.database.get_setting("sim.inputs.seq_cells")
+        sim_tool.sdf_file = self.database.get_setting("sim.inputs.sdf_file")
+
+        missing_inputs = False
+        if sim_tool.top_module == "":
+            self.log.error("Top module not specified for simulation")
+            missing_inputs = True
+        if len(sim_tool.input_files) == 0:
+            self.log.error("No input files specified for simulation")
+            missing_inputs = True
+        if missing_inputs:
+            return False
+
+        self.sim_tool = sim_tool
+        self.tool_configs["simulation"] = sim_tool.get_config()
+        self.update_tool_configs()
+        return True
+
+    def load_sim_tool(self, run_dir: str = "") -> bool:
+        """
+        Load the simulation tool based on the given database.
+
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
+                        constructor.
+        :return: True if simulation tool loading was successful, False otherwise.
+        """
+        config_result = self.instantiate_tool_from_config("sim", HammerSimTool)
+        if config_result is None:
+            return False
+        else:
+            (sim_tool, name) = config_result
+            assert isinstance(sim_tool, HammerSimTool)
+            return self.set_up_sim_tool(sim_tool, name, run_dir)
+
     def load_pcb_tool(self, run_dir: str = "") -> bool:
         """
         Load the PCB deliverable tool based on the given database.
@@ -532,6 +602,15 @@ class HammerDriver:
         """
         self.post_custom_lvs_tool_hooks = list(hooks)
 
+    def set_post_custom_sim_tool_hooks(self, hooks: List[HammerToolHookAction]) -> None:
+        """
+        Set the extra list of hooks used for control flow (resume/pause) in run_sim.
+        They will run after main/hook_actions.
+
+        :param hooks: Hooks to run
+        """
+        self.post_custom_sim_tool_hooks = list(hooks)
+
     def run_synthesis(self, hook_actions: Optional[List[HammerToolHookAction]] = None, force_override: bool = False) -> \
             Tuple[bool, dict]:
         """
@@ -600,6 +679,60 @@ class HammerDriver:
             }  # type: Dict[str, Any]
             if "synthesis.outputs.sdc" in output_dict:
                 result["par.inputs.post_synth_sdc"] = output_dict["synthesis.outputs.sdc"]
+            return result
+        except KeyError:
+            # KeyError means that the given dictionary is missing output keys.
+            return None
+
+    @staticmethod
+    def synthesis_output_to_sim_input(output_dict: dict) -> Optional[dict]:
+        """
+        Generate the appropriate inputs for running gate level simulations from the
+        outputs of synthesis run.
+        Does not merge the results with any project dictionaries.
+        :param output_dict: Dict containing synthesis.outputs.*
+        :return: sim.inputs.* settings generated from output_dict,
+                 or None if output_dict was invalid
+        """
+        try:
+            output_files = deeplist(output_dict["synthesis.outputs.output_files"])
+            all_regs = deeplist(output_dict["synthesis.outputs.all_regs"])
+            result = {
+                "sim.inputs.input_files": output_files,
+                "sim.inputs.input_files_meta": "append",
+                "sim.inputs.top_module": output_dict["synthesis.inputs.top_module"],
+                "sim.inputs.all_regs": all_regs,
+                "sim.inputs.seq_cells": output_dict["synthesis.outputs.seq_cells"],
+                "sim.inputs.sdf_file": output_dict["synthesis.outputs.sdf_file"],
+                "vlsi.builtins.is_complete": False
+            }  # type: Dict[str, Any]
+            return result
+        except KeyError:
+            # KeyError means that the given dictionary is missing output keys.
+            return None
+
+    @staticmethod
+    def par_output_to_sim_input(output_dict: dict) -> Optional[dict]:
+        """
+        Generate the appropriate inputs for running gate level simulations from the
+        outputs of par run.
+        Does not merge the results with any project dictionaries.
+        :param output_dict: Dict containing par.outputs.*
+        :return: sim.inputs.* settings generated from output_dict,
+                 or None if output_dict was invalid
+        """
+        try:
+            output_files = deeplist(output_dict["par.outputs.output_files"])
+            all_regs = deeplist(output_dict["par.outputs.all_regs"])
+            result = {
+                "sim.inputs.input_files": output_files,
+                "sim.inputs.input_files_meta": "append",
+                "sim.inputs.top_module": output_dict["par.inputs.top_module"],
+                "sim.inputs.all_regs": all_regs,
+                "sim.inputs.seq_cells": output_dict["par.outputs.seq_cells"],
+                "sim.inputs.sdf_file": output_dict["par.outputs.sdf_file"],
+                "vlsi.builtins.is_complete": False
+            }  # type: Dict[str, Any]
             return result
         except KeyError:
             # KeyError means that the given dictionary is missing output keys.
@@ -823,6 +956,55 @@ class HammerDriver:
         output_config = {}  # type: Dict[str, Any]
         try:
             output_config.update(self.sram_generator_tool.export_config_outputs())
+        except ValueError as e:
+            self.log.fatal(e.args[0])
+            return False, {}
+
+        return run_succeeded, output_config
+
+    def run_sim(self, hook_actions: Optional[List[HammerToolHookAction]] = None, force_override: bool = False) -> \
+            Tuple[bool, dict]:
+        """
+        Run simulation based on the given database.
+        The output config dict returned does NOT have a copy of the input config settings.
+
+        :param hook_actions: List of hook actions, or leave as None to use the hooks sets in set_simulation_hooks.
+                             Hooks from set_simulation_hooks, if present, will be appended afterwards.
+        :param force_override: Set to true to overwrite instead of append.
+        :return: Tuple of (success, output config dict)
+        """
+        if self.sim_tool is None:
+            self.log.error("Must load simulation tool before calling run_sim")
+            return False, {}
+
+        # TODO: think about artifact storage?
+        self.log.info("Starting simulation with tool '%s'" % (self.sim_tool.name))
+        if hook_actions is None:
+            hooks_to_use = self.post_custom_sim_tool_hooks
+        else:
+            if force_override:
+                hooks_to_use = hook_actions
+            else:
+                hooks_to_use = hook_actions + self.post_custom_sim_tool_hooks
+
+        run_succeeded = self.sim_tool.run(hooks_to_use)
+        if not run_succeeded:
+            self.log.error("Simulation tool %s failed! Please check its output." % self.sim_tool.name)
+            # Allow the flow to keep running, just in case.
+            # TODO: make this an option
+
+        # Record output from the tool into the JSON output.
+        # Note: the output config dict is NOT complete
+        output_config = {}  # type: Dict[str, Any]
+        try:
+            output_config = deepdict(self.sim_tool.export_config_outputs())
+            if output_config.get("vlsi.builtins.is_complete", True):
+                self.log.error(
+                    "The simulation plugin is mis-written; "
+                    "it did not mark its output dictionary as output-only "
+                    "or did not call super().export_config_outputs(). "
+                    "Subsequent commands might not behave correctly.")
+                output_config["vlsi.builtins.is_complete"] = False
         except ValueError as e:
             self.log.fatal(e.args[0])
             return False, {}

@@ -8,7 +8,7 @@
 
 import json
 import os
-import subprocess
+import tarfile
 from abc import ABCMeta, abstractmethod
 from typing import Any, Callable, Iterable, List, NamedTuple, Optional, Tuple, Dict
 from decimal import Decimal
@@ -201,7 +201,7 @@ class ExtraLibrary(NamedTuple('ExtraLibrary', [
         :return: A copy of the library in this ExtraPrefix with the prefix stored in extra_prefixes, if one exists.
         """
         lib_copied = copy_library(self.library)  # type: Library
-        extra_prefixes = get_or_else(optional_map(self.prefix, lambda p: [p]), [])  # type: ignore   #should be List[LibraryPrefix]
+        extra_prefixes = get_or_else(optional_map(self.prefix, lambda p: [p]), [])  # type: List[LibraryPrefix]
         lib_copied.extra_prefixes = extra_prefixes  # type: ignore
         return lib_copied
 
@@ -283,7 +283,7 @@ class HammerTechnology:
         """Set the directory as a persistent cache dir for this library."""
         self._cachedir = value  # type: str
         # Ensure the cache_dir exists.
-        os.makedirs(value, exist_ok=True)
+        os.makedirs(value, mode=0o700, exist_ok=True)
 
     # hammer-vlsi properties.
     # TODO: deduplicate/put these into an interface to share with HammerTool?
@@ -631,15 +631,26 @@ class HammerTechnology:
         for tarball in self.config.tarballs:
             target_path = os.path.join(self.extracted_tarballs_dir, tarball.path)
             tarball_path = os.path.join(self.get_setting(tarball.base_var), tarball.path)
-            self.logger.debug("Extracting/verifying tarball %s" % (tarball_path))
             if os.path.isdir(target_path):
                 # If the folder already seems to exist, continue
                 continue
             else:
                 # Else, extract the tarballs.
-                os.makedirs(target_path, exist_ok=True)  # Make sure it exists or tar will not be happy.
-                subprocess.check_call("tar -xf %s -C %s" % (tarball_path, target_path), shell=True)
-                subprocess.check_call("chmod u+rwX -R %s" % (target_path), shell=True)
+                os.makedirs(target_path, mode=0o700, exist_ok=True)  # Make sure it exists or tar will not be happy.
+                self.logger.debug("Extracting/verifying tarball %s" % (tarball_path))
+                tarfile.open(tarball_path).extractall(target_path)
+                for root, dirs, files in os.walk(target_path):
+                    for d in dirs:
+                        os.chmod(os.path.join(root, d), mode=0o700)
+                    for f in files:
+                        file = os.path.join(root, f)
+                        os.chmod(file, mode=0o700)
+                        # extract tarball recursively
+                        if tarfile.is_tarfile(file):
+                            self.logger.debug("Extracting/verifying tarball %s" % (file))
+                            tarfile.open(file).extractall(path=os.path.join(root, f + "_dir"))
+                            os.remove(file)
+                            os.renames(os.path.join(root, f + "_dir"), file)
 
     def get_extra_libraries(self) -> List[ExtraLibrary]:
         """

@@ -45,6 +45,11 @@ vlsi.core:
   sram_generator_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/sram_generator"]
   sram_generator_tool_path_meta: subst
 
+  # Path(s) to sim tools.
+  # Add the built-in path to sim tools
+  sim_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/sim"]
+  sim_tool_path_meta: subst
+
   # Path(s) to PCB deliverable tools.
   # Add the built-in path to PCB deliverable tools.
   pcb_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/pcb"]
@@ -65,6 +70,9 @@ vlsi.core:
 
   # SRAM Generator tool to use.
   sram_generator_tool: "nop"
+
+  # Sim tool to use.
+  sim_tool: "nop"
 
   # PCB deliverable tool to use.
   # PCB deliverables include footprints, symbols, etc.
@@ -192,7 +200,7 @@ vlsi.inputs:
   # netlist (str) - path to the netlist file
   ilms: []
 
-  # Muli-mode multi-corner setups, overrides supplies
+  # Multi-mode multi-corner setups, overrides supplies
   # MMMC struct members:
   # name (str) - name of the corner.
   # type (str) - One of the following:
@@ -215,6 +223,8 @@ vlsi.inputs:
   # source_path (str) - Required if generated. The path of the clock that this clock is generated from.
   # divisor (int) - Required if generated. The amount this generated clock is slowed from the source clock e.g. 2 => this clock will be two times slower than the source clock.
   #   We are constrained to integers by SDC.
+  # group (str) - Optional. The name of the clock group this clock belongs to. Clocks in the same group will not be marked as asynchronous.
+  #   Clocks with no group specified will all be placed in separate groups and thus marked as asynchronous to each other and all other groups.
   clocks: []
 
   # Default output pin load capacitance.
@@ -698,6 +708,99 @@ technology.core:
     # Can be a wildcard/glob
     # type: str
     tap_cell_rail_reference: null
+
+# Specific inputs for the simulation tool.
+# These inputs will vary based on if the simulation is for RTL, post synthesis, or post PAR.
+# There may be HAMMER simulation tool plugins available that include common simulator flags and inputs that can be modified/augmented for the user's needs.
+sim.inputs:
+  # Top RTL module for simulation
+  # type: str
+  top_module: null
+
+  # Input files for simulation including verilog sources, testharness/testbench, etc.
+  # type: List[str]
+  input_files: []
+
+  # Permissive options for the simulator generation
+  # These options will appear as plain string option additions when generating the simulation executable
+  # type: List[str]
+  options: []
+
+  # Define options passed when generating the simulation executable
+  # For example: when passed to VCS, each define in the input list will be added as "+define+" + {define}
+  # type: List[str]
+  defines: []
+
+  # C compiler options used when generating the simulation executable
+  # For example: when passed to VCS, each compiler_opt will be added as "-CC " + {compiler_opt}
+  # type: List[str]
+  compiler_opts: []
+
+  # Simulation timescale
+  # This is passed as a plain string
+  # For example, for VCS, timescale may be set as "sim.inputs.timescale: '1ns/10ps' which would be passed as "-timescale=1ns/10ps"
+  # type: str
+  timescale: null
+
+  # Benchmarks to run with the simulator executable
+  # This is a list of paths to benchmark binaries that will be run with the simulator to test the design if the testbench requires it.
+  # For example, this may be a RISCV binary like rv64ui-p-simple.
+  # If left empty, the simulation will execute as normal.
+  # type: List[str]
+  benchmarks: []
+
+  # Hierarchical path to the top level instance of the "dut" from the testbench.
+  # For example, this will be used to generate the hierarchical path through the testbench and DUT to each sequential element in the design.
+  # TODO(johnwright) automate this by parsing the TB verilog?
+  # type: str
+  tb_dut: "dut"
+
+  # Simulation mode for simulation at different levels of the VLSI flow
+  # Valid options are:
+  #   "rtl" for rtl level simulation
+  #   "gl" for gate level simulation
+  # type: SimulationLevel
+  level: "rtl"
+
+  # List of all registers in the design passed from synthesis or place-and-route
+  # type: List[str]
+  all_regs: []
+
+  # List of all sequential standard cells in the design passed from synthesis or place-and-route
+  # type: List[str]
+  seq_cells: []
+
+  # SDF File
+  # type: str
+  # Standard Delay Format file for use in timing annotated sims
+  # leave as null if not in use
+  sdf_file: null
+
+  # Simulation force value used for register initialization for gate level sims
+  # TODO: add random initialization option
+  # type: int
+  gl_register_force_value: 0
+
+  # Turns time annotated sim on or off
+  # type: bool
+  # If set to False, the sim will be purely functional, regardless of the simulation "level".
+  # If set to True, the sim will be time annotated based on synthesis or PAR results.
+  timing_annotated: false
+
+  # Flags to run with the simulator
+  # Each string in this list will be passed as an option when actually executing the simulation executable generated from the previous arguments.
+  # type: List[str]
+  execution_flags: []
+
+  # Determines whether or not the simulation executable that is generated with the above inputs will actually be executed with the given flags or if the executable will just be generated in the specified run directory.
+  # type: bool
+  execute_sim: true
+
+sim.submit:
+  command: "${vlsi.submit.command}"
+  command_meta: lazysubst
+  settings: "vlsi.submit.settings"
+  settings_meta: lazycrossref
 
 technology.pcb:
   # Desired pad opening diameter (in post-shrink um)

@@ -22,7 +22,7 @@ from hammer_utils import reverse_dict, deepdict, optional_map, get_or_else, add_
 from hammer_tech import Library, ExtraLibrary
 
 from .constraints import *
-from .units import VoltageValue
+from .units import VoltageValue, TimeValue
 
 
 class HierarchicalMode(Enum):
@@ -56,6 +56,27 @@ class HierarchicalMode(Enum):
         hierarchical sub-blocks).
         """
         return self == HierarchicalMode.Hierarchical or self == HierarchicalMode.Top
+
+class SimulationLevel(Enum):
+    RTL = 1
+    GateLevel = 2
+
+    @classmethod
+    def __mapping(cls) -> Dict[str, "SimulationLevel"]:
+        return {
+            "rtl": SimulationLevel.RTL,
+            "gl": SimulationLevel.GateLevel
+        }
+
+    @staticmethod
+    def from_str(x: str) -> "SimulationLevel":
+        try:
+            return SimulationLevel.__mapping()[x]
+        except KeyError:
+            raise ValueError("Invalid string for SimulationLevel: " + str(x))
+
+    def __str__(self) -> str:
+        return reverse_dict(SimulationLevel.__mapping())[self]
 
 class HammerToolPauseException(Exception):
     """
@@ -300,6 +321,66 @@ class HammerSynthesisTool(HammerTool):
             raise TypeError("output_sdc must be a str")
         self.attr_setter("_output_sdc", value)
 
+
+    @property
+    def output_all_regs(self) -> List[str]:
+        """
+        Get the output list of all registers in the design with output pin for gate level simulation.
+
+        :return: The output list of all registers in the design with output pin for gate level simulation.
+        """
+        try:
+            return self.attr_getter("_output_all_regs", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the output list of all registers in the design with output pin for gate level simulation yet")
+
+    @output_all_regs.setter
+    def output_all_regs(self, value: List[str]) -> None:
+        """Set the output list of all registers in the design with output pin for gate level simulation."""
+        if not (isinstance(value, List)):
+            raise TypeError("output_all_regs must be a List[str]")
+        self.attr_setter("_output_all_regs", value)
+
+
+    @property
+    def output_seq_cells(self) -> List[str]:
+        """
+        Get the output collection of all sequential standard cells in design.
+
+        :return: The output collection of all sequential standard cells in design.
+        """
+        try:
+            return self.attr_getter("_output_seq_cells", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the output collection of all sequential standard cells in design yet")
+
+    @output_seq_cells.setter
+    def output_seq_cells(self, value: List[str]) -> None:
+        """Set the output collection of all sequential standard cells in design."""
+        if not (isinstance(value, List)):
+            raise TypeError("output_seq_cells must be a List[str]")
+        self.attr_setter("_output_seq_cells", value)
+
+
+    @property
+    def sdf_file(self) -> str:
+        """
+        Get the output SDF file to be read for timing annotated gate level sims.
+
+        :return: The output SDF file to be read for timing annotated gate level sims.
+        """
+        try:
+            return self.attr_getter("_sdf_file", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the output SDF file to be read for timing annotated gate level sims yet")
+
+    @sdf_file.setter
+    def sdf_file(self, value: str) -> None:
+        """Set the output SDF file to be read for timing annotated gate level sims."""
+        if not (isinstance(value, str)):
+            raise TypeError("sdf_file must be a str")
+        self.attr_setter("_sdf_file", value)
+
     ### END Generated interface HammerSynthesisTool ###
     ### Generated interface HammerSynthesisTool ###
 
@@ -316,6 +397,8 @@ class HammerPlaceAndRouteTool(HammerTool):
         outputs["par.outputs.output_gds"] = str(self.output_gds)
         outputs["par.outputs.output_netlist"] = str(self.output_netlist)
         outputs["par.outputs.hcells_list"] = list(self.hcells_list)
+        outputs["par.outputs.seq_cells"] = self.output_seq_cells
+        outputs["par.outputs.all_regs"] = self.output_all_regs
         outputs["par.inputs.top_module"] = self.top_module
         return outputs
 
@@ -443,6 +526,66 @@ class HammerPlaceAndRouteTool(HammerTool):
         if not (isinstance(value, List)):
             raise TypeError("hcells_list must be a List[str]")
         self.attr_setter("_hcells_list", value)
+
+
+    @property
+    def output_all_regs(self) -> List[str]:
+        """
+        Get the output list of all registers in the design with output pin for gate level simulation.
+
+        :return: The output list of all registers in the design with output pin for gate level simulation.
+        """
+        try:
+            return self.attr_getter("_output_all_regs", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the output list of all registers in the design with output pin for gate level simulation yet")
+
+    @output_all_regs.setter
+    def output_all_regs(self, value: List[str]) -> None:
+        """Set the output list of all registers in the design with output pin for gate level simulation."""
+        if not (isinstance(value, List)):
+            raise TypeError("output_all_regs must be a List[str]")
+        self.attr_setter("_output_all_regs", value)
+
+
+    @property
+    def output_seq_cells(self) -> List[str]:
+        """
+        Get the output collection of all sequential standard cells in design.
+
+        :return: The output collection of all sequential standard cells in design.
+        """
+        try:
+            return self.attr_getter("_output_seq_cells", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the output collection of all sequential standard cells in design yet")
+
+    @output_seq_cells.setter
+    def output_seq_cells(self, value: List[str]) -> None:
+        """Set the output collection of all sequential standard cells in design."""
+        if not (isinstance(value, List)):
+            raise TypeError("output_seq_cells must be a List[str]")
+        self.attr_setter("_output_seq_cells", value)
+
+
+    @property
+    def sdf_file(self) -> str:
+        """
+        Get the output SDF file to be read for timing annotated gate level sims.
+
+        :return: The output SDF file to be read for timing annotated gate level sims.
+        """
+        try:
+            return self.attr_getter("_sdf_file", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the output SDF file to be read for timing annotated gate level sims yet")
+
+    @sdf_file.setter
+    def sdf_file(self, value: str) -> None:
+        """Set the output SDF file to be read for timing annotated gate level sims."""
+        if not (isinstance(value, str)):
+            raise TypeError("sdf_file must be a str")
+        self.attr_setter("_sdf_file", value)
 
     ### END Generated interface HammerPlaceAndRouteTool ###
 
@@ -964,12 +1107,142 @@ class HammerLVSTool(HammerSignoffTool):
     ### Outputs ###
     ### END Generated interface HammerLVSTool ###
 
+
+class HammerSimTool(HammerTool):
+
+    # No current sim outputs, but some will be added
+    def export_config_outputs(self) -> Dict[str, Any]:
+        outputs = deepdict(super().export_config_outputs())
+        return outputs
+
+    @property
+    def level(self) -> SimulationLevel:
+        """Return the simulation level."""
+        return SimulationLevel.from_str(self.get_setting("sim.inputs.level"))
+
+    @property
+    def benchmarks(self) -> List[str]:
+        """Return the benchmarks to run."""
+        # TODO(ucb-bar/hammer#462) We may want to make these keys that point to a "Benchmarks" library type
+        bms = list(self.get_setting("sim.inputs.benchmarks", []))  # type: List[str]
+        return bms
+
+    ### Generated interface HammerSimTool ###
+    ### DO NOT MODIFY THIS CODE, EDIT generate_properties.py INSTEAD ###
+    ### Inputs ###
+
+    @property
+    def top_module(self) -> str:
+        """
+        Get the top RTL module.
+
+        :return: The top RTL module.
+        """
+        try:
+            return self.attr_getter("_top_module", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the top RTL module yet")
+
+    @top_module.setter
+    def top_module(self, value: str) -> None:
+        """Set the top RTL module."""
+        if not (isinstance(value, str)):
+            raise TypeError("top_module must be a str")
+        self.attr_setter("_top_module", value)
+
+
+    @property
+    def input_files(self) -> List[str]:
+        """
+        Get the paths to input verilog files.
+
+        :return: The paths to input verilog files.
+        """
+        try:
+            return self.attr_getter("_input_files", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the paths to input verilog files yet")
+
+    @input_files.setter
+    def input_files(self, value: List[str]) -> None:
+        """Set the paths to input verilog files."""
+        if not (isinstance(value, List)):
+            raise TypeError("input_files must be a List[str]")
+        self.attr_setter("_input_files", value)
+
+
+    @property
+    def all_regs(self) -> List[str]:
+        """
+        Get the list of all registers in the design with output pin.
+
+        :return: The list of all registers in the design with output pin.
+        """
+        try:
+            return self.attr_getter("_all_regs", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the list of all registers in the design with output pin yet")
+
+    @all_regs.setter
+    def all_regs(self, value: List[str]) -> None:
+        """Set the list of all registers in the design with output pin."""
+        if not (isinstance(value, List)):
+            raise TypeError("all_regs must be a List[str]")
+        self.attr_setter("_all_regs", value)
+
+
+    @property
+    def seq_cells(self) -> List[str]:
+        """
+        Get the collection of all sequential standard cells in design.
+
+        :return: The collection of all sequential standard cells in design.
+        """
+        try:
+            return self.attr_getter("_seq_cells", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the collection of all sequential standard cells in design yet")
+
+    @seq_cells.setter
+    def seq_cells(self, value: List[str]) -> None:
+        """Set the collection of all sequential standard cells in design."""
+        if not (isinstance(value, List)):
+            raise TypeError("seq_cells must be a List[str]")
+        self.attr_setter("_seq_cells", value)
+
+
+    @property
+    def sdf_file(self) -> Optional[str]:
+        """
+        Get the optional SDF file needed for timing annotated gate level sims.
+
+        :return: The optional SDF file needed for timing annotated gate level sims.
+        """
+        try:
+            return self.attr_getter("_sdf_file", None)
+        except AttributeError:
+            return None
+
+    @sdf_file.setter
+    def sdf_file(self, value: Optional[str]) -> None:
+        """Set the optional SDF file needed for timing annotated gate level sims."""
+        if not (isinstance(value, str) or (value is None)):
+            raise TypeError("sdf_file must be a Optional[str]")
+        self.attr_setter("_sdf_file", value)
+
+
+    ### Outputs ###
+    ### END Generated interface HammerSimTool ###
+    ### Generated interface HammerSimTool ###
+
+
 class HasUPFSupport(HammerTool):
     """Mix-in trait with functions useful for tools with UPF style power
     constraints"""
     @property
     def upf_power_specification(self) -> str:
         raise NotImplementedError("Automatic generation of UPF power specifications is not supported yet.")
+
 
 class HasCPFSupport(HammerTool):
     """Mix-in trait with functions useful for tools with CPF style power
@@ -1017,7 +1290,6 @@ class HasCPFSupport(HammerTool):
 
         return "\n".join(output)
 
-
 class HasSDCSupport(HammerTool):
     """Mix-in trait with functions useful for tools with SDC-style
     constraints."""
@@ -1025,6 +1297,8 @@ class HasSDCSupport(HammerTool):
     def sdc_clock_constraints(self) -> str:
         """Generate TCL fragments for top module clock constraints."""
         output = [] # type: List[str]
+        groups = {} # type: Dict[str, List[str]]
+        ungrouped_clocks = [] # type: List[str]
 
         clocks = self.get_clock_ports()
         for clock in clocks:
@@ -1038,6 +1312,18 @@ class HasSDCSupport(HammerTool):
                 output.append("create_clock {0} -name {0} -period {1}".format(clock.name, clock.period.value_in_units("ns")))
             if clock.uncertainty is not None:
                 output.append("set_clock_uncertainty {1} [get_clocks {0}]".format(clock.name, clock.uncertainty.value_in_units("ns")))
+            if clock.group is not None:
+                if clock.group in groups:
+                    groups[clock.group].append(clock.name)
+                else:
+                    groups[clock.group] = [clock.name]
+            else:
+                ungrouped_clocks.append(clock.name)
+        if len(groups):
+            output.append("set_clock_groups -asynchronous {grouped} {ungrouped}".format(
+                    grouped = " ".join(["{{ {c} }}".format(c=" ".join(clks)) for clks in groups.values()]),
+                    ungrouped = " ".join(["{{ {c} }}".format(c=clk) for clk in ungrouped_clocks])
+                    ))
 
         output.append("\n")
         return "\n".join(output)
