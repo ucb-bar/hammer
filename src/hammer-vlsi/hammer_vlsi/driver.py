@@ -717,7 +717,7 @@ class HammerDriver:
         Generate the appropriate inputs for running gate level simulations from the
         outputs of par run.
         Does not merge the results with any project dictionaries.
-        :param output_dict: Dict containing synthesis.outputs.*
+        :param output_dict: Dict containing par.outputs.*
         :return: sim.inputs.* settings generated from output_dict,
                  or None if output_dict was invalid
         """
