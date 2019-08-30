@@ -1824,6 +1824,73 @@ class HammerPowerStrapsTest(HasGetTech, unittest.TestCase):
                     assert False, "Got the wrong layer_name: {}".format(layer_name)
 
 
+class HammerSimToolTestContext:
+    def __init__(self, test: unittest.TestCase) -> None:
+        self.logger = HammerVLSILogging.context()
+        self.test = test # type: unittest.TestCase
+        self.temp_dir = "" # type: str
+        self._driver = None # type: Optional[hammer_vlsi.HammerDriver]
+
+    # Helper property to check that the driver did get initialized.
+    @property
+    def driver(self) -> hammer_vlsi.HammerDriver:
+        assert self._driver is not None, "HammerDriver must be initialized before use"
+        return self._driver
+
+    def __enter__(self) -> "HammerSimToolTestContext":
+        """Initialize context by creating the temp_dir, driver, and loading mocksim."""
+        self.test.assertTrue(hammer_vlsi.HammerVLSISettings.set_hammer_vlsi_path_from_environment(),
+                                "hammer_vlsi_path must exist")
+        temp_dir = tempfile.mkdtemp()
+        json_path = os.path.join(temp_dir, "project.json")
+        json_content = {
+            "vlsi.core.sim_tool": "mocksim",
+            "vlsi.core.technology": "nop",
+            "sim.inputs.top_module": "dummy",
+            "sim.inputs.input_files": ("/dev/null",),
+            "sim.submit.command": "local",
+            "sim.inputs.options": ["-debug"],
+            "sim.inputs.level": "rtl",
+            "sim.mocksim.temp_folder": temp_dir
+        }
+
+        with open(json_path, "w") as f:
+            f.write(json.dumps(json_content, cls=HammerJSONEncoder, indent=4))
+
+        options = hammer_vlsi.HammerDriverOptions(
+            environment_configs=[],
+            project_configs=[json_path],
+            log_file=os.path.join(temp_dir, "log.txt"),
+            obj_dir=temp_dir
+        )
+        self._driver = hammer_vlsi.HammerDriver(options)
+        self.temp_dir = temp_dir
+        return self
+
+    def __exit__(self, type, value, traceback) -> bool:
+        """Cleanup the context by removing the temp_dir."""
+        shutil.rmtree(self.temp_dir)
+        # Return True (normal execution) if no exception ocurred/
+
+        return True if type is None else False
+
+    @property
+    def env(self) -> Dict[str, str]:
+        return {}
+
+class HammerSimToolTest(unittest.TestCase):
+    def create_context(self) -> HammerSimToolTestContext:
+        return HammerSimToolTestContext(self)
+
+    def test_deliverables_exist(self) -> None:
+        with self.create_context() as c:
+            self.assertTrue(c.driver.load_sim_tool())
+            self.assertTrue(c.driver.run_sim())
+
+            assert isinstance(c.driver.sim_tool, hammer_vlsi.HammerSimTool)
+            # Ignore typing here because this is part of the mocksim API
+            self.assertTrue(os.path.exists(c.driver.sim_tool.force_regs_file_path))  # type: ignore
+
 
 if __name__ == '__main__':
     unittest.main()

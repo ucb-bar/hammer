@@ -9,6 +9,8 @@ import copy
 import inspect
 import math
 import sys
+import os
+import errno
 from functools import reduce
 from typing import List, Any, Set, Dict, Tuple, TypeVar, Callable, Iterable, Optional, Union
 from enum import Enum, unique
@@ -420,4 +422,20 @@ def um2mm(length: Decimal, prec: int) -> Decimal:
         p = c.power(10, prec)
         # I would use .quantize(...) here, but it doesn't seem to work for quantization values > 1 (only 1, .1, .01, ...)
         return (mm*p).to_integral_exact()/p
+
+
+def mkdir_p(path: str) -> None:
+    """
+    Recursively create a directory structure if it does not exist (equivalent to the behavior of
+    `mkdir -p` in most shells).
+
+    :param path: The path to the file to create
+    """
+    # https://stackoverflow.com/questions/18973418
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+        pass
 

@@ -116,6 +116,7 @@ class CLIDriver:
         self.drc_rundir = ""  # type: Optional[str]
         self.lvs_rundir = ""  # type: Optional[str]
         self.sram_generator_rundir = ""  # type: Optional[str]
+        self.sim_rundir = ""  # type: Optional[str]
         self.pcb_rundir = ""  # type: Optional[str]
 
         # If a subclass has defined these, don't clobber them in init
@@ -149,6 +150,18 @@ class CLIDriver:
         else:
             self.synthesis_par_action = self.create_synthesis_par_action(self.synthesis_action,
                                                                          self.par_action)  # type: CLIActionConfigType
+        if hasattr(self, "sim_action"):
+            check_CLIActionType_type(self.sim_action)  # type: ignore
+        else:
+            self.sim_action = self.create_sim_action([])  # type: CLIActionConfigType
+        if hasattr(self, "synthesis_sim_action"):
+            check_CLIActionType_type(self.synthesis_sim_action)  # type: ignore
+        else:
+            self.synthesis_sim_action = self.create_synthesis_sim_action(self.synthesis_action, self.sim_action)  # type: CLIActionConfigType
+        if hasattr(self, "par_sim_action"):
+            check_CLIActionType_type(self.par_sim_action) # type: ignore
+        else:
+            self.par_sim_action = self.create_par_sim_action(self.par_action, self.sim_action) # type: CLIActionConfigType
 
         # Dictionaries of module-CLIActionConfigType for hierarchical flows.
         # See all_hierarchical_actions() below.
@@ -189,7 +202,21 @@ class CLIDriver:
             "par_to_lvs": self.par_to_lvs_action,
             "par-to-lvs": self.par_to_lvs_action,
             "drc": self.drc_action,
-            "lvs": self.lvs_action
+            "lvs": self.lvs_action,
+            "sim": self.sim_action,
+            "simulation": self.sim_action,
+            "synthesis_to_sim": self.synthesis_to_sim_action,
+            "synthesis-to-sim": self.synthesis_to_sim_action,
+            "syn_to_sim": self.synthesis_to_sim_action,
+            "syn-to-sim": self.synthesis_to_sim_action,
+            "synthesis_sim": self.synthesis_sim_action,
+            "synthesis-sim": self.synthesis_sim_action,
+            "syn_sim": self.synthesis_sim_action,
+            "syn-sim": self.synthesis_sim_action,
+            "par_to_sim": self.par_to_sim_action,
+            "par-to-sim": self.par_to_sim_action,
+            "par_sim": self.par_sim_action,
+            "par-sim": self.par_sim_action
         }, self.all_hierarchical_actions)
 
     @staticmethod
@@ -238,6 +265,13 @@ class CLIDriver:
     def get_extra_sram_generator_hooks(self) -> List[HammerToolHookAction]:
         """
         Return a list of extra SRAM generation hooks in this project.
+        To be overriden by subclasses.
+        """
+        return list()
+
+    def get_extra_sim_hooks(self) -> List[HammerToolHookAction]:
+        """
+        Return a list of extra simulation hooks in this project.
         To be overridden by subclasses.
         """
         return list()
@@ -305,6 +339,14 @@ class CLIDriver:
                           post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
         hooks = self.get_extra_lvs_hooks() + custom_hooks  # type: List[HammerToolHookAction]
         return self.create_action("lvs", hooks if len(hooks) > 0 else None,
+                                  pre_action_func, post_load_func, post_run_func)
+
+    def create_sim_action(self, custom_hooks: List[HammerToolHookAction],
+                          pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_load_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
+        hooks = self.get_extra_sim_hooks() + custom_hooks  # type: List[HammerToolHookAction]
+        return self.create_action("sim", hooks if len(hooks) > 0 else None,
                                   pre_action_func, post_load_func, post_run_func)
 
     def create_sram_generator_action(self, custom_hooks: List[HammerToolHookAction],
@@ -417,6 +459,12 @@ class CLIDriver:
                     post_load_func_checked(driver)
                 success, output = driver.run_sram_generator(extra_hooks)
                 post_run_func_checked(driver)
+            elif action_type == "sim":
+                if not driver.load_sim_tool(get_or_else(self.sim_rundir, "")):
+                    return None
+                else:
+                    post_load_func_checked(driver)
+                success, output = driver.run_sim(extra_hooks)
             elif action_type == "pcb":
                 if not driver.load_pcb_tool(get_or_else(self.pcb_rundir, "")):
                     return None
@@ -445,6 +493,24 @@ class CLIDriver:
             return None
         else:
             return self.get_full_config(driver, par_input_only)
+
+    def synthesis_to_sim_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        """Create a full config to run the output."""
+        sim_input_only = HammerDriver.synthesis_output_to_sim_input(driver.project_config)
+        if sim_input_only is None:
+            driver.log.error("Input config does not appear to contain valid synthesis outputs")
+            return None
+        else:
+            return self.get_full_config(driver, sim_input_only)
+
+    def par_to_sim_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        """Create a full config to run the output."""
+        sim_input_only = HammerDriver.par_output_to_sim_input(driver.project_config)
+        if sim_input_only is None:
+            driver.log.error("Input config does not appear to contain valid par outputs")
+            return None
+        else:
+            return self.get_full_config(driver, sim_input_only)
 
     def hier_par_to_syn_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
         """ Create a full config to run the output. """
@@ -505,6 +571,70 @@ class CLIDriver:
                 return par_output
 
         return syn_par_action
+
+    def create_synthesis_sim_action(self, synthesis_action: CLIActionConfigType, sim_action: CLIActionConfigType) -> CLIActionConfigType:
+        """
+        Create a parameterizable synthesis_sim action for the CLIDriver.
+
+        :param synthesis_action: synthesis action
+        :param sim_action: sim action
+        :return: Custom synthesis_sim action
+        """
+
+        def syn_sim_action(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+            # Synthesis output.
+            syn_output = synthesis_action(driver, append_error_func)
+            if syn_output is None:
+                append_error_func("Synthesis action in syn_sim failed")
+                return None
+            else:
+                # Generate sim input from the synthesis output.
+                syn_output_converted = HammerDriver.synthesis_output_to_sim_input(syn_output)
+                assert syn_output_converted is not None, "syn_output must be generated by CLIDriver"
+                sim_input = self.get_full_config(driver, syn_output_converted)  # type: dict
+
+                # Dump both synthesis output and sim input for debugging/resuming.
+                assert driver.syn_tool is not None, "Syn tool must exist since we ran synthesis_action successfully"
+                dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "sim-input.json"), sim_input)
+
+                # Use new sim input and run simulation.
+                driver.update_project_configs([sim_input])
+                sim_output = sim_action(driver, append_error_func)
+                return sim_output
+
+        return syn_sim_action
+
+    def create_par_sim_action(self, par_action: CLIActionConfigType, sim_action: CLIActionConfigType) -> CLIActionConfigType:
+        """
+        Create a parameterizable par_sim action for the CLIDriver.
+
+        :param par_action: par action
+        :param sim_action: sim action
+        :return: Custom par_sim action
+        """
+
+        def par_sim_action(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+            # Synthesis output.
+            par_output = par_action(driver, append_error_func)
+            if par_output is None:
+                append_error_func("PAR action in syn_sim failed")
+                return None
+            else:
+                # Generate sim input from the par output.
+                par_output_converted = HammerDriver.par_output_to_sim_input(par_output)
+                assert par_output_converted is not None, "par_output must be generated by CLIDriver"
+                sim_input = self.get_full_config(driver, par_output_converted)  # type: dict
+
+                # Dump both par output and sim input for debugging/resuming.
+                assert driver.par_tool is not None, "PAR tool must exist since we ran par_action successfully"
+                dump_config_to_json_file(os.path.join(driver.par_tool.run_dir, "sim-input.json"), sim_input)
+
+                # Use new sim input and run simulation.
+                driver.update_project_configs([sim_input])
+                sim_output = sim_action(driver, append_error_func)
+                return sim_output
+
+        return par_sim_action
 
     ### Hierarchical stuff ###
     @property
@@ -740,6 +870,7 @@ class CLIDriver:
         self.par_rundir = get_nonempty_str(args['par_rundir'])
         self.drc_rundir = get_nonempty_str(args['drc_rundir'])
         self.lvs_rundir = get_nonempty_str(args['lvs_rundir'])
+        self.sim_rundir = get_nonempty_str(args['sim_rundir'])
 
         # Stage control: from/to
         from_step = get_nonempty_str(args['from_step'])
@@ -971,6 +1102,8 @@ class CLIDriver:
                             help='(optional) Directory to store DRC results in')
         parser.add_argument("--lvs_rundir", required=False, default="",
                             help='(optional) Directory to store LVS results in')
+        parser.add_argument("--sim_rundir", required=False, default="",
+                            help='(optional) Directory to store simulation results in')
         # Optional arguments for step control.
         parser.add_argument("--from_step", dest="from_step", required=False,
                             help="Run the given action from the given step (inclusive).")
