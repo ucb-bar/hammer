@@ -17,6 +17,7 @@ vlsi:
     supplies:
       VDD: "0.70 V"
       GND: "0 V"
+    # mmmc corners config.
     mmmc_corners: [
       {
         "name": "ss",
@@ -55,6 +56,13 @@ vlsi:
         "temp": "0 C"
       }
     ]
+  technology:
+    # Set standard cell LEF placement site
+    placement_site: "coreSite"
+
+    # Set the layer that blocks vias under bumps
+    bump_block_cut_layer: "V9"
+
 
 technology.core:
   # This key should exist in the stackups list in the tech json
@@ -64,9 +72,3 @@ technology.core:
   std_cell_rail_layer: "M1"
   # This is used to provide a reference master for generating standard cells
   tap_cell_rail_reference: "{TAPCELL*}"
-
-# Set standard cell LEF placement site
-vlsi.technology.placement_site: "coreSite"
-
-# Set the layer that blocks vias under bumps
-vlsi.technology.bump_block_cut_layer: "V9"
