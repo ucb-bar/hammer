@@ -17,3 +17,18 @@ vlsi:
     supplies:
       VDD: "0.70 V"
       GND: "0 V"
+
+technology.core:
+  # This key should exist in the stackups list in the tech json
+  stackup: "asap7_3Ma_2Mb_2Mc_2Md"
+  # This should specify the TOPMOST metal layer the standard cells use for power rails
+  # Note that this is not usually stackup specific; it is based on the std cell libraries themselves
+  std_cell_rail_layer: "M1"
+  # This is used to provide a reference master for generating standard cells
+  tap_cell_rail_reference: "{TAPCELL*}"
+
+# Set standard cell LEF placement site
+vlsi.technology.placement_site: "coreSite"
+
+# Set the layer that blocks vias under bumps
+vlsi.technology.bump_block_cut_layer: "V9"
