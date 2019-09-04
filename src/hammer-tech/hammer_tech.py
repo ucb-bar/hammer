@@ -273,15 +273,15 @@ class DRCDeck(NamedTuple('DRCDeck', [
     def to_setting(self) -> dict:
         return {
             'tool name': self.tool_name,
-            'name': self.name,
-            'width': str(self.path),
+            'deck name': self.name,
+            'path': str(self.path),
         }
 
     @staticmethod
     def from_setting(d: dict) -> "DRCDeck":
         return DRCDeck(
             tool_name=str(d['tool name']),
-            name=str(d['name']),
+            name=str(d['deck name']),
             path=str(d['path'])
         )
 
@@ -296,15 +296,15 @@ class LVSDeck(NamedTuple('LVSDeck', [
     def to_setting(self) -> dict:
         return {
             'tool name': self.tool_name,
-            'name': self.name,
-            'width': str(self.path),
+            'deck name': self.name,
+            'path': str(self.path),
         }
 
     @staticmethod
     def from_setting(d: dict) -> "LVSDeck":
         return LVSDeck(
             tool_name=str(d['tool name']),
-            name=str(d['name']),
+            name=str(d['deck name']),
             path=str(d['path'])
         )
 
@@ -483,7 +483,9 @@ class HammerTechnology:
         Return the LVS decks for the given tool.
         """
         if self.config.lvs_decks is not None:
-            return [LVSDeck.from_setting(x) for x in list(self.config.lvs_decks) if x["tool name"] == tool_name]
+            for deck in list(self.config.lvs_decks):
+                deck.path = self.prepend_dir_path(deck.path)
+            return [x for x in list(self.config.lvs_decks) if x.tool_name == tool_name]
         else:
             raise ValueError("Tech JSON does not specify any LVS decks")
 
@@ -492,7 +494,9 @@ class HammerTechnology:
         Return the DRC decks for the given tool.
         """
         if self.config.drc_decks is not None:
-            return [DRCDeck.from_setting(x) for x in list(self.config.drc_decks) if x["tool name"] == tool_name]
+            for deck in list(self.config.drc_decks):
+                deck.path = self.prepend_dir_path(deck.path)
+            return [x for x in list(self.config.drc_decks) if x.tool_name == tool_name]
         else:
             raise ValueError("Tech JSON does not specify any DRC decks")
 
@@ -972,7 +976,7 @@ class HammerTechnology:
         """
         return self.get_site_by_name(self.get_setting("vlsi.technology.placement_site"))
 
-    
+
 
 class HammerTechnologyUtils:
     """
