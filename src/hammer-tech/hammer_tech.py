@@ -976,9 +976,6 @@ class HammerTechnology:
         """
         return self.get_site_by_name(self.get_setting("vlsi.technology.placement_site"))
 
-
-
-
 class HammerTechnologyUtils:
     """
     Utility/helper functions for HammerTechnology.
