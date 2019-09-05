@@ -879,6 +879,10 @@ class HammerDRCTool(HammerSignoffTool):
         assert isinstance(res, list)
         return res
 
+    def get_drc_decks(self) -> List[hammer_tech.DRCDeck]:
+        """ Get all DRC decks for this tool. """
+        return self.technology.get_drc_decks_for_tool(self.get_setting("vlsi.core.drc_tool"))
+
     def get_additional_drc_text(self) -> str:
         """ Get the additional custom DRC command text to add after the boilerplate commands at the top of the DRC run file. """
 
@@ -990,6 +994,10 @@ class HammerLVSTool(HammerSignoffTool):
     def lvs_results(self) -> List[str]:
         """ Return the LVS issue descriptions for each issue. An empty list means LVS passes. """
         pass
+
+    def get_lvs_decks(self) -> List[hammer_tech.LVSDeck]:
+        """ Get all the LVS decks for this tool. """
+        return self.technology.get_lvs_decks_for_tool(self.get_setting("vlsi.core.lvs_tool"))
 
     def get_additional_lvs_text(self) -> str:
         """ Get the additional custom LVS command text to add after the boilerplate commands at the top of the LVS run file. """
