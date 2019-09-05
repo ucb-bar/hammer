@@ -1073,5 +1073,11 @@
   ],
   "sites": [
     {"name": "coreSite", "x": 0.216, "y": 1.08}
+  ],
+  "drc decks": [
+    {"tool name": "calibre", "deck name": "171111a", "path": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/calibre/ruledirs/lvs/lvsRules_calibre_asap7_160819a.rul"}
+  ],
+  "lvs decks": [
+    {"tool name": "calibre", "deck name": "160819a", "path": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/calibre/ruledirs/drc/drcRules_calibre_asap7_171111a.rul"}
   ]
 }
