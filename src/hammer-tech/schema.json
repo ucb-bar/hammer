@@ -273,6 +273,24 @@
           }
         }
       }
-    }
+    },
+    "special cells": {
+      "type": "array",
+      "items" : {
+        "title": "SpecialCell",
+        "type": "object",
+        "properties": {
+          "cell_type": {
+             "type": "string"
+          },
+          "name": {
+             "type": "string"
+          },
+          "size": {
+             "type": "number"
+          }
+        }
+      }
+   }
   }
 }

@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Optional
 
 from hammer_logging import HammerVLSILogging
 import hammer_tech
-from hammer_tech import LibraryFilter, Stackup, Metal, WidthSpacingTuple
+from hammer_tech import LibraryFilter, Stackup, Metal, WidthSpacingTuple, SpecialCell, CellType
 from hammer_utils import deepdict
 from hammer_config import HammerJSONEncoder
 from decimal import Decimal
@@ -600,6 +600,46 @@ END LIBRARY
 
         # Cleanup
         shutil.rmtree(tech_dir_base)
+
+    def test_special_cells(self) -> None:
+        import hammer_config
+
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+
+        def add_special_cells(in_dict: Dict[str, Any]) -> Dict[str, Any]:
+            out_dict = deepdict(in_dict)
+            out_dict.update({"special_cells": [
+                                {"name": "cell1", "cell_type": "tiecell"},
+                                {"name": "cell2", "cell_type": "tiecell", "size": 1.5},
+                                {"name": "cell3", "cell_type": "iofiller", "size": 0.5},
+                                {"name": "cell4", "cell_type": "stdfiller"},
+                                {"name": "cell5", "cell_type": "endcap"},
+                             ]})
+            return out_dict
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_special_cells)
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
+        tech.cache_dir = tech_dir
+
+        tool = DummyTool()
+        tool.technology = tech
+        database = hammer_config.HammerDatabase()
+        tool.set_database(database)
+
+        self.assertEqual(tool.technology.get_special_cell_by_type(CellType.TieCell),
+                [SpecialCell(name="cell1", cell_type=CellType.TieCell, size=None),
+                 SpecialCell(name="cell2", cell_type=CellType.TieCell, size=Decimal(1.5))
+                ])
+
+        self.assertEqual(tool.technology.get_special_cell_by_type(CellType.IOFiller),
+                [SpecialCell(name="cell3", cell_type=CellType.IOFiller, size=Decimal(0.5)),
+                ])
+
+        self.assertEqual(tool.technology.get_special_cell_by_type(CellType.StdFiller),
+                [SpecialCell(name="cell4", cell_type=CellType.StdFiller, size=None)])
+
+        self.assertEqual(tool.technology.get_special_cell_by_type(CellType.EndCap),
+                [SpecialCell(name="cell5", cell_type=CellType.EndCap, size=None)])
 
 class StackupTestHelper:
 
