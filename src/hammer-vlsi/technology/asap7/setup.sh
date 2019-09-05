@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# We need to modify the DRC & LVS rule decks to remove duplicate specification statements
+# This script contains a series of hacks to make the ASAP7 process work. It should be sourced after initial extraction of the tarball.
+
+# Modify the DRC & LVS rule decks to remove duplicate specification statements
 PDK_DIR=ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5
 DRC_DECK=$PDK_DIR/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/calibre/ruledirs/drc/drcRules_calibre_asap7.rul
 LVS_DECK=$PDK_DIR/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/calibre/ruledirs/lvs/lvsRules_calibre_asap7.rul
@@ -11,7 +13,7 @@ do
     sed -i '/'"$FORBIDDEN"'/d' $LVS_DECK
 done
 
-# We need to make GDS's for all Vt's
+# Make GDS's for all Vt's
 GDS_BASE_NAME=$PDK_DIR/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24
 ORIG_GDS=$GDS_BASE_NAME.gds
 
@@ -20,3 +22,9 @@ do
     cp $ORIG_GDS ${GDS_BASE_NAME}_$CORNER.gds
     sed -i 's/_SL/_'"$CORNER"'/g' ${GDS_BASE_NAME}_$CORNER.gds
 done
+
+# Edit the SRAM flavor of the LVS CDL to not be the same as SLVT
+SRAM_CDL=$PDK_DIR/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SRAM.cdl
+
+sed -i 's/SL/SRAM/g' $SRAM_CDL
+sed -i 's/slvt/SRAM/g' $SRAM_CDL
