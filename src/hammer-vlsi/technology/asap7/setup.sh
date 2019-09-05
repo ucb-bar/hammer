@@ -17,7 +17,7 @@ done
 GDS_BASE_NAME=$PDK_DIR/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24
 ORIG_GDS=$GDS_BASE_NAME.gds
 
-for CORNER in "R" "L" "SL"
+for CORNER in "R" "L" "SL" "SRAM"
 do
     cp $ORIG_GDS ${GDS_BASE_NAME}_$CORNER.gds
     sed -i 's/_SL/_'"$CORNER"'/g' ${GDS_BASE_NAME}_$CORNER.gds
