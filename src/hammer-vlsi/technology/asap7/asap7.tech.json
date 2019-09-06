@@ -8,6 +8,8 @@
       "base var": "technology.asap7.tarball_dir"
     }
   ],
+
+  "gds map file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/cdslib/asap7_TechLib/asap7_fromAPR.layermap",
   
   "drc decks": [
     {
@@ -16,7 +18,7 @@
       "path": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/calibre/ruledirs/drc/drcRules_calibre_asap7.rul"
     }
   ],
-  "additional_drc_text": "LAYOUT PRECISION 1000",
+  "additional_drc_text": "",
   
   "lvs decks": [
     {
@@ -25,7 +27,7 @@
       "path": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/calibre/ruledirs/lvs/lvsRules_calibre_asap7.rul"
     }
   ],
-  "additional_lvs_text": "LAYOUT PRECISION 1000",
+  "additional_lvs_text": "",
 
   "libraries": [
     {
