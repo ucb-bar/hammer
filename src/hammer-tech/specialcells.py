@@ -16,6 +16,7 @@ class CellType(Enum):
     EndCap = 2
     IOFiller = 3
     StdFiller = 4
+    TapCell = 5
 
     @classmethod
     def __mapping(cls) -> Dict[str, "CellType"]:
@@ -24,6 +25,7 @@ class CellType(Enum):
             "endcap": CellType.EndCap,
             "iofiller": CellType.IOFiller,
             "stdfiller": CellType.StdFiller,
+            "tapcell": CellType.TapCell
         }
 
     @staticmethod
@@ -40,7 +42,7 @@ class CellType(Enum):
 
 class SpecialCell(NamedTuple('SpecialCell', [
         ('cell_type', CellType),
-        ('name', str),
+        ('name', List[str]),
         ('size', Optional[Decimal])
 ])):
     """
@@ -58,6 +60,6 @@ class SpecialCell(NamedTuple('SpecialCell', [
         # pylint: disable=missing-docstring
         return SpecialCell(
             cell_type=CellType.from_str(d["cell_type"]),
-            name=str(d["name"]),
+            name=list(d["name"]),
             size=size,
         )
