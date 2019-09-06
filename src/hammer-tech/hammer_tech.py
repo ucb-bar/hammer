@@ -317,8 +317,8 @@ class HammerTechnology:
     def load_from_dir(cls, technology_name: str, path: str) -> Optional["HammerTechnology"]:
         """Load a technology from a given folder.
 
-        :param technology_name: Technology name (e.g. "saed32")
-        :param path: Path to the technology folder (e.g. foo/bar/technology/saed32)
+        :param technology_name: Technology name (e.g. "asap7")
+        :param path: Path to the technology folder (e.g. foo/bar/technology/asap7)
         :return: Loaded technology plugin or None if the folder did not have an appropriate tech.json/tech.yaml
         """
         json_path = os.path.join(path, "%s.tech.json" % technology_name)
@@ -338,9 +338,9 @@ class HammerTechnology:
     def load_from_json(cls, technology_name: str, json_str: str, path: str) -> "HammerTechnology":
         """Load a technology from a given folder.
 
-        :param technology_name: Technology name (e.g. "saed32")
+        :param technology_name: Technology name (e.g. "asap7")
         :param json_str: JSON string to use as the technology JSON
-        :param path: Path to set as the technology folder (e.g. foo/bar/technology/saed32)
+        :param path: Path to set as the technology folder (e.g. foo/bar/technology/asap7)
         """
 
         tech = HammerTechnology()
@@ -360,9 +360,9 @@ class HammerTechnology:
     def load_from_yaml(cls, technology_name: str, yaml_str: str, path: str) -> "HammerTechnology":
         """Load a technology from a given folder.
 
-        :param technology_name: Technology name (e.g. "saed32")
+        :param technology_name: Technology name (e.g. "asap7")
         :param yaml_str: yaml string to use as the technology yaml
-        :param path: Path to set as the technology folder (e.g. foo/bar/technology/saed32)
+        :param path: Path to set as the technology folder (e.g. foo/bar/technology/asap7)
         """
         return HammerTechnology.load_from_json(technology_name, json.dumps(load_yaml(yaml_str), cls=HammerJSONEncoder), path)
 

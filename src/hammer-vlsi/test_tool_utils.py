@@ -56,7 +56,7 @@ class HammerToolTestHelpers:
         Create a temporary folder for a test technology.
         Note: the caller is responsible for removing the tech_dir_base folder
         after use!
-        :param tech_name: Technology name (e.g. "saed32")
+        :param tech_name: Technology name (e.g. "asap7")
         :return: Tuple of create tech_dir and tech_dir_base (which the caller
                  must delete)
         """
