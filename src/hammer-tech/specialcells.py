@@ -56,7 +56,7 @@ class SpecialCell(NamedTuple('SpecialCell', [
     def from_setting(d: dict) -> "SpecialCell":
         size = d['size']
         if size is not None:
-            size = Decimal(d['size'])
+            size = Decimal(str(d['size']))
         # pylint: disable=missing-docstring
         return SpecialCell(
             cell_type=CellType.from_str(d["cell_type"]),
