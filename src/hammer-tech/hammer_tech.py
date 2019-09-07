@@ -9,6 +9,7 @@
 import json
 import os
 import tarfile
+import importlib
 from abc import ABCMeta, abstractmethod
 from typing import Any, Callable, Iterable, List, NamedTuple, Optional, Tuple, Dict
 from decimal import Decimal
@@ -386,7 +387,12 @@ class HammerTechnology:
         :param path: Path to set as the technology folder (e.g. foo/bar/technology/asap7)
         """
 
-        tech = HammerTechnology()
+        # try to override tech, if __init__.py exist.
+        try:
+            mod = importlib.import_module(technology_name)
+            tech = mod.tech
+        except:
+            tech = HammerTechnology()
 
         # Name of the technology
         tech.name = technology_name
@@ -717,23 +723,11 @@ class HammerTechnology:
                             tarfile.open(file).extractall(path=os.path.join(root, f + "_dir"))
                             os.remove(file)
                             os.renames(os.path.join(root, f + "_dir"), file)
-                # Source any hotfix script when tarball is extracted the first time
-                self.source_tech_hotfix()
+                self.post_install_script()
 
-    def source_tech_hotfix(self) -> None:
-        """Source a script to apply any needed hotfixes to technology libraries."""
-        if not self.has_setting("technology.core.hotfix_script"):
-            # If the key doesn't exist we can safely say there are no fixes needed to be applied
-            return
-
-        hotfix = os.path.join(self.path, self.get_setting("technology.core.hotfix_script"))
-        if not os.path.exists(hotfix):
-            self.logger.error("hotfix script does not exist; libraries in your tech cache may not work properly")
-            return
-        else:
-            # TODO: execute this script differently depending on script type. Assumed to be shell for now.
-            self.logger.debug("Applying hotfix script to {} libaries".format(self.name))
-            os.system("cd {dir} && source {script}".format(dir=self.extracted_tarballs_dir, script=hotfix))
+    def post_install_script(self) -> None:
+        """a script to apply any needed hotfixes to technology libraries, tech __init__.py will override this"""
+        pass
 
     def get_extra_libraries(self) -> List[ExtraLibrary]:
         """
