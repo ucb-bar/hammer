@@ -627,19 +627,19 @@ END LIBRARY
         tool.set_database(database)
 
         self.assertEqual(tool.technology.get_special_cell_by_type(CellType.TieCell),
-                [SpecialCell(name="cell1", cell_type=CellType.TieCell, size=None),
-                 SpecialCell(name="cell2", cell_type=CellType.TieCell, size=Decimal(1.5))
+                [SpecialCell(name=list("cell1"), cell_type=CellType.TieCell, size=None),
+                 SpecialCell(name=list("cell2"), cell_type=CellType.TieCell, size=Decimal(1.5))
                 ])
 
         self.assertEqual(tool.technology.get_special_cell_by_type(CellType.IOFiller),
-                [SpecialCell(name="cell3", cell_type=CellType.IOFiller, size=Decimal(0.5)),
+                [SpecialCell(name=list("cell3"), cell_type=CellType.IOFiller, size=Decimal(0.5)),
                 ])
 
         self.assertEqual(tool.technology.get_special_cell_by_type(CellType.StdFiller),
-                [SpecialCell(name="cell4", cell_type=CellType.StdFiller, size=None)])
+                [SpecialCell(name=list("cell4"), cell_type=CellType.StdFiller, size=None)])
 
         self.assertEqual(tool.technology.get_special_cell_by_type(CellType.EndCap),
-                [SpecialCell(name="cell5", cell_type=CellType.EndCap, size=None)])
+                [SpecialCell(name=list("cell5"), cell_type=CellType.EndCap, size=None)])
 
 class StackupTestHelper:
 
