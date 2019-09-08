@@ -310,6 +310,10 @@ class LVSDeck(NamedTuple('LVSDeck', [
         )
 
 class HammerTechnology:
+    """
+    Abstraction layer of Technology.
+    This can be overridden by add `__init__.py` to a specific technology like `technology/asap7/__init__.py`
+    """
     # Properties.
     @property
     def cache_dir(self) -> str:
