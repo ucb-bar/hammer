@@ -395,7 +395,7 @@ class HammerTechnology:
         try:
             mod = importlib.import_module(technology_name)
             tech = mod.tech
-        except:
+        except ModuleNotFoundError:
             tech = HammerTechnology()
 
         # Name of the technology
