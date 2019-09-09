@@ -140,6 +140,37 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
         # Cleanup
         shutil.rmtree(tech_dir_base)
 
+    def test_override_HammerTechnology(self) -> None:
+        """
+        Test that HammerTechnology can be overridden by add __init__.py to tech_dir.
+        """
+        import sys
+        import hammer_config
+
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        sys.path.append(tech_dir_base)
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+        dummy_init_file = os.path.join(tech_dir, "__init__.py")
+        with open(dummy_init_file, 'w') as f:
+            f.write("""
+from hammer_tech import HammerTechnology
+
+class Dummy28Tech(HammerTechnology):
+    def some_functions(self) -> None:
+        pass
+tech = Dummy28Tech()
+                """)
+
+
+        HammerToolTestHelpers.write_tech_json(tech_json_filename)
+
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
+
+        self.assertTrue("some_functions" in dir(tech))
+        # Cleanup
+        shutil.rmtree(tech_dir_base)
+
+
     @staticmethod
     def add_tarballs(in_dict: Dict[str, Any]) -> Dict[str, Any]:
         """
