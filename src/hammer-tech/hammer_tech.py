@@ -280,8 +280,8 @@ class DRCDeck(NamedTuple('DRCDeck', [
     @staticmethod
     def from_setting(d: dict) -> "DRCDeck":
         return DRCDeck(
-            tool_name=str(d['tool name']),
-            name=str(d['deck name']),
+            tool_name=str(d['tool_name']),
+            name=str(d['deck_name']),
             path=str(d['path'])
         )
 
@@ -303,8 +303,8 @@ class LVSDeck(NamedTuple('LVSDeck', [
     @staticmethod
     def from_setting(d: dict) -> "LVSDeck":
         return LVSDeck(
-            tool_name=str(d['tool name']),
-            name=str(d['deck name']),
+            tool_name=str(d['tool_name']),
+            name=str(d['deck_name']),
             path=str(d['path'])
         )
 
@@ -485,7 +485,7 @@ class HammerTechnology:
         if self.config.lvs_decks is not None:
             for deck in list(self.config.lvs_decks):
                 deck.path = self.prepend_dir_path(deck.path)
-            return [x for x in list(self.config.lvs_decks) if x.tool_name == tool_name]
+            return [LVSDeck.from_setting(x) for x in list(self.config.lvs_decks) if x.tool_name == tool_name]
         else:
             raise ValueError("Tech JSON does not specify any LVS decks")
 
@@ -496,7 +496,7 @@ class HammerTechnology:
         if self.config.drc_decks is not None:
             for deck in list(self.config.drc_decks):
                 deck.path = self.prepend_dir_path(deck.path)
-            return [x for x in list(self.config.drc_decks) if x.tool_name == tool_name]
+            return [DRCDeck.from_setting(x) for x in list(self.config.drc_decks) if x.tool_name == tool_name]
         else:
             raise ValueError("Tech JSON does not specify any DRC decks")
 

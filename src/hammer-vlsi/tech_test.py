@@ -610,26 +610,21 @@ END LIBRARY
         tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
         tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
 
-        def add_drc_decks(in_dict: Dict[str, Any]) -> Dict[str, Any]:
+        def add_drc_lvs_decks(in_dict: Dict[str, Any]) -> Dict[str, Any]:
             out_dict = deepdict(in_dict)
             out_dict.update({"drc decks": [
-                {"tool name": "hammer", "deck name": "a_nail", "path": "path/to/hammer/a_nail.drc.rules"},
-                {"tool name": "chisel", "deck name": "some_wood", "path": "path/to/chisel/some_wood.drc.rules"},
-                {"tool name": "hammer", "deck name": "head_shark", "path": "path/to/hammer/head_shark.drc.rules"}
-            ]})
-            return out_dict
-
-        def add_lvs_decks(in_dict: Dict[str, Any]) -> Dict[str, Any]:
-            out_dict = deepdict(in_dict)
+                    {"tool name": "hammer", "deck name": "a_nail", "path": "/path/to/hammer/a_nail.drc.rules"},
+                    {"tool name": "chisel", "deck name": "some_wood", "path": "/path/to/chisel/some_wood.drc.rules"},
+                    {"tool name": "hammer", "deck name": "head_shark", "path": "/path/to/hammer/head_shark.drc.rules"}
+                ]})
             out_dict.update({"lvs decks": [
-                {"tool name": "hammer", "deck name": "a_nail", "path": "path/to/hammer/a_nail.lvs.rules"},
-                {"tool name": "chisel", "deck name": "some_wood", "path": "path/to/chisel/some_wood.lvs.rules"},
-                {"tool name": "hammer", "deck name": "head_shark", "path": "path/to/hammer/head_shark.lvs.rules"}
-            ]})
+                    {"tool name": "hammer", "deck name": "a_nail", "path": "/path/to/hammer/a_nail.lvs.rules"},
+                    {"tool name": "chisel", "deck name": "some_wood", "path": "/path/to/chisel/some_wood.lvs.rules"},
+                    {"tool name": "hammer", "deck name": "head_shark", "path": "/path/to/hammer/head_shark.lvs.rules"}
+                ]})
             return out_dict
 
-        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_drc_decks)
-        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_lvs_decks)
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_drc_lvs_decks)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
@@ -638,21 +633,22 @@ END LIBRARY
         database = hammer_config.HammerDatabase()
         tool.set_database(database)
 
+        self.maxDiff = None
         self.assertEqual(tech.get_drc_decks_for_tool("hammer"),
-                [DRCDeck(tool_name="hammer", name="a_nail", path="path/to/hammer/a_nail.drc.rules"),
-                 DRCDeck(tool_name="hammer", name="head_shark", path="path/to/hammer/head_shark.drc.rules")
+                [DRCDeck(tool_name="hammer", name="a_nail", path="/path/to/hammer/a_nail.drc.rules"),
+                 DRCDeck(tool_name="hammer", name="head_shark", path="/path/to/hammer/head_shark.drc.rules")
                 ])
 
         self.assertEqual(tech.get_lvs_decks_for_tool("hammer"),
-                [LVSDeck(tool_name="hammer", name="a_nail", path="path/to/hammer/a_nail.lvs.rules"),
-                 LVSDeck(tool_name="hammer", name="head_shark", path="path/to/hammer/head_shark.lvs.rules")
+                [LVSDeck(tool_name="hammer", name="a_nail", path="/path/to/hammer/a_nail.lvs.rules"),
+                 LVSDeck(tool_name="hammer", name="head_shark", path="/path/to/hammer/head_shark.lvs.rules")
                 ])
 
         self.assertEqual(tech.get_drc_decks_for_tool("chisel"),
-                [DRCDeck(tool_name="chisel", name="some_wood", path="path/to/chisel/some_wood.drc.rules")])
+                [DRCDeck(tool_name="chisel", name="some_wood", path="/path/to/chisel/some_wood.drc.rules")])
 
         self.assertEqual(tech.get_lvs_decks_for_tool("chisel"),
-                [LVSDeck(tool_name="chisel", name="some_wood", path="path/to/chisel/some_wood.lvs.rules")])
+                [LVSDeck(tool_name="chisel", name="some_wood", path="/path/to/chisel/some_wood.lvs.rules")])
 
 class StackupTestHelper:
 
