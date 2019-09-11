@@ -870,6 +870,13 @@ class HammerTool(metaclass=ABCMeta):
             output.append(clock)
         return output
 
+    def get_time_unit(self) -> str:
+        """
+        Return the library time unit.
+        """
+        return self.technology.config.time_unit if self.technology.config.time_unit is not None else "ns"
+
+
     def get_all_supplies(self, key: str) -> List[Supply]:
         supplies = self.get_setting(key)
         output = []  # type: List[Supply]

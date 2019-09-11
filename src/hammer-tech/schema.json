@@ -5,6 +5,9 @@
     "grid_unit" : {
       "type" : "string"
     },
+    "time_unit" : {
+      "type" : "string"
+    },
     "shrink_factor" : {
       "type" : "string"
     },
