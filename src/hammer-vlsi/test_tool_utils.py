@@ -77,7 +77,7 @@ class HammerToolTestHelpers:
         tech_json = {
             "name": "dummy28",
             "grid_unit": "0.001",
-            "time_unit": "ns",
+            "time_unit": "1 ns",
             "installs": [
                 {
                     "path": "test",
