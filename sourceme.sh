@@ -18,6 +18,10 @@ python3 -c "import yaml" > /dev/null 2>&1
 if [[ $? == 1 ]]; then
     export PYTHONPATH="$HAMMER_HOME/src/contrib/pyyaml:$PYTHONPATH"
 fi
+python3 -c "import gdspy" > /dev/null 2>&1
+if [[ $? == 1 ]]; then
+    export PYTHONPATH="$HAMMER_HOME/src/contrib/gdspy:$PYTHONPATH"
+fi
 export MYPYPATH="$PYTHONPATH"
 export PATH="$HAMMER_HOME/src/hammer-shell:$PATH"
 fi

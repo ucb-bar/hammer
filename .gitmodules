@@ -10,3 +10,6 @@
 [submodule "src/contrib/jsonschema"]
 	path = src/contrib/jsonschema
 	url = https://github.com/Julian/jsonschema
+[submodule "src/contrib/gdspy"]
+	path = src/contrib/gdspy
+	url = https://github.com/heitzmann/gdspy
