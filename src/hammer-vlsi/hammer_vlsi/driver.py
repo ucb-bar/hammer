@@ -140,6 +140,7 @@ class HammerDriver:
         self.log.info("Loading technology '{0}'".format(tech_str))
         tech_opt = None  # type: Optional[hammer_tech.HammerTechnology]
         for base_path in tech_paths:
+            sys.path.append(base_path)
             path = os.path.join(base_path, tech_str)
             tech_opt = hammer_tech.HammerTechnology.load_from_dir(tech_str, path)
             if tech_opt is not None:
