@@ -394,8 +394,12 @@ class HammerTechnology:
         # try to override tech, if __init__.py exist.
         try:
             mod = importlib.import_module(technology_name)
-            tech = mod.tech
-        except ModuleNotFoundError:
+            # work around for python < 3.6
+            try: 
+                tech = mod.tech
+            except:
+                raise ImportError
+        except ImportError:
             tech = HammerTechnology()
 
         # Name of the technology
