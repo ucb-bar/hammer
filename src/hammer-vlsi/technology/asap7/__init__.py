@@ -111,4 +111,28 @@ class ASAP7Tech(HammerTechnology):
             shutil.copystat(sram_cdl, tf.name)
             shutil.copy(tf.name, sram_cdl)
 
+    def post_par_script(self, d: dict) -> None:
+        """
+        Scale the final GDS by a factor of 4
+        Called by the `run_par` method
+        """
+        self.logger.info("Scaling down place & routed GDS")
+
+        # load original_gds
+        par_gds_file = d.get("par.outputs.output_gds")
+        gds_lib = gdspy.GdsLibrary(infile=par_gds_file)
+        # Iterate through cells that aren't part of standard cell library and scale
+        for k,v in gds_lib.cell_dict.items():
+            if not 'ASAP7_75t' in k:
+                for poly in v.polygons:
+                    poly.scale(0.25)
+                for path in v.paths:
+                    path.scale(0.25)
+                for label in v.labels:
+                    label.translate(-label.position[0]*0.75, -label.position[1]*0.75)
+                for ref in v.references:
+                    ref.translate(-ref.origin[0]*0.75, -ref.origin[1]*0.75)
+        # Overwrite original GDS file
+        gds_lib.write_gds(par_gds_file)
+
 tech = ASAP7Tech()

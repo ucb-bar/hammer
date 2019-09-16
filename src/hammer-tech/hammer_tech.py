@@ -395,7 +395,7 @@ class HammerTechnology:
         try:
             mod = importlib.import_module(technology_name)
             # work around for python < 3.6
-            try: 
+            try:
                 tech = mod.tech
             except:
                 raise ImportError
@@ -735,6 +735,13 @@ class HammerTechnology:
 
     def post_install_script(self) -> None:
         """a script to apply any needed hotfixes to technology libraries, tech __init__.py will override this"""
+        pass
+
+    def post_par_script(self, d: dict) -> None:
+        """
+        Placeholder for a script to apply any needed hotfixes after place & route, tech __init__.py will override this.
+        Takes the output config dict from par.
+        """
         pass
 
     def get_extra_libraries(self) -> List[ExtraLibrary]:
