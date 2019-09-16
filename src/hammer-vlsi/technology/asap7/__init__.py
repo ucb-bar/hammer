@@ -132,7 +132,8 @@ class ASAP7Tech(HammerTechnology):
                     label.translate(-label.position[0]*0.75, -label.position[1]*0.75)
                 for ref in v.references:
                     ref.translate(-ref.origin[0]*0.75, -ref.origin[1]*0.75)
-        # Overwrite original GDS file
+        # Overwrite original GDS file & set precision to 2.5e-10
+        gds_lib.precision = 2.5e-10
         gds_lib.write_gds(par_gds_file)
 
 tech = ASAP7Tech()
