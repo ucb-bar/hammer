@@ -72,8 +72,6 @@ technology.core:
   std_cell_rail_layer: "M1"
   # This is used to provide a reference master for generating standard cells
   tap_cell_rail_reference: "{TAPCELL*}"
-  # This is a hotfix script to make the PDK work
-  hotfix_script: "setup.sh"
 
 mentor.extra_env_vars:
   - VAR_M4_YOFFSET: "0"
