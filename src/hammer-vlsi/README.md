@@ -20,6 +20,8 @@ System requirements:
 
 See [sourceme.sh](sourceme.sh) for an example of in-tree use of hammer/hammer-vlsi.
 
+The default technology, ASAP7, requires extra requirements. See its [readme](technology/asap7/README.md) for instructions.
+
 Environment Check
 =================
 
