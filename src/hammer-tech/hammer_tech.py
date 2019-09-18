@@ -396,9 +396,9 @@ class HammerTechnology:
             mod = importlib.import_module(technology_name)
             # work around for python < 3.6
             try:
-                tech = mod.tech
+                tech = mod.tech # type: ignore
             except:
-                raise ImportError
+                raise ImportError # type: ignore
         except ImportError:
             tech = HammerTechnology()
 
