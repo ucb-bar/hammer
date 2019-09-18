@@ -128,6 +128,10 @@ class ASAP7Tech(HammerTechnology):
                     poly.scale(0.25)
                 for path in v.paths:
                     path.scale(0.25)
+                    # gdspy bug: we also need to scale custom path extensions
+                    for i, end in enumerate(path.ends):
+                        if isinstance(end, tuple):
+                            path.ends[i] = tuple([e*0.25 for e in end])
                 for label in v.labels:
                     label.translate(-label.position[0]*0.75, -label.position[1]*0.75)
                 for ref in v.references:
