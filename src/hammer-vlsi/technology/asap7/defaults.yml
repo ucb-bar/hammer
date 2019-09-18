@@ -5,13 +5,14 @@ technology.asap7:
 
 # Set some defaults for this technology.
 # For quick performance evaluations, use the typical voltage+temperature corners.
-# Nominal voltage for 32nm technology is 1.05V and is the only voltage provided
+# Nominal voltage for 7nm technology is 0.70 V and is the only voltage provided
 # for normal SRAMs.
 # TODO: add default temperature corners.
 vlsi:
   # Technology dimension
-  # TODO: add more technology files to make some CAD tools happy with the actual number of 32nm
-  core.node: 7
+  # The PaR tool actually runs in the 4x scaled up lef/gds.
+  # after PaR, post_par_script in asap7/__init__.py will scale down the generated gds to 7nm.
+  core.node: 28
   inputs:
     # Supply voltages.
     supplies:
