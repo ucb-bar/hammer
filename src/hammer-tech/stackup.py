@@ -7,7 +7,7 @@
 #  See LICENSE for licence details.
 
 from enum import Enum
-from typing import List, NamedTuple, Tuple, Dict
+from typing import List, NamedTuple, Tuple, Dict, Optional
 from hammer_utils import reverse_dict, coerce_to_grid
 from hammer_logging import HammerVLSILoggingContext
 from decimal import Decimal
@@ -239,7 +239,7 @@ class Metal(NamedTuple('Metal', [
         """
         return self.min_spacing_and_max_width_from_pitch(pitch)[1]
 
-    def quantize_to_width_table(self, width: Decimal, layer: str, logger: HammerVLSILoggingContext) -> Decimal:
+    def quantize_to_width_table(self, width: Decimal, layer: str, logger: Optional[HammerVLSILoggingContext]) -> Decimal:
         """
         Compare a desired width to the width table, if specified for a technology.
         Will return the allowable width smaller than or equal to the desired width,
@@ -262,12 +262,13 @@ class Metal(NamedTuple('Metal', [
                     qwidth = w
                     break
                 else:
-                    logger.warning("The desired power strap width {dw} on {lay} was quantized down to {fw} based on the technology's width table. Please check your power grid.".format(dw=str(width), lay=layer, fw=str(width_table[i-1])))
+                    if logger is not None:
+                        logger.warning("The desired power strap width {dw} on {lay} was quantized down to {fw} based on the technology's width table. Please check your power grid.".format(dw=str(width), lay=layer, fw=str(width_table[i-1])))
                     qwidth = width_table[i-1]
                     break
         return qwidth
 
-    def get_width_spacing_start_twt(self, tracks: int, logger: HammerVLSILoggingContext) -> Tuple[Decimal, Decimal, Decimal]:
+    def get_width_spacing_start_twt(self, tracks: int, logger: Optional[HammerVLSILoggingContext]) -> Tuple[Decimal, Decimal, Decimal]:
         """
         This method will return the maximum width a wire can be in order
         to consume a given number of routing tracks.
@@ -312,7 +313,7 @@ class Metal(NamedTuple('Metal', [
         start = self.min_width / 2 + spacing
         return (self.quantize_to_width_table(width, self.name, logger), spacing, start)
 
-    def get_width_spacing_start_twwt(self, tracks: int, logger: HammerVLSILoggingContext, force_even: bool = False) -> Tuple[Decimal, Decimal, Decimal]:
+    def get_width_spacing_start_twwt(self, tracks: int, logger: Optional[HammerVLSILoggingContext], force_even: bool = False) -> Tuple[Decimal, Decimal, Decimal]:
         """
         This method will return the maximum width a wire can be in order
         to consume a given number of routing tracks.

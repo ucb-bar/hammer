@@ -741,7 +741,7 @@ class StackupTest(unittest.TestCase):
         stackup = StackupTestHelper.create_test_stackup_list()[-1]
         for m in stackup.metals:
             # Try with 1 track (this should return a minimum width wire)
-            w, s, o = m.get_width_spacing_start_twt(1)
+            w, s, o = m.get_width_spacing_start_twt(1, logger=None)
             self.assertEqual(w, m.min_width)
             self.assertEqual(s, m.pitch - w)
 
@@ -752,7 +752,7 @@ class StackupTest(unittest.TestCase):
             # | | | | | |
             # T  --W--  T
             for num_tracks in range(2,40):
-                w, s, o = m.get_width_spacing_start_twt(num_tracks)
+                w, s, o = m.get_width_spacing_start_twt(num_tracks, logger=None)
                 # Check that the resulting spacing is the min spacing
                 self.assertTrue(s >= m.get_spacing_for_width(w))
                 # Check that there is no DRC
@@ -770,7 +770,7 @@ class StackupTest(unittest.TestCase):
         stackup = StackupTestHelper.create_test_stackup_list()[-1]
         for m in stackup.metals:
             # Try with 1 track (this should return a minimum width wire)
-            w, s, o = m.get_width_spacing_start_twwt(1)
+            w, s, o = m.get_width_spacing_start_twwt(1, logger=None)
             self.assertEqual(w, m.min_width)
             self.assertEqual(s, m.pitch - w)
 
@@ -781,7 +781,7 @@ class StackupTest(unittest.TestCase):
             # | | | | | | | | | |
             # T  --W--   --W--  T
             for num_tracks in range(2,40):
-                w, s, o = m.get_width_spacing_start_twwt(num_tracks)
+                w, s, o = m.get_width_spacing_start_twwt(num_tracks, logger=None)
                 # Check that the resulting spacing is the min spacing
                 self.assertGreaterEqual(s, m.get_spacing_for_width(w))
                 # Check that there is no DRC
