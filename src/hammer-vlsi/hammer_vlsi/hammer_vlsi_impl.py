@@ -667,13 +667,16 @@ class HammerPlaceAndRouteTool(HammerTool):
                 spacing, width = layer.min_spacing_and_max_width_from_pitch(one_strap_pitch)
                 strap_start = spacing / 2 + layer.offset
             else:
-                width, spacing, strap_start = layer.get_width_spacing_start_twwt(track_width, force_even=True)
+                width, spacing, strap_start = layer.get_width_spacing_start_twwt(track_width, force_even=True, logger=self.logger.context(layer_name))
         else:
-            width, spacing, strap_start = layer.get_width_spacing_start_twt(track_width)
+            width, spacing, strap_start = layer.get_width_spacing_start_twt(track_width, logger=self.logger.context(layer_name))
             spacing = 2*spacing + (track_spacing - 1) * layer.pitch + layer.min_width
         offset = track_offset + track_start * layer.pitch + strap_start
         assert width > Decimal(0), "Width must be greater than zero. You probably have a malformed tech plugin on layer {}.".format(layer_name)
         assert spacing > Decimal(0), "Spacing must be greater than zero. You probably have a malformed tech plugin on layer {}.".format(layer_name)
+        density = Decimal(len(nets)) * width / pitch * Decimal(100)
+        if density > Decimal(85):
+            self.logger.warning("CAUTION! Your {layer} power strap density is {density}%. Check your technology's DRM to see if this violates maximum density rules.".format(layer=layer_name, density=density))
         return self.specify_power_straps(layer_name, bottom_via_layer, blockage_spacing, pitch, width, spacing, offset, bbox, nets, add_pins)
 
     def specify_all_power_straps_by_tracks(self, layer_names: List[str], ground_net: str, power_nets: List[str], power_weights: List[int], bbox: Optional[List[Decimal]], pin_layers: List[str]) -> List[str]:

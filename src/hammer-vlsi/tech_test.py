@@ -680,6 +680,14 @@ class StackupTestHelper:
         return wst
 
     @staticmethod
+    def create_w_tbl(index: int) -> List[Dict[str, float]]:
+        min_w = StackupTestHelper.index_to_min_width_fn(index)
+        w_tbl = []
+        # Tests currently don't check against quantized widths
+        w_tbl.append({"width": min_w})
+        return w_tbl
+
+    @staticmethod
     def create_test_metal(index: int) -> Dict[str, Any]:
         output = {} # type: Dict[str, Any]
         output["name"] = "M{}".format(index)
@@ -689,6 +697,7 @@ class StackupTestHelper:
         output["pitch"] = StackupTestHelper.index_to_min_pitch_fn(index)
         output["offset"] = StackupTestHelper.index_to_offset_fn(index)
         output["power_strap_widths_and_spacings"] = StackupTestHelper.create_wst_list(index)
+        output["power_strap_width_table"] = StackupTestHelper.create_w_tbl(index)
         return output
 
     @staticmethod
