@@ -137,8 +137,10 @@ class ASAP7Tech(HammerTechnology):
                         if isinstance(end, tuple):
                             path.ends[i] = tuple([e*0.25 for e in end])
                 for label in v.labels:
+                    label.magnification = 0.25
                     label.translate(-label.position[0]*0.75, -label.position[1]*0.75)
                 for ref in v.references:
+                    ref.magnification = 0.25
                     ref.translate(-ref.origin[0]*0.75, -ref.origin[1]*0.75)
         # Overwrite original GDS file & set precision to 2.5e-10
         gds_lib.precision = 2.5e-10
