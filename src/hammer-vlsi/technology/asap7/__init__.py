@@ -133,15 +133,23 @@ class ASAP7Tech(HammerTechnology):
                 for path in v.paths:
                     path.scale(0.25)
                     # gdspy bug: we also need to scale custom path extensions
+                    # wait gdspy/pull#101
                     for i, end in enumerate(path.ends):
                         if isinstance(end, tuple):
                             path.ends[i] = tuple([e*0.25 for e in end])
                 for label in v.labels:
+                    # bug fix for some EDA tools that didn't set MAG field in gds file
+                    # maybe this is a excepted behavior in asap7 PDK
+                    # refer to gdspy/__init__.py: `kwargs["magnification"] = record[1][0]`
                     label.magnification = 0.25
                     label.translate(-label.position[0]*0.75, -label.position[1]*0.75)
+                    label.magnification = 1
+
                 for ref in v.references:
                     ref.magnification = 0.25
                     ref.translate(-ref.origin[0]*0.75, -ref.origin[1]*0.75)
+                    label.magnification = 1
+
         # Overwrite original GDS file & set precision to 2.5e-10
         gds_lib.precision = 2.5e-10
         gds_lib.write_gds(par_gds_file)
