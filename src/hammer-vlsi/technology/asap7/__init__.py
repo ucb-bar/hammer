@@ -89,11 +89,15 @@ class ASAP7Tech(HammerTechnology):
                     # copy boundary_polygon to mvt_layer to mark the this cell is a mvt cell.
                     mvt_polygon = gdspy.PolygonSet(boundary_polygon, multi_lib['mvt_layer'], 0)
                     mvt_cell = cell.copy(name=cell.name.replace('SL', vt), exclude_from_current=True, deep_copy=True).add(mvt_polygon)
-                    # add mvt_cell to corresponding multi_lib
-                    multi_lib['lib'].add(mvt_cell)
+                else:
+                    # RVT, just copy the cell
+                    mvt_cell = cell.copy(name=cell.name.replace('SL', vt), exclude_from_current=True, deep_copy=True)
+                # add mvt_cell to corresponding multi_lib
+                multi_lib['lib'].add(mvt_cell)
 
         for vt, multi_lib in multi_libs.items():
-            # write multi_lib
+            # write multi_lib with 2.5e-10 precision
+            multi_lib['lib'].precision = 2.5e-10
             multi_lib['lib'].write_gds(os.path.splitext(orig_gds)[0] + '_' + vt + '.gds')
 
     def fix_sram_cdl_bug(self) -> None:
