@@ -143,12 +143,11 @@ class ASAP7Tech(HammerTechnology):
                     # refer to gdspy/__init__.py: `kwargs["magnification"] = record[1][0]`
                     label.magnification = 0.25
                     label.translate(-label.position[0]*0.75, -label.position[1]*0.75)
-                    label.magnification = 1
 
                 for ref in v.references:
                     ref.magnification = 0.25
                     ref.translate(-ref.origin[0]*0.75, -ref.origin[1]*0.75)
-                    label.magnification = 1
+                    ref.magnification = 1
 
         # Overwrite original GDS file & set precision to 2.5e-10
         gds_lib.precision = 2.5e-10
