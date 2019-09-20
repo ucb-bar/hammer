@@ -99,7 +99,7 @@ class WidthSpacingTuple(NamedTuple('WidthSpacingTuple', [
 
 class WidthTableEntry(dict):
     """
-    An allowable wire width from technology LEF width table
+    An allowable wire width from technology LEF width table.
     """
     __slots__ = ()
 
@@ -247,7 +247,7 @@ class Metal(NamedTuple('Metal', [
         Issues a logger warning for the user if the returned width was quantized.
         """
         width_table = self.power_strap_width_table
-        if width_table == []:
+        if len(width_table) == 0:
             qwidth = width
         else:
             for i,w in enumerate(width_table):
