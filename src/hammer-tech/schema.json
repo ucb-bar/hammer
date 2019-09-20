@@ -302,6 +302,19 @@
                       }
                     }
                   }
+                },
+                "power_strap_width_table": {
+                  "type": "array",
+                  "items": {
+                    "title": "WidthTableEntry",
+                    "type": "object",
+                    "additionalproperties": false,
+                    "properties": {
+                      "width": {
+                        "type": "number"
+                      }
+                    }
+                  }
                 }
               }
             }
