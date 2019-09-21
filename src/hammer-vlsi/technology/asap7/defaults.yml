@@ -79,3 +79,11 @@ mentor.extra_env_vars:
   - VAR_M5_XOFFSET: "0"
   - VAR_M6_YOFFSET: "0"
   - VAR_M7_XOFFSET: "0"
+
+par.inputs:
+  # gds_merge: ture is mandatory,
+  # since asap7/__init__.py:130, the shrink script will filter stdcell module with keyword "ASAP7_75t"
+  # thus we should merge gds by PaR tools firstly,
+  # TODO: try to change export_config_outputs for PaR inputs to expose gds_merge to output json?
+  # thus we don't need to hardcode this config.
+  gds_merge: true
