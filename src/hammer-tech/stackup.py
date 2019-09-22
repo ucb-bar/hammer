@@ -6,12 +6,13 @@
 #
 #  See LICENSE for licence details.
 
+from decimal import Decimal
 from enum import Enum
-from typing import List, NamedTuple, Tuple, Dict, Optional
+from functools import partial
+from typing import Any, List, NamedTuple, Tuple, Dict, Optional
+
 from hammer_utils import reverse_dict, coerce_to_grid
 from hammer_logging import HammerVLSILoggingContext
-from decimal import Decimal
-from functools import partial
 
 class RoutingDirection(Enum):
     """
@@ -97,15 +98,6 @@ class WidthSpacingTuple(NamedTuple('WidthSpacingTuple', [
             current_spacing = wst.min_spacing
         return out
 
-class WidthTableEntry(dict):
-    """
-    An allowable wire width from technology LEF width table.
-    """
-    __slots__ = ()
-
-    @staticmethod
-    def from_list(grid_unit: Decimal, l: List[dict]) -> List[Decimal]:
-        return sorted([coerce_to_grid(w["width"], grid_unit) for w in l])
 
 class Metal(NamedTuple('Metal', [
         ('name', str),
@@ -162,8 +154,15 @@ class Metal(NamedTuple('Metal', [
             pitch=coerce_to_grid(d["pitch"], grid_unit),
             offset=coerce_to_grid(d["offset"], grid_unit),
             power_strap_widths_and_spacings=WidthSpacingTuple.from_list(grid_unit, d["power_strap_widths_and_spacings"]),
-            power_strap_width_table=WidthTableEntry.from_list(grid_unit, d["power_strap_width_table"] if "power_strap_width_table" in d and d["power_strap_width_table"] else [])
+            power_strap_width_table=Metal.power_strap_widths_from_list(grid_unit, d["power_strap_width_table"] if "power_strap_width_table" in d and d["power_strap_width_table"] else [])
         )
+
+    @staticmethod
+    def power_strap_widths_from_list(grid_unit: Decimal, l: List[Any]) -> List[Decimal]:
+        """
+        Read and cocerce wire widths from the technology LEF width table.
+        """
+        return sorted(map(lambda w: coerce_to_grid(w, grid_unit), map(float, l)))
 
     def get_spacing_for_width(self, width: Decimal) -> Decimal:
         """
@@ -250,10 +249,11 @@ class Metal(NamedTuple('Metal', [
         if len(width_table) == 0:
             qwidth = width
         else:
-            for i,w in enumerate(width_table):
+            for i, w in enumerate(width_table):
                 if width > w:
-                    # last entry in table is special, width can be greater than or equal to this number
-                    if i == len(width_table)-1:
+                    # The last entry in table is special: width can be greater
+                    # than or equal to this number.
+                    if i == len(width_table) - 1:
                         qwidth = width
                         break
                     else:
@@ -268,7 +268,10 @@ class Metal(NamedTuple('Metal', [
                     break
         return qwidth
 
-    def get_width_spacing_start_twt(self, tracks: int, logger: Optional[HammerVLSILoggingContext]) -> Tuple[Decimal, Decimal, Decimal]:
+    def get_width_spacing_start_twt(self,
+                                    tracks: int,
+                                    logger: Optional[HammerVLSILoggingContext]
+                                   ) -> Tuple[Decimal, Decimal, Decimal]:
         """
         This method will return the maximum width a wire can be in order
         to consume a given number of routing tracks.
@@ -353,7 +356,8 @@ class Metal(NamedTuple('Metal', [
             start = start + self.grid_unit
         return (self.quantize_to_width_table(width, self.name, logger), spacing, start)
 
-    # TODO implement M W X* W M style wires, where X is slightly narrower than W and centered on-grid
+    # TODO implement M W X* W M style wires, where X is slightly narrower
+    # than W and centered on-grid.
 
 
 class Stackup(NamedTuple('Stackup', [

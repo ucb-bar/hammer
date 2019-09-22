@@ -650,6 +650,37 @@ END LIBRARY
         self.assertEqual(tech.get_lvs_decks_for_tool("chisel"),
                 [LVSDeck(tool_name="chisel", name="some_wood", path="/path/to/chisel/some_wood.lvs.rules")])
 
+    def test_stackup(self) -> None:
+        """
+        Test that getting the stackup works as expected.
+        """
+        import hammer_config
+
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+
+        test_stackup = StackupTestHelper.create_test_stackup_dict(10)
+
+        def add_stackup(in_dict: Dict[str, Any]) -> Dict[str, Any]:
+            out_dict = deepdict(in_dict)
+            out_dict.update({"stackups": [test_stackup]})
+            return out_dict
+
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_stackup)
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
+        tech.cache_dir = tech_dir
+
+        tool = DummyTool()
+        tool.technology = tech
+        database = hammer_config.HammerDatabase()
+        tool.set_database(database)
+
+        self.assertEqual(
+            tech.get_stackup_by_name(test_stackup["name"]),
+            Stackup.from_setting(tech.get_grid_unit(), test_stackup)
+        )
+
+
 class StackupTestHelper:
 
     @staticmethod
@@ -680,12 +711,12 @@ class StackupTestHelper:
         return wst
 
     @staticmethod
-    def create_w_tbl(index: int, entries: int) -> List[Dict[str, float]]:
+    def create_w_tbl(index: int, entries: int) -> List[float]:
+        """
+        Create a width table (power_strap_width_table).
+        """
         min_w = StackupTestHelper.index_to_min_width_fn(index)
-        w_tbl = []
-        for x in range(1, 4*entries+1, 4):
-            w_tbl.append({"width": min_w*x})
-        return w_tbl
+        return list(map(lambda x: min_w*x, range(1, 4 * entries + 1, 4)))
 
     @staticmethod
     def create_test_metal(index: int) -> Dict[str, Any]:
@@ -721,7 +752,7 @@ class StackupTestHelper:
     @staticmethod
     def create_test_stackup_list() -> List["Stackup"]:
         output = []
-        for x in range(5,8):
+        for x in range(5, 8):
             output.append(Stackup.from_setting(StackupTestHelper.mfr_grid(), StackupTestHelper.create_test_stackup_dict(x)))
             for m in output[-1].metals:
                 assert m.grid_unit == StackupTestHelper.mfr_grid(), "FIXME: the unit grid is different between the tests and metals"
@@ -730,13 +761,28 @@ class StackupTestHelper:
 
 class StackupTest(unittest.TestCase):
     """
-    Tests for the Stackup APIs in stackup.py
+    Tests for the stackup APIs in stackup.py.
     """
 
-    # Test that a T W T wire is correctly sized
-    # This will pass if the wide wire does not have a spacing DRC violation to surrounding minimum-sized wires and is within a single unit grid
-    # This method is not allowed to round the wire, so simply adding a manufacturing grid should suffice to "fail" DRC
+    def test_wire_parsing_from_json(self) -> None:
+        """
+        Test that wires can be parsed correctly from JSON.
+        """
+        grid_unit = StackupTestHelper.mfr_grid()
+        metal_dict = StackupTestHelper.create_test_metal(3)  # type: Dict[str, Any]
+        direct_metal = Metal.from_setting(grid_unit, StackupTestHelper.create_test_metal(3))  # type: Metal
+        json_string = json.dumps(metal_dict, cls=HammerJSONEncoder)  # type: str
+        json_metal = Metal.from_setting(grid_unit, json.loads(json_string))  # type: Metal
+        self.assertTrue(direct_metal, json_metal)
+
     def test_twt_wire(self) -> None:
+        """
+        Test that a T W T wire is correctly sized.
+        This will pass if the wide wire does not have a spacing DRC violation
+        to surrounding minimum-sized wires and is within a single unit grid.
+        This method is not allowed to round the wire, so simply adding a
+        manufacturing grid should suffice to "fail" DRC.
+        """
         # Generate multiple stackups, but we'll only use the largest for this test
         stackup = StackupTestHelper.create_test_stackup_list()[-1]
         for m in stackup.metals:
@@ -762,10 +808,14 @@ class StackupTest(unittest.TestCase):
                 s = m.get_spacing_for_width(w)
                 self.assertLess(m.pitch * (num_tracks + 1), m.min_width + s*2 + w)
 
-    # Test that a T W W T wire is correctly sized
-    # This will pass if the wide wire does not have a spacing DRC violation to surrounding minimum-sized wires and is within a single unit grid
-    # This method is not allowed to round the wire, so simply adding a manufacturing grid should suffice to "fail" DRC
     def test_twwt_wire(self) -> None:
+        """
+        Test that a T W W T wire is correctly sized.
+        This will pass if the wide wire does not have a spacing DRC violation
+        to surrounding minimum-sized wires and is within a single unit grid.
+        This method is not allowed to round the wire, so simply adding a
+        manufacturing grid should suffice to "fail" DRC.
+        """
         # Generate multiple stackups, but we'll only use the largest for this test
         stackup = StackupTestHelper.create_test_stackup_list()[-1]
         for m in stackup.metals:
