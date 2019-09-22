@@ -874,6 +874,7 @@ class StackupTest(unittest.TestCase):
     def test_quantize_to_width_table(self) -> None:
         # Generate two metals (index 1) and add more entries to width table of one of them
         # Only 0.05, 0.25, 0.45, 0.65, 0.85+ allowed -> check quantization against metal without width table
+        # TODO: improve this behaviour in a future PR
         metal_dict = StackupTestHelper.create_test_metal(1)
         metal_dict["power_strap_width_table"] = StackupTestHelper.create_w_tbl(1, 5)
         q_metal = Metal.from_setting(StackupTestHelper.mfr_grid(), metal_dict)
