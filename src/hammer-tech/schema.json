@@ -302,6 +302,13 @@
                       }
                     }
                   }
+                },
+                "power_strap_width_table": {
+                  "type": "array",
+                  "items": {
+                    "title": "WidthTableEntry",
+                    "type": "number"
+                  }
                 }
               }
             }
