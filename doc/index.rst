@@ -1,18 +1,28 @@
-.. hammer-vlsi documentation master file, created by
-   sphinx-quickstart on Sun May  6 21:23:39 2018.
+.. Hammer documentation master file, created by
+   sphinx-quickstart on Wed Sep 25 13:36:12 2019.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to hammer-vlsi's documentation!
-=======================================
+Welcome to Hammer's documentation!
+==================================
+
+Hammer is a physical design framework that wraps around vendor specific technologies and tools to provide a single API to create ASICs. Hammer allows for reusability in ASIC design while still providing the designers leeway to make their own modifications.
+
+.. include:: Hammer-Intro.rst
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
+   :numbered:
 
-   hammer_vlsi
-   hammer_config
-   hammer_tech
+   Technology/index
+
+   :maxdepth: 3
+   :caption: CAD Tools:
+   :numbered:
+   CAD-Tools/index
+
+
 
 Indices and tables
 ==================
