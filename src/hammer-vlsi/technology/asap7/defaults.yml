@@ -21,37 +21,13 @@ vlsi:
     # mmmc corners config.
     mmmc_corners: [
       {
-        "name": "ss",
+        "name": "PVT_0P63V_100C",
         "type": "setup",
         "voltage": "0.63 V",
         "temp": "100 C"
       },
       {
-        "name": "ss",
-        "type": "hold",
-        "voltage": "0.63 V",
-        "temp": "100 C"
-      },
-      {
-        "name": "tt",
-        "type": "setup",
-        "voltage": "0.70 V",
-        "temp": "25 C"
-      },
-      {
-        "name": "tt",
-        "type": "hold",
-        "voltage": "0.70 V",
-        "temp": "25 C"
-      },
-      {
-        "name": "ff",
-        "type": "setup",
-        "voltage": "0.77 V",
-        "temp": "0 C"
-      },
-      {
-        "name": "ff",
+        "name": "PVT_0P77V_0C",
         "type": "hold",
         "voltage": "0.77 V",
         "temp": "0 C"
@@ -81,9 +57,8 @@ mentor.extra_env_vars:
   - VAR_M7_XOFFSET: "0"
 
 par.inputs:
-  # gds_merge: ture is mandatory,
-  # since asap7/__init__.py:130, the shrink script will filter stdcell module with keyword "ASAP7_75t"
-  # thus we should merge gds by PaR tools firstly,
-  # TODO: try to change export_config_outputs for PaR inputs to expose gds_merge to output json?
-  # thus we don't need to hardcode this config.
+  # gds_merge: true is mandatory,
+  # The shrink script in __init__.py filters stdcells but expects all other input GDSs to be 4x upscaled.
+  # If user decides to set this to false, all other GDSs (e.g. hard macros) need to be 1x scaled
+  # TODO: change export_config_outputs for PaR inputs to expose gds_merge to output json
   gds_merge: true

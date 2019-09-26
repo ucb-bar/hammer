@@ -15,8 +15,8 @@ from hammer_tech import HammerTechnology
 
 class ASAP7Tech(HammerTechnology):
     """
-    override the HammerTechnology used in `hammeer_tech.py`
-    this class is loaded by function `load_from_json`, and will pass the `try` in `importlib`.
+    Override the HammerTechnology used in `hammer_tech.py`
+    This class is loaded by function `load_from_json`, and will pass the `try` in `importlib`.
     """
     def post_install_script(self) -> None:
         self.remove_duplication_in_drc_lvs()
@@ -25,9 +25,9 @@ class ASAP7Tech(HammerTechnology):
 
     def remove_duplication_in_drc_lvs(self) -> None:
         """
-        fix the conflicting in vendor drc/lvs deck between hammer-mentor-plugin.
+        Remove conflicting specification statements found in PDK's DRC & LVS decks.
         """
-        self.logger.info("remove LAYOUT PATH|LAYOUT PRIMARY|LAYOUT SYSTEM|DRC RESULTS DATABASE|DRC SUMMARY REPORT|LVS REPORT|LVS POWER NAME|LVS GROUND NAME in DRC/LVS Decks")
+        self.logger.info("Remove LAYOUT PATH|LAYOUT PRIMARY|LAYOUT SYSTEM|DRC RESULTS DATABASE|DRC SUMMARY REPORT|LVS REPORT|LVS POWER NAME|LVS GROUND NAME in DRC/LVS Decks")
         ruledirs = os.path.join(self.extracted_tarballs_dir, "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/calibre/ruledirs")
         drc_deck = os.path.join(ruledirs, "drc/drcRules_calibre_asap7_171111a.rul")
         lvs_deck = os.path.join(ruledirs, "lvs/lvsRules_calibre_asap7_160819a.rul")
@@ -46,15 +46,16 @@ class ASAP7Tech(HammerTechnology):
 
     def generate_multi_vt_gds(self) -> None:
         """
-        vendor only provide SLVT gds, this patch will generate other 3(LVT, RVT, SRAM) VT gds file.
+        PDK GDS only contains SLVT cells.
+        This patch will generate the other 3(LVT, RVT, SRAM) VT GDS files.
         """
-        self.logger.info("generate gds for Multi-VT cells")
+        self.logger.info("Generate GDS for Multi-VT cells")
 
         orig_gds = os.path.join(self.extracted_tarballs_dir, "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24.gds")
         # load original_gds
-        asap7_original_gds = gdspy.GdsLibrary(infile=orig_gds)
+        asap7_original_gds = gdspy.GdsLibrary().read_gds(infile=orig_gds, units='import')
         original_cells = asap7_original_gds.cell_dict
-        # WTF is this?
+        # This is an extra cell in the original GDS that has no geometry inside
         del original_cells['m1_template']
         # required libs
         multi_libs = {
@@ -77,7 +78,7 @@ class ASAP7Tech(HammerTechnology):
         }
         # create new libs
         for vt, multi_lib in multi_libs.items():
-            multi_lib["lib"].name = asap7_original_gds.name.replace('SL', vt)
+            multi_lib['lib'].name = asap7_original_gds.name.replace('SL', vt)
 
         for cell in original_cells.values():
             poly_dict = cell.get_polygons(by_spec=True)
@@ -96,8 +97,7 @@ class ASAP7Tech(HammerTechnology):
                 multi_lib['lib'].add(mvt_cell)
 
         for vt, multi_lib in multi_libs.items():
-            # write multi_lib with 2.5e-10 precision
-            multi_lib['lib'].precision = 2.5e-10
+            # write multi_lib
             multi_lib['lib'].write_gds(os.path.splitext(orig_gds)[0] + '_' + vt + '.gds')
 
     def fix_sram_cdl_bug(self) -> None:
@@ -122,25 +122,31 @@ class ASAP7Tech(HammerTechnology):
         """
         self.logger.info("Scaling down place & routed GDS")
 
+        # load the standard cell list from the gds folder and lop off "_SL" from end
+        cell_list_file = os.path.join(self.extracted_tarballs_dir, "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/cell_list.txt")
+        cell_list = [line.rstrip('\n')[:-3] for line in open(cell_list_file, 'r')]
+
         # load original_gds
         par_gds_file = d.get("par.outputs.output_gds")
-        gds_lib = gdspy.GdsLibrary(infile=par_gds_file)
+        #gds_lib = gdspy.GdsLibrary(infile=par_gds_file)
+        gds_lib = gdspy.GdsLibrary().read_gds(infile=par_gds_file, units='import')
         # Iterate through cells that aren't part of standard cell library and scale
         for k,v in gds_lib.cell_dict.items():
-            if not 'ASAP7_75t' in k:
+            if not any(cell in k for cell in cell_list):
+                self.logger.info("Scaling down {cell}".format(cell=k))
                 for poly in v.polygons:
                     poly.scale(0.25)
                 for path in v.paths:
                     path.scale(0.25)
                     # gdspy bug: we also need to scale custom path extensions
-                    # wait gdspy/pull#101
+                    # Will be fixed by gdspy/pull#101 in next release
                     for i, end in enumerate(path.ends):
                         if isinstance(end, tuple):
                             path.ends[i] = tuple([e*0.25 for e in end])
                 for label in v.labels:
-                    # bug fix for some EDA tools that didn't set MAG field in gds file
-                    # maybe this is a excepted behavior in asap7 PDK
-                    # refer to gdspy/__init__.py: `kwargs["magnification"] = record[1][0]`
+                    # Bug fix for some EDA tools that didn't set MAG field in gds file
+                    # Maybe this is expected behavior in ASAP7 PDK
+                    # In gdspy/__init__.py: `kwargs["magnification"] = record[1][0]`
                     label.magnification = 0.25
                     label.translate(-label.position[0]*0.75, -label.position[1]*0.75)
 
@@ -149,8 +155,7 @@ class ASAP7Tech(HammerTechnology):
                     ref.translate(-ref.origin[0]*0.75, -ref.origin[1]*0.75)
                     ref.magnification = 1
 
-        # Overwrite original GDS file & set precision to 2.5e-10
-        gds_lib.precision = 2.5e-10
+        # Overwrite original GDS file
         gds_lib.write_gds(par_gds_file)
 
 tech = ASAP7Tech()
