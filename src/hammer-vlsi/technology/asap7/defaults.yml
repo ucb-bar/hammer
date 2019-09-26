@@ -32,3 +32,6 @@ vlsi.technology.placement_site: "coreSite"
 
 # Set the layer that blocks vias under bumps
 vlsi.technology.bump_block_cut_layer: "V9"
+
+vlsi.technology.tap_cell_interval: "50"
+vlsi.technology.tap_cell_offset: "10.564"

@@ -12,16 +12,20 @@ from hammer_utils import reverse_dict
 from decimal import Decimal
 
 class CellType(Enum):
-    TieCell = 1
-    EndCap = 2
-    IOFiller = 3
-    StdFiller = 4
-    TapCell = 5
+    TieHiCell = 1
+    TieLoCell = 2
+    TieHiLoCell = 3
+    EndCap = 4
+    IOFiller = 5
+    StdFiller = 6
+    TapCell = 7
 
     @classmethod
     def __mapping(cls) -> Dict[str, "CellType"]:
         return {
-            "tiecell": CellType.TieCell,
+            "tiehicell": CellType.TieHiCell,
+            "tielocell": CellType.TieLoCell,
+            "tiehilocell": CellType.TieHiLoCell,
             "endcap": CellType.EndCap,
             "iofiller": CellType.IOFiller,
             "stdfiller": CellType.StdFiller,
