@@ -610,8 +610,8 @@ END LIBRARY
         def add_special_cells(in_dict: Dict[str, Any]) -> Dict[str, Any]:
             out_dict = deepdict(in_dict)
             out_dict.update({"special_cells": [
-                                {"name": "cell1", "cell_type": "tiecell"},
-                                {"name": "cell2", "cell_type": "tiecell", "size": 1.5},
+                                {"name": "cell1", "cell_type": "tiehicell"},
+                                {"name": "cell2", "cell_type": "tiehicell", "size": 1.5},
                                 {"name": "cell3", "cell_type": "iofiller", "size": 0.5},
                                 {"name": "cell4", "cell_type": "stdfiller"},
                                 {"name": "cell5", "cell_type": "endcap"},
@@ -626,9 +626,9 @@ END LIBRARY
         database = hammer_config.HammerDatabase()
         tool.set_database(database)
 
-        self.assertEqual(tool.technology.get_special_cell_by_type(CellType.TieCell),
-                [SpecialCell(name=list("cell1"), cell_type=CellType.TieCell, size=None),
-                 SpecialCell(name=list("cell2"), cell_type=CellType.TieCell, size=Decimal(1.5))
+        self.assertEqual(tool.technology.get_special_cell_by_type(CellType.TieHiCell),
+                [SpecialCell(name=list("cell1"), cell_type=CellType.TieHiCell, size=None),
+                 SpecialCell(name=list("cell2"), cell_type=CellType.TieHiCell, size=Decimal(1.5))
                 ])
 
         self.assertEqual(tool.technology.get_special_cell_by_type(CellType.IOFiller),
