@@ -272,3 +272,22 @@ class TemperatureValue(ValueWithUnit):
     @property
     def unit_type(self) -> str:
         return "voltage"
+
+class CapacitanceValue(ValueWithUnit):
+    """Capacitance value in Farads - e.g. "1 fF", "12 fF".
+    Mainly used for specifying load constraints in SDC
+    """
+
+    @property
+    def default_prefix(self) -> str:
+        """Default is picofarads"""
+        return "p"
+
+    @property
+    def unit(self) -> str:
+        return "F"
+
+    @property
+    def unit_type(self) -> str:
+        return "capacitance"
+

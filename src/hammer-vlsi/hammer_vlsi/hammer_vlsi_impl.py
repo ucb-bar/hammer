@@ -16,6 +16,7 @@ import sys
 import json
 from typing import Callable, Iterable, List, NamedTuple, Optional, Dict, Any, Union
 from decimal import Decimal
+import textwrap
 
 import hammer_config
 from hammer_utils import reverse_dict, deepdict, optional_map, get_or_else, add_dicts, coerce_to_grid
@@ -1311,19 +1312,37 @@ class HasSDCSupport(HammerTool):
         groups = {} # type: Dict[str, List[str]]
         ungrouped_clocks = [] # type: List[str]
 
+        # set time unit in sdc. this is supported in genus
+        # TODO: is this supported in innovus
+        output.append("set_time_unit -nanoseconds 1.0")
+        output.append("set_load_unit -picofarads 1.0")
+        #time_unit = self.get_time_unit().value_prefix + self.get_time_unit().unit
+
         clocks = self.get_clock_ports()
-        time_unit = self.get_time_unit().value_prefix + self.get_time_unit().unit
         for clock in clocks:
-            # TODO: FIXME This assumes that library units are always in ns!!!
             if get_or_else(clock.generated, False):
-                output.append("create_generated_clock -name {n} -source {m_path} -divide_by {div} {path}".
-                        format(n=clock.name, m_path=clock.source_path, div=clock.divisor, path=clock.path))
+                output.append(textwrap.dedent("""
+                    create_generated_clock \\
+                        -name {n} \\
+                        -source {m_path} \\
+                        -divide_by {div} \\
+                        {path}
+                    """).format(n=clock.name, m_path=clock.source_path, 
+                    div=clock.divisor, path=clock.path))
             elif clock.path is not None:
-                output.append("create_clock {0} -name {1} -period {2}".format(clock.path, clock.name, clock.period.value_in_units(time_unit)))
+                output.append(textwrap.dedent("""
+                    create_clock {0} \\
+                        -name {1} \\
+                        -period {2}
+                    """
+                    ).format(clock.path, clock.name, 
+                        clock.period.value_in_units("ns")))
             else:
-                output.append("create_clock {0} -name {0} -period {1}".format(clock.name, clock.period.value_in_units(time_unit)))
+                output.append("create_clock {0} -name {0} -period {1}".format(
+                    clock.name, clock.period.value_in_units("ns")))
             if clock.uncertainty is not None:
-                output.append("set_clock_uncertainty {1} [get_clocks {0}]".format(clock.name, clock.uncertainty.value_in_units(time_unit)))
+                output.append("set_clock_uncertainty {1} [get_clocks {0}]".format(
+                    clock.name, clock.uncertainty.value_in_units("ns")))
             if clock.group is not None:
                 if clock.group in groups:
                     groups[clock.group].append(clock.name)
@@ -1332,11 +1351,15 @@ class HasSDCSupport(HammerTool):
             else:
                 ungrouped_clocks.append(clock.name)
         if len(groups):
-            output.append("set_clock_groups -asynchronous {grouped} {ungrouped}".format(
-                    grouped = " ".join(["{{ {c} }}".format(c=" ".join(clks)) for clks in groups.values()]),
-                    ungrouped = " ".join(["{{ {c} }}".format(c=clk) for clk in ungrouped_clocks])
-                    ))
-
+            output.append(textwrap.dedent("""
+                set_clock_groups \\
+                    -asynchronous {grouped} \\
+                    {ungrouped}
+                """.format(
+                    grouped=" ".join(["{{ {c} }}"
+                        .format(c=" ".join(clks)) for clks in groups.values()]),
+                    ungrouped=" ".join(["{{ {c} }}"
+                        .format(c=clk) for clk in ungrouped_clocks]))))
         output.append("\n")
         return "\n".join(output)
 
@@ -1345,31 +1368,61 @@ class HasSDCSupport(HammerTool):
         """Generate a fragment for I/O pin constraints."""
         output = []  # type: List[str]
 
-        default_output_load = float(self.get_setting("vlsi.inputs.default_output_load"))
+        default_output_load = \
+            CapacitanceValue(self.get_setting("vlsi.inputs.default_output_load"))
 
-        # Specify default load.
+        default_max_transition = \
+            TimeValue(self.get_setting("vlsi.inputs.default_max_transition"))
+
+        default_clock_max_transition = \
+            TimeValue(self.get_setting("vlsi.inputs.default_clock_max_transition"))
+
+        default_max_fanout = \
+            int(self.get_setting("vlsi.inputs.default_max_fanout"))
+
+        #--------------------------------------------------------------------
+
+        # set time unit in sdc. this is supported in genus
+        output.append("set_time_unit -nanoseconds 1.0")
+        output.append("set_load_unit -picofarads 1.0")
+
+        # Specify default load, transitions
         output.append("set_load {load} [all_outputs]".format(
-            load=default_output_load
+            load=default_output_load.value_in_units("pf")
+        ))
+        output.append("set_max_transition {slew} [current_design]".format(
+            slew=default_max_transition.value_in_units("ns")
+        ))
+        output.append("set_max_transition {slew} [all_clocks]".format(
+            slew=default_clock_max_transition.value_in_units("ns")
+        ))
+        output.append("set_max_fanout {slew} [current_design]".format(
+            slew=default_max_fanout
         ))
 
         # Also specify loads for specific pins.
         for load in self.get_output_load_constraints():
             output.append("set_load {load} [get_port \"{name}\"]".format(
-                load=load.load,
+                load=load.load.value_in_units("pf"),
                 name=load.name
             ))
 
         # Also specify delays for specific pins.
         for delay in self.get_delay_constraints():
-            output.append("set_{direction}_delay {delay} -clock {clock} [get_port \"{name}\"]".format(
-                delay=delay.delay.value_in_units(self.get_time_unit().value_prefix + self.get_time_unit().unit),
+            output.append(textwrap.dedent("""
+                set_{direction}_delay {delay} \\
+                    -clock {clock} \\
+                    [get_port \"{name}\"]
+                """.format(
+                delay=delay.delay.value_in_units("ns"),
                 clock=delay.clock,
                 direction=delay.direction,
                 name=delay.name
-            ))
+            )))
 
         # Custom sdc constraints that are verbatim appended
-        custom_sdc_constraints = self.get_setting("vlsi.inputs.custom_sdc_constraints")  # type: List[str]
+        custom_sdc_constraints = \
+            self.get_setting("vlsi.inputs.custom_sdc_constraints")  # type: List[str]
         for custom in custom_sdc_constraints:
             output.append(str(custom))
 
@@ -1393,11 +1446,27 @@ class TCLTool(HammerTool):
         """
         Buffered output to be put in <name>.tcl
         """
-        return self.attr_getter("_output", [])
+        return self.attr_getter("_output", [textwrap.dedent("""
+            proc HAMMERCMD {args} {
+              puts "\[HAMMER\]: {*}$args"
+              if {[catch {eval "{*}$args"} err]} {
+                puts "\[HAMMER-ERROR\]: cmd failed\\n$::errorInfo"
+                exit 1
+              }
+            }""")])
 
     # Python doesn't have Scala's nice currying syntax (e.g. val newfunc = func(_, fixed_arg))
-    def verbose_append(self, cmd: str, clean: bool = False) -> None:
-        self.verbose_tcl_append(cmd, self.output, clean)
+    def verbose_append(self, cmd: Union[List[str],str], clean: bool = False) -> None:
+        if type(cmd) is list:
+            self.verbose_tcl_append("  \\\n  ".join(cmd), self.output, clean)
+        else:
+            self.verbose_tcl_append(cmd, self.output, clean)
+
+    def verbose_append_wrap(self, cmd: Union[List[str],str], clean: bool = False) -> None:
+        if type(cmd) is list:
+            self.verbose_tcl_append_wrap("  \\\n  ".join(cmd), self.output, clean)
+        else:
+            self.verbose_tcl_append_wrap(cmd, self.output, clean)
 
     def append(self, cmd: str, clean: bool = False) -> None:
         self.tcl_append(cmd, self.output, clean)
@@ -1777,48 +1846,6 @@ class MentorCalibreTool(MentorTool):
         Note to subclasses: remember to include variables from super().env_vars!
         """
         return super().env_vars
-
-
-def load_tool(tool_name: str, path: Iterable[str]) -> HammerTool:
-    """
-    Load the given tool.
-    See the hammer-vlsi README for how it works.
-
-    :param tool_name: Name of the tool
-    :param path: List of paths to get
-    :return: HammerTool of the given tool
-    """
-    # Temporarily add to the import path.
-    for p in path:
-        sys.path.insert(0, p)
-    try:
-        # import_module loads/caches modules into sys.modules, so if
-        # another module with the same name (but different sys.path) is loaded,
-        # import_module won't look in sys.path again.
-        # We need to remove this module from sys.modules to get import_module
-        # to load the modules from sys.path.
-        # See https://docs.python.org/3/library/importlib.html
-        if tool_name in sys.modules:
-            del sys.modules[tool_name]
-        mod = importlib.import_module(tool_name)
-    except ImportError:
-        raise ValueError("No such tool " + tool_name)
-    # Now restore the original import path.
-    for _ in path:
-        sys.path.pop(0)
-    try:
-        tool_class = getattr(mod, "tool")
-    except AttributeError:
-        raise ValueError("No such tool " + tool_name + ", or tool does not follow the hammer-vlsi tool library format")
-
-    if not issubclass(tool_class, HammerTool):
-        raise ValueError("Tool must be a HammerTool")
-
-    # Set the tool directory.
-    tool = tool_class()
-    tool.tool_dir = os.path.dirname(os.path.abspath(mod.__file__))
-    return tool
-
 
 class HammerPCBDeliverableTool(HammerTool):
     @abstractmethod

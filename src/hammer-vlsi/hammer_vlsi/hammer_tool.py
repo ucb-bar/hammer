@@ -44,6 +44,36 @@ def check_hammer_step_function(func: HammerStepFunction) -> None:
 
 
 class HammerTool(metaclass=ABCMeta):
+
+    def read_regs_json(self, regs_json:str) -> dict
+        """
+        parses a regs.json file (from syn/pnr runs) and returns 
+        {seq_cells: [], all_regs: []}
+        """
+        if not os.path.isfile(regs_json):
+            self.error("regs-json file {} not found".format(regs_json))
+
+        output = {}
+        with open(self.mapped_all_regs_path, "r") as f:
+            j = json.load(f)
+            output["seq_cells"] = j["seq_cells"]
+            reg_paths = j["reg_paths"]
+            for i in range(len(reg_paths)):
+                split = reg_paths[i].split("/")
+                if split[-2][-1] == "]":
+                    split[-2] = "\\" + split[-2]
+                    reg_paths[i] = {"path" : '/'
+                            .join(split[0:len(split)-1]), "pin" : split[-1]}
+                else:
+                    reg_paths[i] = {"path" : '/'
+                            .join(split[0:len(split)-1]), "pin" : split[-1]}
+            output["all_regs"] = reg_paths
+        return output
+
+    def error(self, msg:str) -> None:
+        """ convenience wrapper for a tool throwing an error"""
+        raise Exception("[{}-{}]: {}".format(self.design.name, self.stage, msg))
+
     # Interface methods.
     @property
     def env_vars(self) -> Dict[str, str]:
@@ -382,7 +412,7 @@ class HammerTool(metaclass=ABCMeta):
                 seen_names.add(step.name)
         return True, seen_names
 
-    def run_steps(self, steps: List[HammerToolStep], hook_actions: List[HammerToolHookAction] = []) -> bool:
+    def run(self, steps: List[HammerToolStep], hook_actions: List[HammerToolHookAction] = []) -> bool:
         """
         Run the given steps, checking for errors/conditions between each step.
 
@@ -390,6 +420,19 @@ class HammerTool(metaclass=ABCMeta):
         :param hook_actions: List of hook actions.
         :return: Returns true if all the steps are successful.
         """
+
+        #------------------------------------------
+        # Record output from the pcb_tool into the JSON output
+        output_config = {}  # type: Dict[str, Any]
+        try:
+            output_config.update(self.pcb_tool.export_config_outputs())
+        except ValueError as e:
+            self.log.fatal(e.args[0])
+            return False, {}
+
+        return run_succeeded, output_config
+        #------------------------------------------
+
         duplicate_free, names = self.check_duplicates(steps)
         if not duplicate_free:
             return False
@@ -690,15 +733,12 @@ class HammerTool(metaclass=ABCMeta):
     # Accessory functions available to tools.
     # TODO(edwardw): maybe move set_database/get_setting into an interface like UsesHammerDatabase?
     ##############################
-    def set_database(self, database: hammer_config.HammerDatabase) -> None:
-        """Set the settings database for use by the tool."""
-        self._database = database # type: hammer_config.HammerDatabase
 
     def dump_database(self) -> str:
         """Dump the current database JSON in a temporary file in the run_dir and return the path.
         """
         path = os.path.join(self.run_dir, "config_db_tmp.json")
-        db_contents = self._database.get_database_json()
+        db_contents = self.db.get_database_json()
         with open(path, 'w') as f:
             f.write(db_contents)
         return path
@@ -837,8 +877,14 @@ class HammerTool(metaclass=ABCMeta):
         :param cwd: Working directory (leave as None to use the current working directory).
         :return: Output from the command or an error message.
         """
-
-        return self.submit_command.submit(args, self._subprocess_env, self.logger, cwd)
+        # Temporarily disable colours/tag to make run output more readable.
+        # TODO: think of a more elegant way to do this?
+        HammerVLSILogging.enable_colour = False
+        HammerVLSILogging.enable_tag = False
+        ret = self.submit_command.submit(args, self._subprocess_env, self.logger, cwd)
+        HammerVLSILogging.enable_colour = True
+        HammerVLSILogging.enable_tag = True
+        return ret
 
     # TODO: these helper functions might get a bit out of hand, put them somewhere more organized?
     def get_clock_ports(self) -> List[ClockPort]:
@@ -1130,7 +1176,7 @@ class HammerTool(metaclass=ABCMeta):
         for load_src in output_loads:
             load = OutputLoadConstraint(
                 name=str(load_src["name"]),
-                load=float(load_src["load"])
+                load=CapacitanceValue(load_src["load"])
             )
             output.append(load)
         return output
@@ -1185,3 +1231,18 @@ class HammerTool(metaclass=ABCMeta):
         cleaned = cleandoc(cmd) if clean else cmd
         output_buffer.append("""puts "{0}" """.format(cleaned.replace('"', '\"')))
         output_buffer.append(cleaned)
+                                                                                
+    @staticmethod                                                               
+    def verbose_tcl_append_wrap(cmd: str, output_buffer: List[str], 
+            clean: bool = False) -> None:
+        """                                                                     
+        Helper function to echo and run a command using a wrapper function.     
+                                                                                
+        :param cmd: TCL command to run                                          
+        :param output_buffer: Buffer in which to enqueue the resulting TCL lines
+        :param clean: True if you want to trim the leading 
+                      indendation from the string, False otherwise
+        """                                                                     
+        cleaned = cleandoc(cmd) if clean else cmd                               
+        output_buffer.append("HAMMERCMD { "+cleaned+" }\n")                     
+

@@ -309,6 +309,25 @@ class LVSDeck(NamedTuple('LVSDeck', [
         )
 
 class HammerTechnology:
+
+    def clone(self, db:HammerDatabase) -> HammerDatabase:
+        """
+        deep clone it, so we can create customized configs for each block.
+        this includes runtime modifications! User must specify a new db to 
+        point to, because we are NOT cloning a HammerDatabase here..
+        """
+        newtech          = HammerTechnology()
+        newtech.name     = self.name.copy()
+        newtech.path     = self.path.copy()
+        newtech.json_str = self.json_str.copy()
+        newtech.config   = TechJSON.from_json(self.json_str)
+        newtech.db       = db
+        # set by driver
+        newtech.logger    = self.logger
+        newtech.cache_dir = self.cache_dir
+
+        return newtech
+
     # Properties.
     @property
     def cache_dir(self) -> str:

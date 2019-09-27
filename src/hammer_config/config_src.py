@@ -697,6 +697,21 @@ class HammerDatabase:
         """Internal keys that shouldn't show up in any final config."""
         return {_CONFIG_PATH_KEY, _NEXT_FREE_INDEX_KEY}
 
+
+    def clone(self) -> HammerDatabase:
+        """
+        deep clone it, so we can create customized configs for each block.
+        this includes runtime modifications!
+        """
+        # [ssteffl] TODO: probably a better way of doing this
+        newdb = HammerDatabase()
+        for key in ["builtins", "core", "tools", "technology", "environment", "project"]:
+            newdb[key] = deeplist(getattr(self, key))
+        newdb._runtime = deepdict(self._runtime)
+        newdb.__config_cache = deepdict(self.__config_cache)
+        newdb.__config_cache_dirty = self.__config_cache_dirty
+        return newdb
+
     def get_config(self) -> dict:
         """
         Get the config of this database after all the overrides have been dealt with.
@@ -739,6 +754,38 @@ class HammerDatabase:
         else:
             value = self.get_config()[key]
             return nullvalue if value is None else value
+
+    def get_setting_subkeys(self, key: str) -> List[str]:
+        """
+        Retrive a list of subkeys for a specific setting. if the key does
+        not exist, an exception is raised
+        :param key: Desired key prefix.
+        :return: The list of subkeys
+        """
+        matches = {}
+        matcher = "^{}\.".format(re.escape(key))
+        for skey,svalue in self.get_config().items():
+            if re.match(matcher, skey):
+                tmp = re.sub(matcher,"",skey)
+                tmp = re.sub("\..*", "", tmp)
+                matches[tmp] = True
+        return matches.keys()
+
+    def get_unprefixed_settings(self, key: str, nullvalue: Any = None) -> Any:
+        """
+        Retrieve a dict of all the keys that are prefixed with 'key'. The output
+        dict will contain all the matching keys with the prefix 'key' removed.
+
+        :param key: Desired key prefix.
+        :param nullvalue: Value to return out for nulls.
+        :return: The unprefixed dict
+        """
+        matches = {}
+        matcher = "^{}\.".format(re.escape(key))
+        for skey,svalue in self.get_config().items():
+            if re.match(matcher, skey):
+                matches[re.sub(matcher,"",skey)] = svalue
+        return matches
 
     def set_setting(self, key: str, value: Any) -> None:
         """
