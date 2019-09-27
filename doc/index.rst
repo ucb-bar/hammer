@@ -15,14 +15,27 @@ Hammer is a physical design framework that wraps around vendor specific technolo
    :caption: Contents:
    :numbered:
 
-   Technology/index
+   Hammer-Basics/index
 
+   :maxdepth: 3
+   :caption: Technology:
+   :numbered:
+   Technology/index
+   
    :maxdepth: 3
    :caption: CAD Tools:
    :numbered:
    CAD-Tools/index
 
+   :maxdepth: 3
+   :caption: Hammer Flow:
+   :numbered:
+   Hammer-Flow/index
 
+   :maxdepth: 3
+   :caption: Hammer Use:
+   :numbered:
+   Hammer-Use/index
 
 Indices and tables
 ==================
