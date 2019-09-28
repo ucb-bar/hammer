@@ -115,47 +115,56 @@ class ASAP7Tech(HammerTechnology):
             shutil.copystat(sram_cdl, tf.name)
             shutil.copy(tf.name, sram_cdl)
 
-    def post_par_script(self, d: dict) -> None:
+    def scale_gds_script(self, gds_file: str) -> str:
         """
-        Scale the final GDS by a factor of 4
-        Called by the `run_par` method
+        Raw Python script to scale GDS.
+        Needs to be written out to a file from par tool, then executed.
+        Needs the standard cell base list to exclude from scaling
+        and the GDS file to scale.
+        Note: Need to escape TCL constructs such as [] and {}!
         """
-        self.logger.info("Scaling down place & routed GDS")
 
-        # load the standard cell list from the gds folder and lop off "_SL" from end
-        cell_list_file = os.path.join(self.extracted_tarballs_dir, "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/cell_list.txt")
-        cell_list = [line.rstrip('\n')[:-3] for line in open(cell_list_file, 'r')]
+        return """
+#!/usr/bin/python3
 
-        # load original_gds
-        par_gds_file = d.get("par.outputs.output_gds")
-        #gds_lib = gdspy.GdsLibrary(infile=par_gds_file)
-        gds_lib = gdspy.GdsLibrary().read_gds(infile=par_gds_file, units='import')
-        # Iterate through cells that aren't part of standard cell library and scale
-        for k,v in gds_lib.cell_dict.items():
-            if not any(cell in k for cell in cell_list):
-                self.logger.info("Scaling down {cell}".format(cell=k))
-                for poly in v.polygons:
-                    poly.scale(0.25)
-                for path in v.paths:
-                    path.scale(0.25)
-                    # gdspy bug: we also need to scale custom path extensions
-                    # Will be fixed by gdspy/pull#101 in next release
-                    for i, end in enumerate(path.ends):
-                        if isinstance(end, tuple):
-                            path.ends[i] = tuple([e*0.25 for e in end])
-                for label in v.labels:
-                    # Bug fix for some EDA tools that didn't set MAG field in gds file
-                    # Maybe this is expected behavior in ASAP7 PDK
-                    # In gdspy/__init__.py: `kwargs["magnification"] = record[1][0]`
-                    label.magnification = 0.25
-                    label.translate(-label.position[0]*0.75, -label.position[1]*0.75)
+# Scale the final GDS by a factor of 4
+# This is a tech hook that should be inserted post write_design
 
-                for ref in v.references:
-                    ref.magnification = 0.25
-                    ref.translate(-ref.origin[0]*0.75, -ref.origin[1]*0.75)
-                    ref.magnification = 1
+import gdspy
+print('Scaling down place & routed GDS')
 
-        # Overwrite original GDS file
-        gds_lib.write_gds(par_gds_file)
+# load the standard cell list from the gds folder and lop off '_SL' from end
+cell_list = \[line.strip()\[:-3\] for line in open('{cell_list_file}', 'r')\]
+
+# load original_gds
+gds_lib = gdspy.GdsLibrary().read_gds(infile='{gds_file}', units='import')
+# Iterate through cells that aren't part of standard cell library and scale
+for k,v in gds_lib.cell_dict.items():
+    if not any(cell in k for cell in cell_list):
+        print('Scaling down ' + k)
+        for poly in v.polygons:
+            poly.scale(0.25)
+        for path in v.paths:
+            path.scale(0.25)
+            # gdspy bug: we also need to scale custom path extensions
+            # Will be fixed by gdspy/pull#101 in next release
+            for i, end in enumerate(path.ends):
+                if isinstance(end, tuple):
+                    path.ends\[i\] = tuple(\[e*0.25 for e in end\])
+        for label in v.labels:
+            # Bug fix for some EDA tools that didn't set MAG field in gds file
+            # Maybe this is expected behavior in ASAP7 PDK
+            # In gdspy/__init__.py: `kwargs\['magnification'\] = record\[1\]\[0\]`
+            label.magnification = 0.25
+            label.translate(-label.position\[0\]*0.75, -label.position\[1\]*0.75)
+
+        for ref in v.references:
+            ref.magnification = 0.25
+            ref.translate(-ref.origin\[0\]*0.75, -ref.origin\[1\]*0.75)
+            ref.magnification = 1
+
+# Overwrite original GDS file
+gds_lib.write_gds('{gds_file}')
+        """.format(cell_list_file=os.path.join(self.extracted_tarballs_dir, 'ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/cell_list.txt'), gds_file=gds_file)
 
 tech = ASAP7Tech()

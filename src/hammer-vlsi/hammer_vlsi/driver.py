@@ -782,10 +782,6 @@ class HammerDriver:
             self.log.fatal(e.args[0])
             return False, {}
 
-        # Run any post par script (tech specified)
-        assert self.tech is not None, "Must have a technology"
-        self.tech.post_par_script(output_config)
-
         return run_succeeded, output_config
 
     @staticmethod
