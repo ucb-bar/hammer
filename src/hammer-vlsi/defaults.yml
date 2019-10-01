@@ -562,12 +562,12 @@ synthesis.submit:
   error_rgxs:             "vlsi.submit.error_rgxs"
   error_ignore_rgxs:      "vlsi.submit.error_ignore_rgxs"
   command_meta:           lazysubst
-  settings_meta:          lazycrossref
-  max_output_lines_meta:  lazysubst
-  max_error_lines_meta:   lazysubst
-  abort_on_error_meta:    lazysubst
-  error_rgxs_meta:        lazycrossref
-  error_ignore_rgxs_meta: lazycrossref
+  settings_meta:          lazytrycrossref
+  max_output_lines_meta:  lazytrysubst
+  max_error_lines_meta:   lazytrysubst
+  abort_on_error_meta:    lazytrysubst
+  error_rgxs_meta:        lazytrycrossref
+  error_ignore_rgxs_meta: lazytrycrossref
 
 #----------------------------------------------------------------------------
 # Place-and-route settings
@@ -694,12 +694,12 @@ par.submit:
   error_rgxs:             "vlsi.submit.error_rgxs"
   error_ignore_rgxs:      "vlsi.submit.error_ignore_rgxs"
   command_meta:           lazysubst
-  settings_meta:          lazycrossref
-  max_output_lines_meta:  lazysubst
-  max_error_lines_meta:   lazysubst
-  abort_on_error_meta:    lazysubst
-  error_rgxs_meta:        lazycrossref
-  error_ignore_rgxs_meta: lazycrossref
+  settings_meta:          lazytrycrossref
+  max_output_lines_meta:  lazytrysubst
+  max_error_lines_meta:   lazytrysubst
+  abort_on_error_meta:    lazytrysubst
+  error_rgxs_meta:        lazytrycrossref
+  error_ignore_rgxs_meta: lazytrycrossref
 
 #----------------------------------------------------------------------------
 # DRC settings
@@ -739,12 +739,12 @@ drc.submit:
   error_rgxs:             "vlsi.submit.error_rgxs"
   error_ignore_rgxs:      "vlsi.submit.error_ignore_rgxs"
   command_meta:           lazysubst
-  settings_meta:          lazycrossref
-  max_output_lines_meta:  lazysubst
-  max_error_lines_meta:   lazysubst
-  abort_on_error_meta:    lazysubst
-  error_rgxs_meta:        lazycrossref
-  error_ignore_rgxs_meta: lazycrossref
+  settings_meta:          lazytrycrossref
+  max_output_lines_meta:  lazytrysubst
+  max_error_lines_meta:   lazytrysubst
+  abort_on_error_meta:    lazytrysubst
+  error_rgxs_meta:        lazytrycrossref
+  error_ignore_rgxs_meta: lazytrycrossref
 
 #----------------------------------------------------------------------------
 # LVS settings
@@ -777,12 +777,12 @@ lvs.submit:
   error_rgxs:             "vlsi.submit.error_rgxs"
   error_ignore_rgxs:      "vlsi.submit.error_ignore_rgxs"
   command_meta:           lazysubst
-  settings_meta:          lazycrossref
-  max_output_lines_meta:  lazysubst
-  max_error_lines_meta:   lazysubst
-  abort_on_error_meta:    lazysubst
-  error_rgxs_meta:        lazycrossref
-  error_ignore_rgxs_meta: lazycrossref
+  settings_meta:          lazytrycrossref
+  max_output_lines_meta:  lazytrysubst
+  max_error_lines_meta:   lazytrysubst
+  abort_on_error_meta:    lazytrysubst
+  error_rgxs_meta:        lazytrycrossref
+  error_ignore_rgxs_meta: lazytrycrossref
 
 #----------------------------------------------------------------------------
 # sram-generator settings
@@ -796,12 +796,12 @@ sram_generator.submit:
   error_rgxs:             "vlsi.submit.error_rgxs"
   error_ignore_rgxs:      "vlsi.submit.error_ignore_rgxs"
   command_meta:           lazysubst
-  settings_meta:          lazycrossref
-  max_output_lines_meta:  lazysubst
-  max_error_lines_meta:   lazysubst
-  abort_on_error_meta:    lazysubst
-  error_rgxs_meta:        lazycrossref
-  error_ignore_rgxs_meta: lazycrossref
+  settings_meta:          lazytrycrossref
+  max_output_lines_meta:  lazytrysubst
+  max_error_lines_meta:   lazytrysubst
+  abort_on_error_meta:    lazytrysubst
+  error_rgxs_meta:        lazytrycrossref
+  error_ignore_rgxs_meta: lazytrycrossref
 
 
 #----------------------------------------------------------------------------
@@ -820,12 +820,12 @@ pcb.submit:
   error_rgxs:             "vlsi.submit.error_rgxs"
   error_ignore_rgxs:      "vlsi.submit.error_ignore_rgxs"
   command_meta:           lazysubst
-  settings_meta:          lazycrossref
-  max_output_lines_meta:  lazysubst
-  max_error_lines_meta:   lazysubst
-  abort_on_error_meta:    lazysubst
-  error_rgxs_meta:        lazycrossref
-  error_ignore_rgxs_meta: lazycrossref
+  settings_meta:          lazytrycrossref
+  max_output_lines_meta:  lazytrysubst
+  max_error_lines_meta:   lazytrysubst
+  abort_on_error_meta:    lazytrysubst
+  error_rgxs_meta:        lazytrycrossref
+  error_ignore_rgxs_meta: lazytrycrossref
 
 #----------------------------------------------------------------------------
 # sim settings
@@ -926,11 +926,11 @@ sim.submit:
   error_rgxs:             "vlsi.submit.error_rgxs"
   error_ignore_rgxs:      "vlsi.submit.error_ignore_rgxs"
   command_meta:           lazysubst
-  settings_meta:          lazycrossref
-  max_output_lines_meta:  lazysubst
-  max_error_lines_meta:   lazysubst
-  abort_on_error_meta:    lazysubst
-  error_rgxs_meta:        lazycrossref
-  error_ignore_rgxs_meta: lazycrossref
+  settings_meta:          lazytrycrossref
+  max_output_lines_meta:  lazytrysubst
+  max_error_lines_meta:   lazytrysubst
+  abort_on_error_meta:    lazytrysubst
+  error_rgxs_meta:        lazytrycrossref
+  error_ignore_rgxs_meta: lazytrycrossref
 
 
