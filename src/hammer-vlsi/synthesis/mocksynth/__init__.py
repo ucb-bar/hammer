@@ -31,6 +31,7 @@ class MockSynth(HammerSynthesisTool, DummyHammerTool):
     def steps(self) -> List[HammerToolStep]:
         return self.make_steps_from_methods([
             self.step1,
+            self.step1a,
             self.step2,
             self.step3,
             self.step4
@@ -47,6 +48,33 @@ class MockSynth(HammerSynthesisTool, DummyHammerTool):
         except PermissionError:
             return False
         return True
+
+    def step1a(self) -> bool:
+        submit_pass = None
+        submit_fail = None
+        try:
+            submit_pass = \
+                self.get_setting("synthesis.mocksynth.fake_submit_pass")
+        except:
+            pass
+
+        try:
+            submit_fail =\
+                self.get_setting("synthesis.mocksynth.fake_submit_fail")
+        except:
+            pass
+
+        try:
+            if submit_pass is not None and submit_pass:
+                self.run_executable(["cat", self.temp_file("step1.txt")], 
+                        cwd=self.run_dir)
+            elif submit_fail is not None and submit_fail:
+                self.run_executable(["i_hope_this_isnt_in_your_path"], 
+                    cwd=self.run_dir)
+        except Exception:
+            return False
+        return True
+
 
     def step2(self) -> bool:
         try:

@@ -137,6 +137,30 @@ foo:
         self.assertEqual(db.get_setting("foo.pipeline"), "yesman")
         self.assertEqual(db.get_setting("foo.uint"), ["1", "2"])
 
+    def test_meta_trysubst(self) -> None:
+        """
+        Test that the meta attribute "trysubst" works on non-string references
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo:
+    flash: null
+    one: true
+    two: 2
+""", is_yaml=True)
+        meta = hammer_config.load_config_from_string("""
+{
+  "foo.pipeline": "${foo.flash}",
+  "foo.pipeline_meta": "trysubst",
+  "foo.uint": ["${foo.one}", "${foo.two}"],
+  "foo.uint_meta": "trysubst"
+}
+""", is_yaml=False)
+        db.update_core([base, meta])
+        self.assertEqual(db.get_setting("foo.flash"), None)
+        self.assertEqual(db.get_setting("foo.pipeline"), None)
+        self.assertEqual(db.get_setting("foo.uint"), [True, 2])
+
     def test_meta_lazysubst(self) -> None:
         """
         Test that the meta attribute "lazysubst" works.
@@ -175,6 +199,46 @@ style: "waterfall"
         self.assertEqual(db.get_setting("foo.reginit"), "WireInit")
         self.assertEqual(db.get_setting("foo.later"), "later")
         self.assertEqual(db.get_setting("foo.methodology"), "agile design")
+
+    def test_meta_lazytrysubst(self) -> None:
+        """
+        Test that the meta attribute "lazytrysubst" works.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo:
+    flash: 10
+    one: 1
+    two: 2
+style: "waterfall"
+""", is_yaml=True)
+        meta = hammer_config.load_config_from_string("""
+{
+  "foo.pipeline": "${foo.flash}",
+  "foo.pipeline_meta": "trysubst",
+  "foo.reg": "Wire",
+  "foo.reginit": "${foo.reg}Init",
+  "foo.reginit_meta": "lazytrysubst",
+  "foo.later": "${later}",
+  "foo.later_meta": "lazytrysubst",
+  "foo.methodology": "${style}",
+  "foo.methodology_meta": "lazytrysubst"
+}
+""", is_yaml=False)
+        project = hammer_config.load_config_from_string("""
+{
+  "later": "later",
+  "style": True
+}
+""", is_yaml=True)
+        db.update_core([base, meta])
+        db.update_project([project])
+        self.assertEqual(db.get_setting("foo.flash"), 10)
+        self.assertEqual(db.get_setting("foo.pipeline"), 10)
+        self.assertEqual(db.get_setting("foo.reginit"), "WireInit")
+        self.assertEqual(db.get_setting("foo.later"), "later")
+        self.assertEqual(db.get_setting("foo.methodology"), True)
+
 
     def test_meta_lazysubst_array(self) -> None:
         """
@@ -280,6 +344,33 @@ my:
         self.assertEqual(db.get_setting("bools"), [False, True])
         self.assertEqual(db.get_setting("indirect.numbers"), False)
 
+    def test_meta_trycrossref(self) -> None:
+        """
+        Test that the meta attribute "trycrossref" works.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+my:
+    numbers: ["1", "2", "3"]
+""", is_yaml=True)
+        meta = hammer_config.load_config_from_string("""
+{
+  "just.numbers": "my.numbers",
+  "just.numbers_meta": "trycrossref",
+  "just.numbers2": [1,3,5],
+  "just.numbers2_meta": "trycrossref",
+  "just.numbers3": null,
+  "just.numbers3_meta": "trycrossref",
+  "just.numbers4": [True, "3"],
+  "just.numbers4_meta": "trycrossref",
+}
+""", is_yaml=True)
+        db.update_core([base, meta])
+        self.assertEqual(db.get_setting("just.numbers"), ["1", "2", "3"])
+        self.assertEqual(db.get_setting("just.numbers2"), [1,3,5])
+        self.assertEqual(db.get_setting("just.numbers3"), None)
+        self.assertEqual(db.get_setting("just.numbers4"), [True, "3"])
+
     def test_meta_lazycrossref(self) -> None:
         """
         Test that lazy crossref works.
@@ -297,6 +388,27 @@ lazy.numbers_meta: lazycrossref
     """, is_yaml=True)
         db.update_core([base, meta])
         self.assertEqual(db.get_setting("lazy.numbers"), ["1", "2", "3"])
+
+    def test_meta_lazytrycrossref(self) -> None:
+        """
+        Test that lazy trycrossref works.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+my:
+    numbers: ["1", "2", "3"]
+    """, is_yaml=True)
+        meta = hammer_config.load_config_from_string("""
+numbers: "my.numbers"
+numbers_meta: trycrossref
+lazy.numbers: "numbers"
+lazy.numbers_meta: lazytrycrossref
+lazy.numbers2: [1,2,3]
+lazy.numbers2_meta: lazytrycrossref
+    """, is_yaml=True)
+        db.update_core([base, meta])
+        self.assertEqual(db.get_setting("lazy.numbers"), ["1", "2", "3"])
+        self.assertEqual(db.get_setting("lazy.numbers2"), [1,2,3])
 
     def test_meta_crossref_errors(self) -> None:
         """

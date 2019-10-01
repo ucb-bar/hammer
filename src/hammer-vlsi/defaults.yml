@@ -96,12 +96,14 @@ vlsi.submit:
   # command's setting, followed by whatever type it takes.
   settings: []
 
-  # how many output lines to buffer in memory. null for unlimited
+  # TODO: how to allow lazysubst with int/bool fields
+  # how many output lines to buffer in memory. "" for unlimited
   max_output_lines: null
-  # how many error lines to buffer in memory. null for unlimited
+  # how many error lines to buffer in memory. "" for unlimited
   max_error_lines: null
   # if exit code != 0, or len(error_lines) > 0, raise exception immediately
-  abort_on_error: "false"
+  # use "true" or "false"
+  abort_on_error: false
 
   # take a guess that any time these show up, its an error. individual tools
   # can override this assumption
@@ -785,7 +787,7 @@ lvs.submit:
 #----------------------------------------------------------------------------
 # sram-generator settings
 #----------------------------------------------------------------------------
-sram_gen.submit:
+sram_generator.submit:
   command:                "${vlsi.submit.command}"
   settings:               "vlsi.submit.settings"
   max_output_lines:       "${vlsi.submit.max_output_lines}"

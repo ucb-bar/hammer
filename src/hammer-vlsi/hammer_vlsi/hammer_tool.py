@@ -26,7 +26,7 @@ from .constraints import *
 from .hammer_vlsi_impl import HammerToolPauseException, HierarchicalMode
 from .hooks import (HammerStepFunction, HammerToolHookAction, HammerToolStep,
                     HookLocation)
-from .submit_command import HammerSubmitCommand
+from .submit_command import HammerSubmitCommand, HammerSubmitResult
 from .units import TemperatureValue, TimeValue, VoltageValue
 
 __all__ = ['HammerTool']
@@ -829,7 +829,7 @@ class HammerTool(metaclass=ABCMeta):
             f.write(new_tcl_contents)
 
     # TODO(edwardw): consider pulling this out so that hammer_tech can also use this
-    def run_executable(self, args: List[str], cwd: str = None) -> str:
+    def run_executable(self, args: List[str], cwd: str = None) -> HammerSubmitResult:
         """
         Run an executable and log the command to the log while also capturing the output.
 

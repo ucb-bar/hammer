@@ -51,25 +51,31 @@ class HammerSubmitCommand:
                                HammerDatabase (e.g. "synthesis" or "par").
         :param database: The HammerDatabase object with tool settings
         """
-        db                = database
+        def safe_get( key, default) -> Any:
+            try:
+                return database.get_setting(key)
+            except:
+                return default
+
+        # TODO: should these be required to exist?
         ns                = "{}.submit".format(tool_namespace)
-        mode              = db.get_setting(ns+".command", nullvalue="none")
-        settings          = db.get_setting(ns+".settings", nullvalue=[]) 
-        max_outputs       = db.get_setting(ns+".max_output_lines")
-        max_errors        = db.get_setting(ns+".max_error_lines")
-        abort_on_error    = db.get_setting(ns+".abort_on_error")
-        error_rgxs        = db.get_setting(ns+".error_rgxs", nullvalue=[])
-        error_ignore_rgxs = db.get_setting(ns+".error_ignore_rgxs", nullvalue=[])
+        mode              = safe_get(ns+".command", "none")
+        settings          = safe_get(ns+".settings", [])
+        max_outputs       = safe_get(ns+".max_output_lines", None)
+        max_errors        = safe_get(ns+".max_error_lines", None)
+        abort_on_error    = safe_get(ns+".abort_on_error", False)
+        error_rgxs        = safe_get(ns+".error_rgxs", [])
+        error_ignore_rgxs = safe_get(ns+".error_ignore_rgxs", [])
 
         # Settings is a List[Dict[str, Dict[str, Any]]] object. The first Dict
         # key is the submit command name.
-        # Its value is a Dict[str, Any] comprising the settings for that command.
+        # Its value is a Dict[str, Any] comprising the settings for that 
+        # command.
         # The top-level list elements are merged from 0 to the last index, with
         # later indices overriding previous entries.
         def combine_settings(settings: List[Dict[str, Dict[str, Any]]], 
                 key: str) -> Dict[str, Any]:
             return reduce(add_dicts, map(lambda d: d[key], settings), {})
-        settings = combine_settings(settings, mode)
 
         cmd = None
         if (mode == "none") or (mode == "local"):
@@ -77,14 +83,15 @@ class HammerSubmitCommand:
             cmd.settings = None
         elif mode == "lsf":
             cmd = HammerLSFSubmitCommand()
+            settings = combine_settings(settings, mode)
             cmd.settings = HammerLSFSettings.from_setting(settings)
         else:
             raise NotImplementedError(
                 "Submit command key for {0}: {1} is not implemented".format(
                     tool_namespace, submit_command_mode))
 
-        cmd.max_outputs       = int(max_errors) if len(max_errors) else None
-        cmd.max_errors        = int(max_errors) if len(max_errors) else None
+        cmd.max_outputs       = max_outputs
+        cmd.max_errors        = max_errors
         cmd.abort_on_error    = abort_on_error
         cmd.error_rgxs        = error_rgxs
         cmd.error_ignore_rgxs = error_ignore_rgxs
@@ -128,6 +135,7 @@ class HammerSubmitCommand:
                     working directory).
         :return: The command output
         """
+        cwd = cwd if cwd is not None else os.getcwd()
         prog_tag = self.get_program_tag(args)
 
         subprocess_logger = logger.context("Exec " + prog_tag)
@@ -147,22 +155,22 @@ class HammerSubmitCommand:
         with open(log_file, "w") as f:
             def print_to_all(line):
                 f.write(line)
-                subprocess_logger.debug(line)
+                subprocess_logger.debug(line.rstrip())
                 if (self.max_outputs is not None) and \
-                        (len(output_lines) <= int(self.max_outputs)):
-                    output_lines.append(line)
-                else:
+                        (len(output_lines) > int(self.max_outputs)):
                     output_clipped = True
+                else:
+                    output_lines.append(line.rstrip())
 
             while True:
                 line = proc.stdout.readline().decode("utf-8")
                 if line != '':
-                    print_to_all(line.rstrip())
+                    print_to_all(line)
                 else:
                     break
 
-            if output_clipped:
-                print_to_all("[HAMMER]: max output lines exeeded...")
+        if output_clipped:
+            print_to_all("[HAMMER]: max output lines exeeded...")
 
         proc.communicate()
         code = proc.returncode
@@ -175,15 +183,17 @@ class HammerSubmitCommand:
         # check the output_lines for matching error strings
         error_lines = []
         for line in output_lines:
-            if (self.max_errors is not None) and \
-                    (len(error_lines) > int(self.max_errors)):
-                error_lines.append("[HAMMER]: max errors exceeded...")
-                break
-            if len(list(filter(lambda r: re.match(r, line), error_rgxs))) > 0:
-                if len(list(filter(lambda r: re.match(r, line), 
-                        error_ignore_rgxs))) == 0:
+            if len(list(filter(lambda r: re.search(r, line), 
+                    self.error_rgxs))) > 0:
+                if len(list(filter(lambda r: re.search(r, line), 
+                        self.error_ignore_rgxs))) == 0:
                     success = False
-                    error_lines.append(line)
+                    if (self.max_errors is not None) and \
+                            (len(error_lines) >= int(self.max_errors)):
+                        error_lines.append("[HAMMER]: max errors exceeded...")
+                        break
+                    else:
+                        error_lines.append(line)
 
         if self.abort_on_error and (len(error_lines) > 0):
             raise ChildProcessError("Failed command: {}, error in output={}"

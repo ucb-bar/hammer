@@ -1391,18 +1391,6 @@ class HasSDCSupport(HammerTool):
         """Generate a fragment for I/O pin constraints."""
         output = []  # type: List[str]
 
-        default_output_load = \
-            CapacitanceValue(self.get_setting("vlsi.inputs.default_output_load"))
-
-        default_max_transition = \
-            TimeValue(self.get_setting("vlsi.inputs.default_max_transition"))
-
-        default_clock_max_transition = \
-            TimeValue(self.get_setting("vlsi.inputs.default_clock_max_transition"))
-
-        default_max_fanout = \
-            int(self.get_setting("vlsi.inputs.default_max_fanout"))
-
         #--------------------------------------------------------------------
 
         # set time unit in sdc. this is supported in genus
@@ -1410,18 +1398,41 @@ class HasSDCSupport(HammerTool):
         output.append("set_load_unit -picofarads 1.0")
 
         # Specify default load, transitions
-        output.append("set_load {load} [all_outputs]".format(
-            load=default_output_load.value_in_units("pf")
-        ))
-        output.append("set_max_transition {slew} [current_design]".format(
-            slew=default_max_transition.value_in_units("ns")
-        ))
-        output.append("set_max_transition {slew} [all_clocks]".format(
-            slew=default_clock_max_transition.value_in_units("ns")
-        ))
-        output.append("set_max_fanout {slew} [current_design]".format(
-            slew=default_max_fanout
-        ))
+        try:
+            default_output_load = \
+                CapacitanceValue(self.get_setting("vlsi.inputs.default_output_load"))
+            output.append("set_load {load} [all_outputs]".format(
+                load=default_output_load.value_in_units("pf")
+            ))
+        except:
+            pass
+
+        try:
+            default_max_transition = \
+                TimeValue(self.get_setting("vlsi.inputs.default_max_transition"))
+            output.append("set_max_transition {slew} [current_design]".format(
+                slew=default_max_transition.value_in_units("ns")
+            ))
+        except:
+            pass
+
+        try:
+            default_clock_max_transition = \
+                TimeValue(self.get_setting("vlsi.inputs.default_clock_max_transition"))
+            output.append("set_max_transition {slew} [all_clocks]".format(
+                slew=default_clock_max_transition.value_in_units("ns")
+            ))
+        except:
+            pass
+
+        try:
+            default_max_fanout = \
+                int(self.get_setting("vlsi.inputs.default_max_fanout"))
+            output.append("set_max_fanout {slew} [current_design]".format(
+                slew=default_max_fanout
+            ))
+        except:
+            pass
 
         # Also specify loads for specific pins.
         for load in self.get_output_load_constraints():
