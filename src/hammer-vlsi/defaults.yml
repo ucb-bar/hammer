@@ -96,7 +96,6 @@ vlsi.submit:
   # command's setting, followed by whatever type it takes.
   settings: []
 
-  # TODO: how to allow lazysubst with int/bool fields
   # how many output lines to buffer in memory. "" for unlimited
   max_output_lines: null
   # how many error lines to buffer in memory. "" for unlimited
@@ -106,7 +105,7 @@ vlsi.submit:
   abort_on_error: false
 
   # take a guess that any time these show up, its an error. individual tools
-  # can override this assumption
+  # can override this assumption. use any string that is valid in python regex
   error_rgxs: ["ERROR:", "error:", "Error:"]
   error_ignore_rgxs: []
 
