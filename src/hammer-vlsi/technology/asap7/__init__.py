@@ -10,7 +10,6 @@ import os
 import tempfile
 import shutil
 
-import gdspy
 from hammer_tech import HammerTechnology
 
 class ASAP7Tech(HammerTechnology):
@@ -19,6 +18,10 @@ class ASAP7Tech(HammerTechnology):
     This class is loaded by function `load_from_json`, and will pass the `try` in `importlib`.
     """
     def post_install_script(self) -> None:
+        try:
+            import gdspy
+        except ImportError:
+            self.logger.error("Check your gdspy installation! Unable to hack ASAP7 PDK. Wipe your tech cache before running Hammer again.")
         self.remove_duplication_in_drc_lvs()
         self.generate_multi_vt_gds()
         self.fix_sram_cdl_bug()
@@ -124,14 +127,19 @@ class ASAP7Tech(HammerTechnology):
         Note: Need to escape TCL constructs such as [] and {}!
         """
 
-        return """
-#!/usr/bin/python3
+        return """#!/usr/bin/python3
 
 # Scale the final GDS by a factor of 4
 # This is a tech hook that should be inserted post write_design
 
-import gdspy
-print('Scaling down place & routed GDS')
+import sys
+
+try:
+    import gdspy
+    print('Scaling down place & routed GDS')
+except ImportError:
+    print('Check your gdspy installation!')
+    sys.exit()
 
 # load the standard cell list from the gds folder and lop off '_SL' from end
 cell_list = \[line.strip()\[:-3\] for line in open('{cell_list_file}', 'r')\]
