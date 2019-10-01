@@ -217,6 +217,7 @@ class HammerDriver:
             self.database.get_setting("vlsi.inputs.hierarchical.mode"))
         syn_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
         syn_tool.top_module = self.database.get_setting("synthesis.inputs.top_module", nullvalue="")
+        syn_tool.is_physical = self.database.get_setting("synthesis.inputs.is_physical")
         syn_tool.submit_command = HammerSubmitCommand.get("synthesis", self.database)
         syn_tool.output_all_regs = []
         syn_tool.output_seq_cells = []

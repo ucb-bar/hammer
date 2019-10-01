@@ -1123,6 +1123,29 @@ class HammerToolHooksTest(unittest.TestCase):
                     self.assertFalse(os.path.exists(file))
 
 
+    # do the following for local and lsf:
+        # dummy syn/par/drc/lvs tools
+            # command fails when exit code is not 0 and abort set to true
+            # command succeeds when exit code is not 0 and abort set to false
+            # command succeeds when exit code is 0
+
+            # should error when an error regex occurs
+            # should not error when user overrides error_rgxs and an error regex occurs
+            # should not error when user overrides ignore_error_rgxs and an error regex occurs
+            # should error when user overrides error_rgxs and an error regex occurs
+            # should not error when user overrides error_rgx and ignore_error_rgxs and an error regex occurs
+
+            # should not error when user overrides syn:error_rgxs and an error regex occurs
+            # should not error when user overrides syn:ignore_error_rgxs and an error regex occurs
+            # should error when user overrides syn:error_rgxs and an error regex occurs
+            # should not error when user overrides syn:error_rgx and syn:ignore_error_rgxs and an error regex occurs
+
+            # should capture max_output_lines if set
+            # should capture max_error_lines if set
+
+
+
+
 class HammerSubmitCommandTestContext:
 
     def __init__(self, test: unittest.TestCase, cmd_type: str) -> None:

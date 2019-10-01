@@ -14,7 +14,7 @@ from typing import Dict, NamedTuple, Optional, List, Any, Tuple, Union, cast
 
 from hammer_utils import reverse_dict, get_or_else, add_dicts
 from hammer_tech import MacroSize
-from .units import TimeValue, VoltageValue, TemperatureValue
+from .units import TimeValue, VoltageValue, TemperatureValue, CapacitanceValue
 
 from decimal import Decimal
 import math
@@ -372,7 +372,7 @@ ClockPort = NamedTuple('ClockPort', [
 
 OutputLoadConstraint = NamedTuple('OutputLoadConstraint', [
     ('name', str),
-    ('load', float)
+    ('load', CapacitanceValue)
 ])
 
 
