@@ -25,6 +25,7 @@ from hammer_utils import (LEFUtils, add_lists, deeplist, get_or_else,
 from library_filter import LibraryFilter
 from filters import LibraryFilterHolder
 from stackup import RoutingDirection, WidthSpacingTuple, Metal, Stackup
+from specialcells import CellType, SpecialCell
 
 # Holds the list of pre-implemented filters.
 # Access it like hammer_tech.filters.lef_filter
@@ -948,6 +949,13 @@ class HammerTechnology:
         """
         # TODO(ucb-bar/hammer#378) use hammer units for length and area
         return self.get_shrink_factor() * length
+
+    def get_special_cell_by_type(self, cell_type: CellType) -> List[SpecialCell]:
+        if self.config.special_cells is not None:
+            cell_list = [SpecialCell.from_setting(sc) for sc in list(self.config.special_cells)]
+            return [fc for fc in cell_list if fc.cell_type == cell_type]
+        else:
+            raise ValueError("Tech JSON does not specify any special cells")
 
     def get_grid_unit(self) -> Decimal:
         """

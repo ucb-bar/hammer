@@ -315,6 +315,28 @@
           }
         }
       }
-    }
+    },
+    "special cells": {
+      "type": "array",
+      "items" : {
+        "title": "SpecialCell",
+        "type": "object",
+        "properties": {
+          "cell_type": {
+             "type": "string"
+          },
+          "name": {
+             "type": "array",
+             "items": {
+               "title": "string",
+               "type": "string"
+             }
+          },
+          "size": {
+             "type": "number"
+          }
+        }
+      }
+   }
   }
 }

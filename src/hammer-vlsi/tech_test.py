@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Optional
 
 from hammer_logging import HammerVLSILogging
 import hammer_tech
-from hammer_tech import LibraryFilter, Stackup, Metal, WidthSpacingTuple, DRCDeck, LVSDeck
+from hammer_tech import LibraryFilter, Stackup, Metal, WidthSpacingTuple, SpecialCell, CellType, DRCDeck, LVSDeck
 from hammer_utils import deepdict
 from hammer_config import HammerJSONEncoder
 from decimal import Decimal
@@ -601,6 +601,46 @@ END LIBRARY
         # Cleanup
         shutil.rmtree(tech_dir_base)
 
+    def test_special_cells(self) -> None:
+        import hammer_config
+
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+
+        def add_special_cells(in_dict: Dict[str, Any]) -> Dict[str, Any]:
+            out_dict = deepdict(in_dict)
+            out_dict.update({"special_cells": [
+                                {"name": "cell1", "cell_type": "tiehicell"},
+                                {"name": "cell2", "cell_type": "tiehicell", "size": 1.5},
+                                {"name": "cell3", "cell_type": "iofiller", "size": 0.5},
+                                {"name": "cell4", "cell_type": "stdfiller"},
+                                {"name": "cell5", "cell_type": "endcap"},
+                             ]})
+            return out_dict
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_special_cells)
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
+        tech.cache_dir = tech_dir
+
+        tool = DummyTool()
+        tool.technology = tech
+        database = hammer_config.HammerDatabase()
+        tool.set_database(database)
+
+        self.assertEqual(tool.technology.get_special_cell_by_type(CellType.TieHiCell),
+                [SpecialCell(name=list("cell1"), cell_type=CellType.TieHiCell, size=None),
+                 SpecialCell(name=list("cell2"), cell_type=CellType.TieHiCell, size=Decimal(1.5))
+                ])
+
+        self.assertEqual(tool.technology.get_special_cell_by_type(CellType.IOFiller),
+                [SpecialCell(name=list("cell3"), cell_type=CellType.IOFiller, size=Decimal(0.5)),
+                ])
+
+        self.assertEqual(tool.technology.get_special_cell_by_type(CellType.StdFiller),
+                [SpecialCell(name=list("cell4"), cell_type=CellType.StdFiller, size=None)])
+
+        self.assertEqual(tool.technology.get_special_cell_by_type(CellType.EndCap),
+                [SpecialCell(name=list("cell5"), cell_type=CellType.EndCap, size=None)])
+
     def test_drc_lvs_decks(self) -> None:
         """
         Test that getting the DRC & LVS decks works as expected.
@@ -679,7 +719,6 @@ END LIBRARY
             tech.get_stackup_by_name(test_stackup["name"]),
             Stackup.from_setting(tech.get_grid_unit(), test_stackup)
         )
-
 
 class StackupTestHelper:
 
