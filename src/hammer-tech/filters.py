@@ -100,7 +100,7 @@ class LibraryFilterHolder:
         would like to filter for as well (for extra speedup)
         """
         def paths_func(lib: "Library") -> List[str]:
-            if len(vts) != 0:
+            if len(vts) > 0:
                 has_vt = False
                 for vt in vts:
                     for provided in lib.provides:
