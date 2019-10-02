@@ -428,7 +428,7 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
             else:
                 return x
 
-        if type(value) == str:
+        if isinstance(value, str):
             return [change_if_target(value)], "trycrossref"
         else:
             raise NotImplementedError("trycrossref not implemented on other types yet")
