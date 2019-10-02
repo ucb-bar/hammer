@@ -93,7 +93,7 @@ class LibraryFilterHolder:
         return LibraryFilter.new("timing_lib", "CCS/NLDM timing lib (ASCII .lib)",
                                  paths_func=paths_func, is_file=True)
 
-    def timing_lib_nldm_filter(self, vts:List[str]=[]) -> LibraryFilter:
+    def timing_lib_nldm_filter(self, vts: Optional[List[str]] = None) -> LibraryFilter:
         """
         Select ASCII .lib timing libraries. Only chooses NLDM. Only use this
         for pipe-cleaning/exploration. Additionally, specify which vts you
