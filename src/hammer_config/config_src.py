@@ -408,7 +408,7 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
         changed it to [1,2,3], this will be valid, and [1,2,3] is the final
         value returned.
         """
-        if type(value) == str:
+        if isinstance(value, str):
             if value in config_dict:
                 config_dict[key] = config_dict[value]
         else:
