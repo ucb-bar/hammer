@@ -89,6 +89,7 @@ vlsi.core:
 vlsi.submit:
   # - The submit command to use. "none", "local", or null will run on the 
   #   current host. See hammer_submit_command.py for other options.
+  # type: str
   command: "local"
   # type: List[Dict[str, Dict[str, Any]]]
   # The list substitutes settings in order of appearance, and the first 
