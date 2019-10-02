@@ -5,6 +5,7 @@
 #
 #  See LICENSE for licence details.
 
+import sys
 import re
 import os
 import tempfile
@@ -21,7 +22,9 @@ class ASAP7Tech(HammerTechnology):
         try:
             import gdspy
         except ImportError:
-            self.logger.error("Check your gdspy installation! Unable to hack ASAP7 PDK. Wipe your tech cache before running Hammer again.")
+            self.logger.error("Check your gdspy installation! Unable to hack ASAP7 PDK.")
+            shutil.rmtree(self.cache_dir)
+            sys.exit()
         self.remove_duplication_in_drc_lvs()
         self.generate_multi_vt_gds()
         self.fix_sram_cdl_bug()
