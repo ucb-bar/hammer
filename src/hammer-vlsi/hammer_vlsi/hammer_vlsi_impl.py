@@ -667,13 +667,16 @@ class HammerPlaceAndRouteTool(HammerTool):
                 spacing, width = layer.min_spacing_and_max_width_from_pitch(one_strap_pitch)
                 strap_start = spacing / 2 + layer.offset
             else:
-                width, spacing, strap_start = layer.get_width_spacing_start_twwt(track_width, force_even=True)
+                width, spacing, strap_start = layer.get_width_spacing_start_twwt(track_width, force_even=True, logger=self.logger.context(layer_name))
         else:
-            width, spacing, strap_start = layer.get_width_spacing_start_twt(track_width)
+            width, spacing, strap_start = layer.get_width_spacing_start_twt(track_width, logger=self.logger.context(layer_name))
             spacing = 2*spacing + (track_spacing - 1) * layer.pitch + layer.min_width
         offset = track_offset + track_start * layer.pitch + strap_start
         assert width > Decimal(0), "Width must be greater than zero. You probably have a malformed tech plugin on layer {}.".format(layer_name)
         assert spacing > Decimal(0), "Spacing must be greater than zero. You probably have a malformed tech plugin on layer {}.".format(layer_name)
+        density = Decimal(len(nets)) * width / pitch * Decimal(100)
+        if density > Decimal(85):
+            self.logger.warning("CAUTION! Your {layer} power strap density is {density}%. Check your technology's DRM to see if this violates maximum density rules.".format(layer=layer_name, density=density))
         return self.specify_power_straps(layer_name, bottom_via_layer, blockage_spacing, pitch, width, spacing, offset, bbox, nets, add_pins)
 
     def specify_all_power_straps_by_tracks(self, layer_names: List[str], ground_net: str, power_nets: List[str], power_weights: List[int], bbox: Optional[List[Decimal]], pin_layers: List[str]) -> List[str]:
@@ -879,6 +882,10 @@ class HammerDRCTool(HammerSignoffTool):
         assert isinstance(res, list)
         return res
 
+    def get_drc_decks(self) -> List[hammer_tech.DRCDeck]:
+        """ Get all DRC decks for this tool. """
+        return self.technology.get_drc_decks_for_tool(self.get_setting("vlsi.core.drc_tool"))
+
     def get_additional_drc_text(self) -> str:
         """ Get the additional custom DRC command text to add after the boilerplate commands at the top of the DRC run file. """
 
@@ -990,6 +997,10 @@ class HammerLVSTool(HammerSignoffTool):
     def lvs_results(self) -> List[str]:
         """ Return the LVS issue descriptions for each issue. An empty list means LVS passes. """
         pass
+
+    def get_lvs_decks(self) -> List[hammer_tech.LVSDeck]:
+        """ Get all the LVS decks for this tool. """
+        return self.technology.get_lvs_decks_for_tool(self.get_setting("vlsi.core.lvs_tool"))
 
     def get_additional_lvs_text(self) -> str:
         """ Get the additional custom LVS command text to add after the boilerplate commands at the top of the LVS run file. """
@@ -1301,17 +1312,18 @@ class HasSDCSupport(HammerTool):
         ungrouped_clocks = [] # type: List[str]
 
         clocks = self.get_clock_ports()
+        time_unit = self.get_time_unit().value_prefix + self.get_time_unit().unit
         for clock in clocks:
             # TODO: FIXME This assumes that library units are always in ns!!!
             if get_or_else(clock.generated, False):
                 output.append("create_generated_clock -name {n} -source {m_path} -divide_by {div} {path}".
                         format(n=clock.name, m_path=clock.source_path, div=clock.divisor, path=clock.path))
             elif clock.path is not None:
-                output.append("create_clock {0} -name {1} -period {2}".format(clock.path, clock.name, clock.period.value_in_units("ns")))
+                output.append("create_clock {0} -name {1} -period {2}".format(clock.path, clock.name, clock.period.value_in_units(time_unit)))
             else:
-                output.append("create_clock {0} -name {0} -period {1}".format(clock.name, clock.period.value_in_units("ns")))
+                output.append("create_clock {0} -name {0} -period {1}".format(clock.name, clock.period.value_in_units(time_unit)))
             if clock.uncertainty is not None:
-                output.append("set_clock_uncertainty {1} [get_clocks {0}]".format(clock.name, clock.uncertainty.value_in_units("ns")))
+                output.append("set_clock_uncertainty {1} [get_clocks {0}]".format(clock.name, clock.uncertainty.value_in_units(time_unit)))
             if clock.group is not None:
                 if clock.group in groups:
                     groups[clock.group].append(clock.name)
@@ -1350,7 +1362,7 @@ class HasSDCSupport(HammerTool):
         # Also specify delays for specific pins.
         for delay in self.get_delay_constraints():
             output.append("set_{direction}_delay {delay} -clock {clock} [get_port \"{name}\"]".format(
-                delay=delay.delay.value_in_units("ns"),
+                delay=delay.delay.value_in_units(self.get_time_unit().value_prefix + self.get_time_unit().unit),
                 clock=delay.clock,
                 direction=delay.direction,
                 name=delay.name

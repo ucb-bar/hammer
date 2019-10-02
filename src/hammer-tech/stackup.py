@@ -6,11 +6,13 @@
 #
 #  See LICENSE for licence details.
 
-from enum import Enum
-from typing import List, NamedTuple, Tuple, Dict
-from hammer_utils import reverse_dict, coerce_to_grid
 from decimal import Decimal
+from enum import Enum
 from functools import partial
+from typing import Any, List, NamedTuple, Tuple, Dict, Optional
+
+from hammer_utils import reverse_dict, coerce_to_grid
+from hammer_logging import HammerVLSILoggingContext
 
 class RoutingDirection(Enum):
     """
@@ -106,6 +108,7 @@ class Metal(NamedTuple('Metal', [
         ('pitch', Decimal),
         ('offset', Decimal),
         ('power_strap_widths_and_spacings', List[WidthSpacingTuple]),
+        ('power_strap_width_table', List[Decimal]),
         # Note: grid_unit is not currently parsed as part of the Metal data structure!
         # See #379
         ('grid_unit', Decimal)
@@ -126,6 +129,8 @@ class Metal(NamedTuple('Metal', [
             (0 = first track is on an axis).
     power_strap_widths_and_spacings: A list of WidthSpacingTuples that specify the minimum
                                      spacing rules for an infinitely long wire of variying width.
+    power_strap_width_table: A list of allowed metal widths in the technology.
+                             Widths smaller than the last number must be quantized to a value in the table.
     grid_unit: The fixed-point decimal value of a minimum grid unit (e.g. 1nm = 0.001).
                For most technologies, this comes from the technology plugin and is the same for all layers.
     """
@@ -134,10 +139,10 @@ class Metal(NamedTuple('Metal', [
     @staticmethod
     def from_setting(grid_unit: Decimal, d: dict) -> "Metal":
         """
-        Return a Metal object from a dict with keys "name", "index", "direction", "min_width", "max_width", "pitch", "offset", and "power_strap_widths_and_spacings"
+        Return a Metal object from a dict with keys "name", "index", "direction", "min_width", "max_width", "pitch", "offset", "power_strap_widths_and_spacings", and "power_strap_width_table"
 
         :param grid_unit: The manufacturing grid unit in um
-        :param d: A dict containing the keys "name", "index", "direction", "min_width", "max_width", "pitch", "offset", and "power_strap_widths_and_spacings"
+        :param d: A dict containing the keys "name", "index", "direction", "min_width", "max_width", "pitch", "offset", "power_strap_widths_and_spacings", and "power_strap_width_table"
         """
         return Metal(
             grid_unit=grid_unit,
@@ -148,8 +153,16 @@ class Metal(NamedTuple('Metal', [
             max_width=coerce_to_grid(d["max_width"] if "max_width" in d and d["max_width"] else 0.0, grid_unit),
             pitch=coerce_to_grid(d["pitch"], grid_unit),
             offset=coerce_to_grid(d["offset"], grid_unit),
-            power_strap_widths_and_spacings=WidthSpacingTuple.from_list(grid_unit, d["power_strap_widths_and_spacings"])
+            power_strap_widths_and_spacings=WidthSpacingTuple.from_list(grid_unit, d["power_strap_widths_and_spacings"]),
+            power_strap_width_table=Metal.power_strap_widths_from_list(grid_unit, d["power_strap_width_table"] if "power_strap_width_table" in d and d["power_strap_width_table"] else [])
         )
+
+    @staticmethod
+    def power_strap_widths_from_list(grid_unit: Decimal, l: List[Any]) -> List[Decimal]:
+        """
+        Read and cocerce wire widths from the technology LEF width table.
+        """
+        return sorted(map(lambda w: coerce_to_grid(w, grid_unit), map(float, l)))
 
     def get_spacing_for_width(self, width: Decimal) -> Decimal:
         """
@@ -225,7 +238,40 @@ class Metal(NamedTuple('Metal', [
         """
         return self.min_spacing_and_max_width_from_pitch(pitch)[1]
 
-    def get_width_spacing_start_twt(self, tracks: int) -> Tuple[Decimal, Decimal, Decimal]:
+    def quantize_to_width_table(self, width: Decimal, layer: str, logger: Optional[HammerVLSILoggingContext]) -> Decimal:
+        """
+        Compare a desired width to the width table, if specified for a technology.
+        Will return the allowable width smaller than or equal to the desired width,
+        except if the desired width is greater than or equal to the last width in the width table.
+        Issues a logger warning for the user if the returned width was quantized.
+        """
+        width_table = self.power_strap_width_table
+        if len(width_table) == 0:
+            qwidth = width
+        else:
+            for i, w in enumerate(width_table):
+                if width > w:
+                    # The last entry in table is special: width can be greater
+                    # than or equal to this number.
+                    if i == len(width_table) - 1:
+                        qwidth = width
+                        break
+                    else:
+                        continue
+                elif width == w:
+                    qwidth = w
+                    break
+                else:
+                    if logger is not None:
+                        logger.warning("The desired power strap width {dw} on {lay} was quantized down to {fw} based on the technology's width table. Please check your power grid.".format(dw=str(width), lay=layer, fw=str(width_table[i-1])))
+                    qwidth = width_table[i-1]
+                    break
+        return qwidth
+
+    def get_width_spacing_start_twt(self,
+                                    tracks: int,
+                                    logger: Optional[HammerVLSILoggingContext]
+                                   ) -> Tuple[Decimal, Decimal, Decimal]:
         """
         This method will return the maximum width a wire can be in order
         to consume a given number of routing tracks.
@@ -268,9 +314,9 @@ class Metal(NamedTuple('Metal', [
         assert int(width / self.grid_unit) % 2 == 0, (
             "This calculation should always produce an even width")
         start = self.min_width / 2 + spacing
-        return (width, spacing, start)
+        return (self.quantize_to_width_table(width, self.name, logger), spacing, start)
 
-    def get_width_spacing_start_twwt(self, tracks: int, force_even: bool = False) -> Tuple[Decimal, Decimal, Decimal]:
+    def get_width_spacing_start_twwt(self, tracks: int, logger: Optional[HammerVLSILoggingContext], force_even: bool = False) -> Tuple[Decimal, Decimal, Decimal]:
         """
         This method will return the maximum width a wire can be in order
         to consume a given number of routing tracks.
@@ -308,9 +354,10 @@ class Metal(NamedTuple('Metal', [
         if force_even and int(width / self.grid_unit) % 2 == 1:
             width = width - self.grid_unit
             start = start + self.grid_unit
-        return (width, spacing, start)
+        return (self.quantize_to_width_table(width, self.name, logger), spacing, start)
 
-    # TODO implement M W X* W M style wires, where X is slightly narrower than W and centered on-grid
+    # TODO implement M W X* W M style wires, where X is slightly narrower
+    # than W and centered on-grid.
 
 
 class Stackup(NamedTuple('Stackup', [
