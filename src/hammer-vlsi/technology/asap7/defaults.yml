@@ -40,6 +40,10 @@ vlsi:
     # Set the layer that blocks vias under bumps
     bump_block_cut_layer: "V9"
 
+    # Set the interval and offset for tap cells
+    tap_cell_interval: "50"
+    tap_cell_offset: "10.564"
+
 
 technology.core:
   # This key should exist in the stackups list in the tech json
