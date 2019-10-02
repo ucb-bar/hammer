@@ -93,6 +93,28 @@ class LibraryFilterHolder:
         return LibraryFilter.new("timing_lib", "CCS/NLDM timing lib (ASCII .lib)",
                                  paths_func=paths_func, is_file=True)
 
+    def timing_lib_nldm_filter(self, vts: Optional[List[str]] = None) -> LibraryFilter:
+        """
+        Select ASCII .lib timing libraries. Only chooses NLDM. Only use this
+        for pipe-cleaning/exploration. Additionally, specify which vts you
+        would like to filter for as well (for extra speedup)
+        """
+        def paths_func(lib: "Library") -> List[str]:
+            if len(vts) > 0:
+                has_vt = False
+                for vt in vts:
+                    for provided in lib.provides:
+                        has_vt = has_vt or (provided.vt == vt)
+                if not(has_vt):
+                    return []
+            if lib.nldm_liberty_file is not None:
+                return [lib.nldm_liberty_file]
+            return []
+
+        return LibraryFilter.new("timing_lib_nldm", 
+                             "NLDM timing lib (liberty ASCII .lib)",
+                             paths_func=paths_func, is_file=True)
+
     @property
     def timing_lib_with_ecsm_filter(self) -> LibraryFilter:
         """
@@ -165,6 +187,29 @@ class LibraryFilterHolder:
             return 100  # put it behind
 
         return LibraryFilter.new("lef", "LEF physical design layout library", is_file=True, filter_func=filter_func,
+                                 paths_func=paths_func, sort_func=sort_func)
+
+    @property
+    def tech_lef_filter(self) -> LibraryFilter:
+        """
+        Select tech-LEF files for physical layout.
+        """
+
+        def filter_func(lib: "Library") -> bool:
+            return (lib.lef_file is not None) and \
+                (lib.provides is not None) and \
+                (len(list(filter(lambda p: p.lib_type == "technology", 
+                    lib.provides))) > 0)
+
+        def paths_func(lib: "Library") -> List[str]:
+            assert lib.lef_file is not None
+            return [lib.lef_file]
+
+        def sort_func(lib: "Library"):
+            return 0
+
+        return LibraryFilter.new("lef", "LEF physical design layout library", 
+                                 is_file=True, filter_func=filter_func,
                                  paths_func=paths_func, sort_func=sort_func)
 
     @property

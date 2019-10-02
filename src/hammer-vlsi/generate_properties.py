@@ -110,25 +110,27 @@ def main(args) -> int:
     parsed_args = parser.parse_args(args[1:])
 
     HammerSynthesisTool = Interface(module="HammerSynthesisTool",
-                                    filename="hammer_vlsi/hammer_vlsi_impl.py",
-                                    inputs=[
-                                        InterfaceVar("input_files", "List[str]",
-                                                     "input collection of source RTL files (e.g. *.v)")
-                                    ],
-                                    outputs=[
-                                        InterfaceVar("output_files", "List[str]",
-                                                     "output collection of mapped (post-synthesis) RTL files"),
-                                        InterfaceVar("output_sdc", "str",
-                                                     "(optional) output post-synthesis SDC constraints file"),
-                                        InterfaceVar("output_all_regs", "List[str]",
-                                                     "output list of all registers in the design with output pin for gate level simulation"),
-                                        InterfaceVar("output_seq_cells", "List[str]",
-                                                     "output collection of all sequential standard cells in design"),
-                                        InterfaceVar("sdf_file", "str",
-                                                     "output SDF file to be read for timing annotated gate level sims")
-                                        # TODO: model CAD junk
-                                    ]
-                                    )
+        filename="hammer_vlsi/hammer_vlsi_impl.py",
+        inputs=[
+            InterfaceVar("input_files", "List[str]",
+                         "input collection of source RTL files (e.g. *.v)"),
+            InterfaceVar("is_physical", "bool",
+                         "true if the synthesis tool should use lef/def for PLE")
+        ],
+        outputs=[
+            InterfaceVar("output_files", "List[str]",
+                         "output collection of mapped (post-synthesis) RTL files"),
+            InterfaceVar("output_sdc", "str",
+                         "(optional) output post-synthesis SDC constraints file"),
+            InterfaceVar("output_all_regs", "List[str]",
+                         "output list of all registers in the design with output pin for gate level simulation"),
+            InterfaceVar("output_seq_cells", "List[str]",
+                         "output collection of all sequential standard cells in design"),
+            InterfaceVar("sdf_file", "str",
+                         "output SDF file to be read for timing annotated gate level sims")
+            # TODO: model CAD junk
+        ]
+        )
 
     HammerPlaceAndRouteTool = Interface(module="HammerPlaceAndRouteTool",
                                         filename="hammer_vlsi/hammer_vlsi_impl.py",

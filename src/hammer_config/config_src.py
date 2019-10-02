@@ -235,9 +235,11 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
             newval = ""  # type: Union[str, List[str]]
 
             if isinstance(value, list):
-                newval = list(map(lambda input_str: subst_str(input_str, lambda key: config_dict[key]), value))
+                #newval = list(map(lambda input_str: subst_str(input_str, lambda key: config_dict[key]), value))
+                newval = list(map(lambda input_str: trysubst_str(input_str, 
+                    lambda key: config_dict[key]), value))
             else:
-                newval = subst_str(value, lambda key: config_dict[key])
+                newval = trysubst_str(value, lambda key: config_dict[key])
             return newval
 
         config_dict[key] = perform_subst(value)
@@ -277,6 +279,68 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
     directives['subst'] = MetaDirective(action=subst_action,
                                         target_settings=subst_targets,
                                         rename_target=subst_rename)
+
+    def trysubst_str(input_str: str, replacement_func: Callable[[str], str]) -> str:
+        """Substitute ${...}"""
+
+        # this check allows a reference like "${foo}" to just be replaced
+        # instead of using regexes. therefore substituting int/bool/null works
+        split = re.split(__VARIABLE_EXPANSION_REGEX, input_str)
+        if len(split) == 3 and split[0] == "" and split[2] == "" and \
+                input_str == "${" + split[1] + "}":
+            return replacement_func(split[1])
+        else:
+            return re.sub(__VARIABLE_EXPANSION_REGEX, lambda x: replacement_func(x.group(1)), input_str)
+
+    def trysubst_action(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
+        def perform_subst(value: Union[str, List[str]]) -> Union[str, List[str]]:
+            """
+            Perform substitutions for the given value.
+            If value is a string, perform substitutions in the string. 
+            If value is a list, then perform substitutions
+            in every string in the list.
+            :param value: String or list
+            :return: String or list but with everything substituted.
+            """
+            newval = ""  # type: Union[str, List[str]]
+
+            if isinstance(value, list):
+                return list(map(lambda input_str: 
+                    trysubst_str(input_str, lambda key: config_dict[key]), value))
+            elif isinstance(value, str):
+                return trysubst_str(value, lambda key: config_dict[key])
+            else:
+                return value
+
+        config_dict[key] = perform_subst(value)
+
+    def trysubst_targets(key: str, value: Any) -> List[str]:
+        # subst can operate on either a string or a list
+
+        # subst_strings is e.g. ["${a} 1", "${b} 2"]
+        subst_strings = []  # type: List[str]
+        if isinstance(value, str):
+            subst_strings.append(value)
+        elif isinstance(value, list):
+            for i in value:
+                assert isinstance(i, str)
+            subst_strings = value
+        else:
+            return []
+
+        output_vars = []  # type: List[str]
+
+        for subst_value in subst_strings:
+            matches = re.finditer(__VARIABLE_EXPANSION_REGEX, subst_value, re.DOTALL)
+            for match in matches:
+                output_vars.append(match.group(1))
+
+        return output_vars
+
+    directives['trysubst'] = MetaDirective(action=trysubst_action,
+                                          target_settings=trysubst_targets,
+                                          rename_target=subst_rename)
+
 
     def crossref_check_and_cast(k: Any) -> str:
         if not isinstance(k, str):
@@ -335,6 +399,44 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
     directives['crossref'] = MetaDirective(action=crossref_action,
                                            target_settings=crossref_targets,
                                            rename_target=crossref_rename)
+
+    def trycrossref_action(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
+        """
+        Similar to crossref, but it is supposed to work whether you override
+        it with a concrete value downstream. For example. if originally a
+        key defaulted to a trycrossref of 'vlsi.foo.bar', and a later config
+        changed it to [1,2,3], this will be valid, and [1,2,3] is the final
+        value returned.
+        """
+        if isinstance(value, str):
+            if value in config_dict:
+                config_dict[key] = config_dict[value]
+        else:
+            config_dict[key] = value
+
+    def trycrossref_targets(key: str, value: Any) -> List[str]:
+        if type(value) == str:
+            return [value]
+        return []
+
+    def trycrossref_rename(key: str, value: Any, target_setting: str, 
+            replacement_setting: str) -> Optional[
+        Tuple[Any, str]]:
+        def change_if_target(x: str) -> str:
+            if x == target_setting:
+                return replacement_setting
+            else:
+                return x
+
+        if isinstance(value, str):
+            return [change_if_target(value)], "trycrossref"
+        else:
+            raise NotImplementedError("trycrossref not implemented on other types yet")
+
+    directives['trycrossref'] = MetaDirective(action=trycrossref_action,
+                                           target_settings=trycrossref_targets,
+                                           rename_target=trycrossref_rename)
+
 
     def transclude_action(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
         """Transclude the contents of the file pointed to by value."""

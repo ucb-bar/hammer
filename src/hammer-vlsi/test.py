@@ -1122,10 +1122,10 @@ class HammerToolHooksTest(unittest.TestCase):
                 else:
                     self.assertFalse(os.path.exists(file))
 
-
 class HammerSubmitCommandTestContext:
 
-    def __init__(self, test: unittest.TestCase, cmd_type: str) -> None:
+    def __init__(self, test: unittest.TestCase, cmd_type: str,
+            extra_configs: Dict[str, str]={}) -> None:
         self.echo_command_args = ["go", "bears", "!"]
         self.echo_command = ["echo"] + self.echo_command_args
         self.test = test  # type unittest.TestCase
@@ -1135,6 +1135,7 @@ class HammerSubmitCommandTestContext:
             raise NotImplementedError("Have not built a test for %s yet" % cmd_type)
         self._cmd_type = cmd_type
         self._submit_command = None  # type: Optional[hammer_vlsi.HammerSubmitCommand]
+        self.extra_configs = extra_configs
 
     # Helper property to check that the driver did get initialized.
     @property
@@ -1160,7 +1161,27 @@ class HammerSubmitCommandTestContext:
             "synthesis.inputs.top_module": "dummy",
             "synthesis.inputs.input_files": ("/dev/null",),
             "synthesis.mocksynth.temp_folder": temp_dir,
-            "synthesis.submit.command": self._cmd_type
+            "synthesis.submit.command": self._cmd_type,
+            # NOTE: we should be using the defaults.yml here...
+            "vlsi.submit.settings":       [],
+            "vlsi.submit.max_output_lines": None,
+            "vlsi.submit.max_error_lines": None,
+            "vlsi.submit.abort_on_error": False,
+            "vlsi.submit.error_rgxs": ["ERROR:", "error:", "Error:"],
+            "vlsi.submit.error_ignore_rgxs": [],
+            "synthesis.submit.settings":               "vlsi.submit.settings",
+            "synthesis.submit.max_output_lines":       "${vlsi.submit.max_output_lines}",
+            "synthesis.submit.max_error_lines":        "${vlsi.submit.max_error_lines}",
+            "synthesis.submit.abort_on_error":         "${vlsi.submit.abort_on_error}",
+            "synthesis.submit.error_rgxs":             "vlsi.submit.error_rgxs",
+            "synthesis.submit.error_ignore_rgxs":      "vlsi.submit.error_ignore_rgxs",
+            "synthesis.submit.command_meta":           "lazysubst",
+            "synthesis.submit.settings_meta":          "lazytrycrossref",
+            "synthesis.submit.max_output_lines_meta":  "lazytrysubst",
+            "synthesis.submit.max_error_lines_meta":   "lazytrysubst",
+            "synthesis.submit.abort_on_error_meta":    "lazytrysubst",
+            "synthesis.submit.error_rgxs_meta":        "lazytrycrossref",
+            "synthesis.submit.error_ignore_rgxs_meta": "lazytrycrossref"
         }
         if self._cmd_type is "lsf":
             json_content.update({
@@ -1178,6 +1199,7 @@ class HammerSubmitCommandTestContext:
                 ],
                 "vlsi.submit.settings_meta": "lazyappend"
             })
+        json_content.update(self.extra_configs)
 
         with open(json_path, "w") as f:
             f.write(json.dumps(json_content, cls=HammerJSONEncoder, indent=4))
@@ -1196,8 +1218,7 @@ class HammerSubmitCommandTestContext:
     def __exit__(self, type, value, traceback) -> bool:
         """Clean up the context by removing the temp_dir."""
         shutil.rmtree(self.temp_dir)
-        # Return True (normal execution) if no exception occurred.
-        return True if type is None else False
+        return False
 
     @property
     def database(self) -> hammer_config.HammerDatabase:
@@ -1207,42 +1228,145 @@ class HammerSubmitCommandTestContext:
     def env(self) -> Dict[str, str]:
         return {}
 
-
 class HammerSubmitCommandTest(unittest.TestCase):
 
-    def create_context(self, cmd_type: str) -> HammerSubmitCommandTestContext:
-        return HammerSubmitCommandTestContext(self, cmd_type)
+    def create_context(self, cmd_type: str, 
+            extra_configs:Dict[str,str]={}) -> HammerSubmitCommandTestContext:
+        return HammerSubmitCommandTestContext(self, cmd_type, extra_configs)
 
-    def test_local_submit(self) -> None:
-        """ Test that a local submission produces the desired output """
+    def syn_error_texts(self):
+        return [
+            {"synthesis.mocksynth.step1": "a\nb\nfoo\nbar ERROR: baz\n"},
+            {"synthesis.mocksynth.step1": "a\nb\nfoo\nbar error: baz\n"}
+        ]
+
+    def expect_syn(self, context, result):
+        context.driver.load_synthesis_tool()
+        self.assertEqual(context.driver.run_synthesis()[0], result)
+
+    def test_all_commands(self) -> None:
+        """ Test that all commands behave certain similar ways"""
+        for cmd in ["local", "lsf"]:
+        #for cmd in ["lsf"]:
+            for lvl in ["vlsi", "synthesis"]:
+            #for lvl in ["synthesis"]:
+                # command fails when exit code is not 0 and abort set to true
+                config = {"synthesis.mocksynth.fake_submit_fail": True,
+                          "{}.submit.abort_on_error".format(lvl): True }
+                with self.create_context(cmd, config) as c:
+                    self.expect_syn(c, False)
+
+                # command succeeds when exit code is not 0 and abort set to false
+                config = {"synthesis.mocksynth.fake_submit_fail": True,
+                          "{}.submit.abort_on_error".format(lvl): False }
+                with self.create_context(cmd, config) as c:
+                    self.expect_syn(c, True)
+
+                # command succeeds when exit code is 0
+                config = {"synthesis.mocksynth.fake_submit_pass": True,
+                          "{}.submit.abort_on_error".format(lvl): True }
+                with self.create_context(cmd, config) as c:
+                    self.expect_syn(c, True)
+
+                # processing text output
+                for err_text in self.syn_error_texts():
+                    err_text = add_dicts(err_text, {
+                        "synthesis.mocksynth.fake_submit_pass": True,
+                        "{}.submit.abort_on_error".format(lvl): True
+                    })
+
+                    # should capture max_output_lines if set
+                    config = add_dicts(err_text, {"{}.submit.max_output_lines".format(lvl): 1})
+                    with self.create_context(cmd, config) as c:
+                        self.expect_syn(c, True)
+
+                    config = add_dicts(err_text, {"{}.submit.max_output_lines".format(lvl): 20})
+                    with self.create_context(cmd, config) as c:
+                        self.expect_syn(c, False)
+
+                    # should capture max_error_lines if set
+                    config = add_dicts(err_text, {"{}.submit.max_error_lines".format(lvl): 0})
+                    with self.create_context(cmd, config) as c:
+                        self.expect_syn(c, False)
+
+                    config = add_dicts(err_text, {"{}.submit.max_error_lines".format(lvl): 20})
+                    with self.create_context(cmd, config) as c:
+                        self.expect_syn(c, False)
+
+                    # should not error when an error regex occurs and not abort_on_error
+                    config = add_dicts(err_text, {"{}.submit.abort_on_error".format(lvl): False })
+                    with self.create_context(cmd, config) as c:
+                        self.expect_syn(c, True)
+
+                    # should error when an error regex occurs and not abort_on_error
+                    config = add_dicts(err_text, {"{}.submit.abort_on_error".format(lvl): True })
+                    with self.create_context(cmd, config) as c:
+                        self.expect_syn(c, False)
+
+                    # should not error when user overrides error_rgxs and an error regex occurs
+                    config = add_dicts(err_text, {"{}.submit.error_rgxs".format(lvl): ["NO_MATCH"]})
+                    with self.create_context(cmd, config) as c:
+                        self.expect_syn(c, True)
+
+                    config = add_dicts(err_text, {"{}.submit.error_rgxs".format(lvl): []})
+                    with self.create_context(cmd, config) as c:
+                        self.expect_syn(c, True)
+
+                    # should not error when user overrides ignore_error_rgxs and an error regex occurs
+                    config = add_dicts(err_text, 
+                            {"{}.submit.error_ignore_rgxs".format(lvl): ["ERROR:", "Error:", "error:"]})
+                    with self.create_context(cmd, config) as c:
+                        self.expect_syn(c, True)
+
+                    # should error when user overrides error_rgxs and an error regex occurs
+                    config = add_dicts(err_text, {"{}.submit.error_rgxs".format(lvl): ["baz"]})
+                    with self.create_context(cmd, config) as c:
+                        self.expect_syn(c, False)
+
+                    # should not error when user overrides error_rgx and ignore_error_rgxs and an error regex occurs
+                    config = add_dicts(err_text, {
+                        "{}.submit.error_rgxs".format(lvl): ["baz"],
+                        "{}.submit.error_ignore_rgxs".format(lvl): ["ba"]})
+                    with self.create_context(cmd, config) as c:
+                        self.expect_syn(c, True)
+
+    def test_lsf_submit(self) -> None:
+        """ Test that an local submission produces the desired output """
         with self.create_context("local") as c:
             cmd = c.submit_command
-            output = cmd.submit(c.echo_command, c.env, c.logger).splitlines()
+            res = cmd.submit(c.echo_command, c.env, c.logger)
 
-            self.assertEqual(output[0], ' '.join(c.echo_command_args))
+            self.assertEqual(res.success, True)
+            self.assertEqual(res.code, 0)
+            self.assertEqual(len(res.errors), 0)
+            self.assertEqual(res.output[0], ' '.join(c.echo_command_args))
 
     def test_lsf_submit(self) -> None:
         """ Test that an LSF submission produces the desired output """
         with self.create_context("lsf") as c:
             cmd = c.submit_command
             assert isinstance(cmd, hammer_vlsi.HammerLSFSubmitCommand)
-            output = cmd.submit(c.echo_command, c.env, c.logger).splitlines()
+            res = cmd.submit(c.echo_command, c.env, c.logger, c.temp_dir)
 
-            self.assertEqual(output[0], "BLOCKING is: 1")
-            self.assertEqual(output[1], "QUEUE is: %s" % get_or_else(cmd.settings.queue, ""))
-            self.assertEqual(output[2], "NUMCPU is: %d" % get_or_else(cmd.settings.num_cpus, 0))
-            self.assertEqual(output[3], "OUTPUT is: %s" % get_or_else(cmd.settings.log_file, ""))
+            self.assertEqual(res.success, True)
+            self.assertEqual(res.code, 0)
+            self.assertEqual(len(res.errors), 0)
+            self.assertEqual(res.output[0], "BLOCKING is: 1")
+            self.assertEqual(res.output[1], "QUEUE is: %s" % get_or_else(cmd.settings.queue, ""))
+            self.assertEqual(res.output[2], "NUMCPU is: %d" % get_or_else(cmd.settings.num_cpus, 0))
+            self.assertEqual(res.output[3], "OUTPUT is: %s" % get_or_else(cmd.settings.log_file, ""))
 
             extra = cmd.settings.extra_args
             has_resource = 0
             if "-R" in extra:
                 has_resource = 1
-                self.assertEqual(output[4], "RESOURCE is: %s" % extra[extra.index("-R") + 1])
+                self.assertEqual(res.output[4], "RESOURCE is: %s" % extra[extra.index("-R") + 1])
             else:
                 raise NotImplementedError("You forgot to test the extra_args!")
 
-            self.assertEqual(output[4 + has_resource], "COMMAND is: %s" % ' '.join(c.echo_command))
-            self.assertEqual(output[5 + has_resource], ' '.join(c.echo_command_args))
+            # not longer correct
+            #self.assertEqual(res.output[4 + has_resource], "COMMAND is: %s" % ' '.join(c.echo_command))
+            self.assertEqual(res.output[5 + has_resource], ' '.join(c.echo_command_args))
 
 
 class HammerSignoffToolTestContext:
@@ -1893,4 +2017,5 @@ class HammerSimToolTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    #unittest.main(verbosity=2)
     unittest.main()

@@ -17,7 +17,7 @@ from inspect import cleandoc
 
 import hammer_config
 import hammer_tech
-from hammer_logging import HammerVLSILoggingContext
+from hammer_logging import HammerVLSILoggingContext, HammerVLSILogging
 from hammer_tech import LibraryFilter, Stackup, RoutingDirection, Metal
 from hammer_utils import (add_lists, assert_function_type, get_or_else,
                           optional_map)
@@ -26,7 +26,7 @@ from .constraints import *
 from .hammer_vlsi_impl import HammerToolPauseException, HierarchicalMode
 from .hooks import (HammerStepFunction, HammerToolHookAction, HammerToolStep,
                     HookLocation)
-from .submit_command import HammerSubmitCommand
+from .submit_command import HammerSubmitCommand, HammerSubmitResult
 from .units import TemperatureValue, TimeValue, VoltageValue
 
 __all__ = ['HammerTool']
@@ -829,7 +829,7 @@ class HammerTool(metaclass=ABCMeta):
             f.write(new_tcl_contents)
 
     # TODO(edwardw): consider pulling this out so that hammer_tech can also use this
-    def run_executable(self, args: List[str], cwd: str = None) -> str:
+    def run_executable(self, args: List[str], cwd: str = None) -> HammerSubmitResult:
         """
         Run an executable and log the command to the log while also capturing the output.
 
@@ -837,8 +837,15 @@ class HammerTool(metaclass=ABCMeta):
         :param cwd: Working directory (leave as None to use the current working directory).
         :return: Output from the command or an error message.
         """
+        # Temporarily disable colours/tag to make run output more readable.
+        # TODO: think of a more elegant way to do this?
+        HammerVLSILogging.enable_colour = False
+        HammerVLSILogging.enable_tag = False
+        ret = self.submit_command.submit(args, self._subprocess_env, self.logger, cwd)
+        HammerVLSILogging.enable_colour = True
+        HammerVLSILogging.enable_tag = True
+        return ret
 
-        return self.submit_command.submit(args, self._subprocess_env, self.logger, cwd)
 
     # TODO: these helper functions might get a bit out of hand, put them somewhere more organized?
     def get_clock_ports(self) -> List[ClockPort]:
@@ -1130,7 +1137,7 @@ class HammerTool(metaclass=ABCMeta):
         for load_src in output_loads:
             load = OutputLoadConstraint(
                 name=str(load_src["name"]),
-                load=float(load_src["load"])
+                load=CapacitanceValue(load_src["load"])
             )
             output.append(load)
         return output
@@ -1185,3 +1192,18 @@ class HammerTool(metaclass=ABCMeta):
         cleaned = cleandoc(cmd) if clean else cmd
         output_buffer.append("""puts "{0}" """.format(cleaned.replace('"', '\"')))
         output_buffer.append(cleaned)
+
+    @staticmethod                                                               
+    def verbose_tcl_append_wrap(cmd: str, output_buffer: List[str], 
+            clean: bool = False) -> None:
+        """                                                                     
+        Helper function to echo and run a command using a wrapper function.     
+                                                                                
+        :param cmd: TCL command to run                                          
+        :param output_buffer: Buffer in which to enqueue the resulting TCL lines
+        :param clean: True if you want to trim the leading 
+                      indendation from the string, False otherwise
+        """                                                                     
+        cleaned = cleandoc(cmd) if clean else cmd                               
+        output_buffer.append("HAMMERCMD { "+cleaned+" }\n")                     
+

@@ -83,6 +83,36 @@ vlsi.core:
   # Maximum threads to use in a CAD tool invocation.
   max_threads: 1
 
+#----------------------------------------------------------------------------
+# JOB SUBMISSION
+#----------------------------------------------------------------------------
+vlsi.submit:
+  # - The submit command to use. "none", "local", or null will run on the 
+  #   current host. See hammer_submit_command.py for other options.
+  # type: str
+  command: "local"
+  # type: List[Dict[str, Dict[str, Any]]]
+  # The list substitutes settings in order of appearance, and the first 
+  # Dict key is the command. The second dict key is the name of that 
+  # command's setting, followed by whatever type it takes.
+  settings: []
+
+  # how many output lines to buffer in memory. "" for unlimited
+  max_output_lines: null
+  # how many error lines to buffer in memory. "" for unlimited
+  max_error_lines: null
+  # if exit code != 0, or len(error_lines) > 0, raise exception immediately
+  # use "true" or "false"
+  abort_on_error: false
+
+  # take a guess that any time these show up, its an error. individual tools
+  # can override this assumption. use any string that is valid in python regex
+  error_rgxs: ["ERROR:", "error:", "Error:"]
+  error_ignore_rgxs: []
+
+#----------------------------------------------------------------------------
+# Technology
+#----------------------------------------------------------------------------
 # TODO ucb-bar/hammer#317 move these to technology.core (discussion to be had)
 vlsi.technology:
   # Placement site for macros. (Optional[str])
@@ -129,12 +159,48 @@ vlsi.technology:
   # If this is not specified, then the tarballs will be extracted to obj/<tech_dir>/extracted/.
   extracted_tarballs_dir: null
 
+technology.pcb:
+  # Desired pad opening diameter (in post-shrink um)
+  # Typically this should be defined in the technology plugin, assuming everyone will use the same pad and board strategy
+  # type: Decimal
+  bump_pad_opening_diameter: null
+
+  # Desired pad metal diameter (in post-shrink um)
+  # Typically this should be defined in the technology plugin, assuming everyone will use the same pad and board strategy
+  # type: Decimal
+  bump_pad_metal_diameter: null
+
+
+technology.core:
+    # Key name for the technology stackup
+    # This should exist in the stackups list in the tech json
+    # type: str
+    stackup: null
+    # This should specify the TOPMOST metal layer the standard cells use for power rails
+    # Note that this is not usually stackup specific; it is based on the std cell library
+    # type: str
+    std_cell_rail_layer: null
+    # This is used to provide a reference master for generating standard cell rails
+    # Can be a wildcard/glob
+    # type: str
+    tap_cell_rail_reference: null
+
+#----------------------------------------------------------------------------
+# Vendor common settings
+#----------------------------------------------------------------------------
 cadence:
   # Path to the folder with defaults.yml for common Cadence settings.
   common_path: "${vlsi.builtins.hammer_vlsi_path}/common/cadence"
   common_path_meta: subst
 
-# General VLSI inputs.
+mentor:
+    # Path to the folder with defaults.yml for common Mentor settings.
+    common_path: "${vlsi.builtins.hammer_vlsi_path}/common/mentor"
+    common_path_meta: subst
+
+#----------------------------------------------------------------------------
+# DESIGN SPECIFIC SETTINGS
+#----------------------------------------------------------------------------
 # These will vary per run of hammer-vlsi.
 vlsi.inputs:
   # Supply voltages and names
@@ -200,6 +266,12 @@ vlsi.inputs:
   # netlist (str) - path to the netlist file
   ilms: []
 
+  # only use nldm libs (instead of ccs. use for pipecleaning flow only)
+  use_nldm_libs: False
+  # which subset of stdcell lib vts to use (use for pipecleaning flow only)
+  # use the values in the 'library{provides}{vt}' section of the tech.json
+  use_lib_vts: []
+
   # Multi-mode multi-corner setups, overrides supplies
   # MMMC struct members:
   # name (str) - name of the corner.
@@ -227,9 +299,11 @@ vlsi.inputs:
   #   Clocks with no group specified will all be placed in separate groups and thus marked as asynchronous to each other and all other groups.
   clocks: []
 
-  # Default output pin load capacitance.
-  # Default: 1pF
-  default_output_load: 1
+  # these are generic io constraints, tune for your process
+  default_output_load: "1pF"
+  default_max_fanout: 80
+  default_max_transition: "100ps"
+  default_max_clock_transition: "80ps"
 
   # List of output load constraints.
   # Each item in the list should be a struct with the following members:
@@ -449,14 +523,9 @@ vlsi.inputs:
     #   Requires the semi_auto pin generation mode.
     assignments: []
 
-vlsi.submit:
-  # The submit command to use. "none", "local", or null will run on the current host. See hammer_submit_command.py for other options.
-  command: "local"
-  # type: List[Dict[str, Dict[str, Any]]]
-  # The list substitutes settings in order of appearance, and the first Dict key is the command.
-  # The second dict key is the name of that command's setting, followed by whatever type it takes.
-  settings: []
-
+#----------------------------------------------------------------------------
+# SYN
+#----------------------------------------------------------------------------
 # Specific inputs for the synthesis tool.
 # These inputs are the generic inputs; specific tools ("CAD junk") may require
 # additional inputs.
@@ -470,6 +539,9 @@ synthesis.inputs:
   # Set to null to not specify from the JSON.
   top_module: null
 
+  # if true, don't try loading lef/def info, which is faster but less accurate
+  is_physical: False
+
 # Syntheis tool settings
 synthesis:
   # Clock gating mode.
@@ -482,11 +554,24 @@ synthesis:
 
 # inherit settings from vlsi.submit but allow us to override them
 synthesis.submit:
-  command: "${vlsi.submit.command}"
-  command_meta: lazysubst
-  settings: "vlsi.submit.settings"
-  settings_meta: lazycrossref
+  command:                "${vlsi.submit.command}"
+  settings:               "vlsi.submit.settings"
+  max_output_lines:       "${vlsi.submit.max_output_lines}"
+  max_error_lines:        "${vlsi.submit.max_error_lines}"
+  abort_on_error:         "${vlsi.submit.abort_on_error}"
+  error_rgxs:             "vlsi.submit.error_rgxs"
+  error_ignore_rgxs:      "vlsi.submit.error_ignore_rgxs"
+  command_meta:           lazysubst
+  settings_meta:          lazytrycrossref
+  max_output_lines_meta:  lazytrysubst
+  max_error_lines_meta:   lazytrysubst
+  abort_on_error_meta:    lazytrysubst
+  error_rgxs_meta:        lazytrycrossref
+  error_ignore_rgxs_meta: lazytrycrossref
 
+#----------------------------------------------------------------------------
+# Place-and-route settings
+#----------------------------------------------------------------------------
 # Specific inputs for the place and route tool.
 # These inputs are the generic inputs; specific tools ("CAD junk") may require
 # additional inputs.
@@ -537,16 +622,7 @@ par.inputs:
   # type List[str]
   physical_only_cells_list: []
 
-# Place-and-route settings
 par:
-  # Submission command settings
-  # inherit settings from vlsi.submit but allow us to override them
-  submit:
-    command: "${vlsi.submit.command}"
-    command_meta: lazysubst
-    settings: "vlsi.submit.settings"
-    settings_meta: lazycrossref
-
   # Power straps configuration.
   # Valid options are:
   # - empty - Specify no power straps
@@ -609,12 +685,25 @@ par:
       # type: List[str]
       strap_layers: []
 
-mentor:
-    # Path to the folder with defaults.yml for common Mentor settings.
-    common_path: "${vlsi.builtins.hammer_vlsi_path}/common/mentor"
-    common_path_meta: subst
+par.submit:
+  command:                "${vlsi.submit.command}"
+  settings:               "vlsi.submit.settings"
+  max_output_lines:       "${vlsi.submit.max_output_lines}"
+  max_error_lines:        "${vlsi.submit.max_error_lines}"
+  abort_on_error:         "${vlsi.submit.abort_on_error}"
+  error_rgxs:             "vlsi.submit.error_rgxs"
+  error_ignore_rgxs:      "vlsi.submit.error_ignore_rgxs"
+  command_meta:           lazysubst
+  settings_meta:          lazytrycrossref
+  max_output_lines_meta:  lazytrysubst
+  max_error_lines_meta:   lazytrysubst
+  abort_on_error_meta:    lazytrysubst
+  error_rgxs_meta:        lazytrycrossref
+  error_ignore_rgxs_meta: lazytrycrossref
 
+#----------------------------------------------------------------------------
 # DRC settings
+#----------------------------------------------------------------------------
 drc.inputs:
   # Top RTL module.
   # type: str
@@ -641,14 +730,25 @@ drc.inputs:
   # type: List[str]
   drc_rules_to_run: []
 
-# inherit settings from vlsi.submit but allow us to override them
 drc.submit:
-  command: "${vlsi.submit.command}"
-  command_meta: lazysubst
-  settings: "vlsi.submit.settings"
-  settings_meta: lazycrossref
+  command:                "${vlsi.submit.command}"
+  settings:               "vlsi.submit.settings"
+  max_output_lines:       "${vlsi.submit.max_output_lines}"
+  max_error_lines:        "${vlsi.submit.max_error_lines}"
+  abort_on_error:         "${vlsi.submit.abort_on_error}"
+  error_rgxs:             "vlsi.submit.error_rgxs"
+  error_ignore_rgxs:      "vlsi.submit.error_ignore_rgxs"
+  command_meta:           lazysubst
+  settings_meta:          lazytrycrossref
+  max_output_lines_meta:  lazytrysubst
+  max_error_lines_meta:   lazytrysubst
+  abort_on_error_meta:    lazytrysubst
+  error_rgxs_meta:        lazytrycrossref
+  error_ignore_rgxs_meta: lazytrycrossref
 
+#----------------------------------------------------------------------------
 # LVS settings
+#----------------------------------------------------------------------------
 lvs.inputs:
   # Top RTL module.
   top_module: null
@@ -669,46 +769,67 @@ lvs.inputs:
   additional_lvs_text: ""
 
 lvs.submit:
-  command: "${vlsi.submit.command}"
-  command_meta: lazysubst
-  settings: "vlsi.submit.settings"
-  settings_meta: lazycrossref
+  command:                "${vlsi.submit.command}"
+  settings:               "vlsi.submit.settings"
+  max_output_lines:       "${vlsi.submit.max_output_lines}"
+  max_error_lines:        "${vlsi.submit.max_error_lines}"
+  abort_on_error:         "${vlsi.submit.abort_on_error}"
+  error_rgxs:             "vlsi.submit.error_rgxs"
+  error_ignore_rgxs:      "vlsi.submit.error_ignore_rgxs"
+  command_meta:           lazysubst
+  settings_meta:          lazytrycrossref
+  max_output_lines_meta:  lazytrysubst
+  max_error_lines_meta:   lazytrysubst
+  abort_on_error_meta:    lazytrysubst
+  error_rgxs_meta:        lazytrycrossref
+  error_ignore_rgxs_meta: lazytrycrossref
 
-# inherit settings from vlsi.submit but allow us to override them
+#----------------------------------------------------------------------------
+# sram-generator settings
+#----------------------------------------------------------------------------
 sram_generator.submit:
-  command: "${vlsi.submit.command}"
-  command_meta: lazysubst
-  settings: "vlsi.submit.settings"
-  settings_meta: lazycrossref
+  command:                "${vlsi.submit.command}"
+  settings:               "vlsi.submit.settings"
+  max_output_lines:       "${vlsi.submit.max_output_lines}"
+  max_error_lines:        "${vlsi.submit.max_error_lines}"
+  abort_on_error:         "${vlsi.submit.abort_on_error}"
+  error_rgxs:             "vlsi.submit.error_rgxs"
+  error_ignore_rgxs:      "vlsi.submit.error_ignore_rgxs"
+  command_meta:           lazysubst
+  settings_meta:          lazytrycrossref
+  max_output_lines_meta:  lazytrysubst
+  max_error_lines_meta:   lazytrysubst
+  abort_on_error_meta:    lazytrysubst
+  error_rgxs_meta:        lazytrycrossref
+  error_ignore_rgxs_meta: lazytrycrossref
 
+
+#----------------------------------------------------------------------------
 # PCB deliverable settings.
+#----------------------------------------------------------------------------
 pcb.inputs:
   # Top RTL module.
   top_module: null
 
 pcb.submit:
-  # Submission command settings
-  # inherit settings from vlsi.submit but allow us to override them
-  command: "${vlsi.submit.command}"
-  command_meta: lazysubst
-  settings: "vlsi.submit.settings"
-  settings_meta: lazycrossref
+  command:                "${vlsi.submit.command}"
+  settings:               "vlsi.submit.settings"
+  max_output_lines:       "${vlsi.submit.max_output_lines}"
+  max_error_lines:        "${vlsi.submit.max_error_lines}"
+  abort_on_error:         "${vlsi.submit.abort_on_error}"
+  error_rgxs:             "vlsi.submit.error_rgxs"
+  error_ignore_rgxs:      "vlsi.submit.error_ignore_rgxs"
+  command_meta:           lazysubst
+  settings_meta:          lazytrycrossref
+  max_output_lines_meta:  lazytrysubst
+  max_error_lines_meta:   lazytrysubst
+  abort_on_error_meta:    lazytrysubst
+  error_rgxs_meta:        lazytrycrossref
+  error_ignore_rgxs_meta: lazytrycrossref
 
-
-technology.core:
-    # Key name for the technology stackup
-    # This should exist in the stackups list in the tech json
-    # type: str
-    stackup: null
-    # This should specify the TOPMOST metal layer the standard cells use for power rails
-    # Note that this is not usually stackup specific; it is based on the std cell library
-    # type: str
-    std_cell_rail_layer: null
-    # This is used to provide a reference master for generating standard cell rails
-    # Can be a wildcard/glob
-    # type: str
-    tap_cell_rail_reference: null
-
+#----------------------------------------------------------------------------
+# sim settings
+#----------------------------------------------------------------------------
 # Specific inputs for the simulation tool.
 # These inputs will vary based on if the simulation is for RTL, post synthesis, or post PAR.
 # There may be HAMMER simulation tool plugins available that include common simulator flags and inputs that can be modified/augmented for the user's needs.
@@ -797,19 +918,19 @@ sim.inputs:
   execute_sim: true
 
 sim.submit:
-  command: "${vlsi.submit.command}"
-  command_meta: lazysubst
-  settings: "vlsi.submit.settings"
-  settings_meta: lazycrossref
+  command:                "${vlsi.submit.command}"
+  settings:               "vlsi.submit.settings"
+  max_output_lines:       "${vlsi.submit.max_output_lines}"
+  max_error_lines:        "${vlsi.submit.max_error_lines}"
+  abort_on_error:         "${vlsi.submit.abort_on_error}"
+  error_rgxs:             "vlsi.submit.error_rgxs"
+  error_ignore_rgxs:      "vlsi.submit.error_ignore_rgxs"
+  command_meta:           lazysubst
+  settings_meta:          lazytrycrossref
+  max_output_lines_meta:  lazytrysubst
+  max_error_lines_meta:   lazytrysubst
+  abort_on_error_meta:    lazytrysubst
+  error_rgxs_meta:        lazytrycrossref
+  error_ignore_rgxs_meta: lazytrycrossref
 
-technology.pcb:
-  # Desired pad opening diameter (in post-shrink um)
-  # Typically this should be defined in the technology plugin, assuming everyone will use the same pad and board strategy
-  # type: Decimal
-  bump_pad_opening_diameter: null
-
-  # Desired pad metal diameter (in post-shrink um)
-  # Typically this should be defined in the technology plugin, assuming everyone will use the same pad and board strategy
-  # type: Decimal
-  bump_pad_metal_diameter: null
 
