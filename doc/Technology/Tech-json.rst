@@ -1,3 +1,5 @@
+.. _tech-json:
+
 Hammer Tech JSON
 ===============================
 
@@ -8,10 +10,24 @@ Technology Install
 
 The user may supply the PDK to Hammer either as an already extracted directory or as a tarball that Hammer can automatically extract. Setting ``technology.TECH_NAME.`` ``install_dir`` or ``tarball_dir`` (key is setup in the defaults.yml) will fill in as the path prefix for paths supplied to PDK files in the rest of the ``tech.json``.
 
-DRC Deck Setup
+DRC/LVS Deck Setup
 ---------------------------------
 
-TODO
+As many DRC & LVS decks for as many tools can be specified in the ``drc decks`` and ``lvs decks`` keys. Additional DRC/LVS commands can be appended to the generated run files by specifying raw text in the ``additional_drc_text`` and ``additional_lvs_text`` keys. :numref:`deck-example` shows an example of an LVS deck from the ASAP7 plugin.
+
+.. _deck-example:
+.. code-block:: json
+
+  "lvs decks": [
+    {
+      "tool name": "calibre",
+      "deck name": "all_lvs",
+      "path": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/calibre/ruledirs/lvs/lvsRules_calibre_asap7.rul"
+    }
+  ],
+  "additional_lvs_text": "LVS BOX DECAPx1_ASAP7_75t_R\nLVS BOX DECAPx1_ASAP7_75t_L\nLVS BOX DECAPx1_ASAP7_75t_SL\nLVS BOX DECAPx1_ASAP7_75t_SRAM\nLVS BOX DECAPx2_ASAP7_75t_R\nLVS BOX DECAPx2_ASAP7_75t_L\nLVS BOX DECAPx2_ASAP7_75t_SL\nLVS BOX DECAPx2_ASAP7_75t_SRAM\nLVS BOX DECAPx4_ASAP7_75t_R\nLVS BOX DECAPx4_ASAP7_75t_L\nLVS BOX DECAPx4_ASAP7_75t_SL\nLVS BOX DECAPx4_ASAP7_75t_SRAM\nLVS BOX DECAPx6_ASAP7_75t_R\nLVS BOX DECAPx6_ASAP7_75t_L\nLVS BOX DECAPx6_ASAP7_75t_SL\nLVS BOX DECAPx6_ASAP7_75t_SRAM\nLVS BOX DECAPx10_ASAP7_75t_R\nLVS BOX DECAPx10_ASAP7_75t_L\nLVS BOX DECAPx10_ASAP7_75t_SL\nLVS BOX DECAPx10_ASAP7_75t_SRAM\nLVS FILTER DECAPx1_ASAP7_75t_R OPEN\nLVS FILTER DECAPx1_ASAP7_75t_L OPEN\nLVS FILTER DECAPx1_ASAP7_75t_SL OPEN\nLVS FILTER DECAPx1_ASAP7_75t_SRAM OPEN\nLVS FILTER DECAPx2_ASAP7_75t_R OPEN\nLVS FILTER DECAPx2_ASAP7_75t_L OPEN\nLVS FILTER DECAPx2_ASAP7_75t_SL OPEN\nLVS FILTER DECAPx2_ASAP7_75t_SRAM OPEN\nLVS FILTER DECAPx4_ASAP7_75t_R OPEN\nLVS FILTER DECAPx4_ASAP7_75t_L OPEN\nLVS FILTER DECAPx4_ASAP7_75t_SL OPEN\nLVS FILTER DECAPx4_ASAP7_75t_SRAM OPEN\nLVS FILTER DECAPx6_ASAP7_75t_R OPEN\nLVS FILTER DECAPx6_ASAP7_75t_L OPEN\nLVS FILTER DECAPx6_ASAP7_75t_SL OPEN\nLVS FILTER DECAPx6_ASAP7_75t_SRAM OPEN\nLVS FILTER DECAPx10_ASAP7_75t_R OPEN\nLVS FILTER DECAPx10_ASAP7_75t_L OPEN\nLVS FILTER DECAPx10_ASAP7_75t_SL OPEN\nLVS FILTER DECAPx10_ASAP7_75t_SRAM OPEN", 
+
+The file pointers, in this case, use the tarball prefix because Hammer will be extracting the rule deck directly from the ASAP7 tarball. The additional text is needed to tell Calibre that the decap cells need to be filtered from the source netlists.
 
 Library Setup
 ---------------------------------
