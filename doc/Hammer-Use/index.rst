@@ -7,6 +7,7 @@ This documentation will walk through the currently supported steps of the Hammer
    :maxdepth: 2
    :caption: Hammer Use:
 
+   Hammer-APIs
    Hooks
    Buildfile
    Hierarchical
