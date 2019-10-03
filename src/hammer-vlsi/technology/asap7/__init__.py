@@ -55,6 +55,8 @@ class ASAP7Tech(HammerTechnology):
         PDK GDS only contains SLVT cells.
         This patch will generate the other 3(LVT, RVT, SRAM) VT GDS files.
         """
+        import gdspy # TODO: why did module import get lost above for some users?
+
         self.logger.info("Generate GDS for Multi-VT cells")
 
         orig_gds = os.path.join(self.extracted_tarballs_dir, "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24.gds")
