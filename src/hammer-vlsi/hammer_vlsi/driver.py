@@ -722,7 +722,6 @@ class HammerDriver:
                  or None if output_dict was invalid
         """
         try:
-            #output_files = deeplist(output_dict["par.outputs.output_files"])
             all_regs = deeplist(output_dict["par.outputs.all_regs"])
             result = {
                 "sim.inputs.input_files": [output_dict["par.outputs.output_sim_netlist"]],
