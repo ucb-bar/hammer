@@ -16,6 +16,7 @@ class NopPlaceAndRoute(HammerPlaceAndRouteTool, DummyHammerTool):
         self.output_ilms = []
         self.output_gds = "/dev/null"
         self.output_netlist = "/dev/null"
+        self.output_sim_netlist = "/dev/null"
         self.hcells_list = []
         return True
 
