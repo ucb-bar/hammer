@@ -146,6 +146,7 @@ def main(args) -> int:
                                                          "(optional) output ILM information for hierarchical mode"),
                                             InterfaceVar("output_gds", "str", "path to the output GDS file"),
                                             InterfaceVar("output_netlist", "str", "path to the output netlist file"),
+                                            InterfaceVar("output_sim_netlist", "str", "path to the output simulation netlist file"),
                                             InterfaceVar("hcells_list", "List[str]",
                                                          "list of cells to explicitly map hierarchically in LVS"),
                                             InterfaceVar("output_all_regs", "List[str]",
