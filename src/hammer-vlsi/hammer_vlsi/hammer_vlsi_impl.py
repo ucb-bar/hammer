@@ -396,6 +396,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         outputs["par.outputs.output_ilms_meta"] = "append"
         outputs["par.outputs.output_gds"] = str(self.output_gds)
         outputs["par.outputs.output_netlist"] = str(self.output_netlist)
+        outputs["par.outputs.output_sim_netlist"] = str(self.output_sim_netlist)
         outputs["par.outputs.hcells_list"] = list(self.hcells_list)
         outputs["par.outputs.seq_cells"] = self.output_seq_cells
         outputs["par.outputs.all_regs"] = self.output_all_regs
@@ -506,6 +507,26 @@ class HammerPlaceAndRouteTool(HammerTool):
         if not (isinstance(value, str)):
             raise TypeError("output_netlist must be a str")
         self.attr_setter("_output_netlist", value)
+
+
+    @property
+    def output_sim_netlist(self) -> str:
+        """
+        Get the path to the output simulation netlist file.
+
+        :return: The path to the output simulation netlist file.
+        """
+        try:
+            return self.attr_getter("_output_sim_netlist", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the path to the output simulation netlist file yet")
+
+    @output_sim_netlist.setter
+    def output_sim_netlist(self, value: str) -> None:
+        """Set the path to the output simulation netlist file."""
+        if not (isinstance(value, str)):
+            raise TypeError("output_sim_netlist must be a str")
+        self.attr_setter("_output_sim_netlist", value)
 
 
     @property
