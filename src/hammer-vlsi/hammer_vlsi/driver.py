@@ -20,7 +20,7 @@ from hammer_tech import MacroSize
 from .hammer_tool import HammerTool
 from .hooks import HammerToolHookAction
 from .hammer_vlsi_impl import HammerVLSISettings, HammerPlaceAndRouteTool, HammerSynthesisTool, \
-    HammerSignoffTool, HammerDRCTool, HammerLVSTool, HammerSRAMGeneratorTool, HammerPCBDeliverableTool, HammerSimTool, \
+    HammerSignoffTool, HammerDRCTool, HammerLVSTool, HammerSRAMGeneratorTool, HammerPCBDeliverableTool, HammerSimTool, HammerPowerTool \
     HierarchicalMode, load_tool, PlacementConstraint, SRAMParameters, ILMStruct
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, HammerVLSILoggingContext
 from .submit_command import HammerSubmitCommand
@@ -108,6 +108,7 @@ class HammerDriver:
         self.lvs_tool = None  # type: Optional[HammerLVSTool]
         self.sram_generator_tool = None  # type: Optional[HammerSRAMGeneratorTool]
         self.sim_tool = None  # type: Optional[HammerSimTool]
+        self.power_tool = None # type: Optional[HammerPowerTool]
 
         # Initialize tool hooks. Used to specify resume/pause hooks after custom hooks have been registered.
         self.post_custom_syn_tool_hooks = []  # type: List[HammerToolHookAction]
@@ -116,6 +117,7 @@ class HammerDriver:
         self.post_custom_lvs_tool_hooks = []  # type: List[HammerToolHookAction]
         self.post_custom_sram_generator_tool_hooks = []  # type: List[HammerToolHookAction]
         self.post_custom_sim_tool_hooks = []  # type: List[HammerToolHookAction]
+        self.post_custom_power_tool_hooks = [] # type: List[HammerToolHookAction]
         self.post_custom_pcb_tool_hooks = []  # type: List[HammerToolHookAction]
 
     @property
@@ -527,6 +529,58 @@ class HammerDriver:
             assert isinstance(sim_tool, HammerSimTool)
             return self.set_up_sim_tool(sim_tool, name, run_dir)
 
+    def load_power_tool(self, run_dir: str = "") -> bool:
+        """
+        Loads a power tool on a given database
+
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
+                        constructor.
+        :return: True if power tool loading was successful, False otherwise.
+        """
+        if self.tech is None:
+            self.log.error("Must load technology before loading power tool")
+            return False
+
+        if run_dir == "":
+            run_dir = os.path.join(self.obj_dir, "power-rundir")
+
+        power_tool_name = self.database.get_setting("vlsi.core.power_tool")
+        power_tool_get = load_tool(
+            path=self.database.get_setting("vlsi.core.power_tool_path"),
+            tool_name=power_tool_name
+        )
+        assert isinstance(power_tool_get, HammerPowerTool), "Power tool must be a HammerPowerTool"
+        power_tool = power_tool_get  # type: HammerLVSTool
+        power_tool.name = power_tool_name
+        power_tool.logger = self.log.context("power")
+        power_tool.technology = self.tech
+        power_tool.set_database(self.database)
+        power_tool.submit_command = HammerSubmitCommand.get("power", self.database)
+        power_tool.run_dir = run_dir
+
+        power_tool.top_module = self.database.get_setting("power.inputs.top_modue", nullvalue="")
+        power_tool.netlist = self.database.get_setting("power.inputs.netlist", nullvalue="")
+        power_tool.spef_file = self.database.get_setting("power.inputs.spef_file", nullvalue="")
+        power_tool.waveforms = self.database.get_setting("power.inputs.waveforms", nullvalue=[])
+        missing_inputs = False
+        if power_tool.top_module == "":
+            self.log.error("Top module not specified for power analysis")
+            missing_inputs = True
+        if power_tool.netlist is None:
+            self.log.error("No layout file specified for power analysis")
+            missing_inputs = True
+        if power_tool.spef_file is None:
+            self.log.error("No spef file specified for power analysis")
+            missing_inputs = True
+        if missing_inputs:
+            return False
+
+        self.power_tool = power_tool
+
+        self.tool_configs["power"] = power_tool.get_config()
+        self.update_tool_configs()
+        return True
+
     def load_pcb_tool(self, run_dir: str = "") -> bool:
         """
         Load the PCB deliverable tool based on the given database.
@@ -610,6 +664,15 @@ class HammerDriver:
         :param hooks: Hooks to run
         """
         self.post_custom_sim_tool_hooks = list(hooks)
+
+    def set_post_custom_power_tool_hooks(self, hooks: List[HammerToolHookAction]) -> None:
+        """
+        Set the extra list of hooks used for control flow (resume/pause) in run_power.
+        They will run after main/hook_actions.
+
+        :param hooks: Hooks to run
+        """
+        self.post_custom_power_tool_hooks = list(hooks)
 
     def run_synthesis(self, hook_actions: Optional[List[HammerToolHookAction]] = None, force_override: bool = False) -> \
             Tuple[bool, dict]:
@@ -731,6 +794,28 @@ class HammerDriver:
                 "sim.inputs.all_regs": all_regs,
                 "sim.inputs.seq_cells": output_dict["par.outputs.seq_cells"],
                 "sim.inputs.sdf_file": output_dict["par.outputs.sdf_file"],
+                "vlsi.builtins.is_complete": False
+            }  # type: Dict[str, Any]
+            return result
+        except KeyError:
+            # KeyError means that the given dictionary is missing output keys.
+            return None
+
+    @staticmethod
+    def par_output_to_power_input(output_dict: dict) -> Optional[dict]:
+        """
+        Generate the appropriate inputs for running power analysis from the
+        outputs of par run.
+        Does not merge the results with any project dictionaries.
+        :param output_dict: Dict containing par.outputs.*
+        :return: sim.inputs.* settings generated from output_dict,
+                 or None if output_dict was invalid
+        """
+        try:
+            result = {
+                "power.inputs.top_module": output_dict["par.inputs.top_module"],
+                "power.inputs.netlist": output_dict["par.outputs.output_netlist"],
+                "power.inputs.spef_file": output_dict["par.outputs.spef_file"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             return result
@@ -962,6 +1047,28 @@ class HammerDriver:
 
         return run_succeeded, output_config
 
+    @staticmethod
+    def sim_output_to_power_input(output_dict: dict) -> Optional[dict]:
+        """
+        Generate the VCD inputs dynamic power analysis from the
+        outputs of simulations.
+        Does not merge the results with any project dictionaries.
+        :param output_dict: Dict containing sim.outputs.*
+        :return: sim.inputs.* settings generated from output_dict,
+                 or None if output_dict was invalid
+        """
+        try:
+            waveforms = deeplist(output_dict["sim.outputs.waveforms"])
+            result = {
+                "power.inputs.waveforms": waveforms,
+                "power.inputs.waveforms_meta": "append"
+                "vlsi.builtins.is_complete": False
+            }  # type: Dict[str, Any]
+            return result
+        except KeyError:
+            # KeyError means that the given dictionary is missing output keys.
+            return None
+
     def run_sim(self, hook_actions: Optional[List[HammerToolHookAction]] = None, force_override: bool = False) -> \
             Tuple[bool, dict]:
         """
@@ -1005,6 +1112,47 @@ class HammerDriver:
                     "or did not call super().export_config_outputs(). "
                     "Subsequent commands might not behave correctly.")
                 output_config["vlsi.builtins.is_complete"] = False
+        except ValueError as e:
+            self.log.fatal(e.args[0])
+            return False, {}
+
+        return run_succeeded, output_config
+
+    def run_power(self, hook_actions: Optional[List[HammerToolHookAction]] = None, force_override: bool = False) -> \
+            Tuple[bool, dict]:
+        """
+        Run power analysis based on the given database.
+        The output config dict returned does NOT have a copy of the input config settings.
+
+        :param hook_actions: List of hook actions, or leave as None to use the hooks sets in set_power_hooks.
+                             Hooks from set_power_hooks, if present, will be appended afterwards.
+        :param force_override: Set to true to overwrite instead of append.
+        :return: Tuple of (success, output config dict)
+        """
+        if self.power_tool is None:
+            self.log.error("Must load power tool before calling run_power")
+            return False, {}
+
+        # TODO: think about artifact storage?
+        self.log.info("Starting power with tool '%s'" % (self.power_tool.name))
+        if hook_actions is None:
+            hooks_to_use = self.post_custom_power_tool_hooks
+        else:
+            if force_override:
+                hooks_to_use = hook_actions
+            else:
+                hooks_to_use = hook_actions + self.post_custom_power_tool_hooks
+
+        run_succeeded = self.power_tool.run(hooks_to_use)
+        if not run_succeeded:
+            self.log.error("Power tool %s failed! Please check its output." % self.power_tool.name)
+            # Allow the flow to keep running, just in case.
+            # TODO: make this an option
+
+        # Record output from the power tool into the JSON output.
+        output_config = {}  # type: Dict[str, Any]
+        try:
+            output_config.update(self.power_tool.export_config_outputs())
         except ValueError as e:
             self.log.fatal(e.args[0])
             return False, {}

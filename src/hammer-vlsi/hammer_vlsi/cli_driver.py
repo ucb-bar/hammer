@@ -117,6 +117,7 @@ class CLIDriver:
         self.lvs_rundir = ""  # type: Optional[str]
         self.sram_generator_rundir = ""  # type: Optional[str]
         self.sim_rundir = ""  # type: Optional[str]
+        self.power_rundir = "" # type: Optional[str]
         self.pcb_rundir = ""  # type: Optional[str]
 
         # If a subclass has defined these, don't clobber them in init
@@ -162,6 +163,10 @@ class CLIDriver:
             check_CLIActionType_type(self.par_sim_action) # type: ignore
         else:
             self.par_sim_action = self.create_par_sim_action(self.par_action, self.sim_action) # type: CLIActionConfigType
+        if hasattr(self, "power_action"):
+            check_CLIActionType_type(self.power_action) # type: ignore
+        else:
+            self.power_action = self.create_power_action([]) # type: CLIActionConfigType
 
         # Dictionaries of module-CLIActionConfigType for hierarchical flows.
         # See all_hierarchical_actions() below.
@@ -216,7 +221,12 @@ class CLIDriver:
             "par_to_sim": self.par_to_sim_action,
             "par-to-sim": self.par_to_sim_action,
             "par_sim": self.par_sim_action,
-            "par-sim": self.par_sim_action
+            "par-sim": self.par_sim_action,
+            "power": self.power_action,
+            "par-to-power": self.par_to_power_action,
+            "par_to_power": self.par_to_power_action,
+            "sim-to-power": self.sim_to_power_action,
+            "sim_to_power": self.sim_to_power_action
         }, self.all_hierarchical_actions)
 
     @staticmethod
@@ -272,6 +282,13 @@ class CLIDriver:
     def get_extra_sim_hooks(self) -> List[HammerToolHookAction]:
         """
         Return a list of extra simulation hooks in this project.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_extra_power_hooks(self) -> List[HammerToolHookAction]:
+        """
+        Return a list of extra power hooks in this project.
         To be overridden by subclasses.
         """
         return list()
@@ -347,6 +364,14 @@ class CLIDriver:
                           post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
         hooks = self.get_extra_sim_hooks() + custom_hooks  # type: List[HammerToolHookAction]
         return self.create_action("sim", hooks if len(hooks) > 0 else None,
+                                  pre_action_func, post_load_func, post_run_func)
+
+    def create_power_action(self, custom_hooks: List[HammerToolHookAction],
+                          pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_load_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
+        hooks = self.get_extra_sim_hooks() + custom_hooks  # type: List[HammerToolHookAction]
+        return self.create_action("power", hooks if len(hooks) > 0 else None,
                                   pre_action_func, post_load_func, post_run_func)
 
     def create_sram_generator_action(self, custom_hooks: List[HammerToolHookAction],
@@ -465,6 +490,26 @@ class CLIDriver:
                 else:
                     post_load_func_checked(driver)
                 success, output = driver.run_sim(extra_hooks)
+                if not success:
+                    driver.log.error("Sim tool did not succeed")
+                    return None
+                dump_config_to_json_file(os.path.join(driver.sim_tool.run_dir, "sim-output.json"), output)
+                dump_config_to_json_file(os.path.join(driver.sim_tool.run_dir, "sim-output-full.json"),
+                                         self.get_full_config(driver, output))
+                post_run_func_checked(driver)
+            elif action_type == "power":
+                if not driver.load_power_tool(get_or_else(self.power_rundir, "")):
+                    return None
+                else:
+                    post_load_func_checked(driver)
+                success, output = driver.run_power(extra_hooks)
+                if not success:
+                    driver.log.error("Power tool did not succeed")
+                    return None
+                dump_config_to_json_file(os.path.join(driver.power_tool.run_dir, "power-output.json"), output)
+                dump_config_to_json_file(os.path.join(driver.power_tool.run_dir, "power-output-full.json"),
+                                         self.get_full_config(driver, output))
+                post_run_func_checked(driver)
             elif action_type == "pcb":
                 if not driver.load_pcb_tool(get_or_else(self.pcb_rundir, "")):
                     return None
@@ -538,6 +583,25 @@ class CLIDriver:
             return None
         else:
             return self.get_full_config(driver, lvs_input_only)
+
+    def par_to_power_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        """Create a full config to run the output."""
+        power_input_only = HammerDriver.par_output_to_power_input(driver.project_config)
+        if power_input_only is None:
+            driver.log.error("Input config does not appear to contain valid par outputs")
+            return None
+        else:
+            return self.get_full_config(driver, power_input_only)
+
+    def sim_to_power_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        """Create a full config to run the output."""
+        power_input_only = HammerDriver.sim_output_to_power_input(driver.project_config)
+        if power_input_only is None:
+            driver.log.error("Input config does not appear to contain valid par outputs")
+            return None
+        else:
+            return self.get_full_config(driver, power_input_only)
+
 
     def create_synthesis_par_action(self, synthesis_action: CLIActionConfigType, par_action: CLIActionConfigType) -> CLIActionConfigType:
         """
@@ -871,6 +935,7 @@ class CLIDriver:
         self.drc_rundir = get_nonempty_str(args['drc_rundir'])
         self.lvs_rundir = get_nonempty_str(args['lvs_rundir'])
         self.sim_rundir = get_nonempty_str(args['sim_rundir'])
+        self.power_rundir = get_nonempty_str(args['power_rundir'])
 
         # Stage control: from/to
         from_step = get_nonempty_str(args['from_step'])
@@ -1104,6 +1169,8 @@ class CLIDriver:
                             help='(optional) Directory to store LVS results in')
         parser.add_argument("--sim_rundir", required=False, default="",
                             help='(optional) Directory to store simulation results in')
+        parser.add_argument("--power_rundir", required=False, default="",
+                            help='(optional) Directory to store power results in')
         # Optional arguments for step control.
         parser.add_argument("--from_step", dest="from_step", required=False,
                             help="Run the given action from the given step (inclusive).")

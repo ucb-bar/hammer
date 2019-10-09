@@ -50,6 +50,11 @@ vlsi.core:
   sim_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/sim"]
   sim_tool_path_meta: subst
 
+  # Path(s) to power tools.
+  # Add the built-in path to power tools
+  power_tool_path: ["${vlsi.builtins.hammer_vlsi_path/power"]
+  power_tool_path_meta: subst
+
   # Path(s) to PCB deliverable tools.
   # Add the built-in path to PCB deliverable tools.
   pcb_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/pcb"]
@@ -73,6 +78,9 @@ vlsi.core:
 
   # Sim tool to use.
   sim_tool: "nop"
+
+  # Power analysis tool to use.
+  power_tool: "nop"
 
   # PCB deliverable tool to use.
   # PCB deliverables include footprints, symbols, etc.
@@ -801,6 +809,29 @@ sim.inputs:
   execute_sim: true
 
 sim.submit:
+  command: "${vlsi.submit.command}"
+  command_meta: lazysubst
+  settings: "vlsi.submit.settings"
+  settings_meta: lazycrossref
+
+power.inputs:
+  #TODO(daniel) make tool loadable from db or from individual parts
+  #power_tool_load_mode: null
+
+  #database: null
+
+  top_module: null
+
+  netlist: null
+
+  spef_file: null
+
+  power_spec: null
+
+  waveforms: []
+
+
+power.submit:
   command: "${vlsi.submit.command}"
   command_meta: lazysubst
   settings: "vlsi.submit.settings"

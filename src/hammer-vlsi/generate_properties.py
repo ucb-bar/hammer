@@ -154,7 +154,9 @@ def main(args) -> int:
                                             InterfaceVar("output_seq_cells", "List[str]",
                                                      "output collection of all sequential standard cells in design"),
                                             InterfaceVar("sdf_file", "str",
-                                                     "output SDF file to be read for timing annotated gate level sims")
+                                                     "output SDF file to be read for timing annotated gate level sims"),
+                                            InterfaceVar("spef_file", "str",
+                                                     "output SPEF file to be read for power analysis")
                                             # TODO: add individual parts of the ILM (e.g. verilog, sdc, spef, etc) for cross-tool compatibility?
                                         ]
                                         )
@@ -202,8 +204,20 @@ def main(args) -> int:
                                   InterfaceVar("seq_cells", "List[str]", "collection of all sequential standard cells in design"),
                                   InterfaceVar("sdf_file", "Optional[str]", "optional SDF file needed for timing annotated gate level sims")
                               ],
-                              outputs=[]
+                              outputs=[
+                                  InterfaceVar("waveforms", "List[str]", "list of waveform dump files for dynamic power analysis")
+                                  ]
                               )
+    HammerPowerTool = Interface(module="HammerPowerTool",
+                                filename="hammer_vlsi/hammer_vlsi_impl.py",
+                                inputs=[
+                                  InterfaceVar("top_module", "str", "top RTL module"),
+                                  InterfaceVar("netlist", "str", "Netlist for power analysis"),
+                                  InterfaceVar("spef_file", "str", "SPEF file needed for parasitics"),
+                                  InterfaceVar("waveforms", "List[str]", "list of waveform dump files for dynamic power analysis")
+                                ],
+                                outputs=[]
+                                )
     HammerPCBDeliverableTool = Interface(module="HammerPCBDeliverableTool",
                                        filename="hammer_vlsi/hammer_vlsi_impl.py",
                                        inputs=[],
@@ -224,6 +238,7 @@ def main(args) -> int:
     generate_interface(HammerLVSTool)
     generate_interface(HammerSRAMGeneratorTool)
     generate_interface(HammerSimTool)
+    generate_interface(HammerPowerTool)
     generate_interface(HammerPCBDeliverableTool)
 
     if selected_file == "":

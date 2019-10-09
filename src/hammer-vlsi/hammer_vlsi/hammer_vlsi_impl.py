@@ -608,6 +608,26 @@ class HammerPlaceAndRouteTool(HammerTool):
             raise TypeError("sdf_file must be a str")
         self.attr_setter("_sdf_file", value)
 
+
+    @property
+    def spef_file(self) -> str:
+        """
+        Get the output SPEF file to be read for power analysis.
+
+        :return: The output SPEF file to be read for power analysis.
+        """
+        try:
+            return self.attr_getter("_spef_file", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the output SPEF file to be read for power analysis yet")
+
+    @spef_file.setter
+    def spef_file(self, value: str) -> None:
+        """Set the output SPEF file to be read for power analysis."""
+        if not (isinstance(value, str)):
+            raise TypeError("spef_file must be a str")
+        self.attr_setter("_spef_file", value)
+
     ### END Generated interface HammerPlaceAndRouteTool ###
 
     def create_power_straps_tcl(self) -> List[str]:
@@ -1264,9 +1284,118 @@ class HammerSimTool(HammerTool):
 
 
     ### Outputs ###
+
+    @property
+    def waveforms(self) -> List[str]:
+        """
+        Get the list of waveform dump files for dynamic power analysis.
+
+        :return: The list of waveform dump files for dynamic power analysis.
+        """
+        try:
+            return self.attr_getter("_waveforms", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the list of waveform dump files for dynamic power analysis yet")
+
+    @waveforms.setter
+    def waveforms(self, value: List[str]) -> None:
+        """Set the list of waveform dump files for dynamic power analysis."""
+        if not (isinstance(value, List)):
+            raise TypeError("waveforms must be a List[str]")
+        self.attr_setter("_waveforms", value)
+
     ### END Generated interface HammerSimTool ###
     ### Generated interface HammerSimTool ###
 
+class HammerPowerTool(HammerTool):
+
+    ### Generated interface HammerPowerTool ###
+    ### DO NOT MODIFY THIS CODE, EDIT generate_properties.py INSTEAD ###
+    ### Inputs ###
+
+    @property
+    def top_module(self) -> str:
+        """
+        Get the top RTL module.
+
+        :return: The top RTL module.
+        """
+        try:
+            return self.attr_getter("_top_module", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the top RTL module yet")
+
+    @top_module.setter
+    def top_module(self, value: str) -> None:
+        """Set the top RTL module."""
+        if not (isinstance(value, str)):
+            raise TypeError("top_module must be a str")
+        self.attr_setter("_top_module", value)
+
+
+    @property
+    def netlist(self) -> str:
+        """
+        Get the Netlist for power analysis.
+
+        :return: The Netlist for power analysis.
+        """
+        try:
+            return self.attr_getter("_netlist", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the Netlist for power analysis yet")
+
+    @netlist.setter
+    def netlist(self, value: str) -> None:
+        """Set the Netlist for power analysis."""
+        if not (isinstance(value, str)):
+            raise TypeError("netlist must be a str")
+        self.attr_setter("_netlist", value)
+
+
+    @property
+    def spef_file(self) -> str:
+        """
+        Get the SPEF file needed for parasitics.
+
+        :return: The SPEF file needed for parasitics.
+        """
+        try:
+            return self.attr_getter("_spef_file", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the SPEF file needed for parasitics yet")
+
+    @spef_file.setter
+    def spef_file(self, value: str) -> None:
+        """Set the SPEF file needed for parasitics."""
+        if not (isinstance(value, str)):
+            raise TypeError("spef_file must be a str")
+        self.attr_setter("_spef_file", value)
+
+
+    @property
+    def waveforms(self) -> List[str]:
+        """
+        Get the list of waveform dump files for dynamic power analysis.
+
+        :return: The list of waveform dump files for dynamic power analysis.
+        """
+        try:
+            return self.attr_getter("_waveforms", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the list of waveform dump files for dynamic power analysis yet")
+
+    @waveforms.setter
+    def waveforms(self, value: List[str]) -> None:
+        """Set the list of waveform dump files for dynamic power analysis."""
+        if not (isinstance(value, List)):
+            raise TypeError("waveforms must be a List[str]")
+        self.attr_setter("_waveforms", value)
+
+
+    ### Outputs ###
+    ### END Generated interface HammerPowerTool ###
+    ### Generated interface HammerPowerTool ###
 
 class HasUPFSupport(HammerTool):
     """Mix-in trait with functions useful for tools with UPF style power
