@@ -944,28 +944,22 @@ def combine_configs(configs: Iterable[dict]) -> dict:
 def load_config_from_paths(config_paths: Iterable[str], strict: bool = False) -> List[dict]:
     """
     Load configuration from paths containing \*.yml and \*.json files.
-    As noted in README.config, .json will take precedence over .yml files.
 
     :param config_paths: Path to \*.yml and \*.json config files.
     :param strict: Set to true to error if the file is not found.
-    :return: A list of configs in increasing order of precedence.
+    :return: A list of configs in order of specification.
     """
-    # Put the .json configs after the .yml configs to make sure .json takes
-    # precedence over .yml.
-    sorted_paths = sorted(config_paths, key=lambda x: x.endswith(".json"))
-
-    return list(map(lambda path: load_config_from_file(path, strict), sorted_paths))
+    return list(map(lambda path: load_config_from_file(path, strict), config_paths))
 
 
 def load_config_from_defaults(path: str, strict: bool = False) -> List[dict]:
     """
     Load the default configuration for a hammer-vlsi tool/library/technology in
-    the given path, which consists of defaults.yml and defaults.json (with
-    defaults.json taking priority).
+    the given path, which consists of defaults.yml and defaults.json.
 
     :param config_paths: Path to defaults.yml and defaults.json.
     :param strict: Set to true to error if the file is not found.
-    :return: A list of configs in increasing order of precedence.
+    :return: A list of configs in order of specification.
     """
     return load_config_from_paths([
         os.path.join(path, "defaults.yml"),
