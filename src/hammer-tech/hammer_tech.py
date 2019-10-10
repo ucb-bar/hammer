@@ -9,6 +9,7 @@
 import json
 import os
 import tarfile
+import importlib
 from abc import ABCMeta, abstractmethod
 from typing import Any, Callable, Iterable, List, NamedTuple, Optional, Tuple, Dict
 from decimal import Decimal
@@ -310,6 +311,10 @@ class LVSDeck(NamedTuple('LVSDeck', [
         )
 
 class HammerTechnology:
+    """
+    Abstraction layer of Technology.
+    This can be overridden by add `__init__.py` to a specific technology like `technology/asap7/__init__.py`
+    """
     # Properties.
     @property
     def cache_dir(self) -> str:
@@ -387,7 +392,16 @@ class HammerTechnology:
         :param path: Path to set as the technology folder (e.g. foo/bar/technology/asap7)
         """
 
-        tech = HammerTechnology()
+        # try to override tech, if __init__.py exist.
+        try:
+            mod = importlib.import_module(technology_name)
+            # work around for python < 3.6
+            try:
+                tech = mod.tech # type: ignore
+            except:
+                raise ImportError # type: ignore
+        except ImportError:
+            tech = HammerTechnology()
 
         # Name of the technology
         tech.name = technology_name
@@ -718,6 +732,11 @@ class HammerTechnology:
                             tarfile.open(file).extractall(path=os.path.join(root, f + "_dir"))
                             os.remove(file)
                             os.renames(os.path.join(root, f + "_dir"), file)
+                self.post_install_script()
+
+    def post_install_script(self) -> None:
+        """a script to apply any needed hotfixes to technology libraries, tech __init__.py will override this"""
+        pass
 
     def get_extra_libraries(self) -> List[ExtraLibrary]:
         """
@@ -983,8 +1002,6 @@ class HammerTechnology:
         Return the default placement site defined by the hammer setting "vlsi.technology.placement_site"
         """
         return self.get_site_by_name(self.get_setting("vlsi.technology.placement_site"))
-
-
 
 class HammerTechnologyUtils:
     """
