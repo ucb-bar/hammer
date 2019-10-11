@@ -1,12 +1,12 @@
 Setting up a Hammer CAD Tool Plugin
 ================================================
 
-This guide will discuss what a Hammer user may do if they want to implement their own CAD tool plugin or extend the current CAD tool plugins. There are some basic mockup examples of how this can be done in ``hammer/src/hammer-vlsi/ACTION/``, where ``ACTION`` may be ``par`` for example.
+This guide will discuss what a Hammer user may do if they want to implement their own CAD tool plugin or extend the current CAD tool plugins. There are some basic mock-up examples of how this can be done in the ``par`` and ``synthesis`` directories inside ``hammer/src/hammer-vlsi/``.
 
 Tool Class
 ------------------------------------------------
 
-Writing a tool plugin starts with writing the tool class. Hammer already provides a set of classes for a new tool to extend. For instance, the Hammer Innovus plugin inherits from ``HammerPlaceAndRouteTool`` and ``CadenceTool``. 
+Writing a tool plugin starts with writing the tool class. Hammer already provides a set of classes and mixins for a new tool to extend. For example, the Hammer Innovus plugin inherits from ``HammerPlaceAndRouteTool`` and ``CadenceTool``. 
 
 Steps
 ------------------------------------------------
@@ -35,17 +35,19 @@ Hammer provides the method ``get_setting("KEY_NAME")`` for the tool to actually 
 Writing TCL
 ------------------------------------------------
 
-Hammer provides two main methods for writing TCL to a file: ``append`` and ``verbose_append``. Both do similar things but ``verbose_append`` will print the command explicitly upon execution.
+Hammer provides two main methods for writing TCL to a file: ``append`` and ``verbose_append``. Both do similar things but ``verbose_append`` will emit additional TCL code to print the command to the terminal upon execution.
 
 Executing the Tool
 ------------------------------------------------
 
-When all the desired TCL has been written by various step methods, it is time to execute the tool itself. Hammer provides the method ``run_executable(args, cwd=self.run_dir)`` to do so. ``args`` is a Python list of flags to be run with the tool executable. ``cwd=self.run_dir`` sets the "current working directory" and allows the plugin to specify what directory to execute the command in.
+When all the desired TCL has been written by various step methods, it is time to execute the tool itself. Hammer provides the method ``run_executable(args, cwd=self.run_dir)`` to do so. ``args`` is a Python list of flags to be run with the tool executable. ``cwd=self.run_dir`` sets the "current working directory" and allows the plugin to specify in what directory to execute the command.
 
 
 Tool Outputs
 -----------------------------------------------
 
-TODO
-export_output_configs
-
+After execution, the hammer driver will emit a copy of the hammer IR database in JSON format to the run directory as well as specific new fields created by the activity.
+The name of the output JSON files will be related to the activity type (e.g. ``par-output.json`` and ``par-output-full.json`` for the ``par`` activity).
+The ``-full`` verison contains the entire hammer IR database, while the other version contains only the output entries created by this activity.
+The individual fields are created when the ``export_config_outputs`` method is called.
+Each implementation of this tool must override this method with a new one that calls its ``super`` method and appends any additional output fields to the output dictionary, as necessary.
