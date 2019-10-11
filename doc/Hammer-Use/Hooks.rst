@@ -1,7 +1,9 @@
 Extending Hammer with Hooks
 =======================================
 
-Hammer's built-in APIs does not promise to be able to produce DRC & LVS clean, good QoR designs for complex designs in advanced technology nodes. Furthermore, Hammer is flexible and encourages power users to experiment with CAD tool commands to tweak aspects of their designs. To extend Hammer, you need to write *hooks*.
+It is unlikely that using the default Hammer APIs alone will produce DRC- and LVS-clean designs with good QoR in advanced technology nodes if the design is sufficiently complex.
+To solve that, Hammer is extensible using *hooks*.
+These hooks also afford power users additional flexibility to experiment with CAD tool commands to tweak aspects of their designs.
 
 Hook Methods
 ------------
@@ -26,4 +28,4 @@ A list of these hooks must be provided in an implementation of method such as ``
 Plugin-Provided Hooks
 ---------------------
 
-Hooks can also be provided by the technology or tool plugin. The linked Chipyard example includes an example of how the ASAP7 technology plugin injects a hook to scale down a GDS post-P&R.
+Hooks can also be provided by the technology or tool plugin. The linked Chipyard example includes an example of how the ASAP7 technology plugin injects a hook to scale down a GDS post-place-and-route.
