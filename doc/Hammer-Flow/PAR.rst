@@ -3,7 +3,8 @@
 Place-and-Route 
 ===============================
 
-Hammer has an action for placing and routing synthesized Verilog. This action invokes a ``HammerPlaceAndRouteTool`` that must be provided as part of a tool plugin.
+Hammer has an action for placing and routing a synthesized design.
+This action requires a tool plugin to implement ``HammerPlaceAndRouteTool``.
 
 P&R Setup Keys
 --------------
@@ -12,7 +13,7 @@ P&R Setup Keys
 
     * ``par_tool_path``
 
-        * Set to directory with ``__init__.py`` and ``defaults.yml`` for the P&R tool, typically ``/path/to/tool_plugin/par``
+        * Set to the directory containing the tool plugin directory for the place-and-route tool, typically ``/path/to/tool_plugin/par``. This will be the parent directory of the directory containing ``__init__.py`` and ``defaults.yml``.
 
     * ``par_tool``
         
