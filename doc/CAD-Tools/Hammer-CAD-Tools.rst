@@ -11,3 +11,7 @@ The structure of each repository is as follows:
 
         * ``__init__.py`` contains the methods needed to implement the tool
         * ``defaults.yml`` contains the default Hammer IR needed by the tool
+        
+        
+ACTION is the Hammer action name (e.g. ``par``, ``synthesis``, ``drc``, etc.).
+TOOL_NAME is the name of the tool, which is referenced in your configuration. For example, having ``vlsi.core.par_tool_path: par_tool_foo`` in your configuration would expect a TOOL_NAME of ``par_tool_foo``.
