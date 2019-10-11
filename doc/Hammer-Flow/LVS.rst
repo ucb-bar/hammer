@@ -1,7 +1,8 @@
 LVS
 ===============================
 
-Hammer has an action for running LVS decks on a post-P&R'd GDS and gate-levl netlist. This action invokes a ``HammerLVSTool`` that must be provided as part of a tool plugin.
+Hammer has an action for running layout-versus-schematic (LVS) on a post-place-and-route GDS and gate-levl netlist.
+This action requires a tool plugin to implement ``HammerLVSTool``.
 
 LVS Setup Keys
 --------------
@@ -10,7 +11,7 @@ LVS Setup Keys
 
     * ``lvs_tool_path``
 
-        * Set to directory with ``__init__.py`` and ``defaults.yml`` for the lvs tool, typically ``/path/to/tool_plugin/lvs``
+        * Set to the directory containing the tool plugin directory for the LVS tool, typically ``/path/to/tool_plugin/lvs``. This will be the parent directory of the directory containing ``__init__.py`` and ``defaults.yml``.
 
     * ``lvs_tool``
         
