@@ -1,7 +1,7 @@
 DRC
 ===============================
 
-Hammer has an action for running DRC on a post-place-and-route GDS.
+Hammer has an action for running design rules check (DRC) on a post-place-and-route GDS.
 This action requires a tool plugin to implement ``HammerDRCTool``.
 
 DRC Setup Keys
