@@ -56,7 +56,7 @@ This is calling the ``__main__()`` method of the ``CLIDriver`` class. An example
 
     hammer-vlsi -e env.yml -p config.yml --obj_dir build par
 
-Using hooks requires the designer to extend the ``CLIDriver`` class. A good example exists in the `Chipyard <https://github.com/ucb-bar/chipyard>` repository (``chipyard/vlsi/example-vlsi``). This would change the invocation to something like the following:
+Using hooks requires the designer to extend the ``CLIDriver`` class. A good example exists in the `Chipyard <https://github.com/ucb-bar/chipyard>`__ repository (``chipyard/vlsi/example-vlsi``). This would change the invocation to something like the following:
 
 .. _call-example-hooks:
 .. code-block:: bash

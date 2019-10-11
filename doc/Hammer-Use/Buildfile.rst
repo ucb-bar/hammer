@@ -9,9 +9,9 @@ Hammer will generate a Makefile include in the object directory named ``hammer.d
 
 .. code-block:: shell
 
-    ``hammer-vlsi -e env.yml -p config.yml --obj_dir build build``
+    hammer-vlsi -e env.yml -p config.yml --obj_dir build build
 
-`hammer.d`` will contain environment variables needed by Hammer and a target for each major Hammer action (e.g. ``par``, ``synthesis``, etc. but not ``syn-to-par``, which is run automatically when calling ``make par``).
+``hammer.d`` will contain environment variables needed by Hammer and a target for each major Hammer action (e.g. ``par``, ``synthesis``, etc. but not ``syn-to-par``, which is run automatically when calling ``make par``).
 For a flat design, the dependencies are created betwen the major Hammer actions.
 For hierarchical designs, Hammer will use the hierarchy to build a dependency graph and construct the Make target dependencies appropriately.
 ``hammer.d`` should be included in a higher-level Makefile.
