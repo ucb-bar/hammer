@@ -31,7 +31,7 @@ __all__ = ['HammerDriverOptions', 'HammerDriver']
 HammerDriverOptions = NamedTuple('HammerDriverOptions', [
     # List of environment config files in .json
     ('environment_configs', List[str]),
-    # List of project config files in .json
+    # List of project config files in .json or .yml
     ('project_configs', List[str]),
     # Log file location.
     ('log_file', str),
