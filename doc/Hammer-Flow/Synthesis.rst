@@ -1,6 +1,9 @@
 Synthesis 
 ===============================
 
+Hammer supports synthesizing Verilog-based RTL designs to gate-level netlists.
+This action requires a tool plugin to implement ``HammerSynthesisTool``.
+
 Synthesis Setup Keys
 -------------------------------
 
@@ -8,7 +11,7 @@ Synthesis Setup Keys
   
     * ``synthesis_tool_path``
 
-        * Set to directory with ``__init__.py`` and ``defaults.yml`` for the synthesis tool, typically ``/path/to/tool_directory/synthesis/``
+        * Set to the directory containing the tool plugin directory for the DRC tool, typically ``/path/to/tool_plugin/synthesis``. This will be the parent directory of the directory containing ``__init__.py`` and ``defaults.yml``.
 
     * ``synthesis_tool``
 
@@ -57,7 +60,7 @@ Synthesis Commands
 
     * ``hammer-vlsi -e env.yml -p config.yml --obj_dir build syn``
 
-* Synthesis to P&R
+* Synthesis to Place-and-route
 
     * ``hammer-vlsi -e env.yml -p config.yml -p OBJ_DIR/syn-rundir/syn-output.json --obj_dir build syn-to-par``
 
