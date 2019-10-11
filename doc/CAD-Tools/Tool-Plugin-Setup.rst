@@ -11,7 +11,7 @@ Writing a tool plugin starts with writing the tool class. Hammer already provide
 Steps
 ------------------------------------------------
 
-Each tool implements a steps method. For instance, a portion of the steps method for a P&R tool may look like:
+Each tool implements a steps method. For instance, a portion of the steps method for a place-and-route tool may look like:
 
 .. _steps-example:
 .. code-block:: python
@@ -46,8 +46,8 @@ When all the desired TCL has been written by various step methods, it is time to
 Tool Outputs
 -----------------------------------------------
 
-After execution, the hammer driver will emit a copy of the hammer IR database in JSON format to the run directory as well as specific new fields created by the activity.
+After execution, the Hammer driver will emit a copy of the Hammer IR database in JSON format to the run directory as well as specific new fields created by the activity.
 The name of the output JSON files will be related to the activity type (e.g. ``par-output.json`` and ``par-output-full.json`` for the ``par`` activity).
-The ``-full`` verison contains the entire hammer IR database, while the other version contains only the output entries created by this activity.
+The ``-full`` verison contains the entire Hammer IR database, while the other version contains only the output entries created by this activity.
 The individual fields are created when the ``export_config_outputs`` method is called.
 Each implementation of this tool must override this method with a new one that calls its ``super`` method and appends any additional output fields to the output dictionary, as necessary.

@@ -48,7 +48,7 @@ Synthesis Outputs
 * Mapped verilog file: ``obj_dir/syn-rundir/{TOP_MODULE}.mapped.v``
 * Mapped design SDF: ``obj_dir/syn-rundir/{TOP_MODULE}.mapped.sdf``
 * Synthesis output Hammer IR is contained in ``obj_dir/syn-rundir/syn-output.json``
-* Synthesis reports for gates, area, and timing are output in ``obj_dir/syn-rundir/reports``. The mapped
+* Synthesis reports for gates, area, and timing are output in ``obj_dir/syn-rundir/reports``
 
 The synthesis output Hammer IR is converted to inputs for the P&R tool and the simulation tool by the Hammer ``syn-to-par`` and ``syn-to-sim`` commands, respectively.
     

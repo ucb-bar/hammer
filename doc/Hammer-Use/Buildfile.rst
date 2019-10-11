@@ -1,3 +1,5 @@
+.. _buildfile:
+
 Hammer Buildfile
 ==========================================
 
@@ -15,7 +17,7 @@ For hierarchical designs, Hammer will use the hierarchy to build a dependency gr
 ``hammer.d`` should be included in a higher-level Makefile.
 While ``hammer.d`` defines all of the variables that it needs, there are often reasons to set these elsewhere.
 Because ``hammer.d`` uses ``?=`` assignment, the settings created in the top-level Makefile will persist.
-An example of this setup is found in `Chipyard <https://github.com/ucb-bar/chipyard/blob/master/vlsi/Makefile>`  .
+An example of this setup is found in `Chipyard <https://github.com/ucb-bar/chipyard/blob/master/vlsi/Makefile>`__.
 
 
 To enable interactive usage, Hammer will also create a set of "redo" targets (e.g. ``redo-par`` and ``redo-syn``).

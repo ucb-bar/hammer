@@ -1,7 +1,7 @@
 Hammer Use
 ========================================
 
-This documentation will walk through the currently supported steps of the Hammer flow including synthesis, place-and-route, DRC, LVS, simulation, and more.
+This documentation will walk through more advanced features of the Hammer infrastructure. You will learn about Hammer's APIs, how to write hooks, the supported build infrastructure, and how to set up hierarchical flows.
 
 .. toctree::
    :maxdepth: 2
