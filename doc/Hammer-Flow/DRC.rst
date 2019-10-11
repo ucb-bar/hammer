@@ -1,7 +1,8 @@
 DRC
 ===============================
 
-Hammer has an action for running DRC decks on a post-P&R'd GDS. This action invokes a ``HammerDRCTool`` that must be provided as drct of a tool plugin.
+Hammer has an action for running DRC on a post-place-and-route GDS.
+This action requires a tool plugin to implement ``HammerDRCTool``.
 
 DRC Setup Keys
 --------------
@@ -10,7 +11,7 @@ DRC Setup Keys
 
     * ``drc_tool_path``
 
-        * Set to directory with ``__init__.py`` and ``defaults.yml`` for the DRC tool, typically ``/path/to/tool_plugin/drc``
+        * Set to the directory containing the tool plugin directory for the DRC tool, typically ``/path/to/tool_plugin/drc``. This will be the parent directory of the directory containing ``__init__.py`` and ``defaults.yml``.
 
     * ``drc_tool``
         
@@ -27,7 +28,7 @@ DRC Input Keys
 
     * ``inputs.layout_file`` (str)
 
-        * GDSII file from P&R. Auto-populated after par-to-drc.
+        * GDSII file from place-and-route. Auto-populated after par-to-drc.
 
     * ``inputs.additional_drc_text_mode`` (str)
 
