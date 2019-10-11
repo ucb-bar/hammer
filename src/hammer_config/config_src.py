@@ -955,13 +955,14 @@ def load_config_from_paths(config_paths: Iterable[str], strict: bool = False) ->
 def load_config_from_defaults(path: str, strict: bool = False) -> List[dict]:
     """
     Load the default configuration for a hammer-vlsi tool/library/technology in
-    the given path, which consists of defaults.yml and defaults.json.
+    the given path, which consists of defaults.yml and defaults.json (with
+    defaults.json taking priority).
 
     :param config_paths: Path to defaults.yml and defaults.json.
     :param strict: Set to true to error if the file is not found.
     :return: A list of configs in order of specification.
     """
     return load_config_from_paths([
-        os.path.join(path, "defaults.yml"),
-        os.path.join(path, "defaults.json")
+        os.path.join(path, "defaults.json"),
+        os.path.join(path, "defaults.yml")
     ])
