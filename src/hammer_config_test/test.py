@@ -70,6 +70,32 @@ a.b.c_meta: append
         db.update_environment([])
         self.assertEqual(db.get_setting("a.b.c"), ["test"])
 
+    def test_no_json_yaml_precedence(self) -> None:
+        """
+        Test that neither JSON nor YAML take precedence over each other.
+        """
+        yfp, ypath = tempfile.mkstemp(".yml")
+        with open(ypath, 'w') as fy:
+            fy.write("""
+foo.bar: "i'm yaml"
+""")
+        jfp, jpath = tempfile.mkstemp(".json")
+        with open(jpath, 'w') as fj:
+            fj.write("""
+{
+    "foo.bar": "i'm json"
+}
+""")
+        db1 = hammer_config.HammerDatabase()
+        configs = hammer_config.load_config_from_paths([ypath, jpath])
+        db1.update_core([hammer_config.combine_configs(configs)])
+        self.assertEqual(db1.get_setting("foo.bar"), "i'm json")
+
+        db2 = hammer_config.HammerDatabase()
+        configs = hammer_config.load_config_from_paths([jpath, ypath])
+        db2.update_core([hammer_config.combine_configs(configs)])
+        self.assertEqual(db2.get_setting("foo.bar"), "i'm yaml")
+
     def test_meta_json2list(self) -> None:
         """
         Test that the meta attribute "json2list" works.
