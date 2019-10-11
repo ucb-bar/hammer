@@ -1,7 +1,8 @@
 Simulation
 ===============================
 
-Hammer supports RTL, post-synthesis, and post-P&R simulation. It provides a simple API to add flags to the simulator call and automatically passes in collateral to the simulation tool from the synthesis and P&R outputs.
+Hammer supports RTL, post-synthesis, and post-P&R simulation. It provides a simple API to add flags to the simulator call and automatically passes in collateral to the simulation tool from the synthesis and place-and-route outputs.
+This action requires a tool plugin to implement ``HammerSimTool``.
 
 Simulation Setup Keys
 -------------------------------
@@ -9,7 +10,7 @@ Simulation Setup Keys
 * Namespace: ``vlsi.core``
   
     * ``sim_tool_path``
-        * Set to directory with ``__init__.py`` and ``defaults.yml`` for the simulation tool, typically ``/path/to/tool_directory/sim/``
+        * Set to the directory containing the tool plugin directory for the DRC tool, typically ``/path/to/tool_plugin/sim``. This will be the parent directory of the directory containing ``__init__.py`` and ``defaults.yml``.
     * ``sim_tool``
         * Actual name of the simulation tool that is setup in the directory ``synthesis_tool_path``, e.g. ``vcs``
 
