@@ -974,7 +974,7 @@ class HammerTechnology:
             cell_list = [SpecialCell.from_setting(sc) for sc in list(self.config.special_cells)]
             return [fc for fc in cell_list if fc.cell_type == cell_type]
         else:
-            return None
+            return []
 
     def get_grid_unit(self) -> Decimal:
         """
