@@ -724,7 +724,7 @@ class HammerDriver:
         """
         try:
             all_regs = deeplist(output_dict["par.outputs.all_regs"])
-            sim_input_files = deeplist(output_dict["par.outputs.output_sim_netlist"])
+            sim_input_files = deeplist([output_dict["par.outputs.output_sim_netlist"]])
             result = {
                 "sim.inputs.input_files": sim_input_files,
                 "sim.inputs.input_files_meta": "append",
