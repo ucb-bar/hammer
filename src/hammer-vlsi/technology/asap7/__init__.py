@@ -10,8 +10,10 @@ import re
 import os
 import tempfile
 import shutil
+from typing import NamedTuple, List, Optional, Tuple, Dict, Set, Any
 
 from hammer_tech import HammerTechnology
+from hammer_vlsi import HammerTool, HammerPlaceAndRouteTool, CadenceTool, HammerToolHookAction
 
 class ASAP7Tech(HammerTechnology):
     """
@@ -190,5 +192,30 @@ for k,v in gds_lib.cell_dict.items():
 # Overwrite original GDS file
 gds_lib.write_gds('{gds_file}')
         """.format(cell_list_file=os.path.join(self.extracted_tarballs_dir, 'ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/cell_list.txt'), gds_file=gds_file)
+
+    def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
+        hooks = {"innovus": [
+            HammerTool.make_post_insertion_hook("write_design", scale_final_gds)
+            ]}
+        return hooks.get(tool_name, [])
+
+def scale_final_gds(ht: HammerTool) -> bool:
+    assert isinstance(ht, HammerPlaceAndRouteTool)
+    assert isinstance(ht, CadenceTool)
+    """
+    Scale the final GDS by a factor of 4
+    hammer/src/hammer-vlsi/technology/asap7/__init__.py implements scale_gds_script
+    """
+    ht.append('''
+# Write script out to a temporary file and execute it
+set fp [open "{script_file}" "w"]
+puts -nonewline $fp "{script_text}"
+close $fp
+
+# Innovus <19.1 appends some bad LD_LIBRARY_PATHS, so remove them before executing python
+set env(LD_LIBRARY_PATH) [join [lsearch -not -all -inline [split $env(LD_LIBRARY_PATH) ":"] "*INNOVUS*"] ":"]
+python3 {script_file}
+'''.format(script_text=ht.technology.scale_gds_script(ht.output_gds_filename), script_file=os.path.join(ht.run_dir, "gds_scale.py")))
+    return True
 
 tech = ASAP7Tech()

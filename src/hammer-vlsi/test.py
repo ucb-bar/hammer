@@ -1109,7 +1109,7 @@ class HammerToolHooksTest(unittest.TestCase):
                     f.write("HelloWorld")
                 return True
 
-            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_from_to_hooks("step5", "step5"))
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks("step5", "step5"))
             success, syn_output = c.driver.run_synthesis(hook_actions=[
                 hammer_vlsi.HammerTool.make_post_insertion_hook("step4", step5)
             ])

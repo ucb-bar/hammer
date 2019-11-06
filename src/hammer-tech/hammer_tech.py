@@ -22,6 +22,7 @@ from hammer_logging import HammerVLSILoggingContext
 from hammer_utils import (LEFUtils, add_lists, deeplist, get_or_else,
                           in_place_unique, optional_map, reduce_list_str,
                           reduce_named, coerce_to_grid)
+from hammer_vlsi import HammerToolHookAction
 
 from library_filter import LibraryFilter
 from filters import LibraryFilterHolder
@@ -1004,6 +1005,41 @@ class HammerTechnology:
         Return the default placement site defined by the hammer setting "vlsi.technology.placement_site"
         """
         return self.get_site_by_name(self.get_setting("vlsi.technology.placement_site"))
+
+    def get_tech_syn_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
+        """
+        Return a list of synthesis hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
+        """
+        Return a list of place and route hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_tech_sram_generator_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
+        """
+        Return a list of sram generator hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_tech_sim_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
+        """
+        Return a list of sim hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_tech_pcb_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
+        """
+        Return a list of pcb hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
 
 class HammerTechnologyUtils:
     """
