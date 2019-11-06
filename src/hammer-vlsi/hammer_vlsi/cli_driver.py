@@ -1154,7 +1154,7 @@ class CLIDriver:
         parser.add_argument("-e", "--environment_config", action='append', required=False,
                             help="Environment config files (.yml or .json) - .json will take precendence over any .yml. These config files will not be re-emitted in the output json. Can also be specified as a colon-separated list in the environment variable HAMMER_ENVIRONMENT_CONFIGS.")
         parser.add_argument("-p", "--project_config", action='append', dest="configs", type=str,
-                            help='Project config files (.yml or .json) - .json will take precedence over any .yml.')
+                            help='Project config files (.yml or .json).')
         parser.add_argument("-l", "--log", required=False,
                             help='Log file. Leave blank to automatically create one.')
         parser.add_argument("--obj_dir", required=False,

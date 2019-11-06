@@ -11,3 +11,6 @@
 [submodule "src/jsonschema"]
 	path = src/jsonschema
 	url = https://github.com/edwardcwang/jsonschema.git
+[submodule "src/tools/gdspy"]
+	path = src/tools/gdspy
+	url = https://github.com/heitzmann/gdspy.git
