@@ -401,6 +401,7 @@ class CLIDriver:
             # 2. Tool-supplied hooks (usually for persistence)
             # 3. Tech-supplied hooks
             # 4. User-supplied hooks
+            assert driver.tech is not None, "must have a technology"
             if action_type == "synthesis" or action_type == "syn":
                 if not driver.load_synthesis_tool(get_or_else(self.syn_rundir, "")):
                     return None

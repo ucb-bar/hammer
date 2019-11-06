@@ -425,12 +425,13 @@ class HammerTool(metaclass=ABCMeta):
                     self.logger.error("Target step '{step}' does not exist".format(step=action.target_name))
                     return False
 
-                for i in range(len(new_steps)):
-                    if new_steps[i].name == action.target_name:
+                for i, nstep in enumerate(new_steps):
+                    if nstep.name == action.target_name:
                         step_id = i
                         break
-                for i in range(len(persistent_steps)):
-                    if persistent_steps[i].step.name == action.target_name:
+                for i, pstep in enumerate(persistent_steps):
+                    assert pstep.step is not None, "Persistent(Pre/Post)Step requires a step"
+                    if pstep.step.name == action.target_name:
                         pstep_id = i
                         break
                 assert bool(step_id != -1) != bool(pstep_id != -1)
@@ -539,6 +540,7 @@ class HammerTool(metaclass=ABCMeta):
                     self.do_pre_steps(step)
                     # Run appropriate persistent hooks.
                     for pst in persistent_steps:
+                        assert pst.step is not None, "Persistent(Pre/Post)Step requires a step"
                         pst_out = True  # type: bool
                         if pst.location == HookLocation.PersistentStep:
                             self.logger.debug("Running persistent sub-step '{pstep}' before '{step}'".format(pstep=pst.step.name, step=step.name))
@@ -566,6 +568,7 @@ class HammerTool(metaclass=ABCMeta):
 
                 # Inject PersistentPostStep after we pass its target step
                 for pst in list(filter(lambda s: s.target_name == step.name and s.location == HookLocation.PersistentPostStep, persistent_steps)):
+                    assert pst.step is not None, "PersistentPostStep requires a step"
                     self.logger.debug("Running persistent sub-step '{pstep}' after '{step}'".format(pstep=pst.step.name, step=step.name))
                     pst_out = pst.step.func(self)
                     assert isinstance(pst_out, bool)
