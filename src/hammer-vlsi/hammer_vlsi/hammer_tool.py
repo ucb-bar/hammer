@@ -407,7 +407,8 @@ class HammerTool(metaclass=ABCMeta):
         # Copy the list of steps
         new_steps = list(steps)
 
-        # Persistent steps are processed differently from normal steps
+        # Persistent steps are processed differently from normal steps. Not a List[HammerToolStep]
+        # because we need to access its location and target_name later when iterating through new_steps.
         persistent_steps = []  # type: List[HammerToolHookAction]
 
         # Where to resume/pause, if such a hook exists
@@ -434,14 +435,15 @@ class HammerTool(metaclass=ABCMeta):
                     if pstep.step.name == action.target_name:
                         pstep_id = i
                         break
-                assert bool(step_id != -1) != bool(pstep_id != -1)
+                assert (step_id > -1) != (pstep_id > -1)
 
             if action.location == HookLocation.ReplaceStep:
                 assert action.step is not None, "ReplaceStep requires a step"
                 assert action.target_name == action.step.name, "Replacement step should have the same name"
                 if pstep_id > -1:
-                    # Inherit replaced persistent step's location
-                    persistent_steps[pstep_id] = action._replace(location=persistent_steps[pstep_id].location)
+                    # Inherit replaced persistent step's location and target
+                    persistent_steps[pstep_id] = action._replace(location=persistent_steps[pstep_id].location,
+                                                                 target_name=persistent_steps[pstep_id].target_name)
                 elif step_id > -1:
                     new_steps[step_id] = action.step
             elif action.location == HookLocation.InsertPreStep:
@@ -450,8 +452,9 @@ class HammerTool(metaclass=ABCMeta):
                     self.logger.error("New step '{step}' already exists".format(step=action.step.name))
                     return False
                 if pstep_id > -1:
-                    # Inherit replaced persistent step's location
-                    persistent_steps.insert(pstep_id, action._replace(location=persistent_steps[pstep_id].location))
+                    # Inherit replaced persistent step's location and target
+                    persistent_steps.insert(pstep_id, action._replace(location=persistent_steps[pstep_id].location,
+                                                                      target_name=persistent_steps[pstep_id].target_name))
                 elif step_id > -1:
                     new_steps.insert(step_id, action.step)
                 names.add(action.step.name)
@@ -461,8 +464,9 @@ class HammerTool(metaclass=ABCMeta):
                     self.logger.error("New step '{step}' already exists".format(step=action.step.name))
                     return False
                 if pstep_id > -1:
-                    # Inherit replaced persistent step's location
-                    persistent_steps.insert(pstep_id + 1, action._replace(location=persistent_steps[pstep_id].location))
+                    # Inherit replaced persistent step's location and target
+                    persistent_steps.insert(pstep_id + 1, action._replace(location=persistent_steps[pstep_id].location,
+                                                                          target_name=persistent_steps[pstep_id].target_name))
                 elif step_id > -1:
                     new_steps.insert(step_id + 1, action.step)
                 names.add(action.step.name)
@@ -680,6 +684,9 @@ class HammerTool(metaclass=ABCMeta):
     def make_resume_pause_hook(step: str, location: HookLocation) -> HammerToolHookAction:
         """
         Create a hook action which will start/stop the execution of the tool at/after the given step.
+
+        :param step: The target step that bounds of the steps to run.
+        :param location: Encodes whether this hook will cause a resume/pause pre/post the target step.
         """
         if not location in [HookLocation.ResumePreStep, HookLocation.ResumePostStep, HookLocation.PausePreStep, HookLocation.PausePostStep]:
             raise ValueError("Resume/Pause hook location must be Resume*/Pause*")

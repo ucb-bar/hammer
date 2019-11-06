@@ -408,10 +408,10 @@ class CLIDriver:
                 else:
                     post_load_func_checked(driver)
                 assert driver.syn_tool is not None, "load_synthesis_tool was unsuccessful"
-                all_hooks = driver.syn_tool.get_tool_hooks() + \
-                            driver.tech.get_tech_syn_hooks(driver.syn_tool.name) + \
-                            list(extra_hooks or [])
-                success, output = driver.run_synthesis(all_hooks if len(all_hooks) > 0 else None)
+                success, output = driver.run_synthesis(
+                        driver.syn_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_syn_hooks(driver.syn_tool.name) + \
+                        list(extra_hooks or []))
                 if not success:
                     driver.log.error("Synthesis tool did not succeed")
                     return None
@@ -425,10 +425,10 @@ class CLIDriver:
                 else:
                     post_load_func_checked(driver)
                 assert driver.par_tool is not None, "load_par_tool was unsuccessful"
-                all_hooks = driver.par_tool.get_tool_hooks() + \
-                            driver.tech.get_tech_par_hooks(driver.par_tool.name) + \
-                            list(extra_hooks or [])
-                success, output = driver.run_par(all_hooks if len(all_hooks) > 0 else None)
+                success, output = driver.run_par(
+                        driver.par_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_par_hooks(driver.par_tool.name) + \
+                        list(extra_hooks or []))
                 if not success:
                     driver.log.error("Place-and-route tool did not succeed")
                     return None
@@ -442,10 +442,10 @@ class CLIDriver:
                 else:
                     post_load_func_checked(driver)
                 assert driver.drc_tool is not None, "load_drc_tool was unsuccessful"
-                all_hooks = driver.drc_tool.get_tool_hooks() + \
-                            driver.tech.get_tech_drc_hooks(driver.drc_tool.name) + \
-                            list(extra_hooks or [])
-                success, output = driver.run_drc(all_hooks if len(all_hooks) > 0 else None)
+                success, output = driver.run_drc(
+                        driver.drc_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_drc_hooks(driver.drc_tool.name) + \
+                        list(extra_hooks or []))
                 if not success:
                     driver.log.error("DRC tool did not succeed")
                     return None
@@ -459,10 +459,10 @@ class CLIDriver:
                 else:
                     post_load_func_checked(driver)
                 assert driver.lvs_tool is not None, "load_lvs_tool was unsuccessful"
-                all_hooks = driver.lvs_tool.get_tool_hooks() + \
-                            driver.tech.get_tech_lvs_hooks(driver.lvs_tool.name) + \
-                            list(extra_hooks or [])
-                success, output = driver.run_lvs(all_hooks if len(all_hooks) > 0 else None)
+                success, output = driver.run_lvs(
+                        driver.lvs_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_lvs_hooks(driver.lvs_tool.name) + \
+                        list(extra_hooks or []))
                 if not success:
                     driver.log.error("LVS tool did not succeed")
                     return None
@@ -476,10 +476,10 @@ class CLIDriver:
                 else:
                     post_load_func_checked(driver)
                 assert driver.sram_generator_tool is not None, "load_sram_generator_tool was unsuccessful"
-                all_hooks = driver.sram_generator_tool.get_tool_hooks() + \
-                            driver.tech.get_tech_sram_generator_hooks(driver.sram_generator_tool.name) + \
-                            list(extra_hooks or [])
-                success, output = driver.run_sram_generator(all_hooks if len(all_hooks) > 0 else None)
+                success, output = driver.run_sram_generator(
+                        driver.sram_generator_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_sram_generator_hooks(driver.sram_generator_tool.name) + \
+                        list(extra_hooks or []))
                 if not success:
                     driver.log.error("SRAM generator tool did not succeed")
                     return None
@@ -490,10 +490,10 @@ class CLIDriver:
                 else:
                     post_load_func_checked(driver)
                 assert driver.sim_tool is not None, "load_sim_tool was unsuccessful"
-                all_hooks = driver.sim_tool.get_tool_hooks() + \
-                            driver.tech.get_tech_sim_hooks(driver.sim_tool.name) + \
-                            list(extra_hooks or [])
-                success, output = driver.run_sim(all_hooks if len(all_hooks) > 0 else None)
+                success, output = driver.run_sim(
+                        driver.sim_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_sim_hooks(driver.sim_tool.name) + \
+                        list(extra_hooks or []))
                 if not success:
                     driver.log.error("simulation tool did not succeed")
                     return None
@@ -503,10 +503,10 @@ class CLIDriver:
                 else:
                     post_load_func_checked(driver)
                 assert driver.pcb_tool is not None, "load_pcb_tool was unsuccessful"
-                all_hooks = driver.pcb_tool.get_tool_hooks() + \
-                            driver.tech.get_tech_pcb_hooks(driver.pcb_tool.name) + \
-                            list(extra_hooks or [])
-                success, output = driver.run_pcb(all_hooks if len(all_hooks) > 0 else None)
+                success, output = driver.run_pcb(
+                        driver.pcb_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_pcb_hooks(driver.pcb_tool.name) + \
+                        list(extra_hooks or []))
                 if not success:
                     driver.log.error("PCB deliverable tool did not succeed")
                     return None

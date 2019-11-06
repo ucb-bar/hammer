@@ -200,11 +200,11 @@ gds_lib.write_gds('{gds_file}')
         return hooks.get(tool_name, [])
 
 def scale_final_gds(ht: HammerTool) -> bool:
-    assert isinstance(ht, HammerPlaceAndRouteTool)
-    assert isinstance(ht, CadenceTool)
+    assert isinstance(ht, HammerPlaceAndRouteTool), "scale_final_gds can only run on par"
+    assert isinstance(ht, CadenceTool), "scale_final_gds is only for the Cadence Tcl interpreter"
     """
     Scale the final GDS by a factor of 4
-    hammer/src/hammer-vlsi/technology/asap7/__init__.py implements scale_gds_script
+    scale_gds_script writes the actual Python script to execute from the Tcl interpreter
     """
     ht.append('''
 # Write script out to a temporary file and execute it

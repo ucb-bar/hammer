@@ -72,4 +72,4 @@ In this case, there is only one, ``config.yml``, and it needs to set all the req
 All default action run directories and output files will be placed here.
 Finally, ``par`` designates that this is a place-and-route action.
 In this case, Hammer will write outputs to the path ``$PWD/build/par-rundir``.
-For the full list of Hammer command-line arguments, look in the ``src/hammer-vlsi/hammer_vlsi/driver.py`` file.
+For the full list of Hammer command-line arguments, look in the ``src/hammer-vlsi/hammer_vlsi/cli_driver.py`` file.
