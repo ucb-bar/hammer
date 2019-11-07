@@ -924,10 +924,11 @@ class CLIDriver:
             if to_step is not None and until_step is not None:
                 errors.append("Cannot specify both to_step and until_step")
             if only_step is not None:
-                errors.append("Cannot specify from_step/after_step/to_step/until_step and only_step")
+                errors.append("Cannot specify from/after/to/until_step with only_step")
             if (from_step is not None and until_step is not None and from_step == until_step) or \
-                    (after_step is not None and to_step is not None and after_step == to_step):
-                errors.append("from_step == until_step or after_step == to_step will result in nothing being run")
+               (after_step is not None and to_step is not None and after_step == to_step) or \
+               (after_step is not None and until_step is not None and after_step == until_step):
+                errors.append("from_step == until_step, after_step == to_step, or after_step == until_step will result in nothing being run")
         else:
             if only_step is not None:
                 driver.set_post_custom_syn_tool_hooks(HammerTool.make_start_stop_hooks(only_step, None, only_step, None))

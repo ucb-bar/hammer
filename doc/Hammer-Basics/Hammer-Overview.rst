@@ -29,7 +29,11 @@ This demonstrates two different namespaces, ``vlsi.core`` and ``vlsi.inputs``, a
 Tech Plugins
 -------------------------------
 
-A techonology plugin consists of two or more files: a ``*.tech.json`` and a ``defaults.yml``.  The ``*.tech.json`` contains pointers to relevant PDK files and fundamental technology constants.  These values are not meant to be overriden, nor can they be. ``defaults.yml`` sets default technology variables for Hammer to consume, which may be specific to this technology or generic to all. These values may be overriden by design-specific configurations. An example of this is shown in ``hammer/src/hammer-vlsi/technology/asap7/``, and how to setup a technology plugin is documented in more detail in the Technology portion of the docs.
+A techonology plugin consists of two or more files: a ``*.tech.json`` and a ``defaults.yml``.
+
+The ``*.tech.json`` contains pointers to relevant PDK files and fundamental technology constants.  These values are not meant to be overriden, nor can they be. 
+
+``defaults.yml`` sets default technology variables for Hammer to consume, which may be specific to this technology or generic to all. These values may be overriden by design-specific configurations. An example of this is shown in ``hammer/src/hammer-vlsi/technology/asap7/``, and how to setup a technology plugin is documented in more detail in the :ref:`technology` section.
 
 Tool Plugins
 -------------------------------
@@ -66,10 +70,15 @@ Using hooks requires the designer to extend the ``CLIDriver`` class. A good exam
 In both of these commands, an environment configuration is passed to Hammer using a ``-e`` flag, which in this case is ``env.yml``.
 ``env.yml`` contains pointers to the required tool licenses and environment variables.
 These environment settings will not be propagated to the output configuration files after each action.
+
 Any number of other YML or JSON files can then be passed in using the ``-p`` flag.
 In this case, there is only one, ``config.yml``, and it needs to set all the required keys for the step of the flow being run.
+
 ``--obj_dir build`` designates what directory Hammer should use as a working directory.
 All default action run directories and output files will be placed here.
+
 Finally, ``par`` designates that this is a place-and-route action.
+
 In this case, Hammer will write outputs to the path ``$PWD/build/par-rundir``.
+
 For the full list of Hammer command-line arguments, look in the ``src/hammer-vlsi/hammer_vlsi/cli_driver.py`` file.

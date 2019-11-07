@@ -1,3 +1,5 @@
+.. _cad-tools:
+
 Hammer CAD Tools
 ===============================
 

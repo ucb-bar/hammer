@@ -421,10 +421,15 @@ class HammerTool(metaclass=ABCMeta):
         for action in hook_actions:
             step_id = -1
             pstep_id = -1
+
             if action.location != HookLocation.PersistentStep:
                 if not has_step(action.target_name):
-                    self.logger.error("Target step '{step}' does not exist".format(step=action.target_name))
-                    return False
+                    if action.location in [HookLocation.ResumePreStep, HookLocation.ResumePostStep, HookLocation.PausePreStep, HookLocation.PausePostStep]:
+                        self.logger.error("Target step '{step}' specified by --from/after/to/until_step does not exist".format(step=action.target_name))
+                        return False
+                    else:
+                        self.logger.error("Target step '{step}' specified by a hook does not exist".format(step=action.target_name))
+                        return False
 
                 for i, nstep in enumerate(new_steps):
                     if nstep.name == action.target_name:
