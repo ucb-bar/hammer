@@ -23,7 +23,7 @@ from hammer_utils import (LEFUtils, add_lists, deeplist, get_or_else,
                           in_place_unique, optional_map, reduce_list_str,
                           reduce_named, coerce_to_grid)
 if TYPE_CHECKING:
-    from hammer_vlsi import HammerToolHookAction
+    from hammer_vlsi.hooks import HammerToolHookAction
 
 from library_filter import LibraryFilter
 from filters import LibraryFilterHolder
