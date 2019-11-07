@@ -23,7 +23,7 @@ from hammer_utils import (add_lists, assert_function_type, get_or_else,
                           optional_map)
 
 from .constraints import *
-from .hammer_vlsi_impl import HammerToolPauseException, HierarchicalMode
+from .hammer_vlsi_impl import HierarchicalMode
 from .hooks import (HammerStepFunction, HammerToolHookAction, HammerToolStep,
                     HookLocation)
 from .submit_command import HammerSubmitCommand
@@ -648,15 +648,6 @@ class HammerTool(metaclass=ABCMeta):
         if name == "":
             name = func.__name__
         return make_raw_hammer_tool_step(func=func, name=name)
-
-    @staticmethod
-    def make_pause_function() -> HammerStepFunction:
-        """
-        Get a step function which will stop the execution of the tool.
-        """
-        def pause(x: HammerTool) -> bool:
-            raise HammerToolPauseException()
-        return pause
 
     @staticmethod
     def make_replacement_hook(step: str, func: HammerStepFunction) -> HammerToolHookAction:

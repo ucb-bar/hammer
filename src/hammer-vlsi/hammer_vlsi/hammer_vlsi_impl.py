@@ -78,13 +78,6 @@ class SimulationLevel(Enum):
     def __str__(self) -> str:
         return reverse_dict(SimulationLevel.__mapping())[self]
 
-class HammerToolPauseException(Exception):
-    """
-    Internal hammer-vlsi exception raised to indicate that a step has stopped execution of the tool.
-    This is not necessarily an error condition.
-    """
-    pass
-
 
 import hammer_tech
 
