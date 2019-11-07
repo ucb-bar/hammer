@@ -56,9 +56,9 @@ Hooks may be provided by the technology plugin, the tool plugin, and/or the user
 2. tool plugin hooks
 3. technology plugin hooks
    
-A user specifies hooks in the command-line driver. A good example is the ``example-vlsi`` file in the Chipyard example, which implements a ``get_extra_par_hooks(self)`` method that returns a list of hook inclusion methods. 
+A user specifies hooks in the command-line driver and should implement a ``get_extra_<action>_hooks(self)`` method. A good example is the ``example-vlsi`` file in the Chipyard example, which implements a ``get_extra_par_hooks(self)`` method that returns a list of hook inclusion methods. 
 
-A tool plugin specifies hooks in its ``__init__.py`` (as a method inside its subclass of ``HammerTool``). It should implement a ``get_tool_<action>_hooks(self)`` method almost identically to how the user-specified case.
+A tool plugin specifies hooks in its ``__init__.py`` (as a method inside its subclass of ``HammerTool``). It should implement a ``get_tool_hooks(self)`` method almost identically to how the user-specified case, except that the action name is not required because a tool instance can only correspond to a single action.
 
 A technology plugin also specifies hooks in its ``__init__.py`` (as a method inside its subclass of ``HammerTechnology``). It should implement a ``get_tech_<action>_hooks(self, tool_name: str)`` method. The dfference here is that the tool name may also be checked, because multiple tools may implement the same action.
 
