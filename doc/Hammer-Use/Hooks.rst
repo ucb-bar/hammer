@@ -50,16 +50,19 @@ A list of these hooks must be provided in an implementation of method such as ``
 Technology, Tool, and User-Provided Hooks
 -----------------------------------------
 
-Hooks may be provided by the technology plugin, the tool plugin, and/or the user. The order if priority is as follows, from highest to lowest:
+Hooks may be provided by the technology plugin, the tool plugin, and/or the user. The order of step & hook priority is as follows, from lowest to highest:
 
-1. user hooks
-2. tool plugin hooks
-3. technology plugin hooks
-   
-A user specifies hooks in the command-line driver and should implement a ``get_extra_<action>_hooks(self)`` method. A good example is the ``example-vlsi`` file in the Chipyard example, which implements a ``get_extra_par_hooks(self)`` method that returns a list of hook inclusion methods. 
+1. technology default steps
+2. technology plugin hooks
+3. tool plugin hooks
+4. user hooks
 
-A tool plugin specifies hooks in its ``__init__.py`` (as a method inside its subclass of ``HammerTool``). It should implement a ``get_tool_hooks(self)`` method almost identically to how the user-specified case, except that the action name is not required because a tool instance can only correspond to a single action.
-
-A technology plugin also specifies hooks in its ``__init__.py`` (as a method inside its subclass of ``HammerTechnology``). It should implement a ``get_tech_<action>_hooks(self, tool_name: str)`` method. The dfference here is that the tool name may also be checked, because multiple tools may implement the same action.
+A technology plugin specifies hooks in its ``__init__.py`` (as a method inside its subclass of ``HammerTechnology``). It should implement a ``get_tech_<action>_hooks(self, tool_name: str)`` method. The tool name parameter may be checked by the hook implementation because multiple tools may implement the same action. Technology plugin hooks may only target technology default steps to insert/replace.
 
 The linked Chipyard example includes an example of how the ASAP7 technology plugin injects a hook to scale down a GDS post-place-and-route in Innovus.
+
+A tool plugin specifies hooks in its ``__init__.py`` (as a method inside its subclass of ``HammerTool``). It should implement a ``get_tool_hooks(self)`` method. In contrast to the tech-supplied hooks, the action name and tool name are not specified because a tool instance can only correspond to a single action. Tool plugin hooks may target technology default steps and technology plugin hooks to insert/replace.
+
+A user specifies hooks in the command-line driver and should implement a ``get_extra_<action>_hooks(self)`` method. User hooks may target technology default steps, technology plugin hooks, and tool plugin hooks to insert/replace. A good example is the ``example-vlsi`` file in the Chipyard example, which implements a ``get_extra_par_hooks(self)`` method that returns a list of hook inclusion methods. 
+
+The priority means that if both the technology and user specify persistent hooks, any duplicate commands in the user's persistent hook will override those from the techonolgy's persistent hook.
