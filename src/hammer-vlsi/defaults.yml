@@ -759,6 +759,9 @@ sim.inputs:
   # type: str
   tb_dut: "dut"
 
+  # Name of the simulation testbench/test driver module
+  tb_name: "TestDriver"
+
   # Simulation mode for simulation at different levels of the VLSI flow
   # Valid options are:
   #   "rtl" for rtl level simulation
