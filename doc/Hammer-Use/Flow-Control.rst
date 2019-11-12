@@ -4,7 +4,7 @@ Flow Control
 =======================================
 
 Physical design is necessarily an iterative process, and designers will often require fine control of the flow within any given action.
-This allows for rapid testing of new changes in the Hammer IR  to improve the quality of results after certain steps.
+This allows for rapid testing of new changes in the Hammer IR  to improve the quality of results (QoR) after certain steps.
 
 Given the flow defined by tool steps and hooks (described in the next section), users can select ranges of these to run.
 The tool script will then be generated with commands corresponding to only the steps that are to be run.

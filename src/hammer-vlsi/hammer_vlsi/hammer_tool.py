@@ -440,7 +440,7 @@ class HammerTool(metaclass=ABCMeta):
                     if pstep.step.name == action.target_name:
                         pstep_id = i
                         break
-                assert (step_id > -1) != (pstep_id > -1)
+                assert (step_id > -1) != (pstep_id > -1), "Either a regular or persistent step must be targeted"
 
             if action.location == HookLocation.ReplaceStep:
                 assert action.step is not None, "ReplaceStep requires a step"
@@ -741,10 +741,12 @@ class HammerTool(metaclass=ABCMeta):
         :return: HammerToolHookAction list for running from and to the given steps, inclusive.
         """
         output = []  # type: List[HammerToolHookAction]
+        # Determine where to resume from. from_step takes priority over after_step.
         if from_step is not None:
             output.append(HammerTool.make_pre_resume_hook(from_step))
         elif after_step is not None:
             output.append(HammerTool.make_post_resume_hook(after_step))
+        # Determine where to stop the flow. to_step takes priority over until_step.
         if to_step is not None:
             output.append(HammerTool.make_post_pause_hook(to_step))
         elif until_step is not None:

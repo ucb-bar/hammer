@@ -17,6 +17,7 @@ Hooks (depending on how they are included, see below) get turned into step objec
 
 Hooks can live in a Python file inside the design root so that it is available to the class that needs to extend the default ``CLIDriver``.
 An example of some skeletons of hooks are found in `Chipyard <https://github.com/ucb-bar/chipyard/blob/master/vlsi/example-vlsi>`__.
+For more comprehensive examples, refer to the hooks unit tests in the ``HammerToolHooksTest`` class of `test.py <https://github.com/ucb-bar/hammer/blob/master/src/hammer-vlsi/test.py>`__.
 
 Including Hooks
 ----------------

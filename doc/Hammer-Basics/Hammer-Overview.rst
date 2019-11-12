@@ -81,4 +81,4 @@ Finally, ``par`` designates that this is a place-and-route action.
 
 In this case, Hammer will write outputs to the path ``$PWD/build/par-rundir``.
 
-For the full list of Hammer command-line arguments, look in the ``src/hammer-vlsi/hammer_vlsi/cli_driver.py`` file.
+For the full list of Hammer command-line arguments, run `hammer-vlsi --help` or take a peek in the ``src/hammer-vlsi/hammer_vlsi/cli_driver.py`` file.
