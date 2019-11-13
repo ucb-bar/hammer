@@ -154,9 +154,7 @@ def main(args) -> int:
                                             InterfaceVar("output_seq_cells", "List[str]",
                                                      "output collection of all sequential standard cells in design"),
                                             InterfaceVar("sdf_file", "str",
-                                                     "output SDF file to be read for timing annotated gate level sims"),
-                                            InterfaceVar("spef_file", "str",
-                                                     "output SPEF file to be read for power analysis")
+                                                     "output SDF file to be read for timing annotated gate level sims")
                                             # TODO: add individual parts of the ILM (e.g. verilog, sdc, spef, etc) for cross-tool compatibility?
                                         ]
                                         )
@@ -204,16 +202,12 @@ def main(args) -> int:
                                   InterfaceVar("seq_cells", "List[str]", "collection of all sequential standard cells in design"),
                                   InterfaceVar("sdf_file", "Optional[str]", "optional SDF file needed for timing annotated gate level sims")
                               ],
-                              outputs=[
-                                  InterfaceVar("waveforms", "List[str]", "list of waveform dump files for dynamic power analysis")
-                                  ]
+                              outputs=[]
                               )
     HammerPowerTool = Interface(module="HammerPowerTool",
                                 filename="hammer_vlsi/hammer_vlsi_impl.py",
                                 inputs=[
                                   InterfaceVar("top_module", "str", "top RTL module"),
-                                  InterfaceVar("netlist", "str", "Netlist for power analysis"),
-                                  InterfaceVar("spef_file", "str", "SPEF file needed for parasitics"),
                                   InterfaceVar("waveforms", "List[str]", "list of waveform dump files for dynamic power analysis")
                                 ],
                                 outputs=[]

@@ -20,7 +20,7 @@ from hammer_tech import MacroSize
 from .hammer_tool import HammerTool
 from .hooks import HammerToolHookAction
 from .hammer_vlsi_impl import HammerVLSISettings, HammerPlaceAndRouteTool, HammerSynthesisTool, \
-    HammerSignoffTool, HammerDRCTool, HammerLVSTool, HammerSRAMGeneratorTool, HammerPCBDeliverableTool, HammerSimTool, HammerPowerTool \
+    HammerSignoffTool, HammerDRCTool, HammerLVSTool, HammerSRAMGeneratorTool, HammerPCBDeliverableTool, HammerSimTool, HammerPowerTool, \
     HierarchicalMode, load_tool, PlacementConstraint, SRAMParameters, ILMStruct
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, HammerVLSILoggingContext
 from .submit_command import HammerSubmitCommand
@@ -559,20 +559,20 @@ class HammerDriver:
         power_tool.submit_command = HammerSubmitCommand.get("power", self.database)
         power_tool.run_dir = run_dir
 
-        power_tool.top_module = self.database.get_setting("power.inputs.top_modue", nullvalue="")
-        power_tool.netlist = self.database.get_setting("power.inputs.netlist", nullvalue="")
-        power_tool.spef_file = self.database.get_setting("power.inputs.spef_file", nullvalue="")
+        #power_tool.top_module = self.database.get_setting("power.inputs.top_module", nullvalue="")
+        #power_tool.netlist = self.database.get_setting("power.inputs.netlist", nullvalue="")
+        #power_tool.spef_file = self.database.get_setting("power.inputs.spef_file", nullvalue="")
         power_tool.waveforms = self.database.get_setting("power.inputs.waveforms", nullvalue=[])
         missing_inputs = False
-        if power_tool.top_module == "":
-            self.log.error("Top module not specified for power analysis")
-            missing_inputs = True
-        if power_tool.netlist is None:
-            self.log.error("No layout file specified for power analysis")
-            missing_inputs = True
-        if power_tool.spef_file is None:
-            self.log.error("No spef file specified for power analysis")
-            missing_inputs = True
+        #if power_tool.top_module == "":
+        #    self.log.error("Top module not specified for power analysis")
+        #    missing_inputs = True
+        #if power_tool.netlist is None:
+        #    self.log.error("No layout file specified for power analysis")
+        #    missing_inputs = True
+        #if power_tool.spef_file is None:
+        #    self.log.error("No spef file specified for power analysis")
+        #    missing_inputs = True
         if missing_inputs:
             return False
 
@@ -1062,7 +1062,7 @@ class HammerDriver:
             waveforms = deeplist(output_dict["sim.outputs.waveforms"])
             result = {
                 "power.inputs.waveforms": waveforms,
-                "power.inputs.waveforms_meta": "append"
+                "power.inputs.waveforms_meta": "append",
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             return result

@@ -815,12 +815,13 @@ sim.submit:
   settings_meta: lazycrossref
 
 power.inputs:
-  #TODO(daniel) make tool loadable from db or from individual parts
-  #power_tool_load_mode: null
+  database: null
 
-  #database: null
+  static_rail: false
 
-  top_module: null
+  tb_name: "TestDriver"
+
+  tb_dut: "dut"
 
   netlist: null
 
@@ -829,7 +830,6 @@ power.inputs:
   power_spec: null
 
   waveforms: []
-
 
 power.submit:
   command: "${vlsi.submit.command}"
