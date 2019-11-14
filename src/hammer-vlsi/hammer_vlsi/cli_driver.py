@@ -916,15 +916,15 @@ class CLIDriver:
         only_step = get_nonempty_str(args['only_step'])
 
         if from_step is not None and after_step is not None:
-            errors.append("Specified both from_step and after_step. from_step will take precedence.")
+            errors.append("Specified both start_before_step and start_after_step. start_before_step will take precedence.")
         if to_step is not None and until_step is not None:
-            errors.append("Specified both to_step and until_step. to_step will take precedence.")
+            errors.append("Specified both stop_after_step and stop_before_step. stop_after_step will take precedence.")
         if only_step is not None and any(s is not None for s in [from_step, after_step, to_step, until_step]):
-            errors.append("Specified from/after/to/until_step with only_step. only_step will take precedence.")
+            errors.append("Specified {start|stop}_{before_after}_step with only_step. only_step will take precedence.")
         if (from_step is not None and until_step is not None and from_step == until_step) or \
            (after_step is not None and to_step is not None and after_step == to_step) or \
            (after_step is not None and until_step is not None and after_step == until_step):
-            errors.append("Caution: from_step == until_step, after_step == to_step, or after_step == until_step will result in nothing being run")
+            errors.append("Caution: start_before_step == stop_before_step, start_after_step == stop_after_step, or start_after_step == stop_before_step will result in nothing being run")
 
         driver = HammerDriver(options, config)
 
@@ -1157,16 +1157,16 @@ class CLIDriver:
         parser.add_argument("--sim_rundir", required=False, default="",
                             help='(optional) Directory to store simulation results in')
         # Optional arguments for step control.
-        parser.add_argument("--from_step", dest="from_step", required=False,
-                            help="Run the given action from the given step (inclusive). Not compatible with --after_step.")
-        parser.add_argument("--after_step", dest="after_step", required=False,
-                            help="Run the given action from after the given step (exclusive). Not compatible with --from_step.")
-        parser.add_argument("--to_step", dest="to_step", required=False,
-                            help="Run the given action to the given step (inclusive). Not compatible with --until_step.")
-        parser.add_argument("--until_step", dest="until_step", required=False,
-                            help="Run the given action until the given step (exclusive). Not compatible with --to_step.")
+        parser.add_argument("--start_before_step", "--from_step", dest="from_step", required=False,
+                            help="Run the given action from before the given step (inclusive). Not compatible with --start_after_step.")
+        parser.add_argument("--start_after_step", "--after_step", dest="after_step", required=False,
+                            help="Run the given action from after the given step (exclusive). Not compatible with --start_before_step.")
+        parser.add_argument("--stop_after_step", "--to_step", dest="to_step", required=False,
+                            help="Run the given action to the given step (inclusive). Not compatible with --stop_before_step.")
+        parser.add_argument("--stop_before_step", "--until_step", dest="until_step", required=False,
+                            help="Run the given action until the given step (exclusive). Not compatible with --stop_after_step.")
         parser.add_argument("--only_step", dest="only_step", required=False,
-                            help="Run only the given step. Not compatible with --from_step, --after_step, --to_step, or --until_step.")
+                            help="Run only the given step. Not compatible with --{start|stop}_{before|after}_step.")
         # Required arguments for CLI hammer driver.
         parser.add_argument("-o", "--output", default="output.json", required=False,
                             help='Output JSON file for results and modular use of hammer-vlsi. Default: output.json.')
