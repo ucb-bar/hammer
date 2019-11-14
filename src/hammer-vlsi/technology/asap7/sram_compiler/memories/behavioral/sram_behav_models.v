@@ -1,6 +1,4 @@
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM1RW1024x8 Verilog description            *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM1RW1024x8.v                                  *
 *  SRAM name     : SRAM1RW1024x8                                    *
 *  Word width    : 8     bits                                        *
@@ -89,8 +87,6 @@ endmodule
 
 
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM1RW128x46 Verilog description            *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM1RW128x46.v                                  *
 *  SRAM name     : SRAM1RW128x46                                    *
 *  Word width    : 46    bits                                        *
@@ -217,8 +213,6 @@ endmodule
 
 
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM1RW128x48 Verilog description            *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM1RW128x48.v                                  *
 *  SRAM name     : SRAM1RW128x48                                    *
 *  Word width    : 48    bits                                        *
@@ -347,8 +341,6 @@ endmodule
 
 
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM1RW128x8 Verilog description             *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM1RW128x8.v                                   *
 *  SRAM name     : SRAM1RW128x8                                     *
 *  Word width    : 8     bits                                        *
@@ -437,8 +429,6 @@ endmodule
 
 
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM1RW256x128 Verilog description           *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM1RW256x128.v                                 *
 *  SRAM name     : SRAM1RW256x128                                   *
 *  Word width    : 128   bits                                        *
@@ -648,8 +638,6 @@ endmodule
 
 
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM1RW256x32 Verilog description            *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM1RW256x32.v                                  *
 *  SRAM name     : SRAM1RW256x32                                    *
 *  Word width    : 32    bits                                        *
@@ -762,8 +750,6 @@ endmodule
 
 
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM1RW256x46 Verilog description            *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM1RW256x46.v                                  *
 *  SRAM name     : SRAM1RW256x46                                    *
 *  Word width    : 46    bits                                        *
@@ -890,8 +876,6 @@ endmodule
 
 
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM1RW256x48 Verilog description            *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM1RW256x48.v                                  *
 *  SRAM name     : SRAM1RW256x48                                    *
 *  Word width    : 48    bits                                        *
@@ -1020,8 +1004,6 @@ endmodule
 
 
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM1RW256x8 Verilog description             *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM1RW256x8.v                                   *
 *  SRAM name     : SRAM1RW256x8                                     *
 *  Word width    : 8     bits                                        *
@@ -1110,8 +1092,6 @@ endmodule
 
 
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM1RW32x50 Verilog description             *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM1RW32x50.v                                   *
 *  SRAM name     : SRAM1RW32x50                                     *
 *  Word width    : 50    bits                                        *
@@ -1242,8 +1222,6 @@ endmodule
 
 
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM1RW512x128 Verilog description           *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM1RW512x128.v                                 *
 *  SRAM name     : SRAM1RW512x128                                   *
 *  Word width    : 128   bits                                        *
@@ -1452,8 +1430,6 @@ endmodule
 
 
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM1RW512x32 Verilog description            *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM1RW512x32.v                                  *
 *  SRAM name     : SRAM1RW512x32                                    *
 *  Word width    : 32    bits                                        *
@@ -1566,8 +1542,6 @@ endmodule
 
 
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM1RW512x8 Verilog description             *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM1RW512x8.v                                   *
 *  SRAM name     : SRAM1RW512x8                                     *
 *  Word width    : 8     bits                                        *
@@ -1656,8 +1630,6 @@ endmodule
 
 
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM1RW64x128 Verilog description            *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM1RW64x128.v                                  *
 *  SRAM name     : SRAM1RW64x128                                    *
 *  Word width    : 128   bits                                        *
@@ -1866,8 +1838,6 @@ endmodule
 
 
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM1RW64x32 Verilog description             *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM1RW64x32.v                                   *
 *  SRAM name     : SRAM1RW64x32                                     *
 *  Word width    : 32    bits                                        *
@@ -1980,8 +1950,6 @@ endmodule
 
 
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM1RW64x34 Verilog description             *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM1RW64x34.v                                   *
 *  SRAM name     : SRAM1RW64x34                                     *
 *  Word width    : 34    bits                                        *
@@ -2096,8 +2064,6 @@ endmodule
 
 
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM1RW64x8 Verilog description              *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM1RW64x8.v                                    *
 *  SRAM name     : SRAM1RW64x8                                      *
 *  Word width    : 8     bits                                        *
@@ -2186,8 +2152,6 @@ endmodule
 
 
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM2RW128x16 Verilog description                *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM2RW128x16.v                                      *
 *  SRAM name     : SRAM2RW128x16                                        *
 *  Word width    : 16    bits                                        *
@@ -2311,8 +2275,6 @@ always @ (data_out2 or OEB2_i)
 
 endmodule
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM2RW128x32 Verilog description                *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM2RW128x32.v                                      *
 *  SRAM name     : SRAM2RW128x32                                        *
 *  Word width    : 32    bits                                        *
@@ -2452,8 +2414,6 @@ always @ (data_out2 or OEB2_i)
 
 endmodule
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM2RW128x4 Verilog description                 *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM2RW128x4.v                                       *
 *  SRAM name     : SRAM2RW128x4                                         *
 *  Word width    : 4     bits                                        *
@@ -2565,8 +2525,6 @@ always @ (data_out2 or OEB2_i)
 
 endmodule
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM2RW128x8 Verilog description                 *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM2RW128x8.v                                       *
 *  SRAM name     : SRAM2RW128x8                                         *
 *  Word width    : 8     bits                                        *
@@ -2682,8 +2640,6 @@ always @ (data_out2 or OEB2_i)
 
 endmodule
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM2RW16x16 Verilog description                 *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM2RW16x16.v                                       *
 *  SRAM name     : SRAM2RW16x16                                         *
 *  Word width    : 16    bits                                        *
@@ -2807,8 +2763,6 @@ always @ (data_out2 or OEB2_i)
 
 endmodule
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM2RW16x32 Verilog description                 *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM2RW16x32.v                                       *
 *  SRAM name     : SRAM2RW16x32                                         *
 *  Word width    : 32    bits                                        *
@@ -2948,8 +2902,6 @@ always @ (data_out2 or OEB2_i)
 
 endmodule
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM2RW16x4 Verilog description                  *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM2RW16x4.v                                        *
 *  SRAM name     : SRAM2RW16x4                                          *
 *  Word width    : 4     bits                                        *
@@ -3061,8 +3013,6 @@ always @ (data_out2 or OEB2_i)
 
 endmodule
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM2RW16x8 Verilog description                  *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM2RW16x8.v                                        *
 *  SRAM name     : SRAM2RW16x8                                          *
 *  Word width    : 8     bits                                        *
@@ -3178,8 +3128,6 @@ always @ (data_out2 or OEB2_i)
 
 endmodule
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM2RW32x16 Verilog description                 *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM2RW32x16.v                                       *
 *  SRAM name     : SRAM2RW32x16                                         *
 *  Word width    : 16    bits                                        *
@@ -3303,8 +3251,6 @@ always @ (data_out2 or OEB2_i)
 
 endmodule
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM2RW32x22 Verilog description                 *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM2RW32x22.v                                       *
 *  SRAM name     : SRAM2RW32x22                                         *
 *  Word width    : 22    bits                                        *
@@ -3434,8 +3380,6 @@ always @ (data_out2 or OEB2_i)
 
 endmodule
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM2RW32x32 Verilog description                 *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM2RW32x32.v                                       *
 *  SRAM name     : SRAM2RW32x32                                         *
 *  Word width    : 32    bits                                        *
@@ -3575,8 +3519,6 @@ always @ (data_out2 or OEB2_i)
 
 endmodule
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM2RW32x39 Verilog description                 *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM2RW32x39.v                                       *
 *  SRAM name     : SRAM2RW32x39                                         *
 *  Word width    : 39    bits                                        *
@@ -3723,8 +3665,6 @@ always @ (data_out2 or OEB2_i)
 
 endmodule
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM2RW32x4 Verilog description                  *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM2RW32x4.v                                        *
 *  SRAM name     : SRAM2RW32x4                                          *
 *  Word width    : 4     bits                                        *
@@ -3836,8 +3776,6 @@ always @ (data_out2 or OEB2_i)
 
 endmodule
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM2RW32x8 Verilog description                  *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM2RW32x8.v                                        *
 *  SRAM name     : SRAM2RW32x8                                          *
 *  Word width    : 8     bits                                        *
@@ -3953,8 +3891,6 @@ always @ (data_out2 or OEB2_i)
 
 endmodule
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM2RW64x16 Verilog description                 *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM2RW64x16.v                                       *
 *  SRAM name     : SRAM2RW64x16                                         *
 *  Word width    : 16    bits                                        *
@@ -4078,8 +4014,6 @@ always @ (data_out2 or OEB2_i)
 
 endmodule
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM2RW64x32 Verilog description                 *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM2RW64x32.v                                       *
 *  SRAM name     : SRAM2RW64x32                                         *
 *  Word width    : 32    bits                                        *
@@ -4219,8 +4153,6 @@ always @ (data_out2 or OEB2_i)
 
 endmodule
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM2RW64x4 Verilog description                  *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM2RW64x4.v                                        *
 *  SRAM name     : SRAM2RW64x4                                          *
 *  Word width    : 4     bits                                        *
@@ -4332,8 +4264,6 @@ always @ (data_out2 or OEB2_i)
 
 endmodule
 /*********************************************************************
-*  SAED_EDK90nm_SRAM : SRAM2RW64x8 Verilog description                  *
-*  ---------------------------------------------------------------   *
 *  Filename      : SRAM2RW64x8.v                                        *
 *  SRAM name     : SRAM2RW64x8                                          *
 *  Word width    : 8     bits                                        *

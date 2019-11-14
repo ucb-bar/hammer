@@ -38,14 +38,12 @@ class ASAP7SRAMGenerator(HammerSRAMGeneratorTool):
                 d=params.depth,
                 w=params.width)
         lib_path ="{t}/{n}_{c}.lib".format(t=tech_cache_dir,n=sram_name,c=corner_str)
-        print(lib_path)
-        print(os.path.exists(lib_path))
         if not os.path.exists(lib_path):
-            os.symlink("{b}/lib/{n}_{c}.lib".format(b=base_dir,n=sram_name,c=corner_str), "{t}/{n}_{c}.lib".format(t=tech_cache_dir,n=sram_name,c=corner_str))
+            os.symlink("{b}/lib/{n}_lib/{n}_{c}.lib".format(b=base_dir,n=sram_name,c=corner_str), "{t}/{n}_{c}.lib".format(t=tech_cache_dir,n=sram_name,c=corner_str))
         lib = ExtraLibrary(prefix=None, library=Library(
                 name=sram_name,
-                nldm_liberty_file="{t}/{n}_{c}.lib".format(t=tech_cache_dir,n=sram_name,c=corner_str),
-                lef_file="{b}/lef/{n}_X4.lef".format(b=base_dir,n=sram_name),
+                nldm_liberty_file=lib_path,
+                lef_file="{b}/lef/{n}_x4.lef".format(b=base_dir,n=sram_name),
                 gds_file="{b}/gds/{n}_x4.gds".format(b=base_dir,n=sram_name),
                 verilog_sim="{b}/behavioral/sram_behav_models.sv".format(b=base_dir),
                 corner = {'nmos': speed_name, 'pmos': speed_name, 'temperature': str(corner.temp.value_in_units("C")) +" C"},
