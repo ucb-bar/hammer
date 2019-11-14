@@ -27,7 +27,7 @@ HammerToolStep = NamedTuple('HammerToolStep', [
 # Specify step to start/stop
 HammerStartStopStep = NamedTuple('HammerStartStopStep', [
     # Name of the step
-    ('step', str),
+    ('step', Optional[str]),
     # Whether it is inclusive
     ('inclusive', bool)
 ])
