@@ -24,6 +24,13 @@ HammerToolStep = NamedTuple('HammerToolStep', [
     ('name', str)
 ])
 
+# Specify step to start/stop
+HammerStartStopStep = NamedTuple('HammerStartStopStep', [
+    # Name of the step
+    ('step', str),
+    # Whether it is inclusive
+    ('inclusive', bool)
+])
 
 # Where to insert/replace the given step.
 # Persistent steps always execute depending on from/after/to/until steps.

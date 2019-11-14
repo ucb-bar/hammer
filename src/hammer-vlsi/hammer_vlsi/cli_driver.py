@@ -13,7 +13,7 @@ import subprocess
 import sys
 
 from .hammer_vlsi_impl import HammerTool, HammerVLSISettings
-from .hooks import HammerToolHookAction
+from .hooks import HammerToolHookAction, HammerStartStopStep
 from .driver import HammerDriver, HammerDriverOptions
 from .hammer_build_systems import BuildSystems
 
@@ -915,24 +915,30 @@ class CLIDriver:
         until_step = get_nonempty_str(args['until_step'])
         only_step = get_nonempty_str(args['only_step'])
 
+        if from_step is not None and after_step is not None:
+            errors.append("Specified both from_step and after_step. from_step will take precedence.")
+        if to_step is not None and until_step is not None:
+            errors.append("Specified both to_step and until_step. to_step will take precedence.")
+        if only_step is not None and any(s is not None for s in [from_step, after_step, to_step, until_step]):
+            errors.append("Specified from/after/to/until_step with only_step. only_step will take precedence.")
+        if (from_step is not None and until_step is not None and from_step == until_step) or \
+           (after_step is not None and to_step is not None and after_step == to_step) or \
+           (after_step is not None and until_step is not None and after_step == until_step):
+            errors.append("Caution: from_step == until_step, after_step == to_step, or after_step == until_step will result in nothing being run")
+
         driver = HammerDriver(options, config)
-        if any(s is not None for s in [from_step, after_step, to_step, until_step]):
-            driver.set_post_custom_syn_tool_hooks(HammerTool.make_start_stop_hooks(from_step, after_step, to_step, until_step))
-            driver.set_post_custom_par_tool_hooks(HammerTool.make_start_stop_hooks(from_step, after_step, to_step, until_step))
-            if from_step is not None and after_step is not None:
-                errors.append("Cannot specify both from_step and after_step")
-            if to_step is not None and until_step is not None:
-                errors.append("Cannot specify both to_step and until_step")
-            if only_step is not None:
-                errors.append("Cannot specify from/after/to/until_step with only_step")
-            if (from_step is not None and until_step is not None and from_step == until_step) or \
-               (after_step is not None and to_step is not None and after_step == to_step) or \
-               (after_step is not None and until_step is not None and after_step == until_step):
-                errors.append("from_step == until_step, after_step == to_step, or after_step == until_step will result in nothing being run")
-        else:
-            if only_step is not None:
-                driver.set_post_custom_syn_tool_hooks(HammerTool.make_start_stop_hooks(only_step, None, only_step, None))
-                driver.set_post_custom_par_tool_hooks(HammerTool.make_start_stop_hooks(only_step, None, only_step, None))
+
+        start_step = only_step or from_step or after_step or None
+        start_incl = (only_step or from_step) is not None
+        stop_step = only_step or to_step or until_step or None
+        stop_incl = (only_step or to_step) is not None
+        if (start_step or stop_step) is not None:
+            driver.set_post_custom_syn_tool_hooks(HammerTool.make_start_stop_hooks(
+                HammerStartStopStep(step=start_step, inclusive=start_incl),
+                HammerStartStopStep(step=stop_step, inclusive=stop_incl)))
+            driver.set_post_custom_par_tool_hooks(HammerTool.make_start_stop_hooks(
+                HammerStartStopStep(step=start_step, inclusive=start_incl),
+                HammerStartStopStep(step=stop_step, inclusive=stop_incl)))
 
         # Hierarchical support.
         # Generate synthesis and par actions for each module above.

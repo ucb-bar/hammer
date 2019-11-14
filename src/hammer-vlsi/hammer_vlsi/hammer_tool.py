@@ -25,7 +25,7 @@ from hammer_utils import (add_lists, assert_function_type, get_or_else,
 from .constraints import *
 from .hammer_vlsi_impl import HierarchicalMode
 from .hooks import (HammerStepFunction, HammerToolHookAction, HammerToolStep,
-                    HookLocation)
+                    HookLocation, HammerStartStopStep)
 from .submit_command import HammerSubmitCommand
 from .units import TemperatureValue, TimeValue, VoltageValue
 
@@ -726,31 +726,28 @@ class HammerTool(metaclass=ABCMeta):
         return HammerTool.make_resume_pause_hook(step, HookLocation.ResumePostStep)
 
     @staticmethod
-    def make_start_stop_hooks(from_step: Optional[str] = None,
-                              after_step: Optional[str] = None,
-                              to_step: Optional[str] = None,
-                              until_step: Optional[str] = None) -> List[HammerToolHookAction]:
+    def make_start_stop_hooks(start: HammerStartStopStep, stop: HammerStartStopStep) -> List[HammerToolHookAction]:
         """
         Helper function to create a HammerToolHookAction list which will run from/after and to/until the given steps.
         The inclusive ones take priority in the event that incompatible options are called.
 
-        :param from_step: Run from the given step, inclusive. Leave as None to resume from the beginning or after_step.
-        :param after_step: Run from the given step, exclusive. Leave as None to resume from the beginning or from_step.
-        :param to_step: Run to the given step, inclusive. Leave as None to run to the end or until_step.
-        :param until_step: Run to the given step, exclusive. Leave as None to run to the end or to_step.
+        :param start: HammerStartStopStep that defines where to resume from
+        :param stop: HammerStartStopStep that define where to pause at
         :return: HammerToolHookAction list for running from and to the given steps, inclusive.
         """
         output = []  # type: List[HammerToolHookAction]
-        # Determine where to resume from. from_step takes priority over after_step.
-        if from_step is not None:
-            output.append(HammerTool.make_pre_resume_hook(from_step))
-        elif after_step is not None:
-            output.append(HammerTool.make_post_resume_hook(after_step))
-        # Determine where to stop the flow. to_step takes priority over until_step.
-        if to_step is not None:
-            output.append(HammerTool.make_post_pause_hook(to_step))
-        elif until_step is not None:
-            output.append(HammerTool.make_pre_pause_hook(until_step))
+        # Determine where to resume from.
+        if start.step is not None:
+            if start.inclusive:
+                output.append(HammerTool.make_pre_resume_hook(start.step))
+            else:
+                output.append(HammerTool.make_post_resume_hook(start.step))
+        # Determine where to stop the flow.
+        if stop.step is not None:
+            if stop.inclusive:
+                output.append(HammerTool.make_post_pause_hook(stop.step))
+            else:
+                output.append(HammerTool.make_pre_pause_hook(stop.step))
         return output
 
     @staticmethod
