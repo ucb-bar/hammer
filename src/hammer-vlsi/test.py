@@ -21,6 +21,7 @@ import hammer_config
 from hammer_config import HammerJSONEncoder
 import hammer_tech
 import hammer_vlsi
+from hammer_vlsi.hooks import HammerStartStopStep
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, Level
 from hammer_logging.test import HammerLoggingCaptureContext
 from hammer_tech import LibraryFilter, Library, ExtraLibrary
@@ -1103,24 +1104,193 @@ class HammerToolHooksTest(unittest.TestCase):
 
     def test_resume_pause_hooks_with_custom_steps(self) -> None:
         """Test that resume/pause hooks work with custom steps."""
+
         with self.create_context() as c:
             def step5(x: hammer_vlsi.HammerTool) -> bool:
                 with open(os.path.join(c.temp_dir, "step5.txt"), "w") as f:
                     f.write("HelloWorld")
                 return True
-
-            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_from_to_hooks("step5", "step5"))
+            def step6(x: hammer_vlsi.HammerTool) -> bool:
+                with open(os.path.join(c.temp_dir, "step6.txt"), "w") as f:
+                    f.write("ByeByeWorld")
+                return True
+            # Test from_step => to_step
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step5", inclusive=True), HammerStartStopStep(step="step5", inclusive=True)))
             success, syn_output = c.driver.run_synthesis(hook_actions=[
-                hammer_vlsi.HammerTool.make_post_insertion_hook("step4", step5)
+                hammer_vlsi.HammerTool.make_post_insertion_hook("step4", step5),
+                hammer_vlsi.HammerTool.make_post_insertion_hook("step5", step6)
             ])
             self.assertTrue(success)
 
-            for i in range(1, 6):
+            for i in range(1, 7):
                 file = os.path.join(c.temp_dir, "step{}.txt".format(i))
                 if i == 5:
                     self.assertEqual(self.read(file), "HelloWorld")
                 else:
                     self.assertFalse(os.path.exists(file))
+
+        with self.create_context() as c:
+            def step5(x: hammer_vlsi.HammerTool) -> bool:
+                with open(os.path.join(c.temp_dir, "step5.txt"), "w") as f:
+                    f.write("HelloWorld")
+                return True
+            def step6(x: hammer_vlsi.HammerTool) -> bool:
+                with open(os.path.join(c.temp_dir, "step6.txt"), "w") as f:
+                    f.write("ByeByeWorld")
+                return True
+            # Test after_step => until_step
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step4", inclusive=False), HammerStartStopStep(step="step6", inclusive=False)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_post_insertion_hook("step4", step5),
+                hammer_vlsi.HammerTool.make_post_insertion_hook("step5", step6)
+            ])
+            self.assertTrue(success)
+
+            for i in range(1, 7):
+                file = os.path.join(c.temp_dir, "step{}.txt".format(i))
+                if i == 5:
+                    self.assertEqual(self.read(file), "HelloWorld")
+                else:
+                    self.assertFalse(os.path.exists(file))
+
+    def test_persistent_hooks(self) -> None:
+        """Test that persistent hooks work."""
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            # Test persist despite starting from step 3
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step3", inclusive=True), HammerStartStopStep(step=None, inclusive=False)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_persistent_hook(persist)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertEqual(self.read(file1), "HelloWorld")
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            # Test pre_persist executes if anything before target step is run
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step=None, inclusive=False), HammerStartStopStep(step="step2", inclusive=True)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_pre_persistent_hook("step4", persist)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertEqual(self.read(file1), "HelloWorld")
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            # Test pre_persist does not execute if starting from after target step
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step3", inclusive=True), HammerStartStopStep(step=None, inclusive=False)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_pre_persistent_hook("step2", persist)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertFalse(os.path.exists(file1))
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            # Test post_persist does not execute if stopped before target step
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step=None, inclusive=False), HammerStartStopStep(step="step2", inclusive=True)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_post_persistent_hook("step3", persist)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertFalse(os.path.exists(file1))
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            # Test post_persist executes started after target step
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step3", inclusive=True), HammerStartStopStep(step=None, inclusive=False)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_post_persistent_hook("step1", persist)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertEqual(self.read(file1), "HelloWorld")
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            # Test post_persist executes if target step is included in steps run
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step1", inclusive=True), HammerStartStopStep(step=None, inclusive=False)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_post_persistent_hook("step3", persist)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertEqual(self.read(file1), "HelloWorld")
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            def persist2(x: hammer_vlsi.HammerTool) -> bool:
+                file2 = os.path.join(c.temp_dir, "persist2.txt")
+                with open(file2, "w") as f:
+                    f.write("ByeByeWorld")
+                return True
+            # Test replacement hook inherits replaced persistent hook behavior
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step3", inclusive=True), HammerStartStopStep(step=None, inclusive=False)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_post_persistent_hook("step1", persist),
+                hammer_vlsi.HammerTool.make_replacement_hook("persist", persist2)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertFalse(os.path.exists(file1))
+            file2 = os.path.join(c.temp_dir, "persist2.txt")
+            self.assertEqual(self.read(file2), "ByeByeWorld")
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            def persist2(x: hammer_vlsi.HammerTool) -> bool:
+                file2 = os.path.join(c.temp_dir, "persist2.txt")
+                with open(file2, "w") as f:
+                    f.write("ByeByeWorld")
+                return True
+            # Test insertion hook inherits replaced persistent hook behavior
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step3", inclusive=True), HammerStartStopStep(step=None, inclusive=False)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_post_persistent_hook("step1", persist),
+                hammer_vlsi.HammerTool.make_pre_insertion_hook("persist", persist2)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertEqual(self.read(file1), "HelloWorld")
+            file2 = os.path.join(c.temp_dir, "persist2.txt")
+            self.assertEqual(self.read(file2), "ByeByeWorld")
 
 
 class HammerSubmitCommandTestContext:
