@@ -20,7 +20,7 @@ class ASAP7Tech(HammerTechnology):
     """
     def post_install_script(self) -> None:
         try:
-            import gdspy
+            import gdspy  # type: ignore
         except ImportError:
             self.logger.error("Check your gdspy installation! Unable to hack ASAP7 PDK.")
             shutil.rmtree(self.cache_dir)

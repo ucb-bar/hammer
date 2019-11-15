@@ -1422,6 +1422,94 @@ class HammerSRAMGeneratorToolTest(unittest.TestCase):
             "sram64x128_0.5V_0.0C.gds",
             "sram64x128_1.5V_125.0C.gds"]))
 
+class HammerASAP7SRAMGeneratorToolTestContext:
+
+    def __init__(self, test: unittest.TestCase, tool_type: str) -> None:
+        self.test = test  # type unittest.TestCase
+        self.logger = HammerVLSILogging.context("")
+        self._driver = None  # type: Optional[hammer_vlsi.HammerDriver]
+        if tool_type not in ["sram_generator"]:
+            raise NotImplementedError("Have not created a test for %s yet" % (tool_type))
+        self._tool_type = tool_type
+
+    # Helper property to check that the driver did get initialized.
+    @property
+    def driver(self) -> hammer_vlsi.HammerDriver:
+        assert self._driver is not None, "HammerDriver must be initialized before use"
+        return self._driver
+
+    def __enter__(self) -> "HammerASAP7SRAMGeneratorToolTestContext":
+        """Initialize context by creating the temp_dir, driver, and loading the sram_generator tool."""
+        self.test.assertTrue(hammer_vlsi.HammerVLSISettings.set_hammer_vlsi_path_from_environment(),
+                             "hammer_vlsi_path must exist")
+        temp_dir = tempfile.mkdtemp()
+        json_path = os.path.join(temp_dir, "project.json")
+        json_content = {
+            "vlsi.core.technology": "nop", # can't load asap7 because we don't have the tarball
+            "vlsi.core.%s_tool" % self._tool_type: "sram_compiler",
+            "vlsi.core.%s_tool_path" % self._tool_type: ["../hammer-vlsi/technology/asap7"],
+            "vlsi.core.%s_tool_path_meta" % self._tool_type: "append",
+            "%s.inputs.top_module" % self._tool_type: "dummy",
+            "%s.inputs.layout_file" % self._tool_type: "/dev/null",
+            "%s.temp_folder" % self._tool_type: temp_dir,
+            "%s.submit.command" % self._tool_type: "local"
+        }  # type: Dict[str, Any]
+        if self._tool_type is "sram_generator":
+            json_content.update({
+                "vlsi.inputs.sram_parameters": [{"depth": 32, "width": 32,
+                    "name": "small", "family": "2RW", "mask": False, "vt": "SRAM", "mux": 1},
+                                              {"depth": 64, "width": 128,
+                    "name": "large", "family": "1RW", "mask": False, "vt": "SRAM", "mux": 1}],
+                "vlsi.inputs.mmmc_corners": [{"name": "PVT_0P63V_100C", "type": "setup", "voltage": "0.63V", "temp": "100C"},
+                                             {"name": "PVT_0P77V_0C", "type": "hold", "voltage": "0.77V", "temp": "0C"}]
+            })
+
+        with open(json_path, "w") as f:
+            f.write(json.dumps(json_content, cls=HammerJSONEncoder, indent=4))
+
+        options = hammer_vlsi.HammerDriverOptions(
+            environment_configs=[],
+            project_configs=[json_path],
+            log_file=os.path.join(temp_dir, "log.txt"),
+            obj_dir=temp_dir
+        )
+        self._driver = hammer_vlsi.HammerDriver(options)
+        self.temp_dir = temp_dir
+        return self
+
+    def __exit__(self, type, value, traceback) -> bool:
+        """Clean up the context by removing the temp_dir."""
+        shutil.rmtree(self.temp_dir)
+        # Return True (normal execution) if no exception occurred.
+        return True if type is None else False
+
+    @property
+    def env(self) -> Dict[str, str]:
+        return {}
+
+class HammerASAP7SRAMGeneratorToolTest(unittest.TestCase):
+    def create_context(self) -> HammerASAP7SRAMGeneratorToolTestContext:
+        return HammerASAP7SRAMGeneratorToolTestContext(self, "sram_generator")
+
+    def test_get_results(self) -> None:
+        """ Test that multiple srams and multiple corners have their
+            cross-product generated."""
+        with self.create_context() as c:
+          self.assertTrue(c.driver.load_sram_generator_tool())
+          self.assertTrue(c.driver.run_sram_generator())
+          assert isinstance(c.driver.sram_generator_tool, hammer_vlsi.HammerSRAMGeneratorTool)
+          output_libs = c.driver.sram_generator_tool.output_libraries # type: List[ExtraLibrary]
+          assert isinstance(output_libs, list)
+          # Should have an sram for each corner(2) and parameter(2) for a total of 4
+          self.assertEqual(len(output_libs),4)
+          libs = list(map(lambda ex: ex.library, output_libs)) # type: List[Library]
+          lib_names = list(map(lambda lib: lib.nldm_liberty_file, libs)) # type: ignore # These are actually List[str]
+          self.assertEqual(set(lib_names), set([
+            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM2RW32x32_PVT_0P63V_100C.lib"),
+            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM2RW32x32_PVT_0P77V_0C.lib"),
+            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM1RW64x128_PVT_0P63V_100C.lib"),
+            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM1RW64x128_PVT_0P77V_0C.lib")]))
+
 class HammerPCBDeliverableToolTestContext:
     def __init__(self, test: unittest.TestCase) -> None:
         self.test = test  # type unittest.TestCase

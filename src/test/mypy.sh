@@ -37,6 +37,8 @@ call_mypy ../hammer-vlsi/par/mockpar/__init__.py
 call_mypy ../hammer-vlsi/drc/*.py
 call_mypy ../hammer-vlsi/lvs/*.py
 call_mypy ../hammer-vlsi/pcb/generic/__init__.py
+call_mypy ../hammer-vlsi/technology/asap7/*.py
+call_mypy ../hammer-vlsi/technology/asap7/sram_compiler/__init__.py
 
 # Plugins which may or may not exist
 if [ -f ../hammer-vlsi/synthesis/dc/__init__.py ]; then
