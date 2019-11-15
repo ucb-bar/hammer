@@ -18,6 +18,14 @@ python -m pip install gdspy --user
 ```
 Or, replace the pip installation with installation from source in `hammer/src/tools/gdspy`.
 
+Dummy SRAMs
+===========
+The ASAP7 plugin comes with a set of dummy SRAMs which are **completely blank** (full obstructions on layers M1-M3). They are **NOT** used by default (not included in the default tech.json).
+
+`sram-cache-gen.py` generates `sram-cache.json` using `srams.txt`, which contains a list of available SRAMs in Hammer IR. `sram-cache.json` memories is used by MacroCompiler to insert these memories into the design.
+
+Finally, the SRAMCompiler in `sram_compiler/__init__.py` is used to generate the ExtraLibrarys (including .lib, .lef, .gds) needed by the particular design.
+
 Known DRC Issues
 =================
 
