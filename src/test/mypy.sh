@@ -40,6 +40,9 @@ call_mypy ../hammer-vlsi/pcb/generic/__init__.py
 call_mypy ../hammer-vlsi/technology/asap7/*.py
 call_mypy ../hammer-vlsi/technology/asap7/sram_compiler/__init__.py
 
+# Scala library
+call_mypy ../../hammer_ir/scalalib/test/*.py
+
 # Plugins which may or may not exist
 if [ -f ../hammer-vlsi/synthesis/dc/__init__.py ]; then
     call_mypy ../hammer-vlsi/synthesis/dc/__init__.py
