@@ -1,5 +1,4 @@
 [
-
 {
   "type" : "sram",
   "name" : "SRAM1RW1024x8",
@@ -26,8 +25,7 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
 {
   "type" : "sram",
   "name" : "SRAM1RW128x46",
@@ -54,8 +52,7 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
 {
   "type" : "sram",
   "name" : "SRAM1RW128x48",
@@ -82,8 +79,7 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
 {
   "type" : "sram",
   "name" : "SRAM1RW128x8",
@@ -110,8 +106,7 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
 {
   "type" : "sram",
   "name" : "SRAM1RW256x128",
@@ -138,8 +133,7 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
 {
   "type" : "sram",
   "name" : "SRAM1RW256x32",
@@ -166,8 +160,7 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
 {
   "type" : "sram",
   "name" : "SRAM1RW256x46",
@@ -194,8 +187,7 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
 {
   "type" : "sram",
   "name" : "SRAM1RW256x48",
@@ -222,8 +214,7 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
 {
   "type" : "sram",
   "name" : "SRAM1RW256x8",
@@ -250,8 +241,7 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
 {
   "type" : "sram",
   "name" : "SRAM1RW32x50",
@@ -278,8 +268,7 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
 {
   "type" : "sram",
   "name" : "SRAM1RW512x128",
@@ -306,8 +295,7 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
 {
   "type" : "sram",
   "name" : "SRAM1RW512x32",
@@ -334,8 +322,7 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
 {
   "type" : "sram",
   "name" : "SRAM1RW512x8",
@@ -362,8 +349,7 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
 {
   "type" : "sram",
   "name" : "SRAM1RW64x128",
@@ -390,8 +376,7 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
 {
   "type" : "sram",
   "name" : "SRAM1RW64x32",
@@ -418,8 +403,7 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
 {
   "type" : "sram",
   "name" : "SRAM1RW64x34",
@@ -446,8 +430,7 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
 {
   "type" : "sram",
   "name" : "SRAM1RW64x8",
@@ -474,8 +457,8 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
+
 {
   "type" : "sram",
   "name" : "SRAM2RW128x16",
@@ -517,8 +500,8 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
+
 {
   "type" : "sram",
   "name" : "SRAM2RW128x32",
@@ -560,8 +543,8 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
+
 {
   "type" : "sram",
   "name" : "SRAM2RW128x4",
@@ -603,8 +586,8 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
+
 {
   "type" : "sram",
   "name" : "SRAM2RW128x8",
@@ -646,8 +629,8 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
+
 {
   "type" : "sram",
   "name" : "SRAM2RW16x16",
@@ -689,8 +672,8 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
+
 {
   "type" : "sram",
   "name" : "SRAM2RW16x32",
@@ -732,8 +715,8 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
+
 {
   "type" : "sram",
   "name" : "SRAM2RW16x4",
@@ -775,8 +758,8 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
+
 {
   "type" : "sram",
   "name" : "SRAM2RW16x8",
@@ -818,8 +801,8 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
+
 {
   "type" : "sram",
   "name" : "SRAM2RW32x16",
@@ -861,8 +844,8 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
+
 {
   "type" : "sram",
   "name" : "SRAM2RW32x22",
@@ -904,8 +887,8 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
+
 {
   "type" : "sram",
   "name" : "SRAM2RW32x32",
@@ -947,8 +930,8 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
+
 {
   "type" : "sram",
   "name" : "SRAM2RW32x39",
@@ -990,8 +973,8 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
+
 {
   "type" : "sram",
   "name" : "SRAM2RW32x4",
@@ -1033,8 +1016,8 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
+
 {
   "type" : "sram",
   "name" : "SRAM2RW32x8",
@@ -1076,8 +1059,8 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
+
 {
   "type" : "sram",
   "name" : "SRAM2RW64x16",
@@ -1119,8 +1102,8 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
+
 {
   "type" : "sram",
   "name" : "SRAM2RW64x32",
@@ -1162,8 +1145,8 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
+
 {
   "type" : "sram",
   "name" : "SRAM2RW64x4",
@@ -1205,8 +1188,8 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ,
+},
+
 {
   "type" : "sram",
   "name" : "SRAM2RW64x8",
@@ -1248,5 +1231,4 @@
     "chip enable port polarity" : "active low"
   } ],
   "extra ports" : []
-}
-  ]
+}]

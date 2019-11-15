@@ -1,27 +1,32 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+#  Script to generate the ASAP7 dummy SRAM cache.
+#
+#  See LICENSE for licence details.
 
 import sys
-import os
 import re
 
 from typing import List
 
-if len(sys.argv) != 3:
-    print("Usage: ./sram-cache-gen.py list-of-srams-1-per-line.txt output-file.json")
-    exit(1)
+def main(args: List[str]) -> int:
+    if len(args) != 3:
+        print("Usage: ./sram-cache-gen.py list-of-srams-1-per-line.txt output-file.json")
+        return 1
 
-list_of_srams = [] # type: List[str]
-with open(sys.argv[1]) as f:
-    for line in f:
-        list_of_srams.append(line)
+    list_of_srams = []  # type: List[str]
+    with open(sys.argv[1]) as f:
+        for line in f:
+            list_of_srams.append(line)
 
-json = [] # type: List[str]
+    json = []  # type: List[str]
 
-for sram_name in list_of_srams:
-    if sram_name.startswith("SRAM2RW"):
-        m = re.match("SRAM2RW(\d+)x(\d+)", sram_name)
-        if m:
-            json.append("""
+    for sram_name in list_of_srams:
+        if sram_name.startswith("SRAM2RW"):
+            match = re.match(r"SRAM2RW(\d+)x(\d+)", sram_name)
+            if match:
+                json.append("""
 {{
   "type" : "sram",
   "name" : "{n}",
@@ -63,15 +68,14 @@ for sram_name in list_of_srams:
     "chip enable port polarity" : "active low"
   }} ],
   "extra ports" : []
-}}
-  """.format(n=sram_name.strip(), d=m.group(1), w=m.group(2)))
-        else:
-            print("Unsupported memory: {n}".format(n=sram_name))
-    elif sram_name.startswith("SRAM1RW"):
-        m = re.match("SRAM1RW(\d+)x(\d+)", sram_name)
-        if m:
-            json.append("""
-{{
+}}""".format(n=sram_name.strip(), d=match.group(1), w=match.group(2)))
+            else:
+                print("Unsupported memory: {n}".format(n=sram_name), file=sys.stderr)
+                return 1
+        elif sram_name.startswith("SRAM1RW"):
+            match = re.match(r"SRAM1RW(\d+)x(\d+)", sram_name)
+            if match:
+                json.append("""{{
   "type" : "sram",
   "name" : "{n}",
   "vt" : "SRAM",
@@ -97,18 +101,20 @@ for sram_name in list_of_srams:
     "chip enable port polarity" : "active low"
   }} ],
   "extra ports" : []
-}}
-  """.format(n=sram_name.strip(), d=m.group(1), w=m.group(2)))
+}}""".format(n=sram_name.strip(), d=match.group(1), w=match.group(2)))
+            else:
+                print("Unsupported memory: {n}".format(n=sram_name), file=sys.stderr)
+                return 1
         else:
-            print("Unsupported memory: {n}".format(n=sram_name))
-    else:
-        print("Unsupported memory: {n}".format(n=sram_name))
+            print("Unsupported memory: {n}".format(n=sram_name), file=sys.stderr)
+            return 1
 
-with open(sys.argv[2], "w") as f:
-    f.write("[\n")
-    for i in range(0, len(json)):
-        f.write(json[i])
-        if i != (len(json) - 1):
-            f.write(",")
-    f.write("]\n")
+    json_str = "[\n" + ",\n".join(json) + "]\n"
 
+    with open(sys.argv[2], "w") as f:
+        f.write(json_str)
+
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))
