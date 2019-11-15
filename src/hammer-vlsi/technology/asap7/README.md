@@ -20,7 +20,12 @@ Or, replace the pip installation with installation from source in `hammer/src/to
 
 Dummy SRAMs
 ===========
-The ASAP7 plugin comes with a set of dummy SRAMs which are **completely blank** (full obstructions on layers M1-M3). They are **NOT** used by default (not included in the default tech.json).
+The ASAP7 plugin comes with a set of dummy SRAMs, which are **NOT** used by default (not included in the default tech.json).
+
+They are **completely blank** (full obstructions on layers M1-M3).
+All pins are on M4, with the signal all on the left side and the power stripes running across. The M5 power stripes are able to connect up.
+
+**All SRAMs are scaled up by 4x, so they are subject to the scaling script.**
 
 `sram-cache-gen.py` generates `sram-cache.json` using `srams.txt`, which contains a list of available SRAMs in Hammer IR. `sram-cache.json` memories is used by MacroCompiler to insert these memories into the design.
 
