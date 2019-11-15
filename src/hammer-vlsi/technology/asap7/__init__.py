@@ -195,7 +195,7 @@ gds_lib.write_gds('{gds_file}')
 
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {"innovus": [
-            HammerTool.make_persistent_hook(asap7_innovus_settings),
+            HammerTool.make_post_persistent_hook("init_design", asap7_innovus_settings),
             HammerTool.make_post_insertion_hook("write_design", scale_final_gds)
             ]}
         return hooks.get(tool_name, [])
@@ -203,7 +203,9 @@ gds_lib.write_gds('{gds_file}')
 def asap7_innovus_settings(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
     assert isinstance(ht, CadenceTool), "Innovus is Cadence"
-    """Settings that need to be reapplied at every tool invocation"""
+    """Settings that may need to be reapplied at every tool invocation
+    Note that the particular routing layer settings here will persist in Innovus;
+    this hook only serves as an example of what commands may need to persist."""
     ht.append('''
 set_db route_design_bottom_routing_layer 2
 set_db route_design_top_routing_layer 7

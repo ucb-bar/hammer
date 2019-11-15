@@ -60,7 +60,8 @@ Hooks may be provided by the technology plugin, the tool plugin, and/or the user
 
 A technology plugin specifies hooks in its ``__init__.py`` (as a method inside its subclass of ``HammerTechnology``). It should implement a ``get_tech_<action>_hooks(self, tool_name: str)`` method. The tool name parameter may be checked by the hook implementation because multiple tools may implement the same action. Technology plugin hooks may only target technology default steps to insert/replace.
 
-The linked Chipyard example includes an example of how the ASAP7 technology plugin injects a hook to scale down a GDS post-place-and-route in Innovus.
+The included ASAP7 technology plugin provides an example of how to inject two different types of hooks: 1) a persistent hook invoked anytime after the ``init_design`` step to set top & bottom routing layers, and 2) a hook to scale down a GDS post-place-and-route using the ``gdspy`` package.
+Note that the persistent hook that is included does not necessarily need to be persistent (Innovus does retain this setting in snapshot databases), but it serves as an example for building your own tech plugin.
 
 A tool plugin specifies hooks in its ``__init__.py`` (as a method inside its subclass of ``HammerTool``). It should implement a ``get_tool_hooks(self)`` method. In contrast to the tech-supplied hooks, the action name and tool name are not specified because a tool instance can only correspond to a single action. Tool plugin hooks may target technology default steps and technology plugin hooks to insert/replace.
 
