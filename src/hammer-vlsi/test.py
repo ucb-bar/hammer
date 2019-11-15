@@ -21,6 +21,7 @@ import hammer_config
 from hammer_config import HammerJSONEncoder
 import hammer_tech
 import hammer_vlsi
+from hammer_vlsi.hooks import HammerStartStopStep
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, Level
 from hammer_logging.test import HammerLoggingCaptureContext
 from hammer_tech import LibraryFilter, Library, ExtraLibrary
@@ -1103,24 +1104,193 @@ class HammerToolHooksTest(unittest.TestCase):
 
     def test_resume_pause_hooks_with_custom_steps(self) -> None:
         """Test that resume/pause hooks work with custom steps."""
+
         with self.create_context() as c:
             def step5(x: hammer_vlsi.HammerTool) -> bool:
                 with open(os.path.join(c.temp_dir, "step5.txt"), "w") as f:
                     f.write("HelloWorld")
                 return True
-
-            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_from_to_hooks("step5", "step5"))
+            def step6(x: hammer_vlsi.HammerTool) -> bool:
+                with open(os.path.join(c.temp_dir, "step6.txt"), "w") as f:
+                    f.write("ByeByeWorld")
+                return True
+            # Test from_step => to_step
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step5", inclusive=True), HammerStartStopStep(step="step5", inclusive=True)))
             success, syn_output = c.driver.run_synthesis(hook_actions=[
-                hammer_vlsi.HammerTool.make_post_insertion_hook("step4", step5)
+                hammer_vlsi.HammerTool.make_post_insertion_hook("step4", step5),
+                hammer_vlsi.HammerTool.make_post_insertion_hook("step5", step6)
             ])
             self.assertTrue(success)
 
-            for i in range(1, 6):
+            for i in range(1, 7):
                 file = os.path.join(c.temp_dir, "step{}.txt".format(i))
                 if i == 5:
                     self.assertEqual(self.read(file), "HelloWorld")
                 else:
                     self.assertFalse(os.path.exists(file))
+
+        with self.create_context() as c:
+            def step5(x: hammer_vlsi.HammerTool) -> bool:
+                with open(os.path.join(c.temp_dir, "step5.txt"), "w") as f:
+                    f.write("HelloWorld")
+                return True
+            def step6(x: hammer_vlsi.HammerTool) -> bool:
+                with open(os.path.join(c.temp_dir, "step6.txt"), "w") as f:
+                    f.write("ByeByeWorld")
+                return True
+            # Test after_step => until_step
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step4", inclusive=False), HammerStartStopStep(step="step6", inclusive=False)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_post_insertion_hook("step4", step5),
+                hammer_vlsi.HammerTool.make_post_insertion_hook("step5", step6)
+            ])
+            self.assertTrue(success)
+
+            for i in range(1, 7):
+                file = os.path.join(c.temp_dir, "step{}.txt".format(i))
+                if i == 5:
+                    self.assertEqual(self.read(file), "HelloWorld")
+                else:
+                    self.assertFalse(os.path.exists(file))
+
+    def test_persistent_hooks(self) -> None:
+        """Test that persistent hooks work."""
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            # Test persist despite starting from step 3
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step3", inclusive=True), HammerStartStopStep(step=None, inclusive=False)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_persistent_hook(persist)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertEqual(self.read(file1), "HelloWorld")
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            # Test pre_persist executes if anything before target step is run
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step=None, inclusive=False), HammerStartStopStep(step="step2", inclusive=True)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_pre_persistent_hook("step4", persist)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertEqual(self.read(file1), "HelloWorld")
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            # Test pre_persist does not execute if starting from after target step
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step3", inclusive=True), HammerStartStopStep(step=None, inclusive=False)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_pre_persistent_hook("step2", persist)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertFalse(os.path.exists(file1))
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            # Test post_persist does not execute if stopped before target step
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step=None, inclusive=False), HammerStartStopStep(step="step2", inclusive=True)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_post_persistent_hook("step3", persist)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertFalse(os.path.exists(file1))
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            # Test post_persist executes started after target step
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step3", inclusive=True), HammerStartStopStep(step=None, inclusive=False)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_post_persistent_hook("step1", persist)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertEqual(self.read(file1), "HelloWorld")
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            # Test post_persist executes if target step is included in steps run
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step1", inclusive=True), HammerStartStopStep(step=None, inclusive=False)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_post_persistent_hook("step3", persist)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertEqual(self.read(file1), "HelloWorld")
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            def persist2(x: hammer_vlsi.HammerTool) -> bool:
+                file2 = os.path.join(c.temp_dir, "persist2.txt")
+                with open(file2, "w") as f:
+                    f.write("ByeByeWorld")
+                return True
+            # Test replacement hook inherits replaced persistent hook behavior
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step3", inclusive=True), HammerStartStopStep(step=None, inclusive=False)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_post_persistent_hook("step1", persist),
+                hammer_vlsi.HammerTool.make_replacement_hook("persist", persist2)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertFalse(os.path.exists(file1))
+            file2 = os.path.join(c.temp_dir, "persist2.txt")
+            self.assertEqual(self.read(file2), "ByeByeWorld")
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            def persist2(x: hammer_vlsi.HammerTool) -> bool:
+                file2 = os.path.join(c.temp_dir, "persist2.txt")
+                with open(file2, "w") as f:
+                    f.write("ByeByeWorld")
+                return True
+            # Test insertion hook inherits replaced persistent hook behavior
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step3", inclusive=True), HammerStartStopStep(step=None, inclusive=False)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_post_persistent_hook("step1", persist),
+                hammer_vlsi.HammerTool.make_pre_insertion_hook("persist", persist2)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertEqual(self.read(file1), "HelloWorld")
+            file2 = os.path.join(c.temp_dir, "persist2.txt")
+            self.assertEqual(self.read(file2), "ByeByeWorld")
 
 
 class HammerSubmitCommandTestContext:
@@ -1421,6 +1591,94 @@ class HammerSRAMGeneratorToolTest(unittest.TestCase):
             "sram32x32_1.5V_125.0C.gds",
             "sram64x128_0.5V_0.0C.gds",
             "sram64x128_1.5V_125.0C.gds"]))
+
+class HammerASAP7SRAMGeneratorToolTestContext:
+
+    def __init__(self, test: unittest.TestCase, tool_type: str) -> None:
+        self.test = test  # type unittest.TestCase
+        self.logger = HammerVLSILogging.context("")
+        self._driver = None  # type: Optional[hammer_vlsi.HammerDriver]
+        if tool_type not in ["sram_generator"]:
+            raise NotImplementedError("Have not created a test for %s yet" % (tool_type))
+        self._tool_type = tool_type
+
+    # Helper property to check that the driver did get initialized.
+    @property
+    def driver(self) -> hammer_vlsi.HammerDriver:
+        assert self._driver is not None, "HammerDriver must be initialized before use"
+        return self._driver
+
+    def __enter__(self) -> "HammerASAP7SRAMGeneratorToolTestContext":
+        """Initialize context by creating the temp_dir, driver, and loading the sram_generator tool."""
+        self.test.assertTrue(hammer_vlsi.HammerVLSISettings.set_hammer_vlsi_path_from_environment(),
+                             "hammer_vlsi_path must exist")
+        temp_dir = tempfile.mkdtemp()
+        json_path = os.path.join(temp_dir, "project.json")
+        json_content = {
+            "vlsi.core.technology": "nop", # can't load asap7 because we don't have the tarball
+            "vlsi.core.%s_tool" % self._tool_type: "sram_compiler",
+            "vlsi.core.%s_tool_path" % self._tool_type: ["../hammer-vlsi/technology/asap7"],
+            "vlsi.core.%s_tool_path_meta" % self._tool_type: "append",
+            "%s.inputs.top_module" % self._tool_type: "dummy",
+            "%s.inputs.layout_file" % self._tool_type: "/dev/null",
+            "%s.temp_folder" % self._tool_type: temp_dir,
+            "%s.submit.command" % self._tool_type: "local"
+        }  # type: Dict[str, Any]
+        if self._tool_type is "sram_generator":
+            json_content.update({
+                "vlsi.inputs.sram_parameters": [{"depth": 32, "width": 32,
+                    "name": "small", "family": "2RW", "mask": False, "vt": "SRAM", "mux": 1},
+                                              {"depth": 64, "width": 128,
+                    "name": "large", "family": "1RW", "mask": False, "vt": "SRAM", "mux": 1}],
+                "vlsi.inputs.mmmc_corners": [{"name": "PVT_0P63V_100C", "type": "setup", "voltage": "0.63V", "temp": "100C"},
+                                             {"name": "PVT_0P77V_0C", "type": "hold", "voltage": "0.77V", "temp": "0C"}]
+            })
+
+        with open(json_path, "w") as f:
+            f.write(json.dumps(json_content, cls=HammerJSONEncoder, indent=4))
+
+        options = hammer_vlsi.HammerDriverOptions(
+            environment_configs=[],
+            project_configs=[json_path],
+            log_file=os.path.join(temp_dir, "log.txt"),
+            obj_dir=temp_dir
+        )
+        self._driver = hammer_vlsi.HammerDriver(options)
+        self.temp_dir = temp_dir
+        return self
+
+    def __exit__(self, type, value, traceback) -> bool:
+        """Clean up the context by removing the temp_dir."""
+        shutil.rmtree(self.temp_dir)
+        # Return True (normal execution) if no exception occurred.
+        return True if type is None else False
+
+    @property
+    def env(self) -> Dict[str, str]:
+        return {}
+
+class HammerASAP7SRAMGeneratorToolTest(unittest.TestCase):
+    def create_context(self) -> HammerASAP7SRAMGeneratorToolTestContext:
+        return HammerASAP7SRAMGeneratorToolTestContext(self, "sram_generator")
+
+    def test_get_results(self) -> None:
+        """ Test that multiple srams and multiple corners have their
+            cross-product generated."""
+        with self.create_context() as c:
+          self.assertTrue(c.driver.load_sram_generator_tool())
+          self.assertTrue(c.driver.run_sram_generator())
+          assert isinstance(c.driver.sram_generator_tool, hammer_vlsi.HammerSRAMGeneratorTool)
+          output_libs = c.driver.sram_generator_tool.output_libraries # type: List[ExtraLibrary]
+          assert isinstance(output_libs, list)
+          # Should have an sram for each corner(2) and parameter(2) for a total of 4
+          self.assertEqual(len(output_libs),4)
+          libs = list(map(lambda ex: ex.library, output_libs)) # type: List[Library]
+          lib_names = list(map(lambda lib: lib.nldm_liberty_file, libs)) # type: ignore # These are actually List[str]
+          self.assertEqual(set(lib_names), set([
+            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM2RW32x32_PVT_0P63V_100C.lib"),
+            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM2RW32x32_PVT_0P77V_0C.lib"),
+            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM1RW64x128_PVT_0P63V_100C.lib"),
+            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM1RW64x128_PVT_0P77V_0C.lib")]))
 
 class HammerPCBDeliverableToolTestContext:
     def __init__(self, test: unittest.TestCase) -> None:
