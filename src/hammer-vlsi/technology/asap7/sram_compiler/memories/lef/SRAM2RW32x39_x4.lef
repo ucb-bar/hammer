@@ -6,7 +6,7 @@ MACRO SRAM2RW32x39
   CLASS BLOCK ;
   ORIGIN 0 0 ;
   FOREIGN SRAM2RW32x39 0 0 ;
-  SIZE 88.696 BY 166.272 ;
+  SIZE 23.332 BY 166.272 ;
   SYMMETRY X Y ;
   SITE coreSite ;
   PIN VDD
@@ -14,27 +14,27 @@ MACRO SRAM2RW32x39
     USE POWER ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 6.528 88.696 6.912 ;
-        RECT 0.0 14.208 88.696 14.592 ;
-        RECT 0.0 21.888 88.696 22.272 ;
-        RECT 0.0 29.568 88.696 29.952 ;
-        RECT 0.0 37.248 88.696 37.632 ;
-        RECT 0.0 44.928 88.696 45.312 ;
-        RECT 0.0 52.608 88.696 52.992 ;
-        RECT 0.0 60.288 88.696 60.672 ;
-        RECT 0.0 67.968 88.696 68.352 ;
-        RECT 0.0 75.648 88.696 76.032 ;
-        RECT 0.0 83.328 88.696 83.712 ;
-        RECT 0.0 91.008 88.696 91.392 ;
-        RECT 0.0 98.688 88.696 99.072 ;
-        RECT 0.0 106.368 88.696 106.752 ;
-        RECT 0.0 114.048 88.696 114.432 ;
-        RECT 0.0 121.728 88.696 122.112 ;
-        RECT 0.0 129.408 88.696 129.792 ;
-        RECT 0.0 137.088 88.696 137.472 ;
-        RECT 0.0 144.768 88.696 145.152 ;
-        RECT 0.0 152.448 88.696 152.832 ;
-        RECT 0.0 160.128 88.696 160.512 ;
+        RECT 0.0 6.528 23.332 6.912 ;
+        RECT 0.0 14.208 23.332 14.592 ;
+        RECT 0.0 21.888 23.332 22.272 ;
+        RECT 0.0 29.568 23.332 29.952 ;
+        RECT 0.0 37.248 23.332 37.632 ;
+        RECT 0.0 44.928 23.332 45.312 ;
+        RECT 0.0 52.608 23.332 52.992 ;
+        RECT 0.0 60.288 23.332 60.672 ;
+        RECT 0.0 67.968 23.332 68.352 ;
+        RECT 0.0 75.648 23.332 76.032 ;
+        RECT 0.0 83.328 23.332 83.712 ;
+        RECT 0.0 91.008 23.332 91.392 ;
+        RECT 0.0 98.688 23.332 99.072 ;
+        RECT 0.0 106.368 23.332 106.752 ;
+        RECT 0.0 114.048 23.332 114.432 ;
+        RECT 0.0 121.728 23.332 122.112 ;
+        RECT 0.0 129.408 23.332 129.792 ;
+        RECT 0.0 137.088 23.332 137.472 ;
+        RECT 0.0 144.768 23.332 145.152 ;
+        RECT 0.0 152.448 23.332 152.832 ;
+        RECT 0.0 160.128 23.332 160.512 ;
     END 
   END VDD
   PIN VSS
@@ -42,27 +42,27 @@ MACRO SRAM2RW32x39
     USE GROUND ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 7.296 88.696 7.68 ;
-        RECT 0.0 14.976 88.696 15.36 ;
-        RECT 0.0 22.656 88.696 23.04 ;
-        RECT 0.0 30.336 88.696 30.72 ;
-        RECT 0.0 38.016 88.696 38.4 ;
-        RECT 0.0 45.696 88.696 46.08 ;
-        RECT 0.0 53.376 88.696 53.76 ;
-        RECT 0.0 61.056 88.696 61.44 ;
-        RECT 0.0 68.736 88.696 69.12 ;
-        RECT 0.0 76.416 88.696 76.8 ;
-        RECT 0.0 84.096 88.696 84.48 ;
-        RECT 0.0 91.776 88.696 92.16 ;
-        RECT 0.0 99.456 88.696 99.84 ;
-        RECT 0.0 107.136 88.696 107.52 ;
-        RECT 0.0 114.816 88.696 115.2 ;
-        RECT 0.0 122.496 88.696 122.88 ;
-        RECT 0.0 130.176 88.696 130.56 ;
-        RECT 0.0 137.856 88.696 138.24 ;
-        RECT 0.0 145.536 88.696 145.92 ;
-        RECT 0.0 153.216 88.696 153.6 ;
-        RECT 0.0 160.896 88.696 161.28 ;
+        RECT 0.0 7.296 23.332 7.68 ;
+        RECT 0.0 14.976 23.332 15.36 ;
+        RECT 0.0 22.656 23.332 23.04 ;
+        RECT 0.0 30.336 23.332 30.72 ;
+        RECT 0.0 38.016 23.332 38.4 ;
+        RECT 0.0 45.696 23.332 46.08 ;
+        RECT 0.0 53.376 23.332 53.76 ;
+        RECT 0.0 61.056 23.332 61.44 ;
+        RECT 0.0 68.736 23.332 69.12 ;
+        RECT 0.0 76.416 23.332 76.8 ;
+        RECT 0.0 84.096 23.332 84.48 ;
+        RECT 0.0 91.776 23.332 92.16 ;
+        RECT 0.0 99.456 23.332 99.84 ;
+        RECT 0.0 107.136 23.332 107.52 ;
+        RECT 0.0 114.816 23.332 115.2 ;
+        RECT 0.0 122.496 23.332 122.88 ;
+        RECT 0.0 130.176 23.332 130.56 ;
+        RECT 0.0 137.856 23.332 138.24 ;
+        RECT 0.0 145.536 23.332 145.92 ;
+        RECT 0.0 153.216 23.332 153.6 ;
+        RECT 0.0 160.896 23.332 161.28 ;
     END 
   END VSS
   PIN CE1
@@ -70,7 +70,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 1.536 16.0 3.072 ;
+        RECT 0.0 0.384 4.0 0.768 ;
     END 
   END CE1
   PIN CE2
@@ -78,7 +78,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 4.608 16.0 6.144 ;
+        RECT 0.0 1.152 4.0 1.536 ;
     END 
   END CE2
   PIN WEB1
@@ -86,7 +86,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 7.68 16.0 9.216 ;
+        RECT 0.0 1.92 4.0 2.304 ;
     END 
   END WEB1
   PIN WEB2
@@ -94,7 +94,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 10.752 16.0 12.288 ;
+        RECT 0.0 2.688 4.0 3.072 ;
     END 
   END WEB2
   PIN OEB1
@@ -102,7 +102,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 13.824 16.0 15.36 ;
+        RECT 0.0 3.456 4.0 3.84 ;
     END 
   END OEB1
   PIN OEB2
@@ -110,7 +110,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 16.896 16.0 18.432 ;
+        RECT 0.0 4.224 4.0 4.608 ;
     END 
   END OEB2
   PIN CSB1
@@ -118,7 +118,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 19.968 16.0 21.504 ;
+        RECT 0.0 4.992 4.0 5.376 ;
     END 
   END CSB1
   PIN CSB2
@@ -126,7 +126,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 23.04 16.0 24.576 ;
+        RECT 0.0 5.76 4.0 6.144 ;
     END 
   END CSB2
   PIN A1[0]
@@ -134,7 +134,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 32.256 16.0 33.792 ;
+        RECT 0.0 8.064 4.0 8.448 ;
     END 
   END A1[0]
   PIN A1[1]
@@ -142,7 +142,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 35.328 16.0 36.864 ;
+        RECT 0.0 8.832 4.0 9.216 ;
     END 
   END A1[1]
   PIN A1[2]
@@ -150,7 +150,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 38.4 16.0 39.936 ;
+        RECT 0.0 9.6 4.0 9.984 ;
     END 
   END A1[2]
   PIN A1[3]
@@ -158,7 +158,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 41.472 16.0 43.008 ;
+        RECT 0.0 10.368 4.0 10.752 ;
     END 
   END A1[3]
   PIN A1[4]
@@ -166,7 +166,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 44.544 16.0 46.08 ;
+        RECT 0.0 11.136 4.0 11.52 ;
     END 
   END A1[4]
   PIN A2[0]
@@ -174,7 +174,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 47.616 16.0 49.152 ;
+        RECT 0.0 11.904 4.0 12.288 ;
     END 
   END A2[0]
   PIN A2[1]
@@ -182,7 +182,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 50.688 16.0 52.224 ;
+        RECT 0.0 12.672 4.0 13.056 ;
     END 
   END A2[1]
   PIN A2[2]
@@ -190,7 +190,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 53.76 16.0 55.296 ;
+        RECT 0.0 13.44 4.0 13.824 ;
     END 
   END A2[2]
   PIN A2[3]
@@ -198,7 +198,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 62.976 16.0 64.512 ;
+        RECT 0.0 15.744 4.0 16.128 ;
     END 
   END A2[3]
   PIN A2[4]
@@ -206,7 +206,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 66.048 16.0 67.584 ;
+        RECT 0.0 16.512 4.0 16.896 ;
     END 
   END A2[4]
   PIN I1[0]
@@ -214,7 +214,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 69.12 16.0 70.656 ;
+        RECT 0.0 17.28 4.0 17.664 ;
     END 
   END I1[0]
   PIN I1[1]
@@ -222,7 +222,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 72.192 16.0 73.728 ;
+        RECT 0.0 18.048 4.0 18.432 ;
     END 
   END I1[1]
   PIN I1[2]
@@ -230,7 +230,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 75.264 16.0 76.8 ;
+        RECT 0.0 18.816 4.0 19.2 ;
     END 
   END I1[2]
   PIN I1[3]
@@ -238,7 +238,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 78.336 16.0 79.872 ;
+        RECT 0.0 19.584 4.0 19.968 ;
     END 
   END I1[3]
   PIN I1[4]
@@ -246,7 +246,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 81.408 16.0 82.944 ;
+        RECT 0.0 20.352 4.0 20.736 ;
     END 
   END I1[4]
   PIN I1[5]
@@ -254,7 +254,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 84.48 16.0 86.016 ;
+        RECT 0.0 21.12 4.0 21.504 ;
     END 
   END I1[5]
   PIN I1[6]
@@ -262,7 +262,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 93.696 16.0 95.232 ;
+        RECT 0.0 23.424 4.0 23.808 ;
     END 
   END I1[6]
   PIN I1[7]
@@ -270,7 +270,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 96.768 16.0 98.304 ;
+        RECT 0.0 24.192 4.0 24.576 ;
     END 
   END I1[7]
   PIN I1[8]
@@ -278,7 +278,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 99.84 16.0 101.376 ;
+        RECT 0.0 24.96 4.0 25.344 ;
     END 
   END I1[8]
   PIN I1[9]
@@ -286,7 +286,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 102.912 16.0 104.448 ;
+        RECT 0.0 25.728 4.0 26.112 ;
     END 
   END I1[9]
   PIN I1[10]
@@ -294,7 +294,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 105.984 16.0 107.52 ;
+        RECT 0.0 26.496 4.0 26.88 ;
     END 
   END I1[10]
   PIN I1[11]
@@ -302,7 +302,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 109.056 16.0 110.592 ;
+        RECT 0.0 27.264 4.0 27.648 ;
     END 
   END I1[11]
   PIN I1[12]
@@ -310,7 +310,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 112.128 16.0 113.664 ;
+        RECT 0.0 28.032 4.0 28.416 ;
     END 
   END I1[12]
   PIN I1[13]
@@ -318,7 +318,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 115.2 16.0 116.736 ;
+        RECT 0.0 28.8 4.0 29.184 ;
     END 
   END I1[13]
   PIN I1[14]
@@ -326,7 +326,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 124.416 16.0 125.952 ;
+        RECT 0.0 31.104 4.0 31.488 ;
     END 
   END I1[14]
   PIN I1[15]
@@ -334,7 +334,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 127.488 16.0 129.024 ;
+        RECT 0.0 31.872 4.0 32.256 ;
     END 
   END I1[15]
   PIN I1[16]
@@ -342,7 +342,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 130.56 16.0 132.096 ;
+        RECT 0.0 32.64 4.0 33.024 ;
     END 
   END I1[16]
   PIN I1[17]
@@ -350,7 +350,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 133.632 16.0 135.168 ;
+        RECT 0.0 33.408 4.0 33.792 ;
     END 
   END I1[17]
   PIN I1[18]
@@ -358,7 +358,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 136.704 16.0 138.24 ;
+        RECT 0.0 34.176 4.0 34.56 ;
     END 
   END I1[18]
   PIN I1[19]
@@ -366,7 +366,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 139.776 16.0 141.312 ;
+        RECT 0.0 34.944 4.0 35.328 ;
     END 
   END I1[19]
   PIN I1[20]
@@ -374,7 +374,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 142.848 16.0 144.384 ;
+        RECT 0.0 35.712 4.0 36.096 ;
     END 
   END I1[20]
   PIN I1[21]
@@ -382,7 +382,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 145.92 16.0 147.456 ;
+        RECT 0.0 36.48 4.0 36.864 ;
     END 
   END I1[21]
   PIN I1[22]
@@ -390,7 +390,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 155.136 16.0 156.672 ;
+        RECT 0.0 38.784 4.0 39.168 ;
     END 
   END I1[22]
   PIN I1[23]
@@ -398,7 +398,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 158.208 16.0 159.744 ;
+        RECT 0.0 39.552 4.0 39.936 ;
     END 
   END I1[23]
   PIN I1[24]
@@ -406,7 +406,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 161.28 16.0 162.816 ;
+        RECT 0.0 40.32 4.0 40.704 ;
     END 
   END I1[24]
   PIN I1[25]
@@ -414,7 +414,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 164.352 16.0 165.888 ;
+        RECT 0.0 41.088 4.0 41.472 ;
     END 
   END I1[25]
   PIN I1[26]
@@ -422,7 +422,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 167.424 16.0 168.96 ;
+        RECT 0.0 41.856 4.0 42.24 ;
     END 
   END I1[26]
   PIN I1[27]
@@ -430,7 +430,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 170.496 16.0 172.032 ;
+        RECT 0.0 42.624 4.0 43.008 ;
     END 
   END I1[27]
   PIN I1[28]
@@ -438,7 +438,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 173.568 16.0 175.104 ;
+        RECT 0.0 43.392 4.0 43.776 ;
     END 
   END I1[28]
   PIN I1[29]
@@ -446,7 +446,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 176.64 16.0 178.176 ;
+        RECT 0.0 44.16 4.0 44.544 ;
     END 
   END I1[29]
   PIN I1[30]
@@ -454,7 +454,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 185.856 16.0 187.392 ;
+        RECT 0.0 46.464 4.0 46.848 ;
     END 
   END I1[30]
   PIN I1[31]
@@ -462,7 +462,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 188.928 16.0 190.464 ;
+        RECT 0.0 47.232 4.0 47.616 ;
     END 
   END I1[31]
   PIN I1[32]
@@ -470,7 +470,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 192.0 16.0 193.536 ;
+        RECT 0.0 48.0 4.0 48.384 ;
     END 
   END I1[32]
   PIN I1[33]
@@ -478,7 +478,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 195.072 16.0 196.608 ;
+        RECT 0.0 48.768 4.0 49.152 ;
     END 
   END I1[33]
   PIN I1[34]
@@ -486,7 +486,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 198.144 16.0 199.68 ;
+        RECT 0.0 49.536 4.0 49.92 ;
     END 
   END I1[34]
   PIN I1[35]
@@ -494,7 +494,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 201.216 16.0 202.752 ;
+        RECT 0.0 50.304 4.0 50.688 ;
     END 
   END I1[35]
   PIN I1[36]
@@ -502,7 +502,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 204.288 16.0 205.824 ;
+        RECT 0.0 51.072 4.0 51.456 ;
     END 
   END I1[36]
   PIN I1[37]
@@ -510,7 +510,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 207.36 16.0 208.896 ;
+        RECT 0.0 51.84 4.0 52.224 ;
     END 
   END I1[37]
   PIN I1[38]
@@ -518,7 +518,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 216.576 16.0 218.112 ;
+        RECT 0.0 54.144 4.0 54.528 ;
     END 
   END I1[38]
   PIN I2[0]
@@ -526,7 +526,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 219.648 16.0 221.184 ;
+        RECT 0.0 54.912 4.0 55.296 ;
     END 
   END I2[0]
   PIN I2[1]
@@ -534,7 +534,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 222.72 16.0 224.256 ;
+        RECT 0.0 55.68 4.0 56.064 ;
     END 
   END I2[1]
   PIN I2[2]
@@ -542,7 +542,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 225.792 16.0 227.328 ;
+        RECT 0.0 56.448 4.0 56.832 ;
     END 
   END I2[2]
   PIN I2[3]
@@ -550,7 +550,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 228.864 16.0 230.4 ;
+        RECT 0.0 57.216 4.0 57.6 ;
     END 
   END I2[3]
   PIN I2[4]
@@ -558,7 +558,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 231.936 16.0 233.472 ;
+        RECT 0.0 57.984 4.0 58.368 ;
     END 
   END I2[4]
   PIN I2[5]
@@ -566,7 +566,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 235.008 16.0 236.544 ;
+        RECT 0.0 58.752 4.0 59.136 ;
     END 
   END I2[5]
   PIN I2[6]
@@ -574,7 +574,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 238.08 16.0 239.616 ;
+        RECT 0.0 59.52 4.0 59.904 ;
     END 
   END I2[6]
   PIN I2[7]
@@ -582,7 +582,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 247.296 16.0 248.832 ;
+        RECT 0.0 61.824 4.0 62.208 ;
     END 
   END I2[7]
   PIN I2[8]
@@ -590,7 +590,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 250.368 16.0 251.904 ;
+        RECT 0.0 62.592 4.0 62.976 ;
     END 
   END I2[8]
   PIN I2[9]
@@ -598,7 +598,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 253.44 16.0 254.976 ;
+        RECT 0.0 63.36 4.0 63.744 ;
     END 
   END I2[9]
   PIN I2[10]
@@ -606,7 +606,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 256.512 16.0 258.048 ;
+        RECT 0.0 64.128 4.0 64.512 ;
     END 
   END I2[10]
   PIN I2[11]
@@ -614,7 +614,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 259.584 16.0 261.12 ;
+        RECT 0.0 64.896 4.0 65.28 ;
     END 
   END I2[11]
   PIN I2[12]
@@ -622,7 +622,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 262.656 16.0 264.192 ;
+        RECT 0.0 65.664 4.0 66.048 ;
     END 
   END I2[12]
   PIN I2[13]
@@ -630,7 +630,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 265.728 16.0 267.264 ;
+        RECT 0.0 66.432 4.0 66.816 ;
     END 
   END I2[13]
   PIN I2[14]
@@ -638,7 +638,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 268.8 16.0 270.336 ;
+        RECT 0.0 67.2 4.0 67.584 ;
     END 
   END I2[14]
   PIN I2[15]
@@ -646,7 +646,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 278.016 16.0 279.552 ;
+        RECT 0.0 69.504 4.0 69.888 ;
     END 
   END I2[15]
   PIN I2[16]
@@ -654,7 +654,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 281.088 16.0 282.624 ;
+        RECT 0.0 70.272 4.0 70.656 ;
     END 
   END I2[16]
   PIN I2[17]
@@ -662,7 +662,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 284.16 16.0 285.696 ;
+        RECT 0.0 71.04 4.0 71.424 ;
     END 
   END I2[17]
   PIN I2[18]
@@ -670,7 +670,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 287.232 16.0 288.768 ;
+        RECT 0.0 71.808 4.0 72.192 ;
     END 
   END I2[18]
   PIN I2[19]
@@ -678,7 +678,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 290.304 16.0 291.84 ;
+        RECT 0.0 72.576 4.0 72.96 ;
     END 
   END I2[19]
   PIN I2[20]
@@ -686,7 +686,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 293.376 16.0 294.912 ;
+        RECT 0.0 73.344 4.0 73.728 ;
     END 
   END I2[20]
   PIN I2[21]
@@ -694,7 +694,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 296.448 16.0 297.984 ;
+        RECT 0.0 74.112 4.0 74.496 ;
     END 
   END I2[21]
   PIN I2[22]
@@ -702,7 +702,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 299.52 16.0 301.056 ;
+        RECT 0.0 74.88 4.0 75.264 ;
     END 
   END I2[22]
   PIN I2[23]
@@ -710,7 +710,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 308.736 16.0 310.272 ;
+        RECT 0.0 77.184 4.0 77.568 ;
     END 
   END I2[23]
   PIN I2[24]
@@ -718,7 +718,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 311.808 16.0 313.344 ;
+        RECT 0.0 77.952 4.0 78.336 ;
     END 
   END I2[24]
   PIN I2[25]
@@ -726,7 +726,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 314.88 16.0 316.416 ;
+        RECT 0.0 78.72 4.0 79.104 ;
     END 
   END I2[25]
   PIN I2[26]
@@ -734,7 +734,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 317.952 16.0 319.488 ;
+        RECT 0.0 79.488 4.0 79.872 ;
     END 
   END I2[26]
   PIN I2[27]
@@ -742,7 +742,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 321.024 16.0 322.56 ;
+        RECT 0.0 80.256 4.0 80.64 ;
     END 
   END I2[27]
   PIN I2[28]
@@ -750,7 +750,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 324.096 16.0 325.632 ;
+        RECT 0.0 81.024 4.0 81.408 ;
     END 
   END I2[28]
   PIN I2[29]
@@ -758,7 +758,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 327.168 16.0 328.704 ;
+        RECT 0.0 81.792 4.0 82.176 ;
     END 
   END I2[29]
   PIN I2[30]
@@ -766,7 +766,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 330.24 16.0 331.776 ;
+        RECT 0.0 82.56 4.0 82.944 ;
     END 
   END I2[30]
   PIN I2[31]
@@ -774,7 +774,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 339.456 16.0 340.992 ;
+        RECT 0.0 84.864 4.0 85.248 ;
     END 
   END I2[31]
   PIN I2[32]
@@ -782,7 +782,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 342.528 16.0 344.064 ;
+        RECT 0.0 85.632 4.0 86.016 ;
     END 
   END I2[32]
   PIN I2[33]
@@ -790,7 +790,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 345.6 16.0 347.136 ;
+        RECT 0.0 86.4 4.0 86.784 ;
     END 
   END I2[33]
   PIN I2[34]
@@ -798,7 +798,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 348.672 16.0 350.208 ;
+        RECT 0.0 87.168 4.0 87.552 ;
     END 
   END I2[34]
   PIN I2[35]
@@ -806,7 +806,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 351.744 16.0 353.28 ;
+        RECT 0.0 87.936 4.0 88.32 ;
     END 
   END I2[35]
   PIN I2[36]
@@ -814,7 +814,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 354.816 16.0 356.352 ;
+        RECT 0.0 88.704 4.0 89.088 ;
     END 
   END I2[36]
   PIN I2[37]
@@ -822,7 +822,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 357.888 16.0 359.424 ;
+        RECT 0.0 89.472 4.0 89.856 ;
     END 
   END I2[37]
   PIN I2[38]
@@ -830,7 +830,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 360.96 16.0 362.496 ;
+        RECT 0.0 90.24 4.0 90.624 ;
     END 
   END I2[38]
   PIN O1[0]
@@ -838,7 +838,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 370.176 16.0 371.712 ;
+        RECT 0.0 92.544 4.0 92.928 ;
     END 
   END O1[0]
   PIN O1[1]
@@ -846,7 +846,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 373.248 16.0 374.784 ;
+        RECT 0.0 93.312 4.0 93.696 ;
     END 
   END O1[1]
   PIN O1[2]
@@ -854,7 +854,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 376.32 16.0 377.856 ;
+        RECT 0.0 94.08 4.0 94.464 ;
     END 
   END O1[2]
   PIN O1[3]
@@ -862,7 +862,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 379.392 16.0 380.928 ;
+        RECT 0.0 94.848 4.0 95.232 ;
     END 
   END O1[3]
   PIN O1[4]
@@ -870,7 +870,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 382.464 16.0 384.0 ;
+        RECT 0.0 95.616 4.0 96.0 ;
     END 
   END O1[4]
   PIN O1[5]
@@ -878,7 +878,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 385.536 16.0 387.072 ;
+        RECT 0.0 96.384 4.0 96.768 ;
     END 
   END O1[5]
   PIN O1[6]
@@ -886,7 +886,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 388.608 16.0 390.144 ;
+        RECT 0.0 97.152 4.0 97.536 ;
     END 
   END O1[6]
   PIN O1[7]
@@ -894,7 +894,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 391.68 16.0 393.216 ;
+        RECT 0.0 97.92 4.0 98.304 ;
     END 
   END O1[7]
   PIN O1[8]
@@ -902,7 +902,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 400.896 16.0 402.432 ;
+        RECT 0.0 100.224 4.0 100.608 ;
     END 
   END O1[8]
   PIN O1[9]
@@ -910,7 +910,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 403.968 16.0 405.504 ;
+        RECT 0.0 100.992 4.0 101.376 ;
     END 
   END O1[9]
   PIN O1[10]
@@ -918,7 +918,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 407.04 16.0 408.576 ;
+        RECT 0.0 101.76 4.0 102.144 ;
     END 
   END O1[10]
   PIN O1[11]
@@ -926,7 +926,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 410.112 16.0 411.648 ;
+        RECT 0.0 102.528 4.0 102.912 ;
     END 
   END O1[11]
   PIN O1[12]
@@ -934,7 +934,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 413.184 16.0 414.72 ;
+        RECT 0.0 103.296 4.0 103.68 ;
     END 
   END O1[12]
   PIN O1[13]
@@ -942,7 +942,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 416.256 16.0 417.792 ;
+        RECT 0.0 104.064 4.0 104.448 ;
     END 
   END O1[13]
   PIN O1[14]
@@ -950,7 +950,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 419.328 16.0 420.864 ;
+        RECT 0.0 104.832 4.0 105.216 ;
     END 
   END O1[14]
   PIN O1[15]
@@ -958,7 +958,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 422.4 16.0 423.936 ;
+        RECT 0.0 105.6 4.0 105.984 ;
     END 
   END O1[15]
   PIN O1[16]
@@ -966,7 +966,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 431.616 16.0 433.152 ;
+        RECT 0.0 107.904 4.0 108.288 ;
     END 
   END O1[16]
   PIN O1[17]
@@ -974,7 +974,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 434.688 16.0 436.224 ;
+        RECT 0.0 108.672 4.0 109.056 ;
     END 
   END O1[17]
   PIN O1[18]
@@ -982,7 +982,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 437.76 16.0 439.296 ;
+        RECT 0.0 109.44 4.0 109.824 ;
     END 
   END O1[18]
   PIN O1[19]
@@ -990,7 +990,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 440.832 16.0 442.368 ;
+        RECT 0.0 110.208 4.0 110.592 ;
     END 
   END O1[19]
   PIN O1[20]
@@ -998,7 +998,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 443.904 16.0 445.44 ;
+        RECT 0.0 110.976 4.0 111.36 ;
     END 
   END O1[20]
   PIN O1[21]
@@ -1006,7 +1006,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 446.976 16.0 448.512 ;
+        RECT 0.0 111.744 4.0 112.128 ;
     END 
   END O1[21]
   PIN O1[22]
@@ -1014,7 +1014,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 450.048 16.0 451.584 ;
+        RECT 0.0 112.512 4.0 112.896 ;
     END 
   END O1[22]
   PIN O1[23]
@@ -1022,7 +1022,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 453.12 16.0 454.656 ;
+        RECT 0.0 113.28 4.0 113.664 ;
     END 
   END O1[23]
   PIN O1[24]
@@ -1030,7 +1030,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 462.336 16.0 463.872 ;
+        RECT 0.0 115.584 4.0 115.968 ;
     END 
   END O1[24]
   PIN O1[25]
@@ -1038,7 +1038,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 465.408 16.0 466.944 ;
+        RECT 0.0 116.352 4.0 116.736 ;
     END 
   END O1[25]
   PIN O1[26]
@@ -1046,7 +1046,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 468.48 16.0 470.016 ;
+        RECT 0.0 117.12 4.0 117.504 ;
     END 
   END O1[26]
   PIN O1[27]
@@ -1054,7 +1054,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 471.552 16.0 473.088 ;
+        RECT 0.0 117.888 4.0 118.272 ;
     END 
   END O1[27]
   PIN O1[28]
@@ -1062,7 +1062,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 474.624 16.0 476.16 ;
+        RECT 0.0 118.656 4.0 119.04 ;
     END 
   END O1[28]
   PIN O1[29]
@@ -1070,7 +1070,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 477.696 16.0 479.232 ;
+        RECT 0.0 119.424 4.0 119.808 ;
     END 
   END O1[29]
   PIN O1[30]
@@ -1078,7 +1078,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 480.768 16.0 482.304 ;
+        RECT 0.0 120.192 4.0 120.576 ;
     END 
   END O1[30]
   PIN O1[31]
@@ -1086,7 +1086,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 483.84 16.0 485.376 ;
+        RECT 0.0 120.96 4.0 121.344 ;
     END 
   END O1[31]
   PIN O1[32]
@@ -1094,7 +1094,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 493.056 16.0 494.592 ;
+        RECT 0.0 123.264 4.0 123.648 ;
     END 
   END O1[32]
   PIN O1[33]
@@ -1102,7 +1102,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 496.128 16.0 497.664 ;
+        RECT 0.0 124.032 4.0 124.416 ;
     END 
   END O1[33]
   PIN O1[34]
@@ -1110,7 +1110,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 499.2 16.0 500.736 ;
+        RECT 0.0 124.8 4.0 125.184 ;
     END 
   END O1[34]
   PIN O1[35]
@@ -1118,7 +1118,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 502.272 16.0 503.808 ;
+        RECT 0.0 125.568 4.0 125.952 ;
     END 
   END O1[35]
   PIN O1[36]
@@ -1126,7 +1126,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 505.344 16.0 506.88 ;
+        RECT 0.0 126.336 4.0 126.72 ;
     END 
   END O1[36]
   PIN O1[37]
@@ -1134,7 +1134,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 508.416 16.0 509.952 ;
+        RECT 0.0 127.104 4.0 127.488 ;
     END 
   END O1[37]
   PIN O1[38]
@@ -1142,7 +1142,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 511.488 16.0 513.024 ;
+        RECT 0.0 127.872 4.0 128.256 ;
     END 
   END O1[38]
   PIN O2[0]
@@ -1150,7 +1150,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 514.56 16.0 516.096 ;
+        RECT 0.0 128.64 4.0 129.024 ;
     END 
   END O2[0]
   PIN O2[1]
@@ -1158,7 +1158,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 523.776 16.0 525.312 ;
+        RECT 0.0 130.944 4.0 131.328 ;
     END 
   END O2[1]
   PIN O2[2]
@@ -1166,7 +1166,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 526.848 16.0 528.384 ;
+        RECT 0.0 131.712 4.0 132.096 ;
     END 
   END O2[2]
   PIN O2[3]
@@ -1174,7 +1174,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 529.92 16.0 531.456 ;
+        RECT 0.0 132.48 4.0 132.864 ;
     END 
   END O2[3]
   PIN O2[4]
@@ -1182,7 +1182,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 532.992 16.0 534.528 ;
+        RECT 0.0 133.248 4.0 133.632 ;
     END 
   END O2[4]
   PIN O2[5]
@@ -1190,7 +1190,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 536.064 16.0 537.6 ;
+        RECT 0.0 134.016 4.0 134.4 ;
     END 
   END O2[5]
   PIN O2[6]
@@ -1198,7 +1198,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 539.136 16.0 540.672 ;
+        RECT 0.0 134.784 4.0 135.168 ;
     END 
   END O2[6]
   PIN O2[7]
@@ -1206,7 +1206,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 542.208 16.0 543.744 ;
+        RECT 0.0 135.552 4.0 135.936 ;
     END 
   END O2[7]
   PIN O2[8]
@@ -1214,7 +1214,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 545.28 16.0 546.816 ;
+        RECT 0.0 136.32 4.0 136.704 ;
     END 
   END O2[8]
   PIN O2[9]
@@ -1222,7 +1222,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 554.496 16.0 556.032 ;
+        RECT 0.0 138.624 4.0 139.008 ;
     END 
   END O2[9]
   PIN O2[10]
@@ -1230,7 +1230,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 557.568 16.0 559.104 ;
+        RECT 0.0 139.392 4.0 139.776 ;
     END 
   END O2[10]
   PIN O2[11]
@@ -1238,7 +1238,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 560.64 16.0 562.176 ;
+        RECT 0.0 140.16 4.0 140.544 ;
     END 
   END O2[11]
   PIN O2[12]
@@ -1246,7 +1246,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 563.712 16.0 565.248 ;
+        RECT 0.0 140.928 4.0 141.312 ;
     END 
   END O2[12]
   PIN O2[13]
@@ -1254,7 +1254,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 566.784 16.0 568.32 ;
+        RECT 0.0 141.696 4.0 142.08 ;
     END 
   END O2[13]
   PIN O2[14]
@@ -1262,7 +1262,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 569.856 16.0 571.392 ;
+        RECT 0.0 142.464 4.0 142.848 ;
     END 
   END O2[14]
   PIN O2[15]
@@ -1270,7 +1270,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 572.928 16.0 574.464 ;
+        RECT 0.0 143.232 4.0 143.616 ;
     END 
   END O2[15]
   PIN O2[16]
@@ -1278,7 +1278,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 576.0 16.0 577.536 ;
+        RECT 0.0 144.0 4.0 144.384 ;
     END 
   END O2[16]
   PIN O2[17]
@@ -1286,7 +1286,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 585.216 16.0 586.752 ;
+        RECT 0.0 146.304 4.0 146.688 ;
     END 
   END O2[17]
   PIN O2[18]
@@ -1294,7 +1294,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 588.288 16.0 589.824 ;
+        RECT 0.0 147.072 4.0 147.456 ;
     END 
   END O2[18]
   PIN O2[19]
@@ -1302,7 +1302,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 591.36 16.0 592.896 ;
+        RECT 0.0 147.84 4.0 148.224 ;
     END 
   END O2[19]
   PIN O2[20]
@@ -1310,7 +1310,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 594.432 16.0 595.968 ;
+        RECT 0.0 148.608 4.0 148.992 ;
     END 
   END O2[20]
   PIN O2[21]
@@ -1318,7 +1318,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 597.504 16.0 599.04 ;
+        RECT 0.0 149.376 4.0 149.76 ;
     END 
   END O2[21]
   PIN O2[22]
@@ -1326,7 +1326,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 600.576 16.0 602.112 ;
+        RECT 0.0 150.144 4.0 150.528 ;
     END 
   END O2[22]
   PIN O2[23]
@@ -1334,7 +1334,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 603.648 16.0 605.184 ;
+        RECT 0.0 150.912 4.0 151.296 ;
     END 
   END O2[23]
   PIN O2[24]
@@ -1342,7 +1342,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 606.72 16.0 608.256 ;
+        RECT 0.0 151.68 4.0 152.064 ;
     END 
   END O2[24]
   PIN O2[25]
@@ -1350,7 +1350,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 615.936 16.0 617.472 ;
+        RECT 0.0 153.984 4.0 154.368 ;
     END 
   END O2[25]
   PIN O2[26]
@@ -1358,7 +1358,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 619.008 16.0 620.544 ;
+        RECT 0.0 154.752 4.0 155.136 ;
     END 
   END O2[26]
   PIN O2[27]
@@ -1366,7 +1366,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 622.08 16.0 623.616 ;
+        RECT 0.0 155.52 4.0 155.904 ;
     END 
   END O2[27]
   PIN O2[28]
@@ -1374,7 +1374,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 625.152 16.0 626.688 ;
+        RECT 0.0 156.288 4.0 156.672 ;
     END 
   END O2[28]
   PIN O2[29]
@@ -1382,7 +1382,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 628.224 16.0 629.76 ;
+        RECT 0.0 157.056 4.0 157.44 ;
     END 
   END O2[29]
   PIN O2[30]
@@ -1390,7 +1390,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 631.296 16.0 632.832 ;
+        RECT 0.0 157.824 4.0 158.208 ;
     END 
   END O2[30]
   PIN O2[31]
@@ -1398,7 +1398,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 634.368 16.0 635.904 ;
+        RECT 0.0 158.592 4.0 158.976 ;
     END 
   END O2[31]
   PIN O2[32]
@@ -1406,7 +1406,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 637.44 16.0 638.976 ;
+        RECT 0.0 159.36 4.0 159.744 ;
     END 
   END O2[32]
   PIN O2[33]
@@ -1414,7 +1414,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 646.656 16.0 648.192 ;
+        RECT 0.0 161.664 4.0 162.048 ;
     END 
   END O2[33]
   PIN O2[34]
@@ -1422,7 +1422,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 649.728 16.0 651.264 ;
+        RECT 0.0 162.432 4.0 162.816 ;
     END 
   END O2[34]
   PIN O2[35]
@@ -1430,7 +1430,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 652.8 16.0 654.336 ;
+        RECT 0.0 163.2 4.0 163.584 ;
     END 
   END O2[35]
   PIN O2[36]
@@ -1438,7 +1438,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 655.872 16.0 657.408 ;
+        RECT 0.0 163.968 4.0 164.352 ;
     END 
   END O2[36]
   PIN O2[37]
@@ -1446,7 +1446,7 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 658.944 16.0 660.48 ;
+        RECT 0.0 164.736 4.0 165.12 ;
     END 
   END O2[37]
   PIN O2[38]
@@ -1454,16 +1454,16 @@ MACRO SRAM2RW32x39
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 662.016 16.0 663.552 ;
+        RECT 0.0 165.504 4.0 165.888 ;
     END 
   END O2[38]
   OBS 
     LAYER M1 ;
-      RECT 4.0 0.0 88.696 166.272 ;
+      RECT 4.0 0.0 23.332 166.272 ;
     LAYER M2 ;
-      RECT 4.0 0.0 88.696 166.272 ;
+      RECT 4.0 0.0 23.332 166.272 ;
     LAYER M3 ;
-      RECT 4.0 0.0 88.696 166.272 ;
+      RECT 4.0 0.0 23.332 166.272 ;
   END 
 END SRAM2RW32x39
 

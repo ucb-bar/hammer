@@ -6,7 +6,7 @@ MACRO SRAM1RW64x8
   CLASS BLOCK ;
   ORIGIN 0 0 ;
   FOREIGN SRAM1RW64x8 0 0 ;
-  SIZE 73.632 BY 86.848 ;
+  SIZE 20.0 BY 24.96 ;
   SYMMETRY X Y ;
   SITE coreSite ;
   PIN VDD
@@ -14,9 +14,9 @@ MACRO SRAM1RW64x8
     USE POWER ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 6.528 73.632 6.912 ;
-        RECT 0.0 14.208 73.632 14.592 ;
-        RECT 0.0 21.888 73.632 22.272 ;
+        RECT 0.0 6.528 20.0 6.912 ;
+        RECT 0.0 14.208 20.0 14.592 ;
+        RECT 0.0 21.888 20.0 22.272 ;
     END 
   END VDD
   PIN VSS
@@ -24,9 +24,9 @@ MACRO SRAM1RW64x8
     USE GROUND ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 7.296 73.632 7.68 ;
-        RECT 0.0 14.976 73.632 15.36 ;
-        RECT 0.0 22.656 73.632 23.04 ;
+        RECT 0.0 7.296 20.0 7.68 ;
+        RECT 0.0 14.976 20.0 15.36 ;
+        RECT 0.0 22.656 20.0 23.04 ;
     END 
   END VSS
   PIN CE
@@ -239,11 +239,11 @@ MACRO SRAM1RW64x8
   END O[7]
   OBS 
     LAYER M1 ;
-      RECT 4.0 0.0 73.632 86.848 ;
+      RECT 4.0 0.0 20.0 24.96 ;
     LAYER M2 ;
-      RECT 4.0 0.0 73.632 86.848 ;
+      RECT 4.0 0.0 20.0 24.96 ;
     LAYER M3 ;
-      RECT 4.0 0.0 73.632 86.848 ;
+      RECT 4.0 0.0 20.0 24.96 ;
   END 
 END SRAM1RW64x8
 

@@ -6,7 +6,7 @@ MACRO SRAM2RW32x4
   CLASS BLOCK ;
   ORIGIN 0 0 ;
   FOREIGN SRAM2RW32x4 0 0 ;
-  SIZE 39.2 BY 43.808 ;
+  SIZE 12.384 BY 32.64 ;
   SYMMETRY X Y ;
   SITE coreSite ;
   PIN VDD
@@ -14,10 +14,10 @@ MACRO SRAM2RW32x4
     USE POWER ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 6.528 39.2 6.912 ;
-        RECT 0.0 14.208 39.2 14.592 ;
-        RECT 0.0 21.888 39.2 22.272 ;
-        RECT 0.0 29.568 39.2 29.952 ;
+        RECT 0.0 6.528 12.384 6.912 ;
+        RECT 0.0 14.208 12.384 14.592 ;
+        RECT 0.0 21.888 12.384 22.272 ;
+        RECT 0.0 29.568 12.384 29.952 ;
     END 
   END VDD
   PIN VSS
@@ -25,10 +25,10 @@ MACRO SRAM2RW32x4
     USE GROUND ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 7.296 39.2 7.68 ;
-        RECT 0.0 14.976 39.2 15.36 ;
-        RECT 0.0 22.656 39.2 23.04 ;
-        RECT 0.0 30.336 39.2 30.72 ;
+        RECT 0.0 7.296 12.384 7.68 ;
+        RECT 0.0 14.976 12.384 15.36 ;
+        RECT 0.0 22.656 12.384 23.04 ;
+        RECT 0.0 30.336 12.384 30.72 ;
     END 
   END VSS
   PIN CE1
@@ -305,11 +305,11 @@ MACRO SRAM2RW32x4
   END O2[3]
   OBS 
     LAYER M1 ;
-      RECT 4.0 0.0 39.2 43.808 ;
+      RECT 4.0 0.0 12.384 32.64 ;
     LAYER M2 ;
-      RECT 4.0 0.0 39.2 43.808 ;
+      RECT 4.0 0.0 12.384 32.64 ;
     LAYER M3 ;
-      RECT 4.0 0.0 39.2 43.808 ;
+      RECT 4.0 0.0 12.384 32.64 ;
   END 
 END SRAM2RW32x4
 
