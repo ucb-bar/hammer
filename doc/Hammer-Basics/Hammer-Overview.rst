@@ -31,7 +31,7 @@ Tech Plugins
 
 A techonology plugin consists of two or more files: a ``*.tech.json`` and a ``defaults.yml``.
 
-The ``*.tech.json`` contains pointers to relevant PDK files and fundamental technology constants.  These values are not meant to be overriden, nor can they be. 
+The ``*.tech.json`` contains pointers to relevant PDK files and fundamental technology constants.  These values are not meant to be overriden, nor can they be for the time being. 
 
 ``defaults.yml`` sets default technology variables for Hammer to consume, which may be specific to this technology or generic to all. These values may be overriden by design-specific configurations. An example of this is shown in ``hammer/src/hammer-vlsi/technology/asap7/``, and how to setup a technology plugin is documented in more detail in the :ref:`technology` section.
 
