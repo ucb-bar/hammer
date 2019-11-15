@@ -18,17 +18,17 @@ class ASAP7SRAMGenerator(HammerSRAMGeneratorTool):
     def generate_sram(self, params: SRAMParameters, corner: MMMCCorner) -> ExtraLibrary:
         tech_cache_dir = os.path.abspath(self.technology.cache_dir)
         base_dir=os.path.join(self.tool_dir, "memories")
-        if(params.family == "1RW" or params.family == "2RW"):
+        if params.family == "1RW" or params.family == "2RW":
             fam_code = params.family
         else:
             self.logger.error("ASAP7 SRAM cache does not support family:{f}".format(f=params.family))
         #TODO: this is really an abuse of the corner stuff
         #TODO: when we have matching corners remove real_corner and symlink junk
-        if(corner.type == MMMCCornerType.Setup):
+        if corner.type == MMMCCornerType.Setup:
             speed_name = "slow"
-        elif(corner.type == MMMCCornerType.Hold):
+        elif corner.type == MMMCCornerType.Hold:
             speed_name = "fast"
-        elif(corner.type == MMMCCornerType.Extra):
+        elif corner.type == MMMCCornerType.Extra:
             speed_name = "typical"
         corner_str = "PVT_{volt}V_{temp}C".format(
                 volt = str(corner.voltage.value_in_units("V")).replace(".","P"),
@@ -48,7 +48,7 @@ class ASAP7SRAMGenerator(HammerSRAMGeneratorTool):
                 verilog_sim="{b}/behavioral/sram_behav_models.sv".format(b=base_dir),
                 corner = {'nmos': speed_name, 'pmos': speed_name, 'temperature': str(corner.temp.value_in_units("C")) +" C"},
                 supplies = {'VDD': str(corner.voltage.value_in_units("V")) + " V", 'GND': "0 V" },
-                provides = [{'lib_type': "sram", 'vt': params.vt}]))
+                provides = [{'lib_type': "sram", 'vt': params.vt}]))  # type: ExtraLibrary
         return lib
 
 tool=ASAP7SRAMGenerator

@@ -4,16 +4,18 @@ import sys
 import os
 import re
 
+from typing import List
+
 if len(sys.argv) != 3:
     print("Usage: ./sram-cache-gen.py list-of-srams-1-per-line.txt output-file.json")
     exit(1)
 
-list_of_srams = []
+list_of_srams = [] # type: List[str]
 with open(sys.argv[1]) as f:
     for line in f:
         list_of_srams.append(line)
 
-json = []
+json = [] # type: List[str]
 
 for sram_name in list_of_srams:
     if sram_name.startswith("SRAM2RW"):
