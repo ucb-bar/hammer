@@ -759,6 +759,9 @@ sim.inputs:
   # type: str
   tb_dut: "dut"
 
+  # Name of the simulation testbench/test driver module
+  tb_name: "TestDriver"
+
   # Simulation mode for simulation at different levels of the VLSI flow
   # Valid options are:
   #   "rtl" for rtl level simulation
@@ -795,6 +798,14 @@ sim.inputs:
   # Each string in this list will be passed as an option when actually executing the simulation executable generated from the previous arguments.
   # type: List[str]
   execution_flags: []
+
+  # Flags that are to be pre-pended to the simulator execution flags in "execution_flags"
+  # type: List[str]
+  execution_flags_prepend: []
+
+  # Flags that are to be appended to the simulator execution flags in "execution_flags"
+  # type: List[str]
+  execution_flags_append: []
 
   # Determines whether or not the simulation executable that is generated with the above inputs will actually be executed with the given flags or if the executable will just be generated in the specified run directory.
   # type: bool
