@@ -1556,15 +1556,6 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
                 list=self.get_timing_libs(hold_corner)
             ))
             # Skip opconds for now
-            # Next, create Innovus timing conditions
-            append_mmmc("create_timing_condition -name {name} -library_sets [list {list}]".format(
-                name="{n}.setup_cond".format(n=setup_corner.name),
-                list="{n}.setup_set".format(n=setup_corner.name)
-            ))
-            append_mmmc("create_timing_condition -name {name} -library_sets [list {list}]".format(
-                name="{n}.hold_cond".format(n=hold_corner.name),
-                list="{n}.hold_set".format(n=hold_corner.name)
-            ))
             # Next, create Innovus rc corners from qrc tech files
             append_mmmc("create_rc_corner -name {name} -temperature {tempInCelsius} {qrc}".format(
                 name="{n}.setup_rc".format(n=setup_corner.name),
@@ -1578,11 +1569,11 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
             ))
             # Next, create an Innovus delay corner.
             append_mmmc(
-                "create_delay_corner -name {name}_delay -timing_condition {name}_cond -rc_corner {name}_rc".format(
+                "create_delay_corner -name {name}_delay -library_set {name}_set -rc_corner {name}_rc".format(
                     name="{n}.setup".format(n=setup_corner.name)
                 ))
             append_mmmc(
-                "create_delay_corner -name {name}_delay -timing_condition {name}_cond -rc_corner {name}_rc".format(
+                "create_delay_corner -name {name}_delay -library_set {name}_set -rc_corner {name}_rc".format(
                     name="{n}.hold".format(n=hold_corner.name)
                 ))
             # Next, create the analysis views
@@ -1602,12 +1593,6 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
                 name=library_set_name,
                 list=self.get_timing_libs()
             ))
-            # Next, create an Innovus timing condition.
-            timing_condition_name = "my_timing_condition"
-            append_mmmc("create_timing_condition -name {name} -library_sets [list {list}]".format(
-                name=timing_condition_name,
-                list=library_set_name
-            ))
             # extra junk: -opcond ...
             rc_corner_name = "rc_cond"
             append_mmmc("create_rc_corner -name {name} -temperature {tempInCelsius} {qrc}".format(
@@ -1618,9 +1603,9 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
             # Next, create an Innovus delay corner.
             delay_corner_name = "my_delay_corner"
             append_mmmc(
-                "create_delay_corner -name {name} -timing_condition {timing_cond} -rc_corner {rc}".format(
+                "create_delay_corner -name {name} -library_set {library_set} -rc_corner {rc}".format(
                     name=delay_corner_name,
-                    timing_cond=timing_condition_name,
+                    library_set=library_set_name,
                     rc=rc_corner_name
                 ))
             # extra junk: -rc_corner my_rc_corner_maybe_worst
