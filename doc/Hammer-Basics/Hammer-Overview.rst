@@ -35,13 +35,17 @@ The ``*.tech.json`` contains pointers to relevant PDK files and fundamental tech
 
 ``defaults.yml`` sets default technology variables for Hammer to consume, which may be specific to this technology or generic to all. These values may be overriden by design-specific configurations. An example of this is shown in ``hammer/src/hammer-vlsi/technology/asap7/``, and how to setup a technology plugin is documented in more detail in the :ref:`technology` section.
 
+.. note:: Unless you are a UCB BAR or BWRC affiliate or have set up a 3-way technology NDA with us, we cannot share pre-built technology plugins.
+
 Tool Plugins
 -------------------------------
 
 A Hammer tool plugin actually implements tool-specific steps of the VLSI flow in Hammer in a template-like fashion.
 The TCL commands input to the tool are created using technology and design settings provided by the designer.
 
-There are already three Hammer tool plugin repos to which access may be granted to users of Hammer, pending approval from each tool vendor. These repos are ``hammer-cadence-plugins``, ``hammer-synopsys-plugins``, and ``hammer-mentor-plugins``. In them are tool plugin implementations for actions including synthesis, place-and-route, DRC, LVS, and simulation.
+There are already three Hammer tool plugin repos to which access may be granted to Hammer users. These repos are ``hammer-cadence-plugins``, ``hammer-synopsys-plugins``, and ``hammer-mentor-plugins``. In them are tool plugin implementations for actions including synthesis, place-and-route, DRC, LVS, and simulation.
+
+.. note:: If you are not a UCB BAR or BWRC affiliate and have access to tools from a specific vendor, please email hammer-plugins-access@lists.berkeley.edu with a request for which plugin(s) you would like access to. There will be no support guarantee for the plugin repositories, but users are encouraged to file issues and contribute patches where needed.
 
 These plugins implement many of the common steps of a modern physical design flow. However, a real chip flow will require many custom settings and steps that may not be generalizable across technology nodes.
 Because of this, Hammer has an "escape-hatch" mechanism, called a hook, that allows the designer to inject custom steps between the default steps provided by the CAD tool plugin.
