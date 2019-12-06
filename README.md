@@ -6,6 +6,7 @@ This is the master (unstable) development branch.
 Documentation
 =============
 The main documentation is found at https://hammer-vlsi.readthedocs.io
+Docs sources are available at `doc/` for offline reading.
 
 For a deeper dive into available options and environment configuration:
 
