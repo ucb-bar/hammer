@@ -590,7 +590,7 @@ class HammerTool(metaclass=ABCMeta):
 
             if not pause_step_pre and pause_step == step.name:
                 self.logger.info("Pausing tool execution after '{step}' due to pause hook".format(step=step.name))
-                for s in new_steps[step_index:]:
+                for s in new_steps[step_index+1:]:
                     self.logger.debug("Sub-step '{step}' skipped due to pause hook".format(step=s.name))
                 break
 
