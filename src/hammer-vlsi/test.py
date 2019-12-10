@@ -993,6 +993,21 @@ class HammerToolHooksTest(unittest.TestCase):
                 else:
                     self.assertEqual(self.read(file), "step{}".format(i))
 
+    def test_pause_hooks_logging(self) -> None:
+        """Test that pause hooks log correctly."""
+        with self.create_context() as c:
+            with HammerLoggingCaptureContext() as c2:
+                success, syn_output = c.driver.run_synthesis(hook_actions=[
+                    hammer_vlsi.HammerTool.make_post_pause_hook("step1")
+                ])
+                self.assertTrue(success)
+
+            # step2 to step4 should show up in log as skipped
+            for i in range(2, 5):
+                self.assertTrue(c2.log_contains("Sub-step 'step{}' skipped due to pause hook".format(i)))
+            # step1 should NOT show up in log as skipped
+            self.assertFalse(c2.log_contains("Sub-step 'step1' skipped due to pause hook"))
+
     def test_extra_pause_hooks(self) -> None:
         """Test that extra pause hooks cause an error."""
         with self.create_context() as c:
