@@ -672,7 +672,10 @@ class HammerTechnology:
             if len(matching_installs) == 1:
                 install = matching_installs[0]
                 if install.base_var == "":
-                    base = self.path
+                    if "cache" in install.path.lower():
+                        base = self.cache_dir
+                    else:
+                        base = self.path
                 else:
                     base = self.get_setting(install.base_var)
                 return os.path.join(*([base] + rest_of_path))
@@ -707,6 +710,7 @@ class HammerTechnology:
                 if not os.path.exists(install_path):
                     self.logger.error("installs {path} does not exist".format(path=install_path))
                     return False
+        self.post_install_script()
         return True
 
     def extract_tarballs(self) -> None:
