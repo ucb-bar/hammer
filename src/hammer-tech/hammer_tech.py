@@ -672,7 +672,7 @@ class HammerTechnology:
             if len(matching_installs) == 1:
                 install = matching_installs[0]
                 if install.base_var == "":
-                    if "cache" in install.path.lower():
+                    if install.path == os.path.basename(self.cache_dir): # default is tech-<techname>-cache
                         base = self.cache_dir
                     else:
                         base = self.path
