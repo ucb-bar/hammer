@@ -299,6 +299,7 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
 
         tech_dir = "/tmp/path"  # should not be used
         tech = hammer_tech.HammerTechnology.load_from_json("dummy28", json.dumps(tech_json, cls=HammerJSONEncoder, indent=2), tech_dir)
+        tech.cache_dir = tech_dir  # needs to be set for installs check
 
         # Check that a tech-provided prefix works fine
         self.assertEqual("{0}/water".format(tech_dir), tech.prepend_dir_path("test/water"))
