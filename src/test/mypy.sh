@@ -40,24 +40,38 @@ call_mypy ../hammer-vlsi/pcb/generic/__init__.py
 call_mypy ../hammer-vlsi/technology/asap7/*.py
 call_mypy ../hammer-vlsi/technology/asap7/sram_compiler/__init__.py
 
-# Plugins which may or may not exist
-if [ -f ../hammer-vlsi/synthesis/dc/__init__.py ]; then
-    call_mypy ../hammer-vlsi/synthesis/dc/__init__.py
+# Tool plugins which may or may not exist
+if [ -f ../../../hammer-synopsys-plugins/sim/vcs/__init__.py ]; then
+    call_mypy ../../../hammer-synopsys-plugins/sim/vcs/__init__.py
 fi
-if [ -f ../hammer-vlsi/synthesis/genus/__init__.py ]; then
-    call_mypy ../hammer-vlsi/synthesis/genus/__init__.py
+if [ -f ../../../hammer-synopsys-plugins/synthesis/dc/__init__.py ]; then
+    call_mypy ../../../hammer-synopsys-plugins/synthesis/dc/__init__.py
 fi
-if [ -f ../hammer-vlsi/par/icc/__init__.py ]; then
-    call_mypy ../hammer-vlsi/par/icc/__init__.py
+if [ -f ../../../hammer-cadence-plugins/synthesis/genus/__init__.py ]; then
+    call_mypy ../../../hammer-cadence-plugins/synthesis/genus/__init__.py
 fi
-if [ -f ../hammer-vlsi/par/innovus/__init__.py ]; then
-    call_mypy ../hammer-vlsi/par/innovus/__init__.py
+if [ -f ../../../hammer-synopsys-plugins/par/icc/__init__.py ]; then
+    call_mypy ../../../hammer-synopsys-plugins/par/icc/__init__.py
 fi
-if [ -f ../hammer-vlsi/drc/calibre/__init__.py ]; then
-    call_mypy ../hammer-vlsi/drc/calibre/__init__.py
+if [ -f ../../../hammer-cadence-plugins/par/innovus/__init__.py ]; then
+    call_mypy ../../../hammer-cadence-plugins/par/innovus/__init__.py
 fi
-if [ -f ../hammer-vlsi/lvs/calibre/__init__.py ]; then
-    call_mypy ../hammer-vlsi/lvs/calibre/__init__.py
+if [ -f ../../../hammer-mentor-plugins/drc/calibre/__init__.py ]; then
+    call_mypy ../../../hammer-mentor-plugins/drc/calibre/__init__.py
+fi
+if [ -f ../../../hammer-synopsys-plugins/drc/icv/__init__.py ]; then
+    call_mypy ../../../hammer-synopsys-plugins/drc/icv/__init__.py
+fi
+if [ -f ../../../hammer-mentor-plugins/lvs/calibre/__init__.py ]; then
+    call_mypy ../../../hammer-mentor-plugins/lvs/calibre/__init__.py
+fi
+if [ -f ../../../hammer-synopsys-plugins/lvs/icv/__init__.py ]; then
+    call_mypy ../../../hammer-synopsys-plugins/lvs/icv/__init__.py
+fi
+
+# Technology plugin (if first argument is specified)
+if [ -f ../../../hammer-$1-plugin/$1/__init__.py ]; then
+    call_mypy ../../../hammer-$1-plugin/$1/__init__.py
 fi
 
 exit $err

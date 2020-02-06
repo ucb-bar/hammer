@@ -316,7 +316,7 @@ class HammerSynthesisTool(HammerTool):
 
 
     @property
-    def output_all_regs(self) -> List[str]:
+    def output_all_regs(self) -> List[Dict[str, str]]:
         """
         Get the output list of all registers in the design with output pin for gate level simulation.
 
@@ -328,10 +328,10 @@ class HammerSynthesisTool(HammerTool):
             raise ValueError("Nothing set for the output list of all registers in the design with output pin for gate level simulation yet")
 
     @output_all_regs.setter
-    def output_all_regs(self, value: List[str]) -> None:
+    def output_all_regs(self, value: List[Dict[str, str]]) -> None:
         """Set the output list of all registers in the design with output pin for gate level simulation."""
         if not (isinstance(value, List)):
-            raise TypeError("output_all_regs must be a List[str]")
+            raise TypeError("output_all_regs must be a List[Dict[str, str]]")
         self.attr_setter("_output_all_regs", value)
 
 
@@ -543,7 +543,7 @@ class HammerPlaceAndRouteTool(HammerTool):
 
 
     @property
-    def output_all_regs(self) -> List[str]:
+    def output_all_regs(self) -> List[Dict[str, str]]:
         """
         Get the output list of all registers in the design with output pin for gate level simulation.
 
@@ -555,10 +555,10 @@ class HammerPlaceAndRouteTool(HammerTool):
             raise ValueError("Nothing set for the output list of all registers in the design with output pin for gate level simulation yet")
 
     @output_all_regs.setter
-    def output_all_regs(self, value: List[str]) -> None:
+    def output_all_regs(self, value: List[Dict[str, str]]) -> None:
         """Set the output list of all registers in the design with output pin for gate level simulation."""
         if not (isinstance(value, List)):
-            raise TypeError("output_all_regs must be a List[str]")
+            raise TypeError("output_all_regs must be a List[Dict[str, str]]")
         self.attr_setter("_output_all_regs", value)
 
 
@@ -1197,7 +1197,7 @@ class HammerSimTool(HammerTool):
 
 
     @property
-    def all_regs(self) -> List[str]:
+    def all_regs(self) -> List[Dict[str, str]]:
         """
         Get the list of all registers in the design with output pin.
 
@@ -1209,10 +1209,10 @@ class HammerSimTool(HammerTool):
             raise ValueError("Nothing set for the list of all registers in the design with output pin yet")
 
     @all_regs.setter
-    def all_regs(self, value: List[str]) -> None:
+    def all_regs(self, value: List[Dict[str, str]]) -> None:
         """Set the list of all registers in the design with output pin."""
         if not (isinstance(value, List)):
-            raise TypeError("all_regs must be a List[str]")
+            raise TypeError("all_regs must be a List[Dict[str, str]]")
         self.attr_setter("_all_regs", value)
 
 
