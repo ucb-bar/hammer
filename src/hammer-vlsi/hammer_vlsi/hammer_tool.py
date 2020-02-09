@@ -1303,7 +1303,8 @@ class HammerTool(metaclass=ABCMeta):
 
         :param cmd: TCL command to run
         :param output_buffer: Buffer in which to enqueue the resulting TCL lines
-        :param clean: True if you want to trim the leading indendation from the string, False otherwise
+        :param clean: True if you want to trim the leading indendation from the string, False otherwise. See inspect.cleandoc() for what this does.
+        >>>
         """
         output_buffer.append(cleandoc(cmd) if clean else cmd)
 
@@ -1314,7 +1315,7 @@ class HammerTool(metaclass=ABCMeta):
 
         :param cmd: TCL command to run
         :param output_buffer: Buffer in which to enqueue the resulting TCL lines
-        :param clean: True if you want to trim the leading indendation from the string, False otherwise
+        :param clean: True if you want to trim the leading indendation from the string, False otherwise. See inspect.cleandoc() for what this does.
         """
         cleaned = cleandoc(cmd) if clean else cmd
         output_buffer.append("""puts "{0}" """.format(cleaned.replace('"', '\"')))
