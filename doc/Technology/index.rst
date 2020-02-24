@@ -1,3 +1,5 @@
+.. _technology:
+
 Technology Setup and Use
 ========================================
 

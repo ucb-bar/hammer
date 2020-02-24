@@ -11,7 +11,7 @@ import os
 import tarfile
 import importlib
 from abc import ABCMeta, abstractmethod
-from typing import Any, Callable, Iterable, List, NamedTuple, Optional, Tuple, Dict
+from typing import Any, Callable, Iterable, List, NamedTuple, Optional, Tuple, Dict, TYPE_CHECKING
 from decimal import Decimal
 
 import hammer_config
@@ -22,6 +22,8 @@ from hammer_logging import HammerVLSILoggingContext
 from hammer_utils import (LEFUtils, add_lists, deeplist, get_or_else,
                           in_place_unique, optional_map, reduce_list_str,
                           reduce_named, coerce_to_grid)
+if TYPE_CHECKING:
+    from hammer_vlsi.hooks import HammerToolHookAction
 
 from library_filter import LibraryFilter
 from filters import LibraryFilterHolder
@@ -670,7 +672,10 @@ class HammerTechnology:
             if len(matching_installs) == 1:
                 install = matching_installs[0]
                 if install.base_var == "":
-                    base = self.path
+                    if install.path == os.path.basename(self.cache_dir): # default is tech-<techname>-cache
+                        base = self.cache_dir
+                    else:
+                        base = self.path
                 else:
                     base = self.get_setting(install.base_var)
                 return os.path.join(*([base] + rest_of_path))
@@ -705,6 +710,7 @@ class HammerTechnology:
                 if not os.path.exists(install_path):
                     self.logger.error("installs {path} does not exist".format(path=install_path))
                     return False
+        self.post_install_script()
         return True
 
     def extract_tarballs(self) -> None:
@@ -1004,6 +1010,55 @@ class HammerTechnology:
         Return the default placement site defined by the hammer setting "vlsi.technology.placement_site"
         """
         return self.get_site_by_name(self.get_setting("vlsi.technology.placement_site"))
+
+    def get_tech_syn_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
+        """
+        Return a list of synthesis hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_tech_par_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
+        """
+        Return a list of place and route hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_tech_drc_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
+        """
+        Return a list of DRC hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_tech_lvs_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
+        """
+        Return a list of LVS hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_tech_sram_generator_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
+        """
+        Return a list of sram generator hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_tech_sim_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
+        """
+        Return a list of sim hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_tech_pcb_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
+        """
+        Return a list of pcb hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
 
 class HammerTechnologyUtils:
     """

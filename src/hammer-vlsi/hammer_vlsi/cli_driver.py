@@ -13,7 +13,7 @@ import subprocess
 import sys
 
 from .hammer_vlsi_impl import HammerTool, HammerVLSISettings
-from .hooks import HammerToolHookAction
+from .hooks import HammerToolHookAction, HammerStartStopStep
 from .driver import HammerDriver, HammerDriverOptions
 from .hammer_build_systems import BuildSystems
 
@@ -421,13 +421,22 @@ class CLIDriver:
                 pre_action_func(driver)
 
             # If the driver didn't successfully load, return None.
+            # Note the step/hook priority is (in order of lowest to highest):
+            # 1. Tool-supplied core steps
+            # 2. Tool-supplied hooks (usually for persistence)
+            # 3. Tech-supplied hooks
+            # 4. User-supplied hooks
+            assert driver.tech is not None, "must have a technology"
             if action_type == "synthesis" or action_type == "syn":
                 if not driver.load_synthesis_tool(get_or_else(self.syn_rundir, "")):
                     return None
                 else:
                     post_load_func_checked(driver)
-                assert driver.syn_tool is not None, "load_synthesis_tool was successful"
-                success, output = driver.run_synthesis(extra_hooks)
+                assert driver.syn_tool is not None, "load_synthesis_tool was unsuccessful"
+                success, output = driver.run_synthesis(
+                        driver.syn_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_syn_hooks(driver.syn_tool.name) + \
+                        list(extra_hooks or []))
                 if not success:
                     driver.log.error("Synthesis tool did not succeed")
                     return None
@@ -440,8 +449,11 @@ class CLIDriver:
                     return None
                 else:
                     post_load_func_checked(driver)
-                assert driver.par_tool is not None, "load_par_tool was successful"
-                success, output = driver.run_par(extra_hooks)
+                assert driver.par_tool is not None, "load_par_tool was unsuccessful"
+                success, output = driver.run_par(
+                        driver.par_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_par_hooks(driver.par_tool.name) + \
+                        list(extra_hooks or []))
                 if not success:
                     driver.log.error("Place-and-route tool did not succeed")
                     return None
@@ -454,8 +466,11 @@ class CLIDriver:
                     return None
                 else:
                     post_load_func_checked(driver)
-                assert driver.drc_tool is not None, "load_drc_tool was successful"
-                success, output = driver.run_drc(extra_hooks)
+                assert driver.drc_tool is not None, "load_drc_tool was unsuccessful"
+                success, output = driver.run_drc(
+                        driver.drc_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_drc_hooks(driver.drc_tool.name) + \
+                        list(extra_hooks or []))
                 if not success:
                     driver.log.error("DRC tool did not succeed")
                     return None
@@ -468,8 +483,11 @@ class CLIDriver:
                     return None
                 else:
                     post_load_func_checked(driver)
-                assert driver.lvs_tool is not None, "load_lvs_tool was successful"
-                success, output = driver.run_lvs(extra_hooks)
+                assert driver.lvs_tool is not None, "load_lvs_tool was unsuccessful"
+                success, output = driver.run_lvs(
+                        driver.lvs_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_lvs_hooks(driver.lvs_tool.name) + \
+                        list(extra_hooks or []))
                 if not success:
                     driver.log.error("LVS tool did not succeed")
                     return None
@@ -482,14 +500,25 @@ class CLIDriver:
                     return None
                 else:
                     post_load_func_checked(driver)
-                success, output = driver.run_sram_generator(extra_hooks)
+                assert driver.sram_generator_tool is not None, "load_sram_generator_tool was unsuccessful"
+                success, output = driver.run_sram_generator(
+                        driver.sram_generator_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_sram_generator_hooks(driver.sram_generator_tool.name) + \
+                        list(extra_hooks or []))
+                if not success:
+                    driver.log.error("SRAM generator tool did not succeed")
+                    return None
                 post_run_func_checked(driver)
             elif action_type == "sim":
                 if not driver.load_sim_tool(get_or_else(self.sim_rundir, "")):
                     return None
                 else:
                     post_load_func_checked(driver)
-                success, output = driver.run_sim(extra_hooks)
+                assert driver.sim_tool is not None, "load_sim_tool was unsuccessful"
+                success, output = driver.run_sim(
+                        driver.sim_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_sim_hooks(driver.sim_tool.name) + \
+                        list(extra_hooks or []))
                 if not success:
                     driver.log.error("Sim tool did not succeed")
                     return None
@@ -515,7 +544,11 @@ class CLIDriver:
                     return None
                 else:
                     post_load_func_checked(driver)
-                success, output = driver.run_pcb(extra_hooks)
+                assert driver.pcb_tool is not None, "load_pcb_tool was unsuccessful"
+                success, output = driver.run_pcb(
+                        driver.pcb_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_pcb_hooks(driver.pcb_tool.name) + \
+                        list(extra_hooks or []))
                 if not success:
                     driver.log.error("PCB deliverable tool did not succeed")
                     return None
@@ -939,19 +972,35 @@ class CLIDriver:
 
         # Stage control: from/to
         from_step = get_nonempty_str(args['from_step'])
+        after_step = get_nonempty_str(args['after_step'])
         to_step = get_nonempty_str(args['to_step'])
+        until_step = get_nonempty_str(args['until_step'])
         only_step = get_nonempty_str(args['only_step'])
 
+        if from_step is not None and after_step is not None:
+            errors.append("Specified both start_before_step and start_after_step. start_before_step will take precedence.")
+        if to_step is not None and until_step is not None:
+            errors.append("Specified both stop_after_step and stop_before_step. stop_after_step will take precedence.")
+        if only_step is not None and any(s is not None for s in [from_step, after_step, to_step, until_step]):
+            errors.append("Specified {start|stop}_{before_after}_step with only_step. only_step will take precedence.")
+        if (from_step is not None and until_step is not None and from_step == until_step) or \
+           (after_step is not None and to_step is not None and after_step == to_step) or \
+           (after_step is not None and until_step is not None and after_step == until_step):
+            errors.append("Caution: start_before_step == stop_before_step, start_after_step == stop_after_step, or start_after_step == stop_before_step will result in nothing being run")
+
         driver = HammerDriver(options, config)
-        if from_step is not None or to_step is not None:
-            driver.set_post_custom_syn_tool_hooks(HammerTool.make_from_to_hooks(from_step, to_step))
-            driver.set_post_custom_par_tool_hooks(HammerTool.make_from_to_hooks(from_step, to_step))
-            if only_step is not None:
-                errors.append("Cannot specify from_step/to_step and only_step")
-        else:
-            if only_step is not None:
-                driver.set_post_custom_syn_tool_hooks(HammerTool.make_from_to_hooks(only_step, only_step))
-                driver.set_post_custom_par_tool_hooks(HammerTool.make_from_to_hooks(only_step, only_step))
+
+        start_step = only_step or from_step or after_step or None
+        start_incl = (only_step or from_step) is not None
+        stop_step = only_step or to_step or until_step or None
+        stop_incl = (only_step or to_step) is not None
+        if (start_step or stop_step) is not None:
+            driver.set_post_custom_syn_tool_hooks(HammerTool.make_start_stop_hooks(
+                HammerStartStopStep(step=start_step, inclusive=start_incl),
+                HammerStartStopStep(step=stop_step, inclusive=stop_incl)))
+            driver.set_post_custom_par_tool_hooks(HammerTool.make_start_stop_hooks(
+                HammerStartStopStep(step=start_step, inclusive=start_incl),
+                HammerStartStopStep(step=stop_step, inclusive=stop_incl)))
 
         # Hierarchical support.
         # Generate synthesis and par actions for each module above.
@@ -1172,12 +1221,16 @@ class CLIDriver:
         parser.add_argument("--power_rundir", required=False, default="",
                             help='(optional) Directory to store power results in')
         # Optional arguments for step control.
-        parser.add_argument("--from_step", dest="from_step", required=False,
-                            help="Run the given action from the given step (inclusive).")
-        parser.add_argument("--to_step", dest="to_step", required=False,
-                            help="Run the given action to the given step (inclusive).")
+        parser.add_argument("--start_before_step", "--from_step", dest="from_step", required=False,
+                            help="Run the given action from before the given step (inclusive). Not compatible with --start_after_step.")
+        parser.add_argument("--start_after_step", "--after_step", dest="after_step", required=False,
+                            help="Run the given action from after the given step (exclusive). Not compatible with --start_before_step.")
+        parser.add_argument("--stop_after_step", "--to_step", dest="to_step", required=False,
+                            help="Run the given action to the given step (inclusive). Not compatible with --stop_before_step.")
+        parser.add_argument("--stop_before_step", "--until_step", dest="until_step", required=False,
+                            help="Run the given action until the given step (exclusive). Not compatible with --stop_after_step.")
         parser.add_argument("--only_step", dest="only_step", required=False,
-                            help="Run only the given step. Not compatible with --from_step or --to_step.")
+                            help="Run only the given step. Not compatible with --{start|stop}_{before|after}_step.")
         # Required arguments for CLI hammer driver.
         parser.add_argument("-o", "--output", default="output.json", required=False,
                             help='Output JSON file for results and modular use of hammer-vlsi. Default: output.json.')

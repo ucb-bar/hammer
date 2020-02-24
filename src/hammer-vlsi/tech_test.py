@@ -299,6 +299,7 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
 
         tech_dir = "/tmp/path"  # should not be used
         tech = hammer_tech.HammerTechnology.load_from_json("dummy28", json.dumps(tech_json, cls=HammerJSONEncoder, indent=2), tech_dir)
+        tech.cache_dir = tech_dir  # needs to be set for installs check
 
         # Check that a tech-provided prefix works fine
         self.assertEqual("{0}/water".format(tech_dir), tech.prepend_dir_path("test/water"))
@@ -318,6 +319,53 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
             )
         ).store_into_library()  # type: hammer_tech.Library
         self.assertEqual("{0}/hat".format("/tmp/custom"), tech.prepend_dir_path("custom/hat", lib))
+
+    def test_installs_in_cache_dir(self) -> None:
+        """
+        Test that we can access files in the tech cache dir.
+        Use case: A PDK file needs to be hacked by post_install_script
+        """
+        import hammer_config
+
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+
+        tech_json = {
+            "name": "dummy",
+            "installs": [
+                {
+                    "path": "tech-dummy28-cache",
+                    "base var": ""  # means relative to tech dir
+                }
+            ],
+            "libraries": [
+                {
+                    "lef file": "tech-dummy28-cache/tech.lef",
+                    "provides": [
+                        {"lib_type": "technology"}
+                    ]
+                }
+            ]
+        }  # type: Dict[str, Any]
+
+        with open(tech_json_filename, "w") as f:  # pyline: disable=invalid-name
+            f.write(json.dumps(tech_json, cls=HammerJSONEncoder, indent=4))
+
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
+        tech.cache_dir = tech_dir
+
+        database = hammer_config.HammerDatabase()
+        database.update_technology(tech.get_config())
+        HammerVLSISettings.load_builtins_and_core(database)
+        tech.set_database(database)
+        outputs = tech.process_library_filter(pre_filts=[], filt=hammer_tech.filters.lef_filter,
+                                              must_exist=False,
+                                              output_func=lambda str, _: [str])
+
+        self.assertEqual(outputs, ["{0}/tech.lef".format(tech.cache_dir)])
+
+        # Cleanup
+        shutil.rmtree(tech_dir_base)
 
     def test_yaml_tech_file(self) -> None:
         """

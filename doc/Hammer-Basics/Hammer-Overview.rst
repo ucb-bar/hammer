@@ -29,7 +29,13 @@ This demonstrates two different namespaces, ``vlsi.core`` and ``vlsi.inputs``, a
 Tech Plugins
 -------------------------------
 
-A techonology plugin consists of two or more files: a ``*.tech.json`` and a ``defaults.yml``.  The ``*.tech.json`` contains pointers to relevant PDK files and fundamental technology constants.  These values are not meant to be overriden, nor can they be. ``defaults.yml`` sets default technology variables for Hammer to consume, which may be specific to this technology or generic to all. These values may be overriden by design-specific configurations. An example of this is shown in ``hammer/src/hammer-vlsi/technology/asap7/``, and how to setup a technology plugin is documented in more detail in the Technology portion of the docs.
+A techonology plugin consists of two or more files: a ``*.tech.json`` and a ``defaults.yml``.
+
+The ``*.tech.json`` contains pointers to relevant PDK files and fundamental technology constants.  These values are not meant to be overriden, nor can they be for the time being. 
+
+``defaults.yml`` sets default technology variables for Hammer to consume, which may be specific to this technology or generic to all. These values may be overriden by design-specific configurations. An example of this is shown in ``hammer/src/hammer-vlsi/technology/asap7/``, and how to setup a technology plugin is documented in more detail in the :ref:`technology` section.
+
+.. note:: Unless you are a UCB BAR or BWRC affiliate or have set up a 3-way technology NDA with us, we cannot share pre-built technology plugins.
 
 Tool Plugins
 -------------------------------
@@ -37,7 +43,9 @@ Tool Plugins
 A Hammer tool plugin actually implements tool-specific steps of the VLSI flow in Hammer in a template-like fashion.
 The TCL commands input to the tool are created using technology and design settings provided by the designer.
 
-There are already three Hammer tool plugin repos to which access may be granted to users of Hammer, pending approval from each tool vendor. These repos are ``hammer-cadence-plugins``, ``hammer-synopsys-plugins``, and ``hammer-mentor-plugins``. In them are tool plugin implementations for actions including synthesis, place-and-route, DRC, LVS, and simulation.
+There are already three Hammer tool plugin repos to which access may be granted to Hammer users. These repos are ``hammer-cadence-plugins``, ``hammer-synopsys-plugins``, and ``hammer-mentor-plugins``. In them are tool plugin implementations for actions including synthesis, place-and-route, DRC, LVS, and simulation.
+
+.. note:: If you are not a UCB BAR or BWRC affiliate and have access to tools from a specific vendor, please email hammer-plugins-access@lists.berkeley.edu with a request for which plugin(s) you would like access to. There will be no support guarantee for the plugin repositories, but users are encouraged to file issues and contribute patches where needed.
 
 These plugins implement many of the common steps of a modern physical design flow. However, a real chip flow will require many custom settings and steps that may not be generalizable across technology nodes.
 Because of this, Hammer has an "escape-hatch" mechanism, called a hook, that allows the designer to inject custom steps between the default steps provided by the CAD tool plugin.
@@ -66,10 +74,15 @@ Using hooks requires the designer to extend the ``CLIDriver`` class. A good exam
 In both of these commands, an environment configuration is passed to Hammer using a ``-e`` flag, which in this case is ``env.yml``.
 ``env.yml`` contains pointers to the required tool licenses and environment variables.
 These environment settings will not be propagated to the output configuration files after each action.
+
 Any number of other YML or JSON files can then be passed in using the ``-p`` flag.
 In this case, there is only one, ``config.yml``, and it needs to set all the required keys for the step of the flow being run.
+
 ``--obj_dir build`` designates what directory Hammer should use as a working directory.
 All default action run directories and output files will be placed here.
+
 Finally, ``par`` designates that this is a place-and-route action.
+
 In this case, Hammer will write outputs to the path ``$PWD/build/par-rundir``.
-For the full list of Hammer command-line arguments, look in the ``src/hammer-vlsi/hammer_vlsi/driver.py`` file.
+
+For the full list of Hammer command-line arguments, run `hammer-vlsi --help` or take a peek in the ``src/hammer-vlsi/hammer_vlsi/cli_driver.py`` file.

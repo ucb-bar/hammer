@@ -74,6 +74,7 @@ The ``libraries`` key also must be setup in the JSON plugin. This will tell Hamm
 The file pointers, in this case, use the tarball prefix because Hammer will be extracting files directly from the ASAP7 tarball. This points Hammer to one part of the PDK.  The ``corner`` key tells Hammer what process and temperature corner that these files correspond to.  The ``supplies`` key tells Hammer what the nominal supply for these cells are.  The ``provides`` key has several sub-keys that tell Hammer what kind of library this is (examples include ``stdcell``, ``fiducials``,
 ``io pad cells``, ``bump``, and ``level shifters``) and the threshold voltage flavor of the cells, if applicable. Depending on the technology, adding the tech LEF for the technology with the ``lib_type`` set as ``technology`` may also be needed.
 
+..
 TODO: ADD INFO ABOUT LIBRARY FILTERS
 
 Stackup
