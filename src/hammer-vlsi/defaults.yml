@@ -560,6 +560,12 @@ par:
   # type: Decimal
   blockage_spacing: 0.0
 
+  # Top metal layer that is pulled back around blocks and hardmacros
+  # Used by floorplanning.
+  # Overridden by individual placement constraints top_layer.
+  # type: Optional[str]
+  blockage_spacing_top_layer: null
+
   # If power_straps_mode is 'generate', which method to use.
   # Currently, the valid options are:
   # - by_tracks - Specify the power strap plan per layer in terms of tracks
@@ -827,4 +833,3 @@ technology.pcb:
   # Typically this should be defined in the technology plugin, assuming everyone will use the same pad and board strategy
   # type: Decimal
   bump_pad_metal_diameter: null
-
