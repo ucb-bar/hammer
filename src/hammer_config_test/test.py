@@ -70,6 +70,32 @@ a.b.c_meta: append
         db.update_environment([])
         self.assertEqual(db.get_setting("a.b.c"), ["test"])
 
+    def test_no_json_yaml_precedence(self) -> None:
+        """
+        Test that neither JSON nor YAML take precedence over each other.
+        """
+        yfp, ypath = tempfile.mkstemp(".yml")
+        with open(ypath, 'w') as fy:
+            fy.write("""
+foo.bar: "i'm yaml"
+""")
+        jfp, jpath = tempfile.mkstemp(".json")
+        with open(jpath, 'w') as fj:
+            fj.write("""
+{
+    "foo.bar": "i'm json"
+}
+""")
+        db1 = hammer_config.HammerDatabase()
+        configs = hammer_config.load_config_from_paths([ypath, jpath])
+        db1.update_core([hammer_config.combine_configs(configs)])
+        self.assertEqual(db1.get_setting("foo.bar"), "i'm json")
+
+        db2 = hammer_config.HammerDatabase()
+        configs = hammer_config.load_config_from_paths([jpath, ypath])
+        db2.update_core([hammer_config.combine_configs(configs)])
+        self.assertEqual(db2.get_setting("foo.bar"), "i'm yaml")
+
     def test_meta_json2list(self) -> None:
         """
         Test that the meta attribute "json2list" works.
@@ -801,6 +827,106 @@ global: ["hello", "world"]
         db.update_project([config2])
         self.assertEqual(db.get_setting("global"), ["hello", "world", "scala", "python"])
 
+    def test_meta_deepsubst_cwd(self) -> None:
+        """
+        Test that the deepsubst special meta "cwd" correctly prepends the CWD.
+        """
+        cwd = os.getcwd()
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo:
+    bar_meta: deepsubst
+    bar:
+    - adc: "yes"
+      dac: "no"
+      dsl: ["scala"]
+      base_test: "some_relative_path"
+      base_test_deepsubst_meta: "cwd"
+""", is_yaml=True, path="base/config/path")
+        meta = hammer_config.load_config_from_string("""
+{
+  "foo.bar_meta": ["append", "deepsubst"],
+  "foo.bar": [{
+      "dsl": ["python"],
+      "dsl_meta": "append",
+      "dac": "current_weighted",
+      "meta_test": "some/relative/path",
+      "meta_test_deepsubst_meta": "cwd",
+      "abs_test": "/this/is/an/abs/path",
+      "abs_test_deepsubst_meta": "cwd"
+  }]
+}
+""", is_yaml=False, path="meta/config/path")
+        db.update_core([base, meta])
+        self.assertEqual(db.get_setting("foo.bar")[0]["base_test"], os.path.join(cwd, "some_relative_path"))
+        self.assertEqual(db.get_setting("foo.bar")[1]["meta_test"], os.path.join(cwd, "some/relative/path"))
+        # leading / should override the meta
+        self.assertEqual(db.get_setting("foo.bar")[1]["abs_test"], "/this/is/an/abs/path")
+
+    def test_meta_deepsubst_local(self) -> None:
+        """
+        Test that the deepsubst special meta "local" correctly prepends the local path.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo:
+    bar_meta: deepsubst
+    bar:
+    - adc: "yes"
+      dac: "no"
+      dsl: ["scala"]
+      base_test: "local_path"
+      base_test_deepsubst_meta: "local"
+""", is_yaml=True, path="base/config/path")
+        meta = hammer_config.load_config_from_string("""
+{
+  "foo.bar_meta": ["append", "deepsubst"],
+  "foo.bar": [{
+      "dsl": ["python"],
+      "dsl_meta": "append",
+      "dac": "current_weighted",
+      "meta_test": "local_path",
+      "meta_test_deepsubst_meta": "local",
+      "abs_test": "/this/is/an/abs/path",
+      "abs_test_deepsubst_meta": "local"
+  }]
+}
+""", is_yaml=False, path="meta/config/path")
+        db.update_core([base, meta])
+        self.assertEqual(db.get_setting("foo.bar")[0]["base_test"], "base/config/path/local_path")
+        self.assertEqual(db.get_setting("foo.bar")[1]["meta_test"], "meta/config/path/local_path")
+        # leading / should override the meta
+        self.assertEqual(db.get_setting("foo.bar")[1]["abs_test"], "/this/is/an/abs/path")
+
+
+    def test_meta_deepsubst_subst(self) -> None:
+        """
+        Test that deepsubst correctly substitutes strings.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo:
+    baz: "awesome"
+    qux:
+        adc: "yes"
+        dac: "no"
+        dsl: ["scala"]
+        base_test: "local_path"
+""", is_yaml=True, path="base/config/path")
+        meta = hammer_config.load_config_from_string("""
+{
+  "foo.bar_meta": "deepsubst",
+  "foo.bar": [{
+      "dsl": {"x": ["python", "is", "${foo.baz}"], "y": "sometimes"},
+      "dsl_meta": "append",
+      "dac": "current_weighted",
+      "meta_test": "local_path",
+      "meta_test_deepsubst_meta": "local"
+  }]
+}
+""", is_yaml=False, path="meta/config/path")
+        db.update_core([base, meta])
+        self.assertEqual(db.get_setting("foo.bar")[0]["dsl"], {"x": ["python", "is", "awesome"], "y": "sometimes"})
 
 if __name__ == '__main__':
     unittest.main()

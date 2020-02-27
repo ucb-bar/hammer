@@ -9,12 +9,15 @@ import json
 import os
 import shutil
 import tempfile
-from typing import Any, Callable, Dict, Optional
+import re
+from decimal import Decimal
+from typing import Any, Callable, Dict, List, Optional
 
 import hammer_config
+from hammer_config import HammerJSONEncoder
 from hammer_logging.test import HammerLoggingCaptureContext
 from hammer_tech import MacroSize
-from hammer_vlsi import CLIDriver, HammerDriver, PlacementConstraint, PlacementConstraintType
+from hammer_vlsi import CLIDriver, HammerDriver, HammerDriverOptions, HammerVLSISettings, PlacementConstraint, PlacementConstraintType
 from hammer_utils import deepdict
 
 import unittest
@@ -44,7 +47,7 @@ class CLIDriverTest(unittest.TestCase):
             config = postprocessing_func(config)
 
         with open(config_path, "w") as f:
-            f.write(json.dumps(config, indent=4))
+            f.write(json.dumps(config, cls=HammerJSONEncoder, indent=4))
 
         return config
 
@@ -304,7 +307,7 @@ class CLIDriverTest(unittest.TestCase):
         with open(config_packed_path, "r") as f:
             unpacked_config = hammer_config.reverse_unpack(json.loads(f.read()))
         with open(config_path, "w") as f:
-            f.write(json.dumps(unpacked_config, indent=4))
+            f.write(json.dumps(unpacked_config, cls=HammerJSONEncoder, indent=4))
 
         # Check that running the CLIDriver executes successfully (code 0).
         with self.assertRaises(SystemExit) as cm:  # type: ignore
@@ -343,10 +346,12 @@ class CLIDriverTest(unittest.TestCase):
             dummy_placement = PlacementConstraint(
                 path="dummy",
                 type=PlacementConstraintType.Dummy,
-                x=0.0,
-                y=0.0,
-                width=10.0,
-                height=10.0,
+                x=Decimal("0"),
+                y=Decimal("0"),
+                width=Decimal("10"),
+                height=Decimal("10"),
+                master=None,
+                create_physical=None,
                 orientation=None,
                 margins=None,
                 top_layer=None,
@@ -449,8 +454,8 @@ class CLIDriverTest(unittest.TestCase):
         my_size = MacroSize(
             library='my_lib',
             name='my_cell',
-            width=100.0,
-            height=100.0
+            width=Decimal("100"),
+            height=Decimal("100")
         )
 
         def add_macro_sizes(d: Dict[str, Any]) -> Dict[str, Any]:
@@ -526,6 +531,154 @@ class CLIDriverTest(unittest.TestCase):
                 def synthesis_action(self, bad: int) -> dict:  # type: ignore
                     return {bad: "bad"}
             BadOverride()
+
+
+class HammerBuildSystemsTest(unittest.TestCase):
+
+    def _read_targets_from_makefile(self, lines: List[str]) -> Dict[str, List[str]]:
+        """
+        Helper method to read information about targets from lines of a Makefile.
+        """
+        targets = {}  # type: Dict[str, List[str]]
+
+        for line in lines:
+            # This regex is looking for all non-special targets (i.e. those that aren't .PHONY, .INTERMEDIATE, .SECONDARY, ...)
+            # These are of the format (target_name: list of prereqs ...)
+            m = re.match(r"^([^.\s:][^\s:]*)\s*:(.*)$", line)
+            if m:
+                t = m.group(1)
+                p = re.split(r"\s+", m.group(2))
+                self.assertFalse(t in targets, "Found duplicate target {}".format(t))
+                targets[t] = p
+
+        return targets
+
+    def test_flat_makefile(self) -> None:
+        """
+        Test that a Makefile for a flat design is generated correctly.
+        """
+        tmpdir = tempfile.mkdtemp()
+        proj_config = os.path.join(tmpdir, "config.json")
+
+        settings = {
+                "vlsi.core.technology": "nop",
+                "vlsi.core.build_system": "make",
+                "synthesis.inputs.top_module": "TopMod"
+            }
+        with open(proj_config, "w") as f:
+            f.write(json.dumps(settings, cls=HammerJSONEncoder, indent=4))
+
+        options = HammerDriverOptions(
+            environment_configs=[],
+            project_configs=[proj_config],
+            log_file=os.path.join(tmpdir, "log.txt"),
+            obj_dir=tmpdir
+        )
+
+        self.assertTrue(HammerVLSISettings.set_hammer_vlsi_path_from_environment(),
+            "hammer_vlsi_path must exist")
+        driver = HammerDriver(options)
+
+        CLIDriver.generate_build_inputs(driver, lambda x: None)
+
+        d_file = os.path.join(driver.obj_dir, "hammer.d")
+        self.assertTrue(os.path.exists(d_file))
+
+        with open(d_file, "r") as f:
+            contents = f.readlines()
+
+        targets = self._read_targets_from_makefile(contents)
+
+        tasks = {"pcb", "syn", "par", "drc", "lvs"}
+        expected_targets = tasks.copy()
+        expected_targets.update({"redo-" + x for x in tasks if x is not "pcb"})
+        expected_targets.update({os.path.join(tmpdir, x + "-rundir", x + "-output-full.json") for x in tasks})
+        expected_targets.update({os.path.join(tmpdir, x + "-input.json") for x in tasks if x not in {"syn", "pcb"}})
+
+        self.assertEqual(set(targets.keys()), set(expected_targets))
+
+        # TODO at some point we should add more tests
+
+        # Cleanup
+        shutil.rmtree(tmpdir)
+
+    def test_hier_makefile(self) -> None:
+        """
+        Test that a Makefile for a hierarchical design is generated correctly.
+        """
+        tmpdir = tempfile.mkdtemp()
+        proj_config = os.path.join(tmpdir, "config.json")
+
+        settings = {
+                "vlsi.core.technology": "nop",
+                "vlsi.core.build_system": "make",
+                "vlsi.inputs.hierarchical.mode": "hierarchical",
+                "vlsi.inputs.hierarchical.top_module": "TopMod",
+                "vlsi.inputs.hierarchical.config_source": "manual",
+                "vlsi.inputs.hierarchical.manual_modules": [{"TopMod": ["SubModA", "SubModB"]}],
+                "vlsi.inputs.hierarchical.manual_placement_constraints": [
+                    {"TopMod": [
+                        {"path": "top", "type": "toplevel", "x": 0, "y": 0, "width": 1234, "height": 7890, "margins": {"left": 1, "top": 2, "right": 3, "bottom": 4}},
+                        {"path": "top/C", "type": "placement", "x": 2, "y": 102, "width": 30, "height": 40},
+                        {"path": "top/B", "type": "hierarchical", "x": 10, "y": 30, "master": "SubModB"},
+                        {"path": "top/A", "type": "hierarchical", "x": 200, "y": 120, "master": "SubModA"}]},
+                    {"SubModA": [
+                        {"path": "a", "type": "toplevel", "x": 0, "y": 0, "width": 100, "height": 200, "margins": {"left": 0, "top": 0, "right": 0, "bottom": 0}}]},
+                    {"SubModB": [
+                        {"path": "b", "type": "toplevel", "x": 0, "y": 0, "width": 340, "height": 160, "margins": {"left": 0, "top": 0, "right": 0, "bottom": 0}}]}
+                ]
+            }
+        with open(proj_config, "w") as f:
+            f.write(json.dumps(settings, cls=HammerJSONEncoder, indent=4))
+
+        options = HammerDriverOptions(
+            environment_configs=[],
+            project_configs=[proj_config],
+            log_file=os.path.join(tmpdir, "log.txt"),
+            obj_dir=tmpdir
+        )
+
+        self.assertTrue(HammerVLSISettings.set_hammer_vlsi_path_from_environment(),
+            "hammer_vlsi_path must exist")
+        driver = HammerDriver(options)
+
+        CLIDriver.generate_build_inputs(driver, lambda x: None)
+
+        d_file = os.path.join(driver.obj_dir, "hammer.d")
+        self.assertTrue(os.path.exists(d_file))
+
+        with open(d_file, "r") as f:
+            contents = f.readlines()
+
+        targets = self._read_targets_from_makefile(contents)
+
+        mods = {"TopMod", "SubModA", "SubModB"}
+        expected_targets = {"pcb", os.path.join(tmpdir, "pcb-rundir", "pcb-output-full.json")}
+        expected_targets.update({"syn-" + x for x in mods})
+        expected_targets.update({"par-" + x for x in mods})
+        expected_targets.update({"lvs-" + x for x in mods})
+        expected_targets.update({"drc-" + x for x in mods})
+        expected_targets.update({"redo-syn-" + x for x in mods})
+        expected_targets.update({"redo-par-" + x for x in mods})
+        expected_targets.update({"redo-lvs-" + x for x in mods})
+        expected_targets.update({"redo-drc-" + x for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "syn-" + x, "syn-output-full.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "par-" + x, "par-output-full.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "lvs-" + x, "lvs-output-full.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "drc-" + x, "drc-output-full.json") for x in mods})
+        # Only non-leafs get a syn-*-input.json target
+        expected_targets.update({os.path.join(tmpdir, "syn-" + x + "-input.json") for x in mods if x in {"TopMod"}})
+        expected_targets.update({os.path.join(tmpdir, "par-" + x + "-input.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "lvs-" + x + "-input.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "drc-" + x + "-input.json") for x in mods})
+
+        self.assertEqual(set(targets.keys()), expected_targets)
+
+        # TODO at some point we should add more tests
+
+        # Cleanup
+        shutil.rmtree(tmpdir)
+
 
 
 if __name__ == '__main__':

@@ -24,15 +24,27 @@ HammerToolStep = NamedTuple('HammerToolStep', [
     ('name', str)
 ])
 
+# Specify step to start/stop
+HammerStartStopStep = NamedTuple('HammerStartStopStep', [
+    # Name of the step
+    ('step', Optional[str]),
+    # Whether it is inclusive
+    ('inclusive', bool)
+])
 
 # Where to insert/replace the given step.
+# Persistent steps always execute depending on from/after/to/until steps.
 class HookLocation(Enum):
     InsertPreStep = 1
     InsertPostStep = 2
     ReplaceStep = 10
     ResumePreStep = 20
     ResumePostStep = 21
-
+    PausePreStep = 30
+    PausePostStep = 31
+    PersistentStep = 40
+    PersistentPreStep = 41
+    PersistentPostStep = 42
 
 # An hook action. Actions can insert new steps before or after an existing one,
 # or replace an existing stage.

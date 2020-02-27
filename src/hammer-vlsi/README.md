@@ -20,6 +20,8 @@ System requirements:
 
 See [sourceme.sh](sourceme.sh) for an example of in-tree use of hammer/hammer-vlsi.
 
+The default technology, ASAP7, has some extra requirements. See its [README](technology/asap7/README.md) for instructions.
+
 Environment Check
 =================
 
@@ -48,4 +50,4 @@ The module should contain an class object named 'tool', since hammer-vlsi will d
 Technology Library
 ==================
 
-Currently technologies should have its own folder along with a corresponding .tech.json file. For example, "saed32" would have a "saed32.tech.json" file inside of the "saed32" folder.
+Currently technologies should have its own folder along with a corresponding .tech.json file. For example, "asap7" would have a "asap7.tech.json" file inside of the "asap7" folder.

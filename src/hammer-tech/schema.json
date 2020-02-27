@@ -5,6 +5,12 @@
     "grid_unit" : {
       "type" : "string"
     },
+    "time_unit" : {
+      "type" : "string"
+    },
+    "shrink_factor" : {
+      "type" : "string"
+    },
     "installs" : {
       "type" : "array",
       "items" : {
@@ -153,6 +159,13 @@
     "gds map file" : {
       "type" : "string"
     },
+    "physical only cells list" : {
+      "type" : "array",
+      "items" : {
+        "title" : "Cell",
+        "type" : "string"
+      }
+    },
     "dont use list" : {
       "type" : "array",
       "items" : {
@@ -160,11 +173,43 @@
         "type" : "string"
       }
     },
-    "additional drc text" : {
-        "type" : "string"
+    "drc decks" : {
+      "type" : "array",
+      "items" : {
+        "type" : "object",
+        "title" : "DRCDeck",
+        "properties" : {
+          "tool name" : {
+            "type" : "string"
+          },
+          "deck name" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          }
+        },
+        "additionalproperties" : false
+      }
     },
-    "additional lvs text" : {
-        "type" : "string"
+    "lvs decks" : {
+      "type" : "array",
+      "items" : {
+        "type" : "object",
+        "title" : "LVSDeck",
+        "properties" : {
+          "tool name" : {
+            "type" : "string"
+          },
+          "deck name" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          }
+        },
+        "additionalproperties" : false
+      }
     },
     "tarballs" : {
       "type" : "array",
@@ -233,6 +278,9 @@
                 "min_width" : {
                   "type" : "number"
                 },
+                "max_width" : {
+                  "type" : "number"
+                },
                 "pitch" : {
                   "type" : "number"
                 },
@@ -254,12 +302,41 @@
                       }
                     }
                   }
+                },
+                "power_strap_width_table": {
+                  "type": "array",
+                  "items": {
+                    "title": "WidthTableEntry",
+                    "type": "number"
+                  }
                 }
               }
             }
           }
         }
       }
-    }
+    },
+    "special cells": {
+      "type": "array",
+      "items" : {
+        "title": "SpecialCell",
+        "type": "object",
+        "properties": {
+          "cell_type": {
+             "type": "string"
+          },
+          "name": {
+             "type": "array",
+             "items": {
+               "title": "string",
+               "type": "string"
+             }
+          },
+          "size": {
+             "type": "number"
+          }
+        }
+      }
+   }
   }
 }

@@ -14,6 +14,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import hammer_tech
 from hammer_tech import LibraryFilter
+from hammer_config import HammerJSONEncoder
 import hammer_vlsi
 
 
@@ -55,7 +56,7 @@ class HammerToolTestHelpers:
         Create a temporary folder for a test technology.
         Note: the caller is responsible for removing the tech_dir_base folder
         after use!
-        :param tech_name: Technology name (e.g. "saed32")
+        :param tech_name: Technology name (e.g. "asap7")
         :return: Tuple of create tech_dir and tech_dir_base (which the caller
                  must delete)
         """
@@ -76,6 +77,7 @@ class HammerToolTestHelpers:
         tech_json = {
             "name": "dummy28",
             "grid_unit": "0.001",
+            "time_unit": "1 ns",
             "installs": [
                 {
                     "path": "test",
@@ -109,7 +111,7 @@ class HammerToolTestHelpers:
         if postprocessing_func is not None:
             tech_json = postprocessing_func(tech_json)
         with open(tech_json_filename, "w") as f:  # pylint: disable=invalid-name
-            f.write(json.dumps(tech_json, indent=4))
+            f.write(json.dumps(tech_json, cls=HammerJSONEncoder, indent=4))
 
     @staticmethod
     def make_test_filter() -> LibraryFilter:

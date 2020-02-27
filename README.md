@@ -3,25 +3,23 @@ Highly Agile Masks Made Effortlessly from RTL
 
 This is the master (unstable) development branch.
 
-Stable numbered releses can be bound below:
-
-Releases: https://github.com/ucb-bar/hammer/releases
-
 Documentation
 =============
-Here are links to various pieces of documentation currently available:
+The main documentation is found at https://hammer-vlsi.readthedocs.io
+Docs sources are available at `doc/` for offline reading.
+
+For a deeper dive into available options and environment configuration:
 
 * [Core Hammer settings](src/hammer-vlsi/defaults.yml)
 * [Documentation for hammer-vlsi](src/hammer-vlsi/README.md)
 * [Hammer technology library schema](src/hammer-tech/schema.json)
 * For CAD tool settings, please see the relevant `defaults.yml` for those plugins.
 
-Setup
-=====
-
-The [documentation for hammer-vlsi](src/hammer-vlsi/README.md) has system requirements and quick start instructions.
+Hammer is an integral of UC Berkeley Architecture Research's [Chipyard framework](https://github.com/ucb-bar/chipyard).
+Useful documentation for how an example block is pushed through the VLSI flow with Hammer in the free ASAP7 PDK is at https://chipyard.readthedocs.io/en/latest/VLSI
 
 History
 =======
+The list of contributors can be found in the Git history of the project, or online at https://github.com/ucb-bar/hammer/graphs/contributors
 
 The Hammer project builds upon the legacy of the [PLSI project by Palmer Dabbelt](https://www2.eecs.berkeley.edu/Pubs/TechRpts/2017/EECS-2017-77.html), a previous project which aimed to build a portable VLSI flow. The Hammer project is grateful for the feedback and lessons learned which provided valuable insight that ultimately led to the design and software architecture of Hammer as it is now.

@@ -13,12 +13,15 @@ import subprocess
 import sys
 
 from .hammer_vlsi_impl import HammerTool, HammerVLSISettings
-from .hooks import HammerToolHookAction
+from .hooks import HammerToolHookAction, HammerStartStopStep
 from .driver import HammerDriver, HammerDriverOptions
+from .hammer_build_systems import BuildSystems
 
 from typing import List, Dict, Tuple, Any, Callable, Optional, Union, cast
 
 from hammer_utils import add_dicts, deeplist, deepdict, get_or_else, check_function_type
+
+from hammer_config import HammerJSONEncoder
 
 
 def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callable[[str], None]) -> List[str]:
@@ -29,10 +32,12 @@ def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callab
         # No arguments
         pass
     elif isinstance(args_list, List):
+        # Check for file's existence before canonicalization so that we can give the user a sane error message
         for c in args_list:
             if not os.path.exists(c):
                 append_error_func("Given path %s does not exist!" % c)
-        results = list(args_list)
+        # Canonicalize the path at this point
+        results = list(map(os.path.realpath, args_list))
     else:
         append_error_func("Argument was not a list?")
     return results
@@ -53,7 +58,7 @@ def dump_config_to_json_file(output_path: str, config: dict) -> None:
     :param config: Config dictionary to dump
     """
     with open(output_path, "w") as f:
-        f.write(json.dumps(config, indent=4))
+        f.write(json.dumps(config, cls=HammerJSONEncoder, indent=4))
 
 
 # Type signature of a CLIDriver action that returns a config dictionary.
@@ -111,6 +116,8 @@ class CLIDriver:
         self.drc_rundir = ""  # type: Optional[str]
         self.lvs_rundir = ""  # type: Optional[str]
         self.sram_generator_rundir = ""  # type: Optional[str]
+        self.sim_rundir = ""  # type: Optional[str]
+        self.pcb_rundir = ""  # type: Optional[str]
 
         # If a subclass has defined these, don't clobber them in init
         # since the subclass still uses this init function.
@@ -118,6 +125,10 @@ class CLIDriver:
             check_CLIActionType_type(self.sram_generator_action)  # type: ignore
         else:
             self.sram_generator_action = self.create_sram_generator_action([])  # type: CLIActionConfigType
+        if hasattr(self, "pcb_action"):
+            check_CLIActionType_type(self.pcb_action)  # type: ignore
+        else:
+            self.pcb_action = self.create_pcb_action([])  # type: CLIActionConfigType
         if hasattr(self, "synthesis_action"):
             check_CLIActionType_type(self.synthesis_action)  # type: ignore
         else:
@@ -139,6 +150,18 @@ class CLIDriver:
         else:
             self.synthesis_par_action = self.create_synthesis_par_action(self.synthesis_action,
                                                                          self.par_action)  # type: CLIActionConfigType
+        if hasattr(self, "sim_action"):
+            check_CLIActionType_type(self.sim_action)  # type: ignore
+        else:
+            self.sim_action = self.create_sim_action([])  # type: CLIActionConfigType
+        if hasattr(self, "synthesis_sim_action"):
+            check_CLIActionType_type(self.synthesis_sim_action)  # type: ignore
+        else:
+            self.synthesis_sim_action = self.create_synthesis_sim_action(self.synthesis_action, self.sim_action)  # type: CLIActionConfigType
+        if hasattr(self, "par_sim_action"):
+            check_CLIActionType_type(self.par_sim_action) # type: ignore
+        else:
+            self.par_sim_action = self.create_par_sim_action(self.par_action, self.sim_action) # type: CLIActionConfigType
 
         # Dictionaries of module-CLIActionConfigType for hierarchical flows.
         # See all_hierarchical_actions() below.
@@ -152,11 +175,15 @@ class CLIDriver:
     def action_map(self) -> Dict[str, CLIActionType]:
         """Return the mapping of valid actions -> functions for each action of the command-line driver."""
         return add_dicts({
+            "build": self.generate_build_inputs,
+            "build-inputs": self.generate_build_inputs,
+            "build_inputs": self.generate_build_inputs,
             "dump": self.dump_action,
             "dump-macrosizes": self.dump_macrosizes_action,
             "dump_macrosizes": self.dump_macrosizes_action,
             "sram-generator": self.sram_generator_action,
             "sram_generator": self.sram_generator_action,
+            "pcb": self.pcb_action,
             "synthesis": self.synthesis_action,
             "syn": self.synthesis_action,
             "par": self.par_action,
@@ -175,7 +202,21 @@ class CLIDriver:
             "par_to_lvs": self.par_to_lvs_action,
             "par-to-lvs": self.par_to_lvs_action,
             "drc": self.drc_action,
-            "lvs": self.lvs_action
+            "lvs": self.lvs_action,
+            "sim": self.sim_action,
+            "simulation": self.sim_action,
+            "synthesis_to_sim": self.synthesis_to_sim_action,
+            "synthesis-to-sim": self.synthesis_to_sim_action,
+            "syn_to_sim": self.synthesis_to_sim_action,
+            "syn-to-sim": self.synthesis_to_sim_action,
+            "synthesis_sim": self.synthesis_sim_action,
+            "synthesis-sim": self.synthesis_sim_action,
+            "syn_sim": self.synthesis_sim_action,
+            "syn-sim": self.synthesis_sim_action,
+            "par_to_sim": self.par_to_sim_action,
+            "par-to-sim": self.par_to_sim_action,
+            "par_sim": self.par_sim_action,
+            "par-sim": self.par_sim_action
         }, self.all_hierarchical_actions)
 
     @staticmethod
@@ -191,7 +232,7 @@ class CLIDriver:
         Dump macro size information.
         """
         macro_json = list(map(lambda m: m.to_setting(), driver.tech.get_macro_sizes()))
-        return json.dumps(macro_json, indent=4)
+        return json.dumps(macro_json, cls=HammerJSONEncoder, indent=4)
 
     def get_extra_synthesis_hooks(self) -> List[HammerToolHookAction]:
         """
@@ -224,6 +265,20 @@ class CLIDriver:
     def get_extra_sram_generator_hooks(self) -> List[HammerToolHookAction]:
         """
         Return a list of extra SRAM generation hooks in this project.
+        To be overriden by subclasses.
+        """
+        return list()
+
+    def get_extra_sim_hooks(self) -> List[HammerToolHookAction]:
+        """
+        Return a list of extra simulation hooks in this project.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_extra_pcb_hooks(self) -> List[HammerToolHookAction]:
+        """
+        Return a list of extra PCB deliverable hooks in this project.
         To be overridden by subclasses.
         """
         return list()
@@ -286,12 +341,28 @@ class CLIDriver:
         return self.create_action("lvs", hooks if len(hooks) > 0 else None,
                                   pre_action_func, post_load_func, post_run_func)
 
+    def create_sim_action(self, custom_hooks: List[HammerToolHookAction],
+                          pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_load_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
+        hooks = self.get_extra_sim_hooks() + custom_hooks  # type: List[HammerToolHookAction]
+        return self.create_action("sim", hooks if len(hooks) > 0 else None,
+                                  pre_action_func, post_load_func, post_run_func)
+
     def create_sram_generator_action(self, custom_hooks: List[HammerToolHookAction],
                           pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
                           post_load_func: Optional[Callable[[HammerDriver], None]] = None,
                           post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
         hooks = self.get_extra_sram_generator_hooks() + custom_hooks  # type: List[HammerToolHookAction]
         return self.create_action("sram_generator", hooks if len(hooks) > 0 else None,
+                                  pre_action_func, post_load_func, post_run_func)
+
+    def create_pcb_action(self, custom_hooks: List[HammerToolHookAction],
+                          pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_load_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
+        hooks = self.get_extra_pcb_hooks() + custom_hooks  # type: List[HammerToolHookAction]
+        return self.create_action("pcb", hooks if len(hooks) > 0 else None,
                                   pre_action_func, post_load_func, post_run_func)
 
     def create_action(self, action_type: str,
@@ -325,13 +396,22 @@ class CLIDriver:
                 pre_action_func(driver)
 
             # If the driver didn't successfully load, return None.
+            # Note the step/hook priority is (in order of lowest to highest):
+            # 1. Tool-supplied core steps
+            # 2. Tool-supplied hooks (usually for persistence)
+            # 3. Tech-supplied hooks
+            # 4. User-supplied hooks
+            assert driver.tech is not None, "must have a technology"
             if action_type == "synthesis" or action_type == "syn":
                 if not driver.load_synthesis_tool(get_or_else(self.syn_rundir, "")):
                     return None
                 else:
                     post_load_func_checked(driver)
-                assert driver.syn_tool is not None, "load_synthesis_tool was successful"
-                success, output = driver.run_synthesis(extra_hooks)
+                assert driver.syn_tool is not None, "load_synthesis_tool was unsuccessful"
+                success, output = driver.run_synthesis(
+                        driver.syn_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_syn_hooks(driver.syn_tool.name) + \
+                        list(extra_hooks or []))
                 if not success:
                     driver.log.error("Synthesis tool did not succeed")
                     return None
@@ -344,8 +424,11 @@ class CLIDriver:
                     return None
                 else:
                     post_load_func_checked(driver)
-                assert driver.par_tool is not None, "load_par_tool was successful"
-                success, output = driver.run_par(extra_hooks)
+                assert driver.par_tool is not None, "load_par_tool was unsuccessful"
+                success, output = driver.run_par(
+                        driver.par_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_par_hooks(driver.par_tool.name) + \
+                        list(extra_hooks or []))
                 if not success:
                     driver.log.error("Place-and-route tool did not succeed")
                     return None
@@ -358,21 +441,78 @@ class CLIDriver:
                     return None
                 else:
                     post_load_func_checked(driver)
-                success, output = driver.run_drc(extra_hooks)
+                assert driver.drc_tool is not None, "load_drc_tool was unsuccessful"
+                success, output = driver.run_drc(
+                        driver.drc_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_drc_hooks(driver.drc_tool.name) + \
+                        list(extra_hooks or []))
+                if not success:
+                    driver.log.error("DRC tool did not succeed")
+                    return None
+                dump_config_to_json_file(os.path.join(driver.drc_tool.run_dir, "drc-output.json"), output)
+                dump_config_to_json_file(os.path.join(driver.drc_tool.run_dir, "drc-output-full.json"),
+                                         self.get_full_config(driver, output))
                 post_run_func_checked(driver)
             elif action_type == "lvs":
                 if not driver.load_lvs_tool(get_or_else(self.lvs_rundir, "")):
                     return None
                 else:
                     post_load_func_checked(driver)
-                success, output = driver.run_lvs(extra_hooks)
+                assert driver.lvs_tool is not None, "load_lvs_tool was unsuccessful"
+                success, output = driver.run_lvs(
+                        driver.lvs_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_lvs_hooks(driver.lvs_tool.name) + \
+                        list(extra_hooks or []))
+                if not success:
+                    driver.log.error("LVS tool did not succeed")
+                    return None
+                dump_config_to_json_file(os.path.join(driver.lvs_tool.run_dir, "lvs-output.json"), output)
+                dump_config_to_json_file(os.path.join(driver.lvs_tool.run_dir, "lvs-output-full.json"),
+                                         self.get_full_config(driver, output))
                 post_run_func_checked(driver)
             elif action_type == "sram_generator":
                 if not driver.load_sram_generator_tool(get_or_else(self.sram_generator_rundir, "")):
                     return None
                 else:
                     post_load_func_checked(driver)
-                success, output = driver.run_sram_generator(extra_hooks)
+                assert driver.sram_generator_tool is not None, "load_sram_generator_tool was unsuccessful"
+                success, output = driver.run_sram_generator(
+                        driver.sram_generator_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_sram_generator_hooks(driver.sram_generator_tool.name) + \
+                        list(extra_hooks or []))
+                if not success:
+                    driver.log.error("SRAM generator tool did not succeed")
+                    return None
+                post_run_func_checked(driver)
+            elif action_type == "sim":
+                if not driver.load_sim_tool(get_or_else(self.sim_rundir, "")):
+                    return None
+                else:
+                    post_load_func_checked(driver)
+                assert driver.sim_tool is not None, "load_sim_tool was unsuccessful"
+                success, output = driver.run_sim(
+                        driver.sim_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_sim_hooks(driver.sim_tool.name) + \
+                        list(extra_hooks or []))
+                if not success:
+                    driver.log.error("simulation tool did not succeed")
+                    return None
+            elif action_type == "pcb":
+                if not driver.load_pcb_tool(get_or_else(self.pcb_rundir, "")):
+                    return None
+                else:
+                    post_load_func_checked(driver)
+                assert driver.pcb_tool is not None, "load_pcb_tool was unsuccessful"
+                success, output = driver.run_pcb(
+                        driver.pcb_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_pcb_hooks(driver.pcb_tool.name) + \
+                        list(extra_hooks or []))
+                if not success:
+                    driver.log.error("PCB deliverable tool did not succeed")
+                    return None
+                dump_config_to_json_file(os.path.join(driver.pcb_tool.run_dir, "pcb-output.json"), output)
+                dump_config_to_json_file(os.path.join(driver.pcb_tool.run_dir, "pcb-output-full.json"),
+                                         self.get_full_config(driver, output))
                 post_run_func_checked(driver)
             else:
                 raise ValueError("Invalid action_type = " + str(action_type))
@@ -389,6 +529,24 @@ class CLIDriver:
             return None
         else:
             return self.get_full_config(driver, par_input_only)
+
+    def synthesis_to_sim_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        """Create a full config to run the output."""
+        sim_input_only = HammerDriver.synthesis_output_to_sim_input(driver.project_config)
+        if sim_input_only is None:
+            driver.log.error("Input config does not appear to contain valid synthesis outputs")
+            return None
+        else:
+            return self.get_full_config(driver, sim_input_only)
+
+    def par_to_sim_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        """Create a full config to run the output."""
+        sim_input_only = HammerDriver.par_output_to_sim_input(driver.project_config)
+        if sim_input_only is None:
+            driver.log.error("Input config does not appear to contain valid par outputs")
+            return None
+        else:
+            return self.get_full_config(driver, sim_input_only)
 
     def hier_par_to_syn_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
         """ Create a full config to run the output. """
@@ -449,6 +607,70 @@ class CLIDriver:
                 return par_output
 
         return syn_par_action
+
+    def create_synthesis_sim_action(self, synthesis_action: CLIActionConfigType, sim_action: CLIActionConfigType) -> CLIActionConfigType:
+        """
+        Create a parameterizable synthesis_sim action for the CLIDriver.
+
+        :param synthesis_action: synthesis action
+        :param sim_action: sim action
+        :return: Custom synthesis_sim action
+        """
+
+        def syn_sim_action(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+            # Synthesis output.
+            syn_output = synthesis_action(driver, append_error_func)
+            if syn_output is None:
+                append_error_func("Synthesis action in syn_sim failed")
+                return None
+            else:
+                # Generate sim input from the synthesis output.
+                syn_output_converted = HammerDriver.synthesis_output_to_sim_input(syn_output)
+                assert syn_output_converted is not None, "syn_output must be generated by CLIDriver"
+                sim_input = self.get_full_config(driver, syn_output_converted)  # type: dict
+
+                # Dump both synthesis output and sim input for debugging/resuming.
+                assert driver.syn_tool is not None, "Syn tool must exist since we ran synthesis_action successfully"
+                dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "sim-input.json"), sim_input)
+
+                # Use new sim input and run simulation.
+                driver.update_project_configs([sim_input])
+                sim_output = sim_action(driver, append_error_func)
+                return sim_output
+
+        return syn_sim_action
+
+    def create_par_sim_action(self, par_action: CLIActionConfigType, sim_action: CLIActionConfigType) -> CLIActionConfigType:
+        """
+        Create a parameterizable par_sim action for the CLIDriver.
+
+        :param par_action: par action
+        :param sim_action: sim action
+        :return: Custom par_sim action
+        """
+
+        def par_sim_action(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+            # Synthesis output.
+            par_output = par_action(driver, append_error_func)
+            if par_output is None:
+                append_error_func("PAR action in syn_sim failed")
+                return None
+            else:
+                # Generate sim input from the par output.
+                par_output_converted = HammerDriver.par_output_to_sim_input(par_output)
+                assert par_output_converted is not None, "par_output must be generated by CLIDriver"
+                sim_input = self.get_full_config(driver, par_output_converted)  # type: dict
+
+                # Dump both par output and sim input for debugging/resuming.
+                assert driver.par_tool is not None, "PAR tool must exist since we ran par_action successfully"
+                dump_config_to_json_file(os.path.join(driver.par_tool.run_dir, "sim-input.json"), sim_input)
+
+                # Use new sim input and run simulation.
+                driver.update_project_configs([sim_input])
+                sim_output = sim_action(driver, append_error_func)
+                return sim_output
+
+        return par_sim_action
 
     ### Hierarchical stuff ###
     @property
@@ -678,28 +900,45 @@ class CLIDriver:
             # Try getting object dir from environment variable.
             obj_dir = get_nonempty_str(os.environ.get("HAMMER_DRIVER_OBJ_DIR", ""))
         if obj_dir is not None:
-            options = options._replace(obj_dir=obj_dir)
+            options = options._replace(obj_dir=os.path.realpath(obj_dir))
         # Syn/par rundir (optional)
         self.syn_rundir = get_nonempty_str(args['syn_rundir'])
         self.par_rundir = get_nonempty_str(args['par_rundir'])
         self.drc_rundir = get_nonempty_str(args['drc_rundir'])
         self.lvs_rundir = get_nonempty_str(args['lvs_rundir'])
+        self.sim_rundir = get_nonempty_str(args['sim_rundir'])
 
         # Stage control: from/to
         from_step = get_nonempty_str(args['from_step'])
+        after_step = get_nonempty_str(args['after_step'])
         to_step = get_nonempty_str(args['to_step'])
+        until_step = get_nonempty_str(args['until_step'])
         only_step = get_nonempty_str(args['only_step'])
 
+        if from_step is not None and after_step is not None:
+            errors.append("Specified both start_before_step and start_after_step. start_before_step will take precedence.")
+        if to_step is not None and until_step is not None:
+            errors.append("Specified both stop_after_step and stop_before_step. stop_after_step will take precedence.")
+        if only_step is not None and any(s is not None for s in [from_step, after_step, to_step, until_step]):
+            errors.append("Specified {start|stop}_{before_after}_step with only_step. only_step will take precedence.")
+        if (from_step is not None and until_step is not None and from_step == until_step) or \
+           (after_step is not None and to_step is not None and after_step == to_step) or \
+           (after_step is not None and until_step is not None and after_step == until_step):
+            errors.append("Caution: start_before_step == stop_before_step, start_after_step == stop_after_step, or start_after_step == stop_before_step will result in nothing being run")
+
         driver = HammerDriver(options, config)
-        if from_step is not None or to_step is not None:
-            driver.set_post_custom_syn_tool_hooks(HammerTool.make_from_to_hooks(from_step, to_step))
-            driver.set_post_custom_par_tool_hooks(HammerTool.make_from_to_hooks(from_step, to_step))
-            if only_step is not None:
-                errors.append("Cannot specify from_step/to_step and only_step")
-        else:
-            if only_step is not None:
-                driver.set_post_custom_syn_tool_hooks(HammerTool.make_from_to_hooks(only_step, only_step))
-                driver.set_post_custom_par_tool_hooks(HammerTool.make_from_to_hooks(only_step, only_step))
+
+        start_step = only_step or from_step or after_step or None
+        start_incl = (only_step or from_step) is not None
+        stop_step = only_step or to_step or until_step or None
+        stop_incl = (only_step or to_step) is not None
+        if (start_step or stop_step) is not None:
+            driver.set_post_custom_syn_tool_hooks(HammerTool.make_start_stop_hooks(
+                HammerStartStopStep(step=start_step, inclusive=start_incl),
+                HammerStartStopStep(step=stop_step, inclusive=stop_incl)))
+            driver.set_post_custom_par_tool_hooks(HammerTool.make_start_stop_hooks(
+                HammerStartStopStep(step=start_step, inclusive=start_incl),
+                HammerStartStopStep(step=stop_step, inclusive=stop_incl)))
 
         # Hierarchical support.
         # Generate synthesis and par actions for each module above.
@@ -745,10 +984,10 @@ class CLIDriver:
                 def post_run(d: HammerDriver, rundir: str) -> None:
                     # Write out the configs used/generated for logging/debugging.
                     with open(os.path.join(rundir, "full_config.json"), "w") as f:
-                        new_output_json = json.dumps(d.project_config, indent=4)
+                        new_output_json = json.dumps(d.project_config, cls=HammerJSONEncoder, indent=4)
                         f.write(new_output_json)
                     with open(os.path.join(rundir, "module_config.json"), "w") as f:
-                        new_output_json = json.dumps(config, indent=4)
+                        new_output_json = json.dumps(config, cls=HammerJSONEncoder, indent=4)
                         f.write(new_output_json)
 
                     d.update_project_configs(deeplist(base_project_config[0]))
@@ -806,7 +1045,7 @@ class CLIDriver:
                     b, ext = os.path.splitext(args["output"])
                     new_output_filename = "{base}-{module}{ext}".format(base=b, module=module, ext=ext)
                     with open(new_output_filename, "w") as f:
-                        new_output_json = json.dumps(new_output, indent=4)
+                        new_output_json = json.dumps(new_output, cls=HammerJSONEncoder, indent=4)
                         f.write(new_output_json)
                     log.info("Output JSON: " + str(new_output))
 
@@ -816,7 +1055,7 @@ class CLIDriver:
                     }
                     new_ilm_filename = "{base}-{module}_ilm{ext}".format(base=b, module=module, ext=ext)
                     with open(new_ilm_filename, "w") as f:
-                        json_content = json.dumps(new_ilm, indent=4)
+                        json_content = json.dumps(new_ilm, cls=HammerJSONEncoder, indent=4)
                         f.write(json_content)
                     log.info("New input ILM JSON written to " + new_ilm_filename)
                     driver.update_project_configs(driver.project_configs + [new_ilm])
@@ -825,6 +1064,22 @@ class CLIDriver:
             self.hierarchical_auto_action = auto_action
 
         return driver, errors
+
+    @staticmethod
+    def generate_build_inputs(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        """
+        Generate the build tool artifacts for this flow, specified by the "vlsi.core.build_system" key.
+        The flow is the set of steps configured by the current HammerIR input.
+
+        :param driver: The HammerDriver object which has parsed the configs specified by -p
+        :param append_error_func: The function to use to append an error
+        :return: The diplomacy graph
+        """
+        build_system = str(driver.database.get_setting("vlsi.core.build_system", "none"))
+        if build_system in BuildSystems:
+            return BuildSystems[build_system](driver, append_error_func)
+        else:
+            raise ValueError("Unsupported build system: {}".format(build_system))
 
     def run_main_parsed(self, args: dict) -> int:
         """
@@ -851,7 +1106,7 @@ class CLIDriver:
             action_func = cast(CLIActionConfigType, action_func)
             output_config = action_func(driver, errors.append)  # type: Optional[dict]
             if output_config is not None:
-                output_str = json.dumps(output_config, indent=4)
+                output_str = json.dumps(output_config, cls=HammerJSONEncoder, indent=4)
         elif is_string_action(action_func):
             action_func = cast(CLIActionStringType, action_func)
             output_str = action_func(driver, errors.append)
@@ -886,7 +1141,7 @@ class CLIDriver:
         parser.add_argument("-e", "--environment_config", action='append', required=False,
                             help="Environment config files (.yml or .json) - .json will take precendence over any .yml. These config files will not be re-emitted in the output json. Can also be specified as a colon-separated list in the environment variable HAMMER_ENVIRONMENT_CONFIGS.")
         parser.add_argument("-p", "--project_config", action='append', dest="configs", type=str,
-                            help='Project config files (.yml or .json) - .json will take precedence over any .yml.')
+                            help='Project config files (.yml or .json).')
         parser.add_argument("-l", "--log", required=False,
                             help='Log file. Leave blank to automatically create one.')
         parser.add_argument("--obj_dir", required=False,
@@ -899,13 +1154,19 @@ class CLIDriver:
                             help='(optional) Directory to store DRC results in')
         parser.add_argument("--lvs_rundir", required=False, default="",
                             help='(optional) Directory to store LVS results in')
+        parser.add_argument("--sim_rundir", required=False, default="",
+                            help='(optional) Directory to store simulation results in')
         # Optional arguments for step control.
-        parser.add_argument("--from_step", dest="from_step", required=False,
-                            help="Run the given action from the given step (inclusive).")
-        parser.add_argument("--to_step", dest="to_step", required=False,
-                            help="Run the given action to the given step (inclusive).")
+        parser.add_argument("--start_before_step", "--from_step", dest="from_step", required=False,
+                            help="Run the given action from before the given step (inclusive). Not compatible with --start_after_step.")
+        parser.add_argument("--start_after_step", "--after_step", dest="after_step", required=False,
+                            help="Run the given action from after the given step (exclusive). Not compatible with --start_before_step.")
+        parser.add_argument("--stop_after_step", "--to_step", dest="to_step", required=False,
+                            help="Run the given action to the given step (inclusive). Not compatible with --stop_before_step.")
+        parser.add_argument("--stop_before_step", "--until_step", dest="until_step", required=False,
+                            help="Run the given action until the given step (exclusive). Not compatible with --stop_after_step.")
         parser.add_argument("--only_step", dest="only_step", required=False,
-                            help="Run only the given step. Not compatible with --from_step or --to_step.")
+                            help="Run only the given step. Not compatible with --{start|stop}_{before|after}_step.")
         # Required arguments for CLI hammer driver.
         parser.add_argument("-o", "--output", default="output.json", required=False,
                             help='Output JSON file for results and modular use of hammer-vlsi. Default: output.json.')

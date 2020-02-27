@@ -8,6 +8,7 @@
 #  See LICENSE for licence details.
 
 import re
+from decimal import Decimal
 from typing import List, Optional, Tuple
 
 __all__ = ['LEFUtils']
@@ -15,7 +16,7 @@ __all__ = ['LEFUtils']
 
 class LEFUtils:
     @staticmethod
-    def get_sizes(source: str) -> List[Tuple[str, float, float]]:
+    def get_sizes(source: str) -> List[Tuple[str, Decimal, Decimal]]:
         """
         Get the sizes of all macros in the given LEF source file.
 
@@ -24,7 +25,7 @@ class LEFUtils:
         """
         lines = source.split("\n")
 
-        output = []  # type: List[Tuple[str, float, float]]
+        output = []  # type: List[Tuple[str, Decimal, Decimal]]
 
         in_propertydefinitions = False  # type: bool
         in_macro = None  # type: Optional[str]
@@ -82,8 +83,8 @@ class LEFUtils:
             if regex_search:
                 if found_size:
                     raise ValueError("Found two SIZE statements in MACRO block for {m}".format(m=in_macro))
-                width = float(regex_search.group(1))
-                height = float(regex_search.group(2))
+                width = Decimal(regex_search.group(1))
+                height = Decimal(regex_search.group(2))
                 found_size = True
 
                 # Add size to output

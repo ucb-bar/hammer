@@ -18,8 +18,10 @@ from tech_test_utils import HasGetTech
 from test_tool_utils import HammerToolTestHelpers, DummyTool, SingleStepTool
 
 import hammer_config
+from hammer_config import HammerJSONEncoder
 import hammer_tech
 import hammer_vlsi
+from hammer_vlsi.hooks import HammerStartStopStep
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, Level
 from hammer_logging.test import HammerLoggingCaptureContext
 from hammer_tech import LibraryFilter, Library, ExtraLibrary
@@ -212,7 +214,7 @@ class HammerToolTest(HasGetTech, unittest.TestCase):
             ]
         }
         with open(tech_json_filename, "w") as f:
-            f.write(json.dumps(tech_json, indent=4))
+            f.write(json.dumps(tech_json, cls=HammerJSONEncoder, indent=4))
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
         tech.logger = HammerVLSILogging.context("")
@@ -425,7 +427,7 @@ export lol=abc"cat"
                 "vlsi.core.par_tool": "nop",
                 "synthesis.inputs.top_module": "dummy",
                 "synthesis.inputs.input_files": ("/dev/null",)
-            }, indent=4))
+            }, cls=HammerJSONEncoder, indent=4))
 
         class BadExportTool(hammer_vlsi.HammerSynthesisTool, DummyTool):
             def export_config_outputs(self) -> Dict[str, Any]:
@@ -541,6 +543,7 @@ export lol=abc"cat"
         test.run_dir = tempfile.mkdtemp()
         test.technology = tech
         database = hammer_config.HammerDatabase()
+        hammer_vlsi.HammerVLSISettings.load_builtins_and_core(database)
 
         settings = """
         {
@@ -575,6 +578,125 @@ export lol=abc"cat"
         shutil.rmtree(tech_dir_base)
         shutil.rmtree(test.run_dir)
 
+    def test_pin_modes(self) -> None:
+        """
+        Test that both full_auto and semi_auto pin modes work.
+        """
+        import hammer_config
+
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+        def add_stackup(in_dict: Dict[str, Any]) -> Dict[str, Any]:
+            out_dict = deepdict(in_dict)
+            out_dict["stackups"] = [StackupTestHelper.create_test_stackup_dict(8)]
+            return out_dict
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_stackup)
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
+        tech.cache_dir = tech_dir
+        tech.logger = HammerVLSILogging.context("")
+
+        test = DummyTool()
+        test.logger = HammerVLSILogging.context("")
+        test.run_dir = tempfile.mkdtemp()
+        test.technology = tech
+        database = hammer_config.HammerDatabase()
+        hammer_vlsi.HammerVLSISettings.load_builtins_and_core(database)
+
+        # Full-auto config should work in full_auto
+        settings = """
+        {
+        "technology.core.stackup": "StackupWith8Metals",
+        "vlsi.inputs.pin_mode": "generated",
+        "vlsi.inputs.pin.generate_mode": "full_auto",
+        "vlsi.inputs.pin.assignments": [
+                     {"pins": "foo*", "side": "top", "layers": ["M5", "M3"]},
+                     {"pins": "tx_n", "preplaced": true},
+                     {"pins": "rx_n", "side": "left", "layers": ["M6"]}
+                 ]
+        }
+        """
+        database.update_project([hammer_config.load_config_from_string(settings, is_yaml=False)])
+        test.set_database(database)
+
+        with HammerLoggingCaptureContext() as c:
+            my_pins = test.get_pin_assignments()
+
+        self.assertEqual(len(c.logs), 0)
+        assert my_pins is not None
+        self.assertEqual(len(my_pins), 3)
+
+        # Full-auto config should also work in semi_auto
+        settings = """
+        {
+        "technology.core.stackup": "StackupWith8Metals",
+        "vlsi.inputs.pin_mode": "generated",
+        "vlsi.inputs.pin.generate_mode": "semi_auto",
+        "vlsi.inputs.pin.assignments": [
+                     {"pins": "foo*", "side": "top", "layers": ["M5", "M3"]},
+                     {"pins": "tx_n", "preplaced": true},
+                     {"pins": "rx_n", "side": "left", "layers": ["M6"]}
+                 ]
+        }
+        """
+        database.update_project([hammer_config.load_config_from_string(settings, is_yaml=False)])
+        test.set_database(database)
+
+        with HammerLoggingCaptureContext() as c:
+            my_pins = test.get_pin_assignments()
+
+        self.assertEqual(len(c.logs), 0)
+        assert my_pins is not None
+        self.assertEqual(len(my_pins), 3)
+
+        # Semi-auto config should work in semi_auto
+        settings = """
+        {
+        "technology.core.stackup": "StackupWith8Metals",
+        "vlsi.inputs.pin_mode": "generated",
+        "vlsi.inputs.pin.generate_mode": "semi_auto",
+        "vlsi.inputs.pin.assignments": [
+                     {"pins": "foo*", "side": "top", "layers": ["M5", "M3"]},
+                     {"pins": "tx_n", "preplaced": true},
+                     {"pins": "rx_n", "side": "left", "layers": ["M6"], "width": 888.8}
+                 ]
+        }
+        """
+        database.update_project([hammer_config.load_config_from_string(settings, is_yaml=False)])
+        test.set_database(database)
+
+        with HammerLoggingCaptureContext() as c:
+            my_pins = test.get_pin_assignments()
+
+        self.assertEqual(len(c.logs), 0)
+        assert my_pins is not None
+        self.assertEqual(len(my_pins), 3)
+
+        # Semi-auto config should give errors in full_auto
+        settings = """
+        {
+        "technology.core.stackup": "StackupWith8Metals",
+        "vlsi.inputs.pin_mode": "generated",
+        "vlsi.inputs.pin.generate_mode": "full_auto",
+        "vlsi.inputs.pin.assignments": [
+                     {"pins": "foo*", "side": "top", "layers": ["M5", "M3"]},
+                     {"pins": "tx_n", "preplaced": true},
+                     {"pins": "rx_n", "side": "left", "layers": ["M6"], "width": 888.8}
+                 ]
+        }
+        """
+        database.update_project([hammer_config.load_config_from_string(settings, is_yaml=False)])
+        test.set_database(database)
+
+        with HammerLoggingCaptureContext() as c:
+            my_pins = test.get_pin_assignments()
+
+        self.assertEqual(len(c.logs), 1)
+        self.assertTrue("width requires semi_auto" in c.logs[0])
+
+        # Cleanup
+        shutil.rmtree(tech_dir_base)
+        shutil.rmtree(test.run_dir)
+
     def test_pins(self) -> None:
         """
         Test that HammerTool pin placement support works.
@@ -597,6 +719,7 @@ export lol=abc"cat"
         test.run_dir = tempfile.mkdtemp()
         test.technology = tech
         database = hammer_config.HammerDatabase()
+        hammer_vlsi.HammerVLSISettings.load_builtins_and_core(database)
         # Check bad mode string doesn't look at null dict
         settings = """
 {
@@ -649,6 +772,90 @@ export lol=abc"cat"
         shutil.rmtree(tech_dir_base)
         shutil.rmtree(test.run_dir)
 
+    def test_hierarchical_width_height(self) -> None:
+        """
+        Test that hierarchical placements correctly propagate width and height.
+        """
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+        def add_stackup(in_dict: Dict[str, Any]) -> Dict[str, Any]:
+            out_dict = deepdict(in_dict)
+            out_dict["stackups"] = [StackupTestHelper.create_test_stackup_dict(8)]
+            return out_dict
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_stackup)
+        tmpdir = tempfile.mkdtemp()
+        proj_config = os.path.join(tmpdir, "config.json")
+
+        settings = {
+                "vlsi.core.technology": "dummy28",
+                "vlsi.inputs.hierarchical.mode": "hierarchical",
+                "vlsi.inputs.hierarchical.top_module": "TopMod",
+                "vlsi.inputs.hierarchical.config_source": "manual",
+                "vlsi.inputs.hierarchical.manual_modules": [{"TopMod": ["SubModA", "SubModB"]}],
+                "vlsi.inputs.hierarchical.manual_placement_constraints": [
+                    {"TopMod": [
+                        {"path": "top", "type": "toplevel", "x": 0, "y": 0, "width": 1234, "height": 7890, "margins": {"left": 1, "top": 2, "right": 3, "bottom": 4}},
+                        {"path": "top/C", "type": "placement", "x": 2, "y": 102, "width": 30, "height": 40},
+                        {"path": "top/B", "type": "hierarchical", "x": 10, "y": 30, "master": "SubModB"},
+                        {"path": "top/A", "type": "hierarchical", "x": 200, "y": 120, "master": "SubModA"}]},
+                    {"SubModA": [
+                        {"path": "a", "type": "toplevel", "x": 0, "y": 0, "width": 100, "height": 200, "margins": {"left": 0, "top": 0, "right": 0, "bottom": 0}}]},
+                    {"SubModB": [
+                        {"path": "b", "type": "toplevel", "x": 0, "y": 0, "width": 340, "height": 160, "margins": {"left": 0, "top": 0, "right": 0, "bottom": 0}}]}
+                ]
+            }
+        with open(proj_config, "w") as f:
+            f.write(json.dumps(settings, cls=HammerJSONEncoder, indent=4))
+
+        driver = hammer_vlsi.HammerDriver(
+            hammer_vlsi.HammerDriver.get_default_driver_options()._replace(project_configs=[
+                proj_config
+            ]))
+
+        # This should not assert
+        hier_settings = driver.get_hierarchical_settings()
+
+        top_constraints = [x[1]["vlsi.inputs.placement_constraints"] for x in hier_settings if x[0] == "TopMod"][0]
+        print(top_constraints)
+        a = [x for x in top_constraints if x["type"] == "hierarchical" and x["master"] == "SubModA"][0]
+        b = [x for x in top_constraints if x["type"] == "hierarchical" and x["master"] == "SubModB"][0]
+        print(a)
+        # Note that Decimals get serialized as strings
+        self.assertEqual(a["width"], "100")
+        self.assertEqual(a["height"], "200")
+        self.assertEqual(b["width"], "340")
+        self.assertEqual(b["height"], "160")
+
+        # Corrupt SubModA's width and heights
+        settings["vlsi.inputs.hierarchical.manual_placement_constraints"] = [
+                    {"TopMod": [
+                        {"path": "top", "type": "toplevel", "x": 0, "y": 0, "width": 1234, "height": 7890, "margins": {"left": 1, "top": 2, "right": 3, "bottom": 4}},
+                        {"path": "top/C", "type": "placement", "x": 2, "y": 102, "width": 30, "height": 40},
+                        {"path": "top/B", "type": "hierarchical", "x": 10, "y": 30, "master": "SubModB"},
+                        {"path": "top/A", "type": "hierarchical", "x": 200, "y": 120, "width": 123, "height": 456, "master": "SubModA"}]},
+                    {"SubModA": [
+                        {"path": "a", "type": "toplevel", "x": 0, "y": 0, "width": 100, "height": 200, "margins": {"left": 0, "top": 0, "right": 0, "bottom": 0}}]},
+                    {"SubModB": [
+                        {"path": "b", "type": "toplevel", "x": 0, "y": 0, "width": 340, "height": 160, "margins": {"left": 0, "top": 0, "right": 0, "bottom": 0}}]}
+                ]
+
+        with open(proj_config, "w") as f:
+            f.write(json.dumps(settings, cls=HammerJSONEncoder, indent=4))
+
+        driver = hammer_vlsi.HammerDriver(
+            hammer_vlsi.HammerDriver.get_default_driver_options()._replace(project_configs=[
+                proj_config
+            ]))
+
+
+        # This should assert because we mismatched SubModA's width and height with the master values
+        with self.assertRaises(ValueError):
+            hier_settings = driver.get_hierarchical_settings()
+
+        # Cleanup
+        shutil.rmtree(tech_dir_base)
+        shutil.rmtree(tmpdir)
+
 
 T = TypeVar('T')
 
@@ -677,7 +884,7 @@ class HammerToolHooksTestContext:
                 "synthesis.inputs.top_module": "dummy",
                 "synthesis.inputs.input_files": ("/dev/null",),
                 "synthesis.mocksynth.temp_folder": temp_dir
-            }, indent=4))
+            }, cls=HammerJSONEncoder, indent=4))
         options = hammer_vlsi.HammerDriverOptions(
             environment_configs=[],
             project_configs=[json_path],
@@ -785,6 +992,21 @@ class HammerToolHooksTest(unittest.TestCase):
                     self.assertFalse(os.path.exists(file))
                 else:
                     self.assertEqual(self.read(file), "step{}".format(i))
+
+    def test_pause_hooks_logging(self) -> None:
+        """Test that pause hooks log correctly."""
+        with self.create_context() as c:
+            with HammerLoggingCaptureContext() as c2:
+                success, syn_output = c.driver.run_synthesis(hook_actions=[
+                    hammer_vlsi.HammerTool.make_post_pause_hook("step1")
+                ])
+                self.assertTrue(success)
+
+            # step2 to step4 should show up in log as skipped
+            for i in range(2, 5):
+                self.assertTrue(c2.log_contains("Sub-step 'step{}' skipped due to pause hook".format(i)))
+            # step1 should NOT show up in log as skipped
+            self.assertFalse(c2.log_contains("Sub-step 'step1' skipped due to pause hook"))
 
     def test_extra_pause_hooks(self) -> None:
         """Test that extra pause hooks cause an error."""
@@ -897,24 +1119,193 @@ class HammerToolHooksTest(unittest.TestCase):
 
     def test_resume_pause_hooks_with_custom_steps(self) -> None:
         """Test that resume/pause hooks work with custom steps."""
+
         with self.create_context() as c:
             def step5(x: hammer_vlsi.HammerTool) -> bool:
                 with open(os.path.join(c.temp_dir, "step5.txt"), "w") as f:
                     f.write("HelloWorld")
                 return True
-
-            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_from_to_hooks("step5", "step5"))
+            def step6(x: hammer_vlsi.HammerTool) -> bool:
+                with open(os.path.join(c.temp_dir, "step6.txt"), "w") as f:
+                    f.write("ByeByeWorld")
+                return True
+            # Test from_step => to_step
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step5", inclusive=True), HammerStartStopStep(step="step5", inclusive=True)))
             success, syn_output = c.driver.run_synthesis(hook_actions=[
-                hammer_vlsi.HammerTool.make_post_insertion_hook("step4", step5)
+                hammer_vlsi.HammerTool.make_post_insertion_hook("step4", step5),
+                hammer_vlsi.HammerTool.make_post_insertion_hook("step5", step6)
             ])
             self.assertTrue(success)
 
-            for i in range(1, 6):
+            for i in range(1, 7):
                 file = os.path.join(c.temp_dir, "step{}.txt".format(i))
                 if i == 5:
                     self.assertEqual(self.read(file), "HelloWorld")
                 else:
                     self.assertFalse(os.path.exists(file))
+
+        with self.create_context() as c:
+            def step5(x: hammer_vlsi.HammerTool) -> bool:
+                with open(os.path.join(c.temp_dir, "step5.txt"), "w") as f:
+                    f.write("HelloWorld")
+                return True
+            def step6(x: hammer_vlsi.HammerTool) -> bool:
+                with open(os.path.join(c.temp_dir, "step6.txt"), "w") as f:
+                    f.write("ByeByeWorld")
+                return True
+            # Test after_step => until_step
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step4", inclusive=False), HammerStartStopStep(step="step6", inclusive=False)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_post_insertion_hook("step4", step5),
+                hammer_vlsi.HammerTool.make_post_insertion_hook("step5", step6)
+            ])
+            self.assertTrue(success)
+
+            for i in range(1, 7):
+                file = os.path.join(c.temp_dir, "step{}.txt".format(i))
+                if i == 5:
+                    self.assertEqual(self.read(file), "HelloWorld")
+                else:
+                    self.assertFalse(os.path.exists(file))
+
+    def test_persistent_hooks(self) -> None:
+        """Test that persistent hooks work."""
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            # Test persist despite starting from step 3
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step3", inclusive=True), HammerStartStopStep(step=None, inclusive=False)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_persistent_hook(persist)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertEqual(self.read(file1), "HelloWorld")
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            # Test pre_persist executes if anything before target step is run
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step=None, inclusive=False), HammerStartStopStep(step="step2", inclusive=True)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_pre_persistent_hook("step4", persist)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertEqual(self.read(file1), "HelloWorld")
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            # Test pre_persist does not execute if starting from after target step
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step3", inclusive=True), HammerStartStopStep(step=None, inclusive=False)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_pre_persistent_hook("step2", persist)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertFalse(os.path.exists(file1))
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            # Test post_persist does not execute if stopped before target step
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step=None, inclusive=False), HammerStartStopStep(step="step2", inclusive=True)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_post_persistent_hook("step3", persist)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertFalse(os.path.exists(file1))
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            # Test post_persist executes started after target step
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step3", inclusive=True), HammerStartStopStep(step=None, inclusive=False)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_post_persistent_hook("step1", persist)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertEqual(self.read(file1), "HelloWorld")
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            # Test post_persist executes if target step is included in steps run
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step1", inclusive=True), HammerStartStopStep(step=None, inclusive=False)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_post_persistent_hook("step3", persist)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertEqual(self.read(file1), "HelloWorld")
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            def persist2(x: hammer_vlsi.HammerTool) -> bool:
+                file2 = os.path.join(c.temp_dir, "persist2.txt")
+                with open(file2, "w") as f:
+                    f.write("ByeByeWorld")
+                return True
+            # Test replacement hook inherits replaced persistent hook behavior
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step3", inclusive=True), HammerStartStopStep(step=None, inclusive=False)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_post_persistent_hook("step1", persist),
+                hammer_vlsi.HammerTool.make_replacement_hook("persist", persist2)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertFalse(os.path.exists(file1))
+            file2 = os.path.join(c.temp_dir, "persist2.txt")
+            self.assertEqual(self.read(file2), "ByeByeWorld")
+
+        with self.create_context() as c:
+            def persist(x: hammer_vlsi.HammerTool) -> bool:
+                file1 = os.path.join(c.temp_dir, "persist.txt")
+                with open(file1, "w") as f:
+                    f.write("HelloWorld")
+                return True
+            def persist2(x: hammer_vlsi.HammerTool) -> bool:
+                file2 = os.path.join(c.temp_dir, "persist2.txt")
+                with open(file2, "w") as f:
+                    f.write("ByeByeWorld")
+                return True
+            # Test insertion hook inherits replaced persistent hook behavior
+            c.driver.set_post_custom_syn_tool_hooks(hammer_vlsi.HammerTool.make_start_stop_hooks(HammerStartStopStep(step="step3", inclusive=True), HammerStartStopStep(step=None, inclusive=False)))
+            success, syn_output = c.driver.run_synthesis(hook_actions=[
+                hammer_vlsi.HammerTool.make_post_persistent_hook("step1", persist),
+                hammer_vlsi.HammerTool.make_pre_insertion_hook("persist", persist2)
+            ])
+            self.assertTrue(success)
+            file1 = os.path.join(c.temp_dir, "persist.txt")
+            self.assertEqual(self.read(file1), "HelloWorld")
+            file2 = os.path.join(c.temp_dir, "persist2.txt")
+            self.assertEqual(self.read(file2), "ByeByeWorld")
 
 
 class HammerSubmitCommandTestContext:
@@ -974,7 +1365,7 @@ class HammerSubmitCommandTestContext:
             })
 
         with open(json_path, "w") as f:
-            f.write(json.dumps(json_content, indent=4))
+            f.write(json.dumps(json_content, cls=HammerJSONEncoder, indent=4))
 
         options = hammer_vlsi.HammerDriverOptions(
             environment_configs=[],
@@ -1076,7 +1467,7 @@ class HammerSignoffToolTestContext:
             })
 
         with open(json_path, "w") as f:
-            f.write(json.dumps(json_content, indent=4))
+            f.write(json.dumps(json_content, cls=HammerJSONEncoder, indent=4))
 
         options = hammer_vlsi.HammerDriverOptions(
             environment_configs=[],
@@ -1171,7 +1562,7 @@ class HammerSRAMGeneratorToolTestContext:
             })
 
         with open(json_path, "w") as f:
-            f.write(json.dumps(json_content, indent=4))
+            f.write(json.dumps(json_content, cls=HammerJSONEncoder, indent=4))
 
         options = hammer_vlsi.HammerDriverOptions(
             environment_configs=[],
@@ -1215,6 +1606,200 @@ class HammerSRAMGeneratorToolTest(unittest.TestCase):
             "sram32x32_1.5V_125.0C.gds",
             "sram64x128_0.5V_0.0C.gds",
             "sram64x128_1.5V_125.0C.gds"]))
+
+class HammerASAP7SRAMGeneratorToolTestContext:
+
+    def __init__(self, test: unittest.TestCase, tool_type: str) -> None:
+        self.test = test  # type unittest.TestCase
+        self.logger = HammerVLSILogging.context("")
+        self._driver = None  # type: Optional[hammer_vlsi.HammerDriver]
+        if tool_type not in ["sram_generator"]:
+            raise NotImplementedError("Have not created a test for %s yet" % (tool_type))
+        self._tool_type = tool_type
+
+    # Helper property to check that the driver did get initialized.
+    @property
+    def driver(self) -> hammer_vlsi.HammerDriver:
+        assert self._driver is not None, "HammerDriver must be initialized before use"
+        return self._driver
+
+    def __enter__(self) -> "HammerASAP7SRAMGeneratorToolTestContext":
+        """Initialize context by creating the temp_dir, driver, and loading the sram_generator tool."""
+        self.test.assertTrue(hammer_vlsi.HammerVLSISettings.set_hammer_vlsi_path_from_environment(),
+                             "hammer_vlsi_path must exist")
+        temp_dir = tempfile.mkdtemp()
+        json_path = os.path.join(temp_dir, "project.json")
+        json_content = {
+            "vlsi.core.technology": "nop", # can't load asap7 because we don't have the tarball
+            "vlsi.core.%s_tool" % self._tool_type: "sram_compiler",
+            "vlsi.core.%s_tool_path" % self._tool_type: ["../hammer-vlsi/technology/asap7"],
+            "vlsi.core.%s_tool_path_meta" % self._tool_type: "append",
+            "%s.inputs.top_module" % self._tool_type: "dummy",
+            "%s.inputs.layout_file" % self._tool_type: "/dev/null",
+            "%s.temp_folder" % self._tool_type: temp_dir,
+            "%s.submit.command" % self._tool_type: "local"
+        }  # type: Dict[str, Any]
+        if self._tool_type is "sram_generator":
+            json_content.update({
+                "vlsi.inputs.sram_parameters": [{"depth": 32, "width": 32,
+                    "name": "small", "family": "2RW", "mask": False, "vt": "SRAM", "mux": 1},
+                                              {"depth": 64, "width": 128,
+                    "name": "large", "family": "1RW", "mask": False, "vt": "SRAM", "mux": 1}],
+                "vlsi.inputs.mmmc_corners": [{"name": "PVT_0P63V_100C", "type": "setup", "voltage": "0.63V", "temp": "100C"},
+                                             {"name": "PVT_0P77V_0C", "type": "hold", "voltage": "0.77V", "temp": "0C"}]
+            })
+
+        with open(json_path, "w") as f:
+            f.write(json.dumps(json_content, cls=HammerJSONEncoder, indent=4))
+
+        options = hammer_vlsi.HammerDriverOptions(
+            environment_configs=[],
+            project_configs=[json_path],
+            log_file=os.path.join(temp_dir, "log.txt"),
+            obj_dir=temp_dir
+        )
+        self._driver = hammer_vlsi.HammerDriver(options)
+        self.temp_dir = temp_dir
+        return self
+
+    def __exit__(self, type, value, traceback) -> bool:
+        """Clean up the context by removing the temp_dir."""
+        shutil.rmtree(self.temp_dir)
+        # Return True (normal execution) if no exception occurred.
+        return True if type is None else False
+
+    @property
+    def env(self) -> Dict[str, str]:
+        return {}
+
+class HammerASAP7SRAMGeneratorToolTest(unittest.TestCase):
+    def create_context(self) -> HammerASAP7SRAMGeneratorToolTestContext:
+        return HammerASAP7SRAMGeneratorToolTestContext(self, "sram_generator")
+
+    def test_get_results(self) -> None:
+        """ Test that multiple srams and multiple corners have their
+            cross-product generated."""
+        with self.create_context() as c:
+          self.assertTrue(c.driver.load_sram_generator_tool())
+          self.assertTrue(c.driver.run_sram_generator())
+          assert isinstance(c.driver.sram_generator_tool, hammer_vlsi.HammerSRAMGeneratorTool)
+          output_libs = c.driver.sram_generator_tool.output_libraries # type: List[ExtraLibrary]
+          assert isinstance(output_libs, list)
+          # Should have an sram for each corner(2) and parameter(2) for a total of 4
+          self.assertEqual(len(output_libs),4)
+          libs = list(map(lambda ex: ex.library, output_libs)) # type: List[Library]
+          lib_names = list(map(lambda lib: lib.nldm_liberty_file, libs)) # type: ignore # These are actually List[str]
+          self.assertEqual(set(lib_names), set([
+            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM2RW32x32_PVT_0P63V_100C.lib"),
+            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM2RW32x32_PVT_0P77V_0C.lib"),
+            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM1RW64x128_PVT_0P63V_100C.lib"),
+            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM1RW64x128_PVT_0P77V_0C.lib")]))
+
+class HammerPCBDeliverableToolTestContext:
+    def __init__(self, test: unittest.TestCase) -> None:
+        self.test = test  # type unittest.TestCase
+        self.logger = HammerVLSILogging.context("")
+        self._driver = None  # type: Optional[hammer_vlsi.HammerDriver]
+
+    # Helper property to check that the driver did get initialized.
+    @property
+    def driver(self) -> hammer_vlsi.HammerDriver:
+        assert self._driver is not None, "HammerDriver must be initialized before use"
+        return self._driver
+
+    def __enter__(self) -> "HammerPCBDeliverableToolTestContext":
+        """Initialize context by creating the temp_dir, driver, and loading the sram_generator tool."""
+        self.test.assertTrue(hammer_vlsi.HammerVLSISettings.set_hammer_vlsi_path_from_environment(),
+                             "hammer_vlsi_path must exist")
+        temp_dir = tempfile.mkdtemp()
+        json_path = os.path.join(temp_dir, "project.json")
+        json_content = {
+            "vlsi.core.technology": "nop",
+            "vlsi.core.pcb_tool": "generic",
+            "pcb.inputs.top_module": "dummy",
+            "pcb.submit.command": "local",
+            "vlsi.inputs.bumps_mode": "manual",
+            "vlsi.inputs.bumps": {
+                "x": 5,
+                "y": 4,
+                "pitch": "123.4",
+                "cell": "dummybump",
+                "assignments": [
+                    {"name": "reset", "x": 1, "y": 1},
+                    {"name": "clock", "x": 2, "y": 1},
+                    {"name": "VDD", "x": 3, "y": 1},
+                    {"name": "VDD", "x": 4, "y": 1},
+                    {"name": "VSS", "x": 5, "y": 1},
+                    {"name": "data[0]", "x": 1, "y": 2},
+                    {"name": "data[1]", "x": 2, "y": 2},
+                    {"name": "data[2]", "x": 3, "y": 2},
+                    {"name": "VSS", "x": 4, "y": 2},
+                    {"name": "VDD", "x": 5, "y": 2},
+                    {"name": "data[3]", "x": 1, "y": 3},
+                    {"name": "valid", "x": 2, "y": 3},
+                    {"name": "ready", "x": 3, "y": 3},
+                    {"name": "NC", "x": 4, "y": 3, "no_connect": True},
+                    {"name": "VSS", "x": 5, "y": 3},
+                    {"name": "VDD", "x": 1, "y": 4},
+                    {"name": "VSS", "x": 2, "y": 4},
+                    {"name": "VDD", "x": 3, "y": 4},
+                    {"name": "VSS", "x": 4, "y": 4}
+                    # Note 5,4 is left out intentionally
+                ]
+            },
+            "pcb.generic.footprint_type": "PADS-V9",
+            "pcb.generic.schematic_symbol_type": "AltiumCSV",
+            "technology.pcb.bump_pad_opening_diameter": "60",
+            "technology.pcb.bump_pad_metal_diameter": "75"
+        }  # type: Dict[str, Any]
+
+        with open(json_path, "w") as f:
+            f.write(json.dumps(json_content, cls=HammerJSONEncoder, indent=4))
+
+        options = hammer_vlsi.HammerDriverOptions(
+            environment_configs=[],
+            project_configs=[json_path],
+            log_file=os.path.join(temp_dir, "log.txt"),
+            obj_dir=temp_dir
+        )
+        self._driver = hammer_vlsi.HammerDriver(options)
+        self.temp_dir = temp_dir
+        return self
+
+    def __exit__(self, type, value, traceback) -> bool:
+        """Clean up the context by removing the temp_dir."""
+        shutil.rmtree(self.temp_dir)
+        # Return True (normal execution) if no exception occurred.
+        return True if type is None else False
+
+    @property
+    def env(self) -> Dict[str, str]:
+        return {}
+
+class HammerGenericPCBToolTest(unittest.TestCase):
+    def create_context(self) -> HammerPCBDeliverableToolTestContext:
+        return HammerPCBDeliverableToolTestContext(self)
+
+    def test_deliverables_exist(self) -> None:
+        """
+        Test that a PADS-V9 footprint, Altium CSV, and pads CSV are created.
+        This doesn't check the correctness of the deliverables.
+        """
+        with self.create_context() as c:
+            self.assertTrue(c.driver.load_pcb_tool())
+            self.assertTrue(c.driver.run_pcb())
+            # Ignoring the type of this for the same reason as the power straps stuff below.
+            # It's hard to get the concrete type of this tool that contains the methods used below.
+            assert isinstance(c.driver.pcb_tool, hammer_vlsi.HammerPCBDeliverableTool)
+            self.assertTrue(os.path.exists(c.driver.pcb_tool.output_footprint_filename))  # type: ignore
+            self.assertTrue(os.path.exists(c.driver.pcb_tool.output_footprint_csv_filename))  # type: ignore
+            self.assertTrue(os.path.exists(c.driver.pcb_tool.output_schematic_symbol_filename))  # type: ignore
+            self.assertTrue(os.path.exists(c.driver.pcb_tool.output_bom_builder_pindata_filename))  # type: ignore
+
+    # TODO add more checks:
+    # - footprint pads should be mirrored relative to GDS
+    # - Blank bumps should not show up
+    # - test grouping
 
 class HammerPowerStrapsTestContext:
     def __init__(self, test: unittest.TestCase, strap_options: Dict[str, Any]) -> None:
@@ -1260,7 +1845,7 @@ class HammerPowerStrapsTestContext:
                 "technology.core.std_cell_rail_layer": "M1",
                 "technology.core.tap_cell_rail_reference": "FakeTapCell",
                 "par.mockpar.temp_folder": temp_dir
-            }, self.strap_options), indent=4))
+            }, self.strap_options), cls=HammerJSONEncoder, indent=4))
         options = hammer_vlsi.HammerDriverOptions(
             environment_configs=[],
             project_configs=[json_path],
@@ -1294,7 +1879,8 @@ class HammerPowerStrapsTest(HasGetTech, unittest.TestCase):
         track_spacing_M6 = 1
         power_utilization = 0.2
         power_utilization_M8 = 1.0
-        track_offset_M5 = 1
+        track_start_M5 = 1
+        track_offset_M5 = 1.2
 
         # VSS comes before VDD
         nets = ["VSS", "VDD"]
@@ -1318,6 +1904,7 @@ class HammerPowerStrapsTest(HasGetTech, unittest.TestCase):
                 "track_spacing_M6": track_spacing_M6,
                 "power_utilization": power_utilization,
                 "power_utilization_M8": power_utilization_M8,
+                "track_start_M5": track_start_M5,
                 "track_offset_M5": track_offset_M5
             }
         }
@@ -1352,7 +1939,9 @@ class HammerPowerStrapsTest(HasGetTech, unittest.TestCase):
                 metal = stackup.get_metal(layer_name)
                 min_width = metal.min_width
                 group_track_pitch = strap_pitch / metal.pitch
-                used_tracks = round(Decimal(strap_offset + strap_width + strap_spacing + strap_width + strap_offset) / metal.pitch) - 1
+                track_offset = Decimal(str(track_offset_M5)) if layer_name == "M5" else Decimal(0)
+                track_start = Decimal(str(track_start_M5)) if layer_name == "M5" else Decimal(0)
+                used_tracks = round(Decimal(strap_offset + strap_width + strap_spacing + strap_width + strap_offset - 2 * (track_offset + track_start * metal.pitch)) / metal.pitch) - 1
                 if layer_name == "M4":
                     self.assertEqual(entry["bbox"], [])
                     self.assertEqual(entry["nets"], nets)
@@ -1507,6 +2096,73 @@ class HammerPowerStrapsTest(HasGetTech, unittest.TestCase):
                 else:
                     assert False, "Got the wrong layer_name: {}".format(layer_name)
 
+
+class HammerSimToolTestContext:
+    def __init__(self, test: unittest.TestCase) -> None:
+        self.logger = HammerVLSILogging.context()
+        self.test = test # type: unittest.TestCase
+        self.temp_dir = "" # type: str
+        self._driver = None # type: Optional[hammer_vlsi.HammerDriver]
+
+    # Helper property to check that the driver did get initialized.
+    @property
+    def driver(self) -> hammer_vlsi.HammerDriver:
+        assert self._driver is not None, "HammerDriver must be initialized before use"
+        return self._driver
+
+    def __enter__(self) -> "HammerSimToolTestContext":
+        """Initialize context by creating the temp_dir, driver, and loading mocksim."""
+        self.test.assertTrue(hammer_vlsi.HammerVLSISettings.set_hammer_vlsi_path_from_environment(),
+                                "hammer_vlsi_path must exist")
+        temp_dir = tempfile.mkdtemp()
+        json_path = os.path.join(temp_dir, "project.json")
+        json_content = {
+            "vlsi.core.sim_tool": "mocksim",
+            "vlsi.core.technology": "nop",
+            "sim.inputs.top_module": "dummy",
+            "sim.inputs.input_files": ("/dev/null",),
+            "sim.submit.command": "local",
+            "sim.inputs.options": ["-debug"],
+            "sim.inputs.level": "rtl",
+            "sim.mocksim.temp_folder": temp_dir
+        }
+
+        with open(json_path, "w") as f:
+            f.write(json.dumps(json_content, cls=HammerJSONEncoder, indent=4))
+
+        options = hammer_vlsi.HammerDriverOptions(
+            environment_configs=[],
+            project_configs=[json_path],
+            log_file=os.path.join(temp_dir, "log.txt"),
+            obj_dir=temp_dir
+        )
+        self._driver = hammer_vlsi.HammerDriver(options)
+        self.temp_dir = temp_dir
+        return self
+
+    def __exit__(self, type, value, traceback) -> bool:
+        """Cleanup the context by removing the temp_dir."""
+        shutil.rmtree(self.temp_dir)
+        # Return True (normal execution) if no exception ocurred/
+
+        return True if type is None else False
+
+    @property
+    def env(self) -> Dict[str, str]:
+        return {}
+
+class HammerSimToolTest(unittest.TestCase):
+    def create_context(self) -> HammerSimToolTestContext:
+        return HammerSimToolTestContext(self)
+
+    def test_deliverables_exist(self) -> None:
+        with self.create_context() as c:
+            self.assertTrue(c.driver.load_sim_tool())
+            self.assertTrue(c.driver.run_sim())
+
+            assert isinstance(c.driver.sim_tool, hammer_vlsi.HammerSimTool)
+            # Ignore typing here because this is part of the mocksim API
+            self.assertTrue(os.path.exists(c.driver.sim_tool.force_regs_file_path))  # type: ignore
 
 
 if __name__ == '__main__':

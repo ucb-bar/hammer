@@ -18,8 +18,9 @@ from typing import Any, Dict, List, Optional
 
 from hammer_logging import HammerVLSILogging
 import hammer_tech
-from hammer_tech import LibraryFilter, Stackup, Metal, WidthSpacingTuple
+from hammer_tech import LibraryFilter, Stackup, Metal, WidthSpacingTuple, SpecialCell, CellType, DRCDeck, LVSDeck
 from hammer_utils import deepdict
+from hammer_config import HammerJSONEncoder
 from decimal import Decimal
 
 from test_tool_utils import HammerToolTestHelpers, DummyTool
@@ -73,7 +74,7 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
                 name = ""
             else:
                 name = str(lib.name)
-            return [json.dumps({"path": paths[0], "name": name}, indent=4)]
+            return [json.dumps({"path": paths[0], "name": name}, cls=HammerJSONEncoder, indent=4)]
 
         def sort_func(lib: hammer_tech.Library):
             assert lib.milkyway_techfile is not None
@@ -175,7 +176,7 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
         with open(os.path.join(tech_dir, "defaults.json"), "w") as f:
             f.write(json.dumps({
                 "technology.dummy28.tarball_dir": tech_dir
-            }))
+            }, cls=HammerJSONEncoder))
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, self.add_tarballs)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
@@ -208,7 +209,7 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
             f.write(json.dumps({
                 "technology.dummy28.tarball_dir": tech_dir,
                 "vlsi.technology.extracted_tarballs_dir": tech_dir_base
-            }))
+            }, cls=HammerJSONEncoder))
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, self.add_tarballs)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
@@ -243,7 +244,7 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
                 "technology.dummy28.tarball_dir": tech_dir,
                 "vlsi.technology.extracted_tarballs_dir": "/should/not/be/used",
                 "technology.dummy28.extracted_tarballs_dir": tech_dir_base
-            }))
+            }, cls=HammerJSONEncoder))
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, self.add_tarballs)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
@@ -297,7 +298,8 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
         }
 
         tech_dir = "/tmp/path"  # should not be used
-        tech = hammer_tech.HammerTechnology.load_from_json("dummy28", json.dumps(tech_json, indent=2), tech_dir)
+        tech = hammer_tech.HammerTechnology.load_from_json("dummy28", json.dumps(tech_json, cls=HammerJSONEncoder, indent=2), tech_dir)
+        tech.cache_dir = tech_dir  # needs to be set for installs check
 
         # Check that a tech-provided prefix works fine
         self.assertEqual("{0}/water".format(tech_dir), tech.prepend_dir_path("test/water"))
@@ -317,6 +319,53 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
             )
         ).store_into_library()  # type: hammer_tech.Library
         self.assertEqual("{0}/hat".format("/tmp/custom"), tech.prepend_dir_path("custom/hat", lib))
+
+    def test_installs_in_cache_dir(self) -> None:
+        """
+        Test that we can access files in the tech cache dir.
+        Use case: A PDK file needs to be hacked by post_install_script
+        """
+        import hammer_config
+
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+
+        tech_json = {
+            "name": "dummy",
+            "installs": [
+                {
+                    "path": "tech-dummy28-cache",
+                    "base var": ""  # means relative to tech dir
+                }
+            ],
+            "libraries": [
+                {
+                    "lef file": "tech-dummy28-cache/tech.lef",
+                    "provides": [
+                        {"lib_type": "technology"}
+                    ]
+                }
+            ]
+        }  # type: Dict[str, Any]
+
+        with open(tech_json_filename, "w") as f:  # pyline: disable=invalid-name
+            f.write(json.dumps(tech_json, cls=HammerJSONEncoder, indent=4))
+
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
+        tech.cache_dir = tech_dir
+
+        database = hammer_config.HammerDatabase()
+        database.update_technology(tech.get_config())
+        HammerVLSISettings.load_builtins_and_core(database)
+        tech.set_database(database)
+        outputs = tech.process_library_filter(pre_filts=[], filt=hammer_tech.filters.lef_filter,
+                                              must_exist=False,
+                                              output_func=lambda str, _: [str])
+
+        self.assertEqual(outputs, ["{0}/tech.lef".format(tech.cache_dir)])
+
+        # Cleanup
+        shutil.rmtree(tech_dir_base)
 
     def test_yaml_tech_file(self) -> None:
         """
@@ -403,6 +452,75 @@ libraries: []
             'par.inputs.gds_map_file': None
         }])
         self.assertEqual(tool.get_gds_map_file(), None)
+
+        # Cleanup
+        shutil.rmtree(tech_dir_base)
+
+    def test_physical_only_cells_list(self) -> None:
+        """
+        Test that physical only cells list support works as expected.
+        """
+        import hammer_config
+
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+
+        def add_physical_only_cells_list(in_dict: Dict[str, Any]) -> Dict[str, Any]:
+            out_dict = deepdict(in_dict)
+            out_dict.update({"physical only cells list": ["cell1", "cell2"]})
+            return out_dict
+
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_physical_only_cells_list)
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
+        tech.cache_dir = tech_dir
+
+        tool = DummyTool()
+        tool.technology = tech
+        database = hammer_config.HammerDatabase()
+        tool.set_database(database)
+
+        # Test that manual mode for physical_only_cells_mode works.
+        database.update_project([{
+            'par.inputs.physical_only_cells_mode': 'manual',
+            'par.inputs.physical_only_cells_list': ['cell1']
+        }])
+        self.assertEqual(tool.get_physical_only_cells(), ['cell1'])
+
+        # Test that auto mode for physical_only_cells_mode works if the technology has a physical only cells list.
+        database.update_project([{
+            'par.inputs.physical_only_cells_mode': 'auto',
+            'par.inputs.physical_only_cells_list': []
+        }])
+
+        self.assertEqual(tool.get_physical_only_cells(), tool.technology.config.physical_only_cells_list)
+
+        # Test that append mode for physical_only_cells_mode works if the everyone has a physical only cells list.
+        database.update_project([{
+            'par.inputs.physical_only_cells_mode': 'append',
+            'par.inputs.physical_only_cells_list': ['cell3']
+        }])
+
+        self.assertEqual(tool.get_physical_only_cells(), ['cell1', 'cell2', 'cell3'])
+
+        # Cleanup
+        shutil.rmtree(tech_dir_base)
+
+        # Create a new technology with no physical_only_cells list
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+        HammerToolTestHelpers.write_tech_json(tech_json_filename)
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
+        tech.cache_dir = tech_dir
+
+        tool.technology = tech
+
+        # Test that auto mode for physical only cells list works if the technology has no physical only cells list file.
+        database.update_project([{
+            'par.inputs.physical_only_cells_mode': 'auto',
+            'par.inputs.physical_only_cells_list': []
+        }])
+        self.assertEqual(tool.get_physical_only_cells(), [])
 
         # Cleanup
         shutil.rmtree(tech_dir_base)
@@ -525,11 +643,130 @@ END LIBRARY
         # Test that macro sizes can be read out of the LEF.
         self.assertEqual(tech.get_macro_sizes(), [
             hammer_tech.MacroSize(library='my_vendor_lib', name='my_awesome_macro',
-                                  width=810.522, height=607.525)
+                                  width=Decimal("810.522"), height=Decimal("607.525"))
         ])
 
         # Cleanup
         shutil.rmtree(tech_dir_base)
+
+    def test_special_cells(self) -> None:
+        import hammer_config
+
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+
+        def add_special_cells(in_dict: Dict[str, Any]) -> Dict[str, Any]:
+            out_dict = deepdict(in_dict)
+            out_dict.update({"special_cells": [
+                                {"name": "cell1", "cell_type": "tiehicell"},
+                                {"name": "cell2", "cell_type": "tiehicell", "size": 1.5},
+                                {"name": "cell3", "cell_type": "iofiller", "size": 0.5},
+                                {"name": "cell4", "cell_type": "stdfiller"},
+                                {"name": "cell5", "cell_type": "endcap"},
+                             ]})
+            return out_dict
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_special_cells)
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
+        tech.cache_dir = tech_dir
+
+        tool = DummyTool()
+        tool.technology = tech
+        database = hammer_config.HammerDatabase()
+        tool.set_database(database)
+
+        self.assertEqual(tool.technology.get_special_cell_by_type(CellType.TieHiCell),
+                [SpecialCell(name=list("cell1"), cell_type=CellType.TieHiCell, size=None),
+                 SpecialCell(name=list("cell2"), cell_type=CellType.TieHiCell, size=Decimal(1.5))
+                ])
+
+        self.assertEqual(tool.technology.get_special_cell_by_type(CellType.IOFiller),
+                [SpecialCell(name=list("cell3"), cell_type=CellType.IOFiller, size=Decimal(0.5)),
+                ])
+
+        self.assertEqual(tool.technology.get_special_cell_by_type(CellType.StdFiller),
+                [SpecialCell(name=list("cell4"), cell_type=CellType.StdFiller, size=None)])
+
+        self.assertEqual(tool.technology.get_special_cell_by_type(CellType.EndCap),
+                [SpecialCell(name=list("cell5"), cell_type=CellType.EndCap, size=None)])
+
+    def test_drc_lvs_decks(self) -> None:
+        """
+        Test that getting the DRC & LVS decks works as expected.
+        """
+        import hammer_config
+
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+
+        def add_drc_lvs_decks(in_dict: Dict[str, Any]) -> Dict[str, Any]:
+            out_dict = deepdict(in_dict)
+            out_dict.update({"drc decks": [
+                    {"tool name": "hammer", "deck name": "a_nail", "path": "/path/to/hammer/a_nail.drc.rules"},
+                    {"tool name": "chisel", "deck name": "some_wood", "path": "/path/to/chisel/some_wood.drc.rules"},
+                    {"tool name": "hammer", "deck name": "head_shark", "path": "/path/to/hammer/head_shark.drc.rules"}
+                ]})
+            out_dict.update({"lvs decks": [
+                    {"tool name": "hammer", "deck name": "a_nail", "path": "/path/to/hammer/a_nail.lvs.rules"},
+                    {"tool name": "chisel", "deck name": "some_wood", "path": "/path/to/chisel/some_wood.lvs.rules"},
+                    {"tool name": "hammer", "deck name": "head_shark", "path": "/path/to/hammer/head_shark.lvs.rules"}
+                ]})
+            return out_dict
+
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_drc_lvs_decks)
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
+        tech.cache_dir = tech_dir
+
+        tool = DummyTool()
+        tool.technology = tech
+        database = hammer_config.HammerDatabase()
+        tool.set_database(database)
+
+        self.maxDiff = None
+        self.assertEqual(tech.get_drc_decks_for_tool("hammer"),
+                [DRCDeck(tool_name="hammer", name="a_nail", path="/path/to/hammer/a_nail.drc.rules"),
+                 DRCDeck(tool_name="hammer", name="head_shark", path="/path/to/hammer/head_shark.drc.rules")
+                ])
+
+        self.assertEqual(tech.get_lvs_decks_for_tool("hammer"),
+                [LVSDeck(tool_name="hammer", name="a_nail", path="/path/to/hammer/a_nail.lvs.rules"),
+                 LVSDeck(tool_name="hammer", name="head_shark", path="/path/to/hammer/head_shark.lvs.rules")
+                ])
+
+        self.assertEqual(tech.get_drc_decks_for_tool("chisel"),
+                [DRCDeck(tool_name="chisel", name="some_wood", path="/path/to/chisel/some_wood.drc.rules")])
+
+        self.assertEqual(tech.get_lvs_decks_for_tool("chisel"),
+                [LVSDeck(tool_name="chisel", name="some_wood", path="/path/to/chisel/some_wood.lvs.rules")])
+
+    def test_stackup(self) -> None:
+        """
+        Test that getting the stackup works as expected.
+        """
+        import hammer_config
+
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+
+        test_stackup = StackupTestHelper.create_test_stackup_dict(10)
+
+        def add_stackup(in_dict: Dict[str, Any]) -> Dict[str, Any]:
+            out_dict = deepdict(in_dict)
+            out_dict.update({"stackups": [test_stackup]})
+            return out_dict
+
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_stackup)
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
+        tech.cache_dir = tech_dir
+
+        tool = DummyTool()
+        tool.technology = tech
+        database = hammer_config.HammerDatabase()
+        tool.set_database(database)
+
+        self.assertEqual(
+            tech.get_stackup_by_name(test_stackup["name"]),
+            Stackup.from_setting(tech.get_grid_unit(), test_stackup)
+        )
 
 class StackupTestHelper:
 
@@ -561,6 +798,14 @@ class StackupTestHelper:
         return wst
 
     @staticmethod
+    def create_w_tbl(index: int, entries: int) -> List[float]:
+        """
+        Create a width table (power_strap_width_table).
+        """
+        min_w = StackupTestHelper.index_to_min_width_fn(index)
+        return list(map(lambda x: min_w*x, range(1, 4 * entries + 1, 4)))
+
+    @staticmethod
     def create_test_metal(index: int) -> Dict[str, Any]:
         output = {} # type: Dict[str, Any]
         output["name"] = "M{}".format(index)
@@ -570,6 +815,7 @@ class StackupTestHelper:
         output["pitch"] = StackupTestHelper.index_to_min_pitch_fn(index)
         output["offset"] = StackupTestHelper.index_to_offset_fn(index)
         output["power_strap_widths_and_spacings"] = StackupTestHelper.create_wst_list(index)
+        output["power_strap_width_table"] = StackupTestHelper.create_w_tbl(index, 1)
         return output
 
     @staticmethod
@@ -593,7 +839,7 @@ class StackupTestHelper:
     @staticmethod
     def create_test_stackup_list() -> List["Stackup"]:
         output = []
-        for x in range(5,8):
+        for x in range(5, 8):
             output.append(Stackup.from_setting(StackupTestHelper.mfr_grid(), StackupTestHelper.create_test_stackup_dict(x)))
             for m in output[-1].metals:
                 assert m.grid_unit == StackupTestHelper.mfr_grid(), "FIXME: the unit grid is different between the tests and metals"
@@ -602,18 +848,33 @@ class StackupTestHelper:
 
 class StackupTest(unittest.TestCase):
     """
-    Tests for the Stackup APIs in stackup.py
+    Tests for the stackup APIs in stackup.py.
     """
 
-    # Test that a T W T wire is correctly sized
-    # This will pass if the wide wire does not have a spacing DRC violation to surrounding minimum-sized wires and is within a single unit grid
-    # This method is not allowed to round the wire, so simply adding a manufacturing grid should suffice to "fail" DRC
+    def test_wire_parsing_from_json(self) -> None:
+        """
+        Test that wires can be parsed correctly from JSON.
+        """
+        grid_unit = StackupTestHelper.mfr_grid()
+        metal_dict = StackupTestHelper.create_test_metal(3)  # type: Dict[str, Any]
+        direct_metal = Metal.from_setting(grid_unit, StackupTestHelper.create_test_metal(3))  # type: Metal
+        json_string = json.dumps(metal_dict, cls=HammerJSONEncoder)  # type: str
+        json_metal = Metal.from_setting(grid_unit, json.loads(json_string))  # type: Metal
+        self.assertTrue(direct_metal, json_metal)
+
     def test_twt_wire(self) -> None:
+        """
+        Test that a T W T wire is correctly sized.
+        This will pass if the wide wire does not have a spacing DRC violation
+        to surrounding minimum-sized wires and is within a single unit grid.
+        This method is not allowed to round the wire, so simply adding a
+        manufacturing grid should suffice to "fail" DRC.
+        """
         # Generate multiple stackups, but we'll only use the largest for this test
         stackup = StackupTestHelper.create_test_stackup_list()[-1]
         for m in stackup.metals:
             # Try with 1 track (this should return a minimum width wire)
-            w, s, o = m.get_width_spacing_start_twt(1)
+            w, s, o = m.get_width_spacing_start_twt(1, logger=None)
             self.assertEqual(w, m.min_width)
             self.assertEqual(s, m.pitch - w)
 
@@ -624,7 +885,7 @@ class StackupTest(unittest.TestCase):
             # | | | | | |
             # T  --W--  T
             for num_tracks in range(2,40):
-                w, s, o = m.get_width_spacing_start_twt(num_tracks)
+                w, s, o = m.get_width_spacing_start_twt(num_tracks, logger=None)
                 # Check that the resulting spacing is the min spacing
                 self.assertTrue(s >= m.get_spacing_for_width(w))
                 # Check that there is no DRC
@@ -634,15 +895,19 @@ class StackupTest(unittest.TestCase):
                 s = m.get_spacing_for_width(w)
                 self.assertLess(m.pitch * (num_tracks + 1), m.min_width + s*2 + w)
 
-    # Test that a T W W T wire is correctly sized
-    # This will pass if the wide wire does not have a spacing DRC violation to surrounding minimum-sized wires and is within a single unit grid
-    # This method is not allowed to round the wire, so simply adding a manufacturing grid should suffice to "fail" DRC
     def test_twwt_wire(self) -> None:
+        """
+        Test that a T W W T wire is correctly sized.
+        This will pass if the wide wire does not have a spacing DRC violation
+        to surrounding minimum-sized wires and is within a single unit grid.
+        This method is not allowed to round the wire, so simply adding a
+        manufacturing grid should suffice to "fail" DRC.
+        """
         # Generate multiple stackups, but we'll only use the largest for this test
         stackup = StackupTestHelper.create_test_stackup_list()[-1]
         for m in stackup.metals:
             # Try with 1 track (this should return a minimum width wire)
-            w, s, o = m.get_width_spacing_start_twwt(1)
+            w, s, o = m.get_width_spacing_start_twwt(1, logger=None)
             self.assertEqual(w, m.min_width)
             self.assertEqual(s, m.pitch - w)
 
@@ -653,7 +918,7 @@ class StackupTest(unittest.TestCase):
             # | | | | | | | | | |
             # T  --W--   --W--  T
             for num_tracks in range(2,40):
-                w, s, o = m.get_width_spacing_start_twwt(num_tracks)
+                w, s, o = m.get_width_spacing_start_twwt(num_tracks, logger=None)
                 # Check that the resulting spacing is the min spacing
                 self.assertGreaterEqual(s, m.get_spacing_for_width(w))
                 # Check that there is no DRC
@@ -692,6 +957,42 @@ class StackupTest(unittest.TestCase):
                 # Check that the wire is as large as possible by growing it
                 w = w + (m.grid_unit*2)
                 self.assertLess(p, w + m.get_spacing_for_width(w))
+
+    def test_quantize_to_width_table(self) -> None:
+        # Generate two metals (index 1) and add more entries to width table of one of them
+        # Only 0.05, 0.25, 0.45, 0.65, 0.85+ allowed -> check quantization against metal without width table
+        # TODO: improve this behaviour in a future PR
+        metal_dict = StackupTestHelper.create_test_metal(1)
+        metal_dict["power_strap_width_table"] = StackupTestHelper.create_w_tbl(1, 5)
+        q_metal = Metal.from_setting(StackupTestHelper.mfr_grid(), metal_dict)
+        nq_metal = Metal.from_setting(StackupTestHelper.mfr_grid(), StackupTestHelper.create_test_metal(1))
+        for num_tracks in range(1, 20):
+            # twt case
+            wq, sq, oq = q_metal.get_width_spacing_start_twt(num_tracks, logger=None)
+            wnq, snq, onq = nq_metal.get_width_spacing_start_twt(num_tracks, logger=None)
+            if wnq < Decimal('0.25'):
+                self.assertEqual(wq, Decimal('0.05'))
+            elif wnq < Decimal('0.45'):
+                self.assertEqual(wq, Decimal('0.25'))
+            elif wnq < Decimal('0.65'):
+                self.assertEqual(wq, Decimal('0.45'))
+            elif wnq < Decimal('0.85'):
+                self.assertEqual(wq, Decimal('0.65'))
+            else:
+                self.assertEqual(wq, wnq)
+            # twwt case
+            wq, sq, oq = q_metal.get_width_spacing_start_twwt(num_tracks, logger=None)
+            wnq, snq, onq = nq_metal.get_width_spacing_start_twwt(num_tracks, logger=None)
+            if wnq < Decimal('0.25'):
+                self.assertEqual(wq, Decimal('0.05'))
+            elif wnq < Decimal('0.45'):
+                self.assertEqual(wq, Decimal('0.25'))
+            elif wnq < Decimal('0.65'):
+                self.assertEqual(wq, Decimal('0.45'))
+            elif wnq < Decimal('0.85'):
+                self.assertEqual(wq, Decimal('0.65'))
+            else:
+                self.assertEqual(wq, wnq)
 
 if __name__ == '__main__':
     unittest.main()

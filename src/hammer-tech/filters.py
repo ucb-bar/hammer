@@ -168,6 +168,21 @@ class LibraryFilterHolder:
                                  paths_func=paths_func, sort_func=sort_func)
 
     @property
+    def verilog_sim_filter(self) -> LibraryFilter:
+        """
+        Select verilog sim files for gate level simulation
+        """
+
+        def filter_func(lib: "Library") -> bool:
+            return lib.verilog_sim is not None
+
+        def paths_func(lib: "Library") -> List[str]:
+            assert lib.verilog_sim is not None
+            return [lib.verilog_sim]
+
+        return LibraryFilter.new("verilog_sim", "Gate-level verilog sources", is_file=True, filter_func=filter_func, paths_func=paths_func)
+
+    @property
     def gds_filter(self) -> LibraryFilter:
         """
         Select GDS files for opaque physical information.

@@ -86,24 +86,29 @@ class ValueWithUnit(ABC):
         if match is None:
             try:
                 num = str(float(value))
-                value_prefix = default_prefix
+                self._value_prefix = default_prefix
             except ValueError:
                 raise ValueError("Malformed {type} value {value}".format(type=self.unit_type,
                                                                          value=value))
         else:
             num = match.group(1)
-            value_prefix = match.group(2)
+            self._value_prefix = match.group(2)
 
-        if num.count('.') > 1 or len(value_prefix) > 1:
+        if num.count('.') > 1 or len(self._value_prefix) > 1:
             raise ValueError("Malformed {type} value {value}".format(type=self.unit_type,
                                                                      value=value))
 
-        if value_prefix not in self._prefix_table:
+        if self._value_prefix not in self._prefix_table:
             raise ValueError("Bad prefix for {value}".format(value=value))
 
         self._value = float(num)  # type: float
         # Preserve the prefix too to preserve precision
-        self._prefix = self._prefix_table[value_prefix]  # type: float
+        self._prefix = self._prefix_table[self._value_prefix]  # type: float
+
+    @property
+    def value_prefix(self) -> str:
+        """Get the prefix string of this value."""
+        return self._value_prefix
 
     @property
     def value(self) -> float:

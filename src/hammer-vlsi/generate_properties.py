@@ -119,7 +119,13 @@ def main(args) -> int:
                                         InterfaceVar("output_files", "List[str]",
                                                      "output collection of mapped (post-synthesis) RTL files"),
                                         InterfaceVar("output_sdc", "str",
-                                                     "(optional) output post-synthesis SDC constraints file")
+                                                     "(optional) output post-synthesis SDC constraints file"),
+                                        InterfaceVar("output_all_regs", "List[Dict[str, str]]",
+                                                     "output list of all registers in the design with output pin for gate level simulation"),
+                                        InterfaceVar("output_seq_cells", "List[str]",
+                                                     "output collection of all sequential standard cells in design"),
+                                        InterfaceVar("sdf_file", "str",
+                                                     "output SDF file to be read for timing annotated gate level sims")
                                         # TODO: model CAD junk
                                     ]
                                     )
@@ -130,7 +136,7 @@ def main(args) -> int:
                                             InterfaceVar("input_files", "List[str]",
                                                          "input post-synthesis netlist files"),
                                             InterfaceVar("post_synth_sdc", "Optional[str]",
-                                                         "(optional) input post-synthesis SDC constraint file")
+                                                         "(optional) input post-synthesis SDC constraint file"),
                                         ],
                                         outputs=[
                                             # TODO: model more CAD junk
@@ -140,9 +146,15 @@ def main(args) -> int:
                                                          "(optional) output ILM information for hierarchical mode"),
                                             InterfaceVar("output_gds", "str", "path to the output GDS file"),
                                             InterfaceVar("output_netlist", "str", "path to the output netlist file"),
+                                            InterfaceVar("output_sim_netlist", "str", "path to the output simulation netlist file"),
                                             InterfaceVar("hcells_list", "List[str]",
-                                                         "list of cells to explicitly map hierarchically in LVS")
-
+                                                         "list of cells to explicitly map hierarchically in LVS"),
+                                            InterfaceVar("output_all_regs", "List[Dict[str, str]]",
+                                                     "output list of all registers in the design with output pin for gate level simulation"),
+                                            InterfaceVar("output_seq_cells", "List[str]",
+                                                     "output collection of all sequential standard cells in design"),
+                                            InterfaceVar("sdf_file", "str",
+                                                     "output SDF file to be read for timing annotated gate level sims")
                                             # TODO: add individual parts of the ILM (e.g. verilog, sdc, spef, etc) for cross-tool compatibility?
                                         ]
                                         )
@@ -174,10 +186,34 @@ def main(args) -> int:
                                   InterfaceVar("schematic_files", "List[str]",
                                                "path to the input SPICE or Verilog schematic files (e.g. *.v or *.spi)"),
                                   InterfaceVar("hcells_list", "List[str]",
-                                               "list of cells to explicitly map hierarchically in LVS")
+                                               "list of cells to explicitly map hierarchically in LVS"),
+                                  InterfaceVar("ilms", "List[ILMStruct]",
+                                               "list of (optional) input ILM information for hierarchical mode")
                               ],
                               outputs=[]
                               )
+
+    HammerSimTool = Interface(module="HammerSimTool",
+                              filename="hammer_vlsi/hammer_vlsi_impl.py",
+                              inputs=[
+                                  InterfaceVar("top_module", "str", "top RTL module"),
+                                  InterfaceVar("input_files", "List[str]", "paths to input verilog files"),
+                                  InterfaceVar("all_regs", "List[Dict[str, str]]", "list of all registers in the design with output pin"),
+                                  InterfaceVar("seq_cells", "List[str]", "collection of all sequential standard cells in design"),
+                                  InterfaceVar("sdf_file", "Optional[str]", "optional SDF file needed for timing annotated gate level sims")
+                              ],
+                              outputs=[]
+                              )
+    HammerPCBDeliverableTool = Interface(module="HammerPCBDeliverableTool",
+                                       filename="hammer_vlsi/hammer_vlsi_impl.py",
+                                       inputs=[],
+                                       outputs=[
+                                           InterfaceVar("output_footprints", "List[str]",
+                                                        "list of the PCB footprint files for the project"),
+                                           InterfaceVar("output_schematic_symbols", "List[str]",
+                                                        "list of the PCB schematic symbol files for the project"),
+                                           ]
+                                       )
 
     dry_run = parsed_args.dry_run
     selected_file = str(parsed_args.file)
@@ -187,6 +223,8 @@ def main(args) -> int:
     generate_interface(HammerDRCTool)
     generate_interface(HammerLVSTool)
     generate_interface(HammerSRAMGeneratorTool)
+    generate_interface(HammerSimTool)
+    generate_interface(HammerPCBDeliverableTool)
 
     if selected_file == "":
         # Export all files

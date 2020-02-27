@@ -8,23 +8,27 @@
 
 import json
 import os
-import subprocess
+import tarfile
+import importlib
 from abc import ABCMeta, abstractmethod
-from typing import Any, Callable, Iterable, List, NamedTuple, Optional, Tuple, Dict
+from typing import Any, Callable, Iterable, List, NamedTuple, Optional, Tuple, Dict, TYPE_CHECKING
 from decimal import Decimal
 
 import hammer_config
 import python_jsonschema_objects  # type: ignore
 
-from hammer_config import load_yaml
+from hammer_config import load_yaml, HammerJSONEncoder
 from hammer_logging import HammerVLSILoggingContext
 from hammer_utils import (LEFUtils, add_lists, deeplist, get_or_else,
                           in_place_unique, optional_map, reduce_list_str,
                           reduce_named, coerce_to_grid)
+if TYPE_CHECKING:
+    from hammer_vlsi.hooks import HammerToolHookAction
 
 from library_filter import LibraryFilter
 from filters import LibraryFilterHolder
 from stackup import RoutingDirection, WidthSpacingTuple, Metal, Stackup
+from specialcells import CellType, SpecialCell
 
 # Holds the list of pre-implemented filters.
 # Access it like hammer_tech.filters.lef_filter
@@ -235,14 +239,13 @@ class Site(NamedTuple('Site', [
         )
 
 
-
 # Struct that holds information about the size of a macro.
 # See defaults.yml.
 class MacroSize(NamedTuple('MacroSize', [
     ('library', str),
     ('name', str),
-    ('width', float),
-    ('height', float)
+    ('width', Decimal),
+    ('height', Decimal)
 ])):
     __slots__ = ()
 
@@ -259,12 +262,61 @@ class MacroSize(NamedTuple('MacroSize', [
         return MacroSize(
             library=str(d['library']),
             name=str(d['name']),
-            width=float(d['width']),
-            height=float(d['height'])
+            width=Decimal(str(d['width'])),
+            height=Decimal(str(d['height']))
         )
 
+# Struct that holds information about DRC decks.
+class DRCDeck(NamedTuple('DRCDeck', [
+    ('tool_name', str),
+    ('name', str),
+    ('path', str)
+])):
+    __slots__ = ()
+
+    def to_setting(self) -> dict:
+        return {
+            'tool name': self.tool_name,
+            'deck name': self.name,
+            'path': str(self.path),
+        }
+
+    @staticmethod
+    def from_setting(d: dict) -> "DRCDeck":
+        return DRCDeck(
+            tool_name=str(d['tool_name']),
+            name=str(d['deck_name']),
+            path=str(d['path'])
+        )
+
+# Struct that holds information about LVS decks.
+class LVSDeck(NamedTuple('LVSDeck', [
+    ('tool_name', str),
+    ('name', str),
+    ('path', str)
+])):
+    __slots__ = ()
+
+    def to_setting(self) -> dict:
+        return {
+            'tool name': self.tool_name,
+            'deck name': self.name,
+            'path': str(self.path),
+        }
+
+    @staticmethod
+    def from_setting(d: dict) -> "LVSDeck":
+        return LVSDeck(
+            tool_name=str(d['tool_name']),
+            name=str(d['deck_name']),
+            path=str(d['path'])
+        )
 
 class HammerTechnology:
+    """
+    Abstraction layer of Technology.
+    This can be overridden by add `__init__.py` to a specific technology like `technology/asap7/__init__.py`
+    """
     # Properties.
     @property
     def cache_dir(self) -> str:
@@ -283,7 +335,7 @@ class HammerTechnology:
         """Set the directory as a persistent cache dir for this library."""
         self._cachedir = value  # type: str
         # Ensure the cache_dir exists.
-        os.makedirs(value, exist_ok=True)
+        os.makedirs(value, mode=0o700, exist_ok=True)
 
     # hammer-vlsi properties.
     # TODO: deduplicate/put these into an interface to share with HammerTool?
@@ -316,8 +368,8 @@ class HammerTechnology:
     def load_from_dir(cls, technology_name: str, path: str) -> Optional["HammerTechnology"]:
         """Load a technology from a given folder.
 
-        :param technology_name: Technology name (e.g. "saed32")
-        :param path: Path to the technology folder (e.g. foo/bar/technology/saed32)
+        :param technology_name: Technology name (e.g. "asap7")
+        :param path: Path to the technology folder (e.g. foo/bar/technology/asap7)
         :return: Loaded technology plugin or None if the folder did not have an appropriate tech.json/tech.yaml
         """
         json_path = os.path.join(path, "%s.tech.json" % technology_name)
@@ -337,12 +389,21 @@ class HammerTechnology:
     def load_from_json(cls, technology_name: str, json_str: str, path: str) -> "HammerTechnology":
         """Load a technology from a given folder.
 
-        :param technology_name: Technology name (e.g. "saed32")
+        :param technology_name: Technology name (e.g. "asap7")
         :param json_str: JSON string to use as the technology JSON
-        :param path: Path to set as the technology folder (e.g. foo/bar/technology/saed32)
+        :param path: Path to set as the technology folder (e.g. foo/bar/technology/asap7)
         """
 
-        tech = HammerTechnology()
+        # try to override tech, if __init__.py exist.
+        try:
+            mod = importlib.import_module(technology_name)
+            # work around for python < 3.6
+            try:
+                tech = mod.tech # type: ignore
+            except:
+                raise ImportError # type: ignore
+        except ImportError:
+            tech = HammerTechnology()
 
         # Name of the technology
         tech.name = technology_name
@@ -359,11 +420,11 @@ class HammerTechnology:
     def load_from_yaml(cls, technology_name: str, yaml_str: str, path: str) -> "HammerTechnology":
         """Load a technology from a given folder.
 
-        :param technology_name: Technology name (e.g. "saed32")
+        :param technology_name: Technology name (e.g. "asap7")
         :param yaml_str: yaml string to use as the technology yaml
-        :param path: Path to set as the technology folder (e.g. foo/bar/technology/saed32)
+        :param path: Path to set as the technology folder (e.g. foo/bar/technology/asap7)
         """
-        return HammerTechnology.load_from_json(technology_name, json.dumps(load_yaml(yaml_str)), path)
+        return HammerTechnology.load_from_json(technology_name, json.dumps(load_yaml(yaml_str), cls=HammerJSONEncoder), path)
 
     def set_database(self, database: hammer_config.HammerDatabase) -> None:
         """Set the settings database for use by the tool."""
@@ -401,8 +462,22 @@ class HammerTechnology:
             return None
         else:
             # Work around the weird objects implemented by the jsonschema generator.
-            dont_use_list = list(map(lambda x: str(x), list(dont_use_list_raw)))
+            dont_use_list = list(map(str, list(dont_use_list_raw)))
             return dont_use_list
+
+    @property
+    def physical_only_cells_list(self) -> Optional[List[str]]:
+        """
+        Get the list of physical only cells.
+        :return: List of physical only cells, or None if the technology does not define such a list.
+        """
+        physical_only_cells_list_raw = self.config.physical_only_cells_list  # type: Optional[List[str]]
+        if physical_only_cells_list_raw is None:
+            return None
+        else:
+            # Work around the weird objects implemented by the jsonschema generator.
+            physical_only_cells_list = [str(x) for x in physical_only_cells_list_raw]
+            return physical_only_cells_list
 
     @property
     def additional_drc_text(self) -> str:
@@ -419,6 +494,28 @@ class HammerTechnology:
             return ""
         else:
             return str(add_lvs_text_raw)
+
+    def get_lvs_decks_for_tool(self, tool_name: str) -> List[LVSDeck]:
+        """
+        Return the LVS decks for the given tool.
+        """
+        if self.config.lvs_decks is not None:
+            for deck in list(self.config.lvs_decks):
+                deck.path = self.prepend_dir_path(deck.path)
+            return [LVSDeck.from_setting(x) for x in list(self.config.lvs_decks) if x.tool_name == tool_name]
+        else:
+            raise ValueError("Tech JSON does not specify any LVS decks")
+
+    def get_drc_decks_for_tool(self, tool_name: str) -> List[DRCDeck]:
+        """
+        Return the DRC decks for the given tool.
+        """
+        if self.config.drc_decks is not None:
+            for deck in list(self.config.drc_decks):
+                deck.path = self.prepend_dir_path(deck.path)
+            return [DRCDeck.from_setting(x) for x in list(self.config.drc_decks) if x.tool_name == tool_name]
+        else:
+            raise ValueError("Tech JSON does not specify any DRC decks")
 
     @property
     def extracted_tarballs_dir(self) -> str:
@@ -452,7 +549,7 @@ class HammerTechnology:
             raise TypeError("lib must be a dict")
 
         # Convert the dict to JSON...
-        return Library.from_json(json.dumps(lib))
+        return Library.from_json(json.dumps(lib, cls=HammerJSONEncoder))
 
     @property
     def tech_defined_libraries(self) -> List[Library]:
@@ -494,7 +591,7 @@ class HammerTechnology:
                 name = ""
             else:
                 name = str(lib_name)
-            return [json.dumps([paths[0], name])]
+            return [json.dumps([paths[0], name], cls=HammerJSONEncoder)]
 
         lef_filter_plus = filters.lef_filter._replace(extraction_func=extraction_func)
 
@@ -575,7 +672,10 @@ class HammerTechnology:
             if len(matching_installs) == 1:
                 install = matching_installs[0]
                 if install.base_var == "":
-                    base = self.path
+                    if install.path == os.path.basename(self.cache_dir): # default is tech-<techname>-cache
+                        base = self.cache_dir
+                    else:
+                        base = self.path
                 else:
                     base = self.get_setting(install.base_var)
                 return os.path.join(*([base] + rest_of_path))
@@ -610,6 +710,7 @@ class HammerTechnology:
                 if not os.path.exists(install_path):
                     self.logger.error("installs {path} does not exist".format(path=install_path))
                     return False
+        self.post_install_script()
         return True
 
     def extract_tarballs(self) -> None:
@@ -617,15 +718,33 @@ class HammerTechnology:
         for tarball in self.config.tarballs:
             target_path = os.path.join(self.extracted_tarballs_dir, tarball.path)
             tarball_path = os.path.join(self.get_setting(tarball.base_var), tarball.path)
-            self.logger.debug("Extracting/verifying tarball %s" % (tarball_path))
+            if not os.path.isfile(tarball_path):
+                raise ValueError("Path {0} does not point to a valid tarball!".format(tarball_path))
             if os.path.isdir(target_path):
                 # If the folder already seems to exist, continue
                 continue
             else:
                 # Else, extract the tarballs.
-                os.makedirs(target_path, exist_ok=True)  # Make sure it exists or tar will not be happy.
-                subprocess.check_call("tar -xf %s -C %s" % (tarball_path, target_path), shell=True)
-                subprocess.check_call("chmod u+rwX -R %s" % (target_path), shell=True)
+                os.makedirs(target_path, mode=0o700, exist_ok=True)  # Make sure it exists or tar will not be happy.
+                self.logger.debug("Extracting/verifying tarball %s" % (tarball_path))
+                tarfile.open(tarball_path).extractall(target_path)
+                for root, dirs, files in os.walk(target_path):
+                    for d in dirs:
+                        os.chmod(os.path.join(root, d), mode=0o700)
+                    for f in files:
+                        file = os.path.join(root, f)
+                        os.chmod(file, mode=0o700)
+                        # extract tarball recursively
+                        if tarfile.is_tarfile(file):
+                            self.logger.debug("Extracting/verifying tarball %s" % (file))
+                            tarfile.open(file).extractall(path=os.path.join(root, f + "_dir"))
+                            os.remove(file)
+                            os.renames(os.path.join(root, f + "_dir"), file)
+                self.post_install_script()
+
+    def post_install_script(self) -> None:
+        """a script to apply any needed hotfixes to technology libraries, tech __init__.py will override this"""
+        pass
 
     def get_extra_libraries(self) -> List[ExtraLibrary]:
         """
@@ -838,6 +957,33 @@ class HammerTechnology:
         else:
             raise ValueError("Tech JSON does not specify any stackups")
 
+    def get_shrink_factor(self) -> Decimal:
+        """
+        Return the manufacturing shrink factor.
+        """
+        if self.config.shrink_factor is not None:
+            return Decimal(self.config.shrink_factor)
+        else:
+            # TODO(johnwright) Warn the user that we are using a default shrink factor (they should update their tech plugin)
+            return Decimal(1)
+
+    def get_post_shrink_length(self, length: Decimal) -> Decimal:
+        """
+        Convert a drawn dimension into a manufactured (post-shrink) dimension.
+
+        :param length: The drawn length
+        :return: The post-shrink length
+        """
+        # TODO(ucb-bar/hammer#378) use hammer units for length and area
+        return self.get_shrink_factor() * length
+
+    def get_special_cell_by_type(self, cell_type: CellType) -> List[SpecialCell]:
+        if self.config.special_cells is not None:
+            cell_list = [SpecialCell.from_setting(sc) for sc in list(self.config.special_cells)]
+            return [fc for fc in cell_list if fc.cell_type == cell_type]
+        else:
+            return []
+
     def get_grid_unit(self) -> Decimal:
         """
         Return the manufacturing grid unit.
@@ -865,6 +1011,54 @@ class HammerTechnology:
         """
         return self.get_site_by_name(self.get_setting("vlsi.technology.placement_site"))
 
+    def get_tech_syn_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
+        """
+        Return a list of synthesis hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_tech_par_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
+        """
+        Return a list of place and route hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_tech_drc_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
+        """
+        Return a list of DRC hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_tech_lvs_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
+        """
+        Return a list of LVS hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_tech_sram_generator_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
+        """
+        Return a list of sram generator hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_tech_sim_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
+        """
+        Return a list of sim hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_tech_pcb_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
+        """
+        Return a list of pcb hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
 
 class HammerTechnologyUtils:
     """

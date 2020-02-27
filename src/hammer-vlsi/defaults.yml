@@ -8,12 +8,17 @@ vlsi.core:
   technology_path_meta: subst
 
   # Technology to use. hammer-vlsi will read this and load the appropriate technology libraries.
-  technology: "saed32"
+  technology: "nop"
 
   # Technology node dimension (nm) to use.
   # Some tools change what they do as this changes.
   # TODO: move this to vlsi.technology (or technology.core) ucb-bar/hammer#317
-  node: 32
+  node: "nop"
+
+  # Build system to use, if any.
+  # This is used to auto-generate a build file, if desired. It is not required to run hammer.
+  # Valid options are "none" or "make"
+  build_system: "none"
 
   # Path(s) to synthesis tools.
   # Add the built-in path to synthesis tools.
@@ -40,6 +45,16 @@ vlsi.core:
   sram_generator_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/sram_generator"]
   sram_generator_tool_path_meta: subst
 
+  # Path(s) to sim tools.
+  # Add the built-in path to sim tools
+  sim_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/sim"]
+  sim_tool_path_meta: subst
+
+  # Path(s) to PCB deliverable tools.
+  # Add the built-in path to PCB deliverable tools.
+  pcb_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/pcb"]
+  pcb_tool_path_meta: subst
+
   # Synthesis tool to use.
   # Currently we can choose from a selection of built-in tools which hammer-vlsi supports.
   synthesis_tool: "nop"
@@ -55,6 +70,15 @@ vlsi.core:
 
   # SRAM Generator tool to use.
   sram_generator_tool: "nop"
+
+  # Sim tool to use.
+  sim_tool: "nop"
+
+  # PCB deliverable tool to use.
+  # PCB deliverables include footprints, symbols, etc.
+  # For the exact deliverables produced, please see the deliverable tool's documentation.
+  # For the default 'generic' tool, the list of artefacts can be found in src/hammer-vlsi/pcb/generic/__init__.py
+  pcb_tool: "generic"
 
   # Maximum threads to use in a CAD tool invocation.
   max_threads: 1
@@ -176,7 +200,7 @@ vlsi.inputs:
   # netlist (str) - path to the netlist file
   ilms: []
 
-  # Muli-mode multi-corner setups, overrides supplies
+  # Multi-mode multi-corner setups, overrides supplies
   # MMMC struct members:
   # name (str) - name of the corner.
   # type (str) - One of the following:
@@ -188,6 +212,7 @@ vlsi.inputs:
   mmmc_corners: []
 
   # Clock ports of the top-level module.
+  # type: List[ClockPort]
   # TODO: support multiply_by in generated clocks
   # Clock struct members:
   # name (str) - Name of the clock port.
@@ -198,6 +223,8 @@ vlsi.inputs:
   # source_path (str) - Required if generated. The path of the clock that this clock is generated from.
   # divisor (int) - Required if generated. The amount this generated clock is slowed from the source clock e.g. 2 => this clock will be two times slower than the source clock.
   #   We are constrained to integers by SDC.
+  # group (str) - Optional. The name of the clock group this clock belongs to. Clocks in the same group will not be marked as asynchronous.
+  #   Clocks with no group specified will all be placed in separate groups and thus marked as asynchronous to each other and all other groups.
   clocks: []
 
   # Default output pin load capacitance.
@@ -230,31 +257,58 @@ vlsi.inputs:
   # List of placement constraints for floorplanning.
   # Each item is a struct member:
   # path (str) - Path to the given instance
-  # type (str) - One of the following:
-  # - "dummy" (does nothing with this constraint)
-  # - "placement" (creates a placement constraint for an instance)
-  # - "toplevel" (top-level chip dimensions; may only occur once, for the top-level module)
-  # - "hardmacro" (places this hard macro at a particular spot)
-  # - "hierarchical" (marks this instance as part of hierarchical place and route)
-  # - "obstruction" (creates a blockage at a particular spot; see obs_types)
-  # TODO(edwardw): add rotation
+  # - Required for all types
+  # type (str) - The type of placement constraint
+  # - Required for all types
+  # - One of the following:
+  #   - "dummy" (does nothing with this constraint)
+  #   - "placement" (creates a placement constraint for an instance)
+  #   - "toplevel" (top-level chip dimensions; may only occur once, for the top-level module)
+  #   - "hardmacro" (places this hard macro at a particular spot)
+  #   - "hierarchical" (marks this instance as part of hierarchical place and route)
+  #   - "obstruction" (creates a blockage at a particular spot; see obs_types)
+  # orientation (Optional[str]) - The orientation
+  # - Optional for all types
+  # - Valid options:
+  #   - "r0"   (standard orientation)
+  #   - "r90"  (rotated 90 degrees clockwise)
+  #   - "r180" (rotated 180 degrees)
+  #   - "r270" (rotated 270 degrees clockwise; equivalent to -90 degrees counterclockwise)
+  #   - "mx"   (mirrored about the x-axis)
+  #   - "mx90" (mirrored about the x-axis, then rotated 90 degrees clockwise)
+  #   - "my"   (mirrored about the y-axis)
+  #   - "my90" (mirrored about the y-axis, then rotated 90 degrees clockwise)
   # x (float) - x coordinate in um
+  # - Required for all types
   # y (float) - y coordinate in um
+  # - Required for all types
   # width (float) - width in um
+  # - Required for all types, but can be auto-filled for hierarchical and hardmacro if left blank
   # height (float) - height in um
-  # margins (Optional[Margins]) - margins for the top-level module (i.e. only only for a toplevel constraint). Contains the following keys:
-  # - "left" - margin from the left side of the core PNR area to the edge of the chip
-  # - "right" - margin from the right side of the core PNR area to the edge of the chip
-  # - "top" - margin from the top side of the core PNR area to the edge of the chip
-  # - "bottom" - margin from the bottom side of the core PNR area to the edge of the chip
-  # top_layer (str) - Optional: Specifies the highest layer used by this hardmacro
-  #   If specified will be used to keep other wires away from this hardmacro
-  # layers (List[str]) - Optional: only used for obstruction type. 
-  #   If specified, a list of strings that enumerates layer(s) blocked by the obstruction otherwise all layers are blocked
-  # obs_types (List[str]) - Required for obstruction type. A list of one or more of the following:
-  # - "place" - This obstruction type stops the placement of standard cells inside it
-  # - "route" - This obstruction type stops all routing inside it
-  # - "power" - This obstruction type stops only power routing/straps inside it
+  # - Required for all types, but can be auto-filled for hierarchical and hardmacro if left blank
+  # master (Optional[str]) - The master module name of the hierarchical or hardmacro constraint.
+  #                          For example, if this hardmacro is an instance of "my_amplifier", this
+  #                          field should be set to "my_amplifier".
+  # - Required for hierarchical and optional for hardmacro, disallowed otherwise
+  # create_physical (Optional[bool]) - Create an instance of a physical-only cell that does not exist in addition to placing it
+  # - Optional for hardmacro, disallowed otherwise
+  # margins (Optional[Margins]) - margins for the top-level module.
+  # - Required for toplevel, disallowed otherwise
+  # - Contains the following keys:
+  #   - "left"   (margin from the left side of the core PNR area to the edge of the chip)
+  #   - "right"  (margin from the right side of the core PNR area to the edge of the chip)
+  #   - "top"    (margin from the top side of the core PNR area to the edge of the chip)
+  #   - "bottom" (margin from the bottom side of the core PNR area to the edge of the chip)
+  # top_layer (str) - Specifies the highest layer used by this hierarchical or hardmacro, used to keep other wires away
+  # - Optional for hierarchical and hardmacro
+  # layers (List[str]) - A list of strings that enumerates layer(s) blocked by the obstruction otherwise all layers are blocked
+  # - Required for the obstruction type, disallowed otherwise
+  # obs_types (List[str]) - A list of the types of obstructions for the given geometry
+  # - Required for the obstruction type, disallowed otherwise
+  # - A list of one or more of the following:
+  #   - "place" - This obstruction type stops the placement of standard cells inside it
+  #   - "route" - This obstruction type stops all routing inside it
+  #   - "power" - This obstruction type stops only power routing/straps inside it
   placement_constraints: []
 
   # Don't use list mode. (str)
@@ -316,15 +370,31 @@ vlsi.inputs:
     y: 0
     # pitch (float) - pitch of bumps in microns
     pitch: 0.0
-    # cell (str) - Name of bump cell
+    # cell (str) - Name of the default bump cell
     cell: ""
     # assignments - List of BumpAssignment structs. You must specify one of name or no_connect.
     # If both are specified the bump will be left unconnected
     #  - name (Optional[str]) - The name of the net being assigned to a bump
     #  - no_connect (Optional[bool]) - If True the bump will be present but unconnected
-    #  - x (int) - The X coordinate of the bump assigned to this net
-    #  - y (int) - The Y coordinate of the bump assigned to this net
+    #  - x (Decimal) - The X coordinate of the bump assigned to this net
+    #  - y (Decimal) - The Y coordinate of the bump assigned to this net
+    #  - group (Optional[str]) - The group name for the bumps
+    #                          - The schematic symbol generator will put all bumps in a group on the same part or sub-component.
+    #  - custom_cell (Optional[str]) - Cell name (MACRO name) of a custom bump cell in place of the default for this bump. You must also specify the LEF and GDS for this bump in extra_libraries.
     assignments: []
+
+  # Naming scheme for the bumps' actual physical pin designators
+  # Valid options are
+  # - "A0"    (Use letters for rows, skipping I, O, Q, S, X, and Z. After Y is AA, AB, AC ...
+  #            Use numbers for columns, starting at 0, with no leading 0s (0-9, then 10, 11, ...))
+  # - "A1"    (Like A0, but numbers start at 1)
+  # - "A00"   (Like A0, but all bumps will have the same number of digits, with leading 0s appended if needed.
+  #            E.g. if there are 555 columns, The top row will start at A000 and end at A554)
+  # - "A01"   (Like A00, but numbers start at 1)
+  # - "index" (Just returns a single number in the order the bumps are listed- useful for non-grid designs)
+  # type: str
+  bumps_pin_naming_scheme: "A1"
+
 
   # Pin placement mode. (str)
   # Specifies how to arrange pins for your design.
@@ -335,19 +405,48 @@ vlsi.inputs:
   # auto - (not implemented yet) looks at the hierarchy and guess where pins should go
   pin_mode: none
   pin:
+    # Pin generation modes.
+    # type: str
+    # Valid options are:
+    # - full_auto: auto-place minimum-width pins (intended for digital signals) along a side. This option is the default.
+    # - semi_auto: enables the auto-place features above but also optionally allows pin width, depth, and locations to
+    #   be manually specified.
+    generate_mode: full_auto
+
     # List of PinAssignment Structs.
     #   You must specify pins and one of either preplaced or layers and side.
     # - pins (str) - The name(s) of pins that will be assigned. All current backends support
     #   * as wildcards in the pin names. So "*" for all pins or "io_tl_a*" for all pins that
     #   start with "io_tl_a".
     # - side (Optional[str]) - The side of the chip/block these pins will be placed along.
-    #   One of "left", "right", "top", "bottom"
+    #   One of:
+    #   - left, right, top, bottom
+    #   - internal: creates an internal pin with `location` as its *center*.
+    #     Requires the semi_auto pin generation mode.
+    #   If left unspecified, the CAD tool may choose an arbitrary side to use (likely the closest side).
     # - layers (Optional[List[str]]) - The metal layers that these pins will be placed on.
     # - preplaced (Optional[bool]) - If true, these pins are preplaced by some internal block or macro.
     #   This is telling the tool that these pins are on an internal block and I want them
     #   "placed" where they are currently on the internal block. This can be used for IP
     #   that directly connects to bumps, or signals that will be connected by abutment,
     #   and much more.
+    # - location (Optional[Tuple[float, float]]) - specifies the *center* (x, y) location of the pin on the specified
+    #   edge.
+    #   If side is one of left/right/top/bottom, this specifies the point that lies on the edge that is used for
+    #   width/depth control. Below is an example of location if side is "top":
+    #
+    #   -------X------- (chip/block edge)
+    #   |             |
+    #   ---------------
+    #
+    #   If side is "internal", then this specifies the absolute *center* of the
+    #   Requires the semi_auto pin generation mode.
+    # - width (Optional[float]) - specifies a custom width for the pin. The width direction is orthogonal to the routing
+    #   direction.
+    #   Requires the semi_auto pin generation mode.
+    # - depth (Optional[float]) - specifies a custom depth for the pin. The depth direction is parallel to the routing
+    #   direction.
+    #   Requires the semi_auto pin generation mode.
     assignments: []
 
 vlsi.submit:
@@ -423,6 +522,21 @@ par.inputs:
   # type: bool
   gds_merge: false
 
+  # Physical only cells mode.
+  # type: str
+  # The list of physical only cells are cells which don't have a logic function.
+  # They won't have a SPICE circuit for instance.
+  # This is currently only used for what cells to exclude from the LVS netlist, which
+  # requires SPICE circuits for all cells.
+  # Valid options:
+  # auto - Use the technology plugin's value for the physical cell list.
+  # manual - Read the physical cell list from the variable below, overriding the technology plugin.
+  # append - Append the manual list to the technology plugin's list
+  physical_only_cells_mode: auto
+  # List of cells that are only physical.
+  # type List[str]
+  physical_only_cells_list: []
+
 # Place-and-route settings
 par:
   # Submission command settings
@@ -435,15 +549,22 @@ par:
 
   # Power straps configuration.
   # Valid options are:
-  # - blank - Specify no power straps
+  # - empty - Specify no power straps
   # - manual - Specify the contents of a manual TCL script to use, specified in power_straps_script_contents.
   # - generate - Generate power straps from Hammer IR.
-  power_straps_mode: blank
+  power_straps_mode: empty
   power_straps_script_contents: null
 
   # Spacing around blocks and hardmacros in microns
   # Used by power straps and floorplanning
+  # type: Decimal
   blockage_spacing: 0.0
+
+  # Top metal layer that is pulled back around blocks and hardmacros
+  # Used by floorplanning.
+  # Overridden by individual placement constraints top_layer.
+  # type: Optional[str]
+  blockage_spacing_top_layer: null
 
   # If power_straps_mode is 'generate', which method to use.
   # Currently, the valid options are:
@@ -456,31 +577,42 @@ par:
     by_tracks:
       # Spacing from end of strap to a block or blockage
       # Overrideable by appending _<layer name>
+      # type: Decimal
       blockage_spacing: "par.blockage_spacing"
       blockage_spacing_meta: lazycrossref
 
       # Number of routing tracks to be consumed by an individual strap
       # Overrideable by appending _<layer name>
+      # type: int
       track_width: 5
 
       # The first track to contain a power stripe
       # Overrideable by appending _<layer name>
+      # type: int
       # TODO(johnwright): include an auto-center option
       track_start: 0
 
+      # Absolute offset for straps relative to the design bounding box origin
+      # Overrideable by appending _<layer name>
+      # type: Decimal
+      track_offset: 0.0
+
       # Number of routing tracks between sets of straps (0 is recommended)
       # Overrideable by appending _<layer name>
+      # type: int
       track_spacing: 0
 
       # Ratio of total routing tracks to dedicate to power straps, which is used to calculate set pitch
       # Overrideable by appending _<layer name>
+      # type: float
       power_utilization: 0.1
 
       # Layers to put power pins on
+      # type: List[str]
       pin_layers: []
 
-      # List of layers on which to place power straps (std cell rail layer is implied- do not include it)
-      # Not overrideable
+      # List of layers on which to place power straps (std cell rail layer is implied - do not include it)
+      # type: List[str]
       strap_layers: []
 
 mentor:
@@ -491,16 +623,29 @@ mentor:
 # DRC settings
 drc.inputs:
   # Top RTL module.
+  # type: str
   top_module: null
 
-  # Input layout file
-  # Typically a GDSII file from the place and route tool
+  # Input layout file.
+  # Typically a GDSII file from the place and route tool.
+  # type: str
   layout_file: null
 
   # Valid modes are auto, manual, prepend, and append
+  # type: str
   additional_drc_text_mode: "auto"
-  # Custom DRC command text to add after the boilerplate commands at the top of the run file
+  # Custom DRC command text to add after the boilerplate commands at the top of the run file.
+  # type: str
   additional_drc_text: ""
+
+  # DRC rules to run.
+  # Leaving this empty will run all rules - otherwise, the rules listed will be run.
+  # Rule names are defined in the Design Rule Manual (DRM).
+  # Generally rules will still have the same names across DRC decks for different tool vendors from the same PDK.
+  # There is no "schema" for the DRC rule names in Hammer - while the vendors may have some pattern they use, this
+  # setting has no understanding of that.
+  # type: List[str]
+  drc_rules_to_run: []
 
 # inherit settings from vlsi.submit but allow us to override them
 drc.submit:
@@ -521,6 +666,9 @@ lvs.inputs:
   # Input list of schematic files
   schematic_files: []
 
+  # Input list of ILMStructs
+  ilms: []
+
   # Valid modes are auto, manual, prepend, and append
   additional_lvs_text_mode: "auto"
   # Custom LVS command text to add after the boilerplate commands at the top of the run file
@@ -539,11 +687,35 @@ sram_generator.submit:
   settings: "vlsi.submit.settings"
   settings_meta: lazycrossref
 
+# PCB deliverable settings.
+pcb.inputs:
+  # Top RTL module.
+  top_module: null
+
+pcb.generic:
+  # Writes a floorplan.svg file
+  # Valid modes are bumps or all (includes macro placement boxes)
+  # type: string
+  viz: null
+
+pcb.submit:
+  # Submission command settings
+  # inherit settings from vlsi.submit but allow us to override them
+  command: "${vlsi.submit.command}"
+  command_meta: lazysubst
+  settings: "vlsi.submit.settings"
+  settings_meta: lazycrossref
+
+
 technology.core:
     # Key name for the technology stackup
     # This should exist in the stackups list in the tech json
     # type: str
     stackup: null
+    # Key name for the technology's special cells
+    # This should exist in the special_cells list in the tech json
+    # type: str
+    special_cells: null
     # This should specify the TOPMOST metal layer the standard cells use for power rails
     # Note that this is not usually stackup specific; it is based on the std cell library
     # type: str
@@ -552,9 +724,118 @@ technology.core:
     # Can be a wildcard/glob
     # type: str
     tap_cell_rail_reference: null
+ 
+# Specific inputs for the simulation tool.
+# These inputs will vary based on if the simulation is for RTL, post synthesis, or post PAR.
+# There may be HAMMER simulation tool plugins available that include common simulator flags and inputs that can be modified/augmented for the user's needs.
+sim.inputs:
+  # Top RTL module for simulation
+  # type: str
+  top_module: null
 
-pcb.generic:
-  # Writes a floorplan.svg file
-  # Valid modes are bumps or all (includes macro placement boxes)
-  # type: string
-  viz: null
+  # Input files for simulation including verilog sources, testharness/testbench, etc.
+  # type: List[str]
+  input_files: []
+
+  # Permissive options for the simulator generation
+  # These options will appear as plain string option additions when generating the simulation executable
+  # type: List[str]
+  options: []
+
+  # Define options passed when generating the simulation executable
+  # For example: when passed to VCS, each define in the input list will be added as "+define+" + {define}
+  # type: List[str]
+  defines: []
+
+  # C compiler options used when generating the simulation executable
+  # For example: when passed to VCS, each compiler_opt will be added as "-CC " + {compiler_opt}
+  # type: List[str]
+  compiler_opts: []
+
+  # Simulation timescale
+  # This is passed as a plain string
+  # For example, for VCS, timescale may be set as "sim.inputs.timescale: '1ns/10ps' which would be passed as "-timescale=1ns/10ps"
+  # type: str
+  timescale: null
+
+  # Benchmarks to run with the simulator executable
+  # This is a list of paths to benchmark binaries that will be run with the simulator to test the design if the testbench requires it.
+  # For example, this may be a RISCV binary like rv64ui-p-simple.
+  # If left empty, the simulation will execute as normal.
+  # type: List[str]
+  benchmarks: []
+
+  # Hierarchical path to the top level instance of the "dut" from the testbench.
+  # For example, this will be used to generate the hierarchical path through the testbench and DUT to each sequential element in the design.
+  # TODO(johnwright) automate this by parsing the TB verilog?
+  # type: str
+  tb_dut: "dut"
+
+  # Name of the simulation testbench/test driver module
+  tb_name: "TestDriver"
+
+  # Simulation mode for simulation at different levels of the VLSI flow
+  # Valid options are:
+  #   "rtl" for rtl level simulation
+  #   "gl" for gate level simulation
+  # type: SimulationLevel
+  level: "rtl"
+
+  # List of all registers in the design passed from synthesis or place-and-route
+  # type: List[str]
+  all_regs: []
+
+  # List of all sequential standard cells in the design passed from synthesis or place-and-route
+  # type: List[str]
+  seq_cells: []
+
+  # SDF File
+  # type: str
+  # Standard Delay Format file for use in timing annotated sims
+  # leave as null if not in use
+  sdf_file: null
+
+  # Simulation force value used for register initialization for gate level sims
+  # TODO: add random initialization option
+  # type: int
+  gl_register_force_value: 0
+
+  # Turns time annotated sim on or off
+  # type: bool
+  # If set to False, the sim will be purely functional, regardless of the simulation "level".
+  # If set to True, the sim will be time annotated based on synthesis or PAR results.
+  timing_annotated: false
+
+  # Flags to run with the simulator
+  # Each string in this list will be passed as an option when actually executing the simulation executable generated from the previous arguments.
+  # type: List[str]
+  execution_flags: []
+
+  # Flags that are to be pre-pended to the simulator execution flags in "execution_flags"
+  # type: List[str]
+  execution_flags_prepend: []
+
+  # Flags that are to be appended to the simulator execution flags in "execution_flags"
+  # type: List[str]
+  execution_flags_append: []
+
+  # Determines whether or not the simulation executable that is generated with the above inputs will actually be executed with the given flags or if the executable will just be generated in the specified run directory.
+  # type: bool
+  execute_sim: true
+
+sim.submit:
+  command: "${vlsi.submit.command}"
+  command_meta: lazysubst
+  settings: "vlsi.submit.settings"
+  settings_meta: lazycrossref
+
+technology.pcb:
+  # Desired pad opening diameter (in post-shrink um)
+  # Typically this should be defined in the technology plugin, assuming everyone will use the same pad and board strategy
+  # type: Decimal
+  bump_pad_opening_diameter: null
+
+  # Desired pad metal diameter (in post-shrink um)
+  # Typically this should be defined in the technology plugin, assuming everyone will use the same pad and board strategy
+  # type: Decimal
+  bump_pad_metal_diameter: null

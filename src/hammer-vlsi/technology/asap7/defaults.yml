@@ -1,0 +1,68 @@
+# Settings for the asap7 technology to be overriden by the project.
+technology.asap7:
+  # Path to the directory which contains all the asap7 tarballs (e.g. ASAP7_PDKandLIB.tar)
+  tarball_dir: "libs"
+
+# Set some defaults for this technology.
+# For quick performance evaluations, use the typical voltage+temperature corners.
+# Nominal voltage for 7nm technology is 0.70 V and is the only voltage provided
+# for normal SRAMs.
+# TODO: add default temperature corners.
+vlsi:
+  # Technology dimension
+  # The PaR tool actually runs in the 4x scaled up lef/gds.
+  # after PaR, post_par_script in asap7/__init__.py will scale down the generated gds to 7nm.
+  core.node: 28
+  inputs:
+    # Supply voltages.
+    supplies:
+      VDD: "0.70 V"
+      GND: "0 V"
+    # mmmc corners config.
+    mmmc_corners: [
+      {
+        "name": "PVT_0P63V_100C",
+        "type": "setup",
+        "voltage": "0.63 V",
+        "temp": "100 C"
+      },
+      {
+        "name": "PVT_0P77V_0C",
+        "type": "hold",
+        "voltage": "0.77 V",
+        "temp": "0 C"
+      }
+    ]
+  technology:
+    # Set standard cell LEF placement site
+    placement_site: "coreSite"
+
+    # Set the layer that blocks vias under bumps
+    bump_block_cut_layer: "V9"
+
+    # Set the interval and offset for tap cells
+    tap_cell_interval: "50"
+    tap_cell_offset: "10.564"
+
+
+technology.core:
+  # This key should exist in the stackups list in the tech json
+  stackup: "asap7_3Ma_2Mb_2Mc_2Md"
+  # This should specify the TOPMOST metal layer the standard cells use for power rails
+  # Note that this is not usually stackup specific; it is based on the std cell libraries themselves
+  std_cell_rail_layer: "M1"
+  # This is used to provide a reference master for generating standard cells
+  tap_cell_rail_reference: "{TAPCELL*}"
+
+mentor.extra_env_vars:
+  - VAR_M4_YOFFSET: "0"
+  - VAR_M5_XOFFSET: "0"
+  - VAR_M6_YOFFSET: "0"
+  - VAR_M7_XOFFSET: "0"
+
+par.inputs:
+  # gds_merge: true is mandatory,
+  # The shrink script in __init__.py filters stdcells but expects all other input GDSs to be 4x upscaled.
+  # If user decides to set this to false, all other GDSs (e.g. hard macros) need to be 1x scaled
+  # TODO: change export_config_outputs for PaR inputs to expose gds_merge to output json
+  gds_merge: true

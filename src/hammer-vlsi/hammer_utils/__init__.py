@@ -9,9 +9,12 @@ import copy
 import inspect
 import math
 import sys
+import os
+import errno
 from functools import reduce
 from typing import List, Any, Set, Dict, Tuple, TypeVar, Callable, Iterable, Optional, Union
 from enum import Enum, unique
+import decimal
 from decimal import Decimal
 
 from .verilog_utils import *
@@ -109,20 +112,15 @@ def coerce_to_grid(num: float, grid: Decimal) -> Decimal:
     """
     return Decimal(round(num / float(grid))) * grid
 
-def check_on_grid(num: Union[float, Decimal], grid: Decimal) -> bool:
+def check_on_grid(num: Decimal, grid: Decimal) -> bool:
     """
     Checks if a number is an integer multiple of a specified grid unit.
-    This supports floats and Decimals, although support for floats will eventually be removed.
-    Removal of float support will be in ucb-bar/hammer#376
 
     :param num: The number to check
     :param grid: The decimal grid value on which to check number
     :return: True if num is on-grid, False otherwise
     """
-    # TODO(johnwright) Remove float support in ucb-bar/hammer#376
-    num_dec = num if isinstance(num, Decimal) else coerce_to_grid(num, Decimal("0.001"))
-    assert isinstance(num_dec, Decimal)
-    return Decimal(int(num_dec / grid)) == (num_dec / grid)
+    return Decimal(int(num / grid)) == (num / grid)
 
 def gcd(*values: int) -> int:
     """
@@ -364,7 +362,7 @@ def check_function_type(function: Callable, args: List[type], return_type: type)
             "Too many arguments - got {got}, expected {expected}".format(got=len(inspected_args), expected=len(args)))
     else:
         for i, (inspected_var_name, expected) in list(enumerate(zip(inspected_args, args))):
-            inspected = annotations[inspected_var_name]
+            inspected = annotations.get(inspected_var_name, None)
             if not compare_types(inspected, expected):
                 inspected_name = get_name_from_type(inspected)
                 expected_name = get_name_from_type(expected)
@@ -408,3 +406,36 @@ def get_filetype(filename: str) -> HammerFiletype:
         return HammerFiletype.VERILOG
     else:
         raise NotImplementedError("Unknown file extension: {e}. Please update {f}!".format(e=extension, f=__file__))
+
+
+def um2mm(length: Decimal, prec: int) -> Decimal:
+    """
+    Convert a length in microns to millimeters with rounding.
+
+    :param length: The input length in microns
+    :param prec: The number of digits after the decimal place to use
+    :return: A length in millimeters
+    """
+    with decimal.localcontext() as c:
+        c.rounding = decimal.ROUND_HALF_UP
+        mm = length/Decimal(1000)
+        p = c.power(10, prec)
+        # I would use .quantize(...) here, but it doesn't seem to work for quantization values > 1 (only 1, .1, .01, ...)
+        return (mm*p).to_integral_exact()/p
+
+
+def mkdir_p(path: str) -> None:
+    """
+    Recursively create a directory structure if it does not exist (equivalent to the behavior of
+    `mkdir -p` in most shells).
+
+    :param path: The path to the file to create
+    """
+    # https://stackoverflow.com/questions/18973418
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        if e.errno != errno.EEXIST:
+            raise
+        pass
+

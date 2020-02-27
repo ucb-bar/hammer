@@ -13,6 +13,7 @@ import shlex
 from abc import ABCMeta, abstractmethod
 from functools import reduce
 from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, cast
+from inspect import cleandoc
 
 import hammer_config
 import hammer_tech
@@ -22,9 +23,9 @@ from hammer_utils import (add_lists, assert_function_type, get_or_else,
                           optional_map)
 
 from .constraints import *
-from .hammer_vlsi_impl import HammerToolPauseException, HierarchicalMode
+from .hammer_vlsi_impl import HierarchicalMode
 from .hooks import (HammerStepFunction, HammerToolHookAction, HammerToolStep,
-                    HookLocation)
+                    HookLocation, HammerStartStopStep)
 from .submit_command import HammerSubmitCommand
 from .units import TemperatureValue, TimeValue, VoltageValue
 
@@ -225,6 +226,8 @@ class HammerTool(metaclass=ABCMeta):
         try:
             return self._rundir
         except AttributeError:
+            return self._rundir
+        except AttributeError:
             raise ValueError("Internal error: run dir location not set by hammer-vlsi")
 
     @run_dir.setter
@@ -368,6 +371,13 @@ class HammerTool(metaclass=ABCMeta):
     ##############################
     # Hooks
     ##############################
+    def get_tool_hooks(self) -> List[HammerToolHookAction]:
+        """
+        Get any hooks specific to the tool.
+        To be overridden by subclasses that need to implement persistent hooks.
+        """
+        return list()
+
     def check_duplicates(self, lst: List[HammerToolStep]) -> Tuple[bool, Set[str]]:
         """Check that no two steps have the same name."""
         seen_names = set()  # type: Set[str]
@@ -397,47 +407,102 @@ class HammerTool(metaclass=ABCMeta):
         # Copy the list of steps
         new_steps = list(steps)
 
-        # Where to resume, if such a hook exists
+        # Persistent steps are processed differently from normal steps. Not a List[HammerToolStep]
+        # because we need to access its location and target_name later when iterating through new_steps.
+        persistent_steps = []  # type: List[HammerToolHookAction]
+
+        # Where to resume/pause, if such a hook exists
         resume_step = None  # type: Optional[str]
-        # If resume_step is not None, whether to resume pre or post this step
+        pause_step = None  # type: Optional[str]
+        # If resume/pause_step is not None, whether to resume/pause pre or post this step
         resume_step_pre = True  # type: bool
+        pause_step_pre = True  # type: bool
 
         for action in hook_actions:
-            if not has_step(action.target_name):
-                self.logger.error("Target step '{step}' does not exist".format(step=action.target_name))
-                return False
-
             step_id = -1
-            for i in range(len(new_steps)):
-                if new_steps[i].name == action.target_name:
-                    step_id = i
-                    break
-            assert step_id != -1
+            pstep_id = -1
+
+            if action.location != HookLocation.PersistentStep:
+                if not has_step(action.target_name):
+                    if action.location in [HookLocation.ResumePreStep, HookLocation.ResumePostStep, HookLocation.PausePreStep, HookLocation.PausePostStep]:
+                        self.logger.error("Target step '{step}' specified by --from/after/to/until_step does not exist".format(step=action.target_name))
+                        return False
+                    else:
+                        self.logger.error("Target step '{step}' specified by a hook does not exist".format(step=action.target_name))
+                        return False
+
+                for i, nstep in enumerate(new_steps):
+                    if nstep.name == action.target_name:
+                        step_id = i
+                        break
+                for i, pstep in enumerate(persistent_steps):
+                    assert pstep.step is not None, "Persistent(Pre/Post)Step requires a step"
+                    if pstep.step.name == action.target_name:
+                        pstep_id = i
+                        break
+                assert (step_id > -1) != (pstep_id > -1), "Either a regular or persistent step must be targeted"
 
             if action.location == HookLocation.ReplaceStep:
                 assert action.step is not None, "ReplaceStep requires a step"
                 assert action.target_name == action.step.name, "Replacement step should have the same name"
-                new_steps[step_id] = action.step
+                if pstep_id > -1:
+                    # Inherit replaced persistent step's location and target
+                    persistent_steps[pstep_id] = action._replace(location=persistent_steps[pstep_id].location,
+                                                                 target_name=persistent_steps[pstep_id].target_name)
+                elif step_id > -1:
+                    new_steps[step_id] = action.step
             elif action.location == HookLocation.InsertPreStep:
                 assert action.step is not None, "InsertPreStep requires a step"
                 if has_step(action.step.name):
                     self.logger.error("New step '{step}' already exists".format(step=action.step.name))
                     return False
-                new_steps.insert(step_id, action.step)
+                if pstep_id > -1:
+                    # Inherit replaced persistent step's location and target
+                    persistent_steps.insert(pstep_id, action._replace(location=persistent_steps[pstep_id].location,
+                                                                      target_name=persistent_steps[pstep_id].target_name))
+                elif step_id > -1:
+                    new_steps.insert(step_id, action.step)
                 names.add(action.step.name)
             elif action.location == HookLocation.InsertPostStep:
                 assert action.step is not None, "InsertPostStep requires a step"
                 if has_step(action.step.name):
                     self.logger.error("New step '{step}' already exists".format(step=action.step.name))
                     return False
-                new_steps.insert(step_id + 1, action.step)
+                if pstep_id > -1:
+                    # Inherit replaced persistent step's location and target
+                    persistent_steps.insert(pstep_id + 1, action._replace(location=persistent_steps[pstep_id].location,
+                                                                          target_name=persistent_steps[pstep_id].target_name))
+                elif step_id > -1:
+                    new_steps.insert(step_id + 1, action.step)
                 names.add(action.step.name)
             elif action.location == HookLocation.ResumePreStep or action.location == HookLocation.ResumePostStep:
+                if step_id == -1:
+                    self.logger.error("ResumePre/PostStep cannot target a persistent step")
+                    return False
                 if resume_step is not None:
                     self.logger.error("More than one resume hook is present")
                     return False
                 resume_step = action.target_name
                 resume_step_pre = action.location == HookLocation.ResumePreStep
+            elif action.location == HookLocation.PausePreStep or action.location == HookLocation.PausePostStep:
+                if step_id == -1:
+                    self.logger.error("PausePre/PostStep cannot target a persistent step")
+                    return False
+                if pause_step is not None:
+                    self.logger.error("More than one pause hook is present")
+                    return False
+                pause_step = action.target_name
+                pause_step_pre = action.location == HookLocation.PausePreStep
+            elif action.location in [HookLocation.PersistentStep, HookLocation.PersistentPreStep, HookLocation.PersistentPostStep]:
+                assert action.step is not None, "Persistent(Pre/Post)Step requires a step"
+                if action.location != HookLocation.PersistentStep and step_id == -1:
+                    self.logger.error("make_pre/post_persistent_hook cannot target a persistent step")
+                    return False
+                if has_step(action.step.name):
+                    self.logger.error("New step '{step}' already exists".format(step=action.step.name))
+                    return False
+                persistent_steps.append(action)
+                names.add(action.step.name)
             else:
                 assert False, "Should not reach here"
 
@@ -449,57 +514,85 @@ class HammerTool(metaclass=ABCMeta):
                 # Cajole the type checker into accepting that step is a HammerToolStep
                 step = cast(HammerToolStep, step)
                 check_hammer_step_function(step.func)
+        for pstep in persistent_steps:
+            if not isinstance(pstep, HammerToolHookAction):
+                raise ValueError("Element in List[HammerToolHookAction] is not a HammerToolHookAction")
+            else:
+                # Cajole the type checker into accepting that pstep.step is a HammerToolStep
+                step = cast(HammerToolStep, pstep.step)
+                check_hammer_step_function(step.func)
 
         # Run steps.
         prev_step = None  # type: Optional[HammerToolStep]
 
-        for step_index in range(len(new_steps)):
-            step = new_steps[step_index]
-
-            self.logger.debug("Running sub-step '{step}'".format(step=step.name))
-
+        for step_index, step in enumerate(new_steps):
             # Do this step?
             do_step = True
 
-            if resume_step is not None:
-                if resume_step_pre:
-                    if resume_step == step.name:
-                        self.logger.info("Resuming before '{step}' due to resume hook".format(step=step.name))
-                        # Remove resume marker
-                        resume_step = None
-                    else:
-                        self.logger.info("Sub-step '{step}' skipped due to resume hook".format(step=step.name))
-                        do_step = False
-                else:
-                    self.logger.info("Sub-step '{step}' skipped due to resume hook".format(step=step.name))
-                    do_step = False
+            if resume_step_pre and resume_step == step.name:
+                self.logger.info("Resuming before '{step}' due to resume hook".format(step=step.name))
+                # Remove resume marker
+                resume_step = None
+            elif resume_step is not None:
+                self.logger.debug("Sub-step '{step}' skipped due to resume hook".format(step=step.name))
+                do_step = False
+
+            if pause_step_pre and pause_step == step.name:
+                self.logger.info("Pausing tool execution before '{step}' due to pause hook".format(step=step.name))
+                for s in new_steps[step_index:]:
+                    self.logger.debug("Sub-step '{step}' skipped due to pause hook".format(step=s.name))
+                break
 
             if do_step:
-                try:
-                    if prev_step is None:
-                        # Run pre-step hook.
-                        self.do_pre_steps(step)
-                    else:
-                        # TODO: find a cleaner way of detecting a pause hook
-                        if step.name == "pause":
-                            # Don't include "pause" for do_between_steps
-                            if step_index + 1 < len(new_steps):
-                                self.do_between_steps(prev_step, new_steps[step_index + 1])
-                        else:
-                            self.do_between_steps(prev_step, step)
-                    func_out = step.func(self)  # type: bool
-                    prev_step = step
-                except HammerToolPauseException:
-                    self.logger.info("Sub-step '{step}' paused the tool execution".format(step=step.name))
-                    break
+                if prev_step is None:
+                    # Run pre-step hook.
+                    self.do_pre_steps(step)
+                    # Run appropriate persistent hooks.
+                    for pst in persistent_steps:
+                        assert pst.step is not None, "Persistent(Pre/Post)Step requires a step"
+                        pst_out = True  # type: bool
+                        if pst.location == HookLocation.PersistentStep:
+                            self.logger.debug("Running persistent sub-step '{pstep}' before '{step}'".format(pstep=pst.step.name, step=step.name))
+                            pst_out = pst.step.func(self)
+                        elif pst.location == HookLocation.PersistentPreStep and any(s.name == pst.target_name for s in new_steps[step_index:]):
+                            self.logger.debug("Running persistent sub-step '{pstep}' before '{step}' (pre-step: '{pre_step}')".format(
+                                    pstep=pst.step.name, step=step.name, pre_step=pst.target_name))
+                            pst_out = pst.step.func(self)
+                        elif pst.location == HookLocation.PersistentPostStep and any(s.name == pst.target_name for s in new_steps[:step_index]):
+                            self.logger.debug("Running persistent sub-step '{pstep}' before '{step}' (post-step: '{post_step}')".format(
+                                    pstep=pst.step.name, step=step.name, post_step=pst.target_name))
+                            pst_out = pst.step.func(self)
+                        assert isinstance(pst_out, bool)
+                        if not pst_out:
+                            return False
+                else:
+                    self.do_between_steps(prev_step, step)
+
+                self.logger.debug("Running sub-step '{step}'".format(step=step.name))
+                func_out = step.func(self)  # type: bool
+                prev_step = step
                 assert isinstance(func_out, bool)
                 if not func_out:
                     return False
 
-            if resume_step is not None:
-                if not resume_step_pre and resume_step == step.name:
-                    self.logger.info("Resuming after '{step}' due to resume hook".format(step=step.name))
-                    resume_step = None
+                # Inject PersistentPostStep after we pass its target step
+                for pst in list(filter(lambda s: s.target_name == step.name and s.location == HookLocation.PersistentPostStep, persistent_steps)):
+                    assert pst.step is not None, "PersistentPostStep requires a step"
+                    self.logger.debug("Running persistent sub-step '{pstep}' after '{step}'".format(pstep=pst.step.name, step=step.name))
+                    pst_out = pst.step.func(self)
+                    assert isinstance(pst_out, bool)
+                    if not pst_out:
+                        return False
+
+            if not resume_step_pre and resume_step == step.name:
+                self.logger.info("Resuming after '{step}' due to resume hook".format(step=step.name))
+                resume_step = None
+
+            if not pause_step_pre and pause_step == step.name:
+                self.logger.info("Pausing tool execution after '{step}' due to pause hook".format(step=step.name))
+                for s in new_steps[step_index+1:]:
+                    self.logger.debug("Sub-step '{step}' skipped due to pause hook".format(step=s.name))
+                break
 
         # Run post-steps hook.
         self.do_post_steps()
@@ -557,15 +650,6 @@ class HammerTool(metaclass=ABCMeta):
         return make_raw_hammer_tool_step(func=func, name=name)
 
     @staticmethod
-    def make_pause_function() -> HammerStepFunction:
-        """
-        Get a step function which will stop the execution of the tool.
-        """
-        def pause(x: HammerTool) -> bool:
-            raise HammerToolPauseException()
-        return pause
-
-    @staticmethod
     def make_replacement_hook(step: str, func: HammerStepFunction) -> HammerToolHookAction:
         """
         Create a hook action which replaces an existing step.
@@ -593,12 +677,15 @@ class HammerTool(metaclass=ABCMeta):
         )
 
     @staticmethod
-    def make_resume_hook(step: str, location: HookLocation) -> HammerToolHookAction:
+    def make_resume_pause_hook(step: str, location: HookLocation) -> HammerToolHookAction:
         """
-        Create a hook action is inserted relative to the given step.
+        Create a hook action which will start/stop the execution of the tool at/after the given step.
+
+        :param step: The target step that bounds of the steps to run.
+        :param location: Encodes whether this hook will cause a resume/pause pre/post the target step.
         """
-        if location != HookLocation.ResumePreStep and location != HookLocation.ResumePostStep:
-            raise ValueError("Resume hook location must be Resume*")
+        if not location in [HookLocation.ResumePreStep, HookLocation.ResumePostStep, HookLocation.PausePreStep, HookLocation.PausePostStep]:
+            raise ValueError("Resume/Pause hook location must be Resume*/Pause*")
 
         return HammerToolHookAction(
             target_name=step,
@@ -610,15 +697,17 @@ class HammerTool(metaclass=ABCMeta):
     def make_pre_pause_hook(step: str) -> HammerToolHookAction:
         """
         Create pause before the execution of the given step.
+        Note that only one pause hook may be present.
         """
-        return HammerTool.make_insertion_hook(step, HookLocation.InsertPreStep, HammerTool.make_pause_function())
+        return HammerTool.make_resume_pause_hook(step, HookLocation.PausePreStep)
 
     @staticmethod
     def make_post_pause_hook(step: str) -> HammerToolHookAction:
         """
         Create pause before the execution of the given step.
+        Note that only one pause hook may be present.
         """
-        return HammerTool.make_insertion_hook(step, HookLocation.InsertPostStep, HammerTool.make_pause_function())
+        return HammerTool.make_resume_pause_hook(step, HookLocation.PausePostStep)
 
     @staticmethod
     def make_pre_resume_hook(step: str) -> HammerToolHookAction:
@@ -626,7 +715,7 @@ class HammerTool(metaclass=ABCMeta):
         Resume before the given step.
         Note that only one resume hook may be present.
         """
-        return HammerTool.make_resume_hook(step, HookLocation.ResumePreStep)
+        return HammerTool.make_resume_pause_hook(step, HookLocation.ResumePreStep)
 
     @staticmethod
     def make_post_resume_hook(step: str) -> HammerToolHookAction:
@@ -634,23 +723,31 @@ class HammerTool(metaclass=ABCMeta):
         Resume after the given step.
         Note that only one resume hook may be present.
         """
-        return HammerTool.make_resume_hook(step, HookLocation.ResumePostStep)
+        return HammerTool.make_resume_pause_hook(step, HookLocation.ResumePostStep)
 
     @staticmethod
-    def make_from_to_hooks(from_step: Optional[str] = None,
-                           to_step: Optional[str] = None) -> List[HammerToolHookAction]:
+    def make_start_stop_hooks(start: HammerStartStopStep, stop: HammerStartStopStep) -> List[HammerToolHookAction]:
         """
-        Helper function to create a HammerToolHookAction list which will run from and to the given steps, inclusive.
+        Helper function to create a HammerToolHookAction list which will run from/after and to/until the given steps.
+        The inclusive ones take priority in the event that incompatible options are called.
 
-        :param from_step: Run from the given step, inclusive. Leave as None to resume from the beginning.
-        :param to_step: Run to the given step, inclusive. Leave as None to run to the end.
+        :param start: HammerStartStopStep that defines where to resume from
+        :param stop: HammerStartStopStep that define where to pause at
         :return: HammerToolHookAction list for running from and to the given steps, inclusive.
         """
         output = []  # type: List[HammerToolHookAction]
-        if from_step is not None:
-            output.append(HammerTool.make_pre_resume_hook(from_step))
-        if to_step is not None:
-            output.append(HammerTool.make_post_pause_hook(to_step))
+        # Determine where to resume from.
+        if start.step is not None:
+            if start.inclusive:
+                output.append(HammerTool.make_pre_resume_hook(start.step))
+            else:
+                output.append(HammerTool.make_post_resume_hook(start.step))
+        # Determine where to stop the flow.
+        if stop.step is not None:
+            if stop.inclusive:
+                output.append(HammerTool.make_post_pause_hook(stop.step))
+            else:
+                output.append(HammerTool.make_pre_pause_hook(stop.step))
         return output
 
     @staticmethod
@@ -682,6 +779,46 @@ class HammerTool(metaclass=ABCMeta):
             step=HammerTool.make_step_from_function(dummy_step, step)
         )
 
+    @staticmethod
+    def make_persistent_hook(func: HammerStepFunction) -> HammerToolHookAction:
+        """
+        Helper function to always insert a step at the beginning.
+
+        :return: Hook action which is inserted at the beginning of the list of steps
+        """
+        return HammerToolHookAction(
+            target_name="",
+            location=HookLocation.PersistentStep,
+            step=HammerTool.make_step_from_function(func)
+        )
+
+    @staticmethod
+    def make_pre_persistent_hook(step: str, func: HammerStepFunction) -> HammerToolHookAction:
+        """
+        Helper function to always insert a step at the beginning,
+        when the steps to be executed are all before the given step.
+
+        :return: Hook action which is inserted at the beginning of the list of steps
+        """
+        return HammerToolHookAction(
+            target_name=step,
+            location=HookLocation.PersistentPreStep,
+            step=HammerTool.make_step_from_function(func)
+        )
+
+    @staticmethod
+    def make_post_persistent_hook(step: str, func: HammerStepFunction) -> HammerToolHookAction:
+        """
+        Helper function to always insert a step at the beginning,
+        when the steps to be executed are all after the given step.
+
+        :return: Hook action which is inserted at the beginning of the list of steps
+        """
+        return HammerToolHookAction(
+            target_name=step,
+            location=HookLocation.PersistentPostStep,
+            step=HammerTool.make_step_from_function(func)
+        )
 
     ##############################
     # Accessory functions available to tools.
@@ -847,12 +984,14 @@ class HammerTool(metaclass=ABCMeta):
         for clock_port in clocks:
             clock = ClockPort(
                 name=clock_port["name"], period=TimeValue(clock_port["period"]),
-                uncertainty=None, path=None, generated=None, source_path=None, divisor=None
+                uncertainty=None, path=None, generated=None, source_path=None, divisor=None, group=None
             )
             if "path" in clock_port:
                 clock = clock._replace(path=clock_port["path"])
             if "uncertainty" in clock_port:
                 clock = clock._replace(uncertainty=TimeValue(clock_port["uncertainty"]))
+            if "group" in clock_port:
+                clock = clock._replace(group=clock_port["group"])
             generated = None  # type: Optional[bool]
             if "generated" in clock_port:
                 generated = bool(clock_port["generated"])
@@ -864,6 +1003,13 @@ class HammerTool(metaclass=ABCMeta):
             clock = clock._replace(generated=generated)
             output.append(clock)
         return output
+
+    def get_time_unit(self) -> TimeValue:
+        """
+        Return the library time value.
+        """
+        return TimeValue(get_or_else(self.technology.config.time_unit, "1 ns"))
+
 
     def get_all_supplies(self, key: str) -> List[Supply]:
         supplies = self.get_setting(key)
@@ -905,15 +1051,17 @@ class HammerTool(metaclass=ABCMeta):
             no_con = False if not "no_connect" in raw_assign else raw_assign["no_connect"]
             x = raw_assign["x"]
             y = raw_assign["y"]
+            group = None if not "group" in raw_assign else raw_assign["group"]
+            cell = None if not "custom_cell" in raw_assign else raw_assign["custom_cell"]
             if name is None and not no_con:
                 self.logger.warning("Invalid bump assignment, neither name nor no_connect specified for bump {x},{y}. Assuming it should be unassigned".format(
                     x=x, y=y))
             else:
                 assignments.append(BumpAssignment(name=name, no_connect=no_con,
-                    x=x, y=y))
+                    x=x, y=y, group=group, custom_cell=cell))
         return BumpsDefinition(x=self.get_setting("vlsi.inputs.bumps.x"),
             y=self.get_setting("vlsi.inputs.bumps.y"),
-            pitch=self.get_setting("vlsi.inputs.bumps.pitch"),
+            pitch=Decimal(str(self.get_setting("vlsi.inputs.bumps.pitch"))),
             cell=self.get_setting("vlsi.inputs.bumps.cell"), assignments=assignments)
 
     def generate_floorplan_viz(self) -> None:
@@ -1074,35 +1222,43 @@ class HammerTool(metaclass=ABCMeta):
                 "Invalid pin_mode {mode}. Using none pin mode.".format(mode=pin_mode))
             return []
 
+        generate_mode = str(self.get_setting("vlsi.inputs.pin.generate_mode"))
+        if generate_mode not in ("full_auto", "semi_auto"):
+            raise ValueError("Invalid generate_mode {}".format(generate_mode))
+        semi_auto = generate_mode == "semi_auto"
+
         # Generated pin mode needs to ingest the assignments
         assigns = []  # type: List[PinAssignment]
         for raw_assign in self.get_setting("vlsi.inputs.pin.assignments"):
-            pins = str(raw_assign["pins"])  # type: str
-            side = None if not "side" in raw_assign else raw_assign["side"]
-            if not (side is None or side == "top" or side == "bottom" or side == "right" or side == "left") :
-                self.logger.warning("Pins {p} have invalid side {s}. Assuming pins will be handled by CAD tool.".format(p=pins, s=side))
+            try:
+                pin = PinAssignment.from_dict(raw_assign, semi_auto)
+            except PinAssignmentSemiAutoError as e:
+                # Raise this as an error
+                self.logger.error("Semi-auto pin assigment feature used without enabling semi_auto mode: " + str(e))
                 continue
-            preplaced = raw_assign.get("preplaced", False)
-            layers = [] if not "layers" in raw_assign else raw_assign["layers"]
-            if preplaced:
-                if len(layers) != 0 or side is not None:
-                    self.logger.warning("Pins {p} assigned as a preplaced pin with layers or side. Assuming pins are preplaced pins and ignoring layers and side.".format(p=pins))
-                    assigns.append(PinAssignment(pins=pins, side=None, layers=[], preplaced=preplaced))
-                    continue
-            else:
-                if len(layers) == 0 or side is None:
-                    self.logger.warning("Pins {p} assigned without layers or side. Assuming pins will be handled by CAD tool.".format(p=pins))
-                    # No pin appended
-                    continue
-            stackup = self.get_stackup()
-            for layer in layers:
-                direction = stackup.get_metal(layer).direction
-                is_horizontal = direction == RoutingDirection.Horizontal and (side == "left" or side == "right")
-                is_vertical = direction == RoutingDirection.Vertical and (side == "top" or side == "bottom")
-                is_redis = direction == RoutingDirection.Redistribution
-                if not (is_horizontal or is_vertical or is_redis):
-                    self.logger.error("Pins {p} assigned layers {l} that do not match the direction of their side {s}. This is very likely to cause issues.".format(p=pins, l=layers, s=side))
-            assigns.append(PinAssignment(pins=pins, side=side, layers=layers, preplaced=preplaced))
+            except PinAssignmentPreplacedError as e:
+                # Accept the pin assignment and ignore extra information
+                self.logger.warning(str(e))
+                assigns.append(e.pin)
+                continue
+            except PinAssignmentError as e:
+                # Ignore the invalid pin
+                self.logger.warning(str(e))
+                continue
+
+            if pin.layers is not None:
+                stackup = self.get_stackup()
+                for layer in pin.layers:
+                    direction = stackup.get_metal(layer).direction
+                    is_horizontal = direction == RoutingDirection.Horizontal and (
+                                pin.side == "left" or pin.side == "right")
+                    is_vertical = direction == RoutingDirection.Vertical and (pin.side == "top" or pin.side == "bottom")
+                    is_redis = direction == RoutingDirection.Redistribution
+                    if not (is_horizontal or is_vertical or is_redis):
+                        self.logger.error(
+                            "Pins {p} assigned layers {l} that do not match the direction of their side {s}. This is very likely to cause issues.".format(
+                                p=pin.pins, l=pin.layers, s=pin.side))
+            assigns.append(pin)
         return assigns
 
     def get_gds_map_file(self) -> Optional[str]:
@@ -1137,6 +1293,37 @@ class HammerTool(metaclass=ABCMeta):
             map_file = tech_map_file
 
         return map_file
+
+    def get_physical_only_cells(self) -> List[str]:
+        """
+        Get a list of physical only cells in accordance with settings in the Hammer IR.
+        Return a list of cells which are physical only.
+        :return: A list of physical only cells.
+        """
+        # Mode can be auto, manual, or append
+        physical_only_cells_mode = str(self.get_setting("par.inputs.physical_only_cells_mode"))  # type: str
+
+        # physical_only_cells_list will only be used in manual and append mode
+        manual_physical_only_cells_list = self.get_setting("par.inputs.physical_only_cells_list")  # type: List[str]
+        assert isinstance(manual_physical_only_cells_list, list), "par.inputs.physical_only_cells_list must be a list"
+
+        # tech_physical_only_cells_list will only be used in auto and append mode
+        tech_physical_only_cells_list = get_or_else(self.technology.physical_only_cells_list, [])  # type: List[str]
+
+        # Default to auto (use tech_physical_only_cells_list).
+        physical_only_cells_list = tech_physical_only_cells_list  # type: List[str]
+
+        if physical_only_cells_mode == "auto":
+            pass
+        elif physical_only_cells_mode == "manual":
+            physical_only_cells_list = manual_physical_only_cells_list
+        elif physical_only_cells_mode == "append":
+            physical_only_cells_list = tech_physical_only_cells_list + manual_physical_only_cells_list
+        else:
+            self.logger.error(
+                "Invalid physical_only_cells_mode {mode}. Using auto physical only cells list.".format(mode=physical_only_cells_mode))
+
+        return physical_only_cells_list
 
     def get_dont_use_list(self) -> List[str]:
         """
@@ -1175,6 +1362,8 @@ class HammerTool(metaclass=ABCMeta):
         """
         constraints = self.get_setting("vlsi.inputs.placement_constraints")
         assert isinstance(constraints, list)
+        # At this point, the optional width/height placement constraints have been resolved,
+        # so there is no need to pass the masters in here, meaning we can use from_dict.
         return list(map(PlacementConstraint.from_dict, constraints))
 
     def get_mmmc_corners(self) -> List[MMMCCorner]:
@@ -1251,22 +1440,26 @@ class HammerTool(metaclass=ABCMeta):
                 f.write("\n".join(content_lines))
 
     @staticmethod
-    def tcl_append(cmd: str, output_buffer: List[str]) -> None:
+    def tcl_append(cmd: str, output_buffer: List[str], clean: bool = False) -> None:
         """
         Helper function to echo and run a command.
 
         :param cmd: TCL command to run
-        :param output_buffer: Buffer in which to enqueue the resulting TCL lines.
+        :param output_buffer: Buffer in which to enqueue the resulting TCL lines
+        :param clean: True if you want to trim the leading indendation from the string, False otherwise. See inspect.cleandoc() for what this does.
+        >>>
         """
-        output_buffer.append(cmd)
+        output_buffer.append(cleandoc(cmd) if clean else cmd)
 
     @staticmethod
-    def verbose_tcl_append(cmd: str, output_buffer: List[str]) -> None:
+    def verbose_tcl_append(cmd: str, output_buffer: List[str], clean: bool = False) -> None:
         """
         Helper function to echo and run a command.
 
         :param cmd: TCL command to run
-        :param output_buffer: Buffer in which to enqueue the resulting TCL lines.
+        :param output_buffer: Buffer in which to enqueue the resulting TCL lines
+        :param clean: True if you want to trim the leading indendation from the string, False otherwise. See inspect.cleandoc() for what this does.
         """
-        output_buffer.append("""puts "{0}" """.format(cmd.replace('"', '\"')))
-        output_buffer.append(cmd)
+        cleaned = cleandoc(cmd) if clean else cmd
+        output_buffer.append("""puts "{0}" """.format(cleaned.replace('"', '\"')))
+        output_buffer.append(cleaned)
