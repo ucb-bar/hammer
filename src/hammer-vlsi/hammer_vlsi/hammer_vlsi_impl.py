@@ -1473,7 +1473,16 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
         lib_args = self.technology.read_libs([hammer_tech.filters.qrc_tech_filter],
                                              hammer_tech.HammerTechnologyUtils.to_plain_item,
                                              extra_pre_filters=[
-                                                 self.filter_for_mmmc(voltage=corner.voltage, temp=corner.temp)])
+                                             self.filter_for_mmmc(voltage=corner.voltage, temp=corner.temp)],
+                                             must_exist=False)
+        return " ".join(lib_args)
+
+    def get_mmmc_cap_table(self, corner: MMMCCorner) -> str:
+        lib_args = self.technology.read_libs([hammer_tech.filters.cap_table_filter],
+                                             hammer_tech.HammerTechnologyUtils.to_plain_item,
+                                             extra_pre_filters=[
+                                             self.filter_for_mmmc(voltage=corner.voltage, temp=corner.temp)],
+                                             must_exist=False)
         return " ".join(lib_args)
 
     def get_qrc_tech(self) -> str:
@@ -1484,6 +1493,17 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
         """
         lib_args = self.technology.read_libs([
             hammer_tech.filters.qrc_tech_filter
+        ], hammer_tech.HammerTechnologyUtils.to_plain_item)
+        return " ".join(lib_args)
+
+    def get_cap_table(self) -> str:
+        """
+        Helper function to get the list of cap table files in space separated format.
+
+        :return: List of cap table files separated by spaces
+        """
+        lib_args = self.technology.read_libs([
+            hammer_tech.filters.cap_table_filter
         ], hammer_tech.HammerTechnologyUtils.to_plain_item)
         return " ".join(lib_args)
 
@@ -1565,16 +1585,18 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
                 name="{n}.hold_cond".format(n=hold_corner.name),
                 list="{n}.hold_set".format(n=hold_corner.name)
             ))
-            # Next, create Innovus rc corners from qrc tech files
-            append_mmmc("create_rc_corner -name {name} -temperature {tempInCelsius} {qrc}".format(
+            # Next, create Innovus rc corners from qrc tech or cap table files 
+            append_mmmc("create_rc_corner -name {name} -temperature {tempInCelsius} {qrc} {cap_table}".format(
                 name="{n}.setup_rc".format(n=setup_corner.name),
                 tempInCelsius=str(setup_corner.temp.value),
-                qrc="-qrc_tech {}".format(self.get_mmmc_qrc(setup_corner)) if self.get_mmmc_qrc(setup_corner) != '' else ''
+                qrc="-qrc_tech {}".format(self.get_mmmc_qrc(setup_corner)) if self.get_mmmc_qrc(setup_corner) != '' else '',
+                cap_table="-cap_table {}".format(self.get_mmmc_cap_table(setup_corner)) if self.get_mmmc_cap_table(setup_corner) != '' else ''
             ))
-            append_mmmc("create_rc_corner -name {name} -temperature {tempInCelsius} {qrc}".format(
+            append_mmmc("create_rc_corner -name {name} -temperature {tempInCelsius} {qrc} {cap_table}".format(
                 name="{n}.hold_rc".format(n=hold_corner.name),
                 tempInCelsius=str(hold_corner.temp.value),
-                qrc="-qrc_tech {}".format(self.get_mmmc_qrc(hold_corner)) if self.get_mmmc_qrc(hold_corner) != '' else ''
+                qrc="-qrc_tech {}".format(self.get_mmmc_qrc(hold_corner)) if self.get_mmmc_qrc(hold_corner) != '' else '',
+                cap_table="-cap_table {}".format(self.get_mmmc_cap_table(hold_corner)) if self.get_mmmc_cap_table(hold_corner) != '' else ''
             ))
             # Next, create an Innovus delay corner.
             append_mmmc(
@@ -1610,10 +1632,11 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
             ))
             # extra junk: -opcond ...
             rc_corner_name = "rc_cond"
-            append_mmmc("create_rc_corner -name {name} -temperature {tempInCelsius} {qrc}".format(
+            append_mmmc("create_rc_corner -name {name} -temperature {tempInCelsius} {qrc} {cap_table}".format(
                 name=rc_corner_name,
                 tempInCelsius=120,  # TODO: this should come from tech config
-                qrc="-qrc_tech {}".format(self.get_qrc_tech()) if self.get_qrc_tech() != '' else ''
+                qrc="-qrc_tech {}".format(self.get_qrc_tech()) if self.get_qrc_tech() != '' else '',
+                cap_table="-cap_table {}".format(self.get_cap_table()) if self.get_cap_table() != '' else ''
             ))
             # Next, create an Innovus delay corner.
             delay_corner_name = "my_delay_corner"

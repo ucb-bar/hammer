@@ -129,6 +129,21 @@ class LibraryFilterHolder:
                                  paths_func=paths_func, is_file=True)
 
     @property
+    def cap_table_filter(self) -> LibraryFilter:
+        """
+        Selecting cap table RC Corner tech files.
+        """
+
+        def paths_func(lib: "Library") -> List[str]:
+            if lib.cap_table_file is not None:
+                return [lib.cap_table_file]
+            else:
+                return []
+
+        return LibraryFilter.new("cap_table", "cap table RC corner tech file",
+                                 paths_func=paths_func, is_file=True)
+
+    @property
     def verilog_synth_filter(self) -> LibraryFilter:
         """
         Selecting verilog_synth files which are synthesizable wrappers (e.g. for SRAM) which are needed in some

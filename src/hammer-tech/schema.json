@@ -116,6 +116,9 @@
           "qrc techfile" : {
             "type" : "string"
           },
+          "cap table file" : {
+            "type" : "string"
+          },
           "supplies" : {
             "title" : "Supplies",
             "type" : "object",
