@@ -1072,19 +1072,20 @@ class HammerTool(metaclass=ABCMeta):
         Call this from any custom hook (not used by any default flow).
         Note: visualizations generated within a PCBDeliverableTool are mirrored about the y-axis (assumption: flip-chip on PCB)
         """
-        viz_mode = self.get_setting("vlsi.inputs.visualization.mode")
-        viz_file = self.get_setting("vlsi.inputs.visualization.svg_file")
-        shorten_path_depth = self.get_setting("vlsi.inputs.visualization.shorten_path_depth")
+        viz_mode = self.get_setting("vlsi.inputs.visualization.mode") #type: str
+        viz_file = self.get_setting("vlsi.inputs.visualization.svg_file") #type: str
+        shorten_path_depth = self.get_setting("vlsi.inputs.visualization.shorten_path_depth") #type: int
 
         # Checks
         if not viz_mode in ["all", "floorplan", "bumps", "footprint"]:
             self.logger.error("Invalid type for 'vlsi.inputs.visualization.type'! No visualization generated.")
             return
 
-        fp_consts = self.get_placement_constraints()
+        fp_consts = self.get_placement_constraints() #type: List[PlacementConstraint]
         # TODO: make pcb action recognize toplevel constraint if par action had hierarchical constraints
         try:
-            top = next(filter(lambda x: x.type == PlacementConstraintType.TopLevel, fp_consts)) # get toplevel constraint
+            # Get toplevel constraint
+            top = next(filter(lambda x: x.type == PlacementConstraintType.TopLevel, fp_consts)) #type: PlacementConstraint
         except:
             self.logger.error("You must at least have a 'toplevel' type placement constraint to generate a visualization!")
             return
@@ -1105,18 +1106,19 @@ class HammerTool(metaclass=ABCMeta):
             if shorten_path_depth > 0:
                 parent = path.split('/')[:-shorten_path_depth]
                 inst = path.split('/')[-shorten_path_depth:]
-                return os.path.join('/'.join([p[0] for p in parent]), *inst)
+                return os.path.join(*[p[0] for p in parent], *inst)
             else:
                 return path
 
         # Get all bump & macro sizes from their masters when constraint width & height are not defined
-        def get_macro_wh(macro: str) -> Tuple[Decimal, Decimal]:
-            size = next(filter(lambda x: x.name == macro, macro_sizes), None) # take 1st definition
-            if size == None:
+        def get_macro_wh(macro: Optional[str]) -> Tuple[Decimal, Decimal]:
+            # take 1st definition of macro
+            try:
+                size = next(filter(lambda x: x.name == macro, macro_sizes))
+                return (size.width, size.height)
+            except:
                 self.logger.warning("Size of {} not found in any LEFs! Defaulting to 10um x 10um. Try manually specifying width & height.".format(macro))
                 return (Decimal("10"), Decimal("10"))
-            else:
-                return (size.width, size.height)
 
         fsvg = open(os.path.join(self.run_dir, viz_file), 'w')
 
@@ -1158,21 +1160,24 @@ class HammerTool(metaclass=ABCMeta):
         fsvg.write('<text x="{}" y="{}" text-anchor="middle" alignment-baseline="middle" id="chip_name">{}</text>\n'.format(top.width/2, title_height/2, top.path))
 
         # Get macro sizes from LEFs
-        macro_sizes = self.technology.get_macro_sizes()
+        macro_sizes = self.technology.get_macro_sizes() #type: List[MacroSize]
 
         # Visualize floorplan (from placement_constraints)
         if viz_mode in ["all", "floorplan"]:
             macro_rects = macro_text = obs_rects = obs_text = orient_lines = '<g transform="{}">\n'.format(translate)
             for c in fp_consts:
-                assert isinstance(c, PlacementConstraint)
                 if c.type in [PlacementConstraintType.Placement, PlacementConstraintType.HardMacro, PlacementConstraintType.Hierarchical]:
                     # macros & hierarchical not required to have width/height, will resolve to 0
                     (width, height) = (c.width, c.height)
                     if width == 0 or height == 0:
-                        (width, height) = get_macro_wh(c.master)
+                        if c.master is None:
+                            self.logger.warning('Constraint for {} has no master and is missing width and/or height! It will not show up in visualization.'.format(c.path))
+                            continue
+                        else:
+                            (width, height) = get_macro_wh(c.master)
                     # skip if width/height are larger than core area (probably IO or die ring overlay)
                     if width >= core_width or height >= core_height:
-                        self.logger.info("Skipping visualizing {} because it extends beyond core area".format(c.path))
+                        self.logger.info("Skipping visualizing {} because it extends beyond core area.".format(c.path))
                         continue
                     c_x = c.x
                     if is_pcb_tool: # mirror about y-axis
@@ -1191,6 +1196,7 @@ class HammerTool(metaclass=ABCMeta):
                             line_start_end[3] -= height
                     orient_lines += '<line x1="{}" y1="{}" x2="{}" y2="{}" class="orient" />\n'.format(*line_start_end)
                 elif c.type == PlacementConstraintType.Obstruction:
+                    # already enforced to have width & height
                     obs_rects += '<rect x="{}" y="{}" width="{}" height="{}" class="obs" />\n'.format(c_x, top.height-c.y-c.height, c.width, c.height)
                     obs_text += '<text text-anchor="middle" x="{}" y="{}" class="bold10pt">{}</text>\n'.format(c_x+c.width/2, top.height-c.y-c.height/2, shorten(c.path))
 
@@ -1199,13 +1205,12 @@ class HammerTool(metaclass=ABCMeta):
 
         # Visualize bump placement & assignment
         if viz_mode in ["all", "bumps", "footprint"]:
-            bumps = self.get_bumps()
+            bumps = self.get_bumps() #type: Optional[BumpsDefinition]
             if bumps is None:
                 self.logger.error("Not using bumps API, can't draw bumps or footprint!")
                 fsvg.write("</g>\n</svg>\n")
                 fsvg.close()
                 return
-            assert isinstance(bumps, BumpsDefinition)
             bp = bumps.pitch
             bump_radius = get_macro_wh(bumps.cell)[0]/2
             # Bumps API centers bumps in design
@@ -1215,14 +1220,16 @@ class HammerTool(metaclass=ABCMeta):
             fsvg.write('<text x="{}" y="{}" text-anchor="start" class="bold10pt">bump grid: {} x {}</text>\n'.format(10, title_height/2+30, bumps.x, bumps.y))
             bump_circles = bump_text = bump_lblx = bump_lbly = '<g transform="{}">\n'.format(translate)
 
-            for b in bumps.assignments:
+            p_nets = self.get_all_power_nets() #type: List[Supply]
+            g_nets = self.get_all_ground_nets() #type: List[Supply]
+            for b in bumps.assignments: # type: BumpAssignment
                 bump_type = 'signal'
                 if b.no_connect:
                     bump_type = 'nc'
                 # TODO: Hammer's concept of P/G nets may be different from what's specified in CPF
-                elif any(filter(lambda x: x.name == b.name, self.get_all_power_nets())):
+                elif b.name in [p.name for p in p_nets]:
                     bump_type = 'power'
-                elif any(filter(lambda x: x.name == b.name, self.get_all_ground_nets())):
+                elif b.name in [g.name for g in g_nets]:
                     bump_type = 'ground'
 
                 b_x = x_os+Decimal(str(b.x-1))*bp
@@ -1234,8 +1241,9 @@ class HammerTool(metaclass=ABCMeta):
                 if viz_mode == "bumps" or not is_pcb_tool: # don't print pad designator also
                     bump_text += '<text text-anchor="middle" x="{}" y="{}" class="bold10pt">{}</text>\n'.format(b_x, b_y, b.name)
                 else:
+                    naming_scheme = self.naming_scheme #type: ignore
                     bump_text += '<text text-anchor="middle" x="{}" y="{}">\n'.format(b_x, b_y)
-                    bump_text += '\t<tspan class="bold10pt" x="{}" dy="-.6em">{}</tspan>\n'.format(b_x, self.naming_scheme.name_bump(bumps, b))
+                    bump_text += '\t<tspan class="bold10pt" x="{}" dy="-.6em">{}</tspan>\n'.format(b_x, naming_scheme.name_bump(bumps, b))
                     bump_text += '\t<tspan class="bold10pt" x="{}" dy="1.2em">{}</tspan>\n'.format(b_x, b.name)
                     bump_text += '</text>\n'
 
