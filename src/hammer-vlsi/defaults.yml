@@ -449,6 +449,29 @@ vlsi.inputs:
     #   Requires the semi_auto pin generation mode.
     assignments: []
 
+  # SVG visualization of placement constraints and bumps for the current hierarchical module.
+  # Used by the generate_visualization method accessible by all HammerTools.
+  visualization:
+    # Type of visualization to draw
+    # Note: pcb action will mirror visualization across y-axis (assumes flip-chip on PCB)
+    # Valid options:
+    # - all: draws all placement constraints, bumps, and pad designators (if running pcb action)
+    # - floorplan: draws only placement constraints
+    # - bumps: draws only bumps
+    # - footprint: draws PCB footprint, only valid if running pcb action
+    # type: str
+    mode: "all"
+    # Name of the desired output SVG file
+    # type: str
+    svg_file: "${vlsi.inputs.visualization.mode}.svg"
+    svg_file_meta: lazysubst
+    # Depth of paths to shorten for better readability in the SVG
+    # E.g. top/path/to/inst will shorten to t/p/t/inst for depth of 1 and t/p/top/inst for depth of 2
+    # A depth of 0 or less will perform no path shortening.
+    # type: int
+    shorten_path_depth: 1
+
+
 vlsi.submit:
   # The submit command to use. "none", "local", or null will run on the current host. See hammer_submit_command.py for other options.
   command: "local"
@@ -691,12 +714,6 @@ sram_generator.submit:
 pcb.inputs:
   # Top RTL module.
   top_module: null
-
-pcb.generic:
-  # Writes a floorplan.svg file
-  # Valid modes are bumps or all (includes macro placement boxes)
-  # type: string
-  viz: null
 
 pcb.submit:
   # Submission command settings

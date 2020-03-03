@@ -20,7 +20,7 @@ import hammer_tech
 from hammer_logging import HammerVLSILoggingContext
 from hammer_tech import LibraryFilter, Stackup, RoutingDirection, Metal
 from hammer_utils import (add_lists, assert_function_type, get_or_else,
-                          optional_map)
+                          optional_map, LEFUtils)
 
 from .constraints import *
 from .hammer_vlsi_impl import HierarchicalMode
@@ -1064,148 +1064,197 @@ class HammerTool(metaclass=ABCMeta):
             pitch=Decimal(str(self.get_setting("vlsi.inputs.bumps.pitch"))),
             cell=self.get_setting("vlsi.inputs.bumps.cell"), assignments=assignments)
 
-    def generate_floorplan_viz(self) -> None:
-        viz = self.get_setting("pcb.generic.viz")
-        if viz in ["all", "bumps"]:
-            fsvg = open(os.path.join(self.run_dir, 'floorplan.svg'), 'w')
-            fsvg.write("""<?xml version="1.0"?>
-            <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">\n""")
+    def generate_visualization(self) -> None:
+        """
+        Generate an SVG visualizing the chip.
+        Depending on mode, it will display floorplan (placement constraints for the current hierarchy)
+        and/or bumps (overlaid on top of floorplan) and pad designators (if this tool is a PCBDeliverableTool).
+        Call this from any custom hook (not used by any default flow).
+        Note: visualizations generated within a PCBDeliverableTool are mirrored about the y-axis (assumption: flip-chip on PCB)
+        """
+        viz_mode = self.get_setting("vlsi.inputs.visualization.mode")
+        viz_file = self.get_setting("vlsi.inputs.visualization.svg_file")
+        shorten_path_depth = self.get_setting("vlsi.inputs.visualization.shorten_path_depth")
 
-            title_height = 100
-            fp_consts = self.get_placement_constraints()
-            if fp_consts == []:
-                self.logger.error("No placement constraints defined, skipping drawing floorplan svg")
+        # Checks
+        if not viz_mode in ["all", "floorplan", "bumps", "footprint"]:
+            self.logger.error("Invalid type for 'vlsi.inputs.visualization.type'! No visualization generated.")
+            return
+
+        fp_consts = self.get_placement_constraints()
+        # TODO: make pcb action recognize toplevel constraint if par action had hierarchical constraints
+        try:
+            top = next(filter(lambda x: x.type == PlacementConstraintType.TopLevel, fp_consts)) # get toplevel constraint
+        except:
+            self.logger.error("You must at least have a 'toplevel' type placement constraint to generate a visualization!")
+            return
+
+        # TODO: will break if an alternate PCB tool is implemented without naming_scheme property.
+        # TODO: support fractional bump coordinates when generating footprint
+        from .hammer_vlsi_impl import HammerPCBDeliverableTool
+        is_pcb_tool = isinstance(self, HammerPCBDeliverableTool)
+        if not is_pcb_tool:
+            if viz_mode == "footprint":
+                self.logger.error("Can't generate footprint alone if this isn't a PCBDeliverableTool.")
                 return
-            for const in fp_consts:
-                if const.type == PlacementConstraintType.TopLevel:
-                    top_module = const.path
-                    fp_width = const.width
-                    fp_height = const.height
-                    fp_margins = const.margins
+            elif viz_mode == "all":
+                self.logger.info("Visualizing in 'all' mode but not a PCBDeliverableTool. Skipping drawing pad designators.")
 
-            fsvg.write("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%f\" height=\"%f\">\n" % (fp_width+1, fp_height+title_height+1))
+        # Shorten path names to first letters except lowest "depth" levels in hierarchy
+        def shorten(path: str) -> str:
+            if shorten_path_depth > 0:
+                parent = path.split('/')[:-shorten_path_depth]
+                inst = path.split('/')[-shorten_path_depth:]
+                return os.path.join('/'.join([p[0] for p in parent]), *inst)
+            else:
+                return path
 
-            # style
-            fsvg.write("""<defs><style type="text/css">
-            rect {
-              stroke: #000000;
-              fill:   #ffffff;
-            }
-            .macro_path {
-              font-family: sans-serif;
-              font-weight: bold;
-              font-size: 12pt;
-            }
-            .obs_path {
-              font-family: sans-serif;
-              font-weight: bold;
-              font-size: 10pt;
-            }
-            .bump_name {
-              font-family: sans-serif;
-              font-weight: bold;
-              font-size: 10pt;
-            }
-            .bump_num {
-              font-family: sans-serif;
-              font-weight: bold;
-              font-size: 10pt;
-            }
-            #chip_name {
-              font-family: sans-serif;
-              font-weight: bold;
-              font-size: 40pt;
-            }
-            .macro {
-              fill: #aaaaaa;
-            }
-            .obs {
-              fill: #ffff00;
-            }
-            .power {
-              fill: #ff4040;
-            }
-            .ground {
-              fill: #ffa500;
-            }
-            .signal {
-              fill: #4040ff;
-            }
-            </style></defs>\n""")
+        # Get all bump & macro sizes from their masters when constraint width & height are not defined
+        def get_macro_wh(macro: str) -> Tuple[Decimal, Decimal]:
+            size = next(filter(lambda x: x.name == macro, macro_sizes), None) # take 1st definition
+            if size == None:
+                self.logger.warning("Size of {} not found in any LEFs! Defaulting to 10um x 10um. Try manually specifying width & height.".format(macro))
+                return (Decimal("10"), Decimal("10"))
+            else:
+                return (size.width, size.height)
 
-            # Print chip name on top, bbox, and core area rects
-            fsvg.write("<g>\n")
-            fsvg.write("<rect x=\"1\" y=\"{}\" width=\"{}\" height=\"{}\" id=\"die\"/>\n".format(title_height, fp_width, fp_height))
-            fsvg.write("<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" id=\"core\"/>\n".format(getattr(fp_margins, "left", 0)+1, title_height+getattr(fp_margins, "top", 0), fp_width-getattr(fp_margins, "left", 0)-getattr(fp_margins, "right", 0), fp_height-getattr(fp_margins, "top", 0)-getattr(fp_margins, "bottom", 0)))
-            fsvg.write("<text x=\"{}\" y=\"{}\" text-anchor=\"middle\" alignment-baseline=\"middle\" id=\"chip_name\">{}</text>\n".format(fp_width/2, title_height/2, top_module))
+        fsvg = open(os.path.join(self.run_dir, viz_file), 'w')
 
-            translate = "translate({} {})".format(1, title_height)
-            macro_rects = "<g transform=\"{}\">\n".format(translate)
-            macro_text = "<g transform=\"{}\">\n".format(translate)
-            obs_rects = "<g transform=\"{}\">\n".format(translate)
-            obs_text = "<g transform=\"{}\">\n".format(translate)
+        # Translate all shapes by (1, title height)
+        title_height = 100
+        translate = "translate(1 {})".format(title_height)
 
+        # Header & style
+        fsvg.write("""<?xml version="1.0"?>
+        <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+        <svg xmlns="http://www.w3.org/2000/svg" width="{}" height="{}">
+        """.format(top.width+2, top.height+title_height+1))
+        fsvg.write("""<defs><style type="text/css">
+        rect { stroke: #000000; fill: #ffffff; }
+        .bold12pt { font-family: sans-serif; font-weight: bold; font-size: 12pt; }
+        .bold10pt { font-family: sans-serif; font-weight: bold; font-size: 10pt; }
+        #chip_name { font-family: sans-serif; font-weight: bold; font-size: 40pt; }
+        .ref_mark { fill: #000000 }
+        .macro { fill: #aaaaaa; }
+        .obs { fill: #ffff00; }
+        .power { fill: #ff4040; }
+        .ground { fill: #ffa500; }
+        .signal { fill: #6060ff; }
+        .nc { fill: #dddddd; }
+        .orient { stroke: #000000; stroke-width: 2; }
+        </style></defs>\n""")
+
+        # Print chip name on top, draw design & core area bboxes, place reference marking if in any mode but "floorplan"
+        fsvg.write("<g>\n")
+        fsvg.write('<rect x="1" y="{}" width="{}" height="{}" id="die"/>\n'.format(title_height, top.width, top.height))
+        fsvg.write('<text x="{}" y="{}" text-anchor="start" class="bold10pt">visualization mode: {}</text>\n'.format(10, title_height/2-30, viz_mode))
+        fsvg.write('<text x="{}" y="{}" text-anchor="start" class="bold10pt">design size: {}um x {}um</text>\n'.format(10, title_height/2-10, top.width, top.height))
+        ref_x = 15 if is_pcb_tool else top.width-15
+        fsvg.write('<circle cx="{}" cy="{}" r="{}" class="ref_mark" />\n'.format(ref_x, title_height+15, 10))
+
+        core_width = top.width-getattr(top.margins, "left", 0)-getattr(top.margins, "right", 0)
+        core_height = top.height-getattr(top.margins, "top", 0)-getattr(top.margins, "bottom", 0)
+        fsvg.write('<rect x="{}" y="{}" width="{}" height="{}" id="core"/>\n'.format(getattr(top.margins, "left", 0)+1, title_height+getattr(top.margins, "top", 0), core_width, core_height))
+        fsvg.write('<text x="{}" y="{}" text-anchor="middle" alignment-baseline="middle" id="chip_name">{}</text>\n'.format(top.width/2, title_height/2, top.path))
+
+        # Get macro sizes from LEFs
+        macro_sizes = self.technology.get_macro_sizes()
+
+        # Visualize floorplan (from placement_constraints)
+        if viz_mode in ["all", "floorplan"]:
+            macro_rects = macro_text = obs_rects = obs_text = orient_lines = '<g transform="{}">\n'.format(translate)
             for c in fp_consts:
-                if c.type in ['placement', 'hardmacro', 'hierarchical'] and viz == "all":
-                    macro_rects += "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" class=\"macro\" />\n".format(c.x, fp_height-c.y-c.height, c.width, c.height)
-                    macro_text += "<text text-anchor=\"middle\" x=\"{}\" y=\"{}\" class=\"macro_path\">{}</text>\n".format(c.x+c.width/2, fp_height-c.y-c.height/2, c.path)
-                elif c.type == 'obstruction':
-                    obs_rects += "<rect x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" class=\"obs\" />\n".format(c.x, fp_height-c.y-c.height, c.width, c.height)
-                    obs_text += "<text text-anchor=\"middle\" x=\"{}\" y=\"{}\" class=\"obs_path\">{}</text>\n".format(c.x+c.width/2, fp_height-c.y-c.height/2, c.path)
+                assert isinstance(c, PlacementConstraint)
+                if c.type in [PlacementConstraintType.Placement, PlacementConstraintType.HardMacro, PlacementConstraintType.Hierarchical]:
+                    # macros & hierarchical not required to have width/height, will resolve to 0
+                    (width, height) = (c.width, c.height)
+                    if width == 0 or height == 0:
+                        (width, height) = get_macro_wh(c.master)
+                    # skip if width/height are larger than core area (probably IO or die ring overlay)
+                    if width >= core_width or height >= core_height:
+                        self.logger.info("Skipping visualizing {} because it extends beyond core area".format(c.path))
+                        continue
+                    c_x = c.x
+                    if is_pcb_tool: # mirror about y-axis
+                        c_x = top.width - c_x - width
+                    macro_rects += '<rect x="{}" y="{}" width="{}" height="{}" class="macro" />\n'.format(c_x, top.height-c.y-height, width, height)
+                    macro_text += '<text text-anchor="middle" x="{}" y="{}" class="bold12pt">{}</text>\n'.format(c_x+width/2, top.height-c.y-height/2, shorten(c.path))
+                    # calculate orientation line start & end. None orientation implies r0.
+                    # only supports r0, mx, my, r180
+                    line_start_end = [c_x, top.height-c.y-height/4, c_x + width/8, top.height-c.y] # x1, y1, x2, y2
+                    if c.orientation is not None:
+                        if c.orientation.lower() in ["my", "r180"] or is_pcb_tool:
+                            line_start_end[0] += width
+                            line_start_end[2] += width*6/8
+                        if c.orientation.lower() in ["mx", "r180"]:
+                            line_start_end[1] -= height*2/4
+                            line_start_end[3] -= height
+                    orient_lines += '<line x1="{}" y1="{}" x2="{}" y2="{}" class="orient" />\n'.format(*line_start_end)
+                elif c.type == PlacementConstraintType.Obstruction:
+                    obs_rects += '<rect x="{}" y="{}" width="{}" height="{}" class="obs" />\n'.format(c_x, top.height-c.y-c.height, c.width, c.height)
+                    obs_text += '<text text-anchor="middle" x="{}" y="{}" class="bold10pt">{}</text>\n'.format(c_x+c.width/2, top.height-c.y-c.height/2, shorten(c.path))
 
-            fsvg.write(macro_rects)
-            fsvg.write("</g>\n")
-            fsvg.write(macro_text)
-            fsvg.write("</g>\n")
-            fsvg.write(obs_rects)
-            fsvg.write("</g>\n")
-            fsvg.write(obs_text)
-            fsvg.write("</g>\n")
+            # Draw order: obstructions, macros, orientation lines
+            fsvg.write("</g>\n".join([obs_rects, obs_text, macro_rects, macro_text, orient_lines]) + "</g>\n")
 
+        # Visualize bump placement & assignment
+        if viz_mode in ["all", "bumps", "footprint"]:
             bumps = self.get_bumps()
             if bumps is None:
-                self.logger.error("Not using bumps API, skipping drawing bumps")
-            else:
-                bp = bumps.pitch
-                x_os = (fp_width-(bumps.x-1)*bp)/2.0
-                y_os = (fp_height-(bumps.y-1)*bp)/2.0
-                fsvg.write("<text x=\"{}\" y=\"{}\" text-anchor=\"start\" class=\"bump_name\">bump pitch = {}</text>\n".format(x_os, title_height/2, bp))
-                bump_circles = "<g transform=\"{}\">\n".format(translate)
-                bump_text = "<g transform=\"{}\">\n".format(translate)
-                bump_x = "<g transform=\"{}\">\n".format(translate)
-                bump_y = "<g transform=\"{}\">\n".format(translate)
+                self.logger.error("Not using bumps API, can't draw bumps or footprint!")
+                fsvg.write("</g>\n</svg>\n")
+                fsvg.close()
+                return
+            assert isinstance(bumps, BumpsDefinition)
+            bp = bumps.pitch
+            bump_radius = get_macro_wh(bumps.cell)[0]/2
+            # Bumps API centers bumps in design
+            x_os = (top.width-(bumps.x-1)*bp)/2
+            y_os = (top.height-(bumps.y-1)*bp)/2
+            fsvg.write('<text x="{}" y="{}" text-anchor="start" class="bold10pt">bump pitch: {}um</text>\n'.format(10, title_height/2+10, bp))
+            fsvg.write('<text x="{}" y="{}" text-anchor="start" class="bold10pt">bump grid: {} x {}</text>\n'.format(10, title_height/2+30, bumps.x, bumps.y))
+            bump_circles = bump_text = bump_lblx = bump_lbly = '<g transform="{}">\n'.format(translate)
 
-                for b in bumps.assignments:
-                    bump_type = 'signal'
-                    if b.name in [net.name for net in self.get_all_power_nets()]:
-                        bump_type = 'power'
-                    elif b.name in [net.name for net in self.get_all_ground_nets()]:
-                        bump_type = 'ground'
+            for b in bumps.assignments:
+                bump_type = 'signal'
+                if b.no_connect:
+                    bump_type = 'nc'
+                # TODO: Hammer's concept of P/G nets may be different from what's specified in CPF
+                elif any(filter(lambda x: x.name == b.name, self.get_all_power_nets())):
+                    bump_type = 'power'
+                elif any(filter(lambda x: x.name == b.name, self.get_all_ground_nets())):
+                    bump_type = 'ground'
 
-                    #TODO: get the bump radius from the bump LEF instead of just naively making it bump pitch/4
-                    bump_circles += "<circle cx=\"{}\" cy=\"{}\" r=\"{}\" class=\"{}\" />\n".format(x_os+(b.x-1)*bp, fp_height-y_os-(b.y-1)*bp, bp/4, bump_type)
-                    bump_text += "<text text-anchor=\"middle\" x=\"{}\" y=\"{}\" class=\"bump_name\">{}</text>\n".format(x_os+(b.x-1)*bp, fp_height-y_os-(b.y-1)*bp, b.name)
+                b_x = x_os+Decimal(str(b.x-1))*bp
+                if is_pcb_tool: # mirror about y-axis
+                    b_x = top.width - b_x
+                b_y = top.height-y_os-Decimal(str(b.y-1))*bp
 
-                for i in range(bumps.x):
-                    if((i+1) % 5 == 0):
-                        bump_x += "<text text-anchor=\"middle\" x=\"{}\" y=\"{}\" class=\"bump_num\">{}</text>\n".format(x_os+i*bp, fp_height-10, i+1)
-                        bump_x += "<text text-anchor=\"middle\" x=\"{}\" y=\"{}\" class=\"bump_num\">{}</text>\n".format(x_os+i*bp, 10, i+1)
-                for i in range(bumps.y):
-                    if(i % 5 == 0):
-                        bump_y += "<text text-anchor=\"start\" x=\"{}\" y=\"{}\" class=\"bump_num\">{}</text>\n".format(10, fp_height-y_os-i*bp, i+1)
-                        bump_y += "<text text-anchor=\"end\" x=\"{}\" y=\"{}\" class=\"bump_num\">{}</text>\n".format(fp_width-10, fp_height-y_os-i*bp, i+1)
+                bump_circles += '<circle cx="{}" cy="{}" r="{}" class="{}" />\n'.format(b_x, b_y, bump_radius, bump_type)
+                if viz_mode == "bumps" or not is_pcb_tool: # don't print pad designator also
+                    bump_text += '<text text-anchor="middle" x="{}" y="{}" class="bold10pt">{}</text>\n'.format(b_x, b_y, b.name)
+                else:
+                    bump_text += '<text text-anchor="middle" x="{}" y="{}">\n'.format(b_x, b_y)
+                    bump_text += '\t<tspan class="bold10pt" x="{}" dy="-.6em">{}</tspan>\n'.format(b_x, self.naming_scheme.name_bump(bumps, b))
+                    bump_text += '\t<tspan class="bold10pt" x="{}" dy="1.2em">{}</tspan>\n'.format(b_x, b.name)
+                    bump_text += '</text>\n'
 
-                fsvg.write(bump_circles)
-                fsvg.write("</g>\n")
-                fsvg.write(bump_text)
-                fsvg.write("</g>\n")
-                fsvg.write(bump_x)
-                fsvg.write("</g>\n")
-                fsvg.write(bump_y)
-                fsvg.write("</g>\n")
+            # Mark every 5th bump (helpful for large chips)
+            for i in range(4, bumps.x, 5):
+                lbl_x = x_os+i*bp
+                if is_pcb_tool: # mirror about y-axis
+                    lbl_x = top.width - lbl_x
+                bump_lblx += '<text text-anchor="middle" x="{}" y="{}" class="bold12pt">{}</text>\n'.format(lbl_x, top.height-10, i+1)
+                bump_lblx += '<text text-anchor="middle" x="{}" y="{}" class="bold12pt">{}</text>\n'.format(lbl_x, 15, i+1)
+            for i in range(4, bumps.y, 5):
+                lbl_y = top.height-y_os-i*bp
+                bump_lbly += '<text text-anchor="start" x="{}" y="{}" class="bold12pt">{}</text>\n'.format(5, lbl_y, i+1)
+                bump_lbly += '<text text-anchor="end" x="{}" y="{}" class="bold12pt">{}</text>\n'.format(top.width-5, lbl_y, i+1)
 
-            fsvg.write("</g>\n</svg>\n")
-            fsvg.close()
+            fsvg.write("</g>\n".join([bump_circles, bump_text, bump_lblx, bump_lbly]) + "</g>\n")
+
+        fsvg.write("</g>\n</svg>\n")
+        fsvg.close()
 
     def get_pin_assignments(self) -> List[PinAssignment]:
         """

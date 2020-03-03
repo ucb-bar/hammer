@@ -135,8 +135,8 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
         for bump in sorted_assignments:
             # note that the flip-chip mirroring happens here
             name = naming_scheme.name_bump(bumps, bump)
-            x = um2mm((bumps.x - bump.x) * pitch + x_offset, 3)
-            y = um2mm((bump.y - 1) * pitch + y_offset, 3)
+            x = um2mm(Decimal(str(bumps.x - bump.x)) * pitch + x_offset, 3)
+            y = um2mm(Decimal(str(bump.y - 1)) * pitch + y_offset, 3)
             # Fields in order (with valid options):
             # Name
             # X position (mm)
@@ -242,8 +242,8 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
         naming_scheme = self.naming_scheme
         for bump in bumps.assignments:
             # note that the flip-chip mirroring happens here
-            x = um2mm((bumps.x - bump.x) * pitch + x_offset, 3)
-            y = um2mm((bump.y - 1) * pitch + y_offset, 3)
+            x = um2mm(Decimal(str(bumps.x - bump.x)) * pitch + x_offset, 3)
+            y = um2mm(Decimal(str(bump.y - 1)) * pitch + y_offset, 3)
             label = naming_scheme.name_bump(bumps, bump)
             output += "T{x} {y} {x} {y} {label}\n".format(x=x, y=y, label=label)
 

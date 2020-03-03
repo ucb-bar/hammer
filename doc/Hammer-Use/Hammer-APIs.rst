@@ -17,11 +17,15 @@ Clock and pin timing constraints are specified using the Hammer IR keys ``vlsi.i
 
 Floorplan & Placement
 ---------------------
-Placement constraints are specified using the Hammer IR key ``vlsi.inputs.placement_constraints``. These constraints are very flexible and have varying inputs based on the type of object the constraint applies to, such as hierarchical modules, hard macros, or obstructions. At minimum, an ``(x, y)`` coordinate corresponding to the lower left corner must be given, and additional parameters such as width/height, margins, layers, or orientation are needed depending on the type of constraint. Place-and-route tool plugins will take this information and emit the appropriate commands during floorplanning. Additional work is planned to ensure that floorplans are always legal (i.e. on grid, non-overlapping, etc.). Additional work is planned to produce graphical visualization of the floorplan outside of the place-ane-route tool.
+Placement constraints are specified using the Hammer IR key ``vlsi.inputs.placement_constraints``. These constraints are very flexible and have varying inputs based on the type of object the constraint applies to, such as hierarchical modules, hard macros, or obstructions. At minimum, an ``(x, y)`` coordinate corresponding to the lower left corner must be given, and additional parameters such as width/height, margins, layers, or orientation are needed depending on the type of constraint. Place-and-route tool plugins will take this information and emit the appropriate commands during floorplanning. Additional work is planned to ensure that floorplans are always legal (i.e. on grid, non-overlapping, etc.).
+
+All Hammer tool instances have access to a method that can produce graphical visualization of the floorplan as an SVG file, viewable in a web browser. To use it, call the ``generate_visualization()`` method from any custom hook (see :ref:`hooks`). The options for the visualization tool are in the Hammer IR key ``vlsi.inputs.visualization``.
 
 Bumps
 -----
-Bump constraints are specified using the Hammer IR key ``vlsi.inputs.bumps``. Rectangular-gridded bumps are supported, although bumps at fractional coordinates in the grid and deleted bumps are allowed. The place-and-route tool plugin translates the list of bump assignments into the appropriate commands to place them in the floorplan and enable flip-chip routing. The bumps API is also used by the PCB plugin to emit the collateral needed by PCB layout tools such as Altium Designer. This API ensures that the bumps are always in correspondence between the chip and PCB. Additional work is planned to produce graphical visualization of the bumps.
+Bump constraints are specified using the Hammer IR key ``vlsi.inputs.bumps``. Rectangular-gridded bumps are supported, although bumps at fractional coordinates in the grid and deleted bumps are allowed. The place-and-route tool plugin translates the list of bump assignments into the appropriate commands to place them in the floorplan and enable flip-chip routing. The bumps API is also used by the PCB plugin to emit the collateral needed by PCB layout tools such as Altium Designer. This API ensures that the bumps are always in correspondence between the chip and PCB.
+
+The visualization tool mentioned above can also display bump placement and assignments. There are options to view the bumps from the perspective of the ASIC designer or the PCB designer.
 
 Pins
 ----
