@@ -61,17 +61,6 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
         return "TESTCHIP-{}".format(self.top_module)
 
     @property
-    def naming_scheme(self) -> BumpsPinNamingScheme:
-        """
-        Get the desired bump naming scheme.
-        """
-        name = self.get_setting("vlsi.inputs.bumps_pin_naming_scheme")
-        if name is None:
-            raise ValueError("Must provide a vlsi.inputs.bumps_pin_naming_scheme if generating PCB deliverables.")
-        else:
-            return BumpsPinNamingScheme.from_str(str(name))
-
-    @property
     def bump_pad_opening_diameter(self) -> Decimal:
         """
         Get the diameter of the PCB footprint pad opening in post-shrink um.

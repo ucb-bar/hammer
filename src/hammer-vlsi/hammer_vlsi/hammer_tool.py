@@ -1090,7 +1090,6 @@ class HammerTool(metaclass=ABCMeta):
             self.logger.error("You must at least have a 'toplevel' type placement constraint to generate a visualization!")
             return
 
-        # TODO: will break if an alternate PCB tool is implemented without naming_scheme property.
         # TODO: support fractional bump coordinates when generating footprint
         from .hammer_vlsi_impl import HammerPCBDeliverableTool
         is_pcb_tool = isinstance(self, HammerPCBDeliverableTool)
@@ -1106,7 +1105,7 @@ class HammerTool(metaclass=ABCMeta):
             if shorten_path_depth > 0:
                 parent = path.split('/')[:-shorten_path_depth]
                 inst = path.split('/')[-shorten_path_depth:]
-                return os.path.join(*[p[0] for p in parent], *inst)
+                return '/'.join([p[0] for p in parent] + inst)
             else:
                 return path
 

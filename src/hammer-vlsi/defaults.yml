@@ -154,7 +154,6 @@ vlsi.inputs:
     VDD: "0.85 V"
     GND: "0 V"
 
-
   hierarchical:
     # Hierarchical par mode. (str)
     # Valid options:
@@ -395,7 +394,6 @@ vlsi.inputs:
   # type: str
   bumps_pin_naming_scheme: "A1"
 
-
   # Pin placement mode. (str)
   # Specifies how to arrange pins for your design.
   # Valid options:
@@ -470,7 +468,6 @@ vlsi.inputs:
     # A depth of 0 or less will perform no path shortening.
     # type: int
     shorten_path_depth: 1
-
 
 vlsi.submit:
   # The submit command to use. "none", "local", or null will run on the current host. See hammer_submit_command.py for other options.
@@ -722,7 +719,6 @@ pcb.submit:
   command_meta: lazysubst
   settings: "vlsi.submit.settings"
   settings_meta: lazycrossref
-
 
 technology.core:
     # Key name for the technology stackup
