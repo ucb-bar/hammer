@@ -1473,16 +1473,14 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
         lib_args = self.technology.read_libs([hammer_tech.filters.qrc_tech_filter],
                                              hammer_tech.HammerTechnologyUtils.to_plain_item,
                                              extra_pre_filters=[
-                                             self.filter_for_mmmc(voltage=corner.voltage, temp=corner.temp)],
-                                             must_exist=False)
+                                                 self.filter_for_mmmc(voltage=corner.voltage, temp=corner.temp)], must_exist=False)
         return " ".join(lib_args)
 
     def get_mmmc_cap_table(self, corner: MMMCCorner) -> str:
         lib_args = self.technology.read_libs([hammer_tech.filters.cap_table_filter],
                                              hammer_tech.HammerTechnologyUtils.to_plain_item,
                                              extra_pre_filters=[
-                                             self.filter_for_mmmc(voltage=corner.voltage, temp=corner.temp)],
-                                             must_exist=False)
+                                                 self.filter_for_mmmc(voltage=corner.voltage, temp=corner.temp)], must_exist=False)
         return " ".join(lib_args)
 
     def get_qrc_tech(self) -> str:
@@ -1585,7 +1583,7 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
                 name="{n}.hold_cond".format(n=hold_corner.name),
                 list="{n}.hold_set".format(n=hold_corner.name)
             ))
-            # Next, create Innovus rc corners from qrc tech or cap table files 
+            # Next, create Innovus rc corners from qrc tech or cap table files
             append_mmmc("create_rc_corner -name {name} -temperature {tempInCelsius} {qrc} {cap_table}".format(
                 name="{n}.setup_rc".format(n=setup_corner.name),
                 tempInCelsius=str(setup_corner.temp.value),
