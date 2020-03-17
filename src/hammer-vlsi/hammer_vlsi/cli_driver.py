@@ -630,7 +630,7 @@ class CLIDriver:
         """Create a full config to run the output."""
         power_input_only = HammerDriver.sim_output_to_power_input(driver.project_config)
         if power_input_only is None:
-            driver.log.error("Input config does not appear to contain valid par outputs")
+            driver.log.error("Input config does not appear to contain valid sim outputs")
             return None
         else:
             return self.get_full_config(driver, power_input_only)

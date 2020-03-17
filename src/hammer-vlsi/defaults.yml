@@ -808,6 +808,15 @@ sim.inputs:
   # If set to True, the sim will be time annotated based on synthesis or PAR results.
   timing_annotated: false
 
+  # Settings related to activity file (SAIF) dumping
+  saif:
+    # Whether we are dumping an SAIF file or not
+    enable: false
+    # What time each of the benchmarks should begin and end its dumping of the SAIF file.
+    start_times: []
+    end_times: []
+  # Turns the dumping of an activity file (SAIF) on or off
+
   # Flags to run with the simulator
   # Each string in this list will be passed as an option when actually executing the simulation executable generated from the previous arguments.
   # type: List[str]

@@ -768,6 +768,7 @@ class HammerDriver:
                 "sim.inputs.all_regs": all_regs,
                 "sim.inputs.seq_cells": output_dict["synthesis.outputs.seq_cells"],
                 "sim.inputs.sdf_file": output_dict["synthesis.outputs.sdf_file"],
+                "sim.inputs.level": 'gl',
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             return result
