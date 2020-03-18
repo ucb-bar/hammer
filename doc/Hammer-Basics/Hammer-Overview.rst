@@ -1,7 +1,7 @@
 Hammer Overview
 ================================
 
-Hammer has a set of actions and automatically takes the output of one action and converts it into the input for another.  For instance, a synthesis action will output a mapped verilog file which will then automatically by piped to the place-and-route input when a place-and-route action is called. 
+Hammer has a set of actions and automatically takes the output of one action and converts it into the input for another.  For instance, a synthesis action will output a mapped verilog file which will then automatically by piped to the place-and-route input when a place-and-route action is called.
 
 A user's Hammer environment is typically separated into four different components: core Hammer, one or more tool plugins, a technology plugin, and a set of project-specific Hammer input files. Hammer is meant to expose a set of generalized APIs that are then implemented by tool- and technology-specific plugins.
 
@@ -24,14 +24,14 @@ Here is an example of a snippet that would be included in the user's input confi
         VDD: "0.7 V"
         GND: "0 V"
 
-This demonstrates two different namespaces, ``vlsi.core`` and ``vlsi.inputs``, and then two different keys, ``technology`` and ``supplies``, which are set to the ``asap7`` technology and 0.7 Volts supply voltage, respectively. 
+This demonstrates two different namespaces, ``vlsi.core`` and ``vlsi.inputs``, and then two different keys, ``technology`` and ``supplies``, which are set to the ``asap7`` technology and 0.7 Volts supply voltage, respectively.
 
 Tech Plugins
 -------------------------------
 
 A techonology plugin consists of two or more files: a ``*.tech.json`` and a ``defaults.yml``.
 
-The ``*.tech.json`` contains pointers to relevant PDK files and fundamental technology constants.  These values are not meant to be overriden, nor can they be for the time being. 
+The ``*.tech.json`` contains pointers to relevant PDK files and fundamental technology constants.  These values are not meant to be overriden, nor can they be for the time being.
 
 ``defaults.yml`` sets default technology variables for Hammer to consume, which may be specific to this technology or generic to all. These values may be overriden by design-specific configurations. An example of this is shown in ``hammer/src/hammer-vlsi/technology/asap7/``, and how to setup a technology plugin is documented in more detail in the :ref:`technology` section.
 
@@ -45,13 +45,13 @@ The TCL commands input to the tool are created using technology and design setti
 
 There are already three Hammer tool plugin repos to which access may be granted to Hammer users. These repos are ``hammer-cadence-plugins``, ``hammer-synopsys-plugins``, and ``hammer-mentor-plugins``. In them are tool plugin implementations for actions including synthesis, place-and-route, DRC, LVS, and simulation.
 
-.. note:: If you are not a UCB BAR or BWRC affiliate and have access to tools from a specific vendor, please email hammer-plugins-access@lists.berkeley.edu with a request for which plugin(s) you would like access to. There will be no support guarantee for the plugin repositories, but users are encouraged to file issues and contribute patches where needed.
+.. note:: If you are not a UCB BAR or BWRC affiliate and have access to tools from a specific vendor, please email hammer-plugins-access@lists.berkeley.edu with a request for which plugin(s) you would like access to. MAKE SURE TO INCLUDE YOUR GITHUB ID IN YOUR EMAIL AND YOUR ASSOCIATION TO SHOW YOU HAVE LICENSED ACCESS TO THOSE TOOLS. There will be no support guarantee for the plugin repositories, but users are encouraged to file issues and contribute patches where needed.
 
 These plugins implement many of the common steps of a modern physical design flow. However, a real chip flow will require many custom settings and steps that may not be generalizable across technology nodes.
 Because of this, Hammer has an "escape-hatch" mechanism, called a hook, that allows the designer to inject custom steps between the default steps provided by the CAD tool plugin.
 Hooks are python methods that emit TCL code and may be inserted before or after an existing step or replace the step entirely.
 This allows the designer to leverage the APIs built into Hammer while easily inserting custom steps into the flow.
-Hooks are discussed in more detail in the "Example usage" portion of the Hammer documentation. 
+Hooks are discussed in more detail in the "Example usage" portion of the Hammer documentation.
 
 Calling Hammer
 -------------------------------
