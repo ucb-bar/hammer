@@ -818,7 +818,7 @@ class HammerDriver:
             result = {
                 "power.inputs.top_module": output_dict["par.inputs.top_module"],
                 "power.inputs.netlist": output_dict["par.outputs.output_netlist"],
-                "power.inputs.spef_file": output_dict["par.outputs.spef_file"],
+                "power.inputs.spef_files": output_dict["par.outputs.spef_files"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             return result
