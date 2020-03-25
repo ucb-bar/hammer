@@ -61,17 +61,6 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
         return "TESTCHIP-{}".format(self.top_module)
 
     @property
-    def naming_scheme(self) -> BumpsPinNamingScheme:
-        """
-        Get the desired bump naming scheme.
-        """
-        name = self.get_setting("vlsi.inputs.bumps_pin_naming_scheme")
-        if name is None:
-            raise ValueError("Must provide a vlsi.inputs.bumps_pin_naming_scheme if generating PCB deliverables.")
-        else:
-            return BumpsPinNamingScheme.from_str(str(name))
-
-    @property
     def bump_pad_opening_diameter(self) -> Decimal:
         """
         Get the diameter of the PCB footprint pad opening in post-shrink um.
@@ -135,8 +124,8 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
         for bump in sorted_assignments:
             # note that the flip-chip mirroring happens here
             name = naming_scheme.name_bump(bumps, bump)
-            x = um2mm((bumps.x - bump.x) * pitch + x_offset, 3)
-            y = um2mm((bump.y - 1) * pitch + y_offset, 3)
+            x = um2mm(Decimal(str(bumps.x - bump.x)) * pitch + x_offset, 3)
+            y = um2mm(Decimal(str(bump.y - 1)) * pitch + y_offset, 3)
             # Fields in order (with valid options):
             # Name
             # X position (mm)
@@ -242,8 +231,8 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
         naming_scheme = self.naming_scheme
         for bump in bumps.assignments:
             # note that the flip-chip mirroring happens here
-            x = um2mm((bumps.x - bump.x) * pitch + x_offset, 3)
-            y = um2mm((bump.y - 1) * pitch + y_offset, 3)
+            x = um2mm(Decimal(str(bumps.x - bump.x)) * pitch + x_offset, 3)
+            y = um2mm(Decimal(str(bump.y - 1)) * pitch + y_offset, 3)
             label = naming_scheme.name_bump(bumps, bump)
             output += "T{x} {y} {x} {y} {label}\n".format(x=x, y=y, label=label)
 

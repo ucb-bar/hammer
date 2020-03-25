@@ -1839,6 +1839,17 @@ class HammerPCBDeliverableTool(HammerTool):
     def fill_outputs(self) -> bool:
         pass
 
+    @property
+    def naming_scheme(self) -> BumpsPinNamingScheme:
+        """
+        Get the desired bump naming scheme.
+        """
+        name = self.get_setting("vlsi.inputs.bumps_pin_naming_scheme")
+        if name is None:
+            raise ValueError("Must provide a vlsi.inputs.bumps_pin_naming_scheme if generating PCB deliverables.")
+        else:
+            return BumpsPinNamingScheme.from_str(str(name))
+
     ### Generated interface HammerPCBDeliverableTool ###
     ### DO NOT MODIFY THIS CODE, EDIT generate_properties.py INSTEAD ###
     ### Inputs ###
