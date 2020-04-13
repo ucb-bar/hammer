@@ -140,6 +140,37 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
         # Cleanup
         shutil.rmtree(tech_dir_base)
 
+    def test_cap_table_file_library_filter(self) -> None:
+        """
+        Test that process_library_filter removes duplicates.
+        """
+        import hammer_config
+
+        tech_dir, tech_dir_base = HammerToolTestHelpers.create_tech_dir("dummy28")
+        tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
+
+        def add_cap_table(in_dict: Dict[str, Any]) -> Dict[str, Any]:
+            out_dict = deepdict(in_dict)
+            out_dict["libraries"].append({
+                "cap table file": "test/cap_table_file"
+            })
+            return out_dict
+
+        HammerToolTestHelpers.write_tech_json(tech_json_filename, add_cap_table)
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
+        tech.cache_dir = tech_dir
+
+        database = hammer_config.HammerDatabase()
+        tech.set_database(database)
+        outputs = tech.process_library_filter(pre_filts=[], filt=hammer_tech.filters.cap_table_filter,
+                                              must_exist=False,
+                                              output_func=lambda str, _: [str])
+
+        self.assertEqual(outputs, ["{0}/cap_table_file".format(tech_dir)])
+
+        # Cleanup
+        shutil.rmtree(tech_dir_base)
+
     @staticmethod
     def add_tarballs(in_dict: Dict[str, Any]) -> Dict[str, Any]:
         """

@@ -811,7 +811,7 @@ class HammerTechnology:
         # Next, extract paths and prepend them to get the real paths.
         def get_and_prepend_path(lib: Library) -> Tuple[Library, List[str]]:
             paths = filt.paths_func(lib)
-            full_paths = list(map(lambda path: self.prepend_dir_path(path, lib), paths))
+            full_paths = list(map(lambda path: self.prepend_dir_path(path, lib) if path else '', paths))
             return lib, full_paths
 
         libs_and_paths = list(map(get_and_prepend_path, filtered_libs))  # type: List[Tuple[Library, List[str]]]

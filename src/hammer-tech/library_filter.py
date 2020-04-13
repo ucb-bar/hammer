@@ -28,6 +28,8 @@ if TYPE_CHECKING:
         def verilog_synth(self) -> Optional[str]: pass
         @property
         def verilog_sim(self) -> Optional[str]: pass
+        @property
+        def cap_table_file(self) -> Optional[str]: pass
 
 PathsFunctionType = Callable[["Library"], List[str]]
 
