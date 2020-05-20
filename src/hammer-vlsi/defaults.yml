@@ -810,12 +810,25 @@ sim.inputs:
 
   # Settings related to activity file (SAIF) dumping
   saif:
-    # Whether we are dumping an SAIF file or not
+    # Enable dumping an SAIF file, with activity factors
     enable: false
-    # What time each of the benchmarks should begin and end its dumping of the SAIF file.
-    start_times: []
-    end_times: []
-  # Turns the dumping of an activity file (SAIF) on or off
+    # How Hammer determine when to start or stop the activity dumping
+    # Valid options:
+    # time - Start dumping at the specified start_time and end at the specified end_time
+    # trigger - Inserts the trigger into the simulators run script before starting the dump and
+    #   after enabling dumping before stopping dumping. See your simulator plugin for an example
+    # none - Start dumping at the beginning of simulation and stop at the end.
+    # type: str
+    mode: "none"
+    # The times the simulator should begin and end its dumping of the SAIF file.
+    # type: TimeValue
+    start_time: "0ns"
+    # type: TimeValue
+    end_time: "1ns"
+    # The triggers that will occur when the dump should start and when the dump should end.
+    # type: str
+    start_trigger: ""
+    end_trigger: ""
 
   # Flags to run with the simulator
   # Each string in this list will be passed as an option when actually executing the simulation executable generated from the previous arguments.

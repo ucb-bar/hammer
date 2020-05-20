@@ -1061,7 +1061,10 @@ class HammerDriver:
                  or None if output_dict was invalid
         """
         try:
-            waveforms = deeplist(output_dict["sim.outputs.waveforms"])
+            if "sim.outputs.waveforms" not in output_dict:
+                waveforms = []
+            else:
+                waveforms = deeplist(output_dict["sim.outputs.waveforms"])
             result = {
                 "power.inputs.waveforms": waveforms,
                 "power.inputs.waveforms_meta": "append",
