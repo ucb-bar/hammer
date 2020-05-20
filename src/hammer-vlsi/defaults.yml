@@ -570,8 +570,8 @@ par:
 
   # Top metal layer that is pulled back around blocks and hardmacros
   # Used by floorplanning.
-  # Overridden by individual placement constraints top_layer.
-  # type: Optional[String]
+  # Overridden by individual placement constraints on top_layer.
+  # type: Optional[str]
   blockage_spacing_top_layer: null
 
   # If power_straps_mode is 'generate', which method to use.
@@ -811,12 +811,14 @@ sim.inputs:
   # Settings related to activity file (SAIF) dumping
   saif:
     # Enable dumping an SAIF file, with activity factors
+    # type: bool
     enable: false
     # How Hammer determine when to start or stop the activity dumping
     # Valid options:
     # time - Start dumping at the specified start_time and end at the specified end_time
     # trigger - Inserts the trigger into the simulators run script before starting the dump and
     #   after enabling dumping before stopping dumping. See your simulator plugin for an example
+    # trigger_raw - Inserts the given tcl directly into the simulators run script with no checking.
     # none - Start dumping at the beginning of simulation and stop at the end.
     # type: str
     mode: "none"
@@ -825,10 +827,10 @@ sim.inputs:
     start_time: "0ns"
     # type: TimeValue
     end_time: "1ns"
-    # The triggers that will occur when the dump should start and when the dump should end.
+    # The raw triggers that will occur when the dump should start and when the dump should end.
     # type: str
-    start_trigger: ""
-    end_trigger: ""
+    start_trigger_raw: ""
+    end_trigger_raw: ""
 
   # Flags to run with the simulator
   # Each string in this list will be passed as an option when actually executing the simulation executable generated from the previous arguments.
@@ -853,22 +855,37 @@ sim.submit:
   settings: "vlsi.submit.settings"
   settings_meta: lazycrossref
 
+# Specific inputs for the power tool.
+# These may vary based on the specific tool plugin
 power.inputs:
+  # The path to a place and route database of the design to be analyzed
+  # type: str
   database: null
 
+  # Enable static power rail analysis
+  # type: bool
   static_rail: false
 
+  # The name of the test bench from the simulation.
+  # type: str
   tb_name: "TestDriver"
 
+  # The name of the device under test (DUT) from the simulation.
+  # type: str
   tb_dut: "dut"
 
-  netlist: null
+  # The paths of all spef (extraction) files needed for the design.
+  # This may include a file per MMMC corner
+  # type: List[str]
+  spefs: null
 
-  spef_file: null
-
-  power_spec: null
-
+  # A list of paths to VCD waveforms to be used for dynamic power analysis.
+  # type: List[str]
   waveforms: []
+
+  # A list of paths to SAIF activity files to be used for dynamic power analysis.
+  # type: List[str]
+  saifs: []
 
 power.submit:
   command: "${vlsi.submit.command}"

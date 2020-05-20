@@ -559,20 +559,17 @@ class HammerDriver:
         power_tool.submit_command = HammerSubmitCommand.get("power", self.database)
         power_tool.run_dir = run_dir
 
-        #power_tool.top_module = self.database.get_setting("power.inputs.top_module", nullvalue="")
-        #power_tool.netlist = self.database.get_setting("power.inputs.netlist", nullvalue="")
-        #power_tool.spef_file = self.database.get_setting("power.inputs.spef_file", nullvalue="")
+        power_tool.database = self.database.get_setting("power.inputs.database", nullvalue="")
+        power_tool.spefs = self.database.get_setting("power.inputs.spefs", nullvalue=[])
         power_tool.waveforms = self.database.get_setting("power.inputs.waveforms", nullvalue=[])
+        power_tool.saifs = self.database.get_setting("power.inputs.saifs", nullvalue=[])
         missing_inputs = False
-        #if power_tool.top_module == "":
-        #    self.log.error("Top module not specified for power analysis")
-        #    missing_inputs = True
-        #if power_tool.netlist is None:
-        #    self.log.error("No layout file specified for power analysis")
-        #    missing_inputs = True
-        #if power_tool.spef_file is None:
-        #    self.log.error("No spef file specified for power analysis")
-        #    missing_inputs = True
+        if power_tool.database == "":
+            self.log.error("PAR database not specified for power analysis")
+            missing_inputs = True
+        if len(power_tool.spefs) == 0:
+            self.log.error("No spef files specified for power analysis")
+            missing_inputs = True
         if missing_inputs:
             return False
 
@@ -818,7 +815,7 @@ class HammerDriver:
             result = {
                 "power.inputs.top_module": output_dict["par.inputs.top_module"],
                 "power.inputs.netlist": output_dict["par.outputs.output_netlist"],
-                "power.inputs.spef_files": output_dict["par.outputs.spef_files"],
+                "power.inputs.spefs": output_dict["par.outputs.spefs"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             return result
