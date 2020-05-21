@@ -217,6 +217,24 @@ class ValueWithUnit(ABC):
             raise TypeError("Types do not match")
         return self.value >= other.value
 
+    def __add__(self: _TT, other: _TT) -> _TT:
+        """
+        Add other and self.
+        The types must match.
+        """
+        if type(self) != type(other):
+            raise TypeError("Types do not match")
+        return type(self)(str(self.value + other.value),"")
+
+    def __sub__(self: _TT, other: _TT) -> _TT:
+        """
+        Subtract other from self.
+        The types must match.
+        """
+        if type(self) != type(other):
+            raise TypeError("Types do not match")
+        return type(self)(str(self.value - other.value),"")
+
 
 class TimeValue(ValueWithUnit):
     """Time value - e.g. "4 ns".
