@@ -235,6 +235,20 @@ class ValueWithUnit(ABC):
             raise TypeError("Types do not match")
         return type(self)(str(self.value - other.value),"")
 
+    def __div__(self: _TT, other: float) -> _TT:
+        """
+        Divide self by a float or an integer.
+        """
+    # Some python nonsense
+    def __truediv__(self: _TT, other: float) -> _TT:
+        return type(self)(str(self.value / other),"")
+
+    def __mul__(self: _TT, other: float) -> _TT:
+        """
+        Multiply self by a float or an integer.
+        """
+        return type(self)(str(self.value / other),"")
+
 
 class TimeValue(ValueWithUnit):
     """Time value - e.g. "4 ns".

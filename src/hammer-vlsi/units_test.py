@@ -76,6 +76,23 @@ class VoltageValueTest(unittest.TestCase):
         self.assertTrue(negative < zero)
         self.assertTrue(negative < positive)
 
+    def test_math(self) -> None:
+        """
+        Test that math on voltages works properly.
+        """
+        onemV = hammer_vlsi.units.VoltageValue("1mV")
+        zero = hammer_vlsi.units.VoltageValue("0")
+        self.assertTrue(onemV - zero == onemV)
+        self.assertTrue(onemV + zero == onemV)
+        halfmV = hammer_vlsi.units.VoltageValue("0.5mV")
+        self.assertTrue(onemV - halfmV == halfmV)
+        self.assertTrue(halfmV + halfmV == onemV)
+        oneV = hammer_vlsi.units.VoltageValue("1V")
+        self.assertTrue(oneV/1000 == onemV)
+        self.assertTrue(onemV*1000 == oneV)
+        self.assertTrue(onemV*0 == zero)
+        self.assertTrue(oneV*0 == zero)
+
 
 class TimeValueTest(unittest.TestCase):
     def test_read_and_write(self) -> None:
