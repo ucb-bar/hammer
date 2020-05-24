@@ -247,7 +247,7 @@ class ValueWithUnit(ABC):
         """
         Multiply self by a float or an integer.
         """
-        return type(self)(str(self.value / other),"")
+        return type(self)(str(self.value * other),"")
 
 
 class TimeValue(ValueWithUnit):
