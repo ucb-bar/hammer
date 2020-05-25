@@ -15,8 +15,8 @@ For a deeper dive into available options and environment configuration:
 * [Hammer technology library schema](src/hammer-tech/schema.json)
 * For CAD tool settings, please see the relevant `defaults.yml` for those plugins.
 
-Hammer is an integral of UC Berkeley Architecture Research's [Chipyard framework](https://github.com/ucb-bar/chipyard).
-Useful documentation for how an example block is pushed through the VLSI flow with Hammer in the free ASAP7 PDK is at https://chipyard.readthedocs.io/en/latest/VLSI
+Hammer is an integral component of UC Berkeley Architecture Research's [Chipyard framework](https://github.com/ucb-bar/chipyard).
+Useful documentation for how an example block is pushed through the VLSI flow with Hammer in the free ASAP7 PDK is at https://chipyard.readthedocs.io/en/latest/VLSI.
 
 History
 =======

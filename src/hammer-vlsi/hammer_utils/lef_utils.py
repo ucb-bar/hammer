@@ -77,7 +77,7 @@ class LEFUtils:
                 continue
 
             # Check for SIZE
-            regex = "SIZE\s+([\d\.]+)\s+BY\s+([\d\.]+)\s*;"
+            regex = "SIZE\s+([\d\.]+)\s+[bB][yY]\s+([\d\.]+)\s*;"
             regex_search = re.search(regex, line)
 
             if regex_search:
