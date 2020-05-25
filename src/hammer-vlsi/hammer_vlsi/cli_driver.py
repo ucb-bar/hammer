@@ -241,6 +241,7 @@ class CLIDriver:
         """
         Dump macro size information.
         """
+        assert driver.tech is not None, "must have a technology"
         macro_json = list(map(lambda m: m.to_setting(), driver.tech.get_macro_sizes()))
         return json.dumps(macro_json, cls=HammerJSONEncoder, indent=4)
 
@@ -531,6 +532,7 @@ class CLIDriver:
                     return None
                 else:
                     post_load_func_checked(driver)
+                assert driver.power_tool is not None, "load_power_tool was unsuccessful"
                 success, output = driver.run_power(extra_hooks)
                 if not success:
                     driver.log.error("Power tool did not succeed")

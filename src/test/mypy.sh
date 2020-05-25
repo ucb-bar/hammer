@@ -56,6 +56,9 @@ fi
 if [ -f ../../../hammer-cadence-plugins/par/innovus/__init__.py ]; then
     call_mypy ../../../hammer-cadence-plugins/par/innovus/__init__.py
 fi
+if [ -f ../../../hammer-cadence-plugins/power/voltus/__init__.py ]; then
+    call_mypy ../../../hammer-cadence-plugins/power/voltus/__init__.py
+fi
 if [ -f ../../../hammer-mentor-plugins/drc/calibre/__init__.py ]; then
     call_mypy ../../../hammer-mentor-plugins/drc/calibre/__init__.py
 fi

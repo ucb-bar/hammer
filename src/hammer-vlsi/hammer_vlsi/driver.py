@@ -551,7 +551,7 @@ class HammerDriver:
             tool_name=power_tool_name
         )
         assert isinstance(power_tool_get, HammerPowerTool), "Power tool must be a HammerPowerTool"
-        power_tool = power_tool_get  # type: HammerLVSTool
+        power_tool = power_tool_get  # type: HammerPowerTool
         power_tool.name = power_tool_name
         power_tool.logger = self.log.context("power")
         power_tool.technology = self.tech
@@ -1059,7 +1059,7 @@ class HammerDriver:
         """
         try:
             if "sim.outputs.waveforms" not in output_dict:
-                waveforms = []
+                waveforms = []  # type: List[str]
             else:
                 waveforms = deeplist(output_dict["sim.outputs.waveforms"])
             result = {

@@ -1267,23 +1267,43 @@ class HammerPowerTool(HammerTool):
     ### Inputs ###
 
     @property
-    def top_module(self) -> str:
+    def database(self) -> str:
         """
-        Get the top RTL module.
+        Get the path to par database for power analysis.
 
-        :return: The top RTL module.
+        :return: The path to par database for power analysis.
         """
         try:
-            return self.attr_getter("_top_module", None)
+            return self.attr_getter("_database", None)
         except AttributeError:
-            raise ValueError("Nothing set for the top RTL module yet")
+            raise ValueError("Nothing set for the path to par database for power analysis yet")
 
-    @top_module.setter
-    def top_module(self, value: str) -> None:
-        """Set the top RTL module."""
+    @database.setter
+    def database(self, value: str) -> None:
+        """Set the path to par database for power analysis."""
         if not (isinstance(value, str)):
-            raise TypeError("top_module must be a str")
-        self.attr_setter("_top_module", value)
+            raise TypeError("database must be a str")
+        self.attr_setter("_database", value)
+
+
+    @property
+    def spefs(self) -> List[str]:
+        """
+        Get the list of spef files for power anlaysis.
+
+        :return: The list of spef files for power anlaysis.
+        """
+        try:
+            return self.attr_getter("_spefs", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the list of spef files for power anlaysis yet")
+
+    @spefs.setter
+    def spefs(self, value: List[str]) -> None:
+        """Set the list of spef files for power anlaysis."""
+        if not (isinstance(value, List)):
+            raise TypeError("spefs must be a List[str]")
+        self.attr_setter("_spefs", value)
 
 
     @property
@@ -1304,6 +1324,26 @@ class HammerPowerTool(HammerTool):
         if not (isinstance(value, List)):
             raise TypeError("waveforms must be a List[str]")
         self.attr_setter("_waveforms", value)
+
+
+    @property
+    def saifs(self) -> List[str]:
+        """
+        Get the list of activity files for dynamic power analysis.
+
+        :return: The list of activity files for dynamic power analysis.
+        """
+        try:
+            return self.attr_getter("_saifs", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the list of activity files for dynamic power analysis yet")
+
+    @saifs.setter
+    def saifs(self, value: List[str]) -> None:
+        """Set the list of activity files for dynamic power analysis."""
+        if not (isinstance(value, List)):
+            raise TypeError("saifs must be a List[str]")
+        self.attr_setter("_saifs", value)
 
 
     ### Outputs ###
