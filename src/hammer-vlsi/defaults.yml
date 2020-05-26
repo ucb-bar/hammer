@@ -50,6 +50,11 @@ vlsi.core:
   sim_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/sim"]
   sim_tool_path_meta: subst
 
+  # Path(s) to power tools.
+  # Add the built-in path to power tools
+  power_tool_path: ["${vlsi.builtins.hammer_vlsi_path/power"]
+  power_tool_path_meta: subst
+
   # Path(s) to PCB deliverable tools.
   # Add the built-in path to PCB deliverable tools.
   pcb_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/pcb"]
@@ -73,6 +78,9 @@ vlsi.core:
 
   # Sim tool to use.
   sim_tool: "nop"
+
+  # Power analysis tool to use.
+  power_tool: "nop"
 
   # PCB deliverable tool to use.
   # PCB deliverables include footprints, symbols, etc.
@@ -582,7 +590,7 @@ par:
 
   # Top metal layer that is pulled back around blocks and hardmacros
   # Used by floorplanning.
-  # Overridden by individual placement constraints top_layer.
+  # Overridden by individual placement constraints on top_layer.
   # type: Optional[str]
   blockage_spacing_top_layer: null
 
@@ -819,6 +827,29 @@ sim.inputs:
   # If set to True, the sim will be time annotated based on synthesis or PAR results.
   timing_annotated: false
 
+  # Settings related to activity file (SAIF) dumping
+  saif:
+    # How Hammer determines whether and when to start or stop the activity dumping
+    # Valid options:
+    # time - Start dumping at the specified start_time and end at the specified end_time
+    # trigger - Inserts the trigger into the simulators run script before starting the dump and
+    #   after enabling dumping before stopping dumping. See your simulator plugin for an example
+    # trigger_raw - Inserts the given tcl directly into the simulators run script with no checking.
+    # full - Start dumping at the beginning of simulation and stop at the end.
+    # none - Do not dump an SAIF
+    # type: str
+    mode: "none"
+    # The times the simulator should begin and end its dumping of the SAIF file.
+    # type: TimeValue
+    start_time: "0ns"
+    # type: TimeValue
+    end_time: "1ns"
+    # The raw triggers that will occur when the dump should start and when the dump should end.
+    # The exact trigger format will depend on the underlying tool.
+    # type: str
+    start_trigger_raw: ""
+    end_trigger_raw: ""
+
   # Flags to run with the simulator
   # Each string in this list will be passed as an option when actually executing the simulation executable generated from the previous arguments.
   # type: List[str]
@@ -837,6 +868,40 @@ sim.inputs:
   execute_sim: true
 
 sim.submit:
+  command: "${vlsi.submit.command}"
+  command_meta: lazysubst
+  settings: "vlsi.submit.settings"
+  settings_meta: lazycrossref
+
+# Specific inputs for the power tool.
+# These may vary based on the specific tool plugin
+power.inputs:
+  # The path to a place and route database of the design to be analyzed
+  # type: str
+  database: null
+
+  # The name of the test bench from the simulation.
+  # type: str
+  tb_name: "TestDriver"
+
+  # The name of the device under test (DUT) from the simulation.
+  # type: str
+  tb_dut: "dut"
+
+  # The paths of all spef (extraction) files needed for the design.
+  # This may include a file per MMMC corner
+  # type: List[str]
+  spefs: []
+
+  # A list of paths to VCD waveforms to be used for dynamic power analysis.
+  # type: List[str]
+  waveforms: []
+
+  # A list of paths to SAIF activity files to be used for dynamic power analysis.
+  # type: List[str]
+  saifs: []
+
+power.submit:
   command: "${vlsi.submit.command}"
   command_meta: lazysubst
   settings: "vlsi.submit.settings"

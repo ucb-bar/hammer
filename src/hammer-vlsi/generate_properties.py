@@ -204,6 +204,16 @@ def main(args) -> int:
                               ],
                               outputs=[]
                               )
+    HammerPowerTool = Interface(module="HammerPowerTool",
+                                filename="hammer_vlsi/hammer_vlsi_impl.py",
+                                inputs=[
+                                  InterfaceVar("par_database", "str", "path to par database for power analysis"),
+                                  InterfaceVar("spefs", "List[str]", "list of spef files for power anlaysis"),
+                                  InterfaceVar("waveforms", "List[str]", "list of waveform dump files for dynamic power analysis"),
+                                  InterfaceVar("saifs", "List[str]", "list of activity files for dynamic power analysis")
+                                ],
+                                outputs=[]
+                                )
     HammerPCBDeliverableTool = Interface(module="HammerPCBDeliverableTool",
                                        filename="hammer_vlsi/hammer_vlsi_impl.py",
                                        inputs=[],
@@ -224,6 +234,7 @@ def main(args) -> int:
     generate_interface(HammerLVSTool)
     generate_interface(HammerSRAMGeneratorTool)
     generate_interface(HammerSimTool)
+    generate_interface(HammerPowerTool)
     generate_interface(HammerPCBDeliverableTool)
 
     if selected_file == "":

@@ -205,7 +205,7 @@ class ExtraLibrary(NamedTuple('ExtraLibrary', [
         :return: A copy of the library in this ExtraPrefix with the prefix stored in extra_prefixes, if one exists.
         """
         lib_copied = copy_library(self.library)  # type: Library
-        extra_prefixes = get_or_else(optional_map(self.prefix, lambda p: [p]), [])  # type: List[LibraryPrefix]
+        extra_prefixes = get_or_else(optional_map(self.prefix, lambda p: [p]), [])  # type: List[PathPrefix]
         lib_copied.extra_prefixes = extra_prefixes  # type: ignore
         return lib_copied
 
