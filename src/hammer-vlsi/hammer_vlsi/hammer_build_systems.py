@@ -37,6 +37,8 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         - drc
         - lvs
         - sim
+        - sim-syn
+        - sim-par
         - power
 
     For hierarchical flows, the syn, par, drc, and lvs actions will all be suffixed with the name

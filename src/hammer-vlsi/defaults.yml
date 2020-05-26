@@ -847,6 +847,7 @@ sim.inputs:
     # type: TimeValue
     end_time: "1ns"
     # The raw triggers that will occur when the dump should start and when the dump should end.
+    # The exact trigger format will depend on the underlying tool.
     # type: str
     start_trigger_raw: ""
     end_trigger_raw: ""
@@ -896,7 +897,7 @@ power.inputs:
   # The paths of all spef (extraction) files needed for the design.
   # This may include a file per MMMC corner
   # type: List[str]
-  spefs: null
+  spefs: []
 
   # A list of paths to VCD waveforms to be used for dynamic power analysis.
   # type: List[str]
