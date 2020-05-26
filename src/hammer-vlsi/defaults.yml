@@ -880,10 +880,6 @@ power.inputs:
   # type: str
   database: null
 
-  # Enable static power rail analysis
-  # type: bool
-  static_rail: false
-
   # The name of the test bench from the simulation.
   # type: str
   tb_name: "TestDriver"
