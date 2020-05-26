@@ -559,12 +559,12 @@ class HammerDriver:
         power_tool.submit_command = HammerSubmitCommand.get("power", self.database)
         power_tool.run_dir = run_dir
 
-        power_tool.database = self.database.get_setting("power.inputs.database", nullvalue="")
+        power_tool.par_database = self.database.get_setting("power.inputs.database", nullvalue="")
         power_tool.spefs = self.database.get_setting("power.inputs.spefs", nullvalue=[])
         power_tool.waveforms = self.database.get_setting("power.inputs.waveforms", nullvalue=[])
         power_tool.saifs = self.database.get_setting("power.inputs.saifs", nullvalue=[])
         missing_inputs = False
-        if power_tool.database == "":
+        if power_tool.par_database == "":
             self.log.error("PAR database not specified for power analysis")
             missing_inputs = True
         if len(power_tool.spefs) == 0:

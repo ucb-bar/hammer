@@ -371,7 +371,7 @@ class CLIDriver:
                           pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
                           post_load_func: Optional[Callable[[HammerDriver], None]] = None,
                           post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
-        hooks = self.get_extra_sim_hooks() + custom_hooks  # type: List[HammerToolHookAction]
+        hooks = self.get_extra_power_hooks() + custom_hooks  # type: List[HammerToolHookAction]
         return self.create_action("power", hooks if len(hooks) > 0 else None,
                                   pre_action_func, post_load_func, post_run_func)
 
