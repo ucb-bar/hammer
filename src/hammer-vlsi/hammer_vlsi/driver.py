@@ -221,8 +221,8 @@ class HammerDriver:
         syn_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
         syn_tool.top_module = self.database.get_setting("synthesis.inputs.top_module", nullvalue="")
         syn_tool.submit_command = HammerSubmitCommand.get("synthesis", self.database)
-        syn_tool.output_all_regs = []
-        syn_tool.output_seq_cells = []
+        syn_tool.output_all_regs = ""
+        syn_tool.output_seq_cells = ""
 
         # TODO: automate this based on the definitions
         missing_inputs = False
@@ -274,8 +274,8 @@ class HammerDriver:
         par_tool.input_files = list(self.database.get_setting("par.inputs.input_files"))
         par_tool.top_module = self.database.get_setting("par.inputs.top_module", nullvalue="")
         par_tool.post_synth_sdc = self.database.get_setting("par.inputs.post_synth_sdc", nullvalue="")
-        par_tool.output_all_regs = []
-        par_tool.output_seq_cells = []
+        par_tool.output_all_regs = ""
+        par_tool.output_seq_cells = ""
 
 
         if len(par_tool.input_files) == 0:
@@ -757,12 +757,11 @@ class HammerDriver:
         """
         try:
             output_files = deeplist(output_dict["synthesis.outputs.output_files"])
-            all_regs = deeplist(output_dict["synthesis.outputs.all_regs"])
             result = {
                 "sim.inputs.input_files": output_files,
                 "sim.inputs.input_files_meta": "append",
                 "sim.inputs.top_module": output_dict["synthesis.inputs.top_module"],
-                "sim.inputs.all_regs": all_regs,
+                "sim.inputs.all_regs": output_dict["synthesis.outputs.all_regs"],
                 "sim.inputs.seq_cells": output_dict["synthesis.outputs.seq_cells"],
                 "sim.inputs.sdf_file": output_dict["synthesis.outputs.sdf_file"],
                 "sim.inputs.level": 'gl',
@@ -784,13 +783,12 @@ class HammerDriver:
                  or None if output_dict was invalid
         """
         try:
-            all_regs = deeplist(output_dict["par.outputs.all_regs"])
             sim_input_files = deeplist([output_dict["par.outputs.output_sim_netlist"]])
             result = {
                 "sim.inputs.input_files": sim_input_files,
                 "sim.inputs.input_files_meta": "append",
                 "sim.inputs.top_module": output_dict["par.inputs.top_module"],
-                "sim.inputs.all_regs": all_regs,
+                "sim.inputs.all_regs": output_dict["par.outputs.all_regs"],
                 "sim.inputs.seq_cells": output_dict["par.outputs.seq_cells"],
                 "sim.inputs.sdf_file": output_dict["par.outputs.sdf_file"],
                 "sim.inputs.level": 'gl',

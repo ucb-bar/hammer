@@ -316,42 +316,42 @@ class HammerSynthesisTool(HammerTool):
 
 
     @property
-    def output_all_regs(self) -> List[Dict[str, str]]:
+    def output_all_regs(self) -> str:
         """
-        Get the output list of all registers in the design with output pin for gate level simulation.
+        Get the path to output list of all registers in the design with output pin for gate level simulation.
 
-        :return: The output list of all registers in the design with output pin for gate level simulation.
+        :return: The path to output list of all registers in the design with output pin for gate level simulation.
         """
         try:
             return self.attr_getter("_output_all_regs", None)
         except AttributeError:
-            raise ValueError("Nothing set for the output list of all registers in the design with output pin for gate level simulation yet")
+            raise ValueError("Nothing set for the path to output list of all registers in the design with output pin for gate level simulation yet")
 
     @output_all_regs.setter
-    def output_all_regs(self, value: List[Dict[str, str]]) -> None:
-        """Set the output list of all registers in the design with output pin for gate level simulation."""
-        if not (isinstance(value, List)):
-            raise TypeError("output_all_regs must be a List[Dict[str, str]]")
+    def output_all_regs(self, value: str) -> None:
+        """Set the path to output list of all registers in the design with output pin for gate level simulation."""
+        if not (isinstance(value, str)):
+            raise TypeError("output_all_regs must be a str")
         self.attr_setter("_output_all_regs", value)
 
 
     @property
-    def output_seq_cells(self) -> List[str]:
+    def output_seq_cells(self) -> str:
         """
-        Get the output collection of all sequential standard cells in design.
+        Get the path to output collection of all sequential standard cells in design.
 
-        :return: The output collection of all sequential standard cells in design.
+        :return: The path to output collection of all sequential standard cells in design.
         """
         try:
             return self.attr_getter("_output_seq_cells", None)
         except AttributeError:
-            raise ValueError("Nothing set for the output collection of all sequential standard cells in design yet")
+            raise ValueError("Nothing set for the path to output collection of all sequential standard cells in design yet")
 
     @output_seq_cells.setter
-    def output_seq_cells(self, value: List[str]) -> None:
-        """Set the output collection of all sequential standard cells in design."""
-        if not (isinstance(value, List)):
-            raise TypeError("output_seq_cells must be a List[str]")
+    def output_seq_cells(self, value: str) -> None:
+        """Set the path to output collection of all sequential standard cells in design."""
+        if not (isinstance(value, str)):
+            raise TypeError("output_seq_cells must be a str")
         self.attr_setter("_output_seq_cells", value)
 
 
@@ -543,42 +543,42 @@ class HammerPlaceAndRouteTool(HammerTool):
 
 
     @property
-    def output_all_regs(self) -> List[Dict[str, str]]:
+    def output_all_regs(self) -> str:
         """
-        Get the output list of all registers in the design with output pin for gate level simulation.
+        Get the path to output list of all registers in the design with output pin for gate level simulation.
 
-        :return: The output list of all registers in the design with output pin for gate level simulation.
+        :return: The path to output list of all registers in the design with output pin for gate level simulation.
         """
         try:
             return self.attr_getter("_output_all_regs", None)
         except AttributeError:
-            raise ValueError("Nothing set for the output list of all registers in the design with output pin for gate level simulation yet")
+            raise ValueError("Nothing set for the path to output list of all registers in the design with output pin for gate level simulation yet")
 
     @output_all_regs.setter
-    def output_all_regs(self, value: List[Dict[str, str]]) -> None:
-        """Set the output list of all registers in the design with output pin for gate level simulation."""
-        if not (isinstance(value, List)):
-            raise TypeError("output_all_regs must be a List[Dict[str, str]]")
+    def output_all_regs(self, value: str) -> None:
+        """Set the path to output list of all registers in the design with output pin for gate level simulation."""
+        if not (isinstance(value, str)):
+            raise TypeError("output_all_regs must be a str")
         self.attr_setter("_output_all_regs", value)
 
 
     @property
-    def output_seq_cells(self) -> List[str]:
+    def output_seq_cells(self) -> str:
         """
-        Get the output collection of all sequential standard cells in design.
+        Get the path to output collection of all sequential standard cells in design.
 
-        :return: The output collection of all sequential standard cells in design.
+        :return: The path to output collection of all sequential standard cells in design.
         """
         try:
             return self.attr_getter("_output_seq_cells", None)
         except AttributeError:
-            raise ValueError("Nothing set for the output collection of all sequential standard cells in design yet")
+            raise ValueError("Nothing set for the path to output collection of all sequential standard cells in design yet")
 
     @output_seq_cells.setter
-    def output_seq_cells(self, value: List[str]) -> None:
-        """Set the output collection of all sequential standard cells in design."""
-        if not (isinstance(value, List)):
-            raise TypeError("output_seq_cells must be a List[str]")
+    def output_seq_cells(self, value: str) -> None:
+        """Set the path to output collection of all sequential standard cells in design."""
+        if not (isinstance(value, str)):
+            raise TypeError("output_seq_cells must be a str")
         self.attr_setter("_output_seq_cells", value)
 
 
@@ -1197,42 +1197,42 @@ class HammerSimTool(HammerTool):
 
 
     @property
-    def all_regs(self) -> List[Dict[str, str]]:
+    def all_regs(self) -> str:
         """
-        Get the list of all registers in the design with output pin.
+        Get the path to list of all registers in the design with output pin.
 
-        :return: The list of all registers in the design with output pin.
+        :return: The path to list of all registers in the design with output pin.
         """
         try:
             return self.attr_getter("_all_regs", None)
         except AttributeError:
-            raise ValueError("Nothing set for the list of all registers in the design with output pin yet")
+            raise ValueError("Nothing set for the path to list of all registers in the design with output pin yet")
 
     @all_regs.setter
-    def all_regs(self, value: List[Dict[str, str]]) -> None:
-        """Set the list of all registers in the design with output pin."""
-        if not (isinstance(value, List)):
-            raise TypeError("all_regs must be a List[Dict[str, str]]")
+    def all_regs(self, value: str) -> None:
+        """Set the path to list of all registers in the design with output pin."""
+        if not (isinstance(value, str)):
+            raise TypeError("all_regs must be a str")
         self.attr_setter("_all_regs", value)
 
 
     @property
-    def seq_cells(self) -> List[str]:
+    def seq_cells(self) -> str:
         """
-        Get the collection of all sequential standard cells in design.
+        Get the path to collection of all sequential standard cells in design.
 
-        :return: The collection of all sequential standard cells in design.
+        :return: The path to collection of all sequential standard cells in design.
         """
         try:
             return self.attr_getter("_seq_cells", None)
         except AttributeError:
-            raise ValueError("Nothing set for the collection of all sequential standard cells in design yet")
+            raise ValueError("Nothing set for the path to collection of all sequential standard cells in design yet")
 
     @seq_cells.setter
-    def seq_cells(self, value: List[str]) -> None:
-        """Set the collection of all sequential standard cells in design."""
-        if not (isinstance(value, List)):
-            raise TypeError("seq_cells must be a List[str]")
+    def seq_cells(self, value: str) -> None:
+        """Set the path to collection of all sequential standard cells in design."""
+        if not (isinstance(value, str)):
+            raise TypeError("seq_cells must be a str")
         self.attr_setter("_seq_cells", value)
 
 
