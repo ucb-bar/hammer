@@ -13,7 +13,7 @@ import shutil
 from typing import NamedTuple, List, Optional, Tuple, Dict, Set, Any
 
 from hammer_tech import HammerTechnology
-from hammer_vlsi import HammerTool, HammerPlaceAndRouteTool, CadenceTool, HammerToolHookAction
+from hammer_vlsi import HammerTool, HammerPlaceAndRouteTool, TCLTool, HammerToolHookAction
 
 class ASAP7Tech(HammerTechnology):
     """
@@ -202,7 +202,7 @@ gds_lib.write_gds('{gds_file}')
 
 def asap7_innovus_settings(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
-    assert isinstance(ht, CadenceTool), "Innovus is Cadence"
+    assert isinstance(ht, TCLTool), "innovus settings can only run on TCL tools"
     """Settings that may need to be reapplied at every tool invocation
     Note that the particular routing layer settings here will persist in Innovus;
     this hook only serves as an example of what commands may need to persist."""
@@ -214,7 +214,7 @@ set_db route_design_top_routing_layer 7
 
 def scale_final_gds(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerPlaceAndRouteTool), "scale_final_gds can only run on par"
-    assert isinstance(ht, CadenceTool), "scale_final_gds is only for the Cadence Tcl interpreter"
+    assert isinstance(ht, TCLTool), "scale_final_gds can only run on TCL tools"
     """
     Scale the final GDS by a factor of 4
     scale_gds_script writes the actual Python script to execute from the Tcl interpreter
