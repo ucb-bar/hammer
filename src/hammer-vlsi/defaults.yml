@@ -803,7 +803,7 @@ sim.inputs:
   level: "rtl"
 
   # Path to a list of all registers in the design passed from synthesis or place-and-route
-  # type: List[str]
+  # type: str
   all_regs: ""
 
   # Path to a list of all sequential standard cells in the design passed from synthesis or place-and-route
