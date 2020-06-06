@@ -589,11 +589,13 @@ class HammerBuildSystemsTest(unittest.TestCase):
 
         targets = self._read_targets_from_makefile(contents)
 
-        tasks = {"pcb", "syn", "par", "drc", "lvs"}
+        tasks = {"pcb", "sim-rtl", "syn", "sim-syn", "par", "sim-par", "power-par", "drc", "lvs"}
         expected_targets = tasks.copy()
         expected_targets.update({"redo-" + x for x in tasks if x is not "pcb"})
-        expected_targets.update({os.path.join(tmpdir, x + "-rundir", x + "-output-full.json") for x in tasks})
-        expected_targets.update({os.path.join(tmpdir, x + "-input.json") for x in tasks if x not in {"syn", "pcb"}})
+        expected_targets.update({os.path.join(tmpdir, x + "-rundir", x + "-output-full.json") for x in tasks if x not in {"sim-rtl", "sim-syn", "sim-par", "power-par"}})
+        expected_targets.update({os.path.join(tmpdir, x + "-rundir", x.split('-')[0] + "-output-full.json") for x in tasks if x in {"sim-rtl", "sim-syn", "sim-par", "power-par"}})
+        expected_targets.update({os.path.join(tmpdir, x + "-input.json") for x in tasks if x not in {"syn", "pcb", "sim-rtl", "power-par"}})
+        expected_targets.update({os.path.join(tmpdir, x + "-input.json") for x in {"power-par", "power-sim-par"}})
 
         self.assertEqual(set(targets.keys()), set(expected_targets))
 
@@ -654,21 +656,37 @@ class HammerBuildSystemsTest(unittest.TestCase):
 
         mods = {"TopMod", "SubModA", "SubModB"}
         expected_targets = {"pcb", os.path.join(tmpdir, "pcb-rundir", "pcb-output-full.json")}
+        expected_targets.update({"sim-rtl-" + x for x in mods})
         expected_targets.update({"syn-" + x for x in mods})
+        expected_targets.update({"sim-syn-" + x for x in mods})
         expected_targets.update({"par-" + x for x in mods})
+        expected_targets.update({"sim-par-" + x for x in mods})
+        expected_targets.update({"power-par-" + x for x in mods})
         expected_targets.update({"lvs-" + x for x in mods})
         expected_targets.update({"drc-" + x for x in mods})
+        expected_targets.update({"redo-sim-rtl-" + x for x in mods})
         expected_targets.update({"redo-syn-" + x for x in mods})
+        expected_targets.update({"redo-sim-syn-" + x for x in mods})
         expected_targets.update({"redo-par-" + x for x in mods})
+        expected_targets.update({"redo-sim-par-" + x for x in mods})
+        expected_targets.update({"redo-power-par-" + x for x in mods})
         expected_targets.update({"redo-lvs-" + x for x in mods})
         expected_targets.update({"redo-drc-" + x for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "sim-rtl-" + x, "sim-output-full.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "syn-" + x, "syn-output-full.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "sim-syn-" + x, "sim-output-full.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "par-" + x, "par-output-full.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "sim-par-" + x, "sim-output-full.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "power-par-" + x, "power-output-full.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "lvs-" + x, "lvs-output-full.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "drc-" + x, "drc-output-full.json") for x in mods})
         # Only non-leafs get a syn-*-input.json target
         expected_targets.update({os.path.join(tmpdir, "syn-" + x + "-input.json") for x in mods if x in {"TopMod"}})
+        expected_targets.update({os.path.join(tmpdir, "sim-syn-" + x + "-input.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "par-" + x + "-input.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "sim-par-" + x + "-input.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "power-par-" + x + "-input.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "power-sim-par-" + x + "-input.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "lvs-" + x + "-input.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "drc-" + x + "-input.json") for x in mods})
 
