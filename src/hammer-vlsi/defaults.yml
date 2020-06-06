@@ -562,7 +562,7 @@ par.inputs:
   # append - Append the manual list to the technology plugin's list
   physical_only_cells_mode: auto
   # List of cells that are only physical.
-  # type List[str]
+  # type: List[str]
   physical_only_cells_list: []
 
 # Place-and-route settings
