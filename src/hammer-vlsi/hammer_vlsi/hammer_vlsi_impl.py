@@ -1138,6 +1138,8 @@ class HammerSimTool(HammerTool):
     # No current sim outputs, but some will be added
     def export_config_outputs(self) -> Dict[str, Any]:
         outputs = deepdict(super().export_config_outputs())
+        outputs["sim.outputs.waveforms"] = self.output_waveforms
+        outputs["sim.outputs.saifs"] = self.output_saifs
         return outputs
 
     @property
@@ -1257,6 +1259,46 @@ class HammerSimTool(HammerTool):
 
 
     ### Outputs ###
+
+    @property
+    def output_waveforms(self) -> List[str]:
+        """
+        Get the paths to output waveforms.
+
+        :return: The paths to output waveforms.
+        """
+        try:
+            return self.attr_getter("_output_waveforms", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the paths to output waveforms yet")
+
+    @output_waveforms.setter
+    def output_waveforms(self, value: List[str]) -> None:
+        """Set the paths to output waveforms."""
+        if not (isinstance(value, List)):
+            raise TypeError("output_waveforms must be a List[str]")
+        self.attr_setter("_output_waveforms", value)
+
+
+    @property
+    def output_saifs(self) -> List[str]:
+        """
+        Get the paths to output activity files.
+
+        :return: The paths to output activity files.
+        """
+        try:
+            return self.attr_getter("_output_saifs", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the paths to output activity files yet")
+
+    @output_saifs.setter
+    def output_saifs(self, value: List[str]) -> None:
+        """Set the paths to output activity files."""
+        if not (isinstance(value, List)):
+            raise TypeError("output_saifs must be a List[str]")
+        self.attr_setter("_output_saifs", value)
+
     ### END Generated interface HammerSimTool ###
     ### Generated interface HammerSimTool ###
 
