@@ -571,10 +571,11 @@ par.inputs:
   # manual - use the value from the 'par.inputs.gds_precision' key below.
   gds_precision_mode: "auto"
 
-  # GDS output precision when written by PAR tool. Valid values depend on the
-  # specific PAR tool in use. Innovus, for example, restricts it to {100, 200,
-  # 1000, 2000, 10000, 20000}. This value is ignored if
-  # 'par.inputs.gds_precision_mode' is not manual.
+  # GDS output precision when written by PAR tool. Some tools restrict the
+  # value to a limited range and your tool plugin should check this for you.
+  # Innovus, for example, restricts values to one of {100, 200, 1000, 2000,
+  # 10000, 20000}. This value is ignored if 'par.inputs.gds_precision_mode' is
+  # not manual.
   gds_precision: 1000
 
 # Place-and-route settings
