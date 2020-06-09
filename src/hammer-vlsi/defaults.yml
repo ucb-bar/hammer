@@ -569,6 +569,7 @@ par.inputs:
   # auto - perform default PAR-tool behaviour, which is usually to use the
   #        value specified in the LEF.
   # manual - use the value from the 'par.inputs.gds_precision' key below.
+  # type: str
   gds_precision_mode: "auto"
 
   # GDS output precision when written by PAR tool. Valid values depend on the
