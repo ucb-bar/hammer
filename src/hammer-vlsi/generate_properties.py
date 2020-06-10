@@ -202,7 +202,10 @@ def main(args) -> int:
                                   InterfaceVar("seq_cells", "str", "path to collection of all sequential standard cells in design"),
                                   InterfaceVar("sdf_file", "Optional[str]", "optional SDF file needed for timing annotated gate level sims")
                               ],
-                              outputs=[]
+                              outputs=[
+                                  InterfaceVar("output_waveforms", "List[str]", "paths to output waveforms"),
+                                  InterfaceVar("output_saifs", "List[str]", "paths to output activity files")
+                              ]
                               )
     HammerPowerTool = Interface(module="HammerPowerTool",
                                 filename="hammer_vlsi/hammer_vlsi_impl.py",

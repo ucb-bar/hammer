@@ -1056,13 +1056,11 @@ class HammerDriver:
                  or None if output_dict was invalid
         """
         try:
-            if "sim.outputs.waveforms" not in output_dict:
-                waveforms = []  # type: List[str]
-            else:
-                waveforms = deeplist(output_dict["sim.outputs.waveforms"])
             result = {
-                "power.inputs.waveforms": waveforms,
+                "power.inputs.waveforms": output_dict["sim.outputs.waveforms"],
                 "power.inputs.waveforms_meta": "append",
+                "power.inputs.saifs": output_dict["sim.outputs.saifs"],
+                "power.inputs.saifs_meta": "append",
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             return result
