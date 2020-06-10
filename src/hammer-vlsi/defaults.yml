@@ -562,8 +562,23 @@ par.inputs:
   # append - Append the manual list to the technology plugin's list
   physical_only_cells_mode: auto
   # List of cells that are only physical.
-  # type List[str]
+  # type: List[str]
   physical_only_cells_list: []
+
+  # GDS output precision. Controlled by a mode and a precision value. Valid modes are:
+  # auto - perform default PAR-tool behaviour, which is usually to use the
+  #        value specified in the LEF.
+  # manual - use the value from the 'par.inputs.gds_precision' key below.
+  # type: str
+  gds_precision_mode: "auto"
+
+  # GDS output precision when written by PAR tool. Some tools restrict the
+  # value to a limited range and your tool plugin should check this for you.
+  # Innovus, for example, restricts values to one of {100, 200, 1000, 2000,
+  # 10000, 20000}. This value is ignored if 'par.inputs.gds_precision_mode' is
+  # not manual.
+  # type: int
+  gds_precision: 1000
 
 # Place-and-route settings
 par:
