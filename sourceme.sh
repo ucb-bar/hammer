@@ -4,15 +4,8 @@
 if [ -z "${HAMMER_HOME}" ]; then
   # Try to find the location of the script even if it's called through a symlink.
   #  https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
-  SOURCE="${BASH_SOURCE[0]}"
-  while [ -h "${SOURCE}" ]; do
-    DIR="$( cd -P "$( dirname "${SOURCE}" )" > /dev/null 2>&1 && pwd )"
-    SOURCE="$( readlink "${SOURCE}")"
-    [[ ${SOURCE} != /* ]] && SOURCE="${DIR}/${SOURCE}"
-  done
-  DIR="$( cd -P "$( dirname "${SOURCE}" )" > /dev/null 2>&1 && pwd )"
-
-  export HAMMER_HOME="${DIR}"
+  #  https://stackoverflow.com/questions/35006457/choosing-between-0-and-bash-source
+  export HAMMER_HOME="$( dirname "$( readlink -f "${BASH_SOURCE[0]}" )" )"
   >&2 echo "Using (default) HAMMER_HOME=${HAMMER_HOME}"
 else
   >&2 echo "Using HAMMER_HOME=${HAMMER_HOME}"
