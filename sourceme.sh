@@ -1,17 +1,17 @@
 #!/bin/sh
 # Convenience script for setting variables for in-tree use of hammer.
 
-# Try to find the location of the script even if it's called through a symlink.
-#  https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
-SOURCE="${BASH_SOURCE[0]}"
-while [ -h "${SOURCE}" ]; do
-  DIR="$( cd -P "$( dirname "${SOURCE}" )" > /dev/null 2>&1 && pwd )"
-  SOURCE="$( readlink "${SOURCE}")"
-  [[ ${SOURCE} != /* ]] && SOURCE="${DIR}/${SOURCE}"
-done
-DIR="$( cd -P "$( dirname "${SOURCE}" )" > /dev/null 2>&1 && pwd )"
-
 if [ -z "${HAMMER_HOME}" ]; then
+  # Try to find the location of the script even if it's called through a symlink.
+  #  https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
+  SOURCE="${BASH_SOURCE[0]}"
+  while [ -h "${SOURCE}" ]; do
+    DIR="$( cd -P "$( dirname "${SOURCE}" )" > /dev/null 2>&1 && pwd )"
+    SOURCE="$( readlink "${SOURCE}")"
+    [[ ${SOURCE} != /* ]] && SOURCE="${DIR}/${SOURCE}"
+  done
+  DIR="$( cd -P "$( dirname "${SOURCE}" )" > /dev/null 2>&1 && pwd )"
+
   export HAMMER_HOME="${DIR}"
   >&2 echo "Using (default) HAMMER_HOME=${HAMMER_HOME}"
 else
