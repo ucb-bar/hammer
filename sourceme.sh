@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Convenience script for setting variables for in-tree use of hammer.
 
 if [ -z "${HAMMER_HOME}" ]; then
