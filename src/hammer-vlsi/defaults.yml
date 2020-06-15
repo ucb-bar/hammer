@@ -801,6 +801,12 @@ sim.inputs:
   # type: List[str]
   benchmarks: []
 
+  # Maximum number of simulations to run in parallel.
+  # A value of -1 indicates all simulations should be launched in parallel
+  # A value of 0 and 1 are treated the same and all simulations are run serially
+  # type: int
+  parallel_runs: 1
+
   # Hierarchical path to the top level instance of the "dut" from the testbench.
   # For example, this will be used to generate the hierarchical path through the testbench and DUT to each sequential element in the design.
   # TODO(johnwright) automate this by parsing the TB verilog?
