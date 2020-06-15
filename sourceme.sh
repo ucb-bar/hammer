@@ -6,9 +6,7 @@ if [ -z "${HAMMER_HOME}" ]; then
   #  https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
   #  https://stackoverflow.com/questions/35006457/choosing-between-0-and-bash-source
   export HAMMER_HOME="$( dirname "$( readlink -f "${BASH_SOURCE[0]}" )" )"
-  >&2 echo "Using (guessed) HAMMER_HOME=${HAMMER_HOME}"
-else
-  >&2 echo "Using (existing) HAMMER_HOME=${HAMMER_HOME}"
+  >&2 echo "Setting HAMMER_HOME=${HAMMER_HOME}"
 fi
 
 export HAMMER_VLSI="${HAMMER_HOME}/src/hammer-vlsi"
