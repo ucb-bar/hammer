@@ -1,5 +1,6 @@
 # Text editors / IDEs
 *.swp
+*.swo
 .idea
 
 # Hammer outputs

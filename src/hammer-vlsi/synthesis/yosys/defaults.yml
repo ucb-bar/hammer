@@ -1,0 +1,8 @@
+# Default settings for synthesis in Vivado, for project/technology configuration and overriding.
+synthesis.yosys:
+  # Location of the binary. This should be in the $PATH since OpenROAD-flow
+  # adds it to $PATH in the setup_env.sh script, which you should run before
+  # using hammer
+  binary: "yosys"
+  # Generate the TCL file but do not run it yet.
+  generate_only: false
