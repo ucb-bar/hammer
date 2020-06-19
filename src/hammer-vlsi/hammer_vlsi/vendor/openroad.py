@@ -1,0 +1,212 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
+# common tool settings and functions for OpenROAD tools
+# 
+# See LICENSE for licence details.
+
+from functools import reduce
+import os
+import re
+import shutil
+from subprocess import Popen, PIPE
+from textwrap import dedent as dd
+from typing import List, Optional, Dict, Any
+
+from hammer_utils import add_dicts
+from hammer_vlsi import HasSDCSupport, HammerSynthesisTool, \
+                        PlacementConstraintType, TimeValue
+import hammer_tech
+
+class OpenROADTool(HasSDCSupport):
+    """ Mix-in trait with functions useful for OpenROAD-flow tools."""
+
+    @property
+    def config_dirs(self) -> List[str]:
+        # Override this to pull in OpenROAD-flow common configs.
+        return [self.get_setting("openroad.common_path")]+super().config_dirs
+
+    @property
+    def env_vars(self) -> Dict[str, str]:
+        """
+        Get the list of environment variables required for this tool.
+        Note to subclasses: remember to include variables from 
+        super().env_vars!
+        """
+        list_of_vars = self.get_setting("openroad.extra_env_vars")  
+        assert isinstance(list_of_vars, list)
+        return reduce(add_dicts, [dict(super().env_vars)] + list_of_vars, {})
+
+    def validate_openroad_installation(self) -> None:
+        """
+        make sure OPENROAD env-var is set, and klayout is in the path (since
+        klayout is not installed with OPENROAD as of version 1.1.0. this 
+        should be called in steps that actually run tools or touch filepaths
+        """
+        if "OPENROAD" not in os.environ:
+            raise Exception("OPENROAD is not defined in environment!")
+        if not shutil.which("klayout"):
+            raise Exception("klayout is not in PATH")
+
+    def openroad_flow_path(self) -> str:
+        """return the root of the OpenROAD-flow installation"""
+        self.validate_openroad_installation()
+        return os.path.realpath(os.path.join(os.environ['OPENROAD'], "../.."))
+
+    def openroad_flow_makefile_path(self) -> str:
+        """drive OpenROAD-flow's top-level Makefile from hammer"""
+        openroad = self.openroad_flow_path()
+        return os.path.join(openroad, "flow/Makefile")
+
+    def design_config_path(self) -> str:
+        """
+        the initial design_config is written by the synthesis step. any other
+        tool must refer to this design_config
+        """
+        # TODO: leaking info from driver into this tool. figure out a better
+        # way to get "syn-rundir" than duplicating a constant
+        return os.path.realpath(os.path.join(self.run_dir, 
+                                  "../syn-rundir/design_config.mk"))
+
+    def version_number(self, version: str) -> int:
+        """get OPENROAD-flow's version from one of its header files"""
+
+        filepath = os.path.join(self.openroad_flow_path(),
+                                "tools/OpenROAD/include/openroad/Version.hh")
+        process = Popen(["grep","OPENROAD_VERSION",filepath], stdout=PIPE)
+        (output, err) = process.communicate()
+        code = process.wait()
+        assert code == 0, "yosys -V failed with code {}".format(code)
+        text = output.decode("utf-8")
+        match = re.search(r"OPENROAD_VERSION \"(\d+)\.(\d+)\.(\d+)\"", text)
+        if match is None:
+          raise Exception("OPENROAD_VERSION could not be found!")
+        return int(match.group(1))*10000 + \
+               int(match.group(2))*100 + \
+               int(match.group(3))
+
+    def setup_openroad_rundir(self) -> bool:
+        """
+        OpenROAD expects several files/dirs in the current run_dir, so we 
+        symlink them in from the OpenROAD-flow installation
+        """
+        # TODO: for now, just symlink in the read-only OpenROAD stuff, since
+        # the $OPENROAD/flow/Makefile expects these in the current directory.
+        # in the future, $OPENROAD/flow/Makefile should use ?= instead of =
+        # for these symlinked dirs
+        openroad = self.openroad_flow_path()
+        for subpath in ["platforms", "scripts", "util", "test"]:
+          src = os.path.join(openroad, "flow/{}".format(subpath))
+          dst = os.path.join(self.run_dir, subpath)
+          try:
+            os.remove(dst)
+          except:
+            pass
+          os.symlink(src, dst)
+        return True
+
+    def post_synth_sdc(self) -> Optional[str]:
+        # default for all tools. Any tool that uses post_synth_sdc should
+        # override this
+        return None
+
+class OpenROADSynthesisTool(OpenROADTool, HammerSynthesisTool):
+    """ Mix-in trait with functions for OpenROAD-flow synthesis tools."""
+
+    def _clock_period_value(self) -> str:
+        """this string is used in the makefile fragment used by OpenROAD"""
+
+        for clock_port in self.get_setting("vlsi.inputs.clocks"):
+            return TimeValue(clock_port["period"]).value_in_units("ns")
+        raise Exception("no clock was found")
+
+    def _floorplan_bbox(self) -> str:
+        """this string is used in the makefile fragment used by OpenROAD"""
+
+        floorplan_constraints = self.get_placement_constraints()
+        for constraint in floorplan_constraints:
+            new_path = "/".join(constraint.path.split("/")[1:])
+
+            if new_path == "":
+                assert constraint.type == PlacementConstraintType.TopLevel, \
+                    "Top must be a top-level/chip size constraint"
+                margins = constraint.margins
+                assert margins is not None
+                # Set top-level chip dimensions.
+                return "{} {} {} {}".format(
+                    constraint.x, constraint.y, 
+                    constraint.width, constraint.height)
+
+        raise Exception("no top-level placement constraint was found")
+
+    def create_design_config(self) -> bool:
+        """
+        the design-config is the main configuration for the OpenROAD built-in
+        scripts. initially, we are using OpenROAD's tool scripts as-is, so
+        we need to create a design-config that their scripts understand. the
+        synthesis tool is the only tool that will write this
+        """
+        design_config = self.design_config_path()
+
+        # Load input files and check that they are all Verilog.
+        # TODO: is this
+        if not self.check_input_files([".v", ".sv"]):
+            return False
+        abspath_input_files = list(map(lambda name: 
+          os.path.join(os.getcwd(), name), self.input_files))
+
+        # Add any verilog_synth wrappers (which are needed in some 
+        # technologies e.g. for SRAMs) which need to be synthesized.
+        abspath_input_files += self.technology.read_libs([
+            hammer_tech.filters.verilog_synth_filter
+        ], hammer_tech.HammerTechnologyUtils.to_plain_item)
+
+        # Generate constraints
+        input_sdc = os.path.join(self.run_dir, "input.sdc")
+        unit = self.get_time_unit().value_prefix + self.get_time_unit().unit
+        with open(input_sdc, "w") as f:
+            f.write("set_units -time {}\n".format(unit))
+            f.write(self.sdc_clock_constraints)
+            f.write("\n")
+            f.write(self.sdc_pin_constraints)
+
+        # TODO: i am blindly reading in all libs for all corners. but this is
+        #       not a performance issue for nangate45
+        extra_lefs = list(set(filter(lambda x: x is not None,
+                        map(lambda x: x.library.lef_file,
+                            self.technology.get_extra_libraries()))))
+        extra_libs = list(set(filter(lambda x: x is not None,
+                        map(lambda x: x.library.nldm_liberty_file,
+                            self.technology.get_extra_libraries()))))
+
+        with open(design_config, "w") as f:
+            f.write(dd("""
+            export DESIGN_NICKNAME = {design}
+            export DESIGN_NAME     = {design}
+            export PLATFORM        = {node}
+            export VERILOG_FILES   = {verilogs}
+            export SDC_FILE        = {sdc}
+
+            export ADDITIONAL_LEFS = {extra_lefs}
+            export ADDITIONAL_LIBS = {extra_libs}
+
+            # These values must be multiples of placement site, which is
+            # (x=0.19 y=1.4) for nangate45
+            export DIE_AREA    = {die_area}
+            export CORE_AREA   = {core_area}
+
+            export CLOCK_PERIOD = {period}
+
+            """.format(
+              design=self.top_module,
+              node=self.get_setting("vlsi.core.technology"),
+              verilogs=" ".join(abspath_input_files),
+              sdc=input_sdc,
+              extra_lefs=" ".join(extra_lefs),
+              extra_libs=" ".join(extra_libs),
+              die_area=self._floorplan_bbox(),
+              core_area=self._floorplan_bbox(),
+              period=self._clock_period_value(),
+            )))
+        return True
+

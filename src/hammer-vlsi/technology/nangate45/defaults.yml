@@ -1,11 +1,9 @@
-# Settings for the nangate45 technology to be overriden by the project.
+# Settings for OpenROAD-flow's nangate45 technology to be overriden by project
 technology.nangate45:
 
 # Set some defaults for this technology.
-# For quick performance evaluations, use the typical voltage+temperature corners.
-# Nominal voltage for 7nm technology is 0.70 V and is the only voltage provided
-# for normal SRAMs.
-# TODO: add default temperature corners.
+# NOTE: there are no tapcells in nangate45
+# NOTE: there is only 1 TT corner
 vlsi:
   # Technology dimension
   core.node: 45
@@ -14,48 +12,22 @@ vlsi:
     supplies:
       VDD: "1.1 V"
       GND: "0 V"
-    # mmmc corners config.
-    mmmc_corners: [
-      {
-        "name": "PVT_1P10V_25C",
-        "type": "setup",
-        "voltage": "1.10 V",
-        "temp": "25 C"
-      }
-    ]
+    # mmmc corners config. 
+    mmmc_corners: [{
+      "name": "PVT_1P10V_25C",
+      "type": "setup",
+      "voltage": "1.10 V",
+      "temp": "25 C"
+    }]
   technology:
     # Set standard cell LEF placement site
     placement_site: "FreePDK45_38x28_10R_NP_162NW_34O"
 
-    # Set the layer that blocks vias under bumps (NOTE: no bumps used)
-    #bump_block_cut_layer: "V9"
-
-    # Set the interval and offset for tap cells (NOTE: no tap cells)
-    #tap_cell_interval: "50"
-    #tap_cell_offset: "10.564"
-
-
 technology.core:
   # This key should exist in the stackups list in the tech json
   stackup: "nangate45_3Ma_3Mb_2Mc_2Md"
-  # This should specify the TOPMOST metal layer the standard cells use for power rails
-  # Note that this is not usually stackup specific; it is based on the std cell libraries themselves
+  # This should specify the TOPMOST metal layer the 
+  # standard cells use for power rails
+  # Note that this is not usually stackup specific; 
+  # it is based on the std cell libraries themselves
   std_cell_rail_layer: "metal1"
-  # This is used to provide a reference master for generating standard cells
-  # NOTE: no tap cells
-  #tap_cell_rail_reference: "{TAPCELL*}"
-
-# TODO: is needed for 45nm?
-#mentor.extra_env_vars:
-#  - VAR_M4_YOFFSET: "0"
-#  - VAR_M5_XOFFSET: "0"
-#  - VAR_M6_YOFFSET: "0"
-#  - VAR_M7_XOFFSET: "0"
-
-par.inputs:
-  # NOTE: not needed for 45nm
-  # gds_merge: true is mandatory,
-  # The shrink script in __init__.py filters stdcells but expects all other input GDSs to be 4x upscaled.
-  # If user decides to set this to false, all other GDSs (e.g. hard macros) need to be 1x scaled
-  # TODO: change export_config_outputs for PaR inputs to expose gds_merge to output json
-  #gds_merge: true

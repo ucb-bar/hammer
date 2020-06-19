@@ -663,6 +663,11 @@ mentor:
     common_path: "${vlsi.builtins.hammer_vlsi_path}/common/mentor"
     common_path_meta: subst
 
+openroad:
+    # Path to the folder with defaults.yml for common OpenROAD settings.
+    common_path: "${vlsi.builtins.hammer_vlsi_path}/common/openroad"
+    common_path_meta: subst
+
 # DRC settings
 drc.inputs:
   # Top RTL module.

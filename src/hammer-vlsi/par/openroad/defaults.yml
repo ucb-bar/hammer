@@ -1,0 +1,7 @@
+# Configuration options and defaults for OpenROAD's par tools.
+# The values specified in this file are the defaults.
+
+par.openroad:
+  # Generate the TCL file but do not run it yet.
+  generate_only: false
+
