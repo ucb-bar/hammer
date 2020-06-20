@@ -11,11 +11,11 @@ from typing import List, Optional, Dict, Any
 
 from hammer_logging import HammerVLSILogging
 from hammer_utils import deepdict
-from hammer_vlsi import HammerToolStep, TCLTool
+from hammer_vlsi import HammerToolStep
 from hammer_vlsi.vendor import OpenROADSynthesisTool
 
 
-class YosysSynth(OpenROADSynthesisTool, TCLTool):
+class YosysSynth(OpenROADSynthesisTool):
 
     #=========================================================================
     # overrides from parent classes
@@ -29,8 +29,11 @@ class YosysSynth(OpenROADSynthesisTool, TCLTool):
             self.add_tieoffs,
             self.write_regs,
             self.generate_reports,
-            self.run_synthesis
         ])
+
+    def do_post_steps(self) -> bool:
+        assert super().do_post_steps()
+        return self.run_yosys()
 
     @property
     def env_vars(self) -> Dict[str, str]:
@@ -82,34 +85,7 @@ class YosysSynth(OpenROADSynthesisTool, TCLTool):
         openroad = self.openroad_flow_path()
         return os.path.join(openroad, "flow/scripts/synth.tcl")
 
-    #========================================================================
-    # synthesis main steps
-    #========================================================================
-    def init_environment(self) -> bool:
-        # TODO: currently using OpenROAD's default synthesis script
-        return True
-
-    def syn_generic(self) -> bool:
-        # TODO: currently using OpenROAD's default synthesis script
-        return True
-
-    def syn_map(self) -> bool:
-        # TODO: currently using OpenROAD's default synthesis script
-        return True
-
-    def add_tieoffs(self) -> bool:
-        # TODO: currently using OpenROAD's default synthesis script
-        return True
-
-    def write_regs(self) -> bool:
-        # TODO: currently using OpenROAD's default synthesis script
-        return True
-
-    def generate_reports(self) -> bool:
-        # TODO: currently using OpenROAD's default synthesis script
-        return True
-
-    def run_synthesis(self) -> bool:
+    def run_yosys(self) -> bool:
         run_script    = os.path.join(self.run_dir, "run.sh")
         makefile      = self.openroad_flow_makefile_path()
         design_config = self.design_config_path()
@@ -139,7 +115,7 @@ class YosysSynth(OpenROADSynthesisTool, TCLTool):
             self.logger.info("Generate-only mode: command-line is " + \
                              " ".join(args))
         else:
-            # Temporarily disable colours/tag to make run output more readable
+            # Temporarily disable colors/tag to make run output more readable
             # TODO: think of a more elegant way to do this?
             HammerVLSILogging.enable_colour = False
             HammerVLSILogging.enable_tag = False
@@ -147,6 +123,33 @@ class YosysSynth(OpenROADSynthesisTool, TCLTool):
             HammerVLSILogging.enable_colour = True
             HammerVLSILogging.enable_tag = True
 
+        return True
+
+    #========================================================================
+    # synthesis main steps
+    #========================================================================
+    def init_environment(self) -> bool:
+        # TODO: currently using OpenROAD's default synthesis script
+        return True
+
+    def syn_generic(self) -> bool:
+        # TODO: currently using OpenROAD's default synthesis script
+        return True
+
+    def syn_map(self) -> bool:
+        # TODO: currently using OpenROAD's default synthesis script
+        return True
+
+    def add_tieoffs(self) -> bool:
+        # TODO: currently using OpenROAD's default synthesis script
+        return True
+
+    def write_regs(self) -> bool:
+        # TODO: currently using OpenROAD's default synthesis script
+        return True
+
+    def generate_reports(self) -> bool:
+        # TODO: currently using OpenROAD's default synthesis script
         return True
 
 tool = YosysSynth

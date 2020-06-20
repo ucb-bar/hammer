@@ -5,6 +5,7 @@
 # 
 # See LICENSE for licence details.
 
+from decimal import Decimal
 from functools import reduce
 import os
 import re
@@ -15,7 +16,8 @@ from typing import List, Optional, Dict, Any
 
 from hammer_utils import add_dicts
 from hammer_vlsi import HasSDCSupport, HammerSynthesisTool, \
-                        PlacementConstraintType, TimeValue
+                        HammerPlaceAndRouteTool, PlacementConstraintType, \
+                        TimeValue
 import hammer_tech
 
 class OpenROADTool(HasSDCSupport):
@@ -58,15 +60,29 @@ class OpenROADTool(HasSDCSupport):
         openroad = self.openroad_flow_path()
         return os.path.join(openroad, "flow/Makefile")
 
+    def syn_rundir_path(self) -> str:
+        # TODO: leaking info from driver into this tool. figure out a better
+        # way to get "syn-rundir" than duplicating a constant
+        return os.path.realpath(os.path.join(self.run_dir, "../syn-rundir"))
+
     def design_config_path(self) -> str:
         """
         the initial design_config is written by the synthesis step. any other
         tool must refer to this design_config
         """
-        # TODO: leaking info from driver into this tool. figure out a better
-        # way to get "syn-rundir" than duplicating a constant
-        return os.path.realpath(os.path.join(self.run_dir, 
-                                  "../syn-rundir/design_config.mk"))
+        return os.path.join(self.syn_rundir_path(), "design_config.mk")
+
+    def syn_objects_path(self) -> str:
+        """where the intermediate synthesis output objects are located"""
+        return os.path.join(self.syn_rundir_path(), "objects",
+                            self.get_setting("vlsi.core.technology"),
+                            self.top_module)
+
+    def syn_results_path(self) -> str:
+        """where the intermediate synthesis final results are located"""
+        return os.path.join(self.syn_rundir_path(), "results",
+                            self.get_setting("vlsi.core.technology"),
+                            self.top_module)
 
     def version_number(self, version: str) -> int:
         """get OPENROAD-flow's version from one of its header files"""
@@ -105,14 +121,19 @@ class OpenROADTool(HasSDCSupport):
           os.symlink(src, dst)
         return True
 
-    def post_synth_sdc(self) -> Optional[str]:
-        # default for all tools. Any tool that uses post_synth_sdc should
-        # override this
-        return None
-
-class OpenROADSynthesisTool(OpenROADTool, HammerSynthesisTool):
+class OpenROADSynthesisTool(HammerSynthesisTool, OpenROADTool):
     """ Mix-in trait with functions for OpenROAD-flow synthesis tools."""
 
+    #=========================================================================
+    # overrides from parent classes
+    #=========================================================================
+    @property
+    def post_synth_sdc(self) -> Optional[str]:
+        return None
+
+    #=========================================================================
+    # OpenROAD synthesis-specific stuff
+    #=========================================================================
     def _clock_period_value(self) -> str:
         """this string is used in the makefile fragment used by OpenROAD"""
 
@@ -209,4 +230,23 @@ class OpenROADSynthesisTool(OpenROADTool, HammerSynthesisTool):
               period=self._clock_period_value(),
             )))
         return True
+
+class OpenROADPlaceAndRouteTool(HammerPlaceAndRouteTool, OpenROADTool):
+    """ Mix-in trait with functions for OpenROAD-flow par tools."""
+
+    #=========================================================================
+    # overrides from parent classes
+    #=========================================================================
+    def specify_power_straps(self, layer_name: str, 
+        bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, 
+        width: Decimal, spacing: Decimal, offset: Decimal, 
+        bbox: Optional[List[Decimal]], nets: List[str], 
+        add_pins: bool) -> List[str]:
+        # TODO: currently using openroad's powerstrap script
+        return []
+    
+    def specify_std_cell_power_straps(self, blockage_spacing: Decimal, 
+        bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
+        # TODO: currently using openroad's powerstrap script
+        return []
 
