@@ -1,31 +1,51 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-#  OpenROAD-flow par plugin for Hammer
+# OpenROAD-flow par plugin for Hammer
 #
-#  See LICENSE for licence details.
+# See LICENSE for licence details.
 
+import glob
+import os
+from textwrap import dedent as dd
 from typing import List, Optional, Dict, Any
 
-import os
-import shutil
-from textwrap import dedent as dd
+from hammer_logging import HammerVLSILogging
+from hammer_utils import deepdict
+from hammer_vlsi import HammerToolStep
+from hammer_vlsi.vendor import OpenROADPlaceAndRouteTool
 
-from hammer_vlsi import HammerSynthesisTool, HammerToolStep, \
-                        PlacementConstraintType, TimeValue, \
-                        HasSDCSupport, TCLTool
-import hammer_tech
+class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
-class OpenROADPlaceAndRoute(HammerPlaceAndRouteTool, HasSDCSupport, TCLTool):
-
+    #=========================================================================
+    # overrides from parent classes
+    #=========================================================================
     @property
     def steps(self) -> List[HammerToolStep]:
         return self.make_steps_from_methods([
-            self.,
-            self.create_synth_script,
-            self.create_design_config,
-            self.run_synthesis,
+            self.init_design,
+            self.floorplan_design,
+            self.place_bumps, # nop
+            self.place_tap_cells, # nop
+            self.power_straps, # nop
+            self.place_pins, # nop
+            self.place_opt_design,
+            self.clock_tree,
+            self.add_fillers, # nop
+            self.route_design,
+            self.opt_design, # nop
+            self.write_regs, # nop
+            self.write_design,
         ])
+
+    def do_pre_steps(self, first_step: HammerToolStep) -> bool:
+        assert super().do_pre_steps(first_step)
+        self.cmds = []
+        return True
+
+    def do_post_steps(self) -> bool:
+        assert super().do_post_steps()
+        return self.run_openroad()
 
     @property
     def env_vars(self) -> Dict[str, str]:
@@ -33,66 +53,179 @@ class OpenROADPlaceAndRoute(HammerPlaceAndRouteTool, HasSDCSupport, TCLTool):
         new_dict.update({})  # TODO: stuffs
         return new_dict
 
-    def temp_file(self, filename: str) -> str:
-        """Helper function to get the full path to a filename under temp_folder."""
-        if self.get_setting("par.mockpar.temp_folder", nullvalue="") == "":
-            raise ValueError("par.mockpar.temp_folder is not set correctly")
-        return os.path.join(self.get_setting("par.mockpar.temp_folder"), filename)
+    def fill_outputs(self) -> bool:
+        # TODO: no support for ILM
+        self.output_ilms = []
 
-    @property
-    def steps(self) -> List[HammerToolStep]:
-        return self.make_steps_from_methods([
-            self.power_straps
-        ])
+        self.output_gds = self.output_gds_path()
+        self.output_netlist = self.output_v_path()
+        self.output_sim_netlist = self.output_v_path()
+
+        # TODO: support outputting the following
+        self.hcells_list = []
+        self.output_all_regs = ""
+        self.output_seq_cells = ""
+        self.output_sdf_file = ""
+
+        return True
+
+
+    def export_config_outputs(self) -> Dict[str, Any]:
+        outputs = dict(super().export_config_outputs())
+        outputs["par.outputs.seq_cells"] = self.output_seq_cells
+        outputs["par.outputs.all_regs"] = self.output_all_regs
+        outputs["par.outputs.sdf_file"] = self.output_sdf_path
+        outputs["par.outputs.spef_files"] = self.output_spef_paths
+        return outputs
+
+    def tool_config_prefix(self) -> str:
+        return "par.openroad"
+
+    #=========================================================================
+    # useful subroutines
+    #=========================================================================
+
+    def output_gds_path(self) -> str:
+        return os.path.join(self.run_dir, 
+          "results/{}/{}/6_final.gds".format(
+            self.get_setting("vlsi.core.technology"),
+            self.top_module))
+
+    def output_v_path(self) -> str:
+        return os.path.join(self.run_dir, 
+          "results/{}/{}/5_route.v".format(
+            self.get_setting("vlsi.core.technology"),
+            self.top_module))
+
+    def run_openroad(self) -> bool:
+        run_script = os.path.join(self.run_dir, "run.sh")
+
+        self.validate_openroad_installation()
+        self.setup_openroad_rundir()
+
+        with open(run_script, "w") as f:
+            f.write(dd("""\
+              #!/bin/bash
+              cd "{rundir}"
+              mkdir -p results/{tech}/{name}
+              mkdir -p objects/{tech}/{name}
+              mkdir -p reports/{tech}/{name}
+            """.format(
+              rundir=self.run_dir,
+              tech=self.get_setting("vlsi.core.technology"),
+              name=self.top_module, 
+            )))
+            f.write("\n".join(self.cmds))
+        os.chmod(run_script, 0o755)
+
+        if bool(self.get_setting("par.openroad.generate_only")):
+            self.logger.info("Generate-only mode: command-line is " + \
+                             " ".join(args))
+        else:
+            # Temporarily disable colors/tag to make run output more readable
+            # TODO: think of a more elegant way to do this?
+            HammerVLSILogging.enable_colour = False
+            HammerVLSILogging.enable_tag = False
+            self.run_executable([run_script]) # TODO: check for errors
+            HammerVLSILogging.enable_colour = True
+            HammerVLSILogging.enable_tag = True
+
+        return True
+
+    #========================================================================
+    # synthesis main steps
+    #========================================================================
+    def init_design(self) -> bool:
+        # TODO: currently hardlinking the syn outputs, otherwise the 
+        # OpenROAD-flow's default makefile will rebuild syn in this directory
+        syn_dirs = {
+          "results": self.syn_results_path(),
+          "objects": self.syn_objects_path()
+        }
+        for syn_dir in ["results", "objects"]:
+          for src in glob.glob(os.path.join(syn_dirs[syn_dir], "*")):
+              dst = "{syn_dir}/{tech}/{name}/{base}".format(
+                  syn_dir=syn_dir,
+                  tech=self.get_setting("vlsi.core.technology"),
+                  name=self.top_module,
+                  base=os.path.basename(src))
+              self.cmds += [
+                  "rm -f {}".format(dst), 
+                  "ln {} {}".format(src, dst)
+              ]
+        return True
+
+    def floorplan_design(self) -> bool:
+        # TODO: currently using OpenROAD's default floorplan script
+        self.cmds += [
+          "make DESIGN_CONFIG={conf} -f {make} floorplan".format(
+            conf=self.design_config_path(), 
+            make=self.openroad_flow_makefile_path()
+        )]
+        return True
+
+    def place_bumps(self) -> bool:
+        # TODO: currently using OpenROAD's default floorplan script
+        return True
+
+    def place_tap_cells(self) -> bool:
+        # TODO: currently using OpenROAD's default floorplan script
+        return True
 
     def power_straps(self) -> bool:
-        power_straps_tcl = os.path.join(self.run_dir, "power_straps.tcl")
-        with open(power_straps_tcl, "w") as f:
-            f.write("\n".join(self.create_power_straps_tcl()))
+        # TODO: currently using OpenROAD's default floorplan script
         return True
 
-    def parse_mock_power_straps_file(self) -> List[Dict[str, Any]]:
-        power_straps_tcl = os.path.join(self.run_dir, "power_straps.tcl")
-        output = []  # type: List[Dict[str, Any]]
-        with open(power_straps_tcl, "r") as f:
-            for line in f.readlines():
-                output.append(json.loads(line))
-        return output
-
-    def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool) -> List[str]:
-        self._power_straps_check_index(layer_name)
-        output_dict = {
-            "layer_name": layer_name,
-            "bottom_via_layer_name": bottom_via_layer_name,
-            "blockage_spacing": str(blockage_spacing),
-            "pitch": str(pitch),
-            "width": str(width),
-            "spacing": str(spacing),
-            "offset": str(offset),
-            "bbox": [] if bbox is None else list(map(str, bbox)),
-            "nets": list(map(str, nets)),
-            "add_pins": add_pins
-        }
-        return [json.dumps(output_dict, cls=HammerJSONEncoder)]
-
-    def specify_std_cell_power_straps(self, blockage_spacing: Decimal, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
-        layer_name = self.get_setting("technology.core.std_cell_rail_layer")
-        self._power_straps_check_index(layer_name)
-        output_dict = {
-            "layer_name": layer_name,
-            "tap_cell_name": self.get_setting("technology.core.tap_cell_rail_reference"),
-            "bbox": [] if bbox is None else list(map(str, bbox)),
-            "nets": list(map(str, nets))
-        }
-        return [json.dumps(output_dict, cls=HammerJSONEncoder)]
-
-    def fill_outputs(self) -> bool:
-        self.output_gds = "/dev/null"
-        self.output_ilms = []
-        self.output_netlist = "/dev/null"
-        self.output_sim_netlist = "/dev/null"
-        self.hcells_list = []
+    def place_pins(self) -> bool:
+        # TODO: currently using OpenROAD's default floorplan script
         return True
 
+    def place_opt_design(self) -> bool:
+        # TODO: currently using OpenROAD's default place script
+        self.cmds += [
+          "make DESIGN_CONFIG={conf} -f {make} place".format(
+            conf=self.design_config_path(), 
+            make=self.openroad_flow_makefile_path()
+        )]
+        return True
 
-tool = MockPlaceAndRoute
+    def clock_tree(self) -> bool:
+        # TODO: currently using OpenROAD's default cts script
+        self.cmds += [
+          "make DESIGN_CONFIG={conf} -f {make} cts".format(
+            conf=self.design_config_path(), 
+            make=self.openroad_flow_makefile_path()
+        )]
+        return True
+
+    def add_fillers(self) -> bool:
+        # TODO: currently using OpenROAD's default cts script
+        return True
+
+    def route_design(self) -> bool:
+        # TODO: currently using OpenROAD's default route script
+        self.cmds += [
+          "make DESIGN_CONFIG={conf} -f {make} route".format(
+            conf=self.design_config_path(), 
+            make=self.openroad_flow_makefile_path()
+        )]
+        return True
+
+    def opt_design(self) -> bool:
+        # TODO: currently using OpenROAD's default cts script
+        return True
+
+    def write_regs(self) -> bool:
+        # TODO: currently using OpenROAD's default cts script
+        return True
+
+    def write_design(self) -> bool:
+        # TODO: currently using OpenROAD's default finish script
+        self.cmds += [
+          "make DESIGN_CONFIG={conf} -f {make} finish".format(
+            conf=self.design_config_path(), 
+            make=self.openroad_flow_makefile_path()
+        )]
+        return True
+
+tool = OpenROADPlaceAndRoute
