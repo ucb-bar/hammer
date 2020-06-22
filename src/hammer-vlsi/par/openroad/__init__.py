@@ -65,7 +65,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         self.hcells_list = []
         self.output_all_regs = ""
         self.output_seq_cells = ""
-        self.output_sdf_file = ""
+        self.sdf_file = ""
 
         return True
 
@@ -74,8 +74,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         outputs = dict(super().export_config_outputs())
         outputs["par.outputs.seq_cells"] = self.output_seq_cells
         outputs["par.outputs.all_regs"] = self.output_all_regs
-        outputs["par.outputs.sdf_file"] = self.output_sdf_path
-        outputs["par.outputs.spef_files"] = self.output_spef_paths
+        outputs["par.outputs.sdf_file"] = self.sdf_file
         return outputs
 
     def tool_config_prefix(self) -> str:
@@ -107,9 +106,10 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             f.write(dd("""\
               #!/bin/bash
               cd "{rundir}"
-              mkdir -p results/{tech}/{name}
+              mkdir -p logs/{tech}/{name}
               mkdir -p objects/{tech}/{name}
               mkdir -p reports/{tech}/{name}
+              mkdir -p results/{tech}/{name}
             """.format(
               rundir=self.run_dir,
               tech=self.get_setting("vlsi.core.technology"),
@@ -133,7 +133,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         return True
 
     #========================================================================
-    # synthesis main steps
+    # par main steps
     #========================================================================
     def init_design(self) -> bool:
         # TODO: currently hardlinking the syn outputs, otherwise the 

@@ -137,8 +137,9 @@ class OpenROADSynthesisTool(HammerSynthesisTool, OpenROADTool):
     def _clock_period_value(self) -> str:
         """this string is used in the makefile fragment used by OpenROAD"""
 
+        # TODO: the correct way of getting the root clock and value in units
         for clock_port in self.get_setting("vlsi.inputs.clocks"):
-            return TimeValue(clock_port["period"]).value_in_units("ns")
+            return str(TimeValue(clock_port["period"]).value_in_units("ns"))
         raise Exception("no clock was found")
 
     def _floorplan_bbox(self) -> str:
