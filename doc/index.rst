@@ -37,6 +37,12 @@ Hammer is a physical design framework that wraps around vendor specific technolo
    :numbered:
    Hammer-Use/index
 
+   :maxdepth: 3
+   :caption: Examples:
+   :numbered:
+   Examples/index
+
+
 Indices and tables
 ==================
 
