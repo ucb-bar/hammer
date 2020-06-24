@@ -16,8 +16,8 @@ from typing import List, Optional, Dict, Any
 
 from hammer_utils import add_dicts
 from hammer_vlsi import HasSDCSupport, HammerSynthesisTool, \
-                        HammerPlaceAndRouteTool, PlacementConstraintType, \
-                        TimeValue
+                        HammerPlaceAndRouteTool, HammerDRCTool, \
+                        PlacementConstraintType, TimeValue
 import hammer_tech
 
 class OpenROADTool(HasSDCSupport):
@@ -65,13 +65,6 @@ class OpenROADTool(HasSDCSupport):
         # way to get "syn-rundir" than duplicating a constant
         return os.path.realpath(os.path.join(self.run_dir, "../syn-rundir"))
 
-    def design_config_path(self) -> str:
-        """
-        the initial design_config is written by the synthesis step. any other
-        tool must refer to this design_config
-        """
-        return os.path.join(self.syn_rundir_path(), "design_config.mk")
-
     def syn_objects_path(self) -> str:
         """where the intermediate synthesis output objects are located"""
         return os.path.join(self.syn_rundir_path(), "objects",
@@ -81,6 +74,30 @@ class OpenROADTool(HasSDCSupport):
     def syn_results_path(self) -> str:
         """where the intermediate synthesis final results are located"""
         return os.path.join(self.syn_rundir_path(), "results",
+                            self.get_setting("vlsi.core.technology"),
+                            self.top_module)
+
+    def design_config_path(self) -> str:
+        """
+        the initial design_config is written by the synthesis step. any other
+        tool must refer to this design_config
+        """
+        return os.path.join(self.syn_rundir_path(), "design_config.mk")
+
+    def par_rundir_path(self) -> str:
+        # TODO: leaking info from driver into this tool. figure out a better
+        # way to get "par-rundir" than duplicating a constant
+        return os.path.realpath(os.path.join(self.run_dir, "../par-rundir"))
+
+    def par_objects_path(self) -> str:
+        """where the intermediate par output objects are located"""
+        return os.path.join(self.par_rundir_path(), "objects",
+                            self.get_setting("vlsi.core.technology"),
+                            self.top_module)
+
+    def par_results_path(self) -> str:
+        """where the intermediate par final results are located"""
+        return os.path.join(self.par_rundir_path(), "results",
                             self.get_setting("vlsi.core.technology"),
                             self.top_module)
 
@@ -120,6 +137,7 @@ class OpenROADTool(HasSDCSupport):
             pass
           os.symlink(src, dst)
         return True
+
 
 class OpenROADSynthesisTool(HammerSynthesisTool, OpenROADTool):
     """ Mix-in trait with functions for OpenROAD-flow synthesis tools."""
@@ -232,6 +250,7 @@ class OpenROADSynthesisTool(HammerSynthesisTool, OpenROADTool):
             )))
         return True
 
+
 class OpenROADPlaceAndRouteTool(HammerPlaceAndRouteTool, OpenROADTool):
     """ Mix-in trait with functions for OpenROAD-flow par tools."""
 
@@ -239,7 +258,7 @@ class OpenROADPlaceAndRouteTool(HammerPlaceAndRouteTool, OpenROADTool):
     # overrides from parent classes
     #=========================================================================
     def specify_power_straps(self, layer_name: str, 
-        bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, 
+        bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal,
         width: Decimal, spacing: Decimal, offset: Decimal, 
         bbox: Optional[List[Decimal]], nets: List[str], 
         add_pins: bool) -> List[str]:
@@ -251,3 +270,21 @@ class OpenROADPlaceAndRouteTool(HammerPlaceAndRouteTool, OpenROADTool):
         # TODO: currently using openroad's powerstrap script
         return []
 
+
+class OpenROADDRCTool(HammerDRCTool, OpenROADTool):
+    """ Mix-in trait with functions for OpenROAD-flow drc tools."""
+
+    #=========================================================================
+    # overrides from parent classes
+    #=========================================================================
+    @property
+    def post_synth_sdc(self) -> Optional[str]:
+        return None
+
+    def globally_waived_drc_rules(self) -> List[str]:
+        # TODO: i suppose the actual implementation should implement this
+        return []
+
+    def drc_results_pre_waived(self) -> Dict[str, int]:
+        # TODO: i suppose the actual implementation should implement this
+        return []

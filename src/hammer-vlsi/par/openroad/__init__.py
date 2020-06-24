@@ -212,7 +212,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         return True
 
     def opt_design(self) -> bool:
-        # TODO: currently using OpenROAD's default cts script
+        # TODO: currently no analagous OpenROAD default script
         return True
 
     def write_regs(self) -> bool:
