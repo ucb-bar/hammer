@@ -287,4 +287,4 @@ class OpenROADDRCTool(HammerDRCTool, OpenROADTool):
 
     def drc_results_pre_waived(self) -> Dict[str, int]:
         # TODO: i suppose the actual implementation should implement this
-        return []
+        return {}
