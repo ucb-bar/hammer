@@ -394,16 +394,16 @@ class HammerTechnology:
         :param path: Path to set as the technology folder (e.g. foo/bar/technology/asap7)
         """
 
-        # try to override tech, if __init__.py exist.
+        # Try to load the technology's __init__.py
         try:
             mod = importlib.import_module(technology_name)
-            # work around for python < 3.6
-            try:
-                tech = mod.tech # type: ignore
-            except:
-                raise ImportError # type: ignore
-        except ImportError:
-            tech = HammerTechnology()
+        except ImportError as e:
+            raise ImportError("Unable to import technology {t} due to import error:\n{i}".format(t=technology_name, i=str(e)))
+        # work around for python < 3.6
+        try:
+            tech = mod.tech # type: ignore
+        except Exception as e:
+            raise ValueError("Unable to use technology {t} due to error:\n{i}".format(t=technology_name, i=str(e)))
 
         # Name of the technology
         tech.name = technology_name
