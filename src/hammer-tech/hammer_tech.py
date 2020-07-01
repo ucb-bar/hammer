@@ -8,6 +8,7 @@
 
 import json
 import os
+import sys
 import tarfile
 import importlib
 from abc import ABCMeta, abstractmethod
@@ -396,6 +397,9 @@ class HammerTechnology:
 
         # Try to load the technology's __init__.py
         try:
+            # We must remove any duplicates before loading. See load_tool
+            if technology_name in sys.modules:
+                del sys.modules[technology_name]
             mod = importlib.import_module(technology_name)
         except ImportError as e:
             raise ImportError("Unable to import technology {t} due to import error:\n{i}".format(t=technology_name, i=str(e)))
