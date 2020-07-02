@@ -12,6 +12,7 @@ import json
 import os
 import shutil
 import unittest
+import sys
 
 from hammer_vlsi import HammerVLSISettings
 from typing import Any, Dict, List, Optional
@@ -58,6 +59,7 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
             return out_dict
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, add_named_library)
+        sys.path.append(tech_dir_base)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
@@ -126,6 +128,7 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
             return out_dict
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, add_duplicates)
+        sys.path.append(tech_dir_base)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
@@ -179,6 +182,7 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
             }, cls=HammerJSONEncoder))
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, self.add_tarballs)
+        sys.path.append(tech_dir_base)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
@@ -212,6 +216,7 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
             }, cls=HammerJSONEncoder))
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, self.add_tarballs)
+        sys.path.append(tech_dir_base)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
@@ -247,6 +252,7 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
             }, cls=HammerJSONEncoder))
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, self.add_tarballs)
+        sys.path.append(tech_dir_base)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
@@ -351,6 +357,7 @@ class HammerTechnologyTest(HasGetTech, unittest.TestCase):
         with open(tech_json_filename, "w") as f:  # pyline: disable=invalid-name
             f.write(json.dumps(tech_json, cls=HammerJSONEncoder, indent=4))
 
+        sys.path.append(tech_dir_base)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
@@ -383,6 +390,7 @@ libraries: []
         tech_yaml_filename = os.path.join(tech_dir, "dummy28.tech.yml")
         with open(tech_yaml_filename, "w") as f:  # pylint: disable=invalid-name
             f.write(tech_yaml)
+        sys.path.append(tech_dir_base)
         tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
         self.assertFalse(tech_opt is None, "Unable to load technology")
 
@@ -404,6 +412,7 @@ libraries: []
             return out_dict
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, add_gds_map)
+        sys.path.append(tech_dir_base)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
@@ -441,6 +450,7 @@ libraries: []
 
         tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
         HammerToolTestHelpers.write_tech_json(tech_json_filename)
+        sys.path.append(tech_dir_base)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
@@ -471,6 +481,7 @@ libraries: []
             return out_dict
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, add_physical_only_cells_list)
+        sys.path.append(tech_dir_base)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
@@ -510,6 +521,7 @@ libraries: []
 
         tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
         HammerToolTestHelpers.write_tech_json(tech_json_filename)
+        sys.path.append(tech_dir_base)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
@@ -540,6 +552,7 @@ libraries: []
             return out_dict
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, add_dont_use_list)
+        sys.path.append(tech_dir_base)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
@@ -579,6 +592,7 @@ libraries: []
 
         tech_json_filename = os.path.join(tech_dir, "dummy28.tech.json")
         HammerToolTestHelpers.write_tech_json(tech_json_filename)
+        sys.path.append(tech_dir_base)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
@@ -627,6 +641,7 @@ END LIBRARY
             return r
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, add_lib_with_lef)
+        sys.path.append(tech_dir_base)
         tech_opt = hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir)
         if tech_opt is None:
             self.assertTrue(False, "Unable to load technology")
@@ -666,6 +681,7 @@ END LIBRARY
                              ]})
             return out_dict
         HammerToolTestHelpers.write_tech_json(tech_json_filename, add_special_cells)
+        sys.path.append(tech_dir_base)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
@@ -713,6 +729,7 @@ END LIBRARY
             return out_dict
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, add_drc_lvs_decks)
+        sys.path.append(tech_dir_base)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
@@ -755,6 +772,7 @@ END LIBRARY
             return out_dict
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, add_stackup)
+        sys.path.append(tech_dir_base)
         tech = self.get_tech(hammer_tech.HammerTechnology.load_from_dir("dummy28", tech_dir))
         tech.cache_dir = tech_dir
 
