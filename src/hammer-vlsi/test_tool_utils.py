@@ -63,6 +63,10 @@ class HammerToolTestHelpers:
         tech_dir_base = tempfile.mkdtemp()
         tech_dir = os.path.join(tech_dir_base, tech_name)
         os.mkdir(tech_dir)
+        tech_init_py = os.path.join(tech_dir, "__init__.py")
+        with open(tech_init_py, "w") as f: # pylint: disable=invalid-name
+            f.write("from hammer_tech import HammerTechnology\nclass {t}Technology(HammerTechnology):\n    pass\ntech = {t}Technology()".format(
+                t=tech_name))
 
         return tech_dir, tech_dir_base
 
