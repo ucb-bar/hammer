@@ -97,7 +97,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             self.top_module))
 
     def run_openroad(self) -> bool:
-        run_script = os.path.join(self.run_dir, "run.sh")
+        run_script = os.path.join(self.run_dir, "par.sh")
 
         self.validate_openroad_installation()
         self.setup_openroad_rundir()
@@ -199,7 +199,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         return True
 
     def add_fillers(self) -> bool:
-        # TODO: currently using OpenROAD's default cts script
+        # TODO: currently no analagous OpenROAD default script
         return True
 
     def route_design(self) -> bool:
@@ -216,7 +216,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         return True
 
     def write_regs(self) -> bool:
-        # TODO: currently using OpenROAD's default cts script
+        # TODO: currently no analagous OpenROAD default script
         return True
 
     def write_design(self) -> bool:

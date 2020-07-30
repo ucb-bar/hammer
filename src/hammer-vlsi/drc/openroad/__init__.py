@@ -43,13 +43,7 @@ class OpenROADDRC(OpenROADDRCTool):
         return new_dict
 
     def fill_outputs(self) -> bool:
-        # TODO: should i return anything
         return True
-
-    def export_config_outputs(self) -> Dict[str, Any]:
-        # TODO: should i return anything?
-        outputs = dict(super().export_config_outputs())
-        return outputs
 
     def tool_config_prefix(self) -> str:
         return "drc.openroad"
@@ -59,7 +53,7 @@ class OpenROADDRC(OpenROADDRCTool):
     #=========================================================================
 
     def run_openroad(self) -> bool:
-        run_script = os.path.join(self.run_dir, "run.sh")
+        run_script = os.path.join(self.run_dir, "drc.sh")
 
         self.validate_openroad_installation()
         self.setup_openroad_rundir()

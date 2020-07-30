@@ -41,7 +41,7 @@
     }]
   }],
   "stackups": [{
-    "name": "asap7_3Ma_2Mb_2Mc_2Md",
+    "name": "nangate45_3Ma_2Mb_2Mc_2Md",
     "metals": [{
       "name": "metal1", "index": 1, "direction": "horizontal", 
       "min_width": 0.07, "max_width": 1073741.8235, "pitch": 0.14, 

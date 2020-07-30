@@ -109,7 +109,7 @@ class OpenROADTool(HasSDCSupport):
         process = Popen(["grep","OPENROAD_VERSION",filepath], stdout=PIPE)
         (output, err) = process.communicate()
         code = process.wait()
-        assert code == 0, "yosys -V failed with code {}".format(code)
+        assert code == 0, "grep failed with code {}".format(code)
         text = output.decode("utf-8")
         match = re.search(r"OPENROAD_VERSION \"(\d+)\.(\d+)\.(\d+)\"", text)
         if match is None:
@@ -155,10 +155,8 @@ class OpenROADSynthesisTool(HammerSynthesisTool, OpenROADTool):
     def _clock_period_value(self) -> str:
         """this string is used in the makefile fragment used by OpenROAD"""
 
-        # TODO: the correct way of getting the root clock and value in units
-        for clock_port in self.get_setting("vlsi.inputs.clocks"):
-            return str(TimeValue(clock_port["period"]).value_in_units("ns"))
-        raise Exception("no clock was found")
+        assert len(get_clock_ports()) == 0, "openroad only supports 1 root clock"
+        return get_clock_ports()[0].period.value_in_units("ns")
 
     def _floorplan_bbox(self) -> str:
         """this string is used in the makefile fragment used by OpenROAD"""
@@ -189,7 +187,6 @@ class OpenROADSynthesisTool(HammerSynthesisTool, OpenROADTool):
         design_config = self.design_config_path()
 
         # Load input files and check that they are all Verilog.
-        # TODO: is this
         if not self.check_input_files([".v", ".sv"]):
             return False
         abspath_input_files = list(map(lambda name: 
