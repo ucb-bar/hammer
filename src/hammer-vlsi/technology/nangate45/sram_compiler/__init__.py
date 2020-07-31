@@ -12,10 +12,14 @@ from hammer_vlsi import MMMCCorner, MMMCCornerType, HammerTool, \
 from hammer_vlsi.vendor import OpenROADTool
 from hammer_vlsi.units import VoltageValue, TemperatureValue
 from hammer_tech import Library, ExtraLibrary
-from typing import NamedTuple, Dict, Any, List
+from typing import NamedTuple, Dict, Any, List, Optional
 from abc import ABCMeta, abstractmethod
 
 class Nangate45SRAMGenerator(OpenROADTool, HammerSRAMGeneratorTool):
+
+    @property
+    def post_synth_sdc(self) -> Optional[str]:
+        return None
 
     def tool_config_prefix(self) -> str:
         return "sram_generator.nangate45"

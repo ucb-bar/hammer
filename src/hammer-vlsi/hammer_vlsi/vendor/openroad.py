@@ -155,8 +155,8 @@ class OpenROADSynthesisTool(HammerSynthesisTool, OpenROADTool):
     def _clock_period_value(self) -> str:
         """this string is used in the makefile fragment used by OpenROAD"""
 
-        assert len(get_clock_ports()) == 0, "openroad only supports 1 root clock"
-        return get_clock_ports()[0].period.value_in_units("ns")
+        assert len(self.get_clock_ports()) == 1, "openroad only supports 1 root clock"
+        return self.get_clock_ports()[0].period.value_in_units("ns")
 
     def _floorplan_bbox(self) -> str:
         """this string is used in the makefile fragment used by OpenROAD"""
