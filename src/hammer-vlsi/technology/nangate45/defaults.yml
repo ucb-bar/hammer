@@ -1,0 +1,33 @@
+# Settings for OpenROAD-flow's nangate45 technology to be overriden by project
+technology.nangate45:
+
+# Set some defaults for this technology.
+# NOTE: there are no tapcells in nangate45
+# NOTE: there is only 1 TT corner
+vlsi:
+  # Technology dimension
+  core.node: 45
+  inputs:
+    # Supply voltages
+    supplies:
+      VDD: "1.1 V"
+      GND: "0 V"
+    # mmmc corners config. 
+    mmmc_corners: [{
+      "name": "PVT_1P10V_25C",
+      "type": "setup",
+      "voltage": "1.10 V",
+      "temp": "25 C"
+    }]
+  technology:
+    # Set standard cell LEF placement site
+    placement_site: "FreePDK45_38x28_10R_NP_162NW_34O"
+
+technology.core:
+  # This key should exist in the stackups list in the tech json
+  stackup: "nangate45_3Ma_3Mb_2Mc_2Md"
+  # This should specify the TOPMOST metal layer the 
+  # standard cells use for power rails
+  # Note that this is not usually stackup specific; 
+  # it is based on the std cell libraries themselves
+  std_cell_rail_layer: "metal1"

@@ -1,0 +1,153 @@
+{
+  "name": "Nangate45 Library",
+  "grid_unit": "0.005",
+  "time_unit": "1 ps",
+  "installs": [{
+    "path": "nangate45",
+    "base var": "technology.nangate45.install_dir"
+  }],
+
+  "gds map file": "nangate45/layermap.txt",
+  
+  "drc decks": [{
+    "tool name": "openroad",
+    "deck name": "drc",
+    "path": "nangate45/FreePDK45.lydrc"
+  }],
+  "additional_drc_text": "",
+  
+  "lvs decks": [],
+  "additional_lvs_text": "", 
+
+  "libraries": [{
+    "lef file": "nangate45/lef/NangateOpenCellLibrary.tech.lef",
+    "provides": [{"lib_type": "technology"}]
+  },{
+    "nldm liberty file": "nangate45/lib/NangateOpenCellLibrary_typical.lib",
+    "lef file": "nangate45/lef/NangateOpenCellLibrary.macro.lef",
+    "gds file": "nangate45/gds/NangateOpenCellLibrary.gds",
+    "corner": {
+      "nmos": "typical",
+      "pmos": "typical",
+      "temperature": "25 C"
+    },
+    "supplies": {
+      "VDD": "1.10 V",
+      "GND": "0 V"
+    },
+    "provides": [{
+      "lib_type": "stdcell",
+      "vt": "none"
+    }]
+  }],
+  "stackups": [{
+    "name": "nangate45_3Ma_2Mb_2Mc_2Md",
+    "metals": [{
+      "name": "metal1", "index": 1, "direction": "horizontal", 
+      "min_width": 0.07, "max_width": 1073741.8235, "pitch": 0.14, 
+      "offset": 0.07, "power_strap_widths_and_spacings": []
+    },{
+      "name": "metal2", "index": 2, "direction": "vertical", 
+      "min_width": 0.07, "max_width": 1073741.8235, "pitch": 0.14, 
+      "offset": 0.095, "power_strap_widths_and_spacings": [
+        {"width_at_least": 0.0, "min_spacing": 0.07}, 
+        {"width_at_least": 0.09, "min_spacing": 0.09}, 
+        {"width_at_least": 0.27, "min_spacing": 0.27}, 
+        {"width_at_least": 0.5, "min_spacing": 0.5}, 
+        {"width_at_least": 0.9, "min_spacing": 0.9}, 
+        {"width_at_least": 1.5, "min_spacing": 1.5}
+      ]
+    },{
+      "name": "metal3", "index": 3, "direction": "horizontal", 
+      "min_width": 0.07, "max_width": 1073741.8235, "pitch": 0.14, 
+      "offset": 0.07, "power_strap_widths_and_spacings": [
+        {"width_at_least": 0.0, "min_spacing": 0.07}, 
+        {"width_at_least": 0.09, "min_spacing": 0.09}, 
+        {"width_at_least": 0.27, "min_spacing": 0.27}, 
+        {"width_at_least": 0.5, "min_spacing": 0.5}, 
+        {"width_at_least": 0.9, "min_spacing": 0.9}, 
+        {"width_at_least": 1.5, "min_spacing": 1.5}
+      ]
+    },{
+      "name": "metal4", "index": 4, "direction": "vertical", 
+      "min_width": 0.14, "max_width": 1073741.8235, "pitch": 0.28, 
+      "offset": 0.095, "power_strap_widths_and_spacings": [
+        {"width_at_least": 0.0, "min_spacing": 0.14}, 
+        {"width_at_least": 0.27, "min_spacing": 0.27}, 
+        {"width_at_least": 0.5, "min_spacing": 0.5}, 
+        {"width_at_least": 0.9, "min_spacing": 0.9}, 
+        {"width_at_least": 1.5, "min_spacing": 1.5}
+      ]
+    },{
+      "name": "metal5", "index": 5, "direction": "horizontal", 
+      "min_width": 0.14, "max_width": 1073741.8235, "pitch": 0.28, 
+      "offset": 0.07, "power_strap_widths_and_spacings": [
+        {"width_at_least": 0.0, "min_spacing": 0.14}, 
+        {"width_at_least": 0.27, "min_spacing": 0.27}, 
+        {"width_at_least": 0.5, "min_spacing": 0.5}, 
+        {"width_at_least": 0.9, "min_spacing": 0.9}, 
+        {"width_at_least": 1.5, "min_spacing": 1.5}
+      ]
+    },{
+      "name": "metal6", "index": 6, "direction": "vertical", 
+      "min_width": 0.14, "max_width": 1073741.8235, "pitch": 0.28, 
+      "offset": 0.095, "power_strap_widths_and_spacings": [
+        {"width_at_least": 0.0, "min_spacing": 0.14}, 
+        {"width_at_least": 0.27, "min_spacing": 0.27}, 
+        {"width_at_least": 0.5, "min_spacing": 0.5}, 
+        {"width_at_least": 0.9, "min_spacing": 0.9}, 
+        {"width_at_least": 1.5, "min_spacing": 1.5}
+      ]
+    },{
+      "name": "metal7", "index": 7, "direction": "horizontal", 
+      "min_width": 0.4, "max_width": 1073741.8235, "pitch": 0.8, 
+      "offset": 0.07, "power_strap_widths_and_spacings": [
+        {"width_at_least": 0.0, "min_spacing": 0.4}, 
+        {"width_at_least": 0.5, "min_spacing": 0.5}, 
+        {"width_at_least": 0.9, "min_spacing": 0.9}, 
+        {"width_at_least": 1.5, "min_spacing": 1.5}
+      ]
+    },{
+      "name": "metal8", "index": 8, "direction": "vertical", 
+      "min_width": 0.4, "max_width": 1073741.8235, "pitch": 0.8, 
+      "offset": 0.095, "power_strap_widths_and_spacings": [
+        {"width_at_least": 0.0, "min_spacing": 0.4}, 
+        {"width_at_least": 0.5, "min_spacing": 0.5}, 
+        {"width_at_least": 0.9, "min_spacing": 0.9}, 
+        {"width_at_least": 1.5, "min_spacing": 1.5}
+      ]
+    },{
+      "name": "metal9", "index": 9, "direction": "horizontal", 
+      "min_width": 0.8, "max_width": 1073741.8235, "pitch": 1.6, 
+      "offset": 0.07, "power_strap_widths_and_spacings": [
+        {"width_at_least": 0.0, "min_spacing": 0.8}, 
+        {"width_at_least": 0.9, "min_spacing": 0.9}, 
+        {"width_at_least": 1.5, "min_spacing": 1.5}
+      ]
+    },{
+      "name": "metal10", "index": 10, "direction": "vertical", 
+      "min_width": 0.8, "max_width": 1073741.8235, "pitch": 1.6, 
+      "offset": 0.095, "power_strap_widths_and_spacings": [
+        {"width_at_least": 0.0, "min_spacing": 0.8}, 
+        {"width_at_least": 0.9, "min_spacing": 0.9}, 
+        {"width_at_least": 1.5, "min_spacing": 1.5}
+      ]
+    }]
+  }],
+  "sites": [
+    {"name": "FreePDK45_38x28_10R_NP_162NW_34O", "x": 0.19, "y": 1.4} 
+  ],
+  "physical only cells list": [
+    "FILLCELL_X1","FILLCELL_X2","FILLCELL_X4",
+    "FILLCELL_X8","FILLCELL_X16","FILLCELL_X32"
+  ],
+  "special cells": [
+    {"cell_type": "tapcell", "name": ["FILLCELL_X1"]},
+    {"cell_type": "stdfiller", "name": [
+      "FILLCELL_X1","FILLCELL_X2","FILLCELL_X4",
+      "FILLCELL_X8","FILLCELL_X16","FILLCELL_X32"
+    ]},
+    {"cell_type": "tiehicell", "name": ["LOGIC1_X1"]},
+    {"cell_type": "tielocell", "name": ["LOGIC0_X1"]}
+  ]
+}

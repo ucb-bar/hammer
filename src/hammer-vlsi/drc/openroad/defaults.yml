@@ -1,0 +1,11 @@
+# Configuration options and defaults for OpenROAD's drc tool (klayout).
+# The values specified in this file are the defaults.
+
+drc.openroad:
+  # this is just to make hammer happy (although, it is never called AFAICT).
+  # the version is actually calculated by the OpenROADTool class
+  version: "dummy-value"
+
+  # Generate the run script but do not run it yet.
+  generate_only: false
+
