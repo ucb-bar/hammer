@@ -35,13 +35,13 @@ Simulation Input Keys
 
         * Specifies define options that are passed to the simulator. e.g. when using VCS, this will be added as ``+define+{DEFINE}``.
 
-    *  ``compiler_cc_opts`` ([str])
+    * ``compiler_cc_opts`` ([str])
 
-        * Specifies C compiler options when generating the simulation executable. e.g. when using VCS, each compiler_cc_opt will be added as ``-CC {compiler_cc_opt}``.
+        * Specifies C compiler options when generating the simulation executable. e.g. when using VCS, each compiler_cc_opt will be added as ``-CFLAGS {compiler_cc_opt}``.
 
-    *  ``compiler_ld_opts`` ([str])
+    * ``compiler_ld_opts`` ([str])
 
-        * Specifies C linker options when generating the simulation executable. e.g. when using VCS, each compiler_ld_opt will be added as ``-CC {compiler_ld_opt}``.
+        * Specifies C linker options when generating the simulation executable. e.g. when using VCS, each compiler_ld_opt will be added as ``-LDFLAGS {compiler_ld_opt}``.
 
     * ``timescale`` (str)
 
