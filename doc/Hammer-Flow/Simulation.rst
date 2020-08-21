@@ -8,7 +8,7 @@ Simulation Setup Keys
 -------------------------------
 
 * Namespace: ``vlsi.core``
-  
+
     * ``sim_tool_path``
         * Set to the directory containing the tool plugin directory for the DRC tool, typically ``/path/to/tool_plugin/sim``. This will be the parent directory of the directory containing ``__init__.py`` and ``defaults.yml``.
     * ``sim_tool``
@@ -35,16 +35,20 @@ Simulation Input Keys
 
         * Specifies define options that are passed to the simulator. e.g. when using VCS, this will be added as ``+define+{DEFINE}``.
 
-    *  ``compiler_opts`` ([str])
+    * ``compiler_cc_opts`` ([str])
 
-        * Specifies C compier options when generating the simulation executable. e.g. when using VCS, each compiler_opt will be added as ``-CC {compiler_opt}``.
+        * Specifies C compiler options when generating the simulation executable. e.g. when using VCS, each compiler_cc_opt will be added as ``-CFLAGS {compiler_cc_opt}``.
+
+    * ``compiler_ld_opts`` ([str])
+
+        * Specifies C linker options when generating the simulation executable. e.g. when using VCS, each compiler_ld_opt will be added as ``-LDFLAGS {compiler_ld_opt}``.
 
     * ``timescale`` (str)
 
         * Plain string that specifies the simulation timescale. e.g. when using VCS, ``sim.inputs.timescale: '1ns/10ps'`` would be passed as ``-timescale=1ns/10ps``
 
     * ``tb_dut`` (str)
-        
+
         * Hierarchical path to the to top level instance of the "dut" from the testbench.
 
     * ``level`` (``"rtl"`` or ``"gl"``)
@@ -78,13 +82,13 @@ Simulation Input Keys
     * ``execute_sim`` (true or false)
 
         * Determines whether or not the simulation executable that is generated with the above inputs with the given flags or if the executable will just be generated.
-        
+
 
 Simulation Inputs
 -------------------------------
 
 There are no prerequisites to running an RTL simulation other than setting the keys that are described above. Running the ``syn-to-sim`` step after running synthesis will automatically generate the Hammer IR required to pipe the synthesis outputs to the Hammer simulation tool, and should be included in the Hammer call, as demonstrated in the "Post-Synthesis Gate Level Sim" command below.  The same goes for post-place-and-route simulations. The required files for these simulations
-(SDF, SPEF, etc.) are generated and piped to the simulation tool in the corresponding step's outputs. 
+(SDF, SPEF, etc.) are generated and piped to the simulation tool in the corresponding step's outputs.
 
 The Hammer simulation tool will initialize register values in the simulation, as that is of particular need when simulating Chisel-based designs, to deal with issues around x-pessimism.
 
