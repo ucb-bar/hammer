@@ -58,12 +58,12 @@ Synthesis Commands
 
 * Synthesis Command
 
-    * ``hammer-vlsi -e env.yml -p config.yml --obj_dir build syn``
+    * ``hammer-vlsi -e env.yml -p config.yml --obj_dir OBJ_DIR syn``
 
 * Synthesis to Place-and-route
 
-    * ``hammer-vlsi -e env.yml -p config.yml -p OBJ_DIR/syn-rundir/syn-output.json --obj_dir build syn-to-par``
+    * ``hammer-vlsi -e env.yml -p config.yml -p OBJ_DIR/syn-rundir/syn-output.json --obj_dir OBJ_DIR syn-to-par``
 
 * Synthesis to Simulation
 
-    * ``hammer-vlsi -e env.yml -p config.yml -p OBJ_DIR/syn-rundir/syn-output.json --obj_dir build syn-to-sim`` 
+    * ``hammer-vlsi -e env.yml -p config.yml -p OBJ_DIR/syn-rundir/syn-output.json --obj_dir OBJ_DIR syn-to-sim`` 

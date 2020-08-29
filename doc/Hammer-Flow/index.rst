@@ -13,3 +13,4 @@ This documentation will walk through the currently supported steps of the Hammer
    DRC
    LVS
    Simulation
+   Power

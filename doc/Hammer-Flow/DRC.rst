@@ -58,4 +58,4 @@ DRC Commands
 
 * DRC Command (after par-to-drc is run)
 
-    * ``hammer-vlsi -e env.yml -p {OBJ_DIR}/drc-input.json --obj_dir build drc``
+    * ``hammer-vlsi -e env.yml -p {OBJ_DIR}/drc-input.json --obj_dir OBJ_DIR drc``

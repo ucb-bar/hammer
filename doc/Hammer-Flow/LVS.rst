@@ -57,4 +57,4 @@ LVS Commands
 
 * LVS Command (after par-to-lvs is run)
 
-    * ``hammer-vlsi -e env.yml -p {OBJ_DIR}/lvs-input.json --obj_dir build lvs``
+    * ``hammer-vlsi -e env.yml -p {OBJ_DIR}/lvs-input.json --obj_dir OBJ_DIR lvs``

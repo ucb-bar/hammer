@@ -927,6 +927,14 @@ power.inputs:
   # A list of paths to VCD waveforms to be used for dynamic power analysis.
   # type: List[str]
   waveforms: []
+ 
+  # A list of analysis start times corresponding to each waveform used for dynamic power analysis.
+  # type: List[str]
+  start_times: []
+
+  # A list of analysis end times corresponding to each waveform used for dynamic power analysis.
+  # type: List[str]
+  end_times: []
 
   # A list of paths to SAIF activity files to be used for dynamic power analysis.
   # type: List[str]
