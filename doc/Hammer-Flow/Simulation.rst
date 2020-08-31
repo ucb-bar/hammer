@@ -87,7 +87,7 @@ Simulation Input Keys
 
         * Setting to false means that the simulation will be entirely functional. Setting to true means that the simulation will be time annotated based on synthesis or P&R results.
 
-    * ``saif.mode`` (``"time"`, ``"trigger"``, ``"trigger_raw"``, or ``"full"``)
+    * ``saif.mode`` (``"time"``, ``"trigger"``, ``"trigger_raw"``, or ``"full"``)
 
         * ``"time"``: pair with ``saif.mode.start_time`` and ``saif.mode.end_time`` (TimeValue) to dump between 2 timestamps
         * ``"trigger"``: inserts a trigger into the simulator run script
