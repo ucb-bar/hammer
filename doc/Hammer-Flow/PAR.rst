@@ -90,17 +90,17 @@ P&R Commands
 
 * P&R Command (after syn-to-par is run)
 
-    * ``hammer-vlsi -e env.yml -p {OBJ_DIR}/par-input.json --obj_dir build par``
+    * ``hammer-vlsi -e env.yml -p {OBJ_DIR}/par-input.json --obj_dir OBJ_DIR par``
 
 * P&R to DRC
 
-    * ``hammer-vlsi -e env.yml -p config.yml -p {OBJ_DIR}/par-rundir/par-output.json --obj_dir build par-to-drc``
+    * ``hammer-vlsi -e env.yml -p config.yml -p {OBJ_DIR}/par-rundir/par-output.json --obj_dir OBJ_DIR par-to-drc``
 
 * P&R to LVS
 
-    * ``hammer-vlsi -e env.yml -p config.yml -p {OBJ_DIR}/par-rundir/par-output.json --obj_dir build par-to-lvs``
+    * ``hammer-vlsi -e env.yml -p config.yml -p {OBJ_DIR}/par-rundir/par-output.json --obj_dir OBJ_DIR par-to-lvs``
 
 * P&R to Simulation
 
-    * ``hammer-vlsi -e env.yml -p config.yml -p {OBJ_DIR}/par-rundir/par-output.json --obj_dir build par-to-sim``
+    * ``hammer-vlsi -e env.yml -p config.yml -p {OBJ_DIR}/par-rundir/par-output.json --obj_dir OBJ_DIR par-to-sim``
 
