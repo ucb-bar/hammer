@@ -45,7 +45,7 @@ class ASAP7SRAMGenerator(HammerSRAMGeneratorTool):
                 nldm_liberty_file=lib_path,
                 lef_file="{b}/lef/{n}_x4.lef".format(b=base_dir,n=sram_name),
                 gds_file="{b}/gds/{n}_x4.gds".format(b=base_dir,n=sram_name),
-                verilog_sim="{b}/behavioral/sram_behav_models.sv".format(b=base_dir),
+                verilog_sim="{b}/behavioral/sram_behav_models.v".format(b=base_dir),
                 corner = {'nmos': speed_name, 'pmos': speed_name, 'temperature': str(corner.temp.value_in_units("C")) +" C"},
                 supplies = {'VDD': str(corner.voltage.value_in_units("V")) + " V", 'GND': "0 V" },
                 provides = [{'lib_type': "sram", 'vt': params.vt}]))  # type: ExtraLibrary
