@@ -1,0 +1,418 @@
+{
+  "name": "Skywater 130nm Library",
+  "grid_unit": "0.001",
+  "time_unit": "1 ps",
+  "installs": [
+    {
+      "path": "$SKYWATER_BASE_DIR",
+      "base var": "technology.skywater.base_dir"
+    },
+    {
+      "path": "$SKYWATER_LIBS",
+      "base var": "technology.skywater.libs_dir"
+    },
+    {
+      "path": "tech-skywater-cache",
+      "base var": ""
+    }
+  ],
+  "gds map file": "$SKYWATER_BASE_DIR/docs/rules/gds_layers.csv",
+  "drc decks": [
+    {
+      "tool name": "calibre",
+      "deck name": "all_drc",
+      "path": "$SKYWATER_BASE_DIR/docs/verification/drc/calibre.rst"
+    }
+  ],
+  "additional_drc_text": "",
+  
+  "lvs decks": [
+    {
+      "tool name": "calibre",
+      "deck name": "",
+      "path": "$SKYWATER_BASE_DIR/docs/verification/lvs/calibre.rst"
+    }
+  ],
+  "libraries": [
+    {
+      "lef file": "$SKYWATER_LIBS/sky130_fd_sc_hd/latest/tech/sky130_fd_sc_hd.tlef",
+      "provides": [
+        {
+          "lib_type": "technology"
+        }
+      ]
+    },
+
+    {
+      "nldm liberty file": "tech-skywater-cache/lib/sky130_fd_sc_hd__ff_n40C_1v95.lib",
+      "verilog sim": "tech-skywater-cache/verilog/sky130_fd_sc_hd.v",
+      "lef file": "tech-skywater-cache/lef/sky130_fd_sc_hd.lef",
+      "spice file": "tech-skywater-cache/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-skywater-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "tech-skywater-cache/lib/sky130_fd_sc_hd__ss_n40C_1v60.lib",
+      "verilog sim": "tech-skywater-cache/verilog/sky130_fd_sc_hd.v",
+      "lef file": "tech-skywater-cache/lef/sky130_fd_sc_hd.lef",
+      "spice file": "tech-skywater-cache/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-skywater-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.60 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "tech-skywater-cache/lib/sky130_fd_sc_hd__ff_100C_1v65.lib",
+      "verilog sim": "tech-skywater-cache/verilog/sky130_fd_sc_hd.v",
+      "lef file": "tech-skywater-cache/lef/sky130_fd_sc_hd.lef",
+      "spice file": "tech-skywater-cache/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-skywater-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.65 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "tech-skywater-cache/lib/sky130_fd_sc_hd__ff_100C_1v95.lib",
+      "verilog sim": "tech-skywater-cache/verilog/sky130_fd_sc_hd.v",
+      "lef file": "tech-skywater-cache/lef/sky130_fd_sc_hd.lef",
+      "spice file": "tech-skywater-cache/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-skywater-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "tech-skywater-cache/lib/sky130_fd_sc_hd__ff_n40C_1v56.lib",
+      "verilog sim": "tech-skywater-cache/verilog/sky130_fd_sc_hd.v",
+      "lef file": "tech-skywater-cache/lef/sky130_fd_sc_hd.lef",
+      "spice file": "tech-skywater-cache/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-skywater-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.56 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "tech-skywater-cache/lib/sky130_fd_sc_hd__ff_n40C_1v65.lib",
+      "verilog sim": "tech-skywater-cache/verilog/sky130_fd_sc_hd.v",
+      "lef file": "tech-skywater-cache/lef/sky130_fd_sc_hd.lef",
+      "spice file": "tech-skywater-cache/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-skywater-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.65 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "tech-skywater-cache/lib/sky130_fd_sc_hd__ff_n40C_1v76.lib",
+      "verilog sim": "tech-skywater-cache/verilog/sky130_fd_sc_hd.v",
+      "lef file": "tech-skywater-cache/lef/sky130_fd_sc_hd.lef",
+      "spice file": "tech-skywater-cache/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-skywater-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.76 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "tech-skywater-cache/lib/sky130_fd_sc_hd__ss_100C_1v40.lib",
+      "verilog sim": "tech-skywater-cache/verilog/sky130_fd_sc_hd.v",
+      "lef file": "tech-skywater-cache/lef/sky130_fd_sc_hd.lef",
+      "spice file": "tech-skywater-cache/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-skywater-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.40 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "tech-skywater-cache/lib/sky130_fd_sc_hd__ss_100C_1v60.lib",
+      "verilog sim": "tech-skywater-cache/verilog/sky130_fd_sc_hd.v",
+      "lef file": "tech-skywater-cache/lef/sky130_fd_sc_hd.lef",
+      "spice file": "tech-skywater-cache/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-skywater-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.60 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "tech-skywater-cache/lib/sky130_fd_sc_hd__ss_n40C_1v28.lib",
+      "verilog sim": "tech-skywater-cache/verilog/sky130_fd_sc_hd.v",
+      "lef file": "tech-skywater-cache/lef/sky130_fd_sc_hd.lef",
+      "spice file": "tech-skywater-cache/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-skywater-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.28 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "tech-skywater-cache/lib/sky130_fd_sc_hd__ss_n40C_1v35.lib",
+      "verilog sim": "tech-skywater-cache/verilog/sky130_fd_sc_hd.v",
+      "lef file": "tech-skywater-cache/lef/sky130_fd_sc_hd.lef",
+      "spice file": "tech-skywater-cache/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-skywater-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.35 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "tech-skywater-cache/lib/sky130_fd_sc_hd__ss_n40C_1v40.lib",
+      "verilog sim": "tech-skywater-cache/verilog/sky130_fd_sc_hd.v",
+      "lef file": "tech-skywater-cache/lef/sky130_fd_sc_hd.lef",
+      "spice file": "tech-skywater-cache/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-skywater-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.40 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "tech-skywater-cache/lib/sky130_fd_sc_hd__ss_n40C_1v44.lib",
+      "verilog sim": "tech-skywater-cache/verilog/sky130_fd_sc_hd.v",
+      "lef file": "tech-skywater-cache/lef/sky130_fd_sc_hd.lef",
+      "spice file": "tech-skywater-cache/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-skywater-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.44 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "tech-skywater-cache/lib/sky130_fd_sc_hd__ss_n40C_1v76.lib",
+      "verilog sim": "tech-skywater-cache/verilog/sky130_fd_sc_hd.v",
+      "lef file": "tech-skywater-cache/lef/sky130_fd_sc_hd.lef",
+      "spice file": "tech-skywater-cache/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-skywater-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.76 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "tech-skywater-cache/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",
+      "verilog sim": "tech-skywater-cache/verilog/sky130_fd_sc_hd.v",
+      "lef file": "tech-skywater-cache/lef/sky130_fd_sc_hd.lef",
+      "spice file": "tech-skywater-cache/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-skywater-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "025 C"
+      },
+      "supplies": {
+        "VDD": "1.80 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "tech-skywater-cache/lib/sky130_fd_sc_hd__tt_100C_1v80.lib",
+      "verilog sim": "tech-skywater-cache/verilog/sky130_fd_sc_hd.v",
+      "lef file": "tech-skywater-cache/lef/sky130_fd_sc_hd.lef",
+      "spice file": "tech-skywater-cache/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-skywater-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.80 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    }
+  ],
+  "stackups": [
+    {
+      "name": "skywater_sky130_fd_sc_hd",
+      "metals": [
+        {"name": "li1", "index": 1, "direction": "vertical", "pitch": 0.46, "offset": 0.23, "min_width": 0.17, "power_strap_widths_and_spacings": [{"width_at_least": 0, "min_spacing": 0.17}], "power_strap_width_table": []},
+        {"name": "met1", "index": 2, "direction": "horizontal", "pitch": 0.34, "offset": 0.17, "min_width": 0.14, "power_strap_widths_and_spacings": [{"width_at_least": 0, "min_spacing": 0.14}, {"width_at_least": 3, "min_spacing": 0.28}], "power_strap_width_table": []},
+        {"name": "met2", "index": 3, "direction": "vertical", "pitch": 0.46, "offset": 0.23, "min_width": 0.14, "power_strap_widths_and_spacings": [{"width_at_least": 0, "min_spacing": 0.14}, {"width_at_least": 3, "min_spacing": 0.28}], "power_strap_width_table": []},
+        {"name": "met3", "index": 4, "direction": "horizontal", "pitch": 0.68, "offset": 0.34, "min_width": 0.3, "power_strap_widths_and_spacings": [{"width_at_least": 0, "min_spacing": 0.3}, {"width_at_least": 3, "min_spacing": 0.4}], "power_strap_width_table": []},
+        {"name": "met4", "index": 5, "direction": "vertical", "pitch": 0.92, "offset": 0.46, "min_width": 0.3, "power_strap_widths_and_spacings": [{"width_at_least": 0, "min_spacing": 0.3}, {"width_at_least": 3, "min_spacing": 0.4}], "power_strap_width_table": []},
+        {"name": "met5", "index": 6, "direction": "horizontal", "pitch": 3.4, "offset": 1.7, "min_width": 1.6, "power_strap_widths_and_spacings": [{"width_at_least": 0, "min_spacing": 1.6}], "power_strap_width_table": []}
+      ]
+    }
+  ],
+
+  "sites": [
+    {"name": "unithd", "x": 0.46, "y": 2.72},
+    {"name": "unithddbl", "x": 0.46, "y": 5.44}
+  ]
+
+}

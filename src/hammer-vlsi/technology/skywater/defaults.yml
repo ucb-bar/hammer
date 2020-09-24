@@ -1,0 +1,81 @@
+# Settings for the skywater technology to be overriden by the project.
+technology.skywater:
+  # This should be the path to the root of the install
+  # Must be specified.
+  base_dir: "/tools/commercial/skywater/skywater-pdk"
+  
+  # Where all skywater libraries are located
+  # Must be specified.
+  libs_dir: "/tools/commercial/skywater/skywater-pdk/libraries/"
+
+  # This should be the path to the PDK root
+  # Must be specified.
+  #pdk_install_dir: "/tools/intech22/PDK/pdk222_r0.9.1"
+
+  # This should be the path to the standard cell library root
+  # Must be specified.
+  #std_cell_install_dir: "/tools/intech22/LIB/lib222hpm_7t_108pp_base_f.1.0"
+
+
+# Set some defaults for this technology.
+# For quick performance evaluations, use the typical voltage+temperature corners.
+# Nominal voltage for 7nm technology is 0.70 V and is the only voltage provided
+# for normal SRAMs.
+vlsi:
+  # Technology dimension
+  # The PaR tool actually runs in the 4x scaled up lef/gds.
+  # after PaR, post_par_script in asap7/__init__.py will scale down the generated gds to 7nm.
+  core.node: 130
+  inputs:
+    # Supply voltages.
+    supplies:
+      VDD: "1.8 V"
+      GND: "0 V"
+    # mmmc corners config.
+    mmmc_corners: [
+      {
+        "name": "sky130_fd_sc_hd__ss_100C_1v60",
+        "type": "setup",
+        "voltage": "1.60 V",
+        "temp": "100 C"
+      },
+      {
+        "name": "sky130_fd_sc_hd__ff_n40C_1v95",
+        "type": "hold",
+        "voltage": "1.95 V",
+        "temp": "-40 C"
+      }
+    ]
+  technology:
+    # Set standard cell LEF placement site
+    placement_site: "unithd"
+
+    # Set the layer that blocks vias under bumps
+    bump_block_cut_layer: "V9"
+
+    # Set the interval and offset for tap cells
+    tap_cell_interval: "50"
+    tap_cell_offset: "10.564"
+
+
+technology.core:
+  # This key should exist in the stackups list in the tech json
+  stackup: "skywater_sky130_fd_sc_hd"
+  # This should specify the TOPMOST metal layer the standard cells use for power rails
+  # Note that this is not usually stackup specific; it is based on the std cell libraries themselves
+  std_cell_rail_layer: "met1"
+  # This is used to provide a reference master for generating standard cells
+  tap_cell_rail_reference: "{TAPCELL*}"
+
+mentor.extra_env_vars:
+  - VAR_M4_YOFFSET: "0"
+  - VAR_M5_XOFFSET: "0"
+  - VAR_M6_YOFFSET: "0"
+  - VAR_M7_XOFFSET: "0"
+
+par.inputs:
+  # gds_merge: true is mandatory,
+  # The shrink script in __init__.py filters stdcells but expects all other input GDSs to be 4x upscaled.
+  # If user decides to set this to false, all other GDSs (e.g. hard macros) need to be 1x scaled
+  # TODO: change export_config_outputs for PaR inputs to expose gds_merge to output json
+  gds_merge: true
