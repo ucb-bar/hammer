@@ -140,6 +140,7 @@ class HammerDriver:
         tech_paths = list(self.database.get_setting("vlsi.core.technology_path"))  # type: List[str]
 
         self.log.info("Loading technology '{0}'".format(tech_str))
+        self.log.info(str(tech_paths)) 
         tech_opt = None  # type: Optional[hammer_tech.HammerTechnology]
         for base_path in tech_paths:
             sys.path.append(base_path)

@@ -21,12 +21,14 @@ class SkywaterTech(HammerTechnology):
     This class is loaded by function `load_from_json`, and will pass the `try` in `importlib`.
     """
     def post_install_script(self) -> None:
-        try:
-            import gdspy  # type: ignore
-        except ImportError:
-            self.logger.error("Check your gdspy installation! Unable to hack ASAP7 PDK.")
-            shutil.rmtree(self.cache_dir)
-            sys.exit()
+        ## FIXME: trying without this gdspy
+        ##try:
+        ##    import gdspy  # type: ignore
+        ##except ImportError:
+        ##    self.logger.error(f"Check your gdspy installation! Unable to hack {self.__class__.__name__} PDK.")
+        ##    shutil.rmtree(self.cache_dir)
+        ##    sys.exit()
+        
         # make cache directories for all necessary lib files
         dirs = 'cdl gds lef lib verilog/models'.split()
         for dir in dirs:
