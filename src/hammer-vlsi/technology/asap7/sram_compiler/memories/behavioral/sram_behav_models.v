@@ -76,7 +76,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (data_out or OEB_i)
+always @ (posedge CE_i)
 	if (!OEB_i) 
 		O_i = data_out;
 	else
@@ -202,7 +202,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (data_out or OEB_i)
+always @ (posedge CE_i)
 	if (!OEB_i) 
 		O_i = data_out;
 	else
@@ -330,7 +330,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (data_out or OEB_i)
+always @ (posedge CE_i)
 	if (!OEB_i) 
 		O_i = data_out;
 	else
@@ -418,7 +418,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (data_out or OEB_i)
+always @ (posedge CE_i)
 	if (!OEB_i) 
 		O_i = data_out;
 	else
@@ -627,7 +627,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (data_out or OEB_i)
+always @ (posedge CE_i)
 	if (!OEB_i) 
 		O_i = data_out;
 	else
@@ -739,7 +739,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (data_out or OEB_i)
+always @ (posedge CE_i)
 	if (!OEB_i) 
 		O_i = data_out;
 	else
@@ -865,7 +865,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (data_out or OEB_i)
+always @ (posedge CE_i)
 	if (!OEB_i) 
 		O_i = data_out;
 	else
@@ -993,7 +993,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (data_out or OEB_i)
+always @ (posedge CE_i)
 	if (!OEB_i) 
 		O_i = data_out;
 	else
@@ -1081,7 +1081,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (data_out or OEB_i)
+always @ (posedge CE_i)
 	if (!OEB_i) 
 		O_i = data_out;
 	else
@@ -1211,7 +1211,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (data_out or OEB_i)
+always @ (posedge CE_i)
 	if (!OEB_i) 
 		O_i = data_out;
 	else
@@ -1419,7 +1419,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (data_out or OEB_i)
+always @ (posedge CE_i)
 	if (!OEB_i) 
 		O_i = data_out;
 	else
@@ -1531,7 +1531,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (data_out or OEB_i)
+always @ (posedge CE_i)
 	if (!OEB_i) 
 		O_i = data_out;
 	else
@@ -1619,7 +1619,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (data_out or OEB_i)
+always @ (posedge CE_i)
 	if (!OEB_i) 
 		O_i = data_out;
 	else
@@ -1827,7 +1827,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (data_out or OEB_i)
+always @ (posedge CE_i)
 	if (!OEB_i) 
 		O_i = data_out;
 	else
@@ -1939,7 +1939,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (data_out or OEB_i)
+always @ (posedge CE_i)
 	if (!OEB_i) 
 		O_i = data_out;
 	else
@@ -2053,7 +2053,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (data_out or OEB_i)
+always @ (posedge CE_i)
 	if (!OEB_i) 
 		O_i = data_out;
 	else
@@ -2141,7 +2141,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (data_out or OEB_i)
+always @ (posedge CE_i)
 	if (!OEB_i) 
 		O_i = data_out;
 	else
