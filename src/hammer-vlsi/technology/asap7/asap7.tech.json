@@ -1290,6 +1290,11 @@
       }
     }
   ],
+  "dont use list": [
+  "AO*",
+  "OA*",
+  "A2O1*"
+  ],
   "stackups": [
     {
       "name": "asap7_3Ma_2Mb_2Mc_2Md",
