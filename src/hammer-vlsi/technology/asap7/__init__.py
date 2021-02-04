@@ -224,8 +224,9 @@ def asap7_update_floorplan(ht: HammerTool) -> bool:
 # Need to delete and recreate tracks based on tech LEF
 add_tracks -honor_pitch
 
-# This moves the core up by one site, fixes wiring issue
-update_floorplan -core_to_bottom 1.08 -no_snap_to_grid
+# Create place blockage on bottom row, fixes wiring issue + power vias for LVS
+set botrow [lindex [get_db rows] end]
+create_place_blockage -area [get_db $botrow .rect] -name ROW1_BLOCK
 
 # Prevent extending M1 pins in cells
 set_db route_design_with_via_in_pin true
