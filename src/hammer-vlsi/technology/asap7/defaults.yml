@@ -33,6 +33,9 @@ vlsi:
         "temp": "0 C"
       }
     ]
+    # This is to get around missing removal_falling in libs for RESET pin ASYNC_DFF.. cells
+    custom_sdc_constraints:
+    - "set_false_path -hold -fall_to [get_db [get_db insts -if {.base_cell.name == ASYNC_DFF*}] .pins -if {.name == *RESET}]"
   technology:
     # Set standard cell LEF placement site
     placement_site: "coreSite"
