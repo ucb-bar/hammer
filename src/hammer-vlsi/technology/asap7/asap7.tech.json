@@ -1293,7 +1293,8 @@
   "dont use list": [
   "AO*",
   "OA*",
-  "A2O1*"
+  "A2O1*",
+  "BUFx16f*"
   ],
   "stackups": [
     {
