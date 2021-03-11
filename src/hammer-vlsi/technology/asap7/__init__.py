@@ -225,7 +225,8 @@ def asap7_update_floorplan(ht: HammerTool) -> bool:
 add_tracks -honor_pitch
 
 # Create place blockage on bottom row, fixes wiring issue + power vias for LVS
-set botrow [lindex [get_db rows] end]
+set core_lly [get_db current_design .core_bbox.ll.y]
+set botrow [get_db rows -if {.rect.ll.y == $core_lly}]
 create_place_blockage -area [get_db $botrow .rect] -name ROW1_BLOCK
 
 # Prevent extending M1 pins in cells

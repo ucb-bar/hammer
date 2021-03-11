@@ -6,7 +6,7 @@ MACRO SRAM1RW64x8
   CLASS BLOCK ;
   ORIGIN 0 0 ;
   FOREIGN SRAM1RW64x8 0 0 ;
-  SIZE 20.0 BY 24.96 ;
+  SIZE 18.848 BY 28.352 ;
   SYMMETRY X Y ;
   SITE coreSite ;
   PIN VDD
@@ -14,9 +14,9 @@ MACRO SRAM1RW64x8
     USE POWER ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 6.528 20.0 6.912 ;
-        RECT 0.0 14.208 20.0 14.592 ;
-        RECT 0.0 21.888 20.0 22.272 ;
+        RECT 0.0 1.632 18.848 1.728 ;
+        RECT 0.0 3.552 18.848 3.648 ;
+        RECT 0.0 5.472 18.848 5.568 ;
     END 
   END VDD
   PIN VSS
@@ -24,9 +24,9 @@ MACRO SRAM1RW64x8
     USE GROUND ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 7.296 20.0 7.68 ;
-        RECT 0.0 14.976 20.0 15.36 ;
-        RECT 0.0 22.656 20.0 23.04 ;
+        RECT 0.0 1.824 18.848 1.92 ;
+        RECT 0.0 3.744 18.848 3.84 ;
+        RECT 0.0 5.664 18.848 5.76 ;
     END 
   END VSS
   PIN CE
@@ -34,7 +34,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 0.384 4.0 0.768 ;
+        RECT 0.0 0.096 4.0 0.192 ;
     END 
   END CE
   PIN WEB
@@ -42,7 +42,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 1.152 4.0 1.536 ;
+        RECT 0.0 0.288 4.0 0.384 ;
     END 
   END WEB
   PIN OEB
@@ -50,7 +50,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 1.92 4.0 2.304 ;
+        RECT 0.0 0.48 4.0 0.576 ;
     END 
   END OEB
   PIN CSB
@@ -58,7 +58,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 2.688 4.0 3.072 ;
+        RECT 0.0 0.672 4.0 0.768 ;
     END 
   END CSB
   PIN A[0]
@@ -66,7 +66,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 3.456 4.0 3.84 ;
+        RECT 0.0 0.864 4.0 0.96 ;
     END 
   END A[0]
   PIN A[1]
@@ -74,7 +74,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 4.224 4.0 4.608 ;
+        RECT 0.0 1.056 4.0 1.152 ;
     END 
   END A[1]
   PIN A[2]
@@ -82,7 +82,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 4.992 4.0 5.376 ;
+        RECT 0.0 1.248 4.0 1.344 ;
     END 
   END A[2]
   PIN A[3]
@@ -90,7 +90,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 5.76 4.0 6.144 ;
+        RECT 0.0 1.44 4.0 1.536 ;
     END 
   END A[3]
   PIN A[4]
@@ -98,7 +98,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 8.064 4.0 8.448 ;
+        RECT 0.0 2.016 4.0 2.112 ;
     END 
   END A[4]
   PIN A[5]
@@ -106,7 +106,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 8.832 4.0 9.216 ;
+        RECT 0.0 2.208 4.0 2.304 ;
     END 
   END A[5]
   PIN I[0]
@@ -114,7 +114,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 9.6 4.0 9.984 ;
+        RECT 0.0 2.4 4.0 2.496 ;
     END 
   END I[0]
   PIN I[1]
@@ -122,7 +122,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 10.368 4.0 10.752 ;
+        RECT 0.0 2.592 4.0 2.688 ;
     END 
   END I[1]
   PIN I[2]
@@ -130,7 +130,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 11.136 4.0 11.52 ;
+        RECT 0.0 2.784 4.0 2.88 ;
     END 
   END I[2]
   PIN I[3]
@@ -138,7 +138,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 11.904 4.0 12.288 ;
+        RECT 0.0 2.976 4.0 3.072 ;
     END 
   END I[3]
   PIN I[4]
@@ -146,7 +146,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 12.672 4.0 13.056 ;
+        RECT 0.0 3.168 4.0 3.264 ;
     END 
   END I[4]
   PIN I[5]
@@ -154,7 +154,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 13.44 4.0 13.824 ;
+        RECT 0.0 3.36 4.0 3.456 ;
     END 
   END I[5]
   PIN I[6]
@@ -162,7 +162,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 15.744 4.0 16.128 ;
+        RECT 0.0 3.936 4.0 4.032 ;
     END 
   END I[6]
   PIN I[7]
@@ -170,7 +170,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 16.512 4.0 16.896 ;
+        RECT 0.0 4.128 4.0 4.224 ;
     END 
   END I[7]
   PIN O[0]
@@ -178,7 +178,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 17.28 4.0 17.664 ;
+        RECT 0.0 4.32 4.0 4.416 ;
     END 
   END O[0]
   PIN O[1]
@@ -186,7 +186,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 18.048 4.0 18.432 ;
+        RECT 0.0 4.512 4.0 4.608 ;
     END 
   END O[1]
   PIN O[2]
@@ -194,7 +194,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 18.816 4.0 19.2 ;
+        RECT 0.0 4.704 4.0 4.8 ;
     END 
   END O[2]
   PIN O[3]
@@ -202,7 +202,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 19.584 4.0 19.968 ;
+        RECT 0.0 4.896 4.0 4.992 ;
     END 
   END O[3]
   PIN O[4]
@@ -210,7 +210,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 20.352 4.0 20.736 ;
+        RECT 0.0 5.088 4.0 5.184 ;
     END 
   END O[4]
   PIN O[5]
@@ -218,7 +218,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 21.12 4.0 21.504 ;
+        RECT 0.0 5.28 4.0 5.376 ;
     END 
   END O[5]
   PIN O[6]
@@ -226,7 +226,7 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 23.424 4.0 23.808 ;
+        RECT 0.0 5.856 4.0 5.952 ;
     END 
   END O[6]
   PIN O[7]
@@ -234,16 +234,16 @@ MACRO SRAM1RW64x8
     USE SIGNAL ;
     PORT 
       LAYER M4 ;
-        RECT 0.0 24.192 4.0 24.576 ;
+        RECT 0.0 6.048 4.0 6.144 ;
     END 
   END O[7]
   OBS 
     LAYER M1 ;
-      RECT 4.0 0.0 20.0 24.96 ;
+      RECT 4.0 0.0 18.848 28.352 ;
     LAYER M2 ;
-      RECT 4.0 0.0 20.0 24.96 ;
+      RECT 4.0 0.0 18.848 28.352 ;
     LAYER M3 ;
-      RECT 4.0 0.0 20.0 24.96 ;
+      RECT 4.0 0.0 18.848 28.352 ;
   END 
 END SRAM1RW64x8
 
