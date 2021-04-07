@@ -196,7 +196,8 @@ gds_lib.write_gds('{gds_file}')
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {"innovus": [
             HammerTool.make_post_persistent_hook("init_design", asap7_innovus_settings),
-            HammerTool.make_post_insertion_hook("write_design", scale_final_gds)
+            HammerTool.make_post_insertion_hook("floorplan_design", asap7_update_floorplan),
+            HammerTool.make_post_insertion_hook("write_design", asap7_scale_final_gds)
             ]}
         return hooks.get(tool_name, [])
 
@@ -212,9 +213,30 @@ set_db route_design_top_routing_layer 7
     ''')
     return True
 
-def scale_final_gds(ht: HammerTool) -> bool:
-    assert isinstance(ht, HammerPlaceAndRouteTool), "scale_final_gds can only run on par"
-    assert isinstance(ht, TCLTool), "scale_final_gds can only run on TCL tools"
+def asap7_update_floorplan(ht: HammerTool) -> bool:
+    assert isinstance(ht, HammerPlaceAndRouteTool), "asap7_update_floorplan can only run on par"
+    assert isinstance(ht, TCLTool), "asap7_update_floorplan can only run on TCL tools"
+    """
+    This is needed to move the core up by 1 site and re-do wiring tracks.
+    This resolves many DRCs and removes the need for the user to do it in placement constraints.
+    """
+    ht.append('''
+# Need to delete and recreate tracks based on tech LEF
+add_tracks -honor_pitch
+
+# Create place blockage on bottom row, fixes wiring issue + power vias for LVS
+set core_lly [get_db current_design .core_bbox.ll.y]
+set botrow [get_db rows -if {.rect.ll.y == $core_lly}]
+create_place_blockage -area [get_db $botrow .rect] -name ROW1_BLOCK
+
+# Prevent extending M1 pins in cells
+set_db route_design_with_via_in_pin true
+''')
+    return True
+
+def asap7_scale_final_gds(ht: HammerTool) -> bool:
+    assert isinstance(ht, HammerPlaceAndRouteTool), "asap7_scale_final_gds can only run on par"
+    assert isinstance(ht, TCLTool), "asap7_scale_final_gds can only run on TCL tools"
     """
     Scale the final GDS by a factor of 4
     scale_gds_script writes the actual Python script to execute from the Tcl interpreter
