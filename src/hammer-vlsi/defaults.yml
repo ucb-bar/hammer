@@ -145,6 +145,10 @@ cadence:
 # General VLSI inputs.
 # These will vary per run of hammer-vlsi.
 vlsi.inputs:
+  # Design input files.
+  # Typically a list of Verilog/VHDL files, depending on the synthesis/power tools.
+  design_files:
+
   # Supply voltages and names
   # Supply Struct:
   #   name (str) - The name of your supply's net
@@ -927,7 +931,7 @@ power.inputs:
   # A list of paths to VCD waveforms to be used for dynamic power analysis.
   # type: List[str]
   waveforms: []
- 
+
   # A list of analysis start times corresponding to each waveform used for dynamic power analysis.
   # type: List[str]
   start_times: []
@@ -944,6 +948,14 @@ power.inputs:
   # The typical use case is to only report power and rail analysis for a typical/nominal corner.
   # type: bool
   extra_corners_only: false
+
+  # New power tool stuff
+  hdl: []
+
+  power_spec: null
+
+  top_module: null
+
 
 power.submit:
   command: "${vlsi.submit.command}"

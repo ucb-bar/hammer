@@ -1135,11 +1135,11 @@ class HammerLVSTool(HammerSignoffTool):
 
 class HammerSimTool(HammerTool):
 
-    # No current sim outputs, but some will be added
     def export_config_outputs(self) -> Dict[str, Any]:
         outputs = deepdict(super().export_config_outputs())
         outputs["sim.outputs.waveforms"] = self.output_waveforms
         outputs["sim.outputs.saifs"] = self.output_saifs
+        outputs["sim.outputs.top_module"] = self.top_module
         return outputs
 
     @property
@@ -1299,6 +1299,66 @@ class HammerSimTool(HammerTool):
             raise TypeError("output_saifs must be a List[str]")
         self.attr_setter("_output_saifs", value)
 
+
+    @property
+    def output_top_module(self) -> str:
+        """
+        Get the top RTL module.
+
+        :return: The top RTL module.
+        """
+        try:
+            return self.attr_getter("_output_top_module", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the top RTL module yet")
+
+    @output_top_module.setter
+    def output_top_module(self, value: str) -> None:
+        """Set the top RTL module."""
+        if not (isinstance(value, str)):
+            raise TypeError("output_top_module must be a str")
+        self.attr_setter("_output_top_module", value)
+
+
+    @property
+    def output_tb_name(self) -> str:
+        """
+        Get the sim testbench name.
+
+        :return: The sim testbench name.
+        """
+        try:
+            return self.attr_getter("_output_tb_name", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the sim testbench name yet")
+
+    @output_tb_name.setter
+    def output_tb_name(self, value: str) -> None:
+        """Set the sim testbench name."""
+        if not (isinstance(value, str)):
+            raise TypeError("output_tb_name must be a str")
+        self.attr_setter("_output_tb_name", value)
+
+
+    @property
+    def output_tb_dut(self) -> str:
+        """
+        Get the sim DUT instance name.
+
+        :return: The sim DUT instance name.
+        """
+        try:
+            return self.attr_getter("_output_tb_dut", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the sim DUT instance name yet")
+
+    @output_tb_dut.setter
+    def output_tb_dut(self, value: str) -> None:
+        """Set the sim DUT instance name."""
+        if not (isinstance(value, str)):
+            raise TypeError("output_tb_dut must be a str")
+        self.attr_setter("_output_tb_dut", value)
+
     ### END Generated interface HammerSimTool ###
     ### Generated interface HammerSimTool ###
 
@@ -1386,6 +1446,66 @@ class HammerPowerTool(HammerTool):
         if not (isinstance(value, List)):
             raise TypeError("saifs must be a List[str]")
         self.attr_setter("_saifs", value)
+
+
+    @property
+    def top_module(self) -> str:
+        """
+        Get the top RTL module.
+
+        :return: The top RTL module.
+        """
+        try:
+            return self.attr_getter("_top_module", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the top RTL module yet")
+
+    @top_module.setter
+    def top_module(self, value: str) -> None:
+        """Set the top RTL module."""
+        if not (isinstance(value, str)):
+            raise TypeError("top_module must be a str")
+        self.attr_setter("_top_module", value)
+
+
+    @property
+    def tb_name(self) -> str:
+        """
+        Get the testbench name.
+
+        :return: The testbench name.
+        """
+        try:
+            return self.attr_getter("_tb_name", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the testbench name yet")
+
+    @tb_name.setter
+    def tb_name(self, value: str) -> None:
+        """Set the testbench name."""
+        if not (isinstance(value, str)):
+            raise TypeError("tb_name must be a str")
+        self.attr_setter("_tb_name", value)
+
+
+    @property
+    def tb_dut(self) -> str:
+        """
+        Get the DUT instance name.
+
+        :return: The DUT instance name.
+        """
+        try:
+            return self.attr_getter("_tb_dut", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the DUT instance name yet")
+
+    @tb_dut.setter
+    def tb_dut(self, value: str) -> None:
+        """Set the DUT instance name."""
+        if not (isinstance(value, str)):
+            raise TypeError("tb_dut must be a str")
+        self.attr_setter("_tb_dut", value)
 
 
     ### Outputs ###
