@@ -577,13 +577,22 @@ class HammerDriver:
         power_tool.spefs = self.database.get_setting("power.inputs.spefs", nullvalue=[])
         power_tool.waveforms = self.database.get_setting("power.inputs.waveforms", nullvalue=[])
         power_tool.saifs = self.database.get_setting("power.inputs.saifs", nullvalue=[])
+
+        # Joules changes
+        power_tool.hdl = self.database.get_setting("power.inputs.hdl", nullvalue=[])
+        power_tool.top_module = self.database.get_setting("power.inputs.top_module", nullvalue="")
+        power_tool.tb_name = self.database.get_setting("power.inputs.tb_name", nullvalue="")
+        power_tool.tb_dut = self.database.get_setting("power.inputs.tb_dut", nullvalue="")
+
+
         missing_inputs = False
-        if power_tool.par_database == "":
-            self.log.error("PAR database not specified for power analysis")
+        if power_tool.par_database == "" and len(power_tool.hdl) == 0:
+            #self.log.error("PAR database not specified for power analysis")
+            self.log.error("Database or design not specified for power analysis")
             missing_inputs = True
-        if len(power_tool.spefs) == 0:
-            self.log.error("No spef files specified for power analysis")
-            missing_inputs = True
+        #if len(power_tool.spefs) == 0:
+        #    self.log.error("No spef files specified for power analysis")
+        #    missing_inputs = True
         if missing_inputs:
             return False
 
@@ -1075,6 +1084,9 @@ class HammerDriver:
                 "power.inputs.waveforms_meta": "append",
                 "power.inputs.saifs": output_dict["sim.outputs.saifs"],
                 "power.inputs.saifs_meta": "append",
+                "power.inputs.top_module": output_dict["sim.outputs.output_top_module"],
+                "power.inputs.tb_name": output_dict["sim.outputs.output_tb_name"],
+                "power.inputs.tb_dut": output_dict["sim.outputs.output_tb_dut"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             return result

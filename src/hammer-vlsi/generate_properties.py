@@ -204,7 +204,10 @@ def main(args) -> int:
                               ],
                               outputs=[
                                   InterfaceVar("output_waveforms", "List[str]", "paths to output waveforms"),
-                                  InterfaceVar("output_saifs", "List[str]", "paths to output activity files")
+                                  InterfaceVar("output_saifs", "List[str]", "paths to output activity files"),
+                                  InterfaceVar("output_top_module", "str", "top RTL module"),
+                                  InterfaceVar("output_tb_name", "str", "sim testbench name"),
+                                  InterfaceVar("output_tb_dut", "str", "sim DUT instance name")
                               ]
                               )
     HammerPowerTool = Interface(module="HammerPowerTool",
@@ -213,7 +216,10 @@ def main(args) -> int:
                                   InterfaceVar("par_database", "str", "path to par database for power analysis"),
                                   InterfaceVar("spefs", "List[str]", "list of spef files for power anlaysis"),
                                   InterfaceVar("waveforms", "List[str]", "list of waveform dump files for dynamic power analysis"),
-                                  InterfaceVar("saifs", "List[str]", "list of activity files for dynamic power analysis")
+                                  InterfaceVar("saifs", "List[str]", "list of activity files for dynamic power analysis"),
+                                  InterfaceVar("top_module", "str", "top RTL module"),
+                                  InterfaceVar("tb_name", "str", "testbench name"),
+                                  InterfaceVar("tb_dut", "str", "DUT instance name")
                                 ],
                                 outputs=[]
                                 )
