@@ -1139,7 +1139,9 @@ class HammerSimTool(HammerTool):
         outputs = deepdict(super().export_config_outputs())
         outputs["sim.outputs.waveforms"] = self.output_waveforms
         outputs["sim.outputs.saifs"] = self.output_saifs
-        outputs["sim.outputs.top_module"] = self.top_module
+        outputs["sim.outputs.output_top_module"] = self.output_top_module
+        outputs["sim.outputs.output_tb_name"] = self.output_tb_name
+        outputs["sim.outputs.output_tb_dut"] = self.output_tb_dut
         return outputs
 
     @property
