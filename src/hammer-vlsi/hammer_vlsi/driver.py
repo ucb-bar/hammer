@@ -350,6 +350,8 @@ class HammerDriver:
         drc_tool.logger = self.log.context("drc")
         drc_tool.technology = self.tech
         drc_tool.set_database(self.database)
+        drc_tool.hierarchical_mode = HierarchicalMode.from_str(
+            self.database.get_setting("vlsi.inputs.hierarchical.mode"))
         drc_tool.submit_command = HammerSubmitCommand.get("drc", self.database)
         drc_tool.run_dir = run_dir
         # TODO hierarchical
@@ -398,6 +400,8 @@ class HammerDriver:
         lvs_tool.logger = self.log.context("lvs")
         lvs_tool.technology = self.tech
         lvs_tool.set_database(self.database)
+        lvs_tool.hierarchical_mode = HierarchicalMode.from_str(
+            self.database.get_setting("vlsi.inputs.hierarchical.mode"))
         lvs_tool.submit_command = HammerSubmitCommand.get("lvs", self.database)
         lvs_tool.run_dir = run_dir
 
