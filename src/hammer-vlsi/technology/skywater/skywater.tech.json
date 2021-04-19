@@ -35,7 +35,7 @@
   ],
   "libraries": [
     {
-      "lef file": "$SKYWATER_LIBS/sky130_fd_sc_hd/latest/tech/sky130_fd_sc_hd.tlef",
+      "lef file": "tech-skywater-cache/sky130_fd_sc_hd.tlef",
       "provides": [
         {
           "lib_type": "technology"
