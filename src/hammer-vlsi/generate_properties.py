@@ -207,7 +207,8 @@ def main(args) -> int:
                                   InterfaceVar("output_saifs", "List[str]", "paths to output activity files"),
                                   InterfaceVar("output_top_module", "str", "top RTL module"),
                                   InterfaceVar("output_tb_name", "str", "sim testbench name"),
-                                  InterfaceVar("output_tb_dut", "str", "sim DUT instance name")
+                                  InterfaceVar("output_tb_dut", "str", "sim DUT instance name"),
+                                  InterfaceVar("output_level", "str", "simulation flow level")
                               ]
                               )
     HammerPowerTool = Interface(module="HammerPowerTool",

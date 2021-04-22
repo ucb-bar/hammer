@@ -57,26 +57,26 @@ class HierarchicalMode(Enum):
         """
         return self == HierarchicalMode.Hierarchical or self == HierarchicalMode.Top
 
-class SimulationLevel(Enum):
+class FlowLevel(Enum):
     RTL = 1
     GateLevel = 2
 
     @classmethod
-    def __mapping(cls) -> Dict[str, "SimulationLevel"]:
+    def __mapping(cls) -> Dict[str, "FlowLevel"]:
         return {
-            "rtl": SimulationLevel.RTL,
-            "gl": SimulationLevel.GateLevel
+            "rtl": FlowLevel.RTL,
+            "gl": FlowLevel.GateLevel
         }
 
     @staticmethod
-    def from_str(x: str) -> "SimulationLevel":
+    def from_str(x: str) -> "FlowLevel":
         try:
-            return SimulationLevel.__mapping()[x]
+            return FlowLevel.__mapping()[x]
         except KeyError:
-            raise ValueError("Invalid string for SimulationLevel: " + str(x))
+            raise ValueError("Invalid string for FlowLevel: " + str(x))
 
     def __str__(self) -> str:
-        return reverse_dict(SimulationLevel.__mapping())[self]
+        return reverse_dict(FlowLevel.__mapping())[self]
 
 
 import hammer_tech
@@ -1142,12 +1142,13 @@ class HammerSimTool(HammerTool):
         outputs["sim.outputs.output_top_module"] = self.output_top_module
         outputs["sim.outputs.output_tb_name"] = self.output_tb_name
         outputs["sim.outputs.output_tb_dut"] = self.output_tb_dut
+        outputs["sim.outputs.output_level"] = self.output_level
         return outputs
 
     @property
-    def level(self) -> SimulationLevel:
-        """Return the simulation level."""
-        return SimulationLevel.from_str(self.get_setting("sim.inputs.level"))
+    def level(self) -> FlowLevel:
+        """Return the flow level."""
+        return FlowLevel.from_str(self.get_setting("sim.inputs.level"))
 
     @property
     def benchmarks(self) -> List[str]:
@@ -1361,10 +1362,35 @@ class HammerSimTool(HammerTool):
             raise TypeError("output_tb_dut must be a str")
         self.attr_setter("_output_tb_dut", value)
 
+
+    @property
+    def output_level(self) -> str:
+        """
+        Get the simulation flow level.
+
+        :return: The simulation flow level.
+        """
+        try:
+            return self.attr_getter("_output_level", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the simulation flow level yet")
+
+    @output_level.setter
+    def output_level(self, value: str) -> None:
+        """Set the simulation flow level."""
+        if not (isinstance(value, str)):
+            raise TypeError("output_level must be a str")
+        self.attr_setter("_output_level", value)
+
     ### END Generated interface HammerSimTool ###
     ### Generated interface HammerSimTool ###
 
 class HammerPowerTool(HammerTool):
+
+    @property
+    def level(self) -> FlowLevel:
+        """Return the flow level."""
+        return FlowLevel.from_str(self.get_setting("power.inputs.level"))
 
     ### Generated interface HammerPowerTool ###
     ### DO NOT MODIFY THIS CODE, EDIT generate_properties.py INSTEAD ###
