@@ -578,7 +578,6 @@ class HammerDriver:
         power_tool.waveforms = self.database.get_setting("power.inputs.waveforms", nullvalue=[])
         power_tool.saifs = self.database.get_setting("power.inputs.saifs", nullvalue=[])
 
-        # Joules changes
         power_tool.hdl = self.database.get_setting("power.inputs.hdl", nullvalue=[])
         power_tool.top_module = self.database.get_setting("power.inputs.top_module", nullvalue="")
         power_tool.tb_name = self.database.get_setting("power.inputs.tb_name", nullvalue="")
@@ -1087,6 +1086,7 @@ class HammerDriver:
                 "power.inputs.top_module": output_dict["sim.outputs.output_top_module"],
                 "power.inputs.tb_name": output_dict["sim.outputs.output_tb_name"],
                 "power.inputs.tb_dut": output_dict["sim.outputs.output_tb_dut"],
+                "power.inputs.level": output_dict["sim.outputs.output_level"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             return result

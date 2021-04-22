@@ -145,10 +145,6 @@ cadence:
 # General VLSI inputs.
 # These will vary per run of hammer-vlsi.
 vlsi.inputs:
-  # Design input files.
-  # Typically a list of Verilog/VHDL files, depending on the synthesis/power tools.
-  design_files:
-
   # Supply voltages and names
   # Supply Struct:
   #   name (str) - The name of your supply's net
@@ -852,7 +848,7 @@ sim.inputs:
   # Valid options are:
   #   "rtl" for rtl level simulation
   #   "gl" for gate level simulation
-  # type: SimulationLevel
+  # type: FlowLevel
   level: "rtl"
 
   # Path to a list of all registers in the design passed from synthesis or place-and-route
@@ -968,7 +964,30 @@ power.inputs:
   # type: bool
   extra_corners_only: false
 
-  # New power tool stuff
+  frames:
+    # Valid options:
+    # none: no extra reporting
+    # frame_count: split the waveforms into "x" frames
+    # cycles: split the waveforms into frames by "x" toggles of specified signal
+    mode: "none"
+
+    toggle_signal_path: ""
+
+    toggle_signal_cycles: 1
+
+    hier_levels: ""
+
+    module: ""
+
+    frame_count: 1
+
+  # Power analysis mode for different levels of the VLSI flow
+  # Valid options are:
+  #   "rtl" for rtl level power analysis
+  #   "gl" for post-syn or par analysis
+  # type: FlowLevel
+  level: "rtl"
+
   hdl: []
 
   power_spec: null
