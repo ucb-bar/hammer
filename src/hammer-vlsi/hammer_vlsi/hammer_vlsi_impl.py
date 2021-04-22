@@ -1397,23 +1397,23 @@ class HammerPowerTool(HammerTool):
     ### Inputs ###
 
     @property
-    def par_database(self) -> str:
+    def flow_database(self) -> str:
         """
-        Get the path to par database for power analysis.
+        Get the path to syn or par database for power analysis.
 
-        :return: The path to par database for power analysis.
+        :return: The path to syn or par database for power analysis.
         """
         try:
-            return self.attr_getter("_par_database", None)
+            return self.attr_getter("_flow_database", None)
         except AttributeError:
-            raise ValueError("Nothing set for the path to par database for power analysis yet")
+            raise ValueError("Nothing set for the path to syn or par database for power analysis yet")
 
-    @par_database.setter
-    def par_database(self, value: str) -> None:
-        """Set the path to par database for power analysis."""
+    @flow_database.setter
+    def flow_database(self, value: str) -> None:
+        """Set the path to syn or par database for power analysis."""
         if not (isinstance(value, str)):
-            raise TypeError("par_database must be a str")
-        self.attr_setter("_par_database", value)
+            raise TypeError("flow_database must be a str")
+        self.attr_setter("_flow_database", value)
 
 
     @property

@@ -907,7 +907,7 @@ sim.submit:
 # Specific inputs for the power tool.
 # These may vary based on the specific tool plugin
 power.inputs:
-  # The path to a place and route database of the design to be analyzed
+  # The path to a synthesis or place-and-route database of the design to be analyzed
   # type: str
   database: null
 
@@ -969,10 +969,12 @@ power.inputs:
   # type: FlowLevel
   level: "rtl"
 
+  # A list of the paths to the design inputs files to be synthesized for power analysis
+  # type: List[str]
   hdl: []
 
-  power_spec: null
-
+  # Top RTL module for power analysis
+  # type: str
   top_module: null
 
 
