@@ -573,7 +573,7 @@ class HammerDriver:
         power_tool.submit_command = HammerSubmitCommand.get("power", self.database)
         power_tool.run_dir = run_dir
 
-        power_tool.par_database = self.database.get_setting("power.inputs.database", nullvalue="")
+        power_tool.flow_database = self.database.get_setting("power.inputs.database", nullvalue="")
         power_tool.spefs = self.database.get_setting("power.inputs.spefs", nullvalue=[])
         power_tool.waveforms = self.database.get_setting("power.inputs.waveforms", nullvalue=[])
         power_tool.saifs = self.database.get_setting("power.inputs.saifs", nullvalue=[])
@@ -585,7 +585,7 @@ class HammerDriver:
 
 
         missing_inputs = False
-        if power_tool.par_database == "" and len(power_tool.hdl) == 0:
+        if power_tool.flow_database == "" and len(power_tool.hdl) == 0:
             #self.log.error("PAR database not specified for power analysis")
             self.log.error("Database or design not specified for power analysis")
             missing_inputs = True
