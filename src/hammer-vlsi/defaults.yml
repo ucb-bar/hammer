@@ -940,7 +940,8 @@ power.inputs:
   # type: List[str]
   saifs: []
 
-  # If true, power tool will report for only the extra MMMC corners, saving runtime.
+  # If overridden to ``true``, the power tool will report for only the extra MMMC corners, saving runtime.
+  # The typical use case is to only report power and rail analysis for a typical/nominal corner.
   # type: bool
   extra_corners_only: false
 
