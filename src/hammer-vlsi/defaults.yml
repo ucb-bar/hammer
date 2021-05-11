@@ -213,7 +213,7 @@ vlsi.inputs:
   # type (str) - One of the following:
   # - "setup" (corner used for setup timing)
   # - "hold" (corner used for hold timing)
-  # - "extra" (misc. corner potentially used for power analysis
+  # - "extra" (misc. corner, e.g. nominal for power analysis)
   # voltage (str) - voltage of the corner should match tech json
   # temp (str) - temperature of the corner should match tech json
   mmmc_corners: []
@@ -939,6 +939,11 @@ power.inputs:
   # A list of paths to SAIF activity files to be used for dynamic power analysis.
   # type: List[str]
   saifs: []
+
+  # If overridden to ``true``, the power tool will report for only the extra MMMC corners, saving runtime.
+  # The typical use case is to only report power and rail analysis for a typical/nominal corner.
+  # type: bool
+  extra_corners_only: false
 
 power.submit:
   command: "${vlsi.submit.command}"
