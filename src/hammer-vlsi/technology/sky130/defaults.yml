@@ -1,0 +1,59 @@
+# Settings for the skywater technology to be overriden by the project.
+technology.sky130:
+  skywater_pdk: "PATH_TO_SKYWATER_PDK"
+  open_pdks: "PATH_TO_OPEN_PDKS"
+  skywater_nda: "PATH_TO_NDA_FILES"
+  sram_lib: ""
+
+# Set some defaults for this technology.
+vlsi:
+  # Technology dimension
+  core.node: 130
+  inputs:
+    # Supply voltages.
+    supplies:
+        power: [{name: "VDD", pin: "VPWR"}]
+        ground: [{name: "VSS", pin: "VGND"}]
+        VDD: "1.8 V"
+        GND: "0 V"
+    
+    # mmmc corners config
+    mmmc_corners: [
+      {
+        "name": "sky130_fd_sc_hd__ss_100C_1v60",
+        "type": "setup",
+        "voltage": "1.60 V",
+        "temp": "100 C"
+      },
+      {
+        "name": "sky130_fd_sc_hd__ff_n40C_1v95",
+        "type": "hold",
+        "voltage": "1.95 V",
+        "temp": "-40 C"
+      }
+    ]
+  technology:
+    # Set standard cell LEF placement site
+    placement_site: "unithd"
+
+    # Set the layer that blocks vias under bumps
+    # nk - not sure if this is right??
+    bump_block_cut_layer: "via4"
+
+    # Set the interval and offset for tap cells
+    # nk - not sure if this is right??
+    tap_cell_interval: "27"
+    tap_cell_offset: "5"
+
+technology.core:
+  # This key should exist in the stackups list in the tech json
+  stackup: "sky130_fd_sc_hd"
+  # This should specify the TOPMOST metal layer the standard cells use for power rails
+  # Note that this is not usually stackup specific; it is based on the std cell libraries themselves
+  std_cell_rail_layer: "met1" 
+  # This is used to provide a reference master for generating standard cells
+  tap_cell_rail_reference: "{sky130_fd_sc_hd__tap*}"
+
+par.inputs:
+  gds_merge: true
+  
