@@ -39,6 +39,8 @@ call_mypy ../hammer-vlsi/lvs/*.py
 call_mypy ../hammer-vlsi/pcb/generic/__init__.py
 call_mypy ../hammer-vlsi/technology/asap7/*.py
 call_mypy ../hammer-vlsi/technology/asap7/sram_compiler/__init__.py
+call_mypy ../hammer-vlsi/technology/sky130/*.py
+call_mypy ../hammer-vlsi/technology/sky130/sram_compiler/__init__.py
 
 # Tool plugins which may or may not exist
 if [ -f ../../../hammer-synopsys-plugins/sim/vcs/__init__.py ]; then
