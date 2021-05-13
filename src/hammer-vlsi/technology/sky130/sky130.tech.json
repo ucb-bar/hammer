@@ -1,0 +1,437 @@
+{
+  "name": "Skywater 130nm Library",
+  "grid_unit": "0.001",
+  "time_unit": "1 ps",
+  "installs": [
+    {
+      "path": "$SKYWATER_PDK",
+      "base var": "technology.sky130.skywater_pdk"
+    },
+    {
+      "path": "$OPEN_PDKS",
+      "base var": "technology.sky130.open_pdks"
+    },
+    {
+      "path": "$SKYWATER_NDA",
+      "base var": "technology.sky130.skywater_nda"
+    },
+    {
+      "path": "tech-sky130-cache",
+      "base var": ""
+    }
+  ],
+  "gds map file": "$SKYWATER_NDA/s8/V2.0.1/VirtuosoOA/libs/technology_library/technology_library.layermap",
+  "drc decks": [
+    {
+      "tool name": "calibre",
+      "deck name": "all_drc",
+      "path": "$SKYWATER_NDA/s8/V2.0.1/DRC/Calibre/s8_drcRules",
+      "newpath": "tech-sky130-cache/drc/s8_drcRules"
+    }
+  ],
+  "additional_drc_text": "",
+  
+  "lvs decks": [
+    {
+      "tool name": "calibre",
+      "deck name": "all_lvs",
+      "path": "$SKYWATER_NDA/s8/V2.0.1/LVS/Calibre/lvsRules_s8"
+    }
+  ],
+  "additional_lvs_text": "",
+  
+  "libraries": [
+    {
+      "lef file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd.tlef",
+      "provides": [
+        {
+          "lib_type": "technology"
+        }
+      ]
+    },
+
+    {
+      "nldm liberty file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ff_100C_1v65.lib",
+      "verilog sim": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v",
+      "lef file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
+      "spice file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-sky130-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.65 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ff_100C_1v95.lib",
+      "verilog sim": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v",
+      "lef file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
+      "spice file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-sky130-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ff_n40C_1v56.lib",
+      "verilog sim": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v",
+      "lef file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
+      "spice file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-sky130-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.56 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ff_n40C_1v65.lib",
+      "verilog sim": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v",
+      "lef file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
+      "spice file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-sky130-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.65 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ff_n40C_1v76.lib",
+      "verilog sim": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v",
+      "lef file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
+      "spice file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-sky130-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.76 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ff_n40C_1v95.lib",
+      "verilog sim": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v",
+      "lef file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
+      "spice file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-sky130-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_100C_1v40.lib",
+      "verilog sim": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v",
+      "lef file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
+      "spice file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-sky130-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.40 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_100C_1v60.lib",
+      "verilog sim": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v",
+      "lef file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
+      "spice file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-sky130-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.60 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_n40C_1v28.lib",
+      "verilog sim": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v",
+      "lef file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
+      "spice file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-sky130-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.28 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_n40C_1v35.lib",
+      "verilog sim": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v",
+      "lef file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
+      "spice file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-sky130-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.35 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_n40C_1v40.lib",
+      "verilog sim": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v",
+      "lef file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
+      "spice file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-sky130-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.40 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_n40C_1v44.lib",
+      "verilog sim": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v",
+      "lef file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
+      "spice file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-sky130-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.44 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_n40C_1v60.lib",
+      "verilog sim": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v",
+      "lef file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
+      "spice file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-sky130-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.60 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_n40C_1v76.lib",
+      "verilog sim": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v",
+      "lef file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
+      "spice file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-sky130-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.76 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib",
+      "verilog sim": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v",
+      "lef file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
+      "spice file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-sky130-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "025 C"
+      },
+      "supplies": {
+        "VDD": "1.80 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    },
+    {
+      "nldm liberty file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_100C_1v80.lib",
+      "verilog sim": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v",
+      "lef file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
+      "spice file": "$OPEN_PDKS/sky130/sky130A/libs.ref/sky130_fd_sc_hd/cdl/sky130_fd_sc_hd.cdl",
+      "gds file": "tech-sky130-cache/gds/sky130_fd_sc_hd.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.80 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "stdcell",
+          "vt": "RVT" 
+        }
+      ]
+    }
+  ],
+  "stackups": [
+    {
+      "name": "sky130_fd_sc_hd",
+      "metals": [
+        {"name": "li1", "index": 1, "direction": "vertical", "min_width": 0.17, "max_width": 2147483.647, "pitch": 0.34, "offset": 0.23, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 0.17}]},
+        {"name": "met1", "index": 2, "direction": "horizontal", "min_width": 0.14, "max_width": 2147483.647, "pitch": 0.28, "offset": 0.17, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 0.14}, {"width_at_least": 3.0, "min_spacing": 0.28}]},
+        {"name": "met2", "index": 3, "direction": "vertical", "min_width": 0.14, "max_width": 2147483.647, "pitch": 0.28, "offset": 0.23, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 0.14}, {"width_at_least": 3.0, "min_spacing": 0.28}]},
+        {"name": "met3", "index": 4, "direction": "horizontal", "min_width": 0.3, "max_width": 2147483.647, "pitch": 0.6, "offset": 0.34, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 0.3}, {"width_at_least": 3.0, "min_spacing": 0.4}]},
+        {"name": "met4", "index": 5, "direction": "vertical", "min_width": 0.3, "max_width": 2147483.647, "pitch": 0.6, "offset": 0.46, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 0.3}, {"width_at_least": 3.0, "min_spacing": 0.4}]},
+        {"name": "met5", "index": 6, "direction": "horizontal", "min_width": 1.6, "max_width": 2147483.647, "pitch": 3.2, "offset": 1.7, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 1.6}]}
+      ]
+    }
+  ],
+  "sites": [
+    {"name": "unithd", "x": 0.46, "y": 2.72},
+    {"name": "unithddbl", "x": 0.46, "y": 5.44}
+  ],
+  "physical only cells list": [
+    "sky130_fd_sc_hd__tap_1", "sky130_fd_sc_hd__tap_2", 
+    "sky130_fd_sc_hd__tapvgnd_1", 
+    "sky130_fd_sc_hd__tapvpwrvgnd_1",
+    "sky130_fd_sc_hd__fill_1", "sky130_fd_sc_hd__fill_2", "sky130_fd_sc_hd__fill_4", "sky130_fd_sc_hd__fill_8", 
+    "sky130_fd_sc_hd__decap_12", "sky130_fd_sc_hd__decap_3", "sky130_fd_sc_hd__decap_4", "sky130_fd_sc_hd__decap_6", "sky130_fd_sc_hd__decap_8"
+  ],
+  "special cells": [
+    {"cell_type": "tapcell",   "name": ["sky130_fd_sc_hd__tap_1", "sky130_fd_sc_hd__tap_2"]},
+    {"cell_type": "stdfiller", "name": ["sky130_fd_sc_hd__fill_1", "sky130_fd_sc_hd__fill_2", 
+                                        "sky130_fd_sc_hd__fill_4", "sky130_fd_sc_hd__fill_8", 
+                                        "sky130_fd_sc_hd__decap_12", "sky130_fd_sc_hd__decap_3", "sky130_fd_sc_hd__decap_4",
+                                        "sky130_fd_sc_hd__decap_6", "sky130_fd_sc_hd__decap_8"]}
+  ]
+}
