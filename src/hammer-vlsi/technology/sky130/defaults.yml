@@ -1,9 +1,10 @@
-# Settings for the skywater technology to be overriden by the project.
+# Settings for the sky130 technology to be overriden by the project.
 technology.sky130:
-  skywater_pdk: "PATH_TO_SKYWATER_PDK"
+  sky130_pdk: "PATH_TO_SKY130_PDK"
   open_pdks: "PATH_TO_OPEN_PDKS"
-  skywater_nda: "PATH_TO_NDA_FILES"
-  sram_lib: ""
+  sky130_nda: "PATH_TO_NDA_FILES"
+  dffram_lib: "PATH_TO_DFFRAM/Compiler/build"
+  openram_lib: "PATH_TO_sky130_fd_bd_sram/macros"
 
 # Set some defaults for this technology.
 vlsi:

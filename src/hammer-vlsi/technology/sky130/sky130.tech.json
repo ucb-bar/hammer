@@ -4,28 +4,28 @@
   "time_unit": "1 ps",
   "installs": [
     {
-      "path": "$SKYWATER_PDK",
-      "base var": "technology.sky130.skywater_pdk"
+      "path": "$SKY130_PDK",
+      "base var": "technology.sky130.sky130_pdk"
     },
     {
       "path": "$OPEN_PDKS",
       "base var": "technology.sky130.open_pdks"
     },
     {
-      "path": "$SKYWATER_NDA",
-      "base var": "technology.sky130.skywater_nda"
+      "path": "$SKY130_NDA",
+      "base var": "technology.sky130.sky130_nda"
     },
     {
       "path": "tech-sky130-cache",
       "base var": ""
     }
   ],
-  "gds map file": "$SKYWATER_NDA/s8/V2.0.1/VirtuosoOA/libs/technology_library/technology_library.layermap",
+  "gds map file": "$SKY130_NDA/s8/V2.0.1/VirtuosoOA/libs/technology_library/technology_library.layermap",
   "drc decks": [
     {
       "tool name": "calibre",
       "deck name": "all_drc",
-      "path": "$SKYWATER_NDA/s8/V2.0.1/DRC/Calibre/s8_drcRules",
+      "path": "$SKY130_NDA/s8/V2.0.1/DRC/Calibre/s8_drcRules",
       "newpath": "tech-sky130-cache/drc/s8_drcRules"
     }
   ],
@@ -35,7 +35,7 @@
     {
       "tool name": "calibre",
       "deck name": "all_lvs",
-      "path": "$SKYWATER_NDA/s8/V2.0.1/LVS/Calibre/lvsRules_s8"
+      "path": "$SKY130_NDA/s8/V2.0.1/LVS/Calibre/lvsRules_s8"
     }
   ],
   "additional_lvs_text": "",
