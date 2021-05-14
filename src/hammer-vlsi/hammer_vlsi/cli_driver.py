@@ -175,6 +175,8 @@ class CLIDriver:
         self.hierarchical_synthesis_par_actions = {}  # type: Dict[str, CLIActionConfigType]
         self.hierarchical_drc_actions = {}  # type: Dict[str, CLIActionConfigType]
         self.hierarchical_lvs_actions = {}  # type: Dict[str, CLIActionConfigType]
+        self.hierarchical_sim_actions = {}  # type: Dict[str, CLIActionConfigType]
+        self.hierarchical_power_actions = {}  # type: Dict[str, CLIActionConfigType]
         self.hierarchical_auto_action = None  # type: Optional[CLIActionConfigType]
 
     def action_map(self) -> Dict[str, CLIActionType]:
@@ -789,6 +791,18 @@ class CLIDriver:
                 "lvs_{block}"
             ], module, action)
 
+        for module, action in self.hierarchical_sim_actions.items():
+            add_variants([
+                "sim-{block}",
+                "sim_{block}"
+            ], module, action)
+
+        for module, action in self.hierarchical_power_actions.items():
+            add_variants([
+                "power-{block}",
+                "power_{block}"
+            ], module, action)
+
         return actions
 
     def get_extra_hierarchical_synthesis_hooks(self, driver: HammerDriver) -> Dict[str, List[HammerToolHookAction]]:
@@ -821,6 +835,24 @@ class CLIDriver:
     def get_extra_hierarchical_lvs_hooks(self, driver: HammerDriver) -> Dict[str, List[HammerToolHookAction]]:
         """
         Return a list of extra hierarchical LVS hooks in this project.
+        To be overridden by subclasses.
+
+        :return: Dictionary of (module name, list of hooks)
+        """
+        return dict()
+
+    def get_extra_hierarchical_sim_hooks(self, driver: HammerDriver) -> Dict[str, List[HammerToolHookAction]]:
+        """
+        Return a list of extra hierarchical sim hooks in this project.
+        To be overridden by subclasses.
+
+        :return: Dictionary of (module name, list of hooks)
+        """
+        return dict()
+
+    def get_extra_hierarchical_power_hooks(self, driver: HammerDriver) -> Dict[str, List[HammerToolHookAction]]:
+        """
+        Return a list of extra hierarchical power hooks in this project.
         To be overridden by subclasses.
 
         :return: Dictionary of (module name, list of hooks)
@@ -888,6 +920,30 @@ class CLIDriver:
         Set the action associated with hierarchical syn_par for the given module (in hierarchical flows).
         """
         self.hierarchical_synthesis_par_actions[module] = action
+
+    def set_hierarchical_sim_action(self, module: str, action: CLIActionConfigType) -> None:
+        """
+        Set the action associated with hierarchical sim for the given module (in hierarchical flows).
+        """
+        self.hierarchical_sim_actions[module] = action
+
+    def get_hierarchical_sim_action(self, module: str) -> CLIActionConfigType:
+        """
+        Get the action associated with hierarchical sim for the given module (in hierarchical flows).
+        """
+        return self.hierarchical_sim_actions[module]
+
+    def set_hierarchical_power_action(self, module: str, action: CLIActionConfigType) -> None:
+        """
+        Set the action associated with hierarchical power for the given module (in hierarchical flows).
+        """
+        self.hierarchical_power_actions[module] = action
+
+    def get_hierarchical_power_action(self, module: str) -> CLIActionConfigType:
+        """
+        Get the action associated with hierarchical power for the given module (in hierarchical flows).
+        """
+        return self.hierarchical_power_actions[module]
 
     def valid_actions(self) -> List[str]:
         """Get the list of valid actions for the command-line driver."""
@@ -997,6 +1053,7 @@ class CLIDriver:
         stop_step = only_step or to_step or until_step or None
         stop_incl = (only_step or to_step) is not None
         if (start_step or stop_step) is not None:
+            # TODO: do this for the rest of the actions
             driver.set_post_custom_syn_tool_hooks(HammerTool.make_start_stop_hooks(
                 HammerStartStopStep(step=start_step, inclusive=start_incl),
                 HammerStartStopStep(step=stop_step, inclusive=stop_incl)))
@@ -1045,6 +1102,20 @@ class CLIDriver:
                     base_project_config[0] = deeplist(driver.project_configs)
                     d.update_project_configs(deeplist(base_project_config[0]) + [config])
 
+                def sim_pre_func(d: HammerDriver) -> None:
+                    self.lvs_rundir = os.path.join(d.obj_dir, "sim-{module}".format(
+                        module=module))  # TODO(edwardw): fix this ugly os.path.join; it doesn't belong here.
+                    # TODO(edwardw): remove ugly hack to store stuff in parent context
+                    base_project_config[0] = deeplist(driver.project_configs)
+                    d.update_project_configs(deeplist(base_project_config[0]) + [config])
+
+                def power_pre_func(d: HammerDriver) -> None:
+                    self.lvs_rundir = os.path.join(d.obj_dir, "power-{module}".format(
+                        module=module))  # TODO(edwardw): fix this ugly os.path.join; it doesn't belong here.
+                    # TODO(edwardw): remove ugly hack to store stuff in parent context
+                    base_project_config[0] = deeplist(driver.project_configs)
+                    d.update_project_configs(deeplist(base_project_config[0]) + [config])
+
                 def post_run(d: HammerDriver, rundir: str) -> None:
                     # Write out the configs used/generated for logging/debugging.
                     with open(os.path.join(rundir, "full_config.json"), "w") as f:
@@ -1068,6 +1139,12 @@ class CLIDriver:
                 def lvs_post_run(d: HammerDriver) -> None:
                     post_run(d, get_or_else(self.lvs_rundir, ""))
 
+                def sim_post_run(d: HammerDriver) -> None:
+                    post_run(d, get_or_else(self.sim_rundir, ""))
+
+                def power_post_run(d: HammerDriver) -> None:
+                    post_run(d, get_or_else(self.power_rundir, ""))
+
                 syn_action = self.create_synthesis_action(self.get_extra_hierarchical_synthesis_hooks(driver).get(module, []),
                                                           pre_action_func=syn_pre_func, post_load_func=None,
                                                           post_run_func=syn_post_run)
@@ -1086,6 +1163,14 @@ class CLIDriver:
                                                     pre_action_func=lvs_pre_func, post_load_func=None,
                                                     post_run_func=lvs_post_run)
                 self.set_hierarchical_lvs_action(module, lvs_action)
+                sim_action = self.create_sim_action(self.get_extra_hierarchical_sim_hooks(driver).get(module, []),
+                                                    pre_action_func=sim_pre_func, post_load_func=None,
+                                                    post_run_func=sim_post_run)
+                self.set_hierarchical_sim_action(module, sim_action)
+                power_action = self.create_power_action(self.get_extra_hierarchical_power_hooks(driver).get(module, []),
+                                                    pre_action_func=power_pre_func, post_load_func=None,
+                                                    post_run_func=power_post_run)
+                self.set_hierarchical_power_action(module, power_action)
 
             create_actions(module_iter, config_iter)
 

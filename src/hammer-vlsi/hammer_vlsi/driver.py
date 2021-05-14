@@ -498,6 +498,8 @@ class HammerDriver:
         sim_tool.technology = self.tech
         sim_tool.input_files = self.database.get_setting("sim.inputs.input_files")
         sim_tool.top_module = self.database.get_setting("sim.inputs.top_module", nullvalue="")
+        sim_tool.hierarchical_mode = HierarchicalMode.from_str(
+            self.database.get_setting("vlsi.inputs.hierarchical.mode"))
         sim_tool.submit_command = HammerSubmitCommand.get("sim", self.database)
         sim_tool.all_regs = self.database.get_setting("sim.inputs.all_regs")
         sim_tool.seq_cells = self.database.get_setting("sim.inputs.seq_cells")
@@ -560,6 +562,8 @@ class HammerDriver:
         power_tool.logger = self.log.context("power")
         power_tool.technology = self.tech
         power_tool.set_database(self.database)
+        power_tool.hierarchical_mode = HierarchicalMode.from_str(
+            self.database.get_setting("vlsi.inputs.hierarchical.mode"))
         power_tool.submit_command = HammerSubmitCommand.get("power", self.database)
         power_tool.run_dir = run_dir
 
