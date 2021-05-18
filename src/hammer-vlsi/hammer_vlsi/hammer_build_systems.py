@@ -40,6 +40,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         - sim-syn
         - sim-par
         - power-rtl
+        - power-syn
         - power-par
 
     For hierarchical flows, the syn, par, drc, lvs, sim, and power actions will all be suffixed with the name
@@ -130,13 +131,14 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         ####################################################################################
         ## Steps for {mod}
         ####################################################################################
-        .PHONY: sim-rtl{suffix} syn{suffix} sim-syn{suffix} par{suffix} sim-par{suffix} power-rtl{suffix} power-par{suffix} drc{suffix} lvs{suffix}
+        .PHONY: sim-rtl{suffix} syn{suffix} sim-syn{suffix} par{suffix} sim-par{suffix} power-rtl{suffix} power-syn{suffix} power-par{suffix} drc{suffix} lvs{suffix}
         sim-rtl{suffix}: {sim_rtl_out}
         syn{suffix}: {syn_out}
         sim-syn{suffix}: {sim_syn_out}
         par{suffix}: {par_out}
         sim-par{suffix}: {sim_par_out}
         power-rtl{suffix}: {power_rtl_out}
+        power-syn{suffix}: {power_syn_out}
         power-par{suffix}: {power_par_out}
         drc{suffix}: {drc_out}
         lvs{suffix}: {lvs_out}
@@ -160,6 +162,15 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
 
         {sim_syn_out}: {sim_syn_in} $(HAMMER_SIM_SYN_DEPENDENCIES)
         \t$(HAMMER_EXEC) {env_confs} -p {sim_syn_in} $(HAMMER_EXTRA_ARGS) --sim_rundir {sim_syn_run_dir} --obj_dir {obj_dir} sim{suffix}
+
+        {power_sim_syn_in}: {sim_syn_out}
+        \t$(HAMMER_EXEC) {env_confs} -p {sim_syn_out} $(HAMMER_EXTRA_ARGS) -o {power_sim_syn_in} --obj_dir {obj_dir} sim-to-power
+
+        {power_syn_in}: {syn_out}
+        \t$(HAMMER_EXEC) {env_confs} -p {syn_out} $(HAMMER_EXTRA_ARGS) -o {power_syn_in} --obj_dir {obj_dir} syn-to-power
+
+        {power_syn_out}: {power_sim_syn_in} {power_syn_in} $(HAMMER_POWER_SYN_DEPENDENCIES)
+        \t$(HAMMER_EXEC) {env_confs} -p {power_sim_syn_in} -p {power_syn_in} $(HAMMER_EXTRA_ARGS) --power_rundir {power_syn_run_dir} --obj_dir {obj_dir} power{suffix}
 
         {par_in}: {syn_out}
         \t$(HAMMER_EXEC) {env_confs} -p {syn_out} $(HAMMER_EXTRA_ARGS) -o {par_in} --obj_dir {obj_dir} syn-to-par
@@ -212,6 +223,9 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         redo-sim-syn{suffix}:
         \t$(HAMMER_EXEC) {env_confs} -p {sim_syn_in} $(HAMMER_EXTRA_ARGS) --sim_rundir {sim_syn_run_dir} --obj_dir {obj_dir} sim{suffix}
 
+        redo-power-syn{suffix}:
+        \t$(HAMMER_EXEC) {env_confs} -p {power_sim_syn_in} $(HAMMER_EXTRA_ARGS) --power_rundir {power_syn_run_dir} --obj_dir {obj_dir} power{suffix}
+
         redo-par{suffix}:
         \t$(HAMMER_EXEC) {env_confs} -p {par_in} $(HAMMER_EXTRA_ARGS) --obj_dir {obj_dir} par{suffix}
 
@@ -238,6 +252,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         power_rtl_run_dir = os.path.join(obj_dir, "power-rtl-rundir")
         syn_run_dir = os.path.join(obj_dir, "syn-rundir")
         sim_syn_run_dir = os.path.join(obj_dir, "sim-syn-rundir")
+        power_syn_run_dir = os.path.join(obj_dir, "power-syn-rundir")
         par_run_dir = os.path.join(obj_dir, "par-rundir")
         sim_par_run_dir = os.path.join(obj_dir, "sim-par-rundir")
         power_par_run_dir = os.path.join(obj_dir, "power-par-rundir")
@@ -252,6 +267,9 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         syn_out = os.path.join(syn_run_dir, "syn-output-full.json")
         sim_syn_in = os.path.join(obj_dir, "sim-syn-input.json")
         sim_syn_out = os.path.join(sim_syn_run_dir, "sim-output-full.json")
+        power_sim_syn_in = os.path.join(obj_dir, "power-sim-syn-input.json")
+        power_syn_in = os.path.join(obj_dir, "power-syn-input.json")
+        power_syn_out = os.path.join(power_syn_run_dir, "power-output-full.json")
         par_in = os.path.join(obj_dir, "par-input.json")
         par_out = os.path.join(par_run_dir, "par-output-full.json")
         sim_par_in = os.path.join(obj_dir, "sim-par-input.json")
@@ -273,6 +291,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
             power_sim_rtl_in=power_sim_rtl_in, power_rtl_out=power_rtl_out, power_rtl_run_dir=power_rtl_run_dir,
             sim_par_in=sim_par_in, sim_par_out=sim_par_out, sim_par_run_dir=sim_par_run_dir,
             p_syn_in=p_syn_in, syn_out=syn_out, par_in=par_in, par_out=par_out,
+            power_sim_syn_in=power_sim_syn_in, power_syn_in=power_syn_in, power_syn_out=power_syn_out, power_syn_run_dir=power_syn_run_dir,
             power_sim_par_in=power_sim_par_in, power_par_in=power_par_in, power_par_out=power_par_out, power_par_run_dir=power_par_run_dir,
             drc_in=drc_in, drc_out=drc_out, lvs_in=lvs_in, lvs_out=lvs_out)
     else:
@@ -285,6 +304,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
             power_rtl_run_dir = os.path.join(obj_dir, "power-rtl-" + node)
             syn_run_dir = os.path.join(obj_dir, "syn-" + node)
             sim_syn_run_dir = os.path.join(obj_dir, "sim-syn-" + node)
+            power_syn_run_dir = os.path.join(obj_dir, "power-syn-" + node)
             par_run_dir = os.path.join(obj_dir, "par-" + node)
             sim_par_run_dir = os.path.join(obj_dir, "sim-par-" + node)
             power_par_run_dir = os.path.join(obj_dir, "power-par-" + node)
@@ -299,6 +319,9 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
             syn_out = os.path.join(syn_run_dir, "syn-output-full.json")
             sim_syn_in = os.path.join(obj_dir, "sim-syn-{}-input.json".format(node))
             sim_syn_out = os.path.join(sim_syn_run_dir, "sim-output-full.json")
+            power_sim_syn_in = os.path.join(obj_dir, "power-sim-syn-{}-input.json".format(node))
+            power_syn_in = os.path.join(obj_dir, "power-syn-{}-input.json".format(node))
+            power_syn_out = os.path.join(power_syn_run_dir, "power-output-full.json")
             par_in = os.path.join(obj_dir, "par-{}-input.json".format(node))
             par_out = os.path.join(par_run_dir, "par-output-full.json")
             sim_par_in = os.path.join(obj_dir, "sim-par-{}-input.json".format(node))
@@ -333,6 +356,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
                 sim_syn_in=sim_syn_in, sim_syn_out=sim_syn_out, sim_syn_run_dir=sim_syn_run_dir,
                 sim_par_in=sim_par_in, sim_par_out=sim_par_out, sim_par_run_dir=sim_par_run_dir,
                 p_syn_in=p_syn_in, syn_out=syn_out, par_in=par_in, par_out=par_out,
+                power_sim_syn_in=power_sim_syn_in, power_syn_in=power_syn_in, power_syn_out=power_syn_out, power_syn_run_dir=power_syn_run_dir,
                 power_sim_par_in=power_sim_par_in, power_par_in=power_par_in, power_par_out=power_par_out, power_par_run_dir=power_par_run_dir,
                 drc_in=drc_in, drc_out=drc_out, lvs_in=lvs_in, lvs_out=lvs_out)
 

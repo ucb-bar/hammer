@@ -572,14 +572,15 @@ class HammerDriver:
         power_tool.waveforms = self.database.get_setting("power.inputs.waveforms", nullvalue=[])
         power_tool.saifs = self.database.get_setting("power.inputs.saifs", nullvalue=[])
 
-        power_tool.hdl = self.database.get_setting("power.inputs.hdl", nullvalue=[])
+        power_tool.input_files = self.database.get_setting("power.inputs.input_files", nullvalue=[])
+        power_tool.sdc = self.database.get_setting("power.inputs.sdc", nullvalue="")
         power_tool.top_module = self.database.get_setting("power.inputs.top_module", nullvalue="")
         power_tool.tb_name = self.database.get_setting("power.inputs.tb_name", nullvalue="")
         power_tool.tb_dut = self.database.get_setting("power.inputs.tb_dut", nullvalue="")
 
 
         missing_inputs = False
-        if power_tool.flow_database == "" and len(power_tool.hdl) == 0:
+        if power_tool.flow_database == "" and len(power_tool.input_files) == 0:
             #self.log.error("PAR database not specified for power analysis")
             self.log.error("Database or design not specified for power analysis")
             missing_inputs = True
@@ -789,6 +790,32 @@ class HammerDriver:
             return None
 
     @staticmethod
+    def synthesis_output_to_power_input(output_dict: dict) -> Optional[dict]:
+        """
+        Generate the appropriate inputs for running post-synthesis power analysis from the
+        outputs of synthesis run.
+        Does not merge the results with any project dictionaries.
+        :param output_dict: Dict containing synthesis.outputs.*
+        :return: power.inputs.* settings generated from output_dict,
+                 or None if output_dict was invalid
+        """
+        try:
+            output_files = deeplist(output_dict["synthesis.outputs.output_files"])
+            result = {
+                "power.inputs.input_files": output_files,
+                "power.inputs.input_files_meta": "append",
+                "power.inputs.top_module": output_dict["synthesis.inputs.top_module"],
+                "power.inputs.level": 'gl',
+                "power.inputs.sdc": output_dict["synthesis.outputs.sdc"],
+                "vlsi.builtins.is_complete": False
+            }  # type: Dict[str, Any]
+            return result
+        except KeyError:
+            # KeyError means that the given dictionary is missing output keys.
+            return None
+
+
+    @staticmethod
     def par_output_to_sim_input(output_dict: dict) -> Optional[dict]:
         """
         Generate the appropriate inputs for running gate level simulations from the
@@ -822,7 +849,7 @@ class HammerDriver:
         outputs of par run.
         Does not merge the results with any project dictionaries.
         :param output_dict: Dict containing par.outputs.*
-        :return: sim.inputs.* settings generated from output_dict,
+        :return: power.inputs.* settings generated from output_dict,
                  or None if output_dict was invalid
         """
         try:

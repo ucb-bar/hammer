@@ -944,6 +944,26 @@ power.inputs:
   # The typical use case is to only report power and rail analysis for a typical/nominal corner.
   # type: bool
   extra_corners_only: false
+  # A list of the paths to the design inputs files (HDL or netlist) for power analysis
+  # type: List[str]
+  input_files: []
+
+  # type: str
+  sdc: ""
+
+  # Power report configs that are added to the general report for each waveform
+  # type: List[PowerReport]
+  # PowerReport struct members:
+  # toggle_signal (str) - Path to the signal to generate report windows based on toggles
+  # num_toggles (int) - The number of toggles of the toggle_signal for each frame to report power
+  # module (str) - the path to the module to report power for (default here is the Chipyard top level)
+  # levels (int) - the number of levels in the design hierachy to report
+  # example: report_configs: [{toggle_signal: "/ChipTop/clock", num_toggles:5, module: "chiptop", levels:3}]
+  report_configs: []
+
+  # A set of raw plain text commands to configure custom report generation for all waveforms
+  # type: List[str]
+  custom_reports: []
 
   frames:
     # Valid options:
@@ -951,15 +971,10 @@ power.inputs:
     # frame_count: split the waveforms into "x" frames
     # cycles: split the waveforms into frames by "x" toggles of specified signal
     mode: "none"
-
     toggle_signal_path: ""
-
     toggle_signal_cycles: 1
-
     hier_levels: ""
-
     module: ""
-
     frame_count: 1
 
   # Power analysis mode for different levels of the VLSI flow
@@ -968,10 +983,6 @@ power.inputs:
   #   "gl" for post-syn or par analysis
   # type: FlowLevel
   level: "rtl"
-
-  # A list of the paths to the design inputs files to be synthesized for power analysis
-  # type: List[str]
-  hdl: []
 
   # Top RTL module for power analysis
   # type: str
