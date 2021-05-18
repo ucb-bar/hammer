@@ -78,6 +78,13 @@ class FlowLevel(Enum):
     def __str__(self) -> str:
         return reverse_dict(FlowLevel.__mapping())[self]
 
+PowerReport = NamedTuple('PowerReport', [
+    ('toggle_signal', str),
+    ('num_toggles', str),
+    ('module', str),
+    ('levels', int)
+])
+
 
 import hammer_tech
 
@@ -1392,6 +1399,20 @@ class HammerPowerTool(HammerTool):
         """Return the flow level."""
         return FlowLevel.from_str(self.get_setting("power.inputs.level"))
 
+    def get_power_report_configs(self) -> List[PowerReport]:
+        """
+        Get the power report config settings
+        """
+        configs = self.get_setting("power.inputs.report_configs")
+        output = []
+        for config in configs:
+            report = PowerReport(
+                toggle_signal=config["toggle_signal"], num_toggles=config["num_toggles"],
+                module=config["module"], levels=config["levels"]
+            )
+            output.append(report)
+        return output
+
     ### Generated interface HammerPowerTool ###
     ### DO NOT MODIFY THIS CODE, EDIT generate_properties.py INSTEAD ###
     ### Inputs ###
@@ -1417,6 +1438,26 @@ class HammerPowerTool(HammerTool):
 
 
     @property
+    def input_files(self) -> List[str]:
+        """
+        Get the paths to RTL input files or design netlist.
+
+        :return: The paths to RTL input files or design netlist.
+        """
+        try:
+            return self.attr_getter("_input_files", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the paths to RTL input files or design netlist yet")
+
+    @input_files.setter
+    def input_files(self, value: List[str]) -> None:
+        """Set the paths to RTL input files or design netlist."""
+        if not (isinstance(value, List)):
+            raise TypeError("input_files must be a List[str]")
+        self.attr_setter("_input_files", value)
+
+
+    @property
     def spefs(self) -> List[str]:
         """
         Get the list of spef files for power anlaysis.
@@ -1434,6 +1475,26 @@ class HammerPowerTool(HammerTool):
         if not (isinstance(value, List)):
             raise TypeError("spefs must be a List[str]")
         self.attr_setter("_spefs", value)
+
+
+    @property
+    def sdc(self) -> Optional[str]:
+        """
+        Get the (optional) input SDC constraint file.
+
+        :return: The (optional) input SDC constraint file.
+        """
+        try:
+            return self.attr_getter("_sdc", None)
+        except AttributeError:
+            return None
+
+    @sdc.setter
+    def sdc(self, value: Optional[str]) -> None:
+        """Set the (optional) input SDC constraint file."""
+        if not (isinstance(value, str) or (value is None)):
+            raise TypeError("sdc must be a Optional[str]")
+        self.attr_setter("_sdc", value)
 
 
     @property

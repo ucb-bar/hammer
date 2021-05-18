@@ -215,7 +215,9 @@ def main(args) -> int:
                                 filename="hammer_vlsi/hammer_vlsi_impl.py",
                                 inputs=[
                                   InterfaceVar("flow_database", "str", "path to syn or par database for power analysis"),
+                                  InterfaceVar("input_files", "List[str]", "paths to RTL input files or design netlist"),
                                   InterfaceVar("spefs", "List[str]", "list of spef files for power anlaysis"),
+                                  InterfaceVar("sdc", "Optional[str]","(optional) input SDC constraint file"),
                                   InterfaceVar("waveforms", "List[str]", "list of waveform dump files for dynamic power analysis"),
                                   InterfaceVar("saifs", "List[str]", "list of activity files for dynamic power analysis"),
                                   InterfaceVar("top_module", "str", "top RTL module"),
