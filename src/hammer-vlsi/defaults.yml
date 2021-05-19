@@ -965,18 +965,6 @@ power.inputs:
   # type: List[str]
   custom_reports: []
 
-  frames:
-    # Valid options:
-    # none: no extra reporting
-    # frame_count: split the waveforms into "x" frames
-    # cycles: split the waveforms into frames by "x" toggles of specified signal
-    mode: "none"
-    toggle_signal_path: ""
-    toggle_signal_cycles: 1
-    hier_levels: ""
-    module: ""
-    frame_count: 1
-
   # Power analysis mode for different levels of the VLSI flow
   # Valid options are:
   #   "rtl" for rtl level power analysis
