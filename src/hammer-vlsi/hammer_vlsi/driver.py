@@ -502,8 +502,9 @@ class HammerDriver:
             self.database.get_setting("vlsi.inputs.hierarchical.mode"))
         # Special case: if non-leaf hierarchical and gate-level, append ilm sim netlists
         if sim_tool.hierarchical_mode.is_nonleaf_hierarchical() and sim_tool.level == SimulationLevel.GateLevel:
-            sim_netlists = list(map(lambda x: x.sim_netlist, sim_tool.get_input_ilms()))
-            sim_tool.input_files.extend(sim_netlists)
+            for ilm in sim_tool.get_input_ilms():
+                if isinstance(ilm.sim_netlist, str):
+                    sim_tool.input_files.append(ilm.sim_netlist)
         sim_tool.input_files = self.database.get_setting("sim.inputs.input_files")
         sim_tool.submit_command = HammerSubmitCommand.get("sim", self.database)
         sim_tool.all_regs = self.database.get_setting("sim.inputs.all_regs")

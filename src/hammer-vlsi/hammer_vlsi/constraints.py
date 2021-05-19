@@ -52,7 +52,7 @@ class ILMStruct(NamedTuple('ILMStruct', [
             lef=str(ilm["lef"]),
             gds=str(ilm["gds"]),
             netlist=str(ilm["netlist"]),
-            sim_netlist=ilm.get("sim_netlist")  # type: Optional[str]
+            sim_netlist=ilm.get("sim_netlist")
         )
 
 
