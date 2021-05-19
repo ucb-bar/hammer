@@ -21,7 +21,7 @@ from .hammer_tool import HammerTool
 from .hooks import HammerToolHookAction
 from .hammer_vlsi_impl import HammerVLSISettings, HammerPlaceAndRouteTool, HammerSynthesisTool, \
     HammerSignoffTool, HammerDRCTool, HammerLVSTool, HammerSRAMGeneratorTool, HammerPCBDeliverableTool, HammerSimTool, HammerPowerTool, \
-    HierarchicalMode, load_tool, PlacementConstraint, SRAMParameters, ILMStruct
+    HierarchicalMode, load_tool, PlacementConstraint, SRAMParameters, ILMStruct, SimulationLevel
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, HammerVLSILoggingContext
 from .submit_command import HammerSubmitCommand
 
@@ -500,6 +500,12 @@ class HammerDriver:
         sim_tool.top_module = self.database.get_setting("sim.inputs.top_module", nullvalue="")
         sim_tool.hierarchical_mode = HierarchicalMode.from_str(
             self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+        # Special case: if non-leaf hierarchical and gate-level, append ilm sim netlists
+        if sim_tool.hierarchical_mode.is_nonleaf_hierarchical() and sim_tool.level == SimulationLevel.GateLevel:
+            for ilm in sim_tool.get_input_ilms():
+                if isinstance(ilm.sim_netlist, str):
+                    sim_tool.input_files.append(ilm.sim_netlist)
+        sim_tool.input_files = self.database.get_setting("sim.inputs.input_files")
         sim_tool.submit_command = HammerSubmitCommand.get("sim", self.database)
         sim_tool.all_regs = self.database.get_setting("sim.inputs.all_regs")
         sim_tool.seq_cells = self.database.get_setting("sim.inputs.seq_cells")
