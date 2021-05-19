@@ -205,6 +205,7 @@ vlsi.inputs:
   # lef (str) - path to the LEF file
   # gds (str) - path to the GDS file
   # netlist (str) - path to the netlist file
+  # sim_netlist (str) - Optional. If specified, this netlist is appended for hierarchical simulation
   ilms: []
 
   # Multi-mode multi-corner setups, overrides supplies
