@@ -33,7 +33,7 @@ def main(args: List[str]) -> int:
                 json.append("""{{
   "type" : "sram",
   "name" : "{n}",
-  "depth" : {d},
+  "depth" : "{d}",
   "width" : {w},
   "family" : "1rw",
   "mask" : "true",
@@ -65,7 +65,7 @@ def main(args: List[str]) -> int:
 {{
   "type" : "sram",
   "name" : "{n}",
-  "depth" : {d},
+  "depth" : "{d}",
   "width" : {w},
   "family" : "1rw1r",
   "mask" : "true",
