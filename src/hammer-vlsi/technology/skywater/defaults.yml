@@ -7,6 +7,7 @@ technology.skywater:
   # Where all skywater libraries are located
   # Must be specified.
   libs_dir: "/tools/commercial/skywater/skywater-pdk/libraries/"
+  openram_lib: "/tools/commercial/skywater/swtech130/local/sky130_sram_macros"
 
   # This should be the path to the PDK root
   # Must be specified.
