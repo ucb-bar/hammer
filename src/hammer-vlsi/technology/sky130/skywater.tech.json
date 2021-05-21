@@ -5,11 +5,11 @@
   "installs": [
     {
       "path": "$SKYWATER_BASE_DIR",
-      "base var": "technology.skywater.base_dir"
+      "base var": "technology.sky130.base_dir"
     },
     {
       "path": "$SKYWATER_LIBS",
-      "base var": "technology.skywater.libs_dir"
+      "base var": "technology.sky130.libs_dir"
     },
     {
       "path": "tech-skywater-cache",

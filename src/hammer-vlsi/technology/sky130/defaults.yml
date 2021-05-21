@@ -1,5 +1,5 @@
 # Settings for the skywater technology to be overriden by the project.
-technology.skywater:
+technology.sky130:
   # This should be the path to the root of the install
   # Must be specified.
   base_dir: "/tools/commercial/skywater/skywater-pdk"

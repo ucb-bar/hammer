@@ -1,25 +1,51 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-#
-#  Script to generate the ASAP7 dummy SRAM cache.
-#
-#  See LICENSE for licence details.
 
+"""
+Script to generate the SRAM cache.
+See LICENSE for licence details.
+
+As of publication-time, in Sky130, you should not use this script **at all**. 
+
+The `sram-cache.json` is hand-crafted to work through peculiarites 
+that get ChipYard to play nice with one (and only one) OpenRAM-generated Sky130 SRAM. 
+
+This script is here nonetheless for future work, 
+to be updated so that it might expand to more SRAMs later. 
+
+Sources of SRAM comprehended by this script include:
+* The OpenRAM/ eFabless generated macros available at https://github.com/efabless/sky130_sram_macros
+* DFFRAM's flip-flop/latch based macros availabe at https://github.com/Cloud-V/DFFRAM
+
+Note to date *ChipYard*, particularly its macro-compiler/selector, 
+does not comprehend the interface to the latter. 
+
+Prior editions of scripts similar to this have read macro-names 
+from a text file. Given the near-complete difference between handling 
+of the OpenRAM and DFFRAM circuits, this version has to pretend to 
+discern which is which from their names in said text file. 
+(So, just put these things in edits to the script instead.) 
+
+"""
 import sys
 import re
 
 from typing import List
+srams_dot_txt = """
+sky130_sram_1kbyte_1rw1r_32x256_8
+sky130_sram_1kbyte_1rw1r_8x1024_8
+sky130_sram_2kbyte_1rw1r_32x512_8
+sky130_sram_4kbyte_1rw1r_32x1024_8
+sky130_sram_8kbyte_1rw1r_32x2048_8
+"""
 
 def main(args: List[str]) -> int:
     if len(args) != 3:
-        print("Usage: ./sram-cache-gen.py list-of-srams-1-per-line.txt output-file.json")
-        print("E.g.: ./sram-cache-gen.py srams.txt sram-cache.json")
+        print("Usage: ./sram-cache-gen.py output-file.json")
+        print("E.g.: ./sram-cache-gen.py sram-cache.json")
         return 1
 
-    list_of_srams = []  # type: List[str]
-    with open(sys.argv[1]) as f:
-        for line in f:
-            list_of_srams.append(line)
+    list_of_srams = srams_dot_txt.split("\n")
 
     print(str(len(list_of_srams)) + " SRAMs to cache")
 

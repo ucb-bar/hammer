@@ -36,7 +36,7 @@ class SkywaterTech(HammerTechnology):
         # make models dirs in parse_models function
         
         # useful paths/values
-        base_dir = self.get_setting("technology.skywater.base_dir")
+        base_dir = self.get_setting("technology.sky130.base_dir")
         libraries = os.listdir(base_dir+'/libraries/')
         library = 'sky130_fd_sc_hd'
         libs_path = base_dir+'/libraries/'

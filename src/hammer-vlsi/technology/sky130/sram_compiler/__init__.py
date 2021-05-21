@@ -9,7 +9,7 @@ from abc import ABCMeta, abstractmethod
 
 class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
     def tool_config_prefix(self) -> str:
-        return "sram_generator.skywater"
+        return "sram_generator.sky130"
 
     def version_number(self, version: str) -> int:
         return 0
@@ -61,7 +61,7 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
         # elif params.family == "1rw1r":
         if params.family == "1rw":
             self.logger.info("Compiling 1rw1r memories to OpenRAM instances")
-            base_dir = self.get_setting("technology.skywater.openram_lib")
+            base_dir = self.get_setting("technology.sky130.openram_lib")
             fam_code = params.family
             s=round(round(params.width*params.depth/8, -3)/1000) # size in kiB
             w=params.width
