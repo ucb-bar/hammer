@@ -8,10 +8,6 @@
       "base var": "technology.sky130.sky130_pdk"
     },
     {
-      "path": "$OPEN_PDKS",
-      "base var": "technology.sky130.open_pdks"
-    },
-    {
       "path": "$SKY130_NDA",
       "base var": "technology.sky130.sky130_nda"
     },
@@ -24,7 +20,7 @@
       "base var": ""
     }
   ],
-  "gds map file": "$SKY130_NDA/s8/V2.0.1/VirtuosoOA/libs/technology_library/technology_library.layermap",
+  "gds map file": "tech-sky130-cache/technology_library.layermap",
   "drc decks": [
     {
       "tool name": "calibre",
@@ -33,7 +29,6 @@
     }
   ],
   "additional_drc_text": "",
-  
   "lvs decks": [
     {
       "tool name": "calibre",
@@ -42,17 +37,53 @@
     }
   ],
   "additional_lvs_text": "",
-  
+  "physical only cells list": [
+    "sky130_fd_sc_hd__tap_1",
+    "sky130_fd_sc_hd__tap_2",
+    "sky130_fd_sc_hd__tapvgnd_1",
+    "sky130_fd_sc_hd__tapvpwrvgnd_1",
+    "sky130_fd_sc_hd__fill_1",
+    "sky130_fd_sc_hd__fill_2",
+    "sky130_fd_sc_hd__fill_4",
+    "sky130_fd_sc_hd__fill_8",
+    "sky130_fd_sc_hd__decap_12",
+    "sky130_fd_sc_hd__decap_3",
+    "sky130_fd_sc_hd__decap_4",
+    "sky130_fd_sc_hd__decap_6",
+    "sky130_fd_sc_hd__decap_8"
+  ],
+  "special cells": [
+    {
+      "cell_type": "tapcell",
+      "name": [
+        "sky130_fd_sc_hd__tap_1",
+        "sky130_fd_sc_hd__tap_2"
+      ]
+    },
+    {
+      "cell_type": "stdfiller",
+      "name": [
+        "sky130_fd_sc_hd__fill_1",
+        "sky130_fd_sc_hd__fill_2",
+        "sky130_fd_sc_hd__fill_4",
+        "sky130_fd_sc_hd__fill_8",
+        "sky130_fd_sc_hd__decap_12",
+        "sky130_fd_sc_hd__decap_3",
+        "sky130_fd_sc_hd__decap_4",
+        "sky130_fd_sc_hd__decap_6",
+        "sky130_fd_sc_hd__decap_8"
+      ]
+    }
+  ],
   "libraries": [
     {
-      "lef file": "tech-sky130-cache/techlef/sky130_fd_sc_hd.tlef",
+      "lef file": "tech-sky130-cache/sky130_fd_sc_hd.tlef",
       "provides": [
         {
           "lib_type": "technology"
         }
       ]
     },
-
     {
       "nldm liberty file": "$SKY130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ff_100C_1v65.lib",
       "verilog sim": "$SKY130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v",
@@ -71,7 +102,7 @@
       "provides": [
         {
           "lib_type": "stdcell",
-          "vt": "RVT" 
+          "vt": "RVT"
         }
       ]
     },
@@ -93,7 +124,7 @@
       "provides": [
         {
           "lib_type": "stdcell",
-          "vt": "RVT" 
+          "vt": "RVT"
         }
       ]
     },
@@ -115,7 +146,7 @@
       "provides": [
         {
           "lib_type": "stdcell",
-          "vt": "RVT" 
+          "vt": "RVT"
         }
       ]
     },
@@ -137,7 +168,7 @@
       "provides": [
         {
           "lib_type": "stdcell",
-          "vt": "RVT" 
+          "vt": "RVT"
         }
       ]
     },
@@ -159,7 +190,7 @@
       "provides": [
         {
           "lib_type": "stdcell",
-          "vt": "RVT" 
+          "vt": "RVT"
         }
       ]
     },
@@ -181,7 +212,7 @@
       "provides": [
         {
           "lib_type": "stdcell",
-          "vt": "RVT" 
+          "vt": "RVT"
         }
       ]
     },
@@ -203,7 +234,7 @@
       "provides": [
         {
           "lib_type": "stdcell",
-          "vt": "RVT" 
+          "vt": "RVT"
         }
       ]
     },
@@ -225,7 +256,7 @@
       "provides": [
         {
           "lib_type": "stdcell",
-          "vt": "RVT" 
+          "vt": "RVT"
         }
       ]
     },
@@ -247,7 +278,7 @@
       "provides": [
         {
           "lib_type": "stdcell",
-          "vt": "RVT" 
+          "vt": "RVT"
         }
       ]
     },
@@ -269,7 +300,7 @@
       "provides": [
         {
           "lib_type": "stdcell",
-          "vt": "RVT" 
+          "vt": "RVT"
         }
       ]
     },
@@ -291,7 +322,7 @@
       "provides": [
         {
           "lib_type": "stdcell",
-          "vt": "RVT" 
+          "vt": "RVT"
         }
       ]
     },
@@ -313,7 +344,7 @@
       "provides": [
         {
           "lib_type": "stdcell",
-          "vt": "RVT" 
+          "vt": "RVT"
         }
       ]
     },
@@ -335,7 +366,7 @@
       "provides": [
         {
           "lib_type": "stdcell",
-          "vt": "RVT" 
+          "vt": "RVT"
         }
       ]
     },
@@ -357,7 +388,7 @@
       "provides": [
         {
           "lib_type": "stdcell",
-          "vt": "RVT" 
+          "vt": "RVT"
         }
       ]
     },
@@ -379,7 +410,7 @@
       "provides": [
         {
           "lib_type": "stdcell",
-          "vt": "RVT" 
+          "vt": "RVT"
         }
       ]
     },
@@ -401,7 +432,7 @@
       "provides": [
         {
           "lib_type": "stdcell",
-          "vt": "RVT" 
+          "vt": "RVT"
         }
       ]
     }
@@ -410,31 +441,125 @@
     {
       "name": "sky130_fd_sc_hd",
       "metals": [
-        {"name": "li1", "index": 1, "direction": "vertical", "min_width": 0.17, "max_width": 2147483.647, "pitch": 0.34, "offset": 0.23, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 0.17}]},
-        {"name": "met1", "index": 2, "direction": "horizontal", "min_width": 0.14, "max_width": 2147483.647, "pitch": 0.28, "offset": 0.17, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 0.14}, {"width_at_least": 3.0, "min_spacing": 0.28}]},
-        {"name": "met2", "index": 3, "direction": "vertical", "min_width": 0.14, "max_width": 2147483.647, "pitch": 0.28, "offset": 0.23, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 0.14}, {"width_at_least": 3.0, "min_spacing": 0.28}]},
-        {"name": "met3", "index": 4, "direction": "horizontal", "min_width": 0.3, "max_width": 2147483.647, "pitch": 0.6, "offset": 0.34, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 0.3}, {"width_at_least": 3.0, "min_spacing": 0.4}]},
-        {"name": "met4", "index": 5, "direction": "vertical", "min_width": 0.3, "max_width": 2147483.647, "pitch": 0.6, "offset": 0.46, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 0.3}, {"width_at_least": 3.0, "min_spacing": 0.4}]},
-        {"name": "met5", "index": 6, "direction": "horizontal", "min_width": 1.6, "max_width": 2147483.647, "pitch": 3.2, "offset": 1.7, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 1.6}]}
+        {
+          "name": "li1",
+          "index": 1,
+          "direction": "vertical",
+          "min_width": 0.17,
+          "max_width": 2147483.647,
+          "pitch": 0.34,
+          "offset": 0.23,
+          "power_strap_widths_and_spacings": [
+            {
+              "width_at_least": 0.0,
+              "min_spacing": 0.17
+            }
+          ]
+        },
+        {
+          "name": "met1",
+          "index": 2,
+          "direction": "horizontal",
+          "min_width": 0.14,
+          "max_width": 2147483.647,
+          "pitch": 0.28,
+          "offset": 0.17,
+          "power_strap_widths_and_spacings": [
+            {
+              "width_at_least": 0.0,
+              "min_spacing": 0.14
+            },
+            {
+              "width_at_least": 3.0,
+              "min_spacing": 0.28
+            }
+          ]
+        },
+        {
+          "name": "met2",
+          "index": 3,
+          "direction": "vertical",
+          "min_width": 0.14,
+          "max_width": 2147483.647,
+          "pitch": 0.28,
+          "offset": 0.23,
+          "power_strap_widths_and_spacings": [
+            {
+              "width_at_least": 0.0,
+              "min_spacing": 0.14
+            },
+            {
+              "width_at_least": 3.0,
+              "min_spacing": 0.28
+            }
+          ]
+        },
+        {
+          "name": "met3",
+          "index": 4,
+          "direction": "horizontal",
+          "min_width": 0.3,
+          "max_width": 2147483.647,
+          "pitch": 0.6,
+          "offset": 0.34,
+          "power_strap_widths_and_spacings": [
+            {
+              "width_at_least": 0.0,
+              "min_spacing": 0.3
+            },
+            {
+              "width_at_least": 3.0,
+              "min_spacing": 0.4
+            }
+          ]
+        },
+        {
+          "name": "met4",
+          "index": 5,
+          "direction": "vertical",
+          "min_width": 0.3,
+          "max_width": 2147483.647,
+          "pitch": 0.6,
+          "offset": 0.46,
+          "power_strap_widths_and_spacings": [
+            {
+              "width_at_least": 0.0,
+              "min_spacing": 0.3
+            },
+            {
+              "width_at_least": 3.0,
+              "min_spacing": 0.4
+            }
+          ]
+        },
+        {
+          "name": "met5",
+          "index": 6,
+          "direction": "horizontal",
+          "min_width": 1.6,
+          "max_width": 2147483.647,
+          "pitch": 3.2,
+          "offset": 1.7,
+          "power_strap_widths_and_spacings": [
+            {
+              "width_at_least": 0.0,
+              "min_spacing": 1.6
+            }
+          ]
+        }
       ]
     }
   ],
   "sites": [
-    {"name": "unithd", "x": 0.46, "y": 2.72},
-    {"name": "unithddbl", "x": 0.46, "y": 5.44}
-  ],
-  "physical only cells list": [
-    "sky130_fd_sc_hd__tap_1", "sky130_fd_sc_hd__tap_2", 
-    "sky130_fd_sc_hd__tapvgnd_1", 
-    "sky130_fd_sc_hd__tapvpwrvgnd_1",
-    "sky130_fd_sc_hd__fill_1", "sky130_fd_sc_hd__fill_2", "sky130_fd_sc_hd__fill_4", "sky130_fd_sc_hd__fill_8", 
-    "sky130_fd_sc_hd__decap_12", "sky130_fd_sc_hd__decap_3", "sky130_fd_sc_hd__decap_4", "sky130_fd_sc_hd__decap_6", "sky130_fd_sc_hd__decap_8"
-  ],
-  "special cells": [
-    {"cell_type": "tapcell",   "name": ["sky130_fd_sc_hd__tap_1", "sky130_fd_sc_hd__tap_2"]},
-    {"cell_type": "stdfiller", "name": ["sky130_fd_sc_hd__fill_1", "sky130_fd_sc_hd__fill_2", 
-                                        "sky130_fd_sc_hd__fill_4", "sky130_fd_sc_hd__fill_8", 
-                                        "sky130_fd_sc_hd__decap_12", "sky130_fd_sc_hd__decap_3", "sky130_fd_sc_hd__decap_4",
-                                        "sky130_fd_sc_hd__decap_6", "sky130_fd_sc_hd__decap_8"]}
+    {
+      "name": "unithd",
+      "x": 0.46,
+      "y": 2.72
+    },
+    {
+      "name": "unithddbl",
+      "x": 0.46,
+      "y": 5.44
+    }
   ]
 }
