@@ -9,7 +9,11 @@ technology.sky130:
 # Set some defaults for this technology.
 vlsi:
   # Technology dimension
-  core.node: 130
+  core:
+    node: 130
+    sram_generator_tool: "sram_compiler"
+    sram_generator_tool_path: ["${HAMMER_HOME}/src/hammer-vlsi/technology/sky130"]
+    sram_generator_tool_path_meta: "append"
   inputs:
     # Supply voltages.
     supplies:
@@ -17,6 +21,8 @@ vlsi:
         ground: [{name: "VSS", pin: "VGND"}]
         VDD: "1.8 V"
         GND: "0 V"
+
+    dont_use_list: ["*sdf*"] # Scan flops go haywire! Avoid them. 
     
     # mmmc corners config
     mmmc_corners: [
