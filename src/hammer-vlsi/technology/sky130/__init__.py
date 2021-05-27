@@ -8,8 +8,7 @@
 import sys
 import re
 import os
-#import tempfile
-#import shutil
+from pathlib import Path 
 #from typing import NamedTuple, List, Optional, Tuple, Dict, Set, Any
 
 import hammer_tech
@@ -25,32 +24,35 @@ class SKY130Tech(HammerTechnology):
         # maybe run open_pdks for the user and install in tech cache...?
         # this takes a while and ~7Gb
 
-        # hack tlef
-        sky130A = self.get_setting("technology.sky130.sky130A")
-        lef_files = self.read_libs([
-            hammer_tech.filters.lef_filter
-        ], hammer_tech.HammerTechnologyUtils.to_plain_item)
-        tlef_new_path = lef_files[0]
-        words = tlef_new_path.split('/')
-        tlef_filename = words[-1]
-        library_name = tlef_filename.split('.')[0]
-        tlef_old_path = os.path.join(sky130A,'libs.ref',library_name,'techlef',tlef_filename)
+        # hack tlef, adding this very important `licon` section 
+        setting_dir = self.get_setting("technology.sky130.open_pdks")
+        setting_dir = Path(setting_dir)
+        library_name = 'sky130_fd_sc_hd'
+        tlef_old_path = setting_dir / 'sky130'/ 'sky130A' / 'libs.ref' / library_name / 'techlef' / f'{library_name}.tlef'
+        if not tlef_old_path.exists():
+            raise FileNotFoundError(f"Tech-LEF not found: {tlef_old_path}")
+
+        cache_tech_dir_path = Path(self.cache_dir) / 'techlef'
+        os.makedirs(cache_tech_dir_path, exist_ok=True)
+        tlef_new_path = cache_tech_dir_path / f'{library_name}.tlef' 
 
         f_old = open(tlef_old_path,'r')
         f_new = open(tlef_new_path,'w')
         for line in f_old:
             f_new.write(line)
             if line.strip() == 'END pwell':
-                f_new.write('''
-LAYER licon
-  TYPE CUT ;
-END licon
-''')
-            
+                f_new.write(_the_tlef_edit)
+
         f_old.close()
         f_new.close()
         print('Loaded Sky130 Tech')
         
+
+_the_tlef_edit = '''
+LAYER licon
+  TYPE CUT ;
+END licon
+'''
 
 tech = SKY130Tech()
 
