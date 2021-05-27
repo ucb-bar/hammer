@@ -333,7 +333,11 @@
              }
           },
           "size": {
-             "type": "number"
+             "type": "array",
+             "items": {
+               "title": "string",
+               "type": "string"
+             }
           }
         }
       }

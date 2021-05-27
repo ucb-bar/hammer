@@ -304,3 +304,21 @@ class TemperatureValue(ValueWithUnit):
     @property
     def unit_type(self) -> str:
         return "voltage"
+
+
+class CapacitanceValue(ValueWithUnit):
+    """Capacitance value - e.g. "5 fF", "10 nF".
+    """
+
+    @property
+    def default_prefix(self) -> str:
+        """Default prefix: fF"""
+        return "f"
+
+    @property
+    def unit(self) -> str:
+        return "F"
+
+    @property
+    def unit_type(self) -> str:
+        return "capacitance"
