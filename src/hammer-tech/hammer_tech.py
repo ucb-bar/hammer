@@ -646,7 +646,11 @@ class HammerTechnology:
         assert len(path) > 0, "path must not be empty"
 
         # If the path is an absolute path, return it as-is.
-        if path[0] == "/":
+        if path[0] == os.sep:
+            return path
+
+        # If the path has no path separator, treat it as a raw string.
+        if not os.sep in path:
             return path
 
         base_path = path.split(os.path.sep)[0]
@@ -1053,6 +1057,13 @@ class HammerTechnology:
     def get_tech_sim_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
         """
         Return a list of sim hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_tech_power_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
+        """
+        Return a list of power hooks for this technology and tool.
         To be overridden by subclasses.
         """
         return list()
