@@ -16,11 +16,16 @@
       "base var": "technology.sky130.sky130A"
     },
     {
+      "path": "$GDS_MAP_FILE",
+      "base var": "technology.sky130.gds_map_file"
+    },
+    {
       "path": "tech-sky130-cache",
       "base var": ""
     }
   ],
-  "gds map file": "tech-sky130-cache/technology_library.layermap",
+  "gds map file": "$GDS_MAP_FILE",
+  "layer map file": "$SKY130_NDA/s8/V2.0.1/VirtuosoOA/libs/technology_library/technology_library.layermap",
   "drc decks": [
     {
       "tool name": "calibre",
@@ -52,12 +57,12 @@
     "sky130_fd_sc_hd__decap_6",
     "sky130_fd_sc_hd__decap_8"
   ],
+  "dont use list": [],
   "special cells": [
     {
       "cell_type": "tapcell",
       "name": [
-        "sky130_fd_sc_hd__tap_1",
-        "sky130_fd_sc_hd__tap_2"
+        "sky130_fd_sc_hd__tapvpwrvgnd_1"
       ]
     },
     {
@@ -73,11 +78,24 @@
         "sky130_fd_sc_hd__decap_6",
         "sky130_fd_sc_hd__decap_8"
       ]
+    },
+    {
+      "cell_type": "tielocell",
+      "name": [
+        "sky130_fd_sc_hd__conb_1"
+      ]
+    },
+    {
+      "cell_type": "tiehicell",
+      "name": [
+        "sky130_fd_sc_hd__conb_1"
+      ]
     }
   ],
   "libraries": [
     {
       "lef file": "tech-sky130-cache/sky130_fd_sc_hd.tlef",
+      "spice file": "$SKY130_NDA/s8/V2.0.1/LVS/Calibre/source.cdl",
       "provides": [
         {
           "lib_type": "technology"
@@ -432,6 +450,17 @@
       "provides": [
         {
           "lib_type": "stdcell",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "lef file": "$SKY130A/libs.ref/sky130_fd_pr/lef/sky130_fd_pr.lef",
+      "spice file": "$SKY130A/libs.ref/sky130_fd_pr/cdl/sky130_fd_pr.cdl",
+      "gds file": "$SKY130A/libs.ref/sky130_fd_pr/gds/sky130_fd_pr.gds",
+      "provides": [
+        {
+          "lib_type": "primitives",
           "vt": "RVT"
         }
       ]

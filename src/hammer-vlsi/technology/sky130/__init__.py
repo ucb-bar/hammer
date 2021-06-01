@@ -29,10 +29,10 @@ class SKY130Tech(HammerTechnology):
 
     def setup_techlef(self) -> None:
         """ Copy and hack the tech-lef, adding this very important `licon` section """
-        setting_dir = self.get_setting("technology.sky130.open_pdks")
+        setting_dir = self.get_setting("technology.sky130.sky130A")
         setting_dir = Path(setting_dir)
         library_name = 'sky130_fd_sc_hd'
-        tlef_old_path = setting_dir / 'sky130'/ 'sky130A' / 'libs.ref' / library_name / 'techlef' / f'{library_name}.tlef'
+        tlef_old_path = setting_dir / 'libs.ref' / library_name / 'techlef' / f'{library_name}.tlef'
         if not tlef_old_path.exists():
             raise FileNotFoundError(f"Tech-LEF not found: {tlef_old_path}")
 
