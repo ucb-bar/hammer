@@ -670,7 +670,7 @@ class HammerTechnology:
         assert len(path) > 0, "path must not be empty"
 
         # If the path is an absolute path, return it as-is.
-        if path[0] == os.sep:
+        if os.path.isabs(path):
             return path
 
         # If the path has no path separator, treat it as a raw string.
