@@ -14,7 +14,7 @@ from hammer_utils import get_or_else, assert_function_type
 if TYPE_CHECKING:
     # grumble grumble, we need a better Library class generator
     # Here is a stub class for type checking purposes only
-    from hammer_tech import LibraryPrefix
+    from hammer_tech import LibraryPrefix, SpiceModelFile
     class Library:
         @property
         def extra_prefixes(self) -> List[LibraryPrefix]: pass
@@ -28,6 +28,10 @@ if TYPE_CHECKING:
         def verilog_synth(self) -> Optional[str]: pass
         @property
         def verilog_sim(self) -> Optional[str]: pass
+        @property
+        def spice_model_file(self) -> Optional[SpiceModelFile]: pass
+        @property
+        def power_grid_library(self) -> Optional[str]: pass
 
 PathsFunctionType = Callable[["Library"], List[str]]
 

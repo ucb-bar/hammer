@@ -313,6 +313,30 @@ class LVSDeck(NamedTuple('LVSDeck', [
             path=str(d['path'])
         )
 
+# Struct that holds information about Spice model files.
+class SpiceModelFile(NamedTuple('SpiceModelFile', [
+    ('path', str),
+    ('lib_corner', Optional[str])
+])):
+    __slots__ = ()
+
+    def to_setting(self) -> dict:
+        output = {'path': str(self.path)}
+        if self.lib_corner is not None:
+            output.update({'lib corner': str(self.lib_corner)})
+        return output
+
+    @staticmethod
+    def from_setting(d: dict) -> "SpiceModelFile":
+        lib_corner = d['lib corner']
+        if lib_corner is not None:
+            lib_corner = str(d['lib corner'])
+        return SpiceModelFile(
+            path=str(d['path']),
+            lib_corner=lib_corner
+        )
+
+
 class HammerTechnology:
     """
     Abstraction layer of Technology.
