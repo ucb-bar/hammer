@@ -5,7 +5,7 @@ technology.sky130:
   sky130A: "PATH_TO_SKY130A_DIR"
   dffram_lib: "PATH_TO_DFFRAM/Compiler/build"
   openram_lib: "PATH_TO_sky130_fd_bd_sram/macros"
-  gds_map_file: "PATH_TO_GDS_MAP_FILE (you must write this)"
+  gds_map_file: "PATH_TO_GDS_MAP_FILE (you must write this file)"
 
 # Set some defaults for this technology.
 vlsi:
