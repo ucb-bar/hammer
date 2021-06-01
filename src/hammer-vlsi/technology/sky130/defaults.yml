@@ -1,10 +1,11 @@
 # Settings for the sky130 technology to be overriden by the project.
 technology.sky130:
   sky130_pdk: "PATH_TO_SKY130_PDK"
-  open_pdks: "PATH_TO_OPEN_PDKS"
   sky130_nda: "PATH_TO_NDA_FILES"
+  sky130A: "PATH_TO_SKY130A_DIR"
   dffram_lib: "PATH_TO_DFFRAM/Compiler/build"
   openram_lib: "PATH_TO_sky130_fd_bd_sram/macros"
+  gds_map_file: "PATH_TO_GDS_MAP_FILE (you must write this)"
 
 # Set some defaults for this technology.
 vlsi:
