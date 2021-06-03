@@ -121,8 +121,9 @@ class SKY130Tech(HammerTechnology):
 
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {"innovus": [
-            HammerTool.make_post_insertion_hook("init_design", sky130_innovus_settings),
-            HammerTool.make_pre_insertion_hook("power_straps", sky130_power_nets),
+            HammerTool.make_post_insertion_hook("init_design",      sky130_innovus_settings),
+            HammerTool.make_pre_insertion_hook("place_tap_cells",   sky130_place_endcaps),
+            HammerTool.make_pre_insertion_hook("power_straps",      sky130_power_nets),
             #HammerTool.make_replacement_hook("power_straps", intech22_innovus.intech22_reference_power_straps),
             # HammerTool.make_post_insertion_hook("power_straps", intech22_innovus.intech22_m2_staples),
             # HammerTool.make_pre_insertion_hook("clock_tree", intech22_innovus.intech22_cts_options),
@@ -161,7 +162,7 @@ def sky130_innovus_settings(ht: HammerTool) -> bool:
 #-------------------------------------------------------------------------------
 set_db route_design_antenna_diode_insertion 1
 set_db route_design_antenna_cell_name "sky130_fd_sc_hd__diode_2"
-set_db route_design_bottom_routing_layer 1
+set_db route_design_bottom_routing_layer 2
     '''
     )
     return True   
@@ -182,7 +183,20 @@ connect_global_net VSS -type net -net_base_name VGND
     )
     return True
 
-
+# reference: /tools/commercial/skywater/swtech130/skywater-src-nda/scs8hd/V0.0.2/scripts
+def sky130_place_endcaps(ht: HammerTool) -> bool:
+    assert isinstance(
+        ht, HammerPlaceAndRouteTool
+    ), "endcap insertion can only run on par"
+    ht.append(
+        '''  
+set_db add_endcaps_boundary_tap        true
+set_db add_endcaps_left_edge sky130_fd_sc_hd__tap_1
+set_db add_endcaps_right_edge sky130_fd_sc_hd__tap_1
+add_endcaps
+    '''
+    )
+    return True
 
 tech = SKY130Tech()
 
