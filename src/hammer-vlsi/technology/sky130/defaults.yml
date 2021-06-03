@@ -5,7 +5,10 @@ technology.sky130:
   sky130A: "PATH_TO_SKY130A_DIR"
   dffram_lib: "PATH_TO_DFFRAM/Compiler/build"
   openram_lib: "PATH_TO_sky130_fd_bd_sram/macros"
+
   gds_map_file: "PATH_TO_GDS_MAP_FILE (you must write this file)"
+  lvs_deck_sources: 
+    - "/tools/commercial/skywater/swtech130/skywater-src-nda/s8/V2.0.1/LVS/Calibre/lvsControlFile_s8"
 
 # Set some defaults for this technology.
 vlsi:
@@ -65,3 +68,7 @@ technology.core:
 par.inputs:
   gds_merge: true
   
+
+# Calibre environment variables
+mentor.extra_env_vars:
+  - PDK_HOME: "/tools/commercial/skywater/swtech130/skywater-src-nda/s8/V2.0.1"
