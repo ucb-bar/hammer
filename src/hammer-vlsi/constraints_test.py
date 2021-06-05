@@ -11,8 +11,8 @@ from hammer_utils import add_dicts
 from hammer_tech import MacroSize
 from hammer_vlsi import DelayConstraint, ClockPort, DummyHammerTool, PinAssignment, PinAssignmentError, \
     PinAssignmentSemiAutoError, PlacementConstraint, PlacementConstraintType, Margins, \
-    BumpAssignment, BumpsDefinition, BumpsPinNamingScheme
-from hammer_vlsi.units import TimeValue
+    BumpAssignment, BumpsDefinition, BumpsPinNamingScheme, DecapConstraint
+from hammer_vlsi.units import TimeValue, CapacitanceValue
 
 import unittest
 
@@ -282,6 +282,148 @@ class DelayConstraintTest(unittest.TestCase):
                 "direction": "",
                 "delay": "20 ns"
             })
+
+
+class DecapConstraintTest(unittest.TestCase):
+    def test_round_trip(self) -> None:
+        """
+        Test that converting to and from dict works.
+        """
+        orig = DecapConstraint(
+            target="capacitance",
+            density=None,
+            capacitance=CapacitanceValue("2 pF"),
+            x=Decimal(100),
+            y=Decimal(200),
+            width=Decimal(300),
+            height=Decimal(400)
+        )
+        copied = DecapConstraint.from_dict(orig.to_dict())
+        self.assertEqual(orig, copied)
+
+        orig = DecapConstraint(
+            target="density",
+            density=Decimal(0.5),
+            capacitance=None,
+            x=None,
+            y=None,
+            width=None,
+            height=None
+        )
+        copied = DecapConstraint.from_dict(orig.to_dict())
+        self.assertEqual(orig, copied)
+
+    def test_invalid_target(self) -> None:
+        """
+        Test that invalid target is caught properly.
+        """
+        with self.assertRaises(ValueError):
+            DecapConstraint(
+                target="cap",
+                density=None,
+                capacitance=CapacitanceValue("2 pF"),
+                x=Decimal(100),
+                y=Decimal(200),
+                width=Decimal(300),
+                height=Decimal(400)
+            )
+
+        with self.assertRaises(ValueError):
+            DecapConstraint(
+                target="dense",
+                density=Decimal(0.5),
+                capacitance=None,
+                x=None,
+                y=None,
+                width=None,
+                height=None
+            )
+        # Test that the error is raised with the dict as well.
+        with self.assertRaises(ValueError):
+            DecapConstraint.from_dict({
+                "target": "",
+                "density": 0.5
+            })
+
+    def test_invalid_density(self) -> None:
+        """
+        Test that density is specified properly
+        """
+        # Target is density but capacitance specified
+        with self.assertRaises(ValueError):
+            DecapConstraint(
+                target="density",
+                density=None,
+                capacitance=CapacitanceValue("2 pF"),
+                x=None,
+                y=None,
+                width=None,
+                height=None
+            )
+
+        # Desired density less than 0
+        with self.assertRaises(ValueError):
+            DecapConstraint(
+                target="density",
+                density=Decimal(-50),
+                capacitance=None,
+                x=None,
+                y=None,
+                width=None,
+                height=None
+            )
+
+        # Desired density greater than 1
+        with self.assertRaises(ValueError):
+            DecapConstraint(
+                target="density",
+                density=Decimal(50),
+                capacitance=None,
+                x=None,
+                y=None,
+                width=None,
+                height=None
+            )
+
+        # Area incorrectly specified
+        with self.assertRaises(ValueError):
+            DecapConstraint(
+                target="density",
+                density=Decimal(50),
+                capacitance=None,
+                x=Decimal(100),
+                y=Decimal(200),
+                width=None,
+                height=None
+            )
+
+    def test_invalid_capacitance(self) -> None:
+        """
+        Test that capacitance is specified properly
+        """
+        # Target is capacitance but density specified
+        with self.assertRaises(ValueError):
+            DecapConstraint(
+                target="capacitance",
+                density=Decimal(0.5),
+                capacitance=None,
+                x=None,
+                y=None,
+                width=None,
+                height=None
+            )
+
+        # Capacitance area incorrectly specified
+        with self.assertRaises(ValueError):
+            DecapConstraint(
+                target="capacitance",
+                density=None,
+                capacitance=CapacitanceValue("2 pF"),
+                x=Decimal(100),
+                y=Decimal(200),
+                width=None,
+                height=None
+            )
 
 
 class PinAssignmentTest(unittest.TestCase):

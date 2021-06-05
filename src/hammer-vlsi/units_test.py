@@ -165,6 +165,15 @@ class TemperatureValueTest(unittest.TestCase):
         self.assertAlmostEqual(t25.value_in_units("C"), 25)
         self.assertEqual(t25.str_value_in_units("C"), "25 C")
 
+class CapacitanceValueTest(unittest.TestCase):
+    def test_capacitance(self) -> None:
+        c5 = hammer_vlsi.units.CapacitanceValue("5 fF")
+        self.assertAlmostEqual(c5.value, 5e-15)
+
+        c1000 = hammer_vlsi.units.CapacitanceValue("1000 fF")
+        self.assertAlmostEqual(c1000.value_in_units("pF"), 1)
+        self.assertEqual(c1000.str_value_in_units("fF"), "1000 fF")
+        self.assertEqual(c1000.str_value_in_units("pF"), "1 pF")
 
 if __name__ == '__main__':
     unittest.main()

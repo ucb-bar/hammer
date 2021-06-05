@@ -14,7 +14,7 @@ from typing import Dict, NamedTuple, Optional, List, Any, Tuple, Union, cast
 
 from hammer_utils import reverse_dict, get_or_else, add_dicts
 from hammer_tech import MacroSize
-from .units import TimeValue, VoltageValue, TemperatureValue
+from .units import TimeValue, VoltageValue, TemperatureValue, CapacitanceValue
 
 from decimal import Decimal
 import math
@@ -33,15 +33,17 @@ class ILMStruct(NamedTuple('ILMStruct', [
     __slots__ = ()
 
     def to_setting(self) -> dict:
-        return {
+        output = {
             "dir": self.dir,
             "data_dir": self.data_dir,
             "module": self.module,
             "lef": self.lef,
             "gds": self.gds,
-            "netlist": self.netlist,
-            "sim_netlist": self.sim_netlist
+            "netlist": self.netlist
         }
+        if self.sim_netlist is not None:
+            output.update({"sim_netlist": self.sim_netlist})
+        return output
 
     @staticmethod
     def from_setting(ilm: dict) -> "ILMStruct":
@@ -412,6 +414,82 @@ class DelayConstraint(NamedTuple('DelayConstraint', [
             "delay": self.delay.str_value_in_units("ns", round_zeroes=False)
         }
 
+class DecapConstraint(NamedTuple('DecapConstraint', [
+    ('target', str),
+    ('density', Optional[Decimal]),
+    ('capacitance', Optional[CapacitanceValue]),
+    ('x', Optional[Decimal]),
+    ('y', Optional[Decimal]),
+    ('width', Optional[Decimal]),
+    ('height', Optional[Decimal])
+])):
+    __slots__ = ()
+
+    def __new__(cls,
+            target: str,
+            density: Optional[Decimal],
+            capacitance: Optional[CapacitanceValue],
+            x: Optional[Decimal],
+            y: Optional[Decimal],
+            width: Optional[Decimal],
+            height: Optional[Decimal]) -> "DecapConstraint":
+        if target not in ("capacitance", "density"):
+            raise ValueError("Invalid target {target}".format(target=target))
+        if target == "density" and density is None:
+            raise ValueError("Need to specify decap density")
+        if density is not None:
+            if density > Decimal(1) or density < Decimal(0):
+                raise ValueError("Density must be between 0 and 1, inclusive")
+        if target == "capacitance" and capacitance is None:
+            raise ValueError("Need to specify decap capacitance")
+        all_none = all(x is None for x in (x, y, width, height))
+        all_specified = all(x is not None for x in (x, y, width, height))
+        if not (all_none or all_specified):
+            raise ValueError("Decap x, y, width, and height must all be specified")
+        return super().__new__(cls, target, density, capacitance, x, y, width, height)
+
+    @staticmethod
+    def from_dict(decap_src: Dict[str, Any]) -> "DecapConstraint":
+        density = None  # type: Optional[Decimal]
+        if "density" in decap_src:
+            density = Decimal(str(decap_src["density"]))
+        capacitance = None  # type: Optional[CapacitanceValue]
+        if "capacitance" in decap_src:
+            capacitance = CapacitanceValue(decap_src["capacitance"])
+        x = None  # type: Optional[Decimal]
+        if "x" in decap_src:
+            x = Decimal(str(decap_src["x"]))
+        y = None  # type: Optional[Decimal]
+        if "y" in decap_src:
+            y = Decimal(str(decap_src["y"]))
+        width = None  # type: Optional[Decimal]
+        if "width" in decap_src:
+            width = Decimal(str(decap_src["width"]))
+        height = None  # type: Optional[Decimal]
+        if "height" in decap_src:
+            height = Decimal(str(decap_src["height"]))
+        return DecapConstraint(
+            target=str(decap_src["target"]),
+            density=density,
+            capacitance=capacitance,
+            x=x, y=y, width=width, height=height
+        )
+
+    def to_dict(self) -> dict:
+        output = {"target": self.target}
+        if self.density is not None:
+            output.update({"density": str(self.density)})
+        if self.capacitance is not None:
+            output.update({"capacitance": self.capacitance.str_value_in_units("fF")})
+        if self.x is not None:
+            output.update({"x": str(self.x)})
+        if self.y is not None:
+            output.update({"y": str(self.y)})
+        if self.width is not None:
+            output.update({"width": str(self.width)})
+        if self.height is not None:
+            output.update({"height": str(self.height)})
+        return output
 
 class ObstructionType(Enum):
     Place = 1

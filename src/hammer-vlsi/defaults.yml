@@ -456,6 +456,23 @@ vlsi.inputs:
     #   Requires the semi_auto pin generation mode.
     assignments: []
 
+  # List of decap constraints (DecapConstraint struct).
+  # These are used for finer-grained control over how decap cells are placed.
+  # Decap cells can be targeted for a certain density or total capacitance.
+  # A specific area constraint can be specified with x, y, width, and height.
+  # Each item in the list should be a struct with the following members:
+  # target (str) - Targets a specific density or total capacitance. Should be one of:
+  # - "density"
+  # - "capacitance"
+  # density (Optional[Decimal]) - Target density between 0 and 1. Must be used with target: "density".
+  # capacitance (Optional[CapacitanceValue]) - Target total capacitance. Must be used with target: "capacitance".
+  # x (Optional[Decimal]) - x-coordinate of area constraint
+  # y (Optional[Decimal]) - y-coordinate of area constraint
+  # width (Optional[Decimal]) - width of area constraint
+  # height (Optional[Decimal]) - height of area constraint
+  # Note that either none or all of x, y, width, and height must be specified in a constraint struct.
+  decaps: []
+
   # SVG visualization of placement constraints and bumps for the current hierarchical module.
   # Used by the generate_visualization method accessible by all HammerTools.
   visualization:
