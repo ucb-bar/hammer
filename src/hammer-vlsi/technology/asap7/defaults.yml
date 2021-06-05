@@ -69,3 +69,7 @@ par.inputs:
   # If user decides to set this to false, all other GDSs (e.g. hard macros) need to be 1x scaled
   # TODO: change export_config_outputs for PaR inputs to expose gds_merge to output json
   gds_merge: true
+
+power.voltus:
+  lef_layer_map: "lefdefLayer.map"
+  lef_layer_map_meta: "prependlocal"

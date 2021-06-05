@@ -3,7 +3,7 @@
 Hammer Tech JSON
 ===============================
 
-The ``tech.json`` for a given technology sets up some general information about the install of the PDK, sets up DRC rule decks, sets up pointers to PDK files, and supplies technology stackup information. 
+The ``tech.json`` for a given technology sets up some general information about the install of the PDK, sets up DRC rule decks, sets up pointers to PDK files, and supplies technology stackup information. For a full schema that the tech JSON supports, please see ``src/hammer-tech/schema.json``.
 
 Technology Install
 ---------------------------------
