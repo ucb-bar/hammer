@@ -6,7 +6,9 @@ technology.sky130:
   dffram_lib: "PATH_TO_DFFRAM/Compiler/build"
   openram_lib: "PATH_TO_sky130_fd_bd_sram/macros"
 
-  gds_map_file: "PATH_TO_GDS_MAP_FILE (you must write this file)"
+  # GDS map file path, not provided by efabless
+  gds_map_file: "${CHIPYARD_HOME}/vlsi/sky130-files/sky130_lefpin.map"
+  
   lvs_deck_sources: 
     - "/tools/commercial/skywater/swtech130/skywater-src-nda/s8/V2.0.1/LVS/Calibre/lvsControlFile_s8"
 
@@ -24,13 +26,14 @@ vlsi:
     sram_generator_tool_path_meta: "append"
   inputs:
     # Supply voltages.
+    # TODO: add ability to tie pin to net in Hammer Innovus plugin
     supplies:
-      power:  [ {name: "VDD", pin: "VDD"},
-                {name: "VPWR", pin: "VPWR", tie: "VDD"},
-                {name: "VPB", pin: "VPB", tie: "VDD"}]
-      ground: [ {name: "VSS", pin: "VSS"},
-                {name: "VGND", pin: "VGND", tie: "VSS"},
-                {name: "VNB", pin: "VNB", tie: "VSS"}]
+      power:  [ {name: "VDD", pin: "VDD"}]
+                # {name: "VPWR", pin: "VPWR", tie: "VDD"},
+                # {name: "VPB", pin: "VPB", tie: "VDD"}]
+      ground: [ {name: "VSS", pin: "VSS"}]
+                # {name: "VGND", pin: "VGND", tie: "VSS"},
+                # {name: "VNB", pin: "VNB", tie: "VSS"}]
       VDD: "1.8 V"
       GND: "0 V"
 
@@ -60,8 +63,8 @@ vlsi:
     bump_block_cut_layer: "via4"
 
     # Set the interval and offset for tap cells
-    # nk - not sure if this is right??
-    tap_cell_interval: "27"
+    # interval value from the eFPGA---RTL-to-GDS-with-SKY130
+    tap_cell_interval: "40"
     tap_cell_offset: "5"
 
 technology.core:
