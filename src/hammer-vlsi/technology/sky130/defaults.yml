@@ -7,7 +7,7 @@ technology.sky130:
   openram_lib: "PATH_TO_sky130_fd_bd_sram/macros"
 
   # GDS map file path, not provided by efabless
-  gds_map_file: "${CHIPYARD_HOME}/vlsi/sky130-files/sky130_lefpin.map"
+  gds_map_file: "sky130-files/sky130_lefpin.map"
   
   lvs_deck_sources: 
     - "/tools/commercial/skywater/swtech130/skywater-src-nda/s8/V2.0.1/LVS/Calibre/lvsControlFile_s8"
