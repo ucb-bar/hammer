@@ -59,9 +59,9 @@ class SKY130Tech(HammerTechnology):
         f_old = open(cdl_old_path,'r')
         f_new = open(cdl_new_path,'w')
         for line in f_old:
-            new_line = line.replace('pfet_01v8_hvt','phighvt')
-            new_line = new_line.replace('nfet_01v8',    'nshort')
-            f_new.write(new_line)
+            line = line.replace('pfet_01v8_hvt','phighvt')
+            line = line.replace('nfet_01v8',    'nshort')
+            f_new.write(line)
         f_old.close()
         f_new.close()
 
@@ -122,8 +122,10 @@ class SKY130Tech(HammerTechnology):
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {"innovus": [
             HammerTool.make_post_insertion_hook("init_design",      sky130_innovus_settings),
-            HammerTool.make_pre_insertion_hook("place_tap_cells",   sky130_place_endcaps),
+            HammerTool.make_pre_insertion_hook("place_tap_cells",   sky130_add_endcaps),
             HammerTool.make_pre_insertion_hook("power_straps",      sky130_power_nets),
+            HammerTool.make_post_insertion_hook("place_opt_design", sky130_add_tieoffs),
+            HammerTool.make_pre_insertion_hook("write_design",     sky130_connect_nets),
             #HammerTool.make_replacement_hook("power_straps", intech22_innovus.intech22_reference_power_straps),
             # HammerTool.make_post_insertion_hook("power_straps", intech22_innovus.intech22_m2_staples),
             # HammerTool.make_pre_insertion_hook("clock_tree", intech22_innovus.intech22_cts_options),
@@ -167,24 +169,10 @@ set_db route_design_bottom_routing_layer 2
     )
     return True   
 
-# Pair VDD/VPWR and VSS/VGND nets
-#   these commands are already added in Innovus.write_netlist,
-#   but must also occur before power straps are placed
-def sky130_power_nets(ht: HammerTool) -> bool:
-    assert isinstance(
-        ht, HammerPlaceAndRouteTool
-    ), "Innovus settings can only run on par"
-    """Settings for every tool invocation"""
-    ht.append(
-        '''  
-connect_global_net VDD -type net -net_base_name VPWR
-connect_global_net VSS -type net -net_base_name VGND
-    '''
-    )
-    return True
+
 
 # reference: /tools/commercial/skywater/swtech130/skywater-src-nda/scs8hd/V0.0.2/scripts
-def sky130_place_endcaps(ht: HammerTool) -> bool:
+def sky130_add_endcaps(ht: HammerTool) -> bool:
     assert isinstance(
         ht, HammerPlaceAndRouteTool
     ), "endcap insertion can only run on par"
@@ -194,6 +182,48 @@ set_db add_endcaps_boundary_tap        true
 set_db add_endcaps_left_edge sky130_fd_sc_hd__tap_1
 set_db add_endcaps_right_edge sky130_fd_sc_hd__tap_1
 add_endcaps
+    '''
+    )
+    return True
+
+# Pair VDD/VPWR and VSS/VGND nets
+#   these commands are already added in Innovus.write_netlist,
+#   but must also occur before power straps are placed
+def sky130_power_nets(ht: HammerTool) -> bool:
+    assert isinstance(
+        ht, HammerPlaceAndRouteTool
+    ), "connect global nets can only run on par"
+    ht.append(
+        '''  
+connect_global_net VDD -type net -net_base_name VPWR
+connect_global_net VSS -type net -net_base_name VGND
+    '''
+    )
+    return True
+
+# TODO: add these two functions into Hammer Innovus plugin
+def sky130_add_tieoffs(ht: HammerTool) -> bool:
+    assert isinstance(
+        ht, HammerPlaceAndRouteTool
+    ), "tie high/low cell insertion can only run on par"
+    ht.append(
+        '''  
+set_db add_tieoffs_cells sky130_fd_sc_hd__conb_1
+add_tieoffs 
+    '''
+    )
+    return True
+
+def sky130_connect_nets(ht: HammerTool) -> bool:
+    assert isinstance(
+        ht, HammerPlaceAndRouteTool
+    ), "connect global nets can only run on par"
+    ht.append(
+        '''  
+connect_global_net VDD -type pg_pin -pin_base_name VPWR -all
+connect_global_net VDD -type pg_pin -pin_base_name VPB  -all
+connect_global_net VSS -type pg_pin -pin_base_name VGND -all
+connect_global_net VSS -type pg_pin -pin_base_name VNB  -all
     '''
     )
     return True
