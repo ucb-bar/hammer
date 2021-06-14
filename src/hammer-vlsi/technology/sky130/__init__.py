@@ -24,6 +24,7 @@ class SKY130Tech(HammerTechnology):
         # maybe run open_pdks for the user and install in tech cache...?
         # this takes a while and ~7Gb
         self.library_name = 'sky130_fd_sc_hd'
+        self.setup_sram_cdl()
         self.setup_cdl()
         self.setup_techlef()
         self.setup_layermap()
@@ -42,6 +43,19 @@ class SKY130Tech(HammerTechnology):
         if not os.path.exists(dir_name):
             self.logger.info('Creating directory: {}'.format(dir_name))
             os.makedirs(dir_name)
+            
+    def setup_sram_cdl(self) -> None:
+        old_path = Path(self.get_setting("technology.sky130.openram_lib")) / 'sky130_sram_4kbyte_1rw1r_32x1024_8' / 'sky130_sram_4kbyte_1rw1r_32x1024_8.lvs.sp'
+        new_path = self.expand_tech_cache_path('tech-sky130-cache/sky130_sram_4kbyte_1rw1r_32x1024_8/sky130_sram_4kbyte_1rw1r_32x1024_8.lvs.sp')
+        print(new_path)
+        self.ensure_dirs_exist(new_path)
+        with open(old_path,'r') as f_old:
+            with open(new_path,'w') as f_new:
+                for line in f_old:
+                    line = line.replace('sky130_fd_pr__pfet_01v8','pshort')
+                    line = line.replace('sky130_fd_pr__nfet_01v8','nshort')
+                    f_new.write(line)
+
 
     # Tech setup steps
     def setup_cdl(self) -> None:
@@ -118,6 +132,7 @@ class SKY130Tech(HammerTechnology):
                     self.logger.info("Modifying LVS deck: {} -> {}".format
                         (source_path, dest_path))
                     df.write(matcher.sub("", sf.read()))  
+                    df.write(LVS_DECK_INSERT_LINES)
 
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {"innovus": [
@@ -149,6 +164,14 @@ LVS_DECK_SCRUB_LINES = [
     "ERC",
     "LVS REPORT"
 ]
+
+# TODO: black boxing sram is temporary!!
+LVS_DECK_INSERT_LINES = '''
+LVS FILTER D  OPEN  SOURCE
+LVS FILTER D  OPEN  LAYOUT
+
+LVS BOX sky130_sram_4kbyte_1rw1r_32x1024_8
+'''
 
 # various Innovus database settings
 def sky130_innovus_settings(ht: HammerTool) -> bool:
