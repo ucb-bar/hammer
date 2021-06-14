@@ -42,7 +42,7 @@
       "path": "tech-sky130-cache/lvsControlFile_s8"
     }
   ],
-  "additional_lvs_text": "\nLVS FILTER D  OPEN  SOURCE\nLVS FILTER D  OPEN  LAYOUT",
+  "additional_lvs_text": "",
   "physical only cells list": [
     "sky130_fd_sc_hd__tap_1",
     "sky130_fd_sc_hd__tap_2",
@@ -87,6 +87,14 @@
     {
       "lef file": "tech-sky130-cache/sky130_fd_sc_hd.tlef",
       "spice file": "$SKY130_NDA/s8/V2.0.1/LVS/Calibre/source.cdl",
+      "provides": [
+        {
+          "lib_type": "technology"
+        }
+      ]
+    },
+    {
+      "spice file": "/tools/B/nayiri/sky130/chipyard-osci-sky130/vlsi/sky130-files/devices.cdl",
       "provides": [
         {
           "lib_type": "technology"
