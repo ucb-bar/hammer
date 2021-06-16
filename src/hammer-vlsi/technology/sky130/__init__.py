@@ -44,17 +44,27 @@ class SKY130Tech(HammerTechnology):
             self.logger.info('Creating directory: {}'.format(dir_name))
             os.makedirs(dir_name)
             
+    @staticmethod
+    def openram_sram_names() -> None:
+        """ Return a list of cell-names of the OpenRAM SRAMs (that we'll use). """
+        return [
+            # "sky130_sram_4kbyte_1rw1r_32x1024_8", # Eventually to be reinstated, some day
+            "sky130_sram_1kbyte_1rw1r_32x256_8",
+            "sky130_sram_1kbyte_1rw1r_8x1024_8",
+            "sky130_sram_2kbyte_1rw1r_32x512_8"
+        ]
+
     def setup_sram_cdl(self) -> None:
-        old_path = Path(self.get_setting("technology.sky130.openram_lib")) / 'sky130_sram_4kbyte_1rw1r_32x1024_8' / 'sky130_sram_4kbyte_1rw1r_32x1024_8.lvs.sp'
-        new_path = self.expand_tech_cache_path('tech-sky130-cache/sky130_sram_4kbyte_1rw1r_32x1024_8/sky130_sram_4kbyte_1rw1r_32x1024_8.lvs.sp')
-        print(new_path)
-        self.ensure_dirs_exist(new_path)
-        with open(old_path,'r') as f_old:
-            with open(new_path,'w') as f_new:
-                for line in f_old:
-                    line = line.replace('sky130_fd_pr__pfet_01v8','pshort')
-                    line = line.replace('sky130_fd_pr__nfet_01v8','nshort')
-                    f_new.write(line)
+        for sram_name in self.openram_sram_names():
+            old_path = Path(self.get_setting("technology.sky130.openram_lib")) / sram_name / f"{sram_name}.lvs.sp"
+            new_path = self.expand_tech_cache_path(f'tech-sky130-cache/{sram_name}/{sram_name}.lvs.sp')
+            self.ensure_dirs_exist(new_path)
+            with open(old_path,'r') as f_old:
+                with open(new_path,'w') as f_new:
+                    for line in f_old:
+                        line = line.replace('sky130_fd_pr__pfet_01v8','pshort')
+                        line = line.replace('sky130_fd_pr__nfet_01v8','nshort')
+                        f_new.write(line)
 
 
     # Tech setup steps
@@ -165,13 +175,14 @@ LVS_DECK_SCRUB_LINES = [
     "LVS REPORT"
 ]
 
-# TODO: black boxing sram is temporary!!
 LVS_DECK_INSERT_LINES = '''
 LVS FILTER D  OPEN  SOURCE
 LVS FILTER D  OPEN  LAYOUT
 
-LVS BOX sky130_sram_4kbyte_1rw1r_32x1024_8
 '''
+# TODO: black boxing sram is temporary!!
+for name in SKY130Tech.openram_sram_names():
+    LVS_DECK_INSERT_LINES += f"LVS BOX {name} \n"
 
 # various Innovus database settings
 def sky130_innovus_settings(ht: HammerTool) -> bool:
