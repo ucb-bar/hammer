@@ -41,7 +41,7 @@
       },
       {
         "name": "addr1",
-        "width": 11,
+        "width": 10,
         "type": "constant",
         "value": 0
       }
@@ -89,7 +89,7 @@
       },
       {
         "name": "addr1",
-        "width": 11,
+        "width": 8,
         "type": "constant",
         "value": 0
       }
@@ -137,7 +137,7 @@
       },
       {
         "name": "addr1",
-        "width": 11,
+        "width": 9,
         "type": "constant",
         "value": 0
       }
