@@ -1547,7 +1547,7 @@ class TCLTool(HammerTool):
     def append(self, cmd: str, clean: bool = False) -> None:
         self.tcl_append(cmd, self.output, clean)
 
-class SynopsysTool(HasSDCSupport, HammerTool):
+class SynopsysTool(HasSDCSupport, TCLTool, HammerTool):
     """Mix-in trait with functions useful for Synopsys-based tools."""
 
     @property
