@@ -10,6 +10,8 @@
 
 import atexit
 import subprocess
+import termios
+import sys
 import datetime
 from abc import abstractmethod
 from functools import reduce
@@ -123,12 +125,19 @@ class HammerLocalSubmitCommand(HammerSubmitCommand):
         # Just run the command on this host.
 
         prog_tag = self.get_program_tag(args)
+        term_settings = termios.tcgetattr(sys.stdin.fileno()) if sys.stdin.isatty() else None
 
         logger.debug("Executing subprocess: " + ' '.join(args))
         subprocess_logger = logger.context("Exec " + prog_tag)
         proc = subprocess.Popen(args, shell=False, stderr=subprocess.STDOUT,
                                 stdout=subprocess.PIPE, env=env, cwd=cwd)
+        # These are run in reverse order of registration
+        # Terminate is first to allow for the possibility of graceful shutdown
+        # Then the program will be forceably terminated and we restore the terminal settings
+        if term_settings != None:
+            atexit.register(termios.tcsetattr, sys.stdin.fileno(), termios.TCSANOW, term_settings)
         atexit.register(proc.kill)
+        atexit.register(proc.terminate)
 
         output_buf = ""
         # Log output and also capture output at the same time.
