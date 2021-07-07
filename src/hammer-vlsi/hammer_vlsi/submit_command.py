@@ -125,7 +125,7 @@ class HammerLocalSubmitCommand(HammerSubmitCommand):
         # Just run the command on this host.
 
         prog_tag = self.get_program_tag(args)
-        term_settings = termios.tcgetattr(sys.stdin.fileno())
+        term_settings = termios.tcgetattr(sys.stdin.fileno()) if sys.stdin.isatty() else None
 
         logger.debug("Executing subprocess: " + ' '.join(args))
         subprocess_logger = logger.context("Exec " + prog_tag)
@@ -134,7 +134,8 @@ class HammerLocalSubmitCommand(HammerSubmitCommand):
         # These are run in reverse order of registration
         # Terminate is first to allow for the possibility of graceful shutdown
         # Then the program will be forceably terminated and we restore the terminal settings
-        atexit.register(termios.tcsetattr, sys.stdin.fileno(), termios.TCSANOW, term_settings)
+        if term_settings != None:
+            atexit.register(termios.tcsetattr, sys.stdin.fileno(), termios.TCSANOW, term_settings)
         atexit.register(proc.kill)
         atexit.register(proc.terminate)
 
