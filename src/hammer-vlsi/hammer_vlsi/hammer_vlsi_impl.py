@@ -1515,6 +1515,8 @@ class HasSDCSupport(HammerTool):
 
         # Custom sdc constraints that are verbatim appended
         custom_sdc_constraints = self.get_setting("vlsi.inputs.custom_sdc_constraints")  # type: List[str]
+        if isinstance(custom_sdc_constraints, str):
+            custom_sdc_constraints = (custom_sdc_constraints,)
         for custom in custom_sdc_constraints:
             output.append(str(custom))
 
