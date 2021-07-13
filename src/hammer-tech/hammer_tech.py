@@ -95,7 +95,7 @@ class PathPrefix(LibraryPrefix):
         """
         self.internal = _PathPrefixInternal(
             prefix=str(prefix),
-            path=str(path)
+            path=os.path.abspath(str(path))
         )
 
     def __eq__(self, other) -> bool:
