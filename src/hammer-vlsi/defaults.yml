@@ -676,6 +676,10 @@ par:
       # type: List[str]
       strap_layers: []
 
+  # Estimated power for early rail analysis
+  # This shall be estimated for the typical supply given in vlsi.inputs.supplies.VDD in units of Watts
+  rail_analysis_power: 1
+
 mentor:
     # Path to the folder with defaults.yml for common Mentor settings.
     common_path: "${vlsi.builtins.hammer_vlsi_path}/common/mentor"
