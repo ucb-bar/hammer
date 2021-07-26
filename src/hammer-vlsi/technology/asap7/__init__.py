@@ -10,6 +10,8 @@ import re
 import os
 import tempfile
 import shutil
+import glob
+import subprocess
 from typing import NamedTuple, List, Optional, Tuple, Dict, Set, Any
 
 from hammer_tech import HammerTechnology
@@ -27,103 +29,100 @@ class ASAP7Tech(HammerTechnology):
             self.logger.error("Check your gdspy installation! Unable to hack ASAP7 PDK.")
             shutil.rmtree(self.cache_dir)
             sys.exit()
-        self.remove_duplication_in_drc_lvs()
         self.generate_multi_vt_gds()
-        self.fix_sram_cdl_bug()
-
-    def remove_duplication_in_drc_lvs(self) -> None:
-        """
-        Remove conflicting specification statements found in PDK's DRC & LVS decks.
-        """
-        self.logger.info("Remove LAYOUT PATH|LAYOUT PRIMARY|LAYOUT SYSTEM|DRC RESULTS DATABASE|DRC SUMMARY REPORT|LVS REPORT|LVS POWER NAME|LVS GROUND NAME in DRC/LVS Decks")
-        ruledirs = os.path.join(self.extracted_tarballs_dir, "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/calibre/ruledirs")
-        drc_deck = os.path.join(ruledirs, "drc/drcRules_calibre_asap7_171111a.rul")
-        lvs_deck = os.path.join(ruledirs, "lvs/lvsRules_calibre_asap7_160819a.rul")
-        pattern = re.compile(".*(LAYOUT\ PATH|LAYOUT\ PRIMARY|LAYOUT\ SYSTEM|DRC\ RESULTS\ DATABASE|DRC\ SUMMARY\ REPORT|LVS\ REPORT|LVS\ POWER NAME|LVS\ GROUND\ NAME).*\n")
-        with tempfile.NamedTemporaryFile(delete=False) as tf:
-            with open(drc_deck, 'r') as f:
-                tf.write(pattern.sub("", f.read()).encode('utf-8'))
-            shutil.copystat(drc_deck, tf.name)
-            shutil.copy(tf.name, drc_deck)
-
-        with tempfile.NamedTemporaryFile(delete=False) as tf:
-            with open(lvs_deck, 'r') as f:
-                tf.write(pattern.sub("", f.read()).encode('utf-8'))
-            shutil.copystat(lvs_deck, tf.name)
-            shutil.copy(tf.name, lvs_deck)
+        self.fix_icg_libs()
 
     def generate_multi_vt_gds(self) -> None:
         """
-        PDK GDS only contains SLVT cells.
-        This patch will generate the other 3(LVT, RVT, SRAM) VT GDS files.
+        PDK GDS only contains RVT cells.
+        This patch will generate the other 3(LVT, SLVT, SRAM) VT GDS files.
         """
-        import gdspy # TODO: why did module import get lost above for some users?
+        try:
+            os.makedirs(os.path.join(self.cache_dir, "GDS"))
+        except:
+            self.logger.info("Multi-VT GDS's already created")
+            return None
 
-        self.logger.info("Generate GDS for Multi-VT cells")
+        try:
+            import gdspy # TODO: why did module import get lost above for some users?
 
-        orig_gds = os.path.join(self.extracted_tarballs_dir, "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24.gds")
-        # load original_gds
-        asap7_original_gds = gdspy.GdsLibrary().read_gds(infile=orig_gds, units='import')
-        original_cells = asap7_original_gds.cell_dict
-        # This is an extra cell in the original GDS that has no geometry inside
-        del original_cells['m1_template']
-        # required libs
-        multi_libs = {
-            "R": {
-                "lib": gdspy.GdsLibrary(),
-                "mvt_layer": None,
-                },
-            "L": {
-                "lib": gdspy.GdsLibrary(),
-                "mvt_layer": 98
-                },
-            "SL": {
-                "lib": gdspy.GdsLibrary(),
-                "mvt_layer": 97
-                },
-            "SRAM": {
-                "lib": gdspy.GdsLibrary(),
-                "mvt_layer": 110
-                },
-        }
-        # create new libs
-        for vt, multi_lib in multi_libs.items():
-            multi_lib['lib'].name = asap7_original_gds.name.replace('SL', vt)
+            self.logger.info("Generate GDS for Multi-VT cells")
 
-        for cell in original_cells.values():
-            poly_dict = cell.get_polygons(by_spec=True)
-            # extract polygon from layer 100(the boundary for cell)
-            boundary_polygon = poly_dict[(100, 0)]
+            stdcell_dir = self.get_setting("technology.asap7.stdcell_install_dir")
+            orig_gds = os.path.join(stdcell_dir, "GDS/asap7sc7p5t_27_R_201211.gds")
+            # load original_gds
+            asap7_original_gds = gdspy.GdsLibrary().read_gds(infile=orig_gds, units='import')
+            original_cells = asap7_original_gds.cell_dict
+            # required libs
+            multi_libs = {
+                "L": {
+                    "lib": gdspy.GdsLibrary(),
+                    "mvt_layer": 98
+                    },
+                "SL": {
+                    "lib": gdspy.GdsLibrary(),
+                    "mvt_layer": 97
+                    },
+                "SRAM": {
+                    "lib": gdspy.GdsLibrary(),
+                    "mvt_layer": 110
+                    },
+            }
+            # create new libs
             for vt, multi_lib in multi_libs.items():
-                mvt_layer = multi_lib['mvt_layer']
-                if mvt_layer:
+                multi_lib['lib'].name = asap7_original_gds.name.replace('R', vt)
+
+            for cell in original_cells.values():
+                poly_dict = cell.get_polygons(by_spec=True)
+                # extract polygon from layer 100(the boundary for cell)
+                boundary_polygon = poly_dict[(100, 0)]
+                for vt, multi_lib in multi_libs.items():
+                    mvt_layer = multi_lib['mvt_layer']
                     # copy boundary_polygon to mvt_layer to mark the this cell is a mvt cell.
                     mvt_polygon = gdspy.PolygonSet(boundary_polygon, multi_lib['mvt_layer'], 0)
-                    mvt_cell = cell.copy(name=cell.name.replace('SL', vt), exclude_from_current=True, deep_copy=True).add(mvt_polygon)
-                else:
-                    # RVT, just copy the cell
-                    mvt_cell = cell.copy(name=cell.name.replace('SL', vt), exclude_from_current=True, deep_copy=True)
-                # add mvt_cell to corresponding multi_lib
-                multi_lib['lib'].add(mvt_cell)
+                    mvt_cell = cell.copy(name=cell.name.replace('R', vt), exclude_from_current=True, deep_copy=True).add(mvt_polygon)
+                    # add mvt_cell to corresponding multi_lib
+                    multi_lib['lib'].add(mvt_cell)
 
-        for vt, multi_lib in multi_libs.items():
-            # write multi_lib
-            multi_lib['lib'].write_gds(os.path.splitext(orig_gds)[0] + '_' + vt + '.gds')
+            for vt, multi_lib in multi_libs.items():
+                # write multi_lib
+                new_gds = os.path.basename(orig_gds).replace('R', vt)
+                multi_lib['lib'].write_gds(os.path.join(self.cache_dir, 'GDS', new_gds))
 
-    def fix_sram_cdl_bug(self) -> None:
+        except:
+            os.rmdir(os.path.join(self.cache_dir, "GDS"))
+            self.logger.error("GDS patching failed! Check your gdspy and/or ASAP7 PDK installation.")
+            raise
+
+    def fix_icg_libs(self) -> None:
         """
-        vendor's SRAM cdl use slvt cell, this patch will sed cells name in which, fix this bug.
+        ICG cells are missing statetable.
         """
-        self.logger.info("sed slvt to sram in asap7_75t_SRAM.cdl")
-        pattern0 = re.compile("SL")
-        pattern1 = re.compile("slvt")
+        try:
+            os.makedirs(os.path.join(self.cache_dir, "LIB/NLDM"))
+        except:
+            self.logger.info("ICG LIBs already fixed")
+            return None
 
-        with tempfile.NamedTemporaryFile(delete=False) as tf:
-            sram_cdl = os.path.join(self.extracted_tarballs_dir, "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SRAM.cdl")
-            with open(sram_cdl, 'r') as f:
-                tf.write(pattern1.sub("sram", pattern0.sub("SRAM", f.read())).encode('utf-8'))
-            shutil.copystat(sram_cdl, tf.name)
-            shutil.copy(tf.name, sram_cdl)
+        try:
+            self.logger.info("Fixing ICG LIBs")
+            statetable_text = """\    statetable ("CLK ENA SE", "IQ") {\\n      table : "L L L : - : L ,  L L H : - : H , L H L : - : H , L H H : - : H , H - - : - : N ";\\n    }"""
+            gclk_func = "CLK & IQ"
+            lib_dir = os.path.join(self.get_setting("technology.asap7.stdcell_install_dir"), "LIB/NLDM")
+            old_libs = glob.glob(os.path.join(lib_dir, "*SEQ*"))
+            new_libs = list(map(lambda l: os.path.join(self.cache_dir, "LIB/NLDM", os.path.basename(l)), old_libs))
+
+            for olib, nlib in zip(old_libs, new_libs):
+                # Use gzip and sed directly rather than gzip python module
+                # Add the statetable to ICG cells
+                # Change function to state_function for pin GCLK
+                subprocess.call(["gzip -cd {olib} | sed '/ICGx*/a {stbl}' | sed '/CLK & IQ/s/function/state_function/g' | gzip > {nlib}".format(olib=olib, stbl=statetable_text, nlib=nlib)], shell=True)
+        except:
+            os.rmdir(os.path.join(self.cache_dir, "LIB/NLDM"))
+            os.rmdir(os.path.join(self.cache_dir, "LIB"))
+            self.logger.error("Failed to fix ICG LIBs. Check your ASAP7 installation!")
+            raise
+
 
     def scale_gds_script(self, gds_file: str) -> str:
         """
@@ -210,6 +209,8 @@ def asap7_innovus_settings(ht: HammerTool) -> bool:
     ht.append('''
 set_db route_design_bottom_routing_layer 2
 set_db route_design_top_routing_layer 7
+# Ignore 1e+31 removal arcs for ASYNC DFF cells
+set_db timing_analysis_async_checks no_async
     ''')
     return True
 

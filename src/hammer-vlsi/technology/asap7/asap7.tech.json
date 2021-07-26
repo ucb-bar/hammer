@@ -2,21 +2,35 @@
   "name": "ASAP7 Library",
   "grid_unit": "0.001",
   "time_unit": "1 ps",
+  "installs": [
+    {
+      "path": "$PDK",
+      "base var": "technology.asap7.pdk_install_dir"
+    },
+    {
+      "path": "$STDCELLS",
+      "base var": "technology.asap7.stdcell_install_dir"
+    },
+    {
+      "path": "tech-asap7-cache",
+      "base var": ""
+    }
+  ],
   "tarballs": [
     {
-      "path": "ASAP7_PDKandLIB.tar",
+      "path": "ASAP7_PDK_CalibreDeck.tar",
       "homepage": "http://asap.asu.edu/asap/",
       "base var": "technology.asap7.tarball_dir"
     }
   ],
 
-  "gds map file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/cdslib/asap7_TechLib/asap7_fromAPR.layermap",
+  "gds map file": "$PDK/cdslib/asap7_TechLib/asap7_fromAPR.layermap",
   
   "drc decks": [
     {
       "tool name": "calibre",
       "deck name": "all_drc",
-      "path": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/calibre/ruledirs/drc/drcRules_calibre_asap7.rul"
+      "path": "ASAP7_PDK_CalibreDeck.tar/calibredecks_r1p7/calibre/ruledirs/drc/drcRules_calibre_asap7.rul"
     }
   ],
   "additional_drc_text": "",
@@ -25,14 +39,14 @@
     {
       "tool name": "calibre",
       "deck name": "all_lvs",
-      "path": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/calibre/ruledirs/lvs/lvsRules_calibre_asap7.rul"
+      "path": "ASAP7_PDK_CalibreDeck.tar/calibredecks_r1p7/calibre/ruledirs/lvs/lvsRules_calibre_asap7.rul"
     }
   ],
   "additional_lvs_text": "LVS BOX DECAPx1_ASAP7_75t_R\nLVS BOX DECAPx1_ASAP7_75t_L\nLVS BOX DECAPx1_ASAP7_75t_SL\nLVS BOX DECAPx1_ASAP7_75t_SRAM\nLVS BOX DECAPx2_ASAP7_75t_R\nLVS BOX DECAPx2_ASAP7_75t_L\nLVS BOX DECAPx2_ASAP7_75t_SL\nLVS BOX DECAPx2_ASAP7_75t_SRAM\nLVS BOX DECAPx4_ASAP7_75t_R\nLVS BOX DECAPx4_ASAP7_75t_L\nLVS BOX DECAPx4_ASAP7_75t_SL\nLVS BOX DECAPx4_ASAP7_75t_SRAM\nLVS BOX DECAPx6_ASAP7_75t_R\nLVS BOX DECAPx6_ASAP7_75t_L\nLVS BOX DECAPx6_ASAP7_75t_SL\nLVS BOX DECAPx6_ASAP7_75t_SRAM\nLVS BOX DECAPx10_ASAP7_75t_R\nLVS BOX DECAPx10_ASAP7_75t_L\nLVS BOX DECAPx10_ASAP7_75t_SL\nLVS BOX DECAPx10_ASAP7_75t_SRAM\nLVS FILTER DECAPx1_ASAP7_75t_R OPEN\nLVS FILTER DECAPx1_ASAP7_75t_L OPEN\nLVS FILTER DECAPx1_ASAP7_75t_SL OPEN\nLVS FILTER DECAPx1_ASAP7_75t_SRAM OPEN\nLVS FILTER DECAPx2_ASAP7_75t_R OPEN\nLVS FILTER DECAPx2_ASAP7_75t_L OPEN\nLVS FILTER DECAPx2_ASAP7_75t_SL OPEN\nLVS FILTER DECAPx2_ASAP7_75t_SRAM OPEN\nLVS FILTER DECAPx4_ASAP7_75t_R OPEN\nLVS FILTER DECAPx4_ASAP7_75t_L OPEN\nLVS FILTER DECAPx4_ASAP7_75t_SL OPEN\nLVS FILTER DECAPx4_ASAP7_75t_SRAM OPEN\nLVS FILTER DECAPx6_ASAP7_75t_R OPEN\nLVS FILTER DECAPx6_ASAP7_75t_L OPEN\nLVS FILTER DECAPx6_ASAP7_75t_SL OPEN\nLVS FILTER DECAPx6_ASAP7_75t_SRAM OPEN\nLVS FILTER DECAPx10_ASAP7_75t_R OPEN\nLVS FILTER DECAPx10_ASAP7_75t_L OPEN\nLVS FILTER DECAPx10_ASAP7_75t_SL OPEN\nLVS FILTER DECAPx10_ASAP7_75t_SRAM OPEN", 
 
   "libraries": [
     {
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/techlef_misc/asap7_tech_4x_170803.lef",
+      "lef file": "$STDCELLS/techlef_misc/asap7_tech_4x_201209.lef",
       "provides": [
         {
           "lib_type": "technology"
@@ -40,14 +54,14 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SIMPLE_RVT_TT.lib",
-      "verilog sim": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/verilog/asap7sc7p5t_24_SIMPLE_RVT_TT.v",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_R_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_R.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_R.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_SIMPLE_RVT_TT_nldm_201020.lib.gz",
+      "verilog sim": "$STDCELLS/Verilog/asap7sc7p5t_SIMPLE_RVT_TT_201020.v",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_R_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_R.cdl",
+      "gds file": "$STDCELLS/GDS/asap7sc7p5t_27_R_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "spice model file": {
-        "path": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/models/hspice/7nm_TT.pm"
+        "path": "$PDK/models/hspice/7nm_TT.pm"
       },
       "corner": {
         "nmos": "typical",
@@ -66,13 +80,13 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SIMPLE_RVT_SS.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_R_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_R.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_R.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_SIMPLE_RVT_SS_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_R_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_R.cdl",
+      "gds file": "$STDCELLS/GDS/asap7sc7p5t_27_R_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "spice model file": {
-        "path": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/models/hspice/7nm_SS.pm"
+        "path": "$PDK/models/hspice/7nm_SS.pm"
       },
       "corner": {
         "nmos": "slow",
@@ -91,13 +105,13 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SIMPLE_RVT_FF.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_R_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_R.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_R.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_SIMPLE_RVT_FF_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_R_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_R.cdl",
+      "gds file": "$STDCELLS/GDS/asap7sc7p5t_27_R_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "spice model file": {
-        "path": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/models/hspice/7nm_FF.pm"
+        "path": "$PDK/models/hspice/7nm_FF.pm"
       },
       "corner": {
         "nmos": "fast",
@@ -116,14 +130,14 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SIMPLE_LVT_TT.lib",
-      "verilog sim": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/verilog/asap7sc7p5t_24_SIMPLE_LVT_TT.v",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_L_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_L.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_L.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_SIMPLE_LVT_TT_nldm_201020.lib.gz",
+      "verilog sim": "$STDCELLS/Verilog/asap7sc7p5t_SIMPLE_LVT_TT_201020.v",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_L_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_L.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_L_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "spice model file": {
-        "path": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/models/hspice/7nm_TT.pm"
+        "path": "$PDK/models/hspice/7nm_TT.pm"
       },
       "corner": {
         "nmos": "typical",
@@ -142,13 +156,13 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SIMPLE_LVT_SS.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_L_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_L.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_L.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_SIMPLE_LVT_SS_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_L_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_L.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_L_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "spice model file": {
-        "path": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/models/hspice/7nm_SS.pm"
+        "path": "$PDK/models/hspice/7nm_SS.pm"
       },
       "corner": {
         "nmos": "slow",
@@ -167,13 +181,13 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SIMPLE_LVT_FF.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_L_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_L.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_L.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_SIMPLE_LVT_FF_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_L_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_L.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_L_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "spice model file": {
-        "path": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/models/hspice/7nm_FF.pm"
+        "path": "$PDK/models/hspice/7nm_FF.pm"
       },
       "corner": {
         "nmos": "fast",
@@ -192,14 +206,14 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SIMPLE_SLVT_TT.lib",
-      "verilog sim": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/verilog/asap7sc7p5t_24_SIMPLE_SLVT_TT.v",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SL_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SL.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SL.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_SIMPLE_SLVT_TT_nldm_201020.lib.gz",
+      "verilog sim": "$STDCELLS/Verilog/asap7sc7p5t_SIMPLE_SLVT_TT_201020.v",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SL_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SL.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SL_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "spice model file": {
-        "path": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/models/hspice/7nm_TT.pm"
+        "path": "$PDK/models/hspice/7nm_TT.pm"
       },
       "corner": {
         "nmos": "typical",
@@ -218,13 +232,13 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SIMPLE_SLVT_SS.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SL_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SL.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SL.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_SIMPLE_SLVT_SS_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SL_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SL.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SL_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "spice model file": {
-        "path": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/models/hspice/7nm_SS.pm"
+        "path": "$PDK/models/hspice/7nm_SS.pm"
       },
       "corner": {
         "nmos": "slow",
@@ -243,13 +257,13 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SIMPLE_SLVT_FF.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SL_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SL.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SL.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_SIMPLE_SLVT_FF_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SL_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SL.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SL_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "spice model file": {
-        "path": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/models/hspice/7nm_FF.pm"
+        "path": "$PDK/models/hspice/7nm_FF.pm"
       },
       "corner": {
         "nmos": "fast",
@@ -268,14 +282,14 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SIMPLE_SRAM_TT.lib",
-      "verilog sim": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/verilog/asap7sc7p5t_24_SIMPLE_SRAM_TT.v",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SRAM_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SRAM.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SRAM.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_SIMPLE_SRAM_TT_nldm_201020.lib.gz",
+      "verilog sim": "$STDCELLS/Verilog/asap7sc7p5t_SIMPLE_SRAM_TT_201020.v",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SRAM_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SRAM.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SRAM_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "spice model file": {
-        "path": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/models/hspice/7nm_TT.pm"
+        "path": "$PDK/models/hspice/7nm_TT.pm"
       },
       "corner": {
         "nmos": "typical",
@@ -288,13 +302,13 @@
       }
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SIMPLE_SRAM_SS.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SRAM_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SRAM.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SRAM.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_SIMPLE_SRAM_SS_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SRAM_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SRAM.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SRAM_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "spice model file": {
-        "path": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/models/hspice/7nm_SS.pm"
+        "path": "$PDK/models/hspice/7nm_SS.pm"
       },
       "corner": {
         "nmos": "slow",
@@ -307,13 +321,13 @@
       }
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SIMPLE_SRAM_FF.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SRAM_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SRAM.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SRAM.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_SIMPLE_SRAM_FF_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SRAM_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SRAM.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SRAM_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "spice model file": {
-        "path": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7PDK_r1p5.tar.bz2/asap7PDK_r1p5/models/hspice/7nm_FF.pm"
+        "path": "$PDK/models/hspice/7nm_FF.pm"
       },
       "corner": {
         "nmos": "fast",
@@ -326,12 +340,12 @@
       }
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_AO_RVT_TT.lib",
-      "verilog sim": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/verilog/asap7sc7p5t_24_AO_RVT_TT.v",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_R_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_R.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_R.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_AO_RVT_TT_nldm_201020.lib.gz",
+      "verilog sim": "$STDCELLS/Verilog/asap7sc7p5t_AO_RVT_TT_201020.v",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_R_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_R.cdl",
+      "gds file": "$STDCELLS/GDS/asap7sc7p5t_27_R_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "typical",
         "pmos": "typical",
@@ -349,11 +363,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_AO_RVT_SS.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_R_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_R.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_R.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_AO_RVT_SS_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_R_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_R.cdl",
+      "gds file": "$STDCELLS/GDS/asap7sc7p5t_27_R_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "slow",
         "pmos": "slow",
@@ -371,11 +385,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_AO_RVT_FF.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_R_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_R.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_R.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_AO_RVT_FF_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_R_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_R.cdl",
+      "gds file": "$STDCELLS/GDS/asap7sc7p5t_27_R_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "fast",
         "pmos": "fast",
@@ -393,12 +407,12 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_AO_LVT_TT.lib",
-      "verilog sim": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/verilog/asap7sc7p5t_24_AO_LVT_TT.v",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_L_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_L.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_L.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_AO_LVT_TT_nldm_201020.lib.gz",
+      "verilog sim": "$STDCELLS/Verilog/asap7sc7p5t_AO_LVT_TT_201020.v",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_L_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_L.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_L_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "typical",
         "pmos": "typical",
@@ -416,11 +430,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_AO_LVT_SS.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_L_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_L.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_L.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_AO_LVT_SS_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_L_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_L.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_L_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "slow",
         "pmos": "slow",
@@ -438,11 +452,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_AO_LVT_FF.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_L_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_L.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_L.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_AO_LVT_FF_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_L_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_L.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_L_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "fast",
         "pmos": "fast",
@@ -460,12 +474,12 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_AO_SLVT_TT.lib",
-      "verilog sim": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/verilog/asap7sc7p5t_24_AO_SLVT_TT.v",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SL_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SL.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SL.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_AO_SLVT_TT_nldm_201020.lib.gz",
+      "verilog sim": "$STDCELLS/Verilog/asap7sc7p5t_AO_SLVT_TT_201020.v",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SL_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SL.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SL_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "typical",
         "pmos": "typical",
@@ -483,11 +497,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_AO_SLVT_SS.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SL_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SL.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SL.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_AO_SLVT_SS_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SL_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SL.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SL_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "slow",
         "pmos": "slow",
@@ -505,11 +519,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_AO_SLVT_FF.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SL_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SL.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SL.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_AO_SLVT_FF_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SL_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SL.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SL_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "fast",
         "pmos": "fast",
@@ -527,12 +541,12 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_AO_SRAM_TT.lib",
-      "verilog sim": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/verilog/asap7sc7p5t_24_AO_SRAM_TT.v",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SRAM_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SRAM.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SRAM.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_AO_SRAM_TT_nldm_201020.lib.gz",
+      "verilog sim": "$STDCELLS/Verilog/asap7sc7p5t_AO_SRAM_TT_201020.v",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SRAM_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SRAM.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SRAM_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "typical",
         "pmos": "typical",
@@ -544,11 +558,11 @@
       }
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_AO_SRAM_SS.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SRAM_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SRAM.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SRAM.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_AO_SRAM_SS_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SRAM_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SRAM.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SRAM_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "slow",
         "pmos": "slow",
@@ -560,11 +574,11 @@
       }
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_AO_SRAM_FF.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SRAM_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SRAM.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SRAM.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_AO_SRAM_FF_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SRAM_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SRAM.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SRAM_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "fast",
         "pmos": "fast",
@@ -576,12 +590,12 @@
       }
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_OA_RVT_TT.lib",
-      "verilog sim": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/verilog/asap7sc7p5t_24_OA_RVT_TT.v",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_R_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_R.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_R.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_OA_RVT_TT_nldm_201020.lib.gz",
+      "verilog sim": "$STDCELLS/Verilog/asap7sc7p5t_OA_RVT_TT_201020.v",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_R_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_R.cdl",
+      "gds file": "$STDCELLS/GDS/asap7sc7p5t_27_R_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "typical",
         "pmos": "typical",
@@ -599,11 +613,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_OA_RVT_SS.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_R_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_R.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_R.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_OA_RVT_SS_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_R_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_R.cdl",
+      "gds file": "$STDCELLS/GDS/asap7sc7p5t_27_R_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "slow",
         "pmos": "slow",
@@ -621,11 +635,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_OA_RVT_FF.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_R_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_R.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_R.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_OA_RVT_FF_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_R_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_R.cdl",
+      "gds file": "$STDCELLS/GDS/asap7sc7p5t_27_R_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "fast",
         "pmos": "fast",
@@ -643,12 +657,12 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_OA_LVT_TT.lib",
-      "verilog sim": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/verilog/asap7sc7p5t_24_OA_LVT_TT.v",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_L_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_L.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_L.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_OA_LVT_TT_nldm_201020.lib.gz",
+      "verilog sim": "$STDCELLS/Verilog/asap7sc7p5t_OA_LVT_TT_201020.v",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_L_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_L.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_L_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "typical",
         "pmos": "typical",
@@ -666,11 +680,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_OA_LVT_SS.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_L_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_L.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_L.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_OA_LVT_SS_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_L_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_L.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_L_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "slow",
         "pmos": "slow",
@@ -688,11 +702,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_OA_LVT_FF.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_L_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_L.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_L.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_OA_LVT_FF_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_L_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_L.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_L_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "fast",
         "pmos": "fast",
@@ -710,12 +724,12 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_OA_SLVT_TT.lib",
-      "verilog sim": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/verilog/asap7sc7p5t_24_OA_SLVT_TT.v",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SL_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SL.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SL.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_OA_SLVT_TT_nldm_201020.lib.gz",
+      "verilog sim": "$STDCELLS/Verilog/asap7sc7p5t_OA_SLVT_TT_201020.v",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SL_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SL.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SL_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "typical",
         "pmos": "typical",
@@ -733,11 +747,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_OA_SLVT_SS.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SL_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SL.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SL.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_OA_SLVT_SS_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SL_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SL.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SL_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "slow",
         "pmos": "slow",
@@ -755,11 +769,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_OA_SLVT_FF.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SL_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SL.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SL.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_OA_SLVT_FF_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SL_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SL.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SL_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "fast",
         "pmos": "fast",
@@ -777,12 +791,12 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_OA_SRAM_TT.lib",
-      "verilog sim": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/verilog/asap7sc7p5t_24_OA_SRAM_TT.v",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SRAM_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SRAM.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SRAM.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_OA_SRAM_TT_nldm_201020.lib.gz",
+      "verilog sim": "$STDCELLS/Verilog/asap7sc7p5t_OA_SRAM_TT_201020.v",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SRAM_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SRAM.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SRAM_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "typical",
         "pmos": "typical",
@@ -794,11 +808,11 @@
       }
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_OA_SRAM_SS.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SRAM_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SRAM.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SRAM.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_OA_SRAM_SS_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SRAM_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SRAM.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SRAM_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "slow",
         "pmos": "slow",
@@ -810,11 +824,11 @@
       }
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_OA_SRAM_FF.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SRAM_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SRAM.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SRAM.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_OA_SRAM_FF_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SRAM_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SRAM.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SRAM_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "fast",
         "pmos": "fast",
@@ -826,12 +840,12 @@
       }
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SEQ_RVT_TT.lib",
-      "verilog sim": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/verilog/asap7sc7p5t_24_SEQ_RVT_TT.v",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_R_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_R.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_R.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "tech-asap7-cache/LIB/NLDM/asap7sc7p5t_SEQ_RVT_TT_nldm_201020.lib.gz",
+      "verilog sim": "$STDCELLS/Verilog/asap7sc7p5t_SEQ_RVT_TT_201020.v",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_R_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_R.cdl",
+      "gds file": "$STDCELLS/GDS/asap7sc7p5t_27_R_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "typical",
         "pmos": "typical",
@@ -849,11 +863,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SEQ_RVT_SS.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_R_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_R.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_R.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "tech-asap7-cache/LIB/NLDM/asap7sc7p5t_SEQ_RVT_SS_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_R_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_R.cdl",
+      "gds file": "$STDCELLS/GDS/asap7sc7p5t_27_R_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "slow",
         "pmos": "slow",
@@ -871,11 +885,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SEQ_RVT_FF.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_R_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_R.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_R.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "tech-asap7-cache/LIB/NLDM/asap7sc7p5t_SEQ_RVT_FF_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_R_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_R.cdl",
+      "gds file": "$STDCELLS/GDS/asap7sc7p5t_27_R_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "fast",
         "pmos": "fast",
@@ -893,12 +907,12 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SEQ_LVT_TT.lib",
-      "verilog sim": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/verilog/asap7sc7p5t_24_SEQ_LVT_TT.v",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_L_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_L.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_L.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "tech-asap7-cache/LIB/NLDM/asap7sc7p5t_SEQ_LVT_TT_nldm_201020.lib.gz",
+      "verilog sim": "$STDCELLS/Verilog/asap7sc7p5t_SEQ_LVT_TT_201020.v",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_L_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_L.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_L_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "typical",
         "pmos": "typical",
@@ -916,11 +930,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SEQ_LVT_SS.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_L_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_L.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_L.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "tech-asap7-cache/LIB/NLDM/asap7sc7p5t_SEQ_LVT_SS_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_L_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_L.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_L_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "slow",
         "pmos": "slow",
@@ -938,11 +952,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SEQ_LVT_FF.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_L_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_L.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_L.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "tech-asap7-cache/LIB/NLDM/asap7sc7p5t_SEQ_LVT_FF_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_L_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_L.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_L_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "fast",
         "pmos": "fast",
@@ -960,12 +974,12 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SEQ_SLVT_TT.lib",
-      "verilog sim": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/verilog/asap7sc7p5t_24_SEQ_SLVT_TT.v",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SL_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SL.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SL.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "tech-asap7-cache/LIB/NLDM/asap7sc7p5t_SEQ_SLVT_TT_nldm_201020.lib.gz",
+      "verilog sim": "$STDCELLS/Verilog/asap7sc7p5t_SEQ_SLVT_TT_201020.v",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SL_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SL.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SL_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "typical",
         "pmos": "typical",
@@ -983,11 +997,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SEQ_SLVT_SS.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SL_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SL.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SL.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "tech-asap7-cache/LIB/NLDM/asap7sc7p5t_SEQ_SLVT_SS_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SL_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SL.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SL_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "slow",
         "pmos": "slow",
@@ -1005,11 +1019,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SEQ_SLVT_FF.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SL_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SL.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SL.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "tech-asap7-cache/LIB/NLDM/asap7sc7p5t_SEQ_SLVT_FF_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SL_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SL.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SL_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "fast",
         "pmos": "fast",
@@ -1027,12 +1041,12 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SEQ_SRAM_TT.lib",
-      "verilog sim": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/verilog/asap7sc7p5t_24_SEQ_SRAM_TT.v",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SRAM_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SRAM.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SRAM.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "tech-asap7-cache/LIB/NLDM/asap7sc7p5t_SEQ_SRAM_TT_nldm_201020.lib.gz",
+      "verilog sim": "$STDCELLS/Verilog/asap7sc7p5t_SEQ_SRAM_TT_201020.v",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SRAM_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SRAM.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SRAM_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "typical",
         "pmos": "typical",
@@ -1044,11 +1058,11 @@
       }
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SEQ_SRAM_SS.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SRAM_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SRAM.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SRAM.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "tech-asap7-cache/LIB/NLDM/asap7sc7p5t_SEQ_SRAM_SS_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SRAM_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SRAM.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SRAM_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "slow",
         "pmos": "slow",
@@ -1060,11 +1074,11 @@
       }
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_SEQ_SRAM_FF.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SRAM_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SRAM.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SRAM.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "tech-asap7-cache/LIB/NLDM/asap7sc7p5t_SEQ_SRAM_FF_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SRAM_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SRAM.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SRAM_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "fast",
         "pmos": "fast",
@@ -1076,12 +1090,12 @@
       }
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_INVBUF_RVT_TT.lib",
-      "verilog sim": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/verilog/asap7sc7p5t_24_INVBUF_RVT_TT.v",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_R_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_R.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_R.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_INVBUF_RVT_TT_nldm_201020.lib.gz",
+      "verilog sim": "$STDCELLS/Verilog/asap7sc7p5t_INVBUF_RVT_TT_201020.v",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_R_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_R.cdl",
+      "gds file": "$STDCELLS/GDS/asap7sc7p5t_27_R_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "typical",
         "pmos": "typical",
@@ -1099,11 +1113,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_INVBUF_RVT_SS.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_R_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_R.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_R.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_INVBUF_RVT_SS_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_R_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_R.cdl",
+      "gds file": "$STDCELLS/GDS/asap7sc7p5t_27_R_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "slow",
         "pmos": "slow",
@@ -1121,11 +1135,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_INVBUF_RVT_FF.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_R_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_R.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_R.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_INVBUF_RVT_FF_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_R_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_R.cdl",
+      "gds file": "$STDCELLS/GDS/asap7sc7p5t_27_R_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "fast",
         "pmos": "fast",
@@ -1143,12 +1157,12 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_INVBUF_LVT_TT.lib",
-      "verilog sim": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/verilog/asap7sc7p5t_24_INVBUF_LVT_TT.v",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_L_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_L.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_L.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_INVBUF_LVT_TT_nldm_201020.lib.gz",
+      "verilog sim": "$STDCELLS/Verilog/asap7sc7p5t_INVBUF_LVT_TT_201020.v",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_L_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_L.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_L_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "typical",
         "pmos": "typical",
@@ -1166,11 +1180,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_INVBUF_LVT_SS.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_L_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_L.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_L.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_INVBUF_LVT_SS_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_L_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_L.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_L_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "slow",
         "pmos": "slow",
@@ -1188,11 +1202,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_INVBUF_LVT_FF.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_L_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_L.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_L.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_INVBUF_LVT_FF_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_L_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_L.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_L_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "fast",
         "pmos": "fast",
@@ -1210,12 +1224,12 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_INVBUF_SLVT_TT.lib",
-      "verilog sim": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/verilog/asap7sc7p5t_24_INVBUF_SLVT_TT.v",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SL_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SL.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SL.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_INVBUF_SLVT_TT_nldm_201020.lib.gz",
+      "verilog sim": "$STDCELLS/Verilog/asap7sc7p5t_INVBUF_SLVT_TT_201020.v",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SL_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SL.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SL_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "typical",
         "pmos": "typical",
@@ -1233,11 +1247,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_INVBUF_SLVT_SS.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SL_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SL.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SL.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_INVBUF_SLVT_SS_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SL_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SL.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SL_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "slow",
         "pmos": "slow",
@@ -1255,11 +1269,11 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_INVBUF_SLVT_FF.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SL_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SL.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SL.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_INVBUF_SLVT_FF_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SL_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SL.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SL_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "fast",
         "pmos": "fast",
@@ -1277,12 +1291,12 @@
       ]
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_INVBUF_SRAM_TT.lib",
-      "verilog sim": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/verilog/asap7sc7p5t_24_INVBUF_SRAM_TT.v",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SRAM_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SRAM.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SRAM.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_INVBUF_SRAM_TT_nldm_201020.lib.gz",
+      "verilog sim": "$STDCELLS/Verilog/asap7sc7p5t_INVBUF_SRAM_TT_201020.v",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SRAM_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SRAM.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SRAM_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "typical",
         "pmos": "typical",
@@ -1294,11 +1308,11 @@
       }
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_INVBUF_SRAM_SS.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SRAM_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SRAM.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SRAM.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_INVBUF_SRAM_SS_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SRAM_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SRAM.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SRAM_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "slow",
         "pmos": "slow",
@@ -1310,11 +1324,11 @@
       }
     },
     {
-      "nldm liberty file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lib/asap7sc7p5t_24_INVBUF_SRAM_FF.lib",
-      "lef file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/lef/scaled/asap7sc7p5t_24_SRAM_4x_170912.lef",
-      "spice file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/cdl/lvs/asap7_75t_SRAM.cdl",
-      "gds file": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/asap7sc7p5t_24_SRAM.gds",
-      "qrc techfile": "ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/qrc/qrcTechFile_typ03_scaled4xV06",
+      "nldm liberty file": "$STDCELLS/LIB/NLDM/asap7sc7p5t_INVBUF_SRAM_FF_nldm_201020.lib.gz",
+      "lef file": "$STDCELLS/LEF/scaled/asap7sc7p5t_27_SRAM_4x_201211.lef",
+      "spice file": "$STDCELLS/CDL/LVS/asap7sc7p5t_27_SRAM.cdl",
+      "gds file": "tech-asap7-cache/GDS/asap7sc7p5t_27_SRAM_201211.gds",
+      "qrc techfile": "$STDCELLS/qrc/qrcTechFile_typ03_scaled4xV06",
       "corner": {
         "nmos": "fast",
         "pmos": "fast",
@@ -1326,12 +1340,7 @@
       }
     }
   ],
-  "dont use list": [
-  "AO*",
-  "OA*",
-  "A2O1*",
-  "BUFx16f*"
-  ],
+  "dont use list": [],
   "stackups": [
     {
       "name": "asap7_3Ma_2Mb_2Mc_2Md",
@@ -1356,17 +1365,12 @@
     "TAPCELL_ASAP7_75t_R", "TAPCELL_ASAP7_75t_L", "TAPCELL_ASAP7_75t_SL", "TAPCELL_ASAP7_75t_SRAM",
     "TAPCELL_WITH_FILLER_ASAP7_75t_R", "TAPCELL_WITH_FILLER_ASAP7_75t_L", "TAPCELL_WITH_FILLER_ASAP7_75t_SL", "TAPCELL_WITH_FILLER_ASAP7_75t_SRAM",
     "FILLER_ASAP7_75t_R", "FILLER_ASAP7_75t_L", "FILLER_ASAP7_75t_SL", "FILLER_ASAP7_75t_SRAM", 
-    "FILLERxp5_ASAP7_75t_R", "FILLERxp5_ASAP7_75t_L", "FILLERxp5_ASAP7_75t_SL", "FILLERxp5_ASAP7_75t_SRAM", 
-    "DECAPx1_ASAP7_75t_R", "DECAPx1_ASAP7_75t_L", "DECAPx1_ASAP7_75t_SL", "DECAPx1_ASAP7_75t_SRAM", 
-    "DECAPx2_ASAP7_75t_R", "DECAPx2_ASAP7_75t_L", "DECAPx2_ASAP7_75t_SL", "DECAPx2_ASAP7_75t_SRAM", 
-    "DECAPx4_ASAP7_75t_R", "DECAPx4_ASAP7_75t_L", "DECAPx4_ASAP7_75t_SL", "DECAPx4_ASAP7_75t_SRAM", 
-    "DECAPx6_ASAP7_75t_R", "DECAPx6_ASAP7_75t_L", "DECAPx6_ASAP7_75t_SL", "DECAPx6_ASAP7_75t_SRAM", 
-    "DECAPx10_ASAP7_75t_R", "DECAPx10_ASAP7_75t_L", "DECAPx10_ASAP7_75t_SL", "DECAPx10_ASAP7_75t_SRAM" 
+    "FILLERxp5_ASAP7_75t_R", "FILLERxp5_ASAP7_75t_L", "FILLERxp5_ASAP7_75t_SL", "FILLERxp5_ASAP7_75t_SRAM"
   ],
   "special cells": [
     {"cell_type": "tapcell", "name": ["TAPCELL_ASAP7_75t_L"]},
     {"cell_type": "stdfiller", "name": ["FILLER_ASAP7_75t_R", "FILLER_ASAP7_75t_L", "FILLER_ASAP7_75t_SL", "FILLER_ASAP7_75t_SRAM", "FILLERxp5_ASAP7_75t_R", "FILLERxp5_ASAP7_75t_L", "FILLERxp5_ASAP7_75t_SL", "FILLERxp5_ASAP7_75t_SRAM"]},
-    {"cell_type": "decap", "name": ["DECAPx1_ASAP7_75t_R", "DECAPx1_ASAP7_75t_L", "DECAPx1_ASAP7_75t_SL", "DECAPx1_ASAP7_75t_SRAM", "DECAPx2_ASAP7_75t_R", "DECAPx2_ASAP7_75t_L", "DECAPx2_ASAP7_75t_SL", "DECAPx2_ASAP7_75t_SRAM", "DECAPx4_ASAP7_75t_R", "DECAPx4_ASAP7_75t_L", "DECAPx4_ASAP7_75t_SL", "DECAPx4_ASAP7_75t_SRAM", "DECAPx6_ASAP7_75t_R", "DECAPx6_ASAP7_75t_L", "DECAPx6_ASAP7_75t_SL", "DECAPx6_ASAP7_75t_SRAM", "DECAPx10_ASAP7_75t_R", "DECAPx10_ASAP7_75t_L", "DECAPx10_ASAP7_75t_SL", "DECAPx10_ASAP7_75t_SRAM"]},
+    {"cell_type": "decap", "name": ["DECAPx1_ASAP7_75t_R", "DECAPx1_ASAP7_75t_L", "DECAPx1_ASAP7_75t_SL", "DECAPx1_ASAP7_75t_SRAM", "DECAPx2_ASAP7_75t_R", "DECAPx2_ASAP7_75t_L", "DECAPx2_ASAP7_75t_SL", "DECAPx2_ASAP7_75t_SRAM", "DECAPx2b_ASAP7_75t_R", "DECAPx2b_ASAP7_75t_L", "DECAPx2b_ASAP7_75t_SL", "DECAPx2b_ASAP7_75t_SRAM", "DECAPx4_ASAP7_75t_R", "DECAPx4_ASAP7_75t_L", "DECAPx4_ASAP7_75t_SL", "DECAPx4_ASAP7_75t_SRAM", "DECAPx6_ASAP7_75t_R", "DECAPx6_ASAP7_75t_L", "DECAPx6_ASAP7_75t_SL", "DECAPx6_ASAP7_75t_SRAM", "DECAPx10_ASAP7_75t_R", "DECAPx10_ASAP7_75t_L", "DECAPx10_ASAP7_75t_SL", "DECAPx10_ASAP7_75t_SRAM"]},
     {"cell_type": "tiehicell", "name": ["TIEHIx1_ASAP7_75t_SL"]},
     {"cell_type": "tielocell", "name": ["TIELOx1_ASAP7_75t_SL"]}
   ]
