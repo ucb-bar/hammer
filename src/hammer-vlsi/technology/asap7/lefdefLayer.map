@@ -1,0 +1,29 @@
+#This file contains the mapping between technology layers and lefdef layers.
+
+#TECH layers.
+
+#CSUBSTRATE GATE LISD V0 M1 V1 M2 V2 M3 V3 M4 V4 M5 V5 M6 V6 M7 V7 M8 V8 M9 
+
+#LEF layers.
+
+#OVERLAP nwell pwell Gate Active V0 M1 V1 M2 V2 M3 V3 M4 V4 M5 V5 M6 V6 M7 V7 M8 V8 M9 V9 Pad 
+
+#layer type   tech layer name    lefdef layer name
+
+metal	M1	lefdef	 M1
+via	V1	lefdef	 V1
+metal	M2	lefdef	 M2
+via	V2	lefdef	 V2
+metal	M3	lefdef	 M3
+via	V3	lefdef	 V3
+metal	M4	lefdef	 M4
+via	V4	lefdef	 V4
+metal	M5	lefdef	 M5
+via	V5	lefdef	 V5
+metal	M6	lefdef	 M6
+via	V6	lefdef	 V6
+metal	M7	lefdef	 M7
+via	V7	lefdef	 V7
+metal	M8	lefdef	 M8
+via	V8	lefdef	 V8
+metal	M9	lefdef	 M9

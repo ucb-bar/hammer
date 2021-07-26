@@ -313,6 +313,30 @@ class LVSDeck(NamedTuple('LVSDeck', [
             path=str(d['path'])
         )
 
+# Struct that holds information about Spice model files.
+class SpiceModelFile(NamedTuple('SpiceModelFile', [
+    ('path', str),
+    ('lib_corner', Optional[str])
+])):
+    __slots__ = ()
+
+    def to_setting(self) -> dict:
+        output = {'path': str(self.path)}
+        if self.lib_corner is not None:
+            output.update({'lib corner': str(self.lib_corner)})
+        return output
+
+    @staticmethod
+    def from_setting(d: dict) -> "SpiceModelFile":
+        lib_corner = d['lib corner']
+        if lib_corner is not None:
+            lib_corner = str(d['lib corner'])
+        return SpiceModelFile(
+            path=str(d['path']),
+            lib_corner=lib_corner
+        )
+
+
 class HammerTechnology:
     """
     Abstraction layer of Technology.
@@ -646,7 +670,11 @@ class HammerTechnology:
         assert len(path) > 0, "path must not be empty"
 
         # If the path is an absolute path, return it as-is.
-        if path[0] == "/":
+        if os.path.isabs(path):
+            return path
+
+        # If the path has no path separator, treat it as a raw string.
+        if not os.sep in path:
             return path
 
         base_path = path.split(os.path.sep)[0]
@@ -1053,6 +1081,13 @@ class HammerTechnology:
     def get_tech_sim_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
         """
         Return a list of sim hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_tech_power_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
+        """
+        Return a list of power hooks for this technology and tool.
         To be overridden by subclasses.
         """
         return list()

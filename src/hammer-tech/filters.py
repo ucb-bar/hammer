@@ -270,3 +270,46 @@ class LibraryFilterHolder:
             else:
                 return []
         return LibraryFilter.new("tlu_map", "TLU+ map file", is_file=True, paths_func=select_tlu_map_file)
+
+    @property
+    def spice_model_file_filter(self) -> LibraryFilter:
+        """Select spice model files."""
+        def select_spice_model_file(lib: "Library") -> List[str]:
+            if lib.spice_model_file is not None and lib.spice_model_file.path is not None:
+                return [lib.spice_model_file.path]
+            else:
+                return []
+        return LibraryFilter.new("spice_model_file", "Spice model file", is_file=True, paths_func=select_spice_model_file)
+
+    @property
+    def spice_model_lib_corner_filter(self) -> LibraryFilter:
+        """Select spice model lib corners."""
+        def select_spice_model_lib_corner(lib: "Library") -> List[str]:
+            if lib.spice_model_file is not None and lib.spice_model_file.lib_corner is not None:
+                return [lib.spice_model_file.lib_corner]
+            else:
+                return []
+        return LibraryFilter.new("spice_model_lib_corner", "Spice model lib corner", is_file=False, paths_func=select_spice_model_lib_corner)
+
+    @property
+    def power_grid_library_filter(self) -> LibraryFilter:
+        """
+        Select power grid libraries for EM/IR analysis.
+        """
+
+        def filter_func(lib: "Library") -> bool:
+            return lib.power_grid_library is not None
+
+        def paths_func(lib: "Library") -> List[str]:
+            assert lib.power_grid_library is not None
+            return [lib.power_grid_library]
+
+        def sort_func(lib: "Library"):
+            if lib.provides is not None:
+                for provided in lib.provides:
+                    if provided.lib_type is not None and provided.lib_type == "technology":
+                        return 0  # put the technology library in front
+            return 100  # put it behind
+
+        return LibraryFilter.new("power_grid_library", "Power grid library", is_file=True, filter_func=filter_func,
+                                 paths_func=paths_func, sort_func=sort_func)

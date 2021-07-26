@@ -18,7 +18,8 @@ class CellType(Enum):
     EndCap = 4
     IOFiller = 5
     StdFiller = 6
-    TapCell = 7
+    Decap = 7
+    TapCell = 8
 
     @classmethod
     def __mapping(cls) -> Dict[str, "CellType"]:
@@ -29,6 +30,7 @@ class CellType(Enum):
             "endcap": CellType.EndCap,
             "iofiller": CellType.IOFiller,
             "stdfiller": CellType.StdFiller,
+            "decap": CellType.Decap,
             "tapcell": CellType.TapCell
         }
 
@@ -47,7 +49,7 @@ class CellType(Enum):
 class SpecialCell(NamedTuple('SpecialCell', [
         ('cell_type', CellType),
         ('name', List[str]),
-        ('size', Optional[Decimal])
+        ('size', Optional[List[str]])
 ])):
     """
     A SpecialCell is a technology cell used for non logic task (e.g. Tiecells,
@@ -60,7 +62,7 @@ class SpecialCell(NamedTuple('SpecialCell', [
     def from_setting(d: dict) -> "SpecialCell":
         size = d['size']
         if size is not None:
-            size = Decimal(str(d['size']))
+            size = list(map(lambda x: str(x), size))
         # pylint: disable=missing-docstring
         return SpecialCell(
             cell_type=CellType.from_str(d["cell_type"]),

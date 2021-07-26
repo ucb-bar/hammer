@@ -673,11 +673,11 @@ END LIBRARY
         def add_special_cells(in_dict: Dict[str, Any]) -> Dict[str, Any]:
             out_dict = deepdict(in_dict)
             out_dict.update({"special_cells": [
-                                {"name": "cell1", "cell_type": "tiehicell"},
-                                {"name": "cell2", "cell_type": "tiehicell", "size": 1.5},
-                                {"name": "cell3", "cell_type": "iofiller", "size": 0.5},
-                                {"name": "cell4", "cell_type": "stdfiller"},
-                                {"name": "cell5", "cell_type": "endcap"},
+                                {"name": ["cell1"], "cell_type": "tiehicell"},
+                                {"name": ["cell2"], "cell_type": "tiehicell", "size": ["1.5"]},
+                                {"name": ["cell3"], "cell_type": "iofiller", "size": ["0.5"]},
+                                {"name": ["cell4"], "cell_type": "stdfiller"},
+                                {"name": ["cell5"], "cell_type": "endcap"},
                              ]})
             return out_dict
         HammerToolTestHelpers.write_tech_json(tech_json_filename, add_special_cells)
@@ -691,19 +691,19 @@ END LIBRARY
         tool.set_database(database)
 
         self.assertEqual(tool.technology.get_special_cell_by_type(CellType.TieHiCell),
-                [SpecialCell(name=list("cell1"), cell_type=CellType.TieHiCell, size=None),
-                 SpecialCell(name=list("cell2"), cell_type=CellType.TieHiCell, size=Decimal(1.5))
+                [SpecialCell(name=list(["cell1"]), cell_type=CellType.TieHiCell, size=None),
+                 SpecialCell(name=list(["cell2"]), cell_type=CellType.TieHiCell, size=list(["1.5"]))
                 ])
 
         self.assertEqual(tool.technology.get_special_cell_by_type(CellType.IOFiller),
-                [SpecialCell(name=list("cell3"), cell_type=CellType.IOFiller, size=Decimal(0.5)),
+                [SpecialCell(name=list(["cell3"]), cell_type=CellType.IOFiller, size=list(["0.5"])),
                 ])
 
         self.assertEqual(tool.technology.get_special_cell_by_type(CellType.StdFiller),
-                [SpecialCell(name=list("cell4"), cell_type=CellType.StdFiller, size=None)])
+                [SpecialCell(name=list(["cell4"]), cell_type=CellType.StdFiller, size=None)])
 
         self.assertEqual(tool.technology.get_special_cell_by_type(CellType.EndCap),
-                [SpecialCell(name=list("cell5"), cell_type=CellType.EndCap, size=None)])
+                [SpecialCell(name=list(["cell5"]), cell_type=CellType.EndCap, size=None)])
 
     def test_drc_lvs_decks(self) -> None:
         """

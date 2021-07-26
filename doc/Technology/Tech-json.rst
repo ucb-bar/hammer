@@ -3,7 +3,7 @@
 Hammer Tech JSON
 ===============================
 
-The ``tech.json`` for a given technology sets up some general information about the install of the PDK, sets up DRC rule decks, sets up pointers to PDK files, and supplies technology stackup information. 
+The ``tech.json`` for a given technology sets up some general information about the install of the PDK, sets up DRC rule decks, sets up pointers to PDK files, and supplies technology stackup information. For a full schema that the tech JSON supports, please see ``src/hammer-tech/schema.json``.
 
 Technology Install
 ---------------------------------
@@ -101,3 +101,25 @@ The ``sites`` field specifies the unit standard cell size of the technology for 
   ]
 
 This is an example from the ASAP7 tech plugin in which the ``name`` parameter specifies the core site name used in the tech LEF, and the ``x`` and ``y`` parameters specify the width and height of the unit standard cell size, respectively.
+
+Special Cells
+--------------------------------
+The ``special cells`` field specifies a set of cells in the technology that have special functions. :numref:`special-cells-example` shows a subset of the ASAP7 tech plugin for 2 types of cells: ``tapcell`` and ``stdfiller``.
+
+.. _special-cells-example:
+.. code-block:: json
+
+  "special cells": [
+    {"cell_type": "tapcell", "name": ["TAPCELL_ASAP7_75t_L"]},
+    {"cell_type": "stdfiller", "name": ["FILLER_ASAP7_75t_R", "FILLER_ASAP7_75t_L", "FILLER_ASAP7_75t_SL", "FILLER_ASAP7_75t_SRAM", "FILLERxp5_ASAP7_75t_R", "FILLERxp5_ASAP7_75t_L", "FILLERxp5_ASAP7_75t_SL", "FILLERxp5_ASAP7_75t_SRAM"]},
+  ]
+
+There are 8 ``cell_type`` s supported: ``tiehicell``, ``tielocell``, ``tiehilocell``, ``endcap``, ``iofiller``, ``stdfiller``, ``decap``, and ``tapcell``. Depending on the tech/tool, some of these cell types can only have 1 cell in the ``name`` list.
+
+There is an optional ``size`` list. For each element in its corresponding ``name`` list, a size (type: str) can be given. An example of how this is used is for ``decap`` cells, where each listed cell has a typical capacitance, which a place and route tool can then use to place decaps to hit a target total decapacitance value. The ASAP7 technology doesn't have characterized decaps, but it would look like this:
+
+.. code-block:: json
+
+    {"cell_type": "decap", "name": ["DECAPx1_ASAP7_75t_R", "DECAPx1_ASAP7_75t_L", "DECAPx1_ASAP7_75t_SL", "DECAPx1_ASAP7_75t_SRAM", "DECAPx2_ASAP7_75t_R", "DECAPx2_ASAP7_75t_L", "DECAPx2_ASAP7_75t_SL", "DECAPx2_ASAP7_75t_SRAM", "DECAPx4_ASAP7_75t_R", "DECAPx4_ASAP7_75t_L", "DECAPx4_ASAP7_75t_SL", "DECAPx4_ASAP7_75t_SRAM", "DECAPx6_ASAP7_75t_R", "DECAPx6_ASAP7_75t_L", "DECAPx6_ASAP7_75t_SL", "DECAPx6_ASAP7_75t_SRAM", "DECAPx10_ASAP7_75t_R", "DECAPx10_ASAP7_75t_L", "DECAPx10_ASAP7_75t_SL", "DECAPx10_ASAP7_75t_SRAM"],
+    "size": ["1 fF", "1 fF", "1 fF", "1 fF", "2 fF", "2 fF", "2 fF", "2 fF", "4 fF", "4 fF", "4 fF", "4 fF", "6 fF", "6 fF", "6 fF", "6 fF", "10 fF", "10 fF", "10 fF", "10 fF"]
+    }

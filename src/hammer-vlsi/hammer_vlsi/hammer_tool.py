@@ -1477,6 +1477,15 @@ class HammerTool(metaclass=ABCMeta):
         output = list(map(DelayConstraint.from_dict, delays))  # type: List[DelayConstraint]
         return output
 
+    def get_decap_constraints(self) -> List[DecapConstraint]:
+        """
+        Get a list of decapacitance constraints as specified in
+        the config.
+        """
+        decaps = self.get_setting("vlsi.inputs.decaps")  # type: List[dict]
+        output = list(map(DecapConstraint.from_dict, decaps))  # type: List[DecapConstraint]
+        return output
+
     @staticmethod
     def append_contents_to_path(content_to_append: str, target_path: str) -> None:
         """

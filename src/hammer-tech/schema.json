@@ -149,6 +149,21 @@
           },
           "verilog synth" : {
             "type" : "string"
+          },
+          "spice model file" : {
+            "title" : "SpiceModelFile",
+            "type" : "object",
+            "properties" : {
+              "path" : {
+                "type" : "string"
+              },
+              "lib corner" : {
+                "type" : "string"
+              }
+            }
+          },
+          "power grid library" : {
+            "type" : "string"
           }
         }
       }
@@ -333,7 +348,11 @@
              }
           },
           "size": {
-             "type": "number"
+             "type": "array",
+             "items": {
+               "title": "string",
+               "type": "string"
+             }
           }
         }
       }

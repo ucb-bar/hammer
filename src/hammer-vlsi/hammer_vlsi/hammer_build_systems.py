@@ -41,13 +41,13 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         - sim-par
         - power-par
 
-    For hierarchical flows, the syn, par, drc, and lvs actions will all be suffixed with the name
+    For hierarchical flows, the syn, par, drc, lvs, sim, and power actions will all be suffixed with the name
     of the hierarchical modules (e.g. syn-Top, syn-SubModA, par-SubModA, etc.). The appropriate
     dependencies and bridge actions are automatically generated from the hierarchy provided in the
     Hammer IR.
 
     For actions that can be run at multiple points in the flow such as sim, the name of the target
-    will include the action it is being run after (e.g. sim-syn, sim-par, etc.). With no suffix 
+    will include the action it is being run after (e.g. sim-syn, sim-par, etc.). With no suffix
     an rtl level simulation will be run.
 
     Additionally, "redo" steps are created (e.g. redo-par for flat designs or redo-par-Top for
@@ -170,7 +170,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
 
         {power_par_in}: {par_out}
         \t$(HAMMER_EXEC) {env_confs} -p {par_out} $(HAMMER_EXTRA_ARGS) -o {power_par_in} --obj_dir {obj_dir} par-to-power
-        
+
         {power_par_out}: {power_sim_par_in} {power_par_in} $(HAMMER_POWER_PAR_DEPENDENCIES)
         \t$(HAMMER_EXEC) {env_confs} -p {power_sim_par_in} -p {power_par_in} $(HAMMER_EXTRA_ARGS) --power_rundir {power_par_run_dir} --obj_dir {obj_dir} power{suffix}
 
