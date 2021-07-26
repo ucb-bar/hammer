@@ -28,16 +28,18 @@ vlsi:
     # Supply voltages.
     # TODO: add ability to tie pin to net in Hammer Innovus plugin
     supplies:
-      power:  [ {name: "VDD", pin: "VDD"}]
-                # {name: "VPWR", pin: "VPWR", tie: "VDD"},
-                # {name: "VPB", pin: "VPB", tie: "VDD"}]
-      ground: [ {name: "VSS", pin: "VSS"}]
-                # {name: "VGND", pin: "VGND", tie: "VSS"},
-                # {name: "VNB", pin: "VNB", tie: "VSS"}]
+      power:  [ {name: "VDD",  pin: "VDD"}]
+                {name: "VPWR", pin: "VPWR", tie: "VDD"},
+                {name: "VPB",  pin: "VPB" , tie: "VDD"}]
+      ground: [ {name: "VSS",  pin: "VSS"}]
+                {name: "VGND", pin: "VGND", tie: "VSS"},
+                {name: "VNB",  pin: "VNB" , tie: "VSS"}]
       VDD: "1.8 V"
       GND: "0 V"
 
-    dont_use_list: ["*sdf*"] # Scan flops go haywire! Avoid them. 
+    # moved these to json
+    # dont_use_mode: append
+    # dont_use_list: ["*sdf*","sky130_fd_sc_hd__probe_p_8"] # Scan flops go haywire! Avoid them. 
     
     # mmmc corners config
     mmmc_corners: [
@@ -63,8 +65,7 @@ vlsi:
     bump_block_cut_layer: "via4"
 
     # Set the interval and offset for tap cells
-    # interval value from the eFPGA---RTL-to-GDS-with-SKY130
-    tap_cell_interval: "40"
+    tap_cell_interval: "15"
     tap_cell_offset: "5"
 
 technology.core:
@@ -74,7 +75,7 @@ technology.core:
   # Note that this is not usually stackup specific; it is based on the std cell libraries themselves
   std_cell_rail_layer: "met1" 
   # This is used to provide a reference master for generating standard cells
-  tap_cell_rail_reference: "{sky130_fd_sc_hd__tap*}"
+  tap_cell_rail_reference: "sky130_fd_sc_hd__tap*"
 
 par.inputs:
   gds_merge: true
