@@ -26,8 +26,8 @@ class SKY130Tech(HammerTechnology):
         self.library_name = 'sky130_fd_sc_hd'
         self.setup_sram_cdl()
         self.setup_cdl()
+        self.setup_verilog()
         self.setup_techlef()
-        self.setup_layermap()
         self.setup_lvs_deck()
         print('Loaded Sky130 Tech')
 
@@ -70,6 +70,7 @@ class SKY130Tech(HammerTechnology):
     # Tech setup steps
     def setup_cdl(self) -> None:
         """ Copy and hack the cdl, replacing pfet_01v8_hvt/nfet_01v8 with phighvt/nshort """
+        # TODO: figure out how to rename the devices to pass Calibre LVS
         setting_dir = self.get_setting("technology.sky130.sky130A")
         setting_dir = Path(setting_dir)
         cdl_old_path = setting_dir / 'libs.ref' / self.library_name / 'cdl' / f'{self.library_name}.cdl'
@@ -85,6 +86,26 @@ class SKY130Tech(HammerTechnology):
         for line in f_old:
             line = line.replace('pfet_01v8_hvt','phighvt')
             line = line.replace('nfet_01v8',    'nshort')
+            f_new.write(line)
+        f_old.close()
+        f_new.close()
+    
+    def setup_verilog(self) -> None:
+        """ Copy and hack the verilog """
+        setting_dir = self.get_setting("technology.sky130.sky130A")
+        setting_dir = Path(setting_dir)
+        verilog_old_path = setting_dir / 'libs.ref' / self.library_name / 'verilog' / f'{self.library_name}.v'
+        if not verilog_old_path.exists():
+            raise FileNotFoundError(f"Verilog not found: {verilog_old_path}")
+
+        cache_tech_dir_path = Path(self.cache_dir) 
+        os.makedirs(cache_tech_dir_path, exist_ok=True)
+        verilog_new_path = cache_tech_dir_path / f'{self.library_name}.v' 
+
+        f_old = open(verilog_old_path,'r')
+        f_new = open(verilog_new_path,'w')
+        for line in f_old:
+            line = line.replace('wire 1','// wire 1')
             f_new.write(line)
         f_old.close()
         f_new.close()
@@ -110,16 +131,16 @@ class SKY130Tech(HammerTechnology):
         f_old.close()
         f_new.close()
 
-    def setup_layermap(self) -> None:
-        """ Copy the layer-map into `self.cache_dir` """
-        nda_dir = self.get_setting("technology.sky130.sky130_nda")
-        nda_dir = Path(nda_dir)
-        layermap = nda_dir / "s8/V2.0.1/VirtuosoOA/libs/technology_library/technology_library.layermap"
-        if not layermap.exists():
-            raise FileNotFoundError(f"Layer-map not found: {layermap}")
-        cache_path = Path(self.cache_dir) 
-        os.makedirs(cache_path, exist_ok=True)
-        shutil.copy(layermap, cache_path)
+    # def setup_layermap(self) -> None:
+    #     """ Copy the layer-map into `self.cache_dir` """
+    #     nda_dir = self.get_setting("technology.sky130.sky130_nda")
+    #     nda_dir = Path(nda_dir)
+    #     layermap = nda_dir / "s8/V2.0.1/VirtuosoOA/libs/technology_library/technology_library.layermap"
+    #     if not layermap.exists():
+    #         raise FileNotFoundError(f"Layer-map not found: {layermap}")
+    #     cache_path = Path(self.cache_dir) 
+    #     os.makedirs(cache_path, exist_ok=True)
+    #     shutil.copy(layermap, cache_path)
 
     def setup_lvs_deck(self) -> None:
         """Remove conflicting specification statements found in PDK LVS decks."""
@@ -142,7 +163,7 @@ class SKY130Tech(HammerTechnology):
                     self.logger.info("Modifying LVS deck: {} -> {}".format
                         (source_path, dest_path))
                     df.write(matcher.sub("", sf.read()))  
-                    df.write(LVS_DECK_INSERT_LINES)
+                    # df.write(LVS_DECK_INSERT_LINES)
 
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {"innovus": [
@@ -151,10 +172,6 @@ class SKY130Tech(HammerTechnology):
             HammerTool.make_pre_insertion_hook("power_straps",      sky130_power_nets),
             HammerTool.make_post_insertion_hook("place_opt_design", sky130_add_tieoffs),
             HammerTool.make_pre_insertion_hook("write_design",     sky130_connect_nets),
-            #HammerTool.make_replacement_hook("power_straps", intech22_innovus.intech22_reference_power_straps),
-            # HammerTool.make_post_insertion_hook("power_straps", intech22_innovus.intech22_m2_staples),
-            # HammerTool.make_pre_insertion_hook("clock_tree", intech22_innovus.intech22_cts_options),
-            # HammerTool.make_replacement_hook("add_fillers", intech22_innovus.intech22_add_fillers),
             ]}
         return hooks.get(tool_name, [])
 
@@ -178,11 +195,25 @@ LVS_DECK_SCRUB_LINES = [
 LVS_DECK_INSERT_LINES = '''
 LVS FILTER D  OPEN  SOURCE
 LVS FILTER D  OPEN  LAYOUT
-
 '''
+
 # TODO: black boxing sram is temporary!!
 for name in SKY130Tech.openram_sram_names():
     LVS_DECK_INSERT_LINES += f"LVS BOX {name} \n"
+    LVS_DECK_INSERT_LINES += f"LVS FILTER {name} OPEN \n"
+
+# EXCLUDE CELL sky130_sram_1kbyte_1rw1r_32x256_8
+# EXCLUDE CELL sky130_sram_1kbyte_1rw1r_8x1024_8
+# EXCLUDE CELL sky130_sram_2kbyte_1rw1r_32x512_8
+
+# LVS BOX sky130_sram_1kbyte_1rw1r_32x256_8 
+# LVS BOX sky130_sram_1kbyte_1rw1r_8x1024_8 
+# LVS BOX sky130_sram_2kbyte_1rw1r_32x512_8 
+
+# LVS FILTER sky130_sram_1kbyte_1rw1r_32x256_8 OPEN
+# LVS FILTER sky130_sram_1kbyte_1rw1r_8x1024_8 OPEN
+# LVS FILTER sky130_sram_2kbyte_1rw1r_32x512_8 OPEN
+
 
 # various Innovus database settings
 def sky130_innovus_settings(ht: HammerTool) -> bool:
@@ -192,6 +223,47 @@ def sky130_innovus_settings(ht: HammerTool) -> bool:
     """Settings for every tool invocation"""
     ht.append(
         '''  
+
+##########################################################
+# Placement attributes  [get_db -category place]
+##########################################################
+#-------------------------------------------------------------------------------
+set_db place_global_place_io_pins  true
+
+set_db opt_honor_fences true
+set_db place_detail_dpt_flow true
+set_db place_detail_color_aware_legal true
+set_db place_global_solver_effort high
+set_db place_detail_check_cut_spacing true
+set_db place_global_cong_effort high
+
+##########################################################
+# Optimization attributes  [get_db -category opt]
+##########################################################
+#-------------------------------------------------------------------------------
+
+set_db opt_fix_fanout_load true
+set_db opt_clock_gate_aware false
+set_db opt_area_recovery true
+set_db opt_post_route_area_reclaim setup_aware
+set_db opt_fix_hold_verbose true
+# set_db opt_fix_hold_lib_cells "BUFFD0BWP30P140HVT BUFFD1BWP30P140HVT BUFFD2BWP30P140HVT BUFFD3BWP30P140HVT BUFFD4BWP30P140HVT BUFFD6BWP30P140HVT BUFFD8BWP30P140HVT BUFFD12BWP30P140HVT BUFFD16BWP30P140HVT BUFFD20BWP30P140HVT BUFFD24BWP30P140HVT DEL025D1BWP30P140HVT"
+
+
+##########################################################
+# Clock attributes  [get_db -category cts]
+##########################################################
+#-------------------------------------------------------------------------------
+#set_db cts_target_skew                .15
+#set_db cts_target_max_transition_time .3
+#set_db cts_update_io_latency false
+
+# set_db cts_use_inverters true
+# set_db cts_buffer_cells               "clkbuf clkdlybuf4s15 clkdlybuf4s18 clkdlybuf4s25 clkdlybuf4s50"
+# set_db cts_inverter_cells             "clkinv clkinvlp"
+# set_db cts_clock_gating_cells         "CKLHQD1BWP30P140HVT CKLHQD2BWP30P140HVT CKLHQD3BWP30P140HVT CKLHQD4BWP30P140HVT CKLHQD6BWP30P140HVT CKLHQD8BWP30P140HVT CKLHQD12BWP30P140HVT CKLHQD16BWP30P140HVT CKLHQD20BWP30P140HVT CKLHQD24BWP30P140HVT CKLNQD1BWP30P140HVT CKLNQD2BWP30P140HVT CKLNQD3BWP30P140HVT CKLNQD4BWP30P140HVT CKLNQD6BWP30P140HVT CKLNQD8BWP30P140HVT CKLNQD12BWP30P140HVT CKLNQD16BWP30P140HVT CKLNQD20BWP30P140HVT CKLNQD24BWP30P140HVT"
+
+
 ##########################################################
 # Routing attributes  [get_db -category route]
 ##########################################################
@@ -199,6 +271,19 @@ def sky130_innovus_settings(ht: HammerTool) -> bool:
 set_db route_design_antenna_diode_insertion 1
 set_db route_design_antenna_cell_name "sky130_fd_sc_hd__diode_2"
 set_db route_design_bottom_routing_layer 2
+
+set_db route_design_high_freq_search_repair true
+set_db route_design_detail_post_route_spread_wire true
+set_db route_design_with_si_driven true
+set_db route_design_with_timing_driven true
+set_db route_design_concurrent_minimize_via_count_effort high
+set_db opt_consider_routing_congestion true
+set_db route_design_detail_use_multi_cut_via_effort medium
+
+set_db cts_target_skew 0.03
+set_db cts_max_fanout 10
+set_db opt_setup_target_slack 0.10
+set_db opt_hold_target_slack 0.10
     '''
     )
     return True   
@@ -231,6 +316,17 @@ def sky130_power_nets(ht: HammerTool) -> bool:
         '''  
 connect_global_net VDD -type net -net_base_name VPWR
 connect_global_net VSS -type net -net_base_name VGND
+    '''
+    )
+    return True
+
+def sky130_remove_route_blockages(ht: HammerTool) -> bool:
+    assert isinstance(
+        ht, HammerPlaceAndRouteTool
+    ), "removing blockages can only run on par"
+    ht.append(
+        '''  
+delete_route_blockages -layers {met1 met4}
     '''
     )
     return True
