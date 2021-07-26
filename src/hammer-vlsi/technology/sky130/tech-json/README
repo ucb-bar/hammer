@@ -1,0 +1,4 @@
+Make sure $HAMMER_HOME points to the Hammer install you're using with Sky130.
+Then run:
+    >> python generate_json.py
+This writes the tech json file to ./sky130.tech.json and $HAMMER_HOME/src/hammer-vlsi/technology/sky130/sky130.tech.json
