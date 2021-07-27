@@ -44,7 +44,7 @@ vlsi:
     # - "set_false_path -hold -fall_to [get_db [get_db insts -if {.base_cell.name == ASYNC_DFF*}] .pins -if {.name == *RESET}]"
   technology:
     # Set standard cell LEF placement site
-    placement_site: "coreSite"
+    placement_site: "asap7sc7p5t"
 
     # Set the layer that blocks vias under bumps
     bump_block_cut_layer: "V9"

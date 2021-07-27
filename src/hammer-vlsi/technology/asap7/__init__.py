@@ -46,13 +46,14 @@ class ASAP7Tech(HammerTechnology):
         try:
             import gdspy # TODO: why did module import get lost above for some users?
 
-            self.logger.info("Generate GDS for Multi-VT cells")
+            self.logger.info("Generating GDS for Multi-VT cells...")
 
             stdcell_dir = self.get_setting("technology.asap7.stdcell_install_dir")
             orig_gds = os.path.join(stdcell_dir, "GDS/asap7sc7p5t_27_R_201211.gds")
             # load original_gds
             asap7_original_gds = gdspy.GdsLibrary().read_gds(infile=orig_gds, units='import')
             original_cells = asap7_original_gds.cell_dict
+            cell_list = list(map(lambda c: c.name, original_cells.values()))
             # required libs
             multi_libs = {
                 "L": {
@@ -77,10 +78,12 @@ class ASAP7Tech(HammerTechnology):
                 # extract polygon from layer 100(the boundary for cell)
                 boundary_polygon = poly_dict[(100, 0)]
                 for vt, multi_lib in multi_libs.items():
+                    new_cell = cell.name.rstrip('R') + vt
+                    cell_list.append(new_cell)
                     mvt_layer = multi_lib['mvt_layer']
                     # copy boundary_polygon to mvt_layer to mark the this cell is a mvt cell.
                     mvt_polygon = gdspy.PolygonSet(boundary_polygon, multi_lib['mvt_layer'], 0)
-                    mvt_cell = cell.copy(name=cell.name.replace('R', vt), exclude_from_current=True, deep_copy=True).add(mvt_polygon)
+                    mvt_cell = cell.copy(name=new_cell, exclude_from_current=True, deep_copy=True).add(mvt_polygon)
                     # add mvt_cell to corresponding multi_lib
                     multi_lib['lib'].add(mvt_cell)
 
@@ -89,10 +92,14 @@ class ASAP7Tech(HammerTechnology):
                 new_gds = os.path.basename(orig_gds).replace('R', vt)
                 multi_lib['lib'].write_gds(os.path.join(self.cache_dir, 'GDS', new_gds))
 
+            # Write out cell list for scaling script
+            with open(os.path.join(self.cache_dir, 'stdcells.txt'), 'w') as f:
+                f.writelines('{}\n'.format(cell) for cell in cell_list)
+
         except:
             os.rmdir(os.path.join(self.cache_dir, "GDS"))
             self.logger.error("GDS patching failed! Check your gdspy and/or ASAP7 PDK installation.")
-            raise
+            sys.exit()
 
     def fix_icg_libs(self) -> None:
         """
@@ -105,7 +112,7 @@ class ASAP7Tech(HammerTechnology):
             return None
 
         try:
-            self.logger.info("Fixing ICG LIBs")
+            self.logger.info("Fixing ICG LIBs...")
             statetable_text = """\    statetable ("CLK ENA SE", "IQ") {\\n      table : "L L L : - : L ,  L L H : - : H , L H L : - : H , L H H : - : H , H - - : - : N ";\\n    }"""
             gclk_func = "CLK & IQ"
             lib_dir = os.path.join(self.get_setting("technology.asap7.stdcell_install_dir"), "LIB/NLDM")
@@ -121,7 +128,7 @@ class ASAP7Tech(HammerTechnology):
             os.rmdir(os.path.join(self.cache_dir, "LIB/NLDM"))
             os.rmdir(os.path.join(self.cache_dir, "LIB"))
             self.logger.error("Failed to fix ICG LIBs. Check your ASAP7 installation!")
-            raise
+            sys.exit()
 
 
     def scale_gds_script(self, gds_file: str) -> str:
@@ -138,7 +145,7 @@ class ASAP7Tech(HammerTechnology):
 # Scale the final GDS by a factor of 4
 # This is a tech hook that should be inserted post write_design
 
-import sys
+import sys, glob, os, re
 
 try:
     import gdspy
@@ -147,8 +154,8 @@ except ImportError:
     print('Check your gdspy installation!')
     sys.exit()
 
-# load the standard cell list from the gds folder and lop off '_SL' from end
-cell_list = \[line.strip()\[:-3\] for line in open('{cell_list_file}', 'r')\]
+# load the standard cell list
+cell_list = \[line.rstrip() for line in open('{cell_list_file}', 'r')\]
 
 # Need to remove blk layer from any macros, else LVS rule deck interprets it as a polygon
 blockage_datatype = 4
@@ -190,7 +197,9 @@ for k,v in gds_lib.cell_dict.items():
 
 # Overwrite original GDS file
 gds_lib.write_gds('{gds_file}')
-        """.format(cell_list_file=os.path.join(self.extracted_tarballs_dir, 'ASAP7_PDKandLIB.tar/ASAP7_PDKandLIB_v1p5/asap7libs_24.tar.bz2/asap7libs_24/gds/cell_list.txt'), gds_file=gds_file)
+        """.format(cell_list_file=os.path.join(self.cache_dir, 'stdcells.txt'),
+                   stdcell_dir=self.get_setting("technology.asap7.stdcell_install_dir"),
+                   gds_file=gds_file)
 
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {"innovus": [
