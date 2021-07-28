@@ -372,7 +372,13 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
 
     def prependlocal_action(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
         """Prepend the local path of the config dict."""
-        config_dict[key] = os.path.join(params.meta_path, str(value))
+        if isinstance(value, list):
+            new_values = []
+            for v in value:
+                new_values.append(os.path.join(params.meta_path, str(v)))
+            config_dict[key] = new_values
+        else:
+            config_dict[key] = os.path.join(params.meta_path, str(value))
 
     def prependlocal_rename(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[
         Tuple[Any, str]]:
