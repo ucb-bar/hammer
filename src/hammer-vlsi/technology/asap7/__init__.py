@@ -147,8 +147,7 @@ class ASAP7Tech(HammerTechnology):
         except:
             os.rmdir(os.path.join(self.cache_dir, "GDS"))
             self.logger.error("GDS patching failed! Check your gdstk, gdspy, and/or ASAP7 PDK installation.")
-            raise
-            #sys.exit()
+            sys.exit()
 
     def fix_icg_libs(self) -> None:
         """
@@ -241,6 +240,9 @@ if 'gdstk' in sys.modules:
 
     # Overwrite original GDS file
     gds_lib.write_gds('{gds_file}')
+
+    # We can also write an SVG of the top cell
+    gds_lib.top_level()[0].write_svg(os.path.splitext('{gds_file}')\[0\] + '.svg')
 
 elif 'gdspy' in sys.modules:
     # load original_gds
