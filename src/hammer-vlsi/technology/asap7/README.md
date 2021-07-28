@@ -7,17 +7,24 @@ Setup and Environment
 =====================
 
 In addition to requirements for `hammer-vlsi`, using ASAP7 also requires:
-- ASAP7 PDK version 1p5. Note this is not the latest PDK from the ASU website; you will need to contact developers for the older version.
-- The PDK tarball must not be pre-extracted, i.e. must specify `technology.asap7.tarball_dir` only.
-- `numpy` and `gdspy` must also be installed. This is needed to modify the GDS after place-and-route. \* The gdspy version must be 1.4 as newer versions are incompatible.
+- ASAP7 PDK version 1p7, available [here on GitHub](https://github.com/The-OpenROAD-Project/asap7). We recommend downloading an archive of or shallow cloning the repository.
+- The Calibre deck tarball (downloaded separately from the website) must not be extracted. It should be placed in the directory specified by `technology.asap7.tarball_dir`.
+- Either the `gdstk` or `gdspy` GDS manipulation utility is required for 4x database downscaling. `gdstk` (available [here on GitHub](https://github.com/heitzmann/gdstk), version >0.6) is highly recommended; however, because it is more difficult to install, `gdspy` (available [here on Github](https://github.com/heitzmann/gdspy/releases), specifically version 1.4 can also be used instead, but it is much slower.
 - Calibre must be the DRC/LVS tool.
 
-\*At this moment, for BWRC affiliates, the environment needed for a `gdspy` install is setup only on the LSF cluster machines. To install it:
+\*At this moment, for BWRC affiliates, the environment needed for a `gdstk` or `gdspy` install is setup only on the LSF cluster machines. To install it, first enable the Python dev environment:
 ```
 scl enable rh-python36 bash
+```
+`gdstk` must be built from source, with dependencies such as CMake, LAPACK, and ZLIB. All must be installed from source into your own environment. For the ZLIB build, make sure the `-fPIC` CFLAG is used. Then, in the `gdstk` source, add the following CMake flags at the top of `setup.py`: `-DZLIB_LIBRARY=/path/to/your/libz.a` and `-DZLIB_INCLUDE_DIR=/path/to/your/include`. Then, in the `gdstk` source folder:
+```
+python3 setup.py install --user
+```
+For `gdspy`, the installation is much easier, depending just on `pip` and `numpy`:
+```
 python -m pip install gdspy --user
 ```
-Or, replace the pip installation with installation from source in `hammer/src/tools/gdspy`.
+Or, replace the pip installation with installation from source in the `hammer/src/tools/gdspy` submodule.
 
 Dummy SRAMs
 ===========

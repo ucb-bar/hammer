@@ -24,11 +24,17 @@ class ASAP7Tech(HammerTechnology):
     """
     def post_install_script(self) -> None:
         try:
-            import gdspy  # type: ignore
+            # Prioritize gdstk
+            self.gds_tool = __import__('gdstk')
         except ImportError:
-            self.logger.error("Check your gdspy installation! Unable to hack ASAP7 PDK.")
-            shutil.rmtree(self.cache_dir)
-            sys.exit()
+            self.logger.info("gdstk not found, falling back to gdspy...")
+            try:
+                self.gds_tool = __import__('gdspy')
+                assert('1.4' in self.gds_tool.__version__)
+            except (ImportError, AssertionError):
+                self.logger.error("Check your gdspy v1.4 installation! Unable to hack ASAP7 PDK.")
+                shutil.rmtree(self.cache_dir)
+                sys.exit()
         self.generate_multi_vt_gds()
         self.fix_icg_libs()
 
@@ -44,53 +50,95 @@ class ASAP7Tech(HammerTechnology):
             return None
 
         try:
-            import gdspy # TODO: why did module import get lost above for some users?
-
-            self.logger.info("Generating GDS for Multi-VT cells...")
+            self.logger.info("Generating GDS for Multi-VT cells using {}...".format(self.gds_tool.__name__))
 
             stdcell_dir = self.get_setting("technology.asap7.stdcell_install_dir")
             orig_gds = os.path.join(stdcell_dir, "GDS/asap7sc7p5t_27_R_201211.gds")
-            # load original_gds
-            asap7_original_gds = gdspy.GdsLibrary().read_gds(infile=orig_gds, units='import')
-            original_cells = asap7_original_gds.cell_dict
-            cell_list = list(map(lambda c: c.name, original_cells.values()))
-            # required libs
-            multi_libs = {
-                "L": {
-                    "lib": gdspy.GdsLibrary(),
-                    "mvt_layer": 98
-                    },
-                "SL": {
-                    "lib": gdspy.GdsLibrary(),
-                    "mvt_layer": 97
-                    },
-                "SRAM": {
-                    "lib": gdspy.GdsLibrary(),
-                    "mvt_layer": 110
-                    },
-            }
-            # create new libs
-            for vt, multi_lib in multi_libs.items():
-                multi_lib['lib'].name = asap7_original_gds.name.replace('R', vt)
 
-            for cell in original_cells.values():
-                poly_dict = cell.get_polygons(by_spec=True)
-                # extract polygon from layer 100(the boundary for cell)
-                boundary_polygon = poly_dict[(100, 0)]
+            if self.gds_tool.__name__ == 'gdstk':
+                # load original GDS
+                asap7_original_gds = self.gds_tool.read_gds(infile=orig_gds)
+                original_cells = asap7_original_gds.cells
+                cell_list = list(map(lambda c: c.name, original_cells))
+                # required libs
+                multi_libs = {
+                    "L": {
+                        "lib": self.gds_tool.Library(),
+                        "mvt_layer": 98
+                        },
+                    "SL": {
+                        "lib": self.gds_tool.Library(),
+                        "mvt_layer": 97
+                        },
+                    "SRAM": {
+                        "lib": self.gds_tool.Library(),
+                        "mvt_layer": 110
+                        },
+                }
+                # create new libs
                 for vt, multi_lib in multi_libs.items():
-                    new_cell = cell.name.rstrip('R') + vt
-                    cell_list.append(new_cell)
-                    mvt_layer = multi_lib['mvt_layer']
-                    # copy boundary_polygon to mvt_layer to mark the this cell is a mvt cell.
-                    mvt_polygon = gdspy.PolygonSet(boundary_polygon, multi_lib['mvt_layer'], 0)
-                    mvt_cell = cell.copy(name=new_cell, exclude_from_current=True, deep_copy=True).add(mvt_polygon)
-                    # add mvt_cell to corresponding multi_lib
-                    multi_lib['lib'].add(mvt_cell)
+                    multi_lib['lib'].name = asap7_original_gds.name.replace('R', vt)
 
-            for vt, multi_lib in multi_libs.items():
-                # write multi_lib
-                new_gds = os.path.basename(orig_gds).replace('R', vt)
-                multi_lib['lib'].write_gds(os.path.join(self.cache_dir, 'GDS', new_gds))
+                for cell in original_cells:
+                    # extract polygon from layer 100(the boundary for cell)
+                    boundary_polygon = next(filter(lambda p: p.layer==100, cell.polygons))
+                    for vt, multi_lib in multi_libs.items():
+                        new_cell_name = cell.name.rstrip('R') + vt
+                        cell_list.append(new_cell_name)
+                        mvt_layer = multi_lib['mvt_layer']
+                        # copy boundary_polygon to mvt_layer to mark the this cell is a mvt cell.
+                        mvt_polygon = self.gds_tool.Polygon(boundary_polygon.points, multi_lib['mvt_layer'], 0)
+                        mvt_cell = cell.copy(name=new_cell_name, deep_copy=True).add(mvt_polygon)
+                        # add mvt_cell to corresponding multi_lib
+                        multi_lib['lib'].add(mvt_cell)
+
+                for vt, multi_lib in multi_libs.items():
+                    # write multi_lib
+                    new_gds = os.path.basename(orig_gds).replace('R', vt)
+                    multi_lib['lib'].write_gds(os.path.join(self.cache_dir, 'GDS', new_gds))
+
+            elif self.gds_tool.__name__ == 'gdspy':
+                # load original GDS
+                asap7_original_gds = self.gds_tool.GdsLibrary().read_gds(infile=orig_gds, units='import')
+                original_cells = asap7_original_gds.cell_dict
+                cell_list = list(map(lambda c: c.name, original_cells.values()))
+                # required libs
+                multi_libs = {
+                    "L": {
+                        "lib": self.gds_tool.GdsLibrary(),
+                        "mvt_layer": 98
+                        },
+                    "SL": {
+                        "lib": self.gds_tool.GdsLibrary(),
+                        "mvt_layer": 97
+                        },
+                    "SRAM": {
+                        "lib": self.gds_tool.GdsLibrary(),
+                        "mvt_layer": 110
+                        },
+                }
+                # create new libs
+                for vt, multi_lib in multi_libs.items():
+                    multi_lib['lib'].name = asap7_original_gds.name.replace('R', vt)
+
+                for cell in original_cells.values():
+                    poly_dict = cell.get_polygons(by_spec=True)
+                    # extract polygon from layer 100(the boundary for cell)
+                    boundary_polygon = poly_dict[(100, 0)]
+                    for vt, multi_lib in multi_libs.items():
+                        new_cell_name = cell.name.rstrip('R') + vt
+                        cell_list.append(new_cell_name)
+                        mvt_layer = multi_lib['mvt_layer']
+                        # copy boundary_polygon to mvt_layer to mark the this cell is a mvt cell.
+                        mvt_polygon = self.gds_tool.PolygonSet(boundary_polygon, multi_lib['mvt_layer'], 0)
+                        mvt_cell = cell.copy(name=new_cell_name, exclude_from_current=True, deep_copy=True).add(mvt_polygon)
+                        # add mvt_cell to corresponding multi_lib
+                        multi_lib['lib'].add(mvt_cell)
+
+                for vt, multi_lib in multi_libs.items():
+                    # write multi_lib
+                    new_gds = os.path.basename(orig_gds).replace('R', vt)
+                    multi_lib['lib'].write_gds(os.path.join(self.cache_dir, 'GDS', new_gds))
 
             # Write out cell list for scaling script
             with open(os.path.join(self.cache_dir, 'stdcells.txt'), 'w') as f:
@@ -98,8 +146,9 @@ class ASAP7Tech(HammerTechnology):
 
         except:
             os.rmdir(os.path.join(self.cache_dir, "GDS"))
-            self.logger.error("GDS patching failed! Check your gdspy and/or ASAP7 PDK installation.")
-            sys.exit()
+            self.logger.error("GDS patching failed! Check your gdstk, gdspy, and/or ASAP7 PDK installation.")
+            raise
+            #sys.exit()
 
     def fix_icg_libs(self) -> None:
         """
@@ -148,55 +197,88 @@ class ASAP7Tech(HammerTechnology):
 import sys, glob, os, re
 
 try:
-    import gdspy
-    print('Scaling down place & routed GDS')
+    import gdstk
 except ImportError:
-    print('Check your gdspy installation!')
-    sys.exit()
+    try:
+        print('gdstk not found, falling back to gdspy...')
+        import gdspy
+    except ImportError:
+        print('Check your gdspy installation!')
+        sys.exit()
+
+print('Scaling down place & routed GDS')
 
 # load the standard cell list
 cell_list = \[line.rstrip() for line in open('{cell_list_file}', 'r')\]
 
-# Need to remove blk layer from any macros, else LVS rule deck interprets it as a polygon
-blockage_datatype = 4
-
-# load original_gds
-gds_lib = gdspy.GdsLibrary().read_gds(infile='{gds_file}', units='import')
-# Iterate through cells that aren't part of standard cell library and scale
-for k,v in gds_lib.cell_dict.items():
-    if not any(cell in k for cell in cell_list):
-        print('Scaling down ' + k)
+if 'gdstk' in sys.modules:
+    # load original_gds
+    gds_lib = gdstk.read_gds(infile='{gds_file}')
+    # Iterate through cells that aren't part of standard cell library and scale
+    for cell in list(filter(lambda c: c.name not in cell_list, gds_lib.cells)):
+        print('Scaling down ' + cell.name)
 
         # Need to remove 'blk' layer from any macros, else LVS rule deck interprets it as a polygon
         # This has a layer datatype of 4
         # Then scale down the polygon
-        v.polygons = \[poly.scale(0.25) for poly in v.polygons if not 4 in poly.datatypes\]
+        for poly in list(filter(lambda p: p.datatype != 4, cell.polygons)):
+            poly.scale(0.25)
 
         # Scale paths
-        for path in v.paths:
+        for path in cell.paths:
             path.scale(0.25)
-            # gdspy bug: we also need to scale custom path extensions
-            # Will be fixed by gdspy/pull#101 in next release
-            for i, end in enumerate(path.ends):
-                if isinstance(end, tuple):
-                    path.ends\[i\] = tuple(\[e*0.25 for e in end\])
 
         # Scale and move labels
-        for label in v.labels:
+        for label in cell.labels:
             # Bug fix for some EDA tools that didn't set MAG field in gds file
             # Maybe this is expected behavior in ASAP7 PDK
-            # In gdspy/__init__.py: `kwargs\['magnification'\] = record\[1\]\[0\]`
             label.magnification = 0.25
-            label.translate(-label.position\[0\]*0.75, -label.position\[1\]*0.75)
+            label.origin = tuple(i * 0.25 for i in label.origin)
 
-        # Scale and move references
-        for ref in v.references:
-            ref.magnification = 0.25
-            ref.translate(-ref.origin\[0\]*0.75, -ref.origin\[1\]*0.75)
-            ref.magnification = 1
+        # Move references (which are scaled if needed)
+        for ref in cell.references:
+            ref.origin = tuple(i * 0.25 for i in ref.origin)
 
-# Overwrite original GDS file
-gds_lib.write_gds('{gds_file}')
+    # Overwrite original GDS file
+    gds_lib.write_gds('{gds_file}')
+
+elif 'gdspy' in sys.modules:
+    # load original_gds
+    gds_lib = gdspy.GdsLibrary().read_gds(infile='{gds_file}', units='import')
+    # Iterate through cells that aren't part of standard cell library and scale
+    for k,v in gds_lib.cell_dict.items():
+        if not any(cell in k for cell in cell_list):
+            print('Scaling down ' + k)
+
+            # Need to remove 'blk' layer from any macros, else LVS rule deck interprets it as a polygon
+            # This has a layer datatype of 4
+            # Then scale down the polygon
+            v.polygons = \[poly.scale(0.25) for poly in v.polygons if not 4 in poly.datatypes\]
+
+            # Scale paths
+            for path in v.paths:
+                path.scale(0.25)
+                # gdspy v1.4 bug: we also need to scale custom path extensions
+                # Fixed by gdspy/pull#101 in next release
+                if gdspy.__version__ == '1.4':
+                    for i, end in enumerate(path.ends):
+                        if isinstance(end, tuple):
+                            path.ends\[i\] = tuple(\[e*0.25 for e in end\])
+
+            # Scale and move labels
+            for label in v.labels:
+                # Bug fix for some EDA tools that didn't set MAG field in gds file
+                # Maybe this is expected behavior in ASAP7 PDK
+                # In gdspy/__init__.py: `kwargs\['magnification'\] = record\[1\]\[0\]`
+                label.magnification = 0.25
+                label.translate(-label.position\[0\]*0.75, -label.position\[1\]*0.75)
+
+            # Move references (which are scaled if needed)
+            for ref in v.references:
+                ref.translate(-ref.origin\[0\]*0.75, -ref.origin\[1\]*0.75)
+
+    # Overwrite original GDS file
+    gds_lib.write_gds('{gds_file}')
         """.format(cell_list_file=os.path.join(self.cache_dir, 'stdcells.txt'),
                    stdcell_dir=self.get_setting("technology.asap7.stdcell_install_dir"),
                    gds_file=gds_file)
