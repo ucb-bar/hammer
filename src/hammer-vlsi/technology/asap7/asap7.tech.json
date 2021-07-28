@@ -42,8 +42,7 @@
       "path": "ASAP7_PDK_CalibreDeck.tar/calibredecks_r1p7/calibre/ruledirs/lvs/lvsRules_calibre_asap7.rul"
     }
   ],
-  "additional_lvs_text": "", 
-
+  "additional_lvs_text": "LVS SPICE EXCLUDE CELL \"SRAM*RW*\"\nLVS BOX \"SRAM*RW*\"\nLVS FILTER \"SRAM*RW*\" OPEN",
   "libraries": [
     {
       "lef file": "$STDCELLS/techlef_misc/asap7_tech_4x_201209.lef",

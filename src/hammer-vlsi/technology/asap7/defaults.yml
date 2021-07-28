@@ -79,3 +79,7 @@ par.inputs:
 power.voltus:
   lef_layer_map: "lefdefLayer.map"
   lef_layer_map_meta: "prependlocal"
+
+# 2017-year only Calibre supported by decks
+drc.calibre.version: "2017.3_38.30"
+lvs.calibre.version: "2017.3_38.30"
