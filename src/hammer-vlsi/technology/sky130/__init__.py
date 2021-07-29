@@ -66,7 +66,6 @@ class SKY130Tech(HammerTechnology):
                         line = line.replace('sky130_fd_pr__nfet_01v8','nshort')
                         f_new.write(line)
 
-
     # Tech setup steps
     def setup_cdl(self) -> None:
         """ Copy and hack the cdl, replacing pfet_01v8_hvt/nfet_01v8 with phighvt/nshort """
@@ -131,17 +130,6 @@ class SKY130Tech(HammerTechnology):
         f_old.close()
         f_new.close()
 
-    # def setup_layermap(self) -> None:
-    #     """ Copy the layer-map into `self.cache_dir` """
-    #     nda_dir = self.get_setting("technology.sky130.sky130_nda")
-    #     nda_dir = Path(nda_dir)
-    #     layermap = nda_dir / "s8/V2.0.1/VirtuosoOA/libs/technology_library/technology_library.layermap"
-    #     if not layermap.exists():
-    #         raise FileNotFoundError(f"Layer-map not found: {layermap}")
-    #     cache_path = Path(self.cache_dir) 
-    #     os.makedirs(cache_path, exist_ok=True)
-    #     shutil.copy(layermap, cache_path)
-
     def setup_lvs_deck(self) -> None:
         """Remove conflicting specification statements found in PDK LVS decks."""
         pattern = '.*({}).*\n'.format('|'.join(LVS_DECK_SCRUB_LINES))
@@ -163,7 +151,7 @@ class SKY130Tech(HammerTechnology):
                     self.logger.info("Modifying LVS deck: {} -> {}".format
                         (source_path, dest_path))
                     df.write(matcher.sub("", sf.read()))  
-                    # df.write(LVS_DECK_INSERT_LINES)
+                    df.write(LVS_DECK_INSERT_LINES)
 
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {"innovus": [
@@ -290,7 +278,7 @@ set_db opt_hold_target_slack 0.10
 
 
 
-# reference: /tools/commercial/skywater/swtech130/skywater-src-nda/scs8hd/V0.0.2/scripts
+# from NDA scripts
 def sky130_add_endcaps(ht: HammerTool) -> bool:
     assert isinstance(
         ht, HammerPlaceAndRouteTool
