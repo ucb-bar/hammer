@@ -84,7 +84,7 @@ def main(args: List[str]) -> int:
     "chip enable port polarity" : "active low",
     "mask port name" : "wmask0",
     "mask port polarity" : "active high",
-    "mask granularity" : 8
+    "mask granularity" : {m}
   }}, {{
     "address port name" : "addr1",
     "address port polarity" : "active high",
