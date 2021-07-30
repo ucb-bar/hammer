@@ -1339,12 +1339,7 @@
       }
     }
   ],
-  "dont use list": [
-  "AO*",
-  "OA*",
-  "A201*",
-  "BUFx16f*"
-  ],
+  "dont use list": [],
   "stackups": [
     {
       "name": "asap7_3Ma_2Mb_2Mc_2Md",
