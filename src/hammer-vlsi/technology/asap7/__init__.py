@@ -15,7 +15,7 @@ import textwrap
 from typing import NamedTuple, List, Optional, Tuple, Dict, Set, Any
 
 from hammer_tech import HammerTechnology
-from hammer_vlsi import HammerTool, HammerPlaceAndRouteTool, HammerDRCTool, TCLTool, HammerToolHookAction
+from hammer_vlsi import HammerTool, HammerPlaceAndRouteTool, HammerDRCTool, MentorCalibreTool, TCLTool, HammerToolHookAction
 
 class ASAP7Tech(HammerTechnology):
     """
@@ -245,6 +245,7 @@ set env(LD_LIBRARY_PATH) [join [lsearch -not -all -inline [split $env(LD_LIBRARY
 
 def asap7_generate_drc_run_file(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerDRCTool), "asap7_generate_drc_run_file can only run on drc"
+    assert isinstance(ht, MentorCalibreTool), "asap7_generate_drc_run_file can only run on a Calibre tool"
     """
     Replace drc_run_file to prevent conflicting SVRF statements
     Symlink DRC GDS to test.gds as expected by deck and results directories
