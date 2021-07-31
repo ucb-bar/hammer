@@ -34,6 +34,12 @@ vlsi:
         "type": "hold",
         "voltage": "0.77 V",
         "temp": "0 C"
+      },
+      {
+        "name": "PVT_0P7V_25C",
+        "type": "extra",
+        "voltage": "0.7 V",
+        "temp": "25 C"
       }
     ]
     # This is to get around missing removal_falling in libs for RESET pin ASYNC_DFF.. cells
