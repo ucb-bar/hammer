@@ -48,9 +48,11 @@ Known Issues
 
 3. Innovus tries to fix non-existent M3 and M5 enclosure violations, lengthening violation fixing time.
 
-4. Common expected DRC violations:
+4. If you specify core margins in the placement constraints, they should be a multiple of 0.384 to avoid DRC violations. Layer offsets for M4-M7 are adjusted manually to keep all wires on-grid.
+
+5. Common expected DRC violations:
+   - M(4,5,6,7).AUX.(1,2) only if the floorplan size requirement above is not satisfied
    - V(n).M(n+1).AUX.2 and V(n).M(n).EN.1 due to limited selection of via cuts for power straps API
-   - M(4,5,6,7).AUX.(1,2) off-grid if using power straps API: tech LEF does not encode this gridding requirement
    - FIN.S.1 appears to be incorrect, standard cell fins are indeed on the right pitch
    - LVT.W.1 caused by 0.5-width isolated-VT filler cells due to lack of implant layer spacing rules
    - LISD.S.3, LIG.S.4 due to some combinations of adjacent cells

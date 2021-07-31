@@ -201,8 +201,12 @@ def asap7_innovus_settings(ht: HammerTool) -> bool:
     ht.append('''
 set_db route_design_bottom_routing_layer 2
 set_db route_design_top_routing_layer 7
+
 # Ignore 1e+31 removal arcs for ASYNC DFF cells
 set_db timing_analysis_async_checks no_async
+
+# Via preferences for stripes
+set_db generate_special_via_rule_preference { M6_M5widePWR1p152 M5_M4widePWR0p864 M4_M3widePWR0p864 }
     ''')
     return True
 
@@ -210,12 +214,12 @@ def asap7_update_floorplan(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerPlaceAndRouteTool), "asap7_update_floorplan can only run on par"
     assert isinstance(ht, TCLTool), "asap7_update_floorplan can only run on TCL tools"
     """
-    This is needed to move the core up by 1 site and re-do wiring tracks.
+    This is needed to block top/bottom site rows and re-do wiring tracks.
     This resolves many DRCs and removes the need for the user to do it in placement constraints.
     """
     ht.append('''
-# Need to delete and recreate tracks based on tech LEF
-add_tracks -honor_pitch
+# Need to delete and recreate tracks based on tech LEF pitches but overriding offsets
+add_tracks -honor_pitch -offsets { M4 horiz 0.048 M5 vert 0.048 M6 horiz 0.064 M7 vert 0.064 }
 
 # Create place blockage on top & bottom row, fixes wiring issue + power vias for DRC/LVS
 set core_lly [get_db current_design .core_bbox.ll.y]
