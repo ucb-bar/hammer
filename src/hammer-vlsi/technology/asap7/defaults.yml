@@ -11,9 +11,6 @@ technology.asap7:
 
 # Set some defaults for this technology.
 # For quick performance evaluations, use the typical voltage+temperature corners.
-# Nominal voltage for 7nm technology is 0.70 V and is the only voltage provided
-# for normal SRAMs.
-# TODO: add default temperature corners.
 vlsi:
   # Technology dimension
   # The PaR tool actually runs in the 4x scaled up lef/gds.
@@ -69,6 +66,29 @@ par.inputs:
   # If user decides to set this to false, all other GDSs (e.g. hard macros) need to be 1x scaled
   # TODO: change export_config_outputs for PaR inputs to expose gds_merge to output json
   gds_merge: true
+
+# Power straps (most DRC-clean)
+par.power_straps_mode: generate
+par.generate_power_straps_method: by_tracks
+par.generate_power_straps_options:
+  by_tracks:
+    strap_layers:
+      - M3
+      - M4
+      - M5
+      - M6
+      - M7
+      - M8
+      - M9
+    pin_layers:
+      - M9
+    track_width: 7 # minimum allowed for M2 & M3
+    track_spacing: 0
+    track_spacing_M3: 1 # to avoid M2 shorts at higher density
+    track_start: 10
+    power_utilization: 0.2
+    power_utilization_M8: 1.0
+    power_utilization_M9: 1.0
 
 power.voltus:
   lef_layer_map: "lefdefLayer.map"
