@@ -1339,7 +1339,29 @@
       }
     }
   ],
-  "dont use list": ["ICGx*DC*"],
+  "dont use list": [
+      "ICGx*DC*",
+      "AND4x1*",
+      "SDFLx2*",
+      "AO21x1*",
+      "XOR2x2*",
+      "OAI31xp33*",
+      "OAI221xp5*",
+      "SDFLx3*",
+      "SDFLx1*",
+      "AOI211xp5*",
+      "OAI322xp33*",
+      "OR2x6*",
+      "A2O1A1O1Ixp25*",
+      "XNOR2x1*",
+      "OAI32xp33*",
+      "FAx1*",
+      "OAI21x1*",
+      "OAI31xp67*",
+      "OAI33xp33*",
+      "AO21x2*",
+      "AOI32xp33*"
+  ],
   "stackups": [
     {
       "name": "asap7_3Ma_2Mb_2Mc_2Md",

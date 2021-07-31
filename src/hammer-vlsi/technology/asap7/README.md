@@ -8,7 +8,7 @@ Setup and Environment
 
 In addition to requirements for `hammer-vlsi`, using ASAP7 also requires:
 - ASAP7 PDK version 1p7, available [here on GitHub](https://github.com/The-OpenROAD-Project/asap7). We recommend downloading an archive of or shallow cloning the repository.
-- The Calibre deck tarball (downloaded separately from the website) must not be extracted. It should be placed in the directory specified by `technology.asap7.tarball_dir`.
+- The Calibre deck tarball (downloaded separately from the website) must not be extracted. It should be placed in the directory specified by `technology.asap7.tarball_dir`. For ease, this can be same directory as the repository.
 - Either the `gdstk` or `gdspy` GDS manipulation utility is required for 4x database downscaling. `gdstk` (available [here on GitHub](https://github.com/heitzmann/gdstk), version >0.6) is highly recommended; however, because it is more difficult to install, `gdspy` (available [here on Github](https://github.com/heitzmann/gdspy/releases), specifically version 1.4 can also be used instead, but it is much slower.
 - Calibre must be the DRC/LVS tool.
 
@@ -44,9 +44,11 @@ Known Issues
 
 1. `ICGx6p67DC*` and `ICGx8DC*` cells are set as don't use due to improper LEF width.
 
-2. Innovus tries to fix non-existent M3 and M5 enclosure violations, lengthening violation fixing time
+2. Many additional cells are not LVS clean, and are set as don't use.
 
-3. Common expected DRC violations:
+3. Innovus tries to fix non-existent M3 and M5 enclosure violations, lengthening violation fixing time.
+
+4. Common expected DRC violations:
    - V(n).M(n+1).AUX.2 and V(n).M(n).EN.1 due to limited selection of via cuts for power straps API
    - M(4,5,6,7).AUX.(1,2) off-grid if using power straps API: tech LEF does not encode this gridding requirement
    - FIN.S.1 appears to be incorrect, standard cell fins are indeed on the right pitch
