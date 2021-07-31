@@ -161,7 +161,10 @@ class ASAP7Tech(HammerTechnology):
 
         try:
             self.logger.info("Fixing ICG LIBs...")
-            statetable_text = """\    statetable ("CLK ENA SE", "IQ") {\\n      table : "L L L : - : L ,  L L H : - : H , L H L : - : H , L H H : - : H , H - - : - : N ";\\n    }"""
+            statetable_text = "\\n".join([
+               '\    statetable ("CLK ENA SE", "IQ") {',
+                '      table : "L L L : - : L ,  L L H : - : H , L H L : - : H , L H H : - : H , H - - : - : N ";',
+                '    }'])
             gclk_func = "CLK & IQ"
             lib_dir = os.path.join(self.get_setting("technology.asap7.stdcell_install_dir"), "LIB/NLDM")
             old_libs = glob.glob(os.path.join(lib_dir, "*SEQ*"))
@@ -206,7 +209,10 @@ set_db route_design_top_routing_layer 7
 set_db timing_analysis_async_checks no_async
 
 # Via preferences for stripes
-set_db generate_special_via_rule_preference { M7_M6widePWR1p152 M6_M5widePWR1p152 M5_M4widePWR0p864 M4_M3widePWR0p864 M3_m2widePWR0p936 }
+set_db generate_special_via_rule_preference { M7_M6widePWR1p152 M6_M5widePWR1p152 M5_M4widePWR0p864 M4_M3widePWR0p864 M3_M2widePWR0p936 }
+
+# Prevent extending M1 pins in cells
+set_db route_design_with_via_in_pin true
     ''')
     return True
 
@@ -228,9 +234,6 @@ set botrow [get_db rows -if {.rect.ll.y == $core_lly}]
 set toprow [get_db rows -if {.rect.ur.y == $core_ury}]
 create_place_blockage -area [get_db $botrow .rect] -name ROW_BLOCK_BOT
 create_place_blockage -area [get_db $toprow .rect] -name ROW_BLOCK_TOP
-
-# Prevent extending M1 pins in cells
-set_db route_design_with_via_in_pin true
 ''')
     return True
 
