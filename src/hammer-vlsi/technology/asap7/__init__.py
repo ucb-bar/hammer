@@ -217,10 +217,13 @@ def asap7_update_floorplan(ht: HammerTool) -> bool:
 # Need to delete and recreate tracks based on tech LEF
 add_tracks -honor_pitch
 
-# Create place blockage on bottom row, fixes wiring issue + power vias for LVS
+# Create place blockage on top & bottom row, fixes wiring issue + power vias for DRC/LVS
 set core_lly [get_db current_design .core_bbox.ll.y]
+set core_ury [get_db current_design .core_bbox.ur.y]
 set botrow [get_db rows -if {.rect.ll.y == $core_lly}]
-create_place_blockage -area [get_db $botrow .rect] -name ROW1_BLOCK
+set toprow [get_db rows -if {.rect.ur.y == $core_ury}]
+create_place_blockage -area [get_db $botrow .rect] -name ROW_BLOCK_BOT
+create_place_blockage -area [get_db $toprow .rect] -name ROW_BLOCK_TOP
 
 # Prevent extending M1 pins in cells
 set_db route_design_with_via_in_pin true

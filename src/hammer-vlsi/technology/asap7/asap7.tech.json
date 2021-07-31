@@ -1339,7 +1339,7 @@
       }
     }
   ],
-  "dont use list": [],
+  "dont use list": ["ICGx*DC*"],
   "stackups": [
     {
       "name": "asap7_3Ma_2Mb_2Mc_2Md",

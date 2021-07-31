@@ -39,10 +39,16 @@ All pins are on M4, with the signal all on the left side and the power stripes r
 
 Finally, the SRAMCompiler in `sram_compiler/__init__.py` is used to generate the ExtraLibrarys (including .lib, .lef, .gds) needed by the particular design.
 
-Known DRC Issues
+Known Issues
 =================
 
-Due to discrepancies between the technology LEF and DRC decks, these are the most common DRC violations one can expect to encounter:
-- V(n).M(n+1).AUX.2 and V(n).M(n).EN.1 due to limited selection of via cuts
-- M(4,5,6,7).AUX.(1,2) and FIN.S.1 off-grid due to incorrect technology LEF offset for these layers
-- LVT.W.1 due to filler-cells with VT's different from surrounding cells
+1. `ICGx6p67DC*` and `ICGx8DC*` cells are set as don't use due to improper LEF width.
+
+2. Innovus tries to fix non-existent M3 and M5 enclosure violations, lengthening violation fixing time
+
+3. Common expected DRC violations:
+   - V(n).M(n+1).AUX.2 and V(n).M(n).EN.1 due to limited selection of via cuts for power straps API
+   - M(4,5,6,7).AUX.(1,2) off-grid if using power straps API: tech LEF does not encode this gridding requirement
+   - FIN.S.1 appears to be incorrect, standard cell fins are indeed on the right pitch
+   - LVT.W.1 caused by 0.5-width isolated-VT filler cells due to lack of implant layer spacing rules
+   - LISD.S.3, LIG.S.4 due to some combinations of adjacent cells
