@@ -229,9 +229,9 @@ add_tracks -honor_pitch -offsets { M4 horiz 0.048 M5 vert 0.048 M6 horiz 0.064 M
 
 # Create place blockage on top & bottom row, fixes wiring issue + power vias for DRC/LVS
 set core_lly [get_db current_design .core_bbox.ll.y]
-set core_ury [get_db current_design .core_bbox.ur.y]
+set core_ury [expr [get_db current_design .core_bbox.ur.y] - 1.08]
 set botrow [get_db rows -if {.rect.ll.y == $core_lly}]
-set toprow [get_db rows -if {.rect.ur.y == $core_ury}]
+set toprow [get_db rows -if {.rect.ur.y > $core_ury}]
 create_place_blockage -area [get_db $botrow .rect] -name ROW_BLOCK_BOT
 create_place_blockage -area [get_db $toprow .rect] -name ROW_BLOCK_TOP
 ''')
