@@ -14,7 +14,7 @@ if PDK_ROOT is None:
   exit()
 SKY130A   = os.path.join(PDK_ROOT, 'sky130A')
 
-data = {}
+# data = {}
 with open('sky130-tech-gen-files/beginning.json', 'r') as f:
     data = json.load(f)
 
@@ -66,7 +66,7 @@ for cornerfilename in lib_corners:
 
     data["libraries"].append(lib_entry)
 
-stackups = {}
+# stackups = {}
 with open('sky130-tech-gen-files/stackup.json', 'r') as f:
     stackups = json.load(f)
 stackups["name"] = library
@@ -87,7 +87,7 @@ data["stackups"] = [stackups]
 # }
 # data["libraries"].append(lib_entry)
 
-sites = {}
+# sites = {}
 with open('sky130-tech-gen-files/sites.json', 'r') as f:
     sites = json.load(f)
 data["sites"] = sites["sites"]

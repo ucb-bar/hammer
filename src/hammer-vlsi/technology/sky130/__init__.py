@@ -45,7 +45,7 @@ class SKY130Tech(HammerTechnology):
             os.makedirs(dir_name)
             
     @staticmethod
-    def openram_sram_names() -> None:
+    def openram_sram_names() -> List[str]:
         """ Return a list of cell-names of the OpenRAM SRAMs (that we'll use). """
         return [
             # "sky130_sram_4kbyte_1rw1r_32x1024_8", # Eventually to be reinstated, some day
@@ -142,7 +142,7 @@ class SKY130Tech(HammerTechnology):
             try:
                 source_path = source_paths[i]
             except IndexError:
-                self.logging.error(
+                self.logger.error(
                     'No corresponding source for LVS deck {}'.format(deck))
             dest_path = self.expand_tech_cache_path(str(deck.path))
             self.ensure_dirs_exist(dest_path)
