@@ -205,9 +205,8 @@ for name in SKY130Tech.openram_sram_names():
 
 # various Innovus database settings
 def sky130_innovus_settings(ht: HammerTool) -> bool:
-    assert isinstance(
-        ht, HammerPlaceAndRouteTool
-    ), "Innovus settings can only run on par"
+    assert isinstance(ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
+    assert isinstance(ht, TCLTool), "innovus settings can only run on TCL tools"
     """Settings for every tool invocation"""
     ht.append(
         '''  
@@ -280,9 +279,8 @@ set_db opt_hold_target_slack 0.10
 
 # from NDA scripts
 def sky130_add_endcaps(ht: HammerTool) -> bool:
-    assert isinstance(
-        ht, HammerPlaceAndRouteTool
-    ), "endcap insertion can only run on par"
+    assert isinstance(ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
+    assert isinstance(ht, TCLTool), "innovus settings can only run on TCL tools"
     ht.append(
         '''  
 set_db add_endcaps_boundary_tap        true
@@ -297,9 +295,8 @@ add_endcaps
 #   these commands are already added in Innovus.write_netlist,
 #   but must also occur before power straps are placed
 def sky130_power_nets(ht: HammerTool) -> bool:
-    assert isinstance(
-        ht, HammerPlaceAndRouteTool
-    ), "connect global nets can only run on par"
+    assert isinstance(ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
+    assert isinstance(ht, TCLTool), "innovus settings can only run on TCL tools"
     ht.append(
         '''  
 connect_global_net VDD -type net -net_base_name VPWR
@@ -309,9 +306,8 @@ connect_global_net VSS -type net -net_base_name VGND
     return True
 
 def sky130_remove_route_blockages(ht: HammerTool) -> bool:
-    assert isinstance(
-        ht, HammerPlaceAndRouteTool
-    ), "removing blockages can only run on par"
+    assert isinstance(ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
+    assert isinstance(ht, TCLTool), "innovus settings can only run on TCL tools"
     ht.append(
         '''  
 delete_route_blockages -layers {met1 met4}
@@ -321,9 +317,8 @@ delete_route_blockages -layers {met1 met4}
 
 # TODO: add these two functions into Hammer Innovus plugin
 def sky130_add_tieoffs(ht: HammerTool) -> bool:
-    assert isinstance(
-        ht, HammerPlaceAndRouteTool
-    ), "tie high/low cell insertion can only run on par"
+    assert isinstance(ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
+    assert isinstance(ht, TCLTool), "innovus settings can only run on TCL tools"
     ht.append(
         '''  
 set_db add_tieoffs_cells sky130_fd_sc_hd__conb_1
@@ -333,9 +328,8 @@ add_tieoffs
     return True
 
 def sky130_connect_nets(ht: HammerTool) -> bool:
-    assert isinstance(
-        ht, HammerPlaceAndRouteTool
-    ), "connect global nets can only run on par"
+    assert isinstance(ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
+    assert isinstance(ht, TCLTool), "innovus settings can only run on TCL tools"
     ht.append(
         '''  
 connect_global_net VDD -type pg_pin -pin_base_name VPWR -all
