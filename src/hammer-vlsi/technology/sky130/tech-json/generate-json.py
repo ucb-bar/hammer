@@ -68,21 +68,20 @@ with open('stackup.json', 'r') as f:
 stackups["name"] = library
 data["stackups"] = [stackups]
 
-library='sky130_fd_pr'
-SKYWATER_LIBS=os.path.join('$SKY130A',"libs.ref",library)
-lib_entry = {
-  "lef file":           os.path.join(SKYWATER_LIBS,'lef',       library+'.lef'),
-  "spice file":         os.path.join(SKYWATER_LIBS,'cdl',       library+'.cdl'),
-  "gds file":           os.path.join(SKYWATER_LIBS,'gds',       library+'.gds'),
-  "provides": [
-    {
-      "lib_type": "primitives",
-      "vt": "RVT" 
-    }
-  ]
-}
-
-data["libraries"].append(lib_entry)
+# library='sky130_fd_pr'
+# SKYWATER_LIBS=os.path.join('$SKY130A',"libs.ref",library)
+# lib_entry = {
+#   "lef file":           os.path.join(SKYWATER_LIBS,'lef',       library+'.lef'),
+#   "spice file":         os.path.join(SKYWATER_LIBS,'cdl',       library+'.cdl'),
+#   "gds file":           os.path.join(SKYWATER_LIBS,'gds',       library+'.gds'),
+#   "provides": [
+#     {
+#       "lib_type": "primitives",
+#       "vt": "RVT" 
+#     }
+#   ]
+# }
+# data["libraries"].append(lib_entry)
 
 sites = {}
 with open('sites.json', 'r') as f:

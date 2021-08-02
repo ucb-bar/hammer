@@ -444,17 +444,6 @@
           "vt": "RVT"
         }
       ]
-    },
-    {
-      "lef file": "$SKY130A/libs.ref/sky130_fd_pr/lef/sky130_fd_pr.lef",
-      "spice file": "$SKY130A/libs.ref/sky130_fd_pr/cdl/sky130_fd_pr.cdl",
-      "gds file": "$SKY130A/libs.ref/sky130_fd_pr/gds/sky130_fd_pr.gds",
-      "provides": [
-        {
-          "lib_type": "primitives",
-          "vt": "RVT"
-        }
-      ]
     }
   ],
   "stackups": [

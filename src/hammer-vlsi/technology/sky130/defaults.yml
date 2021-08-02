@@ -8,7 +8,6 @@ technology.sky130:
 
   # GDS map file path, not provided by efabless
   gds_map_file: "hammer/src/hammer-vlsi/technology/sky130/sky130_lefpin.map"
-  gds_map_file_meta: 
   
   lvs_deck_sources: 
     - "${technology.sky130.sky130_nda}/s8/V2.0.1/LVS/Calibre/lvsControlFile_s8"
