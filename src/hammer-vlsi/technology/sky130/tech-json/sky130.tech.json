@@ -24,7 +24,7 @@
       "base var": ""
     }
   ],
-  "gds map file": "$GDS_MAP_FILE",
+  "gds map file": "$GDS_MAP_FILE/",
   "layer map file": "$SKY130_NDA/s8/V2.0.1/VirtuosoOA/libs/technology_library/technology_library.layermap",
   "drc decks": [
     {

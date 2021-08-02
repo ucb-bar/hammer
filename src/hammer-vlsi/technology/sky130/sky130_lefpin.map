@@ -1,0 +1,50 @@
+# CADENCE Stream layer mapping table for Skywater130nm
+# <t_ layerObjectName> <t_ objectType> <n_ layerNum> <n_ datatype>
+
+poly			NET,SPNET,VIA	    			    66	20
+poly			PIN			    	                66	16
+licon1			VIA			                   	    66	44
+licon1			PIN		            	    	    66	41
+licon1			NET		            	    	    66	58
+li1			    LEFPIN,LEFOBS,PIN,NET,SPNET,VIA	    67	20
+li1			    PIN		                 		    67	16
+mcon			VIA		                		    67	44
+mcon			PIN		    	            	    67	41
+mcon			NET			                	    67	58
+
+met1			LEFPIN,LEFOBS,PIN,NET,SPNET,VIA     68	20
+met1			NET				                    68	23
+met1			PIN				                    68	16
+NAME            met1/PIN,met1/LEFPIN                68  5
+via			    LEFPIN,LEFOBS,VIA				    68	44
+via			    PIN									68	41
+via			    NET									68	58
+
+met2			LEFPIN,LEFOBS,PIN,NET,SPNET,VIA		69	20
+met2			NET									69	23
+met2			PIN				                    69	16
+NAME            met2/PIN,met2/LEFPIN                69  5
+via2			LEFPIN,LEFOBS,VIA				    69	44
+via2			PIN									69	41
+via2			NET									69	58
+
+met3			LEFPIN,LEFOBS,PIN,NET,SPNET,VIA		70	20
+met3			NET									70	23
+met3			PIN				                    70	16
+NAME            met3/PIN,met3/LEFPIN                70  5
+via3			LEFPIN,LEFOBS,VIA				    70	44
+via3			PIN									70	41
+via3			NET									70	58
+
+met4			LEFPIN,LEFOBS,PIN,NET,SPNET,VIA		71	20
+met4			NET									71	23
+met4			PIN				                    71	16
+NAME            met4/PIN,met4/LEFPIN                71  5
+via4			LEFPIN,LEFOBS,VIA				    71	44
+via4			PIN									71	41
+via4			NET									71	58
+
+met5			LEFPIN,LEFOBS,PIN,NET,SPNET,VIA		72	20
+met5			NET								    72	23
+met5			PIN				                    72	16
+NAME            met5/PIN,met5/LEFPIN                72  5
