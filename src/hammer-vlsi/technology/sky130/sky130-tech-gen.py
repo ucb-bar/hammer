@@ -1,16 +1,21 @@
+# usage:
+#   >> export PDK_ROOT=<path-to-dir-containing-sky130A-dir>
+#   >> python sky130-tech-gen.py
+
 import json
 import os
 from pathlib import Path 
-data = {}
-
-HAMMER_HOME = os.getenv('HAMMER_HOME')
-SKY130A = os.getenv('SKY130A')
-JSON_PATH = os.path.join(HAMMER_HOME,'src/hammer-vlsi/technology/sky130/sky130.tech.json')
-
 
 library='sky130_fd_sc_hd'
 
-with open('beginning.json', 'r') as f:
+PDK_ROOT = os.getenv('PDK_ROOT')
+if PDK_ROOT is None:
+  print("Error: Must set $PDK_ROOT to the directory that contains the sky130A directory.")
+  exit()
+SKY130A   = os.path.join(PDK_ROOT, 'sky130A')
+
+data = {}
+with open('sky130-tech-gen-files/beginning.json', 'r') as f:
     data = json.load(f)
 
 SKYWATER_LIBS = os.path.join('$SKY130A','libs.ref',library)
@@ -34,8 +39,7 @@ for cornerfilename in lib_corners:
     temp = temp.split('C')[0]+' C'
 
     vdd = cornerparts[2]
-    vdd = vdd.split('v')
-    vdd = vdd[0]+'.'+vdd[1]+' V'
+    vdd = vdd.split('v')[0]+'.'+vdd.split('v')[1]+' V'
 
     lib_entry = {
       "nldm liberty file":  os.path.join(SKYWATER_LIBS,'lib',       cornerfilename),
@@ -63,7 +67,7 @@ for cornerfilename in lib_corners:
     data["libraries"].append(lib_entry)
 
 stackups = {}
-with open('stackup.json', 'r') as f:
+with open('sky130-tech-gen-files/stackup.json', 'r') as f:
     stackups = json.load(f)
 stackups["name"] = library
 data["stackups"] = [stackups]
@@ -84,12 +88,9 @@ data["stackups"] = [stackups]
 # data["libraries"].append(lib_entry)
 
 sites = {}
-with open('sites.json', 'r') as f:
+with open('sky130-tech-gen-files/sites.json', 'r') as f:
     sites = json.load(f)
 data["sites"] = sites["sites"]
 
 with open('sky130.tech.json', 'w') as f:
-    json.dump(data, f, indent=2)
-
-with open(os.path.join(JSON_PATH), 'w') as f:
     json.dump(data, f, indent=2)

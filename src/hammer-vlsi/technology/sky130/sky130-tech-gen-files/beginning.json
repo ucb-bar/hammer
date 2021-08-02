@@ -16,15 +16,11 @@
       "base var": "technology.sky130.sky130A"
     },
     {
-      "path": "$GDS_MAP_FILE",
-      "base var": "technology.sky130.gds_map_file"
-    },
-    {
       "path": "tech-sky130-cache",
       "base var": ""
     }
   ],
-  "gds map file": "$GDS_MAP_FILE/",
+  "gds map file": "hammer/src/hammer-vlsi/technology/sky130/sky130_lefpin.map",
   "layer map file": "$SKY130_NDA/s8/V2.0.1/VirtuosoOA/libs/technology_library/technology_library.layermap",
   "drc decks": [
     {
