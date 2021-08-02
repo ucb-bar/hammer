@@ -48,9 +48,9 @@ Known Issues
 
 3. Innovus tries to fix non-existent M3 and M5 enclosure violations, unfortunately lengthening violation fixing time. Ignore these when reviewing the violations in Innovus.
 
-4. If you specify core margins in the placement constraints, they should all be a multiple of 0.384 to avoid DRC violations. Layer offsets for M4-M7 are adjusted manually to keep all wires on-grid.
+4. If you specify core margins in the placement constraints, they left and bottom margins should be a multiple of 0.384 to avoid DRC violations. Layer offsets for M4-M7 are adjusted manually to keep all wires on-grid.
 
-5. Common expected DRC violations:
+5. Common expected DRC violations (at reasonable, <70% local density):
    - M(4,5,6,7).AUX.(1,2) only if the floorplan size requirement above is not satisfied
    - V7.M8.AUX.2 and V2.M2.EN.1 due to incomplete via defs for V2 and V7 in power grid
    - FIN.S.1 appears to be incorrect, standard cell fins are indeed on the right pitch

@@ -35,7 +35,8 @@ if gds_tool.__name__ == 'gdstk':
         # Need to remove 'blk' layer from any macros, else LVS rule deck interprets it as a polygon
         # This has a layer datatype of 4
         # Then scale down the polygon
-        for poly in list(filter(lambda p: p.datatype != 4, cell.polygons)):
+        cell.filter(layers=[], types=[4], operation='or')
+        for poly in cell.polygons:
             poly.scale(0.25)
 
         # Scale paths

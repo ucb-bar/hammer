@@ -84,9 +84,10 @@ par.generate_power_straps_options:
       - M9
     track_width: 7 # minimum allowed for M2 & M3
     track_spacing: 0
-    track_spacing_M3: 1 # to avoid M2 shorts at higher density
+    track_spacing_M3: 28 # space straps apart evenly, in conjunction w/ track_utilization_M3
     track_start: 10
-    power_utilization: 0.2
+    power_utilization: 0.25
+    power_utilization_M3: 0.6 # together with track_spacing_M3 results in approx. 0.25 eff. utilization
     power_utilization_M8: 1.0
     power_utilization_M9: 1.0
 
