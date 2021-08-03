@@ -56,3 +56,5 @@ Known Issues
    - FIN.S.1 appears to be incorrect, standard cell fins are indeed on the right pitch
    - LVT.W.1 caused by 0.5-width isolated-VT filler cells due to lack of implant layer spacing rules
    - LISD.S.3, LIG.S.4 due to some combinations of adjacent cells
+   - V0.S.1 in ASYNC\_DFFHx1
+   - Various M4, GATE violations in/around dummy SRAMs
