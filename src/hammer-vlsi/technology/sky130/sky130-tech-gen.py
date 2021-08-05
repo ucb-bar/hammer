@@ -14,9 +14,14 @@ if PDK_ROOT is None:
   exit()
 SKY130A   = os.path.join(PDK_ROOT, 'sky130A')
 
-# data = {}
 with open('sky130-tech-gen-files/beginning.json', 'r') as f:
     data = json.load(f)
+
+with open('sky130-tech-gen-files/cells.json', 'r') as f:
+    cells = json.load(f)
+data["physical only cells list"] = cells["physical only cells list"]
+data["dont use list"] = cells["dont use list"]
+data["special cells"] = cells["special cells"]
 
 SKYWATER_LIBS = os.path.join('$SKY130A','libs.ref',library)
 LIBRARY_PATH  = os.path.join(SKY130A,'libs.ref',library,'lib')
@@ -66,28 +71,10 @@ for cornerfilename in lib_corners:
 
     data["libraries"].append(lib_entry)
 
-# stackups = {}
-with open('sky130-tech-gen-files/stackup.json', 'r') as f:
+with open('sky130-tech-gen-files/stackups.json', 'r') as f:
     stackups = json.load(f)
-stackups["name"] = library
 data["stackups"] = [stackups]
 
-# library='sky130_fd_pr'
-# SKYWATER_LIBS=os.path.join('$SKY130A',"libs.ref",library)
-# lib_entry = {
-#   "lef file":           os.path.join(SKYWATER_LIBS,'lef',       library+'.lef'),
-#   "spice file":         os.path.join(SKYWATER_LIBS,'cdl',       library+'.cdl'),
-#   "gds file":           os.path.join(SKYWATER_LIBS,'gds',       library+'.gds'),
-#   "provides": [
-#     {
-#       "lib_type": "primitives",
-#       "vt": "RVT" 
-#     }
-#   ]
-# }
-# data["libraries"].append(lib_entry)
-
-# sites = {}
 with open('sky130-tech-gen-files/sites.json', 'r') as f:
     sites = json.load(f)
 data["sites"] = sites["sites"]

@@ -1,5 +1,5 @@
     {
-      "name" : "TODO",
+      "name" : "sky130_fd_sc_hd",
       "metals": [
         {"name": "li1", "index": 1, "direction": "vertical", "min_width": 0.17, "max_width": 2147483.647, "pitch": 0.34, "offset": 0.23, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 0.17}]},
         {"name": "met1", "index": 2, "direction": "horizontal", "min_width": 0.14, "max_width": 2147483.647, "pitch": 0.28, "offset": 0.17, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 0.14}, {"width_at_least": 3.0, "min_spacing": 0.28}]},

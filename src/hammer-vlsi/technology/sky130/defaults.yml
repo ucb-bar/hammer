@@ -1,21 +1,27 @@
-# Settings for the sky130 technology to be overriden by the project.
+# Settings for the sky130 technology
 technology.sky130:
+  # Override these in project
   sky130_pdk: "PATH-TO-SKY130_PDK"
   sky130_nda: "PATH-TO-skywater-src-nda"
   sky130A: "PATH-TO-SKY130A_DIR"
-  openram_lib: "PATH-TO-sky130_fd_bd_sram/macros"
-  dffram_lib: "PATH-TO-DFFRAM/Compiler/build"
-
-  # GDS map file path, not provided by efabless
-  gds_map_file: "hammer/src/hammer-vlsi/technology/sky130/sky130_lefpin.map"
   
+  # Set one of these if using SRAMs
+  # DFFRAM currently not supported
+  openram_lib: "" # path to sky130_fd_bd_sram/macros
+  dffram_lib:  "" # path to dffram/compiler/build
+
+  # Shouldn't need to change these
+  pdk_home: "${technology.sky130.sky130_nda}/s8/V2.0.1"
+  pdk_home_meta: lazysubst
+
   lvs_deck_sources: 
-    - "${technology.sky130.sky130_nda}/s8/V2.0.1/LVS/Calibre/lvsControlFile_s8"
+    - "${technology.sky130.pdk_home}/LVS/Calibre/lvsControlFile_s8"
   lvs_deck_sources_meta: lazysubst
 
-# Calibre environment variables
+# Mentor environment variables
+# Override this in project
 mentor.extra_env_vars:
-  - PDK_HOME: "${technology.sky130_nda}/s8/V2.0.1"
+  - PDK_HOME: "<path-to-skywater-src-nda>/s8/<version#>"
 
 # Set some defaults for this technology.
 vlsi:
@@ -24,8 +30,8 @@ vlsi:
     technology: sky130
     node: 130
     sram_generator_tool: "sram_compiler"
-    sram_generator_tool_path: ["${HAMMER_HOME}/src/hammer-vlsi/technology/sky130"]
-    sram_generator_tool_path_meta: "append"
+    sram_generator_tool_path: ["hammer/src/hammer-vlsi/technology/sky130"]
+    sram_generator_tool_path_meta: ["append", "lazysubst"]
   inputs:
     # Supply voltages.
     # TODO: add ability to tie pin to net in Hammer Innovus plugin
@@ -39,10 +45,6 @@ vlsi:
       VDD: "1.8 V"
       GND: "0 V"
 
-    # moved these to json
-    # dont_use_mode: append
-    # dont_use_list: ["*sdf*","sky130_fd_sc_hd__probe_p_8"] # Scan flops go haywire! Avoid them. 
-    
     # mmmc corners config
     mmmc_corners: [
       {
@@ -63,7 +65,6 @@ vlsi:
     placement_site: "unithd"
 
     # Set the layer that blocks vias under bumps
-    # nk - not sure if this is right??
     bump_block_cut_layer: "via4"
 
     # Set the interval and offset for tap cells
@@ -81,4 +82,6 @@ technology.core:
 
 par.inputs:
   gds_merge: true
-  
+  gds_map_mode: manual
+  gds_map_file: "${vlsi.builtins.hammer_vlsi_path}/technology/sky130/sky130_lefpin.map"
+  gds_map_file_meta: lazysubst

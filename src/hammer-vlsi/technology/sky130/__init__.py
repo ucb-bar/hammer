@@ -21,9 +21,8 @@ class SKY130Tech(HammerTechnology):
     This class is loaded by function `load_from_json`, and will pass the `try` in `importlib`.
     """
     def post_install_script(self) -> None:
-        # maybe run open_pdks for the user and install in tech cache...?
-        # this takes a while and ~7Gb
         self.library_name = 'sky130_fd_sc_hd'
+        self.use_openram = (self.get_setting("technology.sky130.openram_lib") is not "")
         self.setup_sram_cdl()
         self.setup_cdl()
         self.setup_verilog()
@@ -31,7 +30,8 @@ class SKY130Tech(HammerTechnology):
         self.setup_lvs_deck()
         print('Loaded Sky130 Tech')
 
-    # Helper functions - copied from TSMC28 plugin
+    # Helper functions
+    # TODO: add to HammerTechnology
     def expand_tech_cache_path(self, path) -> str:
         """ Replace occurrences of the cache directory's basename with
             the full path to the cache dir."""
@@ -43,33 +43,10 @@ class SKY130Tech(HammerTechnology):
         if not os.path.exists(dir_name):
             self.logger.info('Creating directory: {}'.format(dir_name))
             os.makedirs(dir_name)
-            
-    @staticmethod
-    def openram_sram_names() -> List[str]:
-        """ Return a list of cell-names of the OpenRAM SRAMs (that we'll use). """
-        return [
-            # "sky130_sram_4kbyte_1rw1r_32x1024_8", # Eventually to be reinstated, some day
-            "sky130_sram_1kbyte_1rw1r_32x256_8",
-            "sky130_sram_1kbyte_1rw1r_8x1024_8",
-            "sky130_sram_2kbyte_1rw1r_32x512_8"
-        ]
-
-    def setup_sram_cdl(self) -> None:
-        for sram_name in self.openram_sram_names():
-            old_path = Path(self.get_setting("technology.sky130.openram_lib")) / sram_name / f"{sram_name}.lvs.sp"
-            new_path = self.expand_tech_cache_path(f'tech-sky130-cache/{sram_name}/{sram_name}.lvs.sp')
-            self.ensure_dirs_exist(new_path)
-            with open(old_path,'r') as f_old:
-                with open(new_path,'w') as f_new:
-                    for line in f_old:
-                        line = line.replace('sky130_fd_pr__pfet_01v8','pshort')
-                        line = line.replace('sky130_fd_pr__nfet_01v8','nshort')
-                        f_new.write(line)
 
     # Tech setup steps
     def setup_cdl(self) -> None:
         """ Copy and hack the cdl, replacing pfet_01v8_hvt/nfet_01v8 with phighvt/nshort """
-        # TODO: figure out how to rename the devices to pass Calibre LVS
         setting_dir = self.get_setting("technology.sky130.sky130A")
         setting_dir = Path(setting_dir)
         cdl_old_path = setting_dir / 'libs.ref' / self.library_name / 'cdl' / f'{self.library_name}.cdl'
@@ -132,6 +109,13 @@ class SKY130Tech(HammerTechnology):
 
     def setup_lvs_deck(self) -> None:
         """Remove conflicting specification statements found in PDK LVS decks."""
+
+        # if using OpenRAM SRAMs, LVS BOX these to ignore in LVS check
+        # if self.use_openram:
+        #     for name in SKY130Tech.openram_sram_names():
+        #         LVS_DECK_INSERT_LINES += f"LVS BOX {name} \n"
+        #         LVS_DECK_INSERT_LINES += f"LVS FILTER {name} OPEN \n"
+
         pattern = '.*({}).*\n'.format('|'.join(LVS_DECK_SCRUB_LINES))
         matcher = re.compile(pattern)
 
@@ -163,7 +147,29 @@ class SKY130Tech(HammerTechnology):
             ]}
         return hooks.get(tool_name, [])
 
+    ''' >>>>>>>> OpenRAM SRAM-specific functions '''
+    @staticmethod
+    def openram_sram_names() -> List[str]:
+        """ Return a list of cell-names of the OpenRAM SRAMs (that we'll use). """
+        return [
+            "sky130_sram_1kbyte_1rw1r_32x256_8",
+            "sky130_sram_1kbyte_1rw1r_8x1024_8",
+            "sky130_sram_2kbyte_1rw1r_32x512_8"
+        ]
 
+    def setup_sram_cdl(self) -> None:
+        if not self.use_openram: return
+        for sram_name in self.openram_sram_names():
+            old_path = Path(self.get_setting("technology.sky130.openram_lib")) / sram_name / f"{sram_name}.lvs.sp"
+            new_path = self.expand_tech_cache_path(f'tech-sky130-cache/{sram_name}/{sram_name}.lvs.sp')
+            self.ensure_dirs_exist(new_path)
+            with open(old_path,'r') as f_old:
+                with open(new_path,'w') as f_new:
+                    for line in f_old:
+                        line = line.replace('sky130_fd_pr__pfet_01v8','pshort')
+                        line = line.replace('sky130_fd_pr__nfet_01v8','nshort')
+                        f_new.write(line)
+    ''' <<<<<<< END OpenRAM SRAM-specific functions '''
 
 _the_tlef_edit = '''
 LAYER licon
@@ -184,24 +190,6 @@ LVS_DECK_INSERT_LINES = '''
 LVS FILTER D  OPEN  SOURCE
 LVS FILTER D  OPEN  LAYOUT
 '''
-
-# TODO: black boxing sram is temporary!!
-for name in SKY130Tech.openram_sram_names():
-    LVS_DECK_INSERT_LINES += f"LVS BOX {name} \n"
-    LVS_DECK_INSERT_LINES += f"LVS FILTER {name} OPEN \n"
-
-# EXCLUDE CELL sky130_sram_1kbyte_1rw1r_32x256_8
-# EXCLUDE CELL sky130_sram_1kbyte_1rw1r_8x1024_8
-# EXCLUDE CELL sky130_sram_2kbyte_1rw1r_32x512_8
-
-# LVS BOX sky130_sram_1kbyte_1rw1r_32x256_8 
-# LVS BOX sky130_sram_1kbyte_1rw1r_8x1024_8 
-# LVS BOX sky130_sram_2kbyte_1rw1r_32x512_8 
-
-# LVS FILTER sky130_sram_1kbyte_1rw1r_32x256_8 OPEN
-# LVS FILTER sky130_sram_1kbyte_1rw1r_8x1024_8 OPEN
-# LVS FILTER sky130_sram_2kbyte_1rw1r_32x512_8 OPEN
-
 
 # various Innovus database settings
 def sky130_innovus_settings(ht: HammerTool) -> bool:
@@ -277,7 +265,7 @@ set_db opt_hold_target_slack 0.10
 
 
 
-# from NDA scripts
+# TODO: move to Innovus plugin
 def sky130_add_endcaps(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
     assert isinstance(ht, TCLTool), "innovus settings can only run on TCL tools"
@@ -294,6 +282,7 @@ add_endcaps
 # Pair VDD/VPWR and VSS/VGND nets
 #   these commands are already added in Innovus.write_netlist,
 #   but must also occur before power straps are placed
+# TODO: move to Innovus plugin
 def sky130_power_nets(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
     assert isinstance(ht, TCLTool), "innovus settings can only run on TCL tools"
@@ -301,16 +290,6 @@ def sky130_power_nets(ht: HammerTool) -> bool:
         '''  
 connect_global_net VDD -type net -net_base_name VPWR
 connect_global_net VSS -type net -net_base_name VGND
-    '''
-    )
-    return True
-
-def sky130_remove_route_blockages(ht: HammerTool) -> bool:
-    assert isinstance(ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
-    assert isinstance(ht, TCLTool), "innovus settings can only run on TCL tools"
-    ht.append(
-        '''  
-delete_route_blockages -layers {met1 met4}
     '''
     )
     return True
