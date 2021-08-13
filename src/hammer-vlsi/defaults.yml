@@ -262,6 +262,9 @@ vlsi.inputs:
   # These are appended after all other generated constraints (clock, pin, delay, load, etc.).
   custom_sdc_constraints: []
 
+  # Modules to be retied
+  retime_modules: []
+
   # List of placement constraints for floorplanning.
   # Each item is a struct member:
   # path (str) - Path to the given instance
