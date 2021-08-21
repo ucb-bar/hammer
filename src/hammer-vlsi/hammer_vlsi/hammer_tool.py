@@ -1430,11 +1430,15 @@ class HammerTool(metaclass=ABCMeta):
         output = []  # type: List[MMMCCorner]
         for corner in corners:
             corner_type = MMMCCornerType.from_string(str(corner["type"]))
+            sdc = None  # type: Optional[str]
+            if "sdc" in corner:
+                sdc = str(corner["sdc"])
             corn = MMMCCorner(
                 name=str(corner["name"]),
                 type=corner_type,
                 voltage=VoltageValue(str(corner["voltage"])),
                 temp=TemperatureValue(str(corner["temp"])),
+                sdc=sdc
             )
             output.append(corn)
         return output

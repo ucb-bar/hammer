@@ -861,4 +861,5 @@ MMMCCorner = NamedTuple('MMMCCorner', [
     ('type', MMMCCornerType),
     ('voltage', VoltageValue),
     ('temp', TemperatureValue),
+    ('sdc', Optional[str]),
 ])
