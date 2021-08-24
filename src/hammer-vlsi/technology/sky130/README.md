@@ -65,7 +65,7 @@ In ``$PDK_ROOT``, clone the skywater-pdk repo and generate the liberty files for
 
 Again in ``$PDK_ROOT``, clone the open_pdks repo and run the install process to generate the ``sky130A`` directory:
 
-    git clone https://github.com/RTimothyEdwards/open_pdks
+    git clone https://github.com/RTimothyEdwards/open_pdks.git
     cd open_pdks
     ./configure \
     --enable-sky130-pdk=$PDK_ROOT/skywater-pdk/libraries \
@@ -76,6 +76,8 @@ Again in ``$PDK_ROOT``, clone the open_pdks repo and run the install process to 
 OpenRAM SRAMs
 -------------
 TODO: add overview here
+
+    git clone https://github.com/efabless/sky130_sram_macros.git
 
 Known DRC Issues
 ----------------
