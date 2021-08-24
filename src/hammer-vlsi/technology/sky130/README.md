@@ -69,7 +69,7 @@ Again in ``$PDK_ROOT``, clone the open_pdks repo and run the install process to 
     cd open_pdks
     ./configure \
     --enable-sky130-pdk=$PDK_ROOT/skywater-pdk/libraries \
-    --with-sky130-local-path=$PDK_ROOT
+    --prefix=$PDK_ROOT
     make
     make install
 
