@@ -51,6 +51,12 @@ Prerequisites for PDK Setup
   * tricky to install, closely follow the directions on the ``Install`` page of the website
   
     * as the directions indicate, you will likely need to manually specify the location of the Tcl/Tk package installation using ``--with-tcl`` and ``--with-tk``
+ 
+ If using conda, these installs alone caused the Magic install to work:
+
+    conda install -c intel tcl 
+    conda install -c anaconda tk 
+    conda install -c anaconda libglu
 
 PDK Setup
 ---------
@@ -59,7 +65,8 @@ In ``$PDK_ROOT``, clone the skywater-pdk repo and generate the liberty files for
     git clone https://github.com/google/skywater-pdk.git
     cd skywater-pdk
     # Expect a large download! ~7GB at time of writing.
-    SUBMODULE_VERSION=latest make submodules -j3 || make submodules -j1
+    git submodule init libraries/*/latest
+    git submodule update
     # Regenerate liberty files
     make timing
 
@@ -69,7 +76,8 @@ Again in ``$PDK_ROOT``, clone the open_pdks repo and run the install process to 
     cd open_pdks
     ./configure \
     --enable-sky130-pdk=$PDK_ROOT/skywater-pdk/libraries \
-    --prefix=$PDK_ROOT
+    --prefix=$PDK_ROOT \
+    --enable-sram-sky130=$PDK_ROOT/sky130_sram_macros # if using SRAMs
     make
     make install
 
