@@ -5,6 +5,8 @@
 #
 #  See LICENSE for licence details.
 
+import os
+from pathlib import Path
 from functools import reduce
 from enum import Enum
 from typing import Callable, Iterable, List, NamedTuple, Type
@@ -52,6 +54,11 @@ class HammerVLSIFileLogger:
         :param output_path: Output path of the logger.
         :param format_msg_callback: Optional callback to run to build the message. None to use HammerVLSILogging.build_log_message.
         """
+        (output_base, output_ext) = os.path.splitext(output_path)
+        suffix = 1
+        while os.path.exists(output_path):
+            output_path = Path(output_base + "_" + str(suffix) + output_ext)
+            suffix = suffix + 1
         self._file = open(output_path, "a")
         self._format_msg_callback = format_msg_callback
 
