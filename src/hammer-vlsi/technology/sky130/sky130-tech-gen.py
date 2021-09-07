@@ -48,7 +48,7 @@ for cornerfilename in lib_corners:
 
     lib_entry = {
       "nldm liberty file":  os.path.join(SKYWATER_LIBS,'lib',       cornerfilename),
-      "verilog sim":        os.path.join(SKYWATER_LIBS,'verilog',   library+'.v'),
+      "verilog sim":        os.path.join('tech-sky130-cache',       library+'.v'),
       "lef file":           os.path.join(SKYWATER_LIBS,'lef',       library+'.lef'),
       "spice file":         os.path.join('tech-sky130-cache',       library+'.cdl'),
       "gds file":           os.path.join(SKYWATER_LIBS,'gds',       library+'.gds'),

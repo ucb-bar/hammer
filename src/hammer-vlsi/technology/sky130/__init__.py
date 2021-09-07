@@ -70,6 +70,8 @@ class SKY130Tech(HammerTechnology):
         """ Copy and hack the verilog """
         setting_dir = self.get_setting("technology.sky130.sky130A")
         setting_dir = Path(setting_dir)
+
+        # fix up <library_name>.v
         verilog_old_path = setting_dir / 'libs.ref' / self.library_name / 'verilog' / f'{self.library_name}.v'
         if not verilog_old_path.exists():
             raise FileNotFoundError(f"Verilog not found: {verilog_old_path}")
@@ -82,6 +84,24 @@ class SKY130Tech(HammerTechnology):
         f_new = open(verilog_new_path,'w')
         for line in f_old:
             line = line.replace('wire 1','// wire 1')
+            line = line.replace('`endif SKY130_FD_SC_HD__LPFLOW_BLEEDER_FUNCTIONAL_V','`endif // SKY130_FD_SC_HD__LPFLOW_BLEEDER_FUNCTIONAL_V')
+            f_new.write(line)
+        f_old.close()
+        f_new.close()
+
+        # fix up primitives.v
+        verilog_old_path = setting_dir / 'libs.ref' / self.library_name / 'verilog' / 'primitives.v'
+        if not verilog_old_path.exists():
+            raise FileNotFoundError(f"Verilog not found: {verilog_old_path}")
+
+        cache_tech_dir_path = Path(self.cache_dir) 
+        os.makedirs(cache_tech_dir_path, exist_ok=True)
+        verilog_new_path = cache_tech_dir_path / 'primitives.v' 
+
+        f_old = open(verilog_old_path,'r')
+        f_new = open(verilog_new_path,'w')
+        for line in f_old:
+            line = line.replace('`default_nettype none','`default_nettype wire')
             f_new.write(line)
         f_old.close()
         f_new.close()

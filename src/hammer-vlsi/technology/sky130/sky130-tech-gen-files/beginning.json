@@ -44,10 +44,18 @@
   "libraries": [
     {
       "lef file": "tech-sky130-cache/sky130_fd_sc_hd.tlef",
-      "spice file": "$SKY130_NDA/s8/V2.0.1/LVS/Calibre/source.cdl",
       "provides": [
         {
           "lib_type": "technology"
+        }
+      ]
+    },
+    {
+      "spice file": "$SKY130_NDA/s8/V2.0.1/LVS/Calibre/source.cdl",
+      "verilog sim": "tech-sky130-cache/primitives.v",
+      "provides": [
+        {
+          "lib_type": "extra"
         }
       ]
     }
