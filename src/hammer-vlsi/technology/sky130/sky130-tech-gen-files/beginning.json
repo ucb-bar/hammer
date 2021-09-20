@@ -20,7 +20,6 @@
       "base var": ""
     }
   ],
-  "gds map file": "specified-in-defaults.yml",
   "layer map file": "$SKY130_NDA/s8/V2.0.1/VirtuosoOA/libs/technology_library/technology_library.layermap",
   "drc decks": [
     {
@@ -30,7 +29,6 @@
     }
   ],
   "additional_drc_text": "",
-  
   "lvs decks": [
     {
       "tool name": "calibre",
@@ -40,7 +38,6 @@
     }
   ],
   "additional_lvs_text": "",
-
   "libraries": [
     {
       "lef file": "tech-sky130-cache/sky130_fd_sc_hd.tlef",
