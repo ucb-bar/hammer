@@ -1,7 +1,7 @@
 {
   "name": "Skywater 130nm Library",
   "grid_unit": "0.001",
-  "time_unit": "1 ps",
+  "time_unit": "1 ns",
   "installs": [
     {
       "path": "$SKY130_PDK",

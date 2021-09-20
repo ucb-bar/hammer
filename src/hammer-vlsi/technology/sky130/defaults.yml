@@ -48,13 +48,13 @@ vlsi:
     # mmmc corners config
     mmmc_corners: [
       {
-        name: "sky130_fd_sc_hd__ss_100C_1v60",
+        name: "ss_100C_1v60",
         type: "setup",
         voltage: "1.60 V",
         temp: "100 C"
       },
       {
-        name: "sky130_fd_sc_hd__ff_n40C_1v95",
+        name: "ff_n40C_1v95",
         type: "hold",
         voltage: "1.95 V",
         temp: "-40 C"
