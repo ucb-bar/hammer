@@ -1,19 +1,17 @@
 # Settings for the sky130 technology
 technology.sky130:
   # Override these in project
-  sky130_pdk: "PATH-TO-SKY130_PDK"
+  sky130A: "PATH-TO-sky130A"    # required
+  sky130_pdk: "PATH-TO-skywater-pdk"
   sky130_nda: "PATH-TO-skywater-src-nda"
-  sky130A: "PATH-TO-SKY130A_DIR"
   
-  # Set one of these if using SRAMs
   # DFFRAM currently not supported
-  openram_lib: "" # path to sky130_fd_bd_sram/macros
-  dffram_lib:  "" # path to dffram/compiler/build
+  openram_lib: "PATH-TO-sky130_fd_bd_sram/macros"
+  dffram_lib:  "PATH-TO-dffram/compiler/build"
 
   # Shouldn't need to change these
   pdk_home: "${technology.sky130.sky130_nda}/s8/V2.0.1"
   pdk_home_meta: lazysubst
-
   lvs_deck_sources: 
     - "${technology.sky130.pdk_home}/LVS/Calibre/lvsControlFile_s8"
   lvs_deck_sources_meta: lazysubst

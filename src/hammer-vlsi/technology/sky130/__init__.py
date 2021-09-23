@@ -22,7 +22,9 @@ class SKY130Tech(HammerTechnology):
     """
     def post_install_script(self) -> None:
         self.library_name = 'sky130_fd_sc_hd'
-        self.use_openram = (self.get_setting("technology.sky130.openram_lib") is not "")
+        # check whether variables were overriden to point to a valid path
+        self.use_openram = os.path.exists(self.get_setting("technology.sky130.openram_lib"))
+        self.use_nda_files = (os.path.exists(self.get_setting("technology.sky130.sky130_nda")))
         self.setup_sram_cdl()
         self.setup_cdl()
         self.setup_verilog()
@@ -135,7 +137,8 @@ class SKY130Tech(HammerTechnology):
         #     for name in SKY130Tech.openram_sram_names():
         #         LVS_DECK_INSERT_LINES += f"LVS BOX {name} \n"
         #         LVS_DECK_INSERT_LINES += f"LVS FILTER {name} OPEN \n"
-
+        
+        if not self.use_nda_files: return
         pattern = '.*({}).*\n'.format('|'.join(LVS_DECK_SCRUB_LINES))
         matcher = re.compile(pattern)
 
@@ -144,10 +147,12 @@ class SKY130Tech(HammerTechnology):
         for i in range(len(lvs_decks)):
             deck = lvs_decks[i]
             try:
-                source_path = source_paths[i]
+                source_path = Path(source_paths[i])
             except IndexError:
                 self.logger.error(
                     'No corresponding source for LVS deck {}'.format(deck))
+            if not source_path.exists():
+                raise FileNotFoundError(f"LVS deck not found: {source_path}")
             dest_path = self.expand_tech_cache_path(str(deck.path))
             self.ensure_dirs_exist(dest_path)
             with open(source_path, 'r') as sf:
@@ -182,6 +187,8 @@ class SKY130Tech(HammerTechnology):
         for sram_name in self.openram_sram_names():
             old_path = Path(self.get_setting("technology.sky130.openram_lib")) / sram_name / f"{sram_name}.lvs.sp"
             new_path = self.expand_tech_cache_path(f'tech-sky130-cache/{sram_name}/{sram_name}.lvs.sp')
+            if not old_path.exists():
+                raise FileNotFoundError(f"SRAM CDL file not found: {old_path}")
             self.ensure_dirs_exist(new_path)
             with open(old_path,'r') as f_old:
                 with open(new_path,'w') as f_new:
