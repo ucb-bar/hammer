@@ -6,7 +6,7 @@ import json
 import os
 from pathlib import Path 
 
-use_nda_files=False
+use_nda_files=True
 library='sky130_fd_sc_hd'
 
 PDK_ROOT = os.getenv('PDK_ROOT')
