@@ -6,16 +6,19 @@ import json
 import os
 from pathlib import Path 
 
+use_nda_files=False
 library='sky130_fd_sc_hd'
 
 PDK_ROOT = os.getenv('PDK_ROOT')
 if PDK_ROOT is None:
-  print("Error: Must set $PDK_ROOT to the directory that contains the sky130A directory.")
-  exit()
-SKY130A   = os.path.join(PDK_ROOT, 'sky130A')
+    print("Error: Must set $PDK_ROOT to the directory that contains skywater-pdk and the root of the sky130A install.")
+    exit()
+SKY130A = os.path.join(PDK_ROOT, 'share/pdk/sky130A')
 
-with open('sky130-tech-gen-files/beginning.json', 'r') as f:
-    data = json.load(f)
+if use_nda_files:
+    with open('sky130-tech-gen-files/beginning_nda.json', 'r') as f: data = json.load(f)
+else:
+    with open('sky130-tech-gen-files/beginning.json', 'r') as f: data = json.load(f)
 
 with open('sky130-tech-gen-files/cells.json', 'r') as f:
     cells = json.load(f)

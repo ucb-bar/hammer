@@ -4,10 +4,6 @@
   "time_unit": "1 ns",
   "installs": [
     {
-      "path": "$SKY130_PDK",
-      "base var": "technology.sky130.sky130_pdk"
-    },
-    {
       "path": "$SKY130_NDA",
       "base var": "technology.sky130.sky130_nda"
     },
