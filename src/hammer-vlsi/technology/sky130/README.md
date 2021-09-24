@@ -2,7 +2,7 @@ Sky130 Technology Library
 =========================
 HAMMER now supports the Skywater 130nm Technology process. The [SkyWater Open Source PDK](https://skywater-pdk.readthedocs.io/) is a collaboration between Google and SkyWater Technology Foundry to provide a fully open source Process Design Kit (PDK) and related resources, which can be used to create manufacturable designs at SkyWater’s facility.
 The Skywater 130nm PDK files are located in a repo called [skywater-pdk](https://github.com/google/skywater-pdk/) A tool called [Open-PDKs (open_pdks)](https://github.com/RTimothyEdwards/open_pdks/) was developed to generate all the files typically found in a PDK.
-Open-PDKs uses the contents in ``skywater-pdk``, and outputs files to a directory called ``sky130A``.
+Open-PDKs uses the contents in `skywater-pdk`, and outputs files to a directory called `sky130A`.
 
 [OpenLANE](https://github.com/efabless/openlane/) is an open-source RTL to GDSII VLSI flow that supports Sky130.
 
@@ -14,22 +14,22 @@ PDK Structure
 
 OpenLANE expects a certain file structure for the Sky130 PDK. 
 We recommend adhering to this file structure for Hammer as well.
-All the files reside in a root folder (named something like ``skywater`` or ``sky130``).
-The environment variable ``$PDK_ROOT`` should be set to this folder's path:
+All the files reside in a root folder (named something like `skywater` or `sky130`).
+The environment variable `$PDK_ROOT` should be set to this folder's path:
 
     export PDK_ROOT=<path-to-skywater-directory>
     
-``$PDK_ROOT`` contains the following:
+`$PDK_ROOT` contains the following:
 
-* ``skywater-pdk``
+* `skywater-pdk`
 
   * Original PDK source files
 
-* ``open_pdks``
+* `open_pdks`
 
   * install of Open-PDKs tool
 
-* ``sky130A``
+* `share/pdk/sky130A`
 
   * output files from Open-PDKs compilation process
 
@@ -37,7 +37,7 @@ NDA Files
 ---------
 Using commercial VLSI tools with this process requires files that are currently under NDA. 
 If you have access to these, you will be able to use the Hammer VLSI flow out-of-the-box with the Sky130 process.
-Some of these NDA files, such as the Calibre DRC/LVS decks, rely on the environment variable ``$PDK_HOME`` containing the path to the version of the NDA files you are using.
+Some of these NDA files, such as the Calibre DRC/LVS decks, rely on the environment variable `$PDK_HOME` containing the path to the version of the NDA files you are using.
 You may set it in the Hammer plugin, or as follows:
 
     export PDK_HOME=<path-to-skywater-src-nda>/s8/<version#>
@@ -47,10 +47,10 @@ Prerequisites for PDK Setup
 
 * [Magic](http://opencircuitdesign.com/magic/)
 
-  * required for ``open_pdks`` file generation
-  * tricky to install, closely follow the directions on the ``Install`` page of the website
+  * required for `open_pdks` file generation
+  * tricky to install, closely follow the directions on the `Install` page of the website
   
-    * as the directions indicate, you will likely need to manually specify the location of the Tcl/Tk package installation using ``--with-tcl`` and ``--with-tk``
+    * as the directions indicate, you will likely need to manually specify the location of the Tcl/Tk package installation using `--with-tcl` and `--with-tk`
  
  If using conda, these installs alone caused the Magic install to work:
 
@@ -58,9 +58,16 @@ Prerequisites for PDK Setup
     conda install -c anaconda tk 
     conda install -c anaconda libglu
 
+OpenRAM SRAMs
+-------------
+TODO: add overview here
+
+    git clone https://github.com/efabless/sky130_sram_macros.git
+    
+
 PDK Setup
 ---------
-In ``$PDK_ROOT``, clone the skywater-pdk repo and generate the liberty files for each library:
+In `$PDK_ROOT`, clone the skywater-pdk repo and generate the liberty files for each library:
 
     git clone https://github.com/google/skywater-pdk.git
     cd skywater-pdk
@@ -70,7 +77,7 @@ In ``$PDK_ROOT``, clone the skywater-pdk repo and generate the liberty files for
     # Regenerate liberty files
     make timing
 
-Again in ``$PDK_ROOT``, clone the open_pdks repo and run the install process to generate the ``sky130A`` directory:
+Again in `$PDK_ROOT`, clone the open_pdks repo and run the install process to generate the `sky130A` directory:
 
     git clone https://github.com/RTimothyEdwards/open_pdks.git
     cd open_pdks
@@ -81,11 +88,7 @@ Again in ``$PDK_ROOT``, clone the open_pdks repo and run the install process to 
     make
     make install
 
-OpenRAM SRAMs
--------------
-TODO: add overview here
-
-    git clone https://github.com/efabless/sky130_sram_macros.git
+This generates all the Sky130 PDK files and installs them to `$PDK_ROOT/share/pdk/sky130A`
 
 Known DRC Issues
 ----------------
