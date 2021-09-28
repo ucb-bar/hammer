@@ -1187,7 +1187,7 @@ class HammerTool(metaclass=ABCMeta):
                     # only supports r0, mx, my, r180
                     line_start_end = [c_x, top.height-c.y-height/4, c_x + width/8, top.height-c.y] # x1, y1, x2, y2
                     if c.orientation is not None:
-                        if c.orientation.lower() in ["my", "r180"] or is_pcb_tool:
+                        if (c.orientation.lower() in ["my", "r180"]) ^ is_pcb_tool:
                             line_start_end[0] += width
                             line_start_end[2] += width*6/8
                         if c.orientation.lower() in ["mx", "r180"]:

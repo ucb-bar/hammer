@@ -3415,8 +3415,6 @@ SRAM1RW512x64_1bit sram_IO60 ( CE, WEB,  A, OEB, CSB, I[60], O[60]);
 SRAM1RW512x64_1bit sram_IO61 ( CE, WEB,  A, OEB, CSB, I[61], O[61]);
 SRAM1RW512x64_1bit sram_IO62 ( CE, WEB,  A, OEB, CSB, I[62], O[62]);
 SRAM1RW512x64_1bit sram_IO63 ( CE, WEB,  A, OEB, CSB, I[63], O[63]);
-SRAM1RW512x64_1bit sram_IO64 ( CE, WEB,  A, OEB, CSB, I[64], O[64]);
-SRAM1RW512x64_1bit sram_IO65 ( CE, WEB,  A, OEB, CSB, I[65], O[65]);
 
 
 endmodule
