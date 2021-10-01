@@ -7,6 +7,7 @@ This documentation will walk through more advanced features of the Hammer infras
    :maxdepth: 2
    :caption: Hammer Use:
 
+   Hammer-Config
    Hammer-APIs
    Flow-Control
    Hooks
