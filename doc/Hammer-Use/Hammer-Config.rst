@@ -105,7 +105,7 @@ Common meta actions
 
   Result: ``get_setting("foo.flash")`` returns ``yesman``
 
-* ``lazysubst``: by default, variables are only substituted from previous configs. Using ``lazysubst`` allows us to deter the substitution until the very end.
+* ``lazysubst``: by default, variables are only substituted from previous configs. Using ``lazysubst`` allows us to defer the substitution until the very end.
 
   Example without ``lazysubst``:
 
