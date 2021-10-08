@@ -108,6 +108,10 @@ class CLIDriver:
     argparse and plumbing.
     """
 
+    @staticmethod
+    def log_relative_to_obj_dir() -> bool:
+        return False
+
     def __init__(self) -> None:
         # Cache for the synthesis dir and par dir.
         # Defaults to blank (obj_dir + syn-rundir/par-rundir)
@@ -1020,6 +1024,12 @@ class CLIDriver:
             obj_dir = get_nonempty_str(os.environ.get("HAMMER_DRIVER_OBJ_DIR", ""))
         if obj_dir is not None:
             options = options._replace(obj_dir=os.path.realpath(obj_dir))
+        # Determine if log file should be relative to obj dir
+        if self.log_relative_to_obj_dir():
+            os.makedirs(obj_dir, exist_ok=True)
+            options = options._replace(log_file=os.path.join(obj_dir, options.log_file))
+        else:
+            pass
         # Syn/par rundir (optional)
         self.syn_rundir = get_nonempty_str(args['syn_rundir'])
         self.par_rundir = get_nonempty_str(args['par_rundir'])
