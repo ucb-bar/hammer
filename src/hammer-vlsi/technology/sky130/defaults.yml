@@ -81,5 +81,5 @@ technology.core:
 par.inputs:
   gds_merge: true
   gds_map_mode: manual
-  gds_map_file: "${vlsi.builtins.hammer_vlsi_path}/technology/sky130/sky130_lefpin.map"
+  gds_map_file: "${vlsi.builtins.hammer_vlsi_path}/technology/sky130/extra/sky130_lefpin.map"
   gds_map_file_meta: lazysubst
