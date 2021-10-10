@@ -256,12 +256,12 @@ set_db opt_fix_hold_verbose true
 # Clock attributes  [get_db -category cts]
 ##########################################################
 #-------------------------------------------------------------------------------
-#set_db cts_target_skew                .15
-#set_db cts_target_max_transition_time .3
-#set_db cts_update_io_latency false
+set_db cts_target_skew                .15
+set_db cts_target_max_transition_time .3
+set_db cts_update_io_latency false
 
 # set_db cts_use_inverters true
-# set_db cts_buffer_cells               "clkbuf clkdlybuf4s15 clkdlybuf4s18 clkdlybuf4s25 clkdlybuf4s50"
+# set_db cts_buffer_cells               "sky130_fd_sc_hd__clkbuf_1 sky130_fd_sc_hd__clkbuf_2 sky130_fd_sc_hd__clkbuf_4 sky130_fd_sc_hd__clkbuf_8 sky130_fd_sc_hd__clkbuf_16"
 # set_db cts_inverter_cells             "clkinv clkinvlp"
 # set_db cts_clock_gating_cells         "CKLHQD1BWP30P140HVT CKLHQD2BWP30P140HVT CKLHQD3BWP30P140HVT CKLHQD4BWP30P140HVT CKLHQD6BWP30P140HVT CKLHQD8BWP30P140HVT CKLHQD12BWP30P140HVT CKLHQD16BWP30P140HVT CKLHQD20BWP30P140HVT CKLHQD24BWP30P140HVT CKLNQD1BWP30P140HVT CKLNQD2BWP30P140HVT CKLNQD3BWP30P140HVT CKLNQD4BWP30P140HVT CKLNQD6BWP30P140HVT CKLNQD8BWP30P140HVT CKLNQD12BWP30P140HVT CKLNQD16BWP30P140HVT CKLNQD20BWP30P140HVT CKLNQD24BWP30P140HVT"
 

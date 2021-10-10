@@ -4,10 +4,6 @@
   "time_unit": "1 ns",
   "installs": [
     {
-      "path": "$SKY130_NDA",
-      "base var": "technology.sky130.sky130_nda"
-    },
-    {
       "path": "$SKY130A",
       "base var": "technology.sky130.sky130A"
     },
@@ -16,28 +12,9 @@
       "base var": ""
     }
   ],
-  "layer map file": "$SKY130_NDA/s8/V2.0.1/VirtuosoOA/libs/technology_library/technology_library.layermap",
-  "drc decks": [
-    {
-      "tool name": "calibre",
-      "deck name": "all_drc",
-      "path": "$SKY130_NDA/s8/V2.0.1/DRC/Calibre/s8_drcRules"
-    }
-  ],
-  "additional_drc_text": "",
-  "lvs decks": [
-    {
-      "tool name": "calibre",
-      "deck name": "all_lvs",
-      "old path": "$SKY130_NDA/s8/V2.0.1/LVS/Calibre/lvsRules_s8",
-      "path": "tech-sky130-cache/lvsControlFile_s8"
-    }
-  ],
-  "additional_lvs_text": "",
   "libraries": [
     {
       "lef file": "tech-sky130-cache/sky130_fd_sc_hd.tlef",
-      "spice file": "$SKY130_NDA/s8/V2.0.1/LVS/Calibre/source.cdl",
       "verilog sim": "tech-sky130-cache/primitives.v",
       "provides": [
         {
@@ -156,7 +133,7 @@
       ]
     },
     {
-      "nldm liberty file": "$SKY130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ff_n40C_1v95.lib",
+      "nldm liberty file": "$SKY130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ff_n40C_1v95_ccsnoise.lib",
       "verilog sim": "tech-sky130-cache/sky130_fd_sc_hd.v",
       "lef file": "$SKY130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
       "spice file": "tech-sky130-cache/sky130_fd_sc_hd.cdl",
@@ -310,7 +287,7 @@
       ]
     },
     {
-      "nldm liberty file": "$SKY130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_n40C_1v60.lib",
+      "nldm liberty file": "$SKY130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__ss_n40C_1v60_ccsnoise.lib",
       "verilog sim": "tech-sky130-cache/sky130_fd_sc_hd.v",
       "lef file": "$SKY130A/libs.ref/sky130_fd_sc_hd/lef/sky130_fd_sc_hd.lef",
       "spice file": "tech-sky130-cache/sky130_fd_sc_hd.cdl",

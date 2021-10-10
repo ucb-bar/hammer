@@ -1,12 +1,17 @@
-# usage:
-#   >> export PDK_ROOT=<path-to-dir-containing-sky130A-dir>
-#   >> python sky130-tech-gen.py
+'''
+    Purpose: generate the json file required by the Hammer Sky130 tech plugin
+    Usage:
+        export PDK_ROOT=<path-to-dir-containing-sky130-setup>
+        python sky130-tech-gen.py
+    Output:
+        sky130.tech.json: specifies Sky130 PDK file locations and various details
+'''
 
 import json
 import os
 from pathlib import Path 
 
-use_nda_files=True
+use_nda_files=False
 library='sky130_fd_sc_hd'
 
 PDK_ROOT = os.getenv('PDK_ROOT')
@@ -28,12 +33,15 @@ data["special cells"] = cells["special cells"]
 
 SKYWATER_LIBS = os.path.join('$SKY130A','libs.ref',library)
 LIBRARY_PATH  = os.path.join(SKY130A,'libs.ref',library,'lib')
-lib_corners=os.listdir(LIBRARY_PATH)
-for cornerfilename in lib_corners:
+lib_corner_files=os.listdir(LIBRARY_PATH)
+for cornerfilename in lib_corner_files:
     if (not (library in cornerfilename) ) : continue
-    if ('ccsnoise' in cornerfilename): continue 
+    if ('ccsnoise' in cornerfilename): continue # ignore duplicate corner.lib/corner_ccsnoise.lib files
 
-    tmp = cornerfilename.replace('.lib','__')
+    tmp = cornerfilename.replace('.lib','')
+    if (tmp+'_ccsnoise.lib' in lib_corner_files): 
+      cornerfilename=tmp+'_ccsnoise.lib' # use ccsnoise version of lib file
+
     cornername = tmp.split('__')[1]
     cornerparts = cornername.split('_')
 
