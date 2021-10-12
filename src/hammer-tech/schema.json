@@ -95,6 +95,9 @@
           "nldm library file" : {
             "type" : "string"
           },
+          "socv library file" : {
+            "type" : "string"
+          },
           "openaccess techfile" : {
             "type" : "string"
           },

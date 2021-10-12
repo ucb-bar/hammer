@@ -114,6 +114,23 @@ class LibraryFilterHolder:
                                  paths_func=paths_func, is_file=True)
 
     @property
+    def timing_lib_with_socv_filter(self) -> LibraryFilter:
+        """
+        Select ASCII .socv timing libraries.
+        """
+
+        def paths_func(lib: "Library") -> List[str]:
+            print(f"socv_filter_paths_func:{lib},{lib.socv_library_file}")
+            if lib.socv_library_file is not None:
+                return [lib.socv_library_file]
+            else:
+                return []
+
+        return LibraryFilter.new("timing_lib_with_socv", "SOCV timing lib (ASCII .socv)",
+                                 paths_func=paths_func, is_file=True)
+
+
+    @property
     def qrc_tech_filter(self) -> LibraryFilter:
         """
         Selecting qrc RC Corner tech (qrcTech) files.
