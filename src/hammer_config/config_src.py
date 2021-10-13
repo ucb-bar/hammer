@@ -117,9 +117,22 @@ def deepsubst_local(path: str, params: MetaDirectiveParams) -> str:
     # "If a component is an absolute path, all previous components are thrown away and joining continues from the absolute path component."
     return os.path.join(params.meta_path, path)
 
+def deepsubst_transclude(path: str, params: MetaDirectiveParams) -> str:
+    """
+    Load the path given as the new value of this key
+
+    :param path: The string path to the file to be included
+    :param params: The MetaDirectiveParams which contain the local path.
+    :return: The contents of the file at path
+    """
+    with open(path, "r") as f:
+        file_contents = str(f.read())
+    return file_contents
+
 DeepSubstMetaDirectives = {
     "cwd": deepsubst_cwd,
-    "local": deepsubst_local
+    "local": deepsubst_local,
+    "transclude": deepsubst_transclude
 }  # type: Dict[str, Callable[[str, MetaDirectiveParams], str]]
 
 @lru_cache(maxsize=2)

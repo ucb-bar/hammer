@@ -26,6 +26,8 @@ Here is an example of a snippet that would be included in the user's input confi
 
 This demonstrates two different namespaces, ``vlsi.core`` and ``vlsi.inputs``, and then two different keys, ``technology`` and ``supplies``, which are set to the ``asap7`` technology and 0.7 Volts supply voltage, respectively.
 
+Further details about these keys and how they are manipulated is found in the :ref:`config` section.
+
 Tech Plugins
 -------------------------------
 
