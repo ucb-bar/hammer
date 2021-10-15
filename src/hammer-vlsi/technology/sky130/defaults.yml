@@ -56,6 +56,12 @@ vlsi:
         type: "hold",
         voltage: "1.95 V",
         temp: "-40 C"
+      },
+      {
+        name: "tt_025C_1v80",
+        type: "typical",
+        voltage: "1.80 V",
+        temp: "25 C"
       }
     ]
   technology:
