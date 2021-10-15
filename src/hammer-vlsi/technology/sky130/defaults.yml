@@ -59,7 +59,7 @@ vlsi:
       },
       {
         name: "tt_025C_1v80",
-        type: "typical",
+        type: "extra",
         voltage: "1.80 V",
         temp: "25 C"
       }
