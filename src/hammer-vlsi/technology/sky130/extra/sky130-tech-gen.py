@@ -11,7 +11,7 @@ import json
 import os
 from pathlib import Path 
 
-use_nda_files=False
+use_nda_files=True
 library='sky130_fd_sc_hd'
 
 PDK_ROOT = os.getenv('PDK_ROOT')
@@ -90,5 +90,5 @@ with open('sky130-tech-gen-files/sites.json', 'r') as f:
     sites = json.load(f)
 data["sites"] = sites["sites"]
 
-with open('sky130.tech.json', 'w') as f:
+with open('../sky130.tech.json', 'w') as f:
     json.dump(data, f, indent=2)
