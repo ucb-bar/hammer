@@ -47,7 +47,7 @@ P&R Input Keys
 
     * ``inputs.gds_merge`` (bool)
 
-        * ``True`` tells the P&R tool to merge all library & macro GDS before streamout. Otherwise, only references will exist and merging needs to be done later, by a tool such as ``gdspy``.
+        * ``True`` tells the P&R tool to merge all library & macro GDS before streamout. Otherwise, only references will exist and merging needs to be done later, by a tool such as ``Calibre``, ``gdstk``, or ``gdspy``.
 
     * ``inputs.physical_only_cells_mode`` (str)
 

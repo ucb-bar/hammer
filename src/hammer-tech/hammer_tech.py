@@ -718,14 +718,15 @@ class HammerTechnology:
                 return matched.prepend(os.path.join(*rest_of_path))
 
     def extract_technology_files(self) -> None:
-        """Ensure that the technology files exist either via tarballs or installs."""
-        if self.config.installs is not None:
-            self.check_installs()
-            return
-        if self.config.tarballs is not None:
-            self.extract_tarballs()
-            return
-        self.logger.error("Technology specified neither tarballs or installs")
+        """Ensure that the technology files exist via tarballs and/or installs."""
+        if self.config.installs is None and self.config.tarballs is None:
+            raise ValueError("Technology specified neither tarballs nor installs")
+        else:
+            if self.config.installs is not None:
+                self.check_installs()
+            if self.config.tarballs is not None:
+                self.extract_tarballs()
+            self.post_install_script()
 
     def check_installs(self) -> bool:
         """Check that the all directories for a pre-installed technology actually exist.
@@ -742,7 +743,6 @@ class HammerTechnology:
                 if not os.path.exists(install_path):
                     self.logger.error("installs {path} does not exist".format(path=install_path))
                     return False
-        self.post_install_script()
         return True
 
     def extract_tarballs(self) -> None:
@@ -772,7 +772,6 @@ class HammerTechnology:
                             tarfile.open(file).extractall(path=os.path.join(root, f + "_dir"))
                             os.remove(file)
                             os.renames(os.path.join(root, f + "_dir"), file)
-                self.post_install_script()
 
     def post_install_script(self) -> None:
         """a script to apply any needed hotfixes to technology libraries, tech __init__.py will override this"""
