@@ -10,7 +10,7 @@ In addition to requirements for `hammer-vlsi`, using ASAP7 also requires:
 - ASAP7 PDK version 1p7, available [here on GitHub](https://github.com/The-OpenROAD-Project/asap7). We recommend downloading an archive of or shallow cloning the repository.
 - The Calibre deck tarball (downloaded separately from the website) must not be extracted. It should be placed in the directory specified by `technology.asap7.tarball_dir`. For ease, this can be same directory as the repository.
 - Either the `gdstk` or `gdspy` GDS manipulation utility is required for 4x database downscaling. `gdstk` (available [here on GitHub](https://github.com/heitzmann/gdstk), version >0.6) is highly recommended; however, because it is more difficult to install, `gdspy` (available [here on Github](https://github.com/heitzmann/gdspy/releases), specifically version 1.4 can also be used instead, but it is much slower.
-- Calibre must be the DRC/LVS tool.
+- Calibre must be the DRC/LVS tool.  The rule decks only support 2017-year Calibre versions.
 
 \*At this moment, for BWRC affiliates, the environment needed for a `gdstk` or `gdspy` install is setup only on the LSF cluster machines. To install it, first enable the Python dev environment:
 ```
