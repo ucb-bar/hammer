@@ -75,6 +75,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -172,6 +181,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -284,6 +302,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -401,6 +428,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -519,6 +555,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -643,6 +688,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -787,6 +841,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -875,6 +938,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -963,6 +1035,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -1055,6 +1136,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -1149,6 +1239,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -1251,6 +1350,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -1371,6 +1479,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -1497,6 +1614,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -1625,6 +1751,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -1769,6 +1904,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -1857,6 +2001,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -2066,6 +2219,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -2178,6 +2340,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -2304,6 +2475,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -2432,6 +2612,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -2577,6 +2766,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -2665,6 +2863,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -2795,6 +3002,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -2891,6 +3107,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -2979,6 +3204,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -3187,6 +3421,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -3299,6 +3542,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -3443,6 +3695,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -3531,6 +3792,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -3739,6 +4009,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -3839,6 +4118,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -3940,6 +4228,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -4042,6 +4339,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -4154,6 +4460,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -4268,6 +4583,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -4356,6 +4680,15 @@ wire WE;
 and u1 (RE, ~CSB_i,  WEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out = $urandom_range(1);
+end
 
 always @ (posedge CE_i) 
 	if (RE)
@@ -4466,6 +4799,18 @@ and u1 (RE1, ~CSB1_i,  WEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
 and u3 (RE2, ~CSB2_i,  WEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
+
+// Initialization for simulation
+integer i;
+initial begin
+    O1_i = $urandom_range(1);
+    O2_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out1 = $urandom_range(1);
+    data_out2 = $urandom_range(1);
+end
 
 //Primary ports
 
@@ -4606,6 +4951,18 @@ and u2 (WE1, ~CSB1_i, ~WEB1_i);
 and u3 (RE2, ~CSB2_i,  WEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O1_i = $urandom_range(1);
+    O2_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out1 = $urandom_range(1);
+    data_out2 = $urandom_range(1);
+end
+
 //Primary ports
 
 always @ (posedge CE1_i) 
@@ -4716,6 +5073,18 @@ and u1 (RE1, ~CSB1_i,  WEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
 and u3 (RE2, ~CSB2_i,  WEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
+
+// Initialization for simulation
+integer i;
+initial begin
+    O1_i = $urandom_range(1);
+    O2_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out1 = $urandom_range(1);
+    data_out2 = $urandom_range(1);
+end
 
 //Primary ports
 
@@ -4831,6 +5200,18 @@ and u1 (RE1, ~CSB1_i,  WEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
 and u3 (RE2, ~CSB2_i,  WEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
+
+// Initialization for simulation
+integer i;
+initial begin
+    O1_i = $urandom_range(1);
+    O2_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out1 = $urandom_range(1);
+    data_out2 = $urandom_range(1);
+end
 
 //Primary ports
 
@@ -4954,6 +5335,18 @@ and u1 (RE1, ~CSB1_i,  WEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
 and u3 (RE2, ~CSB2_i,  WEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
+
+// Initialization for simulation
+integer i;
+initial begin
+    O1_i = $urandom_range(1);
+    O2_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out1 = $urandom_range(1);
+    data_out2 = $urandom_range(1);
+end
 
 //Primary ports
 
@@ -5094,6 +5487,18 @@ and u2 (WE1, ~CSB1_i, ~WEB1_i);
 and u3 (RE2, ~CSB2_i,  WEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O1_i = $urandom_range(1);
+    O2_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out1 = $urandom_range(1);
+    data_out2 = $urandom_range(1);
+end
+
 //Primary ports
 
 always @ (posedge CE1_i) 
@@ -5204,6 +5609,18 @@ and u1 (RE1, ~CSB1_i,  WEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
 and u3 (RE2, ~CSB2_i,  WEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
+
+// Initialization for simulation
+integer i;
+initial begin
+    O1_i = $urandom_range(1);
+    O2_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out1 = $urandom_range(1);
+    data_out2 = $urandom_range(1);
+end
 
 //Primary ports
 
@@ -5319,6 +5736,18 @@ and u1 (RE1, ~CSB1_i,  WEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
 and u3 (RE2, ~CSB2_i,  WEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
+
+// Initialization for simulation
+integer i;
+initial begin
+    O1_i = $urandom_range(1);
+    O2_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out1 = $urandom_range(1);
+    data_out2 = $urandom_range(1);
+end
 
 //Primary ports
 
@@ -5442,6 +5871,18 @@ and u1 (RE1, ~CSB1_i,  WEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
 and u3 (RE2, ~CSB2_i,  WEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
+
+// Initialization for simulation
+integer i;
+initial begin
+    O1_i = $urandom_range(1);
+    O2_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out1 = $urandom_range(1);
+    data_out2 = $urandom_range(1);
+end
 
 //Primary ports
 
@@ -5571,6 +6012,18 @@ and u1 (RE1, ~CSB1_i,  WEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
 and u3 (RE2, ~CSB2_i,  WEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
+
+// Initialization for simulation
+integer i;
+initial begin
+    O1_i = $urandom_range(1);
+    O2_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out1 = $urandom_range(1);
+    data_out2 = $urandom_range(1);
+end
 
 //Primary ports
 
@@ -5711,6 +6164,18 @@ and u2 (WE1, ~CSB1_i, ~WEB1_i);
 and u3 (RE2, ~CSB2_i,  WEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O1_i = $urandom_range(1);
+    O2_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out1 = $urandom_range(1);
+    data_out2 = $urandom_range(1);
+end
+
 //Primary ports
 
 always @ (posedge CE1_i) 
@@ -5850,6 +6315,18 @@ and u1 (RE1, ~CSB1_i,  WEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
 and u3 (RE2, ~CSB2_i,  WEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
+
+// Initialization for simulation
+integer i;
+initial begin
+    O1_i = $urandom_range(1);
+    O2_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out1 = $urandom_range(1);
+    data_out2 = $urandom_range(1);
+end
 
 //Primary ports
 
@@ -5997,6 +6474,18 @@ and u2 (WE1, ~CSB1_i, ~WEB1_i);
 and u3 (RE2, ~CSB2_i,  WEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O1_i = $urandom_range(1);
+    O2_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out1 = $urandom_range(1);
+    data_out2 = $urandom_range(1);
+end
+
 //Primary ports
 
 always @ (posedge CE1_i) 
@@ -6107,6 +6596,18 @@ and u1 (RE1, ~CSB1_i,  WEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
 and u3 (RE2, ~CSB2_i,  WEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
+
+// Initialization for simulation
+integer i;
+initial begin
+    O1_i = $urandom_range(1);
+    O2_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out1 = $urandom_range(1);
+    data_out2 = $urandom_range(1);
+end
 
 //Primary ports
 
@@ -6222,6 +6723,18 @@ and u1 (RE1, ~CSB1_i,  WEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
 and u3 (RE2, ~CSB2_i,  WEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
+
+// Initialization for simulation
+integer i;
+initial begin
+    O1_i = $urandom_range(1);
+    O2_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out1 = $urandom_range(1);
+    data_out2 = $urandom_range(1);
+end
 
 //Primary ports
 
@@ -6345,6 +6858,18 @@ and u1 (RE1, ~CSB1_i,  WEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
 and u3 (RE2, ~CSB2_i,  WEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
+
+// Initialization for simulation
+integer i;
+initial begin
+    O1_i = $urandom_range(1);
+    O2_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out1 = $urandom_range(1);
+    data_out2 = $urandom_range(1);
+end
 
 //Primary ports
 
@@ -6476,6 +7001,18 @@ and u1 (RE1, ~CSB1_i,  WEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
 and u3 (RE2, ~CSB2_i,  WEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
+
+// Initialization for simulation
+integer i;
+initial begin
+    O1_i = $urandom_range(1);
+    O2_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out1 = $urandom_range(1);
+    data_out2 = $urandom_range(1);
+end
 
 //Primary ports
 
@@ -6616,6 +7153,18 @@ and u2 (WE1, ~CSB1_i, ~WEB1_i);
 and u3 (RE2, ~CSB2_i,  WEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
+// Initialization for simulation
+integer i;
+initial begin
+    O1_i = $urandom_range(1);
+    O2_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out1 = $urandom_range(1);
+    data_out2 = $urandom_range(1);
+end
+
 //Primary ports
 
 always @ (posedge CE1_i) 
@@ -6726,6 +7275,18 @@ and u1 (RE1, ~CSB1_i,  WEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
 and u3 (RE2, ~CSB2_i,  WEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
+
+// Initialization for simulation
+integer i;
+initial begin
+    O1_i = $urandom_range(1);
+    O2_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out1 = $urandom_range(1);
+    data_out2 = $urandom_range(1);
+end
 
 //Primary ports
 
@@ -6841,6 +7402,18 @@ and u1 (RE1, ~CSB1_i,  WEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
 and u3 (RE2, ~CSB2_i,  WEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
+
+// Initialization for simulation
+integer i;
+initial begin
+    O1_i = $urandom_range(1);
+    O2_i = $urandom_range(1);
+    for (i = 0; i < `numWords; i = i + 1) begin
+        memory[i] = $urandom_range(1);
+    end
+    data_out1 = $urandom_range(1);
+    data_out2 = $urandom_range(1);
+end
 
 //Primary ports
 

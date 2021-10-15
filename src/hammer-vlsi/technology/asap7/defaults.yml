@@ -1,13 +1,16 @@
 # Settings for the asap7 technology to be overriden by the project.
 technology.asap7:
-  # Path to the directory which contains all the asap7 tarballs (e.g. ASAP7_PDKandLIB.tar)
+  # Path to the directory which contains the asap7 Calibre decks tarball (i.e. ASAP7_PDK_CalibreDeck.tar)
   tarball_dir: "libs"
+  # Path to the directory containing the PDK files
+  pdk_install_dir: "${technology.asap7.tarball_dir}/asap7PDK_r1p7"
+  pdk_install_dir_meta: lazysubst
+  # Path to the directory containing the standard cell collateral
+  stdcell_install_dir: "${technology.asap7.tarball_dir}/asap7sc7p5t_27"
+  stdcell_install_dir_meta: lazysubst
 
 # Set some defaults for this technology.
 # For quick performance evaluations, use the typical voltage+temperature corners.
-# Nominal voltage for 7nm technology is 0.70 V and is the only voltage provided
-# for normal SRAMs.
-# TODO: add default temperature corners.
 vlsi:
   # Technology dimension
   # The PaR tool actually runs in the 4x scaled up lef/gds.
@@ -33,12 +36,10 @@ vlsi:
         "temp": "0 C"
       }
     ]
-    # This is to get around missing removal_falling in libs for RESET pin ASYNC_DFF.. cells
-    custom_sdc_constraints:
-    - "set_false_path -hold -fall_to [get_db [get_db insts -if {.base_cell.name == ASYNC_DFF*}] .pins -if {.name == *RESET}]"
+
   technology:
     # Set standard cell LEF placement site
-    placement_site: "coreSite"
+    placement_site: "asap7sc7p5t"
 
     # Set the layer that blocks vias under bumps
     bump_block_cut_layer: "V9"
@@ -57,12 +58,6 @@ technology.core:
   # This is used to provide a reference master for generating standard cells
   tap_cell_rail_reference: "{TAPCELL*}"
 
-mentor.extra_env_vars:
-  - VAR_M4_YOFFSET: "0"
-  - VAR_M5_XOFFSET: "0"
-  - VAR_M6_YOFFSET: "0"
-  - VAR_M7_XOFFSET: "0"
-
 par.inputs:
   # gds_merge: true is mandatory,
   # The shrink script in __init__.py filters stdcells but expects all other input GDSs to be 4x upscaled.
@@ -70,6 +65,41 @@ par.inputs:
   # TODO: change export_config_outputs for PaR inputs to expose gds_merge to output json
   gds_merge: true
 
+# Power straps (most DRC-clean)
+par.power_straps_mode: generate
+par.generate_power_straps_method: by_tracks
+par.generate_power_straps_options:
+  by_tracks:
+    strap_layers:
+      - M3
+      - M4
+      - M5
+      - M6
+      - M7
+      - M8
+      - M9
+    pin_layers:
+      - M9
+    track_width: 7 # minimum allowed for M2 & M3
+    track_spacing: 0
+    track_spacing_M3: 28 # space straps apart evenly, in conjunction w/ track_utilization_M3
+    track_start: 10
+    power_utilization: 0.25
+    power_utilization_M3: 0.6 # together with track_spacing_M3 results in approx. 0.25 eff. utilization
+    power_utilization_M8: 1.0
+    power_utilization_M9: 1.0
+
 power.voltus:
   lef_layer_map: "lefdefLayer.map"
   lef_layer_map_meta: "prependlocal"
+
+mentor.extra_env_vars:
+  - VAR_M4_YOFFSET: "0"
+  - VAR_M5_XOFFSET: "0"
+  - VAR_M6_YOFFSET: "0"
+  - VAR_M7_XOFFSET: "0"
+mentor.layerprops: "calibre.layerprops"
+mentor.layerprops_meta: "prependlocal"
+# 2017-year only Calibre supported by decks
+drc.calibre.version: "2017.3_38.30"
+lvs.calibre.version: "2017.3_38.30"
