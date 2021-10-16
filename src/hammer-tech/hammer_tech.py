@@ -361,6 +361,20 @@ class HammerTechnology:
         self._cachedir = value  # type: str
         # Ensure the cache_dir exists.
         os.makedirs(value, mode=0o700, exist_ok=True)
+    
+    # @classmethod
+    def expand_tech_cache_path(self, path) -> str:
+        """ Replace occurrences of the cache directory's basename with
+            the full path to the cache dir."""
+        cache_dir_basename = os.path.basename(self.cache_dir)
+        return path.replace(cache_dir_basename, self.cache_dir)
+
+    # @classmethod
+    def ensure_dirs_exist(self, path) -> None:
+        dir_name = os.path.dirname(path)
+        if not os.path.exists(dir_name):
+            self.logger.info('Creating directory: {}'.format(dir_name))
+            os.makedirs(dir_name)
 
     # hammer-vlsi properties.
     # TODO: deduplicate/put these into an interface to share with HammerTool?

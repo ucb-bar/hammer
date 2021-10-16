@@ -32,23 +32,9 @@ class SKY130Tech(HammerTechnology):
         self.setup_lvs_deck()
         print('Loaded Sky130 Tech')
 
-    # Helper functions
-    # TODO: add to HammerTechnology
-    def expand_tech_cache_path(self, path) -> str:
-        """ Replace occurrences of the cache directory's basename with
-            the full path to the cache dir."""
-        cache_dir_basename = os.path.basename(self.cache_dir)
-        return path.replace(cache_dir_basename, self.cache_dir)
 
-    def ensure_dirs_exist(self, path) -> None:
-        dir_name = os.path.dirname(path)
-        if not os.path.exists(dir_name):
-            self.logger.info('Creating directory: {}'.format(dir_name))
-            os.makedirs(dir_name)
-
-    # Tech setup steps
+    # Copy and hack the cdl, replacing pfet_01v8_hvt/nfet_01v8 with phighvt/nshort
     def setup_cdl(self) -> None:
-        """ Copy and hack the cdl, replacing pfet_01v8_hvt/nfet_01v8 with phighvt/nshort """
         setting_dir = self.get_setting("technology.sky130.sky130A")
         setting_dir = Path(setting_dir)
         cdl_old_path = setting_dir / 'libs.ref' / self.library_name / 'cdl' / f'{self.library_name}.cdl'
@@ -68,12 +54,15 @@ class SKY130Tech(HammerTechnology):
         f_old.close()
         f_new.close()
     
+    # Copy and hack the verilog
+    #   - <library_name>.v: remove 'wire 1' and one endif line to fix syntax errors
+    #   - primitives.v: set default nettype to 'wire' instead of 'none'
+    #           (the open-source RTL sim tools don't treat undeclared signals as errors)
     def setup_verilog(self) -> None:
-        """ Copy and hack the verilog """
         setting_dir = self.get_setting("technology.sky130.sky130A")
         setting_dir = Path(setting_dir)
 
-        # fix up <library_name>.v
+        # <library_name>.v
         verilog_old_path = setting_dir / 'libs.ref' / self.library_name / 'verilog' / f'{self.library_name}.v'
         if not verilog_old_path.exists():
             raise FileNotFoundError(f"Verilog not found: {verilog_old_path}")
@@ -91,7 +80,7 @@ class SKY130Tech(HammerTechnology):
         f_old.close()
         f_new.close()
 
-        # fix up primitives.v
+        # primitives.v
         verilog_old_path = setting_dir / 'libs.ref' / self.library_name / 'verilog' / 'primitives.v'
         if not verilog_old_path.exists():
             raise FileNotFoundError(f"Verilog not found: {verilog_old_path}")
@@ -108,8 +97,8 @@ class SKY130Tech(HammerTechnology):
         f_old.close()
         f_new.close()
 
+    # Copy and hack the tech-lef, adding this very important `licon` section
     def setup_techlef(self) -> None:
-        """ Copy and hack the tech-lef, adding this very important `licon` section """
         setting_dir = self.get_setting("technology.sky130.sky130A")
         setting_dir = Path(setting_dir)
         tlef_old_path = setting_dir / 'libs.ref' / self.library_name / 'techlef' / f'{self.library_name}.tlef'
@@ -129,15 +118,8 @@ class SKY130Tech(HammerTechnology):
         f_old.close()
         f_new.close()
 
+    # Remove conflicting specification statements found in PDK LVS decks
     def setup_lvs_deck(self) -> None:
-        """Remove conflicting specification statements found in PDK LVS decks."""
-
-        # if using OpenRAM SRAMs, LVS BOX these to ignore in LVS check
-        # if self.use_openram:
-        #     for name in SKY130Tech.openram_sram_names():
-        #         LVS_DECK_INSERT_LINES += f"LVS BOX {name} \n"
-        #         LVS_DECK_INSERT_LINES += f"LVS FILTER {name} OPEN \n"
-        
         if not self.use_nda_files: return
         pattern = '.*({}).*\n'.format('|'.join(LVS_DECK_SCRUB_LINES))
         matcher = re.compile(pattern)
@@ -165,10 +147,7 @@ class SKY130Tech(HammerTechnology):
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {"innovus": [
             HammerTool.make_post_insertion_hook("init_design",      sky130_innovus_settings),
-            HammerTool.make_pre_insertion_hook("place_tap_cells",   sky130_add_endcaps),
-            HammerTool.make_pre_insertion_hook("power_straps",      sky130_power_nets),
-            HammerTool.make_post_insertion_hook("place_opt_design", sky130_add_tieoffs),
-            HammerTool.make_pre_insertion_hook("write_design",     sky130_connect_nets),
+            HammerTool.make_pre_insertion_hook("power_straps",      sky130_power_nets)
             ]}
         return hooks.get(tool_name, [])
 
@@ -218,6 +197,11 @@ LVS FILTER D  OPEN  SOURCE
 LVS FILTER D  OPEN  LAYOUT
 '''
 
+# black-box SRAMs during LVS
+for name in SKY130Tech.openram_sram_names():
+    LVS_DECK_INSERT_LINES += f"LVS BOX {name} \n"
+    LVS_DECK_INSERT_LINES += f"LVS FILTER {name} OPEN \n"
+
 # various Innovus database settings
 def sky130_innovus_settings(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
@@ -249,101 +233,43 @@ set_db opt_clock_gate_aware false
 set_db opt_area_recovery true
 set_db opt_post_route_area_reclaim setup_aware
 set_db opt_fix_hold_verbose true
-# set_db opt_fix_hold_lib_cells "BUFFD0BWP30P140HVT BUFFD1BWP30P140HVT BUFFD2BWP30P140HVT BUFFD3BWP30P140HVT BUFFD4BWP30P140HVT BUFFD6BWP30P140HVT BUFFD8BWP30P140HVT BUFFD12BWP30P140HVT BUFFD16BWP30P140HVT BUFFD20BWP30P140HVT BUFFD24BWP30P140HVT DEL025D1BWP30P140HVT"
-
 
 ##########################################################
 # Clock attributes  [get_db -category cts]
 ##########################################################
 #-------------------------------------------------------------------------------
-set_db cts_target_skew                .15
+set_db cts_target_skew 0.03
+set_db cts_max_fanout 10
 set_db cts_target_max_transition_time .3
 set_db cts_update_io_latency false
-
-# set_db cts_use_inverters true
-# set_db cts_buffer_cells               "sky130_fd_sc_hd__clkbuf_1 sky130_fd_sc_hd__clkbuf_2 sky130_fd_sc_hd__clkbuf_4 sky130_fd_sc_hd__clkbuf_8 sky130_fd_sc_hd__clkbuf_16"
-# set_db cts_inverter_cells             "clkinv clkinvlp"
-# set_db cts_clock_gating_cells         "CKLHQD1BWP30P140HVT CKLHQD2BWP30P140HVT CKLHQD3BWP30P140HVT CKLHQD4BWP30P140HVT CKLHQD6BWP30P140HVT CKLHQD8BWP30P140HVT CKLHQD12BWP30P140HVT CKLHQD16BWP30P140HVT CKLHQD20BWP30P140HVT CKLHQD24BWP30P140HVT CKLNQD1BWP30P140HVT CKLNQD2BWP30P140HVT CKLNQD3BWP30P140HVT CKLNQD4BWP30P140HVT CKLNQD6BWP30P140HVT CKLNQD8BWP30P140HVT CKLNQD12BWP30P140HVT CKLNQD16BWP30P140HVT CKLNQD20BWP30P140HVT CKLNQD24BWP30P140HVT"
-
+set_db opt_setup_target_slack 0.10
+set_db opt_hold_target_slack 0.10
 
 ##########################################################
 # Routing attributes  [get_db -category route]
 ##########################################################
 #-------------------------------------------------------------------------------
-set_db route_design_antenna_diode_insertion 1
-set_db route_design_antenna_cell_name "sky130_fd_sc_hd__diode_2"
 set_db route_design_bottom_routing_layer 2
-
-set_db route_design_high_freq_search_repair true
-set_db route_design_detail_post_route_spread_wire true
-set_db route_design_with_si_driven true
-set_db route_design_with_timing_driven true
-set_db route_design_concurrent_minimize_via_count_effort high
-set_db opt_consider_routing_congestion true
-set_db route_design_detail_use_multi_cut_via_effort medium
-
-set_db cts_target_skew 0.03
-set_db cts_max_fanout 10
-set_db opt_setup_target_slack 0.10
-set_db opt_hold_target_slack 0.10
     '''
     )
     return True   
 
 
-
-# TODO: move to Innovus plugin
-def sky130_add_endcaps(ht: HammerTool) -> bool:
-    assert isinstance(ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
-    assert isinstance(ht, TCLTool), "innovus settings can only run on TCL tools"
-    ht.append(
-        '''  
-set_db add_endcaps_boundary_tap        true
-set_db add_endcaps_left_edge sky130_fd_sc_hd__tap_1
-set_db add_endcaps_right_edge sky130_fd_sc_hd__tap_1
-add_endcaps
-    '''
-    )
-    return True
-
 # Pair VDD/VPWR and VSS/VGND nets
 #   these commands are already added in Innovus.write_netlist,
 #   but must also occur before power straps are placed
-# TODO: move to Innovus plugin
 def sky130_power_nets(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
     assert isinstance(ht, TCLTool), "innovus settings can only run on TCL tools"
-    ht.append(
-        '''  
-connect_global_net VDD -type net -net_base_name VPWR
-connect_global_net VSS -type net -net_base_name VGND
-    '''
-    )
-    return True
-
-# TODO: add these two functions into Hammer Innovus plugin
-def sky130_add_tieoffs(ht: HammerTool) -> bool:
-    assert isinstance(ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
-    assert isinstance(ht, TCLTool), "innovus settings can only run on TCL tools"
-    ht.append(
-        '''  
-set_db add_tieoffs_cells sky130_fd_sc_hd__conb_1
-add_tieoffs 
-    '''
-    )
-    return True
-
-def sky130_connect_nets(ht: HammerTool) -> bool:
-    assert isinstance(ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
-    assert isinstance(ht, TCLTool), "innovus settings can only run on TCL tools"
-    ht.append(
-        '''  
-connect_global_net VDD -type pg_pin -pin_base_name VPWR -all
-connect_global_net VDD -type pg_pin -pin_base_name VPB  -all
-connect_global_net VSS -type pg_pin -pin_base_name VGND -all
-connect_global_net VSS -type pg_pin -pin_base_name VNB  -all
-    '''
-    )
+    for pwr_gnd_net in (ht.get_all_power_nets() + ht.get_all_ground_nets()):
+            if pwr_gnd_net.tie is not None:
+                ht.verbose_append("connect_global_net {tie} -type net -net_base_name {net}".format(tie=pwr_gnd_net.tie, net=pwr_gnd_net.name))
+#     ht.append(
+#         f'''  
+# connect_global_net VDD -type net -net_base_name VPWR
+# connect_global_net VSS -type net -net_base_name VGND
+#     '''
+#     )
     return True
 
 tech = SKY130Tech()
