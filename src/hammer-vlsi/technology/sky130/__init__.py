@@ -241,7 +241,6 @@ set_db opt_fix_hold_verbose true
 set_db cts_target_skew 0.03
 set_db cts_max_fanout 10
 set_db cts_target_max_transition_time .3
-set_db cts_update_io_latency false
 set_db opt_setup_target_slack 0.10
 set_db opt_hold_target_slack 0.10
 
@@ -254,7 +253,6 @@ set_db route_design_bottom_routing_layer 2
     )
     return True   
 
-
 # Pair VDD/VPWR and VSS/VGND nets
 #   these commands are already added in Innovus.write_netlist,
 #   but must also occur before power straps are placed
@@ -264,12 +262,6 @@ def sky130_power_nets(ht: HammerTool) -> bool:
     for pwr_gnd_net in (ht.get_all_power_nets() + ht.get_all_ground_nets()):
             if pwr_gnd_net.tie is not None:
                 ht.verbose_append("connect_global_net {tie} -type net -net_base_name {net}".format(tie=pwr_gnd_net.tie, net=pwr_gnd_net.name))
-#     ht.append(
-#         f'''  
-# connect_global_net VDD -type net -net_base_name VPWR
-# connect_global_net VSS -type net -net_base_name VGND
-#     '''
-#     )
     return True
 
 tech = SKY130Tech()
