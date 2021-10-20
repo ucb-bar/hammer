@@ -1,0 +1,11 @@
+    {
+      "name" : "sky130_fd_sc_hd",
+      "metals": [
+        {"name": "li1", "index": 1, "direction": "vertical", "min_width": 0.17, "max_width": 2147483.647, "pitch": 0.34, "offset": 0.23, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 0.17}]},
+        {"name": "met1", "index": 2, "direction": "horizontal", "min_width": 0.14, "max_width": 2147483.647, "pitch": 0.28, "offset": 0.17, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 0.14}, {"width_at_least": 3.0, "min_spacing": 0.28}]},
+        {"name": "met2", "index": 3, "direction": "vertical", "min_width": 0.14, "max_width": 2147483.647, "pitch": 0.28, "offset": 0.23, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 0.14}, {"width_at_least": 3.0, "min_spacing": 0.28}]},
+        {"name": "met3", "index": 4, "direction": "horizontal", "min_width": 0.3, "max_width": 2147483.647, "pitch": 0.6, "offset": 0.34, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 0.3}, {"width_at_least": 3.0, "min_spacing": 0.4}]},
+        {"name": "met4", "index": 5, "direction": "vertical", "min_width": 0.3, "max_width": 2147483.647, "pitch": 0.6, "offset": 0.46, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 0.3}, {"width_at_least": 3.0, "min_spacing": 0.4}]},
+        {"name": "met5", "index": 6, "direction": "horizontal", "min_width": 1.6, "max_width": 2147483.647, "pitch": 3.2, "offset": 1.7, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 1.6}]}
+      ]
+    }
