@@ -118,7 +118,7 @@ def main(args) -> int:
                                     outputs=[
                                         InterfaceVar("output_files", "List[str]",
                                                      "output collection of mapped (post-synthesis) RTL files"),
-                                        InterfaceVar("output_sdc", "str",
+                                        InterfaceVar("output_sdc", "List[Dict]",
                                                      "(optional) output post-synthesis SDC constraints file"),
                                         InterfaceVar("output_all_regs", "str",
                                                      "path to output list of all registers in the design with output pin for gate level simulation"),
@@ -135,7 +135,7 @@ def main(args) -> int:
                                         inputs=[
                                             InterfaceVar("input_files", "List[str]",
                                                          "input post-synthesis netlist files"),
-                                            InterfaceVar("post_synth_sdc", "Optional[str]",
+                                            InterfaceVar("post_synth_sdc", "List[Dict]",
                                                          "(optional) input post-synthesis SDC constraint file"),
                                         ],
                                         outputs=[

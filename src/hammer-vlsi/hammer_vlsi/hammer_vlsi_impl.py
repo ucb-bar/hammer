@@ -296,7 +296,7 @@ class HammerSynthesisTool(HammerTool):
 
 
     @property
-    def output_sdc(self) -> str:
+    def output_sdc(self) -> List[Dict]:
         """
         Get the (optional) output post-synthesis SDC constraints file.
 
@@ -308,10 +308,10 @@ class HammerSynthesisTool(HammerTool):
             raise ValueError("Nothing set for the (optional) output post-synthesis SDC constraints file yet")
 
     @output_sdc.setter
-    def output_sdc(self, value: str) -> None:
+    def output_sdc(self, value: List[Dict]) -> None:
         """Set the (optional) output post-synthesis SDC constraints file."""
-        if not (isinstance(value, str)):
-            raise TypeError("output_sdc must be a str")
+        if not (isinstance(value, List)):
+            raise TypeError("output_sdc must be a List[Dict]")
         self.attr_setter("_output_sdc", value)
 
 
@@ -421,7 +421,7 @@ class HammerPlaceAndRouteTool(HammerTool):
 
 
     @property
-    def post_synth_sdc(self) -> Optional[str]:
+    def post_synth_sdc(self) -> List[Dict]:
         """
         Get the (optional) input post-synthesis SDC constraint file.
 
@@ -430,13 +430,13 @@ class HammerPlaceAndRouteTool(HammerTool):
         try:
             return self.attr_getter("_post_synth_sdc", None)
         except AttributeError:
-            return None
+            raise ValueError("Nothing set for the (optional) input post-synthesis SDC constraint file yet")
 
     @post_synth_sdc.setter
-    def post_synth_sdc(self, value: Optional[str]) -> None:
+    def post_synth_sdc(self, value: List[Dict]) -> None:
         """Set the (optional) input post-synthesis SDC constraint file."""
-        if not (isinstance(value, str) or (value is None)):
-            raise TypeError("post_synth_sdc must be a Optional[str]")
+        if not (isinstance(value, List)):
+            raise TypeError("post_synth_sdc must be a List[Dict]")
         self.attr_setter("_post_synth_sdc", value)
 
 

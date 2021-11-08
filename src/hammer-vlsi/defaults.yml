@@ -549,9 +549,9 @@ par.inputs:
   # Top RTL module.
   top_module: null
 
-  # Optional: SDC input file from post-synthesis.
-  # Leave as null to not use.
-  post_synth_sdc: null
+  # Optional: SDC input files from post-synthesis.
+  # Leave as empty list to not use.
+  post_synth_sdc: []
 
   # GDS output map mode.
   # type: str
