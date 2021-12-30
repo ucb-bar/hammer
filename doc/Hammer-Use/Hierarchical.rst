@@ -67,7 +67,7 @@ Cadence Implementation
 
 Currently, the hierarchical flow is implemented with the Cadence plugin using its Interface Logic Model (ILM) methodology. At the end of each submodule's place-and-route, an ILM is written as the hardened macro, which contains an abstracted view of its design and timing models only up to the first sequential element.
 
-ILMs are similar to LEFs and LIBs for traditional hard macros, except that at higher levels of hierarchy, the ILM instances are flattened at certain steps, such as those that perform timing analysis on the entire design.
+ILMs are similar to LEFs and LIBs for traditional hard macros, except that the interface logic is included in all views. This means that at higher levels of hierarchy, the ILM instances can be flattened at certain steps, such as those that perform timing analysis on the entire design, resulting in a more accurate picture of timing than a normal LIB would afford.
 
 Tips for Constraining Hierarchical Modules
 ------------------------------------------
@@ -87,17 +87,15 @@ In a bottom-up hierarchical flow, is is important to remember that submodules do
 Special Notes & Limitations
 ---------------------------
 
-#. Currently, Hammer IR keys do not propagate up through the hierarchical tree. For example, if ``vlsi.inputs.clocks`` was specified in the constraints for ``ModuleAA`` but not for ``ModuleAA``, ``ModuleAA`` will not inherit ``ModuleAA``'s constraints; instead, they will take Hammer's defaults.
+#. Hammer IR keys propagate up through the hierarchical tree. For example, if ``vlsi.inputs.clocks`` was specified in the constraints for ``ModuleAA`` but not for ``ModuleA``, ``ModuleA`` will inherit ``ModuleAA``'s constraints. Take special care of where your constraints come from, especially for a parent module with more than one submodule.
 
-#. Hammer IR keys specified at the root level (i.e. outside of ``vlsi.inputs.hierarchical.constraints``) are global, i.e. they override submodule constraints unless a meta action is specified.
+#. Hammer IR keys specified at the root level (i.e. outside of ``vlsi.inputs.hierarchical.constraints``) do not override the corresponding submodule constraints. However, if you add a Hammer IR file using ``-p`` on the command line (after the file containing ``vlsi.inputs.hierarchical.constraints``), those keys are global and override submodule constraints unless a meta action is specified.
 
 #. Due to the structure of ``vlsi.inputs.hierarchical.constraints`` as a list structure, currently, there are the following limitations:
 
-    * You must include all of the constraints in a single file. The config parser is unable to combine constraints from differnt files because meta actions do not work on list items. This will make it harder for collaboration, and unfortnately, changes to module constraints at a higher level of hierarchy after submodules are hardened will trigger the Make dependencies, so you will need to modify the generated Makefile or use redo-targets.
+    * You must include all of the constraints in a single file. The config parser is unable to combine constraints from differnt files because most meta actions do not work on list items (advanced users will need to use ``deepsubst``). This will make it harder for collaboration, and unfortunately, changes to module constraints at a higher level of hierarchy after submodules are hardened will trigger the Make dependencies, so you will need to modify the generated Makefile or use redo-targets.
 
-    * Similarly, certain meta actions do not work as expected, especially those where string substitutions and file transclusion are needed. This is because the meta actions are resolved between flow actions but the meta actions themselves persist.
-
-    * Other issues have been observed, such as the bump API failing (see `this issue <https://github.com/ucb-bar/hammer/issues/401>`_ at the top module level. This is caused by similar mechanisms as above. The workaround is to ensure that bumps are specified at the root level for only the top module and the bumps step is removed from submodule par..
+    * Other issues have been observed, such as the bump API failing (see `this issue <https://github.com/ucb-bar/hammer/issues/401>`_ at the top module level. This is caused by similar mechanisms as above. The workaround is to ensure that bumps are specified at the root level for only the top module and the bumps step is removed from submodule par actions.
 
 #. Most Hammer APIs are not yet intelligent enough to constrain across hierarchical boundaries. For example:
 
@@ -106,5 +104,3 @@ Special Notes & Limitations
     * The pin placement API does not match the placement of pins that may face each other in two adjacent submodule instances. You will need to either manually place the pins yourself or ensure a sufficient routing channel between the instances at the parent level.
 
 #. Hammer does not support running separate decks for submodule DRC and LVS. Technology plugins may need to be written with Makefiles and/or technology-specific options that will implement different checks for submodules vs. the  top level.
-
-
