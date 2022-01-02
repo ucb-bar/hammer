@@ -22,7 +22,7 @@ An example of this setup is found in `Chipyard <https://github.com/ucb-bar/chipy
 
 To enable interactive usage, Hammer will also create a set of "redo" targets (e.g. ``redo-par`` and ``redo-syn``).
 These targets intentionally have no dependency information; they are for advanced users to make changes to the input config and/or edit the design manually, then continue the flow.
-Additional arguments can be passed to the "redo" targets with the ``HAMMER_REDO_ARGS`` environment variable.
-This allows the user to create "patches" to the configuration, which can be easily passed to Hammer by setting, for example, ``HAMMER_REDO_ARGS="-p patch.yml"``.
-Other potential uses for ``HAMMER_REDO_ARGS`` include using ``--to_step/--until_step`` and ``--from_step/after_step`` to stop a run at a particular step or resume one from a previous iteration.
+Additional arguments can be passed to the "redo" targets with the ``HAMMER_EXTRA_ARGS`` environment variable.
+This allows the user to create "patches" to the configuration, which can be easily passed to Hammer by setting, for example, ``HAMMER_EXTRA_ARGS="-p patch.yml"``.
+Other potential uses for ``HAMMER_EXTRA_ARGS`` include using ``--to_step/--until_step`` and ``--from_step/after_step`` to stop a run at a particular step or resume one from a previous iteration.
 
