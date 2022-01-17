@@ -38,6 +38,16 @@ HammerDriverOptions = NamedTuple('HammerDriverOptions', [
     # Folder for storing runtime files / CAD junk.
     ('obj_dir', str)
 ])
+HammerToolTypeMap = {
+        "synthesis": HammerSynthesisTool,
+        "par": HammerPlaceAndRouteTool,
+        "drc": HammerDRCTool,
+        "lvs": HammerLVSTool,
+        "sram_generator": HammerSRAMGeneratorTool,
+        "sim": HammerSimTool,
+        "power": HammerPowerTool,
+        "pcb": HammerPCBDeliverableTool
+}
 
 
 class HammerDriver:
@@ -93,6 +103,11 @@ class HammerDriver:
         self.project_configs = []  # type: List[dict]
         self.update_project_configs(project_configs)
 
+        # Instantiate the tools to get the tool plugin modules in memory.
+        # This partly enables using tool functions from tech plugins.
+        for (name, tool_type) in HammerToolTypeMap.items():
+            self.instantiate_tool_from_config(name, tool_type)
+
         # Get the technology and load technology settings.
         self.tech = None  # type: Optional[hammer_tech.HammerTechnology]
         self.load_technology()
@@ -138,6 +153,12 @@ class HammerDriver:
             cache_dir = os.path.join(self.obj_dir, "tech-%s-cache" % tech_str)
 
         tech_paths = list(self.database.get_setting("vlsi.core.technology_path"))  # type: List[str]
+        # Add the tool plugin paths to sys.path to allow tech plugins to use functions
+        # from the tool plugins.
+        # This requires having loaded the tool plugin modules into memory already.
+        tool_paths = self.get_tool_paths()
+        for tool_path in tool_paths:
+            sys.path.append(tool_path)
 
         self.log.info("Loading technology '{0}'".format(tech_str))
         tech_opt = None  # type: Optional[hammer_tech.HammerTechnology]
@@ -167,6 +188,13 @@ class HammerDriver:
         """
         tools = reduce(lambda a, b: a + b, list(self.tool_configs.values()))
         self.database.update_tools(tools)
+
+    def get_tool_paths(self) -> List[str]:
+        tool_names = HammerToolTypeMap.keys()
+        paths = []
+        for x in map(lambda t: self.database.get_setting("vlsi.core.{t}_tool_path".format(t=t)), tool_names):
+            paths.extend(x)
+        return paths
 
     def instantiate_tool_from_config(self, tool_type: str,
                                      required_type: Optional[type] = None) -> Optional[Tuple[HammerTool, str]]:
