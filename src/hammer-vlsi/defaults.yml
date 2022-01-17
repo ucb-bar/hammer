@@ -52,7 +52,7 @@ vlsi.core:
 
   # Path(s) to power tools.
   # Add the built-in path to power tools
-  power_tool_path: ["${vlsi.builtins.hammer_vlsi_path/power"]
+  power_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/power"]
   power_tool_path_meta: subst
 
   # Path(s) to PCB deliverable tools.
