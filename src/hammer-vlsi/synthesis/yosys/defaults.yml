@@ -2,9 +2,12 @@
 # The values specified in this file are the defaults.
 
 synthesis.yosys:
+  # Location of the binary.
+  binary: "yosys"
   # this is just to make hammer happy (although, it is never called AFAICT).
   # the version is actually calculated by the OpenROADTool class
   version: "dummy-value"
 
   # Generate the input scripts but don't run anything
+  # TODO: make this tool-independent?
   generate_only: false
