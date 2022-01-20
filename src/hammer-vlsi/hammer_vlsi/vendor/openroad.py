@@ -17,10 +17,11 @@ from typing import List, Optional, Dict, Any
 from hammer_utils import add_dicts
 from hammer_vlsi import HasSDCSupport, HammerSynthesisTool, \
                         HammerPlaceAndRouteTool, HammerDRCTool, \
-                        PlacementConstraintType, TimeValue
+                        PlacementConstraintType, TimeValue, \
+                        TCLTool, HammerTool
 import hammer_tech
 
-class OpenROADTool(HasSDCSupport):
+class OpenROADTool(HasSDCSupport, TCLTool, HammerTool):
     """ Mix-in trait with functions useful for OpenROAD-flow tools."""
 
     @property
