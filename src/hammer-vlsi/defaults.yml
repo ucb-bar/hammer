@@ -20,6 +20,11 @@ vlsi.core:
   # Valid options are "none" or "make"
   build_system: "none"
 
+  # Whether to generate new collateral and sctips
+  # If set to true Hammer will not recreate collateral or scripts and instead attempt to reuse
+  # the existing collateral and scripts
+  no_generate: false
+
   # Path(s) to synthesis tools.
   # Add the built-in path to synthesis tools.
   synthesis_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/synthesis"]

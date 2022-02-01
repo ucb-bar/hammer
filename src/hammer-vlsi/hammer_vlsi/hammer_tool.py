@@ -351,6 +351,10 @@ class HammerTool(metaclass=ABCMeta):
         """Set the logger for this tool."""
         self._logger = value # type: HammerVLSILoggingContext
 
+    def no_generate(self) -> None:
+        """Whether or not this tool will re-generate scripts"""
+        return bool(self.get_setting("vlsi.core.no_generate", False))
+
     ##############################
     # Implementation helpers for properties
     ##############################
