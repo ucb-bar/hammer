@@ -148,7 +148,14 @@ class HammerLocalSubmitCommand(HammerSubmitCommand):
                 output_buf += line
             else:
                 break
-        # TODO: check errors
+        proc.wait() # set returncode
+        if (proc.returncode != 0):
+            end_of_log = ''.join(output_buf[-1000:]) # This is a heuristic that could be set by the tool if desired
+            log_lines = end_of_log.split('\n')
+            last_complete_lines = '\n'.join(log_lines[1:])
+            raise Exception(f"Error: Tool failed to return a success exit code {proc.returncode}," +
+                             "likely due to an abnormal exit or crash. The last few lines of tool output follow\n" +
+                             last_complete_lines)
 
         return output_buf
 
