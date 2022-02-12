@@ -283,12 +283,13 @@ def sky130_add_endcaps(ht: HammerTool) -> bool:
     assert isinstance(
         ht, HammerPlaceAndRouteTool
     ), "endcap insertion can only run on par"
-    endcap=ht.technology.get_special_cell_by_type(CellType.EndCap)
+    endcap_cells=ht.technology.get_special_cell_by_type(CellType.EndCap)
+    endcap_cell=endcap_cells[0].name[0]
     ht.append(
         f'''  
 set_db add_endcaps_boundary_tap     true
-set_db add_endcaps_left_edge        {endcap}
-set_db add_endcaps_right_edge       {endcap}
+set_db add_endcaps_left_edge        {endcap_cell}
+set_db add_endcaps_right_edge       {endcap_cell}
 add_endcaps
     '''
     )
