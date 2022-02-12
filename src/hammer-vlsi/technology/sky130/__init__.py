@@ -15,6 +15,9 @@ import hammer_tech
 from hammer_tech import HammerTechnology
 from hammer_vlsi import HammerTool, HammerPlaceAndRouteTool, TCLTool, HammerToolHookAction
 
+import specialcells
+from specialcells import CellType, SpecialCell
+
 class SKY130Tech(HammerTechnology):
     """
     Override the HammerTechnology used in `hammer_tech.py`
@@ -147,7 +150,9 @@ class SKY130Tech(HammerTechnology):
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {"innovus": [
             HammerTool.make_post_insertion_hook("init_design",      sky130_innovus_settings),
-            HammerTool.make_pre_insertion_hook("power_straps",      sky130_power_nets)
+            HammerTool.make_pre_insertion_hook("place_tap_cells",   sky130_add_endcaps),
+            HammerTool.make_pre_insertion_hook("power_straps",      sky130_power_nets),
+            HammerTool.make_pre_insertion_hook("write_design",     sky130_connect_nets)
             ]}
         return hooks.get(tool_name, [])
 
@@ -264,5 +269,29 @@ def sky130_power_nets(ht: HammerTool) -> bool:
                 ht.verbose_append("connect_global_net {tie} -type net -net_base_name {net}".format(tie=pwr_gnd_net.tie, net=pwr_gnd_net.name))
     return True
 
-tech = SKY130Tech()
+def sky130_connect_nets(ht: HammerTool) -> bool:
+    assert isinstance(
+        ht, HammerPlaceAndRouteTool
+    ), "connect global nets can only run on par"
+    for pwr_gnd_net in (ht.get_all_power_nets() + ht.get_all_ground_nets()):
+            if pwr_gnd_net.tie is not None:
+                ht.verbose_append("connect_global_net {tie} -type pg_pin -pin_base_name {net} -all".format(tie=pwr_gnd_net.tie, net=pwr_gnd_net.name))
+    return True
 
+
+def sky130_add_endcaps(ht: HammerTool) -> bool:
+    assert isinstance(
+        ht, HammerPlaceAndRouteTool
+    ), "endcap insertion can only run on par"
+    endcap=ht.technology.get_special_cell_by_type(CellType.EndCap)
+    ht.append(
+        f'''  
+set_db add_endcaps_boundary_tap     true
+set_db add_endcaps_left_edge        {endcap}
+set_db add_endcaps_right_edge       {endcap}
+add_endcaps
+    '''
+    )
+    return True
+
+tech = SKY130Tech()
