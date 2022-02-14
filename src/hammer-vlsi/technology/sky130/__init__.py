@@ -266,23 +266,21 @@ def sky130_power_nets(ht: HammerTool) -> bool:
     assert isinstance(ht, TCLTool), "innovus settings can only run on TCL tools"
     for pwr_gnd_net in (ht.get_all_power_nets() + ht.get_all_ground_nets()):
             if pwr_gnd_net.tie is not None:
-                ht.verbose_append("connect_global_net {tie} -type net -net_base_name {net}".format(tie=pwr_gnd_net.tie, net=pwr_gnd_net.name))
+                ht.append("connect_global_net {tie} -type net -net_base_name {net}".format(tie=pwr_gnd_net.tie, net=pwr_gnd_net.name))
     return True
 
 def sky130_connect_nets(ht: HammerTool) -> bool:
-    assert isinstance(
-        ht, HammerPlaceAndRouteTool
-    ), "connect global nets can only run on par"
+    assert isinstance(ht, HammerPlaceAndRouteTool), "connect global nets only for par"
+    assert isinstance(ht, TCLTool), "connect global nets can only run on TCL tools"
     for pwr_gnd_net in (ht.get_all_power_nets() + ht.get_all_ground_nets()):
             if pwr_gnd_net.tie is not None:
-                ht.verbose_append("connect_global_net {tie} -type pg_pin -pin_base_name {net} -all".format(tie=pwr_gnd_net.tie, net=pwr_gnd_net.name))
+                ht.append("connect_global_net {tie} -type pg_pin -pin_base_name {net} -all".format(tie=pwr_gnd_net.tie, net=pwr_gnd_net.name))
     return True
 
 
 def sky130_add_endcaps(ht: HammerTool) -> bool:
-    assert isinstance(
-        ht, HammerPlaceAndRouteTool
-    ), "endcap insertion can only run on par"
+    assert isinstance(ht, HammerPlaceAndRouteTool), "endcap insertion only for par"
+    assert isinstance(ht, TCLTool), "endcap insertion can only run on TCL tools"
     endcap_cells=ht.technology.get_special_cell_by_type(CellType.EndCap)
     endcap_cell=endcap_cells[0].name[0]
     ht.append(
