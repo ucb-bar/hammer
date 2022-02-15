@@ -311,5 +311,5 @@ class LibraryFilterHolder:
                         return 0  # put the technology library in front
             return 100  # put it behind
 
-        return LibraryFilter.new("power_grid_library", "Power grid library", is_file=True, filter_func=filter_func,
+        return LibraryFilter.new("power_grid_library", "Power grid library", is_file=False, filter_func=filter_func,
                                  paths_func=paths_func, sort_func=sort_func)
