@@ -13,7 +13,7 @@ from typing import NamedTuple, List, Optional, Tuple, Dict, Set, Any
 
 import hammer_tech
 from hammer_tech import HammerTechnology
-from hammer_vlsi import HammerTool, HammerPlaceAndRouteTool, TCLTool, HammerToolHookAction
+from hammer_vlsi import HammerTool, HammerPlaceAndRouteTool, TCLTool, HammerDRCTool, HammerLVSTool, HammerToolHookAction
 
 import specialcells
 from specialcells import CellType, SpecialCell
@@ -152,7 +152,21 @@ class SKY130Tech(HammerTechnology):
             HammerTool.make_post_insertion_hook("init_design",      sky130_innovus_settings),
             HammerTool.make_pre_insertion_hook("place_tap_cells",   sky130_add_endcaps),
             HammerTool.make_pre_insertion_hook("power_straps",      sky130_power_nets),
-            HammerTool.make_pre_insertion_hook("write_design",     sky130_connect_nets)
+            HammerTool.make_pre_insertion_hook("write_design",      sky130_connect_nets)
+            ]}
+        return hooks.get(tool_name, [])
+    
+    def get_tech_drc_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
+        if not self.use_openram: return
+        hooks = {"calibre": [
+            HammerTool.make_post_insertion_hook("generate_drc_run_file", drc_blackbox_openram_srams)
+            ]}
+        return hooks.get(tool_name, [])
+    
+    def get_tech_lvs_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
+        if not self.use_openram: return
+        hooks = {"calibre": [
+            HammerTool.make_post_insertion_hook("generate_lvs_run_file", lvs_blackbox_openram_srams)
             ]}
         return hooks.get(tool_name, [])
 
@@ -266,23 +280,21 @@ def sky130_power_nets(ht: HammerTool) -> bool:
     assert isinstance(ht, TCLTool), "innovus settings can only run on TCL tools"
     for pwr_gnd_net in (ht.get_all_power_nets() + ht.get_all_ground_nets()):
             if pwr_gnd_net.tie is not None:
-                ht.verbose_append("connect_global_net {tie} -type net -net_base_name {net}".format(tie=pwr_gnd_net.tie, net=pwr_gnd_net.name))
+                ht.append("connect_global_net {tie} -type net -net_base_name {net}".format(tie=pwr_gnd_net.tie, net=pwr_gnd_net.name))
     return True
 
 def sky130_connect_nets(ht: HammerTool) -> bool:
-    assert isinstance(
-        ht, HammerPlaceAndRouteTool
-    ), "connect global nets can only run on par"
+    assert isinstance(ht, HammerPlaceAndRouteTool), "connect global nets only for par"
+    assert isinstance(ht, TCLTool), "connect global nets can only run on TCL tools"
     for pwr_gnd_net in (ht.get_all_power_nets() + ht.get_all_ground_nets()):
             if pwr_gnd_net.tie is not None:
-                ht.verbose_append("connect_global_net {tie} -type pg_pin -pin_base_name {net} -all".format(tie=pwr_gnd_net.tie, net=pwr_gnd_net.name))
+                ht.append("connect_global_net {tie} -type pg_pin -pin_base_name {net} -all".format(tie=pwr_gnd_net.tie, net=pwr_gnd_net.name))
     return True
 
 
 def sky130_add_endcaps(ht: HammerTool) -> bool:
-    assert isinstance(
-        ht, HammerPlaceAndRouteTool
-    ), "endcap insertion can only run on par"
+    assert isinstance(ht, HammerPlaceAndRouteTool), "endcap insertion only for par"
+    assert isinstance(ht, TCLTool), "endcap insertion can only run on TCL tools"
     endcap_cells=ht.technology.get_special_cell_by_type(CellType.EndCap)
     endcap_cell=endcap_cells[0].name[0]
     ht.append(
@@ -293,6 +305,25 @@ set_db add_endcaps_right_edge       {endcap_cell}
 add_endcaps
     '''
     )
+    return True
+
+def drc_blackbox_openram_srams(ht: HammerTool) -> bool:
+    assert isinstance(ht, HammerDRCTool), "Exlude SRAMs only in DRC"
+    drc_box = ''
+    for name in SKY130Tech.openram_sram_names():
+        drc_box += f"\nEXCLUDE CELL {name}"
+    with open(ht.drc_run_file, "a") as f:
+        f.write(drc_box)
+    return True
+
+def lvs_blackbox_openram_srams(ht: HammerTool) -> bool:
+    assert isinstance(ht, HammerLVSTool), "Blackbox and filter SRAMs only in LVS"
+    lvs_box = ''
+    for name in SKY130Tech.openram_sram_names():
+        lvs_box += f"\nLVS BOX {name}"
+        lvs_box += f"\nLVS FILTER {name} OPEN "
+    with open(ht.lvs_run_file, "a") as f:
+        f.write(lvs_box)
     return True
 
 tech = SKY130Tech()
