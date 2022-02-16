@@ -8,7 +8,7 @@
 import sys
 import re
 import os, shutil
-from pathlib import Path 
+from pathlib import Path
 from typing import NamedTuple, List, Optional, Tuple, Dict, Set, Any
 
 import hammer_tech
@@ -44,9 +44,9 @@ class SKY130Tech(HammerTechnology):
         if not cdl_old_path.exists():
             raise FileNotFoundError(f"CDL not found: {cdl_old_path}")
 
-        cache_tech_dir_path = Path(self.cache_dir) 
+        cache_tech_dir_path = Path(self.cache_dir)
         os.makedirs(cache_tech_dir_path, exist_ok=True)
-        cdl_new_path = cache_tech_dir_path / f'{self.library_name}.cdl' 
+        cdl_new_path = cache_tech_dir_path / f'{self.library_name}.cdl'
 
         f_old = open(cdl_old_path,'r')
         f_new = open(cdl_new_path,'w')
@@ -56,7 +56,7 @@ class SKY130Tech(HammerTechnology):
             f_new.write(line)
         f_old.close()
         f_new.close()
-    
+
     # Copy and hack the verilog
     #   - <library_name>.v: remove 'wire 1' and one endif line to fix syntax errors
     #   - primitives.v: set default nettype to 'wire' instead of 'none'
@@ -70,9 +70,9 @@ class SKY130Tech(HammerTechnology):
         if not verilog_old_path.exists():
             raise FileNotFoundError(f"Verilog not found: {verilog_old_path}")
 
-        cache_tech_dir_path = Path(self.cache_dir) 
+        cache_tech_dir_path = Path(self.cache_dir)
         os.makedirs(cache_tech_dir_path, exist_ok=True)
-        verilog_new_path = cache_tech_dir_path / f'{self.library_name}.v' 
+        verilog_new_path = cache_tech_dir_path / f'{self.library_name}.v'
 
         f_old = open(verilog_old_path,'r')
         f_new = open(verilog_new_path,'w')
@@ -88,9 +88,9 @@ class SKY130Tech(HammerTechnology):
         if not verilog_old_path.exists():
             raise FileNotFoundError(f"Verilog not found: {verilog_old_path}")
 
-        cache_tech_dir_path = Path(self.cache_dir) 
+        cache_tech_dir_path = Path(self.cache_dir)
         os.makedirs(cache_tech_dir_path, exist_ok=True)
-        verilog_new_path = cache_tech_dir_path / 'primitives.v' 
+        verilog_new_path = cache_tech_dir_path / 'primitives.v'
 
         f_old = open(verilog_old_path,'r')
         f_new = open(verilog_new_path,'w')
@@ -108,9 +108,9 @@ class SKY130Tech(HammerTechnology):
         if not tlef_old_path.exists():
             raise FileNotFoundError(f"Tech-LEF not found: {tlef_old_path}")
 
-        cache_tech_dir_path = Path(self.cache_dir) 
+        cache_tech_dir_path = Path(self.cache_dir)
         os.makedirs(cache_tech_dir_path, exist_ok=True)
-        tlef_new_path = cache_tech_dir_path / f'{self.library_name}.tlef' 
+        tlef_new_path = cache_tech_dir_path / f'{self.library_name}.tlef'
 
         f_old = open(tlef_old_path,'r')
         f_new = open(tlef_new_path,'w')
@@ -144,7 +144,7 @@ class SKY130Tech(HammerTechnology):
                 with open(dest_path, 'w') as df:
                     self.logger.info("Modifying LVS deck: {} -> {}".format
                         (source_path, dest_path))
-                    df.write(matcher.sub("", sf.read()))  
+                    df.write(matcher.sub("", sf.read()))
                     df.write(LVS_DECK_INSERT_LINES)
 
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
@@ -155,16 +155,16 @@ class SKY130Tech(HammerTechnology):
             HammerTool.make_pre_insertion_hook("write_design",      sky130_connect_nets)
             ]}
         return hooks.get(tool_name, [])
-    
+
     def get_tech_drc_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
-        if not self.use_openram: return
+        if not self.use_openram: return []
         hooks = {"calibre": [
             HammerTool.make_post_insertion_hook("generate_drc_run_file", drc_blackbox_openram_srams)
             ]}
         return hooks.get(tool_name, [])
-    
+
     def get_tech_lvs_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
-        if not self.use_openram: return
+        if not self.use_openram: return []
         hooks = {"calibre": [
             HammerTool.make_post_insertion_hook("generate_lvs_run_file", lvs_blackbox_openram_srams)
             ]}
@@ -227,7 +227,7 @@ def sky130_innovus_settings(ht: HammerTool) -> bool:
     assert isinstance(ht, TCLTool), "innovus settings can only run on TCL tools"
     """Settings for every tool invocation"""
     ht.append(
-        '''  
+        '''
 
 ##########################################################
 # Placement attributes  [get_db -category place]
@@ -270,7 +270,7 @@ set_db opt_hold_target_slack 0.10
 set_db route_design_bottom_routing_layer 2
     '''
     )
-    return True   
+    return True
 
 # Pair VDD/VPWR and VSS/VGND nets
 #   these commands are already added in Innovus.write_netlist,
@@ -298,7 +298,7 @@ def sky130_add_endcaps(ht: HammerTool) -> bool:
     endcap_cells=ht.technology.get_special_cell_by_type(CellType.EndCap)
     endcap_cell=endcap_cells[0].name[0]
     ht.append(
-        f'''  
+        f'''
 set_db add_endcaps_boundary_tap     true
 set_db add_endcaps_left_edge        {endcap_cell}
 set_db add_endcaps_right_edge       {endcap_cell}
@@ -312,7 +312,8 @@ def drc_blackbox_openram_srams(ht: HammerTool) -> bool:
     drc_box = ''
     for name in SKY130Tech.openram_sram_names():
         drc_box += f"\nEXCLUDE CELL {name}"
-    with open(ht.drc_run_file, "a") as f:
+    run_file = ht.drc_run_file  # type: ignore
+    with open(run_file, "a") as f:
         f.write(drc_box)
     return True
 
@@ -322,7 +323,8 @@ def lvs_blackbox_openram_srams(ht: HammerTool) -> bool:
     for name in SKY130Tech.openram_sram_names():
         lvs_box += f"\nLVS BOX {name}"
         lvs_box += f"\nLVS FILTER {name} OPEN "
-    with open(ht.lvs_run_file, "a") as f:
+    run_file = ht.lvs_run_file  # type: ignore
+    with open(run_file, "a") as f:
         f.write(lvs_box)
     return True
 
