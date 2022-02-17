@@ -18,8 +18,9 @@ technology.sky130:
 
 # Mentor environment variables
 # Override this in project
+mentor.extra_env_vars_meta: lazydeepsubst
 mentor.extra_env_vars:
-  - PDK_HOME: "<path-to-skywater-src-nda>/s8/<version#>"
+  - PDK_HOME: "${technology.sky130.sky130_nda}/s8/V2.0.1"
 
 # Set some defaults for this technology.
 vlsi:

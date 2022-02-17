@@ -127,15 +127,69 @@ class HammerTool(metaclass=ABCMeta):
         """
         pass
 
+    @property
+    def first_step(self) -> HammerToolStep:
+        """
+        The first non-persistent step after hooks resolution.
+
+        :return: The first non-persistent step to be run.
+        """
+        try:
+            return self._first_step
+        except AttributeError:
+            raise ValueError("Internal error: first step not set by hammer-vlsi")
+
+    @first_step.setter
+    def first_step(self, step: HammerToolStep) -> None:
+        """Set the first non-persistent step to be run."""
+        self._first_step = step
+
+    @property
+    def persistent_steps(self) -> List[HammerToolHookAction]:
+        """
+        List of persistent steps for this tool.
+
+        :return: List of persistent hooks.
+        """
+        try:
+            return self._persistent_steps
+        except AttributeError:
+            raise ValueError("Internal error: persistent hooks not set by hammer-vlsi")
+
+    @persistent_steps.setter
+    def persistent_steps(self, hooks: List[HammerToolHookAction]) -> None:
+        """Set the List of persistent hooks."""
+        self._persistent_steps = hooks
+
+    def run_persistent_step(self, pst: HammerToolHookAction, target_step: HammerToolStep) -> bool:
+        assert pst.step is not None, "Persistent(Pre/Post)Step requires a step"
+        if pst.location == HookLocation.PersistentStep:
+            self.logger.debug("Running persistent sub-step '{pstep}' before '{step}'".format(pstep=pst.step.name, step=target_step.name))
+        if pst.location == HookLocation.PersistentPreStep:
+            self.logger.debug("Running persistent sub-step '{pstep}' before '{step}' (pre-step: '{pre_step}'".format(pstep=pst.step.name, step=target_step.name, pre_step=pst.target_name))
+        if pst.location == HookLocation.PersistentPostStep:
+            self.logger.debug("Running persistent sub-step '{pstep}' after '{step}' (post-step: '{post_step}'".format(pstep=pst.step.name, step=target_step.name, post_step=pst.target_name))
+        pst_out = pst.step.func(self)
+        assert isinstance(pst_out, bool)
+        return pst_out
+
     def do_pre_steps(self, first_step: HammerToolStep) -> bool:
         """
         Function to run before the list of steps executes.
-        Intended to be overridden by subclasses.
+        Intended to be overriden by subclasses.
+        Note: if you override this, remember to call the superclass method too!
 
         :param first_step: First step to be taken.
         :return: True if successful, False otherwise.
         """
-        return True
+        pst_out = False
+        # Run persistent hooks first
+        for pst in list(filter(lambda p: p.location == HookLocation.PersistentStep, self.persistent_steps)):
+            pst_out = self.run_persistent_step(pst, first_step)
+        # If pre-persistent hooks target the first step, run them first
+        for pst in list(filter(lambda p: p.location == HookLocation.PersistentPreStep and p.target_name == self.first_step.name, self.persistent_steps)):
+            pst_out = self.run_persistent_step(pst, first_step)
+        return pst_out
 
     def do_between_steps(self, prev: HammerToolStep, next: HammerToolStep) -> bool:
         """
@@ -409,7 +463,7 @@ class HammerTool(metaclass=ABCMeta):
 
         # Persistent steps are processed differently from normal steps. Not a List[HammerToolStep]
         # because we need to access its location and target_name later when iterating through new_steps.
-        persistent_steps = []  # type: List[HammerToolHookAction]
+        p_steps = []  # type: List[HammerToolHookAction]
 
         # Where to resume/pause, if such a hook exists
         resume_step = None  # type: Optional[str]
@@ -422,6 +476,7 @@ class HammerTool(metaclass=ABCMeta):
             step_id = -1
             pstep_id = -1
 
+            # First, process which step is being targeted - set step_id or pstep_id accordingly.
             if action.location != HookLocation.PersistentStep:
                 if not has_step(action.target_name):
                     if action.location in [HookLocation.ResumePreStep, HookLocation.ResumePostStep, HookLocation.PausePreStep, HookLocation.PausePostStep]:
@@ -435,22 +490,26 @@ class HammerTool(metaclass=ABCMeta):
                     if nstep.name == action.target_name:
                         step_id = i
                         break
-                for i, pstep in enumerate(persistent_steps):
+                for i, pstep in enumerate(p_steps):
                     assert pstep.step is not None, "Persistent(Pre/Post)Step requires a step"
                     if pstep.step.name == action.target_name:
                         pstep_id = i
                         break
                 assert (step_id > -1) != (pstep_id > -1), "Either a regular or persistent step must be targeted"
 
+            # Next, process hook actions based on location
             if action.location == HookLocation.ReplaceStep:
                 assert action.step is not None, "ReplaceStep requires a step"
-                assert action.target_name == action.step.name, "Replacement step should have the same name"
                 if pstep_id > -1:
                     # Inherit replaced persistent step's location and target
-                    persistent_steps[pstep_id] = action._replace(location=persistent_steps[pstep_id].location,
-                                                                 target_name=persistent_steps[pstep_id].target_name)
+                    p_steps[pstep_id] = action._replace(location=p_steps[pstep_id].location,
+                                                                 target_name=p_steps[pstep_id].target_name)
                 elif step_id > -1:
                     new_steps[step_id] = action.step
+                # Replace name so it can be properly targeted by other hook actions, except for removal hooks
+                names.remove(action.target_name)
+                if action.step.name != "dummy_step":
+                    names.add(action.step.name)
             elif action.location == HookLocation.InsertPreStep:
                 assert action.step is not None, "InsertPreStep requires a step"
                 if has_step(action.step.name):
@@ -458,8 +517,8 @@ class HammerTool(metaclass=ABCMeta):
                     return False
                 if pstep_id > -1:
                     # Inherit replaced persistent step's location and target
-                    persistent_steps.insert(pstep_id, action._replace(location=persistent_steps[pstep_id].location,
-                                                                      target_name=persistent_steps[pstep_id].target_name))
+                    p_steps.insert(pstep_id, action._replace(location=p_steps[pstep_id].location,
+                                                                      target_name=p_steps[pstep_id].target_name))
                 elif step_id > -1:
                     new_steps.insert(step_id, action.step)
                 names.add(action.step.name)
@@ -470,8 +529,8 @@ class HammerTool(metaclass=ABCMeta):
                     return False
                 if pstep_id > -1:
                     # Inherit replaced persistent step's location and target
-                    persistent_steps.insert(pstep_id + 1, action._replace(location=persistent_steps[pstep_id].location,
-                                                                          target_name=persistent_steps[pstep_id].target_name))
+                    p_steps.insert(pstep_id + 1, action._replace(location=p_steps[pstep_id].location,
+                                                                          target_name=p_steps[pstep_id].target_name))
                 elif step_id > -1:
                     new_steps.insert(step_id + 1, action.step)
                 names.add(action.step.name)
@@ -501,7 +560,7 @@ class HammerTool(metaclass=ABCMeta):
                 if has_step(action.step.name):
                     self.logger.error("New step '{step}' already exists".format(step=action.step.name))
                     return False
-                persistent_steps.append(action)
+                p_steps.append(action)
                 names.add(action.step.name)
             else:
                 assert False, "Should not reach here"
@@ -514,13 +573,23 @@ class HammerTool(metaclass=ABCMeta):
                 # Cajole the type checker into accepting that step is a HammerToolStep
                 step = cast(HammerToolStep, step)
                 check_hammer_step_function(step.func)
-        for pstep in persistent_steps:
+
+        for pstep in p_steps:
             if not isinstance(pstep, HammerToolHookAction):
                 raise ValueError("Element in List[HammerToolHookAction] is not a HammerToolHookAction")
             else:
                 # Cajole the type checker into accepting that pstep.step is a HammerToolStep
                 step = cast(HammerToolStep, pstep.step)
                 check_hammer_step_function(step.func)
+
+        # Set properties
+        if len(new_steps) == 0:
+            def dummy_step(x: HammerTool) -> bool:
+                return True
+            self.first_step = HammerTool.make_step_from_function(dummy_step)
+        else:
+            self.first_step = new_steps[0]
+        self.persistent_steps = p_steps
 
         # Run steps.
         prev_step = None  # type: Optional[HammerToolStep]
@@ -544,27 +613,17 @@ class HammerTool(metaclass=ABCMeta):
                 break
 
             if do_step:
+                # First step
                 if prev_step is None:
                     # Run pre-step hook.
                     self.do_pre_steps(step)
-                    # Run appropriate persistent hooks.
-                    for pst in persistent_steps:
-                        assert pst.step is not None, "Persistent(Pre/Post)Step requires a step"
-                        pst_out = True  # type: bool
-                        if pst.location == HookLocation.PersistentStep:
-                            self.logger.debug("Running persistent sub-step '{pstep}' before '{step}'".format(pstep=pst.step.name, step=step.name))
-                            pst_out = pst.step.func(self)
-                        elif pst.location == HookLocation.PersistentPreStep and any(s.name == pst.target_name for s in new_steps[step_index:]):
-                            self.logger.debug("Running persistent sub-step '{pstep}' before '{step}' (pre-step: '{pre_step}')".format(
-                                    pstep=pst.step.name, step=step.name, pre_step=pst.target_name))
-                            pst_out = pst.step.func(self)
-                        elif pst.location == HookLocation.PersistentPostStep and any(s.name == pst.target_name for s in new_steps[:step_index]):
-                            self.logger.debug("Running persistent sub-step '{pstep}' before '{step}' (post-step: '{post_step}')".format(
-                                    pstep=pst.step.name, step=step.name, post_step=pst.target_name))
-                            pst_out = pst.step.func(self)
-                        assert isinstance(pst_out, bool)
-                        if not pst_out:
-                            return False
+                    # If pre-persistent hooks don't target the first step, now run them
+                    for pst in list(filter(lambda p: p.location == HookLocation.PersistentPreStep and any(s.name == p.target_name for s in new_steps[step_index:]), self.persistent_steps)):
+                        if pst.target_name != self.first_step.name:
+                            self.run_persistent_step(pst, step)
+                    # Finally, run the post-persistent hooks whose targets were passed
+                    for pst in list(filter(lambda p: p.location == HookLocation.PersistentPostStep and any(s.name == p.target_name for s in new_steps[:step_index]), self.persistent_steps)):
+                        self.run_persistent_step(pst, step)
                 else:
                     self.do_between_steps(prev_step, step)
 
@@ -576,13 +635,8 @@ class HammerTool(metaclass=ABCMeta):
                     return False
 
                 # Inject PersistentPostStep after we pass its target step
-                for pst in list(filter(lambda s: s.target_name == step.name and s.location == HookLocation.PersistentPostStep, persistent_steps)):
-                    assert pst.step is not None, "PersistentPostStep requires a step"
-                    self.logger.debug("Running persistent sub-step '{pstep}' after '{step}'".format(pstep=pst.step.name, step=step.name))
-                    pst_out = pst.step.func(self)
-                    assert isinstance(pst_out, bool)
-                    if not pst_out:
-                        return False
+                for pst in list(filter(lambda s: s.target_name == step.name and s.location == HookLocation.PersistentPostStep, self.persistent_steps)):
+                    self.run_persistent_step(pst, step)
 
             if not resume_step_pre and resume_step == step.name:
                 self.logger.info("Resuming after '{step}' due to resume hook".format(step=step.name))
@@ -659,7 +713,7 @@ class HammerTool(metaclass=ABCMeta):
         return HammerToolHookAction(
             target_name=step,
             location=HookLocation.ReplaceStep,
-            step=HammerTool.make_step_from_function(func, step)
+            step=HammerTool.make_step_from_function(func)
         )
 
     @staticmethod
@@ -776,7 +830,7 @@ class HammerTool(metaclass=ABCMeta):
         return HammerToolHookAction(
             target_name=step,
             location=HookLocation.ReplaceStep,
-            step=HammerTool.make_step_from_function(dummy_step, step)
+            step=HammerTool.make_step_from_function(dummy_step)
         )
 
     @staticmethod

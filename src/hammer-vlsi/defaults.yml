@@ -942,7 +942,8 @@ power.inputs:
   # type: List[str]
   spefs: []
 
-  # A list of paths to VCD waveforms to be used for dynamic power analysis.
+  # A list of paths to waveforms to be used for dynamic power analysis.
+  # Depending on the sim & power tool, these may be VCD/VPD, FSDB, SHM, etc. files/dirs.
   # type: List[str]
   waveforms: []
  
