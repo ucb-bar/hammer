@@ -481,6 +481,7 @@ abc -D {self.clock_period} \\
     
     def write_outputs(self) -> bool:
         self.append(f'write_verilog -noattr -noexpr -nohex -nodec -defparam "{self.mapped_v_path}"')
+        # BLIF file seems to be easier to parse than mapped verilog for find_regs functions so leave for now
         self.append(f'write_blif -top gcd "{self.mapped_blif_path}"')
         # self.append(f'write_json gcd.json')
         # TODO: figure out why the OpenLANE script re-runs synthesis & flattens design, when we explicitly requested hierarchical mode
