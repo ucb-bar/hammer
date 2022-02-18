@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Yosys synthesis plugin for Hammer (as part of OpenROAD-flow installation).
+# mostly adoped from OpenLANE scripts found here: https://github.com/The-OpenROAD-Project/OpenLane/tree/master/scripts
 #
 # See LICENSE for licence details.
 
@@ -13,7 +14,7 @@ from hammer_vlsi.vendor import OpenROADTool, OpenROADSynthesisTool
 ###########
 from hammer_vlsi import HammerTool, HammerToolStep, HammerToolHookAction, HierarchicalMode
 from hammer_vlsi.constraints import MMMCCorner, MMMCCornerType
-from hammer_utils import VerilogUtils
+from hammer_utils import VerilogUtils, optional_map
 from hammer_vlsi import HammerSynthesisTool
 from hammer_logging import HammerVLSILogging
 from hammer_vlsi import MMMCCornerType
@@ -59,17 +60,48 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool):
     def post_synth_sdc(self) -> Optional[str]:
         # No post-synth SDC input for synthesis...
         return None
+    
+    @property
+    def all_regs_path(self) -> str:
+        return os.path.join(self.run_dir, "find_regs_paths.json")
 
+    @property
+    def all_cells_path(self) -> str:
+        return os.path.join(self.run_dir, "find_regs_cells.json")
+    
     def fill_outputs(self) -> bool:
+        # TODO: actually generate the following for simulation
+        # Check that the regs paths were written properly if the write_regs step was run
+        self.output_seq_cells = self.all_cells_path
+        self.output_all_regs = self.all_regs_path
+        if self.ran_write_regs:
+            if not os.path.isfile(self.all_cells_path):
+                raise ValueError("Output find_regs_cells.json %s not found" % (self.all_cells_path))
+
+            if not os.path.isfile(self.all_regs_path):
+                raise ValueError("Output find_regs_paths.json %s not found" % (self.all_regs_path))
+
+            # if not self.process_reg_paths(self.all_regs_path):
+            #     self.logger.error("Failed to process all register paths")
+        else:
+            self.logger.info("Did not run write_regs")
+
         # Check that the synthesis outputs exist if the synthesis run was successful
         mapped_v = self.mapped_hier_v_path if self.hierarchical_mode.is_nonleaf_hierarchical() else self.mapped_v_path
         self.output_files = [mapped_v]
         self.output_sdc = self.mapped_sdc_path
+        # self.sdf_file = self.output_sdf_path
+        if self.ran_write_outputs:
+            if not os.path.isfile(mapped_v):
+                raise ValueError("Output mapped verilog %s not found" % (mapped_v)) # better error?
 
-        # TODO: actually generate the following for simulation
-        self.output_all_regs = ""
-        self.output_seq_cells = ""
-        self.sdf_file = ""
+            if not os.path.isfile(self.mapped_sdc_path):
+                raise ValueError("Output SDC %s not found" % (self.mapped_sdc_path)) # better error?
+
+            # if not os.path.isfile(self.output_sdf_path):
+            #     raise ValueError("Output SDF %s not found" % (self.output_sdf_path))
+        else:
+            self.logger.info("Did not run write_outputs")
 
         return True
 
@@ -78,7 +110,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool):
         outputs["synthesis.outputs.sdc"] = self.output_sdc
         outputs["synthesis.outputs.seq_cells"] = self.output_seq_cells
         outputs["synthesis.outputs.all_regs"] = self.output_all_regs
-        outputs["synthesis.outputs.sdf_file"] = self.sdf_file
+        # outputs["synthesis.outputs.sdf_file"] = self.sdf_file
         return outputs
 
     def tool_config_prefix(self) -> str:
@@ -94,6 +126,10 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool):
     @property
     def mapped_sdc_path(self) -> str:
         return os.path.join(self.run_dir, "{}.mapped.sdc".format(self.top_module))
+    
+    @property
+    def mapped_blif_path(self) -> str:
+        return os.path.join(self.run_dir, "{}.mapped.blif".format(self.top_module))
 
     def synth_script_path(self) -> str:
         # TODO: generate this internally
@@ -131,7 +167,6 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool):
         args = [
             self.get_setting("synthesis.yosys.binary"),
             "-c", syn_tcl_filename,
-            # "-no_gui"
         ]
 
         if bool(self.get_setting("synthesis.yosys.generate_only")):
@@ -147,45 +182,70 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool):
 
         return True
 
+    def write_sdc_file(self) -> bool:
+        with open(self.mapped_sdc_path,'w') as f:
+                f.write(f"""\
+create_clock [get_ports {self.clock_port_name}]  -name {self.clock_port_name}  -period {self.clock_period}
+
+set_max_fanout {self.max_fanout}
+
+set clk_indx [lsearch [all_inputs] [get_port {self.clock_port_name}]]
+set all_inputs_wo_clk_rst [lreplace [all_inputs] $clk_indx $clk_indx]
+
+# correct resetn
+# IO_PCT default: 0.2
+set_input_delay  [expr {self.clock_period} * 0.2]  -clock [get_clocks {self.clock_port_name}] $all_inputs_wo_clk_rst
+set_output_delay [expr {self.clock_period} * 0.2]  -clock [get_clocks {self.clock_port_name}] [all_outputs]
+
+set_driving_cell -lib_cell {self.driving_cell} -pin {self.driving_cell_pin} [all_inputs]
+set_load [expr {self.synth_cap_load} / 1000.0] [all_outputs]
+
+set_clock_uncertainty {self.clock_uncertainty} [get_clocks {self.clock_port_name}]
+
+# default SYNTH_CLOCK_TRANSITION = 0.15
+set_clock_transition {self.clock_transition} [get_clocks {self.clock_port_name}]
+
+# default SYNTH_TIMING_DERATE = "+5%/-5%"
+set_timing_derate -early [expr 1-"+5%/-5%"]
+set_timing_derate -late [expr 1+"+5%/-5%"]
+""")
+
     #========================================================================
     # synthesis main steps
     #========================================================================
     def init_environment(self) -> bool:
 
-        self.driver_cell = "sky130_fd_sc_hd__inv_1"
+        # set variables to match global variables in OpenLANE
+        self.driving_cell = "sky130_fd_sc_hd__inv_1" # SYNTH_DRIVING_CELL
+        self.driving_cell_pin = "Y" # SYNTH_DRIVING_CELL_PIN
         self.buffer_cell = "sky130_fd_sc_hd__buf_2 A X"
 
-        clocks = self.get_clock_ports()
         time_unit = self.get_time_unit().value_prefix + self.get_time_unit().unit
-        self.clock_period = int(clocks[0].period.value_in_units(time_unit))
+        clock_port = self.get_clock_ports()[0]
+        self.clock_port_name = clock_port.name
+        self.clock_period = int(clock_port.period.value_in_units(time_unit))
+        self.clock_uncertainty = int(clock_port.period.value_in_units(time_unit))
+        self.clock_transition = 0.15 # SYNTH_CLOCK_TRANSITION
 
-        # list of liberty files
+        self.synth_cap_load = 33.5 # SYNTH_CAP_LOAD
+        self.max_fanout = 5 # default SYNTH_MAX_FANOUT = 5
+
+        # get typical corner liberty file
         corners = self.get_mmmc_corners()  # type: List[MMMCCorner]
-        # append_mmmc("create_library_set -name {name}_set -timing [list {list}]".format(
-        #             name=corner_name,
-        #             list=self.get_timing_libs(corner)
-        #         ))
+        corner_tt = next((corner for corner in corners if corner.type == MMMCCornerType.Extra), None)
+        self.liberty_file = self.get_timing_libs(corner_tt)
 
-        self.append("""
-# Set env variables based on defaults in OpenLANE
-set ::env(CURRENT_INDEX) 0
-set ::env(LIB_SYNTH_COMPLETE) "/tools/commercial/skywater/swtech130/local/sky130A/libs.ref/sky130_fd_sc_hd/lib/sky130_fd_sc_hd__tt_025C_1v80.lib"
+#         self.append(f"""
+# # Set env variables based on defaults in OpenLANE
+# # TODO: LIB_SYNTH should technically be set to trimmed.lib, a trimmed version of the sky130_fd_sc_hd__tt_025C_1v80 library. there's a script to generate this, should figure out its purpose
+# set ::env(LIB_SYNTH) "{self.get_timing_libs(corner_tt)}"
 
-set ::env(SYNTH_BUFFERING) 0
-set ::env(SYNTH_SIZING) 0
-set ::env(DESIGN_NAME) gcd
-set ::env(CLOCK_PORT) "clk"
-set ::env(LIB_SYNTH) $::env(LIB_SYNTH_COMPLETE)
-set ::env(SYNTH_READ_BLACKBOX_LIB) 0
-set ::env(synthesis_tmpfiles) "/tools/B/nayiri/openroad/gcd/yosys/syn-rundir"
-set ::env(SYNTH_STRATEGY) "AREA 0"
-""")
-        
-        self.append("""
-set ::env(SYNTH_NO_FLAT) 1
-set ::env(SYNTH_SHARE_RESOURCES) 1
-set ::env(synth_report_prefix) "$::env(synthesis_tmpfiles)/gcd"
-""")
+# """)
+        # fyi:  synthesis_tmpfiles = self.run_dir
+        #       synth_report_prefix = self.run_dir/gcd
+#         self.append("""
+# set ::env(synth_report_prefix) "$::env(synthesis_tmpfiles)/gcd"
+# """)
         
         self.append("yosys -import")
         
@@ -193,30 +253,6 @@ set ::env(synth_report_prefix) "$::env(synthesis_tmpfiles)/gcd"
 ########################################################
 # from openlane/scripts/tcl_commands/utils.tcl
 ########################################################
-
-proc puts_err {txt} {
-  set message "\[ERROR\]: $txt"
-  puts "$message"
-  if { [info exists ::env(LOGS_DIR)] } {
-    exec echo $message >> $::env(RUN_DIR)/flow_summary.log
-  }
-}
-
-proc flow_fail {args} {
-	if { ! [info exists ::env(FLOW_FAILED)] || ! $::env(FLOW_FAILED) } {
-		set ::env(FLOW_FAILED) 1
-		# calc_total_runtime -status "flow failed"
-		# generate_final_summary_report
-        # save_state
-		puts_err "Flow failed."
-	}
-}
-
-# a minimal try catch block
-proc try_catch {args} {
-    set exit_code [catch {eval exec $args} error_msg]
-}
-
 proc index_file {args} {
 	set file_full_name [lindex $args 0]
 
@@ -227,87 +263,43 @@ proc index_file {args} {
 
 	set file_path [file dirname $file_full_name]
 	set fbasename [file tail $file_full_name]
-	set fbasename "$::env(CURRENT_INDEX)-$fbasename"
+	set fbasename "0-$fbasename"
 
 	set new_file_full_name "$file_path/$fbasename"
-    set replace [string map {/ \\/} $::env(CURRENT_INDEX)]
+    set replace [string map {/ \\/} 0]
 	return $new_file_full_name
 }
 """)
+        # for now, just ignore this pg_pin conversion/removal
 
-        self.append(r"""
-########################################################
-# from openlane/scripts/tcl_commands/synthesis.tcl
-########################################################
-proc convert_pg_pins {lib_in lib_out} {
-	try_catch sed -E {s/^([[:space:]]+)pg_pin(.*)/\1pin\2\n\1    direction : "inout";/g} $lib_in > $lib_out
-}
-""")
-        self.append("""
-set ::env(LIB_SYNTH_COMPLETE_NO_PG) [list]
-foreach lib $::env(LIB_SYNTH_COMPLETE) {
-    set fbasename [file rootname [file tail $lib]]
-    set lib_path [index_file $::env(synthesis_tmpfiles)/$fbasename.no_pg.lib]
-    convert_pg_pins $lib $lib_path
-    lappend ::env(LIB_SYNTH_COMPLETE_NO_PG) $lib_path
-}
-""")
-
-        self.append("""
-########################################################
-# from openlane/scripts/yosys/synth.tcl
-########################################################
-
-# inputs expected as env vars
-set buffering $::env(SYNTH_BUFFERING)
-set sizing $::env(SYNTH_SIZING)
-set sclib $::env(LIB_SYNTH)
-#set opt $::env(SYNTH_OPT)
-
-if { [info exists ::env(SYNTH_DEFINES) ] } {
-	foreach define $::env(SYNTH_DEFINES) {
-		log "Defining $define"
-		verilog_defines -D$define
-	}
-}
-
-set vIdirsArgs ""
-if {[info exist ::env(VERILOG_INCLUDE_DIRS)]} {
-	foreach dir $::env(VERILOG_INCLUDE_DIRS) {
-		lappend vIdirsArgs "-I$dir"
-	}
-	set vIdirsArgs [join $vIdirsArgs]
-}
-""")
-
-        self.append("""
-if { $::env(SYNTH_READ_BLACKBOX_LIB) } {
-	log "Reading $::env(LIB_SYNTH_COMPLETE_NO_PG) as a blackbox"
-	foreach lib $::env(LIB_SYNTH_COMPLETE_NO_PG) {""")
-        self.verbose_append("read_liberty -lib -ignore_miss_dir -setattr blackbox $lib")
-        self.append("""
-	}
-}
-""")
-
-        self.append("""
-if { [info exists ::env(EXTRA_LIBS) ] } {
-	foreach lib $::env(EXTRA_LIBS) {""")
-        self.verbose_append("read_liberty -lib -ignore_miss_dir -setattr blackbox $lib")
-        self.append("""
-	}
-}
-""")
-
-        self.append("""
-if { [info exists ::env(VERILOG_FILES_BLACKBOX)] } {
-	foreach verilog_file $::env(VERILOG_FILES_BLACKBOX) {
-		read_verilog -sv -lib {*}$vIdirsArgs $verilog_file
-	}
-}
-""")
+#         self.append(r"""
+# ########################################################
+# # from openlane/scripts/tcl_commands/synthesis.tcl
+# ########################################################
+# proc convert_pg_pins {lib_in lib_out} {
+# 	exec sed -E {s/^([[:space:]]+)pg_pin(.*)/\1pin\2\n\1    direction : "inout";/g} $lib_in > $lib_out
+# }
+# """)
+#         self.append("""
+# set ::env(LIB_SYNTH_COMPLETE_NO_PG) [list]
+# foreach lib $::env(LIB_SYNTH_COMPLETE) {
+#     set fbasename [file rootname [file tail $lib]]
+#     set lib_path [index_file $::env(synthesis_tmpfiles)/$fbasename.no_pg.lib]
+#     convert_pg_pins $lib $lib_path
+#     lappend ::env(LIB_SYNTH_COMPLETE_NO_PG) $lib_path
+# }
+# """)
+        
+#         self.append("""
+# if { [info exists ::env(SYNTH_DEFINES) ] } {
+# 	foreach define $::env(SYNTH_DEFINES) {
+# 		log "Defining $define"
+# 		verilog_defines -D$define
+# 	}
+# }
+# """)
         # input pin cap of IN_3VX8
-        self.append("set max_FO 5") # default SYNTH_MAX_FANOUT = 5
+        self.append("set max_FO 5") 
         self.append(f"set max_Tran {0.1*self.clock_period}")
         self.append(f"""
 
@@ -318,18 +310,17 @@ set F_factor  0.00
 
 # Don't change these unless you know what you are doing
 set stat_ext    ".stat.rpt"
-set chk_ext    ".chk.rpt"
-set gl_ext      ".gl.v"
-set constr_ext  ".{self.clock_period}.constr"
-set timing_ext  ".timing.txt"
-set abc_ext     ".abc"
+set chk_ext     ".chk.rpt"
 
 """)
+
+        self.write_sdc_file()
+
         # get old sdc, add library specific stuff for abc scripts
         self.append(f'set sdc_file "{self.mapped_sdc_path}"')
         self.append(f"set outfile [open {self.mapped_sdc_path} w]")
-        self.append(f'puts $outfile "set_driving_cell {self.driver_cell}"')
-        self.append('puts $outfile "set_load 33.5"') # default SYNTH_CAP_LOAD = 33.5
+        self.append(f'puts $outfile "set_driving_cell {self.driving_cell}"')
+        self.append(f'puts $outfile "set_load {self.synth_cap_load}"')
         self.append("close $outfile")
 
         
@@ -352,14 +343,24 @@ set abc_ext     ".abc"
         return True
 
     def syn_generic(self) -> bool:
+        self.append("yosys proc") # TODO: verify this, it was in yosys manual but not in OpenLANE script
         self.append(f"hierarchy -check -top {self.top_module}")
-        self.append(f"synth -top {self.top_module}")
+        self.append(f"synth -top {self.top_module} -run :fine")
+        self.append("opt -fast -full")
+        self.append("memory_map")
+        self.append("opt -full")
+        # TODO: figure out why techmap path is required for server install but not conda install
+        self.append("techmap -map /usr/local/share/yosys/techmap.v")
+        self.append("opt -fast")
+        self.append("abc -fast")
+        self.append("opt -fast")
+        self.append("synth -top gcd -run check:")
         # write a post techmap dot file - from OpenLANE I think this is in the wrong place??
         # self.append("show -format dot -prefix $::env(synthesis_tmpfiles)/post_techmap")
         self.append('share -aggressive') # default SYNTH_SHARE_RESOURCES = 1
         self.append("opt")
         self.append("opt_clean -purge")
-        # self.append('tee -o "$::env(synth_report_prefix)_pre.stat" stat')
+        self.append(f'tee -o "{self.run_dir}/{self.top_module}_pre.stat" stat')
         return True
 
     def syn_map(self) -> bool:
@@ -399,13 +400,7 @@ set abc_retime_area   	"retime,-D,{D},-M,5"
 set abc_retime_dly    	"retime,-D,{D},-M,6"
 set abc_map_new_area  	"amap,-m,-Q,0.1,-F,20,-A,20,-C,5000"
 
-if {$buffering==1} {
-	set abc_fine_tune		"buffer,-N,${max_FO},-S,${max_Tran};upsize,{D};dnsize,{D}"
-} elseif {$sizing} {
-	set abc_fine_tune       "upsize,{D};dnsize,{D}"
-} else {
-	set abc_fine_tune       ""
-}
+set abc_fine_tune       ""
 """)
 
         self.append(r"""
@@ -426,37 +421,8 @@ set area_scripts [list \
         self.append("""
 set all_scripts [list {*}$delay_scripts {*}$area_scripts]
 
-set strategy_parts [split $::env(SYNTH_STRATEGY)]
-
-proc synth_strategy_format_err { } {
-	upvar area_scripts area_scripts
-	upvar delay_scripts delay_scripts
-	log -stderr "\[ERROR] Misformatted SYNTH_STRATEGY (\"$::env(SYNTH_STRATEGY)\")."
-	log -stderr "\[ERROR] Correct format is \"DELAY|AREA 0-[expr [llength $delay_scripts]-1]|0-[expr [llength $area_scripts]-1]\"."
-	exit 1
-}
-
-if { [llength $strategy_parts] != 2 } {
-	synth_strategy_format_err
-}
-
-set strategy_type [lindex $strategy_parts 0]
-set strategy_type_idx [lindex $strategy_parts 1]
-
-if { $strategy_type != "AREA" && $strategy_type != "DELAY" } {
-	log -stderr "\[ERROR] AREA|DELAY tokens not found. ($strategy_type)"
-	synth_strategy_format_err
-}
-
-if { $strategy_type == "DELAY" && $strategy_type_idx >= [llength $delay_scripts] } {
-	log -stderr "\[ERROR] strategy index ($strategy_type_idx) is too high."
-	synth_strategy_format_err
-}
-
-if { $strategy_type == "AREA" && $strategy_type_idx >= [llength $area_scripts] } {
-	log -stderr "\[ERROR] strategy index ($strategy_type_idx) is too high."
-	synth_strategy_format_err
-}
+set strategy_type AREA
+set strategy_type_idx 0
 
 if { $strategy_type == "DELAY" } {
 	set strategy $strategy_type_idx
@@ -465,14 +431,14 @@ if { $strategy_type == "DELAY" } {
 }
 
 """)
-        self.append("dfflibmap -liberty $sclib")
-        # self.append('tee -o "$::env(synth_report_prefix)_dff.stat" stat')
+        self.append(f"dfflibmap -liberty {self.liberty_file}")
+        self.append(f'tee -o "{self.run_dir}/{self.top_module}_dff.stat" stat')
         self.append(f"""
 log "\[INFO\]: ABC: WireLoad : S_$strategy"
-abc -D {self.clock_period} \
-    -constr {self.mapped_sdc_path} \
-    -liberty $sclib  \
-    -script [lindex $all_scripts $strategy] \
+abc -D {self.clock_period} \\
+    -constr {self.mapped_sdc_path} \\
+    -liberty {self.liberty_file} \\
+    -script [lindex $all_scripts $strategy] \\
     -showtmp;
 """)
         return True
@@ -480,15 +446,20 @@ abc -D {self.clock_period} \
     def add_tieoffs(self) -> bool:
         tie_hi_cells = self.technology.get_special_cell_by_type(CellType.TieHiCell)
         tie_lo_cells = self.technology.get_special_cell_by_type(CellType.TieLoCell)
+        tie_hilo_cells = self.technology.get_special_cell_by_type(CellType.TieHiLoCell)
 
         if len(tie_hi_cells) != 1 or len (tie_lo_cells) != 1:
-            self.logger.warning("Hi and Lo tiecells are unspecified or improperly specified and will not be added during synthesis.")
-            return True
+            if len(tie_hilo_cells) != 1:
+                self.logger.warning("Hi and Lo tiecells are unspecified or improperly specified and will not be added during synthesis.")
+                return True
+            tie_hi_cells = tie_hilo_cells
+            tie_lo_cells = tie_hilo_cells            
 
         tie_hi_cell = tie_hi_cells[0].name[0]
         tie_lo_cell = tie_lo_cells[0].name[0]
         
         self.append(f'hilomap -hicell "{tie_hi_cell}" -locell "{tie_lo_cell}"')
+        # need buffers in synthesis?
         # self.append(f"insbuf -buf {*}sky130_fd_sc_hd__buf_2 A X")
         return True
 
@@ -497,33 +468,36 @@ abc -D {self.clock_period} \
         # get rid of the assignments that make init_floorplan fail
         self.append("splitnets") # split multi-bit nets into signle-bit nets
         self.append("opt_clean -purge")
-
-        # TODO: currently using OpenROAD's default synthesis script
+        
+        # TODO: generate find_regs_cells.json / find_regs_paths.json here
+        self.ran_write_regs = True
         return True
 
     def generate_reports(self) -> bool:
         # TODO: generate all reports (not sure how...?)
         self.append(f'tee -o "{self.run_dir}/{self.top_module}$chk_ext.strategy$strategy" check')
-        self.append(f'tee -o "{self.run_dir}/{self.top_module}$stat_ext.strategy$strategy" stat -top {self.top_module} -liberty [lindex $::env(LIB_SYNTH_COMPLETE_NO_PG) 0]')
+        self.append(f'tee -o "{self.run_dir}/{self.top_module}$stat_ext.strategy$strategy" stat -top {self.top_module} -liberty {self.liberty_file}')
         return True
     
     def write_outputs(self) -> bool:
         self.append(f'write_verilog -noattr -noexpr -nohex -nodec -defparam "{self.mapped_v_path}"')
-
+        self.append(f'write_blif -top gcd "{self.mapped_blif_path}"')
+        # self.append(f'write_json gcd.json')
         # TODO: figure out why the OpenLANE script re-runs synthesis & flattens design, when we explicitly requested hierarchical mode
-        self.append(f"""
-design -reset
-read_liberty -lib -ignore_miss_dir -setattr blackbox $::env(LIB_SYNTH_COMPLETE_NO_PG)
-file copy -force {self.mapped_v_path} {self.run_dir}/{self.top_module}.mapped.hierarchical.v
-read_verilog -sv {self.mapped_v_path}
-synth -top {self.top_module} -flatten
-splitnets
-opt_clean -purge
-insbuf -buf {self.buffer_cell}
-write_verilog -noattr -noexpr -nohex -nodec -defparam "{self.mapped_v_path}"
-tee -o "$::env(synth_report_prefix)$chk_ext.strategy$strategy" check
-tee -o "$::env(synth_report_prefix)$stat_ext.strategy$strategy" stat -top {self.top_module} -liberty [lindex $::env(LIB_SYNTH_COMPLETE_NO_PG) 0]    
-""")
+#         self.append(f"""
+# design -reset
+# read_liberty -lib -ignore_miss_dir -setattr blackbox $::env(LIB_SYNTH_COMPLETE_NO_PG)
+# file copy -force {self.mapped_v_path} {self.run_dir}/{self.top_module}.mapped.hierarchical.v
+# read_verilog -sv {self.mapped_v_path}
+# synth -top {self.top_module} -flatten
+# splitnets
+# opt_clean -purge
+# insbuf -buf {self.buffer_cell}
+# write_verilog -noattr -noexpr -nohex -nodec -defparam "{self.mapped_v_path}"
+# tee -o "$::env(synth_report_prefix)$chk_ext.strategy$strategy" check
+# tee -o "$::env(synth_report_prefix)$stat_ext.strategy$strategy" stat -top {self.top_module} -liberty [lindex $::env(LIB_SYNTH_COMPLETE_NO_PG) 0]    
+# """)
+        self.ran_write_outputs = True
         return True
     
 tool = YosysSynth
