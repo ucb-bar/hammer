@@ -415,13 +415,7 @@
   ],
   "special cells": [
     {
-      "cell_type": "tiehicell",
-      "name": [
-        "sky130_fd_sc_hd__conb_1"
-      ]
-    },
-    {
-      "cell_type": "tielocell",
+      "cell_type": "tiehilocell",
       "name": [
         "sky130_fd_sc_hd__conb_1"
       ]
