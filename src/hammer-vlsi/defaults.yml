@@ -263,6 +263,21 @@ vlsi.inputs:
   # delay (TimeValue) - Delay applied to the I/O.
   delays: []
 
+  # List of custom GroupPath constraints, a tool-agnostic represetnation of group_path SDC command.
+  # These constraints group paths together, and usually instruct tools to optimize them separately.
+  # Optionally these constraints can also suggest adjustments to the optimizaiton parameters of the tool
+  # Tool support varies for these SDC commands so we need to translate from intention to implementation
+  # Each item in the list should be a struct with the following members and contain at least one of "from", "to", or "through":
+  # name (str) - Name of the group being created
+  # from (Optional[str]) - Constrains only paths that come "from" this argument
+  # to (Optional[str]) - Constrains only paths that go "to" this argument
+  # through (Optional[str]) - Constrains only paths that go "through" this argument
+  # priority (Optional[int]) - When path groups overlap this field can be used to resolve which group the path ends in.
+  #   A higher priority means that group will hold onto the path over other groups.
+  # weight (Optional[int]) - Increases the importance of this path group to encourage the tool to spend more effort on these paths.
+  # critical_range (Optional[float]) - Increases the range of paths considered critical and thus requiring optimization.
+  group_paths: []
+
   # List of custom sdc constraints to use. (List[str])
   # These are appended after all other generated constraints (clock, pin, delay, load, etc.).
   custom_sdc_constraints: []

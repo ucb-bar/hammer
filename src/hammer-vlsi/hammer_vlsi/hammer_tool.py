@@ -1494,6 +1494,17 @@ class HammerTool(metaclass=ABCMeta):
         output = list(map(DecapConstraint.from_dict, decaps))  # type: List[DecapConstraint]
         return output
 
+    def get_group_path_constraints(self) -> List[GroupPath]:
+        """
+        Get a list of group_path constraints as specified in the config.
+        """
+        try:
+            group_paths = self.get_setting("vlsi.inputs.group_paths")  # type: List[dict]
+        except KeyError:
+            group_paths = []
+        output = list(map(GroupPath.from_dict, group_paths))
+        return output
+
     @staticmethod
     def append_contents_to_path(content_to_append: str, target_path: str) -> None:
         """

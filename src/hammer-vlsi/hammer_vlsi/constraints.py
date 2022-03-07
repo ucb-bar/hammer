@@ -863,3 +863,62 @@ MMMCCorner = NamedTuple('MMMCCorner', [
     ('temp', TemperatureValue),
     ('sdc', Optional[str]),
 ])
+
+class GroupPath(NamedTuple('Margins', [
+    ('name', str),
+    ('from_value', Optional[str]),
+    ('to', Optional[str]),
+    ('through', Optional[str]),
+    ('priority', Optional[int]),
+    ('weight', Optional[int]),
+    ('critical_range', Optional[float])
+])):
+    @staticmethod
+    def from_dict(d: dict) -> "GroupPath":
+        # Initialize all optional fields. value is appended to avoid keyword 'from'
+        from_value = None
+        to_value = None
+        through_value = None
+        priority_value = None
+        weight_value = None
+        critical_range_value = None
+        # Get or else and then check at least one of to/from/through fields exists
+        if 'from' in d:
+            from_value = str(d['from'])
+        if 'to' in d:
+            to_value = str(d['to'])
+        if 'through' in d:
+            through_value = str(d['through'])
+        if from_value is None and to_value is None and through_value is None:
+            raise ValueError("GroupPaths require at least one of from, to, or throughfields be specified.")
+        if 'priority' in d:
+            priority_value = int(d['priority'])
+        if 'weight' in d:
+            weight_value = int(d['weight'])
+        if 'critical_range' in d:
+            critical_range_value = int(d['critical_range'])
+        return GroupPath(
+            name=str(d['name']),
+            from_value=from_value,
+            to=to_value,
+            through=through_value,
+            priority=priority_value,
+            weight=weight_value,
+            critical_range=critical_range_value
+        )
+
+    def to_dict(self) -> dict:
+        output = {"name": self.name}
+        if self.to is not None:
+            output.update({"to": self.to})
+        if self.from_value is not None:
+            output.update({"from": self.from_value})
+        if self.through is not None:
+            output.update({"through": self.through})
+        if self.priority is not None:
+            output.update({"priority": self.priority})
+        if self.weight is not None:
+            output.update({"weight": self.weight})
+        if self.critical_range is not None:
+            output.update({"critical_range": self.critical_range})
+        return output
