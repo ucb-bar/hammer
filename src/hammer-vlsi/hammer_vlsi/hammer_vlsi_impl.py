@@ -224,8 +224,11 @@ class HammerSRAMGeneratorTool(HammerTool):
     # in techX16 you can generate only ever generate a single SRAM per run but can
     # generate multiple corners at once
     def generate_all_srams_and_corners(self) -> bool:
-        srams = reduce(list.__add__, list(map(lambda c: self.generate_all_srams(c), self.get_mmmc_corners()))) # type: List[ExtraLibrary]
-        self.output_libraries = srams
+        srams_corners = list(map(lambda c: self.generate_all_srams(c), self.get_mmmc_corners())) # type: List[List[ExtraLibrary]]
+        if len(srams_corners):
+            self.output_libraries = reduce(list.__add__, srams_corners)
+        else:
+            self.output_libraries = []
         return True
 
     def generate_all_srams(self, corner: MMMCCorner) -> List[ExtraLibrary]:
