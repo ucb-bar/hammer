@@ -430,14 +430,19 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
                             if meta_key in oldval:
                                 # Do the deepsubst_meta, whatever it is.
                                 meta = oldval[meta_key]
-                                if meta in DeepSubstMetaDirectives:
-                                    if isinstance(v, str):
-                                        newval[k] = DeepSubstMetaDirectives[meta](v, params)
+                                if not isinstance(meta, list):
+                                    meta = [meta]
+                                intermediate_val = v
+                                for meta_var in meta:
+                                    if meta_var in DeepSubstMetaDirectives:
+                                        if isinstance(intermediate_val, str):
+                                            intermediate_val = DeepSubstMetaDirectives[meta_var](intermediate_val, params)
+                                        else:
+                                            raise ValueError("Deepsubst metas not supported on non-string values: {}".format(str(v)))
                                     else:
-                                        raise ValueError("Deepsubst metas not supported on non-string values: {}".format(str(v)))
-                                else:
-                                    raise ValueError("Unknown deepsubst_meta type: {}. Valid options are [{}].".format(str(meta),
-                                        ", ".join(DeepSubstMetaDirectives.keys())))
+                                        raise ValueError("Unknown deepsubst_meta type: {}. Valid options are [{}].".format(str(meta_var),
+                                            ", ".join(DeepSubstMetaDirectives.keys())))
+                                newval[k] = intermediate_val
                             else:
                                 newval[k] = do_subst(v)
                     else:
