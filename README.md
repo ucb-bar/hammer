@@ -23,3 +23,6 @@ History
 The list of contributors can be found in the Git history of the project, or online at https://github.com/ucb-bar/hammer/graphs/contributors
 
 The Hammer project builds upon the legacy of the [PLSI project by Palmer Dabbelt](https://www2.eecs.berkeley.edu/Pubs/TechRpts/2017/EECS-2017-77.html), a previous project which aimed to build a portable VLSI flow. The Hammer project is grateful for the feedback and lessons learned which provided valuable insight that ultimately led to the design and software architecture of Hammer as it is now.
+
+Disclaimer:
+This is a testing branch.
