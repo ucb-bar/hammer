@@ -64,7 +64,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -78,7 +77,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -93,11 +91,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -170,7 +164,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -184,7 +177,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -199,11 +191,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -291,7 +279,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -305,7 +292,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -320,11 +306,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -417,7 +399,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -431,7 +412,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -446,11 +426,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -544,7 +520,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -558,7 +533,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -573,11 +547,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -677,7 +647,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -691,7 +660,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -706,11 +674,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -830,7 +794,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -844,7 +807,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -859,11 +821,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -927,7 +885,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -941,7 +898,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -956,11 +912,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -1024,7 +976,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -1038,7 +989,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -1053,11 +1003,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -1125,7 +1071,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -1139,7 +1084,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -1154,11 +1098,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -1228,7 +1168,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -1242,7 +1181,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -1257,11 +1195,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -1339,7 +1273,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -1353,7 +1286,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -1368,11 +1300,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -1468,7 +1396,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -1482,7 +1409,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -1497,11 +1423,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -1603,7 +1525,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -1617,7 +1538,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -1632,11 +1552,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -1740,7 +1656,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -1754,7 +1669,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -1769,11 +1683,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -1893,7 +1803,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -1907,7 +1816,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -1922,11 +1830,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -1990,7 +1894,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -2004,7 +1907,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -2019,11 +1921,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -2208,7 +2106,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -2222,7 +2119,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -2237,11 +2133,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -2329,7 +2221,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -2343,7 +2234,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -2358,11 +2248,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -2464,7 +2350,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -2478,7 +2363,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -2493,11 +2377,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -2601,7 +2481,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -2615,7 +2494,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -2630,11 +2508,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -2755,7 +2629,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -2769,7 +2642,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -2784,11 +2656,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -2852,7 +2720,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -2866,7 +2733,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -2881,11 +2747,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -2991,7 +2853,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -3005,7 +2866,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -3020,11 +2880,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -3096,7 +2952,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -3110,7 +2965,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -3125,11 +2979,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -3193,7 +3043,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -3207,7 +3056,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -3222,11 +3070,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -3410,7 +3254,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -3424,7 +3267,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -3439,11 +3281,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -3531,7 +3369,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -3545,7 +3382,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -3560,11 +3396,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -3684,7 +3516,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -3698,7 +3529,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -3713,11 +3543,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -3781,7 +3607,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -3795,7 +3620,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -3810,11 +3634,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -3998,7 +3818,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -4012,7 +3831,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -4027,11 +3845,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -4107,7 +3921,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -4121,7 +3934,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -4136,11 +3948,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -4217,7 +4025,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -4231,7 +4038,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -4246,11 +4052,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -4328,7 +4130,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -4342,7 +4143,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -4357,11 +4157,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -4449,7 +4245,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -4463,7 +4258,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -4478,11 +4272,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -4572,7 +4362,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -4586,7 +4375,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -4601,11 +4389,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -4669,7 +4453,6 @@ input 	[0:0] I_i;
 
 output 	[0:0] O_i;
 
-reg 	[0:0]O_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out;
 
@@ -4683,7 +4466,6 @@ and u2 (WE, ~CSB_i, ~WEB_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -4698,11 +4480,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-always @ (posedge CE_i)
-	if (!OEB_i) 
-		O_i = data_out;
-	else
-		O_i =  1'bz;
+assign O_i = OEB_i ? 1'bz : data_out;
 
 
 endmodule
@@ -4786,7 +4564,6 @@ input 	[0:0] I1_i, I2_i;
 
 output 	[0:0] O1_i, O2_i;
 
-reg 	[0:0] O1_i, O2_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out1, data_out2;
 
@@ -4803,8 +4580,6 @@ and u4 (WE2, ~CSB2_i, ~WEB2_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O1_i = $urandom_range(1);
-    O2_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -4822,11 +4597,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-always @ (data_out1 or OEB1_i)
-	if (!OEB1_i) 
-		O1_i = data_out1;
-	else
-		O1_i =  1'bz;
+assign O1_i = OEB1_i ? 1'bz : data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -4836,11 +4607,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-always @ (data_out2 or OEB2_i)
-	if (!OEB2_i) 
-		O2_i = data_out2;
-	else
-		O2_i = 1'bz;
+assign O2_i = OEB2_i ? 1'bz : data_out2;
 
 endmodule
 /*********************************************************************
@@ -4937,7 +4704,6 @@ input 	[0:0] I1_i, I2_i;
 
 output 	[0:0] O1_i, O2_i;
 
-reg 	[0:0] O1_i, O2_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out1, data_out2;
 
@@ -4954,8 +4720,6 @@ and u4 (WE2, ~CSB2_i, ~WEB2_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O1_i = $urandom_range(1);
-    O2_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -4973,11 +4737,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-always @ (data_out1 or OEB1_i)
-	if (!OEB1_i) 
-		O1_i = data_out1;
-	else
-		O1_i =  1'bz;
+assign O1_i = OEB1_i ? 1'bz : data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -4987,11 +4747,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-always @ (data_out2 or OEB2_i)
-	if (!OEB2_i) 
-		O2_i = data_out2;
-	else
-		O2_i = 1'bz;
+assign O2_i = OEB2_i ? 1'bz : data_out2;
 
 endmodule
 /*********************************************************************
@@ -5060,7 +4816,6 @@ input 	[0:0] I1_i, I2_i;
 
 output 	[0:0] O1_i, O2_i;
 
-reg 	[0:0] O1_i, O2_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out1, data_out2;
 
@@ -5077,8 +4832,6 @@ and u4 (WE2, ~CSB2_i, ~WEB2_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O1_i = $urandom_range(1);
-    O2_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -5096,11 +4849,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-always @ (data_out1 or OEB1_i)
-	if (!OEB1_i) 
-		O1_i = data_out1;
-	else
-		O1_i =  1'bz;
+assign O1_i = OEB1_i ? 1'bz : data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -5110,11 +4859,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-always @ (data_out2 or OEB2_i)
-	if (!OEB2_i) 
-		O2_i = data_out2;
-	else
-		O2_i = 1'bz;
+assign O2_i = OEB2_i ? 1'bz : data_out2;
 
 endmodule
 /*********************************************************************
@@ -5187,7 +4932,6 @@ input 	[0:0] I1_i, I2_i;
 
 output 	[0:0] O1_i, O2_i;
 
-reg 	[0:0] O1_i, O2_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out1, data_out2;
 
@@ -5204,8 +4948,6 @@ and u4 (WE2, ~CSB2_i, ~WEB2_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O1_i = $urandom_range(1);
-    O2_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -5223,11 +4965,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-always @ (data_out1 or OEB1_i)
-	if (!OEB1_i) 
-		O1_i = data_out1;
-	else
-		O1_i =  1'bz;
+assign O1_i = OEB1_i ? 1'bz : data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -5237,11 +4975,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-always @ (data_out2 or OEB2_i)
-	if (!OEB2_i) 
-		O2_i = data_out2;
-	else
-		O2_i = 1'bz;
+assign O2_i = OEB2_i ? 1'bz : data_out2;
 
 endmodule
 /*********************************************************************
@@ -5322,7 +5056,6 @@ input 	[0:0] I1_i, I2_i;
 
 output 	[0:0] O1_i, O2_i;
 
-reg 	[0:0] O1_i, O2_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out1, data_out2;
 
@@ -5339,8 +5072,6 @@ and u4 (WE2, ~CSB2_i, ~WEB2_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O1_i = $urandom_range(1);
-    O2_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -5358,11 +5089,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-always @ (data_out1 or OEB1_i)
-	if (!OEB1_i) 
-		O1_i = data_out1;
-	else
-		O1_i =  1'bz;
+assign O1_i = OEB1_i ? 1'bz : data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -5372,11 +5099,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-always @ (data_out2 or OEB2_i)
-	if (!OEB2_i) 
-		O2_i = data_out2;
-	else
-		O2_i = 1'bz;
+assign O2_i = OEB2_i ? 1'bz : data_out2;
 
 endmodule
 /*********************************************************************
@@ -5473,7 +5196,6 @@ input 	[0:0] I1_i, I2_i;
 
 output 	[0:0] O1_i, O2_i;
 
-reg 	[0:0] O1_i, O2_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out1, data_out2;
 
@@ -5490,8 +5212,6 @@ and u4 (WE2, ~CSB2_i, ~WEB2_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O1_i = $urandom_range(1);
-    O2_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -5509,11 +5229,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-always @ (data_out1 or OEB1_i)
-	if (!OEB1_i) 
-		O1_i = data_out1;
-	else
-		O1_i =  1'bz;
+assign O1_i = OEB1_i ? 1'bz : data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -5523,11 +5239,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-always @ (data_out2 or OEB2_i)
-	if (!OEB2_i) 
-		O2_i = data_out2;
-	else
-		O2_i = 1'bz;
+assign O2_i = OEB2_i ? 1'bz : data_out2;
 
 endmodule
 /*********************************************************************
@@ -5596,7 +5308,6 @@ input 	[0:0] I1_i, I2_i;
 
 output 	[0:0] O1_i, O2_i;
 
-reg 	[0:0] O1_i, O2_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out1, data_out2;
 
@@ -5613,8 +5324,6 @@ and u4 (WE2, ~CSB2_i, ~WEB2_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O1_i = $urandom_range(1);
-    O2_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -5632,11 +5341,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-always @ (data_out1 or OEB1_i)
-	if (!OEB1_i) 
-		O1_i = data_out1;
-	else
-		O1_i =  1'bz;
+assign O1_i = OEB1_i ? 1'bz : data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -5646,11 +5351,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-always @ (data_out2 or OEB2_i)
-	if (!OEB2_i) 
-		O2_i = data_out2;
-	else
-		O2_i = 1'bz;
+assign O2_i = OEB2_i ? 1'bz : data_out2;
 
 endmodule
 /*********************************************************************
@@ -5723,7 +5424,6 @@ input 	[0:0] I1_i, I2_i;
 
 output 	[0:0] O1_i, O2_i;
 
-reg 	[0:0] O1_i, O2_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out1, data_out2;
 
@@ -5740,8 +5440,6 @@ and u4 (WE2, ~CSB2_i, ~WEB2_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O1_i = $urandom_range(1);
-    O2_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -5759,11 +5457,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-always @ (data_out1 or OEB1_i)
-	if (!OEB1_i) 
-		O1_i = data_out1;
-	else
-		O1_i =  1'bz;
+assign O1_i = OEB1_i ? 1'bz : data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -5773,11 +5467,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-always @ (data_out2 or OEB2_i)
-	if (!OEB2_i) 
-		O2_i = data_out2;
-	else
-		O2_i = 1'bz;
+assign O2_i = OEB2_i ? 1'bz : data_out2;
 
 endmodule
 /*********************************************************************
@@ -5858,7 +5548,6 @@ input 	[0:0] I1_i, I2_i;
 
 output 	[0:0] O1_i, O2_i;
 
-reg 	[0:0] O1_i, O2_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out1, data_out2;
 
@@ -5875,8 +5564,6 @@ and u4 (WE2, ~CSB2_i, ~WEB2_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O1_i = $urandom_range(1);
-    O2_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -5894,11 +5581,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-always @ (data_out1 or OEB1_i)
-	if (!OEB1_i) 
-		O1_i = data_out1;
-	else
-		O1_i =  1'bz;
+assign O1_i = OEB1_i ? 1'bz : data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -5908,11 +5591,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-always @ (data_out2 or OEB2_i)
-	if (!OEB2_i) 
-		O2_i = data_out2;
-	else
-		O2_i = 1'bz;
+assign O2_i = OEB2_i ? 1'bz : data_out2;
 
 endmodule
 /*********************************************************************
@@ -5999,7 +5678,6 @@ input 	[0:0] I1_i, I2_i;
 
 output 	[0:0] O1_i, O2_i;
 
-reg 	[0:0] O1_i, O2_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out1, data_out2;
 
@@ -6016,8 +5694,6 @@ and u4 (WE2, ~CSB2_i, ~WEB2_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O1_i = $urandom_range(1);
-    O2_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -6035,11 +5711,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-always @ (data_out1 or OEB1_i)
-	if (!OEB1_i) 
-		O1_i = data_out1;
-	else
-		O1_i =  1'bz;
+assign O1_i = OEB1_i ? 1'bz : data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -6049,11 +5721,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-always @ (data_out2 or OEB2_i)
-	if (!OEB2_i) 
-		O2_i = data_out2;
-	else
-		O2_i = 1'bz;
+assign O2_i = OEB2_i ? 1'bz : data_out2;
 
 endmodule
 /*********************************************************************
@@ -6150,7 +5818,6 @@ input 	[0:0] I1_i, I2_i;
 
 output 	[0:0] O1_i, O2_i;
 
-reg 	[0:0] O1_i, O2_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out1, data_out2;
 
@@ -6167,8 +5834,6 @@ and u4 (WE2, ~CSB2_i, ~WEB2_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O1_i = $urandom_range(1);
-    O2_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -6186,11 +5851,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-always @ (data_out1 or OEB1_i)
-	if (!OEB1_i) 
-		O1_i = data_out1;
-	else
-		O1_i =  1'bz;
+assign O1_i = OEB1_i ? 1'bz : data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -6200,11 +5861,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-always @ (data_out2 or OEB2_i)
-	if (!OEB2_i) 
-		O2_i = data_out2;
-	else
-		O2_i = 1'bz;
+assign O2_i = OEB2_i ? 1'bz : data_out2;
 
 endmodule
 /*********************************************************************
@@ -6302,7 +5959,6 @@ input 	[0:0] I1_i, I2_i;
 
 output 	[0:0] O1_i, O2_i;
 
-reg 	[0:0] O1_i, O2_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out1, data_out2;
 
@@ -6319,8 +5975,6 @@ and u4 (WE2, ~CSB2_i, ~WEB2_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O1_i = $urandom_range(1);
-    O2_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -6338,11 +5992,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-always @ (data_out1 or OEB1_i)
-	if (!OEB1_i) 
-		O1_i = data_out1;
-	else
-		O1_i =  1'bz;
+assign O1_i = OEB1_i ? 1'bz : data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -6352,11 +6002,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-always @ (data_out2 or OEB2_i)
-	if (!OEB2_i) 
-		O2_i = data_out2;
-	else
-		O2_i = 1'bz;
+assign O2_i = OEB2_i ? 1'bz : data_out2;
 
 endmodule
 /*********************************************************************
@@ -6460,7 +6106,6 @@ input 	[0:0] I1_i, I2_i;
 
 output 	[0:0] O1_i, O2_i;
 
-reg 	[0:0] O1_i, O2_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out1, data_out2;
 
@@ -6477,8 +6122,6 @@ and u4 (WE2, ~CSB2_i, ~WEB2_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O1_i = $urandom_range(1);
-    O2_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -6496,11 +6139,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-always @ (data_out1 or OEB1_i)
-	if (!OEB1_i) 
-		O1_i = data_out1;
-	else
-		O1_i =  1'bz;
+assign O1_i = OEB1_i ? 1'bz : data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -6510,11 +6149,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-always @ (data_out2 or OEB2_i)
-	if (!OEB2_i) 
-		O2_i = data_out2;
-	else
-		O2_i = 1'bz;
+assign O2_i = OEB2_i ? 1'bz : data_out2;
 
 endmodule
 /*********************************************************************
@@ -6583,7 +6218,6 @@ input 	[0:0] I1_i, I2_i;
 
 output 	[0:0] O1_i, O2_i;
 
-reg 	[0:0] O1_i, O2_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out1, data_out2;
 
@@ -6600,8 +6234,6 @@ and u4 (WE2, ~CSB2_i, ~WEB2_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O1_i = $urandom_range(1);
-    O2_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -6619,11 +6251,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-always @ (data_out1 or OEB1_i)
-	if (!OEB1_i) 
-		O1_i = data_out1;
-	else
-		O1_i =  1'bz;
+assign O1_i = OEB1_i ? 1'bz : data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -6633,11 +6261,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-always @ (data_out2 or OEB2_i)
-	if (!OEB2_i) 
-		O2_i = data_out2;
-	else
-		O2_i = 1'bz;
+assign O2_i = OEB2_i ? 1'bz : data_out2;
 
 endmodule
 /*********************************************************************
@@ -6710,7 +6334,6 @@ input 	[0:0] I1_i, I2_i;
 
 output 	[0:0] O1_i, O2_i;
 
-reg 	[0:0] O1_i, O2_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out1, data_out2;
 
@@ -6727,8 +6350,6 @@ and u4 (WE2, ~CSB2_i, ~WEB2_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O1_i = $urandom_range(1);
-    O2_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -6746,11 +6367,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-always @ (data_out1 or OEB1_i)
-	if (!OEB1_i) 
-		O1_i = data_out1;
-	else
-		O1_i =  1'bz;
+assign O1_i = OEB1_i ? 1'bz : data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -6760,11 +6377,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-always @ (data_out2 or OEB2_i)
-	if (!OEB2_i) 
-		O2_i = data_out2;
-	else
-		O2_i = 1'bz;
+assign O2_i = OEB2_i ? 1'bz : data_out2;
 
 endmodule
 /*********************************************************************
@@ -6845,7 +6458,6 @@ input 	[0:0] I1_i, I2_i;
 
 output 	[0:0] O1_i, O2_i;
 
-reg 	[0:0] O1_i, O2_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out1, data_out2;
 
@@ -6862,8 +6474,6 @@ and u4 (WE2, ~CSB2_i, ~WEB2_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O1_i = $urandom_range(1);
-    O2_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -6881,11 +6491,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-always @ (data_out1 or OEB1_i)
-	if (!OEB1_i) 
-		O1_i = data_out1;
-	else
-		O1_i =  1'bz;
+assign O1_i = OEB1_i ? 1'bz : data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -6895,11 +6501,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-always @ (data_out2 or OEB2_i)
-	if (!OEB2_i) 
-		O2_i = data_out2;
-	else
-		O2_i = 1'bz;
+assign O2_i = OEB2_i ? 1'bz : data_out2;
 
 endmodule
 /*********************************************************************
@@ -6988,7 +6590,6 @@ input 	[0:0] I1_i, I2_i;
 
 output 	[0:0] O1_i, O2_i;
 
-reg 	[0:0] O1_i, O2_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out1, data_out2;
 
@@ -7005,8 +6606,6 @@ and u4 (WE2, ~CSB2_i, ~WEB2_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O1_i = $urandom_range(1);
-    O2_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -7024,11 +6623,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-always @ (data_out1 or OEB1_i)
-	if (!OEB1_i) 
-		O1_i = data_out1;
-	else
-		O1_i =  1'bz;
+assign O1_i = OEB1_i ? 1'bz : data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -7038,11 +6633,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-always @ (data_out2 or OEB2_i)
-	if (!OEB2_i) 
-		O2_i = data_out2;
-	else
-		O2_i = 1'bz;
+assign O2_i = OEB2_i ? 1'bz : data_out2;
 
 endmodule
 /*********************************************************************
@@ -7139,7 +6730,6 @@ input 	[0:0] I1_i, I2_i;
 
 output 	[0:0] O1_i, O2_i;
 
-reg 	[0:0] O1_i, O2_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out1, data_out2;
 
@@ -7156,8 +6746,6 @@ and u4 (WE2, ~CSB2_i, ~WEB2_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O1_i = $urandom_range(1);
-    O2_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -7175,11 +6763,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-always @ (data_out1 or OEB1_i)
-	if (!OEB1_i) 
-		O1_i = data_out1;
-	else
-		O1_i =  1'bz;
+assign O1_i = OEB1_i ? 1'bz : data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -7189,11 +6773,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-always @ (data_out2 or OEB2_i)
-	if (!OEB2_i) 
-		O2_i = data_out2;
-	else
-		O2_i = 1'bz;
+assign O2_i = OEB2_i ? 1'bz : data_out2;
 
 endmodule
 /*********************************************************************
@@ -7262,7 +6842,6 @@ input 	[0:0] I1_i, I2_i;
 
 output 	[0:0] O1_i, O2_i;
 
-reg 	[0:0] O1_i, O2_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out1, data_out2;
 
@@ -7279,8 +6858,6 @@ and u4 (WE2, ~CSB2_i, ~WEB2_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O1_i = $urandom_range(1);
-    O2_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -7298,11 +6875,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-always @ (data_out1 or OEB1_i)
-	if (!OEB1_i) 
-		O1_i = data_out1;
-	else
-		O1_i =  1'bz;
+assign O1_i = OEB1_i ? 1'bz : data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -7312,11 +6885,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-always @ (data_out2 or OEB2_i)
-	if (!OEB2_i) 
-		O2_i = data_out2;
-	else
-		O2_i = 1'bz;
+assign O2_i = OEB2_i ? 1'bz : data_out2;
 
 endmodule
 /*********************************************************************
@@ -7389,7 +6958,6 @@ input 	[0:0] I1_i, I2_i;
 
 output 	[0:0] O1_i, O2_i;
 
-reg 	[0:0] O1_i, O2_i;
 reg    	[0:0]  	memory[`numWords-1:0];
 reg  	[0:0]	data_out1, data_out2;
 
@@ -7406,8 +6974,6 @@ and u4 (WE2, ~CSB2_i, ~WEB2_i);
 // Initialization for simulation
 integer i;
 initial begin
-    O1_i = $urandom_range(1);
-    O2_i = $urandom_range(1);
     for (i = 0; i < `numWords; i = i + 1) begin
         memory[i] = $urandom_range(1);
     end
@@ -7425,11 +6991,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-always @ (data_out1 or OEB1_i)
-	if (!OEB1_i) 
-		O1_i = data_out1;
-	else
-		O1_i =  1'bz;
+assign O1_i = OEB1_i ? 1'bz : data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -7439,10 +7001,6 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-always @ (data_out2 or OEB2_i)
-	if (!OEB2_i) 
-		O2_i = data_out2;
-	else
-		O2_i = 1'bz;
+assign O2_i = OEB2_i ? 1'bz : data_out2;
 
 endmodule
