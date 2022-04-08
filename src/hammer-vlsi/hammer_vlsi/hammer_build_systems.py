@@ -7,11 +7,13 @@
 #  See LICENSE for licence details.
 
 from .driver import HammerDriver
+from hammer_utils import *
 
 import os
 import sys
 import textwrap
 from typing import List, Dict, Tuple, Callable
+from functools import reduce
 
 def build_noop(driver: HammerDriver, append_error_func: Callable[[str], None]) -> dict:
     """
@@ -263,7 +265,19 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
     else:
         # Hierarchical flow
         for node, edges in dependency_graph.items():
-            out_edges = edges[1]
+            #filter edges based on module fidelity
+            list_of_module_fidelity = driver.database.get_setting(
+                    "vlsi.inputs.hierarchical.module_fidelity")  # type: List[Dict]
+            hier_fidelity = reduce(add_dicts, list_of_module_fidelity, {})  # type: Dict[str, str]
+            all_out_edges = edges[1]
+            out_edges = []
+            for edge in all_out_edges:
+                if edge in hier_fidelity and hier_fidelity[edge] == "blackbox":
+                    # We don't actually depend on this module
+                    pass
+                else:
+                    out_edges.append(edge)
+            #out_edges = edges[1]
 
             # TODO make this DRY
             sim_rtl_run_dir = os.path.join(obj_dir, "sim-rtl-" + node)

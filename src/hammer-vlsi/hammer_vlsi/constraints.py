@@ -28,7 +28,9 @@ class ILMStruct(NamedTuple('ILMStruct', [
     ('lef', str),
     ('gds', str),
     ('netlist', str),
-    ('sim_netlist', Optional[str])
+    ('sim_netlist', Optional[str]),
+    ('fidelity', str),
+    ('blackbox_sdc', Optional[str])
 ])):
     __slots__ = ()
 
@@ -39,10 +41,14 @@ class ILMStruct(NamedTuple('ILMStruct', [
             "module": self.module,
             "lef": self.lef,
             "gds": self.gds,
-            "netlist": self.netlist
+            "netlist": self.netlist,
+            "fidelity": self.fidelity,
+            "blackbox_sdc": self.blackbox_sdc
         }
         if self.sim_netlist is not None:
             output.update({"sim_netlist": self.sim_netlist})
+        if self.blackbox_sdc is not None:
+            output.update({"blackbox_sdc": self.blackbox_sdc})
         return output
 
     @staticmethod
@@ -54,7 +60,9 @@ class ILMStruct(NamedTuple('ILMStruct', [
             lef=str(ilm["lef"]),
             gds=str(ilm["gds"]),
             netlist=str(ilm["netlist"]),
-            sim_netlist=ilm.get("sim_netlist")
+            sim_netlist=ilm.get("sim_netlist"),
+            fidelity=str(ilm["fidelity"]),
+            blackbox_sdc=ilm.get("blackbox_sdc")
         )
 
 

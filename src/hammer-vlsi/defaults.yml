@@ -197,6 +197,13 @@ vlsi.inputs:
     # Should be a list along the lines of [{"module1": <list of PlacementConstraint structs>}].
     manual_placement_constraints: []
 
+    # Controls the fidelity of submodule implementations. Each sub-module can set its own fidelity from the following
+    # Valid options:
+    # full - run P&R through to completion for this submodule (default)
+    # syn - stop submodule after synthesis to generate submodule collateral
+    # blackbox - use given SDC constraints and placement constraints to create a blackbox for this submodule without running any tools
+    module_fidelity: []
+
     # Manual hierarchical constraints. Overrides generic constraints on a per module basis.
     # Should be a list along the lines of [{"module1": <list of other hammer constraints>}].
     # For example [{"mod1": [vlsi.inputs.default_output_load: 2], "mod2": [vlsi.inputs.clocks:<clock constraints>] }].

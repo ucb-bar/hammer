@@ -1271,6 +1271,7 @@ class HammerDriver:
         hier_modules = {}  # type: Dict[str, List[str]]
         hier_placement_constraints = {}  # type: Dict[str, List[PlacementConstraint]]
         hier_constraints = {}  # type: Dict[str, List[Dict]]
+        hier_module_fidelity = {}  # type: Dict[str, str]
 
         # This is retrieving the list of hard macro sizes to be used when creating PlacementConstraint tuples later
         list_of_hard_macros = self.database.get_setting("vlsi.technology.extra_macro_sizes")  # type: List[Dict]
@@ -1290,6 +1291,10 @@ class HammerDriver:
                 "vlsi.inputs.hierarchical.manual_placement_constraints")  # type: List[Dict]
             assert isinstance(list_of_placement_constraints, list)
             combined_raw_placement_dict = reduce(add_dicts, list_of_placement_constraints, {})  # type: Dict[str, List[Dict[str, Any]]]
+
+            list_of_module_fidelity = self.database.get_setting(
+                    "vlsi.inputs.hierarchical.module_fidelity")  # type: List[Dict]
+            hier_fidelity = reduce(add_dicts, list_of_module_fidelity, {})  # type: Dict[str, str]
 
             # This helper function filters only the dict containing the toplevel placement constraint, if any, from the provided list of dicts.
             # If the list does not contain a toplevel constraint, it returns None.
@@ -1367,11 +1372,19 @@ class HammerDriver:
                 if mod != top_module:
                     intermediate_modules.add(mod)
                 for m in hier_modules[mod]:
-                    # m depends on us
-                    dependency_graph.setdefault(m, ([], []))[0].append(mod)
-                    # We depend on m
-                    dependency_graph.setdefault(mod, ([], []))[1].append(m)
-                    visit_module(m)
+                    if m in hier_fidelity and hier_fidelity[m] == "blackbox":
+                        # We don't depend on blackboxes
+                        # We depend on m
+                        dependency_graph.setdefault(mod, ([], []))[1].append(m)
+                        # m depends on us
+                        dependency_graph.setdefault(m, ([], []))[0].append(mod)
+                        visit_module(m)
+                    else:
+                        # m depends on us
+                        dependency_graph.setdefault(m, ([], []))[0].append(mod)
+                        # We depend on m
+                        dependency_graph.setdefault(mod, ([], []))[1].append(m)
+                        visit_module(m)
         visit_module(top_module)
 
         # Create an order for the modules to be run in.
