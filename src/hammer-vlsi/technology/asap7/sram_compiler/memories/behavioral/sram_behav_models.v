@@ -71,7 +71,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -91,7 +91,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -171,7 +171,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -191,7 +191,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -286,7 +286,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -306,7 +306,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -406,7 +406,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -426,7 +426,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -527,7 +527,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -547,7 +547,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -654,7 +654,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -674,7 +674,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -801,7 +801,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -821,7 +821,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -892,7 +892,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -912,7 +912,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -983,7 +983,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -1003,7 +1003,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -1078,7 +1078,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -1098,7 +1098,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -1175,7 +1175,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -1195,7 +1195,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -1280,7 +1280,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -1300,7 +1300,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -1403,7 +1403,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -1423,7 +1423,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -1532,7 +1532,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -1552,7 +1552,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -1663,7 +1663,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -1683,7 +1683,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -1810,7 +1810,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -1830,7 +1830,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -1901,7 +1901,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -1921,7 +1921,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -2113,7 +2113,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -2133,7 +2133,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -2228,7 +2228,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -2248,7 +2248,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -2357,7 +2357,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -2377,7 +2377,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -2488,7 +2488,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -2508,7 +2508,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -2636,7 +2636,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -2656,7 +2656,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -2727,7 +2727,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -2747,7 +2747,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -2860,7 +2860,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -2880,7 +2880,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -2959,7 +2959,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -2979,7 +2979,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -3050,7 +3050,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -3070,7 +3070,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -3261,7 +3261,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -3281,7 +3281,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -3376,7 +3376,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -3396,7 +3396,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -3523,7 +3523,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -3543,7 +3543,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -3614,7 +3614,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -3634,7 +3634,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -3825,7 +3825,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -3845,7 +3845,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -3928,7 +3928,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -3948,7 +3948,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -4032,7 +4032,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -4052,7 +4052,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -4137,7 +4137,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -4157,7 +4157,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -4252,7 +4252,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -4272,7 +4272,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -4369,7 +4369,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -4389,7 +4389,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -4460,7 +4460,7 @@ reg  	[0:0]	data_out;
 // Write Mode
 wire RE;
 wire WE;
-and u1 (RE, ~CSB_i,  WEB_i);
+and u1 (RE, ~CSB_i, ~OEB_i);
 and u2 (WE, ~CSB_i, ~WEB_i);
 
 // Initialization for simulation
@@ -4480,7 +4480,7 @@ always @ (posedge CE_i)
 		memory[A_i] = I_i;
 		
 
-assign O_i = OEB_i ? 1'bz : data_out;
+assign O_i = data_out;
 
 
 endmodule
@@ -4572,9 +4572,9 @@ wire RE1;
 wire WE1;
 wire RE2;
 wire WE2;
-and u1 (RE1, ~CSB1_i,  WEB1_i);
+and u1 (RE1, ~CSB1_i, ~OEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
-and u3 (RE2, ~CSB2_i,  WEB2_i);
+and u3 (RE2, ~CSB2_i, ~OEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
 // Initialization for simulation
@@ -4597,7 +4597,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-assign O1_i = OEB1_i ? 1'bz : data_out1;
+assign O1_i = data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -4607,7 +4607,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-assign O2_i = OEB2_i ? 1'bz : data_out2;
+assign O2_i = data_out2;
 
 endmodule
 /*********************************************************************
@@ -4712,9 +4712,9 @@ wire RE1;
 wire WE1;
 wire RE2;
 wire WE2;
-and u1 (RE1, ~CSB1_i,  WEB1_i);
+and u1 (RE1, ~CSB1_i, ~OEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
-and u3 (RE2, ~CSB2_i,  WEB2_i);
+and u3 (RE2, ~CSB2_i, ~OEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
 // Initialization for simulation
@@ -4737,7 +4737,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-assign O1_i = OEB1_i ? 1'bz : data_out1;
+assign O1_i = data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -4747,7 +4747,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-assign O2_i = OEB2_i ? 1'bz : data_out2;
+assign O2_i = data_out2;
 
 endmodule
 /*********************************************************************
@@ -4824,9 +4824,9 @@ wire RE1;
 wire WE1;
 wire RE2;
 wire WE2;
-and u1 (RE1, ~CSB1_i,  WEB1_i);
+and u1 (RE1, ~CSB1_i, ~OEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
-and u3 (RE2, ~CSB2_i,  WEB2_i);
+and u3 (RE2, ~CSB2_i, ~OEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
 // Initialization for simulation
@@ -4849,7 +4849,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-assign O1_i = OEB1_i ? 1'bz : data_out1;
+assign O1_i = data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -4859,7 +4859,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-assign O2_i = OEB2_i ? 1'bz : data_out2;
+assign O2_i = data_out2;
 
 endmodule
 /*********************************************************************
@@ -4940,9 +4940,9 @@ wire RE1;
 wire WE1;
 wire RE2;
 wire WE2;
-and u1 (RE1, ~CSB1_i,  WEB1_i);
+and u1 (RE1, ~CSB1_i, ~OEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
-and u3 (RE2, ~CSB2_i,  WEB2_i);
+and u3 (RE2, ~CSB2_i, ~OEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
 // Initialization for simulation
@@ -4965,7 +4965,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-assign O1_i = OEB1_i ? 1'bz : data_out1;
+assign O1_i = data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -4975,7 +4975,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-assign O2_i = OEB2_i ? 1'bz : data_out2;
+assign O2_i = data_out2;
 
 endmodule
 /*********************************************************************
@@ -5064,9 +5064,9 @@ wire RE1;
 wire WE1;
 wire RE2;
 wire WE2;
-and u1 (RE1, ~CSB1_i,  WEB1_i);
+and u1 (RE1, ~CSB1_i, ~OEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
-and u3 (RE2, ~CSB2_i,  WEB2_i);
+and u3 (RE2, ~CSB2_i, ~OEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
 // Initialization for simulation
@@ -5089,7 +5089,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-assign O1_i = OEB1_i ? 1'bz : data_out1;
+assign O1_i = data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -5099,7 +5099,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-assign O2_i = OEB2_i ? 1'bz : data_out2;
+assign O2_i = data_out2;
 
 endmodule
 /*********************************************************************
@@ -5204,9 +5204,9 @@ wire RE1;
 wire WE1;
 wire RE2;
 wire WE2;
-and u1 (RE1, ~CSB1_i,  WEB1_i);
+and u1 (RE1, ~CSB1_i, ~OEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
-and u3 (RE2, ~CSB2_i,  WEB2_i);
+and u3 (RE2, ~CSB2_i, ~OEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
 // Initialization for simulation
@@ -5229,7 +5229,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-assign O1_i = OEB1_i ? 1'bz : data_out1;
+assign O1_i = data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -5239,7 +5239,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-assign O2_i = OEB2_i ? 1'bz : data_out2;
+assign O2_i = data_out2;
 
 endmodule
 /*********************************************************************
@@ -5316,9 +5316,9 @@ wire RE1;
 wire WE1;
 wire RE2;
 wire WE2;
-and u1 (RE1, ~CSB1_i,  WEB1_i);
+and u1 (RE1, ~CSB1_i, ~OEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
-and u3 (RE2, ~CSB2_i,  WEB2_i);
+and u3 (RE2, ~CSB2_i, ~OEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
 // Initialization for simulation
@@ -5341,7 +5341,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-assign O1_i = OEB1_i ? 1'bz : data_out1;
+assign O1_i = data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -5351,7 +5351,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-assign O2_i = OEB2_i ? 1'bz : data_out2;
+assign O2_i = data_out2;
 
 endmodule
 /*********************************************************************
@@ -5432,9 +5432,9 @@ wire RE1;
 wire WE1;
 wire RE2;
 wire WE2;
-and u1 (RE1, ~CSB1_i,  WEB1_i);
+and u1 (RE1, ~CSB1_i, ~OEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
-and u3 (RE2, ~CSB2_i,  WEB2_i);
+and u3 (RE2, ~CSB2_i, ~OEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
 // Initialization for simulation
@@ -5457,7 +5457,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-assign O1_i = OEB1_i ? 1'bz : data_out1;
+assign O1_i = data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -5467,7 +5467,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-assign O2_i = OEB2_i ? 1'bz : data_out2;
+assign O2_i = data_out2;
 
 endmodule
 /*********************************************************************
@@ -5556,9 +5556,9 @@ wire RE1;
 wire WE1;
 wire RE2;
 wire WE2;
-and u1 (RE1, ~CSB1_i,  WEB1_i);
+and u1 (RE1, ~CSB1_i, ~OEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
-and u3 (RE2, ~CSB2_i,  WEB2_i);
+and u3 (RE2, ~CSB2_i, ~OEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
 // Initialization for simulation
@@ -5581,7 +5581,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-assign O1_i = OEB1_i ? 1'bz : data_out1;
+assign O1_i = data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -5591,7 +5591,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-assign O2_i = OEB2_i ? 1'bz : data_out2;
+assign O2_i = data_out2;
 
 endmodule
 /*********************************************************************
@@ -5686,9 +5686,9 @@ wire RE1;
 wire WE1;
 wire RE2;
 wire WE2;
-and u1 (RE1, ~CSB1_i,  WEB1_i);
+and u1 (RE1, ~CSB1_i, ~OEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
-and u3 (RE2, ~CSB2_i,  WEB2_i);
+and u3 (RE2, ~CSB2_i, ~OEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
 // Initialization for simulation
@@ -5711,7 +5711,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-assign O1_i = OEB1_i ? 1'bz : data_out1;
+assign O1_i = data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -5721,7 +5721,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-assign O2_i = OEB2_i ? 1'bz : data_out2;
+assign O2_i = data_out2;
 
 endmodule
 /*********************************************************************
@@ -5826,9 +5826,9 @@ wire RE1;
 wire WE1;
 wire RE2;
 wire WE2;
-and u1 (RE1, ~CSB1_i,  WEB1_i);
+and u1 (RE1, ~CSB1_i, ~OEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
-and u3 (RE2, ~CSB2_i,  WEB2_i);
+and u3 (RE2, ~CSB2_i, ~OEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
 // Initialization for simulation
@@ -5851,7 +5851,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-assign O1_i = OEB1_i ? 1'bz : data_out1;
+assign O1_i = data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -5861,7 +5861,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-assign O2_i = OEB2_i ? 1'bz : data_out2;
+assign O2_i = data_out2;
 
 endmodule
 /*********************************************************************
@@ -5967,9 +5967,9 @@ wire RE1;
 wire WE1;
 wire RE2;
 wire WE2;
-and u1 (RE1, ~CSB1_i,  WEB1_i);
+and u1 (RE1, ~CSB1_i, ~OEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
-and u3 (RE2, ~CSB2_i,  WEB2_i);
+and u3 (RE2, ~CSB2_i, ~OEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
 // Initialization for simulation
@@ -5992,7 +5992,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-assign O1_i = OEB1_i ? 1'bz : data_out1;
+assign O1_i = data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -6002,7 +6002,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-assign O2_i = OEB2_i ? 1'bz : data_out2;
+assign O2_i = data_out2;
 
 endmodule
 /*********************************************************************
@@ -6114,9 +6114,9 @@ wire RE1;
 wire WE1;
 wire RE2;
 wire WE2;
-and u1 (RE1, ~CSB1_i,  WEB1_i);
+and u1 (RE1, ~CSB1_i, ~OEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
-and u3 (RE2, ~CSB2_i,  WEB2_i);
+and u3 (RE2, ~CSB2_i, ~OEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
 // Initialization for simulation
@@ -6139,7 +6139,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-assign O1_i = OEB1_i ? 1'bz : data_out1;
+assign O1_i = data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -6149,7 +6149,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-assign O2_i = OEB2_i ? 1'bz : data_out2;
+assign O2_i = data_out2;
 
 endmodule
 /*********************************************************************
@@ -6226,9 +6226,9 @@ wire RE1;
 wire WE1;
 wire RE2;
 wire WE2;
-and u1 (RE1, ~CSB1_i,  WEB1_i);
+and u1 (RE1, ~CSB1_i, ~OEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
-and u3 (RE2, ~CSB2_i,  WEB2_i);
+and u3 (RE2, ~CSB2_i, ~OEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
 // Initialization for simulation
@@ -6251,7 +6251,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-assign O1_i = OEB1_i ? 1'bz : data_out1;
+assign O1_i = data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -6261,7 +6261,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-assign O2_i = OEB2_i ? 1'bz : data_out2;
+assign O2_i = data_out2;
 
 endmodule
 /*********************************************************************
@@ -6342,9 +6342,9 @@ wire RE1;
 wire WE1;
 wire RE2;
 wire WE2;
-and u1 (RE1, ~CSB1_i,  WEB1_i);
+and u1 (RE1, ~CSB1_i, ~OEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
-and u3 (RE2, ~CSB2_i,  WEB2_i);
+and u3 (RE2, ~CSB2_i, ~OEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
 // Initialization for simulation
@@ -6367,7 +6367,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-assign O1_i = OEB1_i ? 1'bz : data_out1;
+assign O1_i = data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -6377,7 +6377,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-assign O2_i = OEB2_i ? 1'bz : data_out2;
+assign O2_i = data_out2;
 
 endmodule
 /*********************************************************************
@@ -6466,9 +6466,9 @@ wire RE1;
 wire WE1;
 wire RE2;
 wire WE2;
-and u1 (RE1, ~CSB1_i,  WEB1_i);
+and u1 (RE1, ~CSB1_i, ~OEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
-and u3 (RE2, ~CSB2_i,  WEB2_i);
+and u3 (RE2, ~CSB2_i, ~OEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
 // Initialization for simulation
@@ -6491,7 +6491,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-assign O1_i = OEB1_i ? 1'bz : data_out1;
+assign O1_i = data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -6501,7 +6501,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-assign O2_i = OEB2_i ? 1'bz : data_out2;
+assign O2_i = data_out2;
 
 endmodule
 /*********************************************************************
@@ -6598,9 +6598,9 @@ wire RE1;
 wire WE1;
 wire RE2;
 wire WE2;
-and u1 (RE1, ~CSB1_i,  WEB1_i);
+and u1 (RE1, ~CSB1_i, ~OEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
-and u3 (RE2, ~CSB2_i,  WEB2_i);
+and u3 (RE2, ~CSB2_i, ~OEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
 // Initialization for simulation
@@ -6623,7 +6623,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-assign O1_i = OEB1_i ? 1'bz : data_out1;
+assign O1_i = data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -6633,7 +6633,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-assign O2_i = OEB2_i ? 1'bz : data_out2;
+assign O2_i = data_out2;
 
 endmodule
 /*********************************************************************
@@ -6738,9 +6738,9 @@ wire RE1;
 wire WE1;
 wire RE2;
 wire WE2;
-and u1 (RE1, ~CSB1_i,  WEB1_i);
+and u1 (RE1, ~CSB1_i, ~OEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
-and u3 (RE2, ~CSB2_i,  WEB2_i);
+and u3 (RE2, ~CSB2_i, ~OEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
 // Initialization for simulation
@@ -6763,7 +6763,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-assign O1_i = OEB1_i ? 1'bz : data_out1;
+assign O1_i = data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -6773,7 +6773,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-assign O2_i = OEB2_i ? 1'bz : data_out2;
+assign O2_i = data_out2;
 
 endmodule
 /*********************************************************************
@@ -6850,9 +6850,9 @@ wire RE1;
 wire WE1;
 wire RE2;
 wire WE2;
-and u1 (RE1, ~CSB1_i,  WEB1_i);
+and u1 (RE1, ~CSB1_i, ~OEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
-and u3 (RE2, ~CSB2_i,  WEB2_i);
+and u3 (RE2, ~CSB2_i, ~OEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
 // Initialization for simulation
@@ -6875,7 +6875,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-assign O1_i = OEB1_i ? 1'bz : data_out1;
+assign O1_i = data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -6885,7 +6885,7 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-assign O2_i = OEB2_i ? 1'bz : data_out2;
+assign O2_i = data_out2;
 
 endmodule
 /*********************************************************************
@@ -6966,9 +6966,9 @@ wire RE1;
 wire WE1;
 wire RE2;
 wire WE2;
-and u1 (RE1, ~CSB1_i,  WEB1_i);
+and u1 (RE1, ~CSB1_i, ~OEB1_i);
 and u2 (WE1, ~CSB1_i, ~WEB1_i);
-and u3 (RE2, ~CSB2_i,  WEB2_i);
+and u3 (RE2, ~CSB2_i, ~OEB2_i);
 and u4 (WE2, ~CSB2_i, ~WEB2_i);
 
 // Initialization for simulation
@@ -6991,7 +6991,7 @@ always @ (posedge CE1_i)
 		memory[A1_i] = I1_i;
 		
 
-assign O1_i = OEB1_i ? 1'bz : data_out1;
+assign O1_i = data_out1;
 
 //Dual ports	
 always @ (posedge CE2_i)
@@ -7001,6 +7001,6 @@ always @ (posedge CE2_i)
 	if (WE2)
 		memory[A2_i] = I2_i;
 		
-assign O2_i = OEB2_i ? 1'bz : data_out2;
+assign O2_i = data_out2;
 
 endmodule
