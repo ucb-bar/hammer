@@ -41,13 +41,16 @@ class OpenROADTool(HasSDCSupport, TCLTool, HammerTool):
         return reduce(add_dicts, [dict(super().env_vars)] + list_of_vars, {})
 
     def validate_openroad_installation(self) -> None:
+        # TODO: why does OPENROAD need to be an env var??
         """
         make sure OPENROAD env-var is set, and klayout is in the path (since
         klayout is not installed with OPENROAD as of version 1.1.0. this 
         should be called in steps that actually run tools or touch filepaths
         """
-        if "OPENROAD" not in os.environ:
-            raise Exception("OPENROAD is not defined in environment!")
+        # if "OPENROAD" not in os.environ:
+        #     raise Exception("OPENROAD is not defined in environment!")
+        if not shutil.which("openroad"):
+            raise Exception("openroad is not in PATH")
         if not shutil.which("klayout"):
             raise Exception("klayout is not in PATH")
 
@@ -146,9 +149,10 @@ class OpenROADSynthesisTool(HammerSynthesisTool, OpenROADTool):
     #=========================================================================
     # overrides from parent classes
     #=========================================================================
-    @property
-    def post_synth_sdc(self) -> Optional[str]:
-        return None
+    # @property
+    # don't overrride this!
+    # def post_synth_sdc(self) -> Optional[str]:
+    #     return None
 
     #=========================================================================
     # OpenROAD synthesis-specific stuff
