@@ -246,6 +246,7 @@ class HammerDriver:
         syn_tool.run_dir = run_dir
         syn_tool.hierarchical_mode = HierarchicalMode.from_str(
             self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+        syn_tool.hierarchical_settings = self.get_hierarchical_settings()
         syn_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
         syn_tool.top_module = self.database.get_setting("synthesis.inputs.top_module", nullvalue="")
         syn_tool.submit_command = HammerSubmitCommand.get("synthesis", self.database)
@@ -294,6 +295,7 @@ class HammerDriver:
         par_tool.run_dir = run_dir
         par_tool.hierarchical_mode = HierarchicalMode.from_str(
             self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+        par_tool.hierarchical_settings = self.get_hierarchical_settings()
         par_tool.submit_command = HammerSubmitCommand.get("par", self.database)
 
         missing_inputs = False
@@ -380,6 +382,7 @@ class HammerDriver:
         drc_tool.set_database(self.database)
         drc_tool.hierarchical_mode = HierarchicalMode.from_str(
             self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+        drc_tool.hierarchical_settings = self.get_hierarchical_settings()
         drc_tool.submit_command = HammerSubmitCommand.get("drc", self.database)
         drc_tool.run_dir = run_dir
         # TODO hierarchical
@@ -430,6 +433,7 @@ class HammerDriver:
         lvs_tool.set_database(self.database)
         lvs_tool.hierarchical_mode = HierarchicalMode.from_str(
             self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+        lvs_tool.hierarchical_settings = self.get_hierarchical_settings()
         lvs_tool.submit_command = HammerSubmitCommand.get("lvs", self.database)
         lvs_tool.run_dir = run_dir
 
@@ -528,6 +532,7 @@ class HammerDriver:
         sim_tool.top_module = self.database.get_setting("sim.inputs.top_module", nullvalue="")
         sim_tool.hierarchical_mode = HierarchicalMode.from_str(
             self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+        sim_tool.hierarchical_settings = self.get_hierarchical_settings()
         # Special case: if non-leaf hierarchical and gate-level, append ilm sim netlists
         if sim_tool.hierarchical_mode.is_nonleaf_hierarchical() and sim_tool.level == SimulationLevel.GateLevel:
             for ilm in sim_tool.get_input_ilms():
@@ -598,6 +603,7 @@ class HammerDriver:
         power_tool.set_database(self.database)
         power_tool.hierarchical_mode = HierarchicalMode.from_str(
             self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+        power_tool.hierarchical_settings = self.get_hierarchical_settings()
         power_tool.submit_command = HammerSubmitCommand.get("power", self.database)
         power_tool.run_dir = run_dir
 

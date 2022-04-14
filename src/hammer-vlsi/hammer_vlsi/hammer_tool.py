@@ -282,6 +282,20 @@ class HammerTool(metaclass=ABCMeta):
         self.attr_setter("_hierarchical_mode", value)
 
     @property
+    def hierarchical_settings(self) -> Optional[List[Tuple[str, dict]]]:
+        try:
+            return self.attr_getter("_hierarchical_settings", None)
+        except AttributeError:
+            return None
+
+    @hierarchical_settings.setter
+    def hierarchical_settings(self, value: List[Tuple[str, dict]]) -> None:
+        if not isinstance(value, List):
+            raise TypeError("hierarchical_settings must be a list")
+        self.attr_setter("_hierarchical_settings", value)
+
+
+    @property
     def technology(self) -> hammer_tech.HammerTechnology:
         """
         Get the technology library currently in use.
@@ -1270,9 +1284,13 @@ class HammerTool(metaclass=ABCMeta):
     def get_pin_assignments(self) -> List[PinAssignment]:
         """
         Get a list of pin assignments in accordance with settings in the Hammer IR.
-        :return: A potentially empty list of PinAssigments.
+        :return: A potentially empty list of PinAssignments.
         """
-        pin_mode = str(self.get_setting("vlsi.inputs.pin_mode"))  # type: str
+        return self.get_pin_assignments_from_dict(self._database)
+
+    def get_pin_assignments_from_dict(self, settings: Dict) -> List[PinAssignment]:
+        print(f"pin_dict:{settings}")
+        pin_mode = str(settings.get("vlsi.inputs.pin_mode"))  # type: str
         if pin_mode == "none":
             return []
         elif pin_mode == "generated":
@@ -1282,14 +1300,14 @@ class HammerTool(metaclass=ABCMeta):
                 "Invalid pin_mode {mode}. Using none pin mode.".format(mode=pin_mode))
             return []
 
-        generate_mode = str(self.get_setting("vlsi.inputs.pin.generate_mode"))
+        generate_mode = str(settings.get("vlsi.inputs.pin.generate_mode"))
         if generate_mode not in ("full_auto", "semi_auto"):
             raise ValueError("Invalid generate_mode {}".format(generate_mode))
         semi_auto = generate_mode == "semi_auto"
 
         # Generated pin mode needs to ingest the assignments
         assigns = []  # type: List[PinAssignment]
-        for raw_assign in self.get_setting("vlsi.inputs.pin.assignments"):
+        for raw_assign in settings.get("vlsi.inputs.pin.assignments"):
             try:
                 pin = PinAssignment.from_dict(raw_assign, semi_auto)
             except PinAssignmentSemiAutoError as e:
