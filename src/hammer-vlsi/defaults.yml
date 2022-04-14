@@ -203,6 +203,7 @@ vlsi.inputs:
     # syn - stop submodule after synthesis to generate submodule collateral
     # blackbox - use given SDC constraints and placement constraints to create a blackbox for this submodule without running any tools
     module_fidelity: []
+    output_module_fidelity: ["synthesis", "placement", "clocktree", "route", "full"]
 
     # Manual hierarchical constraints. Overrides generic constraints on a per module basis.
     # Should be a list along the lines of [{"module1": <list of other hammer constraints>}].
