@@ -20,6 +20,37 @@ from decimal import Decimal
 import math
 import string
 
+
+# Fidelty types for sub-block collateral
+class FidelityType(Enum):
+    Blackbox = 1
+    Synthesis= 2
+    Placement = 3
+    ClockTree = 4
+    Route = 5
+    Full = 6
+
+    @classmethod
+    def __mapping(cls) -> Dict[str, "FidelityType"]:
+        return {
+            "blackbox": FidelityType.Blackbox,
+            "synthesis": FidelityType.Synthesis,
+            "placement": FidelityType.Placement,
+            "clocktree": FidelityType.ClockTree,
+            "route": FidelityType.Route,
+            "full": FidelityType.Full
+        }
+
+    @staticmethod
+    def from_str(input_str: str) -> "FidelityType":
+        try:
+            return FidelityType.__mapping()[input_str]
+        except KeyError:
+            raise ValueError("Invalid fidelity type: " + str(input_str))
+
+    def __str__(self) -> str:
+        return reverse_dict(FidelityType.__mapping())[self]
+
 # Struct that holds various paths related to ILMs.
 class ILMStruct(NamedTuple('ILMStruct', [
     ('dir', str),
@@ -29,7 +60,7 @@ class ILMStruct(NamedTuple('ILMStruct', [
     ('gds', str),
     ('netlist', str),
     ('sim_netlist', Optional[str]),
-    ('fidelity', str),
+    ('fidelity', FidelityType),
     ('blackbox_sdc', Optional[str])
 ])):
     __slots__ = ()
@@ -61,7 +92,7 @@ class ILMStruct(NamedTuple('ILMStruct', [
             gds=str(ilm["gds"]),
             netlist=str(ilm["netlist"]),
             sim_netlist=ilm.get("sim_netlist"),
-            fidelity=str(ilm["fidelity"]),
+            fidelity=FidelityType.from_str(str(ilm["fidelity"])),
             blackbox_sdc=ilm.get("blackbox_sdc")
         )
 
