@@ -76,9 +76,9 @@ end
 
 always @ (posedge CE) begin
 	if (RE)
-		data_out = memory[A];
+		data_out <= memory[A];
 	if (WE)
-		memory[A] = I;
+		memory[A] <= I;
 end
 
 assign O = data_out;
@@ -134,16 +134,16 @@ end
 
 always @ (posedge CE1) begin
 	if (RE1)
-		data_out1 = memory[A1];
+		data_out1 <= memory[A1];
 	if (WE1)
-		memory[A1] = I1;
+		memory[A1] <= I1;
 end
 
 always @ (posedge CE2) begin
 	if (RE2)
-		data_out2 = memory[A2];
+		data_out2 <= memory[A2];
 	if (WE2)
-		memory[A2] = I2;
+		memory[A2] <= I2;
 end
 
 assign O1 = data_out1;
