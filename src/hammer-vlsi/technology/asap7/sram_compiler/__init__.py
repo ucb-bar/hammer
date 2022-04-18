@@ -45,10 +45,6 @@ class ASAP7SRAMGenerator(HammerSRAMGeneratorTool):
                 f.write("""
 `timescale 1ns/100fs
 
-`define numAddr {NUMADDR}
-`define numWords {NUMWORDS}
-`define wordLength {WORDLENGTH}
-
 module {NAME} (A,CE,WEB,OEB,CSB,I,O);
 
 input 				CE;
@@ -56,13 +52,13 @@ input 				WEB;
 input 				OEB;
 input 				CSB;
 
-input 	[`numAddr-1:0] 		A;
-input 	[`wordLength-1:0] 	I;
-output 	[`wordLength-1:0] 	O;
+input 	[{NUMADDR}-1:0] 		A;
+input 	[{WORDLENGTH}-1:0] 	I;
+output 	[{WORDLENGTH}-1:0] 	O;
 
-reg     [`wordLength-1:0]	memory[`numWords-1:0];
-reg  	[`wordLength-1:0]	data_out;
-wire 	[`wordLength-1:0] 	O;
+reg     [{WORDLENGTH}-1:0]	memory[{NUMWORDS}-1:0];
+reg  	[{WORDLENGTH}-1:0]	data_out;
+wire 	[{WORDLENGTH}-1:0] 	O;
 
 wire 				RE;
 wire 				WE;
@@ -72,10 +68,10 @@ and u2 (WE, ~CSB, ~WEB);
 // Initialization for simulation
 integer i;
 initial begin
-    for (i = 0; i < `numWords; i = i + 1) begin
-        memory[i] = $urandom_range(2**`wordLength-1);
+    for (i = 0; i < {NUMWORDS}; i = i + 1) begin
+        memory[i] = $urandom_range(2**{WORDLENGTH}-1);
     end
-    data_out = $urandom_range(2**`wordLength-1);
+    data_out = $urandom_range(2**{WORDLENGTH}-1);
 end
 
 always @ (posedge CE) begin
@@ -93,10 +89,6 @@ endmodule
                 f.write("""
 `timescale 1ns/100fs
 
-`define numAddr {NUMADDR}
-`define numWords {NUMWORDS}
-`define wordLength {WORDLENGTH}
-
 module {NAME} (A1,A2,CE1,CE2,WEB1,WEB2,OEB1,OEB2,CSB1,CSB2,I1,I2,O1,O2);
 
 input 				CE1;
@@ -108,18 +100,18 @@ input 				OEB2;
 input 				CSB1;
 input 				CSB2;
 
-input 	[`numAddr-1:0] 		A1;
-input 	[`numAddr-1:0] 		A2;
-input 	[`wordLength-1:0] 	I1;
-input 	[`wordLength-1:0] 	I2;
-output 	[`wordLength-1:0] 	O1;
-output 	[`wordLength-1:0] 	O2;
+input 	[{NUMADDR}-1:0] 		A1;
+input 	[{NUMADDR}-1:0] 		A2;
+input 	[{WORDLENGTH}-1:0] 	I1;
+input 	[{WORDLENGTH}-1:0] 	I2;
+output 	[{WORDLENGTH}-1:0] 	O1;
+output 	[{WORDLENGTH}-1:0] 	O2;
 
-reg     [`wordLength-1:0]	memory[`numWords-1:0];
-reg  	[`wordLength-1:0]	data_out1;
-reg  	[`wordLength-1:0]	data_out2;
-wire 	[`wordLength-1:0] 	O1;
-wire  	[`wordLength-1:0]	O2;
+reg     [{WORDLENGTH}-1:0]	memory[{NUMWORDS}-1:0];
+reg  	[{WORDLENGTH}-1:0]	data_out1;
+reg  	[{WORDLENGTH}-1:0]	data_out2;
+wire 	[{WORDLENGTH}-1:0] 	O1;
+wire  	[{WORDLENGTH}-1:0]	O2;
 
 wire 				RE1;
 wire 				RE2;
@@ -133,11 +125,11 @@ and u4 (WE2, ~CSB2, ~WEB2);
 // Initialization for simulation
 integer i;
 initial begin
-    for (i = 0; i < `numWords; i = i + 1) begin
-        memory[i] = $urandom_range(2**`wordLength-1);
+    for (i = 0; i < {NUMWORDS}; i = i + 1) begin
+        memory[i] = $urandom_range(2**{WORDLENGTH}-1);
     end
-    data_out1 = $urandom_range(2**`wordLength-1);
-    data_out2 = $urandom_range(2**`wordLength-1);
+    data_out1 = $urandom_range(2**{WORDLENGTH}-1);
+    data_out2 = $urandom_range(2**{WORDLENGTH}-1);
 end
 
 always @ (posedge CE1) begin
