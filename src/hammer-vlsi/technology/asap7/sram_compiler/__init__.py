@@ -40,8 +40,6 @@ class ASAP7SRAMGenerator(HammerSRAMGeneratorTool):
 
         # Generate Verilog file from template
         verilog_path ="{t}/{n}.v".format(t=tech_cache_dir,n=sram_name)
-        random = "$urandom_range(2**{WORDLENGTH}-1) ".format(WORDLENGTH=params.width)
-        rand_concat = "{" + ", ".join((random*math.ceil(params.width/32)).split()) + "}"
         with open(verilog_path, 'w') as f:
             if params.family == "1RW":
                 f.write("""
@@ -71,9 +69,9 @@ and u2 (WE, ~CSB, ~WEB);
 integer i;
 initial begin
     for (i = 0; i < {NUMWORDS}; i = i + 1) begin
-        memory[i] = {RANDOMIZE}[{WORDLENGTH}-1:0];
+        memory[i] = {{{RAND_WIDTH}{{$urandom()}}}};
     end
-    data_out = {RANDOMIZE}[{WORDLENGTH}-1:0];
+    data_out = {{{RAND_WIDTH}{{$urandom()}}}};
 end
 
 always @ (posedge CE) begin
@@ -86,7 +84,7 @@ end
 assign O = data_out;
 
 endmodule
-""".format(NUMADDR=math.ceil(math.log2(params.depth)), NUMWORDS=params.depth, WORDLENGTH=params.width, NAME=sram_name, RANDOMIZE=rand_concat))
+""".format(NUMADDR=math.ceil(math.log2(params.depth)), NUMWORDS=params.depth, WORDLENGTH=params.width, NAME=sram_name, RAND_WIDTH=math.ceil(params.width/32)))
             else:
                 f.write("""
 `timescale 1ns/100fs
@@ -128,10 +126,10 @@ and u4 (WE2, ~CSB2, ~WEB2);
 integer i;
 initial begin
     for (i = 0; i < {NUMWORDS}; i = i + 1) begin
-        memory[i] = {RANDOMIZE}[{WORDLENGTH}-1:0];
+        memory[i] = {{{RAND_WIDTH}{{$urandom()}}}};
     end
-    data_out1 = {RANDOMIZE}[{WORDLENGTH}-1:0];
-    data_out2 = {RANDOMIZE}[{WORDLENGTH}-1:0];
+    data_out1 = {{{RAND_WIDTH}{{$urandom()}}}};
+    data_out2 = {{{RAND_WIDTH}{{$urandom()}}}};
 end
 
 always @ (posedge CE1) begin
@@ -152,7 +150,7 @@ assign O1 = data_out1;
 assign O2 = data_out2;
 
 endmodule
-""".format(NUMADDR=math.ceil(math.log2(params.depth)), NUMWORDS=params.depth, WORDLENGTH=params.width, NAME=sram_name, RANDOMIZE=rand_concat))
+""".format(NUMADDR=math.ceil(math.log2(params.depth)), NUMWORDS=params.depth, WORDLENGTH=params.width, NAME=sram_name, RAND_WIDTH=math.ceil(params.width/32)))
 
         #lib_path ="{t}/{n}_{c}.lib".format(t=tech_cache_dir,n=sram_name,c=corner_str)
         #if not os.path.exists(lib_path):
