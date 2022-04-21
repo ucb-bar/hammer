@@ -54,43 +54,49 @@ class FidelityType(Enum):
 # Struct that holds various paths related to ILMs.
 class ILMStruct(NamedTuple('ILMStruct', [
     ('dir', str),
-    ('data_dir', str),
+    ('data_dir', Optional[str]),
     ('module', str),
-    ('lef', str),
-    ('gds', str),
-    ('netlist', str),
+    ('lef', Optional[str]),
+    ('gds', Optional[str]),
+    ('netlist', Optional[str]),
     ('sim_netlist', Optional[str]),
     ('fidelity', FidelityType),
     ('blackbox_sdc', Optional[str])
 ])):
     __slots__ = ()
 
-    def to_setting(self) -> dict:
+    def to_dict(self) -> dict:
         output = {
             "dir": self.dir,
-            "data_dir": self.data_dir,
             "module": self.module,
-            "lef": self.lef,
-            "gds": self.gds,
-            "netlist": self.netlist,
-            "fidelity": self.fidelity,
-            "blackbox_sdc": self.blackbox_sdc
+            "fidelity": str(self.fidelity),
         }
+        if self.data_dir is not None:
+            output.update({"data_dir": self.data_dir})
+        if self.lef is not None:
+            output.update({"lef": self.lef})
+        if self.gds is not None:
+            output.update({"gds": self.gds})
+        if self.netlist is not None:
+            output.update({"netlist": self.netlist})
         if self.sim_netlist is not None:
             output.update({"sim_netlist": self.sim_netlist})
         if self.blackbox_sdc is not None:
             output.update({"blackbox_sdc": self.blackbox_sdc})
         return output
 
+    def to_setting(self) -> dict:
+        return self.to_dict()
+
     @staticmethod
     def from_setting(ilm: dict) -> "ILMStruct":
         return ILMStruct(
             dir=str(ilm["dir"]),
-            data_dir=str(ilm["data_dir"]),
+            data_dir=ilm.get("data_dir"),
             module=str(ilm["module"]),
-            lef=str(ilm["lef"]),
-            gds=str(ilm["gds"]),
-            netlist=str(ilm["netlist"]),
+            lef=ilm.get("lef"),
+            gds=ilm.get("gds"),
+            netlist=ilm.get("netlist"),
             sim_netlist=ilm.get("sim_netlist"),
             fidelity=FidelityType.from_str(str(ilm["fidelity"])),
             blackbox_sdc=ilm.get("blackbox_sdc")

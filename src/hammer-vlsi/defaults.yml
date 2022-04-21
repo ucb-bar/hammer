@@ -210,7 +210,7 @@ vlsi.inputs:
     # For example [{"mod1": [vlsi.inputs.default_output_load: 2], "mod2": [vlsi.inputs.clocks:<clock constraints>] }].
     constraints: []
 
-  # ILMs for hierarchical mode.
+  # ILMs for hierarchical mode. The optionality of the values in the struct depends on the fidelity
   # ILM struct (ILMStruct) members:
   # dir (str) - directory to the ILMs (...ILMDir)
   # data_dir (str) - data directory to the ILMs (...ILMDir/mmmc/...)
@@ -219,6 +219,7 @@ vlsi.inputs:
   # gds (str) - path to the GDS file
   # netlist (str) - path to the netlist file
   # sim_netlist (str) - Optional. If specified, this netlist is appended for hierarchical simulation
+  # fidelity (enum) - One of: blackbox, synthesis, placement, clocktree, route, full
   ilms: []
 
   # Multi-mode multi-corner setups, overrides supplies
