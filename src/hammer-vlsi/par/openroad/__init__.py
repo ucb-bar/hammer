@@ -5,6 +5,8 @@
 #
 # See LICENSE for licence details.
 
+# NOTE: any hard-coded values are from OpenROAD example flow
+
 import glob
 import os
 from textwrap import dedent as dd
@@ -13,7 +15,7 @@ from decimal import Decimal
 
 from hammer_logging import HammerVLSILogging
 from hammer_utils import deepdict, optional_map
-from hammer_vlsi import HammerTool, HammerPlaceAndRouteTool, HammerToolStep, HammerToolHookAction, MMMCCornerType, PlacementConstraintType
+from hammer_vlsi import HammerTool, HammerPlaceAndRouteTool, HammerToolStep, HammerToolHookAction, MMMCCornerType, PlacementConstraintType, TCLTool
 from hammer_vlsi.constraints import MMMCCorner, MMMCCornerType
 from hammer_vlsi.vendor import OpenROADTool, OpenROADPlaceAndRouteTool
 
@@ -22,8 +24,10 @@ from hammer_tech import RoutingDirection
 import specialcells
 from specialcells import CellType, SpecialCell
 
+# TODO: replace all $::env(HAMMER_HOME) with keys from hammer
 
-class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
+
+class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
 
     #=========================================================================
     # overrides from parent classes
@@ -33,16 +37,17 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         return self.make_steps_from_methods([
             self.init_design,
             self.floorplan_design,
-            self.place_bumps, # nop
             self.place_tap_cells, 
             self.power_straps, 
+            self.global_placement,
             self.place_pins, 
             self.place_opt_design,
             self.clock_tree,
             self.add_fillers, 
             self.route_design,
-            self.opt_design, 
-            self.write_regs, # nop
+            # self.opt_design, 
+            # self.write_regs, # nop
+            self.extraction,
             self.write_design,
         ])
 
@@ -140,6 +145,10 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     def block_append(self,commands) -> bool:
         for line in commands.split('\n'):
             self.append(line.strip())
+            # if line.strip().startswith('#') or (line==""):
+            #     self.append(line.strip())
+            # else:
+            #     self.verbose_append(line.strip())
         return True
 
     def fill_outputs(self) -> bool:
@@ -180,9 +189,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         par_tcl_filename = os.path.join(self.run_dir, "par.tcl")
         with open(par_tcl_filename, "w") as f:
             f.write("\n".join(self.output))
-
-        # Make sure that generated-scripts exists.
-        os.makedirs(self.generated_scripts_dir, exist_ok=True)
 
         # Create open_chip script pointing to latest (symlinked to post_<last ran step>).
         with open(self.open_chip_tcl, "w") as f:
@@ -284,7 +290,9 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             
             self.append(f"define_corners {' '.join(corner_names)}")
             for corner,corner_name in zip(corners,corner_names):
-                self.append(f"read_liberty -corner {corner_name} {self.get_timing_libs(corner)}")
+                lib_files=self.get_timing_libs(corner)
+                for lib_file in lib_files.split():
+                    self.verbose_append(f"read_liberty -corner {corner_name} {lib_file}")
         self.append("")
 
     def convert_units(self,prefix) -> str:
@@ -307,37 +315,11 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         # overwrite SDC file to exclude group_path command
         # change units in SDC file (1000.0fF and 1000.0ps cause errors)
         # TODO: make this more elegant
-        with open(self.post_synth_sdc,'r') as f_old:
-            lines=f_old.readlines()
-            sdc_filename=self.post_synth_sdc.split("/")[-1]
-            new_post_synth_sdc = f"{self.run_dir}/{sdc_filename}"
-            with open(new_post_synth_sdc,'w') as f_new:
-                i = 0
-                while i < len(lines):
-                    line = lines[i]
-                    words = line.strip().split()
-                    if line.startswith("set_units") and len(words) >= 3:
-                        value=words[2].split('.')[0]
-                        units=words[2].replace('.','')
-                        for c in value:
-                            if not c.isnumeric():
-                                value=value.replace(v,'')
-                        for c in units:
-                            if c.isnumeric():
-                                units=units.replace(c,'')
-                        if value == '1000' and len(units) >= 2:
-                            value='1'
-                            units=self.convert_units(units[0])+units[1:]
-                        line=f"set_units {words[1]} {value}{units}\n"
-                    if line.startswith("group_path"):
-                        while (lines[i].strip().endswith('\\') and i < len(lines)-1):
-                            i=i+1
-                    else:
-                        f_new.write(line)
-                    i=i+1
         
-        self.post_synth_sdc = new_post_synth_sdc
-        self.append(f"read_sdc {self.post_synth_sdc}\n")
+        sdc_files = self.generate_sdc_files()
+        for sdc_file in sdc_files:
+            self.append(f"read_sdc -echo {sdc_file}")
+
         return True
 
     #========================================================================
@@ -357,31 +339,31 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         return True
 
     def floorplan_design(self) -> bool:
+        # TODO: place macros
+        floorplan_tcl_path = os.path.join(self.run_dir, "floorplan.tcl")
+        with open(floorplan_tcl_path, "w") as f:
+            # print(self.create_floorplan_tcl())
+            f.write("\n".join(self.create_floorplan_tcl()))
+
+        self.block_append(f"""
+        ################################################################
+        # Floorplan Design
+        source -echo -verbose {floorplan_tcl_path}
+        # source $::env(HAMMER_HOME)/src/hammer-vlsi/technology/sky130/extra/sky130hd.tracks
+
+        # remove buffers inserted by synthesis 
+        remove_buffers
+
+        # IO Placement (random)
+        {self.place_pins_tcl(random=True)}
+        """)
+        
         # TODO: macro placement
         # Macro Placement
         # if { [have_macros] } {
         #   global_placement -density $global_place_density
         #   macro_placement -halo $macro_place_halo -channel $macro_place_channel
         # }
-
-        floorplan_tcl_path = os.path.join(self.run_dir, "floorplan.tcl")
-        with open(floorplan_tcl_path, "w") as f:
-            f.write("\n".join(self.create_floorplan_tcl()))
-        self.append(f"source -echo -verbose {floorplan_tcl_path}\n")
-
-        # initialize_floorplan removes existing tracks --> use the make_tracks command to add routing tracks to a floorplan (with no arguments it uses default from tech LEF)
-        layers = self.get_setting("par.generate_power_straps_options.by_tracks.strap_layers")
-        for metal in self.get_stackup().metals:
-            self.append(f"make_tracks {metal.name}")
-
-        self.block_append("""
-        # remove buffers inserted by synthesis 
-        remove_buffers
-        """)
-        return True
-
-    def place_bumps(self) -> bool:
-        # ???
         return True
 
     def place_tap_cells(self) -> bool:
@@ -412,18 +394,26 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         gnd_nets=self.get_all_ground_nets()
         primary_pwr_net=pwr_nets[0].name
         primary_gnd_net=gnd_nets[0].name
+        all_metal_layer_names = [layer.name for layer in self.get_stackup().metals]
 
-        std_cell_rail_layer = str(self.get_setting("technology.core.std_cell_rail_layer"))
         strap_layers = self.get_setting("par.generate_power_straps_options.by_tracks.strap_layers").copy()
-        all_metal_layers = [layer.name for layer in self.get_stackup().metals]
-        metal_pairs=""
+        std_cell_rail_layer = str(self.get_setting("technology.core.std_cell_rail_layer"))
         strap_layers.insert(0,std_cell_rail_layer)
+        
+        metal_pairs=""
         for i in range(0,len(strap_layers)-1):
             metal_pairs+=f"{{{strap_layers[i]} {strap_layers[i+1]}}} "
-        connect_tcl=f"connect {{{metal_pairs}}}"
-
-        straps_tcl=' '.join(self.create_power_straps_tcl())
         
+        global_connections_pwr=[]
+        for pwr_net in pwr_nets:
+            if pwr_net.tie is not None:
+                global_connections_pwr.append(f"\n{{inst_name .* pin_name {pwr_net.name}}}")
+        
+        global_connections_gnd=[]
+        for gnd_net in gnd_nets:
+            if gnd_net.tie is not None:
+                global_connections_gnd.append(f"\n{{inst_name .* pin_name {gnd_net.name}}}")
+
         pdn_cfg=f"""
         # Floorplan information - core boundary coordinates, std. cell row height,
         # minimum track pitch as defined in LEF
@@ -439,48 +429,38 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         set ::ground_nets "{primary_gnd_net}"
 
         set pdngen::global_connections {{
-            {primary_pwr_net} {{"""
-        
-        for pwr_net in pwr_nets:
-            if pwr_net.tie is not None:
-                pdn_cfg+=f"""
-                {{inst_name .* pin_name {pwr_net.name}}}"""
-        
-        pdn_cfg+=f"""
+            {primary_pwr_net} {{
+                {' '.join(global_connections_pwr)}
         }}
-            {primary_gnd_net} {{"""
-        for gnd_net in gnd_nets:
-            if gnd_net.tie is not None:
-                pdn_cfg+=f"""
-                {{inst_name .* pin_name {gnd_net.name}}}"""
-        pdn_cfg+="""
-            }
-        }
+            {primary_gnd_net} {{
+                {' '.join(global_connections_gnd)}
+            }}
+        }}
         ##===> Power grid strategy
         # Ensure pitches and offsets will make the stripes fall on track
-        """
-        pdn_cfg+=f"""
+
         pdngen::specify_grid stdcell {{
             name grid
             rails {{
                 met1 {{width 0.48 offset 0}}
             }}
             straps {{
-                {straps_tcl}
+                {' '.join(self.create_power_straps_tcl())}
             }}
-            {connect_tcl}
+            connect {{{metal_pairs}}}
         }}
 
         pdngen::specify_grid macro {{
             orient {{R0 R180 MX MY}}
-            power_pins  "{str(self.get_setting("technology.core.std_cell_supplies.power"))}"
-            ground_pins "{str(self.get_setting("technology.core.std_cell_supplies.ground"))}"
-            blockages "{" ".join(all_metal_layers[:-1])}"
+            power_pins  "{' '.join(self.get_setting("technology.core.std_cell_supplies.power"))}"
+            ground_pins "{' '.join(self.get_setting("technology.core.std_cell_supplies.ground"))}"
+            blockages "{" ".join(all_metal_layer_names[:-1])}"
             # TODO: where does this met4_PIN_ver come from????
             connect {{{{met4_PIN_ver met5}}}}
             # or: connect {{{{met4_PIN_hor met5}}}}
         }}
         """
+
         with open(pdn_config_path, "w") as f:
             f.write(pdn_cfg)
 
@@ -495,43 +475,11 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         """)
         return True        
 
-    def place_pins(self) -> bool:
-        # place_pins  [-hor_layers <h_layers>]
-        #             [-ver_layers <v_layers>]
-        #             [-random_seed <seed>]
-        #             [-exclude <interval>]
-        #             [-random]
-        #             [-group_pins <pins>]
-        #             [-corner_avoidance <length>]
-        #             [-min_distance <distance>]
-        #             [-min_distance_in_tracks]
-        pin_assignments = self.get_pin_assignments()
-        hor_layers=[]
-        ver_layers=[]
-        for pin in pin_assignments:
-            # if pin.side == "bottom"
-            if pin.layers is not None and len(pin.layers) > 0:
-                for pin_layer in pin.layers:
-                    layer = self.get_stackup().get_metal(pin_layer)
-                    # TODO: should we enable overriding metal layers' default routing direction?
-                    if layer.direction==RoutingDirection.Horizontal:
-                        hor_layers.append(pin_layer)
-                    if layer.direction==RoutingDirection.Vertical:
-                        ver_layers.append(pin_layer)
+    def global_placement(self) -> bool:
+        # TODO: generate sky130hd.rc ourselves
+        # TODO: try leaving out clock
+        # TODO: try without set_wire_rc
         
-        place_pins_args=""
-        # both hor_layers and ver_layers arguments are required
-        if not (hor_layers or ver_layers):
-            self.logger.error("Must specify both vertical and horizontal layers for vlsi.inputs.pin.assignments.layers Hammer key.")
-
-        self.block_append(f"""
-        ################################################################
-        # IO Placement (random)
-        place_pins -random -hor_layers {{{' '.join(hor_layers)}}} -ver_layers {{{' '.join(ver_layers)}}}
-        """)
-        return True
-
-    def place_opt_design(self) -> bool:
         self.block_append("""
         ################################################################
         # Global placement
@@ -539,28 +487,101 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         metals=self.get_stackup().metals[1:]
         for metal in metals:
             self.append(f"set_global_routing_layer_adjustment {metal.name} 0.5")
-        # any hard-coded values are from OpenROAD example flow
-        # TODO: generate sky130hd.rc ourselves
         self.block_append(f"""
         set_routing_layers -signal {metals[0].name}-{metals[-1].name} -clock met3-met5
-        global_placement -routability_driven -density 0.3 -pad_left 4 -pad_right 4
-        write_def {self.run_dir}/{self.top_module}_global_place.def
+        set_macro_extension 2
 
+        global_placement -routability_driven -density 0.3 -pad_left 4 -pad_right 4
+        """)
+
+        return True
+
+    def place_pins_tcl(self,random=False) -> str:
+        # TODO: investigate order of place_pins (i.e. ordered by port declaration??)
+        # TODO: add -group_pins flag (what happens when called for multiple groups)
+        random_arg=""
+        if random: random_arg="-random"
+
+        stackup = self.get_stackup()
+        all_metal_layer_names = [layer.name for layer in self.get_stackup().metals]
+        pin_assignments = self.get_pin_assignments()
+        hor_layers=[]
+        ver_layers=[]
+        for pin in pin_assignments:
+            if pin.layers is not None and len(pin.layers) > 0:
+                for pin_layer_name in pin.layers:
+                    layer = self.get_stackup().get_metal(pin_layer_name)
+                    if layer.direction==RoutingDirection.Horizontal:
+                        hor_layers.append(pin_layer_name)
+                    if layer.direction==RoutingDirection.Vertical:
+                        ver_layers.append(pin_layer_name)
+        
+        # both hor_layers and ver_layers arguments are required
+        # if missing, auto-choose one or both
+        if not (hor_layers and ver_layers):
+            self.logger.warning("Both horizontal and vertical pin layers should be specified. Hammer will auto-specify one or both.")
+            # choose first pin layer to be middle of stackup
+            #   or use pin layer in either hor_layers or ver_layers
+            pin_layer_names=["",""]
+            pin_layer_names[0]=all_metal_layer_names[int(len(all_metal_layer_names)/2)]
+            # pin_layer_name1=self.get_stackup().get_metal_by_index(int(len(self.get_stackup().metals)/2))
+            if (hor_layers): pin_layer_names[0]=hor_layers[0]
+            if (ver_layers): pin_layer_names[0]=ver_layers[0]
+            pin_layer_idx_1=all_metal_layer_names.index(pin_layer_names[0])
+            if (pin_layer_idx_1 < len(all_metal_layer_names)-1): 
+                pin_layer_names[1]=all_metal_layer_names[pin_layer_idx_1+1]
+            elif (pin_layer_idx_1 > 0): 
+                pin_layer_names[1]=all_metal_layer_names[pin_layer_idx_1-1]
+            else: # edge-case
+                pin_layer_names[1]=all_metal_layer_names[pin_layer_idx_1]
+            for pin_layer_name in pin_layer_names:
+                layer = self.get_stackup().get_metal(pin_layer_name)
+                if (layer.direction==RoutingDirection.Horizontal) and (pin_layer_name not in hor_layers):
+                    hor_layers.append(pin_layer_name)
+                if (layer.direction==RoutingDirection.Vertical)   and (pin_layer_name not in ver_layers):
+                    ver_layers.append(pin_layer_name)
+        return f"place_pins {random_arg} -hor_layers {{{' '.join(hor_layers)}}} -ver_layers {{{' '.join(ver_layers)}}}"
+
+    def place_pins(self) -> bool:
+        self.block_append(f"""
+        ################################################################
+        # IO Placement
+        {self.place_pins_tcl()}
+
+        write_def "{self.run_dir}/{self.top_module}_global_place.def"
+        """)
+        return True
+
+    def place_opt_design(self) -> bool:
+        self.block_append(f"""
         ################################################################
         # Repair max slew/cap/fanout violations and normalize slews
-        source "/tools/B/nayiri/openroad/gcd/sky130hd/sky130hd.rc"
+        source "$::env(HAMMER_HOME)/src/hammer-vlsi/technology/sky130/extra/sky130hd.rc"
         set_wire_rc -signal -layer "met2"
         set_wire_rc -clock  -layer "met5"
+        """)
 
+        tie_hi_cells = self.technology.get_special_cell_by_type(CellType.TieHiCell)
+        tie_lo_cells = self.technology.get_special_cell_by_type(CellType.TieLoCell)
+        tie_hilo_cells = self.technology.get_special_cell_by_type(CellType.TieHiLoCell)
+
+        if len(tie_hi_cells) != 1 or len (tie_lo_cells) != 1:
+            self.logger.warning("Hi and Lo tiecells are unspecified or improperly specified and will not be added during synthesis.")
+        else:   
+            tie_hi_cell = tie_hi_cells[0].name[0]
+            tie_hi_port = tie_hi_cells[0].input_ports[0]
+            tie_lo_cell = tie_lo_cells[0].name[0]
+            tie_lo_port = tie_lo_cells[0].input_ports[0]
+
+        self.block_append(f"""
+        ################################################################
+        # Repair max slew/cap/fanout violations and normalize slews
         set_dont_use {{{' '.join(self.get_dont_use_list())}}}
         estimate_parasitics -placement
         repair_design -slew_margin 0 -cap_margin 0
 
-        set tie_separation 5
-        set tielo_port "sky130_fd_sc_hd__conb_1/LO"
-        set tiehi_port "sky130_fd_sc_hd__conb_1/HI"
-        repair_tie_fanout -separation $tie_separation $tielo_port
-        repair_tie_fanout -separation $tie_separation $tiehi_port
+        repair_tie_fanout -separation 5 "{tie_hi_cell}/{tie_hi_port}"
+        repair_tie_fanout -separation 5 "{tie_lo_cell}/{tie_lo_port}"
 
         # default detail_place_pad value in OpenROAD = 2
         set_placement_padding -global -left 2 -right 2
@@ -591,9 +612,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
         # checkpoint
         write_def {self.run_dir}/{self.top_module}_cts.def
-        """)
 
-        self.block_append("""
         ################################################################
         # Setup/hold timing repair
 
@@ -717,14 +736,15 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         """)
         return True
 
-    def opt_design(self) -> bool:
+    def extraction(self) -> bool:
         sed_expr=r"{s/\\//g}"  # use sed find+replace to remove '\' character
+        # TODO: generate this rcx_rules file
         self.block_append(f"""
         ################################################################
         # Extraction
         define_process_corner -ext_model_index 0 X
 
-        extract_parasitics -ext_model_file /tools/B/nayiri/openroad/gcd/sky130hd/sky130hd.rcx_rules
+        extract_parasitics -ext_model_file {self.get_setting("par.inputs.openrcx_techfile")}
 
         write_spef {self.output_spef_paths}
         # remove backslashes in instances so that read_spef recognizes the instances
@@ -734,7 +754,62 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         """)
         # alternative: use global routing based parasitics inlieu of rc extraction
         #   >> estimate_parasitics -global_routing
+        return True
 
+    def write_netlist(self) -> bool:
+        # TODO: figure out how to remove physical-only cells
+        # TODO: figure out how to emit flat verilog for LVS netlist (or is it default flat)
+        self.append(f"write_verilog -include_pwr_gnd -remove_cells {self.fill_cells} {self.output_netlist_filename}")
+        return True
+
+    def write_gds(self) -> bool:
+        # for some reason this gets executed last in example in OpenROAD-flow-scripts
+        # klayout.lyt file is generated with sed command, sky130hd.lyt file is provided in OpenROAD-flow-scripts 
+        # write_gds
+        gds_files = self.technology.read_libs([
+            hammer_tech.filters.gds_filter
+        ], hammer_tech.HammerTechnologyUtils.to_plain_item)
+        if self.hierarchical_mode.is_nonleaf_hierarchical():
+            ilm_gds = list(map(lambda ilm: ilm.gds, self.get_input_ilms()))
+            gds_files.extend(ilm_gds)
+
+        klayout_techfiles = self.technology.read_libs([
+            hammer_tech.filters.klayout_techfile_filter
+        ], hammer_tech.HammerTechnologyUtils.to_plain_item)
+        klayout_techfile = klayout_techfiles[0]
+
+        self.block_append(f"""
+        # write gds
+        exec klayout -zz \\
+                -rd design_name={self.top_module} \\
+                -rd in_def={self.output_def_filename} \\
+                -rd in_files={" ".join(gds_files)} \\
+                -rd seal_file= \\
+                -rd config_file=$::env(HAMMER_HOME)/src/hammer-vlsi/technology/sky130/extra/fill.json \\
+                -rd out_file={self.output_gds_filename} \\
+                -rd tech_file={klayout_techfile} \\
+                -rm $::env(HAMMER_HOME)/src/hammer-vlsi/technology/sky130/extra/def2stream.py
+        """) 
+        # extra options:
+        #   -rd in_files="$::env(GDSOAS_FILES) $::env(WRAPPED_GDSOAS)" \: all the extra gds files (set to GDS_FILES += $(BLOCK_GDS), BLOCK_GDS += ./results/$(PLATFORM)/$(DESIGN_NICKNAME)_$(block)/$(FLOW_VARIANT)/6_final.gds)
+        #   -rd config_file=$fill_config \: ~OpenROAD-flow-scripts/flow/platforms/sky130hd/fill.json
+        #   -rd seal_file=$seal_gds \: I think we can skip??
+        return True
+
+    def write_sdf(self) -> bool:
+        corners = self.get_mmmc_corners()  
+        self.append(f"write_sdf -corner setup {self.output_sdf_path}")
+        return True
+
+    def write_spefs(self) -> bool:
+        
+        return True
+
+    def write_regs(self) -> bool:
+        # TODO: currently no analagous OpenROAD default script
+        return True
+
+    def write_reports(self) -> bool:
         # TODO: write all these to files!!!! (or process log to generate report)
         self.block_append("""
         ################################################################
@@ -762,56 +837,55 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         """)
         return True
 
-    def write_regs(self) -> bool:
-        # TODO: currently no analagous OpenROAD default script
-        return True
-
     def write_design(self) -> bool:
-        # TODO: figure out how to remove physical-only cells
-        # TODO: figure out how to emit flat verilog for LVS netlist (or is it default flat)
-        # self.write_sdf()
-        # TODO: look at IR drop analysis from ~OpenROAD-flow-scripts/flow/scripts/final_report.tcl
-        # Static IR drop analysis
-
-        # for some reason this gets executed last in example in OpenROAD-flow-scripts
-        # klayout.lyt file is generated with sed command, sky130hd.lyt file is provided in OpenROAD-flow-scripts 
-        # write_gds
-        gds_files = self.technology.read_libs([
-            hammer_tech.filters.gds_filter
-        ], hammer_tech.HammerTechnologyUtils.to_plain_item)
-        if self.hierarchical_mode.is_nonleaf_hierarchical():
-            ilm_gds = list(map(lambda ilm: ilm.gds, self.get_input_ilms()))
-            gds_files.extend(ilm_gds)
-
-        klayout_files = self.technology.read_libs([
-            hammer_tech.filters.klayout_filter
-        ], hammer_tech.HammerTechnologyUtils.to_plain_item)
-        klayout_file = klayout_files[0]
-
         self.block_append(f"""
         ################################################################
         # Write Design
-        write_def {self.output_def_filename}
-        write_verilog -include_pwr_gnd -remove_cells {self.fill_cells} {self.output_netlist_filename}
+        """)
+        self.append(f"write_def {self.output_def_filename}")
+        
+        # TODO: look at IR drop analysis from ~OpenROAD-flow-scripts/flow/scripts/final_report.tcl
+        # Static IR drop analysis
 
-        exec klayout -zz \\
-                -rd design_name={self.top_module} \\
-                -rd in_def={self.output_def_filename} \\
-                -rd in_files={" ".join(gds_files)} \\
-                -rd seal_file= \\
-                -rd config_file=/tools/B/nayiri/openroad/gcd/sky130hd/fill.json \\
-                -rd out_file={self.output_gds_filename} \\
-                -rd tech_file={klayout_file} \\
-                -rm /tools/B/nayiri/openroad/gcd/sky130hd/def2stream.py
-        """) 
-        # extra options:
-        #   -rd in_files="$::env(GDSOAS_FILES) $::env(WRAPPED_GDSOAS)" \: all the extra gds files (set to GDS_FILES += $(BLOCK_GDS), BLOCK_GDS += ./results/$(PLATFORM)/$(DESIGN_NICKNAME)_$(block)/$(FLOW_VARIANT)/6_final.gds)
-        #   -rd config_file=$fill_config \: ~OpenROAD-flow-scripts/flow/platforms/sky130hd/fill.json
-        #   -rd seal_file=$seal_gds \: I think we can skip??
-        # -rd tech_file=/tools/B/nayiri/openroad/gcd/sky130hd/klayout.lyt \\
+        # Write netlist
+        self.write_netlist()
+
+        # GDS streamout.
+        self.write_gds()
+
+        # Write SDF
+        self.write_sdf()
+
+        # Make sure that generated-scripts exists.
+        os.makedirs(self.generated_scripts_dir, exist_ok=True)
+
+        self.write_reports()
 
         self.ran_write_design=True
+
         return True
+
+    
+
+    @staticmethod
+    def generate_chip_size_constraint(width: Decimal, height: Decimal, left: Decimal, bottom: Decimal, right: Decimal,
+                                      top: Decimal, site: str) -> str:
+        """
+        Given chip width/height and margins, generate an Innovus TCL command to create the floorplan.
+        Also requires a technology specific name for the core site
+        """
+
+        return f"initialize_floorplan -site {site} -die_area {{ 0 0 {width} {height}}} -core_area {{{left} {bottom} {width-right} {height-top}}}"
+
+    def generate_make_tracks(self) -> List[str]:
+        output = []
+        # initialize_floorplan removes existing tracks 
+        #   --> use the make_tracks command to add routing tracks 
+        #       to a floorplan (with no arguments it uses default from tech LEF)
+        layers = self.get_setting("par.generate_power_straps_options.by_tracks.strap_layers")
+        for metal in self.get_stackup().metals:
+            output.append(f"make_tracks {metal.name}")
+        return output
 
     def create_floorplan_tcl(self) -> List[str]:
         """
@@ -845,17 +919,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             output.append("# Blank floorplan specified from HAMMER")
         return output
 
-    @staticmethod
-    def generate_chip_size_constraint(width: Decimal, height: Decimal, left: Decimal, bottom: Decimal, right: Decimal,
-                                      top: Decimal, site: str) -> str:
-        """
-        Given chip width/height and margins, generate an Innovus TCL command to create the floorplan.
-        Also requires a technology specific name for the core site
-        """
-
-        return f"initialize_floorplan -site {site} -die_area {{ 0 0 {width} {height}}} -core_area {{{left} {bottom} {width-right} {height-top}}}"
-
     def generate_floorplan_tcl(self) -> List[str]:
+
         """
         Generate a TCL floorplan for OpenROAD based on the input config/IR.
         Not to be confused with create_floorplan_tcl, which calls this function.
@@ -968,7 +1033,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                         ))
                 else:
                     assert False, "Should not reach here"
-        return [chip_size_constraint] + output
+            output = []
+        return [chip_size_constraint] + output + self.generate_make_tracks()
 
     def specify_std_cell_power_straps(self, blockage_spacing: Decimal, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
         """
@@ -1001,32 +1067,68 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         :return: A list of TCL commands that will generate power straps.
         """
         return [f"\n{layer_name} {{width {width} pitch {pitch} offset {offset}}}"]
+    
+    def process_sdc_file(self,post_synth_sdc) -> str:
+        # overwrite SDC file to exclude group_path command
+        # change units in SDC file (1000.0fF and 1000.0ps cause errors)
+        sdc_filename=os.path.basename(post_synth_sdc)
+        new_post_synth_sdc = f"{self.run_dir}/{sdc_filename}"
+        with open(post_synth_sdc,'r') as f_old:
+            lines=f_old.readlines()
+            with open(new_post_synth_sdc,'w') as f_new:
+                i = 0
+                while i < len(lines):
+                    line = lines[i]
+                    words = line.strip().split()
+                    if line.startswith("set_units") and len(words) >= 3:
+                        value=words[2].split('.')[0]
+                        units=words[2].replace('.','')
+                        for c in value:
+                            if not c.isnumeric():
+                                value=value.replace(v,'')
+                        for c in units:
+                            if c.isnumeric():
+                                units=units.replace(c,'')
+                        if value == '1000' and len(units) >= 2:
+                            value='1'
+                            units=self.convert_units(units[0])+units[1:]
+                        line=f"set_units {words[1]} {value}{units}\n"
+                    if line.startswith("group_path"):
+                        while (lines[i].strip().endswith('\\') and i < len(lines)-1):
+                            i=i+1
+                    else:
+                        f_new.write(line)
+                    i=i+1
+        return new_post_synth_sdc
 
+    def generate_sdc_files(self) -> List[str]:
+        sdc_files = []  # type: List[str]
 
-    # definitely the most elegant solution is to insert a synthesis hook
-#     def get_tech_syn_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
-#         hooks = {"genus": [
-#             HammerTool.make_post_insertion_hook("write_outputs", write_sdc)
-#             ]}
-#         return hooks.get(tool_name, [])
+        # Generate constraints
+        clock_constraints_fragment = os.path.join(self.run_dir, "clock_constraints_fragment.sdc")
+        with open(clock_constraints_fragment, "w") as f:
+            f.write(self.sdc_clock_constraints)
+        sdc_files.append(clock_constraints_fragment)
 
-# def write_sdc(ht: HammerTool) -> bool: 
-#     # overwrite SDC file to exclude group_path command
-#     corners = ht.get_mmmc_corners()
-#     if corners:
-#         # First setup corner is default view
-#         view_name="{cname}.setup_view".format(cname=next(filter(lambda c: c.type is MMMCCornerType.Setup, corners)).name)
-#     else:
-#         # TODO: remove hardcoded my_view string
-#         view_name = "my_view"
-#     ht.append("write_sdc -view {view} -exclude {exclude} > {file}".format(view=view_name, exclude="{group_path}", file=ht.mapped_sdc_path))
-#     # change units in SDC file (1000.0fF and 1000.0ps cause errors)
-#     return True
+        # Generate port constraints.
+        pin_constraints_fragment = os.path.join(self.run_dir, "pin_constraints_fragment.sdc")
+        with open(pin_constraints_fragment, "w") as f:
+            f.write(self.sdc_pin_constraints)
+        sdc_files.append(pin_constraints_fragment)
+
+        # Add the post-synthesis SDC, if present.
+        post_synth_sdc = self.post_synth_sdc
+        if post_synth_sdc is not None:
+            self.post_synth_sdc = self.process_sdc_file(self.post_synth_sdc)
+            sdc_files.append(self.post_synth_sdc)
+
+        return sdc_files
 
 def openroad_global_settings(ht: HammerTool) -> bool:
     """Settings that need to be reapplied at every tool invocation"""
     assert isinstance(ht, HammerPlaceAndRouteTool)
     assert isinstance(ht, OpenROADTool)
+    assert isinstance(ht, TCLTool)
     ht.create_enter_script()
 
     # Generic settings

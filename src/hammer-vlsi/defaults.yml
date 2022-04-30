@@ -598,6 +598,10 @@ par.inputs:
   # type: int
   gds_precision: 1000
 
+  # Optional: OpenRCX RC tech file
+  # type: Optional[str]
+  openrcx_techfile: null
+
 # Place-and-route settings
 par:
   # Submission command settings
@@ -783,6 +787,10 @@ technology.core:
     # Can be a wildcard/glob
     # type: str
     tap_cell_rail_reference: null
+    # Names of the power and ground rails of the standard cells
+    std_cell_supplies:
+        power: []
+        ground: []
 
 # Specific inputs for the simulation tool.
 # These inputs will vary based on if the simulation is for RTL, post synthesis, or post PAR.

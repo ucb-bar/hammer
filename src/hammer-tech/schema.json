@@ -77,6 +77,9 @@
           "lef file" : {
             "type" : "string"
           },
+          "klayout techfile" : {
+            "type" : "string"
+          },
           "spice file" : {
             "type" : "string"
           },
@@ -353,6 +356,20 @@
                "title": "string",
                "type": "string"
              }
+          },
+          "input ports": {
+            "type": "array",
+            "items": {
+              "title": "string",
+              "type": "string"
+            }
+          },
+          "output ports": {
+            "type": "array",
+            "items": {
+              "title": "string",
+              "type": "string"
+            }
           }
         }
       }

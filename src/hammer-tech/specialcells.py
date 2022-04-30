@@ -20,6 +20,8 @@ class CellType(Enum):
     StdFiller = 6
     Decap = 7
     TapCell = 8
+    Buffer = 9
+    CTSBuffer = 10
 
     @classmethod
     def __mapping(cls) -> Dict[str, "CellType"]:
@@ -31,7 +33,9 @@ class CellType(Enum):
             "iofiller": CellType.IOFiller,
             "stdfiller": CellType.StdFiller,
             "decap": CellType.Decap,
-            "tapcell": CellType.TapCell
+            "tapcell": CellType.TapCell,
+            "buffer": CellType.Buffer,
+            "ctsbuffer": CellType.CTSBuffer
         }
 
     @staticmethod
@@ -49,7 +53,9 @@ class CellType(Enum):
 class SpecialCell(NamedTuple('SpecialCell', [
         ('cell_type', CellType),
         ('name', List[str]),
-        ('size', Optional[List[str]])
+        ('size', Optional[List[str]]),
+        ('input_ports', Optional[List[str]]),
+        ('output_ports', Optional[List[str]])
 ])):
     """
     A SpecialCell is a technology cell used for non logic task (e.g. Tiecells,
@@ -68,4 +74,6 @@ class SpecialCell(NamedTuple('SpecialCell', [
             cell_type=CellType.from_str(d["cell_type"]),
             name=list(d["name"]),
             size=size,
+            input_ports=d["input_ports"],
+            output_ports=d["output_ports"],
         )
