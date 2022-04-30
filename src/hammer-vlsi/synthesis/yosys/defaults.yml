@@ -3,7 +3,7 @@
 
 synthesis.yosys:
   # Location of the binary.
-  binary: "yosys"
+  yosys_bin: "yosys"
   # this is just to make hammer happy (although, it is never called AFAICT).
   # the version is actually calculated by the OpenROADTool class
   version: "dummy-value"
