@@ -27,8 +27,9 @@ class SKY130Tech(HammerTechnology):
         self.library_name = 'sky130_fd_sc_hd'
         # check whether variables were overriden to point to a valid path
         self.use_openram = os.path.exists(self.get_setting("technology.sky130.openram_lib"))
-        self.use_nda_files = (os.path.exists(self.get_setting("technology.sky130.sky130_nda")))
+        self.use_nda_files = os.path.exists(self.get_setting("technology.sky130.sky130_nda"))
         self.setup_sram_cdl()
+        self.setup_sram_lef()
         self.setup_cdl()
         self.setup_verilog()
         self.setup_techlef()
@@ -194,6 +195,26 @@ class SKY130Tech(HammerTechnology):
                         line = line.replace('sky130_fd_pr__pfet_01v8','pshort')
                         line = line.replace('sky130_fd_pr__nfet_01v8','nshort')
                         f_new.write(line)
+
+    def setup_sram_lef(self) -> None:
+        if not self.use_openram: return
+        for sram_name in self.openram_sram_names():
+            old_path = Path(self.get_setting("technology.sky130.openram_lib")) / sram_name / f"{sram_name}.lef"
+            new_path = self.expand_tech_cache_path(f'tech-sky130-cache/{sram_name}/{sram_name}.lef')
+            if not old_path.exists():
+                raise FileNotFoundError(f"SRAM LEF file not found: {old_path}")
+            self.ensure_dirs_exist(new_path)
+            with open(old_path,'r') as f_old:
+                with open(new_path,'w') as f_new:
+                    units=False
+                    for line in f_old:
+                        if line.strip().startswith("UNITS"):
+                            units=True
+                        if line.strip().startswith("END UNITS"):
+                            units=False
+                            continue
+                        if not units:
+                            f_new.write(line)
     ''' <<<<<<< END OpenRAM SRAM-specific functions '''
 
 _the_tlef_edit = '''

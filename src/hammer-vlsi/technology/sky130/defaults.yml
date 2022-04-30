@@ -84,9 +84,15 @@ technology.core:
   std_cell_rail_layer: "met1" 
   # This is used to provide a reference master for generating standard cells
   tap_cell_rail_reference: "sky130_fd_sc_hd__tap*"
+  # default power pins are VDD/VSS
+  std_cell_supplies: 
+    power:  ["VPWR"]
+    ground: ["VGND"]
 
 par.inputs:
   gds_merge: true
   gds_map_mode: manual
   gds_map_file: "${vlsi.builtins.hammer_vlsi_path}/technology/sky130/extra/sky130_lefpin.map"
   gds_map_file_meta: lazysubst
+  openrcx_techfile: "${vlsi.builtins.hammer_vlsi_path}/technology/sky130/extra/sky130hd.rcx_rules"
+  openrcx_techfile_meta: lazysubst

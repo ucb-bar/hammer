@@ -86,7 +86,7 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
             return ExtraLibrary(prefix=None, library=Library(
                 name=sram_name,
                 nldm_liberty_file=lib_path,
-                lef_file="{b}/{n}/{n}.lef".format(b=base_dir,n=sram_name),
+                lef_file="{b}/{n}/{n}.lef".format(b=tech_cache_dir,n=sram_name),
                 gds_file="{b}/{n}/{n}.gds".format(b=base_dir,n=sram_name),
                 spice_file="{b}/{n}/{n}.lvs.sp".format(b=base_dir,n=sram_name),
                 verilog_sim="{b}/{n}/{n}.v".format(b=base_dir,n=sram_name),
