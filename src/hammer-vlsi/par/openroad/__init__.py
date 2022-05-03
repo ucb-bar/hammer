@@ -9,6 +9,9 @@
 
 import glob
 import os
+import platform
+import subprocess
+from datetime import datetime
 from textwrap import dedent as dd
 from typing import List, Optional, Dict, Any, Tuple
 from decimal import Decimal
@@ -37,15 +40,15 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         return self.make_steps_from_methods([
             self.init_design,
             self.floorplan_design,
-            self.place_tap_cells, 
-            self.power_straps, 
+            self.place_tap_cells,
+            self.power_straps,
             self.global_placement,
-            self.place_pins, 
+            self.place_pins,
             self.place_opt_design,
             self.clock_tree,
-            self.add_fillers, 
+            self.add_fillers,
             self.route_design,
-            # self.opt_design, 
+            # self.opt_design,
             # self.write_regs, # nop
             self.extraction,
             self.write_design,
@@ -129,11 +132,11 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
     @property
     def output_sim_netlist_filename(self) -> str:
         return os.path.join(self.run_dir, "{top}.sim.v".format(top=self.top_module))
-    
+
     @property
     def generated_scripts_dir(self) -> str:
         return os.path.join(self.run_dir, "generated-scripts")
-    
+
     @property
     def open_chip_script(self) -> str:
         return os.path.join(self.generated_scripts_dir, "open_chip")
@@ -141,7 +144,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
     @property
     def open_chip_tcl(self) -> str:
         return self.open_chip_script + ".tcl"
-    
+
     def block_append(self,commands) -> bool:
         for line in commands.split('\n'):
             self.append(line.strip())
@@ -176,6 +179,70 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
 
     def tool_config_prefix(self) -> str:
         return "par.openroad"
+
+    def handle_errors(self, output: str, code: int) -> bool:
+        """
+        Package a tarball of the design for submission to OpenROAD developers.
+        Based on the make <design>_issue target in OpenROAD-flow-scripts/flow/util/utils.mk
+
+        TODOs:
+        - Check error code to determine if this needs to actually be done
+        - Split par.tcl into constituent steps, conditional filter out everything after floorplan
+        - Conditional copy/sourcing of LEFs & LIBs
+        - Conditional copy of .pdn file
+        """
+        now = datetime.now().strftime("%Y-%m-%d_%H-%M")
+        tag = f"{self.top_module}_{platform.platform()}_{now}"
+        issue_dir = os.path.join(self.run_dir, tag)
+        os.mkdir(issue_dir)
+
+        # Dump the log
+        with open(os.path.join(issue_dir, f"{self.top_module}.log")) as f:
+            f.write(output)
+
+        # runme script
+        with open(os.path.join(issue_dir, "runme.sh")) as f:
+            f.write("#!/bin/bash")
+            f.write("openroad -no_init par.tcl")
+
+        # Gather files in self.run_dir
+        file_exts = [".tcl", ".sdc", ".pdn", ".lef"]
+        for match in list(filter(lambda x: any(ext in file_exts for ext in x, os.listdir(self.run_dir)))):
+            shutil.copy2(os.path.join(self.run_dir, match), os.path.join(issue_dir, match))
+
+        # Verilog
+        abspath_input_files = list(map(lambda name: os.path.join(os.getcwd(), name), self.input_files))
+        for verilog_file in abspath_input_files:
+            shutil.copy2(verilog_file, os.path.join(issue_dir, os.path.basename(verilog_file)))
+
+        # LEF
+        # This will also copy LEF files that were then hacked in read_lef() but already copied above
+        lef_files = self.technology.read_libs([
+            hammer_tech.filters.lef_filter
+        ], hammer_tech.HammerTechnologyUtils.to_plain_item)
+        if self.hierarchical_mode.is_nonleaf_hierarchical():
+            ilm_lefs = list(map(lambda ilm: ilm.lef, self.get_input_ilms()))
+            lef_files.extend(ilm_lefs)
+        for lef_file in lef_files:
+            shutil.copy2(lef_file, os.path.join(issue_dir, os.path.basename(lef_file)))
+
+        # LIB
+        corners = self.get_mmmc_corners()  # type: List[MMMCCorner]
+        for corner in corners:
+            for lib_file in self.get_timing_libs(corner).split():
+                shutil.copy2(lib_file, os.path.join(issue_dir, os.path.basename(lib_file)))
+
+        # Hack par.tcl script
+        # Remove abspaths to files since they are now in issue_dir
+        subprocess.call(["sed", "-i", "s/\(.* \)\(.*\/\)\(.*\)/\\1\\3/g", os.path.join(issue_dir, "par.tcl")])
+        # Comment out exec klayout block
+        subprocess.call(["sed", "-i", "s/\(exec klayout\|-rd\|-rm\)/# \\1/g", os.path.join(issue_dir, "par.tcl")])
+
+        # Tar up the directory
+        subprocess.call(["tar", "-zcf", f"{tag}.tar.gz", issue_dir])
+
+        return True
+
 
     #=========================================================================
     # useful subroutines
@@ -228,7 +295,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         # TODO: check that par run was successful
 
         return True
-    
+
     def get_timing_libs(self, corner: Optional[MMMCCorner] = None) -> str:
         """
         Helper function to get the list of ASCII timing .lib files in space separated format.
@@ -261,14 +328,10 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
             if lef_file_libname in lef_file_libnames:
                 lef_file_libname=f"{lef_file_libname}_{unique_id}.{lef_file_ext}"
                 new_lef_file=f"{self.run_dir}/{lef_file_libname}"
-                with open(lef_file,'r') as f_old:
-                    with open(new_lef_file,'w') as f_new:
-                        for line in f_old: 
-                            f_new.write(line)
-                lef_file=new_lef_file
+                shutil.copyfile(lef_file, new_lef_file)
                 unique_id+=1
             lef_file_libnames.append(lef_file_libname)
-            self.append(f"read_lef {lef_file}")
+            self.append(f"read_lef {new_lef_file}")
         self.append("")
         return True
 
@@ -287,7 +350,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
                 else:
                     raise ValueError("Unsupported MMMCCornerType")
                 corner_names.append(corner_name)
-            
+
             self.append(f"define_corners {' '.join(corner_names)}")
             for corner,corner_name in zip(corners,corner_names):
                 lib_files=self.get_timing_libs(corner)
@@ -310,12 +373,12 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         if prefix == 'm':
             return ''
         return ''
-        
+
     def read_sdc(self) -> bool:
         # overwrite SDC file to exclude group_path command
         # change units in SDC file (1000.0fF and 1000.0ps cause errors)
         # TODO: make this more elegant
-        
+
         sdc_files = self.generate_sdc_files()
         for sdc_file in sdc_files:
             self.append(f"read_sdc -echo {sdc_file}")
@@ -328,7 +391,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
     def init_design(self) -> bool:
         self.read_lef()
         self.read_liberty()
-        
+
         # read_verilog
         # We are switching working directories and we still need to find paths.
         abspath_input_files = list(map(lambda name: os.path.join(os.getcwd(), name), self.input_files))
@@ -351,13 +414,13 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         source -echo -verbose {floorplan_tcl_path}
         # source $::env(HAMMER_HOME)/src/hammer-vlsi/technology/sky130/extra/sky130hd.tracks
 
-        # remove buffers inserted by synthesis 
+        # remove buffers inserted by synthesis
         remove_buffers
 
         # IO Placement (random)
         {self.place_pins_tcl(random=True)}
         """)
-        
+
         # TODO: macro placement
         # Macro Placement
         # if { [have_macros] } {
@@ -399,16 +462,16 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         strap_layers = self.get_setting("par.generate_power_straps_options.by_tracks.strap_layers").copy()
         std_cell_rail_layer = str(self.get_setting("technology.core.std_cell_rail_layer"))
         strap_layers.insert(0,std_cell_rail_layer)
-        
+
         metal_pairs=""
         for i in range(0,len(strap_layers)-1):
             metal_pairs+=f"{{{strap_layers[i]} {strap_layers[i+1]}}} "
-        
+
         global_connections_pwr=[]
         for pwr_net in pwr_nets:
             if pwr_net.tie is not None:
                 global_connections_pwr.append(f"\n{{inst_name .* pin_name {pwr_net.name}}}")
-        
+
         global_connections_gnd=[]
         for gnd_net in gnd_nets:
             if gnd_net.tie is not None:
@@ -473,13 +536,13 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         # Power distribution network insertion
         pdngen -verbose {pdn_config_path}
         """)
-        return True        
+        return True
 
     def global_placement(self) -> bool:
         # TODO: generate sky130hd.rc ourselves
         # TODO: try leaving out clock
         # TODO: try without set_wire_rc
-        
+
         self.block_append("""
         ################################################################
         # Global placement
@@ -515,7 +578,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
                         hor_layers.append(pin_layer_name)
                     if layer.direction==RoutingDirection.Vertical:
                         ver_layers.append(pin_layer_name)
-        
+
         # both hor_layers and ver_layers arguments are required
         # if missing, auto-choose one or both
         if not (hor_layers and ver_layers):
@@ -528,9 +591,9 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
             if (hor_layers): pin_layer_names[0]=hor_layers[0]
             if (ver_layers): pin_layer_names[0]=ver_layers[0]
             pin_layer_idx_1=all_metal_layer_names.index(pin_layer_names[0])
-            if (pin_layer_idx_1 < len(all_metal_layer_names)-1): 
+            if (pin_layer_idx_1 < len(all_metal_layer_names)-1):
                 pin_layer_names[1]=all_metal_layer_names[pin_layer_idx_1+1]
-            elif (pin_layer_idx_1 > 0): 
+            elif (pin_layer_idx_1 > 0):
                 pin_layer_names[1]=all_metal_layer_names[pin_layer_idx_1-1]
             else: # edge-case
                 pin_layer_names[1]=all_metal_layer_names[pin_layer_idx_1]
@@ -567,7 +630,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
 
         if len(tie_hi_cells) != 1 or len (tie_lo_cells) != 1:
             self.logger.warning("Hi and Lo tiecells are unspecified or improperly specified and will not be added during synthesis.")
-        else:   
+        else:
             tie_hi_cell = tie_hi_cells[0].name[0]
             tie_hi_port = tie_hi_cells[0].input_ports[0]
             tie_lo_cell = tie_lo_cells[0].name[0]
@@ -603,10 +666,10 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         # Clock Tree Synthesis
         repair_clock_inverters
         clock_tree_synthesis -root_buf sky130_fd_sc_hd__clkbuf_1 -buf_list sky130_fd_sc_hd__clkbuf_1 -sink_clustering_enable
-        
+
         # CTS leaves a long wire from the pad to the clock tree root.
         repair_clock_nets
-        
+
         # place clock buffers
         detailed_placement
 
@@ -688,7 +751,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
 
             # TODO: INV setting: self.append("set_db add_fillers_cells \"{FILLER}\"".format(FILLER=" ".join(fill_cells)))
             # TODO: INV setting:self.append("add_fillers")
-            
+
             # Then the rest is stdfillers
             self.fill_cells = '{'+' '.join(list(map(lambda c: str(c), stdfillers[0].name)))+'}'
             self.block_append(f"""
@@ -719,7 +782,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
           fail "found $antenna_errors antenna violations"
         }}
         """)
-        
+
         self.block_append(f"""
         ################################################################
         # Detailed routing
@@ -764,7 +827,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
 
     def write_gds(self) -> bool:
         # for some reason this gets executed last in example in OpenROAD-flow-scripts
-        # klayout.lyt file is generated with sed command, sky130hd.lyt file is provided in OpenROAD-flow-scripts 
+        # klayout.lyt file is generated with sed command, sky130hd.lyt file is provided in OpenROAD-flow-scripts
         # write_gds
         gds_files = self.technology.read_libs([
             hammer_tech.filters.gds_filter
@@ -789,7 +852,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
                 -rd out_file={self.output_gds_filename} \\
                 -rd tech_file={klayout_techfile} \\
                 -rm $::env(HAMMER_HOME)/src/hammer-vlsi/technology/sky130/extra/def2stream.py
-        """) 
+        """)
         # extra options:
         #   -rd in_files="$::env(GDSOAS_FILES) $::env(WRAPPED_GDSOAS)" \: all the extra gds files (set to GDS_FILES += $(BLOCK_GDS), BLOCK_GDS += ./results/$(PLATFORM)/$(DESIGN_NICKNAME)_$(block)/$(FLOW_VARIANT)/6_final.gds)
         #   -rd config_file=$fill_config \: ~OpenROAD-flow-scripts/flow/platforms/sky130hd/fill.json
@@ -797,12 +860,12 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         return True
 
     def write_sdf(self) -> bool:
-        corners = self.get_mmmc_corners()  
+        corners = self.get_mmmc_corners()
         self.append(f"write_sdf -corner setup {self.output_sdf_path}")
         return True
 
     def write_spefs(self) -> bool:
-        
+
         return True
 
     def write_regs(self) -> bool:
@@ -843,7 +906,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         # Write Design
         """)
         self.append(f"write_def {self.output_def_filename}")
-        
+
         # TODO: look at IR drop analysis from ~OpenROAD-flow-scripts/flow/scripts/final_report.tcl
         # Static IR drop analysis
 
@@ -865,7 +928,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
 
         return True
 
-    
+
 
     @staticmethod
     def generate_chip_size_constraint(width: Decimal, height: Decimal, left: Decimal, bottom: Decimal, right: Decimal,
@@ -879,8 +942,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
 
     def generate_make_tracks(self) -> List[str]:
         output = []
-        # initialize_floorplan removes existing tracks 
-        #   --> use the make_tracks command to add routing tracks 
+        # initialize_floorplan removes existing tracks
+        #   --> use the make_tracks command to add routing tracks
         #       to a floorplan (with no arguments it uses default from tech LEF)
         layers = self.get_setting("par.generate_power_straps_options.by_tracks.strap_layers")
         for metal in self.get_stackup().metals:
@@ -1067,7 +1130,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         :return: A list of TCL commands that will generate power straps.
         """
         return [f"\n{layer_name} {{width {width} pitch {pitch} offset {offset}}}"]
-    
+
     def process_sdc_file(self,post_synth_sdc) -> str:
         # overwrite SDC file to exclude group_path command
         # change units in SDC file (1000.0fF and 1000.0ps cause errors)
