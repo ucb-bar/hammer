@@ -1027,11 +1027,10 @@ class HammerTool(metaclass=ABCMeta):
         """
         (output, returncode) = self.submit_command.submit(args, self._subprocess_env, self.logger, cwd)
 
-        if returncode >= 0: # negative number denotes killed/terminated
+        if returncode > 0: # negative number denotes killed/terminated
             self.handle_errors(output, returncode)
 
         return output
-        #return self.submit_command.submit(args, self._subprocess_env, self.logger, cwd)
 
     def handle_errors(self, output: str, code: int) -> bool:
         """
