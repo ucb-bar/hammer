@@ -115,7 +115,7 @@ The Hammer simulation tool will initialize register values in the simulation, as
 Simulation Outputs
 -------------------------------
 
-The simulation tool is able to output VCD/VPD files for the simulation. All of the relevant outputs of the simulation can be found in ``OBJ_DIR/sim-rundir/``.
+The simulation tool is able to output waveforms for the simulation. All of the relevant outputs of the simulation can be found in ``OBJ_DIR/sim-rundir/``.
 
 Simulation Commands
 -------------------------------

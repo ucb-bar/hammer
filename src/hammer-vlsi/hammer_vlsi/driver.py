@@ -1062,7 +1062,7 @@ class HammerDriver:
     @staticmethod
     def sim_output_to_power_input(output_dict: dict) -> Optional[dict]:
         """
-        Generate the VCD inputs dynamic power analysis from the
+        Generate the inputs for dynamic power analysis from the
         outputs of simulations.
         Does not merge the results with any project dictionaries.
         :param output_dict: Dict containing sim.outputs.*
