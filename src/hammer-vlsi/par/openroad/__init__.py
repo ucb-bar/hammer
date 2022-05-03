@@ -201,9 +201,11 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
             f.write(output)
 
         # runme script
-        with open(os.path.join(issue_dir, "runme.sh")) as f:
+        runme = os.path.join(issue_dir, "runme.sh")
+        with open(runme) as f:
             f.write("#!/bin/bash")
-            f.write("openroad -no_init par.tcl")
+            f.write("openroad -no_init -exit par.tcl")
+        os.chmod(runme, 0o755) # +x
 
         # Gather files in self.run_dir
         file_exts = [".tcl", ".sdc", ".pdn", ".lef"]
