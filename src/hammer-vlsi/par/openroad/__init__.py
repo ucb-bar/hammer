@@ -240,8 +240,9 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         # Comment out exec klayout block
         subprocess.call(["sed", "-i", "s/\(exec klayout\|-rd\|-rm\)/# \\1/g", os.path.join(issue_dir, "par.tcl")])
 
-        # Tar up the directory
+        # Tar up the directory, delete it
         subprocess.call(["tar", "-zcf", f"{tag}.tar.gz", issue_dir])
+        shutil.rmtree(issue_dir)
 
         return True
 
