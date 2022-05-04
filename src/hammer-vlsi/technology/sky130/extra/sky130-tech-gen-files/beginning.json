@@ -1,0 +1,26 @@
+{
+  "name": "Skywater 130nm Library",
+  "grid_unit": "0.001",
+  "time_unit": "1 ns",
+  "installs": [
+    {
+      "path": "$SKY130A",
+      "base var": "technology.sky130.sky130A"
+    },
+    {
+      "path": "tech-sky130-cache",
+      "base var": ""
+    }
+  ],
+  "libraries": [
+    {
+      "lef file": "tech-sky130-cache/sky130_fd_sc_hd.tlef",
+      "verilog sim": "tech-sky130-cache/primitives.v",
+      "provides": [
+        {
+          "lib_type": "technology"
+        }
+      ]
+    }
+  ]
+}

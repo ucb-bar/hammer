@@ -1688,12 +1688,10 @@ class HammerASAP7SRAMGeneratorToolTest(unittest.TestCase):
           # Should have an sram for each corner(2) and parameter(2) for a total of 4
           self.assertEqual(len(output_libs),4)
           libs = list(map(lambda ex: ex.library, output_libs)) # type: List[Library]
-          lib_names = list(map(lambda lib: lib.nldm_liberty_file, libs)) # type: ignore # These are actually List[str]
-          self.assertEqual(set(lib_names), set([
-            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM2RW32x32_PVT_0P63V_100C.lib"),
-            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM2RW32x32_PVT_0P77V_0C.lib"),
-            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM1RW64x128_PVT_0P63V_100C.lib"),
-            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM1RW64x128_PVT_0P77V_0C.lib")]))
+          verilog_names = list(map(lambda lib: lib.verilog_sim, libs)) # type: ignore # These are actually List[str]
+          self.assertEqual(set(verilog_names), set([
+            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM2RW32x32.v"),
+            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM1RW64x128.v")]))
 
 class HammerPCBDeliverableToolTestContext:
     def __init__(self, test: unittest.TestCase) -> None:
