@@ -388,11 +388,18 @@ foo:
   "foo.bar.meta_test_meta": "prependlocal"
 }
 """, is_yaml=False, path="meta/config/path")
-        db.update_core([base, meta])
+        array = hammer_config.load_config_from_string("""
+foo:
+    bar:
+        array_test: ["local_path", "express_path"]
+        array_test_meta: prependlocal
+""", is_yaml=True, path="array/config/path")
+        db.update_core([base, meta, array])
         self.assertEqual(db.get_setting("foo.bar.dac"), "current_weighted")
         self.assertEqual(db.get_setting("foo.bar.dsl"), ["scala", "python"])
         self.assertEqual(db.get_setting("foo.bar.base_test"), "base/config/path/local_path")
         self.assertEqual(db.get_setting("foo.bar.meta_test"), "meta/config/path/local_path")
+        self.assertEqual(db.get_setting("foo.bar.array_test"), ["array/config/path/local_path", "array/config/path/express_path"])
 
     def test_meta_transclude(self) -> None:
         """
@@ -530,13 +537,13 @@ foo:
 """, is_yaml=True, path="base/config/path")
         meta = hammer_config.load_config_from_string("""
 {
-  "foo.bar.meta_test": "${foo.bar.base_test}",
+  "foo.bar.meta_test": ["${foo.bar.base_test}", "express_path"],
   "foo.bar.meta_test_meta": ["subst", "prependlocal"]
 }
 """, is_yaml=False, path="meta/config/path")
         db.update_core([base, meta])
         self.assertEqual(db.get_setting("foo.bar.base_test"), "local_path")
-        self.assertEqual(db.get_setting("foo.bar.meta_test"), "meta/config/path/local_path")
+        self.assertEqual(db.get_setting("foo.bar.meta_test"), ["meta/config/path/local_path", "meta/config/path/express_path"])
 
     def test_multiple_lazy_metas(self) -> None:
         """
