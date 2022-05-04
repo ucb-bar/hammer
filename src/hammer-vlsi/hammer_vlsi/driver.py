@@ -1284,6 +1284,24 @@ class HammerDriver:
 
             hier_placement_constraints = {key: list(map(partial(PlacementConstraint.from_masters_and_dict, masters), lst))
                                           for key, lst in combined_raw_placement_dict.items()}
+            # Iterate over project configs to find which ones contain hierarchical constraints
+            # For each file that does append its path to the special key in the extracted
+            # hierarchical constraints section.
+            hier_constraint_source = ""  # type: str
+            for project_conf in self.project_configs:
+                if "vlsi.inputs.hierarchical.constraints" in project_conf:
+                    hier_constraint_source = project_conf[hammer_config._CONFIG_PATH_KEY]
+                    pc = project_conf["vlsi.inputs.hierarchical.constraints"]  # type: List[Dict]
+                    # Add CONFIG_PATH_KEY to actual project configs for each project config's hierarchical constraint
+                    # keys then update project configs at the end
+                    for md in pc:
+                        md  # one entry dict with a list
+                        for m in md.keys():
+                            if hammer_config._CONFIG_PATH_KEY in md[m][-1]:
+                                pass
+                            else:
+                                md[m].append({hammer_config._CONFIG_PATH_KEY: hier_constraint_source})
+            self.update_project_configs(self.project_configs)
             list_of_hier_constraints = self.database.get_setting(
                     "vlsi.inputs.hierarchical.constraints") # type: List[Dict]
             hier_constraints = reduce(add_dicts, list_of_hier_constraints, {})
