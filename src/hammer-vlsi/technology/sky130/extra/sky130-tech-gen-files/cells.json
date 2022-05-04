@@ -1,0 +1,18 @@
+{
+  "physical only cells list": [
+    "sky130_fd_sc_hd__tap_1", "sky130_fd_sc_hd__tap_2", "sky130_fd_sc_hd__tapvgnd_1", "sky130_fd_sc_hd__tapvpwrvgnd_1",
+    "sky130_fd_sc_hd__fill_1", "sky130_fd_sc_hd__fill_2", "sky130_fd_sc_hd__fill_4", "sky130_fd_sc_hd__fill_8", 
+    "sky130_fd_sc_hd__diode_2"
+  ],
+  "dont use list": [
+    "*sdf*",
+    "sky130_fd_sc_hd__probe_p_8"
+  ],
+  "special cells": [
+    {"cell_type": "tiehilocell",    "name": ["sky130_fd_sc_hd__conb_1"]},
+    {"cell_type": "endcap",         "name": ["sky130_fd_sc_hd__tap_1"]},
+    {"cell_type": "tapcell",        "name": ["sky130_fd_sc_hd__tapvpwrvgnd_1"]},
+    {"cell_type": "stdfiller",      "name": ["sky130_fd_sc_hd__fill_1", "sky130_fd_sc_hd__fill_2", "sky130_fd_sc_hd__fill_4", "sky130_fd_sc_hd__fill_8"]},
+    {"cell_type": "decap",          "name": ["sky130_fd_sc_hd__decap_3", "sky130_fd_sc_hd__decap_4", "sky130_fd_sc_hd__decap_6", "sky130_fd_sc_hd__decap_8", "sky130_fd_sc_hd__decap_12"]}    
+  ]
+}

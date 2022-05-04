@@ -37,7 +37,7 @@ Simulation Input Keys
 
     * ``waveforms`` ([str])
 
-        * List of paths to VCD waveforms to be used for dynamic power analysis. Paths may be relative to the directory in which ``hammer-vlsi`` is called.
+        * List of paths to waveforms to be used for dynamic power analysis. Paths may be relative to the directory in which ``hammer-vlsi`` is called.
 
     * ``start_times`` ([TimeValue])
 

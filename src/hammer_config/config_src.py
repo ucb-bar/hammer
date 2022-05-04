@@ -117,9 +117,22 @@ def deepsubst_local(path: str, params: MetaDirectiveParams) -> str:
     # "If a component is an absolute path, all previous components are thrown away and joining continues from the absolute path component."
     return os.path.join(params.meta_path, path)
 
+def deepsubst_transclude(path: str, params: MetaDirectiveParams) -> str:
+    """
+    Load the path given as the new value of this key
+
+    :param path: The string path to the file to be included
+    :param params: The MetaDirectiveParams which contain the local path.
+    :return: The contents of the file at path
+    """
+    with open(path, "r") as f:
+        file_contents = str(f.read())
+    return file_contents
+
 DeepSubstMetaDirectives = {
     "cwd": deepsubst_cwd,
-    "local": deepsubst_local
+    "local": deepsubst_local,
+    "transclude": deepsubst_transclude
 }  # type: Dict[str, Callable[[str, MetaDirectiveParams], str]]
 
 @lru_cache(maxsize=2)
@@ -372,7 +385,13 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
 
     def prependlocal_action(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
         """Prepend the local path of the config dict."""
-        config_dict[key] = os.path.join(params.meta_path, str(value))
+        if isinstance(value, list):
+            new_values = []
+            for v in value:
+                new_values.append(os.path.join(params.meta_path, str(v)))
+            config_dict[key] = new_values
+        else:
+            config_dict[key] = os.path.join(params.meta_path, str(value))
 
     def prependlocal_rename(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[
         Tuple[Any, str]]:
