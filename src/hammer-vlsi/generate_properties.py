@@ -217,6 +217,16 @@ def main(args) -> int:
                                 ],
                                 outputs=[]
                                 )
+    HammerFormalTool = Interface(module="HammerFormalTool",
+                            filename="hammer_vlsi/hammer_vlsi_impl.py",
+                            inputs=[
+                                InterfaceVar("algorithms", "List[str]",
+                                    "list of formal verification algorithms to run"),
+                                InterfaceVar("input_files", "List[str]",
+                                    "input collection of implementation design files")
+                            ],
+                            outputs=[]
+                            )
     HammerPCBDeliverableTool = Interface(module="HammerPCBDeliverableTool",
                                        filename="hammer_vlsi/hammer_vlsi_impl.py",
                                        inputs=[],
@@ -238,6 +248,7 @@ def main(args) -> int:
     generate_interface(HammerSRAMGeneratorTool)
     generate_interface(HammerSimTool)
     generate_interface(HammerPowerTool)
+    generate_interface(HammerFormalTool)
     generate_interface(HammerPCBDeliverableTool)
 
     if selected_file == "":

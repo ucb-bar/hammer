@@ -378,7 +378,6 @@ class HammerSynthesisTool(HammerTool):
         self.attr_setter("_sdf_file", value)
 
     ### END Generated interface HammerSynthesisTool ###
-    ### Generated interface HammerSynthesisTool ###
 
 
 class HammerPlaceAndRouteTool(HammerTool):
@@ -1303,7 +1302,6 @@ class HammerSimTool(HammerTool):
         self.attr_setter("_output_saifs", value)
 
     ### END Generated interface HammerSimTool ###
-    ### Generated interface HammerSimTool ###
 
 class HammerPowerTool(HammerTool):
 
@@ -1393,7 +1391,55 @@ class HammerPowerTool(HammerTool):
 
     ### Outputs ###
     ### END Generated interface HammerPowerTool ###
-    ### Generated interface HammerPowerTool ###
+
+class HammerFormalTool(HammerTool):
+
+    ### Generated interface HammerFormalTool ###
+    ### DO NOT MODIFY THIS CODE, EDIT generate_properties.py INSTEAD ###
+    ### Inputs ###
+
+    @property
+    def algorithms(self) -> List[str]:
+        """
+        Get the list of formal verification algorithms to run.
+
+        :return: The list of formal verification algorithms to run.
+        """
+        try:
+            return self.attr_getter("_algorithms", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the list of formal verification algorithms to run yet")
+
+    @algorithms.setter
+    def algorithms(self, value: List[str]) -> None:
+        """Set the list of formal verification algorithms to run."""
+        if not (isinstance(value, List)):
+            raise TypeError("algorithms must be a List[str]")
+        self.attr_setter("_algorithms", value)
+
+
+    @property
+    def input_files(self) -> List[str]:
+        """
+        Get the input collection of implementation design files.
+
+        :return: The input collection of implementation design files.
+        """
+        try:
+            return self.attr_getter("_input_files", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the input collection of implementation design files yet")
+
+    @input_files.setter
+    def input_files(self, value: List[str]) -> None:
+        """Set the input collection of implementation design files."""
+        if not (isinstance(value, List)):
+            raise TypeError("input_files must be a List[str]")
+        self.attr_setter("_input_files", value)
+
+
+    ### Outputs ###
+    ### END Generated interface HammerFormalTool ###
 
 class HasUPFSupport(HammerTool):
     """Mix-in trait with functions useful for tools with UPF style power
