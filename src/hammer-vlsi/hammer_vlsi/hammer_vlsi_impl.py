@@ -1399,23 +1399,23 @@ class HammerFormalTool(HammerTool):
     ### Inputs ###
 
     @property
-    def algorithms(self) -> List[str]:
+    def check(self) -> str:
         """
-        Get the list of formal verification algorithms to run.
+        Get the formal verification check type to run.
 
-        :return: The list of formal verification algorithms to run.
+        :return: The formal verification check type to run.
         """
         try:
-            return self.attr_getter("_algorithms", None)
+            return self.attr_getter("_check", None)
         except AttributeError:
-            raise ValueError("Nothing set for the list of formal verification algorithms to run yet")
+            raise ValueError("Nothing set for the formal verification check type to run yet")
 
-    @algorithms.setter
-    def algorithms(self, value: List[str]) -> None:
-        """Set the list of formal verification algorithms to run."""
-        if not (isinstance(value, List)):
-            raise TypeError("algorithms must be a List[str]")
-        self.attr_setter("_algorithms", value)
+    @check.setter
+    def check(self, value: str) -> None:
+        """Set the formal verification check type to run."""
+        if not (isinstance(value, str)):
+            raise TypeError("check must be a str")
+        self.attr_setter("_check", value)
 
 
     @property
@@ -1436,6 +1436,26 @@ class HammerFormalTool(HammerTool):
         if not (isinstance(value, List)):
             raise TypeError("input_files must be a List[str]")
         self.attr_setter("_input_files", value)
+
+
+    @property
+    def top_module(self) -> str:
+        """
+        Get the top RTL module.
+
+        :return: The top RTL module.
+        """
+        try:
+            return self.attr_getter("_top_module", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the top RTL module yet")
+
+    @top_module.setter
+    def top_module(self, value: str) -> None:
+        """Set the top RTL module."""
+        if not (isinstance(value, str)):
+            raise TypeError("top_module must be a str")
+        self.attr_setter("_top_module", value)
 
 
     ### Outputs ###

@@ -981,10 +981,16 @@ power.submit:
 # Specific inputs for the formal tool.
 # These may vary based on the specific tool plugin
 formal.inputs:
-  # Algorithms to run. Support varies based on the specific tool plugin.
-  # Valid options: lec
-  # type: List[str]
-  algorithms: ["lec"]
+  # Check type to run. Support varies based on the specific tool plugin.
+  # Potential options (see tool plugin defaults.yml for supported checks): 
+  # - lec: logical equivalence checking
+  # - power: power intent (CPF/UPF) and structure checking
+  # - constraint: design constaint (SDC) checking
+  # - cdc: clock domain crossing checking
+  # - property: contention, tristate, don't care, etc. checking
+  # - eco: engineering change order generation
+  # type: str
+  check: "lec"
 
   # Input files.
   # Typically a list of Verilog/VHDL files, depending on the formal tool.
@@ -1005,9 +1011,9 @@ formal.inputs:
   # type: str
   reference_format: "verilog"
 
-  # Power aware comparison will use the power spec (CPF/UPF)
-  # type: bool
-  power_aware: true
+  # Top RTL module for running verification on
+  # type: str
+  top_module: null
 
 formal.submit:
   command: "${vlsi.submit.command}"

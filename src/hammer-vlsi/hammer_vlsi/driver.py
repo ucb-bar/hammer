@@ -622,14 +622,20 @@ class HammerDriver:
         formal_tool.technology = self.tech
         formal_tool.submit_command = HammerSubmitCommand.get("formal", self.database)
 
-        formal_tool.algorithms = self.database.get_setting("formal.inputs.algorithms")
+        formal_tool.checks = self.database.get_setting("formal.inputs.checks")
         formal_tool.input_files = self.database.get_setting("formal.inputs.input_files")
         formal_tool.hierarchical_mode = HierarchicalMode.from_str(
             self.database.get_setting("vlsi.inputs.hierarchical.mode"))
-        # TODO: do we need ilm netlists?
+        # Special case: if non-leaf hierarchical, append ilm sim netlists
+        # TODO: differentiate b/w GL-to-RTL (post-syn) and GL-to-GL (post-par) netlists. May need another key.
+        if formal_tool.hierarchical_mode.is_nonleaf_hierarchical():
+            for ilm in formal_tool.get_input_ilms():
+                if isinstance(ilm.sim_netlist, str):
+                    formal_tool.input_files.append(ilm.sim_netlist)
+        formal_tool.top_module = self.database.get_setting("formal.inputs.top_module")
         missing_inputs = False
-        if len(formal_tool.algorithms) == 0:
-            self.log.error("No algorithms specified for formal")
+        if formal_tool.checks == "":
+            self.log.error("No check specified for formal")
             missing_inputs = True
         if len(formal_tool.input_files) == 0:
             self.log.error("No input files specified for formal")
@@ -873,12 +879,13 @@ class HammerDriver:
         """
         try:
             reference_files = deeplist(output_dict["synthesis.inputs.input_files"])
-            output_files = deeplist(output_dict["synthesis.outputs.output_files"])
+            input_files = deeplist(output_dict["synthesis.outputs.output_sim_netlist"])
             result = {
-                "formal.inputs.input_files": output_files,
+                "formal.inputs.input_files": input_files,
                 "formal.inputs.input_files_meta": "append",
                 "formal.inputs.reference_files": reference_files,
                 "formal.inputs.reference_files_meta": "append",
+                "formal.inputs.top_module": output_dict["synthesis.inputs.top_module"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             return result
@@ -946,13 +953,15 @@ class HammerDriver:
                  or None if output_dict was invalid
         """
         try:
+            # TODO: confirm we want .mapped/lvs.v or .sim.v? If latter, need to modify syn_to_par
             reference_files = deeplist(output_dict["par.inputs.input_files"])
-            output_files = deeplist(output_dict["par.outputs.output_files"])
+            input_files = deeplist(output_dict["par.outputs.output_netlist"])
             result = {
-                "formal.inputs.input_files": output_files,
+                "formal.inputs.input_files": input_files,
                 "formal.inputs.input_files_meta": "append",
                 "formal.inputs.reference_files": reference_files,
                 "formal.inputs.reference_files_meta": "append",
+                "formal.inputs.top_module": output_dict["synthesis.inputs.top_module"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             return result

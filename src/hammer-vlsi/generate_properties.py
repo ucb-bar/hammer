@@ -220,10 +220,11 @@ def main(args) -> int:
     HammerFormalTool = Interface(module="HammerFormalTool",
                             filename="hammer_vlsi/hammer_vlsi_impl.py",
                             inputs=[
-                                InterfaceVar("algorithms", "List[str]",
-                                    "list of formal verification algorithms to run"),
+                                InterfaceVar("check", "str",
+                                    "formal verification check type to run"),
                                 InterfaceVar("input_files", "List[str]",
-                                    "input collection of implementation design files")
+                                    "input collection of implementation design files"),
+                                InterfaceVar("top_module", "str", "top RTL module"),
                             ],
                             outputs=[]
                             )
