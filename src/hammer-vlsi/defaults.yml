@@ -997,19 +997,9 @@ formal.inputs:
   # For equivalence checking, this is commonly referred to as the "revised" design.
   input_files: []
 
-  # The format of the input files
-  # Valid options: vhdl, verilog, systemverilog, spice, liberty
-  # type: str
-  input_format: "verilog"
-
   # The reference (golden) design files for equivalence checks
   # type: List[str]
   reference_files: []
-
-  # The format of the reference design files
-  # Valid options: vhdl, verilog, systemverilog, spice, liberty
-  # type: str
-  reference_format: "verilog"
 
   # Top RTL module for running verification on
   # type: str
