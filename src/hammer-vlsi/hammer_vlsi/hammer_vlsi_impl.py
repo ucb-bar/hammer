@@ -1439,6 +1439,26 @@ class HammerFormalTool(HammerTool):
 
 
     @property
+    def reference_files(self) -> List[str]:
+        """
+        Get the input collection of reference design files.
+
+        :return: The input collection of reference design files.
+        """
+        try:
+            return self.attr_getter("_reference_files", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the input collection of reference design files yet")
+
+    @reference_files.setter
+    def reference_files(self, value: List[str]) -> None:
+        """Set the input collection of reference design files."""
+        if not (isinstance(value, List)):
+            raise TypeError("reference_files must be a List[str]")
+        self.attr_setter("_reference_files", value)
+
+
+    @property
     def top_module(self) -> str:
         """
         Get the top RTL module.
@@ -1456,6 +1476,26 @@ class HammerFormalTool(HammerTool):
         if not (isinstance(value, str)):
             raise TypeError("top_module must be a str")
         self.attr_setter("_top_module", value)
+
+
+    @property
+    def post_synth_sdc(self) -> Optional[str]:
+        """
+        Get the (optional) input post-synthesis SDC constraint file.
+
+        :return: The (optional) input post-synthesis SDC constraint file.
+        """
+        try:
+            return self.attr_getter("_post_synth_sdc", None)
+        except AttributeError:
+            return None
+
+    @post_synth_sdc.setter
+    def post_synth_sdc(self, value: Optional[str]) -> None:
+        """Set the (optional) input post-synthesis SDC constraint file."""
+        if not (isinstance(value, str) or (value is None)):
+            raise TypeError("post_synth_sdc must be a Optional[str]")
+        self.attr_setter("_post_synth_sdc", value)
 
 
     ### Outputs ###

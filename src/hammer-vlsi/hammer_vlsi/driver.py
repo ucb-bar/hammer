@@ -615,14 +615,14 @@ class HammerDriver:
         if run_dir == "":
             run_dir = os.path.join(self.obj_dir, "formal-rundir")
 
-        formal_tool_name = name
+        formal_tool.name = name
         formal_tool.logger = self.log.context("formal")
         formal_tool.set_database(self.database)
         formal_tool.run_dir = run_dir
         formal_tool.technology = self.tech
         formal_tool.submit_command = HammerSubmitCommand.get("formal", self.database)
 
-        formal_tool.checks = self.database.get_setting("formal.inputs.checks")
+        formal_tool.check = self.database.get_setting("formal.inputs.check")
         formal_tool.input_files = self.database.get_setting("formal.inputs.input_files")
         formal_tool.hierarchical_mode = HierarchicalMode.from_str(
             self.database.get_setting("vlsi.inputs.hierarchical.mode"))
@@ -632,9 +632,10 @@ class HammerDriver:
             for ilm in formal_tool.get_input_ilms():
                 if isinstance(ilm.sim_netlist, str):
                     formal_tool.input_files.append(ilm.sim_netlist)
+        formal_tool.reference_files = self.database.get_setting("formal.inputs.reference_files")
         formal_tool.top_module = self.database.get_setting("formal.inputs.top_module")
         missing_inputs = False
-        if formal_tool.checks == "":
+        if formal_tool.check == "":
             self.log.error("No check specified for formal")
             missing_inputs = True
         if len(formal_tool.input_files) == 0:
@@ -879,7 +880,7 @@ class HammerDriver:
         """
         try:
             reference_files = deeplist(output_dict["synthesis.inputs.input_files"])
-            input_files = deeplist(output_dict["synthesis.outputs.output_sim_netlist"])
+            input_files = deeplist(output_dict["synthesis.outputs.output_files"])
             result = {
                 "formal.inputs.input_files": input_files,
                 "formal.inputs.input_files_meta": "append",
@@ -955,7 +956,7 @@ class HammerDriver:
         try:
             # TODO: confirm we want .mapped/lvs.v or .sim.v? If latter, need to modify syn_to_par
             reference_files = deeplist(output_dict["par.inputs.input_files"])
-            input_files = deeplist(output_dict["par.outputs.output_netlist"])
+            input_files = deeplist(output_dict["par.outputs.output_sim_netlist"])
             result = {
                 "formal.inputs.input_files": input_files,
                 "formal.inputs.input_files_meta": "append",

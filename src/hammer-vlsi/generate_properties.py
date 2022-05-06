@@ -224,7 +224,11 @@ def main(args) -> int:
                                     "formal verification check type to run"),
                                 InterfaceVar("input_files", "List[str]",
                                     "input collection of implementation design files"),
+                                InterfaceVar("reference_files", "List[str]",
+                                    "input collection of reference design files"),
                                 InterfaceVar("top_module", "str", "top RTL module"),
+                                InterfaceVar("post_synth_sdc", "Optional[str]",
+                                    "(optional) input post-synthesis SDC constraint file")
                             ],
                             outputs=[]
                             )
