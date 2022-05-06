@@ -216,7 +216,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         {formal_par_in}: {par_out}
         \t$(HAMMER_EXEC) {env_confs} -p {par_out} $(HAMMER_EXTRA_ARGS) -o {formal_par_in} --obj_dir {obj_dir} par-to-formal
 
-        {formal_syn_out}: {formal_syn_in} $(HAMMER_FORMAL_PAR_DEPENDENCIES)
+        {formal_par_out}: {formal_syn_in} $(HAMMER_FORMAL_PAR_DEPENDENCIES)
         \t$(HAMMER_EXEC) {env_confs} -p {formal_par_in} $(HAMMER_EXTRA_ARGS) --formal_rundir {formal_par_run_dir} --obj_dir {obj_dir} formal{suffix}
 
         # Redo steps
@@ -274,13 +274,13 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         \t$(HAMMER_EXEC) {env_confs} -p {syn_out} $(HAMMER_EXTRA_ARGS) -o {formal_syn_in} --obj_dir {obj_dir} syn-to-formal
 
         redo-formal-syn{suffix}:
-        \t${HAMMER_EXEC} {env_confs} -p {formal_syn_in} $(HAMMER_EXTRA_ARGS) --formal_rundir {formal_syn_run_dir} --obj_dir {obj_dir} formal{suffix}
+        \t$(HAMMER_EXEC) {env_confs} -p {formal_syn_in} $(HAMMER_EXTRA_ARGS) --formal_rundir {formal_syn_run_dir} --obj_dir {obj_dir} formal{suffix}
 
         redo-par-to-formal{suffix}:
         \t$(HAMMER_EXEC) {env_confs} -p {par_out} $(HAMMER_EXTRA_ARGS) -o {formal_par_in} --obj_dir {obj_dir} par-to-formal
 
         redo-formal-par{suffix}:
-        \t${HAMMER_EXEC} {env_confs} -p {formal_par_in} $(HAMMER_EXTRA_ARGS) --formal_rundir {formal_par_run_dir} --obj_dir {obj_dir} formal{suffix}
+        \t$(HAMMER_EXEC) {env_confs} -p {formal_par_in} $(HAMMER_EXTRA_ARGS) --formal_rundir {formal_par_run_dir} --obj_dir {obj_dir} formal{suffix}
 
         """)
 
@@ -332,8 +332,8 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
             p_syn_in=p_syn_in, syn_out=syn_out, par_in=par_in, par_out=par_out,
             power_sim_par_in=power_sim_par_in, power_par_in=power_par_in, power_par_out=power_par_out, power_par_run_dir=power_par_run_dir,
             drc_in=drc_in, drc_out=drc_out, lvs_in=lvs_in, lvs_out=lvs_out,
-            formal_syn_in=formal_syn_in, formal_syn_out=formal_syn_out,
-            formal_par_in=formal_par_in, formal_par_out=formal_par_out)
+            formal_syn_in=formal_syn_in, formal_syn_out=formal_syn_out, formal_syn_run_dir=formal_syn_run_dir,
+            formal_par_in=formal_par_in, formal_par_out=formal_par_out, formal_par_run_dir=formal_par_run_dir)
     else:
         # Hierarchical flow
         for node, edges in dependency_graph.items():
@@ -368,9 +368,9 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
             drc_out = os.path.join(drc_run_dir, "drc-output-full.json")
             lvs_in = os.path.join(obj_dir, "lvs-{}-input.json".format(node))
             lvs_out = os.path.join(lvs_run_dir, "lvs-output-full.json")
-            formal_syn_in = os.path.join(obj_dir, "formal-{}-syn-input.json".format(node))
+            formal_syn_in = os.path.join(obj_dir, "formal-syn-{}-input.json".format(node))
             formal_syn_out = os.path.join(formal_syn_run_dir, "formal-output-full.json")
-            formal_par_in = os.path.join(obj_dir, "formal-{}-par-input.json".format(node))
+            formal_par_in = os.path.join(obj_dir, "formal-par-{}-input.json".format(node))
             formal_par_out = os.path.join(formal_par_run_dir, "formal-output-full.json")
 
             # need to revert this each time
@@ -396,8 +396,8 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
                 p_syn_in=p_syn_in, syn_out=syn_out, par_in=par_in, par_out=par_out,
                 power_sim_par_in=power_sim_par_in, power_par_in=power_par_in, power_par_out=power_par_out, power_par_run_dir=power_par_run_dir,
                 drc_in=drc_in, drc_out=drc_out, lvs_in=lvs_in, lvs_out=lvs_out,
-                formal_syn_in=formal_syn_in, formal_syn_out=formal_syn_out,
-                formal_par_in=formal_par_in, formal_par_out=formal_par_out)
+                formal_syn_in=formal_syn_in, formal_syn_out=formal_syn_out, formal_syn_run_dir=formal_syn_run_dir,
+                formal_par_in=formal_par_in, formal_par_out=formal_par_out, formal_par_run_dir=formal_par_run_dir)
 
     with open(makefile, "w") as f:
         f.write(output)
