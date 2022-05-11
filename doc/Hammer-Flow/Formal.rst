@@ -21,7 +21,7 @@ Formal Verification Input Keys
 
     * ``check`` (str)
 
-        * Name of the formal verification check that is to be performed. Support varies based on the specific tool plugin. Potential check types/algorithms could be "lec", "power", "constraint", "cdc", "property", "eco", and more.
+        * Name of the formal verification check that is to be performed. Support varies based on the specific tool plugin. Potential check types/algorithms could be "lec", "power", "constraint", "cdc", "property", "eco", and more. At the moment, only "lec" is supported.
 
     * ``input_files`` ([])
 

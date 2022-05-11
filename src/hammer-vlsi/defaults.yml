@@ -979,22 +979,24 @@ power.submit:
   settings_meta: lazycrossref
 
 # Specific inputs for the formal tool.
-# These may vary based on the specific tool plugin
+# These may vary based on the specific tool plugin.
+# For example, files could be combinations of Verilog, Liberty, Spice, CPF, and/or SDC files.
 formal.inputs:
   # Check type to run. Support varies based on the specific tool plugin.
   # Potential options (see tool plugin defaults.yml for supported checks): 
-  # - lec: logical equivalence checking
-  # - power: power intent (CPF/UPF) and structure checking
-  # - constraint: design constaint (SDC) checking
-  # - cdc: clock domain crossing checking
-  # - property: contention, tristate, don't care, etc. checking
-  # - eco: engineering change order generation
+  # - lec: logical equivalence checking (supported)
+  # - power: power intent (CPF/UPF) and structure checking (not yet supported)
+  # - constraint: design constaint (SDC) checking (not yet supported)
+  # - cdc: clock domain crossing checking (not yet supported)
+  # - property: contention, tristate, don't care, etc. checking (not yet supported)
+  # - eco: engineering change order generation (not yet supported)
   # type: str
   check: "lec"
 
   # Input files.
   # Typically a list of Verilog/VHDL files, depending on the formal tool.
   # For equivalence checking, this is commonly referred to as the "revised" design.
+  # type: List[str]
   input_files: []
 
   # The reference (golden) design files for equivalence checks
