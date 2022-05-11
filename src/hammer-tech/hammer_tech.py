@@ -361,7 +361,7 @@ class HammerTechnology:
         self._cachedir = value  # type: str
         # Ensure the cache_dir exists.
         os.makedirs(value, mode=0o700, exist_ok=True)
-    
+
     # @classmethod
     def expand_tech_cache_path(self, path) -> str:
         """ Replace occurrences of the cache directory's basename with
@@ -1101,6 +1101,13 @@ class HammerTechnology:
     def get_tech_power_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
         """
         Return a list of power hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_tech_formal_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
+        """
+        Return a list of formal hooks for this technology and tool.
         To be overridden by subclasses.
         """
         return list()

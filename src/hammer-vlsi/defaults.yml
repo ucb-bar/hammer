@@ -55,6 +55,11 @@ vlsi.core:
   power_tool_path: ["${vlsi.builtins.hammer_vlsi_path/power"]
   power_tool_path_meta: subst
 
+  # Path(s) to formal tools.
+  # Add the built-in path to power tools
+  formal_tool_path: ["${vlsi.builtins.hammer_vlsi_path/formal"]
+  formal_tool_path_meta: subst
+
   # Path(s) to PCB deliverable tools.
   # Add the built-in path to PCB deliverable tools.
   pcb_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/pcb"]
@@ -81,6 +86,9 @@ vlsi.core:
 
   # Power analysis tool to use.
   power_tool: "nop"
+
+  # Formal verification/check tool to use.
+  formal_tool: "nop"
 
   # PCB deliverable tool to use.
   # PCB deliverables include footprints, symbols, etc.
@@ -965,6 +973,41 @@ power.inputs:
   extra_corners_only: false
 
 power.submit:
+  command: "${vlsi.submit.command}"
+  command_meta: lazysubst
+  settings: "vlsi.submit.settings"
+  settings_meta: lazycrossref
+
+# Specific inputs for the formal tool.
+# These may vary based on the specific tool plugin.
+# For example, files could be combinations of Verilog, Liberty, Spice, CPF, and/or SDC files.
+formal.inputs:
+  # Check type to run. Support varies based on the specific tool plugin.
+  # Potential options (see tool plugin defaults.yml for supported checks): 
+  # - lec: logical equivalence checking (supported)
+  # - power: power intent (CPF/UPF) and structure checking (not yet supported)
+  # - constraint: design constaint (SDC) checking (not yet supported)
+  # - cdc: clock domain crossing checking (not yet supported)
+  # - property: contention, tristate, don't care, etc. checking (not yet supported)
+  # - eco: engineering change order generation (not yet supported)
+  # type: str
+  check: "lec"
+
+  # Input files.
+  # Typically a list of Verilog/VHDL files, depending on the formal tool.
+  # For equivalence checking, this is commonly referred to as the "revised" design.
+  # type: List[str]
+  input_files: []
+
+  # The reference (golden) design files for equivalence checks
+  # type: List[str]
+  reference_files: []
+
+  # Top RTL module for running verification on
+  # type: str
+  top_module: null
+
+formal.submit:
   command: "${vlsi.submit.command}"
   command_meta: lazysubst
   settings: "vlsi.submit.settings"
