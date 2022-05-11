@@ -197,10 +197,13 @@ vlsi.inputs:
     # Should be a list along the lines of [{"module1": <list of PlacementConstraint structs>}].
     manual_placement_constraints: []
 
-    # Controls the fidelity of submodule implementations. Each sub-module can set its own fidelity from the following
+    # Controls which fidelity of submodule implementations are used. Each submodule can set its own fidelity from the following
     # Valid options:
-    # full - run P&R through to completion for this submodule (default)
-    # syn - stop submodule after synthesis to generate submodule collateral
+    # full - use the final submodule place and route implementation collateral
+    # route - use the submdoule implemenation collateral generated after routing before finalization/signoff
+    # clocktree - use the submdoule implemenation collateral generated after clock tree insertion before routing
+    # placement - use the submodule implemenation collateral generated after placement before clock trees
+    # synthesis - use the submodule implementation collateral generated after synthesis
     # blackbox - use given SDC constraints and placement constraints to create a blackbox for this submodule without running any tools
     module_fidelity: []
     # Controls which levels of fidelity the submodule data will be produced for. Defaults to all available levels.
