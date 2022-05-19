@@ -48,7 +48,6 @@ The TCL commands input to the tool are created using technology and design setti
 There are already three Hammer tool plugin repos to which access may be granted to Hammer users. These repos are ``hammer-cadence-plugins``, ``hammer-synopsys-plugins``, and ``hammer-mentor-plugins``. In them are tool plugin implementations for actions including synthesis, place-and-route, DRC, LVS, and simulation.
 
 .. _plugins-access:
-
 .. note:: If you are not a UCB BAR or BWRC affiliate and have access to tools from a specific vendor, please email hammer-plugins-access@lists.berkeley.edu with a request for which plugin(s) you would like access to. MAKE SURE TO INCLUDE YOUR GITHUB ID IN YOUR EMAIL AND YOUR ASSOCIATION TO SHOW YOU HAVE LICENSED ACCESS TO THOSE TOOLS. There will be no support guarantee for the plugin repositories, but users are encouraged to file issues and contribute patches where needed.
 
 These plugins implement many of the common steps of a modern physical design flow. However, a real chip flow will require many custom settings and steps that may not be generalizable across technology nodes.
