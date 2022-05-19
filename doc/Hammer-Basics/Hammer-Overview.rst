@@ -45,7 +45,7 @@ Tool Plugins
 A Hammer tool plugin actually implements tool-specific steps of the VLSI flow in Hammer in a template-like fashion.
 The TCL commands input to the tool are created using technology and design settings provided by the designer.
 
-There are already three Hammer tool plugin repos to which access may be granted to Hammer users. These repos are ``hammer-cadence-plugins``, ``hammer-synopsys-plugins``, and ``hammer-mentor-plugins``. In them are tool plugin implementations for actions including synthesis, place-and-route, DRC, LVS, and simulation.
+There are currently three Hammer tool plugin repos: ``hammer-cadence-plugins``, ``hammer-synopsys-plugins``, and ``hammer-mentor-plugins``. In them are tool plugin implementations for actions including synthesis, place-and-route, DRC, LVS, and simulation. ``hammer-cadence-plugins`` is publicly available; however, users must request access to ``hammer-synopsys-plugins`` and ``hammer-mentor-plugins``:
 
 .. _plugins-access:
 .. note:: If you are not a UCB BAR or BWRC affiliate and have access to tools from a specific vendor, please email hammer-plugins-access@lists.berkeley.edu with a request for which plugin(s) you would like access to. MAKE SURE TO INCLUDE YOUR GITHUB ID IN YOUR EMAIL AND YOUR ASSOCIATION TO SHOW YOU HAVE LICENSED ACCESS TO THOSE TOOLS. There will be no support guarantee for the plugin repositories, but users are encouraged to file issues and contribute patches where needed.
