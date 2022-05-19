@@ -388,6 +388,8 @@ class HammerPlaceAndRouteTool(HammerTool):
     def export_config_outputs(self) -> Dict[str, Any]:
         outputs = deepdict(super().export_config_outputs())
         outputs["par.outputs.output_ilms"] = list(map(lambda s: s.to_setting(), self.output_ilms))
+        if self.hierarchical_mode.is_nonleaf_hierarchical():
+            outputs["par.outputs.output_ilms"].extend(list(map(lambda s: s.to_setting(), self.get_input_ilms())))
         outputs["par.outputs.output_ilms_meta"] = "append"
         outputs["par.outputs.output_gds"] = str(self.output_gds)
         outputs["par.outputs.output_netlist"] = str(self.output_netlist)
