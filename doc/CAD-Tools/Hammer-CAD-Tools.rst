@@ -3,7 +3,7 @@
 Hammer CAD Tools
 ===============================
 
-Hammer currently has three repos for CAD tools from different vendors: ``hammer-cadence-plugins``, ``hammer-synopsys-plugins``, and ``hammer-mentor-plugins``. These repos are private since they contain commands specific to each tool, but access to them may be granted for Hammer users pending approval from their respective companies.  
+Hammer currently has three repos for CAD tools from different vendors: ``hammer-cadence-plugins``, ``hammer-synopsys-plugins``, and ``hammer-mentor-plugins``. ``hammer-cadence-plugins`` is a public repo but the others are private since they contain tool-specific commands not yet cleared for public release. Access to them may be granted for Hammer users who already have licenses for those tools. See :ref:`plugins-access` for instructions for how to request access.
 
 The structure of each repository is as follows:
 
