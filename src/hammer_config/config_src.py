@@ -807,7 +807,7 @@ class HammerDatabase:
         """
         return key in self.get_config()
 
-    def get_setting_type(self, key: str, nullvalue: Any = None) -> str:
+    def get_setting_type(self, key: str, nullvalue: Any = None) -> Any:
         """
         Acquire the type of a given key.
 
@@ -901,14 +901,9 @@ class HammerDatabase:
         m_prim = re.search(PRIMARY_REGEX, setting_type)
         m_sec = re.search(INNER_REGEX, setting_type)
 
-        if m_prim is None:
-            raise RuntimeError("Not a valid configuration type")
-        if m_prim.group(0) not in ["Optional", "list", "dict"]:
-            return ConfigType(m_prim.group(0))
-
-        if m_sec is None:
-            raise RuntimeError("Not a valid inner configuration type")
         if m_prim.group(0) == "Optional":
+            if m_sec is None:
+                raise RuntimeError("Not a valid inner configuration type")
             recursive_type = self.parse_setting_type(m_sec.group(1))
             return ConfigType(
                 recursive_type.primary,
@@ -918,9 +913,15 @@ class HammerDatabase:
                 tertiary_v=recursive_type.tertiary_v
             )
         elif m_prim.group(0) == "list":
+            if m_sec is None:
+                raise RuntimeError("Not a valid inner configuration type")
             m_sec_prim = re.search(PRIMARY_REGEX, m_sec.group(1))
+            if m_sec_prim is None:
+                raise RuntimeError("Not a valid contained type")
             if m_sec_prim.group(0) == "dict":
                 m_sec_inner = re.search(r"\w+\[(\w+), (\w+)\]", m_sec.group(0))
+                if m_sec_inner is None:
+                    raise RuntimeError("Not a valid inner dictionary type")
                 return ConfigType(
                     m_prim.group(0),
                     secondary=m_sec_prim.group(0),
@@ -929,6 +930,7 @@ class HammerDatabase:
                 )
             else:
                 return ConfigType(m_prim.group(0), secondary=m_sec_prim.group(0))
+        return ConfigType(m_prim.group(0))
 
 def load_config_from_string(contents: str, is_yaml: bool, path: str = "unspecified") -> dict:
     """
