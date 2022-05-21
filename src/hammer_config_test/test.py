@@ -982,7 +982,7 @@ foo:
     bar:
         adc: list[int]
         dac: int
-        wrong: dict
+        wrong: list[dict[str, str]]
 """, is_yaml=True)
 
         db.update_core([base])
@@ -1032,15 +1032,14 @@ foo:
 foo:
     bar:
         adc: Optional[str]
-        quu: int
+        quu: Optional[str]
 """, is_yaml=True)
 
         db.update_core([base])
         db.update_types(base_types)
         
         self.assertIsNone(db.get_setting("foo.bar.adc"))
-        with self.assertRaises(TypeError):
-            db.get_setting("foo.bar.quu")
+        self.assertEqual(db.get_setting("foo.bar.quu"), "hi")
 
     def test_decimal_constraints(self) -> None:
         """
@@ -1082,7 +1081,7 @@ foo:
         db = hammer_config.HammerDatabase()
         db.update_core(base[1:])
         db.update_builtins([builtins])
-        db.update_types(base_types)
+        db.update_types(base_types[1])
 
         for k, v in db.get_config().items():
             self.assertEqual(db.get_setting(k), v)
