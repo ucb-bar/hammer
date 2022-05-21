@@ -11,7 +11,6 @@
 
 from decimal import Decimal
 from typing import Iterable, List, Union, Callable, Any, Dict, Set, NamedTuple, Tuple, Optional
-from dataclasses import dataclass
 
 from hammer_utils import deepdict, topological_sort
 from .yaml2json import load_yaml  # grumble grumble
@@ -767,12 +766,13 @@ class HammerDatabase:
             raise KeyError("Key " + key + " is missing")
         else:
             value = self.get_config()[key]
-            if value is not nullvalue and self.has_setting_type(key): 
-                exp_value_type = self.parse_setting_type(self.get_config_types()[key])
+            if value is not nullvalue and self.has_setting_type(key):
+                key_type = self.get_config_types()[key]
+                exp_value_type = self.parse_setting_type(key_type)
                 if not exp_value_type.optional:
                     value_type_primary = type(value).__name__
                     if value_type_primary != exp_value_type.primary:
-                        raise TypeError(f"Expected primary type {exp_value_type.primary}, got type {value_type_primary}")
+                        raise TypeError(f"Expected primary type {exp_value_type.primary} for {key}, got type {value_type_primary}")
                     if isinstance(value, list) and len(value) > 0:
                         contained_val = value[0]
                         value_type_secondary = type(contained_val).__name__
@@ -889,34 +889,46 @@ class HammerDatabase:
         self.__config_types = config_types
         self.__config_cache_dirty = True
 
-    def parse_setting_type(self, setting_type: str) -> Any:
+    def parse_setting_type(self, setting_type: str) -> NamedTuple:
         """
         Parses a configuration type.
         :param setting_type: The string form of a setting configuration.
         :return: A configuration type dataclass with info about the type.
         """
-        TYPE_REGEX = re.compile(r"(\w+)\[?(.+)\]?")
-        m = re.match(TYPE_REGEX, setting_type)
-        if m is None:
+        PRIMARY_REGEX = re.compile(r"(\w+)")
+        INNER_REGEX = re.compile(r"\w+\[(.+)\]")
+
+        m_prim = re.search(PRIMARY_REGEX, setting_type)
+        m_sec = re.search(INNER_REGEX, setting_type)
+
+        if m_prim is None:
             raise RuntimeError("Not a valid configuration type")
-        if m.group(1) == "Optional":
-            config_cls = self.parse_setting_type(m.group(2))
-            config_cls.optional = True
-            return config_cls
-        elif m.group(1) == "list":
-            m_sec = re.match(TYPE_REGEX, m.group(2))
-            if m_sec.group(1) == "dict":
-                m_kv = re.match(r"(\w+), (\w+)", m_sec.group(2))
+        if m_prim.group(0) not in ["Optional", "list", "dict"]:
+            return ConfigType(m_prim.group(0))
+
+        if m_sec is None:
+            raise RuntimeError("Not a valid inner configuration type")
+        if m_prim.group(0) == "Optional":
+            recursive_type = self.parse_setting_type(m_sec.group(1))
+            return ConfigType(
+                recursive_type.primary,
+                optional=True,
+                secondary=recursive_type.secondary,
+                tertiary_k=recursive_type.tertiary_k,
+                tertiary_v=recursive_type.tertiary_v
+            )
+        elif m_prim.group(0) == "list":
+            m_sec_prim = re.search(PRIMARY_REGEX, m_sec.group(1))
+            if m_sec_prim.group(0) == "dict":
+                m_sec_inner = re.search(r"\w+\[(\w+), (\w+)\]", m_sec.group(0))
                 return ConfigType(
-                    m.group(1),
-                    secondary=m_sec.group(1),
-                    tertiary_k=m_kv.group(1),
-                    tertiary_v=m_kv.group(2)
+                    m_prim.group(0),
+                    secondary=m_sec_prim.group(0),
+                    tertiary_k=m_sec_inner.group(1),
+                    tertiary_v=m_sec_inner.group(2)
                 )
             else:
-                return ConfigType(m.group(1), secondary=m_sec.group(1))
-        else:
-            return ConfigType(m.group(0))
+                return ConfigType(m_prim.group(0), secondary=m_sec_prim.group(0))
 
 def load_config_from_string(contents: str, is_yaml: bool, path: str = "unspecified") -> dict:
     """
@@ -1120,8 +1132,7 @@ def load_config_types_from_defaults(path: str, strict: bool = False) -> List[dic
         os.path.join(path, "defaults_types.yml")
     ])
 
-@dataclass(repr=True, eq=True)
-class ConfigType:
+class ConfigType(NamedTuple):
     """
     Class for a parsed configuration type.
 
