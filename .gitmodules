@@ -1,6 +1,3 @@
-[submodule "src/tools/pyyaml"]
-	path = src/tools/pyyaml
-	url = https://github.com/edwardcwang/pyyaml_plsi.git
 [submodule "src/python-jsonschema-objects"]
 	path = src/python-jsonschema-objects
 	url = https://github.com/edwardcwang/python-jsonschema-objects.git
@@ -11,3 +8,7 @@
 [submodule "src/tools/gdspy"]
 	path = src/tools/gdspy
 	url = https://github.com/heitzmann/gdspy.git
+[submodule "src/tools/pyyaml"]
+	path = src/tools/pyyaml
+	url = https://github.com/yaml/pyyaml.git
+	branch = release/6.1

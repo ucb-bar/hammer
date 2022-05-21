@@ -10,7 +10,7 @@ import os
 import shutil
 import tempfile
 import unittest
-from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Union, cast
 from decimal import Decimal
 
 from tech_test import StackupTestHelper
@@ -1339,7 +1339,7 @@ class HammerSubmitCommandTestContext:
                              "hammer_vlsi_path must exist")
         temp_dir = tempfile.mkdtemp()
         json_path = os.path.join(temp_dir, "project.json")
-        json_content = {
+        json_content: Dict[str, Any] = {
             "vlsi.core.synthesis_tool": "mocksynth",
             "vlsi.core.technology": "nop",
             "synthesis.inputs.top_module": "dummy",
@@ -1917,8 +1917,8 @@ class HammerPowerStrapsTest(HasGetTech, unittest.TestCase):
             # that particular part of this
             assert isinstance(par_tool, hammer_vlsi.HammerPlaceAndRouteTool)
             stackup = par_tool.get_stackup()
-            entries = par_tool.parse_mock_power_straps_file()  # type: ignore
-            entries  # type: List[Dict[str, Any]]
+            parsed_out = par_tool.parse_mock_power_straps_file()  # type: ignore
+            entries = cast(List[Dict[str, Any]], parsed_out)
 
             for entry in entries:
                 c.logger.debug("Power strap entry:" + str(entry))
@@ -2034,8 +2034,8 @@ class HammerPowerStrapsTest(HasGetTech, unittest.TestCase):
             # that particular part of this
             assert isinstance(par_tool, hammer_vlsi.HammerPlaceAndRouteTool)
             stackup = par_tool.get_stackup()
-            entries = par_tool.parse_mock_power_straps_file()  # type: ignore
-            entries  # type: List[Dict[str, Any]]
+            parsed_out = par_tool.parse_mock_power_straps_file()  # type: ignore
+            entries = cast(List[Dict[str, Any]], parsed_out)
 
             # There should be 1 std cell rail definition and 2 straps per layer (total 7)
             self.assertEqual(len(entries), 7)
@@ -2138,12 +2138,12 @@ class HammerSimToolTestContext:
         self.temp_dir = temp_dir
         return self
 
-    def __exit__(self, type, value, traceback) -> bool:
+    def __exit__(self, typ, value, traceback) -> bool:
         """Cleanup the context by removing the temp_dir."""
         shutil.rmtree(self.temp_dir)
-        # Return True (normal execution) if no exception ocurred/
+        # Return True (normal execution) if no exception ocurred
 
-        return True if type is None else False
+        return typ is None
 
     @property
     def env(self) -> Dict[str, str]:
