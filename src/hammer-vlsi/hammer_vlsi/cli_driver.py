@@ -76,12 +76,12 @@ CLIActionType = Union[CLIActionConfigType, CLIActionStringType]
 
 def is_config_action(func: CLIActionType) -> bool:
     """Return True if the given function is a CLIActionConfigType."""
-    return check_function_type(func, [HammerDriver, Callable[[str], None]], Optional[dict]) is None
+    return check_function_type(func, [HammerDriver, cast(type, Callable[[str], None])], cast(type, Optional[dict])) is None
 
 
 def is_string_action(func: CLIActionType) -> bool:
     """Return True if the given function is a CLIActionConfigType."""
-    return check_function_type(func, [HammerDriver, Callable[[str], None]], Optional[str]) is None
+    return check_function_type(func, [HammerDriver, cast(type, Callable[[str], None])], cast(type, Optional[str])) is None
 
 
 def check_CLIActionType_type(func: CLIActionType) -> None:
@@ -89,11 +89,12 @@ def check_CLIActionType_type(func: CLIActionType) -> None:
     Check that the given CLIActionType obeys its function type signature.
     Raises TypeError if the function is of the incorrect type.
     """
-    config_check = check_function_type(func, [HammerDriver, Callable[[str], None]], Optional[dict])
+    s = [HammerDriver, cast(type, Callable[[str], None])]
+    config_check = check_function_type(func, s, cast(type, Optional[dict]))
     if config_check is None:
         return
 
-    string_check = check_function_type(func, [HammerDriver, Callable[[str], None]], Optional[str])
+    string_check = check_function_type(func, s, cast(type, Optional[str]))
     if string_check is None:
         return
 
