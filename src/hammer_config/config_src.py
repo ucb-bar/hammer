@@ -11,6 +11,7 @@
 
 from decimal import Decimal
 from typing import Iterable, List, Union, Callable, Any, Dict, Set, NamedTuple, Tuple, Optional
+from dataclasses import dataclass
 
 from hammer_utils import deepdict, topological_sort
 from .yaml2json import load_yaml  # grumble grumble
@@ -707,6 +708,8 @@ class HammerDatabase:
         self.__config_cache = {}  # type: dict
         self.__config_cache_dirty = False  # type: bool
 
+        self.__config_types = {}  # type: dict
+
     @property
     def runtime(self) -> List[dict]:
         return [self._runtime]
@@ -726,6 +729,13 @@ class HammerDatabase:
                 self.project + self.runtime)
             self.__config_cache_dirty = False
         return self.__config_cache
+
+    def get_config_types(self) -> dict:
+        """
+        Get the types for the configuration of a database.
+        """
+        self.__config_cache_dirty = False
+        return self.__config_types
 
     def get_database_json(self) -> str:
         """Get the database (get_config) in JSON form as a string.
@@ -757,6 +767,25 @@ class HammerDatabase:
             raise KeyError("Key " + key + " is missing")
         else:
             value = self.get_config()[key]
+            if value is not nullvalue and self.has_setting_type(key): 
+                exp_value_type = self.parse_setting_type(self.get_config_types()[key])
+                if not exp_value_type.optional:
+                    value_type_primary = type(value).__name__
+                    if value_type_primary != exp_value_type.primary:
+                        raise TypeError(f"Expected primary type {exp_value_type.primary}, got type {value_type_primary}")
+                    if isinstance(value, list) and len(value) > 0:
+                        contained_val = value[0]
+                        value_type_secondary = type(contained_val).__name__
+                        if value_type_secondary != exp_value_type.secondary:
+                            raise TypeError(f"Expected secondary type {exp_value_type.secondary}, got type {value_type_secondary}")
+                        if isinstance(contained_val, dict) and len(contained_val) > 0:
+                            k, v = list(contained_val.items())[0]
+                            k_type = type(k).__name__
+                            v_type = type(v).__name__
+                            if k_type != exp_value_type.tertiary_k:
+                                raise TypeError(f"Expected tertiary type {exp_value_type.tertiary_k}, got type {k_type}")
+                            if v_type != exp_value_type.tertiary_v:
+                                raise TypeError(f"Expected tertiary type {exp_value_type.tertiary_v}, got type {v_type}")
             return nullvalue if value is None else value
 
     def set_setting(self, key: str, value: Any) -> None:
@@ -777,6 +806,39 @@ class HammerDatabase:
         :return: True if the given setting exists.
         """
         return key in self.get_config()
+
+    def get_setting_type(self, key: str, nullvalue: Any = None) -> str:
+        """
+        Acquire the type of a given key.
+
+        :param key: Desired key.
+        :param nullvalue: Value to return for nulls.
+        :return: Data type of key.
+        """
+        if key not in self.get_config_types():
+            raise KeyError(f"Key {key} is missing")
+        else:
+            value = self.get_config_types()[key]
+            return nullvalue if value is None else value
+
+    def set_setting_type(self, key: str, value: Any) -> None:
+        """
+        Set the given key type.
+
+        :param key: Key
+        :param value: Value for key
+        """
+        self.__config_types[key] = value
+        self.__config_cache_dirty = True
+
+    def has_setting_type(self, key: str) -> bool:
+        """
+        Check if the given key type exists in the database.
+
+        :param key: Desired key.
+        :return: True if the given setting exists.
+        """
+        return key in self.get_config_types()
 
     def update_core(self, core_config: List[dict]) -> None:
         """
@@ -819,7 +881,42 @@ class HammerDatabase:
         """
         self.builtins = builtins_config
         self.__config_cache_dirty = True
+    
+    def update_types(self, config_types: dict) -> None:
+        """
+        Update the types config with the given types config.
+        """
+        self.__config_types = config_types
+        self.__config_cache_dirty = True
 
+    def parse_setting_type(self, setting_type: str) -> Any:
+        """
+        Parses a configuration type.
+        :param setting_type: The string form of a setting configuration.
+        :return: A configuration type dataclass with info about the type.
+        """
+        TYPE_REGEX = re.compile(r"(\w+)\[?(.+)\]?")
+        m = re.match(TYPE_REGEX, setting_type)
+        if m is None:
+            raise RuntimeError("Not a valid configuration type")
+        if m.group(1) == "Optional":
+            config_cls = self.parse_setting_type(m.group(2))
+            config_cls.optional = True
+            return config_cls
+        elif m.group(1) == "list":
+            m_sec = re.match(TYPE_REGEX, m.group(2))
+            if m_sec.group(1) == "dict":
+                m_kv = re.match(r"(\w+), (\w+)", m_sec.group(2))
+                return ConfigType(
+                    m.group(1),
+                    secondary=m_sec.group(1),
+                    tertiary_k=m_kv.group(1),
+                    tertiary_v=m_kv.group(2)
+                )
+            else:
+                return ConfigType(m.group(1), secondary=m_sec.group(1))
+        else:
+            return ConfigType(m.group(0))
 
 def load_config_from_string(contents: str, is_yaml: bool, path: str = "unspecified") -> dict:
     """
@@ -986,3 +1083,56 @@ def load_config_from_defaults(path: str, strict: bool = False) -> List[dict]:
         os.path.join(path, "defaults.json"),
         os.path.join(path, "defaults.yml")
     ])
+
+def load_config_types_from_string(contents: str, is_yaml: bool, path: str = "unspecified") -> dict:
+    """
+    Load config types from string. Alias for `load_config_from_string`.
+    
+    :param contents: Contents of the config.
+    :param is_yaml: True if the contents are yaml.
+    :param path: Path to the folder where the config file is located.
+    :return: Loaded config dictionary, unpacked.
+    """
+    return load_config_from_string(contents, is_yaml, path)
+
+def load_config_types_from_file(path: str, strict: bool = False) -> dict:
+    """
+    Load the default types from a configuration `.yml` file. Alias for `load_config_from_file`.
+
+    :param path: Path to a types.yml file.
+    :param strict: Set to true to error if the file is not found
+    :return: A list of data types for a configuration file.
+    """
+    return load_config_from_file(path, strict)
+
+def load_config_types_from_defaults(path: str, strict: bool = False) -> List[dict]:
+    """
+    Load the default configuration for a hammer-vlsi tool/library/technology in
+    the given path, which consists of defaults.yml and defaults.json (with
+    defaults.json taking priority).
+
+    :param config_paths: Path to defaults.yml and defaults.json.
+    :param strict: Set to true to error if the file is not found.
+    :return: A list of configs in order of specification.
+    """
+    return load_config_from_paths([
+        os.path.join(path, "defaults_types.json"),
+        os.path.join(path, "defaults_types.yml")
+    ])
+
+@dataclass(repr=True, eq=True)
+class ConfigType:
+    """
+    Class for a parsed configuration type.
+
+    :param primary: the outermost type on a configuration.
+    :param optional: if the type is an Optional type.
+    :param secondary: the type within the type, i.e. what is in a list.
+    :param tertiary_k: the key type stored in a dictionary.
+    :param tertiary_v: the value type stored in a dictionary.
+    """
+    primary: str
+    optional: bool = False
+    secondary: str = ""
+    tertiary_k: str = ""
+    tertiary_v: str = ""

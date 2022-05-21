@@ -935,5 +935,157 @@ foo:
         db.update_core([base, meta])
         self.assertEqual(db.get_setting("foo.bar")[0]["dsl"], {"x": ["python", "is", "awesome"], "y": "sometimes"})
 
+    def test_load_types(self) -> None:
+        """
+        Test that type configurations are loaded with full package paths.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_types_from_string("""
+foo:
+    bar:
+        adc: int
+        dac: str
+""", is_yaml=True)
+        db.update_types(base)
+        self.assertEqual(db.get_setting_type("foo.bar.adc"), int.__name__)
+        self.assertEqual(db.get_setting_type("foo.bar.dac"), str.__name__)
+        
+    def test_load_imported_types(self) -> None:
+        """
+        Test that type configurations of imported types are loaded and checked.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_types_from_string("""
+foo:
+    bar:
+        adc: list
+        dac: dict
+""", is_yaml=True)
+        db.update_types(base)
+        self.assertEqual(db.get_setting_type("foo.bar.adc"), list.__name__)
+        self.assertEqual(db.get_setting_type("foo.bar.dac"), dict.__name__)
+
+    def test_wrong_types(self) -> None:
+        """
+        Test that types are checked when retrieving settings.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo:
+    bar:
+        adc: [1, 2, 3]
+        dac: 0
+        wrong: 0
+""", is_yaml=True)
+        base_types = hammer_config.load_config_from_string("""
+foo:
+    bar:
+        adc: list[int]
+        dac: int
+        wrong: dict
+""", is_yaml=True)
+
+        db.update_core([base])
+        db.update_types(base_types)
+
+        self.assertEqual(db.get_setting("foo.bar.adc"), [1, 2, 3])
+        with self.assertRaises(TypeError):
+            db.get_setting("foo.bar.wrong")
+
+    def test_wrong_constraints(self) -> None:
+        """
+        Test that custom constraints are checked when retrieving settings.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo:
+    bar:
+        adc: [{name: \"hi\", pin: \"vdd\"}]
+        wrong: [{name: \"hi\", pin: \"vdd\"}]
+""", is_yaml=True)
+        base_types = hammer_config.load_config_from_string("""
+foo:
+    bar:
+        adc: list[dict[str, str]]
+        wrong: int
+""", is_yaml=True)
+
+        db.update_core([base])
+        db.update_types(base_types)
+
+        self.assertEqual(db.get_setting("foo.bar.adc"), [{"name": "hi", "pin": "vdd"}])
+        with self.assertRaises(TypeError):
+            db.get_setting("foo.bar.wrong")
+
+    def test_optional_constraints(self) -> None:
+        """
+        Test that optional constraints are ignored properly.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo:
+    bar:
+        adc: 
+        quu: hi
+""", is_yaml=True)
+        base_types = hammer_config.load_config_from_string("""
+foo:
+    bar:
+        adc: Optional[str]
+        quu: int
+""", is_yaml=True)
+
+        db.update_core([base])
+        db.update_types(base_types)
+        
+        self.assertIsNone(db.get_setting("foo.bar.adc"))
+        with self.assertRaises(TypeError):
+            db.get_setting("foo.bar.quu")
+
+    def test_decimal_constraints(self) -> None:
+        """
+        Test that Decimal constraints are checked properly.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo:
+    bar:
+        adc: 3.14
+        quu: 69
+""", is_yaml=True)
+        base_types = hammer_config.load_config_from_string("""
+foo:
+    bar:
+        adc: float
+        quu: float
+""", is_yaml=True)
+
+        db.update_core([base])
+        db.update_types(base_types)
+        
+        self.assertEqual(db.get_setting("foo.bar.adc"), 3.14)
+        with self.assertRaises(TypeError):
+            db.get_setting("foo.bar.quu")
+
+    def test_default_types(self) -> None:
+        """
+        Test that all HAMMER defaults are properly type-checked.
+        """
+        CFG_PATH = os.path.join(os.path.dirname(os.getcwd()), "hammer-vlsi")
+        TYPE_PATH = os.path.join(os.path.dirname(os.getcwd()), "hammer-vlsi")
+        BL_PATH = os.path.join(os.path.dirname(os.getcwd()), "hammer-vlsi", "builtins.yml")
+
+        base = hammer_config.load_config_from_defaults(CFG_PATH)
+        base_types = hammer_config.load_config_types_from_defaults(TYPE_PATH)
+        builtins = hammer_config.load_config_from_file(BL_PATH)
+
+        db = hammer_config.HammerDatabase()
+        db.update_core(base[1:])
+        db.update_builtins([builtins])
+        db.update_types(base_types)
+
+        for k, v in db.get_config().items():
+            self.assertEqual(db.get_setting(k), v)
+
 if __name__ == '__main__':
     unittest.main()
