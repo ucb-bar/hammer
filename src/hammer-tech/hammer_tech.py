@@ -74,7 +74,7 @@ class LibraryPrefix(metaclass=ABCMeta):
 
 
 # Internal backend of PathPrefix. Do not use.
-_PathPrefixInternal = NamedTuple('PathPrefix', [
+_PathPrefixInternal = NamedTuple('_PathPrefixInternal', [
     ('prefix', str),
     ('path', str)
 ])
@@ -851,7 +851,8 @@ class HammerTechnology:
 
         # Next, sort the list of libraries if a sort function exists.
         if filt.sort_func is not None:
-            filtered_libs = sorted(filtered_libs, key=filt.sort_func)
+            # Possible mypy quirk
+            filtered_libs = sorted(filtered_libs, key=filt.sort_func)  # type: ignore
 
         # Next, extract paths and prepend them to get the real paths.
         def get_and_prepend_path(lib: Library) -> Tuple[Library, List[str]]:
