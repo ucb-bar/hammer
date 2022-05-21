@@ -358,7 +358,7 @@ vlsi.inputs:
   power_spec_contents: Optional[str]
 
   # SRAM Parameters
-  sram_parameters: []
+  sram_parameters: list[dict[str, str]] 
 
   # Bumps settings mode. (str)
   # Specifies how to setup the bumps for your design.
@@ -501,7 +501,7 @@ vlsi.submit:
   # type: list[Dict[str, Dict[str, Any]]]
   # The list substitutes settings in order of appearance, and the first Dict key is the command.
   # The second dict key is the name of that command's setting, followed by whatever type it takes.
-  settings: list[dict[str, dict[str, dict]]]
+  settings: list[dict[str, dict]]
 
 # Specific inputs for the synthesis tool.
 # These inputs are the generic inputs; specific tools ("CAD junk") may require
@@ -530,7 +530,7 @@ synthesis:
 synthesis.submit:
   command: str
   command_meta: str
-  settings: str
+  settings: list[dict[str, dict]]
   settings_meta: str
 
 # Specific inputs for the place and route tool.
@@ -605,7 +605,7 @@ par:
   submit:
     command: str
     command_meta: str
-    settings: str
+    settings: list[dict[str, dict]]
     settings_meta: str
 
   # Power straps configuration.
@@ -717,7 +717,7 @@ drc.inputs:
 drc.submit:
   command: str
   command_meta: str
-  settings: str
+  settings: list[dict[str, dict]]
   settings_meta: str
 
 # LVS settings
@@ -743,14 +743,14 @@ lvs.inputs:
 lvs.submit:
   command: str
   command_meta: str
-  settings: str
+  settings: list[dict[str, dict]]
   settings_meta: str
 
 # inherit settings from vlsi.submit but allow us to override them
 sram_generator.submit:
   command: str
   command_meta: str
-  settings: str
+  settings: list[dict[str, dict]]
   settings_meta: str
 
 # PCB deliverable settings.
@@ -763,7 +763,7 @@ pcb.submit:
   # inherit settings from vlsi.submit but allow us to override them
   command: str
   command_meta: str
-  settings: str
+  settings: list[dict[str, dict]]
   settings_meta: str
 
 technology.core:
@@ -919,7 +919,7 @@ sim.inputs:
 sim.submit:
   command: str
   command_meta: str
-  settings: str
+  settings: list[dict[str, dict]]
   settings_meta: str
 
 # Specific inputs for the power tool.
@@ -967,7 +967,7 @@ power.inputs:
 power.submit:
   command: str
   command_meta: str
-  settings: str
+  settings: list[dict[str, dict]]
   settings_meta: str
 
 technology.pcb:
