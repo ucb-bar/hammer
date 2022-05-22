@@ -4,7 +4,6 @@
 vlsi.core:
   # Path(s) to out-of-tree hammer technology libraries.
   technology_path: list[str]
-  technology_path_meta: str
 
   # Technology to use. hammer-vlsi will read this and load the appropriate technology libraries.
   technology: str
@@ -19,42 +18,34 @@ vlsi.core:
   # Path(s) to synthesis tools.
   # Add the built-in path to synthesis tools.
   synthesis_tool_path: list[str]
-  synthesis_tool_path_meta: str
 
   # Path(s) to place and route tools.
   # Add the built-in path to place and route tools.
   par_tool_path: list[str]
-  par_tool_path_meta: str
 
   # Path(s) to drc tools.
   # Add the built-in path to drc tools.
   drc_tool_path: list[str]
-  drc_tool_path_meta: str
 
   # Path(s) to lvs tools.
   # Add the built-in path to lvs tools.
   lvs_tool_path: list[str]
-  lvs_tool_path_meta: str
 
   # Path(s) to sram generator tools.
   # Add the built-in path to sram generator tools.
   sram_generator_tool_path: list[str]
-  sram_generator_tool_path_meta: str
 
   # Path(s) to sim tools.
   # Add the built-in path to sim tools
   sim_tool_path: list[str]
-  sim_tool_path_meta: str
 
   # Path(s) to power tools.
   # Add the built-in path to power tools
   power_tool_path: list[str]
-  power_tool_path_meta: str
 
   # Path(s) to PCB deliverable tools.
   # Add the built-in path to PCB deliverable tools.
   pcb_tool_path: list[str]
-  pcb_tool_path_meta: str
 
   # Synthesis tool to use.
   synthesis_tool: str
@@ -103,7 +94,6 @@ vlsi.technology:
 cadence:
   # Path to the folder with defaults.yml for common Cadence settings.
   common_path: str
-  common_path_meta: str
 
 # General VLSI inputs.
 # These will vary per run of hammer-vlsi.
@@ -214,7 +204,6 @@ vlsi.inputs:
     # Name of the desired output SVG file
     # type: str
     svg_file: str
-    svg_file_meta: str
     # Depth of paths to shorten for better readability in the SVG
     # type: int
     shorten_path_depth: int
@@ -241,9 +230,7 @@ synthesis:
 # inherit settings from vlsi.submit but allow us to override them
 synthesis.submit:
   command: str
-  command_meta: str
   settings: list[dict[str, dict]]
-  settings_meta: str
 
 # Specific inputs for the place and route tool.
 par.inputs:
@@ -289,9 +276,7 @@ par:
   # inherit settings from vlsi.submit but allow us to override them
   submit:
     command: str
-    command_meta: str
     settings: list[dict[str, dict]]
-    settings_meta: str
 
   # Power straps configuration.
   power_straps_mode: str
@@ -313,7 +298,6 @@ par:
       # Spacing from end of strap to a block or blockage
       # type: Decimal
       blockage_spacing: float
-      blockage_spacing_meta: str
 
       # Number of routing tracks to be consumed by an individual strap
       # type: int
@@ -346,12 +330,10 @@ par:
 mentor:
     # Path to the folder with defaults.yml for common Mentor settings.
     common_path: str
-    common_path_meta: str
 
 openroad:
     # Path to the folder with defaults.yml for common OpenROAD settings.
     common_path: str
-    common_path_meta: str
 
 # DRC settings
 drc.inputs:
@@ -377,9 +359,7 @@ drc.inputs:
 # inherit settings from vlsi.submit but allow us to override them
 drc.submit:
   command: str
-  command_meta: str
   settings: list[dict[str, dict]]
-  settings_meta: str
 
 # LVS settings
 lvs.inputs:
@@ -402,16 +382,12 @@ lvs.inputs:
 
 lvs.submit:
   command: str
-  command_meta: str
   settings: list[dict[str, dict]]
-  settings_meta: str
 
 # inherit settings from vlsi.submit but allow us to override them
 sram_generator.submit:
   command: str
-  command_meta: str
   settings: list[dict[str, dict]]
-  settings_meta: str
 
 # PCB deliverable settings.
 pcb.inputs:
@@ -422,9 +398,7 @@ pcb.submit:
   # Submission command settings
   # inherit settings from vlsi.submit but allow us to override them
   command: str
-  command_meta: str
   settings: list[dict[str, dict]]
-  settings_meta: str
 
 technology.core:
     # Key name for the technology stackup
@@ -542,9 +516,7 @@ sim.inputs:
 
 sim.submit:
   command: str
-  command_meta: str
   settings: list[dict[str, dict]]
-  settings_meta: str
 
 # Specific inputs for the power tool.
 # These may vary based on the specific tool plugin
@@ -587,9 +559,7 @@ power.inputs:
 
 power.submit:
   command: str
-  command_meta: str
   settings: list[dict[str, dict]]
-  settings_meta: str
 
 technology.pcb:
   # Desired pad opening diameter (in post-shrink um)
