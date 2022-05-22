@@ -26,11 +26,6 @@ class Magic(HammerDRCTool, TCLTool):
             self.run_drc
         ])
 
-    def do_pre_steps(self, first_step: HammerToolStep) -> bool:
-        assert super().do_pre_steps(first_step)
-        self.cmds = []
-        return True
-
     def do_post_steps(self) -> bool:
         assert super().do_post_steps()
         return self.run_magic()
