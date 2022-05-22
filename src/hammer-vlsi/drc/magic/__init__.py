@@ -44,7 +44,7 @@ class Magic(HammerDRCTool, TCLTool):
         return True
 
     def tool_config_prefix(self) -> str:
-        return "drc.openroad"
+        return "drc.magic"
 
     def drc_results_pre_waived(self) -> Dict[str, int]:
         return {}
@@ -145,6 +145,8 @@ class Magic(HammerDRCTool, TCLTool):
         # Results output is taken from output of certain commands
         # Hooks that also write to it should use the $fout variable
         self.append("set fout [open drc.out w]")
+
+        self.append(self.get_additional_drc_text())
         return True
 
     def run_drc(self) -> bool:
@@ -176,11 +178,10 @@ class Magic(HammerDRCTool, TCLTool):
         ''')
 
         # Error counts
-        self.append('puts "Hierarchical DRC error count:"')
-        self.append("drc listall count")
+        # TODO: hierarchical counts don't work in noconsole mode...
+        #self.append('puts "Hierarchical DRC error counts:"')
+        #self.append("puts [drc listall count]")
         self.append('puts "Flat DRC error count: $flat_count"')
-
-        self.append(self.get_additional_drc_text())
         return True
 
 tool = Magic
