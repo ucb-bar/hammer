@@ -23,7 +23,7 @@ class Netgen(HammerLVSTool, TCLTool):
     @property
     def steps(self) -> List[HammerToolStep]:
         return self.make_steps_from_methods([
-            self.generate_layout_spice_file,
+            self.run_ext2spice,
             self.run_lvs
         ])
 
@@ -116,7 +116,7 @@ class Netgen(HammerLVSTool, TCLTool):
     #========================================================================
     # lvs main steps
     #========================================================================
-    def generate_layout_spice_file(self) -> bool:
+    def run_ext2spice(self) -> bool:
         """
         Run magic ext2spice
         Adapted from OpenLane
@@ -127,6 +127,7 @@ class Netgen(HammerLVSTool, TCLTool):
                 self.logger.info("Layout Spice file already generated, skipping...")
                 return True
 
+        # Magic args
         args = [self.get_setting("drc.magic.magic_bin"), "-noconsole", "-dnull"]
         rcfile = self.get_setting("drc.magic.rcfile")
         # Equivalent to get_drc_decks() for DRCTool
@@ -140,11 +141,16 @@ class Netgen(HammerLVSTool, TCLTool):
                 self.logger.error("More than 1 tech file (DRC deck) found. netgen only supports 1.")
             args.extend(["-T", techfile[0]])
 
-        gds2spice_script = os.path.join(self.run_dir, "gds2spice.tcl")
-        args.append(gds2spice_script)
+        ext2spice_script = os.path.join(self.run_dir, "ext2spice.tcl")
+        args.append(ext2spice_script)
 
+        # Create folder for all .ext files
+        os.makedirs(os.path.join(self.run_dir, "ext2spice-rundir"), exist_ok=True)
+
+        # ext2spice script
         self.append("gds read " + self.layout_file)
         self.append("load " + self.top_module)
+        self.append("cd ext2spice-rundir")
         self.append("extract do local")
         self.append("extract no capacitance")
         self.append("extract no coupling")
@@ -155,10 +161,10 @@ class Netgen(HammerLVSTool, TCLTool):
         self.append("extract")
         self.append("ext2spice lvs")
         self.append("ext2spice -o " + self.ext2spice_netlist)
-        self.append("feedback save gds2spice.log")
+        self.append("feedback save ext2spice.log")
         self.append("quit")
 
-        with open(gds2spice_script, "w") as f:
+        with open(ext2spice_script, "w") as f:
             f.write("\n".join(self.output))
         self.output.clear()
 
