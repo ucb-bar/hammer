@@ -137,8 +137,8 @@ class Netgen(HammerLVSTool, TCLTool):
             args.extend(["-rcfile", rcfile])
         else:
             # lvs deck should be the tech file. There should only be 1.
-            if len(techfile) > 1:
-                self.logger.error("More than 1 tech file (DRC deck) found. netgen only supports 1.")
+            if len(techfile) == 0 or len(techfile) > 1:
+                self.logger.error("None or more than 1 tech file (DRC deck) found. netgen only supports 1.")
             args.extend(["-T", techfile[0]])
 
         ext2spice_script = os.path.join(self.run_dir, "ext2spice.tcl")
@@ -151,13 +151,14 @@ class Netgen(HammerLVSTool, TCLTool):
         self.append("gds read " + self.layout_file)
         self.append("load " + self.top_module)
         self.append("cd ext2spice-rundir")
-        self.append("extract do local")
+        self.append("extract do local") # extract into ext2spice-rundir
         self.append("extract no capacitance")
         self.append("extract no coupling")
         self.append("extract no resistance")
         self.append("extract no adjust")
         if not self.get_setting("lvs.netgen.connect_by_label"):
             self.append("extract unique")
+        self.append("extract warn all")
         self.append("extract")
         self.append("ext2spice lvs")
         self.append("ext2spice -o " + self.ext2spice_netlist)
@@ -204,7 +205,7 @@ class Netgen(HammerLVSTool, TCLTool):
 
         self.append('puts "Running LVS..."')
         setup_file = self.get_setting("lvs.netgen.setup_file")
-        self.append("lvs 1 {{{top} 2}} {setup} {top}.lvs.log -json".format(
+        self.append("lvs {{{top} 1}} {{{top} 2}} {setup} {top}.lvs.log -json".format(
                     top=self.top_module,
                     setup=get_or_else(setup_file, "nosetup")))
         return True

@@ -83,8 +83,8 @@ class Magic(HammerDRCTool, TCLTool):
             args.extend(["-rcfile", rcfile])
         else:
             # DRC deck should be the tech file. There should only be 1.
-            if len(techfile) > 1:
-                self.logger.error("More than 1 tech file (DRC deck) found. Magic only supports 1.")
+            if len(techfile) == 0 or len(techfile) > 1:
+                self.logger.error("None or more than 1 tech file (DRC deck) found. netgen only supports 1.")
             args.extend(["-T", techfile[0]])
 
         """
