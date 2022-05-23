@@ -14,6 +14,7 @@ from typing import Iterable, List, Union, Callable, Any, Dict, Set, NamedTuple, 
 
 from hammer_utils import deepdict, topological_sort
 from .yaml2json import load_yaml  # grumble grumble
+from warnings import warn
 
 from functools import reduce, lru_cache
 import json
@@ -764,29 +765,12 @@ class HammerDatabase:
         """
         if key not in self.get_config():
             raise KeyError("Key " + key + " is missing")
+        if key not in self.get_config_types():
+            warn(f"Key {key} is not associated with a type")
         else:
-            value = self.get_config()[key]
-            if value is not nullvalue and self.has_setting_type(key):
-                key_type = self.get_config_types()[key]
-                exp_value_type = self.parse_setting_type(key_type)
-                if not exp_value_type.optional:
-                    value_type_primary = type(value).__name__
-                    if value_type_primary != exp_value_type.primary:
-                        raise TypeError(f"Expected primary type {exp_value_type.primary} for {key}, got type {value_type_primary}")
-                    if isinstance(value, list) and len(value) > 0:
-                        contained_val = value[0]
-                        value_type_secondary = type(contained_val).__name__
-                        if value_type_secondary != exp_value_type.secondary:
-                            raise TypeError(f"Expected secondary type {exp_value_type.secondary}, got type {value_type_secondary}")
-                        if isinstance(contained_val, dict) and len(contained_val) > 0:
-                            k, v = list(contained_val.items())[0]
-                            k_type = type(k).__name__
-                            v_type = type(v).__name__
-                            if k_type != exp_value_type.tertiary_k:
-                                raise TypeError(f"Expected tertiary type {exp_value_type.tertiary_k}, got type {k_type}")
-                            if v_type != exp_value_type.tertiary_v:
-                                raise TypeError(f"Expected tertiary type {exp_value_type.tertiary_v}, got type {v_type}")
-            return nullvalue if value is None else value
+            self.check_setting(key)
+        value = self.get_config()[key]
+        return nullvalue if value is None else value
 
     def set_setting(self, key: str, value: Any) -> None:
         """
@@ -816,7 +800,7 @@ class HammerDatabase:
         :return: Data type of key.
         """
         if key not in self.get_config_types():
-            raise KeyError(f"Key {key} is missing")
+            raise KeyError(f"Key type {key} is missing")
         else:
             value = self.get_config_types()[key]
             return nullvalue if value is None else value
@@ -840,10 +824,46 @@ class HammerDatabase:
         """
         return key in self.get_config_types()
 
+    def check_setting(self, key: str, cfg: dict = None) -> bool:
+        """
+        Checks a setting for correct typing.
+        """
+        if cfg is None:
+            cfg = self.get_config()
+        exp_value_type = parse_setting_type(self.get_config_types()[key])
+        value = cfg[key]
+
+        if value is None and not exp_value_type.optional:
+            raise TypeError(f"Key {key} is missing and non-optional")
+        elif value is None and exp_value_type.optional:
+            return True
+
+        value_type_primary = type(value).__name__
+        if value_type_primary != exp_value_type.primary:
+            raise TypeError(f"Expected primary type {exp_value_type.primary} for {key}, got type {value_type_primary}")
+
+        if isinstance(value, list) and len(value) > 0:
+            contained_val = value[0]
+            value_type_secondary = type(contained_val).__name__
+            if value_type_secondary != exp_value_type.secondary:
+                raise TypeError(f"Expected secondary type {exp_value_type.secondary} for {key}, got type {value_type_secondary}")
+
+            if isinstance(contained_val, dict) and len(contained_val) > 0:
+                k, v = list(contained_val.items())[0]
+                k_type = type(k).__name__
+                v_type = type(v).__name__
+                if k_type != exp_value_type.tertiary_k:
+                    raise TypeError(f"Expected tertiary key type {exp_value_type.tertiary_k} for {key}, got type {k_type}")
+                if v_type != exp_value_type.tertiary_v:
+                    raise TypeError(f"Expected tertiary value type {exp_value_type.tertiary_v} for {key}, got type {v_type}")
+        return True
+
     def update_core(self, core_config: List[dict]) -> None:
         """
         Update the core config with the given core config.
         """
+        for k in self.get_config_types().keys():
+            self.check_setting(k, cfg=core_config)
         self.core = core_config
         self.__config_cache_dirty = True
 
@@ -887,50 +907,12 @@ class HammerDatabase:
         Update the types config with the given types config.
         """
         self.__config_types = config_types
+        for k, v in config_types.items():
+            if not self.has_setting(k):
+                warn(f"Key {k} has a type {v} is not yet implemented")
+            elif k != "_config_path":
+                self.check_setting(k)
         self.__config_cache_dirty = True
-
-    def parse_setting_type(self, setting_type: str) -> NamedTuple:
-        """
-        Parses a configuration type.
-        :param setting_type: The string form of a setting configuration.
-        :return: A configuration type dataclass with info about the type.
-        """
-        PRIMARY_REGEX = re.compile(r"(\w+)")
-        INNER_REGEX = re.compile(r"\w+\[(.+)\]")
-
-        m_prim = re.search(PRIMARY_REGEX, setting_type)
-        m_sec = re.search(INNER_REGEX, setting_type)
-
-        if m_prim.group(0) == "Optional":
-            if m_sec is None:
-                raise RuntimeError("Not a valid inner configuration type")
-            recursive_type = self.parse_setting_type(m_sec.group(1))
-            return ConfigType(
-                recursive_type.primary,
-                optional=True,
-                secondary=recursive_type.secondary,
-                tertiary_k=recursive_type.tertiary_k,
-                tertiary_v=recursive_type.tertiary_v
-            )
-        elif m_prim.group(0) == "list":
-            if m_sec is None:
-                raise RuntimeError("Not a valid inner configuration type")
-            m_sec_prim = re.search(PRIMARY_REGEX, m_sec.group(1))
-            if m_sec_prim is None:
-                raise RuntimeError("Not a valid contained type")
-            if m_sec_prim.group(0) == "dict":
-                m_sec_inner = re.search(r"\w+\[(\w+), (\w+)\]", m_sec.group(0))
-                if m_sec_inner is None:
-                    raise RuntimeError("Not a valid inner dictionary type")
-                return ConfigType(
-                    m_prim.group(0),
-                    secondary=m_sec_prim.group(0),
-                    tertiary_k=m_sec_inner.group(1),
-                    tertiary_v=m_sec_inner.group(2)
-                )
-            else:
-                return ConfigType(m_prim.group(0), secondary=m_sec_prim.group(0))
-        return ConfigType(m_prim.group(0))
 
 def load_config_from_string(contents: str, is_yaml: bool, path: str = "unspecified") -> dict:
     """
@@ -1149,3 +1131,46 @@ class ConfigType(NamedTuple):
     secondary: str = ""
     tertiary_k: str = ""
     tertiary_v: str = ""
+
+def parse_setting_type(setting_type: str) -> NamedTuple:
+    """
+    Parses a configuration type.
+    :param setting_type: The string form of a setting configuration.
+    :return: A configuration type dataclass with info about the type.
+    """
+    PRIMARY_REGEX = re.compile(r"(\w+)")
+    INNER_REGEX = re.compile(r"\w+\[(.+)\]")
+
+    m_prim = re.search(PRIMARY_REGEX, setting_type)
+    m_sec = re.search(INNER_REGEX, setting_type)
+
+    if m_prim.group(0) == "Optional":
+        if m_sec is None:
+            raise RuntimeError("Not a valid inner configuration type")
+        recursive_type = parse_setting_type(m_sec.group(1))
+        return ConfigType(
+            recursive_type.primary,
+            optional=True,
+            secondary=recursive_type.secondary,
+            tertiary_k=recursive_type.tertiary_k,
+            tertiary_v=recursive_type.tertiary_v
+        )
+    elif m_prim.group(0) == "list":
+        if m_sec is None:
+            raise RuntimeError("Not a valid inner configuration type")
+        m_sec_prim = re.search(PRIMARY_REGEX, m_sec.group(1))
+        if m_sec_prim is None:
+            raise RuntimeError("Not a valid contained type")
+        if m_sec_prim.group(0) == "dict":
+            m_sec_inner = re.search(r"\w+\[(\w+), (\w+)\]", m_sec.group(0))
+            if m_sec_inner is None:
+                raise RuntimeError("Not a valid inner dictionary type")
+            return ConfigType(
+                m_prim.group(0),
+                secondary=m_sec_prim.group(0),
+                tertiary_k=m_sec_inner.group(1),
+                tertiary_v=m_sec_inner.group(2)
+            )
+        else:
+            return ConfigType(m_prim.group(0), secondary=m_sec_prim.group(0))
+    return ConfigType(m_prim.group(0))
