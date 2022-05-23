@@ -986,11 +986,10 @@ foo:
 """, is_yaml=True)
 
         db.update_core([base])
-        db.update_types(base_types)
+        with self.assertRaises(TypeError):
+            db.update_types(base_types)
 
         self.assertEqual(db.get_setting("foo.bar.adc"), [1, 2, 3])
-        with self.assertRaises(TypeError):
-            db.get_setting("foo.bar.wrong")
 
     def test_wrong_constraints(self) -> None:
         """
@@ -1011,11 +1010,10 @@ foo:
 """, is_yaml=True)
 
         db.update_core([base])
-        db.update_types(base_types)
+        with self.assertRaises(TypeError):
+            db.update_types(base_types)
 
         self.assertEqual(db.get_setting("foo.bar.adc"), [{"name": "hi", "pin": "vdd"}])
-        with self.assertRaises(TypeError):
-            db.get_setting("foo.bar.wrong")
 
     def test_optional_constraints(self) -> None:
         """
@@ -1060,11 +1058,10 @@ foo:
 """, is_yaml=True)
 
         db.update_core([base])
-        db.update_types(base_types)
+        with self.assertRaises(TypeError):
+            db.update_types(base_types)
         
         self.assertEqual(db.get_setting("foo.bar.adc"), 3.14)
-        with self.assertRaises(TypeError):
-            db.get_setting("foo.bar.quu")
 
     def test_default_types(self) -> None:
         """
