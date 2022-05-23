@@ -84,6 +84,8 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
 
     The generated Makefile has a few variables that are set if absent. This allows the user to override them without
     modifying hammer.d. They are listed as follows:
+        - HAMMER_MAKEFILE_ROOT: This is an absolute path to the directory that the HammerDriver CLI was invoked from. It
+          can be set externally if the Makefile is relocated and the paths need relocating.
         - HAMMER_EXEC: This sets the actual python executable containing the HammerDriver main() function. It is set to
           the executable used to generate the Makefile by default.
         - HAMMER_DEPENDENCIES: The list of dependences to use for the initial syn and pcb targets. It is set to the set
@@ -102,15 +104,16 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
     makefile = os.path.join(driver.obj_dir, "hammer.d")
     default_dependencies = driver.options.project_configs + driver.options.environment_configs
     default_dependencies.extend(list(driver.database.get_setting("synthesis.inputs.input_files", [])))
-    # Resolve the canonical path for each dependency
-    default_dependencies = [os.path.realpath(x) for x in default_dependencies]
-    output = "HAMMER_EXEC ?= {}\n".format(os.path.realpath(sys.argv[0]))
+    # Ensure each path is made relative to the current run directory which is abstracted as a variable for easy integration
+    default_dependencies = [os.path.join("$(HAMMER_MAKEFILE_ROOT)", os.path.relpath(x)) for x in default_dependencies]
+    output = "HAMMER_MAKEFILE_ROOT ?= {build_run_dir}\n".format(build_run_dir=os.getcwd())
+    output += "HAMMER_EXEC ?= {}\n".format(os.path.join("$(HAMMER_MAKEFILE_ROOT)", sys.argv[0]))
     output += "HAMMER_DEPENDENCIES ?= {}\n\n".format(" ".join(default_dependencies))
     syn_deps = "$(HAMMER_DEPENDENCIES)"
     # Get the confs passed into this execution
-    env_confs = " ".join(["-e " + os.path.realpath(x) for x in driver.options.environment_configs])
-    proj_confs = " ".join(["-p " + os.path.realpath(x) for x in driver.options.project_configs])
-    obj_dir = os.path.realpath(driver.obj_dir)
+    env_confs = " ".join(["-e " + os.path.join("$(HAMMER_MAKEFILE_ROOT)", os.path.relpath(x)) for x in driver.options.environment_configs])
+    proj_confs = " ".join(["-p " + os.path.join("$(HAMMER_MAKEFILE_ROOT)", os.path.relpath(x)) for x in driver.options.project_configs])
+    obj_dir = os.path.join("$(HAMMER_MAKEFILE_ROOT)", os.path.relpath(driver.obj_dir))
 
     # Global steps that are the same for hier or flat
     pcb_run_dir = os.path.join(obj_dir, "pcb-rundir")
