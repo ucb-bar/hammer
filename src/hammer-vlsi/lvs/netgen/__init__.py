@@ -114,7 +114,7 @@ class Netgen(HammerLVSTool, TCLTool):
         return True
 
     #========================================================================
-    # lvs main steps
+    # LVS main steps
     #========================================================================
     def run_ext2spice(self) -> bool:
         """
@@ -136,7 +136,7 @@ class Netgen(HammerLVSTool, TCLTool):
         if rcfile is not None:
             args.extend(["-rcfile", rcfile])
         else:
-            # lvs deck should be the tech file. There should only be 1.
+            # DRC deck should be the tech file. There should only be 1.
             if len(techfile) == 0 or len(techfile) > 1:
                 self.logger.error("None or more than 1 tech file (DRC deck) found. netgen only supports 1.")
             args.extend(["-T", techfile[0]])
@@ -186,7 +186,7 @@ class Netgen(HammerLVSTool, TCLTool):
     def run_lvs(self) -> bool:
         """
         Read all libraries (stdcells, macros), then run comparison
-        Additional LVS text can only modify library netlists, not top-level
+        Additional LVS text can then modify netlists
         TODO: break up lvs command into constituent parts for more control
         """
         # libs for circuit1. spice format must be specified.
