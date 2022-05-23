@@ -238,7 +238,7 @@ par.inputs:
   input_files: list[str]
 
   # Top RTL module.
-  top_module: str
+  top_module: Optional[str]
 
   # Optional: SDC input file from post-synthesis.
   post_synth_sdc: Optional[str]
@@ -280,7 +280,7 @@ par:
 
   # Power straps configuration.
   power_straps_mode: str
-  power_straps_script_contents: str
+  power_straps_script_contents: Optional[str]
 
   # Spacing around blocks and hardmacros in microns
   blockage_spacing: float
@@ -339,11 +339,11 @@ openroad:
 drc.inputs:
   # Top RTL module.
   # type: str
-  top_module: str
+  top_module: Optional[str]
 
   # Input layout file.
   # type: str
-  layout_file: str
+  layout_file: Optional[str]
 
   # Valid modes are auto, manual, prepend, and append
   # type: str
@@ -367,7 +367,7 @@ lvs.inputs:
   top_module: Optional[str]
 
   # Input layout file
-  layout_file: Optionals[str]
+  layout_file: Optional[str]
 
   # Input list of schematic files
   schematic_files: list[str]
@@ -392,7 +392,7 @@ sram_generator.submit:
 # PCB deliverable settings.
 pcb.inputs:
   # Top RTL module.
-  top_module: str
+  top_module: Optional[str]
 
 pcb.submit:
   # Submission command settings
@@ -403,22 +403,22 @@ pcb.submit:
 technology.core:
     # Key name for the technology stackup
     # type: str
-    stackup: str
+    stackup: Optional[str]
     # Key name for the technology's special cells
     # type: str
-    special_cells: str
+    special_cells: Optional[str]
     # This should specify the TOPMOST metal layer the standard cells use for power rails
     # type: str
-    std_cell_rail_layer: str
+    std_cell_rail_layer: Optional[str]
     # This is used to provide a reference master for generating standard cell rails
     # type: str
-    tap_cell_rail_reference: str
+    tap_cell_rail_reference: Optional[str]
 
 # Specific inputs for the simulation tool.
 sim.inputs:
   # Top RTL module for simulation
   # type: str
-  top_module: str
+  top_module: Optional[str]
 
   # Input files for simulation including verilog sources, testharness/testbench, etc.
   # type: list[str]
@@ -442,7 +442,7 @@ sim.inputs:
 
   # Simulation timescale
   # type: str
-  timescale: str
+  timescale: Optional[str]
 
   # Benchmarks to run with the simulator executable
   # type: list[str]
@@ -523,7 +523,7 @@ sim.submit:
 power.inputs:
   # The path to a place and route database of the design to be analyzed
   # type: str
-  database: str
+  database: Optional[str]
 
   # The name of the test bench from the simulation.
   # type: str
@@ -564,8 +564,8 @@ power.submit:
 technology.pcb:
   # Desired pad opening diameter (in post-shrink um)
   # type: Decimal
-  bump_pad_opening_diameter: float
+  bump_pad_opening_diameter: Optional[float]
 
   # Desired pad metal diameter (in post-shrink um)
   # type: Decimal
-  bump_pad_metal_diameter: float
+  bump_pad_metal_diameter: Optional[float]
