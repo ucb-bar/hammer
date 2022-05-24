@@ -999,13 +999,17 @@ foo:
         base = hammer_config.load_config_from_string("""
 foo:
     bar:
-        adc: [{name: \"hi\", pin: \"vdd\"}]
+        adc: [{name: \"hi\", pin: 1}]
+        dac: [{name: [\"hi\"], pin: [1, 2]}]
+        any: [{name: \"hi\", pin: [1, 2]}]
         wrong: [{name: \"hi\", pin: \"vdd\"}]
 """, is_yaml=True)
         base_types = hammer_config.load_config_from_string("""
 foo:
     bar:
         adc: list[dict[str, str]]
+        dac: list[dict[str, list]]
+        any: list[dict[str, Any]]
         wrong: int
 """, is_yaml=True)
 
@@ -1013,7 +1017,9 @@ foo:
         with self.assertRaises(TypeError):
             db.update_types(base_types)
 
-        self.assertEqual(db.get_setting("foo.bar.adc"), [{"name": "hi", "pin": "vdd"}])
+        self.assertEqual(db.get_setting("foo.bar.adc"), [{"name": "hi", "pin": 1}])
+        self.assertEqual(db.get_setting("foo.bar.dac"), [{"name": ["hi"], "pin": [1, 2]}])
+        self.assertEqual(db.get_setting("foo.bar.any"), [{"name": "hi", "pin": [1, 2]}])
 
     def test_optional_constraints(self) -> None:
         """
