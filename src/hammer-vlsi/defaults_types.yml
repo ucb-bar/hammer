@@ -83,7 +83,8 @@ vlsi.technology:
 
   # Extra semiconductor IP libraries/stdcell libs/hard macros. (List[ExtraLibrary])
   # ExtraLibrary is serialized as a list[dict[str, str]]
-  extra_libraries: list[dict[str, str]]
+  # TODO: Extralibrary does not have a clean JSON serialization as of late
+  extra_libraries: list[dict[str, Any]]
 
   # Extra information about macro sizes.
   extra_macro_sizes: list[dict[str, str]]
@@ -147,7 +148,7 @@ vlsi.inputs:
   custom_sdc_constraints: list[str]
 
   # List of placement constraints for floorplanning.
-  placement_constraints: list[dict[str, str]]
+  placement_constraints: list[dict[str, Any]]
 
   # Don't use list mode. (str)
   dont_use_mode: str
