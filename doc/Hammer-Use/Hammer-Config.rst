@@ -220,8 +220,9 @@ The file should contain the same keys as the corresponding configuration file, b
 
 - primitive types (``int``, ``str``, etc.)
 - collection types (``list``)
-- collections of key-value pairs (``list[dict[str, str]]``) to ensure compatibility with custom constraints
+- collections of key-value pairs (``list[dict[str, str]]``, ``list[dict[str, list]]``, etc.) These values are turned into custom constraints (e.g. ``PlacementConstraint``, ``PinAssignment``) later in the HAMMER workflow, but the key value pairs are not type-checked any deeper.
 - optional forms of the above (``Optional[str]``)
+- the wildcard ``Any`` type
 
 HAMMER will perform the same without a types file, but it is highly recommended to ensure type safety of any future plugins.
 
