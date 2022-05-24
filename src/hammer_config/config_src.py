@@ -10,11 +10,13 @@
 # pylint: disable=invalid-name
 
 from decimal import Decimal
+from tokenize import Name
 from typing import Iterable, List, Union, Callable, Any, Dict, Set, NamedTuple, Tuple, Optional
 
 from hammer_utils import deepdict, topological_sort
 from .yaml2json import load_yaml  # grumble grumble
 from warnings import warn
+from enum import Enum
 
 from functools import reduce, lru_cache
 import json
@@ -838,24 +840,28 @@ class HammerDatabase:
         elif value is None and exp_value_type.optional:
             return True
 
+        if exp_value_type.primary == NamedType.ANY:
+            return
         value_type_primary = type(value).__name__
-        if value_type_primary != exp_value_type.primary:
-            raise TypeError(f"Expected primary type {exp_value_type.primary} for {key}, got type {value_type_primary}")
+        if value_type_primary != exp_value_type.primary.value:
+            raise TypeError(f"Expected primary type {exp_value_type.primary.value} for {key}, got type {value_type_primary}")
 
         if isinstance(value, list) and len(value) > 0:
+            if exp_value_type.secondary == NamedType.ANY:
+                return
             contained_val = value[0]
             value_type_secondary = type(contained_val).__name__
-            if value_type_secondary != exp_value_type.secondary:
-                raise TypeError(f"Expected secondary type {exp_value_type.secondary} for {key}, got type {value_type_secondary}")
+            if value_type_secondary != exp_value_type.secondary.value:
+                raise TypeError(f"Expected secondary type {exp_value_type.secondary.value} for {key}, got type {value_type_secondary}")
 
             if isinstance(contained_val, dict) and len(contained_val) > 0:
                 k, v = list(contained_val.items())[0]
                 k_type = type(k).__name__
                 v_type = type(v).__name__
-                if k_type != exp_value_type.tertiary_k:
-                    raise TypeError(f"Expected tertiary key type {exp_value_type.tertiary_k} for {key}, got type {k_type}")
-                if v_type != exp_value_type.tertiary_v:
-                    raise TypeError(f"Expected tertiary value type {exp_value_type.tertiary_v} for {key}, got type {v_type}")
+                if exp_value_type.tertiary_k != NamedType.ANY and k_type != exp_value_type.tertiary_k.value:
+                    raise TypeError(f"Expected tertiary key type {exp_value_type.tertiary_k.value} for {key}, got type {k_type}")
+                if exp_value_type.tertiary_v != NamedType.ANY and v_type != exp_value_type.tertiary_v.value:
+                    raise TypeError(f"Expected tertiary value type {exp_value_type.tertiary_v.value} for {key}, got type {v_type}")
         return True
 
     def update_core(self, core_config: List[dict]) -> None:
@@ -1116,6 +1122,15 @@ def load_config_types_from_defaults(path: str, strict: bool = False) -> List[dic
         os.path.join(path, "defaults_types.yml")
     ])
 
+class NamedType(Enum):
+    STR = "str"
+    INT = "int"
+    FLOAT = "float"
+    BOOL = "bool"
+    LIST = "list"
+    DICT = "dict"
+    ANY = "Any"
+
 class ConfigType(NamedTuple):
     """
     Class for a parsed configuration type.
@@ -1126,11 +1141,11 @@ class ConfigType(NamedTuple):
     :param tertiary_k: the key type stored in a dictionary.
     :param tertiary_v: the value type stored in a dictionary.
     """
-    primary: str
+    primary: NamedType
     optional: bool = False
-    secondary: str = ""
-    tertiary_k: str = ""
-    tertiary_v: str = ""
+    secondary: NamedType = NamedType.ANY
+    tertiary_k: NamedType = NamedType.ANY
+    tertiary_v: NamedType = NamedType.ANY
 
 def parse_setting_type(setting_type: str) -> NamedTuple:
     """
@@ -1149,11 +1164,11 @@ def parse_setting_type(setting_type: str) -> NamedTuple:
             raise RuntimeError("Not a valid inner configuration type")
         recursive_type = parse_setting_type(m_sec.group(1))
         return ConfigType(
-            recursive_type.primary,
+            NamedType(recursive_type.primary),
             optional=True,
-            secondary=recursive_type.secondary,
-            tertiary_k=recursive_type.tertiary_k,
-            tertiary_v=recursive_type.tertiary_v
+            secondary=NamedType(recursive_type.secondary),
+            tertiary_k=NamedType(recursive_type.tertiary_k),
+            tertiary_v=NamedType(recursive_type.tertiary_v)
         )
     elif m_prim.group(0) == "list":
         if m_sec is None:
@@ -1166,11 +1181,11 @@ def parse_setting_type(setting_type: str) -> NamedTuple:
             if m_sec_inner is None:
                 raise RuntimeError("Not a valid inner dictionary type")
             return ConfigType(
-                m_prim.group(0),
-                secondary=m_sec_prim.group(0),
-                tertiary_k=m_sec_inner.group(1),
-                tertiary_v=m_sec_inner.group(2)
+                NamedType(m_prim.group(0)),
+                secondary=NamedType(m_sec_prim.group(0)),
+                tertiary_k=NamedType(m_sec_inner.group(1)),
+                tertiary_v=NamedType(m_sec_inner.group(2))
             )
         else:
-            return ConfigType(m_prim.group(0), secondary=m_sec_prim.group(0))
-    return ConfigType(m_prim.group(0))
+            return ConfigType(NamedType(m_prim.group(0)), secondary=NamedType(m_sec_prim.group(0)))
+    return ConfigType(NamedType(m_prim.group(0)))
