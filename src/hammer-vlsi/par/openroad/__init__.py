@@ -37,6 +37,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         return self.make_steps_from_methods([
             self.init_design,
             self.floorplan_design,
+            # self.macro_placement,
             self.place_tap_cells, 
             self.power_straps, 
             self.global_placement,
@@ -72,7 +73,10 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         # self.cmds = []
         # Restore from the last checkpoint if we're not starting over.
         if first_step != self.first_step:
+            self.append(self.read_liberty())
             self.append("read_db pre_{step}".format(step=first_step.name))
+            self.read_sdc()
+            self.set_rc()
         return True
 
     def do_between_steps(self, prev: HammerToolStep, next: HammerToolStep) -> bool:
@@ -141,6 +145,11 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
     @property
     def open_chip_tcl(self) -> str:
         return self.open_chip_script + ".tcl"
+
+    def fill_cells(self) -> str:
+        stdfillers = self.technology.get_special_cell_by_type(CellType.StdFiller)
+        # fill_cells = '{'+' '.join(list(map(lambda c: str(c), stdfillers[0].name)))+'}'
+        return ' '.join(list(map(lambda c: str(c), stdfillers[0].name)))
     
     def block_append(self,commands) -> bool:
         for line in commands.split('\n'):
@@ -177,6 +186,12 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
     def tool_config_prefix(self) -> str:
         return "par.openroad"
 
+    def gui(self) -> str:
+        cmds=[]
+        cmds.append(self.read_liberty())
+        cmds.append("read_db latest")
+        return '\n'.join(cmds)
+
     #=========================================================================
     # useful subroutines
     #=========================================================================
@@ -192,7 +207,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
 
         # Create open_chip script pointing to latest (symlinked to post_<last ran step>).
         with open(self.open_chip_tcl, "w") as f:
-            f.write("read_db latest")
+            f.write(self.gui())
 
         with open(self.open_chip_script, "w") as f:
             f.write("""#!/bin/bash
@@ -272,7 +287,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         self.append("")
         return True
 
-    def read_liberty(self) -> bool:
+    def read_liberty(self) -> str:
+        cmds=[]
         corners = self.get_mmmc_corners()  # type: List[MMMCCorner]
         if corners:
             corner_names = []
@@ -288,12 +304,13 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
                     raise ValueError("Unsupported MMMCCornerType")
                 corner_names.append(corner_name)
             
-            self.append(f"define_corners {' '.join(corner_names)}")
+            cmds.append(f"define_corners {' '.join(corner_names)}")
             for corner,corner_name in zip(corners,corner_names):
                 lib_files=self.get_timing_libs(corner)
                 for lib_file in lib_files.split():
-                    self.verbose_append(f"read_liberty -corner {corner_name} {lib_file}")
-        self.append("")
+                    cmds.append(f"read_liberty -corner {corner_name} {lib_file}")
+        cmds.append("")
+        return '\n'.join(cmds)
 
     def convert_units(self,prefix) -> str:
         # convert SI prefix down by 1000x
@@ -317,7 +334,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         # TODO: make this more elegant
         
         sdc_files = self.generate_sdc_files()
-        for sdc_file in sdc_files:
+        for sdc_file in sdc_files[0:2]:
             self.append(f"read_sdc -echo {sdc_file}")
 
         return True
@@ -326,8 +343,13 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
     # par main steps
     #========================================================================
     def init_design(self) -> bool:
+        # set up useful variables
+        clock_port = self.get_clock_ports()[0]
+        self.clock_port_name = clock_port.name
+
+        # start routine
         self.read_lef()
-        self.read_liberty()
+        self.append(self.read_liberty())
         
         # read_verilog
         # We are switching working directories and we still need to find paths.
@@ -338,18 +360,44 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         self.read_sdc()
         return True
 
+    # def initialize_floorplan(self) -> str:
+    #     output=""
+    #     floorplan_constraints = self.get_placement_constraints()
+    #     for constraint in floorplan_constraints:
+    #         # Floorplan names/insts need to not include the top-level module,
+    #         # despite the internal get_db commands including the top-level module...
+    #         # e.g. Top/foo/bar -> foo/bar
+    #         new_path = "/".join(constraint.path.split("/")[1:])
+    #         if new_path == "":
+    #             assert constraint.type == PlacementConstraintType.TopLevel, "Top must be a top-level/chip size constraint"
+    #             margins = constraint.margins
+    #             assert margins is not None
+    #             # Set top-level chip dimensions.
+    #             site=self.technology.get_placement_site().name
+    #             width=constraint.width
+    #             height=constraint.height
+    #             left=margins.left
+    #             bottom=margins.bottom
+    #             right=margins.right
+    #             top=margins.top
+    #             output=f"initialize_floorplan -site {site} -die_area {{ 0 0 {width} {height}}} -core_area {{{left} {bottom} {width-right-left} {height-top-bottom}}}"
+    #     return output
+
     def floorplan_design(self) -> bool:
-        # TODO: place macros
-        floorplan_tcl_path = os.path.join(self.run_dir, "floorplan.tcl")
-        with open(floorplan_tcl_path, "w") as f:
-            # print(self.create_floorplan_tcl())
+
+        floorplan_tcl = os.path.join(self.run_dir, "floorplan.tcl")
+        with open(floorplan_tcl, "w") as f:
             f.write("\n".join(self.create_floorplan_tcl()))
 
         self.block_append(f"""
         ################################################################
         # Floorplan Design
-        source -echo -verbose {floorplan_tcl_path}
-        # source $::env(HAMMER_HOME)/src/hammer-vlsi/technology/sky130/extra/sky130hd.tracks
+
+        # Init floorplan/Place Macros
+        source -echo -verbose {floorplan_tcl}
+
+        # TODO: see pg 44 abt how these are generated, use self.generate_make_tracks()
+        source /tools/B/nayiri/openroad/gcd/sky130hd/sky130hd.tracks
 
         # remove buffers inserted by synthesis 
         remove_buffers
@@ -365,6 +413,34 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         #   macro_placement -halo $macro_place_halo -channel $macro_place_channel
         # }
         return True
+
+    def macro_placement(self) -> bool:
+
+        spacing = self.get_setting("par.blockage_spacing")
+        
+        self.block_append(f"""
+        ################################################################
+        # Macro Placement
+        """)
+        # -density 0.3 : default is 0.7
+        # TODO: overflow is by default 0.1, set to higher to speed up this step 
+        
+
+        output=""
+        floorplan_constraints = self.get_placement_constraints()
+        for constraint in floorplan_constraints:
+            # Floorplan names/insts need to not include the top-level module,
+            # despite the internal get_db commands including the top-level module...
+            # e.g. Top/foo/bar -> foo/bar
+            new_path = "/".join(constraint.path.split("/")[1:])
+            if new_path == "":
+                self.append("global_placement -density 0.3 -overflow 0.8 -verbose_level 2")
+            else:
+                # TODO: eventually set halo to spacing variable and figure out how to generate channel
+                self.append(f"macro_placement -halo {{1 1}} -channel {{80 80}}")
+                return True
+        return True
+
 
     def place_tap_cells(self) -> bool:
         tap_cells = self.technology.get_special_cell_by_type(CellType.TapCell)
@@ -479,19 +555,18 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         # TODO: generate sky130hd.rc ourselves
         # TODO: try leaving out clock
         # TODO: try without set_wire_rc
+
+        spacing = self.get_setting("par.blockage_spacing")
         
         self.block_append("""
         ################################################################
         # Global placement
         """)
-        metals=self.get_stackup().metals[1:]
-        for metal in metals:
-            self.append(f"set_global_routing_layer_adjustment {metal.name} 0.5")
-        self.block_append(f"""
-        set_routing_layers -signal {metals[0].name}-{metals[-1].name} -clock met3-met5
-        set_macro_extension 2
 
-        global_placement -routability_driven -density 0.3 -pad_left 4 -pad_right 4
+        self.block_append(f"""
+        # -density 0.3 : default is 0.7, overflow default is 0.3
+        global_placement -routability_driven  -pad_left 4 -pad_right 4 -overflow 0.8
+
         """)
 
         return True
@@ -552,14 +627,19 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         """)
         return True
 
-    def place_opt_design(self) -> bool:
+    def set_rc(self) -> bool:
         self.block_append(f"""
         ################################################################
         # Repair max slew/cap/fanout violations and normalize slews
-        source "$::env(HAMMER_HOME)/src/hammer-vlsi/technology/sky130/extra/sky130hd.rc"
+        source "/tools/B/nayiri/openroad/hammer-openroad/src/hammer-vlsi/technology/sky130/extra/sky130hd.rc"
         set_wire_rc -signal -layer "met2"
         set_wire_rc -clock  -layer "met5"
         """)
+
+        return True
+
+    def place_opt_design(self) -> bool:
+        self.set_rc()
 
         tie_hi_cells = self.technology.get_special_cell_by_type(CellType.TieHiCell)
         tie_lo_cells = self.technology.get_special_cell_by_type(CellType.TieLoCell)
@@ -574,8 +654,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
             tie_lo_port = tie_lo_cells[0].input_ports[0]
 
         self.block_append(f"""
-        ################################################################
-        # Repair max slew/cap/fanout violations and normalize slews
         set_dont_use {{{' '.join(self.get_dont_use_list())}}}
         estimate_parasitics -placement
         repair_design -slew_margin 0 -cap_margin 0
@@ -598,12 +676,17 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         return True
 
     def clock_tree(self) -> bool:
+        clock_port = self.get_clock_ports()[0]
+        self.clock_port_name = clock_port.name
+
         self.block_append(f"""
         ################################################################
         # Clock Tree Synthesis
         repair_clock_inverters
         clock_tree_synthesis -root_buf sky130_fd_sc_hd__clkbuf_1 -buf_list sky130_fd_sc_hd__clkbuf_1 -sink_clustering_enable
         
+        set_propagated_clock [all_clocks]
+
         # CTS leaves a long wire from the pad to the clock tree root.
         repair_clock_nets
         
@@ -611,9 +694,9 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         detailed_placement
 
         # checkpoint
-        write_def {self.run_dir}/{self.top_module}_cts.def
+        # write_def {self.run_dir}/{self.top_module}_cts.def
 
-        ################################################################
+        ###########################
         # Setup/hold timing repair
 
         set_propagated_clock [all_clocks]
@@ -690,35 +773,44 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
             # TODO: INV setting:self.append("add_fillers")
             
             # Then the rest is stdfillers
-            self.fill_cells = '{'+' '.join(list(map(lambda c: str(c), stdfillers[0].name)))+'}'
+            # self.fill_cells = '{'+' '.join(list(map(lambda c: str(c), stdfillers[0].name)))+'}'
             self.block_append(f"""
             ################################################################
             # Detailed +  Filler Placement (final)
 
-            detailed_placement
+            #err detailed_placement
             # Capture utilization before fillers make it 100%
             utl::metric "utilization" [format %.1f [expr [rsz::utilization] * 100]]
             utl::metric "design_area" [sta::format_area [rsz::design_area] 0]
-            filler_placement {self.fill_cells}
-            check_placement -verbose
+            filler_placement {{ {self.fill_cells} }}
+            #err check_placement -verbose
             """)
         return True
 
     def route_design(self) -> bool:
+        metals=self.get_stackup().metals[1:]
+
         self.block_append(f"""
         ################################################################
         # Global routing
-        pin_access
+        set_global_routing_layer_adjustment {metals[0].name}-{metals[-1].name} 0.5
+        set_routing_layers -signal {metals[0].name}-{metals[-1].name} -clock met3-met5
+        set_macro_extension 2
 
-        global_route -guide_file {self.route_guide_path} -congestion_iterations 100
+        # pin_access
+        global_route -guide_file {self.route_guide_path} -congestion_iterations 100 -verbose
+        set_propagated_clock [all_clocks]
+        estimate_parasitics -global_routing
 
-        set antenna_report {self.run_dir}/{self.top_module}_ant.rpt
-        set antenna_errors [check_antennas -report_violating_nets -report_file $antenna_report]
-        utl::metric "ANT::errors" $antenna_errors
-        if {{ $antenna_errors > 0 }} {{
-          fail "found $antenna_errors antenna violations"
-        }}
+        check_antennas -report_file {self.run_dir}/antenna.log -report_violating_nets
         """)
+
+        # set antenna_report {self.run_dir}/{self.top_module}_ant.rpt
+        # set antenna_errors [check_antennas -report_violating_nets -report_file $antenna_report]
+        # utl::metric "ANT::errors" $antenna_errors
+        # if {{ $antenna_errors > 0 }} {{
+        #   fail "found $antenna_errors antenna violations"
+        # }}
         
         self.block_append(f"""
         ################################################################
@@ -759,7 +851,9 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
     def write_netlist(self) -> bool:
         # TODO: figure out how to remove physical-only cells
         # TODO: figure out how to emit flat verilog for LVS netlist (or is it default flat)
-        self.append(f"write_verilog -include_pwr_gnd -remove_cells {self.fill_cells} {self.output_netlist_filename}")
+        # stdfillers = self.technology.get_special_cell_by_type(CellType.StdFiller)
+        # fill_cells = '{'+' '.join(list(map(lambda c: str(c), stdfillers[0].name)))+'}'
+        self.append(f"write_verilog -include_pwr_gnd -remove_cells {{ {self.fill_cells} }} {self.output_netlist_filename}")
         return True
 
     def write_gds(self) -> bool:
@@ -865,19 +959,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
 
         return True
 
-    
-
-    @staticmethod
-    def generate_chip_size_constraint(width: Decimal, height: Decimal, left: Decimal, bottom: Decimal, right: Decimal,
-                                      top: Decimal, site: str) -> str:
-        """
-        Given chip width/height and margins, generate an Innovus TCL command to create the floorplan.
-        Also requires a technology specific name for the core site
-        """
-
-        return f"initialize_floorplan -site {site} -die_area {{ 0 0 {width} {height}}} -core_area {{{left} {bottom} {width-right} {height-top}}}"
-
-    def generate_make_tracks(self) -> List[str]:
+    def generate_make_tracks(self) -> str:
         output = []
         # initialize_floorplan removes existing tracks 
         #   --> use the make_tracks command to add routing tracks 
@@ -885,7 +967,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         layers = self.get_setting("par.generate_power_straps_options.by_tracks.strap_layers")
         for metal in self.get_stackup().metals:
             output.append(f"make_tracks {metal.name}")
-        return output
+        return "\n".join(output)
 
     def create_floorplan_tcl(self) -> List[str]:
         """
@@ -919,14 +1001,25 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
             output.append("# Blank floorplan specified from HAMMER")
         return output
 
-    def generate_floorplan_tcl(self) -> List[str]:
-
+    @staticmethod
+    def generate_chip_size_constraint(width: Decimal, height: Decimal, left: Decimal, bottom: Decimal, right: Decimal,
+                                      top: Decimal, site: str) -> str:
         """
-        Generate a TCL floorplan for OpenROAD based on the input config/IR.
+        Given chip width/height and margins, generate an Innovus TCL command to create the floorplan.
+        Also requires a technology specific name for the core site
+        """
+        # -flip -f allows standard cells to be flipped correctly during place-and-route
+
+        return f"initialize_floorplan -site {site} -die_area {{ 0 0 {width} {height}}} -core_area {{{left} {bottom} {width-right-left} {height-top-bottom}}}"
+
+    def generate_floorplan_tcl(self) -> List[str]:
+        """
+        Generate a TCL floorplan for Innovus based on the input config/IR.
         Not to be confused with create_floorplan_tcl, which calls this function.
         """
         output = []  # type: List[str]
 
+        # TODO(edwardw): proper source locators/SourceInfo
         output.append("# Floorplan automatically generated from HAMMER")
 
         # Top-level chip size constraint.
@@ -965,6 +1058,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
                 )
             else:
                 orientation = constraint.orientation if constraint.orientation is not None else "r0"
+                orientation = orientation.upper()
+                # TODO: copied from Innovus
                 if constraint.create_physical:
                     output.append("create_inst -cell {cell} -inst {inst} -location {{{x} {y}}} -orient {orientation} -physical -status fixed".format(
                         cell=constraint.master,
@@ -975,6 +1070,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
                     ))
                 if constraint.type == PlacementConstraintType.Dummy:
                     pass
+                # TODO: copied from Innovus
                 elif constraint.type == PlacementConstraintType.Placement:
                     output.append("create_guide -name {name} -area {x1} {y1} {x2} {y2}".format(
                         name=new_path,
@@ -983,14 +1079,16 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
                         y1=constraint.y,
                         y2=constraint.y + constraint.height
                     ))
+                # for OpenROAD
                 elif constraint.type in [PlacementConstraintType.HardMacro, PlacementConstraintType.Hierarchical]:
-                    output.append("place_inst {inst} {x} {y} {orientation}{fixed}".format(
+                    output.append("place_cell -inst_name {inst} -origin {{ {x} {y} }} -orient {orientation} -status FIRM".format(
                         inst=new_path,
                         x=constraint.x,
                         y=constraint.y,
                         orientation=orientation,
-                        fixed=" -fixed" if constraint.create_physical else ""
+                        # fixed=" -fixed" if constraint.create_physical else ""
                     ))
+                    # TODO: add place_cell option [-status (PLACED|FIRM)] (like -fixed for innovus)
                     spacing = self.get_setting("par.blockage_spacing")
                     if constraint.top_layer is not None:
                         current_top_layer = constraint.top_layer #  type: Optional[str]
@@ -998,12 +1096,14 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
                         current_top_layer = global_top_layer
                     else:
                         current_top_layer = None
-                    if current_top_layer is not None:
-                        bot_layer = self.get_stackup().get_metal_by_index(1).name
-                        output.append("create_place_halo -insts {inst} -halo_deltas {{{s} {s} {s} {s}}} -snap_to_site".format(
-                            inst=new_path, s=spacing))
-                        output.append("create_route_halo -bottom_layer {b} -space {s} -top_layer {t} -inst {inst}".format(
-                            inst=new_path, b=bot_layer, t=current_top_layer, s=spacing))
+                    # TODO: find equivalent for place/route halo in OpenROAD
+                    # if current_top_layer is not None:
+                    #     bot_layer = self.get_stackup().get_metal_by_index(1).name
+                    #     output.append("create_place_halo -insts {inst} -halo_deltas {{{s} {s} {s} {s}}} -snap_to_site".format(
+                    #         inst=new_path, s=spacing))
+                    #     output.append("create_route_halo -bottom_layer {b} -space {s} -top_layer {t} -inst {inst}".format(
+                    #         inst=new_path, b=bot_layer, t=current_top_layer, s=spacing))
+                # TODO: copied from Innovus
                 elif constraint.type == PlacementConstraintType.Obstruction:
                     obs_types = get_or_else(constraint.obs_types, [])  # type: List[ObstructionType]
                     if ObstructionType.Place in obs_types:
@@ -1033,8 +1133,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
                         ))
                 else:
                     assert False, "Should not reach here"
-            output = []
-        return [chip_size_constraint] + output + self.generate_make_tracks()
+        return [chip_size_constraint] + output
 
     def specify_std_cell_power_straps(self, blockage_spacing: Decimal, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
         """
