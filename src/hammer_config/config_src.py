@@ -14,6 +14,8 @@ from typing import Iterable, List, Union, Callable, Any, Dict, Set, NamedTuple, 
 
 from hammer_utils import deepdict, topological_sort
 from .yaml2json import load_yaml  # grumble grumble
+from warnings import warn
+from enum import Enum
 
 from functools import reduce, lru_cache
 import json
@@ -707,6 +709,8 @@ class HammerDatabase:
         self.__config_cache = {}  # type: dict
         self.__config_cache_dirty = False  # type: bool
 
+        self.__config_types = {}  # type: dict
+
     @property
     def runtime(self) -> List[dict]:
         return [self._runtime]
@@ -726,6 +730,13 @@ class HammerDatabase:
                 self.project + self.runtime)
             self.__config_cache_dirty = False
         return self.__config_cache
+
+    def get_config_types(self) -> dict:
+        """
+        Get the types for the configuration of a database.
+        """
+        self.__config_cache_dirty = False
+        return self.__config_types
 
     def get_database_json(self) -> str:
         """Get the database (get_config) in JSON form as a string.
@@ -755,9 +766,12 @@ class HammerDatabase:
         """
         if key not in self.get_config():
             raise KeyError("Key " + key + " is missing")
+        if key not in self.get_config_types():
+            warn(f"Key {key} is not associated with a type")
         else:
-            value = self.get_config()[key]
-            return nullvalue if value is None else value
+            self.check_setting(key)
+        value = self.get_config()[key]
+        return nullvalue if value is None else value
 
     def set_setting(self, key: str, value: Any) -> None:
         """
@@ -778,10 +792,83 @@ class HammerDatabase:
         """
         return key in self.get_config()
 
+    def get_setting_type(self, key: str, nullvalue: Any = None) -> Any:
+        """
+        Acquire the type of a given key.
+
+        :param key: Desired key.
+        :param nullvalue: Value to return for nulls.
+        :return: Data type of key.
+        """
+        if key not in self.get_config_types():
+            raise KeyError(f"Key type {key} is missing")
+        else:
+            value = self.get_config_types()[key]
+            return nullvalue if value is None else value
+
+    def set_setting_type(self, key: str, value: Any) -> None:
+        """
+        Set the given key type.
+
+        :param key: Key
+        :param value: Value for key
+        """
+        self.__config_types[key] = value
+        self.__config_cache_dirty = True
+
+    def has_setting_type(self, key: str) -> bool:
+        """
+        Check if the given key type exists in the database.
+
+        :param key: Desired key.
+        :return: True if the given setting exists.
+        """
+        return key in self.get_config_types()
+
+    def check_setting(self, key: str, cfg: dict = None) -> bool:
+        """
+        Checks a setting for correct typing.
+        """
+        if cfg is None:
+            cfg = self.get_config()
+        exp_value_type = parse_setting_type(self.get_config_types()[key])
+        value = cfg[key]
+
+        if value is None and not exp_value_type.optional:
+            raise TypeError(f"Key {key} is missing and non-optional")
+        elif value is None and exp_value_type.optional:
+            return True
+
+        if exp_value_type.primary == NamedType.ANY:
+            return True
+        value_type_primary = type(value).__name__
+        if value_type_primary != exp_value_type.primary.value:
+            raise TypeError(f"Expected primary type {exp_value_type.primary.value} for {key}, got type {value_type_primary}")
+
+        if isinstance(value, list) and len(value) > 0:
+            if exp_value_type.secondary == NamedType.ANY:
+                return True
+            contained_val = value[0]
+            value_type_secondary = type(contained_val).__name__
+            if value_type_secondary != exp_value_type.secondary.value:
+                raise TypeError(f"Expected secondary type {exp_value_type.secondary.value} for {key}, got type {value_type_secondary}")
+
+            if isinstance(contained_val, dict) and len(contained_val) > 0:
+                k, v = list(contained_val.items())[0]
+                k_type = type(k).__name__
+                v_type = type(v).__name__
+                if exp_value_type.tertiary_k != NamedType.ANY and k_type != exp_value_type.tertiary_k.value:
+                    raise TypeError(f"Expected tertiary key type {exp_value_type.tertiary_k.value} for {key}, got type {k_type}")
+                if exp_value_type.tertiary_v != NamedType.ANY and v_type != exp_value_type.tertiary_v.value:
+                    raise TypeError(f"Expected tertiary value type {exp_value_type.tertiary_v.value} for {key}, got type {v_type}")
+        return True
+
     def update_core(self, core_config: List[dict]) -> None:
         """
         Update the core config with the given core config.
         """
+        for k in self.get_config_types().keys():
+            self.check_setting(k, cfg=combine_configs(core_config))
         self.core = core_config
         self.__config_cache_dirty = True
 
@@ -820,6 +907,17 @@ class HammerDatabase:
         self.builtins = builtins_config
         self.__config_cache_dirty = True
 
+    def update_types(self, config_types: dict) -> None:
+        """
+        Update the types config with the given types config.
+        """
+        self.__config_types = config_types
+        for k, v in config_types.items():
+            if not self.has_setting(k):
+                warn(f"Key {k} has a type {v} is not yet implemented")
+            elif k != "_config_path":
+                self.check_setting(k)
+        self.__config_cache_dirty = True
 
 def load_config_from_string(contents: str, is_yaml: bool, path: str = "unspecified") -> dict:
     """
@@ -986,3 +1084,119 @@ def load_config_from_defaults(path: str, strict: bool = False) -> List[dict]:
         os.path.join(path, "defaults.json"),
         os.path.join(path, "defaults.yml")
     ])
+
+def load_config_types_from_string(contents: str, is_yaml: bool, path: str = "unspecified") -> dict:
+    """
+    Load config types from string. Alias for `load_config_from_string`.
+
+    :param contents: Contents of the config.
+    :param is_yaml: True if the contents are yaml.
+    :param path: Path to the folder where the config file is located.
+    :return: Loaded config dictionary, unpacked.
+    """
+    return load_config_from_string(contents, is_yaml, path)
+
+def load_config_types_from_file(path: str, strict: bool = False) -> dict:
+    """
+    Load the default types from a configuration `.yml` file. Alias for `load_config_from_file`.
+
+    :param path: Path to a types.yml file.
+    :param strict: Set to true to error if the file is not found
+    :return: A list of data types for a configuration file.
+    """
+    return load_config_from_file(path, strict)
+
+def load_config_types_from_defaults(path: str, strict: bool = False) -> List[dict]:
+    """
+    Load the default configuration for a hammer-vlsi tool/library/technology in
+    the given path, which consists of defaults.yml and defaults.json (with
+    defaults.json taking priority).
+
+    :param config_paths: Path to defaults.yml and defaults.json.
+    :param strict: Set to true to error if the file is not found.
+    :return: A list of configs in order of specification.
+    """
+    return load_config_from_paths([
+        os.path.join(path, "defaults_types.json"),
+        os.path.join(path, "defaults_types.yml")
+    ])
+
+class NamedType(Enum):
+    STR = "str"
+    INT = "int"
+    FLOAT = "float"
+    BOOL = "bool"
+    LIST = "list"
+    DICT = "dict"
+    ANY = "Any"
+
+class ConfigType(NamedTuple):
+    """
+    Class for a parsed configuration type.
+
+    :param primary: the outermost type on a configuration.
+    :param optional: if the type is an Optional type.
+    :param secondary: the type within the type, i.e. what is in a list.
+    :param tertiary_k: the key type stored in a dictionary.
+    :param tertiary_v: the value type stored in a dictionary.
+    """
+    primary: NamedType
+    optional: bool = False
+    secondary: NamedType = NamedType.ANY
+    tertiary_k: NamedType = NamedType.ANY
+    tertiary_v: NamedType = NamedType.ANY
+
+def parse_setting_type(setting_type: str) -> ConfigType:
+    """
+    Parses a configuration type.
+    :param setting_type: The string form of a setting configuration.
+    :return: A configuration type dataclass with info about the type.
+    """
+    PRIMARY_REGEX = re.compile(r"(\w+)")
+    INNER_REGEX = re.compile(r"\w+\[(.+)\]")
+
+    m_prim = re.search(PRIMARY_REGEX, setting_type)
+    m_sec = re.search(INNER_REGEX, setting_type)
+
+    if m_prim is None:
+        raise RuntimeError("Not a valid configuration type")
+    primary_type = m_prim.group(0)
+
+    if primary_type == "Optional":
+        if m_sec is None:
+            raise RuntimeError("Not a valid inner configuration type")
+        opt_type = m_sec.group(1)
+
+        recursive_type = parse_setting_type(opt_type)
+        return ConfigType(
+            NamedType(recursive_type.primary),
+            optional=True,
+            secondary=NamedType(recursive_type.secondary),
+            tertiary_k=NamedType(recursive_type.tertiary_k),
+            tertiary_v=NamedType(recursive_type.tertiary_v)
+        )
+    elif primary_type == "list":
+        if m_sec is None:
+            raise RuntimeError("Not a valid inner configuration type")
+        secondary_type_full = m_sec.group(1)
+
+        m_sec_flat = re.search(PRIMARY_REGEX, secondary_type_full)
+        if m_sec_flat is None:
+            raise RuntimeError("Not a valid inner configuration type")
+        secondary_type_flat = m_sec_flat.group(0)
+
+        if secondary_type_flat == "dict":
+            m_sec_inner = re.search(r"\w+\[(\w+), (\w+)\]", secondary_type_full)
+            if m_sec_inner is None:
+                raise RuntimeError("Not a valid inner dictionary type")
+            tertiary_k, tertiary_v = m_sec_inner.groups()[:2]
+
+            return ConfigType(
+                NamedType(primary_type),
+                secondary=NamedType(secondary_type_flat),
+                tertiary_k=NamedType(tertiary_k),
+                tertiary_v=NamedType(tertiary_v)
+            )
+        else:
+            return ConfigType(NamedType(primary_type), secondary=NamedType(secondary_type_flat))
+    return ConfigType(NamedType(primary_type))
