@@ -906,7 +906,7 @@ class HammerDatabase:
         """
         self.builtins = builtins_config
         self.__config_cache_dirty = True
-    
+
     def update_types(self, config_types: dict) -> None:
         """
         Update the types config with the given types config.
@@ -1088,7 +1088,7 @@ def load_config_from_defaults(path: str, strict: bool = False) -> List[dict]:
 def load_config_types_from_string(contents: str, is_yaml: bool, path: str = "unspecified") -> dict:
     """
     Load config types from string. Alias for `load_config_from_string`.
-    
+
     :param contents: Contents of the config.
     :param is_yaml: True if the contents are yaml.
     :param path: Path to the folder where the config file is located.
@@ -1146,7 +1146,7 @@ class ConfigType(NamedTuple):
     tertiary_k: NamedType = NamedType.ANY
     tertiary_v: NamedType = NamedType.ANY
 
-def parse_setting_type(setting_type: str) -> NamedTuple:
+def parse_setting_type(setting_type: str) -> ConfigType:
     """
     Parses a configuration type.
     :param setting_type: The string form of a setting configuration.
