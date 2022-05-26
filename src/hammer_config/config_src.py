@@ -10,7 +10,6 @@
 # pylint: disable=invalid-name
 
 from decimal import Decimal
-from tokenize import Name
 from typing import Iterable, List, Union, Callable, Any, Dict, Set, NamedTuple, Tuple, Optional
 
 from hammer_utils import deepdict, topological_sort
@@ -841,14 +840,14 @@ class HammerDatabase:
             return True
 
         if exp_value_type.primary == NamedType.ANY:
-            return
+            return True
         value_type_primary = type(value).__name__
         if value_type_primary != exp_value_type.primary.value:
             raise TypeError(f"Expected primary type {exp_value_type.primary.value} for {key}, got type {value_type_primary}")
 
         if isinstance(value, list) and len(value) > 0:
             if exp_value_type.secondary == NamedType.ANY:
-                return
+                return True
             contained_val = value[0]
             value_type_secondary = type(contained_val).__name__
             if value_type_secondary != exp_value_type.secondary.value:
@@ -869,7 +868,7 @@ class HammerDatabase:
         Update the core config with the given core config.
         """
         for k in self.get_config_types().keys():
-            self.check_setting(k, cfg=core_config)
+            self.check_setting(k, cfg=combine_configs(core_config))
         self.core = core_config
         self.__config_cache_dirty = True
 
