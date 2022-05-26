@@ -42,20 +42,20 @@ class ASAP7SRAMGenerator(HammerSRAMGeneratorTool):
         verilog_path ="{t}/{n}.v".format(t=tech_cache_dir,n=sram_name)
         with open(verilog_path, 'w') as f:
             if params.family == "1RW":
-				specify = ""
-				for specify_j in range(0,params.width):
-				for specify_i in range(0,2):
-					if specify_i == 0:
-						specify += "$setuphold(posedge CE, %s I[%d], 0, 0, NOTIFIER);\n"%("posedge",specify_j)
-					else:
-						specify += "$setuphold(posedge CE, %s I[%d], 0, 0, NOTIFIER);\n"%("negedge",specify_j)
-				specify += "(CE => O[%d]) = 0;\n"%(specify_j)
-				for specify_k in range(0,math.ceil(math.log2(params.depth))):
-				for specify_i in range(0,2):
-					if specify_i == 0:
-					specify += "$setuphold(posedge CE, %s A[%d], 0, 0, NOTIFIER);\n"%("posedge",specify_k)
-					else:
-					specify += "$setuphold(posedge CE, %s A[%d], 0, 0, NOTIFIER);\n"%("negedge",specify_k)
+                specify = ""
+                for specify_j in range(0,params.width):
+                for specify_i in range(0,2):
+                    if specify_i == 0:
+                        specify += "$setuphold(posedge CE, %s I[%d], 0, 0, NOTIFIER);\n"%("posedge",specify_j)
+                    else:
+                        specify += "$setuphold(posedge CE, %s I[%d], 0, 0, NOTIFIER);\n"%("negedge",specify_j)
+                specify += "(CE => O[%d]) = 0;\n"%(specify_j)
+                for specify_k in range(0,math.ceil(math.log2(params.depth))):
+                for specify_i in range(0,2):
+                    if specify_i == 0:
+                    specify += "$setuphold(posedge CE, %s A[%d], 0, 0, NOTIFIER);\n"%("posedge",specify_k)
+                    else:
+                    specify += "$setuphold(posedge CE, %s A[%d], 0, 0, NOTIFIER);\n"%("negedge",specify_k)
                 f.write("""
 `timescale 1ns/100fs
 
