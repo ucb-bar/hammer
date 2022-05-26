@@ -1159,10 +1159,16 @@ def parse_setting_type(setting_type: str) -> NamedTuple:
     m_prim = re.search(PRIMARY_REGEX, setting_type)
     m_sec = re.search(INNER_REGEX, setting_type)
 
-    if m_prim.group(0) == "Optional":
+    if m_prim is None:
+        raise RuntimeError("Not a valid configuration type")
+    primary_type = m_prim.group(0)
+
+    if primary_type == "Optional":
         if m_sec is None:
             raise RuntimeError("Not a valid inner configuration type")
-        recursive_type = parse_setting_type(m_sec.group(1))
+        opt_type = m_sec.group(1)
+
+        recursive_type = parse_setting_type(opt_type)
         return ConfigType(
             NamedType(recursive_type.primary),
             optional=True,
@@ -1170,22 +1176,28 @@ def parse_setting_type(setting_type: str) -> NamedTuple:
             tertiary_k=NamedType(recursive_type.tertiary_k),
             tertiary_v=NamedType(recursive_type.tertiary_v)
         )
-    elif m_prim.group(0) == "list":
+    elif primary_type == "list":
         if m_sec is None:
             raise RuntimeError("Not a valid inner configuration type")
-        m_sec_prim = re.search(PRIMARY_REGEX, m_sec.group(1))
-        if m_sec_prim is None:
-            raise RuntimeError("Not a valid contained type")
-        if m_sec_prim.group(0) == "dict":
-            m_sec_inner = re.search(r"\w+\[(\w+), (\w+)\]", m_sec.group(0))
+        secondary_type_full = m_sec.group(1)
+
+        m_sec_flat = re.search(PRIMARY_REGEX, secondary_type_full)
+        if m_sec_flat is None:
+            raise RuntimeError("Not a valid inner configuration type")
+        secondary_type_flat = m_sec_flat.group(0)
+
+        if secondary_type_flat == "dict":
+            m_sec_inner = re.search(r"\w+\[(\w+), (\w+)\]", secondary_type_full)
             if m_sec_inner is None:
                 raise RuntimeError("Not a valid inner dictionary type")
+            tertiary_k, tertiary_v = m_sec_inner.groups()[:2]
+
             return ConfigType(
-                NamedType(m_prim.group(0)),
-                secondary=NamedType(m_sec_prim.group(0)),
-                tertiary_k=NamedType(m_sec_inner.group(1)),
-                tertiary_v=NamedType(m_sec_inner.group(2))
+                NamedType(primary_type),
+                secondary=NamedType(secondary_type_flat),
+                tertiary_k=NamedType(tertiary_k),
+                tertiary_v=NamedType(tertiary_v)
             )
         else:
-            return ConfigType(NamedType(m_prim.group(0)), secondary=NamedType(m_sec_prim.group(0)))
-    return ConfigType(NamedType(m_prim.group(0)))
+            return ConfigType(NamedType(primary_type), secondary=NamedType(secondary_type_flat))
+    return ConfigType(NamedType(primary_type))
