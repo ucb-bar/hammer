@@ -42,6 +42,20 @@ class ASAP7SRAMGenerator(HammerSRAMGeneratorTool):
         verilog_path ="{t}/{n}.v".format(t=tech_cache_dir,n=sram_name)
         with open(verilog_path, 'w') as f:
             if params.family == "1RW":
+                specify = ""
+                for specify_j in range(0,params.width):
+                    for specify_i in range(0,2):
+                        if specify_i == 0:
+                            specify += "$setuphold(posedge CE, %s I[%d], 0, 0, NOTIFIER);\n"%("posedge",specify_j)
+                        else:
+                            specify += "$setuphold(posedge CE, %s I[%d], 0, 0, NOTIFIER);\n"%("negedge",specify_j)
+                    specify += "(CE => O[%d]) = 0;\n"%(specify_j)
+                for specify_k in range(0,math.ceil(math.log2(params.depth))):
+                    for specify_i in range(0,2):
+                        if specify_i == 0:
+                            specify += "$setuphold(posedge CE, %s A[%d], 0, 0, NOTIFIER);\n"%("posedge",specify_k)
+                        else:
+                            specify += "$setuphold(posedge CE, %s A[%d], 0, 0, NOTIFIER);\n"%("negedge",specify_k)
                 f.write("""
 `timescale 1ns/100fs
 
@@ -81,11 +95,36 @@ always @ (posedge CE) begin
 		memory[A] <= I;
 end
 
+reg NOTIFIER;
+specify
+{specify}
+endspecify
+
 assign O = data_out;
 
 endmodule
-""".format(NUMADDR=math.ceil(math.log2(params.depth)), NUMWORDS=params.depth, WORDLENGTH=params.width, NAME=sram_name, RAND_WIDTH=math.ceil(params.width/32)))
+""".format(NUMADDR=math.ceil(math.log2(params.depth)), NUMWORDS=params.depth, WORDLENGTH=params.width, NAME=sram_name, RAND_WIDTH=math.ceil(params.width/32),specify=specify))
             else:
+				specify = ""
+                
+                for specify_j in range(0,params.width):
+                    for specify_i in range(0,2):
+                        if specify_i == 0:
+                                specify += "$setuphold(posedge CE1, %s I1[%d], 0, 0, NOTIFIER);\n"%("posedge",specify_j)
+                                specify += "$setuphold(posedge CE2, %s I2[%d], 0, 0, NOTIFIER);\n"%("posedge",specify_j)
+                        else:
+                                specify += "$setuphold(posedge CE1, %s I1[%d], 0, 0, NOTIFIER);\n"%("negedge",specify_j)
+                                specify += "$setuphold(posedge CE2, %s I2[%d], 0, 0, NOTIFIER);\n"%("negedge",specify_j)
+                    specify += "(CE1 => O1[%d]) = 0;\n"%(specify_j)
+                    specify += "(CE2 => O2[%d]) = 0;\n"%(specify_j)
+                for specify_k in range(0,math.ceil(math.log2(params.depth))):
+                    for specify_i in range(0,2):
+                        if specify_i == 0:
+                            specify += "$setuphold(posedge CE1, %s A1[%d], 0, 0, NOTIFIER);\n"%("posedge",specify_k)
+                            specify += "$setuphold(posedge CE2, %s A2[%d], 0, 0, NOTIFIER);\n"%("posedge",specify_k)
+                        else:
+                            specify += "$setuphold(posedge CE1, %s A1[%d], 0, 0, NOTIFIER);\n"%("negedge",specify_k)
+                            specify += "$setuphold(posedge CE2, %s A2[%d], 0, 0, NOTIFIER);\n"%("negedge",specify_k)
                 f.write("""
 `timescale 1ns/100fs
 
@@ -146,11 +185,16 @@ always @ (posedge CE2) begin
 		memory[A2] <= I2;
 end
 
+reg NOTIFIER;
+specify
+{specify}
+endspecify
+
 assign O1 = data_out1;
 assign O2 = data_out2;
 
 endmodule
-""".format(NUMADDR=math.ceil(math.log2(params.depth)), NUMWORDS=params.depth, WORDLENGTH=params.width, NAME=sram_name, RAND_WIDTH=math.ceil(params.width/32)))
+""".format(NUMADDR=math.ceil(math.log2(params.depth)), NUMWORDS=params.depth, WORDLENGTH=params.width, NAME=sram_name, RAND_WIDTH=math.ceil(params.width/32),specify=specify))
 
         #lib_path ="{t}/{n}_{c}.lib".format(t=tech_cache_dir,n=sram_name,c=corner_str)
         #if not os.path.exists(lib_path):
