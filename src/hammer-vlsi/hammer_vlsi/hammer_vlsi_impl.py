@@ -1575,7 +1575,7 @@ class HammerTimingTool(HammerTool):
 
 
     @property
-    def spefs(self) -> Optional[List[str]]:
+    def spefs(self) -> Optional[List]:
         """
         Get the (optional) list of SPEF files.
 
@@ -1587,10 +1587,10 @@ class HammerTimingTool(HammerTool):
             return None
 
     @spefs.setter
-    def spefs(self, value: Optional[List[str]]) -> None:
+    def spefs(self, value: Optional[List]) -> None:
         """Set the (optional) list of SPEF files."""
-        if not (isinstance(value, List[str]) or (value is None)):
-            raise TypeError("spefs must be a Optional[List[str]]")
+        if not (isinstance(value, List) or (value is None)):
+            raise TypeError("spefs must be a Optional[List]")
         self.attr_setter("_spefs", value)
 
 

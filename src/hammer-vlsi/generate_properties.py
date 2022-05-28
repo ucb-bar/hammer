@@ -240,7 +240,7 @@ def main(args) -> int:
                                 InterfaceVar("top_module", "str", "top RTL module"),
                                 InterfaceVar("post_synth_sdc", "Optional[str]",
                                     "(optional) input post-synthesis SDC constraint file"),
-                                InterfaceVar("spefs", "Optional[List[str]]",
+                                InterfaceVar("spefs", "Optional[List]",
                                     "(optional) list of SPEF files"),
                                 InterfaceVar("sdf_file", "Optional[str]",
                                     "(optional) input SDF file")
