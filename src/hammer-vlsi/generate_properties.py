@@ -232,6 +232,21 @@ def main(args) -> int:
                             ],
                             outputs=[]
                             )
+    HammerTimingTool = Interface(module="HammerTimingTool",
+                            filename="hammer_vlsi/hammer_vlsi_impl.py",
+                            inputs=[
+                                InterfaceVar("input_files", "List[str]",
+                                    "input collection of design files"),
+                                InterfaceVar("top_module", "str", "top RTL module"),
+                                InterfaceVar("post_synth_sdc", "Optional[str]",
+                                    "(optional) input post-synthesis SDC constraint file"),
+                                InterfaceVar("spefs", "Optional[List[str]]",
+                                    "(optional) list of SPEF files"),
+                                InterfaceVar("sdf_file", "Optional[str]",
+                                    "(optional) input SDF file")
+                            ],
+                            outputs=[]
+                            )
     HammerPCBDeliverableTool = Interface(module="HammerPCBDeliverableTool",
                                        filename="hammer_vlsi/hammer_vlsi_impl.py",
                                        inputs=[],
@@ -254,6 +269,7 @@ def main(args) -> int:
     generate_interface(HammerSimTool)
     generate_interface(HammerPowerTool)
     generate_interface(HammerFormalTool)
+    generate_interface(HammerTimingTool)
     generate_interface(HammerPCBDeliverableTool)
 
     if selected_file == "":

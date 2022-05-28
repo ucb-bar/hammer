@@ -1113,6 +1113,13 @@ class HammerTechnology:
         """
         return list()
 
+    def get_tech_timing_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
+        """
+        Return a list of timing hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
+
     def get_tech_pcb_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
         """
         Return a list of pcb hooks for this technology and tool.

@@ -47,6 +47,10 @@ vlsi.core:
   # Add the built-in path to power tools
   formal_tool_path: list[str]
 
+  # Path(s) to timing tools.
+  # Add the built-in path to power tools
+  timing_tool_path: list[str]
+
   # Path(s) to PCB deliverable tools.
   # Add the built-in path to PCB deliverable tools.
   pcb_tool_path: list[str]
@@ -74,6 +78,9 @@ vlsi.core:
 
   # Formal verification/check tool to use.
   formal_tool: str
+
+  # Static timing analysis tool to use.
+  timing_tool: str
 
   # PCB deliverable tool to use.
   pcb_tool: str
@@ -588,6 +595,32 @@ formal.inputs:
   top_module: Optional[str]
 
 formal.submit:
+  command: str
+  settings: list[dict[str, dict]]
+
+# Specific inputs for the timing tool.
+timing.inputs:
+  # Input Verilog files.
+  # type: List[str]
+  input_files: list[str]
+
+  # Top RTL module
+  # type: str
+  top_module: Optional[str]
+
+  # Optional: SDC input file from post-synthesis.
+  # type: Optional[str]
+  post_synth_sdc: Optional[str]
+
+  # Optional: Input SPEF files from post-P&R.
+  # type: Optional[List[str]]
+  spefs: Optional[list[str]]
+
+  # Optional: Input SDF file
+  # type: Optional[str]
+  sdf_file: Optional[str]
+
+timing.submit:
   command: str
   settings: list[dict[str, dict]]
 

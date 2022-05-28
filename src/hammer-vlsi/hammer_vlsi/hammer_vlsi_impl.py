@@ -1502,6 +1502,121 @@ class HammerFormalTool(HammerTool):
     ### Outputs ###
     ### END Generated interface HammerFormalTool ###
 
+class HammerTimingTool(HammerTool):
+
+    @property
+    def max_paths(self) -> SimulationLevel:
+        """Return the max paths to report."""
+        return self.get_setting("timing.inputs.max_paths")
+
+
+    ### Generated interface HammerTimingTool ###
+    ### DO NOT MODIFY THIS CODE, EDIT generate_properties.py INSTEAD ###
+    ### Inputs ###
+
+    @property
+    def input_files(self) -> List[str]:
+        """
+        Get the input collection of design files.
+
+        :return: The input collection of design files.
+        """
+        try:
+            return self.attr_getter("_input_files", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the input collection of design files yet")
+
+    @input_files.setter
+    def input_files(self, value: List[str]) -> None:
+        """Set the input collection of design files."""
+        if not (isinstance(value, List)):
+            raise TypeError("input_files must be a List[str]")
+        self.attr_setter("_input_files", value)
+
+
+    @property
+    def top_module(self) -> str:
+        """
+        Get the top RTL module.
+
+        :return: The top RTL module.
+        """
+        try:
+            return self.attr_getter("_top_module", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the top RTL module yet")
+
+    @top_module.setter
+    def top_module(self, value: str) -> None:
+        """Set the top RTL module."""
+        if not (isinstance(value, str)):
+            raise TypeError("top_module must be a str")
+        self.attr_setter("_top_module", value)
+
+
+    @property
+    def post_synth_sdc(self) -> Optional[str]:
+        """
+        Get the (optional) input post-synthesis SDC constraint file.
+
+        :return: The (optional) input post-synthesis SDC constraint file.
+        """
+        try:
+            return self.attr_getter("_post_synth_sdc", None)
+        except AttributeError:
+            return None
+
+    @post_synth_sdc.setter
+    def post_synth_sdc(self, value: Optional[str]) -> None:
+        """Set the (optional) input post-synthesis SDC constraint file."""
+        if not (isinstance(value, str) or (value is None)):
+            raise TypeError("post_synth_sdc must be a Optional[str]")
+        self.attr_setter("_post_synth_sdc", value)
+
+
+    @property
+    def spefs(self) -> Optional[List[str]]:
+        """
+        Get the (optional) list of SPEF files.
+
+        :return: The (optional) list of SPEF files.
+        """
+        try:
+            return self.attr_getter("_spefs", None)
+        except AttributeError:
+            return None
+
+    @spefs.setter
+    def spefs(self, value: Optional[List[str]]) -> None:
+        """Set the (optional) list of SPEF files."""
+        if not (isinstance(value, List[str]) or (value is None)):
+            raise TypeError("spefs must be a Optional[List[str]]")
+        self.attr_setter("_spefs", value)
+
+
+    @property
+    def sdf_file(self) -> Optional[str]:
+        """
+        Get the (optional) input SDF file.
+
+        :return: The (optional) input SDF file.
+        """
+        try:
+            return self.attr_getter("_sdf_file", None)
+        except AttributeError:
+            return None
+
+    @sdf_file.setter
+    def sdf_file(self, value: Optional[str]) -> None:
+        """Set the (optional) input SDF file."""
+        if not (isinstance(value, str) or (value is None)):
+            raise TypeError("sdf_file must be a Optional[str]")
+        self.attr_setter("_sdf_file", value)
+
+
+    ### Outputs ###
+    ### END Generated interface HammerTimingTool ###
+
 class HasUPFSupport(HammerTool):
     """Mix-in trait with functions useful for tools with UPF style power
     constraints"""
