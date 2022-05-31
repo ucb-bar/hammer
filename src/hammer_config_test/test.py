@@ -946,7 +946,7 @@ foo:
         adc: int
         dac: str
 """, is_yaml=True)
-        db.update_types(base)
+        db.update_types([base])
         self.assertEqual(db.get_setting_type("foo.bar.adc"), int.__name__)
         self.assertEqual(db.get_setting_type("foo.bar.dac"), str.__name__)
         
@@ -961,7 +961,7 @@ foo:
         adc: list
         dac: dict
 """, is_yaml=True)
-        db.update_types(base)
+        db.update_types([base])
         self.assertEqual(db.get_setting_type("foo.bar.adc"), list.__name__)
         self.assertEqual(db.get_setting_type("foo.bar.dac"), dict.__name__)
 
@@ -987,7 +987,7 @@ foo:
 
         db.update_core([base])
         with self.assertRaises(TypeError):
-            db.update_types(base_types)
+            db.update_types([base_types])
 
         self.assertEqual(db.get_setting("foo.bar.adc"), [1, 2, 3])
 
@@ -1015,7 +1015,7 @@ foo:
 
         db.update_core([base])
         with self.assertRaises(TypeError):
-            db.update_types(base_types)
+            db.update_types([base_types])
 
         self.assertEqual(db.get_setting("foo.bar.adc"), [{"name": "hi", "pin": 1}])
         self.assertEqual(db.get_setting("foo.bar.dac"), [{"name": ["hi"], "pin": [1, 2]}])
@@ -1040,7 +1040,7 @@ foo:
 """, is_yaml=True)
 
         db.update_core([base])
-        db.update_types(base_types)
+        db.update_types([base_types])
         
         self.assertIsNone(db.get_setting("foo.bar.adc"))
         self.assertEqual(db.get_setting("foo.bar.quu"), "hi")
@@ -1065,7 +1065,7 @@ foo:
 
         db.update_core([base])
         with self.assertRaises(TypeError):
-            db.update_types(base_types)
+            db.update_types([base_types])
         
         self.assertEqual(db.get_setting("foo.bar.adc"), 3.14)
 
@@ -1074,17 +1074,16 @@ foo:
         Test that all HAMMER defaults are properly type-checked.
         """
         CFG_PATH = os.path.join(os.path.dirname(os.getcwd()), "hammer-vlsi")
-        TYPE_PATH = os.path.join(os.path.dirname(os.getcwd()), "hammer-vlsi")
         BL_PATH = os.path.join(os.path.dirname(os.getcwd()), "hammer-vlsi", "builtins.yml")
 
         base = hammer_config.load_config_from_defaults(CFG_PATH)
-        base_types = hammer_config.load_config_types_from_defaults(TYPE_PATH)
+        base_types = hammer_config.load_config_types_from_defaults(CFG_PATH)
         builtins = hammer_config.load_config_from_file(BL_PATH)
 
         db = hammer_config.HammerDatabase()
         db.update_core(base[1:])
         db.update_builtins([builtins])
-        db.update_types(base_types[1])
+        db.update_types(base_types)
 
         for k, v in db.get_config().items():
             self.assertEqual(db.get_setting(k), v)

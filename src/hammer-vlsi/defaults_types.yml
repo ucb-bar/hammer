@@ -125,7 +125,7 @@ vlsi.inputs:
     config_source: str
 
     # Manual hierarchical definitions used only if hierarchical_definition_source is set to manual mode.
-    manual_modules: list[dict[str, str]]
+    manual_modules: list[dict[str, list]]
 
     # Manual hierarchical placement constraints used only if hierarchical_definition_source is set to manual mode.
     manual_placement_constraints: list[dict[str, list]]
@@ -171,7 +171,7 @@ vlsi.inputs:
   power_spec_contents: Optional[str]
 
   # SRAM Parameters
-  sram_parameters: list[dict[str, str]] 
+  sram_parameters: list[dict[str, Any]] 
 
   # Bumps settings mode. (str)
   bumps_mode: str
@@ -594,8 +594,8 @@ formal.submit:
 technology.pcb:
   # Desired pad opening diameter (in post-shrink um)
   # type: Decimal
-  bump_pad_opening_diameter: Optional[float]
+  bump_pad_opening_diameter: Optional[int]
 
   # Desired pad metal diameter (in post-shrink um)
   # type: Decimal
-  bump_pad_metal_diameter: Optional[float]
+  bump_pad_metal_diameter: Optional[int]

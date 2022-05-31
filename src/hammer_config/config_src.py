@@ -11,11 +11,11 @@
 
 from decimal import Decimal
 from typing import Iterable, List, Union, Callable, Any, Dict, Set, NamedTuple, Tuple, Optional
+from warnings import warn
+from enum import Enum
 
 from hammer_utils import deepdict, topological_sort
 from .yaml2json import load_yaml  # grumble grumble
-from warnings import warn
-from enum import Enum
 
 from functools import reduce, lru_cache
 import json
@@ -735,7 +735,6 @@ class HammerDatabase:
         """
         Get the types for the configuration of a database.
         """
-        self.__config_cache_dirty = False
         return self.__config_types
 
     def get_database_json(self) -> str:
@@ -907,17 +906,17 @@ class HammerDatabase:
         self.builtins = builtins_config
         self.__config_cache_dirty = True
 
-    def update_types(self, config_types: dict) -> None:
+    def update_types(self, config_types: List[dict]) -> None:
         """
         Update the types config with the given types config.
         """
-        self.__config_types = config_types
-        for k, v in config_types.items():
+        loaded_cfg = combine_configs(config_types)
+        self.__config_types = loaded_cfg
+        for k, v in loaded_cfg.items():
             if not self.has_setting(k):
                 warn(f"Key {k} has a type {v} is not yet implemented")
             elif k != "_config_path":
                 self.check_setting(k)
-        self.__config_cache_dirty = True
 
 def load_config_from_string(contents: str, is_yaml: bool, path: str = "unspecified") -> dict:
     """
@@ -1146,15 +1145,16 @@ class ConfigType(NamedTuple):
     tertiary_k: NamedType = NamedType.ANY
     tertiary_v: NamedType = NamedType.ANY
 
+PRIMARY_REGEX = re.compile(r"(\w+)")
+INNER_REGEX = re.compile(r"\w+\[(.+)\]")
+DICT_REGEX = re.compile(r"\w+\[(\w+), (\w+)\]")
+
 def parse_setting_type(setting_type: str) -> ConfigType:
     """
     Parses a configuration type.
     :param setting_type: The string form of a setting configuration.
     :return: A configuration type dataclass with info about the type.
     """
-    PRIMARY_REGEX = re.compile(r"(\w+)")
-    INNER_REGEX = re.compile(r"\w+\[(.+)\]")
-
     m_prim = re.search(PRIMARY_REGEX, setting_type)
     m_sec = re.search(INNER_REGEX, setting_type)
 
@@ -1186,7 +1186,7 @@ def parse_setting_type(setting_type: str) -> ConfigType:
         secondary_type_flat = m_sec_flat.group(0)
 
         if secondary_type_flat == "dict":
-            m_sec_inner = re.search(r"\w+\[(\w+), (\w+)\]", secondary_type_full)
+            m_sec_inner = re.search(DICT_REGEX, secondary_type_full)
             if m_sec_inner is None:
                 raise RuntimeError("Not a valid inner dictionary type")
             tertiary_k, tertiary_v = m_sec_inner.groups()[:2]

@@ -1720,7 +1720,7 @@ class HammerPCBDeliverableToolTestContext:
             "vlsi.inputs.bumps": {
                 "x": 5,
                 "y": 4,
-                "pitch": "123.4",
+                "pitch": 123.4,
                 "cell": "dummybump",
                 "assignments": [
                     {"name": "reset", "x": 1, "y": 1},
@@ -1747,8 +1747,8 @@ class HammerPCBDeliverableToolTestContext:
             },
             "pcb.generic.footprint_type": "PADS-V9",
             "pcb.generic.schematic_symbol_type": "AltiumCSV",
-            "technology.pcb.bump_pad_opening_diameter": "60",
-            "technology.pcb.bump_pad_metal_diameter": "75"
+            "technology.pcb.bump_pad_opening_diameter": 60,
+            "technology.pcb.bump_pad_metal_diameter": 75
         }  # type: Dict[str, Any]
 
         with open(json_path, "w") as f:
