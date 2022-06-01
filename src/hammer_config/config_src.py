@@ -755,20 +755,23 @@ class HammerDatabase:
         """Alias for has_setting()."""
         return self.has_setting(item)
 
-    def get_setting(self, key: str, nullvalue: Any = None) -> Any:
+    def get_setting(self, key: str, nullvalue: Any = None, check_type: bool = True) -> Any:
         """
         Retrieve the given key.
 
         :param key: Desired key.
         :param nullvalue: Value to return out for nulls.
+        :param check_type: Flag to enforce type checking
         :return: The given config
         """
+        IGNORE = ["vlsi.builtins.hammer_vlsi_path", "vlsi.builtins.is_complete"]
         if key not in self.get_config():
             raise KeyError("Key " + key + " is missing")
-        if key not in self.get_config_types():
-            warn(f"Key {key} is not associated with a type")
-        else:
-            self.check_setting(key)
+        if check_type and key not in IGNORE:
+            if key not in self.get_config_types():
+                warn(f"Key {key} is not associated with a type")
+            else:
+                self.check_setting(key)
         value = self.get_config()[key]
         return nullvalue if value is None else value
 
@@ -906,17 +909,18 @@ class HammerDatabase:
         self.builtins = builtins_config
         self.__config_cache_dirty = True
 
-    def update_types(self, config_types: List[dict]) -> None:
+    def update_types(self, config_types: List[dict], check_type: bool = True) -> None:
         """
         Update the types config with the given types config.
         """
         loaded_cfg = combine_configs(config_types)
         self.__config_types = loaded_cfg
-        for k, v in loaded_cfg.items():
-            if not self.has_setting(k):
-                warn(f"Key {k} has a type {v} is not yet implemented")
-            elif k != "_config_path":
-                self.check_setting(k)
+        if check_type:
+            for k, v in loaded_cfg.items():
+                if not self.has_setting(k):
+                    warn(f"Key {k} has a type {v} is not yet implemented")
+                elif k != "_config_path":
+                    self.check_setting(k)
 
 def load_config_from_string(contents: str, is_yaml: bool, path: str = "unspecified") -> dict:
     """
