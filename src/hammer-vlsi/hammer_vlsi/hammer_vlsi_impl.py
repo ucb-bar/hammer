@@ -127,6 +127,7 @@ class HammerVLSISettings:
 
         # Read in core defaults.
         database.update_core(hammer_config.load_config_from_defaults(cls.hammer_vlsi_path, strict=True))
+        database.update_types(hammer_config.load_config_types_from_defaults(cls.hammer_vlsi_path, strict=True))
 
 
 from .hammer_tool import HammerTool, HammerToolStep
