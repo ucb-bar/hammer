@@ -106,7 +106,7 @@ endmodule
 """.format(NUMADDR=math.ceil(math.log2(params.depth)), NUMWORDS=params.depth, WORDLENGTH=params.width, NAME=sram_name, RAND_WIDTH=math.ceil(params.width/32),specify=specify))
             else:
                 specify = ""
-
+                
                 for specify_j in range(0,params.width):
                     for specify_i in range(0,2):
                         if specify_i == 0:
