@@ -1309,22 +1309,22 @@ class HammerPowerTool(HammerTool):
     ### Inputs ###
 
     @property
-    def par_database(self) -> str:
+    def par_database(self) -> Optional[str]:
         """
-        Get the path to par database for power analysis.
+        Get the optional path to par database for power analysis.
 
-        :return: The path to par database for power analysis.
+        :return: The optional path to par database for power analysis.
         """
         try:
             return self.attr_getter("_par_database", None)
         except AttributeError:
-            raise ValueError("Nothing set for the path to par database for power analysis yet")
+            return None
 
     @par_database.setter
-    def par_database(self, value: str) -> None:
-        """Set the path to par database for power analysis."""
-        if not (isinstance(value, str)):
-            raise TypeError("par_database must be a str")
+    def par_database(self, value: Optional[str]) -> None:
+        """Set the optional path to par database for power analysis."""
+        if not (isinstance(value, str) or (value is None)):
+            raise TypeError("par_database must be a Optional[str]")
         self.attr_setter("_par_database", value)
 
 

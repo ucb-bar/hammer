@@ -611,11 +611,13 @@ class HammerDriver:
         power_tool.spefs = self.database.get_setting("power.inputs.spefs", nullvalue=[])
         power_tool.waveforms = self.database.get_setting("power.inputs.waveforms", nullvalue=[])
         power_tool.saifs = self.database.get_setting("power.inputs.saifs", nullvalue=[])
+        if len(power_tool.spefs) == 0 and power_tool.par_database == "":
+            # We are doing RTL level power analysis
+            power_tool.top_module = self.database.get_setting("synthesis.inputs.top_module")
+            power_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
         missing_inputs = False
-        if power_tool.par_database == "":
-            self.log.error("PAR database not specified for power analysis")
-            missing_inputs = True
-        if len(power_tool.spefs) == 0:
+        # We only care about the par database and spefs if we doing post par power
+        if len(power_tool.spefs) == 1 and power_tool.par_database == "":
             self.log.error("No spef files specified for power analysis")
             missing_inputs = True
         if missing_inputs:

@@ -210,7 +210,7 @@ def main(args) -> int:
     HammerPowerTool = Interface(module="HammerPowerTool",
                                 filename="hammer_vlsi/hammer_vlsi_impl.py",
                                 inputs=[
-                                  InterfaceVar("par_database", "str", "path to par database for power analysis"),
+                                  InterfaceVar("par_database", "Optional[str]", "optional path to par database for power analysis"),
                                   InterfaceVar("spefs", "List[str]", "list of spef files for power anlaysis"),
                                   InterfaceVar("waveforms", "List[str]", "list of waveform dump files for dynamic power analysis"),
                                   InterfaceVar("saifs", "List[str]", "list of activity files for dynamic power analysis")
