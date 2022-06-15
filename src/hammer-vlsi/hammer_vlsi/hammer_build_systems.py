@@ -243,13 +243,11 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         redo-sim-syn{suffix}:
         \t$(HAMMER_EXEC) {env_confs} -p {sim_syn_in} $(HAMMER_EXTRA_ARGS) --sim_rundir {sim_syn_run_dir} --obj_dir {obj_dir} sim{suffix}
 
-<<<<<<< HEAD
         redo-syn-to-par{suffix}:
         \t$(HAMMER_EXEC) {env_confs} -p {syn_out} $(HAMMER_EXTRA_ARGS) -o {par_in} --obj_dir {obj_dir} syn-to-par
-=======
+
         redo-power-syn{suffix}:
         \t$(HAMMER_EXEC) {env_confs} -p {power_sim_syn_in} $(HAMMER_EXTRA_ARGS) --power_rundir {power_syn_run_dir} --obj_dir {obj_dir} power{suffix}
->>>>>>> edits for post syn power
 
         redo-par{suffix}:
         \t$(HAMMER_EXEC) {env_confs} -p {par_in} $(HAMMER_EXTRA_ARGS) --obj_dir {obj_dir} par{suffix}

@@ -79,10 +79,15 @@ class FlowLevel(Enum):
         return reverse_dict(FlowLevel.__mapping())[self]
 
 PowerReport = NamedTuple('PowerReport', [
-    ('toggle_signal', str),
-    ('num_toggles', str),
+    ('waveform_path', str),
     ('module', str),
-    ('levels', int)
+    ('levels', int),
+    ('start_time', str),
+    ('end_time', str),
+    ('toggle_signal', str),
+    ('num_toggles', int),
+    ('frame_count', int),
+    ('report_name', str)
 ])
 
 
@@ -1407,9 +1412,28 @@ class HammerPowerTool(HammerTool):
         output = []
         for config in configs:
             report = PowerReport(
-                toggle_signal=config["toggle_signal"], num_toggles=config["num_toggles"],
-                module=config["module"], levels=config["levels"]
+                waveform_path=config["waveform_path"], module=None,
+                levels=None, start_time=None,
+                end_time=None, toggle_signal=None,
+                num_toggles=None, frame_count=None,
+                report_name=None
             )
+            if "module" in config:
+                report = report._replace(module=config["module"])
+            if "levels" in config:
+                report = report._replace(levels=config["levels"])
+            if "start_time" in config:
+                start_time = report._replace(start_time=TimeValue(config["start_time"]))
+            if "end_time" in config:
+                report = report._replace(end_time=TimeValue(config["end_time"]))
+            if "toggle_signal" in config:
+                report = report._replace(toggle_signal=config["toggle_signal"])
+            if "num_toggles" in config:
+                report = report._replace(num_toggles=config["num_toggles"])
+            if "frame_count" in config:
+                report = report._replace(frame_count=config["frame_count"])
+            if "report_name" in config:
+                report = report._replace(report_name=config["report_name"])
             output.append(report)
         return output
 
