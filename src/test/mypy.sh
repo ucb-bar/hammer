@@ -30,10 +30,12 @@ call_mypy ../hammer_config_test/test.py
 # Plugins
 call_mypy ../hammer-vlsi/synthesis/mocksynth/__init__.py
 call_mypy ../hammer-vlsi/synthesis/vivado/__init__.py
+call_mypy ../hammer-vlsi/synthesis/yosys/__init__.py
 call_mypy ../hammer-vlsi/synthesis/nop.py
 call_mypy ../hammer-vlsi/par/nop.py
 call_mypy ../hammer-vlsi/par/vivado/__init__.py
 call_mypy ../hammer-vlsi/par/mockpar/__init__.py
+call_mypy ../hammer-vlsi/par/openroad/__init__.py
 call_mypy ../hammer-vlsi/drc/*.py
 call_mypy ../hammer-vlsi/lvs/*.py
 call_mypy ../hammer-vlsi/pcb/generic/__init__.py

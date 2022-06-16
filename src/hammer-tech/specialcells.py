@@ -20,7 +20,7 @@ class CellType(Enum):
     StdFiller = 6
     Decap = 7
     TapCell = 8
-    Buffer = 9
+    Driver = 9
     CTSBuffer = 10
 
     @classmethod
@@ -34,7 +34,7 @@ class CellType(Enum):
             "stdfiller": CellType.StdFiller,
             "decap": CellType.Decap,
             "tapcell": CellType.TapCell,
-            "buffer": CellType.Buffer,
+            "driver": CellType.Driver,
             "ctsbuffer": CellType.CTSBuffer
         }
 
