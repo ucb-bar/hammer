@@ -211,6 +211,21 @@ Common meta actions
 
   Result: ``get_setting("foo.bar.baz")`` returns ``12345`` and ``get_setting("foo.bar.baz")`` returns ``32123``
 
+Type Checking
+-------------
+
+Any existing configuration file can and should be accompanied with a corresponding configuration types file.
+This allows for static type checking of any key when calling ``get_setting``.
+The file should contain the same keys as the corresponding configuration file, but can contain the following as values:
+
+- primitive types (``int``, ``str``, etc.)
+- collection types (``list``)
+- collections of key-value pairs (``list[dict[str, str]]``, ``list[dict[str, list]]``, etc.) These values are turned into custom constraints (e.g. ``PlacementConstraint``, ``PinAssignment``) later in the HAMMER workflow, but the key value pairs are not type-checked any deeper.
+- optional forms of the above (``Optional[str]``)
+- the wildcard ``Any`` type
+
+HAMMER will perform the same without a types file, but it is highly recommended to ensure type safety of any future plugins.
+
 Reference
 ---------
 
