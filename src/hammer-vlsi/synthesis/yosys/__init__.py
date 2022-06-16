@@ -205,10 +205,6 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
     def init_environment(self) -> bool:
 
         # set variables to match global variables in OpenLANE
-        self.driving_cell = "sky130_fd_sc_hd__inv_1" # SYNTH_DRIVING_CELL
-        self.driving_cell_pin = "Y" # SYNTH_DRIVING_CELL_PIN
-        self.buffer_cell = "sky130_fd_sc_hd__buf_2 A X"
-
         time_unit = self.get_time_unit().value_prefix + self.get_time_unit().unit
         clock_port = self.get_clock_ports()[0]
         self.clock_port_name = clock_port.name
@@ -320,19 +316,19 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
             hilomap -hicell "{tie_hi_cell} {tie_hi_port}" -locell "{tie_lo_cell} {tie_lo_port}"
             """)
 
-        buffer_cells = self.technology.get_special_cell_by_type(CellType.Buffer)
+        driver_cells = self.technology.get_special_cell_by_type(CellType.Driver)
 
-        if buffer_cells is None:
-            self.logger.warning("Buffer cells are unspecified and will not be added during synthesis.")
+        if driver_cells is None:
+            self.logger.warning("Driver cells are unspecified and will not be added during synthesis.")
         else:
-            buffer_cell = buffer_cells[0].name[0]
-            buffer_ports_in = buffer_cells[0].input_ports[0]
-            buffer_ports_out = buffer_cells[0].output_ports[0]
+            driver_cell = driver_cells[0].name[0]
+            driver_ports_in = driver_cells[0].input_ports[0]
+            driver_ports_out = driver_cells[0].output_ports[0]
 
             self.block_append(f"""
-            # Insert buffer cells for pass through wires
+            # Insert driver cells for pass through wires
             # TODO: why does -buf arg not work? try with yosys conda install
-            insbuf "{buffer_cell} {buffer_ports_in} {buffer_ports_out}"
+            insbuf "{driver_cell} {driver_ports_in} {driver_ports_out}"
             """)
         return True
 
