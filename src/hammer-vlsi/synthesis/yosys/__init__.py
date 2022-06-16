@@ -257,24 +257,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         yosys proc
         hierarchy -check -top {self.top_module}
 
-        # old: synth -top {self.top_module}
-        # but techmap file location that yosys is checking for is incorrect
-        # TODO: figure out why this is
-
-        # begin, coarse labels: automatic
-        synth -top {self.top_module} -run :fine
-        # fine label: run manually 
-        opt -fast -full
-        memory_map
-        opt -full
-        # TODO: figure out why techmap path assumed correct for conda but not server install 
-        techmap -map "/usr/local/share/yosys/techmap.v"
-        opt -fast
-        puts "first abc pass"
-        abc -fast
-        opt -fast
-        # check label: automatic
-        synth -top gcd -run check:
+        synth -top {self.top_module}
 
         # Optimize the design
         opt -purge
@@ -298,10 +281,11 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         # Technology mapping for cells
         # ABC supports multiple liberty files, but the hook from Yosys to ABC doesn't
         puts "second abc pass"
-        abc -D {self.clock_period} \\
-            -constr "{self.mapped_sdc_path}" \\
-            -liberty "{self.liberty_file}" \\
-            -script "/tools/B/nayiri/openroad/gcd/sky130hd/abc_speed.script" \\
+        abc -D {self.clock_period} \
+            -constr "{self.mapped_sdc_path}" \
+            -liberty "{self.liberty_file.split()[0]}" \
+            -nocleanup \
+            -showtmp
 
         # Replace undef values with defined constants
         # TODO: do we need this??
@@ -365,8 +349,11 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
     
     def write_outputs(self) -> bool:
         self.append(f'write_verilog -noattr -noexpr -nohex -nodec -defparam "{self.mapped_v_path}"')
+        self.append("flatten")
+        mapped_flat_v_path=os.path.join(self.run_dir, f"{self.top_module}.mapped.flat.v")
+        self.append(f'write_verilog -noattr -noexpr -nohex -nodec -defparam "{mapped_flat_v_path}"')
         # BLIF file seems to be easier to parse than mapped verilog for find_regs functions so leave for now
-        self.append(f'write_blif -top gcd "{self.mapped_blif_path}"')
+        self.append(f'write_blif -top {self.top_module} "{self.mapped_blif_path}"')
         # TODO: figure out why the OpenLANE script re-runs synthesis & flattens design, when we explicitly requested hierarchical mode
         self.ran_write_outputs = True
         return True
