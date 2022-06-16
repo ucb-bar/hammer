@@ -386,7 +386,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
                     {syn_deps}: {prereqs}
                     \t$(HAMMER_EXEC) {env_confs} {pstring} -o {syn_deps} --obj_dir {obj_dir} hier-par-to-syn
                     """.format(syn_deps=syn_deps, prereqs=prereqs, env_confs=env_confs, pstring=pstring,
-                    p_syn_in=p_syn_in, obj_dir=obj_dir))
+                    obj_dir=obj_dir))
 
             output += make_text.format(suffix="-"+node, mod=node, env_confs=env_confs, obj_dir=obj_dir, syn_deps=syn_deps,
                 par_to_syn=par_to_syn,

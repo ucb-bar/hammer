@@ -5,7 +5,7 @@
 #
 #  See LICENSE for licence details.
 
-from typing import Dict, Tuple, List, Optional, Union
+from typing import Dict, Tuple, List, Optional, Union, cast
 from decimal import Decimal
 
 from hammer_utils import (topological_sort, get_or_else, optional_map, assert_function_type, check_function_type,
@@ -121,13 +121,15 @@ class UtilsTest(unittest.TestCase):
         def test6(a: int) -> Optional[dict]:
             return {"a": a}
 
-        assert_function_type(test6, [int], Optional[Dict])
+        # Possible mypy bug
+        assert_function_type(test6, [int], cast(type, Optional[dict]))
 
         # Check that Union types get handled properly.
         def test7(a: Union[int, float]) -> Union[bool, str]:
             return str(a)
 
-        assert_function_type(test7, [Union[int, float]], Union[bool, str])
+        # Possible mypy bug
+        assert_function_type(test7, [cast(type, Union[int, float])], cast(type, Union[bool, str]))
 
         # Check that stringly-typed annotations work.
         def test8(a: "int") -> "list":
