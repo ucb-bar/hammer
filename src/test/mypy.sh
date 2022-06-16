@@ -35,7 +35,10 @@ call_mypy ../hammer-vlsi/par/nop.py
 call_mypy ../hammer-vlsi/par/vivado/__init__.py
 call_mypy ../hammer-vlsi/par/mockpar/__init__.py
 call_mypy ../hammer-vlsi/drc/*.py
+call_mypy ../hammer-vlsi/drc/openroad/__init__.py
+call_mypy ../hammer-vlsi/drc/magic/__init__.py
 call_mypy ../hammer-vlsi/lvs/*.py
+call_mypy ../hammer-vlsi/lvs/netgen/__init__.py
 call_mypy ../hammer-vlsi/pcb/generic/__init__.py
 call_mypy ../hammer-vlsi/technology/asap7/*.py
 call_mypy ../hammer-vlsi/technology/asap7/sram_compiler/__init__.py
