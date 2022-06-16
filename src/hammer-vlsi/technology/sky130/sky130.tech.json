@@ -16,7 +16,7 @@
       "base var": ""
     }
   ],
-  "cadence layer map file": "$SKY130_NDA/s8/V2.0.1/VirtuosoOA/libs/technology_library/technology_library.layermap",
+  "layer map file": "$SKY130_NDA/s8/V2.0.1/VirtuosoOA/libs/technology_library/technology_library.layermap",
   "drc decks": [
     {
       "tool name": "calibre",
@@ -36,7 +36,7 @@
   "additional_lvs_text": "",
   "libraries": [
     {
-      "lef file": "tech-sky130-cache/sky130_fd_sc_hd.tlef",
+      "lef file": "tech-sky130-cache/sky130_fd_sc_hd__nom.tlef",
       "klayout techfile": "$SKY130A/libs.tech/klayout/sky130A.lyt",
       "spice file": "$SKY130_NDA/s8/V2.0.1/LVS/Calibre/source.cdl",
       "verilog sim": "tech-sky130-cache/primitives.v",
