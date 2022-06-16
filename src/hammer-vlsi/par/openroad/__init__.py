@@ -27,7 +27,7 @@ from specialcells import CellType, SpecialCell
 # TODO: replace all $::env(HAMMER_HOME) with keys from hammer
 
 
-class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
+class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     #=========================================================================
     # overrides from parent classes
@@ -45,7 +45,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
             self.place_opt_design,
             self.clock_tree,
             self.add_fillers, 
-            self.route_design,
+            self.global_route,
+            self.detailed_route,
             # self.opt_design, 
             # self.write_regs, # nop
             self.extraction,
@@ -146,14 +147,20 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
     def open_chip_tcl(self) -> str:
         return self.open_chip_script + ".tcl"
 
+    @property
     def fill_cells(self) -> str:
         stdfillers = self.technology.get_special_cell_by_type(CellType.StdFiller)
         # fill_cells = '{'+' '.join(list(map(lambda c: str(c), stdfillers[0].name)))+'}'
         return ' '.join(list(map(lambda c: str(c), stdfillers[0].name)))
     
-    def block_append(self,commands) -> bool:
-        for line in commands.split('\n'):
-            self.append(line.strip())
+    def block_append(self,commands,file=None) -> bool:
+        if file is None:
+            for line in commands.split('\n'):
+                self.append(line.strip())
+        else:
+            for line in commands.split('\n'):
+                file.write(line.strip())
+                file.write('\n')
             # if line.strip().startswith('#') or (line==""):
             #     self.append(line.strip())
             # else:
@@ -414,32 +421,32 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         # }
         return True
 
-    def macro_placement(self) -> bool:
+    # def macro_placement(self) -> bool:
 
-        spacing = self.get_setting("par.blockage_spacing")
+    #     spacing = self.get_setting("par.blockage_spacing")
         
-        self.block_append(f"""
-        ################################################################
-        # Macro Placement
-        """)
-        # -density 0.3 : default is 0.7
-        # TODO: overflow is by default 0.1, set to higher to speed up this step 
+    #     self.block_append(f"""
+    #     ################################################################
+    #     # Macro Placement
+    #     """)
+    #     # -density 0.3 : default is 0.7
+    #     # TODO: overflow is by default 0.1, set to higher to speed up this step 
         
 
-        output=""
-        floorplan_constraints = self.get_placement_constraints()
-        for constraint in floorplan_constraints:
-            # Floorplan names/insts need to not include the top-level module,
-            # despite the internal get_db commands including the top-level module...
-            # e.g. Top/foo/bar -> foo/bar
-            new_path = "/".join(constraint.path.split("/")[1:])
-            if new_path == "":
-                self.append("global_placement -density 0.3 -overflow 0.8 -verbose_level 2")
-            else:
-                # TODO: eventually set halo to spacing variable and figure out how to generate channel
-                self.append(f"macro_placement -halo {{1 1}} -channel {{80 80}}")
-                return True
-        return True
+    #     output=""
+    #     floorplan_constraints = self.get_placement_constraints()
+    #     for constraint in floorplan_constraints:
+    #         # Floorplan names/insts need to not include the top-level module,
+    #         # despite the internal get_db commands including the top-level module...
+    #         # e.g. Top/foo/bar -> foo/bar
+    #         new_path = "/".join(constraint.path.split("/")[1:])
+    #         if new_path == "":
+    #             self.append("global_placement -density 0.3 -overflow 0.8 -verbose_level 2")
+    #         else:
+    #             # TODO: eventually set halo to spacing variable and figure out how to generate channel
+    #             self.append(f"macro_placement -halo {{1 1}} -channel {{80 80}}")
+    #             return True
+    #     return True
 
 
     def place_tap_cells(self) -> bool:
@@ -452,6 +459,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         endcap_cell=endcap_cells[0].name[0]
         try:
             interval = self.get_setting("vlsi.technology.tap_cell_interval")
+            # TODO: revert this
+            interval = 40
             offset = self.get_setting("vlsi.technology.tap_cell_offset")
             self.block_append(f"""
             ################################################################
@@ -540,15 +549,92 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         with open(pdn_config_path, "w") as f:
             f.write(pdn_cfg)
 
+    def write_power_straps_tcl(self, power_straps_tcl_path) -> bool:
+        pwr_nets=self.get_all_power_nets()
+        gnd_nets=self.get_all_ground_nets()
+        primary_pwr_net=pwr_nets[0].name
+        primary_gnd_net=gnd_nets[0].name
+        all_metal_layer_names = [layer.name for layer in self.get_stackup().metals]
+
+        strap_layers = self.get_setting("par.generate_power_straps_options.by_tracks.strap_layers").copy()
+        std_cell_rail_layer = str(self.get_setting("technology.core.std_cell_rail_layer"))
+        strap_layers.insert(0,std_cell_rail_layer)
+        
+        add_pdn_connect_tcl=""
+        for i in range(0,len(strap_layers)-1):
+            add_pdn_connect_tcl+=f"add_pdn_connect -grid grid -layers {{{strap_layers[i]} {strap_layers[i+1]}}}\n"
+        
+        global_connections_pwr_tcl=f"add_global_connection -net {{{primary_pwr_net}}} -inst_pattern {{.*}} -pin_pattern {{^{primary_pwr_net}$}} -power"
+        global_connections_gnd_tcl=f"add_global_connection -net {{{primary_gnd_net}}} -inst_pattern {{.*}} -pin_pattern {{^{primary_gnd_net}$}} -ground"
+        for pwr_net in pwr_nets:
+            if pwr_net.tie is not None:
+                global_connections_pwr_tcl += f"\n add_global_connection -net {{{primary_pwr_net}}} -inst_pattern {{.*}} -pin_pattern {{{pwr_net.name}}}"
+        for gnd_net in gnd_nets:
+            if gnd_net.tie is not None:
+                global_connections_gnd_tcl += f"\n add_global_connection -net {{{primary_gnd_net}}} -inst_pattern {{.*}} -pin_pattern {{{gnd_net.name}}}"
+
+        with open(power_straps_tcl_path,'w') as power_straps_tcl_file:
+            self.block_append(
+            f"""
+            ####################################
+            # global connections
+            ####################################
+            {global_connections_pwr_tcl}
+            {global_connections_gnd_tcl}
+
+            # add_global_connection -net {{primary_pwr_net}} -inst_pattern {{.*}} -pin_pattern {{^VDDPE$}}
+            # add_global_connection -net {{primary_pwr_net}} -inst_pattern {{.*}} -pin_pattern {{^VDDCE$}}
+            # add_global_connection -net {{primary_gnd_net}} -inst_pattern {{.*}} -pin_pattern {{^VSSE$}}
+
+            ####################################
+            # voltage domains
+            ####################################
+            # AO is hard-coded in cpf generation too
+            set_voltage_domain -name {{AO}} -power {{{primary_pwr_net}}} -ground {{{primary_gnd_net}}}
+
+            ####################################
+            # standard cell grid
+            ####################################
+            define_pdn_grid -name {{grid}} -voltage_domains {{AO}}
+            {' '.join(self.create_power_straps_tcl())}
+            {add_pdn_connect_tcl}
+
+            ####################################
+            # macro grids
+            ####################################
+            ####################################
+            # grid for: CORE_macro_grid_1
+            ####################################
+            define_pdn_grid -name {{CORE_macro_grid_1}} -voltage_domains {{CORE}} -macro -orient {{R0 R180 MX MY}} -halo {{2.0 2.0 2.0 2.0}} -grid_over_boundary
+            add_pdn_connect -grid {{CORE_macro_grid_1}} -layers {{met4 met5}}
+            
+            ####################################
+            # grid for: CORE_macro_grid_2
+            ####################################
+            #define_pdn_grid -name {{CORE_macro_grid_2}} -voltage_domains {{CORE}} -macro -orient {{R90 R270 MXR90 MYR90}} -halo {{2.0 2.0 2.0 2.0}} -grid_over_boundary
+            #add_pdn_connect -grid {{CORE_macro_grid_2}} -layers {{met4 met5}}
+            """,
+            file=power_straps_tcl_file)
+        
+        return True
+    
     def power_straps(self) -> bool:
         """Place the power straps for the design."""
-        pdn_config_path = os.path.join(self.run_dir, "power_straps.pdn")
-        self.generate_pdn_config(pdn_config_path)
+        power_straps_tcl_path = os.path.join(self.run_dir, "power_straps.pdn")
+        # self.write_power_straps_tcl(power_straps_tcl_path)
+        # TODO: re-add this:
+        self.generate_pdn_config(power_straps_tcl_path)
         self.block_append(f"""
         ################################################################
         # Power distribution network insertion
-        pdngen -verbose {pdn_config_path}
+        pdngen -verbose {power_straps_tcl_path}
         """)
+        # self.block_append(f"""
+        # ################################################################
+        # # Power distribution network insertion
+        # source -echo -verbose {power_straps_tcl_path}
+        # # pdngen -verbose 
+        # """)
         return True        
 
     def global_placement(self) -> bool:
@@ -556,17 +642,21 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         # TODO: try leaving out clock
         # TODO: try without set_wire_rc
 
+        metals=self.get_stackup().metals[1:]
         spacing = self.get_setting("par.blockage_spacing")
         
-        self.block_append("""
+        self.block_append(f"""
         ################################################################
         # Global placement
-        """)
+        set_global_routing_layer_adjustment {metals[0].name}-{metals[-1].name} 0
+        set_routing_layers -signal {metals[0].name}-{metals[-1].name} -clock met3-met5
+        set_macro_extension 2
 
-        self.block_append(f"""
-        # -density 0.3 : default is 0.7, overflow default is 0.3
-        global_placement -routability_driven  -pad_left 4 -pad_right 4 -overflow 0.8
+        # -density default is 0.7, overflow default is 0.3
+        # set overflow higher (ex. 0.8) to make faster
+        global_placement -routability_driven -pad_left 4 -pad_right 4 -overflow 0.2
 
+        estimate_parasitics -placement
         """)
 
         return True
@@ -615,7 +705,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
                     hor_layers.append(pin_layer_name)
                 if (layer.direction==RoutingDirection.Vertical)   and (pin_layer_name not in ver_layers):
                     ver_layers.append(pin_layer_name)
-        return f"place_pins {random_arg} -hor_layers {{{' '.join(hor_layers)}}} -ver_layers {{{' '.join(ver_layers)}}}"
+        return f"place_pins {random_arg} -hor_layers {{{' '.join(hor_layers)}}} -ver_layers {{{' '.join(ver_layers)}}} -exclude top:* -exclude right:* -exclude left:*"
 
     def place_pins(self) -> bool:
         self.block_append(f"""
@@ -658,11 +748,11 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         estimate_parasitics -placement
         repair_design -slew_margin 0 -cap_margin 0
 
-        repair_tie_fanout -separation 5 "{tie_hi_cell}/{tie_hi_port}"
-        repair_tie_fanout -separation 5 "{tie_lo_cell}/{tie_lo_port}"
+        repair_tie_fanout -separation 0 "{tie_hi_cell}/{tie_hi_port}"
+        repair_tie_fanout -separation 0 "{tie_lo_cell}/{tie_lo_port}"
 
         # default detail_place_pad value in OpenROAD = 2
-        set_placement_padding -global -left 2 -right 2
+        set_placement_padding -global -left 4 -right 4
         detailed_placement
 
         # post resize timing report (ideal clocks)
@@ -672,6 +762,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
 
         # Check slew repair
         report_check_types -max_slew -max_capacitance -max_fanout -violators
+
+        # check_placement -verbose
         """)
         return True
 
@@ -680,8 +772,12 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         self.clock_port_name = clock_port.name
 
         self.block_append(f"""
+        check_placement -verbose
+
         ################################################################
         # Clock Tree Synthesis
+        set_placement_padding -global -left 2 -right 2
+
         repair_clock_inverters
         clock_tree_synthesis -root_buf sky130_fd_sc_hd__clkbuf_1 -buf_list sky130_fd_sc_hd__clkbuf_1 -sink_clustering_enable
         
@@ -699,132 +795,157 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         ###########################
         # Setup/hold timing repair
 
+        set_placement_padding -global -left 0 -right 0
+
         set_propagated_clock [all_clocks]
 
         # -placement|-global_routing
         estimate_parasitics -placement
 
-        repair_timing
+        repair_timing -setup
+
+        repair_timing -hold
+
+        detailed_placement
 
         # Post timing repair.
         report_worst_slack -min -digits 3
         report_worst_slack -max -digits 3
         report_tns -digits 3
+
+
         """)
         return True
 
     def add_fillers(self) -> bool:
         """add decap and filler cells"""
-        # TODO: EDIT THIS ALL DOWN!!!
-        decaps = self.technology.get_special_cell_by_type(CellType.Decap)
-        stdfillers = self.technology.get_special_cell_by_type(CellType.StdFiller)
-        if len(decaps) == 0:
-            self.logger.info("The technology plugin 'special cells: decap' field does not exist. It should specify a list of decap cells. Filling with stdfiller instead.")
-        else:
-            decap_cells = decaps[0].name
-            decap_caps = []  # type: List[float]
-            if decaps[0].size is not None:
-                decap_caps = list(map(lambda x: CapacitanceValue(x).value_in_units("fF"), decaps[0].size))
-            if len(decap_cells) != len(decap_caps):
-                self.logger.error("Each decap cell in the name list must have a corresponding decapacitance value in the size list.")
-            decap_consts = list(filter(lambda x: x.target=="capacitance", self.get_decap_constraints()))
-            if len(decap_consts) > 0:
-                if decap_caps is None:
-                    self.logger.warning("No decap capacitances specified but decap constraints with target: 'capacitance' exist. Add decap capacitances to the tech plugin!")
-                else:
-                    for (cell, cap) in zip(decap_cells, decap_caps):
-                        self.append("add_decap_cell_candidates {CELL} {CAP}".format(CELL=cell, CAP=cap))
-                    for const in decap_consts:
-                        assert isinstance(const.capacitance, CapacitanceValue)
-                        area_str = ""
-                        if all(c is not None for c in (const.x, const.y, const.width, const.height)):
-                            assert isinstance(const.x, Decimal)
-                            assert isinstance(const.y, Decimal)
-                            assert isinstance(const.width, Decimal)
-                            assert isinstance(const.height, Decimal)
-                            area_str = " ".join(("-area", str(const.x), str(const.y), str(const.x+const.width), str(const.y+const.height)))
-                        self.append("add_decaps -effort high -total_cap {CAP} {AREA}".format(
-                            CAP=const.capacitance.value_in_units("fF"), AREA=area_str))
-        if len(stdfillers) == 0:
-            self.logger.warning(
-                "The technology plugin 'special cells: stdfiller' field does not exist. It should specify a list of (non IO) filler cells. No filler will be added. You can override this with an add_fillers hook if you do not specify filler cells in the technology plugin.")
-        else:
-            # Decap cells as fillers
-            if len(decaps) > 0:
-                fill_cells = list(map(lambda c: str(c), decaps[0].name))
-                # self.append("set_db add_fillers_cells \"{FILLER}\"".format(FILLER=" ".join(fill_cells)))
-                # Targeted decap constraints
-                decap_consts = list(filter(lambda x: x.target=="density", self.get_decap_constraints()))
-                for const in decap_consts:
-                    area_str = ""
-                    if all(c is not None for c in (const.x, const.y, const.width, const.height)):
-                        assert isinstance(const.x, Decimal)
-                        assert isinstance(const.y, Decimal)
-                        assert isinstance(const.width, Decimal)
-                        assert isinstance(const.height, Decimal)
-                        area_str = " ".join(("-area", str(const.x), str(const.y), str(const.x+const.width), str(const.y+const.height)))
-                    self.append("add_fillers -density {DENSITY} {AREA}".format(
-                        DENSITY=str(const.density), AREA=area_str))
-                # Or, fill everywhere if no decap constraints given
-                # if len(self.get_decap_constraints()) == 0:
-                    # TODO: INV setting: self.append("add_fillers")
+        # # TODO: EDIT THIS ALL DOWN!!!
+        # decaps = self.technology.get_special_cell_by_type(CellType.Decap)
+        # stdfillers = self.technology.get_special_cell_by_type(CellType.StdFiller)
+        # if len(decaps) == 0:
+        #     self.logger.info("The technology plugin 'special cells: decap' field does not exist. It should specify a list of decap cells. Filling with stdfiller instead.")
+        # else:
+        #     decap_cells = decaps[0].name
+        #     decap_caps = []  # type: List[float]
+        #     if decaps[0].size is not None:
+        #         decap_caps = list(map(lambda x: CapacitanceValue(x).value_in_units("fF"), decaps[0].size))
+        #     if len(decap_cells) != len(decap_caps):
+        #         self.logger.error("Each decap cell in the name list must have a corresponding decapacitance value in the size list.")
+        #     decap_consts = list(filter(lambda x: x.target=="capacitance", self.get_decap_constraints()))
+        #     if len(decap_consts) > 0:
+        #         if decap_caps is None:
+        #             self.logger.warning("No decap capacitances specified but decap constraints with target: 'capacitance' exist. Add decap capacitances to the tech plugin!")
+        #         else:
+        #             for (cell, cap) in zip(decap_cells, decap_caps):
+        #                 self.append("add_decap_cell_candidates {CELL} {CAP}".format(CELL=cell, CAP=cap))
+        #             for const in decap_consts:
+        #                 assert isinstance(const.capacitance, CapacitanceValue)
+        #                 area_str = ""
+        #                 if all(c is not None for c in (const.x, const.y, const.width, const.height)):
+        #                     assert isinstance(const.x, Decimal)
+        #                     assert isinstance(const.y, Decimal)
+        #                     assert isinstance(const.width, Decimal)
+        #                     assert isinstance(const.height, Decimal)
+        #                     area_str = " ".join(("-area", str(const.x), str(const.y), str(const.x+const.width), str(const.y+const.height)))
+        #                 self.append("add_decaps -effort high -total_cap {CAP} {AREA}".format(
+        #                     CAP=const.capacitance.value_in_units("fF"), AREA=area_str))
+        # if len(stdfillers) == 0:
+        #     self.logger.warning(
+        #         "The technology plugin 'special cells: stdfiller' field does not exist. It should specify a list of (non IO) filler cells. No filler will be added. You can override this with an add_fillers hook if you do not specify filler cells in the technology plugin.")
+        # else:
+        #     # Decap cells as fillers
+        #     if len(decaps) > 0:
+        #         fill_cells = list(map(lambda c: str(c), decaps[0].name))
+        #         # self.append("set_db add_fillers_cells \"{FILLER}\"".format(FILLER=" ".join(fill_cells)))
+        #         # Targeted decap constraints
+        #         decap_consts = list(filter(lambda x: x.target=="density", self.get_decap_constraints()))
+        #         for const in decap_consts:
+        #             area_str = ""
+        #             if all(c is not None for c in (const.x, const.y, const.width, const.height)):
+        #                 assert isinstance(const.x, Decimal)
+        #                 assert isinstance(const.y, Decimal)
+        #                 assert isinstance(const.width, Decimal)
+        #                 assert isinstance(const.height, Decimal)
+        #                 area_str = " ".join(("-area", str(const.x), str(const.y), str(const.x+const.width), str(const.y+const.height)))
+        #             self.append("add_fillers -density {DENSITY} {AREA}".format(
+        #                 DENSITY=str(const.density), AREA=area_str))
+        #         # Or, fill everywhere if no decap constraints given
+        #         # if len(self.get_decap_constraints()) == 0:
+        #             # TODO: INV setting: self.append("add_fillers")
 
-            # TODO: INV setting: self.append("set_db add_fillers_cells \"{FILLER}\"".format(FILLER=" ".join(fill_cells)))
-            # TODO: INV setting:self.append("add_fillers")
+        #     # TODO: INV setting: self.append("set_db add_fillers_cells \"{FILLER}\"".format(FILLER=" ".join(fill_cells)))
+        #     # TODO: INV setting:self.append("add_fillers")
             
-            # Then the rest is stdfillers
-            # self.fill_cells = '{'+' '.join(list(map(lambda c: str(c), stdfillers[0].name)))+'}'
-            self.block_append(f"""
-            ################################################################
-            # Detailed +  Filler Placement (final)
+        # Then the rest is stdfillers
+        # self.fill_cells = '{'+' '.join(list(map(lambda c: str(c), stdfillers[0].name)))+'}'
+        self.block_append(f"""
+        check_placement -verbose
+        
+        ################################################################
+        # Detailed +  Filler Placement (final)
+        set_placement_padding -global -left 0 -right 0
+        detailed_placement
+        improve_placement
+        check_placement -verbose
+        # optimize_mirroring - tries to reduce wirelength
+        # Capture utilization before fillers make it 100%
+        utl::metric "utilization" [format %.1f [expr [rsz::utilization] * 100]]
+        utl::metric "design_area" [sta::format_area [rsz::design_area] 0]
 
-            #err detailed_placement
-            # Capture utilization before fillers make it 100%
-            utl::metric "utilization" [format %.1f [expr [rsz::utilization] * 100]]
-            utl::metric "design_area" [sta::format_area [rsz::design_area] 0]
-            filler_placement {{ {self.fill_cells} }}
-            #err check_placement -verbose
-            """)
+        filler_placement {{ {self.fill_cells} }}
+        # detailed_placement
+        # check_placement -verbose
+        """)
         return True
 
-    def route_design(self) -> bool:
+    def global_route(self) -> bool:
         metals=self.get_stackup().metals[1:]
 
         self.block_append(f"""
+        detailed_placement
+        check_placement -verbose
+
         ################################################################
         # Global routing
-        set_global_routing_layer_adjustment {metals[0].name}-{metals[-1].name} 0.5
+        set_global_routing_layer_adjustment {metals[0].name}-{metals[-1].name} 0.3
         set_routing_layers -signal {metals[0].name}-{metals[-1].name} -clock met3-met5
         set_macro_extension 2
 
-        # pin_access
-        global_route -guide_file {self.route_guide_path} -congestion_iterations 100 -verbose
+        # pin_access - this command caused openroad to crash
+        # -allow_congestion and -allow_overflow added for now
+
+        global_route -guide_file {self.route_guide_path} -allow_congestion -congestion_iterations 200 -verbose
+
         set_propagated_clock [all_clocks]
         estimate_parasitics -global_routing
 
         check_antennas -report_file {self.run_dir}/antenna.log -report_violating_nets
         """)
+        return True
 
-        # set antenna_report {self.run_dir}/{self.top_module}_ant.rpt
-        # set antenna_errors [check_antennas -report_violating_nets -report_file $antenna_report]
-        # utl::metric "ANT::errors" $antenna_errors
-        # if {{ $antenna_errors > 0 }} {{
-        #   fail "found $antenna_errors antenna violations"
-        # }}
+    def detailed_route(self) -> bool:
+        metals=self.get_stackup().metals[1:]
         
         self.block_append(f"""
         ################################################################
         # Detailed routing
 
-        set_thread_count [exec getconf _NPROCESSORS_ONLN]
-        detailed_route -guide {self.route_guide_path} \\
-               -output_guide {self.run_dir}/{self.top_module}_output_guide.mod \\
-               -output_drc {self.run_dir}/{self.top_module}_route_drc.rpt \\
-               -output_maze {self.run_dir}/{self.top_module}_maze.log \\
-               -verbose 0
+        # set_thread_count [exec getconf _NPROCESSORS_ONLN]
 
-        utl::metric "DRT::drv" [detailed_route_num_drvs]
-        write_def {self.run_dir}/{self.top_module}_route.def
+        write_verilog -include_pwr_gnd /tools/B/nayiri/openroad/chipyard-openroad/vlsi/build-openroad/chipyard.TestHarness.MinimalRocketConfig-ChipTop/par-rundir/ChipTop.lvs.v
+
+        # TODO: many other arguments available
+        detailed_route -guide {self.route_guide_path} \\
+            -bottom_routing_layer met1 \\
+            -top_routing_layer met5 \\
+            -output_guide {self.run_dir}/{self.top_module}_output_guide.mod \\
+            -output_drc {self.run_dir}/{self.top_module}_route_drc.rpt \\
+            -output_maze {self.run_dir}/{self.top_module}_maze.log \\
+            -verbose 1 \\
+            -droute_end_iter 3
+
+        #utl::metric "DRT::drv" [detailed_route_num_drvs]
+        #write_def {self.run_dir}/{self.top_module}_route.def
         """)
         return True
 
@@ -838,6 +959,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
 
         extract_parasitics -ext_model_file {self.get_setting("par.inputs.openrcx_techfile")}
 
+        # TODO: touch the file in case write_spef fails
+        exec touch {self.output_spef_paths}
         write_spef {self.output_spef_paths}
         # remove backslashes in instances so that read_spef recognizes the instances
         exec sed -i {sed_expr} {self.output_spef_paths}
@@ -877,17 +1000,20 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         exec klayout -zz \\
                 -rd design_name={self.top_module} \\
                 -rd in_def={self.output_def_filename} \\
-                -rd in_files={" ".join(gds_files)} \\
+                -rd in_files={" ".join(gds_files)} /tools/C/nayiri/sky130/sky130_sram_macros/sky130_sram_2kbyte_1rw1r_32x512_8/sky130_sram_2kbyte_1rw1r_32x512_8.lef /tools/C/nayiri/sky130/sky130_sram_macros/sky130_sram_1kbyte_1rw1r_32x256_8/sky130_sram_1kbyte_1rw1r_32x256_8.lef \\
                 -rd seal_file= \\
-                -rd config_file=$::env(HAMMER_HOME)/src/hammer-vlsi/technology/sky130/extra/fill.json \\
-                -rd out_file={self.output_gds_filename} \\
                 -rd tech_file={klayout_techfile} \\
-                -rm $::env(HAMMER_HOME)/src/hammer-vlsi/technology/sky130/extra/def2stream.py
+                -rd config_file= \\
+                -rd out_file={self.output_gds_filename} \\
+                -rm /tools/B/nayiri/openroad/hammer-openroad/src/hammer-vlsi/technology/sky130/extra/def2stream.py
         """) 
         # extra options:
+        # /tools/B/nayiri/openroad/hammer-openroad/src/hammer-vlsi/technology/sky130/extra/fill.json
         #   -rd in_files="$::env(GDSOAS_FILES) $::env(WRAPPED_GDSOAS)" \: all the extra gds files (set to GDS_FILES += $(BLOCK_GDS), BLOCK_GDS += ./results/$(PLATFORM)/$(DESIGN_NICKNAME)_$(block)/$(FLOW_VARIANT)/6_final.gds)
         #   -rd config_file=$fill_config \: ~OpenROAD-flow-scripts/flow/platforms/sky130hd/fill.json
         #   -rd seal_file=$seal_gds \: I think we can skip??
+                        # -rd tech_file=/tools/B/nayiri/openroad/hammer-openroad/src/hammer-vlsi/technology/sky130/extra/sky130hd.lyt \\
+
         return True
 
     def write_sdf(self) -> bool:
@@ -1005,7 +1131,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
     def generate_chip_size_constraint(width: Decimal, height: Decimal, left: Decimal, bottom: Decimal, right: Decimal,
                                       top: Decimal, site: str) -> str:
         """
-        Given chip width/height and margins, generate an Innovus TCL command to create the floorplan.
+        Given chip width/height and margins, generate an OpenROAD TCL command to create the floorplan.
         Also requires a technology specific name for the core site
         """
         # -flip -f allows standard cells to be flipped correctly during place-and-route
@@ -1014,7 +1140,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
 
     def generate_floorplan_tcl(self) -> List[str]:
         """
-        Generate a TCL floorplan for Innovus based on the input config/IR.
+        Generate a TCL floorplan for OpenROAD based on the input config/IR.
         Not to be confused with create_floorplan_tcl, which calls this function.
         """
         output = []  # type: List[str]
@@ -1145,6 +1271,10 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         :param nets: A list of power net names (e.g. ["VDD", "VSS"]). Currently only two are supported.
         :return: A list of TCL commands that will generate power straps on rails.
         """
+        layer_name = self.get_setting("technology.core.std_cell_rail_layer")
+        layer = self.get_stackup().get_metal(layer_name)
+        tcl=[]
+        tcl.append(f"add_pdn_stripe -grid {{grid}} -layer {{{layer.name}}} -width {0.48} -pitch {5.44} -offset 0 -followpins\n")
         return []
 
     def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool) -> List[str]:
@@ -1165,7 +1295,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool, TCLTool):
         :param add_pins: True if pins are desired on this layer; False otherwise.
         :return: A list of TCL commands that will generate power straps.
         """
-        return [f"\n{layer_name} {{width {width} pitch {pitch} offset {offset}}}"]
+        # return [f"add_pdn_stripe -grid {{grid}} -layer {{{layer_name}}} -width {width} -pitch {pitch} -offset {offset} \n"]
+        return [f" {layer_name} {{width {width} pitch {pitch} offset {offset}}} \n"]
     
     def process_sdc_file(self,post_synth_sdc) -> str:
         # overwrite SDC file to exclude group_path command
