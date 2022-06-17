@@ -17,6 +17,7 @@ from pathlib import Path
 from hammer_logging import HammerVLSILogging
 from hammer_utils import deepdict, optional_map
 from hammer_vlsi import HammerTool, HammerPlaceAndRouteTool, HammerToolStep, HammerToolHookAction, MMMCCornerType, PlacementConstraintType, TCLTool
+from hammer_vlsi.units import TimeValue, CapacitanceValue
 from hammer_vlsi.constraints import MMMCCorner, MMMCCornerType
 from hammer_vlsi.vendor import OpenROADTool, OpenROADPlaceAndRouteTool
 
@@ -317,7 +318,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         cmds.append("")
         return '\n'.join(cmds)
 
-    def convert_units(self,prefix) -> str:
+    def scale_units_1000x_down(self,prefix) -> str:
         # convert SI prefix down by 1000x
         if prefix == 'a':
             return 'f'
@@ -336,10 +337,9 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     def read_sdc(self) -> bool:
         # overwrite SDC file to exclude group_path command
         # change units in SDC file (1000.0fF and 1000.0ps cause errors)
-        # TODO: make this more elegant
-        
+
         sdc_files = self.generate_sdc_files()
-        for sdc_file in sdc_files[0:2]:
+        for sdc_file in sdc_files:
             self.append(f"read_sdc -echo {sdc_file}")
 
         return True
@@ -1156,18 +1156,20 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                     line = lines[i]
                     words = line.strip().split()
                     if line.startswith("set_units") and len(words) >= 3:
+                        unit_type = words[1]
                         value=words[2].split('.')[0]
                         units=words[2].replace('.','')
                         for c in value:
                             if not c.isnumeric():
-                                value=value.replace(v,'')
+                                value=value.replace(c,'')
                         for c in units:
                             if c.isnumeric():
                                 units=units.replace(c,'')
                         if value == '1000' and len(units) >= 2:
                             value='1'
-                            units=self.convert_units(units[0])+units[1:]
+                            units=self.scale_units_1000x_down(units[0])+units[1:]
                         line=f"set_units {words[1]} {value}{units}\n"
+
                     if line.startswith("group_path"):
                         while (lines[i].strip().endswith('\\') and i < len(lines)-1):
                             i=i+1
