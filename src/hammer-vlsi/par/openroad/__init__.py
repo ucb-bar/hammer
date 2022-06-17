@@ -10,8 +10,9 @@
 import glob
 import os
 from textwrap import dedent as dd
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Optional, Dict, Any, Tuple, Callable
 from decimal import Decimal
+from pathlib import Path
 
 from hammer_logging import HammerVLSILogging
 from hammer_utils import deepdict, optional_map
@@ -24,9 +25,6 @@ from hammer_tech import RoutingDirection
 import specialcells
 from specialcells import CellType, SpecialCell
 
-# TODO: replace all $::env(HAMMER_HOME) with keys from hammer
-
-
 class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     #=========================================================================
@@ -37,7 +35,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         return self.make_steps_from_methods([
             self.init_design,
             self.floorplan_design,
-            # self.macro_placement,
             self.place_tap_cells, 
             self.power_straps, 
             self.global_placement,
@@ -47,8 +44,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             self.add_fillers, 
             self.global_route,
             self.detailed_route,
-            # self.opt_design, 
-            # self.write_regs, # nop
             self.extraction,
             self.write_design,
         ])
@@ -147,12 +142,25 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     def open_chip_tcl(self) -> str:
         return self.open_chip_script + ".tcl"
 
+    def tech_lib_filter(self) -> List[Callable[[hammer_tech.Library], bool]]:
+        """ Filter only libraries from tech plugin """
+        return [self.filter_for_tech_libs]
+
+    def filter_for_tech_libs(self, lib: hammer_tech.Library) -> bool:
+        return lib in self.technology.tech_defined_libraries
+
+    def extra_lib_filter(self) -> List[Callable[[hammer_tech.Library], bool]]:
+        """ Filter only libraries from vlsi.inputs.extra_libraries """
+        return [self.filter_for_extra_libs]
+
+    def filter_for_extra_libs(self, lib: hammer_tech.Library) -> bool:
+        return lib in list(map(lambda el: el.store_into_library(), self.technology.get_extra_libraries()))
+
     @property
     def fill_cells(self) -> str:
         stdfillers = self.technology.get_special_cell_by_type(CellType.StdFiller)
-        # fill_cells = '{'+' '.join(list(map(lambda c: str(c), stdfillers[0].name)))+'}'
         return ' '.join(list(map(lambda c: str(c), stdfillers[0].name)))
-    
+
     def block_append(self,commands,file=None) -> bool:
         if file is None:
             for line in commands.split('\n'):
@@ -161,10 +169,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             for line in commands.split('\n'):
                 file.write(line.strip())
                 file.write('\n')
-            # if line.strip().startswith('#') or (line==""):
-            #     self.append(line.strip())
-            # else:
-            #     self.verbose_append(line.strip())
         return True
 
     def fill_outputs(self) -> bool:
@@ -229,8 +233,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             self.get_setting("par.openroad.openroad_bin"),
             "-no_init",             # do not read .openroad init file
             "-exit",                # exit after reading par_tcl_filename
-            # this log prevents any output from showing in terminal, even with verbose_append
-            # "-log openroad.log",    # write a log in <file_name>
             par_tcl_filename
         ]
 
@@ -244,10 +246,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             self.run_executable(args, cwd=self.run_dir)  # TODO: check for errors and deal with them
             HammerVLSILogging.enable_colour = True
             HammerVLSILogging.enable_tag = True
-
-        return True
-
-        # TODO: check that par run was successful
 
         return True
     
@@ -367,29 +365,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         self.read_sdc()
         return True
 
-    # def initialize_floorplan(self) -> str:
-    #     output=""
-    #     floorplan_constraints = self.get_placement_constraints()
-    #     for constraint in floorplan_constraints:
-    #         # Floorplan names/insts need to not include the top-level module,
-    #         # despite the internal get_db commands including the top-level module...
-    #         # e.g. Top/foo/bar -> foo/bar
-    #         new_path = "/".join(constraint.path.split("/")[1:])
-    #         if new_path == "":
-    #             assert constraint.type == PlacementConstraintType.TopLevel, "Top must be a top-level/chip size constraint"
-    #             margins = constraint.margins
-    #             assert margins is not None
-    #             # Set top-level chip dimensions.
-    #             site=self.technology.get_placement_site().name
-    #             width=constraint.width
-    #             height=constraint.height
-    #             left=margins.left
-    #             bottom=margins.bottom
-    #             right=margins.right
-    #             top=margins.top
-    #             output=f"initialize_floorplan -site {site} -die_area {{ 0 0 {width} {height}}} -core_area {{{left} {bottom} {width-right-left} {height-top-bottom}}}"
-    #     return output
-
     def floorplan_design(self) -> bool:
 
         floorplan_tcl = os.path.join(self.run_dir, "floorplan.tcl")
@@ -403,8 +378,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         # Init floorplan/Place Macros
         source -echo -verbose {floorplan_tcl}
 
-        # TODO: see pg 44 abt how these are generated, use self.generate_make_tracks()
-        source /tools/B/nayiri/openroad/gcd/sky130hd/sky130hd.tracks
+        # create routing tracks
+        {self.generate_make_tracks()}
 
         # remove buffers inserted by synthesis 
         remove_buffers
@@ -413,41 +388,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         {self.place_pins_tcl(random=True)}
         """)
         
-        # TODO: macro placement
-        # Macro Placement
-        # if { [have_macros] } {
-        #   global_placement -density $global_place_density
-        #   macro_placement -halo $macro_place_halo -channel $macro_place_channel
-        # }
         return True
-
-    # def macro_placement(self) -> bool:
-
-    #     spacing = self.get_setting("par.blockage_spacing")
-        
-    #     self.block_append(f"""
-    #     ################################################################
-    #     # Macro Placement
-    #     """)
-    #     # -density 0.3 : default is 0.7
-    #     # TODO: overflow is by default 0.1, set to higher to speed up this step 
-        
-
-    #     output=""
-    #     floorplan_constraints = self.get_placement_constraints()
-    #     for constraint in floorplan_constraints:
-    #         # Floorplan names/insts need to not include the top-level module,
-    #         # despite the internal get_db commands including the top-level module...
-    #         # e.g. Top/foo/bar -> foo/bar
-    #         new_path = "/".join(constraint.path.split("/")[1:])
-    #         if new_path == "":
-    #             self.append("global_placement -density 0.3 -overflow 0.8 -verbose_level 2")
-    #         else:
-    #             # TODO: eventually set halo to spacing variable and figure out how to generate channel
-    #             self.append(f"macro_placement -halo {{1 1}} -channel {{80 80}}")
-    #             return True
-    #     return True
-
 
     def place_tap_cells(self) -> bool:
         tap_cells = self.technology.get_special_cell_by_type(CellType.TapCell)
@@ -459,8 +400,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         endcap_cell=endcap_cells[0].name[0]
         try:
             interval = self.get_setting("vlsi.technology.tap_cell_interval")
-            # TODO: revert this
-            interval = 40
             offset = self.get_setting("vlsi.technology.tap_cell_offset")
             self.block_append(f"""
             ################################################################
@@ -621,27 +560,15 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     def power_straps(self) -> bool:
         """Place the power straps for the design."""
         power_straps_tcl_path = os.path.join(self.run_dir, "power_straps.pdn")
-        # self.write_power_straps_tcl(power_straps_tcl_path)
-        # TODO: re-add this:
         self.generate_pdn_config(power_straps_tcl_path)
         self.block_append(f"""
         ################################################################
         # Power distribution network insertion
         pdngen -verbose {power_straps_tcl_path}
         """)
-        # self.block_append(f"""
-        # ################################################################
-        # # Power distribution network insertion
-        # source -echo -verbose {power_straps_tcl_path}
-        # # pdngen -verbose 
-        # """)
         return True        
 
     def global_placement(self) -> bool:
-        # TODO: generate sky130hd.rc ourselves
-        # TODO: try leaving out clock
-        # TODO: try without set_wire_rc
-
         metals=self.get_stackup().metals[1:]
         spacing = self.get_setting("par.blockage_spacing")
         
@@ -662,8 +589,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         return True
 
     def place_pins_tcl(self,random=False) -> str:
-        # TODO: investigate order of place_pins (i.e. ordered by port declaration??)
-        # TODO: add -group_pins flag (what happens when called for multiple groups)
         random_arg=""
         if random: random_arg="-random"
 
@@ -819,65 +744,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     def add_fillers(self) -> bool:
         """add decap and filler cells"""
-        # # TODO: EDIT THIS ALL DOWN!!!
-        # decaps = self.technology.get_special_cell_by_type(CellType.Decap)
-        # stdfillers = self.technology.get_special_cell_by_type(CellType.StdFiller)
-        # if len(decaps) == 0:
-        #     self.logger.info("The technology plugin 'special cells: decap' field does not exist. It should specify a list of decap cells. Filling with stdfiller instead.")
-        # else:
-        #     decap_cells = decaps[0].name
-        #     decap_caps = []  # type: List[float]
-        #     if decaps[0].size is not None:
-        #         decap_caps = list(map(lambda x: CapacitanceValue(x).value_in_units("fF"), decaps[0].size))
-        #     if len(decap_cells) != len(decap_caps):
-        #         self.logger.error("Each decap cell in the name list must have a corresponding decapacitance value in the size list.")
-        #     decap_consts = list(filter(lambda x: x.target=="capacitance", self.get_decap_constraints()))
-        #     if len(decap_consts) > 0:
-        #         if decap_caps is None:
-        #             self.logger.warning("No decap capacitances specified but decap constraints with target: 'capacitance' exist. Add decap capacitances to the tech plugin!")
-        #         else:
-        #             for (cell, cap) in zip(decap_cells, decap_caps):
-        #                 self.append("add_decap_cell_candidates {CELL} {CAP}".format(CELL=cell, CAP=cap))
-        #             for const in decap_consts:
-        #                 assert isinstance(const.capacitance, CapacitanceValue)
-        #                 area_str = ""
-        #                 if all(c is not None for c in (const.x, const.y, const.width, const.height)):
-        #                     assert isinstance(const.x, Decimal)
-        #                     assert isinstance(const.y, Decimal)
-        #                     assert isinstance(const.width, Decimal)
-        #                     assert isinstance(const.height, Decimal)
-        #                     area_str = " ".join(("-area", str(const.x), str(const.y), str(const.x+const.width), str(const.y+const.height)))
-        #                 self.append("add_decaps -effort high -total_cap {CAP} {AREA}".format(
-        #                     CAP=const.capacitance.value_in_units("fF"), AREA=area_str))
-        # if len(stdfillers) == 0:
-        #     self.logger.warning(
-        #         "The technology plugin 'special cells: stdfiller' field does not exist. It should specify a list of (non IO) filler cells. No filler will be added. You can override this with an add_fillers hook if you do not specify filler cells in the technology plugin.")
-        # else:
-        #     # Decap cells as fillers
-        #     if len(decaps) > 0:
-        #         fill_cells = list(map(lambda c: str(c), decaps[0].name))
-        #         # self.append("set_db add_fillers_cells \"{FILLER}\"".format(FILLER=" ".join(fill_cells)))
-        #         # Targeted decap constraints
-        #         decap_consts = list(filter(lambda x: x.target=="density", self.get_decap_constraints()))
-        #         for const in decap_consts:
-        #             area_str = ""
-        #             if all(c is not None for c in (const.x, const.y, const.width, const.height)):
-        #                 assert isinstance(const.x, Decimal)
-        #                 assert isinstance(const.y, Decimal)
-        #                 assert isinstance(const.width, Decimal)
-        #                 assert isinstance(const.height, Decimal)
-        #                 area_str = " ".join(("-area", str(const.x), str(const.y), str(const.x+const.width), str(const.y+const.height)))
-        #             self.append("add_fillers -density {DENSITY} {AREA}".format(
-        #                 DENSITY=str(const.density), AREA=area_str))
-        #         # Or, fill everywhere if no decap constraints given
-        #         # if len(self.get_decap_constraints()) == 0:
-        #             # TODO: INV setting: self.append("add_fillers")
-
-        #     # TODO: INV setting: self.append("set_db add_fillers_cells \"{FILLER}\"".format(FILLER=" ".join(fill_cells)))
-        #     # TODO: INV setting:self.append("add_fillers")
-            
-        # Then the rest is stdfillers
-        # self.fill_cells = '{'+' '.join(list(map(lambda c: str(c), stdfillers[0].name)))+'}'
         self.block_append(f"""
         check_placement -verbose
         
@@ -951,7 +817,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     def extraction(self) -> bool:
         sed_expr=r"{s/\\//g}"  # use sed find+replace to remove '\' character
-        # TODO: generate this rcx_rules file
         self.block_append(f"""
         ################################################################
         # Extraction
@@ -959,7 +824,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
         extract_parasitics -ext_model_file {self.get_setting("par.inputs.openrcx_techfile")}
 
-        # TODO: touch the file in case write_spef fails
+        # touch the file in case write_spef fails
         exec touch {self.output_spef_paths}
         write_spef {self.output_spef_paths}
         # remove backslashes in instances so that read_spef recognizes the instances
@@ -972,17 +837,44 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         return True
 
     def write_netlist(self) -> bool:
-        # TODO: figure out how to remove physical-only cells
-        # TODO: figure out how to emit flat verilog for LVS netlist (or is it default flat)
-        # stdfillers = self.technology.get_special_cell_by_type(CellType.StdFiller)
-        # fill_cells = '{'+' '.join(list(map(lambda c: str(c), stdfillers[0].name)))+'}'
         self.append(f"write_verilog -include_pwr_gnd -remove_cells {{ {self.fill_cells} }} {self.output_netlist_filename}")
         return True
 
+    # Copy and hack the klayout techfile, to add all required LEFs
+    def setup_klayout_techfile(self) -> bool:
+        setting_dir = self.get_setting("technology.sky130.sky130A")
+        setting_dir = Path(setting_dir)
+
+        source_path = setting_dir / 'libs.tech' / 'klayout' / 'sky130A.lyt'
+        if not source_path.exists():
+            raise FileNotFoundError(f"Klayout techfile not found: {source_path}")
+
+        cache_tech_dir_path = Path(self.technology.cache_dir)
+        os.makedirs(cache_tech_dir_path, exist_ok=True)
+        dest_path = cache_tech_dir_path / f'sky130A.lyt'
+
+        # klayout needs tlef + macro lefs
+        tech_lib_lefs = self.technology.read_libs([hammer_tech.filters.lef_filter], hammer_tech.HammerTechnologyUtils.to_plain_item, self.tech_lib_filter())
+        tech_lef = tech_lib_lefs[0]
+        extra_lib_lefs = self.technology.read_libs([hammer_tech.filters.lef_filter], hammer_tech.HammerTechnologyUtils.to_plain_item, self.extra_lib_filter())
+        
+        insert_lines=''
+        for lef_file in [tech_lef]+extra_lib_lefs:
+            insert_lines += f"<lef-files>{lef_file}</lef-files>\n"
+
+        with open(source_path, 'r') as sf:
+            with open(dest_path, 'w') as df:
+                self.logger.info("Modifying Klayout Techfile: {} -> {}".format
+                    (source_path, dest_path))
+                for line in sf:
+                    if '</lefdef>' in line:
+                        df.write(insert_lines)
+                    df.write(line)
+        return True
+
     def write_gds(self) -> bool:
-        # for some reason this gets executed last in example in OpenROAD-flow-scripts
-        # klayout.lyt file is generated with sed command, sky130hd.lyt file is provided in OpenROAD-flow-scripts 
-        # write_gds
+        self.setup_klayout_techfile()
+
         gds_files = self.technology.read_libs([
             hammer_tech.filters.gds_filter
         ], hammer_tech.HammerTechnologyUtils.to_plain_item)
@@ -1007,13 +899,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                 -rd out_file={self.output_gds_filename} \\
                 -rm /tools/B/nayiri/openroad/hammer-openroad/src/hammer-vlsi/technology/sky130/extra/def2stream.py
         """) 
-        # extra options:
-        # /tools/B/nayiri/openroad/hammer-openroad/src/hammer-vlsi/technology/sky130/extra/fill.json
-        #   -rd in_files="$::env(GDSOAS_FILES) $::env(WRAPPED_GDSOAS)" \: all the extra gds files (set to GDS_FILES += $(BLOCK_GDS), BLOCK_GDS += ./results/$(PLATFORM)/$(DESIGN_NICKNAME)_$(block)/$(FLOW_VARIANT)/6_final.gds)
-        #   -rd config_file=$fill_config \: ~OpenROAD-flow-scripts/flow/platforms/sky130hd/fill.json
-        #   -rd seal_file=$seal_gds \: I think we can skip??
-                        # -rd tech_file=/tools/B/nayiri/openroad/hammer-openroad/src/hammer-vlsi/technology/sky130/extra/sky130hd.lyt \\
-
         return True
 
     def write_sdf(self) -> bool:
@@ -1030,7 +915,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         return True
 
     def write_reports(self) -> bool:
-        # TODO: write all these to files!!!! (or process log to generate report)
+        # TODO: write all these to report files
         self.block_append("""
         ################################################################
         # Final Report
@@ -1134,8 +1019,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         Given chip width/height and margins, generate an OpenROAD TCL command to create the floorplan.
         Also requires a technology specific name for the core site
         """
-        # -flip -f allows standard cells to be flipped correctly during place-and-route
-
         return f"initialize_floorplan -site {site} -die_area {{ 0 0 {width} {height}}} -core_area {{{left} {bottom} {width-right-left} {height-top-bottom}}}"
 
     def generate_floorplan_tcl(self) -> List[str]:
@@ -1185,26 +1068,12 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             else:
                 orientation = constraint.orientation if constraint.orientation is not None else "r0"
                 orientation = orientation.upper()
-                # TODO: copied from Innovus
                 if constraint.create_physical:
-                    output.append("create_inst -cell {cell} -inst {inst} -location {{{x} {y}}} -orient {orientation} -physical -status fixed".format(
-                        cell=constraint.master,
-                        inst=new_path,
-                        x=constraint.x,
-                        y=constraint.y,
-                        orientation=orientation
-                    ))
+                    pass
                 if constraint.type == PlacementConstraintType.Dummy:
                     pass
-                # TODO: copied from Innovus
                 elif constraint.type == PlacementConstraintType.Placement:
-                    output.append("create_guide -name {name} -area {x1} {y1} {x2} {y2}".format(
-                        name=new_path,
-                        x1=constraint.x,
-                        x2=constraint.x + constraint.width,
-                        y1=constraint.y,
-                        y2=constraint.y + constraint.height
-                    ))
+                    pass
                 # for OpenROAD
                 elif constraint.type in [PlacementConstraintType.HardMacro, PlacementConstraintType.Hierarchical]:
                     output.append("place_cell -inst_name {inst} -origin {{ {x} {y} }} -orient {orientation} -status FIRM".format(
@@ -1212,9 +1081,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                         x=constraint.x,
                         y=constraint.y,
                         orientation=orientation,
-                        # fixed=" -fixed" if constraint.create_physical else ""
                     ))
-                    # TODO: add place_cell option [-status (PLACED|FIRM)] (like -fixed for innovus)
+                    # TODO: add place_cell option [-status (PLACED|FIRM)]
                     spacing = self.get_setting("par.blockage_spacing")
                     if constraint.top_layer is not None:
                         current_top_layer = constraint.top_layer #  type: Optional[str]
@@ -1223,40 +1091,9 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                     else:
                         current_top_layer = None
                     # TODO: find equivalent for place/route halo in OpenROAD
-                    # if current_top_layer is not None:
-                    #     bot_layer = self.get_stackup().get_metal_by_index(1).name
-                    #     output.append("create_place_halo -insts {inst} -halo_deltas {{{s} {s} {s} {s}}} -snap_to_site".format(
-                    #         inst=new_path, s=spacing))
-                    #     output.append("create_route_halo -bottom_layer {b} -space {s} -top_layer {t} -inst {inst}".format(
-                    #         inst=new_path, b=bot_layer, t=current_top_layer, s=spacing))
-                # TODO: copied from Innovus
+
                 elif constraint.type == PlacementConstraintType.Obstruction:
-                    obs_types = get_or_else(constraint.obs_types, [])  # type: List[ObstructionType]
-                    if ObstructionType.Place in obs_types:
-                        output.append("create_place_blockage -area {{{x} {y} {urx} {ury}}}".format(
-                            x=constraint.x,
-                            y=constraint.y,
-                            urx=constraint.x+constraint.width,
-                            ury=constraint.y+constraint.height
-                        ))
-                    if ObstructionType.Route in obs_types:
-                        output.append("create_route_blockage -layers {{{layers}}} -spacing 0 -{area_flag} {{{x} {y} {urx} {ury}}}".format(
-                            x=constraint.x,
-                            y=constraint.y,
-                            urx=constraint.x+constraint.width,
-                            ury=constraint.y+constraint.height,
-                            area_flag="rects" if self.version() >= self.version_number("181") else "area",
-                            layers="all" if constraint.layers is None else " ".join(get_or_else(constraint.layers, []))
-                        ))
-                    if ObstructionType.Power in obs_types:
-                        output.append("create_route_blockage -pg_nets -layers {{{layers}}} -{area_flag} {{{x} {y} {urx} {ury}}}".format(
-                            x=constraint.x,
-                            y=constraint.y,
-                            urx=constraint.x+constraint.width,
-                            ury=constraint.y+constraint.height,
-                            area_flag="rects" if self.version() >= self.version_number("181") else "area",
-                            layers="all" if constraint.layers is None else " ".join(get_or_else(constraint.layers, []))
-                        ))
+                    pass
                 else:
                     assert False, "Should not reach here"
         return [chip_size_constraint] + output
@@ -1295,7 +1132,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         :param add_pins: True if pins are desired on this layer; False otherwise.
         :return: A list of TCL commands that will generate power straps.
         """
-        # return [f"add_pdn_stripe -grid {{grid}} -layer {{{layer_name}}} -width {width} -pitch {pitch} -offset {offset} \n"]
         return [f" {layer_name} {{width {width} pitch {pitch} offset {offset}}} \n"]
     
     def process_sdc_file(self,post_synth_sdc) -> str:
