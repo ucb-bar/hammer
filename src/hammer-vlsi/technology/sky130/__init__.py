@@ -31,6 +31,7 @@ class SKY130Tech(HammerTechnology):
         self.setup_cdl()
         self.setup_verilog()
         self.setup_techlef()
+        self.setup_klayout_techfile()
         self.setup_lvs_deck()
         self.setup_sram_spice()
         self.setup_sram_lef()
@@ -121,6 +122,41 @@ class SKY130Tech(HammerTechnology):
                     df.write(line)
                     if line.strip() == 'END pwell':
                         df.write(_the_tlef_edit)
+
+    # Copy and hack the klayout techfile, to add all required LEFs
+    # TODO: should this be in OpenROAD plugin instead?
+    def setup_klayout_techfile(self) -> None:
+        setting_dir = self.get_setting("technology.sky130.sky130A")
+        setting_dir = Path(setting_dir)
+
+        source_path = setting_dir / 'libs.tech' / 'klayout' / 'sky130A.lyt'
+        if not source_path.exists():
+            raise FileNotFoundError(f"Klayout techfile not found: {source_path}")
+
+        cache_tech_dir_path = Path(self.cache_dir)
+        os.makedirs(cache_tech_dir_path, exist_ok=True)
+        dest_path = cache_tech_dir_path / f'sky130A.lyt'
+
+        insert_lines=''
+        lef_files = self.read_libs([
+            hammer_tech.filters.lef_filter
+        ], hammer_tech.HammerTechnologyUtils.to_plain_item)
+
+        for i,lef_file in enumerate(lef_files):
+            # skip standard cell lef file (klayout gives an error that cells already exist)
+            # TODO: very hacky to assume std cell lef is in position 1, is there a way to only extract tech lef + macro lefs?
+            if i == 1: continue 
+            insert_lines += f"<lef-files>{lef_file}</lef-files>\n"
+
+        with open(source_path, 'r') as sf:
+            with open(dest_path, 'w') as df:
+                self.logger.info("Modifying Klayout Techfile: {} -> {}".format
+                    (source_path, dest_path))
+                for line in sf:
+                    if '</lefdef>' in line:
+                        df.write(insert_lines)
+                    df.write(line)
+                    
 
     # Remove conflicting specification statements found in PDK LVS decks
     def setup_lvs_deck(self) -> None:

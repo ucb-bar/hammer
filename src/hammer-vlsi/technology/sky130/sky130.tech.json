@@ -37,7 +37,7 @@
   "libraries": [
     {
       "lef file": "tech-sky130-cache/sky130_fd_sc_hd__nom.tlef",
-      "klayout techfile": "$SKY130A/libs.tech/klayout/sky130A.lyt",
+      "klayout techfile": "tech-sky130-cache/sky130A.lyt",
       "spice file": "$SKY130_NDA/s8/V2.0.1/LVS/Calibre/source.cdl",
       "verilog sim": "tech-sky130-cache/primitives.v",
       "provides": [

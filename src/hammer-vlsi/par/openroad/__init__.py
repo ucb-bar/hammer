@@ -1000,7 +1000,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         exec klayout -zz \\
                 -rd design_name={self.top_module} \\
                 -rd in_def={self.output_def_filename} \\
-                -rd in_files={" ".join(gds_files)} /tools/C/nayiri/sky130/sky130_sram_macros/sky130_sram_2kbyte_1rw1r_32x512_8/sky130_sram_2kbyte_1rw1r_32x512_8.lef /tools/C/nayiri/sky130/sky130_sram_macros/sky130_sram_1kbyte_1rw1r_32x256_8/sky130_sram_1kbyte_1rw1r_32x256_8.lef \\
+                -rd in_files={" ".join(gds_files)} \\
                 -rd seal_file= \\
                 -rd tech_file={klayout_techfile} \\
                 -rd config_file= \\
