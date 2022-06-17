@@ -351,6 +351,9 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         # set up useful variables
         clock_port = self.get_clock_ports()[0]
         self.clock_port_name = clock_port.name
+        tech_base_dir=self.get_setting('vlsi.core.technology_path')[0]
+        tech = self.get_setting('vlsi.core.technology')
+        self.hammer_tech_plugin_path = os.path.join(tech_base_dir,tech)
 
         # start routine
         self.read_lef()
@@ -571,13 +574,14 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     def global_placement(self) -> bool:
         metals=self.get_stackup().metals[1:]
         spacing = self.get_setting("par.blockage_spacing")
+        idx_clock_bottom_metal=min(2,len(metals)-1)
         
         self.block_append(f"""
         ################################################################
         # Global placement
         set_global_routing_layer_adjustment {metals[0].name}-{metals[-1].name} 0
-        set_routing_layers -signal {metals[0].name}-{metals[-1].name} -clock met3-met5
-        set_macro_extension 2
+        set_routing_layers -signal {metals[0].name}-{metals[-1].name} -clock {metals[idx_clock_bottom_metal].name}-{metals[-1].name}
+        set_macro_extension {int(self.get_setting("par.blockage_spacing"))}
 
         # -density default is 0.7, overflow default is 0.3
         # set overflow higher (ex. 0.8) to make faster
@@ -637,16 +641,15 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         ################################################################
         # IO Placement
         {self.place_pins_tcl()}
-
-        write_def "{self.run_dir}/{self.top_module}_global_place.def"
         """)
         return True
 
     def set_rc(self) -> bool:
+
         self.block_append(f"""
         ################################################################
         # Repair max slew/cap/fanout violations and normalize slews
-        source "/tools/B/nayiri/openroad/hammer-openroad/src/hammer-vlsi/technology/sky130/extra/sky130hd.rc"
+        source {self.hammer_tech_plugin_path}/extra/sky130hd.rc
         set_wire_rc -signal -layer "met2"
         set_wire_rc -clock  -layer "met5"
         """)
@@ -696,6 +699,15 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         clock_port = self.get_clock_ports()[0]
         self.clock_port_name = clock_port.name
 
+        cts_buffer_cells = self.technology.get_special_cell_by_type(CellType.CTSBuffer)
+
+        cts_args=""
+        if cts_buffer_cells is None:
+            self.logger.warning("CTS buffer cells are unspecified.")
+        else:
+            cts_buffer_cell = cts_buffer_cells[0].name[0]
+            cts_args=f"-root_buf {cts_buffer_cell} -buf_list {cts_buffer_cell}"
+
         self.block_append(f"""
         check_placement -verbose
 
@@ -704,7 +716,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         set_placement_padding -global -left 2 -right 2
 
         repair_clock_inverters
-        clock_tree_synthesis -root_buf sky130_fd_sc_hd__clkbuf_1 -buf_list sky130_fd_sc_hd__clkbuf_1 -sink_clustering_enable
+        clock_tree_synthesis {cts_args} -sink_clustering_enable
         
         set_propagated_clock [all_clocks]
 
@@ -713,9 +725,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         
         # place clock buffers
         detailed_placement
-
-        # checkpoint
-        # write_def {self.run_dir}/{self.top_module}_cts.def
 
         ###########################
         # Setup/hold timing repair
@@ -775,7 +784,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         # Global routing
         set_global_routing_layer_adjustment {metals[0].name}-{metals[-1].name} 0.3
         set_routing_layers -signal {metals[0].name}-{metals[-1].name} -clock met3-met5
-        set_macro_extension 2
+        set_macro_extension {int(self.get_setting("par.blockage_spacing"))}
 
         # pin_access - this command caused openroad to crash
         # -allow_congestion and -allow_overflow added for now
@@ -798,7 +807,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
         # set_thread_count [exec getconf _NPROCESSORS_ONLN]
 
-        write_verilog -include_pwr_gnd /tools/B/nayiri/openroad/chipyard-openroad/vlsi/build-openroad/chipyard.TestHarness.MinimalRocketConfig-ChipTop/par-rundir/ChipTop.lvs.v
+        write_verilog -include_pwr_gnd {self.output_netlist_filename}
 
         # TODO: many other arguments available
         detailed_route -guide {self.route_guide_path} \\
@@ -897,7 +906,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                 -rd tech_file={klayout_techfile} \\
                 -rd config_file= \\
                 -rd out_file={self.output_gds_filename} \\
-                -rm /tools/B/nayiri/openroad/hammer-openroad/src/hammer-vlsi/technology/sky130/extra/def2stream.py
+                -rm {self.hammer_tech_plugin_path}/extra/def2stream.py
         """) 
         return True
 
