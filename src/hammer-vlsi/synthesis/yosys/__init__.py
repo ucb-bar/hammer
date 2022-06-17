@@ -185,10 +185,10 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
 
     def write_sdc_file(self) -> bool:
         with open(self.mapped_sdc_path,'w') as f:
-            # TODO: why buf cell and not inv??
             # custom sdc constraints
-            f.write("set_driving_cell sky130_fd_sc_hd__buf_1\n" )
-            f.write("set_load 5\n")
+            if self.driver_cell is not None:
+                f.write(f"set_driving_cell {self.driver_cell}\n" )
+                f.write("set_load 5\n")
 
     def block_append(self,commands) -> bool:
         for line in commands.split('\n'):
@@ -216,6 +216,14 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         self.synth_cap_load = 33.5 # SYNTH_CAP_LOAD
         self.max_fanout = 5 # default SYNTH_MAX_FANOUT = 5
 
+        self.driver_cell = None
+        driver_cells = self.technology.get_special_cell_by_type(CellType.Driver)
+        if driver_cells is None:
+            self.logger.warning("Driver cells are unspecified and will not be added during synthesis.")
+        else:
+            self.driver_cell = driver_cells[0].name[0]
+            self.driver_ports_in = driver_cells[0].input_ports[0]
+            self.driver_ports_out = driver_cells[0].output_ports[0]
         # Yosys commands only take a single lib file
         #   so use typical corner liberty file
         corners = self.get_mmmc_corners()  # type: List[MMMCCorner]
@@ -225,7 +233,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         self.append("yosys -import")
 
         # replaces undef (x) constants with defined (0/1) constants.
-        # self.append("setundef -zero")
+        self.append("setundef -zero")
 
         # We are switching working directories and Yosys still needs to find paths.
         abspath_input_files = list(map(lambda name: os.path.join(os.getcwd(), name), self.input_files))  # type: List[str]
@@ -315,20 +323,11 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
             # TODO: add extra field in specialcells
             hilomap -hicell "{tie_hi_cell} {tie_hi_port}" -locell "{tie_lo_cell} {tie_lo_port}"
             """)
-
-        driver_cells = self.technology.get_special_cell_by_type(CellType.Driver)
-
-        if driver_cells is None:
-            self.logger.warning("Driver cells are unspecified and will not be added during synthesis.")
-        else:
-            driver_cell = driver_cells[0].name[0]
-            driver_ports_in = driver_cells[0].input_ports[0]
-            driver_ports_out = driver_cells[0].output_ports[0]
-
+        if self.driver_cell is not None:
             self.block_append(f"""
             # Insert driver cells for pass through wires
             # TODO: why does -buf arg not work? try with yosys conda install
-            insbuf "{driver_cell} {driver_ports_in} {driver_ports_out}"
+            insbuf "{self.driver_cell} {self.driver_ports_in} {self.driver_ports_out}"
             """)
         return True
 
