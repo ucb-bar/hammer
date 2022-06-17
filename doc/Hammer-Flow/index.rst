@@ -14,3 +14,4 @@ This documentation will walk through the currently supported steps of the Hammer
    LVS
    Simulation
    Power
+   Formal

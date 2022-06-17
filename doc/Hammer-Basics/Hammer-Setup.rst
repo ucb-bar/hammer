@@ -38,3 +38,5 @@ To check your environment you may run the following:
     echo $?
 
 If the last line above returns 0, then the environment is set up and ready to go.
+
+Note: certain tools and technologies will have additional system requirements. For example, LVS with Netgen requires Tcl/Tk 8.6, which is not installed for CentOS7/RHEL7 and below. Refer to each respective tool and technology's documentation for those requirements.

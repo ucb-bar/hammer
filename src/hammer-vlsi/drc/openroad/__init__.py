@@ -29,7 +29,7 @@ class OpenROADDRC(OpenROADDRCTool):
 
     def do_pre_steps(self, first_step: HammerToolStep) -> bool:
         assert super().do_pre_steps(first_step)
-        self.cmds = []
+        self.cmds = []  # type: List[str]
         return True
 
     def do_post_steps(self) -> bool:
@@ -69,14 +69,14 @@ class OpenROADDRC(OpenROADDRCTool):
             """.format(
               rundir=self.run_dir,
               tech=self.get_setting("vlsi.core.technology"),
-              name=self.top_module, 
+              name=self.top_module,
             )))
             f.write("\n".join(self.cmds))
         os.chmod(run_script, 0o755)
 
         if bool(self.get_setting("drc.openroad.generate_only")):
             self.logger.info("Generate-only mode: command-line is " + \
-                             " ".join(args))
+                             " ".join(self.cmds))
         else:
             # Temporarily disable colors/tag to make run output more readable
             # TODO: think of a more elegant way to do this?
@@ -92,7 +92,7 @@ class OpenROADDRC(OpenROADDRCTool):
     # drc main steps
     #========================================================================
     def init_design(self) -> bool:
-        # TODO: currently hardlinking the par outputs, otherwise the 
+        # TODO: currently hardlinking the par outputs, otherwise the
         # OpenROAD-flow's default makefile will rebuild syn in this directory
         par_dirs = {
           "results": self.par_results_path(),
@@ -106,7 +106,7 @@ class OpenROADDRC(OpenROADDRCTool):
                   name=self.top_module,
                   base=os.path.basename(src))
               self.cmds += [
-                  "rm -f {}".format(dst), 
+                  "rm -f {}".format(dst),
                   "ln {} {}".format(src, dst)
               ]
         return True
@@ -115,7 +115,7 @@ class OpenROADDRC(OpenROADDRCTool):
         # TODO: currently using OpenROAD's default drc script
         self.cmds += [
           "make DESIGN_CONFIG={conf} -f {make} drc".format(
-            conf=self.design_config_path(), 
+            conf=self.design_config_path(),
             make=self.openroad_flow_makefile_path()
         )]
         return True

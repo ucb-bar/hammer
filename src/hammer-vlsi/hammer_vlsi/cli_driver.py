@@ -76,12 +76,12 @@ CLIActionType = Union[CLIActionConfigType, CLIActionStringType]
 
 def is_config_action(func: CLIActionType) -> bool:
     """Return True if the given function is a CLIActionConfigType."""
-    return check_function_type(func, [HammerDriver, Callable[[str], None]], Optional[dict]) is None
+    return check_function_type(func, [HammerDriver, cast(type, Callable[[str], None])], cast(type, Optional[dict])) is None
 
 
 def is_string_action(func: CLIActionType) -> bool:
     """Return True if the given function is a CLIActionConfigType."""
-    return check_function_type(func, [HammerDriver, Callable[[str], None]], Optional[str]) is None
+    return check_function_type(func, [HammerDriver, cast(type, Callable[[str], None])], cast(type, Optional[str])) is None
 
 
 def check_CLIActionType_type(func: CLIActionType) -> None:
@@ -89,11 +89,12 @@ def check_CLIActionType_type(func: CLIActionType) -> None:
     Check that the given CLIActionType obeys its function type signature.
     Raises TypeError if the function is of the incorrect type.
     """
-    config_check = check_function_type(func, [HammerDriver, Callable[[str], None]], Optional[dict])
+    s = [HammerDriver, cast(type, Callable[[str], None])]
+    config_check = check_function_type(func, s, cast(type, Optional[dict]))
     if config_check is None:
         return
 
-    string_check = check_function_type(func, [HammerDriver, Callable[[str], None]], Optional[str])
+    string_check = check_function_type(func, s, cast(type, Optional[str]))
     if string_check is None:
         return
 
@@ -118,6 +119,7 @@ class CLIDriver:
         self.sram_generator_rundir = ""  # type: Optional[str]
         self.sim_rundir = ""  # type: Optional[str]
         self.power_rundir = "" # type: Optional[str]
+        self.formal_rundir = "" # type: Optional[str]
         self.pcb_rundir = ""  # type: Optional[str]
 
         # If a subclass has defined these, don't clobber them in init
@@ -167,6 +169,10 @@ class CLIDriver:
             check_CLIActionType_type(self.power_action) # type: ignore
         else:
             self.power_action = self.create_power_action([]) # type: CLIActionConfigType
+        if hasattr(self, "formal_action"):
+            check_CLIActionType_type(self.formal_action) # type: ignore
+        else:
+            self.formal_action = self.create_formal_action([]) # type: CLIActionConfigType
 
         # Dictionaries of module-CLIActionConfigType for hierarchical flows.
         # See all_hierarchical_actions() below.
@@ -177,6 +183,7 @@ class CLIDriver:
         self.hierarchical_lvs_actions = {}  # type: Dict[str, CLIActionConfigType]
         self.hierarchical_sim_actions = {}  # type: Dict[str, CLIActionConfigType]
         self.hierarchical_power_actions = {}  # type: Dict[str, CLIActionConfigType]
+        self.hierarchical_formal_actions = {}  # type: Dict[str, CLIActionConfigType]
         self.hierarchical_auto_action = None  # type: Optional[CLIActionConfigType]
 
     def action_map(self) -> Dict[str, CLIActionType]:
@@ -228,7 +235,14 @@ class CLIDriver:
             "par-to-power": self.par_to_power_action,
             "par_to_power": self.par_to_power_action,
             "sim-to-power": self.sim_to_power_action,
-            "sim_to_power": self.sim_to_power_action
+            "sim_to_power": self.sim_to_power_action,
+            "formal": self.formal_action,
+            "synthesis_to_formal": self.synthesis_to_formal_action,
+            "synthesis-to-formal": self.synthesis_to_formal_action,
+            "syn_to_formal": self.synthesis_to_formal_action,
+            "syn-to-formal": self.synthesis_to_formal_action,
+            "par_to_formal": self.par_to_formal_action,
+            "par-to-formal": self.par_to_formal_action
         }, self.all_hierarchical_actions)
 
     @staticmethod
@@ -292,6 +306,13 @@ class CLIDriver:
     def get_extra_power_hooks(self) -> List[HammerToolHookAction]:
         """
         Return a list of extra power hooks in this project.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_extra_formal_hooks(self) -> List[HammerToolHookAction]:
+        """
+        Return a list of extra formal hooks in this project.
         To be overridden by subclasses.
         """
         return list()
@@ -375,6 +396,14 @@ class CLIDriver:
                           post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
         hooks = self.get_extra_power_hooks() + custom_hooks  # type: List[HammerToolHookAction]
         return self.create_action("power", hooks if len(hooks) > 0 else None,
+                                  pre_action_func, post_load_func, post_run_func)
+
+    def create_formal_action(self, custom_hooks: List[HammerToolHookAction],
+                          pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_load_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
+        hooks = self.get_extra_formal_hooks() + custom_hooks  # type: List[HammerToolHookAction]
+        return self.create_action("formal", hooks if len(hooks) > 0 else None,
                                   pre_action_func, post_load_func, post_run_func)
 
     def create_sram_generator_action(self, custom_hooks: List[HammerToolHookAction],
@@ -543,6 +572,23 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.power_tool.run_dir, "power-output-full.json"),
                                          self.get_full_config(driver, output))
                 post_run_func_checked(driver)
+            elif action_type == "formal":
+                if not driver.load_formal_tool(get_or_else(self.formal_rundir, "")):
+                    return None
+                else:
+                    post_load_func_checked(driver)
+                assert driver.formal_tool is not None, "load_formal_tool was unsuccessful"
+                success, output = driver.run_formal(
+                        driver.formal_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_formal_hooks(driver.formal_tool.name) + \
+                        list(extra_hooks or []))
+                if not success:
+                    driver.log.error("Formal tool did not succeed")
+                    return None
+                dump_config_to_json_file(os.path.join(driver.formal_tool.run_dir, "formal-output.json"), output)
+                dump_config_to_json_file(os.path.join(driver.formal_tool.run_dir, "formal-output-full.json"),
+                                         self.get_full_config(driver, output))
+                post_run_func_checked(driver)
             elif action_type == "pcb":
                 if not driver.load_pcb_tool(get_or_else(self.pcb_rundir, "")):
                     return None
@@ -638,6 +684,24 @@ class CLIDriver:
             return None
         else:
             return self.get_full_config(driver, power_input_only)
+
+    def synthesis_to_formal_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        """Create a full config to run the output."""
+        formal_input_only = HammerDriver.synthesis_output_to_formal_input(driver.project_config)
+        if formal_input_only is None:
+            driver.log.error("Input config does not appear to contain valid synthesis outputs")
+            return None
+        else:
+            return self.get_full_config(driver, formal_input_only)
+
+    def par_to_formal_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        """Create a full config to run the output."""
+        formal_input_only = HammerDriver.par_output_to_formal_input(driver.project_config)
+        if formal_input_only is None:
+            driver.log.error("Input config does not appear to contain valid par outputs")
+            return None
+        else:
+            return self.get_full_config(driver, formal_input_only)
 
 
     def create_synthesis_par_action(self, synthesis_action: CLIActionConfigType, par_action: CLIActionConfigType) -> CLIActionConfigType:
@@ -803,6 +867,12 @@ class CLIDriver:
                 "power_{block}"
             ], module, action)
 
+        for module, action in self.hierarchical_formal_actions.items():
+            add_variants([
+                "formal-{block}",
+                "formal_{block}"
+            ], module, action)
+
         return actions
 
     def get_extra_hierarchical_synthesis_hooks(self, driver: HammerDriver) -> Dict[str, List[HammerToolHookAction]]:
@@ -853,6 +923,15 @@ class CLIDriver:
     def get_extra_hierarchical_power_hooks(self, driver: HammerDriver) -> Dict[str, List[HammerToolHookAction]]:
         """
         Return a list of extra hierarchical power hooks in this project.
+        To be overridden by subclasses.
+
+        :return: Dictionary of (module name, list of hooks)
+        """
+        return dict()
+
+    def get_extra_hierarchical_formal_hooks(self, driver: HammerDriver) -> Dict[str, List[HammerToolHookAction]]:
+        """
+        Return a list of extra hierarchical formal hooks in this project.
         To be overridden by subclasses.
 
         :return: Dictionary of (module name, list of hooks)
@@ -945,6 +1024,18 @@ class CLIDriver:
         """
         return self.hierarchical_power_actions[module]
 
+    def set_hierarchical_formal_action(self, module: str, action: CLIActionConfigType) -> None:
+        """
+        Set the action associated with hierarchical formal for the given module (in hierarchical flows).
+        """
+        self.hierarchical_formal_actions[module] = action
+
+    def get_hierarchical_formal_action(self, module: str) -> CLIActionConfigType:
+        """
+        Get the action associated with hierarchical formal for the given module (in hierarchical flows).
+        """
+        return self.hierarchical_formal_actions[module]
+
     def valid_actions(self) -> List[str]:
         """Get the list of valid actions for the command-line driver."""
         return list(self.action_map().keys())
@@ -1027,6 +1118,7 @@ class CLIDriver:
         self.lvs_rundir = get_nonempty_str(args['lvs_rundir'])
         self.sim_rundir = get_nonempty_str(args['sim_rundir'])
         self.power_rundir = get_nonempty_str(args['power_rundir'])
+        self.formal_rundir = get_nonempty_str(args['formal_rundir'])
 
         # Stage control: from/to
         from_step = get_nonempty_str(args['from_step'])
@@ -1069,6 +1161,9 @@ class CLIDriver:
                 HammerStartStopStep(step=start_step, inclusive=start_incl),
                 HammerStartStopStep(step=stop_step, inclusive=stop_incl)))
             driver.set_post_custom_power_tool_hooks(HammerTool.make_start_stop_hooks(
+                HammerStartStopStep(step=start_step, inclusive=start_incl),
+                HammerStartStopStep(step=stop_step, inclusive=stop_incl)))
+            driver.set_post_custom_formal_tool_hooks(HammerTool.make_start_stop_hooks(
                 HammerStartStopStep(step=start_step, inclusive=start_incl),
                 HammerStartStopStep(step=stop_step, inclusive=stop_incl)))
 
@@ -1127,6 +1222,13 @@ class CLIDriver:
                     base_project_config[0] = deeplist(driver.project_configs)
                     d.update_project_configs(deeplist(base_project_config[0]) + [config])
 
+                def formal_pre_func(d: HammerDriver) -> None:
+                    self.lvs_rundir = os.path.join(d.obj_dir, "formal-{module}".format(
+                        module=module))  # TODO(edwardw): fix this ugly os.path.join; it doesn't belong here.
+                    # TODO(edwardw): remove ugly hack to store stuff in parent context
+                    base_project_config[0] = deeplist(driver.project_configs)
+                    d.update_project_configs(deeplist(base_project_config[0]) + [config])
+
                 def post_run(d: HammerDriver, rundir: str) -> None:
                     # Write out the configs used/generated for logging/debugging.
                     with open(os.path.join(rundir, "full_config.json"), "w") as f:
@@ -1156,6 +1258,9 @@ class CLIDriver:
                 def power_post_run(d: HammerDriver) -> None:
                     post_run(d, get_or_else(self.power_rundir, ""))
 
+                def formal_post_run(d: HammerDriver) -> None:
+                    post_run(d, get_or_else(self.formal_rundir, ""))
+
                 syn_action = self.create_synthesis_action(self.get_extra_hierarchical_synthesis_hooks(driver).get(module, []),
                                                           pre_action_func=syn_pre_func, post_load_func=None,
                                                           post_run_func=syn_post_run)
@@ -1182,6 +1287,10 @@ class CLIDriver:
                                                     pre_action_func=power_pre_func, post_load_func=None,
                                                     post_run_func=power_post_run)
                 self.set_hierarchical_power_action(module, power_action)
+                formal_action = self.create_formal_action(self.get_extra_hierarchical_formal_hooks(driver).get(module, []),
+                                                    pre_action_func=formal_pre_func, post_load_func=None,
+                                                    post_run_func=formal_post_run)
+                self.set_hierarchical_formal_action(module, formal_action)
 
             create_actions(module_iter, config_iter)
 
@@ -1280,7 +1389,7 @@ class CLIDriver:
         else:
             with open(args["output"], "w") as f:
                 f.write(output_str)
-            print(output_str)
+            print("Action {action} config output written to {file}".format(action=action, file=args["output"]))
             return 0
 
 
@@ -1318,6 +1427,8 @@ class CLIDriver:
                             help='(optional) Directory to store simulation results in')
         parser.add_argument("--power_rundir", required=False, default="",
                             help='(optional) Directory to store power results in')
+        parser.add_argument("--formal_rundir", required=False, default="",
+                            help='(optional) Directory to store formal results in')
         # Optional arguments for step control.
         parser.add_argument("--start_before_step", "--from_step", dest="from_step", required=False,
                             help="Run the given action from before the given step (inclusive). Not compatible with --start_after_step.")
