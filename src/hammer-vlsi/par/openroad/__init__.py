@@ -73,7 +73,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             self.append(self.read_liberty())
             self.append("read_db pre_{step}".format(step=first_step.name))
             self.read_sdc()
-            self.set_rc()
         return True
 
     def do_between_steps(self, prev: HammerToolStep, next: HammerToolStep) -> bool:
@@ -496,6 +495,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
         with open(pdn_config_path, "w") as f:
             f.write(pdn_cfg)
+        
+        return True
 
     def write_power_straps_tcl(self, power_straps_tcl_path) -> bool:
         pwr_nets=self.get_all_power_nets()
@@ -670,8 +671,10 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         tie_lo_cells = self.technology.get_special_cell_by_type(CellType.TieLoCell)
         tie_hilo_cells = self.technology.get_special_cell_by_type(CellType.TieHiLoCell)
 
-        if len(tie_hi_cells) != 1 or len (tie_lo_cells) != 1:
-            self.logger.warning("Hi and Lo tiecells are unspecified or improperly specified and will not be added during synthesis.")
+        if len(tie_hi_cells) != 1 or len (tie_lo_cells) != 1
+           or len(tie_hi_cells[0].input_ports < 1)
+           or len(tie_lo_cells[0].input_ports < 1):
+            self.logger.warning("Hi and Lo tiecells and their input ports are unspecified or improperly specified and will not be added during synthesis.")
         else:   
             tie_hi_cell = tie_hi_cells[0].name[0]
             tie_hi_port = tie_hi_cells[0].input_ports[0]
@@ -858,7 +861,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     # Copy and hack the klayout techfile, to add all required LEFs
     def setup_klayout_techfile(self) -> bool:
-        source_path = Path(self.get_setting("par.inputs.klayout_techfile_sources")[0])
+        source_path = Path(self.get_setting("par.inputs.klayout_techfile_source"))
         if not source_path.exists():
             raise FileNotFoundError(f"Klayout techfile not found: {source_path}")
 

@@ -610,6 +610,10 @@ par.inputs:
   # type: Optional[str]
   openrcx_techfile: null
 
+  # Optional: KLayout tech file
+  # type: Optional[str]
+  klayout_techfile_source: null
+
 # Place-and-route settings
 par:
   # Submission command settings
@@ -797,8 +801,8 @@ technology.core:
     tap_cell_rail_reference: null
     # Names of the power and ground rails of the standard cells
     std_cell_supplies:
-        power: []
-        ground: []
+        power: ["VDD"]
+        ground: ["VSS"]
 
 # Specific inputs for the simulation tool.
 # These inputs will vary based on if the simulation is for RTL, post synthesis, or post PAR.

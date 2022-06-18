@@ -20,7 +20,7 @@ from hammer_logging import HammerVLSILogging
 from hammer_vlsi import MMMCCornerType
 import hammer_tech
 
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Callable
 
 import specialcells
 from specialcells import CellType, SpecialCell
@@ -87,7 +87,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
             self.logger.info("Did not run write_regs")
 
         # Check that the synthesis outputs exist if the synthesis run was successful
-        mapped_v = self.mapped_hier_v_path if self.hierarchical_mode.is_nonleaf_hierarchical() else self.mapped_v_path
+        mapped_v = self.mapped_v_path
         self.output_files = [mapped_v]
         self.output_sdc = self.mapped_sdc_path
         # self.sdf_file = self.output_sdf_path
@@ -184,6 +184,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
             if self.driver_cell is not None:
                 f.write(f"set_driving_cell {self.driver_cell}\n" )
                 f.write("set_load 5\n")
+        return True
 
     def block_append(self,commands) -> bool:
         for line in commands.split('\n'):
@@ -209,8 +210,10 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
 
         self.driver_cell = None
         driver_cells = self.technology.get_special_cell_by_type(CellType.Driver)
-        if driver_cells is None:
-            self.logger.warning("Driver cells are unspecified and will not be added during synthesis.")
+        if driver_cells is None
+            or driver_cells[0].input_ports is None
+            or driver_cells[0].output_ports is None:
+            self.logger.warning("Driver cells and their input and output ports are unspecified and will not be added during synthesis.")
         else:
             self.driver_cell = driver_cells[0].name[0]
             self.driver_ports_in = driver_cells[0].input_ports[0]
@@ -228,9 +231,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
 
         # We are switching working directories and Yosys still needs to find paths.
         abspath_input_files = list(map(lambda name: os.path.join(os.getcwd(), name), self.input_files))  # type: List[str]
-        # If we are in hierarchical, we need to remove hierarchical sub-modules/sub-blocks.
-        if self.hierarchical_mode.is_nonleaf_hierarchical():
-            abspath_input_files = list(map(self.remove_hierarchical_submodules_from_file, abspath_input_files))
+        
         # Add any verilog_synth wrappers (which are needed in some technologies e.g. for SRAMs) which need to be
         # synthesized.
         abspath_input_files += self.technology.read_libs([
@@ -300,7 +301,9 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         tie_lo_cells = self.technology.get_special_cell_by_type(CellType.TieLoCell)
         tie_hilo_cells = self.technology.get_special_cell_by_type(CellType.TieHiLoCell)
 
-        if len(tie_hi_cells) != 1 or len (tie_lo_cells) != 1:
+        if len(tie_hi_cells) != 1 or len (tie_lo_cells) != 1
+           or len(tie_hi_cells[0].input_ports < 1)
+           or len(tie_lo_cells[0].input_ports < 1):
             self.logger.warning("Hi and Lo tiecells are unspecified or improperly specified and will not be added during synthesis.")
         else:   
             tie_hi_cell = tie_hi_cells[0].name[0]
