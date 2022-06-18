@@ -210,9 +210,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
 
         self.driver_cell = None
         driver_cells = self.technology.get_special_cell_by_type(CellType.Driver)
-        if driver_cells is None
-            or driver_cells[0].input_ports is None
-            or driver_cells[0].output_ports is None:
+        if driver_cells is None or driver_cells[0].input_ports is None or driver_cells[0].output_ports is None:
             self.logger.warning("Driver cells and their input and output ports are unspecified and will not be added during synthesis.")
         else:
             self.driver_cell = driver_cells[0].name[0]
@@ -301,9 +299,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         tie_lo_cells = self.technology.get_special_cell_by_type(CellType.TieLoCell)
         tie_hilo_cells = self.technology.get_special_cell_by_type(CellType.TieHiLoCell)
 
-        if len(tie_hi_cells) != 1 or len (tie_lo_cells) != 1
-           or len(tie_hi_cells[0].input_ports < 1)
-           or len(tie_lo_cells[0].input_ports < 1):
+        if len(tie_hi_cells) != 1 or len (tie_lo_cells) != 1 or tie_hi_cells[0].input_ports is None or tie_lo_cells[0].input_ports is None:
             self.logger.warning("Hi and Lo tiecells are unspecified or improperly specified and will not be added during synthesis.")
         else:   
             tie_hi_cell = tie_hi_cells[0].name[0]

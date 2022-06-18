@@ -671,9 +671,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         tie_lo_cells = self.technology.get_special_cell_by_type(CellType.TieLoCell)
         tie_hilo_cells = self.technology.get_special_cell_by_type(CellType.TieHiLoCell)
 
-        if len(tie_hi_cells) != 1 or len (tie_lo_cells) != 1
-           or len(tie_hi_cells[0].input_ports < 1)
-           or len(tie_lo_cells[0].input_ports < 1):
+        if len(tie_hi_cells) != 1 or len (tie_lo_cells) != 1 or len(tie_hi_cells[0].input_ports) < 1 or len(tie_lo_cells[0].input_ports) < 1:
             self.logger.warning("Hi and Lo tiecells and their input ports are unspecified or improperly specified and will not be added during synthesis.")
         else:   
             tie_hi_cell = tie_hi_cells[0].name[0]
