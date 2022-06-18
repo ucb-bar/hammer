@@ -101,15 +101,15 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         return os.path.join(self.run_dir, "{top}.par.sdf".format(top=self.top_module))
 
     @property
-    def output_spef_paths(self) -> List[str]:
+    def output_spef_paths(self) -> str:
         return os.path.join(self.run_dir, "{top}.par.spef".format(top=self.top_module))
 
     @property
-    def route_guide_path(self) -> List[str]:
+    def route_guide_path(self) -> str:
         return os.path.join(self.run_dir, "{top}.route_guide".format(top=self.top_module))
 
     @property
-    def klayout_techfile_path(self) -> List[str]:
+    def klayout_techfile_path(self) -> str:
         klayout_techfiles = self.technology.read_libs([
             hammer_tech.filters.klayout_techfile_filter
         ], hammer_tech.HammerTechnologyUtils.to_plain_item)
@@ -671,8 +671,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         tie_lo_cells = self.technology.get_special_cell_by_type(CellType.TieLoCell)
         tie_hilo_cells = self.technology.get_special_cell_by_type(CellType.TieHiLoCell)
 
-        if len(tie_hi_cells) != 1 or len (tie_lo_cells) != 1 or len(tie_hi_cells[0].input_ports) < 1 or len(tie_lo_cells[0].input_ports) < 1:
-            self.logger.warning("Hi and Lo tiecells and their input ports are unspecified or improperly specified and will not be added during synthesis.")
+        if len(tie_hi_cells) is None or len (tie_lo_cells) is None or tie_hi_cells[0].input_ports is None or tie_lo_cells[0].input_ports is None:
+            self.logger.warning("Hi and Lo tiecells and their input ports are unspecified or improperly specified and will not be added.")
         else:   
             tie_hi_cell = tie_hi_cells[0].name[0]
             tie_hi_port = tie_hi_cells[0].input_ports[0]
