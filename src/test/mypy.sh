@@ -17,8 +17,11 @@ call_mypy () {
 }
 
 # Core
-call_mypy --package hammer_vlsi
 call_mypy --package hammer_utils
+# call_mypy --package hammer_vlsi
+call_mypy ../hammer-vlsi/hammer_vlsi/*.py
+call_mypy ../hammer-vlsi/hammer_vlsi/vendor/__init__.py
+call_mypy ../hammer-vlsi/hammer_vlsi/vendor/openroad.py
 
 # Shell
 call_mypy ../hammer-shell/get-config
