@@ -110,6 +110,13 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         return os.path.join(self.run_dir, "{top}.route_guide".format(top=self.top_module))
 
     @property
+    def klayout_techfile_path(self) -> List[str]:
+        klayout_techfiles = self.technology.read_libs([
+            hammer_tech.filters.klayout_techfile_filter
+        ], hammer_tech.HammerTechnologyUtils.to_plain_item)
+        return klayout_techfiles[0]
+
+    @property
     def env_vars(self) -> Dict[str, str]:
         v = dict(super().env_vars)
         v["OPENROAD_BIN"] = self.get_setting("par.openroad.openroad_bin")
@@ -351,9 +358,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         # set up useful variables
         clock_port = self.get_clock_ports()[0]
         self.clock_port_name = clock_port.name
-        tech_base_dir=self.get_setting('vlsi.core.technology_path')[0]
+        tech_base_dir=self.get_setting('vlsi.core.technology_path')[-1]
         tech = self.get_setting('vlsi.core.technology')
-        self.hammer_tech_plugin_path = os.path.join(tech_base_dir,tech)
 
         # start routine
         self.read_lef()
@@ -515,6 +521,9 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             if gnd_net.tie is not None:
                 global_connections_gnd_tcl += f"\n add_global_connection -net {{{primary_gnd_net}}} -inst_pattern {{.*}} -pin_pattern {{{gnd_net.name}}}"
 
+        blockage_spacing = self.get_setting("par.blockage_spacing")
+        blockage_spacing_halo = [blockage_spacing for i in range(4)]
+
         with open(power_straps_tcl_path,'w') as power_straps_tcl_file:
             self.block_append(
             f"""
@@ -547,13 +556,13 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             ####################################
             # grid for: CORE_macro_grid_1
             ####################################
-            define_pdn_grid -name {{CORE_macro_grid_1}} -voltage_domains {{CORE}} -macro -orient {{R0 R180 MX MY}} -halo {{2.0 2.0 2.0 2.0}} -grid_over_boundary
+            define_pdn_grid -name {{CORE_macro_grid_1}} -voltage_domains {{CORE}} -macro -orient {{R0 R180 MX MY}} -halo {{ {blockage_spacing_halo} }} -grid_over_boundary
             add_pdn_connect -grid {{CORE_macro_grid_1}} -layers {{met4 met5}}
             
             ####################################
             # grid for: CORE_macro_grid_2
             ####################################
-            #define_pdn_grid -name {{CORE_macro_grid_2}} -voltage_domains {{CORE}} -macro -orient {{R90 R270 MXR90 MYR90}} -halo {{2.0 2.0 2.0 2.0}} -grid_over_boundary
+            #define_pdn_grid -name {{CORE_macro_grid_2}} -voltage_domains {{CORE}} -macro -orient {{R90 R270 MXR90 MYR90}} -halo {{ {blockage_spacing_halo} }} -grid_over_boundary
             #add_pdn_connect -grid {{CORE_macro_grid_2}} -layers {{met4 met5}}
             """,
             file=power_straps_tcl_file)
@@ -581,7 +590,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         # Global placement
         set_global_routing_layer_adjustment {metals[0].name}-{metals[-1].name} 0
         set_routing_layers -signal {metals[0].name}-{metals[-1].name} -clock {metals[idx_clock_bottom_metal].name}-{metals[-1].name}
-        set_macro_extension {int(self.get_setting("par.blockage_spacing"))}
+        set_macro_extension {int(spacing)}
 
         # -density default is 0.7, overflow default is 0.3
         # set overflow higher (ex. 0.8) to make faster
@@ -644,21 +653,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         """)
         return True
 
-    def set_rc(self) -> bool:
-
-        self.block_append(f"""
-        ################################################################
-        # Repair max slew/cap/fanout violations and normalize slews
-        source {self.hammer_tech_plugin_path}/extra/sky130hd.rc
-        set_wire_rc -signal -layer "met2"
-        set_wire_rc -clock  -layer "met5"
-        """)
-
-        return True
-
     def place_opt_design(self) -> bool:
-        self.set_rc()
-
         tie_hi_cells = self.technology.get_special_cell_by_type(CellType.TieHiCell)
         tie_lo_cells = self.technology.get_special_cell_by_type(CellType.TieLoCell)
         tie_hilo_cells = self.technology.get_special_cell_by_type(CellType.TieHiLoCell)
@@ -851,16 +846,11 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     # Copy and hack the klayout techfile, to add all required LEFs
     def setup_klayout_techfile(self) -> bool:
-        setting_dir = self.get_setting("technology.sky130.sky130A")
-        setting_dir = Path(setting_dir)
-
-        source_path = setting_dir / 'libs.tech' / 'klayout' / 'sky130A.lyt'
+        source_path = Path(self.get_setting("par.inputs.klayout_techfile_sources")[0])
         if not source_path.exists():
             raise FileNotFoundError(f"Klayout techfile not found: {source_path}")
 
-        cache_tech_dir_path = Path(self.technology.cache_dir)
-        os.makedirs(cache_tech_dir_path, exist_ok=True)
-        dest_path = cache_tech_dir_path / f'sky130A.lyt'
+        dest_path = self.klayout_techfile_path
 
         # klayout needs tlef + macro lefs
         tech_lib_lefs = self.technology.read_libs([hammer_tech.filters.lef_filter], hammer_tech.HammerTechnologyUtils.to_plain_item, self.tech_lib_filter())
@@ -891,10 +881,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             ilm_gds = list(map(lambda ilm: ilm.gds, self.get_input_ilms()))
             gds_files.extend(ilm_gds)
 
-        klayout_techfiles = self.technology.read_libs([
-            hammer_tech.filters.klayout_techfile_filter
-        ], hammer_tech.HammerTechnologyUtils.to_plain_item)
-        klayout_techfile = klayout_techfiles[0]
+        tech_base_dir=self.get_setting('vlsi.builtins.hammer_vlsi_path')
 
         self.block_append(f"""
         # write gds
@@ -903,10 +890,10 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                 -rd in_def={self.output_def_filename} \\
                 -rd in_files={" ".join(gds_files)} \\
                 -rd seal_file= \\
-                -rd tech_file={klayout_techfile} \\
+                -rd tech_file={self.klayout_techfile_path} \\
                 -rd config_file= \\
                 -rd out_file={self.output_gds_filename} \\
-                -rm {self.hammer_tech_plugin_path}/extra/def2stream.py
+                -rm {tech_base_dir}/hammer_vlsi/vendor/def2stream.py
         """) 
         return True
 

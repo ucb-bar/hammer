@@ -102,6 +102,9 @@ par.inputs:
   gds_map_file_meta: lazysubst
   openrcx_techfile: "${vlsi.builtins.hammer_vlsi_path}/technology/sky130/extra/sky130hd.rcx_rules"
   openrcx_techfile_meta: lazysubst
+  klayout_techfile_sources: 
+    - "${technology.sky130.sky130A}/libs.tech/klayout/sky130A.lyt"
+  klayout_techfile_sources_meta: lazysubst
 
 # Power Straps
 par.power_straps_mode: generate

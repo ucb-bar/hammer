@@ -193,10 +193,6 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
     def block_append(self,commands) -> bool:
         for line in commands.split('\n'):
             self.append(line.strip())
-            # if line.strip().startswith('#') or (line==""):
-            #     self.append(line.strip())
-            # else:
-            #     self.verbose_append(line.strip())
         return True
 
     #========================================================================
@@ -319,14 +315,11 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
 
             self.block_append(f"""
             # Technology mapping of constant hi- and/or lo-drivers
-            # TODO: how to specify ports
-            # TODO: add extra field in specialcells
             hilomap -hicell "{tie_hi_cell} {tie_hi_port}" -locell "{tie_lo_cell} {tie_lo_port}"
             """)
         if self.driver_cell is not None:
             self.block_append(f"""
             # Insert driver cells for pass through wires
-            # TODO: why does -buf arg not work? try with yosys conda install
             insbuf "{self.driver_cell} {self.driver_ports_in} {self.driver_ports_out}"
             """)
         return True
@@ -337,7 +330,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         return True
 
     def generate_reports(self) -> bool:
-        # TODO: generate all reports (not sure how...?)
+        # TODO: generate all reports (will probably need to parse the log file)
         self.append(f'tee -o "{self.run_dir}/{self.top_module}.synth_check.rpt" check')
         self.append(f'tee -o "{self.run_dir}/{self.top_module}.synth_stat.txt" stat -top {self.top_module} -liberty {self.liberty_file}')
         return True
