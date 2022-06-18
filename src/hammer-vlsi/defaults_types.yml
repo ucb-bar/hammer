@@ -10,7 +10,7 @@ vlsi.core:
 
   # Technology node dimension (nm) to use.
   # Some tools change what they do as this changes.
-  node: str
+  node: int
 
   # Build system to use, if any.
   build_system: str
