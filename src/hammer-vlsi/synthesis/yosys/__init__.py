@@ -131,11 +131,6 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
     def mapped_blif_path(self) -> str:
         return os.path.join(self.run_dir, "{}.mapped.blif".format(self.top_module))
 
-    def synth_script_path(self) -> str:
-        # TODO: generate this internally
-        openroad = self.openroad_flow_path()
-        return os.path.join(openroad, "flow/scripts/synth.tcl")
-
     def get_timing_libs(self, corner: Optional[MMMCCorner] = None) -> str:
         """
         Helper function to get the list of ASCII timing .lib files in space separated format.

@@ -627,7 +627,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             #   or use pin layer in either hor_layers or ver_layers
             pin_layer_names=["",""]
             pin_layer_names[0]=all_metal_layer_names[int(len(all_metal_layer_names)/2)]
-            # pin_layer_name1=self.get_stackup().get_metal_by_index(int(len(self.get_stackup().metals)/2))
             if (hor_layers): pin_layer_names[0]=hor_layers[0]
             if (ver_layers): pin_layer_names[0]=ver_layers[0]
             pin_layer_idx_1=all_metal_layer_names.index(pin_layer_names[0])
@@ -643,7 +642,20 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                     hor_layers.append(pin_layer_name)
                 if (layer.direction==RoutingDirection.Vertical)   and (pin_layer_name not in ver_layers):
                     ver_layers.append(pin_layer_name)
-        return f"place_pins {random_arg} -hor_layers {{{' '.join(hor_layers)}}} -ver_layers {{{' '.join(ver_layers)}}} -exclude top:* -exclude right:* -exclude left:*"
+        # determine commands for side specified in pin assignments
+        #   can only be done in openroad by "excluding" the entire length of the other 3 sides from pin placement
+        side=""
+        for pin in pin_assignments:
+            if pin.side == "bottom":
+                side="-exclude top:* -exclude right:* -exclude left:*"
+            elif pin.side == "top":
+                side="-exclude bottom:* -exclude right:* -exclude left:*"
+            elif pin.side == "left":
+                side="-exclude top:* -exclude right:* -exclude bottom:*"
+            elif pin.side == "right":
+                side="-exclude top:* -exclude bottom:* -exclude left:*"
+
+        return f"place_pins {random_arg} -hor_layers {{{' '.join(hor_layers)}}} -ver_layers {{{' '.join(ver_layers)}}} {side}"
 
     def place_pins(self) -> bool:
         self.block_append(f"""
