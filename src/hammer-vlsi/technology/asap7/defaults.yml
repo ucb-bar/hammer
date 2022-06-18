@@ -15,7 +15,7 @@ vlsi:
   # Technology dimension
   # The PaR tool actually runs in the 4x scaled up lef/gds.
   # after PaR, post_par_script in asap7/__init__.py will scale down the generated gds to 7nm.
-  core.node: 28
+  core.node: "28"
   inputs:
     # Supply voltages.
     supplies:
