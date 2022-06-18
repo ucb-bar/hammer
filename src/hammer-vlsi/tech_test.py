@@ -692,7 +692,7 @@ END LIBRARY
 
         self.assertEqual(tool.technology.get_special_cell_by_type(CellType.TieHiCell),
                 [SpecialCell(name=list(["cell1"]), cell_type=CellType.TieHiCell, size=None, input_ports=None, output_ports=None),
-                 SpecialCell(name=list(["cell2"]), cell_type=CellType.TieHiCell, size=list(["1.5"]), input_ports=list(["A"]), output_ports=list(["Y"]))
+                 SpecialCell(name=list(["cell2"]), cell_type=CellType.TieHiCell, size=list(["1.5"]), input_ports=None, output_ports=None)
                 ])
 
         self.assertEqual(tool.technology.get_special_cell_by_type(CellType.IOFiller),
