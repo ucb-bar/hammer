@@ -8,7 +8,7 @@ vlsi.core:
   technology_path_meta: subst
 
   # Technology to use. hammer-vlsi will read this and load the appropriate technology libraries.
-  technology: "nop"
+  technology: 0
 
   # Technology node dimension (nm) to use.
   # Some tools change what they do as this changes.
