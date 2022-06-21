@@ -584,15 +584,11 @@ class HammerDriver:
         power_tool.tb_name = self.database.get_setting("power.inputs.tb_name", nullvalue="")
         power_tool.tb_dut = self.database.get_setting("power.inputs.tb_dut", nullvalue="")
 
-
         missing_inputs = False
         if power_tool.flow_database == "" and len(power_tool.input_files) == 0:
-            #self.log.error("PAR database not specified for power analysis")
-            self.log.error("Database or design not specified for power analysis")
+            self.log.error("Input database or design not specified for power analysis")
             missing_inputs = True
-        #if len(power_tool.spefs) == 0:
-        #    self.log.error("No spef files specified for power analysis")
-        #    missing_inputs = True
+
         if missing_inputs:
             return False
 

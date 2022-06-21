@@ -955,6 +955,7 @@ power.inputs:
   # The typical use case is to only report power and rail analysis for a typical/nominal corner.
   # type: bool
   extra_corners_only: false
+
   # A list of the paths to the design inputs files (HDL or netlist) for power analysis
   # type: List[str]
   input_files: []
