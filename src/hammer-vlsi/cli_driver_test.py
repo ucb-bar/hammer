@@ -589,8 +589,8 @@ class HammerBuildSystemsTest(unittest.TestCase):
 
         targets = self._read_targets_from_makefile(contents)
 
-        tasks = {"pcb", "sim-rtl", "syn", "sim-syn", "par", "sim-par", "power-par", "drc", "lvs"}
-        bridge_tasks = {"syn-to-sim", "syn-to-par", "par-to-sim", "par-to-lvs", "par-to-drc", "par-to-power", "sim-par-to-power"}
+        tasks = {"pcb", "sim-rtl", "power-rtl", "syn", "sim-syn", "power-syn", "par", "sim-par", "power-par", "drc", "lvs"}
+        bridge_tasks = {"syn-to-sim", "syn-to-par", "par-to-sim", "par-to-lvs", "par-to-drc", "syn-to-power", "par-to-power", "sim-rtl-to-power", "sim-syn-to-power", "sim-par-to-power"}
         expected_targets = tasks.copy()
         expected_targets.update(bridge_tasks)
         expected_targets.update({"redo-" + x for x in expected_targets if x is not "pcb"})
@@ -658,12 +658,12 @@ class HammerBuildSystemsTest(unittest.TestCase):
 
         mods = {"TopMod", "SubModA", "SubModB"}
         expected_targets = {"pcb", os.path.join(tmpdir, "pcb-rundir", "pcb-output-full.json")}
-        hier_tasks = {"sim-rtl", "syn", "sim-syn", "par", "sim-par", "power-par", "drc", "lvs"}
+        hier_tasks = {"sim-rtl", "power-rtl", "syn", "sim-syn", "power-syn", "par", "sim-par", "power-par", "drc", "lvs"}
         for task in hier_tasks:
             expected_targets.update({task + "-" + x for x in mods})
             expected_targets.update({"redo-" + task + "-" + x for x in mods})
             expected_targets.update({os.path.join(tmpdir, task + "-" + x, task.split("-")[0] + "-output-full.json") for x in mods})
-        bridge_tasks = {"syn-to-sim", "syn-to-par", "par-to-sim", "par-to-lvs", "par-to-drc", "par-to-power", "sim-par-to-power"}
+        bridge_tasks = {"syn-to-sim", "syn-to-par", "par-to-sim", "par-to-lvs", "par-to-drc", "syn-to-power", "par-to-power", "sim-rtl-to-power", "sim-syn-to-power", "sim-par-to-power"}
         for task in bridge_tasks:
             expected_targets.update({task + "-" + x for x in mods})
             expected_targets.update({"redo-" + task + "-" + x for x in mods})

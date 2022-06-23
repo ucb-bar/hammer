@@ -847,7 +847,8 @@ sim.inputs:
   # Simulation mode for simulation at different levels of the VLSI flow
   # Valid options are:
   #   "rtl" for rtl level simulation
-  #   "gl" for gate level simulation
+  #   "syn" for post-synthesis level simulation
+  #   "par" for post-par level simulation
   # type: FlowLevel
   level: "rtl"
 
@@ -960,6 +961,7 @@ power.inputs:
   # type: List[str]
   input_files: []
 
+  # SDC input file
   # type: str
   sdc: ""
 
@@ -972,7 +974,7 @@ power.inputs:
   # start_time (str) - Optional. The start time of the power report in the waveform
   # end_time (str) - Optional. The end time of the power report in the waveform
   # toggle_signal (str) - Optional. Path to the signal to generate report windows based on toggles
-  # num_toggles (int) - The number of toggles of the toggle_signal for each frame to report power
+  # num_toggles (int) - Optional (must be specified if num_toggles is specified). The number of toggles of the toggle_signal for each frame to report power
   # frame_count (int) - Optional. The number of frames to report the power for
   # report_name (str) - Optional. Name of the power report
   # example: report_configs: [{waveform_path: "/path/to/fsdb", module: "chiptop", levels:3, start_time: "0ns", end_time: "1ns", toggle_signal:"/ChipTop/clock", num_toggles:1, frame_count:1000, report_name: "my_fsdb_report"}]
@@ -985,7 +987,8 @@ power.inputs:
   # Power analysis mode for different levels of the VLSI flow
   # Valid options are:
   #   "rtl" for rtl level power analysis
-  #   "gl" for post-syn or par analysis
+  #   "syn" for post-syn power analysis
+  #   "par" for post-par power analysis
   # type: FlowLevel
   level: "rtl"
 

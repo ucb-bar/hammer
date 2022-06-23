@@ -501,7 +501,8 @@ class HammerDriver:
         sim_tool.hierarchical_mode = HierarchicalMode.from_str(
             self.database.get_setting("vlsi.inputs.hierarchical.mode"))
         # Special case: if non-leaf hierarchical and gate-level, append ilm sim netlists
-        if sim_tool.hierarchical_mode.is_nonleaf_hierarchical() and sim_tool.level == FlowLevel.GateLevel:
+        #if sim_tool.hierarchical_mode.is_nonleaf_hierarchical() and sim_tool.level == FlowLevel.GateLevel:
+        if sim_tool.hierarchical_mode.is_nonleaf_hierarchical() and FlowLevel.is_gatelevel(sim_tool.level):
             for ilm in sim_tool.get_input_ilms():
                 if isinstance(ilm.sim_netlist, str):
                     sim_tool.input_files.append(ilm.sim_netlist)
@@ -783,7 +784,7 @@ class HammerDriver:
                 "sim.inputs.all_regs": output_dict["synthesis.outputs.all_regs"],
                 "sim.inputs.seq_cells": output_dict["synthesis.outputs.seq_cells"],
                 "sim.inputs.sdf_file": output_dict["synthesis.outputs.sdf_file"],
-                "sim.inputs.level": 'gl',
+                "sim.inputs.level": 'syn',
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             return result
@@ -807,7 +808,7 @@ class HammerDriver:
                 "power.inputs.input_files": output_files,
                 "power.inputs.input_files_meta": "append",
                 "power.inputs.top_module": output_dict["synthesis.inputs.top_module"],
-                "power.inputs.level": 'gl',
+                "power.inputs.level": 'syn',
                 "power.inputs.sdc": output_dict["synthesis.outputs.sdc"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
@@ -836,7 +837,7 @@ class HammerDriver:
                 "sim.inputs.all_regs": output_dict["par.outputs.all_regs"],
                 "sim.inputs.seq_cells": output_dict["par.outputs.seq_cells"],
                 "sim.inputs.sdf_file": output_dict["par.outputs.sdf_file"],
-                "sim.inputs.level": 'gl',
+                "sim.inputs.level": 'par',
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             return result

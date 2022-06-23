@@ -59,13 +59,17 @@ class HierarchicalMode(Enum):
 
 class FlowLevel(Enum):
     RTL = 1
-    GateLevel = 2
+    SYN = 2
+    PAR = 3
+    #GateLevel = 2
 
     @classmethod
     def __mapping(cls) -> Dict[str, "FlowLevel"]:
         return {
             "rtl": FlowLevel.RTL,
-            "gl": FlowLevel.GateLevel
+            "syn": FlowLevel.SYN,
+            "par": FlowLevel.PAR
+        #    "gl": FlowLevel.GateLevel
         }
 
     @staticmethod
@@ -78,16 +82,20 @@ class FlowLevel(Enum):
     def __str__(self) -> str:
         return reverse_dict(FlowLevel.__mapping())[self]
 
+    def is_gatelevel(self) -> bool:
+        return self == FlowLevel.SYN or self == FlowLevel.PAR
+
+
 PowerReport = NamedTuple('PowerReport', [
     ('waveform_path', str),
-    ('module', str),
-    ('levels', int),
-    ('start_time', str),
-    ('end_time', str),
-    ('toggle_signal', str),
-    ('num_toggles', int),
-    ('frame_count', int),
-    ('report_name', str)
+    ('module', Optional[str]),
+    ('levels', Optional[int]),
+    ('start_time', Optional[TimeValue]),
+    ('end_time', Optional[TimeValue]),
+    ('toggle_signal', Optional[str]),
+    ('num_toggles', Optional[int]),
+    ('frame_count', Optional[int]),
+    ('report_name', Optional[str])
 ])
 
 
