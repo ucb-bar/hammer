@@ -589,13 +589,13 @@ class HammerBuildSystemsTest(unittest.TestCase):
 
         targets = self._read_targets_from_makefile(contents)
 
-        tasks = {"pcb", "sim-rtl", "syn", "sim-syn", "par", "sim-par", "power-par", "drc", "lvs"}
-        bridge_tasks = {"syn-to-sim", "syn-to-par", "par-to-sim", "par-to-lvs", "par-to-drc", "par-to-power", "sim-par-to-power"}
+        tasks = {"pcb", "sim-rtl", "syn", "sim-syn", "par", "sim-par", "power-par", "drc", "lvs", "formal-syn", "formal-par"}
+        bridge_tasks = {"syn-to-sim", "syn-to-par", "par-to-sim", "par-to-lvs", "par-to-drc", "par-to-power", "sim-par-to-power", "syn-to-formal", "par-to-formal"}
         expected_targets = tasks.copy()
         expected_targets.update(bridge_tasks)
         expected_targets.update({"redo-" + x for x in expected_targets if x is not "pcb"})
-        expected_targets.update({os.path.join(tmpdir, x + "-rundir", x + "-output-full.json") for x in tasks if x not in {"sim-rtl", "sim-syn", "sim-par", "power-par"}})
-        expected_targets.update({os.path.join(tmpdir, x + "-rundir", x.split('-')[0] + "-output-full.json") for x in tasks if x in {"sim-rtl", "sim-syn", "sim-par", "power-par"}})
+        expected_targets.update({os.path.join(tmpdir, x + "-rundir", x + "-output-full.json") for x in tasks if x not in {"sim-rtl", "sim-syn", "sim-par", "power-par", "formal-syn", "formal-par"}})
+        expected_targets.update({os.path.join(tmpdir, x + "-rundir", x.split('-')[0] + "-output-full.json") for x in tasks if x in {"sim-rtl", "sim-syn", "sim-par", "power-par", "formal-syn", "formal-par"}})
         expected_targets.update({os.path.join(tmpdir, x + "-input.json") for x in tasks if x not in {"syn", "pcb", "sim-rtl", "power-par"}})
         expected_targets.update({os.path.join(tmpdir, x + "-input.json") for x in {"power-par", "power-sim-par"}})
 
@@ -658,12 +658,12 @@ class HammerBuildSystemsTest(unittest.TestCase):
 
         mods = {"TopMod", "SubModA", "SubModB"}
         expected_targets = {"pcb", os.path.join(tmpdir, "pcb-rundir", "pcb-output-full.json")}
-        hier_tasks = {"sim-rtl", "syn", "sim-syn", "par", "sim-par", "power-par", "drc", "lvs"}
+        hier_tasks = {"sim-rtl", "syn", "sim-syn", "par", "sim-par", "power-par", "drc", "lvs", "formal-syn", "formal-par"}
         for task in hier_tasks:
             expected_targets.update({task + "-" + x for x in mods})
             expected_targets.update({"redo-" + task + "-" + x for x in mods})
             expected_targets.update({os.path.join(tmpdir, task + "-" + x, task.split("-")[0] + "-output-full.json") for x in mods})
-        bridge_tasks = {"syn-to-sim", "syn-to-par", "par-to-sim", "par-to-lvs", "par-to-drc", "par-to-power", "sim-par-to-power"}
+        bridge_tasks = {"syn-to-sim", "syn-to-par", "par-to-sim", "par-to-lvs", "par-to-drc", "par-to-power", "sim-par-to-power", "syn-to-formal", "par-to-formal"}
         for task in bridge_tasks:
             expected_targets.update({task + "-" + x for x in mods})
             expected_targets.update({"redo-" + task + "-" + x for x in mods})
@@ -677,6 +677,8 @@ class HammerBuildSystemsTest(unittest.TestCase):
         expected_targets.update({os.path.join(tmpdir, "power-sim-par-" + x + "-input.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "lvs-" + x + "-input.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "drc-" + x + "-input.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "formal-syn-" + x + "-input.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "formal-par-" + x + "-input.json") for x in mods})
 
         self.assertEqual(set(targets.keys()), expected_targets)
 
