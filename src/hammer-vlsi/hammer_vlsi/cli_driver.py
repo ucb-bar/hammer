@@ -12,17 +12,22 @@ import os
 import subprocess
 import sys
 
+import ruamel.yaml
 from .hammer_vlsi_impl import HammerTool, HammerVLSISettings
 from .hooks import HammerToolHookAction, HammerStartStopStep
 from .driver import HammerDriver, HammerDriverOptions
 from .hammer_build_systems import BuildSystems
 
+from functools import reduce
 from typing import List, Dict, Tuple, Any, Callable, Optional, Union, cast
 
 from hammer_utils import add_dicts, deeplist, deepdict, get_or_else, check_function_type
 
 from hammer_config import HammerJSONEncoder
+from hammer_config.config_src import load_config_from_paths
 
+
+KEY_HISTORY = "key-history.json"
 
 def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callable[[str], None]) -> List[str]:
     """Parse a possibly null list of files, validate the existence of each file, and return a list of paths (possibly
@@ -60,6 +65,31 @@ def dump_config_to_json_file(output_path: str, config: dict) -> None:
     with open(output_path, "w") as f:
         f.write(json.dumps(config, cls=HammerJSONEncoder, indent=4))
 
+def dump_config_to_yaml_file(output_path: str, config: ruamel.yaml.CommentedMap) -> None:
+    """
+    Helper function to dump the given config in YAML form
+    to the given output path while overwriting it if it already exists.
+    :param output_path: Output path
+    :param config: Config dictionary to dump
+    """
+    yaml = ruamel.yaml.YAML()
+    with open(output_path, 'w') as f:
+        yaml.dump(config, f)
+
+def add_key_history(config: dict, history: dict) -> ruamel.yaml.CommentedMap:
+    """
+    Generates a YAML file with comments indicating what files modified said keys.
+    """
+    new = ruamel.yaml.CommentedMap()
+    curr_slot = 0
+    for k, v in config.items():
+        if k in history:
+            pretty_hist = ', '.join(history[k])
+            new.insert(curr_slot, k, v, comment=f"Modified by: {pretty_hist}")
+        else:
+            new.insert(curr_slot, k, v)
+        curr_slot += 1
+    return new
 
 # Type signature of a CLIDriver action that returns a config dictionary.
 CLIActionConfigType = Callable[[HammerDriver, Callable[[str], None]], Optional[dict]]
@@ -503,6 +533,12 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output-full.json"),
                                          self.get_full_config(driver, output))
+                key_history_f = os.path.join(driver.obj_dir, KEY_HISTORY)
+                with open(key_history_f, 'r') as f:
+                    key_history = json.load(f)
+                os.remove(key_history_f)
+                dump_config_to_yaml_file(os.path.join(driver.syn_tool.run_dir, "syn-output-history.yml"),
+                                         add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
             elif action_type == "par":
                 if not driver.load_par_tool(get_or_else(self.par_rundir, "")):
@@ -1210,6 +1246,16 @@ class CLIDriver:
         self.power_rundir = get_nonempty_str(args['power_rundir'])
         self.formal_rundir = get_nonempty_str(args['formal_rundir'])
         self.timing_rundir = get_nonempty_str(args['timing_rundir'])
+
+        # Intercept keys for determining key origin
+        project_configs_yaml = load_config_from_paths(project_configs)
+        project_configs_yaml_keys = [set(i.keys()) for i in project_configs_yaml]
+        key_history = {i: [] for i in reduce(lambda x, y: x.union(y), project_configs_yaml_keys)}
+        for cfg_file, cfg in zip(project_configs, project_configs_yaml_keys):
+            for key in cfg:
+                key_history[key].append(cfg_file)
+        with open(os.path.join(options.obj_dir, KEY_HISTORY), 'w') as f:
+            json.dump(key_history, f)
 
         # Stage control: from/to
         from_step = get_nonempty_str(args['from_step'])
