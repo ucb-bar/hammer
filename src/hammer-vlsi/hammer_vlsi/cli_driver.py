@@ -7,12 +7,17 @@
 #  See LICENSE for licence details.
 
 import argparse
+import importlib.util
 import json
 import os
 import subprocess
 import sys
+import warnings
 
-import ruamel.yaml
+if importlib.util.find_spec("ruamel.yaml") is None:
+    warnings.warn("ruamel package not found, cannot outout key histories")
+else:
+    import ruamel.yaml
 from .hammer_vlsi_impl import HammerTool, HammerVLSISettings
 from .hooks import HammerToolHookAction, HammerStartStopStep
 from .driver import HammerDriver, HammerDriverOptions
@@ -521,6 +526,7 @@ class CLIDriver:
             with open(key_history_f, 'r') as f:
                 key_history = json.load(f)
             os.remove(key_history_f)
+            spec = importlib.util.find_spec("ruamel.yaml")
             if action_type == "synthesis" or action_type == "syn":
                 if not driver.load_synthesis_tool(get_or_else(self.syn_rundir, "")):
                     return None
@@ -537,8 +543,9 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output-full.json"),
                                          self.get_full_config(driver, output))
-                dump_config_to_yaml_file(os.path.join(driver.syn_tool.run_dir, "syn-output-history.yml"),
-                                         add_key_history(self.get_full_config(driver, output), key_history))
+                if spec is not None:
+                    dump_config_to_yaml_file(os.path.join(driver.syn_tool.run_dir, "syn-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
             elif action_type == "par":
                 if not driver.load_par_tool(get_or_else(self.par_rundir, "")):
@@ -556,8 +563,9 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.par_tool.run_dir, "par-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.par_tool.run_dir, "par-output-full.json"),
                                          self.get_full_config(driver, output))
-                dump_config_to_yaml_file(os.path.join(driver.par_tool.run_dir, "par-output-history.yml"),
-                                         add_key_history(self.get_full_config(driver, output), key_history))
+                if spec is not None:
+                    dump_config_to_yaml_file(os.path.join(driver.par_tool.run_dir, "par-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
             elif action_type == "drc":
                 if not driver.load_drc_tool(get_or_else(self.drc_rundir, "")):
@@ -575,8 +583,9 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.drc_tool.run_dir, "drc-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.drc_tool.run_dir, "drc-output-full.json"),
                                          self.get_full_config(driver, output))
-                dump_config_to_yaml_file(os.path.join(driver.drc_tool.run_dir, "drc-output-history.yml"),
-                                         add_key_history(self.get_full_config(driver, output), key_history))
+                if spec is not None:
+                    dump_config_to_yaml_file(os.path.join(driver.drc_tool.run_dir, "drc-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
             elif action_type == "lvs":
                 if not driver.load_lvs_tool(get_or_else(self.lvs_rundir, "")):
@@ -594,8 +603,9 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.lvs_tool.run_dir, "lvs-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.lvs_tool.run_dir, "lvs-output-full.json"),
                                          self.get_full_config(driver, output))
-                dump_config_to_yaml_file(os.path.join(driver.lvs_tool.run_dir, "lvs-output-history.yml"),
-                                         add_key_history(self.get_full_config(driver, output), key_history))
+                if spec is not None:
+                    dump_config_to_yaml_file(os.path.join(driver.lvs_tool.run_dir, "lvs-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
             elif action_type == "sram_generator":
                 if not driver.load_sram_generator_tool(get_or_else(self.sram_generator_rundir, "")):
@@ -627,8 +637,9 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.sim_tool.run_dir, "sim-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.sim_tool.run_dir, "sim-output-full.json"),
                                          self.get_full_config(driver, output))
-                dump_config_to_yaml_file(os.path.join(driver.sim_tool.run_dir, "sim-output-history.yml"),
-                                         add_key_history(self.get_full_config(driver, output), key_history))
+                if spec is not None:
+                    dump_config_to_yaml_file(os.path.join(driver.sim_tool.run_dir, "sim-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
             elif action_type == "power":
                 if not driver.load_power_tool(get_or_else(self.power_rundir, "")):
@@ -643,8 +654,9 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.power_tool.run_dir, "power-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.power_tool.run_dir, "power-output-full.json"),
                                          self.get_full_config(driver, output))
-                dump_config_to_yaml_file(os.path.join(driver.power_tool.run_dir, "power-output-history.yml"),
-                                         add_key_history(self.get_full_config(driver, output), key_history))
+                if spec is not None:
+                    dump_config_to_yaml_file(os.path.join(driver.power_tool.run_dir, "power-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
             elif action_type == "formal":
                 if not driver.load_formal_tool(get_or_else(self.formal_rundir, "")):
@@ -662,8 +674,9 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.formal_tool.run_dir, "formal-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.formal_tool.run_dir, "formal-output-full.json"),
                                          self.get_full_config(driver, output))
-                dump_config_to_yaml_file(os.path.join(driver.formal_tool.run_dir, "formal-output-history.yml"),
-                                         add_key_history(self.get_full_config(driver, output), key_history))
+                if spec is not None:
+                    dump_config_to_yaml_file(os.path.join(driver.formal_tool.run_dir, "formal-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
             elif action_type == "timing":
                 if not driver.load_timing_tool(get_or_else(self.timing_rundir, "")):
@@ -698,8 +711,9 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.pcb_tool.run_dir, "pcb-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.pcb_tool.run_dir, "pcb-output-full.json"),
                                          self.get_full_config(driver, output))
-                dump_config_to_yaml_file(os.path.join(driver.pcb_tool.run_dir, "pcb-output-history.yml"),
-                                         add_key_history(self.get_full_config(driver, output), key_history))
+                if spec is not None:
+                    dump_config_to_yaml_file(os.path.join(driver.pcb_tool.run_dir, "pcb-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
             else:
                 raise ValueError("Invalid action_type = " + str(action_type))
