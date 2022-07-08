@@ -214,8 +214,10 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
 
         self.driver_cell = None
         driver_cells = self.technology.get_special_cell_by_type(CellType.Driver)
-        if driver_cells is None or driver_cells[0].input_ports is None or driver_cells[0].output_ports is None:
-            self.logger.warning("Driver cells and their input and output ports are unspecified and will not be added during synthesis.")
+        if driver_cells is None:
+            self.logger.warning("Driver cells are unspecified and will not be added during synthesis.")
+        elif driver_cells[0].input_ports is None or driver_cells[0].output_ports is None:
+            self.logger.warning("Driver cell input and output ports are unspecified and will not be added during synthesis.")
         else:
             self.driver_cell = driver_cells[0].name[0]
             self.driver_ports_in = driver_cells[0].input_ports[0]
