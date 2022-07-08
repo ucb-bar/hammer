@@ -182,13 +182,17 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         with open(self.mapped_sdc_path,'w') as f:
             # custom sdc constraints
             if self.driver_cell is not None:
-                f.write(f"set_driving_cell {self.driver_cell}\n" )
-                f.write("set_load 5\n")
+                f.write(f"set_driving_cell -lib_cell {self.driver_cell} [all_inputs]\n" )
+                f.write("set_load 5 [all_inputs]\n")
         return True
 
     def block_append(self,commands) -> bool:
         for line in commands.split('\n'):
-            self.append(line.strip())
+            line=line.strip()
+            if line.startswith('#') or '"' in line or line is "":
+                self.append(line)
+            else:
+                self.verbose_append(line)
         return True
 
     #========================================================================
@@ -246,6 +250,13 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         return True
 
     def syn_generic(self) -> bool:
+        # TODO: is there a better way to do this? like self.has_setting()
+        latch_map = ""
+        if self._database.has_setting("synthesis.inputs.latch_map_file"):
+            latch_map = f"techmap -map {self.get_setting('synthesis.inputs.latch_map_file')}"
+
+        dfflibmap = '\n'.join([f"dfflibmap -liberty {liberty_file}" for liberty_file in self.liberty_file.split()])
+
         self.block_append(f"""
         # TODO: verify this command, it was in yosys manual but not in OpenLANE script
         yosys proc
@@ -256,12 +267,14 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         # Optimize the design
         opt -purge
 
-        dfflibmap -liberty {self.liberty_file}
+        # Technology mapping of latches
+        {latch_map}
+
+        # Technology mapping of flip-flops
+        {dfflibmap}
 
         opt
         """)
-        # need this report??
-        # tee -o "{self.run_dir}/{self.top_module}_pre.stat" stat
 
         # merges shareable resources into a single resource. A SAT solver
         # is used to determine if two resources are share-able.

@@ -95,6 +95,10 @@ technology.core:
     power:  ["VPWR"]
     ground: ["VGND"]
 
+synthesis.inputs:
+  latch_map_file: "${technology.sky130.sky130A}/libs.tech/openlane/sky130_fd_sc_hd/latch_map.v"
+  latch_map_file_meta: lazysubst
+
 par.inputs:
   gds_merge: true
   gds_map_mode: manual
