@@ -631,6 +631,11 @@ timing.inputs:
   # type: Optional[str]
   sdf_file: Optional[str]
 
+  # Max paths to report
+  # type: int
+  max_paths: int
+
+
 timing.submit:
   command: str
   settings: list[dict[str, dict]]
