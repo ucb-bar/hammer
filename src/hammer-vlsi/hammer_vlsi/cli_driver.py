@@ -120,6 +120,7 @@ class CLIDriver:
         self.sim_rundir = ""  # type: Optional[str]
         self.power_rundir = "" # type: Optional[str]
         self.formal_rundir = "" # type: Optional[str]
+        self.timing_rundir = "" # type: Optional[str]
         self.pcb_rundir = ""  # type: Optional[str]
 
         # If a subclass has defined these, don't clobber them in init
@@ -173,6 +174,10 @@ class CLIDriver:
             check_CLIActionType_type(self.formal_action) # type: ignore
         else:
             self.formal_action = self.create_formal_action([]) # type: CLIActionConfigType
+        if hasattr(self, "timing_action"):
+            check_CLIActionType_type(self.timing_action) # type: ignore
+        else:
+            self.timing_action = self.create_timing_action([]) # type: CLIActionConfigType
 
         # Dictionaries of module-CLIActionConfigType for hierarchical flows.
         # See all_hierarchical_actions() below.
@@ -184,6 +189,7 @@ class CLIDriver:
         self.hierarchical_sim_actions = {}  # type: Dict[str, CLIActionConfigType]
         self.hierarchical_power_actions = {}  # type: Dict[str, CLIActionConfigType]
         self.hierarchical_formal_actions = {}  # type: Dict[str, CLIActionConfigType]
+        self.hierarchical_timing_actions = {}  # type: Dict[str, CLIActionConfigType]
         self.hierarchical_auto_action = None  # type: Optional[CLIActionConfigType]
 
     def action_map(self) -> Dict[str, CLIActionType]:
@@ -242,7 +248,14 @@ class CLIDriver:
             "syn_to_formal": self.synthesis_to_formal_action,
             "syn-to-formal": self.synthesis_to_formal_action,
             "par_to_formal": self.par_to_formal_action,
-            "par-to-formal": self.par_to_formal_action
+            "par-to-formal": self.par_to_formal_action,
+            "timing": self.timing_action,
+            "synthesis_to_timing": self.synthesis_to_timing_action,
+            "synthesis-to-timing": self.synthesis_to_timing_action,
+            "syn_to_timing": self.synthesis_to_timing_action,
+            "syn-to-timing": self.synthesis_to_timing_action,
+            "par_to_timing": self.par_to_timing_action,
+            "par-to-timing": self.par_to_timing_action
         }, self.all_hierarchical_actions)
 
     @staticmethod
@@ -313,6 +326,13 @@ class CLIDriver:
     def get_extra_formal_hooks(self) -> List[HammerToolHookAction]:
         """
         Return a list of extra formal hooks in this project.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_extra_timing_hooks(self) -> List[HammerToolHookAction]:
+        """
+        Return a list of extra timing hooks in this project.
         To be overridden by subclasses.
         """
         return list()
@@ -404,6 +424,14 @@ class CLIDriver:
                           post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
         hooks = self.get_extra_formal_hooks() + custom_hooks  # type: List[HammerToolHookAction]
         return self.create_action("formal", hooks if len(hooks) > 0 else None,
+                                  pre_action_func, post_load_func, post_run_func)
+
+    def create_timing_action(self, custom_hooks: List[HammerToolHookAction],
+                          pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_load_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
+        hooks = self.get_extra_timing_hooks() + custom_hooks  # type: List[HammerToolHookAction]
+        return self.create_action("timing", hooks if len(hooks) > 0 else None,
                                   pre_action_func, post_load_func, post_run_func)
 
     def create_sram_generator_action(self, custom_hooks: List[HammerToolHookAction],
@@ -589,6 +617,23 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.formal_tool.run_dir, "formal-output-full.json"),
                                          self.get_full_config(driver, output))
                 post_run_func_checked(driver)
+            elif action_type == "timing":
+                if not driver.load_timing_tool(get_or_else(self.timing_rundir, "")):
+                    return None
+                else:
+                    post_load_func_checked(driver)
+                assert driver.timing_tool is not None, "load_timing_tool was unsuccessful"
+                success, output = driver.run_timing(
+                        driver.timing_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_timing_hooks(driver.timing_tool.name) + \
+                        list(extra_hooks or []))
+                if not success:
+                    driver.log.error("Timing tool did not succeed")
+                    return None
+                dump_config_to_json_file(os.path.join(driver.timing_tool.run_dir, "timing-output.json"), output)
+                dump_config_to_json_file(os.path.join(driver.timing_tool.run_dir, "timing-output-full.json"),
+                                         self.get_full_config(driver, output))
+                post_run_func_checked(driver)
             elif action_type == "pcb":
                 if not driver.load_pcb_tool(get_or_else(self.pcb_rundir, "")):
                     return None
@@ -702,6 +747,24 @@ class CLIDriver:
             return None
         else:
             return self.get_full_config(driver, formal_input_only)
+
+    def synthesis_to_timing_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        """Create a full config to run the output."""
+        timing_input_only = HammerDriver.synthesis_output_to_timing_input(driver.project_config)
+        if timing_input_only is None:
+            driver.log.error("Input config does not appear to contain valid synthesis outputs")
+            return None
+        else:
+            return self.get_full_config(driver, timing_input_only)
+
+    def par_to_timing_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        """Create a full config to run the output."""
+        timing_input_only = HammerDriver.par_output_to_timing_input(driver.project_config)
+        if timing_input_only is None:
+            driver.log.error("Input config does not appear to contain valid par outputs")
+            return None
+        else:
+            return self.get_full_config(driver, timing_input_only)
 
 
     def create_synthesis_par_action(self, synthesis_action: CLIActionConfigType, par_action: CLIActionConfigType) -> CLIActionConfigType:
@@ -873,6 +936,12 @@ class CLIDriver:
                 "formal_{block}"
             ], module, action)
 
+        for module, action in self.hierarchical_timing_actions.items():
+            add_variants([
+                "timing-{block}",
+                "timing_{block}"
+            ], module, action)
+
         return actions
 
     def get_extra_hierarchical_synthesis_hooks(self, driver: HammerDriver) -> Dict[str, List[HammerToolHookAction]]:
@@ -932,6 +1001,15 @@ class CLIDriver:
     def get_extra_hierarchical_formal_hooks(self, driver: HammerDriver) -> Dict[str, List[HammerToolHookAction]]:
         """
         Return a list of extra hierarchical formal hooks in this project.
+        To be overridden by subclasses.
+
+        :return: Dictionary of (module name, list of hooks)
+        """
+        return dict()
+
+    def get_extra_hierarchical_timing_hooks(self, driver: HammerDriver) -> Dict[str, List[HammerToolHookAction]]:
+        """
+        Return a list of extra hierarchical timing hooks in this project.
         To be overridden by subclasses.
 
         :return: Dictionary of (module name, list of hooks)
@@ -1036,6 +1114,18 @@ class CLIDriver:
         """
         return self.hierarchical_formal_actions[module]
 
+    def set_hierarchical_timing_action(self, module: str, action: CLIActionConfigType) -> None:
+        """
+        Set the action associated with hierarchical timing for the given module (in hierarchical flows).
+        """
+        self.hierarchical_timing_actions[module] = action
+
+    def get_hierarchical_timing_action(self, module: str) -> CLIActionConfigType:
+        """
+        Get the action associated with hierarchical timing for the given module (in hierarchical flows).
+        """
+        return self.hierarchical_timing_actions[module]
+
     def valid_actions(self) -> List[str]:
         """Get the list of valid actions for the command-line driver."""
         return list(self.action_map().keys())
@@ -1119,6 +1209,7 @@ class CLIDriver:
         self.sim_rundir = get_nonempty_str(args['sim_rundir'])
         self.power_rundir = get_nonempty_str(args['power_rundir'])
         self.formal_rundir = get_nonempty_str(args['formal_rundir'])
+        self.timing_rundir = get_nonempty_str(args['timing_rundir'])
 
         # Stage control: from/to
         from_step = get_nonempty_str(args['from_step'])
@@ -1164,6 +1255,9 @@ class CLIDriver:
                 HammerStartStopStep(step=start_step, inclusive=start_incl),
                 HammerStartStopStep(step=stop_step, inclusive=stop_incl)))
             driver.set_post_custom_formal_tool_hooks(HammerTool.make_start_stop_hooks(
+                HammerStartStopStep(step=start_step, inclusive=start_incl),
+                HammerStartStopStep(step=stop_step, inclusive=stop_incl)))
+            driver.set_post_custom_timing_tool_hooks(HammerTool.make_start_stop_hooks(
                 HammerStartStopStep(step=start_step, inclusive=start_incl),
                 HammerStartStopStep(step=stop_step, inclusive=stop_incl)))
 
@@ -1229,6 +1323,13 @@ class CLIDriver:
                     base_project_config[0] = deeplist(driver.project_configs)
                     d.update_project_configs(deeplist(base_project_config[0]) + [config])
 
+                def timing_pre_func(d: HammerDriver) -> None:
+                    self.lvs_rundir = os.path.join(d.obj_dir, "timing-{module}".format(
+                        module=module))  # TODO(edwardw): fix this ugly os.path.join; it doesn't belong here.
+                    # TODO(edwardw): remove ugly hack to store stuff in parent context
+                    base_project_config[0] = deeplist(driver.project_configs)
+                    d.update_project_configs(deeplist(base_project_config[0]) + [config])
+
                 def post_run(d: HammerDriver, rundir: str) -> None:
                     # Write out the configs used/generated for logging/debugging.
                     with open(os.path.join(rundir, "full_config.json"), "w") as f:
@@ -1261,6 +1362,9 @@ class CLIDriver:
                 def formal_post_run(d: HammerDriver) -> None:
                     post_run(d, get_or_else(self.formal_rundir, ""))
 
+                def timing_post_run(d: HammerDriver) -> None:
+                    post_run(d, get_or_else(self.timing_rundir, ""))
+
                 syn_action = self.create_synthesis_action(self.get_extra_hierarchical_synthesis_hooks(driver).get(module, []),
                                                           pre_action_func=syn_pre_func, post_load_func=None,
                                                           post_run_func=syn_post_run)
@@ -1291,6 +1395,10 @@ class CLIDriver:
                                                     pre_action_func=formal_pre_func, post_load_func=None,
                                                     post_run_func=formal_post_run)
                 self.set_hierarchical_formal_action(module, formal_action)
+                timing_action = self.create_timing_action(self.get_extra_hierarchical_timing_hooks(driver).get(module, []),
+                                                    pre_action_func=timing_pre_func, post_load_func=None,
+                                                    post_run_func=timing_post_run)
+                self.set_hierarchical_timing_action(module, timing_action)
 
             create_actions(module_iter, config_iter)
 
@@ -1429,6 +1537,8 @@ class CLIDriver:
                             help='(optional) Directory to store power results in')
         parser.add_argument("--formal_rundir", required=False, default="",
                             help='(optional) Directory to store formal results in')
+        parser.add_argument("--timing_rundir", required=False, default="",
+                            help='(optional) Directory to store timing results in')
         # Optional arguments for step control.
         parser.add_argument("--start_before_step", "--from_step", dest="from_step", required=False,
                             help="Run the given action from before the given step (inclusive). Not compatible with --start_after_step.")
