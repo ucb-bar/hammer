@@ -313,3 +313,19 @@ class LibraryFilterHolder:
 
         return LibraryFilter.new("power_grid_library", "Power grid library", is_file=False, filter_func=filter_func,
                                  paths_func=paths_func, sort_func=sort_func)
+
+    @property
+    def klayout_techfile_filter(self) -> LibraryFilter:
+        """
+        Select KLayout tech files for GDS streaming.
+        """
+
+        def filter_func(lib: "Library") -> bool:
+            return lib.klayout_techfile is not None
+
+        def paths_func(lib: "Library") -> List[str]:
+            assert lib.klayout_techfile is not None
+            return [lib.klayout_techfile]
+
+        return LibraryFilter.new("klayout", "GDS streaming", is_file=True, filter_func=filter_func, 
+                                 paths_func=paths_func)

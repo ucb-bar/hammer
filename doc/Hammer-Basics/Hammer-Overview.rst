@@ -35,9 +35,9 @@ A techonology plugin consists of two or more files: a ``*.tech.json`` and a ``de
 
 The ``*.tech.json`` contains pointers to relevant PDK files and fundamental technology constants.  These values are not meant to be overriden, nor can they be for the time being.
 
-``defaults.yml`` sets default technology variables for Hammer to consume, which may be specific to this technology or generic to all. These values may be overriden by design-specific configurations. An example of this is shown in ``hammer/src/hammer-vlsi/technology/asap7/``, and how to setup a technology plugin is documented in more detail in the :ref:`technology` section.
+``defaults.yml`` sets default technology variables for Hammer to consume, which may be specific to this technology or generic to all. These values may be overriden by design-specific configurations. An example of this is shown in the open-source technology plugins in ``hammer/src/hammer-vlsi/technology/``, such as ``asap7``, and how to setup a technology plugin is documented in more detail in the :ref:`technology` section.
 
-.. note:: Unless you are a UCB BAR or BWRC affiliate or have set up a 3-way technology NDA with us, we cannot share pre-built technology plugins.
+.. note:: Unless you are a UCB BAR or BWRC affiliate or have set up a 3-way technology NDA with us, we cannot share pre-built technology plugin repositories.
 
 Tool Plugins
 -------------------------------
@@ -45,7 +45,10 @@ Tool Plugins
 A Hammer tool plugin actually implements tool-specific steps of the VLSI flow in Hammer in a template-like fashion.
 The TCL commands input to the tool are created using technology and design settings provided by the designer.
 
-There are currently three Hammer tool plugin repos: ``hammer-cadence-plugins``, ``hammer-synopsys-plugins``, and ``hammer-mentor-plugins``. In them are tool plugin implementations for actions including synthesis, place-and-route, DRC, LVS, and simulation. ``hammer-cadence-plugins`` is publicly available; however, users must request access to ``hammer-synopsys-plugins`` and ``hammer-mentor-plugins``:
+
+There are currently three Hammer tool plugin repositories for commercial tools: ``hammer-cadence-plugins``, ``hammer-synopsys-plugins``, and ``hammer-mentor-plugins``. In them are tool plugin implementations for actions including synthesis, place-and-route, DRC, LVS, and simulation. ``hammer-cadence-plugins`` is publicly available; however, users must request access to ``hammer-synopsys-plugins`` and ``hammer-mentor-plugins``:
+
+There are also a set of open-source tools (e.g. Yosys, OpenROAD, Magic, Netgen) provided in ``hammer/src/hammer-vlsi/`` under their respective actions.
 
 .. _plugins-access:
 .. note:: If you are not a UCB BAR or BWRC affiliate and have access to tools from a specific vendor, please email hammer-plugins-access@lists.berkeley.edu with a request for which plugin(s) you would like access to. MAKE SURE TO INCLUDE YOUR GITHUB ID IN YOUR EMAIL AND YOUR ASSOCIATION TO SHOW YOU HAVE LICENSED ACCESS TO THOSE TOOLS. There will be no support guarantee for the plugin repositories, but users are encouraged to file issues and contribute patches where needed.

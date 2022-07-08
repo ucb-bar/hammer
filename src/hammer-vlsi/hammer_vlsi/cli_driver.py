@@ -1497,7 +1497,7 @@ class CLIDriver:
         else:
             with open(args["output"], "w") as f:
                 f.write(output_str)
-            print(output_str)
+            print("Action {action} config output written to {file}".format(action=action, file=args["output"]))
             return 0
 
 

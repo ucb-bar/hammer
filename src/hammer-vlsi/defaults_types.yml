@@ -10,7 +10,7 @@ vlsi.core:
 
   # Technology node dimension (nm) to use.
   # Some tools change what they do as this changes.
-  node: str
+  node: int
 
   # Build system to use, if any.
   build_system: str
@@ -285,6 +285,12 @@ par.inputs:
   # type: int
   gds_precision: int
 
+  # Path to OpenROAD *.rcx_rules file
+  openrcx_techfile: Optional[str]
+
+  # Path to KLayout techfile *.lyt file
+  klayout_techfile_source: Optional[str]
+
 # Place-and-route settings
 par:
   # Submission command settings
@@ -428,6 +434,11 @@ technology.core:
     # This is used to provide a reference master for generating standard cell rails
     # type: str
     tap_cell_rail_reference: Optional[str]
+
+    # Name of standard cell power/ground rails
+    std_cell_supplies:
+      power: list[str]
+      ground: list[str]
 
 # Specific inputs for the simulation tool.
 sim.inputs:

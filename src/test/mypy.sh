@@ -17,8 +17,11 @@ call_mypy () {
 }
 
 # Core
-call_mypy --package hammer_vlsi
 call_mypy --package hammer_utils
+# call_mypy --package hammer_vlsi
+call_mypy ../hammer-vlsi/hammer_vlsi/*.py
+call_mypy ../hammer-vlsi/hammer_vlsi/vendor/__init__.py
+call_mypy ../hammer-vlsi/hammer_vlsi/vendor/openroad.py
 
 # Shell
 call_mypy ../hammer-shell/get-config
@@ -30,12 +33,17 @@ call_mypy ../hammer_config_test/test.py
 # Plugins
 call_mypy ../hammer-vlsi/synthesis/mocksynth/__init__.py
 call_mypy ../hammer-vlsi/synthesis/vivado/__init__.py
+call_mypy ../hammer-vlsi/synthesis/yosys/__init__.py
 call_mypy ../hammer-vlsi/synthesis/nop.py
 call_mypy ../hammer-vlsi/par/nop.py
 call_mypy ../hammer-vlsi/par/vivado/__init__.py
 call_mypy ../hammer-vlsi/par/mockpar/__init__.py
+call_mypy ../hammer-vlsi/par/openroad/__init__.py
 call_mypy ../hammer-vlsi/drc/*.py
+call_mypy ../hammer-vlsi/drc/openroad/__init__.py
+call_mypy ../hammer-vlsi/drc/magic/__init__.py
 call_mypy ../hammer-vlsi/lvs/*.py
+call_mypy ../hammer-vlsi/lvs/netgen/__init__.py
 call_mypy ../hammer-vlsi/pcb/generic/__init__.py
 call_mypy ../hammer-vlsi/technology/asap7/*.py
 call_mypy ../hammer-vlsi/technology/asap7/sram_compiler/__init__.py
