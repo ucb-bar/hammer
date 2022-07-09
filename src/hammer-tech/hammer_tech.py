@@ -74,7 +74,7 @@ class LibraryPrefix(metaclass=ABCMeta):
 
 
 # Internal backend of PathPrefix. Do not use.
-_PathPrefixInternal = NamedTuple('PathPrefix', [
+_PathPrefixInternal = NamedTuple('_PathPrefixInternal', [
     ('prefix', str),
     ('path', str)
 ])
@@ -361,7 +361,7 @@ class HammerTechnology:
         self._cachedir = value  # type: str
         # Ensure the cache_dir exists.
         os.makedirs(value, mode=0o700, exist_ok=True)
-    
+
     # @classmethod
     def expand_tech_cache_path(self, path) -> str:
         """ Replace occurrences of the cache directory's basename with
@@ -851,7 +851,8 @@ class HammerTechnology:
 
         # Next, sort the list of libraries if a sort function exists.
         if filt.sort_func is not None:
-            filtered_libs = sorted(filtered_libs, key=filt.sort_func)
+            # Possible mypy quirk
+            filtered_libs = sorted(filtered_libs, key=filt.sort_func)  # type: ignore
 
         # Next, extract paths and prepend them to get the real paths.
         def get_and_prepend_path(lib: Library) -> Tuple[Library, List[str]]:
@@ -1101,6 +1102,20 @@ class HammerTechnology:
     def get_tech_power_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
         """
         Return a list of power hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_tech_formal_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
+        """
+        Return a list of formal hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_tech_timing_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
+        """
+        Return a list of timing hooks for this technology and tool.
         To be overridden by subclasses.
         """
         return list()

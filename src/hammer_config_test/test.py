@@ -8,6 +8,7 @@
 import os
 import tempfile
 import unittest
+import warnings
 
 import hammer_config
 
@@ -20,9 +21,9 @@ class HammerDatabaseTest(unittest.TestCase):
         """
         db = hammer_config.HammerDatabase()
         db.update_project([{"tech.x": "foo"}])
-        self.assertEqual(db.get_setting("tech.x"), "foo")
+        self.assertEqual(db.get_setting("tech.x", check_type=False), "foo")
         db.update_technology([{"tech.x": "bar"}])
-        self.assertEqual(db.get_setting("tech.x"), "foo")
+        self.assertEqual(db.get_setting("tech.x", check_type=False), "foo")
 
     def test_unpacking(self) -> None:
         """
@@ -36,8 +37,8 @@ foo:
         dac: "no"
 """, is_yaml=True)
         db.update_core([config])
-        self.assertEqual(db.get_setting("foo.bar.adc"), "yes")
-        self.assertEqual(db.get_setting("foo.bar.dac"), "no")
+        self.assertEqual(db.get_setting("foo.bar.adc", check_type=False), "yes")
+        self.assertEqual(db.get_setting("foo.bar.dac", check_type=False), "no")
 
     def test_no_config_junk(self) -> None:
         """Test that no _config_path junk variables get left behind."""
@@ -62,13 +63,13 @@ a.b.c: ["test"]
 a.b.c_meta: append
 """, is_yaml=True)
         db.update_core([base])
-        self.assertEqual(db.get_setting("a.b.c"), [])
+        self.assertEqual(db.get_setting("a.b.c", check_type=False), [])
         db.update_project([meta])
-        self.assertEqual(db.get_setting("a.b.c"), ["test"])
+        self.assertEqual(db.get_setting("a.b.c", check_type=False), ["test"])
         db.update_technology([])
-        self.assertEqual(db.get_setting("a.b.c"), ["test"])
+        self.assertEqual(db.get_setting("a.b.c", check_type=False), ["test"])
         db.update_environment([])
-        self.assertEqual(db.get_setting("a.b.c"), ["test"])
+        self.assertEqual(db.get_setting("a.b.c", check_type=False), ["test"])
 
     def test_no_json_yaml_precedence(self) -> None:
         """
@@ -89,12 +90,12 @@ foo.bar: "i'm yaml"
         db1 = hammer_config.HammerDatabase()
         configs = hammer_config.load_config_from_paths([ypath, jpath])
         db1.update_core([hammer_config.combine_configs(configs)])
-        self.assertEqual(db1.get_setting("foo.bar"), "i'm json")
+        self.assertEqual(db1.get_setting("foo.bar", check_type=False), "i'm json")
 
         db2 = hammer_config.HammerDatabase()
         configs = hammer_config.load_config_from_paths([jpath, ypath])
         db2.update_core([hammer_config.combine_configs(configs)])
-        self.assertEqual(db2.get_setting("foo.bar"), "i'm yaml")
+        self.assertEqual(db2.get_setting("foo.bar", check_type=False), "i'm yaml")
 
     def test_meta_json2list(self) -> None:
         """
@@ -113,9 +114,9 @@ foo:
 }
     """, is_yaml=False)
         db.update_core([base, meta])
-        self.assertEqual(db.get_setting("foo.flash"), "yes")
-        self.assertEqual(db.get_setting("foo.max"), "min")
-        self.assertEqual(db.get_setting("foo.pipeline"), ["1", "2"])
+        self.assertEqual(db.get_setting("foo.flash", check_type=False), "yes")
+        self.assertEqual(db.get_setting("foo.max", check_type=False), "min")
+        self.assertEqual(db.get_setting("foo.pipeline", check_type=False), ["1", "2"])
 
     def test_meta_lazyjson2list(self) -> None:
         """
@@ -135,9 +136,9 @@ foo:
 }
     """, is_yaml=False)
         db.update_core([base, meta])
-        self.assertEqual(db.get_setting("foo.flash"), "yes")
-        self.assertEqual(db.get_setting("foo.max"), "min")
-        self.assertEqual(db.get_setting("foo.pipeline"), ["1", "2"])
+        self.assertEqual(db.get_setting("foo.flash", check_type=False), "yes")
+        self.assertEqual(db.get_setting("foo.max", check_type=False), "min")
+        self.assertEqual(db.get_setting("foo.pipeline", check_type=False), ["1", "2"])
 
     def test_meta_subst(self) -> None:
         """
@@ -159,9 +160,9 @@ foo:
 }
 """, is_yaml=False)
         db.update_core([base, meta])
-        self.assertEqual(db.get_setting("foo.flash"), "yes")
-        self.assertEqual(db.get_setting("foo.pipeline"), "yesman")
-        self.assertEqual(db.get_setting("foo.uint"), ["1", "2"])
+        self.assertEqual(db.get_setting("foo.flash", check_type=False), "yes")
+        self.assertEqual(db.get_setting("foo.pipeline", check_type=False), "yesman")
+        self.assertEqual(db.get_setting("foo.uint", check_type=False), ["1", "2"])
 
     def test_meta_lazysubst(self) -> None:
         """
@@ -196,11 +197,11 @@ style: "waterfall"
 """, is_yaml=False)
         db.update_core([base, meta])
         db.update_project([project])
-        self.assertEqual(db.get_setting("foo.flash"), "yes")
-        self.assertEqual(db.get_setting("foo.pipeline"), "yesman")
-        self.assertEqual(db.get_setting("foo.reginit"), "WireInit")
-        self.assertEqual(db.get_setting("foo.later"), "later")
-        self.assertEqual(db.get_setting("foo.methodology"), "agile design")
+        self.assertEqual(db.get_setting("foo.flash", check_type=False), "yes")
+        self.assertEqual(db.get_setting("foo.pipeline", check_type=False), "yesman")
+        self.assertEqual(db.get_setting("foo.reginit", check_type=False), "WireInit")
+        self.assertEqual(db.get_setting("foo.later", check_type=False), "later")
+        self.assertEqual(db.get_setting("foo.methodology", check_type=False), "agile design")
 
     def test_meta_lazysubst_array(self) -> None:
         """
@@ -213,7 +214,7 @@ style: "waterfall"
         array_meta: lazysubst
         """, is_yaml=True)
         db.update_core([d])
-        self.assertEqual(db.get_setting("array"), ["foobar"])
+        self.assertEqual(db.get_setting("array", check_type=False), ["foobar"])
 
     def test_meta_append(self) -> None:
         """
@@ -235,8 +236,8 @@ foo:
 }
 """, is_yaml=False)
         db.update_core([base, meta])
-        self.assertEqual(db.get_setting("foo.bar.dac"), "current_weighted")
-        self.assertEqual(db.get_setting("foo.bar.dsl"), ["scala", "python"])
+        self.assertEqual(db.get_setting("foo.bar.dac", check_type=False), "current_weighted")
+        self.assertEqual(db.get_setting("foo.bar.dsl", check_type=False), ["scala", "python"])
 
     def test_meta_crossappend(self) -> None:
         """
@@ -253,8 +254,8 @@ foo.bar.dsl: ["scala"]
 }
 """, is_yaml=False)
         db.update_core([base, meta])
-        self.assertEqual(db.get_setting("foo.bar.dsl"), ["scala"])
-        self.assertEqual(db.get_setting("foo.bar.languages"), ["scala", "python"])
+        self.assertEqual(db.get_setting("foo.bar.dsl", check_type=False), ["scala"])
+        self.assertEqual(db.get_setting("foo.bar.languages", check_type=False), ["scala", "python"])
 
     def test_meta_crossappendref(self) -> None:
         """
@@ -272,8 +273,8 @@ snakes: ["python"]
 }
 """, is_yaml=False)
         db.update_core([base, meta])
-        self.assertEqual(db.get_setting("foo.bar.dsl"), ["scala"])
-        self.assertEqual(db.get_setting("foo.bar.languages"), ["scala", "python"])
+        self.assertEqual(db.get_setting("foo.bar.dsl", check_type=False), ["scala"])
+        self.assertEqual(db.get_setting("foo.bar.languages", check_type=False), ["scala", "python"])
 
     def test_meta_crossref(self) -> None:
         """
@@ -301,10 +302,10 @@ my:
 }
 """, is_yaml=False)
         db.update_core([base, meta])
-        self.assertEqual(db.get_setting("just.numbers"), ["1", "2", "3"])
-        self.assertEqual(db.get_setting("copies.numbers"), [["1", "2", "3"], ["world"]])
-        self.assertEqual(db.get_setting("bools"), [False, True])
-        self.assertEqual(db.get_setting("indirect.numbers"), False)
+        self.assertEqual(db.get_setting("just.numbers", check_type=False), ["1", "2", "3"])
+        self.assertEqual(db.get_setting("copies.numbers", check_type=False), [["1", "2", "3"], ["world"]])
+        self.assertEqual(db.get_setting("bools", check_type=False), [False, True])
+        self.assertEqual(db.get_setting("indirect.numbers", check_type=False), False)
 
     def test_meta_lazycrossref(self) -> None:
         """
@@ -322,7 +323,7 @@ lazy.numbers: "numbers"
 lazy.numbers_meta: lazycrossref
     """, is_yaml=True)
         db.update_core([base, meta])
-        self.assertEqual(db.get_setting("lazy.numbers"), ["1", "2", "3"])
+        self.assertEqual(db.get_setting("lazy.numbers", check_type=False), ["1", "2", "3"])
 
     def test_meta_crossref_errors(self) -> None:
         """
@@ -345,7 +346,7 @@ my:
 }
 """, is_yaml=False)
             db.update_core([base, meta])
-            db.get_setting("no_crossrefing_using_int")
+            db.get_setting("no_crossrefing_using_int", check_type=False)
         with self.assertRaises(ValueError):
             meta = hammer_config.load_config_from_string("""
 {
@@ -354,7 +355,7 @@ my:
 }
 """, is_yaml=False)
             db.update_core([base, meta])
-            db.get_setting("no_crossrefing_using_bool")
+            db.get_setting("no_crossrefing_using_bool", check_type=False)
         with self.assertRaises(ValueError):
             meta = hammer_config.load_config_from_string("""
 {
@@ -363,7 +364,7 @@ my:
 }
 """, is_yaml=False)
             db.update_core([base, meta])
-            db.get_setting("bad_list")
+            db.get_setting("bad_list", check_type=False)
 
     def test_meta_prependlocal(self) -> None:
         """
@@ -388,11 +389,18 @@ foo:
   "foo.bar.meta_test_meta": "prependlocal"
 }
 """, is_yaml=False, path="meta/config/path")
-        db.update_core([base, meta])
-        self.assertEqual(db.get_setting("foo.bar.dac"), "current_weighted")
-        self.assertEqual(db.get_setting("foo.bar.dsl"), ["scala", "python"])
-        self.assertEqual(db.get_setting("foo.bar.base_test"), "base/config/path/local_path")
-        self.assertEqual(db.get_setting("foo.bar.meta_test"), "meta/config/path/local_path")
+        array = hammer_config.load_config_from_string("""
+foo:
+    bar:
+        array_test: ["local_path", "express_path"]
+        array_test_meta: prependlocal
+""", is_yaml=True, path="array/config/path")
+        db.update_core([base, meta, array])
+        self.assertEqual(db.get_setting("foo.bar.dac", check_type=False), "current_weighted")
+        self.assertEqual(db.get_setting("foo.bar.dsl", check_type=False), ["scala", "python"])
+        self.assertEqual(db.get_setting("foo.bar.base_test", check_type=False), "base/config/path/local_path")
+        self.assertEqual(db.get_setting("foo.bar.meta_test", check_type=False), "meta/config/path/local_path")
+        self.assertEqual(db.get_setting("foo.bar.array_test", check_type=False), ["array/config/path/local_path", "array/config/path/express_path"])
 
     def test_meta_transclude(self) -> None:
         """
@@ -420,13 +428,13 @@ chips:
         db.update_core([base, meta])
 
         # Trigger merge before cleanup
-        self.assertEqual(db.get_setting("chips.potato"), "tuber")
+        self.assertEqual(db.get_setting("chips.potato", check_type=False), "tuber")
 
         # Cleanup
         os.remove(path)
 
-        self.assertEqual(db.get_setting("chips.bear"), "yeah")
-        self.assertEqual(db.get_setting("chips.tree"), file_contents)
+        self.assertEqual(db.get_setting("chips.bear", check_type=False), "yeah")
+        self.assertEqual(db.get_setting("chips.tree", check_type=False), file_contents)
 
     def test_meta_transclude_prependlocal(self) -> None:
         """
@@ -455,13 +463,13 @@ chips:
         db.update_core([base, meta])
 
         # Trigger merge before cleanup
-        self.assertEqual(db.get_setting("chips.potato"), "tuber")
+        self.assertEqual(db.get_setting("chips.potato", check_type=False), "tuber")
 
         # Cleanup
         os.remove(path)
 
-        self.assertEqual(db.get_setting("chips.bear"), "yeah")
-        self.assertEqual(db.get_setting("chips.tree"), os.path.join(local_path, file_contents))
+        self.assertEqual(db.get_setting("chips.bear", check_type=False), "yeah")
+        self.assertEqual(db.get_setting("chips.tree", check_type=False), os.path.join(local_path, file_contents))
 
     def test_meta_transclude_subst(self) -> None:
         """
@@ -491,12 +499,12 @@ food:
         db.update_core([base, meta])
 
         # Trigger merge before cleanup
-        self.assertEqual(db.get_setting("food.dish"), "chips")
+        self.assertEqual(db.get_setting("food.dish", check_type=False), "chips")
 
         # Cleanup
         os.remove(path)
 
-        self.assertEqual(db.get_setting("food.announcement"), file_contents_sol)
+        self.assertEqual(db.get_setting("food.announcement", check_type=False), file_contents_sol)
 
     def test_meta_as_array_1(self) -> None:
         """
@@ -515,8 +523,8 @@ foo:
 }
 """, is_yaml=False, path="meta/config/path")
         db.update_core([base, meta])
-        self.assertEqual(db.get_setting("foo.bar.base_test"), "local_path")
-        self.assertEqual(db.get_setting("foo.bar.meta_test"), "local_path")
+        self.assertEqual(db.get_setting("foo.bar.base_test", check_type=False), "local_path")
+        self.assertEqual(db.get_setting("foo.bar.meta_test", check_type=False), "local_path")
 
     def test_meta_subst_and_prependlocal(self) -> None:
         """
@@ -530,13 +538,13 @@ foo:
 """, is_yaml=True, path="base/config/path")
         meta = hammer_config.load_config_from_string("""
 {
-  "foo.bar.meta_test": "${foo.bar.base_test}",
+  "foo.bar.meta_test": ["${foo.bar.base_test}", "express_path"],
   "foo.bar.meta_test_meta": ["subst", "prependlocal"]
 }
 """, is_yaml=False, path="meta/config/path")
         db.update_core([base, meta])
-        self.assertEqual(db.get_setting("foo.bar.base_test"), "local_path")
-        self.assertEqual(db.get_setting("foo.bar.meta_test"), "meta/config/path/local_path")
+        self.assertEqual(db.get_setting("foo.bar.base_test", check_type=False), "local_path")
+        self.assertEqual(db.get_setting("foo.bar.meta_test", check_type=False), ["meta/config/path/local_path", "meta/config/path/express_path"])
 
     def test_multiple_lazy_metas(self) -> None:
         """
@@ -558,8 +566,8 @@ test_meta: ["lazysubst", "lazycrossref"]
     """, is_yaml=False)
         db.update_core([base, meta])
         with self.assertRaises(ValueError) as cm:
-            self.assertEqual(db.get_setting("base"), "hello2")
-            self.assertEqual(db.get_setting("test"), "def")
+            self.assertEqual(db.get_setting("base", check_type=False), "hello2")
+            self.assertEqual(db.get_setting("test", check_type=False), "def")
         msg = cm.exception.args[0]
         self.assertTrue("Multiple lazy directives in a single directive array not supported yet" in msg)
 
@@ -630,14 +638,14 @@ conglomerate_meta: "lazysubst"
 }
 """, is_yaml=False)
         db.update_core([base, meta])
-        self.assertEqual(db.get_setting("global"), "foobar")
-        self.assertEqual(db.get_setting("tool1.common"), "foobar tool1")
-        self.assertEqual(db.get_setting("tool1.a"), "foobar tool1 abc")
-        self.assertEqual(db.get_setting("tool1.b"), "foobar tool1 bcd")
-        self.assertEqual(db.get_setting("tool2.common"), "foobar tool2")
-        self.assertEqual(db.get_setting("tool2.x"), "foobar tool2 xyz")
-        self.assertEqual(db.get_setting("tool2.z"), "foobar tool2 zyx")
-        self.assertEqual(db.get_setting("conglomerate"), "foobar tool1 + foobar tool2")
+        self.assertEqual(db.get_setting("global", check_type=False), "foobar")
+        self.assertEqual(db.get_setting("tool1.common", check_type=False), "foobar tool1")
+        self.assertEqual(db.get_setting("tool1.a", check_type=False), "foobar tool1 abc")
+        self.assertEqual(db.get_setting("tool1.b", check_type=False), "foobar tool1 bcd")
+        self.assertEqual(db.get_setting("tool2.common", check_type=False), "foobar tool2")
+        self.assertEqual(db.get_setting("tool2.x", check_type=False), "foobar tool2 xyz")
+        self.assertEqual(db.get_setting("tool2.z", check_type=False), "foobar tool2 zyx")
+        self.assertEqual(db.get_setting("conglomerate", check_type=False), "foobar tool1 + foobar tool2")
 
     def test_meta_lazysubst_other_lazysubst(self) -> None:
         """
@@ -662,9 +670,9 @@ foo:
     """, is_yaml=False)
         db.update_core([base])
         db.update_project([project])
-        self.assertEqual(db.get_setting("lolcat"), "whatever")
-        self.assertEqual(db.get_setting("foo.twelve"), "whatever")
-        self.assertEqual(db.get_setting("later"), "whatever")
+        self.assertEqual(db.get_setting("lolcat", check_type=False), "whatever")
+        self.assertEqual(db.get_setting("foo.twelve", check_type=False), "whatever")
+        self.assertEqual(db.get_setting("later", check_type=False), "whatever")
 
     def test_meta_lazycrossappendref(self) -> None:
         """
@@ -680,8 +688,8 @@ tool: ["tool_1", "snakes"]
 tool_meta: "lazycrossappendref"
 """, is_yaml=True)
         db.update_core([base])
-        self.assertEqual(db.get_setting("global"), ["hello", "world", "scala"])
-        self.assertEqual(db.get_setting("tool"), ["hello", "world", "scala", "python"])
+        self.assertEqual(db.get_setting("global", check_type=False), ["hello", "world", "scala"])
+        self.assertEqual(db.get_setting("tool", check_type=False), ["hello", "world", "scala", "python"])
 
     def test_meta_lazycrossappendref_prepend_local(self) -> None:
         """
@@ -709,9 +717,9 @@ paths: ["base", "tmp.tmptmp"]
 paths_meta: "lazycrossappendref"
 """, is_yaml=True, path="opt")
         db.update_core([base])
-        self.assertEqual(db.get_setting("base"), ["bin", "usr_bin"])
-        self.assertEqual(db.get_setting("paths"), ["bin", "usr_bin", "opt/myfolder"])
-        self.assertEqual(db.get_setting("test"), ["opt/myfolder", "opt/myfolder"])
+        self.assertEqual(db.get_setting("base", check_type=False), ["bin", "usr_bin"])
+        self.assertEqual(db.get_setting("paths", check_type=False), ["bin", "usr_bin", "opt/myfolder"])
+        self.assertEqual(db.get_setting("test", check_type=False), ["opt/myfolder", "opt/myfolder"])
 
     def test_meta_lazycrossappend_with_lazycrossref(self) -> None:
         """
@@ -726,8 +734,8 @@ tool: ["tool_1", ["python"]]
 tool_meta: "lazycrossappend"
 """, is_yaml=True)
         db.update_core([base])
-        self.assertEqual(db.get_setting("global"), ["hello", "world", "scala"])
-        self.assertEqual(db.get_setting("tool"), ["hello", "world", "scala", "python"])
+        self.assertEqual(db.get_setting("global", check_type=False), ["hello", "world", "scala"])
+        self.assertEqual(db.get_setting("tool", check_type=False), ["hello", "world", "scala", "python"])
 
     def test_meta_lazyappend_with_lazycrossref_2(self) -> None:
         """
@@ -748,8 +756,8 @@ tool_meta: "lazycrossref"
 }
 """, is_yaml=False)
         db.update_core([base, meta])
-        self.assertEqual(db.get_setting("global"), ["hello", "world", "scala"])
-        self.assertEqual(db.get_setting("tool"), ["hello", "world", "scala", "python"])
+        self.assertEqual(db.get_setting("global", check_type=False), ["hello", "world", "scala"])
+        self.assertEqual(db.get_setting("tool", check_type=False), ["hello", "world", "scala", "python"])
 
     def test_self_reference_lazysubst(self) -> None:
         """
@@ -774,7 +782,7 @@ derivative_str_meta: "lazysubst"
 }
         """, is_yaml=True)
         db.update_core([base, config1, config2])
-        self.assertEqual(db.get_setting("derivative_str"), "hello_1_2")
+        self.assertEqual(db.get_setting("derivative_str", check_type=False), "hello_1_2")
 
     def test_self_reference_lazycrossref(self) -> None:
         """
@@ -800,7 +808,7 @@ derivative_meta: "lazycrossref"
 }
         """, is_yaml=True)
         db.update_core([base, config1, config2])
-        self.assertEqual(db.get_setting("base"), "tower")
+        self.assertEqual(db.get_setting("base", check_type=False), "tower")
 
     def test_self_reference_lazyappend(self) -> None:
         """
@@ -825,7 +833,7 @@ global: ["hello", "world"]
 """, is_yaml=False)
         db.update_core([base, config1])
         db.update_project([config2])
-        self.assertEqual(db.get_setting("global"), ["hello", "world", "scala", "python"])
+        self.assertEqual(db.get_setting("global", check_type=False), ["hello", "world", "scala", "python"])
 
     def test_meta_deepsubst_cwd(self) -> None:
         """
@@ -858,10 +866,10 @@ foo:
 }
 """, is_yaml=False, path="meta/config/path")
         db.update_core([base, meta])
-        self.assertEqual(db.get_setting("foo.bar")[0]["base_test"], os.path.join(cwd, "some_relative_path"))
-        self.assertEqual(db.get_setting("foo.bar")[1]["meta_test"], os.path.join(cwd, "some/relative/path"))
+        self.assertEqual(db.get_setting("foo.bar", check_type=False)[0]["base_test"], os.path.join(cwd, "some_relative_path"))
+        self.assertEqual(db.get_setting("foo.bar", check_type=False)[1]["meta_test"], os.path.join(cwd, "some/relative/path"))
         # leading / should override the meta
-        self.assertEqual(db.get_setting("foo.bar")[1]["abs_test"], "/this/is/an/abs/path")
+        self.assertEqual(db.get_setting("foo.bar", check_type=False)[1]["abs_test"], "/this/is/an/abs/path")
 
     def test_meta_deepsubst_local(self) -> None:
         """
@@ -893,10 +901,10 @@ foo:
 }
 """, is_yaml=False, path="meta/config/path")
         db.update_core([base, meta])
-        self.assertEqual(db.get_setting("foo.bar")[0]["base_test"], "base/config/path/local_path")
-        self.assertEqual(db.get_setting("foo.bar")[1]["meta_test"], "meta/config/path/local_path")
+        self.assertEqual(db.get_setting("foo.bar", check_type=False)[0]["base_test"], "base/config/path/local_path")
+        self.assertEqual(db.get_setting("foo.bar", check_type=False)[1]["meta_test"], "meta/config/path/local_path")
         # leading / should override the meta
-        self.assertEqual(db.get_setting("foo.bar")[1]["abs_test"], "/this/is/an/abs/path")
+        self.assertEqual(db.get_setting("foo.bar", check_type=False)[1]["abs_test"], "/this/is/an/abs/path")
 
 
     def test_meta_deepsubst_subst(self) -> None:
@@ -926,7 +934,164 @@ foo:
 }
 """, is_yaml=False, path="meta/config/path")
         db.update_core([base, meta])
-        self.assertEqual(db.get_setting("foo.bar")[0]["dsl"], {"x": ["python", "is", "awesome"], "y": "sometimes"})
+        self.assertEqual(db.get_setting("foo.bar", check_type=False)[0]["dsl"], {"x": ["python", "is", "awesome"], "y": "sometimes"})
+
+    def test_load_types(self) -> None:
+        """
+        Test that type configurations are loaded with full package paths.
+        """
+        db = hammer_config.HammerDatabase()
+        base_types = hammer_config.load_config_types_from_string("""
+foo:
+    bar:
+        adc: int
+        dac: str
+""", is_yaml=True)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            db.update_types([base_types])
+        self.assertEqual(db.get_setting_type("foo.bar.adc"), int.__name__)
+        self.assertEqual(db.get_setting_type("foo.bar.dac"), str.__name__)
+        
+    def test_load_imported_types(self) -> None:
+        """
+        Test that type configurations of imported types are loaded and checked.
+        """
+        db = hammer_config.HammerDatabase()
+        base_types = hammer_config.load_config_types_from_string("""
+foo:
+    bar:
+        adc: list
+        dac: dict
+""", is_yaml=True)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            db.update_types([base_types])
+        self.assertEqual(db.get_setting_type("foo.bar.adc"), list.__name__)
+        self.assertEqual(db.get_setting_type("foo.bar.dac"), dict.__name__)
+
+    def test_wrong_types(self) -> None:
+        """
+        Test that types are checked when retrieving settings.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo:
+    bar:
+        adc: [1, 2, 3]
+        dac: 0
+        wrong: 0
+""", is_yaml=True)
+        base_types = hammer_config.load_config_from_string("""
+foo:
+    bar:
+        adc: list[int]
+        dac: int
+        wrong: list[dict[str, str]]
+""", is_yaml=True)
+
+        db.update_core([base])
+        with self.assertRaises(TypeError):
+            db.update_types([base_types])
+
+        self.assertEqual(db.get_setting("foo.bar.adc"), [1, 2, 3])
+
+    def test_wrong_constraints(self) -> None:
+        """
+        Test that custom constraints are checked when retrieving settings.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo:
+    bar:
+        adc: [{name: \"hi\", pin: 1}]
+        dac: [{name: [\"hi\"], pin: [1, 2]}]
+        any: [{name: \"hi\", pin: [1, 2]}]
+        wrong: [{name: \"hi\", pin: \"vdd\"}]
+""", is_yaml=True)
+        base_types = hammer_config.load_config_from_string("""
+foo:
+    bar:
+        adc: list[dict[str, str]]
+        dac: list[dict[str, list]]
+        any: list[dict[str, Any]]
+        wrong: int
+""", is_yaml=True)
+
+        db.update_core([base])
+        with self.assertRaises(TypeError):
+            db.update_types([base_types])
+
+        self.assertEqual(db.get_setting("foo.bar.adc"), [{"name": "hi", "pin": 1}])
+        self.assertEqual(db.get_setting("foo.bar.dac"), [{"name": ["hi"], "pin": [1, 2]}])
+        self.assertEqual(db.get_setting("foo.bar.any"), [{"name": "hi", "pin": [1, 2]}])
+
+    def test_optional_constraints(self) -> None:
+        """
+        Test that optional constraints are ignored properly.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo:
+    bar:
+        adc: 
+        quu: hi
+""", is_yaml=True)
+        base_types = hammer_config.load_config_from_string("""
+foo:
+    bar:
+        adc: Optional[str]
+        quu: Optional[str]
+""", is_yaml=True)
+
+        db.update_core([base])
+        db.update_types([base_types])
+        
+        self.assertIsNone(db.get_setting("foo.bar.adc"))
+        self.assertEqual(db.get_setting("foo.bar.quu"), "hi")
+
+    def test_decimal_constraints(self) -> None:
+        """
+        Test that Decimal constraints are checked properly.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo:
+    bar:
+        adc: 3.14
+        quu: 69
+""", is_yaml=True)
+        base_types = hammer_config.load_config_from_string("""
+foo:
+    bar:
+        adc: float
+        quu: float
+""", is_yaml=True)
+
+        db.update_core([base])
+        with self.assertRaises(TypeError):
+            db.update_types([base_types])
+        
+        self.assertEqual(db.get_setting("foo.bar.adc"), 3.14)
+
+    def test_default_types(self) -> None:
+        """
+        Test that all HAMMER defaults are properly type-checked.
+        """
+        CFG_PATH = os.path.join(os.path.dirname(os.getcwd()), "hammer-vlsi")
+        BL_PATH = os.path.join(os.path.dirname(os.getcwd()), "hammer-vlsi", "builtins.yml")
+
+        base = hammer_config.load_config_from_defaults(CFG_PATH)
+        base_types = hammer_config.load_config_types_from_defaults(CFG_PATH)
+        builtins = hammer_config.load_config_from_file(BL_PATH)
+
+        db = hammer_config.HammerDatabase()
+        db.update_core(base[1:])
+        db.update_builtins([builtins])
+        db.update_types(base_types)
+
+        for k, v in db.get_config().items():
+            self.assertEqual(db.get_setting(k), v)
 
 if __name__ == '__main__':
     unittest.main()
