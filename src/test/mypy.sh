@@ -72,6 +72,9 @@ fi
 if [ -f ../../../hammer-cadence-plugins/formal/conformal/__init__.py ]; then
     MYPYPATH=$MYPYPATH:../../../hammer-cadence-plugins/common call_mypy ../../../hammer-cadence-plugins/formal/conformal/__init__.py
 fi
+if [ -f ../../../hammer-cadence-plugins/timing/tempus/__init__.py ]; then
+    MYPYPATH=$MYPYPATH:../../../hammer-cadence-plugins/common call_mypy ../../../hammer-cadence-plugins/timing/tempus/__init__.py
+fi
 if [ -f ../../../hammer-mentor-plugins/drc/calibre/__init__.py ]; then
     call_mypy ../../../hammer-mentor-plugins/drc/calibre/__init__.py
 fi

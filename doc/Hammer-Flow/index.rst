@@ -15,3 +15,4 @@ This documentation will walk through the currently supported steps of the Hammer
    Simulation
    Power
    Formal
+   Timing
