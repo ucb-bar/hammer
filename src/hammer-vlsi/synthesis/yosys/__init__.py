@@ -8,6 +8,9 @@
 
 from textwrap import dedent as dd
 
+import sys
+
+
 # from hammer_utils import deepdict
 from hammer_vlsi.vendor import OpenROADTool, OpenROADSynthesisTool
 
@@ -146,7 +149,9 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
                                              hammer_tech.HammerTechnologyUtils.to_plain_item,
                                              extra_pre_filters=pre_filters)
         
-        return " ".join(lib_args)
+        lib_args_filtered = self.technology.extract_to_cache(lib_args)
+
+        return " ".join(lib_args_filtered)
 
     def run_yosys(self) -> bool:
         """Close out the synthesis script and run Yosys."""
@@ -182,13 +187,17 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         with open(self.mapped_sdc_path,'w') as f:
             # custom sdc constraints
             if self.driver_cell is not None:
-                f.write(f"set_driving_cell {self.driver_cell}\n" )
-                f.write("set_load 5\n")
+                f.write(f"set_driving_cell -lib_cell {self.driver_cell} [all_inputs]\n" )
+                f.write("set_load 5 [all_inputs]\n")
         return True
 
     def block_append(self,commands) -> bool:
         for line in commands.split('\n'):
-            self.append(line.strip())
+            line=line.strip()
+            if line.startswith('#') or '"' in line or line is "":
+                self.append(line)
+            else:
+                self.verbose_append(line)
         return True
 
     #========================================================================
@@ -208,7 +217,6 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         self.synth_cap_load = 33.5 # SYNTH_CAP_LOAD
         self.max_fanout = 5 # default SYNTH_MAX_FANOUT = 5
 
-        
         self.driver_cell = None
         driver_cells = self.technology.get_special_cell_by_type(CellType.Driver)
         if driver_cells is None or driver_cells[0].input_ports is None or driver_cells[0].output_ports is None:
@@ -217,15 +225,10 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
             self.driver_cell = driver_cells[0].name[0]
             self.driver_ports_in = driver_cells[0].input_ports[0]
             self.driver_ports_out = driver_cells[0].output_ports[0]
-
         # Yosys commands only take a single lib file
         #   so use typical corner liberty file
         corners = self.get_mmmc_corners()  # type: List[MMMCCorner]
-        try:
-            corner_tt = next((corner for corner in corners if corner.type == MMMCCornerType.Extra), None)
-        except:
-            raise ValueError("An extra corner is required for Yosys.")
-            
+        corner_tt = next((corner for corner in corners if corner.type == MMMCCornerType.Extra), None)
         self.liberty_file = self.get_timing_libs(corner_tt)
         
         self.append("yosys -import")
@@ -252,6 +255,15 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         return True
 
     def syn_generic(self) -> bool:
+        # TODO: is there a better way to do this? like self.get_setting()
+        if self._database.has_setting("synthesis.inputs.latch_map_file"):
+            latch_map = f"techmap -map {self.get_setting('synthesis.inputs.latch_map_file')}"
+        else:
+            latch_map = ""
+        # TODO: make the else case better
+
+        dfflibmap = '\n'.join([f"dfflibmap -liberty {liberty_file}" for liberty_file in self.liberty_file.split()])
+
         self.block_append(f"""
         # TODO: verify this command, it was in yosys manual but not in OpenLANE script
         yosys proc
@@ -262,12 +274,17 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         # Optimize the design
         opt -purge
 
-        dfflibmap -liberty {self.liberty_file}
+        # Technology mapping of latches
+        {latch_map}
+
+        # Technology mapping of flip-flops
+        {dfflibmap}
 
         opt
         """)
-        # need this report??
-        # tee -o "{self.run_dir}/{self.top_module}_pre.stat" stat
+
+
+
 
         # merges shareable resources into a single resource. A SAT solver
         # is used to determine if two resources are share-able.

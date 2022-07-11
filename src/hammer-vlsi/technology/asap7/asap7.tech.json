@@ -1360,7 +1360,8 @@
       "OAI31xp67*",
       "OAI33xp33*",
       "AO21x2*",
-      "AOI32xp33*"
+      "AOI32xp33*",
+      "ASYNC_DFF*"
   ],
   "stackups": [
     {
@@ -1396,6 +1397,7 @@
 "0.75409 fF", "1.5855 fF", "1.6086 fF", "1.62646 fF", "1.50861 fF", "2.37825 fF", "2.4129 fF", "2.43969 fF",
 "2.26224 fF", "3.96376 fF", "4.02151 fF", "4.06615 fF", "3.7704 fF"]},
     {"cell_type": "tiehicell", "name": ["TIEHIx1_ASAP7_75t_SL"]},
-    {"cell_type": "tielocell", "name": ["TIELOx1_ASAP7_75t_SL"]}
+    {"cell_type": "tielocell", "name": ["TIELOx1_ASAP7_75t_SL"]},
+    {"cell_type": "driver", "name": ["BUFx10_ASAP7_75t_R", "BUFx12_ASAP7_75t_R", "BUFx12f_ASAP7_75t_R", "BUFx16f_ASAP7_75t_R", "BUFx24_ASAP7_75t_R"]}
   ]
 }
