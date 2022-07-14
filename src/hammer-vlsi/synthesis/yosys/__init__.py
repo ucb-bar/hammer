@@ -8,6 +8,9 @@
 
 from textwrap import dedent as dd
 
+import sys
+
+
 # from hammer_utils import deepdict
 from hammer_vlsi.vendor import OpenROADTool, OpenROADSynthesisTool
 
@@ -146,7 +149,9 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
                                              hammer_tech.HammerTechnologyUtils.to_plain_item,
                                              extra_pre_filters=pre_filters)
         
-        return " ".join(lib_args)
+        lib_args_filtered = self.technology.extract_to_cache(lib_args)
+
+        return " ".join(lib_args_filtered)
 
     def run_yosys(self) -> bool:
         """Close out the synthesis script and run Yosys."""
@@ -252,10 +257,19 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         return True
 
     def syn_generic(self) -> bool:
+<<<<<<< HEAD
         # TODO: is there a better way to do this? like self.has_setting()
         latch_map = ""
         if self._database.has_setting("synthesis.inputs.latch_map_file"):
             latch_map = f"techmap -map {self.get_setting('synthesis.inputs.latch_map_file')}"
+=======
+        # TODO: is there a better way to do this? like self.get_setting()
+        if self._database.has_setting("synthesis.inputs.latch_map_file"):
+            latch_map = f"techmap -map {self.get_setting('synthesis.inputs.latch_map_file')}"
+        else:
+            latch_map = ""
+        # TODO: make the else case better
+>>>>>>> b1878989141940c73d33147e40f624367234baab
 
         dfflibmap = '\n'.join([f"dfflibmap -liberty {liberty_file}" for liberty_file in self.liberty_file.split()])
 
@@ -277,6 +291,12 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
 
         opt
         """)
+<<<<<<< HEAD
+=======
+
+
+
+>>>>>>> b1878989141940c73d33147e40f624367234baab
 
         # merges shareable resources into a single resource. A SAT solver
         # is used to determine if two resources are share-able.

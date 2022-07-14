@@ -12,6 +12,7 @@ import shutil
 import glob
 import subprocess
 import textwrap
+from types import new_class
 from typing import NamedTuple, List, Optional, Tuple, Dict, Set, Any
 
 from hammer_tech import HammerTechnology
