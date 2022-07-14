@@ -148,10 +148,15 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         lib_args = self.technology.read_libs([hammer_tech.filters.timing_lib_with_ecsm_filter],
                                              hammer_tech.HammerTechnologyUtils.to_plain_item,
                                              extra_pre_filters=pre_filters)
+<<<<<<< Updated upstream
         
         lib_args_filtered = self.technology.extract_to_cache(lib_args)
 
         return " ".join(lib_args_filtered)
+=======
+        lib_args_extracted = self.technology.extract_to_cache(lib_args)
+        return " ".join(lib_args_extracted)
+>>>>>>> Stashed changes
 
     def run_yosys(self) -> bool:
         """Close out the synthesis script and run Yosys."""
