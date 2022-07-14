@@ -12,10 +12,11 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 import warnings
 
 if importlib.util.find_spec("ruamel.yaml") is None:
-    warnings.warn("ruamel package not found, cannot outout key histories")
+    warnings.warn("ruamel package not found, cannot output key histories")
 else:
     import ruamel.yaml
 from .hammer_vlsi_impl import HammerTool, HammerVLSISettings
@@ -32,7 +33,7 @@ from hammer_config import HammerJSONEncoder
 from hammer_config.config_src import load_config_from_paths
 
 
-KEY_HISTORY = "key-history.json"
+KEY_PATH = os.path.join(tempfile.mkdtemp(), "key-history.json")
 
 def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callable[[str], None]) -> List[str]:
     """Parse a possibly null list of files, validate the existence of each file, and return a list of paths (possibly
@@ -78,6 +79,7 @@ def dump_config_to_yaml_file(output_path: str, config: ruamel.yaml.CommentedMap)
     :param config: Config dictionary to dump
     """
     yaml = ruamel.yaml.YAML()
+    yaml.indent(offset=2)
     with open(output_path, 'w') as f:
         yaml.dump(config, f)
 
@@ -522,10 +524,8 @@ class CLIDriver:
             # 3. Tech-supplied hooks
             # 4. User-supplied hooks
             assert driver.tech is not None, "must have a technology"
-            key_history_f = os.path.join(driver.obj_dir, KEY_HISTORY)
-            with open(key_history_f, 'r') as f:
+            with open(KEY_PATH, 'r') as f:
                 key_history = json.load(f)
-            os.remove(key_history_f)
             spec = importlib.util.find_spec("ruamel.yaml")
             if action_type == "synthesis" or action_type == "syn":
                 if not driver.load_synthesis_tool(get_or_else(self.syn_rundir, "")):
@@ -1282,7 +1282,7 @@ class CLIDriver:
         for cfg_file, cfg in zip(project_configs, project_configs_yaml_keys):
             for key in cfg:
                 key_history[key].append(cfg_file)
-        with open(os.path.join(options.obj_dir, KEY_HISTORY), 'w') as f:
+        with open(KEY_PATH, 'w') as f:
             json.dump(key_history, f)
 
         # Stage control: from/to
