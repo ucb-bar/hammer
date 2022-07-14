@@ -257,19 +257,12 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         return True
 
     def syn_generic(self) -> bool:
-<<<<<<< HEAD
-        # TODO: is there a better way to do this? like self.has_setting()
-        latch_map = ""
-        if self._database.has_setting("synthesis.inputs.latch_map_file"):
-            latch_map = f"techmap -map {self.get_setting('synthesis.inputs.latch_map_file')}"
-=======
         # TODO: is there a better way to do this? like self.get_setting()
         if self._database.has_setting("synthesis.inputs.latch_map_file"):
             latch_map = f"techmap -map {self.get_setting('synthesis.inputs.latch_map_file')}"
         else:
             latch_map = ""
         # TODO: make the else case better
->>>>>>> b1878989141940c73d33147e40f624367234baab
 
         dfflibmap = '\n'.join([f"dfflibmap -liberty {liberty_file}" for liberty_file in self.liberty_file.split()])
 
