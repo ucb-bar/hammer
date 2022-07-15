@@ -5,14 +5,20 @@
 #
 #  See LICENSE for licence details.
 
+import importlib
 import json
 import os
 import shutil
 import tempfile
 import re
+import warnings
 from decimal import Decimal
 from typing import Any, Callable, Dict, List, Optional
 
+if importlib.util.find_spec("ruamel.yaml") is None:
+    warnings.warn("ruamel package not found, cannot output key histories")
+else:
+    import ruamel.yaml
 import hammer_config
 from hammer_config import HammerJSONEncoder
 from hammer_logging.test import HammerLoggingCaptureContext
@@ -532,6 +538,41 @@ class CLIDriverTest(unittest.TestCase):
                     return {bad: "bad"}
             BadOverride()
 
+    def test_key_history(self) -> None:
+        """Test that a key history file is created using synthesis."""
+        # Check that ruamel.yaml is installed
+        if importlib.util.find_spec("ruamel.yaml") is None:
+            return
+
+        # Set up some temporary folders for the unit test.
+        syn_rundir = tempfile.mkdtemp()
+        par_rundir = tempfile.mkdtemp()
+
+        # Generate a config for testing.
+        top_module = "dummy"
+        config_path = os.path.join(syn_rundir, "run_config.json")
+        syn_out_path = os.path.join(syn_rundir, "syn_out.json")
+        syn_to_par_out_path = os.path.join(syn_rundir, "syn_par_out.json")
+        history_path = os.path.join(syn_rundir, "syn-output-history.yml")
+        self.generate_dummy_config(syn_rundir, config_path, top_module)
+
+        self.run_syn_to_par_with_output(config_path, syn_rundir, par_rundir,
+                                        syn_out_path, syn_to_par_out_path)
+
+        # History file should have comments
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+
+        with open(history_path, 'r') as f:
+            yaml = ruamel.yaml.YAML()
+            data = yaml.load(f)
+            for i in config.keys():
+                cmt = data.ca.items[i][2]
+                self.assertEqual(cmt.value, f"# Modified by: {config_path}\n")
+
+        # Cleanup
+        shutil.rmtree(syn_rundir)
+        shutil.rmtree(par_rundir)
 
 class HammerBuildSystemsTest(unittest.TestCase):
 
