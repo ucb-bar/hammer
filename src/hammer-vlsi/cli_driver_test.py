@@ -542,6 +542,7 @@ class CLIDriverTest(unittest.TestCase):
         """Test that a key history file is created using synthesis."""
         # Check that ruamel.yaml is installed
         if importlib.util.find_spec("ruamel.yaml") is None:
+            warnings.warn("ruamel package not found, cannot test for key histories")
             return
 
         # Set up some temporary folders for the unit test.
