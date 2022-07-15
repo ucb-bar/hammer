@@ -1279,7 +1279,7 @@ class CLIDriver:
         # Intercept keys for determining key origin
         project_configs_yaml = load_config_from_paths(project_configs)
         project_configs_yaml_keys = [set(i.keys()) for i in project_configs_yaml]
-        key_history = {i: [] for i in reduce(lambda x, y: x.union(y), project_configs_yaml_keys)}
+        key_history: dict[str, list[str]] = {i: [] for i in reduce(lambda x, y: x.union(y), project_configs_yaml_keys)}
         for cfg_file, cfg in zip(project_configs, project_configs_yaml_keys):
             for key in cfg:
                 key_history[key].append(cfg_file)
