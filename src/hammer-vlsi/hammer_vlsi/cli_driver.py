@@ -33,7 +33,8 @@ from hammer_config import HammerJSONEncoder
 from hammer_config.config_src import load_config_from_paths
 
 
-KEY_PATH = os.path.join(tempfile.mkdtemp(), "key-history.json")
+KEY_DIR = tempfile.mkdtemp()
+KEY_PATH = os.path.join(KEY_DIR, "key-history.json")
 
 def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callable[[str], None]) -> List[str]:
     """Parse a possibly null list of files, validate the existence of each file, and return a list of paths (possibly
