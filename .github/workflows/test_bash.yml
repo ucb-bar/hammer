@@ -36,7 +36,7 @@ jobs:
             pip install pytest
         - name: source_setup
           run: |
-            echo ls
+            ls
             source sourceme.sh
         - name: script
           run: |
