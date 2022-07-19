@@ -345,7 +345,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         # change units in SDC file (1000.0fF and 1000.0ps cause errors)
 
         sdc_files = self.generate_sdc_files()
-        for sdc_file in sdc_files:
+        for sdc_file in sdc_files[:-1]:
             self.append(f"read_sdc -echo {sdc_file}")
 
         return True
@@ -595,7 +595,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
         # -density default is 0.7, overflow default is 0.3
         # set overflow higher (ex. 0.8) to make faster
-        global_placement -routability_driven -pad_left 4 -pad_right 4 -overflow 0.2
+        global_placement -routability_driven -pad_left 4 -pad_right 4 -overflow 0.3
 
         estimate_parasitics -placement
         """)
@@ -622,6 +622,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         
         # both hor_layers and ver_layers arguments are required
         # if missing, auto-choose one or both
+        # TODO: Hammer currently throws an error if both horizontal + vertical pin layers are specified
         if not (hor_layers and ver_layers):
             self.logger.warning("Both horizontal and vertical pin layers should be specified. Hammer will auto-specify one or both.")
             # choose first pin layer to be middle of stackup
@@ -646,15 +647,15 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         # determine commands for side specified in pin assignments
         #   can only be done in openroad by "excluding" the entire length of the other 3 sides from pin placement
         side=""
-        for pin in pin_assignments:
-            if pin.side == "bottom":
-                side="-exclude top:* -exclude right:* -exclude left:*"
-            elif pin.side == "top":
-                side="-exclude bottom:* -exclude right:* -exclude left:*"
-            elif pin.side == "left":
-                side="-exclude top:* -exclude right:* -exclude bottom:*"
-            elif pin.side == "right":
-                side="-exclude top:* -exclude bottom:* -exclude left:*"
+        # for pin in pin_assignments:
+        #     if pin.side == "bottom":
+        #         side="-exclude top:* -exclude right:* -exclude left:*"
+        #     elif pin.side == "top":
+        #         side="-exclude bottom:* -exclude right:* -exclude left:*"
+        #     elif pin.side == "left":
+        #         side="-exclude top:* -exclude right:* -exclude bottom:*"
+        #     elif pin.side == "right":
+        #         side="-exclude top:* -exclude bottom:* -exclude left:*"
 
         return f"place_pins {random_arg} -hor_layers {{{' '.join(hor_layers)}}} -ver_layers {{{' '.join(ver_layers)}}} {side}"
 
@@ -794,7 +795,9 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         set_routing_layers -signal {metals[0].name}-{metals[-1].name} -clock met3-met5
         set_macro_extension {int(self.get_setting("par.blockage_spacing"))}
 
-        # pin_access - this command caused openroad to crash
+        # pin_access - this
+        
+        #  command caused openroad to crash
         # -allow_congestion and -allow_overflow added for now
 
         global_route -guide_file {self.route_guide_path} -allow_congestion -congestion_iterations 200 -verbose
@@ -860,10 +863,13 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     # Copy and hack the klayout techfile, to add all required LEFs
     def setup_klayout_techfile(self) -> bool:
         source_path = Path(self.get_setting("par.inputs.klayout_techfile_source"))
+        klayout_techfile_filename = os.path.basename(source_path)
         if not source_path.exists():
             raise FileNotFoundError(f"Klayout techfile not found: {source_path}")
 
-        dest_path = self.klayout_techfile_path
+        cache_tech_dir_path = Path(self.technology.cache_dir)
+        os.makedirs(cache_tech_dir_path, exist_ok=True)
+        dest_path = cache_tech_dir_path / klayout_techfile_filename
 
         # klayout needs tlef + macro lefs
         tech_lib_lefs = self.technology.read_libs([hammer_tech.filters.lef_filter], hammer_tech.HammerTechnologyUtils.to_plain_item, self.tech_lib_filter())

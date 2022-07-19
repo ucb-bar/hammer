@@ -283,6 +283,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
             {latch_map}
         opt
         """)
+<<<<<<< HEAD
         
         if (self.get_setting("vlsi.core.technology") == "asap7"):
             self.block_append(f"""
@@ -297,6 +298,15 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
             {dfflibmap}
             opt
             """)
+=======
+<<<<<<< HEAD
+=======
+
+
+
+>>>>>>> b1878989141940c73d33147e40f624367234baab
+
+>>>>>>> 1de7dffc036138309c55710e5f3780e5d49554b9
         # merges shareable resources into a single resource. A SAT solver
         # is used to determine if two resources are share-able.
         # self.append('share -aggressive')
