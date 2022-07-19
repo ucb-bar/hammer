@@ -1,5 +1,9 @@
-name: run-sh-test
-on: [pull_request, push]
+name: run-sh-tests
+on:  
+  push:
+    branches:
+      - ci_cd_debug
+      - ci_cd_pr
 env:
   HAMMER_HOME: $PWD
 
@@ -37,7 +41,7 @@ jobs:
             source sourceme.sh
         - name: script
           run: |
-            cd $GITHUB_WORKSPACE/src/test
+            cd ./src/test
             ./unittests.sh
             echo $?
 #    bash_setup_check:
