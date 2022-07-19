@@ -32,6 +32,8 @@ if TYPE_CHECKING:
         def spice_model_file(self) -> Optional[SpiceModelFile]: pass
         @property
         def power_grid_library(self) -> Optional[str]: pass
+        @property
+        def klayout_techfile(self) -> Optional[str]: pass
 
 PathsFunctionType = Callable[["Library"], List[str]]
 

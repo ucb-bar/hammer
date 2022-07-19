@@ -13,3 +13,5 @@ Most of the keys in the ``defaults.yml`` are a part of the ``vlsi`` and ``techno
 * ``technology.core`` needs to specify the stackup to use, which layer the standard cell power rails are on, and a reference cell to draw the lowest layer power rails over.
 
 Tool environment variables (commonly needed for DRC/LVS decks) and other necessary default options should be set in this file. As always, they can be overriden by other snippets of Hammer IR.
+
+The data types for all keys in ``defaults.yml`` can be found in ``defaults_types.yml``. When adding or overriding to ``defaults.yml``, make sure that said data types are updated accordingly to prevent problems with the type checker.

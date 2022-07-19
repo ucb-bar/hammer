@@ -17,10 +17,11 @@ from typing import List, Optional, Dict, Any
 from hammer_utils import add_dicts
 from hammer_vlsi import HasSDCSupport, HammerSynthesisTool, \
                         HammerPlaceAndRouteTool, HammerDRCTool, \
-                        PlacementConstraintType, TimeValue
+                        PlacementConstraintType, TimeValue, \
+                        TCLTool, HammerTool
 import hammer_tech
 
-class OpenROADTool(HasSDCSupport):
+class OpenROADTool(HasSDCSupport, TCLTool, HammerTool):
     """ Mix-in trait with functions useful for OpenROAD-flow tools."""
 
     @property
@@ -45,8 +46,8 @@ class OpenROADTool(HasSDCSupport):
         klayout is not installed with OPENROAD as of version 1.1.0. this 
         should be called in steps that actually run tools or touch filepaths
         """
-        if "OPENROAD" not in os.environ:
-            raise Exception("OPENROAD is not defined in environment!")
+        if not shutil.which("openroad"):
+            raise Exception("openroad is not in PATH")
         if not shutil.which("klayout"):
             raise Exception("klayout is not in PATH")
 
@@ -145,9 +146,10 @@ class OpenROADSynthesisTool(HammerSynthesisTool, OpenROADTool):
     #=========================================================================
     # overrides from parent classes
     #=========================================================================
-    @property
-    def post_synth_sdc(self) -> Optional[str]:
-        return None
+    # @property
+    # don't overrride this!
+    # def post_synth_sdc(self) -> Optional[str]:
+    #     return None
 
     #=========================================================================
     # OpenROAD synthesis-specific stuff

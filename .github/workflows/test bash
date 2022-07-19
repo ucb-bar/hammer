@@ -1,0 +1,63 @@
+name: run-sh-test
+on: 
+  pull-request:
+    branches:
+      - ci_cd
+      - ci_cd_debug
+
+
+jobs:
+    checkout:
+      runs-on: ubuntu-latest #Switch to redhat 7
+      steps:
+        - name: Setup_for_Repository
+          uses: actions/checkout@v2
+        - name: Check Current Repository
+          run: |
+            ls -a
+            PWD 
+    bash_initial_setup:
+      runs-on: ubuntu-latest
+      needs: [checkout] 
+      strategy:
+        matrix:
+          python-version: [3.6, 3.7, 3.8, 3.9, 3.10] #Ask if any version is okay to Harrison - including python 3.4 or lower with other packages?
+          #Also, do I need any extra libraries for the setup? What are the dependencies that have to be setup for the project?
+          os: [ubuntu-latest] #add red hat 7 here
+      steps:
+        - name: Set Up Python ${{ matrix.python-version }} #Here, I can use strategy but should I? Is only the most relevant python version okay (if we need pre 3.4, further setup needed)
+          uses: actions/setup-python@v2
+          with:
+            python-version: ${{ matrix.python-version }}
+        - name: Install pytest
+          run: |
+            python -m pip install --upgrade pip
+            pip install pytest
+        - uses: actions/checkout@v2
+        - name: script
+          run: ${{GITHUB_WORKSPACE}}/src/test/unittests.sh
+          shell: bash
+    bash_path_setup:
+      runs-on: ubuntu-latest
+      needs:  [checkout, bash_initial_setup]
+      #Python path stuff
+    bash_setup_check:
+      runs-on: ubuntu-latest
+      needs: [checkout, bash_initial_setup, bash_path_setup]
+      env:
+          HAMMER_HOME: ${{HOME}}
+      strategy:
+        matrix:
+          python-version: [3.6, 3.7, 3.8, 3.9]
+      steps:
+        - name: git_submodule
+          run: |
+            git submodule update --init --recursive
+        - name: source_and_cd
+          run: |
+            source sourceme.sh
+            cd src
+        - name: tests
+          run: |
+            ./unittests.sh
+            echo $?
