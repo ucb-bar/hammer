@@ -31,13 +31,13 @@ jobs:
             pip install pytest
         - uses: actions/checkout@v2
         - name: script
-          run: ${{GITHUB_WORKSPACE}}/src/test/unittests.sh
+          run: $GITHUB_WORKSPACE/src/test/unittests.sh
           shell: bash
     bash_setup_check:
       runs-on: ubuntu-latest
       needs: [checkout, bash_initial_setup]
       env:
-          HAMMER_HOME: ${{HOME}}
+          HAMMER_HOME: $HOME
       strategy:
         matrix:
           python-version: [3.6, 3.7, 3.8, 3.9]
