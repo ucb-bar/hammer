@@ -18,11 +18,11 @@ jobs:
       needs: [checkout] 
       strategy:
         matrix:
-          python-version: [3.4, 3.5, 3.6, 3.7, 3.8, 3.9] #Ask if any version is okay to Harrison - including python 3.4 or lower with other packages?
-          #Also, do I need any extra libraries for the setup? What are the dependencies that have to be setup for the project?
+          python-version: [3.4.10, 3.5, 3.6, 3.7, 3.8, 3.9] 
+          #Version 3.4 not on x64, so need to force install 3.4.10 instead.
           os: [ubuntu-latest] #add red hat 7 here
       steps:
-        - if: 3.4 == ${{matrix.python-version}}
+        - if: 3.4.10 == ${{matrix.python-version}}
           run: |
             python3 -m pip install typing
             python3 -m pip install enum34
