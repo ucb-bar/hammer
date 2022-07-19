@@ -1,0 +1,16 @@
+name: hammer-ci-checks
+
+on:
+  pull-request:
+    branches: [master, ci_cd]
+  push:
+    branches: [master, ci_cd]
+
+jobs:
+  cancel-previous-individual-workflows:
+    name: cancel-previous-individual-workflows
+    runs-on: ubuntu-latest
+    steps:
+        - uses: actions/checkout@v1
+        - uses: n1hility/cancel-previous-runs@v2
+          with: ${{github.token}}
