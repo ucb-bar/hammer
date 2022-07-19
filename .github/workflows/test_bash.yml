@@ -1,5 +1,8 @@
 name: run-sh-test
 on: [pull_request, push]
+env:
+  HAMMER_HOME: $PWD
+
 
 
 jobs:
@@ -15,10 +18,14 @@ jobs:
       needs: [checkout] 
       strategy:
         matrix:
-          python-version: [3.6, 3.7, 3.8, 3.9] #Ask if any version is okay to Harrison - including python 3.4 or lower with other packages?
+          python-version: [3.4, 3.5, 3.6, 3.7, 3.8, 3.9] #Ask if any version is okay to Harrison - including python 3.4 or lower with other packages?
           #Also, do I need any extra libraries for the setup? What are the dependencies that have to be setup for the project?
           os: [ubuntu-latest] #add red hat 7 here
       steps:
+        - if: 3.4 == ${{matrix.python-version}}
+          run: |
+            python3 -m pip install typing
+            python3 -m pip install enum34
         - name: Set Up Python ${{ matrix.python-version }} #Here, I can use strategy but should I? Is only the most relevant python version okay (if we need pre 3.4, further setup needed)
           uses: actions/setup-python@v2
           with:
@@ -27,7 +34,6 @@ jobs:
           run: |
             python -m pip install --upgrade pip
             pip install pytest
-        - uses: actions/checkout@v2
         - name: source_setup
           run: |
             source sourceme.sh
