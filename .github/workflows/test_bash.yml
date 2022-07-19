@@ -1,5 +1,5 @@
 name: run-sh-test
-on: [pull-request]
+on: [pull_request]
 
 
 jobs:
