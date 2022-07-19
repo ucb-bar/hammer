@@ -1,9 +1,5 @@
 name: run-sh-test
-on: 
-  pull-request:
-    branches:
-      - ci_cd
-      - ci_cd_debug
+on: [pull-request]
 
 
 jobs:
@@ -40,7 +36,6 @@ jobs:
     bash_path_setup:
       runs-on: ubuntu-latest
       needs:  [checkout, bash_initial_setup]
-      #Python path stuff
     bash_setup_check:
       runs-on: ubuntu-latest
       needs: [checkout, bash_initial_setup, bash_path_setup]
