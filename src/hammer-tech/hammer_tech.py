@@ -11,12 +11,7 @@ import shutil, os
 import sys
 import tarfile
 import importlib
-<<<<<<< Updated upstream
-import glob
 import subprocess
-=======
-import shutil, subprocess
->>>>>>> Stashed changes
 from abc import ABCMeta, abstractmethod
 from typing import Any, Callable, Iterable, List, NamedTuple, Optional, Tuple, Dict, TYPE_CHECKING
 from decimal import Decimal
@@ -1135,12 +1130,10 @@ class HammerTechnology:
         """
         return list()
 
+
     def extract_to_cache(self,extract_list:List[str]) -> List[str]:
         """
-        Filter the input file list for compressed files (probably wildcard on .gz and .tar.gz extensions first, since these are most common)
-        Generate path to unzipped files, check if files already exist. If so, skip unzipping and go to step 4, if not, step 3.
-        Perform unzipping to cache dir
-        Return modified paths
+        Return the paths of unzipped ASAP7 Liberty Files for Yosys
         """
         dest_path = os.path.join(self._cachedir, "extracted_tarfiles")
         full_list = []
@@ -1165,14 +1158,9 @@ class HammerTechnology:
         
         for extracted_file in libs:
             full_list.append(extracted_file)
-        
+               
         return full_list
-<<<<<<< Updated upstream
-  
                 
-=======
-
->>>>>>> Stashed changes
 class HammerTechnologyUtils:
     """
     Utility/helper functions for HammerTechnology.

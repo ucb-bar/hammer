@@ -148,15 +148,12 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         lib_args = self.technology.read_libs([hammer_tech.filters.timing_lib_with_ecsm_filter],
                                              hammer_tech.HammerTechnologyUtils.to_plain_item,
                                              extra_pre_filters=pre_filters)
-<<<<<<< Updated upstream
-        
-        lib_args_filtered = self.technology.extract_to_cache(lib_args)
+        if (self.get_setting("vlsi.core.technology") == "asap7"):
+            lib_args_filtered = self.technology.extract_to_cache(lib_args)
+        else:
+            lib_args_filtered = lib_args
 
         return " ".join(lib_args_filtered)
-=======
-        lib_args_extracted = self.technology.extract_to_cache(lib_args)
-        return " ".join(lib_args_extracted)
->>>>>>> Stashed changes
 
     def run_yosys(self) -> bool:
         """Close out the synthesis script and run Yosys."""
@@ -224,8 +221,10 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
 
         self.driver_cell = None
         driver_cells = self.technology.get_special_cell_by_type(CellType.Driver)
-        if driver_cells is None or driver_cells[0].input_ports is None or driver_cells[0].output_ports is None:
-            self.logger.warning("Driver cells and their input and output ports are unspecified and will not be added during synthesis.")
+        if driver_cells is None:
+            self.logger.warning("Driver cells are unspecified and will not be added during synthesis.")
+        elif driver_cells[0].input_ports is None or driver_cells[0].output_ports is None:
+            self.logger.warning("Driver cell input and output ports are unspecified and will not be added during synthesis.")
         else:
             self.driver_cell = driver_cells[0].name[0]
             self.driver_ports_in = driver_cells[0].input_ports[0]
@@ -267,30 +266,37 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
             latch_map = ""
         # TODO: make the else case better
 
-        dfflibmap = '\n'.join([f"dfflibmap -liberty {liberty_file}" for liberty_file in self.liberty_file.split()])
+        #dfflibmap = '\n'.join([f"dfflibmap -liberty {liberty_file}" for liberty_file in self.liberty_file.split()])
+        lib_path = os.path.split(self.run_dir)[0]
 
         self.block_append(f"""
-        # TODO: verify this command, it was in yosys manual but not in OpenLANE script
-        yosys proc
-        hierarchy -check -top {self.top_module}
+            # TODO: verify this command, it was in yosys manual but not in OpenLANE script
+            yosys proc
+            hierarchy -check -top {self.top_module}
 
-        synth -top {self.top_module}
+            synth -top {self.top_module}
 
-        # Optimize the design
-        opt -purge
+            # Optimize the design
+            opt -purge
 
-        # Technology mapping of latches
-        {latch_map}
-
-        # Technology mapping of flip-flops
-        {dfflibmap}
-
+            # Technology mapping of latches
+            {latch_map}
         opt
         """)
-
-
-
-
+        
+        if (self.get_setting("vlsi.core.technology") == "asap7"):
+            self.block_append(f"""
+            # Technology mapping of flip-flops
+            dfflibmap -liberty {lib_path}/tech-asap7-cache/extracted_tarfiles/asap7sc7p5t_SEQ_RVT_TT_nldm_201020.lib
+            opt
+            """)
+            
+        else:
+            dfflibmap = '\n'.join([f"dfflibmap -liberty {liberty_file}" for liberty_file in self.liberty_file.split()])
+            self.block_append(f"""
+            {dfflibmap}
+            opt
+            """)
         # merges shareable resources into a single resource. A SAT solver
         # is used to determine if two resources are share-able.
         # self.append('share -aggressive')
