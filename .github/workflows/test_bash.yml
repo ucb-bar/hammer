@@ -9,9 +9,7 @@ jobs:
         - name: Setup_for_Repository
           uses: actions/checkout@v2
         - name: Check Current Repository
-          run: |
-            ls -a
-            PWD 
+          run: ls-a
     bash_initial_setup:
       runs-on: ubuntu-latest
       needs: [checkout] 
