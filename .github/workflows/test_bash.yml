@@ -6,18 +6,6 @@ env:
 
 
 jobs:
-    checkout:
-      runs-on: ubuntu-latest #Switch to redhat 7
-      steps:
-        - name: Setup_for_Repository
-          uses: actions/checkout@v2
-        - name: Check Current Repository
-          run: ls
-        - name: upload-artifact-checkout
-          uses: actions/upload-artifact@v2
-          with:
-            name: hammer
-            path: $HAMMER_HOME
     bash_initial_setup:
       runs-on: ubuntu-latest
       needs: [checkout] 
@@ -27,10 +15,10 @@ jobs:
           #Version 3.4 not on x64, so skipping 3.4 for now.
           os: [ubuntu-latest] #add red hat 7 here
       steps:
-        - name: get-artifact
-          uses: actions/download-artifact@v2
-          with:
-            name: hammer
+        - name: Setup_for_Repository
+          uses: actions/checkout@v2
+        - name: Check Current Repository
+          run: ls -a
         - if: 3.4 == ${{matrix.python-version}}
           run: |
             python3 -m pip install typing
