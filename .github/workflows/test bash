@@ -2,8 +2,8 @@ name: run-sh-test
 on: 
   pull-request:
     branches:
-      ci_cd
-      ci_cd_debug
+      - ci_cd
+      - ci_cd_debug
 
 
 jobs:
