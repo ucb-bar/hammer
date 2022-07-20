@@ -1008,10 +1008,6 @@ power.inputs:
   # example: report_configs: [{waveform_path: "/path/to/fsdb", module: "chiptop", levels:3, start_time: "0ns", end_time: "1ns", toggle_signal:"/ChipTop/clock", num_toggles:1, frame_count:1000, report_name: "my_fsdb_report"}]
   report_configs: []
 
-  # A set of raw plain text commands to configure custom report generation for all waveforms
-  # type: List[str]
-  custom_reports: []
-
   # Power analysis mode for different levels of the VLSI flow
   # Valid options are:
   #   "rtl" for rtl level power analysis
@@ -1036,7 +1032,7 @@ power.submit:
 # For example, files could be combinations of Verilog, Liberty, Spice, CPF, and/or SDC files.
 formal.inputs:
   # Check type to run. Support varies based on the specific tool plugin.
-  # Potential options (see tool plugin defaults.yml for supported checks): 
+  # Potential options (see tool plugin defaults.yml for supported checks):
   # - lec: logical equivalence checking (supported)
   # - power: power intent (CPF/UPF) and structure checking (not yet supported)
   # - constraint: design constaint (SDC) checking (not yet supported)

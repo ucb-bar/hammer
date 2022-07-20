@@ -55,10 +55,25 @@ Simulation Input Keys
 
         * If overridden to ``true``, the power tool will report for only the extra MMMC corners, saving runtime. The typical use case is to only report power and rail analysis for a typical/nominal corner.
 
+    * ``input_files`` ([str])
+        * A list of the paths to the design inputs files (HDL or netlist) for power analysis.
+
+    * ``sdc`` (str)
+        * Path to SDC input file.
+
+    * ``report_configs`` ([dict])
+        * List of report configs that specify ``PowerReport`` structs.
+
+    * ``level`` (FlowLevel)
+        * Power analysis mode for different levels of the VLSI flow. The available options are ``rtl``, ``syn``, and ``par``.
+
+    * ``top_module`` (str)
+        * Top RTL module for power analysis.
+
 Power Inputs
 -------------------------------
 
-Currently, Hammer's power analysis requires that place-and-route and post-place-and-route gate-level simulation are run, in addition to setting the keys that are described above. Auto-translation of of Hammer IR to the power tool from those outputs are accomplished using the ``par-to-power`` and ``sim-to-power`` actions, as demonstrated in the "Post-PAR Power Analysis" command below.  The required files for power analysis 
+Currently, Hammer's power analysis requires that place-and-route and post-place-and-route gate-level simulation are run, in addition to setting the keys that are described above. Auto-translation of of Hammer IR to the power tool from those outputs are accomplished using the ``par-to-power`` and ``sim-to-power`` actions, as demonstrated in the "Post-PAR Power Analysis" command below.  The required files for power analysis
 (database, SAIF, SPEF, etc.) are generated and piped to the power tool from the pre-requisite action's outputs.
 
 Power Outputs

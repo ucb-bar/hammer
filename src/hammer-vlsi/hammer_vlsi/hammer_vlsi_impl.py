@@ -61,7 +61,6 @@ class FlowLevel(Enum):
     RTL = 1
     SYN = 2
     PAR = 3
-    #GateLevel = 2
 
     @classmethod
     def __mapping(cls) -> Dict[str, "FlowLevel"]:
@@ -69,7 +68,6 @@ class FlowLevel(Enum):
             "rtl": FlowLevel.RTL,
             "syn": FlowLevel.SYN,
             "par": FlowLevel.PAR
-        #    "gl": FlowLevel.GateLevel
         }
 
     @staticmethod
@@ -1747,7 +1745,7 @@ class HammerFormalTool(HammerTool):
 class HammerTimingTool(HammerTool):
 
     @property
-    def max_paths(self) -> SimulationLevel:
+    def max_paths(self) -> FlowLevel:
         """Return the max paths to report."""
         return self.get_setting("timing.inputs.max_paths")
 

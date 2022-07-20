@@ -178,7 +178,7 @@ vlsi.inputs:
   power_spec_contents: Optional[str]
 
   # SRAM Parameters
-  sram_parameters: list[dict[str, Any]] 
+  sram_parameters: list[dict[str, Any]]
 
   # Bumps settings mode. (str)
   bumps_mode: str
@@ -566,14 +566,6 @@ power.inputs:
   # A list of paths to waveforms to be used for dynamic power analysis.
   # type: list[str]
   waveforms: list[str]
- 
-  # A list of analysis start times corresponding to each waveform used for dynamic power analysis.
-  # type: list[str]
-  start_times: list[str]
-
-  # A list of analysis end times corresponding to each waveform used for dynamic power analysis.
-  # type: list[str]
-  end_times: list[str]
 
   # A list of paths to SAIF activity files to be used for dynamic power analysis.
   # type: list[str]
@@ -582,6 +574,41 @@ power.inputs:
   # If overridden to ``true``, the power tool will report for only the extra MMMC corners, saving runtime.
   # type: bool
   extra_corners_only: bool
+
+  # A list of the paths to the design inputs files (HDL or netlist) for power analysis
+  # type: List[str]
+  input_files: list[str]
+
+  # SDC input file
+  # type: str
+  sdc: str
+
+  # Power report configs that are run in addition to the average power reports in power.inputs.waveforms
+  # type: List[PowerReport]
+  # PowerReport struct members:
+  # waveform_path (str) - Path to the waveform for the report
+  # module (str) - Optional. the path to the module to report power for (default here is the Chipyard top level)
+  # levels (int) - Optional. the number of levels in the design hierachy to report
+  # start_time (str) - Optional. The start time of the power report in the waveform
+  # end_time (str) - Optional. The end time of the power report in the waveform
+  # toggle_signal (str) - Optional. Path to the signal to generate report windows based on toggles
+  # num_toggles (int) - Optional (must be specified if num_toggles is specified). The number of toggles of the toggle_signal for each frame to report power
+  # frame_count (int) - Optional. The number of frames to report the power for
+  # report_name (str) - Optional. Name of the power report
+  # example: report_configs: [{waveform_path: "/path/to/fsdb", module: "chiptop", levels:3, start_time: "0ns", end_time: "1ns", toggle_signal:"/ChipTop/clock", num_toggles:1, frame_count:1000, report_name: "my_fsdb_report"}]
+  report_configs: list[dict[str, str]]
+
+  # Power analysis mode for different levels of the VLSI flow
+  # Valid options are:
+  #   "rtl" for rtl level power analysis
+  #   "syn" for post-syn power analysis
+  #   "par" for post-par power analysis
+  # type: FlowLevel
+  level: FlowLevel
+
+  # Top RTL module for power analysis
+  # type: str
+  top_module: str
 
 power.submit:
   command: str
