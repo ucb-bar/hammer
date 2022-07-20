@@ -1,7 +1,7 @@
 Power
 ===============================
 
-Hammer supports post-P&R power analysis. It provides a simple API to add flags to the power tool call and automatically passes in collateral to the power tool from the place-and-route and post-place-and-route simulation outputs.
+Hammer supports RTL, post-synthesis, and post-P&R power analysis. It provides a simple API to add flags to the power tool call and automatically passes in collateral to the power tool from the other tool steps.
 This action requires a tool plugin to implement ``HammerPowerTool``.
 
 Power Setup Keys
@@ -73,8 +73,9 @@ Simulation Input Keys
 Power Inputs
 -------------------------------
 
-Currently, Hammer's power analysis requires that place-and-route and post-place-and-route gate-level simulation are run, in addition to setting the keys that are described above. Auto-translation of of Hammer IR to the power tool from those outputs are accomplished using the ``par-to-power`` and ``sim-to-power`` actions, as demonstrated in the "Post-PAR Power Analysis" command below.  The required files for power analysis
-(database, SAIF, SPEF, etc.) are generated and piped to the power tool from the pre-requisite action's outputs.
+Hammer's power analysis can be run with an RTL input, or post-synthesis or post-place-and-route (and with corresponding simulations).
+Auto-translation of of Hammer IR to the power tool from those outputs are accomplished using the ``sim-rtl-to-power``, ``syn-to-power``, ``sim-syn-to-power``, ``par-to-power``, and ``sim-par-to-power`` actions, as demonstrated below.
+The required files for power analysis (database, SAIF, SPEF, etc.) are generated and piped to the power tool from the pre-requisite action's outputs.
 
 Power Outputs
 -------------------------------
@@ -84,7 +85,43 @@ The power tool outputs static and active power estimations into the ``OBJ_DIR/po
 Power Commands
 -------------------------------
 
-Assuming you have finished place-and-route (P&R):
+RTL Power Analysis:
+
+* RTL Sim
+
+    * ``hammer-vlsi -e env.yml -p config.yml --obj_dir OBJ_DIR sim-rtl``
+
+* Simulation to Power
+
+    * ``hammer-vlsi -e env.yml -p config.yml -p OBJ_DIR/sim-rundir/sim-rtl-output.json -o OBJ_DIR/sim-rtl-to-power_input.json --obj_dir OBJ_DIR sim-rtl-to-power``
+
+* Power
+
+    * ``hammer-vlsi -e env.yml -p config.yml -p OBJ_DIR/sim-rtl-to-power_input.json --obj_dir OBJ_DIR power-rtl``
+
+Post-synthesis Power Analysis:
+
+* Syn to Power
+
+    * ``hammer-vlsi -e env.yml -p config.yml -p OBJ_DIR/syn-rundir/syn-output.json -o OBJ_DIR/syn-to-power_input.json --obj_dir OBJ_DIR syn-to-power``
+
+* Syn to Simulation
+
+    * ``hammer-vlsi -e env.yml -p config.yml -p OBJ_DIR/syn-rundir/syn-output.json -o OBJ_DIR/syn-to-sim_input.json --obj_dir OBJ_DIR syn-to-sim``
+
+* Post-Syn Gate Level Sim
+
+    * ``hammer-vlsi -e env.yml -p config.yml -p OBJ_DIR/syn-to-sim_input.json --obj_dir OBJ_DIR sim-syn``
+
+* Simulation to Power
+
+    * ``hammer-vlsi -e env.yml -p config.yml -p OBJ_DIR/sim-rundir/sim-syn-output.json -o OBJ_DIR/sim-syn-to-power_input.json --obj_dir OBJ_DIR sim-syn-to-power``
+
+* Power
+
+    * ``hammer-vlsi -e env.yml -p config.yml -p OBJ_DIR/syn-to-power_input.json -p OBJ_DIR/sim-syn-to-power_input.json --obj_dir OBJ_DIR power-syn``
+
+Post-P&R Power Analysis:
 
 * P&R to Power
 
@@ -96,12 +133,12 @@ Assuming you have finished place-and-route (P&R):
 
 * Post-P&R Gate Level Sim
 
-    * ``hammer-vlsi -e env.yml -p config.yml -p OBJ_DIR/par-to-sim_input.json --obj_dir OBJ_DIR sim``
+    * ``hammer-vlsi -e env.yml -p config.yml -p OBJ_DIR/par-to-sim_input.json --obj_dir OBJ_DIR sim-par``
 
 * Simulation to Power
 
-    * ``hammer-vlsi -e env.yml -p config.yml -p OBJ_DIR/sim-rundir/sim-output.json -o OBJ_DIR/sim-to-power_input.json --obj_dir OBJ_DIR sim-to-power``
+    * ``hammer-vlsi -e env.yml -p config.yml -p OBJ_DIR/sim-rundir/sim-par-output.json -o OBJ_DIR/sim-par-to-power_input.json --obj_dir OBJ_DIR sim-par-to-power``
 
 * Power
 
-    * ``hammer-vlsi -e env.yml -p config.yml -p OBJ_DIR/par-to-power_input.json -p OBJ_DIR/sim-to-power_input.json --obj_dir OBJ_DIR power``
+    * ``hammer-vlsi -e env.yml -p config.yml -p OBJ_DIR/par-to-power_input.json -p OBJ_DIR/sim-par-to-power_input.json --obj_dir OBJ_DIR power-par``
