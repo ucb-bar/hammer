@@ -575,6 +575,52 @@ class CLIDriverTest(unittest.TestCase):
         shutil.rmtree(syn_rundir)
         shutil.rmtree(par_rundir)
 
+    def test_key_history_as_input(self) -> None:
+        """Test that a key history file is created using synthesis."""
+        # Check that ruamel.yaml is installed
+        if importlib.util.find_spec("ruamel.yaml") is None:
+            warnings.warn("ruamel package not found, cannot test for key histories")
+            return
+
+        # Set up some temporary folders for the unit test.
+        syn_rundir = tempfile.mkdtemp()
+        par_rundir = tempfile.mkdtemp()
+
+        # Generate a config for testing.
+        top_module = "dummy"
+        config_path = os.path.join(syn_rundir, "run_config.json")
+        syn_out_path = os.path.join(syn_rundir, "syn_out.json")
+        syn_to_par_out_path = os.path.join(syn_rundir, "syn_par_out.json")
+        history_path = os.path.join(syn_rundir, "syn-output-history.yml")
+        self.generate_dummy_config(syn_rundir, config_path, top_module)
+
+        # Check that running the CLIDriver executes successfully (code 0).
+        with self.assertRaises(SystemExit) as cm:  # type: ignore
+            CLIDriver().main(args=[
+                "syn",  # action
+                "-p", config_path,
+                "--output", syn_out_path,
+                "--syn_rundir", syn_rundir,
+            ])
+        self.assertEqual(cm.exception.code, 0)
+
+        # Now run par with the main config as well as the outputs.
+        with self.assertRaises(SystemExit) as cm:  # type: ignore
+            CLIDriver().main(args=[
+                "syn-to-par",  # action
+                "-p", config_path,
+                "-p", history_path,
+                "--output", syn_to_par_out_path,
+                "--syn_rundir", syn_rundir,
+                "--par_rundir", par_rundir
+            ])
+        self.assertEqual(cm.exception.code, 0)
+
+        # Cleanup
+        shutil.rmtree(syn_rundir)
+        shutil.rmtree(par_rundir)
+
+
 class HammerBuildSystemsTest(unittest.TestCase):
 
     def _read_targets_from_makefile(self, lines: List[str]) -> Dict[str, List[str]]:
