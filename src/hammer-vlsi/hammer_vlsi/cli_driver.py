@@ -539,7 +539,10 @@ class CLIDriver:
                 else:
                     post_load_func_checked(driver)
                 assert driver.power_tool is not None, "load_power_tool was unsuccessful"
-                success, output = driver.run_power(extra_hooks)
+                success, output = driver.run_power(
+                        driver.power_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_power_hooks(driver.power_tool.name) + \
+                        list(extra_hooks or []))
                 if not success:
                     driver.log.error("Power tool did not succeed")
                     return None
