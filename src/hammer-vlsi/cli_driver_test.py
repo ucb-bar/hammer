@@ -15,16 +15,19 @@ import warnings
 from decimal import Decimal
 from typing import Any, Callable, Dict, List, Optional
 
-if importlib.util.find_spec("ruamel.yaml") is None:
-    warnings.warn("ruamel package not found, cannot output key histories")
-else:
-    import ruamel.yaml
 import hammer_config
 from hammer_config import HammerJSONEncoder
 from hammer_logging.test import HammerLoggingCaptureContext
 from hammer_tech import MacroSize
 from hammer_vlsi import CLIDriver, HammerDriver, HammerDriverOptions, HammerVLSISettings, PlacementConstraint, PlacementConstraintType
 from hammer_utils import deepdict
+
+from hammer_vlsi.cli_driver import is_ruamel_missing
+
+if is_ruamel_missing():
+    warnings.warn("ruamel package not found, cannot output key histories")
+else:
+    import ruamel.yaml
 
 import unittest
 
@@ -541,7 +544,7 @@ class CLIDriverTest(unittest.TestCase):
     def test_key_history(self) -> None:
         """Test that a key history file is created using synthesis."""
         # Check that ruamel.yaml is installed
-        if importlib.util.find_spec("ruamel.yaml") is None:
+        if is_ruamel_missing():
             warnings.warn("ruamel package not found, cannot test for key histories")
             return
 
@@ -578,7 +581,7 @@ class CLIDriverTest(unittest.TestCase):
     def test_key_history_as_input(self) -> None:
         """Test that a key history file is created using synthesis."""
         # Check that ruamel.yaml is installed
-        if importlib.util.find_spec("ruamel.yaml") is None:
+        if is_ruamel_missing():
             warnings.warn("ruamel package not found, cannot test for key histories")
             return
 

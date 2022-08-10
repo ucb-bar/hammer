@@ -15,7 +15,10 @@ import sys
 import tempfile
 import warnings
 
-if importlib.util.find_spec("ruamel.yaml") is None:
+def is_ruamel_missing():
+    return importlib.util.find_spec("ruamel") is None
+
+if is_ruamel_missing():
     warnings.warn("ruamel package not found, cannot output key histories")
 else:
     import ruamel.yaml
@@ -72,7 +75,7 @@ def dump_config_to_json_file(output_path: str, config: dict) -> None:
     with open(output_path, "w") as f:
         f.write(json.dumps(config, cls=HammerJSONEncoder, indent=4))
 
-def dump_config_to_yaml_file(output_path: str, config: ruamel.yaml.CommentedMap) -> None:
+def dump_config_to_yaml_file(output_path: str, config: Any) -> None:
     """
     Helper function to dump the given config in YAML form
     to the given output path while overwriting it if it already exists.
@@ -84,7 +87,7 @@ def dump_config_to_yaml_file(output_path: str, config: ruamel.yaml.CommentedMap)
     with open(output_path, 'w') as f:
         yaml.dump(config, f)
 
-def add_key_history(config: dict, history: dict) -> ruamel.yaml.CommentedMap:
+def add_key_history(config: dict, history: dict) -> Any:
     """
     Generates a YAML file with comments indicating what files modified said keys.
     """
@@ -527,7 +530,6 @@ class CLIDriver:
             assert driver.tech is not None, "must have a technology"
             with open(KEY_PATH, 'r') as f:
                 key_history = json.load(f)
-            spec = importlib.util.find_spec("ruamel.yaml")
             if action_type == "synthesis" or action_type == "syn":
                 if not driver.load_synthesis_tool(get_or_else(self.syn_rundir, "")):
                     return None
@@ -544,7 +546,7 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output-full.json"),
                                          self.get_full_config(driver, output))
-                if spec is not None:
+                if not is_ruamel_missing():
                     dump_config_to_yaml_file(os.path.join(driver.syn_tool.run_dir, "syn-output-history.yml"),
                                             add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
@@ -564,7 +566,7 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.par_tool.run_dir, "par-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.par_tool.run_dir, "par-output-full.json"),
                                          self.get_full_config(driver, output))
-                if spec is not None:
+                if not is_ruamel_missing():
                     dump_config_to_yaml_file(os.path.join(driver.par_tool.run_dir, "par-output-history.yml"),
                                             add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
@@ -584,7 +586,7 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.drc_tool.run_dir, "drc-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.drc_tool.run_dir, "drc-output-full.json"),
                                          self.get_full_config(driver, output))
-                if spec is not None:
+                if not is_ruamel_missing():
                     dump_config_to_yaml_file(os.path.join(driver.drc_tool.run_dir, "drc-output-history.yml"),
                                             add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
@@ -604,7 +606,7 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.lvs_tool.run_dir, "lvs-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.lvs_tool.run_dir, "lvs-output-full.json"),
                                          self.get_full_config(driver, output))
-                if spec is not None:
+                if not is_ruamel_missing():
                     dump_config_to_yaml_file(os.path.join(driver.lvs_tool.run_dir, "lvs-output-history.yml"),
                                             add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
@@ -638,7 +640,7 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.sim_tool.run_dir, "sim-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.sim_tool.run_dir, "sim-output-full.json"),
                                          self.get_full_config(driver, output))
-                if spec is not None:
+                if not is_ruamel_missing():
                     dump_config_to_yaml_file(os.path.join(driver.sim_tool.run_dir, "sim-output-history.yml"),
                                             add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
@@ -655,7 +657,7 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.power_tool.run_dir, "power-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.power_tool.run_dir, "power-output-full.json"),
                                          self.get_full_config(driver, output))
-                if spec is not None:
+                if not is_ruamel_missing():
                     dump_config_to_yaml_file(os.path.join(driver.power_tool.run_dir, "power-output-history.yml"),
                                             add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
@@ -675,7 +677,7 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.formal_tool.run_dir, "formal-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.formal_tool.run_dir, "formal-output-full.json"),
                                          self.get_full_config(driver, output))
-                if spec is not None:
+                if not is_ruamel_missing():
                     dump_config_to_yaml_file(os.path.join(driver.formal_tool.run_dir, "formal-output-history.yml"),
                                             add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
@@ -712,7 +714,7 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.pcb_tool.run_dir, "pcb-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.pcb_tool.run_dir, "pcb-output-full.json"),
                                          self.get_full_config(driver, output))
-                if spec is not None:
+                if not is_ruamel_missing():
                     dump_config_to_yaml_file(os.path.join(driver.pcb_tool.run_dir, "pcb-output-history.yml"),
                                             add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
