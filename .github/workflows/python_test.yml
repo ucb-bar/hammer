@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.5, 3.6, 3.7, 3.8, 3.9] #Ask if any version is okay to Harrison
+        python-version: [3.6, 3.7, 3.8, 3.9] #Ask if any version is okay to Harrison
 
     steps:
         # Checkout the latest code from the repo
@@ -24,11 +24,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
-      - name: Install package
-        run: python setup.py install
       - name: Install pytest
         run: |
           python -m pip install --upgrade pip
           pip install pytest
+      - name: Setup 
+        run: source sourceme.sh
       - name: Run tests
         run: ./src/test/pylintrc.py
