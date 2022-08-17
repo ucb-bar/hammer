@@ -18,6 +18,7 @@ jobs:
         - name: Add Env variables
           run: |
             echo  "HAMMER_HOME = ${GITHUB_WORKSPACE}" >> $GITHUB_ENV
+            echo  "HAMMER_VLSI="${GITHUB_WORKSPACE}/src/hammer-vlsi"" >> $GITHUB_ENV
         - name: Check Current Envs
           run: |
             echo $HAMMER_HOME
@@ -53,6 +54,7 @@ jobs:
         - name: source_setup
           run: |
             echo  "HAMMER_HOME = ${GITHUB_WORKSPACE}" >> $GITHUB_ENV
+            echo  "HAMMER_VLSI="${GITHUB_WORKSPACE}/src/hammer-vlsi"" >> $GITHUB_ENV
             source sourceme.sh
         - name: Check Current Envs
           run: |
