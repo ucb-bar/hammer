@@ -11,9 +11,9 @@ jobs:
     bash_test_env:
       runs-on: ubuntu-latest
       env:
-        HAMMER_VLSI: "$PWD/src/hammer-vlsi"
-        PYTHONPATH: $PWD/src:$PWD/src/jsonschema:$PWD/src/python-jsonschema-objects:$PWD/src/hammer-tech:$PWD/src/hammer-vlsi:$PYTHONPATH"
-        PATHEXTRA: "$PWD/src/hammer-shell:$PATHEXTRA"
+        HAMMER_VLSI: "{{$PWD}}/src/hammer-vlsi"
+        PYTHONPATH: "{{$PWD}}/src:{{$PWD}}/src/jsonschema:{{$PWD}}/src/python-jsonschema-objects:{{$PWD}}/src/hammer-tech:{{$PWD}}/src/hammer-vlsi:{{$PYTHONPATH}}"
+        PATHEXTRA: "{{$PWD}}/src/hammer-shell:{{$PATHEXTRA}}"
       steps:
         - name: Setup_for_Repository
           uses: actions/checkout@v2
