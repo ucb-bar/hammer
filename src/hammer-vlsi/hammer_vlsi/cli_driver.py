@@ -15,13 +15,13 @@ import sys
 import tempfile
 import warnings
 
-def is_ruamel_missing():
+def is_ruamel_missing() -> bool:
     return importlib.util.find_spec("ruamel") is None
 
 if is_ruamel_missing():
     warnings.warn("ruamel package not found, cannot output key histories")
 else:
-    import ruamel.yaml
+    import ruamel.yaml  # type: ignore
 from .hammer_vlsi_impl import HammerTool, HammerVLSISettings
 from .hooks import HammerToolHookAction, HammerStartStopStep
 from .driver import HammerDriver, HammerDriverOptions

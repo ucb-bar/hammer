@@ -27,7 +27,7 @@ from hammer_vlsi.cli_driver import is_ruamel_missing
 if is_ruamel_missing():
     warnings.warn("ruamel package not found, cannot output key histories")
 else:
-    import ruamel.yaml
+    import ruamel.yaml  # type: ignore
 
 import unittest
 
