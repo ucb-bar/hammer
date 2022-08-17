@@ -56,14 +56,11 @@ jobs:
             echo "HAMMER_HOME = ${GITHUB_WORKSPACE}" >> $GITHUB_ENV
             echo "HAMMER_VLSI= ${GITHUB_WORKSPACE}/src/hammer-vlsi" >> $GITHUB_ENV
             echo "hammer_config = ${GITHUB_WORKSPACE}/src/hammer_config" >> $GITHUB_ENV
-            echo "HAMMER_TECH = ${GITHUB_WORKSPACE}/src/hammer" >> $GITHUB_ENV
-            source sourceme.sh 
         - name: Check Current Envs
           run: |
-            echo $HAMMER_HOME
-            echo $HAMMER_VLSI
-            echo $PYTHONPATH
-            echo $PATH
+            echo ${env.hammer_config}
+            echo ${env.HAMMER_HOME}
+            echo ${env.HAMMER_VLSI}
         - name: script
           run: |
             cd ./src/test
