@@ -53,15 +53,18 @@ jobs:
           run: ls -a
         - name: source_setup
           run: |
-            echo "HAMMER_HOME = ${GITHUB_WORKSPACE}" >> $GITHUB_ENV
-            echo "PYTHONPATH= ${GITHUB_WORKSPACE}/src" >> $GITHUB_ENV
-            echo "MYPYPATH= ${GITHUB_WORKSPACE}" >> $GITHUB_ENV
-            echo "PATH= ${GITHUB_WORKSPACE}/src/hammer-shell:${PATH}" >> $GITHUB_ENV
+            echo "HAMMER_HOME=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
+            echo "HAMMER_VLSI=${GITHUB_WORKSPACE}/src/hammer-vlsi" >> $GITHUB_ENV
+            echo "HAMMER_CONFIG=${GITHUB_WORKSPACE}/src/hammer_config" >> $GITHUB_ENV
+            echo "PYTHONPATH=${GITHUB_WORKSPACE}/src" >> $GITHUB_ENV
+            echo "MYPYPATH=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
+            echo "PATH=${GITHUB_WORKSPACE}/src/hammer-shell:${PATH}" >> $GITHUB_ENV
         - name: Check Current Envs
           run: |
             ls 
-            echo "-------------------------"
+            echo $HAMMER_CONFIG
             echo $HAMMER_HOME
+            echo $HAMMER_VLSI
             echo $PYTHONPATH
         - name: script
           run: |
