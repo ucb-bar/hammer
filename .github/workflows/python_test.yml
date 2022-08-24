@@ -1,6 +1,6 @@
 name: run-python-tests
 on: 
-  push:
+  pull_request:
     branches:
       - ci_cd_debug
       - ci_cd_pr
