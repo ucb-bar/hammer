@@ -59,10 +59,10 @@ jobs:
             echo "PYTHONPATH= ${HAMMER_HOME}/src:${HAMMER_HOME}/src/jsonschema:${HAMMER_HOME}/src/python-jsonschema-objects:${HAMMER_HOME}/src/hammer-tech:${HAMMER_HOME}/src/hammer-vlsi:${PYTHONPATH}" >> $GITHUB_ENV
         - name: Check Current Envs
           run: |
-            echo ${env.hammer_config}
-            echo ${env.HAMMER_HOME}
-            echo ${env.HAMMER_VLSI}
-            echo ${env.PYTHONPATH}
+            echo $hammer_config
+            echo $HAMMER_HOME
+            echo $HAMMER_VLSI
+            echo $PYTHONPATH
         - name: script
           run: |
             cd ./src/test
