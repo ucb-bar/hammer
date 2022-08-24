@@ -61,6 +61,8 @@ jobs:
             echo "PATH= ${HAMMER_HOME}/src/hammer-shell:${PATH}" >> $GITHUB_ENV
         - name: Check Current Envs
           run: |
+            ls 
+            pwd
             echo $hammer_config
             echo $HAMMER_HOME
             echo $HAMMER_VLSI
