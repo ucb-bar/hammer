@@ -56,10 +56,9 @@ jobs:
             echo "HAMMER_HOME = ${GITHUB_WORKSPACE}" >> $GITHUB_ENV
             echo "HAMMER_VLSI= ${GITHUB_WORKSPACE}/src/hammer-vlsi" >> $GITHUB_ENV
             echo "hammer_config = ${GITHUB_WORKSPACE}/src/hammer_config" >> $GITHUB_ENV
-            echo "PYTHONPATH= ${HAMMER_HOME}/src:${HAMMER_HOME}/src/jsonschema:${HAMMER_HOME}/src/python-jsonschema-objects:${HAMMER_HOME}/src/hammer-tech:${HAMMER_HOME}/src/hammer-vlsi:${PYTHONPATH}" >> $GITHUB_ENV
+            echo "PYTHONPATH= ${HAMMER_HOME}/src" >> $GITHUB_ENV
             echo "MYPYPATH= ${PYTHONPATH}" >> $GITHUB_ENV
             echo "PATH= ${HAMMER_HOME}/src/hammer-shell:${PATH}" >> $GITHUB_ENV
-
         - name: Check Current Envs
           run: |
             echo $hammer_config
