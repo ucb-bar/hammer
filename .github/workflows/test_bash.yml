@@ -49,16 +49,20 @@ jobs:
           run: |
             python -m pip install --upgrade pip
             pip install pytest
+            pip install pyyaml
         - name: Check Relevant Directory
           run: ls -a
         - name: source_setup
+        #For hammer vlsi, do we use hammer_vlsi/hammer_vlsi or hammer_vlsi/hammer_utils?
           run: |
             echo "HAMMER_HOME=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
-            echo "HAMMER_VLSI=${GITHUB_WORKSPACE}/src/hammer-vlsi" >> $GITHUB_ENV
+            echo "HAMMER_VLSI=${GITHUB_WORKSPACE}/src/hammer-vlsi" >> $GITHUB_ENV 
+            echo "hammer_utils=${GITHUB_WORKSPACE}/src/hammer-vlsi/hammer_utils" >> $GITHUB_ENV 
             echo "HAMMER_CONFIG=${GITHUB_WORKSPACE}/src/hammer_config" >> $GITHUB_ENV
             echo "PYTHONPATH=${GITHUB_WORKSPACE}/src" >> $GITHUB_ENV
             echo "MYPYPATH=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
             echo "PATH=${GITHUB_WORKSPACE}/src/hammer-shell:${PATH}" >> $GITHUB_ENV
+            echo "HAMMER_PYYAML_PATH to pyyaml/lib3
         - name: Check Current Envs
           run: |
             ls 
