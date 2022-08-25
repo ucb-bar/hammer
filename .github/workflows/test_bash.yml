@@ -18,7 +18,7 @@ jobs:
         - name: Add Env variables
           run: |
             echo  "HAMMER_HOME = ${GITHUB_WORKSPACE}" >> $GITHUB_ENV
-            echo  "HAMMER_VLSI="${GITHUB_WORKSPACE}/src/hammer-vlsi"" >> $GITHUB_ENV
+            echo  "HAMMER_VLSI=${GITHUB_WORKSPACE}/src/hammer-vlsi" >> $GITHUB_ENV
         - name: Check Current Envs
           run: |
             echo $HAMMER_HOME
@@ -55,8 +55,8 @@ jobs:
         - name: source_setup
           run: |
             echo "HAMMER_HOME=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
-            echo "HAMMER_VLSI=${GITHUB_WORKSPACE}/src/hammer-vlsi" >> $GITHUB_ENV 
-            echo "hammer_utils=${GITHUB_WORKSPACE}/src/hammer-vlsi/hammer_utils" >> $GITHUB_ENV 
+            echo "HAMMER_VLSI=${GITHUB_WORKSPACE}/src/hammer-vlsi" >> $GITHUB_ENV
+            echo "hammer_utils=${GITHUB_WORKSPACE}/src/hammer-vlsi/hammer_utils" >> $GITHUB_ENV
             echo "HAMMER_CONFIG=${GITHUB_WORKSPACE}/src/hammer_config" >> $GITHUB_ENV
             echo "PYTHONPATH=${GITHUB_WORKSPACE}/src" >> $GITHUB_ENV
             echo "MYPYPATH=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
