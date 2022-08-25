@@ -53,7 +53,6 @@ jobs:
         - name: Check Relevant Directory
           run: ls -a
         - name: source_setup
-        #For hammer vlsi, do we use hammer_vlsi/hammer_vlsi or hammer_vlsi/hammer_utils?
           run: |
             echo "HAMMER_HOME=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
             echo "HAMMER_VLSI=${GITHUB_WORKSPACE}/src/hammer-vlsi" >> $GITHUB_ENV 
