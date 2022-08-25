@@ -61,7 +61,6 @@ jobs:
             echo "PYTHONPATH=${GITHUB_WORKSPACE}/src" >> $GITHUB_ENV
             echo "MYPYPATH=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
             echo "PATH=${GITHUB_WORKSPACE}/src/hammer-shell:${PATH}" >> $GITHUB_ENV
-            echo "HAMMER_PYYAML_PATH to pyyaml/lib3
         - name: Check Current Envs
           run: |
             ls 
