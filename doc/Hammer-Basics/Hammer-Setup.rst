@@ -5,11 +5,9 @@ Hammer has a few requirements and there are several environment variables to set
 
 System Requirements
 -----------------------------
-- Python 3.6+ recommended (minimum Python 3.3+)
+- Python 3.6+ required
 
--- For Python 3.4 and lower, the ``typing`` module must be installed. (``python3 -m pip install typing``)
-
--- For Python 3.4, the enum34 package must be installed. (``python3 -m pip install enum34``)
+- The ``ruamel.yaml`` package is recommended for key history (``pip install ruamel.yaml``)
 
 - python3 in the $PATH
 
