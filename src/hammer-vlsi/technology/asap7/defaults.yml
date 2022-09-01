@@ -6,7 +6,7 @@ technology.asap7:
   pdk_install_dir: "${technology.asap7.tarball_dir}/asap7PDK_r1p7"
   pdk_install_dir_meta: lazysubst
   # Path to the directory containing the standard cell collateral
-  stdcell_install_dir: "${technology.asap7.tarball_dir}/asap7sc7p5t_27"
+  stdcell_install_dir: "${technology.asap7.tarball_dir}/asap7sc7p5t_28"
   stdcell_install_dir_meta: lazysubst
 
 # Set some defaults for this technology.
