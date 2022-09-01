@@ -35,165 +35,6 @@ class ASAP7Tech(HammerTechnology):
                 self.logger.error("Check your gdspy v1.4 installation! Unable to hack ASAP7 PDK.")
                 shutil.rmtree(self.cache_dir)
                 sys.exit()
-        self.generate_multi_vt_gds()
-        self.fix_icg_libs()
-
-    def generate_multi_vt_gds(self) -> None:
-        """
-        PDK GDS only contains RVT cells.
-        This patch will generate the other 3(LVT, SLVT, SRAM) VT GDS files.
-        """
-        try:
-            os.makedirs(os.path.join(self.cache_dir, "GDS"))
-        except:
-            self.logger.info("Multi-VT GDS's already created")
-            return None
-
-        try:
-            self.logger.info("Generating GDS for Multi-VT cells using {}...".format(self.gds_tool.__name__))
-
-            stdcell_dir = self.get_setting("technology.asap7.stdcell_install_dir")
-            orig_gds = os.path.join(stdcell_dir, "GDS/asap7sc7p5t_27_R_201211.gds")
-
-            if self.gds_tool.__name__ == 'gdstk':
-                # load original GDS
-                asap7_original_gds = self.gds_tool.read_gds(infile=orig_gds)
-                original_cells = asap7_original_gds.cells
-                cell_list = list(map(lambda c: c.name, original_cells))
-                # required libs
-                multi_libs = {
-                    "L": {
-                        "lib": self.gds_tool.Library(),
-                        "mvt_layer": 98
-                        },
-                    "SL": {
-                        "lib": self.gds_tool.Library(),
-                        "mvt_layer": 97
-                        },
-                    "SRAM": {
-                        "lib": self.gds_tool.Library(),
-                        "mvt_layer": 110
-                        },
-                }
-                # create new libs
-                for vt, multi_lib in multi_libs.items():
-                    multi_lib['lib'].name = asap7_original_gds.name.replace('R', vt)
-
-                for cell in original_cells:
-                    # extract polygon from layer 100(the boundary for cell)
-                    boundary_polygon = next(filter(lambda p: p.layer==100, cell.polygons))
-                    for vt, multi_lib in multi_libs.items():
-                        new_cell_name = cell.name.rstrip('R') + vt
-                        cell_list.append(new_cell_name)
-                        mvt_layer = multi_lib['mvt_layer']
-                        # copy boundary_polygon to mvt_layer to mark the this cell is a mvt cell.
-                        mvt_polygon = self.gds_tool.Polygon(boundary_polygon.points, multi_lib['mvt_layer'], 0)
-                        mvt_cell = cell.copy(name=new_cell_name, deep_copy=True).add(mvt_polygon)
-                        # add mvt_cell to corresponding multi_lib
-                        multi_lib['lib'].add(mvt_cell)
-
-                for vt, multi_lib in multi_libs.items():
-                    # write multi_lib
-                    new_gds = os.path.basename(orig_gds).replace('R', vt)
-                    multi_lib['lib'].write_gds(os.path.join(self.cache_dir, 'GDS', new_gds))
-
-            elif self.gds_tool.__name__ == 'gdspy':
-                # load original GDS
-                asap7_original_gds = self.gds_tool.GdsLibrary().read_gds(infile=orig_gds, units='import')
-                original_cells = asap7_original_gds.cell_dict
-                cell_list = list(map(lambda c: c.name, original_cells.values()))
-                # required libs
-                multi_libs = {
-                    "L": {
-                        "lib": self.gds_tool.GdsLibrary(),
-                        "mvt_layer": 98
-                        },
-                    "SL": {
-                        "lib": self.gds_tool.GdsLibrary(),
-                        "mvt_layer": 97
-                        },
-                    "SRAM": {
-                        "lib": self.gds_tool.GdsLibrary(),
-                        "mvt_layer": 110
-                        },
-                }
-                # create new libs
-                for vt, multi_lib in multi_libs.items():
-                    multi_lib['lib'].name = asap7_original_gds.name.replace('R', vt)
-
-                for cell in original_cells.values():
-                    poly_dict = cell.get_polygons(by_spec=True)
-                    # extract polygon from layer 100(the boundary for cell)
-                    boundary_polygon = poly_dict[(100, 0)]
-                    for vt, multi_lib in multi_libs.items():
-                        new_cell_name = cell.name.rstrip('R') + vt
-                        cell_list.append(new_cell_name)
-                        mvt_layer = multi_lib['mvt_layer']
-                        # copy boundary_polygon to mvt_layer to mark the this cell is a mvt cell.
-                        mvt_polygon = self.gds_tool.PolygonSet(boundary_polygon, multi_lib['mvt_layer'], 0)
-                        mvt_cell = cell.copy(name=new_cell_name, exclude_from_current=True, deep_copy=True).add(mvt_polygon)
-                        # add mvt_cell to corresponding multi_lib
-                        multi_lib['lib'].add(mvt_cell)
-
-                for vt, multi_lib in multi_libs.items():
-                    # write multi_lib
-                    new_gds = os.path.basename(orig_gds).replace('R', vt)
-                    multi_lib['lib'].write_gds(os.path.join(self.cache_dir, 'GDS', new_gds))
-
-            # Write out cell list for scaling script
-            with open(os.path.join(self.cache_dir, 'stdcells.txt'), 'w') as f:
-                f.writelines('{}\n'.format(cell) for cell in cell_list)
-
-        except:
-            os.rmdir(os.path.join(self.cache_dir, "GDS"))
-            self.logger.error("GDS patching failed! Check your gdstk, gdspy, and/or ASAP7 PDK installation.")
-            sys.exit()
-
-    def fix_icg_libs(self) -> None:
-        """
-        ICG cells are missing statetable.
-        """
-        try:
-            os.makedirs(os.path.join(self.cache_dir, "LIB/NLDM"))
-        except:
-            self.logger.info("ICG LIBs already fixed")
-            return None
-
-        try:
-            self.logger.info("Fixing ICG LIBs...")
-            statetable_text = "\\n".join([
-               '\    statetable ("CLK ENA SE", "IQ") {',
-                '      table : "L L L : - : L ,  L L H : - : H , L H L : - : H , L H H : - : H , H - - : - : N ";',
-                '    }'])
-            gclk_func = "CLK & IQ"
-            lib_dir = os.path.join(self.get_setting("technology.asap7.stdcell_install_dir"), "LIB/NLDM")
-            old_libs = glob.glob(os.path.join(lib_dir, "*SEQ*"))
-            new_libs = list(map(lambda l: os.path.join(self.cache_dir, "LIB/NLDM", os.path.basename(l)), old_libs))
-
-            for olib, nlib in zip(old_libs, new_libs):
-                # Use gzip and sed directly rather than gzip python module
-                # Add the statetable to ICG cells
-                # Change function to state_function for pin GCLK
-                subprocess.call(["gzip -cd {olib} | sed '/ICGx*/a {stbl}' | sed '/CLK & IQ/s/function/state_function/g' | gzip > {nlib}".format(olib=olib, stbl=statetable_text, nlib=nlib)], shell=True)
-        except:
-            os.rmdir(os.path.join(self.cache_dir, "LIB/NLDM"))
-            os.rmdir(os.path.join(self.cache_dir, "LIB"))
-            self.logger.error("Failed to fix ICG LIBs. Check your ASAP7 installation!")
-            sys.exit()
-
-    def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
-        hooks = {"innovus": [
-            HammerTool.make_post_persistent_hook("init_design", asap7_innovus_settings),
-            HammerTool.make_post_insertion_hook("floorplan_design", asap7_update_floorplan),
-            HammerTool.make_post_insertion_hook("write_design", asap7_scale_final_gds)
-            ]}
-        return hooks.get(tool_name, [])
-
-    def get_tech_drc_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
-        hooks = {"calibre": [
-            HammerTool.make_replacement_hook("generate_drc_run_file", asap7_generate_drc_run_file)
-            ]}
-        return hooks.get(tool_name, [])
 
 def asap7_innovus_settings(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
@@ -244,16 +85,13 @@ def asap7_scale_final_gds(ht: HammerTool) -> bool:
     Scale the final GDS by a factor of 4
     scale_gds_script writes the actual Python script to execute from the Tcl interpreter
     """
-    # This is from the Cadence tools
-    cadence_output_gds_name = ht.output_gds_filename  # type: ignore
-
     ht.append('''
 # Innovus <19.1 appends some bad LD_LIBRARY_PATHS, so remove them before executing python
 set env(LD_LIBRARY_PATH) [join [lsearch -not -all -inline [split $env(LD_LIBRARY_PATH) ":"] "*INNOVUS*"] ":"]
 {scale_script} {stdcells_file} {gds_file}
 '''.format(scale_script = os.path.join(os.path.dirname(__file__), 'gds_scale.py'),
            stdcells_file = os.path.join(ht.technology.cache_dir, 'stdcells.txt'),
-           gds_file = cadence_output_gds_name))
+           gds_file = ht.output_gds_filename))
     return True
 
 def asap7_generate_drc_run_file(ht: HammerTool) -> bool:
@@ -263,17 +101,12 @@ def asap7_generate_drc_run_file(ht: HammerTool) -> bool:
     Replace drc_run_file to prevent conflicting SVRF statements
     Symlink DRC GDS to test.gds as expected by deck and results directories
     """
-    # These are from the Calibre tools
-    ht_drc_run_file = ht.drc_run_file  # type: ignore
-    ht_max_drc_results = ht.max_drc_results  # type: ignore
-    ht_virtual_connect_colon = ht.virtual_connect_colon  # type: ignore
-
     new_layout_file = os.path.join(ht.run_dir, 'test.gds')
     if not os.path.lexists(new_layout_file):
         os.symlink(os.path.splitext(ht.layout_file)[0] + '_drc.gds', new_layout_file)
     ht.layout_file = new_layout_file
 
-    with open(ht_drc_run_file, "w") as f:
+    with open(ht.drc_run_file, "w") as f:
         f.write(textwrap.dedent("""
         // Generated by HAMMER
 
@@ -285,8 +118,8 @@ def asap7_generate_drc_run_file(ht: HammerTool) -> bool:
         VIRTUAL CONNECT COLON {virtual_connect}
         VIRTUAL CONNECT REPORT NO
         """).format(
-            max_results=ht_max_drc_results,
-            virtual_connect="YES" if ht_virtual_connect_colon else "NO"
+            max_results=ht.max_drc_results,
+            virtual_connect="YES" if ht.virtual_connect_colon else "NO"
         )
         )
         # Include paths to all supplied decks
