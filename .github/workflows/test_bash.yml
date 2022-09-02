@@ -77,11 +77,11 @@ jobs:
           run: |
             cd ./src/test
             ./unittests.sh
-            echo "VALUE = $?" >> $GITHUB_ENV.RESULT
+            echo "RESULT = $?" >> $GITHUB_ENV
 
     end_condition:
       runs-on: ubuntu-latest
-      if: $GITHUB_ENV.RESULT == "0"
+      if: $RESULT == "0"
       steps:
         - name: "Success!"
           run: |
