@@ -55,6 +55,7 @@ jobs:
             pip install pytest
             pip install pyyaml
             pip install python-jsonschema-objects
+            pip install coverage
         - name: Check Relevant Directory
           run: ls -a
         - name: source_setup

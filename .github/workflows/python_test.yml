@@ -35,6 +35,7 @@ jobs:
           pip install pytest
           pip install pyyaml
           pip install python-jsonschema-objects
+          pip install mypy
       - name: source_setup
         run: |
           echo "HAMMER_HOME=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
@@ -55,7 +56,7 @@ jobs:
       - name: Run mypy exclusions
         if: always()
         run: |
-          ./src/test/mypy_with_exclusions
+          ./src/test/mypy_with_exclusions.sh
 
 
 
