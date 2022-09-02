@@ -81,7 +81,7 @@ jobs:
 
     end_condition:
       runs-on: ubuntu-latest
-      if: env.RESULT == "0"
+      if: ${{env.RESULT == "0"}}
       steps:
         - name: "Success!"
           run: |
