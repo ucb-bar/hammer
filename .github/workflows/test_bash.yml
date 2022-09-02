@@ -78,16 +78,12 @@ jobs:
             cd ./src/test
             ./unittests.sh
             echo "RESULT = $?" >> $GITHUB_ENV
+    end_condition:
+      runs-on: ubuntu-latest
+      steps:
         - name: print res
           run: |
             echo $RESULT
 
-    # end_condition:
-    #   runs-on: ubuntu-latest
-    #   if: ${{ env.RESULT == "0" }}
-    #   steps:
-    #     - name: "Success!"
-    #       run: |
-    #         echo "push succesful!"
 
 
