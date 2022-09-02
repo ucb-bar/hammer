@@ -43,7 +43,7 @@ jobs:
           echo "hammer_utils=${GITHUB_WORKSPACE}/src/hammer-vlsi/hammer_utils" >> $GITHUB_ENV
           echo "HAMMER_CONFIG=${GITHUB_WORKSPACE}/src/hammer_config" >> $GITHUB_ENV
           echo "PYTHONPATH=${GITHUB_WORKSPACE}/src:${GITHUB_WORKSPACE}/src/jsonschema:${GITHUB_WORKSPACE}/src/python-jsonschema-objects:${GITHUB_WORKSPACE}/src/hammer-tech:${GITHUB_WORKSPACE}/src/hammer-vlsi:${PYTHONPATH}" >> $GITHUB_ENV
-          echo "MYPYPATH=${GITHUB_WORKSPACE}/src:${GITHUB_WORKSPACE}/src/jsonschema:${GITHUB_WORKSPACE}/src/python-jsonschema-objects:${GITHUB_WORKSPACE}/src/hammer-tech:${GITHUB_WORKSPACE}/src/hammer-vlsi:${PYTHONPATH}" >> $GITHUB_ENV
+          echo "MYPYPATH=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}/src/jsonschema:${GITHUB_WORKSPACE}/src/python-jsonschema-objects:${GITHUB_WORKSPACE}/src/hammer-tech:${GITHUB_WORKSPACE}/src/hammer-vlsi:${PYTHONPATH}" >> $GITHUB_ENV
           echo "PATH=${GITHUB_WORKSPACE}/src/hammer-shell:${PATH}" >> $GITHUB_ENV
       - name: check $PWD
         run: |
