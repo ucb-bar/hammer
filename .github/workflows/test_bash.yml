@@ -76,13 +76,12 @@ jobs:
             echo $PYTHONPATH
         - name: script
           run: |
-            ./unittests.sh
+            cd ./src/test && ./unittests.sh
             echo "RESULT = $?" >> $GITHUB_ENV
         #pwd is not maintained between steps...
         - name: run coverage
           if: always()
           run: |
-            pwd
             cd ./src/test && ./coverage.sh
         - name: Print result
           if: always()
