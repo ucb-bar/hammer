@@ -165,7 +165,6 @@ class HammerSlurmSettings(NamedTuple('HammerSlurmSettings', [
     ('srun_binary', str),
     ('num_cpus', Optional[int]),
     ('partition', Optional[str]),
-    ('log_file', Optional[str]),
     ('extra_args', List[str])
 ])):
     __slots__ = ()
@@ -187,10 +186,6 @@ class HammerSlurmSettings(NamedTuple('HammerSlurmSettings', [
         except KeyError:
             partition = None
         try:
-            log_file = settings["log_file"]
-        except KeyError:
-            log_file = None
-        try:
             extra_args = settings["extra_args"]
         except KeyError:
             extra_args = []
@@ -199,12 +194,14 @@ class HammerSlurmSettings(NamedTuple('HammerSlurmSettings', [
             srun_binary=srun_binary,
             num_cpus=num_cpus,
             partition=partition,
-            log_file=log_file,
             extra_args=extra_args
         )
 
 
 class HammerSlurmSubmitCommand(HammerSubmitCommand):
+
+    # TODO use --output to set logfile AND have stdout/stderr output
+    #      Currently there is no option to specify a log file.
 
     @property
     def settings(self) -> HammerSlurmSettings:
@@ -226,7 +223,6 @@ class HammerSlurmSubmitCommand(HammerSubmitCommand):
 
     def srun_args(self) -> List[str]:
         args = [self.settings.srun_binary]
-        args.extend(["--output", self.settings.log_file if self.settings.log_file is not None else "slurm-jobid-%j.log"])
         if self.settings.partition is not None:
             args.extend(["--partition", self.settings.partition])
         if self.settings.num_cpus is not None:
@@ -236,8 +232,6 @@ class HammerSlurmSubmitCommand(HammerSubmitCommand):
 
     def submit(self, args: List[str], env: Dict[str, str],
                logger: HammerVLSILoggingContext, cwd: str = None) -> str:
-        # TODO fix output capturing
-
         prog_tag = self.get_program_tag(args)
 
         subprocess_format_str = 'Executing subprocess: {srun_args} {args}'
