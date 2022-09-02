@@ -75,14 +75,13 @@ jobs:
             echo $HAMMER_VLSI
             echo $PYTHONPATH
         - name: script
-          if: always()
           run: |
-            ./src/test/unittests.sh
+            cd ./src/test && ./unittests.sh
             echo "RESULT = $?" >> $GITHUB_ENV
         - name: run coverage
           if: always()
           run: |
-            ./src/test/coverage.sh
+            ./coverage.sh
         - name: Print result
           if: always()
           run: |
