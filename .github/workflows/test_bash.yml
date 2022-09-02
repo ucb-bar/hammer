@@ -35,6 +35,8 @@ jobs:
       steps:
         - name: Setup_for_Repository
           uses: actions/checkout@v2
+        - name: Update submodules
+          uses: #here update json_schema_objects
         - name: Check Current Repository
           run: ls -a
         - if: 3.4 == ${{matrix.python-version}}
@@ -50,6 +52,7 @@ jobs:
             python -m pip install --upgrade pip
             pip install pytest
             pip install pyyaml
+            pip install python-jsonschema-objects
         - name: Check Relevant Directory
           run: ls -a
         - name: source_setup
@@ -58,7 +61,6 @@ jobs:
             echo "HAMMER_VLSI=${GITHUB_WORKSPACE}/src/hammer-vlsi" >> $GITHUB_ENV
             echo "hammer_utils=${GITHUB_WORKSPACE}/src/hammer-vlsi/hammer_utils" >> $GITHUB_ENV
             echo "HAMMER_CONFIG=${GITHUB_WORKSPACE}/src/hammer_config" >> $GITHUB_ENV
-            echo "HAMMER_PYYAML_PATH=pyyaml/lib3"
             echo "PYTHONPATH=${GITHUB_WORKSPACE}/src:${GITHUB_WORKSPACE}/src/jsonschema:${GITHUB_WORKSPACE}/src/python-jsonschema-objects:${GITHUB_WORKSPACE}/src/hammer-tech:${GITHUB_WORKSPACE}/src/hammer-vlsi:${PYTHONPATH}" >> $GITHUB_ENV
             echo "MYPYPATH=${GITHUB_WORKSPACE}/src:${GITHUB_WORKSPACE}/src/jsonschema:${GITHUB_WORKSPACE}/src/python-jsonschema-objects:${GITHUB_WORKSPACE}/src/hammer-tech:${GITHUB_WORKSPACE}/src/hammer-vlsi:${PYTHONPATH}" >> $GITHUB_ENV
             echo "PATH=${GITHUB_WORKSPACE}/src/hammer-shell:${PATH}" >> $GITHUB_ENV
