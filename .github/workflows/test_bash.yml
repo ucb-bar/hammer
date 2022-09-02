@@ -79,6 +79,7 @@ jobs:
             ./unittests.sh
             echo "RESULT = $?" >> $GITHUB_ENV
     end_condition:
+      needs: [bash_initial_setup]
       runs-on: ubuntu-latest
       steps:
         - name: print res
