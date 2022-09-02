@@ -52,11 +52,11 @@ jobs:
       - name: Run mypy tests
         if: always()
         run: |
-          ./src/test/mypy.sh
+          $GITHUB_WORKSAPCE/src/test/mypy.sh
       - name: Run mypy exclusions
         if: always()
         run: |
-          ./src/test/mypy_with_exclusions.sh
+          $GITHUB_WORKSAPCE/src/test/mypy_with_exclusions.sh
 
 
 
