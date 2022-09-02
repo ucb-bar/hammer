@@ -10,9 +10,11 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
-        python-version: [3.9] #Ask if any version is okay to Harrison
+        python-version: [3.9] 
+        experimental: [true]
     steps:
         # Checkout the latest code from the repo
       - name: Checkout repo
@@ -46,6 +48,13 @@ jobs:
         run: |
           ls -a 
           pwd
-      - name: Run tests
-        run: ./src/test/pylintrc.py
+      - name: Run mypy tests
+        run: |
+          ./src/test/mypy.sh
+      - name: Run mypy exclusions
+        run: |
+          ./src/test/mypy_with_exclusions
+
+
+
 

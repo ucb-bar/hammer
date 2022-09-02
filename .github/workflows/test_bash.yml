@@ -75,9 +75,11 @@ jobs:
             echo $PYTHONPATH
         - name: script
           run: |
-            cd ./src/test
-            ./unittests.sh
+            ./src/test/unittests.sh
             echo "RESULT = $?" >> $GITHUB_ENV
+        - name: run coverage
+          run: |
+            ./src/test/coverage.sh
         - name: Print result
           if: always()
           run: |
