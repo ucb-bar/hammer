@@ -36,7 +36,7 @@ jobs:
         - name: Setup_for_Repository
           uses: actions/checkout@v2
         - name: Update submodules
-          uses: #here update json_schema_objects
+          run: git submodule update
         - name: Check Current Repository
           run: ls -a
         - if: 3.4 == ${{matrix.python-version}}
