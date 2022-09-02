@@ -27,9 +27,11 @@ jobs:
     bash_initial_setup:
       needs: [bash_test_env]
       runs-on: ubuntu-latest
+      continue-on-error: ${{ matrix.experimental }}
       strategy:
         matrix:
           python-version: [3.5, 3.6, 3.7, 3.8, 3.9] 
+          experimental: [true]
           #Version 3.4 not on x64, so skipping 3.4 for now.
           os: [ubuntu-latest] #add red hat 7 here
       steps:
@@ -75,24 +77,14 @@ jobs:
           run: |
             cd ./src/test
             ./unittests.sh
-            echo $?
-#    bash_setup_check:
-#     runs-on: ubuntu-latest
-#      needs: [checkout, bash_initial_setup]
-#      env:
-#         HAMMER_HOME: $HOME
-#      strategy:
-#        matrix:
-#          python-version: [3.6, 3.7, 3.8, 3.9]
-#      steps:
- #       - name: git_submodule
-  #        run: |
-  #          git submodule update --init --recursive
-  #      - name: source_and_cd
-   #       run: |
-    #        source sourceme.sh
-      #      cd src
-    #    - name: tests
-     #     run: |
-     #       ./unittests.sh
-      #      echo $?
+            echo "VALUE = $?" >> $GITHUB_ENV.RESULT
+
+    end_condition:
+      runs-on: ubuntu-latest
+      if: $RESULT == "0"
+      steps:
+        - name: "Success!"
+          run: |
+            echo "push succesful!"
+
+
