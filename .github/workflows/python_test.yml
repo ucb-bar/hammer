@@ -44,7 +44,6 @@ jobs:
           echo "PATH=${GITHUB_WORKSPACE}/src/hammer-shell:${PATH}" >> $GITHUB_ENV
       - name: check $PWD
         run: |
-          cd ${{GITHUB_WORKSPACE}}
           ls -a 
           pwd
       - name: Run tests
