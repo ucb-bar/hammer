@@ -43,6 +43,7 @@ jobs:
           echo "MYPYPATH=${GITHUB_WORKSPACE}/src:${GITHUB_WORKSPACE}/src/jsonschema:${GITHUB_WORKSPACE}/src/python-jsonschema-objects:${GITHUB_WORKSPACE}/src/hammer-tech:${GITHUB_WORKSPACE}/src/hammer-vlsi:${PYTHONPATH}" >> $GITHUB_ENV
           echo "PATH=${GITHUB_WORKSPACE}/src/hammer-shell:${PATH}" >> $GITHUB_ENV
       - name: check $PWD
+        run: |
           cd ${{GITHUB_WORKSPACE}}
           ls -a 
           pwd
