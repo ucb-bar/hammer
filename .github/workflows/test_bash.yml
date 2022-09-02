@@ -30,7 +30,7 @@ jobs:
       continue-on-error: ${{ matrix.experimental }}
       strategy:
         matrix:
-          python-version: [3.5, 3.6, 3.7, 3.8, 3.9] 
+          python-version: [3.9]  # Lowered num of versions for less overhead during testing.
           experimental: [true]
           #Version 3.4 not on x64, so skipping 3.4 for now.
           os: [ubuntu-latest] #add red hat 7 here
