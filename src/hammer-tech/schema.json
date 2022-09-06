@@ -147,6 +147,9 @@
             "title" : "TLUPlusMapFile",
             "type" : "string"
           },
+          "tluplus tech file": {
+            "type" : "string"
+          },
           "verilog sim" : {
             "type" : "string"
           },

@@ -120,7 +120,6 @@ class LibraryFilterHolder:
         """
 
         def paths_func(lib: "Library") -> List[str]:
-            print(f"socv_filter_paths_func:{lib},{lib.socv_library_file}")
             if lib.socv_library_file is not None:
                 return [lib.socv_library_file]
             else:
@@ -287,6 +286,16 @@ class LibraryFilterHolder:
             else:
                 return []
         return LibraryFilter.new("tlu_map", "TLU+ map file", is_file=True, paths_func=select_tlu_map_file)
+
+    @property
+    def tlu_tech_file_filter(self) -> LibraryFilter:
+        """Select TLU+ tech files."""
+        def select_tlu_tech_file(lib: "Library") -> List[str]:
+            if lib.tluplus_tech_file is not None:
+                return [lib.tluplus_tech_file]
+            else:
+                return []
+        return LibraryFilter.new("tlu_tech", "TLU+ tech file", is_file=True, paths_func=select_tlu_tech_file)
 
     @property
     def spice_model_file_filter(self) -> LibraryFilter:
