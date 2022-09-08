@@ -11,11 +11,11 @@ try:
     import yaml
 except ImportError:
     try:
-        sys.path.append("src/tools/pyyaml/lib3")
+        sys.path.append("src/tools/pyyaml/lib")
         import yaml
     except ImportError:
         if "HAMMER_PYYAML_PATH" not in os.environ:
-            print("pyyaml not found. Set $HAMMER_PYYAML_PATH to pyyaml/lib3", file=sys.stderr)
+            print("pyyaml not found. Set $HAMMER_PYYAML_PATH to pyyaml/lib", file=sys.stderr)
             sys.exit(1)
         else:
             sys.path.append(os.environ["HAMMER_PYYAML_PATH"])

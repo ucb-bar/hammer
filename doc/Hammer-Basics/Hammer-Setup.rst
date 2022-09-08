@@ -17,7 +17,7 @@ System Requirements
 
 - hammer_config, python-jsonschema-objects, hammer-tech, hammer-vlsi in $PYTHONPATH
 
-- HAMMER_PYYAML_PATH set to pyyaml/lib3 or pyyaml in $PYTHONPATH
+- HAMMER_PYYAML_PATH set to pyyaml/lib or pyyaml in $PYTHONPATH
 
 - HAMMER_HOME set to hammer repo root
 
