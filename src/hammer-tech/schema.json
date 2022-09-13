@@ -150,6 +150,9 @@
           "tluplus tech file": {
             "type" : "string"
           },
+          "nxtgrd file": {
+            "type" : "string"
+          },
           "verilog sim" : {
             "type" : "string"
           },

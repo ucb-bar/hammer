@@ -298,6 +298,16 @@ class LibraryFilterHolder:
         return LibraryFilter.new("tlu_tech", "TLU+ tech file", is_file=True, paths_func=select_tlu_tech_file)
 
     @property
+    def nxtgrd_file_filter(self) -> LibraryFilter:
+        """ Select NxtGrd tech files."""
+        def select_nxtgrd_file(lib: "Library") -> List[str]:
+            if lib.nxtgrd_file is not None:
+                return [lib.nxtgrd_file]
+            else:
+                return []
+        return LibraryFilter.new("nxtgrd", "NxtGrd file", is_file=True, paths_func=select_nxtgrd_file)
+
+    @property
     def spice_model_file_filter(self) -> LibraryFilter:
         """Select spice model files."""
         def select_spice_model_file(lib: "Library") -> List[str]:
