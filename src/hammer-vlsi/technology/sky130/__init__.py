@@ -32,8 +32,6 @@ class SKY130Tech(HammerTechnology):
         self.setup_verilog()
         self.setup_techlef()
         self.setup_lvs_deck()
-        self.setup_sram_spice()
-        self.setup_sram_lef()
         print('Loaded Sky130 Tech')
 
 
@@ -151,7 +149,7 @@ class SKY130Tech(HammerTechnology):
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {
             "openroad": [
-            HammerTool.make_pre_insertion_hook("place_opt_design",   sky130_set_wire_rc)
+            HammerTool.make_pre_insertion_hook("detailed_placement",   sky130_set_wire_rc)
             ],
             "innovus": [
             HammerTool.make_post_insertion_hook("init_design",      sky130_innovus_settings),
@@ -184,6 +182,29 @@ class SKY130Tech(HammerTechnology):
             "sky130_sram_1kbyte_1rw1r_8x1024_8",
             "sky130_sram_2kbyte_1rw1r_32x512_8"
         ]
+
+    # def setup_sram_verilog(self) -> None:
+    #     """ Move 'mem' declaration before it is used. """
+    #     if not self.use_openram: return
+    #     for sram_name in self.openram_sram_names():
+    #         source_path = Path(self.get_setting("technology.sky130.openram_lib")) / sram_name / f"{sram_name}.v"
+    #         dest_path = self.expand_tech_cache_path(f'tech-sky130-cache/{sram_name}/{sram_name}.v')
+    #         if not source_path.exists():
+    #             raise FileNotFoundError(f"SRAM Spice file not found: {source_path}")
+    #         self.ensure_dirs_exist(dest_path)
+    #         with open(source_path,'r') as sf:
+    #             with open(dest_path,'w') as df:
+    #                 self.logger.info("Modifying SRAM Verilog deck: {} -> {}".format
+    #                     (source_path, dest_path))
+    #                 lines = sf.readlines()
+    #                 insert_idx = 0
+    #                 for i,line in enumerate(lines):
+    #                     if insert_idx == 0 and line.strip().startswith('always'):
+    #                         insert_idx = i
+    #                     elif line.strip() == "reg [DATA_WIDTH-1:0]    mem [0:RAM_DEPTH-1];":
+    #                         lines.pop(i)
+    #                         lines.insert(insert_idx,line)
+    #                 df.write(''.join(lines))
 
     def setup_sram_spice(self) -> None:
         if not self.use_openram: return
