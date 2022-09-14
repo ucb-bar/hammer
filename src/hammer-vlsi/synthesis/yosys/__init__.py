@@ -207,7 +207,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
                 # puts_cmd = line.replace('#','')
                 puts_cmd = line.strip("\\ ") # remove leading/trailing characters
                 if puts_cmd != "":
-                    verbose_commands.append(f'{indent}puts "{puts_cmd}"')
+                    verbose_commands.append(f'{indent}puts "[hammer] {puts_cmd}"')
             verbose_commands.append(line)
             prev_line = line
         self.append('\n'.join(verbose_commands), clean=True)
