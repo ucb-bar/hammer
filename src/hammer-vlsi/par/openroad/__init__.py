@@ -181,35 +181,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         stdfillers = self.technology.get_special_cell_by_type(CellType.StdFiller)
         return ' '.join(list(map(lambda c: str(c), stdfillers[0].name)))
 
-    
-    def block_append(self,commands) -> bool:
-        verbose_commands = []
-        if len(commands[0].strip()) == 0:
-            commands = commands[1:]
-        prev_line = ""
-        for line in commands.split('\n'):
-            # add "verbose" statement
-            if not (('"' in line) or (line is "") or '\\' in prev_line or ('#' in line)):
-                indent_len = len(line) - len(line.lstrip())
-                indent = ' ' * indent_len
-                # puts_cmd = line.replace('#','')
-                puts_cmd = line.strip("\\ ") # remove leading/trailing characters
-                if puts_cmd != "":
-                    verbose_commands.append(f'{indent}puts "[hammer] {puts_cmd}"')
-            verbose_commands.append(line)
-            prev_line = line
-        self.append('\n'.join(verbose_commands), clean=True)
-        return True
-
-    # def block_append(self,commands,file=None) -> bool:
-    #     if file is None:
-    #         for line in commands.split('\n'):
-    #             self.append(line.strip())
-    #     else:
-    #         for line in commands.split('\n'):
-    #             file.write(line.strip())
-    #             file.write('\n')
-    #     return True
 
     def fill_outputs(self) -> bool:
         # TODO: no support for ILM
@@ -268,10 +239,13 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                 """.format(run_dir=self.run_dir, open_chip_tcl=self.open_chip_tcl))
         os.chmod(self.open_chip_script, 0o755)
 
+        num_threads = str(self.get_setting("vlsi.core.max_threads"))
+
         # Build args.
         args = [
             self.get_setting("par.openroad.openroad_bin"),
             "-no_init",             # do not read .openroad init file
+            "-threads", num_threads,
             "-exit",                # exit after reading par_tcl_filename
             par_tcl_filename
         ]
@@ -417,14 +391,13 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         # Floorplan Design
 
         # Init floorplan + Place Macros
-        source -echo -verbose {floorplan_tcl}
+        source -verbose {floorplan_tcl}
 
         # Make tracks
-        # create routing tracks
-        """)
+        # create routing tracks""")
         self.append(self.generate_make_tracks_tcl())
         self.block_append(f"""
-
+        
         # remove buffers inserted by synthesis 
         remove_buffers
 
@@ -1207,12 +1180,14 @@ pdngen::specify_grid macro {{
                 # for OpenROAD
                 elif constraint.type in [PlacementConstraintType.HardMacro, PlacementConstraintType.Hierarchical]:
                     inst_name=new_path
+                    floorplan_cmd = f"place_cell -inst_name {inst_name} -origin {{ {constraint.x} {constraint.y} }} -orient {orientation} -status FIRM"
+                    
                     output.append("# only place macro if it is present in design")
-                    output.append('if {[[set block [ord::get_db_block]] findInst {inst_name}] == "NULL"} {'.format(inst_name))
-                    output.append(f'  puts "[ERROR] Cell/macro {inst_name} not found!')
-                    output.append("}")
-                    output.append("else {")
-                    output.append(f"  place_cell -inst_name {inst_name} -origin {{ {constraint.x} {constraint.y} }} -orient {orientation} -status FIRM")
+                    output.append(f'if {{[[set block [ord::get_db_block]] findInst {inst_name}] == "NULL"}} {{')
+                    output.append(f'  puts "(ERROR) Cell/macro {inst_name} not found!"')
+                    output.append("} else {")
+                    output.append(f'  puts "{floorplan_cmd}"')
+                    output.append(f"  {floorplan_cmd}")
                     output.append("}")
                     # TODO: add place_cell option [-status (PLACED|FIRM)]
                     spacing = self.get_setting("par.blockage_spacing")

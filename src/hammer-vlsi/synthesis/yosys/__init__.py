@@ -194,25 +194,6 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
                 f.write("set_load 5\n")
         return True
 
-    def block_append(self,commands) -> bool:
-        verbose_commands = []
-        if len(commands[0].strip()) == 0:
-            commands = commands[1:]
-        prev_line = ""
-        for line in commands.split('\n'):
-            # add "verbose" statement
-            if not (('"' in line) or (line is "") or '\\' in prev_line or ('#' in line)):
-                indent_len = len(line) - len(line.lstrip())
-                indent = ' ' * indent_len
-                # puts_cmd = line.replace('#','')
-                puts_cmd = line.strip("\\ ") # remove leading/trailing characters
-                if puts_cmd != "":
-                    verbose_commands.append(f'{indent}puts "[hammer] {puts_cmd}"')
-            verbose_commands.append(line)
-            prev_line = line
-        self.append('\n'.join(verbose_commands), clean=True)
-        return True
-
     #========================================================================
     # synthesis main steps
     #========================================================================
@@ -371,19 +352,25 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
 
     def generate_reports(self) -> bool:
         # TODO: generate all reports (will probably need to parse the log file)
-        self.append(f'tee -o "{self.run_dir}/{self.top_module}.synth_check.rpt" check')
-        self.append(f'tee -o "{self.run_dir}/{self.top_module}.synth_stat.txt" stat -top {self.top_module} -liberty {self.liberty_files_tt}')
+        self.block_append(f"""
+        tee -o {self.run_dir}/{self.top_module}.synth_check.rpt check
+
+        tee -o {self.run_dir}/{self.top_module}.synth_stat.txt stat -top {self.top_module} -liberty {self.liberty_files_tt.split()[0]}
+        """)
         return True
     
     def write_outputs(self) -> bool:
         mapped_v_path=os.path.join(self.run_dir, f"{self.top_module}.mapped.notflat.v")
-        self.verbose_append(f'write_verilog -noattr -noexpr -nohex -nodec -defparam "{mapped_v_path}"')
-        self.verbose_append("flatten")
-        mapped_flat_v_path=os.path.join(self.run_dir, f"{self.top_module}.mapped.flat.v")
-        self.verbose_append(f'write_verilog -noattr -noexpr -nohex -nodec -defparam "{self.mapped_v_path}"')
+        self.block_append(f"""
+        write_verilog -noattr -noexpr -nohex -nodec -defparam "{mapped_v_path}"
+
+        flatten
+
+        write_verilog -noattr -noexpr -nohex -nodec -defparam "{self.mapped_v_path}"
+
         # BLIF file seems to be easier to parse than mapped verilog for find_regs functions so leave for now
-        self.verbose_append(f'write_blif -top {self.top_module} "{self.mapped_blif_path}"')
-        # TODO: figure out why the OpenLANE script re-runs synthesis & flattens design, when we explicitly requested hierarchical mode
+        write_blif -top {self.top_module} "{self.mapped_blif_path}"
+        """)
         self.ran_write_outputs = True
         return True
     

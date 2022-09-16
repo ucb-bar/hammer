@@ -54,7 +54,7 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
                 n=sram_name,
                 c=corner_str)
             if not os.path.exists(lib_path):
-                self.logger.error(f"SKY130 {params.family} SRAM cache does not support corner: {c}".format(c=corner_str))
+                self.logger.error(f"SKY130 {params.family} SRAM cache does not support corner: {corner_str}")
 
             self.setup_sram_spice(sram_name)
             self.setup_sram_lef(sram_name)
