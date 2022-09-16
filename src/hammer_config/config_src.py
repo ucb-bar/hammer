@@ -764,9 +764,14 @@ class HammerDatabase:
         :param check_type: Flag to enforce type checking
         :return: The given config
         """
+        CFG_PATH = os.path.join(os.path.dirname(os.getcwd()), "hammer-vlsi")
+        defaults = unpack(load_config_from_defaults(CFG_PATH)[1])
+
         IGNORE = ["vlsi.builtins.hammer_vlsi_path", "vlsi.builtins.is_complete"]
         if key not in self.get_config():
             raise KeyError("Key " + key + " is missing")
+        if key not in IGNORE and key not in defaults:
+            warn(f"Key {key} does not have a default implementation")
         if check_type and key not in IGNORE:
             if key not in self.get_config_types():
                 warn(f"Key {key} is not associated with a type")

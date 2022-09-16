@@ -7,22 +7,37 @@
 #  See LICENSE for licence details.
 
 import argparse
+import importlib.util
 import json
 import os
 import subprocess
 import sys
+import tempfile
+import warnings
 
+def is_ruamel_missing() -> bool:
+    return importlib.util.find_spec("ruamel") is None
+
+if is_ruamel_missing():
+    warnings.warn("ruamel package not found, cannot output key histories")
+else:
+    import ruamel.yaml  # type: ignore
 from .hammer_vlsi_impl import HammerTool, HammerVLSISettings
 from .hooks import HammerToolHookAction, HammerStartStopStep
 from .driver import HammerDriver, HammerDriverOptions
 from .hammer_build_systems import BuildSystems
 
+from functools import reduce
 from typing import List, Dict, Tuple, Any, Callable, Optional, Union, cast
 
 from hammer_utils import add_dicts, deeplist, deepdict, get_or_else, check_function_type
 
 from hammer_config import HammerJSONEncoder
+from hammer_config.config_src import load_config_from_paths
 
+
+KEY_DIR = tempfile.mkdtemp()
+KEY_PATH = os.path.join(KEY_DIR, "key-history.json")
 
 def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callable[[str], None]) -> List[str]:
     """Parse a possibly null list of files, validate the existence of each file, and return a list of paths (possibly
@@ -60,6 +75,32 @@ def dump_config_to_json_file(output_path: str, config: dict) -> None:
     with open(output_path, "w") as f:
         f.write(json.dumps(config, cls=HammerJSONEncoder, indent=4))
 
+def dump_config_to_yaml_file(output_path: str, config: Any) -> None:
+    """
+    Helper function to dump the given config in YAML form
+    to the given output path while overwriting it if it already exists.
+    :param output_path: Output path
+    :param config: Config dictionary to dump
+    """
+    yaml = ruamel.yaml.YAML()
+    yaml.indent(offset=2)
+    with open(output_path, 'w') as f:
+        yaml.dump(config, f)
+
+def add_key_history(config: dict, history: dict) -> Any:
+    """
+    Generates a YAML file with comments indicating what files modified said keys.
+    """
+    new = ruamel.yaml.CommentedMap()
+    curr_slot = 0
+    for k, v in config.items():
+        if k in history:
+            pretty_hist = ', '.join(history[k])
+            new.insert(curr_slot, k, v, comment=f"Modified by: {pretty_hist}")
+        else:
+            new.insert(curr_slot, k, v)
+        curr_slot += 1
+    return new
 
 # Type signature of a CLIDriver action that returns a config dictionary.
 CLIActionConfigType = Callable[[HammerDriver, Callable[[str], None]], Optional[dict]]
@@ -487,6 +528,8 @@ class CLIDriver:
             # 3. Tech-supplied hooks
             # 4. User-supplied hooks
             assert driver.tech is not None, "must have a technology"
+            with open(KEY_PATH, 'r') as f:
+                key_history = json.load(f)
             if action_type == "synthesis" or action_type == "syn":
                 if not driver.load_synthesis_tool(get_or_else(self.syn_rundir, "")):
                     return None
@@ -503,6 +546,9 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output-full.json"),
                                          self.get_full_config(driver, output))
+                if not is_ruamel_missing():
+                    dump_config_to_yaml_file(os.path.join(driver.syn_tool.run_dir, "syn-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
             elif action_type == "par":
                 if not driver.load_par_tool(get_or_else(self.par_rundir, "")):
@@ -520,6 +566,9 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.par_tool.run_dir, "par-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.par_tool.run_dir, "par-output-full.json"),
                                          self.get_full_config(driver, output))
+                if not is_ruamel_missing():
+                    dump_config_to_yaml_file(os.path.join(driver.par_tool.run_dir, "par-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
             elif action_type == "drc":
                 if not driver.load_drc_tool(get_or_else(self.drc_rundir, "")):
@@ -537,6 +586,9 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.drc_tool.run_dir, "drc-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.drc_tool.run_dir, "drc-output-full.json"),
                                          self.get_full_config(driver, output))
+                if not is_ruamel_missing():
+                    dump_config_to_yaml_file(os.path.join(driver.drc_tool.run_dir, "drc-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
             elif action_type == "lvs":
                 if not driver.load_lvs_tool(get_or_else(self.lvs_rundir, "")):
@@ -554,6 +606,9 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.lvs_tool.run_dir, "lvs-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.lvs_tool.run_dir, "lvs-output-full.json"),
                                          self.get_full_config(driver, output))
+                if not is_ruamel_missing():
+                    dump_config_to_yaml_file(os.path.join(driver.lvs_tool.run_dir, "lvs-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
             elif action_type == "sram_generator":
                 if not driver.load_sram_generator_tool(get_or_else(self.sram_generator_rundir, "")):
@@ -585,6 +640,9 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.sim_tool.run_dir, "sim-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.sim_tool.run_dir, "sim-output-full.json"),
                                          self.get_full_config(driver, output))
+                if not is_ruamel_missing():
+                    dump_config_to_yaml_file(os.path.join(driver.sim_tool.run_dir, "sim-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
             elif action_type == "power":
                 if not driver.load_power_tool(get_or_else(self.power_rundir, "")):
@@ -599,6 +657,9 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.power_tool.run_dir, "power-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.power_tool.run_dir, "power-output-full.json"),
                                          self.get_full_config(driver, output))
+                if not is_ruamel_missing():
+                    dump_config_to_yaml_file(os.path.join(driver.power_tool.run_dir, "power-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
             elif action_type == "formal":
                 if not driver.load_formal_tool(get_or_else(self.formal_rundir, "")):
@@ -616,6 +677,9 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.formal_tool.run_dir, "formal-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.formal_tool.run_dir, "formal-output-full.json"),
                                          self.get_full_config(driver, output))
+                if not is_ruamel_missing():
+                    dump_config_to_yaml_file(os.path.join(driver.formal_tool.run_dir, "formal-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
             elif action_type == "timing":
                 if not driver.load_timing_tool(get_or_else(self.timing_rundir, "")):
@@ -650,6 +714,9 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.pcb_tool.run_dir, "pcb-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.pcb_tool.run_dir, "pcb-output-full.json"),
                                          self.get_full_config(driver, output))
+                if not is_ruamel_missing():
+                    dump_config_to_yaml_file(os.path.join(driver.pcb_tool.run_dir, "pcb-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
             else:
                 raise ValueError("Invalid action_type = " + str(action_type))
@@ -1210,6 +1277,16 @@ class CLIDriver:
         self.power_rundir = get_nonempty_str(args['power_rundir'])
         self.formal_rundir = get_nonempty_str(args['formal_rundir'])
         self.timing_rundir = get_nonempty_str(args['timing_rundir'])
+
+        # Intercept keys for determining key origin
+        project_configs_yaml = load_config_from_paths(project_configs)
+        project_configs_yaml_keys = [set(i.keys()) for i in project_configs_yaml]
+        key_history: Dict[str, List[str]] = {i: [] for i in reduce(lambda x, y: x.union(y), project_configs_yaml_keys)}
+        for cfg_file, cfg in zip(project_configs, project_configs_yaml_keys):
+            for key in cfg:
+                key_history[key].append(cfg_file)
+        with open(KEY_PATH, 'w') as f:
+            json.dump(key_history, f)
 
         # Stage control: from/to
         from_step = get_nonempty_str(args['from_step'])

@@ -211,6 +211,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         self.synth_cap_load = 33.5 # SYNTH_CAP_LOAD
         self.max_fanout = 5 # default SYNTH_MAX_FANOUT = 5
 
+        
         self.driver_cell = None
         driver_cells = self.technology.get_special_cell_by_type(CellType.Driver)
         if len(driver_cells) == 0:
@@ -221,11 +222,16 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
             self.driver_cell = driver_cells[0].name[0]
             self.driver_ports_in = driver_cells[0].input_ports[0]
             self.driver_ports_out = driver_cells[0].output_ports[0]
+
         # Yosys commands only take a single lib file
         #   so use typical corner liberty file
         corners = self.get_mmmc_corners()  # type: List[MMMCCorner]
-        corner_tt = next((corner for corner in corners if corner.type == MMMCCornerType.Extra), None)
-        self.liberty_files_tt = self.get_timing_libs(corner_tt)
+        try:
+            corner_tt = next((corner for corner in corners if corner.type == MMMCCornerType.Extra), None)
+        except:
+            raise ValueError("An extra corner is required for Yosys.")
+            
+        self.liberty_file = self.get_timing_libs(corner_tt)
         
         self.append("yosys -import")
 

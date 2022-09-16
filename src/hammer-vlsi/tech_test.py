@@ -715,6 +715,10 @@ END LIBRARY
                 [SpecialCell(name=list(["cell6"]), cell_type=CellType.TieLoCell, size=None, input_ports=None, output_ports=None )
                 ])
 
+        # self.assertEqual(tool.technology.get_special_cell_by_type(CellType.TieHiCell),
+        #         [SpecialCell(name=list(["cell7"]), cell_type=CellType.TieHiCell, size=None, input_ports=None, output_ports=None )
+        #         ])
+
     def test_drc_lvs_decks(self) -> None:
         """
         Test that getting the DRC & LVS decks works as expected.

@@ -1,8 +1,11 @@
 # Settings for the sky130 technology
 technology.sky130:
-  # Override these in project
+  # This should be output files from the OpenPDKs compilation process.
+  # This is $PDK_ROOT/share/pdk/sky130A from the README.
   sky130A: "PATH-TO-sky130A"    # required
-  sky130_pdk: "PATH-TO-skywater-pdk"
+
+  # By default, this is used to populate pdk_home below.
+  # It should contain s8/V2.0.1
   sky130_nda: "PATH-TO-skywater-src-nda"
   
   # DFFRAM currently not supported
