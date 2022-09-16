@@ -1775,6 +1775,29 @@ class TCLTool(HammerTool):
     def append(self, cmd: str, clean: bool = False) -> None:
         self.tcl_append(cmd, self.output, clean)
 
+    # append a multiline string with proper formatting (makes plugins easier to read)
+    def block_append(self,commands) -> bool:
+        verbose_commands = []
+        # remove first line if it's empty because it messes up indentation
+        if len(commands[0].strip()) == 0:
+            commands = commands[1:]
+        prev_line = ""
+        for line in commands.split('\n'):
+            # add "verbose" statement
+            #   if line isn't (1) empty, (2) part of a multiline command, or (3) a comment
+            if not ((line is "") or '\\' in prev_line or ('#' in line)):
+                indent_len = len(line) - len(line.lstrip())
+                indent = ' ' * indent_len
+                puts_cmd = line.strip("\\ ") # remove leading/trailing characters
+                puts_cmd = puts_cmd.replace('"','') # remove quote characters
+                if puts_cmd != "":
+                    verbose_commands.append(f'{indent}puts "(hammer) {puts_cmd}"')
+            verbose_commands.append(line)
+            prev_line = line
+        self.append('\n'.join(verbose_commands), clean=True)
+        self.append("")
+        return True
+
 class SynopsysTool(HasSDCSupport, TCLTool, HammerTool):
     """Mix-in trait with functions useful for Synopsys-based tools."""
 
