@@ -993,7 +993,7 @@ power.inputs:
   # type: str
   sdc: ""
 
-  # Power report configs that are run in addition to the average power reports in power.inputs.waveforms
+  # Optional: Power report configs that are run in addition to the average power reports in power.inputs.waveforms
   # type: List[PowerReport]
   # PowerReport struct members:
   # waveform_path (str) - Path to the waveform for the report

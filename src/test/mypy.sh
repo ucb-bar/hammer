@@ -69,9 +69,6 @@ fi
 if [ -f ../../../hammer-cadence-plugins/power/joules/__init__.py ]; then
     MYPYPATH=$MYPYPATH:../../../hammer-cadence-plugins/common call_mypy ../../../hammer-cadence-plugins/power/joules/__init__.py
 fi
-if [ -f ../../../hammer-cadence-plugins/power/joules/__init__.py ]; then
-    MYPYPATH=$MYPYPATH:../../../hammer-cadence-plugins/common call_mypy ../../../hammer-cadence-plugins/power/joules/__init__.py
-fi
 if [ -f ../../../hammer-cadence-plugins/power/voltus/__init__.py ]; then
     MYPYPATH=$MYPYPATH:../../../hammer-cadence-plugins/common call_mypy ../../../hammer-cadence-plugins/power/voltus/__init__.py
 fi
