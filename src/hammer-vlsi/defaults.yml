@@ -954,6 +954,10 @@ sim.submit:
 # Specific inputs for the power tool.
 # These may vary based on the specific tool plugin
 power.inputs:
+  # Top RTL module for power analysis
+  # type: str
+  top_module: "ChipTop"
+
   # The path to a synthesis or place-and-route database of the design to be analyzed
   # type: str
   database: null
@@ -1016,10 +1020,13 @@ power.inputs:
   # type: FlowLevel
   level: "rtl"
 
-  # Top RTL module for power analysis
-  # type: str
-  top_module: null
+  # Optional: A list of analysis start times corresponding to each waveform used for dynamic power analysis.
+  # type: Optional[List[str]]
+  start_times: []
 
+  # Optional: A list of analysis end times corresponding to each waveform used for dynamic power analysis.
+  # type: Optional[List[str]]
+  end_times: []
 
 power.submit:
   command: "${vlsi.submit.command}"

@@ -486,7 +486,7 @@ sim.inputs:
   tb_name: str
 
   # Simulation mode for simulation at different levels of the VLSI flow
-  # type: SimulationLevel
+  # type: FlowLevel
   level: str
 
   # Path to a list of all registers in the design passed from synthesis or place-and-route
@@ -547,6 +547,10 @@ sim.submit:
 # Specific inputs for the power tool.
 # These may vary based on the specific tool plugin
 power.inputs:
+  # Top RTL module for power analysis
+  # type: str
+  top_module: str
+
   # The path to a place and route database of the design to be analyzed
   # type: str
   database: Optional[str]
@@ -604,11 +608,15 @@ power.inputs:
   #   "syn" for post-syn power analysis
   #   "par" for post-par power analysis
   # type: FlowLevel
-  level: FlowLevel
+  level: str
 
-  # Top RTL module for power analysis
-  # type: str
-  top_module: str
+  # Optional: A list of analysis start times corresponding to each waveform used for dynamic power analysis.
+  # type: Optional[List[str]]
+  start_times: list[str]
+
+  # Optional: A list of analysis end times corresponding to each waveform used for dynamic power analysis.
+  # type: Optional[List[str]]
+  end_times: list[str]
 
 power.submit:
   command: str
