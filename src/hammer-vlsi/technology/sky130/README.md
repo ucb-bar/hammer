@@ -42,6 +42,8 @@ You may set it in the Hammer plugin, or as follows:
 
     export PDK_HOME=<path-to-skywater-src-nda>/s8/<version#>
 
+This plugin has been tested with PDK version `V2.0.1`; your mileage may vary for other versions.
+
 Prerequisites for PDK Setup
 ---------------------------
 

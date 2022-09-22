@@ -226,6 +226,100 @@ The file should contain the same keys as the corresponding configuration file, b
 
 HAMMER will perform the same without a types file, but it is highly recommended to ensure type safety of any future plugins.
 
+Key History
+-----------
+
+When the ``ruamel.yaml`` package is installed, HAMMER can emit what files have modified any configuration keys in YAML format.
+The file is named ``{action}-output-history.yml`` and is located in the output folder of the given action.
+
+Example with the file ``test-config.yml``:
+
+  .. code-block:: yaml
+
+    synthesis.inputs:
+        input_files: ["foo", "bar"]
+        top_module: "z1top.xdc"
+
+    vlsi:
+        core:
+            technology: "nop"
+            technology_path: ["src/hammer-vlsi/technology"]
+
+            synthesis_tool: "nop"
+            synthesis_tool_path: ["src/hammer-vlsi/synthesis"]
+
+``test/syn-rundir/syn-output-history.yml`` after executing the command ``hammer-vlsi -p test-config.yml --obj_dir test syn``:
+
+  .. code-block:: yaml
+
+    synthesis.inputs.input_files:  # Modified by: test-config.yml
+      - LICENSE
+      - README.md
+    synthesis.inputs.top_module: z1top.xdc # Modified by: test-config.yml
+
+    vlsi.core.technology: nop # Modified by: test-config.yml
+    vlsi.core.technology_path: # Modified by: test-config.yml
+      - src/hammer-vlsi/technology
+    vlsi.core.synthesis_tool: nop # Modified by: test-config.yml
+    vlsi.core.synthesis_tool_path: # Modified by: test-config.yml
+      - src/hammer-vlsi/synthesis
+
+Example with the files ``test-config.yml`` and ``test-config2.yml``, respectively:
+
+  .. code-block:: yaml
+
+    synthesis.inputs:
+        input_files: ["foo", "bar"]
+        top_module: "z1top.xdc"
+
+    vlsi:
+        core:
+            technology: "nop"
+            technology_path: ["src/hammer-vlsi/technology"]
+
+            synthesis_tool: "nop"
+            synthesis_tool_path: ["src/hammer-vlsi/synthesis"]
+
+  .. code-block:: yaml
+
+    par.inputs:
+        input_files: ["foo", "bar"]
+        top_module: "z1top.xdc"
+
+    vlsi:
+        core:
+            technology: "${foo.subst}"
+            technology_path: ["/dev/null"]
+            technology_path_meta: subst
+
+            par_tool: "nop"
+            par_tool_path: ["src/hammer-vlsi/par"]
+
+    foo.subst: "nop2"
+
+``test/syn-rundir/par-output-history.yml`` after executing the command ``hammer-vlsi -p test-config.yml -p test-config2.yml --obj_dir test syn-par``:
+
+  .. code-block:: yaml
+
+    foo.subst: nop2 # Modified by: test-config2.yml
+    par.inputs.input_files:  # Modified by: test-config2.yml
+      - foo
+      - bar
+    par.inputs.top_module: z1top.xdc # Modified by: test-config2.yml
+    synthesis.inputs.input_files:  # Modified by: test-config.yml
+      - foo
+      - bar
+    synthesis.inputs.top_module: z1top.xdc # Modified by: test-config.yml
+    vlsi.core.technology: nop2 # Modified by: test-config.yml, test-config2.yml
+    vlsi.core.technology_path: # Modified by: test-config.yml, test-config2.yml
+      - /dev/null
+    vlsi.core.synthesis_tool: nop # Modified by: test-config.yml
+    vlsi.core.synthesis_tool_path: # Modified by: test-config.yml
+      - src/hammer-vlsi/synthesis
+    vlsi.core.par_tool: nop # Modified by: test-config2.yml
+    vlsi.core.par_tool_path: # Modified by: test-config2.yml
+      - src/hammer-vlsi/par
+
 Reference
 ---------
 
