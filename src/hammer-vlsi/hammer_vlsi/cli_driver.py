@@ -279,6 +279,8 @@ class CLIDriver:
             "par_sim": self.par_sim_action,
             "par-sim": self.par_sim_action,
             "power": self.power_action,
+            "syn-to-power": self.syn_to_power_action,
+            "syn_to_power": self.syn_to_power_action,
             "par-to-power": self.par_to_power_action,
             "par_to_power": self.par_to_power_action,
             "sim-to-power": self.sim_to_power_action,
@@ -778,6 +780,15 @@ class CLIDriver:
             return None
         else:
             return self.get_full_config(driver, lvs_input_only)
+
+    def syn_to_power_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        """Create a full config to run the output."""
+        power_input_only = HammerDriver.synthesis_output_to_power_input(driver.project_config)
+        if power_input_only is None:
+            driver.log.error("Input config does not appear to contain valid syn outputs")
+            return None
+        else:
+            return self.get_full_config(driver, power_input_only)
 
     def par_to_power_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
         """Create a full config to run the output."""

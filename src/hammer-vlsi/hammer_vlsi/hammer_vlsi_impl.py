@@ -57,26 +57,44 @@ class HierarchicalMode(Enum):
         """
         return self == HierarchicalMode.Hierarchical or self == HierarchicalMode.Top
 
-class SimulationLevel(Enum):
+class FlowLevel(Enum):
     RTL = 1
-    GateLevel = 2
+    SYN = 2
+    PAR = 3
 
     @classmethod
-    def __mapping(cls) -> Dict[str, "SimulationLevel"]:
+    def __mapping(cls) -> Dict[str, "FlowLevel"]:
         return {
-            "rtl": SimulationLevel.RTL,
-            "gl": SimulationLevel.GateLevel
+            "rtl": FlowLevel.RTL,
+            "syn": FlowLevel.SYN,
+            "par": FlowLevel.PAR
         }
 
     @staticmethod
-    def from_str(x: str) -> "SimulationLevel":
+    def from_str(x: str) -> "FlowLevel":
         try:
-            return SimulationLevel.__mapping()[x]
+            return FlowLevel.__mapping()[x]
         except KeyError:
-            raise ValueError("Invalid string for SimulationLevel: " + str(x))
+            raise ValueError("Invalid string for FlowLevel: " + str(x))
 
     def __str__(self) -> str:
-        return reverse_dict(SimulationLevel.__mapping())[self]
+        return reverse_dict(FlowLevel.__mapping())[self]
+
+    def is_gatelevel(self) -> bool:
+        return self == FlowLevel.SYN or self == FlowLevel.PAR
+
+
+PowerReport = NamedTuple('PowerReport', [
+    ('waveform_path', str),
+    ('module', Optional[str]),
+    ('levels', Optional[int]),
+    ('start_time', Optional[TimeValue]),
+    ('end_time', Optional[TimeValue]),
+    ('toggle_signal', Optional[str]),
+    ('num_toggles', Optional[int]),
+    ('frame_count', Optional[int]),
+    ('report_name', Optional[str])
+])
 
 
 import hammer_tech
@@ -1139,17 +1157,20 @@ class HammerLVSTool(HammerSignoffTool):
 
 class HammerSimTool(HammerTool):
 
-    # No current sim outputs, but some will be added
     def export_config_outputs(self) -> Dict[str, Any]:
         outputs = deepdict(super().export_config_outputs())
         outputs["sim.outputs.waveforms"] = self.output_waveforms
         outputs["sim.outputs.saifs"] = self.output_saifs
+        outputs["sim.outputs.output_top_module"] = self.output_top_module
+        outputs["sim.outputs.output_tb_name"] = self.output_tb_name
+        outputs["sim.outputs.output_tb_dut"] = self.output_tb_dut
+        outputs["sim.outputs.output_level"] = self.output_level
         return outputs
 
     @property
-    def level(self) -> SimulationLevel:
-        """Return the simulation level."""
-        return SimulationLevel.from_str(self.get_setting("sim.inputs.level"))
+    def level(self) -> FlowLevel:
+        """Return the flow level."""
+        return FlowLevel.from_str(self.get_setting("sim.inputs.level"))
 
     @property
     def benchmarks(self) -> List[str]:
@@ -1303,32 +1324,170 @@ class HammerSimTool(HammerTool):
             raise TypeError("output_saifs must be a List[str]")
         self.attr_setter("_output_saifs", value)
 
+
+    @property
+    def output_top_module(self) -> str:
+        """
+        Get the top RTL module.
+
+        :return: The top RTL module.
+        """
+        try:
+            return self.attr_getter("_output_top_module", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the top RTL module yet")
+
+    @output_top_module.setter
+    def output_top_module(self, value: str) -> None:
+        """Set the top RTL module."""
+        if not (isinstance(value, str)):
+            raise TypeError("output_top_module must be a str")
+        self.attr_setter("_output_top_module", value)
+
+
+    @property
+    def output_tb_name(self) -> str:
+        """
+        Get the sim testbench name.
+
+        :return: The sim testbench name.
+        """
+        try:
+            return self.attr_getter("_output_tb_name", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the sim testbench name yet")
+
+    @output_tb_name.setter
+    def output_tb_name(self, value: str) -> None:
+        """Set the sim testbench name."""
+        if not (isinstance(value, str)):
+            raise TypeError("output_tb_name must be a str")
+        self.attr_setter("_output_tb_name", value)
+
+
+    @property
+    def output_tb_dut(self) -> str:
+        """
+        Get the sim DUT instance name.
+
+        :return: The sim DUT instance name.
+        """
+        try:
+            return self.attr_getter("_output_tb_dut", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the sim DUT instance name yet")
+
+    @output_tb_dut.setter
+    def output_tb_dut(self, value: str) -> None:
+        """Set the sim DUT instance name."""
+        if not (isinstance(value, str)):
+            raise TypeError("output_tb_dut must be a str")
+        self.attr_setter("_output_tb_dut", value)
+
+
+    @property
+    def output_level(self) -> str:
+        """
+        Get the simulation flow level.
+
+        :return: The simulation flow level.
+        """
+        try:
+            return self.attr_getter("_output_level", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the simulation flow level yet")
+
+    @output_level.setter
+    def output_level(self, value: str) -> None:
+        """Set the simulation flow level."""
+        if not (isinstance(value, str)):
+            raise TypeError("output_level must be a str")
+        self.attr_setter("_output_level", value)
+
     ### END Generated interface HammerSimTool ###
 
 class HammerPowerTool(HammerTool):
+
+    @property
+    def level(self) -> FlowLevel:
+        """Return the flow level."""
+        return FlowLevel.from_str(self.get_setting("power.inputs.level"))
+
+    def get_power_report_configs(self) -> List[PowerReport]:
+        """
+        Get the power report config settings
+        """
+        configs = self.get_setting("power.inputs.report_configs")
+        output = []
+        for config in configs:
+            report = PowerReport(
+                waveform_path=config["waveform_path"], module=None,
+                levels=None, start_time=None,
+                end_time=None, toggle_signal=None,
+                num_toggles=None, frame_count=None,
+                report_name=None
+            )
+            if "module" in config:
+                report = report._replace(module=config["module"])
+            if "levels" in config:
+                report = report._replace(levels=config["levels"])
+            if "start_time" in config:
+                start_time = report._replace(start_time=TimeValue(config["start_time"]))
+            if "end_time" in config:
+                report = report._replace(end_time=TimeValue(config["end_time"]))
+            if "toggle_signal" in config:
+                report = report._replace(toggle_signal=config["toggle_signal"])
+            if "num_toggles" in config:
+                report = report._replace(num_toggles=config["num_toggles"])
+            if "frame_count" in config:
+                report = report._replace(frame_count=config["frame_count"])
+            if "report_name" in config:
+                report = report._replace(report_name=config["report_name"])
+            output.append(report)
+        return output
 
     ### Generated interface HammerPowerTool ###
     ### DO NOT MODIFY THIS CODE, EDIT generate_properties.py INSTEAD ###
     ### Inputs ###
 
     @property
-    def par_database(self) -> str:
+    def flow_database(self) -> str:
         """
-        Get the path to par database for power analysis.
+        Get the path to syn or par database for power analysis.
 
-        :return: The path to par database for power analysis.
+        :return: The path to syn or par database for power analysis.
         """
         try:
-            return self.attr_getter("_par_database", None)
+            return self.attr_getter("_flow_database", None)
         except AttributeError:
-            raise ValueError("Nothing set for the path to par database for power analysis yet")
+            raise ValueError("Nothing set for the path to syn or par database for power analysis yet")
 
-    @par_database.setter
-    def par_database(self, value: str) -> None:
-        """Set the path to par database for power analysis."""
+    @flow_database.setter
+    def flow_database(self, value: str) -> None:
+        """Set the path to syn or par database for power analysis."""
         if not (isinstance(value, str)):
-            raise TypeError("par_database must be a str")
-        self.attr_setter("_par_database", value)
+            raise TypeError("flow_database must be a str")
+        self.attr_setter("_flow_database", value)
+
+
+    @property
+    def input_files(self) -> List[str]:
+        """
+        Get the paths to RTL input files or design netlist.
+
+        :return: The paths to RTL input files or design netlist.
+        """
+        try:
+            return self.attr_getter("_input_files", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the paths to RTL input files or design netlist yet")
+
+    @input_files.setter
+    def input_files(self, value: List[str]) -> None:
+        """Set the paths to RTL input files or design netlist."""
+        if not (isinstance(value, List)):
+            raise TypeError("input_files must be a List[str]")
+        self.attr_setter("_input_files", value)
 
 
     @property
@@ -1349,6 +1508,26 @@ class HammerPowerTool(HammerTool):
         if not (isinstance(value, List)):
             raise TypeError("spefs must be a List[str]")
         self.attr_setter("_spefs", value)
+
+
+    @property
+    def sdc(self) -> Optional[str]:
+        """
+        Get the (optional) input SDC constraint file.
+
+        :return: The (optional) input SDC constraint file.
+        """
+        try:
+            return self.attr_getter("_sdc", None)
+        except AttributeError:
+            return None
+
+    @sdc.setter
+    def sdc(self, value: Optional[str]) -> None:
+        """Set the (optional) input SDC constraint file."""
+        if not (isinstance(value, str) or (value is None)):
+            raise TypeError("sdc must be a Optional[str]")
+        self.attr_setter("_sdc", value)
 
 
     @property
@@ -1389,6 +1568,66 @@ class HammerPowerTool(HammerTool):
         if not (isinstance(value, List)):
             raise TypeError("saifs must be a List[str]")
         self.attr_setter("_saifs", value)
+
+
+    @property
+    def top_module(self) -> str:
+        """
+        Get the top RTL module.
+
+        :return: The top RTL module.
+        """
+        try:
+            return self.attr_getter("_top_module", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the top RTL module yet")
+
+    @top_module.setter
+    def top_module(self, value: str) -> None:
+        """Set the top RTL module."""
+        if not (isinstance(value, str)):
+            raise TypeError("top_module must be a str")
+        self.attr_setter("_top_module", value)
+
+
+    @property
+    def tb_name(self) -> str:
+        """
+        Get the testbench name.
+
+        :return: The testbench name.
+        """
+        try:
+            return self.attr_getter("_tb_name", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the testbench name yet")
+
+    @tb_name.setter
+    def tb_name(self, value: str) -> None:
+        """Set the testbench name."""
+        if not (isinstance(value, str)):
+            raise TypeError("tb_name must be a str")
+        self.attr_setter("_tb_name", value)
+
+
+    @property
+    def tb_dut(self) -> str:
+        """
+        Get the DUT instance name.
+
+        :return: The DUT instance name.
+        """
+        try:
+            return self.attr_getter("_tb_dut", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the DUT instance name yet")
+
+    @tb_dut.setter
+    def tb_dut(self, value: str) -> None:
+        """Set the DUT instance name."""
+        if not (isinstance(value, str)):
+            raise TypeError("tb_dut must be a str")
+        self.attr_setter("_tb_dut", value)
 
 
     ### Outputs ###
@@ -1506,7 +1745,7 @@ class HammerFormalTool(HammerTool):
 class HammerTimingTool(HammerTool):
 
     @property
-    def max_paths(self) -> SimulationLevel:
+    def max_paths(self) -> FlowLevel:
         """Return the max paths to report."""
         return self.get_setting("timing.inputs.max_paths")
 
