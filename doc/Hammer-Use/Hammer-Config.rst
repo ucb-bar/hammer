@@ -320,6 +320,54 @@ Example with the files ``test-config.yml`` and ``test-config2.yml``, respectivel
     vlsi.core.par_tool_path: # Modified by: test-config2.yml
       - src/hammer-vlsi/par
 
+Key Description Lookup
+----------------------
+
+With the ``ruamel.yaml`` package, HAMMER can execute the ``info`` action, allowing users to look up the description of most keys.
+The comments must be structured like so in order to be read propertly:
+
+  .. code-block:: yaml
+    foo: bar # this is a comment 
+    # this is another comment for the key "foo"
+
+HAMMER will take the descriptions from any ``defaults.yml`` files.
+
+  .. code-block::yaml
+    foo.bar:
+      apple: banana # type of fruit
+      price: 2 # price of fruit
+
+Running ``hammer-vlsi -p test-config.yml info`` (assuming the above configuration is in ``defaults.yml``):
+
+  .. code-block::
+    foo.bar
+    Select from the current level of keys: foo.bar
+    
+    apple
+    price
+    Select from the current level of keys: apple
+    ----------------------------------------
+    Key: foo.bar.apple
+    Value: banana
+    Description: # type of fruit
+    ----------------------------------------
+
+    Continue querying keys? [y/n]: y
+
+    foo.bar
+    Select from the current level of keys: foo.bar
+    
+    apple
+    price
+    Select from the current level of keys: price
+    ----------------------------------------
+    Key: foo.bar.price
+    Value: 2
+    Description: # price of fruit
+    ----------------------------------------
+
+Keys are queried post-resolution of all meta actions, so their values correspond to the project configuration after other actions like ``syn`` or ``par``.
+
 Reference
 ---------
 
