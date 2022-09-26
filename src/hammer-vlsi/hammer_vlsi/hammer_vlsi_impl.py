@@ -1776,7 +1776,7 @@ class TCLTool(HammerTool):
         self.tcl_append(cmd, self.output, clean)
 
     # append a multiline string with proper formatting (makes plugins easier to read)
-    def block_append(self,commands) -> bool:
+    def block_append(self,commands,verbose=True) -> bool:
         verbose_commands = []
         # remove first line if it's empty because it messes up indentation
         if len(commands[0].strip()) == 0:
@@ -1785,7 +1785,7 @@ class TCLTool(HammerTool):
         for line in commands.split('\n'):
             # add "verbose" statement
             #   if line isn't (1) empty, (2) part of a multiline command, or (3) a comment
-            if not ((line is "") or '\\' in prev_line or ('#' in line)):
+            if verbose and not ((line is "") or '\\' in prev_line or ('#' in line)):
                 indent_len = len(line) - len(line.lstrip())
                 indent = ' ' * indent_len
                 puts_cmd = line.strip("\\ ") # remove leading/trailing characters

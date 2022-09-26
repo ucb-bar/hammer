@@ -417,15 +417,32 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     def macro_placement(self) -> bool:
         # TODO: did I understand the par.blockage_spacing key correctly?
         spacing = self.get_setting("par.blockage_spacing")
-        self.block_append(f"""
+
+        self.block_append(r"""
         ################################################################
         # Auto Macro Placement (for any unplaced macros)
-
-        # Timing Driven Mixed Sized Placement
-        global_placement -density 0.6 -pad_left 1 -pad_right 1
         
-        macro_placement -halo "{spacing} {spacing}" -channel "{2*spacing} {2*spacing}"
-        """)
+        proc find_macros {} {
+            set macros ""
+            set block [[[ord::get_db] getChip] getBlock]
+            foreach inst [$block getInsts] {
+                set inst_master [$inst getMaster]
+                # BLOCK means MACRO cells
+                if { [string match [$inst_master getType] "BLOCK"] } {
+                    append macros " " $inst
+                }
+            }
+            return $macros
+        }
+        """, verbose=False)
+        self.block_append(f"""
+        if {{[find_macros] != ""}} {{
+            # Timing Driven Mixed Sized Placement
+            global_placement -density 0.6 -pad_left 1 -pad_right 1
+            # ParquetFP-based macro cell placer, “TritonMacroPlacer”
+            macro_placement -halo "{spacing} {spacing}" -channel "{2*spacing} {2*spacing}"
+        }}
+        """, verbose=False)
         return True
 
 
@@ -717,11 +734,12 @@ pdngen::specify_grid macro {{
         set_dont_use {{{' '.join(self.get_dont_use_list())}}}
         set_global_routing_layer_adjustment {metals[0].name}-{metals[-1].name} 0.3
         set_routing_layers -signal {metals[0].name}-{metals[-1].name} -clock {metals[idx_clock_bottom_metal].name}-{metals[-1].name}
-        set_macro_extension {int(spacing)}
+        # creates blockages around macros
+        # set_macro_extension 2
 
         # -density default is 0.7, overflow default is 0.1
         # set overflow higher (ex. 0.8) to make faster
-        global_placement -routability_driven -overflow 0.2 -pad_left 4 -pad_right 4
+        global_placement -overflow 0.2 -pad_left 4 -pad_right 4
         # TODO: -routability_driven breaks this!!!
 
         # estimate_parasitics -placement
@@ -877,7 +895,7 @@ pdngen::specify_grid macro {{
         set_global_routing_layer_adjustment {metals[0].name}-{metals[-1].name} 0.7
         set_routing_layers -signal {metals[0].name}-{metals[-1].name} -clock met3-met5
         # hard-coded in the example OpenROAD scripts
-        set_macro_extension 2
+        # set_macro_extension 2
 
         # pin_access - this command caused openroad to crash
         # -allow_congestion and -allow_overflow added for now

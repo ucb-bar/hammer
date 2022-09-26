@@ -5,7 +5,7 @@ OpenROAD Place-and-Route Tool Plugin
 Tool Setup
 ----------
 
-TODO: link the tool setup here
+First, follow [these directions](https://github.com/The-OpenROAD-Project/OpenROAD#build) to build and install OpenROAD.
 
 
 

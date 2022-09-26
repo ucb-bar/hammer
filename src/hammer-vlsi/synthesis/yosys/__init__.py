@@ -231,7 +231,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         except:
             raise ValueError("An extra corner is required for Yosys.")
             
-        self.liberty_file = self.get_timing_libs(corner_tt)
+        self.liberty_files_tt = self.get_timing_libs(corner_tt)
         
         self.append("yosys -import")
 
