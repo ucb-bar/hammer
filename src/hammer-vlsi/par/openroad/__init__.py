@@ -119,16 +119,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         return os.path.join(self.run_dir, "{top}.route_guide".format(top=self.top_module))
 
     @property
-    def klayout_techfile_path(self) -> str:
-        klayout_techfiles = self.technology.read_libs([
-            hammer_tech.filters.klayout_techfile_filter
-        ], hammer_tech.HammerTechnologyUtils.to_plain_item)
-        if len(klayout_techfiles) > 0:
-            return klayout_techfiles[0]
-        else:
-            return ""
-
-    @property
     def env_vars(self) -> Dict[str, str]:
         v = dict(super().env_vars)
         v["OPENROAD_BIN"] = self.get_setting("par.openroad.openroad_bin")
@@ -739,7 +729,7 @@ pdngen::specify_grid macro {{
 
         # -density default is 0.7, overflow default is 0.1
         # set overflow higher (ex. 0.8) to make faster
-        global_placement -overflow 0.2 -pad_left 4 -pad_right 4
+        global_placement -routability_driven -overflow 0.2 -pad_left 4 -pad_right 4
         # TODO: -routability_driven breaks this!!!
 
         # estimate_parasitics -placement
@@ -960,29 +950,27 @@ pdngen::specify_grid macro {{
         return True
 
 
-    def write_netlist(self) -> bool:
-        self.append(f"write_verilog -include_pwr_gnd -remove_cells {{ {self.fill_cells} }} {self.output_netlist_filename}")
-        return True
-
-
     # Copy and hack the klayout techfile, to add all required LEFs
     def setup_klayout_techfile(self) -> bool:
         source_path = Path(self.get_setting("par.inputs.klayout_techfile_source"))
         klayout_techfile_filename = os.path.basename(source_path)
         if not source_path.exists():
-            raise FileNotFoundError(f"Klayout techfile not found: {source_path}")
+            self.logger.error("Klayout techfiles not specified in tech plugin. Klayout won't be able to write GDS file.")
+            return False
+            # raise FileNotFoundError(f"Klayout techfile not found: {source_path}")
 
         cache_tech_dir_path = Path(self.technology.cache_dir)
         os.makedirs(cache_tech_dir_path, exist_ok=True)
         dest_path = cache_tech_dir_path / klayout_techfile_filename
+        self.klayout_techfile_path = dest_path
 
-        # klayout needs tlef + macro lefs
+        # klayout needs all lefs
         tech_lib_lefs = self.technology.read_libs([hammer_tech.filters.lef_filter], hammer_tech.HammerTechnologyUtils.to_plain_item, self.tech_lib_filter())
-        tech_lef = tech_lib_lefs[0]
+        # tech_lef = tech_lib_lefs[0]
         extra_lib_lefs = self.technology.read_libs([hammer_tech.filters.lef_filter], hammer_tech.HammerTechnologyUtils.to_plain_item, self.extra_lib_filter())
         
         insert_lines=''
-        for lef_file in [tech_lef]+extra_lib_lefs:
+        for lef_file in tech_lib_lefs+extra_lib_lefs:
             insert_lines += f"<lef-files>{lef_file}</lef-files>\n"
 
         with open(source_path, 'r') as sf:
@@ -1072,14 +1060,16 @@ pdngen::specify_grid macro {{
         self.block_append(f"""
         ################################################################
         # Write Design
+
+        # write DEF (need this to write GDS)
+        write_def {self.output_def_filename}
+
+        # write netlist
+        write_verilog -include_pwr_gnd -remove_cells {{{self.fill_cells}}} {self.output_netlist_filename}
         """)
-        self.append(f"write_def {self.output_def_filename}")
-        
+
         # TODO: look at IR drop analysis from ~OpenROAD-flow-scripts/flow/scripts/final_report.tcl
         # Static IR drop analysis
-
-        # Write netlist
-        self.write_netlist()
 
         # GDS streamout.
         self.write_gds()
