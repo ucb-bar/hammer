@@ -35,7 +35,6 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
         if params.family == "1rw" or params.family == "1rw1r":
             self.logger.info(f"Compiling {params.family} memories to OpenRAM instances")
             base_dir = self.get_setting("technology.sky130.openram_lib")
-            fam_code = params.family
             s=round(round(params.width*params.depth/8, -3)/1000) # size in kiB
             w=params.width
             d=params.depth
@@ -75,7 +74,6 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
 
 
     def setup_sram_spice(self,sram_name) -> None:
-        cache_dir = os.path.abspath(self.technology.cache_dir)
         source_path = Path(self.get_setting("technology.sky130.openram_lib")) / sram_name / f"{sram_name}.lvs.sp"
         dest_path = f"{os.path.abspath(self.technology.cache_dir)}/{sram_name}/{sram_name}.lvs.sp"
         self.technology.ensure_dirs_exist(dest_path)
@@ -112,29 +110,5 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
                         continue
                     if not units:
                         df.write(line)
-
-
-    # def setup_sram_verilog(self) -> None:
-    #     """ Move 'mem' declaration before it is used. """
-    #     if not self.use_openram: return
-    #     for sram_name in self.openram_sram_names():
-    #         source_path = Path(self.get_setting("technology.sky130.openram_lib")) / sram_name / f"{sram_name}.v"
-    #         dest_path = self.expand_tech_cache_path(f'tech-sky130-cache/{sram_name}/{sram_name}.v')
-    #         if not source_path.exists():
-    #             raise FileNotFoundError(f"SRAM Spice file not found: {source_path}")
-    #         self.ensure_dirs_exist(dest_path)
-    #         with open(source_path,'r') as sf:
-    #             with open(dest_path,'w') as df:
-    #                 self.logger.info("Modifying SRAM Verilog deck: {} -> {}".format
-    #                     (source_path, dest_path))
-    #                 lines = sf.readlines()
-    #                 insert_idx = 0
-    #                 for i,line in enumerate(lines):
-    #                     if insert_idx == 0 and line.strip().startswith('always'):
-    #                         insert_idx = i
-    #                     elif line.strip() == "reg [DATA_WIDTH-1:0]    mem [0:RAM_DEPTH-1];":
-    #                         lines.pop(i)
-    #                         lines.insert(insert_idx,line)
-    #                 df.write(''.join(lines))
 
 tool=SKY130SRAMGenerator
