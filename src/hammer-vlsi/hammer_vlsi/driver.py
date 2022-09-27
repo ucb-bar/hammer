@@ -21,7 +21,7 @@ from .hammer_tool import HammerTool
 from .hooks import HammerToolHookAction
 from .hammer_vlsi_impl import HammerVLSISettings, HammerPlaceAndRouteTool, HammerSynthesisTool, \
     HammerSignoffTool, HammerDRCTool, HammerLVSTool, HammerSRAMGeneratorTool, HammerPCBDeliverableTool, HammerSimTool, HammerPowerTool, HammerFormalTool, HammerTimingTool, \
-    HierarchicalMode, load_tool, PlacementConstraint, SRAMParameters, ILMStruct, SimulationLevel
+    HierarchicalMode, load_tool, PlacementConstraint, SRAMParameters, ILMStruct, FlowLevel
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, HammerVLSILoggingContext
 from .submit_command import HammerSubmitCommand
 
@@ -505,7 +505,7 @@ class HammerDriver:
         sim_tool.hierarchical_mode = HierarchicalMode.from_str(
             self.database.get_setting("vlsi.inputs.hierarchical.mode"))
         # Special case: if non-leaf hierarchical and gate-level, append ilm sim netlists
-        if sim_tool.hierarchical_mode.is_nonleaf_hierarchical() and sim_tool.level == SimulationLevel.GateLevel:
+        if sim_tool.hierarchical_mode.is_nonleaf_hierarchical() and sim_tool.level.is_gatelevel():
             for ilm in sim_tool.get_input_ilms():
                 if isinstance(ilm.sim_netlist, str):
                     sim_tool.input_files.append(ilm.sim_netlist)
@@ -577,17 +577,22 @@ class HammerDriver:
         power_tool.submit_command = HammerSubmitCommand.get("power", self.database)
         power_tool.run_dir = run_dir
 
-        power_tool.par_database = self.database.get_setting("power.inputs.database", nullvalue="")
+        power_tool.flow_database = self.database.get_setting("power.inputs.database", nullvalue="")
         power_tool.spefs = self.database.get_setting("power.inputs.spefs", nullvalue=[])
         power_tool.waveforms = self.database.get_setting("power.inputs.waveforms", nullvalue=[])
         power_tool.saifs = self.database.get_setting("power.inputs.saifs", nullvalue=[])
+
+        power_tool.input_files = self.database.get_setting("power.inputs.input_files", nullvalue=[])
+        power_tool.sdc = self.database.get_setting("power.inputs.sdc", nullvalue="")
+        power_tool.top_module = self.database.get_setting("power.inputs.top_module", nullvalue="")
+        power_tool.tb_name = self.database.get_setting("power.inputs.tb_name", nullvalue="")
+        power_tool.tb_dut = self.database.get_setting("power.inputs.tb_dut", nullvalue="")
+
         missing_inputs = False
-        if power_tool.par_database == "":
-            self.log.error("PAR database not specified for power analysis")
+        if power_tool.flow_database == "" and len(power_tool.input_files) == 0:
+            self.log.error("Input database or design not specified for power analysis")
             missing_inputs = True
-        if len(power_tool.spefs) == 0:
-            self.log.error("No spef files specified for power analysis")
-            missing_inputs = True
+
         if missing_inputs:
             return False
 
@@ -930,7 +935,32 @@ class HammerDriver:
                 "sim.inputs.all_regs": output_dict["synthesis.outputs.all_regs"],
                 "sim.inputs.seq_cells": output_dict["synthesis.outputs.seq_cells"],
                 "sim.inputs.sdf_file": output_dict["synthesis.outputs.sdf_file"],
-                "sim.inputs.level": 'gl',
+                "sim.inputs.level": 'syn',
+                "vlsi.builtins.is_complete": False
+            }  # type: Dict[str, Any]
+            return result
+        except KeyError:
+            # KeyError means that the given dictionary is missing output keys.
+            return None
+
+    @staticmethod
+    def synthesis_output_to_power_input(output_dict: dict) -> Optional[dict]:
+        """
+        Generate the appropriate inputs for running post-synthesis power analysis from the
+        outputs of synthesis run.
+        Does not merge the results with any project dictionaries.
+        :param output_dict: Dict containing synthesis.outputs.*
+        :return: power.inputs.* settings generated from output_dict,
+                 or None if output_dict was invalid
+        """
+        try:
+            output_files = deeplist(output_dict["synthesis.outputs.output_files"])
+            result = {
+                "power.inputs.input_files": output_files,
+                "power.inputs.input_files_meta": "append",
+                "power.inputs.top_module": output_dict["synthesis.inputs.top_module"],
+                "power.inputs.level": 'syn',
+                "power.inputs.sdc": output_dict["synthesis.outputs.sdc"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             return result
@@ -1008,7 +1038,7 @@ class HammerDriver:
                 "sim.inputs.all_regs": output_dict["par.outputs.all_regs"],
                 "sim.inputs.seq_cells": output_dict["par.outputs.seq_cells"],
                 "sim.inputs.sdf_file": output_dict["par.outputs.sdf_file"],
-                "sim.inputs.level": 'gl',
+                "sim.inputs.level": 'par',
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             return result
@@ -1023,7 +1053,7 @@ class HammerDriver:
         outputs of par run.
         Does not merge the results with any project dictionaries.
         :param output_dict: Dict containing par.outputs.*
-        :return: sim.inputs.* settings generated from output_dict,
+        :return: power.inputs.* settings generated from output_dict,
                  or None if output_dict was invalid
         """
         try:
@@ -1330,6 +1360,10 @@ class HammerDriver:
                 "power.inputs.waveforms_meta": "append",
                 "power.inputs.saifs": output_dict["sim.outputs.saifs"],
                 "power.inputs.saifs_meta": "append",
+                "power.inputs.top_module": output_dict["sim.outputs.output_top_module"],
+                "power.inputs.tb_name": output_dict["sim.outputs.output_tb_name"],
+                "power.inputs.tb_dut": output_dict["sim.outputs.output_tb_dut"],
+                "power.inputs.level": output_dict["sim.outputs.output_level"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             return result

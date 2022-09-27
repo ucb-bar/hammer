@@ -875,8 +875,9 @@ sim.inputs:
   # Simulation mode for simulation at different levels of the VLSI flow
   # Valid options are:
   #   "rtl" for rtl level simulation
-  #   "gl" for gate level simulation
-  # type: SimulationLevel
+  #   "syn" for post-synthesis level simulation
+  #   "par" for post-par level simulation
+  # type: FlowLevel
   level: "rtl"
 
   # Path to a list of all registers in the design passed from synthesis or place-and-route
@@ -953,7 +954,11 @@ sim.submit:
 # Specific inputs for the power tool.
 # These may vary based on the specific tool plugin
 power.inputs:
-  # The path to a place and route database of the design to be analyzed
+  # Top RTL module for power analysis
+  # type: str
+  top_module: "ChipTop"
+
+  # The path to a synthesis or place-and-route database of the design to be analyzed
   # type: str
   database: null
 
@@ -974,14 +979,6 @@ power.inputs:
   # Depending on the sim & power tool, these may be VCD/VPD, FSDB, SHM, etc. files/dirs.
   # type: List[str]
   waveforms: []
- 
-  # A list of analysis start times corresponding to each waveform used for dynamic power analysis.
-  # type: List[str]
-  start_times: []
-
-  # A list of analysis end times corresponding to each waveform used for dynamic power analysis.
-  # type: List[str]
-  end_times: []
 
   # A list of paths to SAIF activity files to be used for dynamic power analysis.
   # type: List[str]
@@ -991,6 +988,45 @@ power.inputs:
   # The typical use case is to only report power and rail analysis for a typical/nominal corner.
   # type: bool
   extra_corners_only: false
+
+  # A list of the paths to the design inputs files (HDL or netlist) for power analysis
+  # type: List[str]
+  input_files: []
+
+  # SDC input file
+  # type: str
+  sdc: ""
+
+  # Optional: Power report configs that are run in addition to the average power reports in power.inputs.waveforms
+  # type: List[PowerReport]
+  # PowerReport struct members:
+  # waveform_path (str) - Path to the waveform for the report
+  # module (str) - Optional. the path to the module to report power for (default here is the Chipyard top level)
+  # levels (int) - Optional. the number of levels in the design hierachy to report
+  # start_time (str) - Optional. The start time of the power report in the waveform
+  # end_time (str) - Optional. The end time of the power report in the waveform
+  # toggle_signal (str) - Optional. Path to the signal to generate report windows based on toggles
+  # num_toggles (int) - Optional (must be specified if num_toggles is specified). The number of toggles of the toggle_signal for each frame to report power
+  # frame_count (int) - Optional. The number of frames to report the power for
+  # report_name (str) - Optional. Name of the power report
+  # example: report_configs: [{waveform_path: "/path/to/fsdb", module: "chiptop", levels:3, start_time: "0ns", end_time: "1ns", toggle_signal:"/ChipTop/clock", num_toggles:1, frame_count:1000, report_name: "my_fsdb_report"}]
+  report_configs: []
+
+  # Power analysis mode for different levels of the VLSI flow
+  # Valid options are:
+  #   "rtl" for rtl level power analysis
+  #   "syn" for post-syn power analysis
+  #   "par" for post-par power analysis
+  # type: FlowLevel
+  level: "rtl"
+
+  # Optional: A list of analysis start times corresponding to each waveform used for dynamic power analysis.
+  # type: Optional[List[str]]
+  start_times: []
+
+  # Optional: A list of analysis end times corresponding to each waveform used for dynamic power analysis.
+  # type: Optional[List[str]]
+  end_times: []
 
 power.submit:
   command: "${vlsi.submit.command}"
@@ -1003,7 +1039,7 @@ power.submit:
 # For example, files could be combinations of Verilog, Liberty, Spice, CPF, and/or SDC files.
 formal.inputs:
   # Check type to run. Support varies based on the specific tool plugin.
-  # Potential options (see tool plugin defaults.yml for supported checks): 
+  # Potential options (see tool plugin defaults.yml for supported checks):
   # - lec: logical equivalence checking (supported)
   # - power: power intent (CPF/UPF) and structure checking (not yet supported)
   # - constraint: design constaint (SDC) checking (not yet supported)

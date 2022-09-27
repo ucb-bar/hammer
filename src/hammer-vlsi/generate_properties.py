@@ -204,16 +204,25 @@ def main(args) -> int:
                               ],
                               outputs=[
                                   InterfaceVar("output_waveforms", "List[str]", "paths to output waveforms"),
-                                  InterfaceVar("output_saifs", "List[str]", "paths to output activity files")
+                                  InterfaceVar("output_saifs", "List[str]", "paths to output activity files"),
+                                  InterfaceVar("output_top_module", "str", "top RTL module"),
+                                  InterfaceVar("output_tb_name", "str", "sim testbench name"),
+                                  InterfaceVar("output_tb_dut", "str", "sim DUT instance name"),
+                                  InterfaceVar("output_level", "str", "simulation flow level")
                               ]
                               )
     HammerPowerTool = Interface(module="HammerPowerTool",
                                 filename="hammer_vlsi/hammer_vlsi_impl.py",
                                 inputs=[
-                                  InterfaceVar("par_database", "str", "path to par database for power analysis"),
+                                  InterfaceVar("flow_database", "str", "path to syn or par database for power analysis"),
+                                  InterfaceVar("input_files", "List[str]", "paths to RTL input files or design netlist"),
                                   InterfaceVar("spefs", "List[str]", "list of spef files for power anlaysis"),
+                                  InterfaceVar("sdc", "Optional[str]","(optional) input SDC constraint file"),
                                   InterfaceVar("waveforms", "List[str]", "list of waveform dump files for dynamic power analysis"),
-                                  InterfaceVar("saifs", "List[str]", "list of activity files for dynamic power analysis")
+                                  InterfaceVar("saifs", "List[str]", "list of activity files for dynamic power analysis"),
+                                  InterfaceVar("top_module", "str", "top RTL module"),
+                                  InterfaceVar("tb_name", "str", "testbench name"),
+                                  InterfaceVar("tb_dut", "str", "DUT instance name")
                                 ],
                                 outputs=[]
                                 )
