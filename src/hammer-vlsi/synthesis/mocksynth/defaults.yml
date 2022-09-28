@@ -1,6 +1,5 @@
 synthesis.mocksynth:
-  # A folder where mocksynth can create files.
-  temp_folder: null
+  temp_folder: null # A folder where mocksynth can create files.
 
   # Default texts to check hooks.
   step1: "step1"

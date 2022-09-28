@@ -2,16 +2,13 @@
 # The values specified in this file are the defaults.
 
 par.openroad:
-  # Location of the binary.
-  openroad_bin: "openroad"
-  # this is just to make hammer happy (although, it is never called AFAICT).
+  openroad_bin: "openroad" # Location of the binary.
+  version: "dummy-value" # this is just to make hammer happy (although, it is never called AFAICT).
   # the version is actually calculated by the OpenROADTool class
-  version: "dummy-value"
 
-  # Generate the TCL file but do not run it yet.
-  generate_only: false
+  generate_only: false # Generate the TCL file but do not run it yet.
 
-  # Floorplanning SDC constraints to use.
+  floorplan_mode: generate # Floorplanning SDC constraints to use.
   # Valid options are:
   # - blank - Specify no floorplanning constraints (likely won't work)
   # - manual - Specify the contents of a manual SDC floorplanning script to use in floorplan_script_contents.
@@ -19,5 +16,4 @@ par.openroad:
   # - auto - Use Innovus's `plan_design` command to auto-generate a floorplan. Will have poor, but sane results
   #   If you specify this, you must also specify the floorplanning_script config below. The floorplanning_script config will be ignored in other modes.
   # TODO(edwardw): Put in new floorplanning thing here when done.
-  floorplan_mode: generate
   floorplan_script_contents: null

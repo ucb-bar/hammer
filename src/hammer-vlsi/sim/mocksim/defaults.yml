@@ -1,3 +1,2 @@
 sim.mocksim:
-  # A folder where mocksim can create files.
-  temp_folder: null
+  temp_folder: null # A folder where mocksim can create files.
