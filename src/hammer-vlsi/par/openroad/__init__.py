@@ -432,7 +432,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             # ParquetFP-based macro cell placer, “TritonMacroPlacer”
             macro_placement -halo "{spacing} {spacing}" -channel "{2*spacing} {2*spacing}"
         }}
-        """, verbose=False)
+        """)
         return True
 
 
@@ -912,18 +912,14 @@ pdngen::specify_grid macro {{
 
         # write_verilog -include_pwr_gnd {self.output_netlist_filename}
 
-        # TODO: many other arguments available
+        # NOTE: many other arguments available
         detailed_route -guide {self.route_guide_path} \\
             -bottom_routing_layer met1 \\
             -top_routing_layer met5 \\
             -output_guide {self.run_dir}/{self.top_module}_output_guide.mod \\
             -output_drc {self.run_dir}/{self.top_module}_route_drc.rpt \\
             -output_maze {self.run_dir}/{self.top_module}_maze.log \\
-            -verbose 1 \\
-            -droute_end_iter 3
-
-        #utl::metric "DRT::drv" [detailed_route_num_drvs]
-        #write_def {self.run_dir}/{self.top_module}_route.def
+            -verbose 1
         """)
         return True
 
@@ -935,7 +931,7 @@ pdngen::specify_grid macro {{
         # Extraction
         define_process_corner -ext_model_index 0 X
 
-        extract_parasitics -ext_model_file {self.get_setting("par.inputs.openrcx_techfile")}
+        extract_parasitics -ext_model_file {self.get_setting("par.openroad.openrcx_techfile")}
 
         # touch the file in case write_spef fails
         exec touch {self.output_spef_paths}
@@ -952,7 +948,7 @@ pdngen::specify_grid macro {{
 
     # Copy and hack the klayout techfile, to add all required LEFs
     def setup_klayout_techfile(self) -> bool:
-        source_path = Path(self.get_setting("par.inputs.klayout_techfile_source"))
+        source_path = Path(self.get_setting("par.openroad.klayout_techfile_source"))
         klayout_techfile_filename = os.path.basename(source_path)
         if not source_path.exists():
             self.logger.error("Klayout techfiles not specified in tech plugin. Klayout won't be able to write GDS file.")

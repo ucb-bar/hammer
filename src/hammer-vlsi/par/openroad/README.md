@@ -12,7 +12,7 @@ First, follow [these directions](https://github.com/The-OpenROAD-Project/OpenROA
 Tool Steps
 ----------
 
-TODO: maybe describe each step here?
+See ``__init__.py`` for the implementation of these steps.
 
     # INITIALIZE
     init_design

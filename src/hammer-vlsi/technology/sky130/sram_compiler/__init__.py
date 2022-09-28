@@ -57,6 +57,7 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
 
             self.setup_sram_spice(sram_name)
             self.setup_sram_lef(sram_name)
+            self.setup_sram_verilog(sram_name)
             # self.setup_sram_verilog(sram_name)
             return ExtraLibrary(prefix=None, library=Library(
                 name=sram_name,
@@ -110,5 +111,27 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
                         continue
                     if not units:
                         df.write(line)
+
+
+    def setup_sram_verilog(self, sram_name) -> None:
+        """ Move 'mem' declaration before it is referenced in the verilog. """
+        source_path = Path(self.get_setting("technology.sky130.openram_lib")) / sram_name / f"{sram_name}.v"
+        dest_path = f"{os.path.abspath(self.technology.cache_dir)}/{sram_name}/{sram_name}.v"
+        if not source_path.exists():
+            raise FileNotFoundError(f"SRAM Spice file not found: {source_path}")
+        self.technology.ensure_dirs_exist(dest_path)
+        with open(source_path,'r') as sf:
+            with open(dest_path,'w') as df:
+                self.logger.info("Modifying SRAM Verilog deck: {} -> {}".format
+                    (source_path, dest_path))
+                lines = sf.readlines()
+                insert_idx = 0
+                for i,line in enumerate(lines):
+                    if insert_idx == 0 and line.strip().startswith('always'):
+                        insert_idx = i
+                    elif line.strip() == "reg [DATA_WIDTH-1:0]    mem [0:RAM_DEPTH-1];":
+                        lines.pop(i)
+                        lines.insert(insert_idx,line)
+                df.write(''.join(lines))
 
 tool=SKY130SRAMGenerator

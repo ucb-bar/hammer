@@ -2015,20 +2015,24 @@ class TCLTool(HammerTool):
         self.tcl_append(cmd, self.output, clean)
 
     # append a multiline string with proper formatting (makes plugins easier to read)
-    def block_append(self,commands,verbose=True) -> bool:
+    def block_append(self, commands: list, verbose: bool = True) -> bool:
         verbose_commands = []
         # remove first line if it's empty because it messes up indentation
         if len(commands[0].strip()) == 0:
             commands = commands[1:]
         prev_line = ""
         for line in commands.split('\n'):
-            # add "verbose" statement
+            # add "verbose" statement (echo TCL command to terminal)
             #   if line isn't (1) empty, (2) part of a multiline command, or (3) a comment
-            if verbose and not ((line is "") or '\\' in prev_line or ('#' in line)):
+            # we can't just use verbose_append because it blindly echoes all commands
+            empty = not any(c.isalpha() for c in line)
+            if verbose and not (empty or '\\' in prev_line or ('#' in line)):
                 indent_len = len(line) - len(line.lstrip())
                 indent = ' ' * indent_len
                 puts_cmd = line.strip("\\ ") # remove leading/trailing characters
-                puts_cmd = puts_cmd.replace('"','') # remove quote characters
+                escape_str = '"[]'  # NOTE: there may be more characters that need to be escaped!
+                for c in escape_str:  # escape characters in commands for puts command
+                    puts_cmd = puts_cmd.replace(c, '\\'+c)
                 if puts_cmd != "":
                     verbose_commands.append(f'{indent}puts "(hammer) {puts_cmd}"')
             verbose_commands.append(line)

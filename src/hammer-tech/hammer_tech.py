@@ -1131,9 +1131,11 @@ class HammerTechnology:
         return list()
 
 
-    def extract_to_cache(self,extract_list:List[str]) -> List[str]:
+    def extract_gz_files(self,extract_list:List[str]) -> List[str]:
         """
-        Return the paths of unzipped ASAP7 Liberty Files for Yosys
+        Return list of paths of unzipped files (*.gz)
+        Unzips the *.gz files to the cache directory.
+        Files not ending in *.gz are unchanged and paths are included in the returned list.
         """
         dest_path = os.path.join(self._cachedir, "extracted_tarfiles")
         full_list = []

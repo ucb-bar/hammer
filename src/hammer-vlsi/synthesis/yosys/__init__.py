@@ -6,12 +6,6 @@
 #
 # See LICENSE for licence details.
 
-from textwrap import dedent as dd
-
-import sys
-
-
-# from hammer_utils import deepdict
 from hammer_vlsi.vendor import OpenROADTool, OpenROADSynthesisTool
 
 ###########
@@ -148,12 +142,11 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         lib_args = self.technology.read_libs([hammer_tech.filters.timing_lib_with_ecsm_filter],
                                              hammer_tech.HammerTechnologyUtils.to_plain_item,
                                              extra_pre_filters=pre_filters)
-        if (self.get_setting("vlsi.core.technology") == "asap7"):
-            lib_args_filtered = self.technology.extract_to_cache(lib_args)
-        else:
-            lib_args_filtered = lib_args
 
-        return " ".join(lib_args_filtered)
+        # lib files are often in a zipped format, so unzip them if they are
+        lib_args_unzipped = self.technology.extract_gz_files(lib_args)
+
+        return " ".join(lib_args_unzipped)
 
     def run_yosys(self) -> bool:
         """Close out the synthesis script and run Yosys."""
@@ -258,8 +251,8 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
 
     def syn_generic(self) -> bool:
         # TODO: is there a better way to do this? like self.get_setting()
-        if self._database.has_setting("synthesis.inputs.latch_map_file"):
-            latch_map = f"techmap -map {self.get_setting('synthesis.inputs.latch_map_file')}"
+        if self._database.has_setting("synthesis.yosys.latch_map_file"):
+            latch_map = f"techmap -map {self.get_setting('synthesis.yosys.latch_map_file')}"
         else:
             latch_map = ""
         # TODO: make the else case better

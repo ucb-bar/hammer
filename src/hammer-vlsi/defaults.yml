@@ -614,14 +614,6 @@ par.inputs:
   # type: int
   gds_precision: 1000
 
-  # Optional: OpenRCX RC tech file
-  # type: Optional[str]
-  openrcx_techfile: null
-
-  # Optional: KLayout tech file
-  # type: Optional[str]
-  klayout_techfile_source: null
-
 # Place-and-route settings
 par:
   # Submission command settings
