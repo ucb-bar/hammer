@@ -32,8 +32,6 @@ class SKY130Tech(HammerTechnology):
         self.setup_verilog()
         self.setup_techlef()
         self.setup_lvs_deck()
-        self.setup_sram_spice()
-        self.setup_sram_lef()
         print('Loaded Sky130 Tech')
 
 
@@ -151,7 +149,7 @@ class SKY130Tech(HammerTechnology):
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {
             "openroad": [
-            HammerTool.make_pre_insertion_hook("place_opt_design",   sky130_set_wire_rc)
+            HammerTool.make_pre_insertion_hook("detailed_placement",   sky130_set_wire_rc)
             ],
             "innovus": [
             HammerTool.make_post_insertion_hook("init_design",      sky130_innovus_settings),
@@ -175,7 +173,6 @@ class SKY130Tech(HammerTechnology):
             ]}
         return hooks.get(tool_name, [])
 
-    ''' >>>>>>>> OpenRAM SRAM-specific functions '''
     @staticmethod
     def openram_sram_names() -> List[str]:
         """ Return a list of cell-names of the OpenRAM SRAMs (that we'll use). """
@@ -185,46 +182,6 @@ class SKY130Tech(HammerTechnology):
             "sky130_sram_2kbyte_1rw1r_32x512_8"
         ]
 
-    def setup_sram_spice(self) -> None:
-        if not self.use_openram: return
-        for sram_name in self.openram_sram_names():
-            source_path = Path(self.get_setting("technology.sky130.openram_lib")) / sram_name / f"{sram_name}.lvs.sp"
-            dest_path = self.expand_tech_cache_path(f'tech-sky130-cache/{sram_name}/{sram_name}.lvs.sp')
-            if not source_path.exists():
-                raise FileNotFoundError(f"SRAM Spice file not found: {source_path}")
-            self.ensure_dirs_exist(dest_path)
-            with open(source_path,'r') as sf:
-                with open(dest_path,'w') as df:
-                    self.logger.info("Modifying SRAM SPICE deck: {} -> {}".format
-                        (source_path, dest_path))
-                    for line in sf:
-                        line = line.replace('sky130_fd_pr__pfet_01v8','pshort')
-                        line = line.replace('sky130_fd_pr__nfet_01v8','nshort')
-                        line = line.replace('wmask0[0]'    , 'wmask0')
-                        df.write(line)
-
-    def setup_sram_lef(self) -> None:
-        if not self.use_openram: return
-        for sram_name in self.openram_sram_names():
-            source_path = Path(self.get_setting("technology.sky130.openram_lib")) / sram_name / f"{sram_name}.lef"
-            dest_path = self.expand_tech_cache_path(f'tech-sky130-cache/{sram_name}/{sram_name}.lef')
-            if not source_path.exists():
-                raise FileNotFoundError(f"SRAM LEF file not found: {source_path}")
-            self.ensure_dirs_exist(dest_path)
-            with open(source_path,'r') as sf:
-                with open(dest_path,'w') as df:
-                    self.logger.info("Modifying SRAM LEF deck: {} -> {}".format
-                        (source_path, dest_path))
-                    units=False
-                    for line in sf:
-                        if line.strip().startswith("UNITS"):
-                            units=True
-                        if line.strip().startswith("END UNITS"):
-                            units=False
-                            continue
-                        if not units:
-                            df.write(line)
-    ''' <<<<<<< END OpenRAM SRAM-specific functions '''
 
 _the_tlef_edit = '''
 LAYER licon

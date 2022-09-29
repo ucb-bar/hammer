@@ -2,15 +2,19 @@
 technology.sky130:
   # This should be output files from the OpenPDKs compilation process.
   # This is $PDK_ROOT/share/pdk/sky130A from the README.
-  sky130A: "PATH-TO-sky130A"    # required
+  sky130A: "/path/to/sky130A"    # required
 
+  # sky130_nda directory contains the NDA files
+  # this key is OPTIONAL, no NDA files will be used if it does not point to a valid path
   # By default, this is used to populate pdk_home below.
   # It should contain s8/V2.0.1
-  sky130_nda: "PATH-TO-skywater-src-nda"
+  sky130_nda: "/path/to/skywater-src-nda"
   
+  # RAM paths
+  # OpenRAM
+  openram_lib: "/path/to/sky130_sram_macros"
   # DFFRAM currently not supported
-  openram_lib: "PATH-TO-sky130_fd_bd_sram/macros"
-  dffram_lib:  "PATH-TO-dffram/compiler/build"
+  dffram_lib:  "/path/to/dffram/compiler/build"
 
   # Shouldn't need to change these
   pdk_home: "${technology.sky130.sky130_nda}/s8/V2.0.1"
@@ -97,12 +101,18 @@ technology.core:
   std_cell_supplies: 
     power:  ["VPWR"]
     ground: ["VGND"]
+  
+synthesis.yosys:
+  latch_map_file: "${technology.sky130.sky130A}/libs.tech/openlane/sky130_fd_sc_hd/latch_map.v"
+  latch_map_file_meta: lazysubst
 
 par.inputs:
   gds_merge: true
   gds_map_mode: manual
   gds_map_file: "${vlsi.builtins.hammer_vlsi_path}/technology/sky130/extra/sky130_lefpin.map"
   gds_map_file_meta: lazysubst
+
+par.openroad:
   openrcx_techfile: "${vlsi.builtins.hammer_vlsi_path}/technology/sky130/extra/sky130hd.rcx_rules"
   openrcx_techfile_meta: lazysubst
   klayout_techfile_source: "${technology.sky130.sky130A}/libs.tech/klayout/sky130A.lyt"

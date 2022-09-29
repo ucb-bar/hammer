@@ -37,7 +37,6 @@
   "libraries": [
     {
       "lef file": "tech-sky130-cache/sky130_fd_sc_hd__nom.tlef",
-      "klayout techfile": "tech-sky130-cache/sky130A.lyt",
       "spice file": "$SKY130_NDA/s8/V2.0.1/LVS/Calibre/source.cdl",
       "verilog sim": "tech-sky130-cache/primitives.v",
       "provides": [
@@ -417,43 +416,77 @@
   ],
   "special cells": [
     {
-      "cell_type": "tiehilocell",    
-      "name": ["sky130_fd_sc_hd__conb_1"]
+      "cell_type": "tiehilocell",
+      "name": [
+        "sky130_fd_sc_hd__conb_1"
+      ]
     },
     {
-      "cell_type": "tiehicell",      
-      "name": ["sky130_fd_sc_hd__conb_1"],
-      "input ports":  ["HI"]
+      "cell_type": "tiehicell",
+      "name": [
+        "sky130_fd_sc_hd__conb_1"
+      ],
+      "output ports": [
+        "HI"
+      ]
     },
     {
-      "cell_type": "tielocell",      
-      "name": ["sky130_fd_sc_hd__conb_1"],
-      "input ports":  ["LO"]
+      "cell_type": "tielocell",
+      "name": [
+        "sky130_fd_sc_hd__conb_1"
+      ],
+      "output ports": [
+        "LO"
+      ]
     },
     {
-      "cell_type": "endcap",         
-      "name": ["sky130_fd_sc_hd__tap_1"]
+      "cell_type": "endcap",
+      "name": [
+        "sky130_fd_sc_hd__tap_1"
+      ]
     },
     {
-      "cell_type": "tapcell",        
-      "name": ["sky130_fd_sc_hd__tapvpwrvgnd_1"]
+      "cell_type": "tapcell",
+      "name": [
+        "sky130_fd_sc_hd__tapvpwrvgnd_1"
+      ]
     },
     {
-      "cell_type": "stdfiller",      
-      "name": ["sky130_fd_sc_hd__fill_1", "sky130_fd_sc_hd__fill_2", "sky130_fd_sc_hd__fill_4", "sky130_fd_sc_hd__fill_8"]
+      "cell_type": "stdfiller",
+      "name": [
+        "sky130_fd_sc_hd__fill_1",
+        "sky130_fd_sc_hd__fill_2",
+        "sky130_fd_sc_hd__fill_4",
+        "sky130_fd_sc_hd__fill_8"
+      ]
     },
     {
-      "cell_type": "decap",          
-      "name": ["sky130_fd_sc_hd__decap_3", "sky130_fd_sc_hd__decap_4", "sky130_fd_sc_hd__decap_6", "sky130_fd_sc_hd__decap_8", "sky130_fd_sc_hd__decap_12"]
+      "cell_type": "decap",
+      "name": [
+        "sky130_fd_sc_hd__decap_3",
+        "sky130_fd_sc_hd__decap_4",
+        "sky130_fd_sc_hd__decap_6",
+        "sky130_fd_sc_hd__decap_8",
+        "sky130_fd_sc_hd__decap_12"
+      ]
     },
-    { 
-      "cell_type": "driver",         
-      "name": ["sky130_fd_sc_hd__buf_4"],
-      "input ports":  ["A"],
-      "output ports":  ["X"]
+    {
+      "cell_type": "driver",
+      "name": [
+        "sky130_fd_sc_hd__buf_4"
+      ],
+      "input ports": [
+        "A"
+      ],
+      "output ports": [
+        "X"
+      ]
     },
-    {"cell_type": "ctsbuffer",        
-      "name": ["sky130_fd_sc_hd__clkbuf_1"]
+    {
+      "cell_type": "ctsbuffer",
+      "name": [
+        "sky130_fd_sc_hd__clkbuf_1"
+      ]
     }
   ],
   "stackups": [
@@ -464,10 +497,9 @@
           "name": "li1",
           "index": 1,
           "direction": "vertical",
-          "min_width": 0.17,
-          "max_width": 2147483.647,
-          "pitch": 0.34,
+          "pitch": 0.46,
           "offset": 0.23,
+          "min_width": 0.17,
           "power_strap_widths_and_spacings": [
             {
               "width_at_least": 0.0,
@@ -479,10 +511,9 @@
           "name": "met1",
           "index": 2,
           "direction": "horizontal",
-          "min_width": 0.14,
-          "max_width": 2147483.647,
-          "pitch": 0.28,
+          "pitch": 0.34,
           "offset": 0.17,
+          "min_width": 0.14,
           "power_strap_widths_and_spacings": [
             {
               "width_at_least": 0.0,
@@ -498,10 +529,9 @@
           "name": "met2",
           "index": 3,
           "direction": "vertical",
-          "min_width": 0.14,
-          "max_width": 2147483.647,
-          "pitch": 0.28,
+          "pitch": 0.46,
           "offset": 0.23,
+          "min_width": 0.14,
           "power_strap_widths_and_spacings": [
             {
               "width_at_least": 0.0,
@@ -517,10 +547,9 @@
           "name": "met3",
           "index": 4,
           "direction": "horizontal",
-          "min_width": 0.3,
-          "max_width": 2147483.647,
-          "pitch": 0.6,
+          "pitch": 0.68,
           "offset": 0.34,
+          "min_width": 0.3,
           "power_strap_widths_and_spacings": [
             {
               "width_at_least": 0.0,
@@ -536,10 +565,9 @@
           "name": "met4",
           "index": 5,
           "direction": "vertical",
-          "min_width": 0.3,
-          "max_width": 2147483.647,
-          "pitch": 0.6,
+          "pitch": 0.92,
           "offset": 0.46,
+          "min_width": 0.3,
           "power_strap_widths_and_spacings": [
             {
               "width_at_least": 0.0,
@@ -555,10 +583,9 @@
           "name": "met5",
           "index": 6,
           "direction": "horizontal",
-          "min_width": 1.6,
-          "max_width": 2147483.647,
-          "pitch": 3.2,
+          "pitch": 3.4,
           "offset": 1.7,
+          "min_width": 1.6,
           "power_strap_widths_and_spacings": [
             {
               "width_at_least": 0.0,

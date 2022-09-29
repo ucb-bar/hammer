@@ -7,10 +7,11 @@
 #  See LICENSE for licence details.
 
 import json
-import os
+import shutil, os
 import sys
 import tarfile
 import importlib
+import subprocess
 from abc import ABCMeta, abstractmethod
 from typing import Any, Callable, Iterable, List, NamedTuple, Optional, Tuple, Dict, TYPE_CHECKING
 from decimal import Decimal
@@ -930,7 +931,7 @@ class HammerTechnology:
         if extra_pre_filters is not None:
             assert isinstance(extra_pre_filters, List)
             pre_filts += extra_pre_filters
-
+        
         return reduce_list_str(
             add_lists,
             map(
@@ -938,6 +939,8 @@ class HammerTechnology:
                 library_types
             )
         )
+
+
 
     def default_pre_filters(self) -> List[Callable[[Library], bool]]:
         """
@@ -1127,6 +1130,39 @@ class HammerTechnology:
         """
         return list()
 
+
+    def extract_gz_files(self,extract_list:List[str]) -> List[str]:
+        """
+        Return list of paths of unzipped files (*.gz)
+        Unzips the *.gz files to the cache directory.
+        Files not ending in *.gz are unchanged and paths are included in the returned list.
+        """
+        dest_path = os.path.join(self._cachedir, "extracted_tarfiles")
+        full_list = []
+
+        try: 
+            os.makedirs(dest_path,mode=0o700, exist_ok=True)
+        except:
+            pass
+
+        for tar_file in extract_list:
+            if (tar_file.endswith('.gz')):
+                if (os.path.splitext(os.path.basename((tar_file)))[0] not in os.listdir(dest_path)):
+                    shutil.copy(tar_file, dest_path)
+            else:
+                full_list.append(tar_file)
+            
+        libs = os.listdir(dest_path)
+        full_paths = list(map(lambda l: os.path.join(dest_path, os.path.basename(l)), libs))
+
+        for _path in full_paths:
+            subprocess.call(["gzip -d {_path}".format(_path=_path)], shell=True)
+        
+        for extracted_file in libs:
+            full_list.append(extracted_file)
+               
+        return full_list
+                
 class HammerTechnologyUtils:
     """
     Utility/helper functions for HammerTechnology.

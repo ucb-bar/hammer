@@ -1,0 +1,22 @@
+# Settings for the sky130 technology
+technology.sky130:
+  # sky130A directory contains most of the PDK files
+  # This should be output files from the OpenPDKs compilation process.
+  # This is $PDK_ROOT/share/pdk/sky130A from the README.
+  sky130A: str
+
+  # sky130_nda directory contains the NDA files
+  # this key is OPTIONAL, no NDA files will be used if it does not point to a valid path
+  # By default, this is used to populate pdk_home below.
+  # It should contain s8/V2.0.1
+  sky130_nda: Optional[str]
+  
+  # RAM paths
+  # OpenRAM
+  openram_lib: Optional[str]
+  # DFFRAM currently not supported
+  dffram_lib:  Optional[str]
+
+  # Shouldn't need to change these
+  pdk_home: Optional[str]
+  lvs_deck_sources: Optional[list[str]]
