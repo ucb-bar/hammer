@@ -649,15 +649,15 @@ pdngen::specify_grid macro {{
         # determine commands for side specified in pin assignments
         #   can only be done in openroad by "excluding" the entire length of the other 3 sides from pin placement
         side=""
-        # for pin in pin_assignments:
-        #     if pin.side == "bottom":
-        #         side="-exclude top:* -exclude right:* -exclude left:*"
-        #     elif pin.side == "top":
-        #         side="-exclude bottom:* -exclude right:* -exclude left:*"
-        #     elif pin.side == "left":
-        #         side="-exclude top:* -exclude right:* -exclude bottom:*"
-        #     elif pin.side == "right":
-        #         side="-exclude top:* -exclude bottom:* -exclude left:*"
+        for pin in pin_assignments:
+            if pin.side == "bottom":
+                side="-exclude top:* -exclude right:* -exclude left:*"
+            elif pin.side == "top":
+                side="-exclude bottom:* -exclude right:* -exclude left:*"
+            elif pin.side == "left":
+                side="-exclude top:* -exclude right:* -exclude bottom:*"
+            elif pin.side == "right":
+                side="-exclude top:* -exclude bottom:* -exclude left:*"
 
         return f"place_pins {random_arg} -hor_layers {{{' '.join(hor_layers)}}} -ver_layers {{{' '.join(ver_layers)}}} {side}"
 
