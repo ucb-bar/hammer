@@ -9,6 +9,7 @@
 
 import glob
 import os
+import errno
 from textwrap import dedent as dd
 from typing import List, Optional, Dict, Any, Tuple, Callable
 from decimal import Decimal
@@ -96,6 +97,25 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     def do_post_steps(self) -> bool:
         assert super().do_post_steps()
+        # Create symlinks for post_<step> to pre_<step+1> to improve usability.
+        try:
+            for prev, next in self._step_transitions:
+                os.symlink(
+                    os.path.join(self.run_dir, "pre_{next}".format(next=next)), # src
+                    os.path.join(self.run_dir, "post_{prev}".format(prev=prev)) # dst
+                )
+        except OSError as e:
+            if e.errno != errno.EEXIST:
+                self.logger.warning("Failed to create post_* symlinks: " + str(e))
+
+        # Create db post_<last step>
+        # TODO: this doesn't work if you're only running the very last step
+        if len(self._step_transitions) > 0:
+            last = "post_{step}".format(step=self._step_transitions[-1][1])
+            self.verbose_append("write_db {last}".format(last=last))
+            # Symlink the database to latest for open_chip script later.
+            self.verbose_append("ln -sfn {last} latest".format(last=last))
+
         return self.run_openroad()
 
     @property
@@ -472,8 +492,12 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         all_metal_layer_names = [layer.name for layer in self.get_stackup().metals]
 
         strap_layers = self.get_setting("par.generate_power_straps_options.by_tracks.strap_layers").copy()
-        std_cell_rail_layer = str(self.get_setting("technology.core.std_cell_rail_layer"))
-        strap_layers.insert(0,std_cell_rail_layer)
+        std_cell_rail_layer_name = str(self.get_setting("technology.core.std_cell_rail_layer"))
+        std_cell_rail_layer = self.get_stackup().get_metal(std_cell_rail_layer_name)
+        std_cell_rail_minwidth = std_cell_rail_layer.min_width
+
+        # std_cell_rail_layer_minwidth = 
+        strap_layers.insert(0,std_cell_rail_layer_name)
         top_strap_layer = strap_layers[-1]
         straps = '\n    '.join(self.create_power_straps_tcl())
         
@@ -490,9 +514,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         for gnd_net in gnd_nets:
             if gnd_net.tie is not None:
                 global_connections_gnd += f"\n    {{inst_name .* pin_name {gnd_net.name}}}"
-        
-        site = self.technology.get_site_by_name(self.get_setting("vlsi.technology.placement_site"))
-        width = site.x
 
         # blockages
         top_blockage_layer = self.get_setting("par.blockage_spacing_top_layer")
@@ -526,7 +547,7 @@ set pdngen::global_connections {{
 pdngen::specify_grid stdcell {{
   name grid
   rails {{
-    met1 {{width {width} offset 0}}
+    {std_cell_rail_layer_name} {{width {std_cell_rail_minwidth} offset 0}}
   }}
   straps {{
     {straps}
@@ -846,14 +867,12 @@ pdngen::specify_grid macro {{
         ################################################################
         # Detailed routing
 
-        # set_thread_count [exec getconf _NPROCESSORS_ONLN]
-
-        # write_verilog -include_pwr_gnd {self.output_netlist_filename}
+        set_thread_count {self.get_setting("vlsi.core.max_threads")}
 
         # NOTE: many other arguments available
         detailed_route -guide {self.route_guide_path} \\
-            -bottom_routing_layer met1 \\
-            -top_routing_layer met5 \\
+            -bottom_routing_layer {metals[0].name} \\
+            -top_routing_layer {metals[-1].name} \\
             -output_guide {self.run_dir}/{self.top_module}_output_guide.mod \\
             -output_drc {self.run_dir}/{self.top_module}_route_drc.rpt \\
             -output_maze {self.run_dir}/{self.top_module}_maze.log \\
