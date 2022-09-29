@@ -22,7 +22,7 @@ from hammer_vlsi.constraints import MMMCCorner, MMMCCornerType
 from hammer_vlsi.vendor import OpenROADTool, OpenROADPlaceAndRouteTool
 
 import hammer_tech
-from hammer_tech import RoutingDirection
+from hammer_tech import RoutingDirection, Site
 import specialcells
 from specialcells import CellType, SpecialCell
 
@@ -464,6 +464,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         return True
 
     def generate_pdn_config(self, pdn_config_path) -> bool:
+
         pwr_nets=self.get_all_power_nets()
         gnd_nets=self.get_all_ground_nets()
         primary_pwr_net=pwr_nets[0].name
@@ -489,6 +490,9 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         for gnd_net in gnd_nets:
             if gnd_net.tie is not None:
                 global_connections_gnd += f"\n    {{inst_name .* pin_name {gnd_net.name}}}"
+        
+        site = self.technology.get_site_by_name(self.get_setting("vlsi.technology.placement_site"))
+        width = site.x
 
         # blockages
         top_blockage_layer = self.get_setting("par.blockage_spacing_top_layer")
@@ -522,7 +526,7 @@ set pdngen::global_connections {{
 pdngen::specify_grid stdcell {{
   name grid
   rails {{
-    met1 {{width 0.48 offset 0}}
+    met1 {{width {width} offset 0}}
   }}
   straps {{
     {straps}
@@ -551,74 +555,6 @@ pdngen::specify_grid macro {{
 
         with open(pdn_config_path, "w") as f:
             f.write(pdn_cfg)
-        
-        return True
-
-    def write_power_straps_tcl(self, power_straps_tcl_path) -> bool:
-        pwr_nets=self.get_all_power_nets()
-        gnd_nets=self.get_all_ground_nets()
-        primary_pwr_net=pwr_nets[0].name
-        primary_gnd_net=gnd_nets[0].name
-        all_metal_layer_names = [layer.name for layer in self.get_stackup().metals]
-
-        strap_layers = self.get_setting("par.generate_power_straps_options.by_tracks.strap_layers").copy()
-        std_cell_rail_layer = str(self.get_setting("technology.core.std_cell_rail_layer"))
-        strap_layers.insert(0,std_cell_rail_layer)
-        
-        add_pdn_connect_tcl=""
-        for i in range(0,len(strap_layers)-1):
-            add_pdn_connect_tcl+=f"add_pdn_connect -grid grid -layers {{{strap_layers[i]} {strap_layers[i+1]}}}\n"
-        
-        global_connections_pwr_tcl=f"add_global_connection -net {{{primary_pwr_net}}} -inst_pattern {{.*}} -pin_pattern {{^{primary_pwr_net}$}} -power"
-        global_connections_gnd_tcl=f"add_global_connection -net {{{primary_gnd_net}}} -inst_pattern {{.*}} -pin_pattern {{^{primary_gnd_net}$}} -ground"
-        for pwr_net in pwr_nets:
-            if pwr_net.tie is not None:
-                global_connections_pwr_tcl += f"\n add_global_connection -net {{{primary_pwr_net}}} -inst_pattern {{.*}} -pin_pattern {{{pwr_net.name}}}"
-        for gnd_net in gnd_nets:
-            if gnd_net.tie is not None:
-                global_connections_gnd_tcl += f"\n add_global_connection -net {{{primary_gnd_net}}} -inst_pattern {{.*}} -pin_pattern {{{gnd_net.name}}}"
-
-        blockage_spacing = self.get_setting("par.blockage_spacing")
-        blockage_spacing_halo = [blockage_spacing for i in range(4)]
-
-        # AO is hard-coded in cpf generation too
-        voltage_domain = "AO"
-
-        with open(power_straps_tcl_path,'w') as power_straps_tcl_file:
-            self.block_append(
-            f"""
-            ####################################
-            # global connections
-            ####################################
-            {global_connections_pwr_tcl}
-            {global_connections_gnd_tcl}
-            #global_connect
-            ####################################
-            # voltage domains
-            ####################################
-            set_voltage_domain -name {{{voltage_domain}}} -power {{{primary_pwr_net}}} -ground {{{primary_gnd_net}}}
-            ####################################
-            # standard cell grid
-            ####################################
-            define_pdn_grid -name {{grid}} -voltage_domains {{{voltage_domain}}}
-            {' '.join(self.create_power_straps_tcl())}
-            {add_pdn_connect_tcl}
-            ####################################
-            # macro grids
-            ####################################
-            ####################################
-            # grid for: {voltage_domain}_macro_grid_1
-            ####################################
-            define_pdn_grid -name {{{voltage_domain}_macro_grid_1}} -voltage_domains {{{voltage_domain}}} -macro -orient {{R0 R180 MX MY}} -halo {{ {blockage_spacing_halo} }} -grid_over_boundary
-            add_pdn_connect -grid {{{voltage_domain}_macro_grid_1}} -layers {{met4 met5}}
-            
-            ####################################
-            # grid for: {voltage_domain}_macro_grid_2
-            ####################################
-            define_pdn_grid -name {{{voltage_domain}_macro_grid_2}} -voltage_domains {{{voltage_domain}}} -macro -orient {{R90 R270 MXR90 MYR90}} -halo {{ {blockage_spacing_halo} }} -grid_over_boundary
-            add_pdn_connect -grid {{{voltage_domain}_macro_grid_2}} -layers {{met4 met5}}
-            """,
-            file=power_straps_tcl_file)
         
         return True
     
@@ -742,8 +678,10 @@ pdngen::specify_grid macro {{
         tie_lo_cells = self.technology.get_special_cell_by_type(CellType.TieLoCell)
         tie_hilo_cells = self.technology.get_special_cell_by_type(CellType.TieHiLoCell)
 
-        if len(tie_hi_cells) != 1 or len (tie_lo_cells) != 1 or len(tie_hi_cells[0].output_ports) == 0 is None or len(tie_lo_cells[0].output_ports) == 0:
-            self.logger.warning("Hi and Lo tiecells and their input ports are unspecified or improperly specified and will not be added.")
+        if len(tie_hi_cells) != 1 or len (tie_lo_cells) != 1:
+            self.logger.warning("Hi and Lo tiecells are unspecified or improperly specified and will not be added.")
+        elif tie_hi_cells[0].output_ports is None or tie_lo_cells[0].output_ports is None:
+            self.logger.warning("Hi and Lo tiecells output ports are unspecified or improperly specified and will not be added.")
         else:   
             tie_hi_cell = tie_hi_cells[0].name[0]
             tie_hi_port = tie_hi_cells[0].output_ports[0]
@@ -1208,23 +1146,6 @@ pdngen::specify_grid macro {{
                 else:
                     assert False, "Should not reach here"
         return [chip_size_constraint] + output
-        # return output
-
-    def specify_std_cell_power_straps(self, blockage_spacing: Decimal, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
-        """
-        Generate a list of TCL commands that build the low-level standard cell power strap rails.
-        This will use the -master option to create power straps based on technology.core.tap_cell_rail_reference.
-        The layer is set by technology.core.std_cell_rail_layer, which should be the highest metal layer in the std cell rails.
-
-        :param bbox: The optional (2N)-point bounding box of the area to generate straps. By default the entire core area is used.
-        :param nets: A list of power net names (e.g. ["VDD", "VSS"]). Currently only two are supported.
-        :return: A list of TCL commands that will generate power straps on rails.
-        """
-        layer_name = self.get_setting("technology.core.std_cell_rail_layer")
-        layer = self.get_stackup().get_metal(layer_name)
-        tcl = [f"add_pdn_stripe -grid {{grid}} -layer {{{layer.name}}} -width {0.48} -pitch {5.44} -offset {0} -followpins\n"]
-        tcl = [f"add_pdn_stripe -grid {{grid}} -layer {{{layer.name}}} -followpins\n"]
-        return []
 
     def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool) -> List[str]:
         """

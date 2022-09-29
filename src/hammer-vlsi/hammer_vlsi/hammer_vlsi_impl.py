@@ -2015,13 +2015,14 @@ class TCLTool(HammerTool):
         self.tcl_append(cmd, self.output, clean)
 
     # append a multiline string with proper formatting (makes plugins easier to read)
-    def block_append(self, commands: list, verbose: bool = True) -> bool:
+    def block_append(self, cmds: str, verbose: bool = True) -> bool:
         verbose_commands = []
+        commands = cmds.split('\n')
         # remove first line if it's empty because it messes up indentation
         if len(commands[0].strip()) == 0:
             commands = commands[1:]
         prev_line = ""
-        for line in commands.split('\n'):
+        for line in commands:
             # add "verbose" statement (echo TCL command to terminal)
             #   if line isn't (1) empty, (2) part of a multiline command, or (3) a comment
             # we can't just use verbose_append because it blindly echoes all commands

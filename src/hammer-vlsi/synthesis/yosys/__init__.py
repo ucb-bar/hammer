@@ -253,13 +253,9 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         # TODO: is there a better way to do this? like self.get_setting()
         if self._database.has_setting("synthesis.yosys.latch_map_file"):
             latch_map = f"techmap -map {self.get_setting('synthesis.yosys.latch_map_file')}"
-        else:
+        else:  # TODO: make the else case better
             latch_map = ""
-        # TODO: make the else case better
-
-        #dfflibmap = '\n'.join([f"dfflibmap -liberty {liberty_file}" for liberty_file in self.liberty_files_tt.split()])
-        lib_path = os.path.split(self.run_dir)[0]
-
+        
         self.block_append(f"""
         # TODO: verify this command, it was in yosys manual but not in OpenLANE script
         yosys proc
@@ -274,16 +270,9 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         {latch_map}
 
         # Technology mapping of flip-flops
-        # dfflibmap -liberty {self.liberty_files_tt.split()[0]}
-        # opt
         """)
-        
-        if (self.get_setting("vlsi.core.technology") == "asap7"):
-            self.verbose_append(f"dfflibmap -liberty {lib_path}/tech-asap7-cache/extracted_tarfiles/asap7sc7p5t_SEQ_RVT_TT_nldm_201020.lib")
-            
-        else:
-            for liberty_file in self.liberty_files_tt.split():
-                self.verbose_append(f"dfflibmap -liberty {liberty_file}")
+        for liberty_file in self.liberty_files_tt.split():
+            self.verbose_append(f"dfflibmap -liberty {liberty_file}")
         self.verbose_append("opt")
 
         # merges shareable resources into a single resource. A SAT solver
@@ -298,8 +287,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         self.block_append(f"""
         # Technology mapping for cells
         # ABC supports multiple liberty files, but the hook from Yosys to ABC doesn't
-        # try: merged.lib, custom script
-        # TODO: this is a bad way of getting one liberty file
+        # TODO: this is a bad way of getting one liberty file, need a way to merge all std cell lib files
         abc -D {self.clock_period} \\
             -constr "{self.mapped_sdc_path}" \\
             -liberty "{self.liberty_files_tt.split()[0]}" \\
@@ -309,7 +297,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         # TODO: do we need this??
         setundef -zero
 
-        # TODO: what is the purpose of splitnets?
+        # Split multi-bit nets into single-bit nets.
         # Splitting nets resolves unwanted compound assign statements in netlist (assign [..] = [..])
         splitnets
 
@@ -323,7 +311,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         tie_lo_cells = self.technology.get_special_cell_by_type(CellType.TieLoCell)
         tie_hilo_cells = self.technology.get_special_cell_by_type(CellType.TieHiLoCell)
 
-        if len(tie_hi_cells) != 1 or len (tie_lo_cells) != 1 or len(tie_hi_cells[0].output_ports) == 0 is None or len(tie_lo_cells[0].output_ports) == 0:
+        if len(tie_hi_cells) != 1 or len (tie_lo_cells) != 1 or tie_hi_cells[0].output_ports is None or tie_lo_cells[0].output_ports is None:
             self.logger.warning("Hi and Lo tiecells and their input ports are unspecified or improperly specified and will not be added during synthesis.")
         else:   
             tie_hi_cell = tie_hi_cells[0].name[0]
@@ -359,12 +347,13 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         return True
     
     def write_outputs(self) -> bool:
-        mapped_v_path=os.path.join(self.run_dir, f"{self.top_module}.mapped.notflat.v")
+        hier_mapped_v_path=os.path.join(self.run_dir, f"{self.top_module}.mapped.hier.v")
         self.block_append(f"""
-        write_verilog -noattr -noexpr -nohex -nodec -defparam "{mapped_v_path}"
+        write_verilog -noattr -noexpr -nohex -nodec -defparam "{hier_mapped_v_path}"
 
         flatten
 
+        # OpenROAD will throw an error if the verilog from Yosys is not flattened
         write_verilog -noattr -noexpr -nohex -nodec -defparam "{self.mapped_v_path}"
 
         # BLIF file seems to be easier to parse than mapped verilog for find_regs functions so leave for now
