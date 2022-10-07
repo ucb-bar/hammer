@@ -320,17 +320,20 @@ class CLIDriver:
             with open(defaults_path, 'r', encoding="utf-8") as f:
                 yaml = ruamel.yaml.YAML()
                 data = yaml.load(f)
+            with open(KEY_PATH, 'r', encoding="utf-8") as f:
+                yaml = ruamel.yaml.YAML()
+                history = yaml.load(f)
         else:
             warnings.warn("Cannot provide key descriptions without the ruamel.yaml package.")
             return driver.project_config
         while True:
             curr_level = data
             overall_key = []
-            while not all(isinstance(k, str) and isinstance(v, str)
-                for k, v in curr_level.items()):  # check if data is not flat
+            while isinstance(curr_level, ruamel.yaml.CommentedMap):
                 print()
                 for k in curr_level.keys():
-                    print(k)
+                    if "_meta" not in k:
+                        print(k)
                 while True:
                     try:
                         key = input("Select from the current level of keys: ")
@@ -341,20 +344,24 @@ class CLIDriver:
                 overall_key.append(key)
                 if not isinstance(next_level, ruamel.yaml.CommentedMap):
                     flat_key = '.'.join(overall_key)
-                    if flat_key not in driver.project_config:
+                    if not driver.database.has_setting(flat_key):
                         val = curr_level.get(key)
                         warnings.warn(f"{flat_key} is not in the project configuration, the default value is displayed.")
                     else:
-                        val = driver.project_config[flat_key]
-                    comment = curr_level.ca.items[key][2].value.strip().replace('\n', ' ')
+                        val = driver.database.get_setting(flat_key)
+                    if key in curr_level.ca.items:
+                        comment = curr_level.ca.items[key][2].value.strip().replace('\n', ' ')  # NOTE: only takes in comment immediately after the key-value pair
+                    else:
+                        comment = "no comment provided"
+                    key_hist = history[flat_key] if flat_key in history else "no history provided"
                     print(dedent(f"""
                     ----------------------------------------
                     Key: {flat_key}
                     Value: {val}
                     Description: {comment}
+                    History: {key_hist}
                     ----------------------------------------
                     """))
-                    # NOTE: only takes in comment immediately after the key-value pair
                     while True:
                         continue_input = input("Continue querying keys? [y/n]: ")
                         if continue_input.lower() == 'y':
