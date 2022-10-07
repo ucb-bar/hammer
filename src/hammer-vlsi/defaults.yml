@@ -3,124 +3,97 @@
 # e.g. foo: "bar" in this file means that the default setting for foo is "bar".
 
 vlsi.core:
-  # Path(s) to out-of-tree hammer technology libraries.
-  technology_path: ["${vlsi.builtins.hammer_vlsi_path}/technology"]
+  technology_path: ["${vlsi.builtins.hammer_vlsi_path}/technology"] # Path(s) to out-of-tree hammer technology libraries.
   technology_path_meta: subst
 
-  # Technology to use. hammer-vlsi will read this and load the appropriate technology libraries.
-  technology: "nop"
+  technology: "nop" # Technology to use. hammer-vlsi will read this and load the appropriate technology libraries.
 
-  # Technology node dimension (nm) to use.
+  node: 0 # Technology node dimension (nm) to use.
   # Some tools change what they do as this changes.
   # TODO: move this to vlsi.technology (or technology.core) ucb-bar/hammer#317
-  node: 0
 
-  # Build system to use, if any.
+  build_system: "none" # Build system to use, if any.
   # This is used to auto-generate a build file, if desired. It is not required to run hammer.
   # Valid options are "none" or "make"
-  build_system: "none"
 
-  # Path(s) to synthesis tools.
+  synthesis_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/synthesis"] # Path(s) to synthesis tools.
   # Add the built-in path to synthesis tools.
-  synthesis_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/synthesis"]
   synthesis_tool_path_meta: subst
 
-  # Path(s) to place and route tools.
+  par_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/par"] # Path(s) to place and route tools.
   # Add the built-in path to place and route tools.
-  par_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/par"]
   par_tool_path_meta: subst
 
-  # Path(s) to drc tools.
+  drc_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/drc"] # Path(s) to drc tools.
   # Add the built-in path to drc tools.
-  drc_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/drc"]
   drc_tool_path_meta: subst
 
-  # Path(s) to lvs tools.
+  lvs_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/lvs"] # Path(s) to lvs tools.
   # Add the built-in path to lvs tools.
-  lvs_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/lvs"]
   lvs_tool_path_meta: subst
 
-  # Path(s) to sram generator tools.
+  sram_generator_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/sram_generator"] # Path(s) to sram generator tools.
   # Add the built-in path to sram generator tools.
-  sram_generator_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/sram_generator"]
   sram_generator_tool_path_meta: subst
 
-  # Path(s) to sim tools.
+  sim_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/sim"] # Path(s) to sim tools.
   # Add the built-in path to sim tools
-  sim_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/sim"]
   sim_tool_path_meta: subst
 
-  # Path(s) to power tools.
+  power_tool_path: ["${vlsi.builtins.hammer_vlsi_path/power"] # Path(s) to power tools.
   # Add the built-in path to power tools
-  power_tool_path: ["${vlsi.builtins.hammer_vlsi_path/power"]
   power_tool_path_meta: subst
 
-  # Path(s) to formal tools.
+  formal_tool_path: ["${vlsi.builtins.hammer_vlsi_path/formal"] # Path(s) to formal tools.
   # Add the built-in path to power tools
-  formal_tool_path: ["${vlsi.builtins.hammer_vlsi_path/formal"]
   formal_tool_path_meta: subst
 
-  # Path(s) to timing tools.
+  timing_tool_path: ["${vlsi.builtins.hammer_vlsi_path/timing"] # Path(s) to timing tools.
   # Add the built-in path to power tools
-  timing_tool_path: ["${vlsi.builtins.hammer_vlsi_path/timing"]
   timing_tool_path_meta: subst
 
-  # Path(s) to PCB deliverable tools.
+  pcb_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/pcb"] # Path(s) to PCB deliverable tools.
   # Add the built-in path to PCB deliverable tools.
-  pcb_tool_path: ["${vlsi.builtins.hammer_vlsi_path}/pcb"]
   pcb_tool_path_meta: subst
 
-  # Synthesis tool to use.
+  synthesis_tool: "nop" # Synthesis tool to use.
   # Currently we can choose from a selection of built-in tools which hammer-vlsi supports.
-  synthesis_tool: "nop"
 
-  # Place and route tool to use.
-  par_tool: "nop"
+  par_tool: "nop" # Place and route tool to use.
 
-  # DRC tool to use.
-  drc_tool: "nop"
+  drc_tool: "nop" # DRC tool to use.
 
-  # LVS tool to use.
-  lvs_tool: "nop"
+  lvs_tool: "nop" # LVS tool to use.
 
-  # SRAM Generator tool to use.
-  sram_generator_tool: "nop"
+  sram_generator_tool: "nop" # SRAM Generator tool to use.
 
-  # Sim tool to use.
-  sim_tool: "nop"
+  sim_tool: "nop" # Sim tool to use.
 
-  # Power analysis tool to use.
-  power_tool: "nop"
+  power_tool: "nop" # Power analysis tool to use.
 
-  # Formal verification/check tool to use.
-  formal_tool: "nop"
+  formal_tool: "nop" # Formal verification/check tool to use.
 
-  # Static timing analysis tool to use.
-  timing_tool: "nop"
+  timing_tool: "nop" # Static timing analysis tool to use.
 
-  # PCB deliverable tool to use.
+  pcb_tool: "generic" # PCB deliverable tool to use.
   # PCB deliverables include footprints, symbols, etc.
   # For the exact deliverables produced, please see the deliverable tool's documentation.
   # For the default 'generic' tool, the list of artefacts can be found in src/hammer-vlsi/pcb/generic/__init__.py
-  pcb_tool: "generic"
 
-  # Maximum threads to use in a CAD tool invocation.
-  max_threads: 1
+  max_threads: 1 # Maximum threads to use in a CAD tool invocation.
 
-# TODO ucb-bar/hammer#317 move these to technology.core (discussion to be had)
 vlsi.technology:
-  # Placement site for macros. (Optional[str])
+# TODO ucb-bar/hammer#317 move these to technology.core (discussion to be had)
+  placement_site: null # Placement site for macros. (Optional[str])
   # Typically specified in standard cell LEFs.
   # See http://www.ispd.cc/contests/18/lefdefref.pdf
   # Required for some CAD tools to function properly.
-  placement_site: null
 
-  # Top cut/via layer for blockage under bumps. (Optional[str])
+  bump_block_cut_layer: null # Top cut/via layer for blockage under bumps. (Optional[str])
   # Only used if using vlsi.inputs.bumps
   # TODO: remove this after stackup supports vias ucb-bar/hammer#354
-  bump_block_cut_layer: null
 
-  # Extra semiconductor IP libraries/stdcell libs/hard macros. (List[ExtraLibrary])
+  extra_libraries: [] # Extra semiconductor IP libraries/stdcell libs/hard macros. (List[ExtraLibrary])
   # Used for non-technology-vendor-provided custom IP blocks.
   # ExtraLibrary is a struct with two fields:
   # - prefix (Optional[PathPrefix]) - struct that holds a prefix and path.
@@ -131,17 +104,16 @@ vlsi.technology:
   #     For example, if "lef file" in HammerLibrary references "pll/layout/pll.lef", then the path would be "pll".
   # - library (hammer_tech.HammerLibrary) - IP library to add.
   # Extra libraries are added at the end of the library list, in the event that order matters.
-  extra_libraries: []
 
-  # Extra information about macro sizes.
+  extra_macro_sizes: [] # Extra information about macro sizes.
   # type: List[MacroSize]
   # MacroSize is a struct with the following fields:
   # - library (str): IP library of the macro. Leave blank if unknown
   # - name (str): Name of the macro block
   # - width (float): Width of the macro in um
   # - height (float): Height of the macro in um
-  extra_macro_sizes: []
 
+  extracted_tarballs_dir: null
   # Path where tarballs have been extracted.
   # type: Optional[str]
   # Note: this setting can be specified per-technology using
@@ -151,11 +123,9 @@ vlsi.technology:
   # and this is set to /opt/test, then /opt/test/foobar.tar.gz/ should contain
   # the extracted contents of foobar.tar.gz.
   # If this is not specified, then the tarballs will be extracted to obj/<tech_dir>/extracted/.
-  extracted_tarballs_dir: null
 
 cadence:
-  # Path to the folder with defaults.yml for common Cadence settings.
-  common_path: "${vlsi.builtins.hammer_vlsi_path}/common/cadence"
+  common_path: "${vlsi.builtins.hammer_vlsi_path}/common/cadence" # Path to the folder with defaults.yml for common Cadence settings.
   common_path_meta: subst
 
 # General VLSI inputs.
@@ -168,52 +138,42 @@ vlsi.inputs:
   #   tie (Optional[str]) - Another supply this supply is tied to. Nets with this set will  not end up in your final layout.
   #   weight (Optional[int]) - The weight of this supply when building power straps (larger number = more straps).
   #     Not used for grounds. Mandatory, but defaults to 1 if omitted.
-  # power (List(Supply)): A list of of all power net(s) in the design
-  # ground (List(Supply)): A list of all ground net(s) in the design
-  # VDD (str): The default voltage of the primary power net
-  # GND (str): The default voltage of the primary ground net
   supplies:
-    power: [{name: "VDD", pin: "VDD"}]
-    ground: [{name: "VSS", pin: "VSS"}]
-    VDD: "0.85 V"
-    GND: "0 V"
+    power: [{name: "VDD", pin: "VDD"}] # power (List(Supply)): A list of of all power net(s) in the design
+    ground: [{name: "VSS", pin: "VSS"}] # ground (List(Supply)): A list of all ground net(s) in the design
+    VDD: "0.85 V" # VDD (str): The default voltage of the primary power net
+    GND: "0 V" # GND (str): The default voltage of the primary ground net
 
   hierarchical:
-    # Hierarchical par mode. (str)
+    mode: flat # Hierarchical par mode. (str)
     # Valid options:
     # flat - Perform a flat place and route run.
     # leaf - Leaf module in a hierarchical run - same as flat except that an extra write_ilm step is added.
     # hierarchical - Module which has sub-modules which are also hierarchical.
     # top - Top module in a hierarchical run - runs an extra assemble_design step.
-    mode: flat
 
-    # Top RTL module in the hierarchical flow. (str)
+    top_module: "null" # Top RTL module in the hierarchical flow. (str)
     # Not to be confused with synthesis.inputs.top_module which specifies the synthesis module for this run.
     # (e.g. synthesis.inputs.top_module is used for a sub-synthesis run)
-    top_module: "null"
 
-    # Used by HammerDriver to generate configurations for hierarchical place-and-route.
+    config_source: none # Used by HammerDriver to generate configurations for hierarchical place-and-route.
     # type: (str)
     # Valid options:
     # none - Do nothing. (default)
     # manual - Read from hierarchical_manual_* below.
     # from_placement - Generate from "hierarchical" entries in vlsi.inputs.placement_constraints.
-    config_source: none
 
-    # Manual hierarchical definitions used only if hierarchical_definition_source is set to manual mode.
+    manual_modules: [] # Manual hierarchical definitions used only if hierarchical_definition_source is set to manual mode.
     # Should be a list along the lines of [{"module1": "module1_sub1", "module1_sub2", "module2": "module2_sub"}].
-    manual_modules: []
 
-    # Manual hierarchical placement constraints used only if hierarchical_definition_source is set to manual mode.
+    manual_placement_constraints: [] # Manual hierarchical placement constraints used only if hierarchical_definition_source is set to manual mode.
     # Should be a list along the lines of [{"module1": <list of PlacementConstraint structs>}].
-    manual_placement_constraints: []
 
-    # Manual hierarchical constraints. Overrides generic constraints on a per module basis.
+    constraints: [] # Manual hierarchical constraints. Overrides generic constraints on a per module basis.
     # Should be a list along the lines of [{"module1": <list of other hammer constraints>}].
     # For example [{"mod1": [vlsi.inputs.default_output_load: 2], "mod2": [vlsi.inputs.clocks:<clock constraints>] }].
-    constraints: []
 
-  # ILMs for hierarchical mode.
+  ilms: [] # ILMs for hierarchical mode.
   # ILM struct (ILMStruct) members:
   # dir (str) - directory to the ILMs (...ILMDir)
   # data_dir (str) - data directory to the ILMs (...ILMDir/mmmc/...)
@@ -222,9 +182,8 @@ vlsi.inputs:
   # gds (str) - path to the GDS file
   # netlist (str) - path to the netlist file
   # sim_netlist (str) - Optional. If specified, this netlist is appended for hierarchical simulation
-  ilms: []
 
-  # Multi-mode multi-corner setups, overrides supplies
+  mmmc_corners: [] # Multi-mode multi-corner setups, overrides supplies
   # MMMC struct members:
   # name (str) - name of the corner.
   # type (str) - One of the following:
@@ -233,9 +192,8 @@ vlsi.inputs:
   # - "extra" (misc. corner, e.g. nominal for power analysis)
   # voltage (str) - voltage of the corner should match tech json
   # temp (str) - temperature of the corner should match tech json
-  mmmc_corners: []
 
-  # Clock ports of the top-level module.
+  clocks: [] # Clock ports of the top-level module.
   # type: List[ClockPort]
   # TODO: support multiply_by in generated clocks
   # Clock struct members:
@@ -249,19 +207,16 @@ vlsi.inputs:
   #   We are constrained to integers by SDC.
   # group (str) - Optional. The name of the clock group this clock belongs to. Clocks in the same group will not be marked as asynchronous.
   #   Clocks with no group specified will all be placed in separate groups and thus marked as asynchronous to each other and all other groups.
-  clocks: []
 
-  # Default output pin load capacitance.
+  default_output_load: 1 # Default output pin load capacitance.
   # Default: 1pF
-  default_output_load: 1
 
-  # List of output load constraints.
+  output_loads: [] # List of output load constraints.
   # Each item in the list should be a struct with the following members:
   # name (str) - Name of the output load (e.g. io_out)
   # load (float) - Output load capacitance in pF.
-  output_loads: []
 
-  # List of delay constraints.
+  delays: [] # List of delay constraints.
   # These either constrain inputs to arrive after a certain delay relative
   # to the clock or constrain outputs to arrive a certain delay before
   # the clock edge.
@@ -272,13 +227,11 @@ vlsi.inputs:
   # - "input"
   # - "output"
   # delay (TimeValue) - Delay applied to the I/O.
-  delays: []
 
-  # List of custom sdc constraints to use. (List[str])
+  custom_sdc_constraints: [] # List of custom sdc constraints to use. (List[str])
   # These are appended after all other generated constraints (clock, pin, delay, load, etc.).
-  custom_sdc_constraints: []
 
-  # List of placement constraints for floorplanning.
+  placement_constraints: [] # List of placement constraints for floorplanning.
   # Each item is a struct member:
   # path (str) - Path to the given instance
   # - Required for all types
@@ -333,9 +286,8 @@ vlsi.inputs:
   #   - "place" - This obstruction type stops the placement of standard cells inside it
   #   - "route" - This obstruction type stops all routing inside it
   #   - "power" - This obstruction type stops only power routing/straps inside it
-  placement_constraints: []
 
-  # Don't use list mode. (str)
+  dont_use_mode: auto # Don't use list mode. (str)
   # Specifies where to get the list of cells to not use.
   # These cells can be specified in a number of ways:
   # - "MY_CELL" (cell MY_CELL in any library)
@@ -349,12 +301,10 @@ vlsi.inputs:
   # auto - Use the technology plugin's value for the don't use list
   # manual - Use the list from the variable below, overriding the technology plugin
   # append - Append the manual list to the technology plugin's list
-  dont_use_mode: auto
-  # Optional: List of cells to mark as don't use
+  dont_use_list: [] # Optional: List of cells to mark as don't use
   # type: List[str]
-  dont_use_list: []
 
-  # Power specification mode. (str)
+  power_spec_mode: empty # Power specification mode. (str)
   # Specifies how to obtain a power specificaiton. Power specifications often setup
   # how many power nets you have, what their names and voltages are, as well as
   # how many domains you have and what their relation is.
@@ -363,20 +313,16 @@ vlsi.inputs:
   #        including vlsi.inputs.supplies.
   # manual - Use the value given in power_spec_contents with type given in power_spec_type
   # empty - Do not use any power specification
-  power_spec_mode: empty
-  # Optional: Power specification type. (str)
+  power_spec_type: null # Optional: Power specification type. (str)
   # Specifies what kind/version/type of power specification to use
   # Valid options:
   # cpf - Use the common power format commonly used in Cadence tools
   # upf - Use the universal power format, IEEE 1801-2015
-  power_spec_type: null
-  # Optional: Contents of a power specification in the above type (str)
-  power_spec_contents: null
+  power_spec_contents: null # Optional: Contents of a power specification in the above type (str)
 
-  # SRAM Parameters
-  sram_parameters: []
+  sram_parameters: [] # SRAM Parameters
 
-  # Bumps settings mode. (str)
+  bumps_mode: empty # Bumps settings mode. (str)
   # Specifies how to setup the bumps for your design.
   # Currently only support rectangular, evenly-spaced grids
   # Bumps are numbered starting with 1,1 in the lower left
@@ -384,19 +330,15 @@ vlsi.inputs:
   # Valid options:
   # manual - Use the bumps struct to create and assign bumps
   # empty - Do not add any bumps
-  bumps_mode: empty
+
+  bumps:
   # Bumps settings struct only required if above key is set to manual
   # BumpsDefinition struct members
-  bumps:
-    # x (int) - number of bumps in the x dimension
-    x: 0
-    # y (int) - number of bumps in the y dimension
-    y: 0
-    # pitch (float) - pitch of bumps in microns
-    pitch: 0.0
-    # cell (str) - Name of the default bump cell
-    cell: ""
-    # assignments - List of BumpAssignment structs. You must specify one of name or no_connect.
+    x: 0 # x (int) - number of bumps in the x dimension
+    y: 0 # y (int) - number of bumps in the y dimension
+    pitch: 0.0 # pitch (float) - pitch of bumps in microns
+    cell: "" # cell (str) - Name of the default bump cell
+    assignments: [] # assignments - List of BumpAssignment structs. You must specify one of name or no_connect.
     # If both are specified the bump will be left unconnected
     #  - name (Optional[str]) - The name of the net being assigned to a bump
     #  - no_connect (Optional[bool]) - If True the bump will be present but unconnected
@@ -405,9 +347,8 @@ vlsi.inputs:
     #  - group (Optional[str]) - The group name for the bumps
     #                          - The schematic symbol generator will put all bumps in a group on the same part or sub-component.
     #  - custom_cell (Optional[str]) - Cell name (MACRO name) of a custom bump cell in place of the default for this bump. You must also specify the LEF and GDS for this bump in extra_libraries.
-    assignments: []
 
-  # Naming scheme for the bumps' actual physical pin designators
+  bumps_pin_naming_scheme: "A1" # Naming scheme for the bumps' actual physical pin designators
   # Valid options are
   # - "A0"    (Use letters for rows, skipping I, O, Q, S, X, and Z. After Y is AA, AB, AC ...
   #            Use numbers for columns, starting at 0, with no leading 0s (0-9, then 10, 11, ...))
@@ -417,26 +358,23 @@ vlsi.inputs:
   # - "A01"   (Like A00, but numbers start at 1)
   # - "index" (Just returns a single number in the order the bumps are listed- useful for non-grid designs)
   # type: str
-  bumps_pin_naming_scheme: "A1"
 
-  # Pin placement mode. (str)
+  pin_mode: none # Pin placement mode. (str)
   # Specifies how to arrange pins for your design.
   # Valid options:
   # none - This mode lets the CAD tool do whatever it wants (providing no constraints).
   #   Typically this is sane but unpredictable.
   # generated - Use the assignments list below
   # auto - (not implemented yet) looks at the hierarchy and guess where pins should go
-  pin_mode: none
   pin:
-    # Pin generation modes.
+    generate_mode: full_auto # Pin generation modes.
     # type: str
     # Valid options are:
     # - full_auto: auto-place minimum-width pins (intended for digital signals) along a side. This option is the default.
     # - semi_auto: enables the auto-place features above but also optionally allows pin width, depth, and locations to
     #   be manually specified.
-    generate_mode: full_auto
 
-    # List of PinAssignment Structs.
+    assignments: [] # List of PinAssignment Structs.
     #   You must specify pins and one of either preplaced or layers and side.
     # - pins (str) - The name(s) of pins that will be assigned. All current backends support
     #   * as wildcards in the pin names. So "*" for all pins or "io_tl_a*" for all pins that
@@ -470,9 +408,8 @@ vlsi.inputs:
     # - depth (Optional[float]) - specifies a custom depth for the pin. The depth direction is parallel to the routing
     #   direction.
     #   Requires the semi_auto pin generation mode.
-    assignments: []
 
-  # List of decap constraints (DecapConstraint struct).
+  decaps: [] # List of decap constraints (DecapConstraint struct).
   # These are used for finer-grained control over how decap cells are placed.
   # Decap cells can be targeted for a certain density or total capacitance.
   # A specific area constraint can be specified with x, y, width, and height.
@@ -487,12 +424,11 @@ vlsi.inputs:
   # width (Optional[Decimal]) - width of area constraint
   # height (Optional[Decimal]) - height of area constraint
   # Note that either none or all of x, y, width, and height must be specified in a constraint struct.
-  decaps: []
 
+  visualization:
   # SVG visualization of placement constraints and bumps for the current hierarchical module.
   # Used by the generate_visualization method accessible by all HammerTools.
-  visualization:
-    # Type of visualization to draw
+    mode: "all" # Type of visualization to draw
     # Note: pcb action will mirror visualization across y-axis (assumes flip-chip on PCB)
     # Valid options:
     # - all: draws all placement constraints, bumps, and pad designators (if running pcb action)
@@ -500,73 +436,62 @@ vlsi.inputs:
     # - bumps: draws only bumps
     # - footprint: draws PCB footprint, only valid if running pcb action
     # type: str
-    mode: "all"
-    # Name of the desired output SVG file
+    svg_file: "${vlsi.inputs.visualization.mode}.svg" # Name of the desired output SVG file
     # type: str
-    svg_file: "${vlsi.inputs.visualization.mode}.svg"
     svg_file_meta: lazysubst
-    # Depth of paths to shorten for better readability in the SVG
+    shorten_path_depth: 1 # Depth of paths to shorten for better readability in the SVG
     # E.g. top/path/to/inst will shorten to t/p/t/inst for depth of 1 and t/p/top/inst for depth of 2
     # A depth of 0 or less will perform no path shortening.
     # type: int
-    shorten_path_depth: 1
 
 vlsi.submit:
-  # The submit command to use. "none", "local", or null will run on the current host. See hammer_submit_command.py for other options.
-  command: "local"
-  # type: List[Dict[str, Dict[str, Any]]]
+  command: "local" # The submit command to use. "none", "local", or null will run on the current host. See hammer_submit_command.py for other options.
+  settings: [] # type: List[Dict[str, Dict[str, Any]]]
   # The list substitutes settings in order of appearance, and the first Dict key is the command.
   # The second dict key is the name of that command's setting, followed by whatever type it takes.
-  settings: []
 
+synthesis.inputs:
 # Specific inputs for the synthesis tool.
 # These inputs are the generic inputs; specific tools ("CAD junk") may require
 # additional inputs.
 # They will vary per run of hammer-vlsi.
-synthesis.inputs:
-  # Input files.
+  input_files: [] # Input files.
   # Typically a list of Verilog/VHDL files, depending on the synthesis tool.
-  input_files: []
 
-  # Top RTL module.
+  top_module: null # Top RTL module.
   # Set to null to not specify from the JSON.
-  top_module: null
 
-# Syntheis tool settings
 synthesis:
-  # Clock gating mode.
+# Syntheis tool settings
+  clock_gating_mode: auto # Clock gating mode.
   # type: str
   # This tells the tool how to handle clock gating.
   # Valid options:
   # auto - Turn on automatic clock gating inference in CAD tools.
   # empty - Do not do any clock gating.
-  clock_gating_mode: auto
 
-# inherit settings from vlsi.submit but allow us to override them
 synthesis.submit:
+# inherit settings from vlsi.submit but allow us to override them
   command: "${vlsi.submit.command}"
   command_meta: lazysubst
   settings: "vlsi.submit.settings"
   settings_meta: lazycrossref
 
+par.inputs:
 # Specific inputs for the place and route tool.
 # These inputs are the generic inputs; specific tools ("CAD junk") may require
 # additional inputs.
 # They will vary per run of hammer-vlsi.
-par.inputs:
-  # Input post-synthesis netlist files.
+  input_files: [] # Input post-synthesis netlist files.
   # Typically a list of Verilog/VHDL files, depending on the tool.
   # For place and route, these should typically be post-synthesis netlists.
-  input_files: []
 
-  # Top RTL module.
-  top_module: null
+  top_module: null # Top RTL module.
 
-  # Optional: SDC input file from post-synthesis.
+  post_synth_sdc: null # Optional: SDC input file from post-synthesis.
   # Leave as null to not use.
-  post_synth_sdc: null
 
-  # GDS output map mode.
+  gds_map_mode: auto # GDS output map mode.
   # type: str
   # The GDS map file shows how/what layers should be put in the GDSII file.
   # Valid options:
@@ -574,17 +499,14 @@ par.inputs:
   # empty - Don't use a map file at all and let the cad tool do what it wants.
   #         This often results in a complete but arbitrary assignment.
   # manual - Read the map file from the variable below, overriding the technology plugin.
-  gds_map_mode: auto
-  # Optional: GDS map file path. Used only if gds_map_mode above is set to manual.
+  gds_map_file: null # Optional: GDS map file path. Used only if gds_map_mode above is set to manual.
   # type: Optional[str]
-  gds_map_file: null
 
-  # If true, tell the place and route tool to merge any library/macro GDSes into
+  gds_merge: false # If true, tell the place and route tool to merge any library/macro GDSes into
   # the final GDS.
   # type: bool
-  gds_merge: false
 
-  # Physical only cells mode.
+  physical_only_cells_mode: auto # Physical only cells mode.
   # type: str
   # The list of physical only cells are cells which don't have a logic function.
   # They won't have a SPICE circuit for instance.
@@ -594,28 +516,24 @@ par.inputs:
   # auto - Use the technology plugin's value for the physical cell list.
   # manual - Read the physical cell list from the variable below, overriding the technology plugin.
   # append - Append the manual list to the technology plugin's list
-  physical_only_cells_mode: auto
-  # List of cells that are only physical.
+  physical_only_cells_list: [] # List of cells that are only physical.
   # type: List[str]
-  physical_only_cells_list: []
 
-  # GDS output precision. Controlled by a mode and a precision value. Valid modes are:
+  gds_precision_mode: "auto" # GDS output precision. Controlled by a mode and a precision value. Valid modes are:
   # auto - perform default PAR-tool behaviour, which is usually to use the
   #        value specified in the LEF.
   # manual - use the value from the 'par.inputs.gds_precision' key below.
   # type: str
-  gds_precision_mode: "auto"
 
-  # GDS output precision when written by PAR tool. Some tools restrict the
+  gds_precision: 1000 # GDS output precision when written by PAR tool. Some tools restrict the
   # value to a limited range and your tool plugin should check this for you.
   # Innovus, for example, restricts values to one of {100, 200, 1000, 2000,
   # 10000, 20000}. This value is ignored if 'par.inputs.gds_precision_mode' is
   # not manual.
   # type: int
-  gds_precision: 1000
 
-# Place-and-route settings
 par:
+# Place-and-route settings
   # Submission command settings
   # inherit settings from vlsi.submit but allow us to override them
   submit:
@@ -624,137 +542,112 @@ par:
     settings: "vlsi.submit.settings"
     settings_meta: lazycrossref
 
-  # Power straps configuration.
+  power_straps_mode: empty # Power straps configuration.
   # Valid options are:
   # - empty - Specify no power straps
   # - manual - Specify the contents of a manual TCL script to use, specified in power_straps_script_contents.
   # - generate - Generate power straps from Hammer IR.
-  power_straps_mode: empty
   power_straps_script_contents: null
 
-  # Spacing around blocks and hardmacros in microns
+  blockage_spacing: 0.0 # Spacing around blocks and hardmacros in microns
   # Used by power straps and floorplanning
   # type: Decimal
-  blockage_spacing: 0.0
 
-  # Top metal layer that is pulled back around blocks and hardmacros
+  blockage_spacing_top_layer: null # Top metal layer that is pulled back around blocks and hardmacros
   # Used by floorplanning.
   # Overridden by individual placement constraints on top_layer.
   # type: Optional[str]
-  blockage_spacing_top_layer: null
 
-  # If power_straps_mode is 'generate', which method to use.
+  generate_power_straps_method: "by_tracks" # If power_straps_mode is 'generate', which method to use.
   # Currently, the valid options are:
   # - by_tracks - Specify the power strap plan per layer in terms of tracks
-  generate_power_straps_method: "by_tracks"
 
+  generate_power_straps_options:
   # Default settings for power strap generation modes
   # Keys are the valid values of the 'generate_power_straps_method' key above
-  generate_power_straps_options:
     by_tracks:
-      # Spacing from end of strap to a block or blockage
+      blockage_spacing: "par.blockage_spacing" # Spacing from end of strap to a block or blockage
       # Overrideable by appending _<layer name>
       # type: Decimal
-      blockage_spacing: "par.blockage_spacing"
       blockage_spacing_meta: lazycrossref
 
-      # Number of routing tracks to be consumed by an individual strap
+      track_width: 5 # Number of routing tracks to be consumed by an individual strap
       # Overrideable by appending _<layer name>
       # type: int
-      track_width: 5
 
-      # The first track to contain a power stripe
+      track_start: 0 # The first track to contain a power stripe
       # Overrideable by appending _<layer name>
       # type: int
       # TODO(johnwright): include an auto-center option
-      track_start: 0
 
-      # Absolute offset for straps relative to the design bounding box origin
+      track_offset: 0.0 # Absolute offset for straps relative to the design bounding box origin
       # Overrideable by appending _<layer name>
       # type: Decimal
-      track_offset: 0.0
 
-      # Number of routing tracks between sets of straps (0 is recommended)
+      track_spacing: 0 # Number of routing tracks between sets of straps (0 is recommended)
       # Overrideable by appending _<layer name>
       # type: int
-      track_spacing: 0
 
-      # Ratio of total routing tracks to dedicate to power straps, which is used to calculate set pitch
+      power_utilization: 0.1 # Ratio of total routing tracks to dedicate to power straps, which is used to calculate set pitch
       # Overrideable by appending _<layer name>
       # type: float
-      power_utilization: 0.1
 
-      # Layers to put power pins on
+      pin_layers: [] # Layers to put power pins on
       # type: List[str]
-      pin_layers: []
 
-      # List of layers on which to place power straps (std cell rail layer is implied - do not include it)
+      strap_layers: [] # List of layers on which to place power straps (std cell rail layer is implied - do not include it)
       # type: List[str]
-      strap_layers: []
 
 mentor:
-    # Path to the folder with defaults.yml for common Mentor settings.
-    common_path: "${vlsi.builtins.hammer_vlsi_path}/common/mentor"
+    common_path: "${vlsi.builtins.hammer_vlsi_path}/common/mentor" # Path to the folder with defaults.yml for common Mentor settings.
     common_path_meta: subst
 
 openroad:
-    # Path to the folder with defaults.yml for common OpenROAD settings.
-    common_path: "${vlsi.builtins.hammer_vlsi_path}/common/openroad"
+    common_path: "${vlsi.builtins.hammer_vlsi_path}/common/openroad" # Path to the folder with defaults.yml for common OpenROAD settings.
     common_path_meta: subst
 
-# DRC settings
 drc.inputs:
-  # Top RTL module.
+# DRC settings
+  top_module: null # Top RTL module.
   # type: str
-  top_module: null
 
-  # Input layout file.
+  layout_file: null # Input layout file.
   # Typically a GDSII file from the place and route tool.
   # type: str
-  layout_file: null
 
-  # Valid modes are auto, manual, prepend, and append
+  additional_drc_text_mode: "auto" # Valid modes are auto, manual, prepend, and append
   # type: str
-  additional_drc_text_mode: "auto"
-  # Custom DRC command text to add after the boilerplate commands at the top of the run file.
+  additional_drc_text: "" # Custom DRC command text to add after the boilerplate commands at the top of the run file.
   # type: str
-  additional_drc_text: ""
 
-  # DRC rules to run.
+  drc_rules_to_run: [] # DRC rules to run.
   # Leaving this empty will run all rules - otherwise, the rules listed will be run.
   # Rule names are defined in the Design Rule Manual (DRM).
   # Generally rules will still have the same names across DRC decks for different tool vendors from the same PDK.
   # There is no "schema" for the DRC rule names in Hammer - while the vendors may have some pattern they use, this
   # setting has no understanding of that.
   # type: List[str]
-  drc_rules_to_run: []
 
-# inherit settings from vlsi.submit but allow us to override them
 drc.submit:
+# inherit settings from vlsi.submit but allow us to override them
   command: "${vlsi.submit.command}"
   command_meta: lazysubst
   settings: "vlsi.submit.settings"
   settings_meta: lazycrossref
 
-# LVS settings
 lvs.inputs:
-  # Top RTL module.
-  top_module: null
+# LVS settings
+  top_module: null # Top RTL module.
 
-  # Input layout file
+  layout_file: null # Input layout file
   # Typically a GDSII file from the place and route tool
-  layout_file: null
 
-  # Input list of schematic files
-  schematic_files: []
+  schematic_files: [] # Input list of schematic files
 
-  # Input list of ILMStructs
-  ilms: []
+  ilms: [] # Input list of ILMStructs
 
-  # Valid modes are auto, manual, prepend, and append
-  additional_lvs_text_mode: "auto"
-  # Custom LVS command text to add after the boilerplate commands at the top of the run file
-  additional_lvs_text: ""
+  additional_lvs_text_mode: "auto" # Valid modes are auto, manual, prepend, and append
+  additional_lvs_text: "" # Custom LVS command text to add after the boilerplate commands at the top of the run file
 
 lvs.submit:
   command: "${vlsi.submit.command}"
@@ -762,17 +655,16 @@ lvs.submit:
   settings: "vlsi.submit.settings"
   settings_meta: lazycrossref
 
-# inherit settings from vlsi.submit but allow us to override them
 sram_generator.submit:
+# inherit settings from vlsi.submit but allow us to override them
   command: "${vlsi.submit.command}"
   command_meta: lazysubst
   settings: "vlsi.submit.settings"
   settings_meta: lazycrossref
 
-# PCB deliverable settings.
 pcb.inputs:
-  # Top RTL module.
-  top_module: null
+# PCB deliverable settings.
+  top_module: null # Top RTL module.
 
 pcb.submit:
   # Submission command settings
@@ -783,24 +675,20 @@ pcb.submit:
   settings_meta: lazycrossref
 
 technology.core:
-    # Key name for the technology stackup
+    stackup: null # Key name for the technology stackup
     # This should exist in the stackups list in the tech json
     # type: str
-    stackup: null
-    # Key name for the technology's special cells
+    special_cells: null # Key name for the technology's special cells
     # This should exist in the special_cells list in the tech json
     # type: str
-    special_cells: null
-    # This should specify the TOPMOST metal layer the standard cells use for power rails
+    std_cell_rail_layer: null # This should specify the TOPMOST metal layer the standard cells use for power rails
     # Note that this is not usually stackup specific; it is based on the std cell library
     # type: str
-    std_cell_rail_layer: null
-    # This is used to provide a reference master for generating standard cell rails
+    tap_cell_rail_reference: null # This is used to provide a reference master for generating standard cell rails
     # Can be a wildcard/glob
     # type: str
-    tap_cell_rail_reference: null
-    # Names of the power and ground rails of the standard cells
     std_cell_supplies:
+    # Names of the power and ground rails of the standard cells
         power: ["VDD"]
         ground: ["VSS"]
 
@@ -808,98 +696,81 @@ technology.core:
 # These inputs will vary based on if the simulation is for RTL, post synthesis, or post PAR.
 # There may be HAMMER simulation tool plugins available that include common simulator flags and inputs that can be modified/augmented for the user's needs.
 sim.inputs:
-  # Top RTL module for simulation
+  top_module: null # Top RTL module for simulation
   # type: str
-  top_module: null
 
-  # Input files for simulation including verilog sources, testharness/testbench, etc.
+  input_files: [] # Input files for simulation including verilog sources, testharness/testbench, etc.
   # type: List[str]
-  input_files: []
 
-  # Permissive options for the simulator generation
+  options: [] # Permissive options for the simulator generation
   # These options will appear as plain string option additions when generating the simulation executable
   # type: List[str]
-  options: []
 
-  # Define options passed when generating the simulation executable
+  defines: [] # Define options passed when generating the simulation executable
   # For example: when passed to VCS, each define in the input list will be added as "+define+" + {define}
   # type: List[str]
-  defines: []
 
-  # C compiler options used when generating the simulation executable
+  compiler_cc_opts: [] # C compiler options used when generating the simulation executable
   # For example: when passed to VCS, each compiler_cc_opt will be added as "-CC " + {compiler_cc_opt}
   # type: List[str]
-  compiler_cc_opts: []
 
-  # C linker options used when generating the simulation executable
+  compiler_ld_opts: [] # C linker options used when generating the simulation executable
   # For example: when passed to VCS, each compiler_ld_opt will be added as "-LDFLAGS " + {compiler_ld_opt}
   # type: List[str]
-  compiler_ld_opts: []
 
-  # Simulation timescale
+  timescale: null # Simulation timescale
   # This is passed as a plain string
   # For example, for VCS, timescale may be set as "sim.inputs.timescale: '1ns/10ps' which would be passed as "-timescale=1ns/10ps"
   # type: str
-  timescale: null
 
-  # Benchmarks to run with the simulator executable
+  benchmarks: [] # Benchmarks to run with the simulator executable
   # This is a list of paths to benchmark binaries that will be run with the simulator to test the design if the testbench requires it.
   # For example, this may be a RISCV binary like rv64ui-p-simple.
   # If left empty, the simulation will execute as normal.
   # type: List[str]
-  benchmarks: []
 
-  # Maximum number of simulations to run in parallel.
+  parallel_runs: 1 # Maximum number of simulations to run in parallel.
   # A value of -1 indicates all simulations should be launched in parallel
   # A value of 0 and 1 are treated the same and all simulations are run serially
   # type: int
-  parallel_runs: 1
 
-  # Hierarchical path to the top level instance of the "dut" from the testbench.
+  tb_dut: "dut" # Hierarchical path to the top level instance of the "dut" from the testbench.
   # For example, this will be used to generate the hierarchical path through the testbench and DUT to each sequential element in the design.
   # TODO(johnwright) automate this by parsing the TB verilog?
   # type: str
-  tb_dut: "dut"
 
-  # Name of the simulation testbench/test driver module
-  tb_name: "TestDriver"
+  tb_name: "TestDriver" # Name of the simulation testbench/test driver module
 
-  # Simulation mode for simulation at different levels of the VLSI flow
+  level: "rtl" # Simulation mode for simulation at different levels of the VLSI flow
   # Valid options are:
   #   "rtl" for rtl level simulation
   #   "syn" for post-synthesis level simulation
   #   "par" for post-par level simulation
   # type: FlowLevel
-  level: "rtl"
 
-  # Path to a list of all registers in the design passed from synthesis or place-and-route
+  all_regs: "" # Path to a list of all registers in the design passed from synthesis or place-and-route
   # type: str
-  all_regs: ""
 
-  # Path to a list of all sequential standard cells in the design passed from synthesis or place-and-route
+  seq_cells: "" # Path to a list of all sequential standard cells in the design passed from synthesis or place-and-route
   # type: str
-  seq_cells: ""
 
-  # SDF File
+  sdf_file: null # SDF File
   # type: str
   # Standard Delay Format file for use in timing annotated sims
   # leave as null if not in use
-  sdf_file: null
 
-  # Simulation force value used for register initialization for gate level sims
+  gl_register_force_value: 0 # Simulation force value used for register initialization for gate level sims
   # TODO: add random initialization option
   # type: int
-  gl_register_force_value: 0
 
-  # Turns time annotated sim on or off
+  timing_annotated: false # Turns time annotated sim on or off
   # type: bool
   # If set to False, the sim will be purely functional, regardless of the simulation "level".
   # If set to True, the sim will be time annotated based on synthesis or PAR results.
-  timing_annotated: false
 
   # Settings related to activity file (SAIF) dumping
   saif:
-    # How Hammer determines whether and when to start or stop the activity dumping
+    mode: "none" # How Hammer determines whether and when to start or stop the activity dumping
     # Valid options:
     # time - Start dumping at the specified start_time and end at the specified end_time
     # trigger - Inserts the trigger into the simulators run script before starting the dump and
@@ -908,34 +779,26 @@ sim.inputs:
     # full - Start dumping at the beginning of simulation and stop at the end.
     # none - Do not dump an SAIF
     # type: str
-    mode: "none"
-    # The times the simulator should begin and end its dumping of the SAIF file.
+    start_time: "0ns" # The times the simulator should begin and end its dumping of the SAIF file.
     # type: TimeValue
-    start_time: "0ns"
-    # type: TimeValue
-    end_time: "1ns"
-    # The raw triggers that will occur when the dump should start and when the dump should end.
+    end_time: "1ns" # type: TimeValue
+    start_trigger_raw: "" # The raw triggers that will occur when the dump should start and when the dump should end.
     # The exact trigger format will depend on the underlying tool.
     # type: str
-    start_trigger_raw: ""
     end_trigger_raw: ""
 
-  # Flags to run with the simulator
+  execution_flags: [] # Flags to run with the simulator
   # Each string in this list will be passed as an option when actually executing the simulation executable generated from the previous arguments.
   # type: List[str]
-  execution_flags: []
 
-  # Flags that are to be pre-pended to the simulator execution flags in "execution_flags"
+  execution_flags_prepend: [] # Flags that are to be pre-pended to the simulator execution flags in "execution_flags"
   # type: List[str]
-  execution_flags_prepend: []
 
-  # Flags that are to be appended to the simulator execution flags in "execution_flags"
+  execution_flags_append: [] # Flags that are to be appended to the simulator execution flags in "execution_flags"
   # type: List[str]
-  execution_flags_append: []
 
-  # Determines whether or not the simulation executable that is generated with the above inputs will actually be executed with the given flags or if the executable will just be generated in the specified run directory.
+  execute_sim: true # Determines whether or not the simulation executable that is generated with the above inputs will actually be executed with the given flags or if the executable will just be generated in the specified run directory.
   # type: bool
-  execute_sim: true
 
 sim.submit:
   command: "${vlsi.submit.command}"
@@ -943,53 +806,43 @@ sim.submit:
   settings: "vlsi.submit.settings"
   settings_meta: lazycrossref
 
+power.inputs:
 # Specific inputs for the power tool.
 # These may vary based on the specific tool plugin
-power.inputs:
-  # Top RTL module for power analysis
+  top_module: "ChipTop" # Top RTL module for power analysis
   # type: str
-  top_module: "ChipTop"
 
-  # The path to a synthesis or place-and-route database of the design to be analyzed
+  database: null # The path to a synthesis or place-and-route database of the design to be analyzed
   # type: str
-  database: null
 
-  # The name of the test bench from the simulation.
+  tb_name: "TestDriver" # The name of the test bench from the simulation.
   # type: str
-  tb_name: "TestDriver"
 
-  # The name of the device under test (DUT) from the simulation.
+  tb_dut: "dut" # The name of the device under test (DUT) from the simulation.
   # type: str
-  tb_dut: "dut"
 
-  # The paths of all spef (extraction) files needed for the design.
+  spefs: [] # The paths of all spef (extraction) files needed for the design.
   # This may include a file per MMMC corner
   # type: List[str]
-  spefs: []
 
-  # A list of paths to waveforms to be used for dynamic power analysis.
+  waveforms: [] # A list of paths to waveforms to be used for dynamic power analysis.
   # Depending on the sim & power tool, these may be VCD/VPD, FSDB, SHM, etc. files/dirs.
   # type: List[str]
-  waveforms: []
 
-  # A list of paths to SAIF activity files to be used for dynamic power analysis.
+  saifs: [] # A list of paths to SAIF activity files to be used for dynamic power analysis.
   # type: List[str]
-  saifs: []
 
-  # If overridden to ``true``, the power tool will report for only the extra MMMC corners, saving runtime.
+  extra_corners_only: false # If overridden to ``true``, the power tool will report for only the extra MMMC corners, saving runtime.
   # The typical use case is to only report power and rail analysis for a typical/nominal corner.
   # type: bool
-  extra_corners_only: false
 
-  # A list of the paths to the design inputs files (HDL or netlist) for power analysis
+  input_files: [] # A list of the paths to the design inputs files (HDL or netlist) for power analysis
   # type: List[str]
-  input_files: []
 
-  # SDC input file
+  sdc: "" # SDC input file
   # type: str
-  sdc: ""
 
-  # Optional: Power report configs that are run in addition to the average power reports in power.inputs.waveforms
+  report_configs: [] # Optional: Power report configs that are run in addition to the average power reports in power.inputs.waveforms
   # type: List[PowerReport]
   # PowerReport struct members:
   # waveform_path (str) - Path to the waveform for the report
@@ -1002,23 +855,19 @@ power.inputs:
   # frame_count (int) - Optional. The number of frames to report the power for
   # report_name (str) - Optional. Name of the power report
   # example: report_configs: [{waveform_path: "/path/to/fsdb", module: "chiptop", levels:3, start_time: "0ns", end_time: "1ns", toggle_signal:"/ChipTop/clock", num_toggles:1, frame_count:1000, report_name: "my_fsdb_report"}]
-  report_configs: []
 
-  # Power analysis mode for different levels of the VLSI flow
+  level: "rtl" # Power analysis mode for different levels of the VLSI flow
   # Valid options are:
   #   "rtl" for rtl level power analysis
   #   "syn" for post-syn power analysis
   #   "par" for post-par power analysis
   # type: FlowLevel
-  level: "rtl"
 
-  # Optional: A list of analysis start times corresponding to each waveform used for dynamic power analysis.
+  start_times: [] # Optional: A list of analysis start times corresponding to each waveform used for dynamic power analysis.
   # type: Optional[List[str]]
-  start_times: []
 
-  # Optional: A list of analysis end times corresponding to each waveform used for dynamic power analysis.
+  end_times: [] # Optional: A list of analysis end times corresponding to each waveform used for dynamic power analysis.
   # type: Optional[List[str]]
-  end_times: []
 
 power.submit:
   command: "${vlsi.submit.command}"
@@ -1026,11 +875,11 @@ power.submit:
   settings: "vlsi.submit.settings"
   settings_meta: lazycrossref
 
+formal.inputs:
 # Specific inputs for the formal tool.
 # These may vary based on the specific tool plugin.
 # For example, files could be combinations of Verilog, Liberty, Spice, CPF, and/or SDC files.
-formal.inputs:
-  # Check type to run. Support varies based on the specific tool plugin.
+  check: "lec" # Check type to run. Support varies based on the specific tool plugin.
   # Potential options (see tool plugin defaults.yml for supported checks):
   # - lec: logical equivalence checking (supported)
   # - power: power intent (CPF/UPF) and structure checking (not yet supported)
@@ -1039,21 +888,17 @@ formal.inputs:
   # - property: contention, tristate, don't care, etc. checking (not yet supported)
   # - eco: engineering change order generation (not yet supported)
   # type: str
-  check: "lec"
 
-  # Input files.
+  input_files: [] # Input files.
   # Typically a list of Verilog/VHDL files, depending on the formal tool.
   # For equivalence checking, this is commonly referred to as the "revised" design.
   # type: List[str]
-  input_files: []
 
-  # The reference (golden) design files for equivalence checks
+  reference_files: [] # The reference (golden) design files for equivalence checks
   # type: List[str]
-  reference_files: []
 
-  # Top RTL module for running verification on
+  top_module: null # Top RTL module for running verification on
   # type: str
-  top_module: null
 
 formal.submit:
   command: "${vlsi.submit.command}"
@@ -1061,32 +906,26 @@ formal.submit:
   settings: "vlsi.submit.settings"
   settings_meta: lazycrossref
 
+timing.inputs:
 # Specific inputs for the timing tool.
 # These may vary based on the specific tool plugin.
-timing.inputs:
-  # Input Verilog files.
+  input_files: [] # Input Verilog files.
   # type: List[str]
-  input_files: []
 
-  # Top RTL module.
+  top_module: null # Top RTL module.
   # Set to null to not specify from the JSON.
-  top_module: null
 
-  # Optional: SDC input file from post-synthesis.
+  post_synth_sdc: null # Optional: SDC input file from post-synthesis.
   # type: Optional[str]
-  post_synth_sdc: null
 
-  # Optional: Input SPEF files from post-P&R.
+  spefs: null # Optional: Input SPEF files from post-P&R.
   # type: Optional[List[str]]
-  spefs: null
 
-  # Optional: Input SDF file
+  sdf_file: null # Optional: Input SDF file
   # type: Optional[str]
-  sdf_file: null
 
-  # Max paths to report
+  max_paths: 100 # Max paths to report
   # type: int
-  max_paths: 100
 
 timing.submit:
   command: "${vlsi.submit.command}"
@@ -1095,12 +934,10 @@ timing.submit:
   settings_meta: lazycrossref
 
 technology.pcb:
-  # Desired pad opening diameter (in post-shrink um)
+  bump_pad_opening_diameter: null # Desired pad opening diameter (in post-shrink um)
   # Typically this should be defined in the technology plugin, assuming everyone will use the same pad and board strategy
   # type: Decimal
-  bump_pad_opening_diameter: null
 
-  # Desired pad metal diameter (in post-shrink um)
+  bump_pad_metal_diameter: null # Desired pad metal diameter (in post-shrink um)
   # Typically this should be defined in the technology plugin, assuming everyone will use the same pad and board strategy
   # type: Decimal
-  bump_pad_metal_diameter: null

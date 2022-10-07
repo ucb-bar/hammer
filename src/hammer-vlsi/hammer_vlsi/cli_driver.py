@@ -28,6 +28,7 @@ from .driver import HammerDriver, HammerDriverOptions
 from .hammer_build_systems import BuildSystems
 
 from functools import reduce
+from textwrap import dedent
 from typing import List, Dict, Tuple, Any, Callable, Optional, Union, cast
 
 from hammer_utils import add_dicts, deeplist, deepdict, get_or_else, check_function_type
@@ -242,6 +243,7 @@ class CLIDriver:
             "dump": self.dump_action,
             "dump-macrosizes": self.dump_macrosizes_action,
             "dump_macrosizes": self.dump_macrosizes_action,
+            "info": self.info_action,
             "sram-generator": self.sram_generator_action,
             "sram_generator": self.sram_generator_action,
             "pcb": self.pcb_action,
@@ -307,6 +309,68 @@ class CLIDriver:
         Just dump the parsed project configuration as the output.
         """
         return driver.project_config
+
+    @staticmethod
+    def info_action(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        """
+        Return the descripion of any key.
+        """
+        defaults_path = os.path.join(os.getcwd(), "src", "hammer-vlsi", "defaults.yml")
+        if not is_ruamel_missing():
+            with open(defaults_path, 'r', encoding="utf-8") as f:
+                yaml = ruamel.yaml.YAML()
+                data = yaml.load(f)
+            with open(KEY_PATH, 'r', encoding="utf-8") as f:
+                yaml = ruamel.yaml.YAML()
+                history = yaml.load(f)
+        else:
+            warnings.warn("Cannot provide key descriptions without the ruamel.yaml package.")
+            return driver.project_config
+        while True:
+            curr_level = data
+            overall_key = []
+            while isinstance(curr_level, ruamel.yaml.CommentedMap):
+                print()
+                for k in curr_level.keys():
+                    if "_meta" not in k:
+                        print(k)
+                while True:
+                    try:
+                        key = input("Select from the current level of keys: ")
+                        next_level = curr_level[key]
+                        break
+                    except KeyError:
+                        print(f"ERROR: Key {key} could not be found at the current level, try again.")
+                overall_key.append(key)
+                if not isinstance(next_level, ruamel.yaml.CommentedMap):
+                    flat_key = '.'.join(overall_key)
+                    if not driver.database.has_setting(flat_key):
+                        val = curr_level.get(key)
+                        warnings.warn(f"{flat_key} is not in the project configuration, the default value is displayed.")
+                    else:
+                        val = driver.database.get_setting(flat_key)
+                    if key in curr_level.ca.items:
+                        comment = curr_level.ca.items[key][2].value.strip().replace('\n', ' ')  # NOTE: only takes in comment immediately after the key-value pair
+                    else:
+                        comment = "no comment provided"
+                    key_hist = history[flat_key] if flat_key in history else "no history provided"
+                    print(dedent(f"""
+                    ----------------------------------------
+                    Key: {flat_key}
+                    Value: {val}
+                    Description: {comment}
+                    History: {key_hist}
+                    ----------------------------------------
+                    """))
+                    while True:
+                        continue_input = input("Continue querying keys? [y/n]: ")
+                        if continue_input.lower() == 'y':
+                            break
+                        if continue_input.lower() == 'n':
+                            return driver.project_config
+                        print("Please input either [y]es or [n]o.")
+                    break
+                curr_level = next_level
 
     @staticmethod
     def dump_macrosizes_action(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[str]:

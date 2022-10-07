@@ -1,21 +1,16 @@
 # Configuration options and defaults for netgen LVS.
 # The values specified in this file are the defaults.
 lvs.netgen:
-  # Change this if netgen is not on your PATH.
-  netgen_bin: "netgen"
+  netgen_bin: "netgen" # Change this if netgen is not on your PATH.
   
-  # this is just to make hammer happy (although, it is never called AFAICT).
+  version: "dummy-value" # this is just to make hammer happy (although, it is never called AFAICT).
   # the version is actually calculated by the Netgen class
-  version: "dummy-value"
 
-  # Connect nets by label in layout (GDS) to Spice extraction step
+  connect_by_label: false # Connect nets by label in layout (GDS) to Spice extraction step
   # type: bool
-  connect_by_label: false
 
-  # Setup file for netgen (in Tcl format, supplied by technology)
+  setup_file: null # Setup file for netgen (in Tcl format, supplied by technology)
   # type: str
-  setup_file: null
 
-  # Generate the run script but do not run it yet.
-  generate_only: false
+  generate_only: false # Generate the run script but do not run it yet.
 
