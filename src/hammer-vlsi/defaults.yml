@@ -532,12 +532,6 @@ par.inputs:
   # not manual.
   # type: int
 
-  openrcx_techfile: null # Optional: OpenRCX RC tech file
-  # type: Optional[str]
-
-  klayout_techfile_source: null # Optional: KLayout tech file
-  # type: Optional[str]
-
 par:
 # Place-and-route settings
   # Submission command settings

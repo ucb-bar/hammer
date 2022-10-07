@@ -285,12 +285,6 @@ par.inputs:
   # type: int
   gds_precision: int
 
-  # Path to OpenROAD *.rcx_rules file
-  openrcx_techfile: Optional[str]
-
-  # Path to KLayout techfile *.lyt file
-  klayout_techfile_source: Optional[str]
-
 # Place-and-route settings
 par:
   # Submission command settings
