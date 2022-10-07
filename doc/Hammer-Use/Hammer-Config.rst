@@ -350,6 +350,7 @@ Running ``hammer-vlsi -p test-config.yml info`` (assuming the above configuratio
     Key: foo.bar.apple
     Value: banana
     Description: # type of fruit
+    History: ["defaults.yml"]
     ----------------------------------------
 
     Continue querying keys? [y/n]: y
@@ -364,6 +365,7 @@ Running ``hammer-vlsi -p test-config.yml info`` (assuming the above configuratio
     Key: foo.bar.price
     Value: 2
     Description: # price of fruit
+    History: ["defaults.yml"]
     ----------------------------------------
 
 Keys are queried post-resolution of all meta actions, so their values correspond to the project configuration after other actions like ``syn`` or ``par``.
