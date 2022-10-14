@@ -154,7 +154,7 @@ class SKY130Tech(HammerTechnology):
             "innovus": [
             HammerTool.make_post_insertion_hook("init_design",      sky130_innovus_settings),
             HammerTool.make_pre_insertion_hook("place_tap_cells",   sky130_add_endcaps),
-            HammerTool.make_pre_insertion_hook("power_straps",      sky130_connect_nets),
+            HammerTool.make_pre_insertion_hook("power_straps",      sky130_connect_nets),            
             HammerTool.make_pre_insertion_hook("write_design",      sky130_connect_nets2)
             ]}
         return hooks.get(tool_name, [])
