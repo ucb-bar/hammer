@@ -246,7 +246,7 @@ set_db opt_fix_hold_verbose true
 #-------------------------------------------------------------------------------
 set_db cts_target_skew 0.03
 set_db cts_max_fanout 10
-set_db cts_target_max_transition_time .3
+#set_db cts_target_max_transition_time .3
 set_db opt_setup_target_slack 0.10
 set_db opt_hold_target_slack 0.10
 
@@ -254,7 +254,17 @@ set_db opt_hold_target_slack 0.10
 # Routing attributes  [get_db -category route]
 ##########################################################
 #-------------------------------------------------------------------------------
+set_db route_design_antenna_diode_insertion 1
+set_db route_design_antenna_cell_name "sky130_fd_sc_hd__diode_2"
 set_db route_design_bottom_routing_layer 2
+
+set_db route_design_high_freq_search_repair true
+set_db route_design_detail_post_route_spread_wire true
+set_db route_design_with_si_driven true
+set_db route_design_with_timing_driven true
+set_db route_design_concurrent_minimize_via_count_effort high
+set_db opt_consider_routing_congestion true
+set_db route_design_detail_use_multi_cut_via_effort medium
     '''
     )
     return True
