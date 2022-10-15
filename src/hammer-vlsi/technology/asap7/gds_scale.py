@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 # Scale the final GDS by a factor of 4
 # This is called by a tech hook that should be inserted post write_design
