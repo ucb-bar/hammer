@@ -36,6 +36,20 @@ class ASAP7Tech(HammerTechnology):
                 shutil.rmtree(self.cache_dir)
                 sys.exit()
 
+    def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
+        hooks = {"innovus": [
+            HammerTool.make_post_persistent_hook("init_design", asap7_innovus_settings),
+            HammerTool.make_post_insertion_hook("floorplan_design", asap7_update_floorplan),
+            HammerTool.make_post_insertion_hook("write_design", asap7_scale_final_gds)
+            ]}
+        return hooks.get(tool_name, [])
+
+    def get_tech_drc_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
+        hooks = {"calibre": [
+            HammerTool.make_replacement_hook("generate_drc_run_file", asap7_generate_drc_run_file)
+            ]}
+        return hooks.get(tool_name, [])
+
 def asap7_innovus_settings(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
     assert isinstance(ht, TCLTool), "innovus settings can only run on TCL tools"
