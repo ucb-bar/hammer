@@ -35,6 +35,32 @@ class ASAP7Tech(HammerTechnology):
                 self.logger.error("Check your gdspy v1.4 installation! Unable to hack ASAP7 PDK.")
                 shutil.rmtree(self.cache_dir)
                 sys.exit()
+        self.generate_cell_list()
+
+    def generate_cell_list(self) -> None:
+        """
+        Get a list of all sttd cells and output to stdcells.txt
+        """
+        gds_dir = os.path.join(self.get_setting("technology.asap7.stdcell_install_dir"), 'GDS')
+        gds_files = ['asap7sc7p5t_28_L_220121a.gds',
+                     'asap7sc7p5t_28_R_220121a.gds',
+                     'asap7sc7p5t_28_SL_220121a.gds',
+                     'asap7sc7p5t_28_SRAM_220121a.gds']
+        cell_list = []
+        if self.gds_tool.__name__ == 'gdstk':
+            for gds_file in gds_files:
+                asap7_original_gds = self.gds_tool.read_gds(infile=os.path.join(gds_dir, gds_file))
+                original_cells = asap7_original_gds.cells
+                cell_list += list(map(lambda c: c.name, original_cells))
+        elif self.gds_tool.__name__ == 'gdspy':
+            for gds_file in gds_files:
+                asap7_original_gds = self.gds_tool.GdsLibrary().read_gds(infile=os.path.join(gds_dir, gds_file), units='import')
+                original_cells = asap7_original_gds.cell_dict
+                cell_list += list(map(lambda c: c.name, original_cells.values()))
+
+        # Write out cell list for scaling script
+        with open(os.path.join(self.cache_dir, 'stdcells.txt'), 'w') as f:
+            f.writelines('{}\n'.format(cell) for cell in cell_list)
 
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {"innovus": [
