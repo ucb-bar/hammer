@@ -54,18 +54,11 @@ The plugin is still the best reference for what each step does, the explanations
 
 Currently, there are two ways to place macros.
 
-If ``par.openroad.floorplan_mode`` == ``generate``, use the ``vlsi.inputs.placement_constraints`` key to specify the path and (x,y) coordinate of each macro in the design.
+If ``par.openroad.floorplan_mode`` == ``generate``, use the ``vlsi.inputs.placement_constraints`` key to specify the path and (x,y) coordinate of each macro in the design. The placement constraints for ALL macros must be specified, or OpenROAD will eventually throw an error about an unplaced instance.
+Note that the (x,y) position is fixed to the bottom left corner of the macro, then the orientation is applied. This means that for rotations besides ``r0``, the (x,y) position WILL NOT correspond to the bottom left corner of the final placed macro (e.g. the (x,y) position for a macro with orientation ``mx`` will correspond to the top left corner of the final placed macro).
 
 If ``par.openroad.floorplan_mode`` == ``auto``, the macros will be placed automatically using OpenROAD's ``macro_placement`` command, leading to poor-quality but sane results.
 
-The plugin will first honor all macro placements specified in ``vlsi.inputs.placement_constraints``,
-then will run the ``macro_placement`` command anyways to place any remaining macros in the design.
-Thus OpenROAD should never throw an error for having unplaced macros, as they all get placed eventually.
-The reasoning here is that with frequent alterations to the RTL, manually specifying the new macro
-paths and locations becomes tedious.
-
-In the future, the ``par.openroad.floorplan_mode`` should be used to set whether to do floorplanning this way,
-or throw an error for unplaced macros.
 
 ### Detailed Route
 
