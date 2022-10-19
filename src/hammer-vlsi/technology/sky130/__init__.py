@@ -28,8 +28,6 @@ class SKY130Tech(HammerTechnology):
         # check whether variables were overriden to point to a valid path
         self.use_openram = os.path.exists(self.get_setting("technology.sky130.openram_lib"))
         self.use_nda_files = os.path.exists(self.get_setting("technology.sky130.sky130_nda"))
-        self.setup_sram_cdl()
-        self.setup_sram_lef()
         self.setup_cdl()
         self.setup_verilog()
         self.setup_techlef()
@@ -41,22 +39,22 @@ class SKY130Tech(HammerTechnology):
     def setup_cdl(self) -> None:
         setting_dir = self.get_setting("technology.sky130.sky130A")
         setting_dir = Path(setting_dir)
-        cdl_old_path = setting_dir / 'libs.ref' / self.library_name / 'cdl' / f'{self.library_name}.cdl'
-        if not cdl_old_path.exists():
-            raise FileNotFoundError(f"CDL not found: {cdl_old_path}")
+        source_path = setting_dir / 'libs.ref' / self.library_name / 'cdl' / f'{self.library_name}.cdl'
+        if not source_path.exists():
+            raise FileNotFoundError(f"CDL not found: {source_path}")
 
         cache_tech_dir_path = Path(self.cache_dir)
         os.makedirs(cache_tech_dir_path, exist_ok=True)
-        cdl_new_path = cache_tech_dir_path / f'{self.library_name}.cdl'
+        dest_path = cache_tech_dir_path / f'{self.library_name}.cdl'
 
-        f_old = open(cdl_old_path,'r')
-        f_new = open(cdl_new_path,'w')
-        for line in f_old:
-            line = line.replace('pfet_01v8_hvt','phighvt')
-            line = line.replace('nfet_01v8',    'nshort')
-            f_new.write(line)
-        f_old.close()
-        f_new.close()
+        with open(source_path, 'r') as sf:
+            with open(dest_path, 'w') as df:
+                self.logger.info("Modifying CDL netlist: {} -> {}".format
+                    (source_path, dest_path))
+                for line in sf:
+                    line = line.replace('pfet_01v8_hvt', 'phighvt')
+                    line = line.replace('nfet_01v8'    , 'nshort')
+                    df.write(line)
 
     # Copy and hack the verilog
     #   - <library_name>.v: remove 'wire 1' and one endif line to fix syntax errors
@@ -67,60 +65,60 @@ class SKY130Tech(HammerTechnology):
         setting_dir = Path(setting_dir)
 
         # <library_name>.v
-        verilog_old_path = setting_dir / 'libs.ref' / self.library_name / 'verilog' / f'{self.library_name}.v'
-        if not verilog_old_path.exists():
-            raise FileNotFoundError(f"Verilog not found: {verilog_old_path}")
+        source_path = setting_dir / 'libs.ref' / self.library_name / 'verilog' / f'{self.library_name}.v'
+        if not source_path.exists():
+            raise FileNotFoundError(f"Verilog not found: {source_path}")
 
         cache_tech_dir_path = Path(self.cache_dir)
         os.makedirs(cache_tech_dir_path, exist_ok=True)
-        verilog_new_path = cache_tech_dir_path / f'{self.library_name}.v'
+        dest_path = cache_tech_dir_path / f'{self.library_name}.v'
 
-        f_old = open(verilog_old_path,'r')
-        f_new = open(verilog_new_path,'w')
-        for line in f_old:
-            line = line.replace('wire 1','// wire 1')
-            line = line.replace('`endif SKY130_FD_SC_HD__LPFLOW_BLEEDER_FUNCTIONAL_V','`endif // SKY130_FD_SC_HD__LPFLOW_BLEEDER_FUNCTIONAL_V')
-            f_new.write(line)
-        f_old.close()
-        f_new.close()
+        with open(source_path, 'r') as sf:
+            with open(dest_path, 'w') as df:
+                self.logger.info("Modifying Verilog netlist: {} -> {}".format
+                    (source_path, dest_path))
+                for line in sf:
+                    line = line.replace('wire 1','// wire 1')
+                    line = line.replace('`endif SKY130_FD_SC_HD__LPFLOW_BLEEDER_FUNCTIONAL_V','`endif // SKY130_FD_SC_HD__LPFLOW_BLEEDER_FUNCTIONAL_V')
+                    df.write(line)
 
         # primitives.v
-        verilog_old_path = setting_dir / 'libs.ref' / self.library_name / 'verilog' / 'primitives.v'
-        if not verilog_old_path.exists():
-            raise FileNotFoundError(f"Verilog not found: {verilog_old_path}")
+        source_path = setting_dir / 'libs.ref' / self.library_name / 'verilog' / 'primitives.v'
+        if not source_path.exists():
+            raise FileNotFoundError(f"Verilog not found: {source_path}")
 
         cache_tech_dir_path = Path(self.cache_dir)
         os.makedirs(cache_tech_dir_path, exist_ok=True)
-        verilog_new_path = cache_tech_dir_path / 'primitives.v'
+        dest_path = cache_tech_dir_path / 'primitives.v'
 
-        f_old = open(verilog_old_path,'r')
-        f_new = open(verilog_new_path,'w')
-        for line in f_old:
-            line = line.replace('`default_nettype none','`default_nettype wire')
-            f_new.write(line)
-        f_old.close()
-        f_new.close()
+        with open(source_path, 'r') as sf:
+            with open(dest_path, 'w') as df:
+                self.logger.info("Modifying Verilog netlist: {} -> {}".format
+                    (source_path, dest_path))
+                for line in sf:
+                    line = line.replace('`default_nettype none','`default_nettype wire')
+                    df.write(line)
 
     # Copy and hack the tech-lef, adding this very important `licon` section
     def setup_techlef(self) -> None:
         setting_dir = self.get_setting("technology.sky130.sky130A")
         setting_dir = Path(setting_dir)
-        tlef_old_path = setting_dir / 'libs.ref' / self.library_name / 'techlef' / f'{self.library_name}.tlef'
-        if not tlef_old_path.exists():
-            raise FileNotFoundError(f"Tech-LEF not found: {tlef_old_path}")
+        source_path = setting_dir / 'libs.ref' / self.library_name / 'techlef' / f'{self.library_name}__nom.tlef'
+        if not source_path.exists():
+            raise FileNotFoundError(f"Tech-LEF not found: {source_path}")
 
         cache_tech_dir_path = Path(self.cache_dir)
         os.makedirs(cache_tech_dir_path, exist_ok=True)
-        tlef_new_path = cache_tech_dir_path / f'{self.library_name}.tlef'
+        dest_path = cache_tech_dir_path / f'{self.library_name}__nom.tlef'
 
-        f_old = open(tlef_old_path,'r')
-        f_new = open(tlef_new_path,'w')
-        for line in f_old:
-            f_new.write(line)
-            if line.strip() == 'END pwell':
-                f_new.write(_the_tlef_edit)
-        f_old.close()
-        f_new.close()
+        with open(source_path, 'r') as sf:
+            with open(dest_path, 'w') as df:
+                self.logger.info("Modifying Technology LEF: {} -> {}".format
+                    (source_path, dest_path))
+                for line in sf:
+                    df.write(line)
+                    if line.strip() == 'END pwell':
+                        df.write(_the_tlef_edit)
 
     # Remove conflicting specification statements found in PDK LVS decks
     def setup_lvs_deck(self) -> None:
@@ -147,13 +145,17 @@ class SKY130Tech(HammerTechnology):
                         (source_path, dest_path))
                     df.write(matcher.sub("", sf.read()))
                     df.write(LVS_DECK_INSERT_LINES)
-
+    
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
-        hooks = {"innovus": [
+        hooks = {
+            "openroad": [
+            HammerTool.make_pre_insertion_hook("detailed_placement",   sky130_set_wire_rc)
+            ],
+            "innovus": [
             HammerTool.make_post_insertion_hook("init_design",      sky130_innovus_settings),
             HammerTool.make_pre_insertion_hook("place_tap_cells",   sky130_add_endcaps),
-            HammerTool.make_pre_insertion_hook("power_straps",      sky130_power_nets),
-            HammerTool.make_pre_insertion_hook("write_design",      sky130_connect_nets)
+            HammerTool.make_pre_insertion_hook("power_straps",      sky130_connect_nets),            
+            HammerTool.make_pre_insertion_hook("write_design",      sky130_connect_nets2)
             ]}
         return hooks.get(tool_name, [])
 
@@ -171,7 +173,6 @@ class SKY130Tech(HammerTechnology):
             ]}
         return hooks.get(tool_name, [])
 
-    ''' >>>>>>>> OpenRAM SRAM-specific functions '''
     @staticmethod
     def openram_sram_names() -> List[str]:
         """ Return a list of cell-names of the OpenRAM SRAMs (that we'll use). """
@@ -181,41 +182,6 @@ class SKY130Tech(HammerTechnology):
             "sky130_sram_2kbyte_1rw1r_32x512_8"
         ]
 
-    def setup_sram_cdl(self) -> None:
-        if not self.use_openram: return
-        for sram_name in self.openram_sram_names():
-            old_path = Path(self.get_setting("technology.sky130.openram_lib")) / sram_name / f"{sram_name}.lvs.sp"
-            new_path = self.expand_tech_cache_path(f'tech-sky130-cache/{sram_name}/{sram_name}.lvs.sp')
-            if not old_path.exists():
-                raise FileNotFoundError(f"SRAM CDL file not found: {old_path}")
-            self.ensure_dirs_exist(new_path)
-            with open(old_path,'r') as f_old:
-                with open(new_path,'w') as f_new:
-                    for line in f_old:
-                        line = line.replace('sky130_fd_pr__pfet_01v8','pshort')
-                        line = line.replace('sky130_fd_pr__nfet_01v8','nshort')
-                        f_new.write(line)
-
-    def setup_sram_lef(self) -> None:
-        if not self.use_openram: return
-        for sram_name in self.openram_sram_names():
-            old_path = Path(self.get_setting("technology.sky130.openram_lib")) / sram_name / f"{sram_name}.lef"
-            new_path = self.expand_tech_cache_path(f'tech-sky130-cache/{sram_name}/{sram_name}.lef')
-            if not old_path.exists():
-                raise FileNotFoundError(f"SRAM LEF file not found: {old_path}")
-            self.ensure_dirs_exist(new_path)
-            with open(old_path,'r') as f_old:
-                with open(new_path,'w') as f_new:
-                    units=False
-                    for line in f_old:
-                        if line.strip().startswith("UNITS"):
-                            units=True
-                        if line.strip().startswith("END UNITS"):
-                            units=False
-                            continue
-                        if not units:
-                            f_new.write(line)
-    ''' <<<<<<< END OpenRAM SRAM-specific functions '''
 
 _the_tlef_edit = '''
 LAYER licon
@@ -280,7 +246,7 @@ set_db opt_fix_hold_verbose true
 #-------------------------------------------------------------------------------
 set_db cts_target_skew 0.03
 set_db cts_max_fanout 10
-set_db cts_target_max_transition_time .3
+#set_db cts_target_max_transition_time .3
 set_db opt_setup_target_slack 0.10
 set_db opt_hold_target_slack 0.10
 
@@ -288,20 +254,19 @@ set_db opt_hold_target_slack 0.10
 # Routing attributes  [get_db -category route]
 ##########################################################
 #-------------------------------------------------------------------------------
+set_db route_design_antenna_diode_insertion 1
+set_db route_design_antenna_cell_name "sky130_fd_sc_hd__diode_2"
 set_db route_design_bottom_routing_layer 2
+
+set_db route_design_high_freq_search_repair true
+set_db route_design_detail_post_route_spread_wire true
+set_db route_design_with_si_driven true
+set_db route_design_with_timing_driven true
+set_db route_design_concurrent_minimize_via_count_effort high
+set_db opt_consider_routing_congestion true
+set_db route_design_detail_use_multi_cut_via_effort medium
     '''
     )
-    return True
-
-# Pair VDD/VPWR and VSS/VGND nets
-#   these commands are already added in Innovus.write_netlist,
-#   but must also occur before power straps are placed
-def sky130_power_nets(ht: HammerTool) -> bool:
-    assert isinstance(ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
-    assert isinstance(ht, TCLTool), "innovus settings can only run on TCL tools"
-    for pwr_gnd_net in (ht.get_all_power_nets() + ht.get_all_ground_nets()):
-            if pwr_gnd_net.tie is not None:
-                ht.append("connect_global_net {tie} -type net -net_base_name {net}".format(tie=pwr_gnd_net.tie, net=pwr_gnd_net.name))
     return True
 
 def sky130_connect_nets(ht: HammerTool) -> bool:
@@ -309,7 +274,15 @@ def sky130_connect_nets(ht: HammerTool) -> bool:
     assert isinstance(ht, TCLTool), "connect global nets can only run on TCL tools"
     for pwr_gnd_net in (ht.get_all_power_nets() + ht.get_all_ground_nets()):
             if pwr_gnd_net.tie is not None:
-                ht.append("connect_global_net {tie} -type pg_pin -pin_base_name {net} -all".format(tie=pwr_gnd_net.tie, net=pwr_gnd_net.name))
+                ht.append("connect_global_net {tie} -type pg_pin -pin_base_name {net} -all -auto_tie -netlist_override".format(tie=pwr_gnd_net.tie, net=pwr_gnd_net.name))
+                ht.append("connect_global_net {tie} -type net    -net_base_name {net} -all -netlist_override".format(tie=pwr_gnd_net.tie, net=pwr_gnd_net.name))
+    return True
+
+# Pair VDD/VPWR and VSS/VGND nets
+#   these commands are already added in Innovus.write_netlist,
+#   but must also occur before power straps are placed
+def sky130_connect_nets2(ht: HammerTool) -> bool:
+    sky130_connect_nets(ht)
     return True
 
 
@@ -326,6 +299,19 @@ set_db add_endcaps_right_edge       {endcap_cell}
 add_endcaps
     '''
     )
+    return True
+
+def sky130_set_wire_rc(ht: HammerTool) -> bool:
+    assert isinstance(ht, HammerPlaceAndRouteTool), "set wire rc only for par"
+    assert isinstance(ht, TCLTool), "set wire rc can only run on TCL tools"
+    sky130_plugin_path=ht.get_setting('vlsi.core.technology_path')[-1]
+    ht.append(f"""
+################################################################
+# Repair max slew/cap/fanout violations and normalize slews
+source {sky130_plugin_path}/sky130/extra/sky130hd.rc
+set_wire_rc -signal -layer "met2"
+set_wire_rc -clock  -layer "met5"
+    """)
     return True
 
 def drc_blackbox_openram_srams(ht: HammerTool) -> bool:

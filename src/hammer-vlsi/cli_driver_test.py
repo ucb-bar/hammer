@@ -5,11 +5,13 @@
 #
 #  See LICENSE for licence details.
 
+import importlib.util
 import json
 import os
 import shutil
 import tempfile
 import re
+import warnings
 from decimal import Decimal
 from typing import Any, Callable, Dict, List, Optional
 
@@ -19,6 +21,13 @@ from hammer_logging.test import HammerLoggingCaptureContext
 from hammer_tech import MacroSize
 from hammer_vlsi import CLIDriver, HammerDriver, HammerDriverOptions, HammerVLSISettings, PlacementConstraint, PlacementConstraintType
 from hammer_utils import deepdict
+
+from hammer_vlsi.cli_driver import is_ruamel_missing
+
+if is_ruamel_missing():
+    warnings.warn("ruamel package not found, cannot output key histories")
+else:
+    import ruamel.yaml  # type: ignore
 
 import unittest
 
@@ -532,6 +541,88 @@ class CLIDriverTest(unittest.TestCase):
                     return {bad: "bad"}
             BadOverride()
 
+    def test_key_history(self) -> None:
+        """Test that a key history file is created using synthesis."""
+        # Check that ruamel.yaml is installed
+        if is_ruamel_missing():
+            warnings.warn("ruamel package not found, cannot test for key histories")
+            return
+
+        # Set up some temporary folders for the unit test.
+        syn_rundir = tempfile.mkdtemp()
+        par_rundir = tempfile.mkdtemp()
+
+        # Generate a config for testing.
+        top_module = "dummy"
+        config_path = os.path.join(syn_rundir, "run_config.json")
+        syn_out_path = os.path.join(syn_rundir, "syn_out.json")
+        syn_to_par_out_path = os.path.join(syn_rundir, "syn_par_out.json")
+        history_path = os.path.join(syn_rundir, "syn-output-history.yml")
+        self.generate_dummy_config(syn_rundir, config_path, top_module)
+
+        self.run_syn_to_par_with_output(config_path, syn_rundir, par_rundir,
+                                        syn_out_path, syn_to_par_out_path)
+
+        # History file should have comments
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+
+        with open(history_path, 'r') as f:
+            yaml = ruamel.yaml.YAML()
+            data = yaml.load(f)
+            for i in config.keys():
+                cmt = data.ca.items[i][2]
+                self.assertEqual(cmt.value, f"# Modified by: {config_path}\n")
+
+        # Cleanup
+        shutil.rmtree(syn_rundir)
+        shutil.rmtree(par_rundir)
+
+    def test_key_history_as_input(self) -> None:
+        """Test that a key history file is created using synthesis."""
+        # Check that ruamel.yaml is installed
+        if is_ruamel_missing():
+            warnings.warn("ruamel package not found, cannot test for key histories")
+            return
+
+        # Set up some temporary folders for the unit test.
+        syn_rundir = tempfile.mkdtemp()
+        par_rundir = tempfile.mkdtemp()
+
+        # Generate a config for testing.
+        top_module = "dummy"
+        config_path = os.path.join(syn_rundir, "run_config.json")
+        syn_out_path = os.path.join(syn_rundir, "syn_out.json")
+        syn_to_par_out_path = os.path.join(syn_rundir, "syn_par_out.json")
+        history_path = os.path.join(syn_rundir, "syn-output-history.yml")
+        self.generate_dummy_config(syn_rundir, config_path, top_module)
+
+        # Check that running the CLIDriver executes successfully (code 0).
+        with self.assertRaises(SystemExit) as cm:  # type: ignore
+            CLIDriver().main(args=[
+                "syn",  # action
+                "-p", config_path,
+                "--output", syn_out_path,
+                "--syn_rundir", syn_rundir,
+            ])
+        self.assertEqual(cm.exception.code, 0)
+
+        # Now run par with the main config as well as the outputs.
+        with self.assertRaises(SystemExit) as cm:  # type: ignore
+            CLIDriver().main(args=[
+                "syn-to-par",  # action
+                "-p", config_path,
+                "-p", history_path,
+                "--output", syn_to_par_out_path,
+                "--syn_rundir", syn_rundir,
+                "--par_rundir", par_rundir
+            ])
+        self.assertEqual(cm.exception.code, 0)
+
+        # Cleanup
+        shutil.rmtree(syn_rundir)
+        shutil.rmtree(par_rundir)
+
 
 class HammerBuildSystemsTest(unittest.TestCase):
 
@@ -589,15 +680,15 @@ class HammerBuildSystemsTest(unittest.TestCase):
 
         targets = self._read_targets_from_makefile(contents)
 
-        tasks = {"pcb", "sim-rtl", "syn", "sim-syn", "par", "sim-par", "power-par", "drc", "lvs"}
-        bridge_tasks = {"syn-to-sim", "syn-to-par", "par-to-sim", "par-to-lvs", "par-to-drc", "par-to-power", "sim-par-to-power"}
+        tasks = {"pcb", "sim-rtl", "power-rtl", "syn", "sim-syn", "power-syn", "par", "sim-par", "power-par", "drc", "lvs", "formal-syn", "formal-par", "timing-syn", "timing-par"}
+        bridge_tasks = {"syn-to-sim", "syn-to-par", "par-to-sim", "par-to-lvs", "par-to-drc", "syn-to-power", "par-to-power", "sim-rtl-to-power", "sim-syn-to-power", "sim-par-to-power", "syn-to-formal", "par-to-formal", "syn-to-timing", "par-to-timing"}
         expected_targets = tasks.copy()
         expected_targets.update(bridge_tasks)
         expected_targets.update({"redo-" + x for x in expected_targets if x is not "pcb"})
-        expected_targets.update({os.path.join(tmpdir, x + "-rundir", x + "-output-full.json") for x in tasks if x not in {"sim-rtl", "sim-syn", "sim-par", "power-par"}})
-        expected_targets.update({os.path.join(tmpdir, x + "-rundir", x.split('-')[0] + "-output-full.json") for x in tasks if x in {"sim-rtl", "sim-syn", "sim-par", "power-par"}})
-        expected_targets.update({os.path.join(tmpdir, x + "-input.json") for x in tasks if x not in {"syn", "pcb", "sim-rtl", "power-par"}})
-        expected_targets.update({os.path.join(tmpdir, x + "-input.json") for x in {"power-par", "power-sim-par"}})
+        expected_targets.update({os.path.join(tmpdir, x + "-rundir", x + "-output-full.json") for x in tasks if x not in {"sim-rtl", "sim-syn", "sim-par", "power-rtl", "power-syn", "power-par", "formal-syn", "formal-par", "timing-syn", "timing-par"}})
+        expected_targets.update({os.path.join(tmpdir, x + "-rundir", x.split('-')[0] + "-output-full.json") for x in tasks if x in {"sim-rtl", "sim-syn", "sim-par", "power-rtl", "power-syn", "power-par", "formal-syn", "formal-par", "timing-syn", "timing-par"}})
+        expected_targets.update({os.path.join(tmpdir, x + "-input.json") for x in tasks if x not in {"syn", "pcb", "sim-rtl", "power-rtl"}})
+        expected_targets.update({os.path.join(tmpdir, x + "-input.json") for x in {"power-sim-rtl", "power-sim-syn", "power-sim-par"}})
 
         self.assertEqual(set(targets.keys()), set(expected_targets))
 
@@ -658,12 +749,12 @@ class HammerBuildSystemsTest(unittest.TestCase):
 
         mods = {"TopMod", "SubModA", "SubModB"}
         expected_targets = {"pcb", os.path.join(tmpdir, "pcb-rundir", "pcb-output-full.json")}
-        hier_tasks = {"sim-rtl", "syn", "sim-syn", "par", "sim-par", "power-par", "drc", "lvs"}
+        hier_tasks = {"sim-rtl", "power-rtl", "syn", "sim-syn", "power-syn", "par", "sim-par", "power-par", "drc", "lvs", "formal-syn", "formal-par", "timing-syn", "timing-par"}
         for task in hier_tasks:
             expected_targets.update({task + "-" + x for x in mods})
             expected_targets.update({"redo-" + task + "-" + x for x in mods})
             expected_targets.update({os.path.join(tmpdir, task + "-" + x, task.split("-")[0] + "-output-full.json") for x in mods})
-        bridge_tasks = {"syn-to-sim", "syn-to-par", "par-to-sim", "par-to-lvs", "par-to-drc", "par-to-power", "sim-par-to-power"}
+        bridge_tasks = {"syn-to-sim", "syn-to-par", "par-to-sim", "par-to-lvs", "par-to-drc", "syn-to-power", "par-to-power", "sim-rtl-to-power", "sim-syn-to-power", "sim-par-to-power", "syn-to-formal", "par-to-formal", "syn-to-timing", "par-to-timing"}
         for task in bridge_tasks:
             expected_targets.update({task + "-" + x for x in mods})
             expected_targets.update({"redo-" + task + "-" + x for x in mods})
@@ -673,10 +764,18 @@ class HammerBuildSystemsTest(unittest.TestCase):
         expected_targets.update({os.path.join(tmpdir, "sim-syn-" + x + "-input.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "par-" + x + "-input.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "sim-par-" + x + "-input.json") for x in mods})
+        #expected_targets.update({os.path.join(tmpdir, "power-rtl-" + x + "-input.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "power-syn-" + x + "-input.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "power-par-" + x + "-input.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "power-sim-rtl-" + x + "-input.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "power-sim-syn-" + x + "-input.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "power-sim-par-" + x + "-input.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "lvs-" + x + "-input.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "drc-" + x + "-input.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "formal-syn-" + x + "-input.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "formal-par-" + x + "-input.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "timing-syn-" + x + "-input.json") for x in mods})
+        expected_targets.update({os.path.join(tmpdir, "timing-par-" + x + "-input.json") for x in mods})
 
         self.assertEqual(set(targets.keys()), expected_targets)
 

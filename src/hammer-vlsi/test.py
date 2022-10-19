@@ -10,7 +10,7 @@ import os
 import shutil
 import tempfile
 import unittest
-from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar, Union, cast
 from decimal import Decimal
 
 from tech_test import StackupTestHelper
@@ -1339,7 +1339,7 @@ class HammerSubmitCommandTestContext:
                              "hammer_vlsi_path must exist")
         temp_dir = tempfile.mkdtemp()
         json_path = os.path.join(temp_dir, "project.json")
-        json_content = {
+        json_content: Dict[str, Any] = {
             "vlsi.core.synthesis_tool": "mocksynth",
             "vlsi.core.technology": "nop",
             "synthesis.inputs.top_module": "dummy",
@@ -1692,12 +1692,10 @@ class HammerASAP7SRAMGeneratorToolTest(unittest.TestCase):
           # Should have an sram for each corner(2) and parameter(2) for a total of 4
           self.assertEqual(len(output_libs),4)
           libs = list(map(lambda ex: ex.library, output_libs)) # type: List[Library]
-          lib_names = list(map(lambda lib: lib.nldm_liberty_file, libs)) # type: ignore # These are actually List[str]
-          self.assertEqual(set(lib_names), set([
-            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM2RW32x32_PVT_0P63V_100C.lib"),
-            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM2RW32x32_PVT_0P77V_0C.lib"),
-            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM1RW64x128_PVT_0P63V_100C.lib"),
-            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM1RW64x128_PVT_0P77V_0C.lib")]))
+          verilog_names = list(map(lambda lib: lib.verilog_sim, libs)) # type: ignore # These are actually List[str]
+          self.assertEqual(set(verilog_names), set([
+            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM2RW32x32.v"),
+            os.path.join(c.temp_dir, "tech-nop-cache", "SRAM1RW64x128.v")]))
 
 class HammerPCBDeliverableToolTestContext:
     def __init__(self, test: unittest.TestCase) -> None:
@@ -1726,7 +1724,7 @@ class HammerPCBDeliverableToolTestContext:
             "vlsi.inputs.bumps": {
                 "x": 5,
                 "y": 4,
-                "pitch": "123.4",
+                "pitch": 123.4,
                 "cell": "dummybump",
                 "assignments": [
                     {"name": "reset", "x": 1, "y": 1},
@@ -1753,8 +1751,8 @@ class HammerPCBDeliverableToolTestContext:
             },
             "pcb.generic.footprint_type": "PADS-V9",
             "pcb.generic.schematic_symbol_type": "AltiumCSV",
-            "technology.pcb.bump_pad_opening_diameter": "60",
-            "technology.pcb.bump_pad_metal_diameter": "75"
+            "technology.pcb.bump_pad_opening_diameter": 60,
+            "technology.pcb.bump_pad_metal_diameter": 75
         }  # type: Dict[str, Any]
 
         with open(json_path, "w") as f:
@@ -1923,8 +1921,8 @@ class HammerPowerStrapsTest(HasGetTech, unittest.TestCase):
             # that particular part of this
             assert isinstance(par_tool, hammer_vlsi.HammerPlaceAndRouteTool)
             stackup = par_tool.get_stackup()
-            entries = par_tool.parse_mock_power_straps_file()  # type: ignore
-            entries  # type: List[Dict[str, Any]]
+            parsed_out = par_tool.parse_mock_power_straps_file()  # type: ignore
+            entries = cast(List[Dict[str, Any]], parsed_out)
 
             for entry in entries:
                 c.logger.debug("Power strap entry:" + str(entry))
@@ -2040,8 +2038,8 @@ class HammerPowerStrapsTest(HasGetTech, unittest.TestCase):
             # that particular part of this
             assert isinstance(par_tool, hammer_vlsi.HammerPlaceAndRouteTool)
             stackup = par_tool.get_stackup()
-            entries = par_tool.parse_mock_power_straps_file()  # type: ignore
-            entries  # type: List[Dict[str, Any]]
+            parsed_out = par_tool.parse_mock_power_straps_file()  # type: ignore
+            entries = cast(List[Dict[str, Any]], parsed_out)
 
             # There should be 1 std cell rail definition and 2 straps per layer (total 7)
             self.assertEqual(len(entries), 7)
@@ -2144,12 +2142,12 @@ class HammerSimToolTestContext:
         self.temp_dir = temp_dir
         return self
 
-    def __exit__(self, type, value, traceback) -> bool:
+    def __exit__(self, typ, value, traceback) -> bool:
         """Cleanup the context by removing the temp_dir."""
         shutil.rmtree(self.temp_dir)
-        # Return True (normal execution) if no exception ocurred/
+        # Return True (normal execution) if no exception ocurred
 
-        return True if type is None else False
+        return typ is None
 
     @property
     def env(self) -> Dict[str, str]:

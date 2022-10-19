@@ -20,7 +20,7 @@ class CellType(Enum):
     StdFiller = 6
     Decap = 7
     TapCell = 8
-    Buffer = 9
+    Driver = 9
     CTSBuffer = 10
 
     @classmethod
@@ -34,7 +34,7 @@ class CellType(Enum):
             "stdfiller": CellType.StdFiller,
             "decap": CellType.Decap,
             "tapcell": CellType.TapCell,
-            "buffer": CellType.Buffer,
+            "driver": CellType.Driver,
             "ctsbuffer": CellType.CTSBuffer
         }
 
@@ -66,14 +66,20 @@ class SpecialCell(NamedTuple('SpecialCell', [
 
     @staticmethod
     def from_setting(d: dict) -> "SpecialCell":
-        size = d['size']
+        size = d["size"]
+        input_ports = d["input_ports"]
+        output_ports = d["output_ports"]
         if size is not None:
             size = list(map(lambda x: str(x), size))
+        if input_ports is not None:
+            input_ports = list(input_ports)
+        if output_ports is not None:
+            output_ports = list(output_ports)
         # pylint: disable=missing-docstring
         return SpecialCell(
             cell_type=CellType.from_str(d["cell_type"]),
             name=list(d["name"]),
             size=size,
-            input_ports=d["input_ports"],
-            output_ports=d["output_ports"],
+            input_ports=input_ports,
+            output_ports=output_ports,
         )

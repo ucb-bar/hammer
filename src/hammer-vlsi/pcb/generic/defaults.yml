@@ -4,19 +4,16 @@
 # A catch-all for generic PCB deliverables that needn't be in a separate plugin
 pcb.generic:
 
-  # Footprint type
+  footprint_type: "PADS-V9" # Footprint type
   # Currently only supports PADS-V9
   # See ftp://ftp.freecalypso.org/pub/CAD/PADS/pdfdocs/Plib_ASCII.pdf
   # type: str
-  footprint_type: "PADS-V9"
 
-  # Schematic symbol type
+  schematic_symbol_type: "AltiumCSV" # Schematic symbol type
   # Currently only supports AltiumCSV
   # type: str
-  schematic_symbol_type: "AltiumCSV"
 
-  # Version string
+  version: "1.0" # Version string
   # This does nothing, but is required by HammerTool
   # type: str
-  version: "1.0"
 

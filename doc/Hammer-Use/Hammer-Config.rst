@@ -211,6 +211,165 @@ Common meta actions
 
   Result: ``get_setting("foo.bar.baz")`` returns ``12345`` and ``get_setting("foo.bar.baz")`` returns ``32123``
 
+Type Checking
+-------------
+
+Any existing configuration file can and should be accompanied with a corresponding configuration types file.
+This allows for static type checking of any key when calling ``get_setting``.
+The file should contain the same keys as the corresponding configuration file, but can contain the following as values:
+
+- primitive types (``int``, ``str``, etc.)
+- collection types (``list``)
+- collections of key-value pairs (``list[dict[str, str]]``, ``list[dict[str, list]]``, etc.) These values are turned into custom constraints (e.g. ``PlacementConstraint``, ``PinAssignment``) later in the HAMMER workflow, but the key value pairs are not type-checked any deeper.
+- optional forms of the above (``Optional[str]``)
+- the wildcard ``Any`` type
+
+HAMMER will perform the same without a types file, but it is highly recommended to ensure type safety of any future plugins.
+
+Key History
+-----------
+
+When the ``ruamel.yaml`` package is installed, HAMMER can emit what files have modified any configuration keys in YAML format.
+The file is named ``{action}-output-history.yml`` and is located in the output folder of the given action.
+
+Example with the file ``test-config.yml``:
+
+  .. code-block:: yaml
+
+    synthesis.inputs:
+        input_files: ["foo", "bar"]
+        top_module: "z1top.xdc"
+
+    vlsi:
+        core:
+            technology: "nop"
+            technology_path: ["src/hammer-vlsi/technology"]
+
+            synthesis_tool: "nop"
+            synthesis_tool_path: ["src/hammer-vlsi/synthesis"]
+
+``test/syn-rundir/syn-output-history.yml`` after executing the command ``hammer-vlsi -p test-config.yml --obj_dir test syn``:
+
+  .. code-block:: yaml
+
+    synthesis.inputs.input_files:  # Modified by: test-config.yml
+      - LICENSE
+      - README.md
+    synthesis.inputs.top_module: z1top.xdc # Modified by: test-config.yml
+
+    vlsi.core.technology: nop # Modified by: test-config.yml
+    vlsi.core.technology_path: # Modified by: test-config.yml
+      - src/hammer-vlsi/technology
+    vlsi.core.synthesis_tool: nop # Modified by: test-config.yml
+    vlsi.core.synthesis_tool_path: # Modified by: test-config.yml
+      - src/hammer-vlsi/synthesis
+
+Example with the files ``test-config.yml`` and ``test-config2.yml``, respectively:
+
+  .. code-block:: yaml
+
+    synthesis.inputs:
+        input_files: ["foo", "bar"]
+        top_module: "z1top.xdc"
+
+    vlsi:
+        core:
+            technology: "nop"
+            technology_path: ["src/hammer-vlsi/technology"]
+
+            synthesis_tool: "nop"
+            synthesis_tool_path: ["src/hammer-vlsi/synthesis"]
+
+  .. code-block:: yaml
+
+    par.inputs:
+        input_files: ["foo", "bar"]
+        top_module: "z1top.xdc"
+
+    vlsi:
+        core:
+            technology: "${foo.subst}"
+            technology_path: ["/dev/null"]
+            technology_path_meta: subst
+
+            par_tool: "nop"
+            par_tool_path: ["src/hammer-vlsi/par"]
+
+    foo.subst: "nop2"
+
+``test/syn-rundir/par-output-history.yml`` after executing the command ``hammer-vlsi -p test-config.yml -p test-config2.yml --obj_dir test syn-par``:
+
+  .. code-block:: yaml
+
+    foo.subst: nop2 # Modified by: test-config2.yml
+    par.inputs.input_files:  # Modified by: test-config2.yml
+      - foo
+      - bar
+    par.inputs.top_module: z1top.xdc # Modified by: test-config2.yml
+    synthesis.inputs.input_files:  # Modified by: test-config.yml
+      - foo
+      - bar
+    synthesis.inputs.top_module: z1top.xdc # Modified by: test-config.yml
+    vlsi.core.technology: nop2 # Modified by: test-config.yml, test-config2.yml
+    vlsi.core.technology_path: # Modified by: test-config.yml, test-config2.yml
+      - /dev/null
+    vlsi.core.synthesis_tool: nop # Modified by: test-config.yml
+    vlsi.core.synthesis_tool_path: # Modified by: test-config.yml
+      - src/hammer-vlsi/synthesis
+    vlsi.core.par_tool: nop # Modified by: test-config2.yml
+    vlsi.core.par_tool_path: # Modified by: test-config2.yml
+      - src/hammer-vlsi/par
+
+Key Description Lookup
+----------------------
+
+With the ``ruamel.yaml`` package, HAMMER can execute the ``info`` action, allowing users to look up the description of most keys.
+The comments must be structured like so in order to be read propertly:
+
+  .. code-block:: yaml
+    foo: bar # this is a comment 
+    # this is another comment for the key "foo"
+
+HAMMER will take the descriptions from any ``defaults.yml`` files.
+
+  .. code-block::yaml
+    foo.bar:
+      apple: banana # type of fruit
+      price: 2 # price of fruit
+
+Running ``hammer-vlsi -p test-config.yml info`` (assuming the above configuration is in ``defaults.yml``):
+
+  .. code-block::
+    foo.bar
+    Select from the current level of keys: foo.bar
+    
+    apple
+    price
+    Select from the current level of keys: apple
+    ----------------------------------------
+    Key: foo.bar.apple
+    Value: banana
+    Description: # type of fruit
+    History: ["defaults.yml"]
+    ----------------------------------------
+
+    Continue querying keys? [y/n]: y
+
+    foo.bar
+    Select from the current level of keys: foo.bar
+    
+    apple
+    price
+    Select from the current level of keys: price
+    ----------------------------------------
+    Key: foo.bar.price
+    Value: 2
+    Description: # price of fruit
+    History: ["defaults.yml"]
+    ----------------------------------------
+
+Keys are queried post-resolution of all meta actions, so their values correspond to the project configuration after other actions like ``syn`` or ``par``.
+
 Reference
 ---------
 

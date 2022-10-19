@@ -1,0 +1,14 @@
+# Configuration options and defaults for magic DRC.
+# The values specified in this file are the defaults.
+drc.magic:
+  magic_bin: "magic" # Change this if magic is not on your PATH.
+  
+  version: "dummy-value" # this is just to make hammer happy (although, it is never called AFAICT).
+  # the version is actually calculated by the Magic class
+
+  rc_file: null # A startup file that may be provided by the technology that loads settings.
+  # If not specified, the tech file (technology DRC deck) will be loaded instead.
+  # type: Optional[str]
+
+  generate_only: false # Generate the run script but do not run it yet.
+

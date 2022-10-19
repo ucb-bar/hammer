@@ -6,9 +6,6 @@
 #
 # See LICENSE for licence details.
 
-from textwrap import dedent as dd
-
-# from hammer_utils import deepdict
 from hammer_vlsi.vendor import OpenROADTool, OpenROADSynthesisTool
 
 ###########
@@ -20,7 +17,7 @@ from hammer_logging import HammerVLSILogging
 from hammer_vlsi import MMMCCornerType
 import hammer_tech
 
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Callable
 
 import specialcells
 from specialcells import CellType, SpecialCell
@@ -87,7 +84,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
             self.logger.info("Did not run write_regs")
 
         # Check that the synthesis outputs exist if the synthesis run was successful
-        mapped_v = self.mapped_hier_v_path if self.hierarchical_mode.is_nonleaf_hierarchical() else self.mapped_v_path
+        mapped_v = self.mapped_v_path
         self.output_files = [mapped_v]
         self.output_sdc = self.mapped_sdc_path
         # self.sdf_file = self.output_sdf_path
@@ -131,11 +128,6 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
     def mapped_blif_path(self) -> str:
         return os.path.join(self.run_dir, "{}.mapped.blif".format(self.top_module))
 
-    def synth_script_path(self) -> str:
-        # TODO: generate this internally
-        openroad = self.openroad_flow_path()
-        return os.path.join(openroad, "flow/scripts/synth.tcl")
-
     def get_timing_libs(self, corner: Optional[MMMCCorner] = None) -> str:
         """
         Helper function to get the list of ASCII timing .lib files in space separated format.
@@ -150,8 +142,11 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         lib_args = self.technology.read_libs([hammer_tech.filters.timing_lib_with_ecsm_filter],
                                              hammer_tech.HammerTechnologyUtils.to_plain_item,
                                              extra_pre_filters=pre_filters)
-        
-        return " ".join(lib_args)
+
+        # lib files are often in a zipped format, so unzip them if they are
+        lib_args_unzipped = self.technology.extract_gz_files(lib_args)
+
+        return " ".join(lib_args_unzipped)
 
     def run_yosys(self) -> bool:
         """Close out the synthesis script and run Yosys."""
@@ -185,18 +180,11 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
 
     def write_sdc_file(self) -> bool:
         with open(self.mapped_sdc_path,'w') as f:
-            # TODO: why buf cell and not inv??
             # custom sdc constraints
-            f.write("set_driving_cell sky130_fd_sc_hd__buf_1\n" )
-            f.write("set_load 5\n")
-
-    def block_append(self,commands) -> bool:
-        for line in commands.split('\n'):
-            self.append(line.strip())
-            # if line.strip().startswith('#') or (line==""):
-            #     self.append(line.strip())
-            # else:
-            #     self.verbose_append(line.strip())
+            if self.driver_cell is not None:
+                f.write(f"set_driving_cell {self.driver_cell}\n" )
+                # TODO: generate this hard-coded 5
+                f.write("set_load 5\n")
         return True
 
     #========================================================================
@@ -205,10 +193,6 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
     def init_environment(self) -> bool:
 
         # set variables to match global variables in OpenLANE
-        self.driving_cell = "sky130_fd_sc_hd__inv_1" # SYNTH_DRIVING_CELL
-        self.driving_cell_pin = "Y" # SYNTH_DRIVING_CELL_PIN
-        self.buffer_cell = "sky130_fd_sc_hd__buf_2 A X"
-
         time_unit = self.get_time_unit().value_prefix + self.get_time_unit().unit
         clock_port = self.get_clock_ports()[0]
         self.clock_port_name = clock_port.name
@@ -220,22 +204,36 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         self.synth_cap_load = 33.5 # SYNTH_CAP_LOAD
         self.max_fanout = 5 # default SYNTH_MAX_FANOUT = 5
 
+        
+        self.driver_cell = None
+        driver_cells = self.technology.get_special_cell_by_type(CellType.Driver)
+        if len(driver_cells) == 0:
+            self.logger.warning("Driver cells are unspecified and will not be added during synthesis.")
+        elif driver_cells[0].input_ports is None or driver_cells[0].output_ports is None:
+            self.logger.warning("Driver cell input and output ports are unspecified and will not be added during synthesis.")
+        else:
+            self.driver_cell = driver_cells[0].name[0]
+            self.driver_ports_in = driver_cells[0].input_ports[0]
+            self.driver_ports_out = driver_cells[0].output_ports[0]
+
         # Yosys commands only take a single lib file
         #   so use typical corner liberty file
         corners = self.get_mmmc_corners()  # type: List[MMMCCorner]
-        corner_tt = next((corner for corner in corners if corner.type == MMMCCornerType.Extra), None)
-        self.liberty_file = self.get_timing_libs(corner_tt)
+        try:
+            corner_tt = next((corner for corner in corners if corner.type == MMMCCornerType.Extra), None)
+        except:
+            raise ValueError("An extra corner is required for Yosys.")
+            
+        self.liberty_files_tt = self.get_timing_libs(corner_tt)
         
         self.append("yosys -import")
 
         # replaces undef (x) constants with defined (0/1) constants.
-        # self.append("setundef -zero")
+        self.append("setundef -zero")
 
         # We are switching working directories and Yosys still needs to find paths.
         abspath_input_files = list(map(lambda name: os.path.join(os.getcwd(), name), self.input_files))  # type: List[str]
-        # If we are in hierarchical, we need to remove hierarchical sub-modules/sub-blocks.
-        if self.hierarchical_mode.is_nonleaf_hierarchical():
-            abspath_input_files = list(map(self.remove_hierarchical_submodules_from_file, abspath_input_files))
+        
         # Add any verilog_synth wrappers (which are needed in some technologies e.g. for SRAMs) which need to be
         # synthesized.
         abspath_input_files += self.technology.read_libs([
@@ -252,39 +250,30 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         return True
 
     def syn_generic(self) -> bool:
+        # TODO: is there a better way to do this? like self.get_setting()
+        if self._database.has_setting("synthesis.yosys.latch_map_file"):
+            latch_map = f"techmap -map {self.get_setting('synthesis.yosys.latch_map_file')}"
+        else:  # TODO: make the else case better
+            latch_map = ""
+        
         self.block_append(f"""
         # TODO: verify this command, it was in yosys manual but not in OpenLANE script
         yosys proc
         hierarchy -check -top {self.top_module}
 
-        # old: synth -top {self.top_module}
-        # but techmap file location that yosys is checking for is incorrect
-        # TODO: figure out why this is
-
-        # begin, coarse labels: automatic
-        synth -top {self.top_module} -run :fine
-        # fine label: run manually 
-        opt -fast -full
-        memory_map
-        opt -full
-        # TODO: figure out why techmap path assumed correct for conda but not server install 
-        techmap -map "/usr/local/share/yosys/techmap.v"
-        opt -fast
-        puts "first abc pass"
-        abc -fast
-        opt -fast
-        # check label: automatic
-        synth -top gcd -run check:
+        synth -top {self.top_module}
 
         # Optimize the design
         opt -purge
 
-        dfflibmap -liberty {self.liberty_file}
+        # Technology mapping of latches
+        {latch_map}
 
-        opt
+        # Technology mapping of flip-flops
         """)
-        # need this report??
-        # tee -o "{self.run_dir}/{self.top_module}_pre.stat" stat
+        for liberty_file in self.liberty_files_tt.split():
+            self.verbose_append(f"dfflibmap -liberty {liberty_file}")
+        self.verbose_append("opt")
 
         # merges shareable resources into a single resource. A SAT solver
         # is used to determine if two resources are share-able.
@@ -294,20 +283,21 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         return True
 
     def syn_map(self) -> bool:
+        
         self.block_append(f"""
         # Technology mapping for cells
         # ABC supports multiple liberty files, but the hook from Yosys to ABC doesn't
-        puts "second abc pass"
+        # TODO: this is a bad way of getting one liberty file, need a way to merge all std cell lib files
         abc -D {self.clock_period} \\
             -constr "{self.mapped_sdc_path}" \\
-            -liberty "{self.liberty_file}" \\
-            -script "/tools/B/nayiri/openroad/gcd/sky130hd/abc_speed.script" \\
+            -liberty "{self.liberty_files_tt.split()[0]}" \\
+            -showtmp
 
         # Replace undef values with defined constants
         # TODO: do we need this??
         setundef -zero
 
-        # TODO: what is the purpose of splitnets?
+        # Split multi-bit nets into single-bit nets.
         # Splitting nets resolves unwanted compound assign statements in netlist (assign [..] = [..])
         splitnets
 
@@ -321,34 +311,24 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         tie_lo_cells = self.technology.get_special_cell_by_type(CellType.TieLoCell)
         tie_hilo_cells = self.technology.get_special_cell_by_type(CellType.TieHiLoCell)
 
-        if len(tie_hi_cells) != 1 or len (tie_lo_cells) != 1:
-            self.logger.warning("Hi and Lo tiecells are unspecified or improperly specified and will not be added during synthesis.")
+        if len(tie_hi_cells) != 1 or len (tie_lo_cells) != 1 or tie_hi_cells[0].output_ports is None or tie_lo_cells[0].output_ports is None:
+            self.logger.warning("Hi and Lo tiecells and their input ports are unspecified or improperly specified and will not be added during synthesis.")
         else:   
             tie_hi_cell = tie_hi_cells[0].name[0]
-            tie_hi_port = tie_hi_cells[0].input_ports[0]
+            tie_hi_port = tie_hi_cells[0].output_ports[0]
             tie_lo_cell = tie_lo_cells[0].name[0]
-            tie_lo_port = tie_lo_cells[0].input_ports[0]
+            tie_lo_port = tie_lo_cells[0].output_ports[0]
 
             self.block_append(f"""
             # Technology mapping of constant hi- and/or lo-drivers
-            # TODO: how to specify ports
-            # TODO: add extra field in specialcells
-            hilomap -hicell "{tie_hi_cell} {tie_hi_port}" -locell "{tie_lo_cell} {tie_lo_port}"
+            hilomap -singleton \\
+                    -hicell {{*}}{tie_hi_cell} {tie_hi_port} \\
+                    -locell {{*}}{tie_lo_cell} {tie_lo_port}
             """)
-
-        buffer_cells = self.technology.get_special_cell_by_type(CellType.Buffer)
-
-        if buffer_cells is None:
-            self.logger.warning("Buffer cells are unspecified and will not be added during synthesis.")
-        else:
-            buffer_cell = buffer_cells[0].name[0]
-            buffer_ports_in = buffer_cells[0].input_ports[0]
-            buffer_ports_out = buffer_cells[0].output_ports[0]
-
+        if self.driver_cell is not None:
             self.block_append(f"""
-            # Insert buffer cells for pass through wires
-            # TODO: why does -buf arg not work? try with yosys conda install
-            insbuf "{buffer_cell} {buffer_ports_in} {buffer_ports_out}"
+            # Insert driver cells for pass through wires
+            insbuf -buf {{*}}{self.driver_cell} {self.driver_ports_in} {self.driver_ports_out}
             """)
         return True
 
@@ -358,16 +338,27 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         return True
 
     def generate_reports(self) -> bool:
-        # TODO: generate all reports (not sure how...?)
-        self.append(f'tee -o "{self.run_dir}/{self.top_module}.synth_check.rpt" check')
-        self.append(f'tee -o "{self.run_dir}/{self.top_module}.synth_stat.txt" stat -top {self.top_module} -liberty {self.liberty_file}')
+        # TODO: generate all reports (will probably need to parse the log file)
+        self.block_append(f"""
+        tee -o {self.run_dir}/{self.top_module}.synth_check.rpt check
+
+        tee -o {self.run_dir}/{self.top_module}.synth_stat.txt stat -top {self.top_module} -liberty {self.liberty_files_tt.split()[0]}
+        """)
         return True
     
     def write_outputs(self) -> bool:
-        self.append(f'write_verilog -noattr -noexpr -nohex -nodec -defparam "{self.mapped_v_path}"')
+        hier_mapped_v_path=os.path.join(self.run_dir, f"{self.top_module}.mapped.hier.v")
+        self.block_append(f"""
+        write_verilog -noattr -noexpr -nohex -nodec -defparam "{hier_mapped_v_path}"
+
+        flatten
+
+        # OpenROAD will throw an error if the verilog from Yosys is not flattened
+        write_verilog -noattr -noexpr -nohex -nodec -defparam "{self.mapped_v_path}"
+
         # BLIF file seems to be easier to parse than mapped verilog for find_regs functions so leave for now
-        self.append(f'write_blif -top gcd "{self.mapped_blif_path}"')
-        # TODO: figure out why the OpenLANE script re-runs synthesis & flattens design, when we explicitly requested hierarchical mode
+        write_blif -top {self.top_module} "{self.mapped_blif_path}"
+        """)
         self.ran_write_outputs = True
         return True
     

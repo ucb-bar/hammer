@@ -20,8 +20,8 @@ from hammer_tech import MacroSize
 from .hammer_tool import HammerTool
 from .hooks import HammerToolHookAction
 from .hammer_vlsi_impl import HammerVLSISettings, HammerPlaceAndRouteTool, HammerSynthesisTool, \
-    HammerSignoffTool, HammerDRCTool, HammerLVSTool, HammerSRAMGeneratorTool, HammerPCBDeliverableTool, HammerSimTool, HammerPowerTool, \
-    HierarchicalMode, load_tool, PlacementConstraint, SRAMParameters, ILMStruct, SimulationLevel
+    HammerSignoffTool, HammerDRCTool, HammerLVSTool, HammerSRAMGeneratorTool, HammerPCBDeliverableTool, HammerSimTool, HammerPowerTool, HammerFormalTool, HammerTimingTool, \
+    HierarchicalMode, load_tool, PlacementConstraint, SRAMParameters, ILMStruct, FlowLevel
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, HammerVLSILoggingContext
 from .submit_command import HammerSubmitCommand
 
@@ -109,6 +109,8 @@ class HammerDriver:
         self.sram_generator_tool = None  # type: Optional[HammerSRAMGeneratorTool]
         self.sim_tool = None  # type: Optional[HammerSimTool]
         self.power_tool = None # type: Optional[HammerPowerTool]
+        self.formal_tool = None # type: Optional[HammerFormalTool]
+        self.timing_tool = None # type: Optional[HammerTimingTool]
 
         # Initialize tool hooks. Used to specify resume/pause hooks after custom hooks have been registered.
         self.post_custom_syn_tool_hooks = []  # type: List[HammerToolHookAction]
@@ -118,6 +120,8 @@ class HammerDriver:
         self.post_custom_sram_generator_tool_hooks = []  # type: List[HammerToolHookAction]
         self.post_custom_sim_tool_hooks = []  # type: List[HammerToolHookAction]
         self.post_custom_power_tool_hooks = [] # type: List[HammerToolHookAction]
+        self.post_custom_formal_tool_hooks = [] # type: List[HammerToolHookAction]
+        self.post_custom_timing_tool_hooks = [] # type: List[HammerToolHookAction]
         self.post_custom_pcb_tool_hooks = []  # type: List[HammerToolHookAction]
 
     @property
@@ -501,7 +505,7 @@ class HammerDriver:
         sim_tool.hierarchical_mode = HierarchicalMode.from_str(
             self.database.get_setting("vlsi.inputs.hierarchical.mode"))
         # Special case: if non-leaf hierarchical and gate-level, append ilm sim netlists
-        if sim_tool.hierarchical_mode.is_nonleaf_hierarchical() and sim_tool.level == SimulationLevel.GateLevel:
+        if sim_tool.hierarchical_mode.is_nonleaf_hierarchical() and sim_tool.level.is_gatelevel():
             for ilm in sim_tool.get_input_ilms():
                 if isinstance(ilm.sim_netlist, str):
                     sim_tool.input_files.append(ilm.sim_netlist)
@@ -573,17 +577,22 @@ class HammerDriver:
         power_tool.submit_command = HammerSubmitCommand.get("power", self.database)
         power_tool.run_dir = run_dir
 
-        power_tool.par_database = self.database.get_setting("power.inputs.database", nullvalue="")
+        power_tool.flow_database = self.database.get_setting("power.inputs.database", nullvalue="")
         power_tool.spefs = self.database.get_setting("power.inputs.spefs", nullvalue=[])
         power_tool.waveforms = self.database.get_setting("power.inputs.waveforms", nullvalue=[])
         power_tool.saifs = self.database.get_setting("power.inputs.saifs", nullvalue=[])
+
+        power_tool.input_files = self.database.get_setting("power.inputs.input_files", nullvalue=[])
+        power_tool.sdc = self.database.get_setting("power.inputs.sdc", nullvalue="")
+        power_tool.top_module = self.database.get_setting("power.inputs.top_module", nullvalue="")
+        power_tool.tb_name = self.database.get_setting("power.inputs.tb_name", nullvalue="")
+        power_tool.tb_dut = self.database.get_setting("power.inputs.tb_dut", nullvalue="")
+
         missing_inputs = False
-        if power_tool.par_database == "":
-            self.log.error("PAR database not specified for power analysis")
+        if power_tool.flow_database == "" and len(power_tool.input_files) == 0:
+            self.log.error("Input database or design not specified for power analysis")
             missing_inputs = True
-        if len(power_tool.spefs) == 0:
-            self.log.error("No spef files specified for power analysis")
-            missing_inputs = True
+
         if missing_inputs:
             return False
 
@@ -592,6 +601,136 @@ class HammerDriver:
         self.tool_configs["power"] = power_tool.get_config()
         self.update_tool_configs()
         return True
+
+    def set_up_formal_tool(self, formal_tool: HammerFormalTool,
+                              name: str, run_dir: str = "") -> bool:
+        """
+        Set up and store the given formal tool instance for use in this
+        driver.
+        :param formal_tool: Tool instance.
+        :param name: Short name (e.g. "conformal") of the tool instance. Typically
+                     obtained from the database.
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the
+                        run_dir passed in the HammerDriver constructor.
+        :return: True if setup was successful.
+        """
+
+        if self.tech is None:
+            self.log.error("Must load technology before loading formal tool")
+            return False
+
+        if run_dir == "":
+            run_dir = os.path.join(self.obj_dir, "formal-rundir")
+
+        formal_tool.name = name
+        formal_tool.logger = self.log.context("formal")
+        formal_tool.set_database(self.database)
+        formal_tool.run_dir = run_dir
+        formal_tool.technology = self.tech
+        formal_tool.submit_command = HammerSubmitCommand.get("formal", self.database)
+
+        formal_tool.check = self.database.get_setting("formal.inputs.check")
+        formal_tool.input_files = self.database.get_setting("formal.inputs.input_files")
+        formal_tool.hierarchical_mode = HierarchicalMode.from_str(
+            self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+        # Special case: if non-leaf hierarchical, append ilm sim netlists
+        if formal_tool.hierarchical_mode.is_nonleaf_hierarchical():
+            for ilm in formal_tool.get_input_ilms():
+                if isinstance(ilm.sim_netlist, str):
+                    formal_tool.input_files.append(ilm.sim_netlist)
+        formal_tool.reference_files = self.database.get_setting("formal.inputs.reference_files")
+        formal_tool.top_module = self.database.get_setting("formal.inputs.top_module")
+        missing_inputs = False
+        if formal_tool.check == "":
+            self.log.error("No check specified for formal")
+            missing_inputs = True
+        if len(formal_tool.input_files) == 0:
+            self.log.error("No input files specified for formal")
+            missing_inputs = True
+        if missing_inputs:
+            return False
+
+        self.formal_tool = formal_tool
+
+        self.tool_configs["formal"] = formal_tool.get_config()
+        self.update_tool_configs()
+        return True
+
+    def load_formal_tool(self, run_dir: str = "") -> bool:
+        """
+        Loads a formal tool on a given database
+
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
+                        constructor.
+        :return: True if formal tool loading was successful, False otherwise.
+        """
+        config_result = self.instantiate_tool_from_config("formal", HammerFormalTool)
+        if config_result is None:
+            return False
+        else:
+            (formal_tool, name) = config_result
+            assert isinstance(formal_tool, HammerFormalTool)
+            return self.set_up_formal_tool(formal_tool, name, run_dir)
+
+    def set_up_timing_tool(self, timing_tool: HammerTimingTool,
+                              name: str, run_dir: str = "") -> bool:
+        """
+        Set up and store the given timing tool instance for use in this
+        driver.
+        :param timing_tool: Tool instance.
+        :param name: Short name (e.g. "tempus") of the tool instance. Typically
+                     obtained from the database.
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the
+                        run_dir passed in the HammerDriver constructor.
+        :return: True if setup was successful.
+        """
+
+        if self.tech is None:
+            self.log.error("Must load technology before loading timing tool")
+            return False
+
+        if run_dir == "":
+            run_dir = os.path.join(self.obj_dir, "timing-rundir")
+
+        timing_tool.name = name
+        timing_tool.logger = self.log.context("timing")
+        timing_tool.set_database(self.database)
+        timing_tool.run_dir = run_dir
+        timing_tool.technology = self.tech
+        timing_tool.submit_command = HammerSubmitCommand.get("timing", self.database)
+
+        timing_tool.input_files = self.database.get_setting("timing.inputs.input_files")
+        timing_tool.hierarchical_mode = HierarchicalMode.from_str(
+            self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+        timing_tool.top_module = self.database.get_setting("timing.inputs.top_module")
+        missing_inputs = False
+        if len(timing_tool.input_files) == 0:
+            self.log.error("No input files specified for timing")
+            missing_inputs = True
+        if missing_inputs:
+            return False
+
+        self.timing_tool = timing_tool
+
+        self.tool_configs["timing"] = timing_tool.get_config()
+        self.update_tool_configs()
+        return True
+
+    def load_timing_tool(self, run_dir: str = "") -> bool:
+        """
+        Loads a timing tool on a given database
+
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
+                        constructor.
+        :return: True if timing tool loading was successful, False otherwise.
+        """
+        config_result = self.instantiate_tool_from_config("timing", HammerTimingTool)
+        if config_result is None:
+            return False
+        else:
+            (timing_tool, name) = config_result
+            assert isinstance(timing_tool, HammerTimingTool)
+            return self.set_up_timing_tool(timing_tool, name, run_dir)
 
     def load_pcb_tool(self, run_dir: str = "") -> bool:
         """
@@ -686,6 +825,24 @@ class HammerDriver:
         """
         self.post_custom_power_tool_hooks = list(hooks)
 
+    def set_post_custom_formal_tool_hooks(self, hooks: List[HammerToolHookAction]) -> None:
+        """
+        Set the extra list of hooks used for control flow (resume/pause) in run_formal.
+        They will run after main/hook_actions.
+
+        :param hooks: Hooks to run
+        """
+        self.post_custom_formal_tool_hooks = list(hooks)
+
+    def set_post_custom_timing_tool_hooks(self, hooks: List[HammerToolHookAction]) -> None:
+        """
+        Set the extra list of hooks used for control flow (resume/pause) in run_timing.
+        They will run after main/hook_actions.
+
+        :param hooks: Hooks to run
+        """
+        self.post_custom_timing_tool_hooks = list(hooks)
+
     def run_synthesis(self, hook_actions: Optional[List[HammerToolHookAction]] = None, force_override: bool = False) -> \
             Tuple[bool, dict]:
         """
@@ -778,7 +935,83 @@ class HammerDriver:
                 "sim.inputs.all_regs": output_dict["synthesis.outputs.all_regs"],
                 "sim.inputs.seq_cells": output_dict["synthesis.outputs.seq_cells"],
                 "sim.inputs.sdf_file": output_dict["synthesis.outputs.sdf_file"],
-                "sim.inputs.level": 'gl',
+                "sim.inputs.level": 'syn',
+                "vlsi.builtins.is_complete": False
+            }  # type: Dict[str, Any]
+            return result
+        except KeyError:
+            # KeyError means that the given dictionary is missing output keys.
+            return None
+
+    @staticmethod
+    def synthesis_output_to_power_input(output_dict: dict) -> Optional[dict]:
+        """
+        Generate the appropriate inputs for running post-synthesis power analysis from the
+        outputs of synthesis run.
+        Does not merge the results with any project dictionaries.
+        :param output_dict: Dict containing synthesis.outputs.*
+        :return: power.inputs.* settings generated from output_dict,
+                 or None if output_dict was invalid
+        """
+        try:
+            output_files = deeplist(output_dict["synthesis.outputs.output_files"])
+            result = {
+                "power.inputs.input_files": output_files,
+                "power.inputs.input_files_meta": "append",
+                "power.inputs.top_module": output_dict["synthesis.inputs.top_module"],
+                "power.inputs.level": 'syn',
+                "power.inputs.sdc": output_dict["synthesis.outputs.sdc"],
+                "vlsi.builtins.is_complete": False
+            }  # type: Dict[str, Any]
+            return result
+        except KeyError:
+            # KeyError means that the given dictionary is missing output keys.
+            return None
+
+    @staticmethod
+    def synthesis_output_to_formal_input(output_dict: dict) -> Optional[dict]:
+        """
+        Generate the appropriate inputs for running formal tools from the
+        outputs of synthesis run.
+        Does not merge the results with any project dictionaries.
+        :param output_dict: Dict containing synthesis.outputs.*
+        :return: formal.inputs.* settings generated from output_dict,
+                 or None if output_dict was invalid
+        """
+        try:
+            reference_files = deeplist(output_dict["synthesis.inputs.input_files"])
+            input_files = deeplist(output_dict["synthesis.outputs.output_files"])
+            result = {
+                "formal.inputs.input_files": input_files,
+                "formal.inputs.input_files_meta": "append",
+                "formal.inputs.reference_files": reference_files,
+                "formal.inputs.reference_files_meta": "append",
+                "formal.inputs.top_module": output_dict["synthesis.inputs.top_module"],
+                "vlsi.builtins.is_complete": False
+            }  # type: Dict[str, Any]
+            return result
+        except KeyError:
+            # KeyError means that the given dictionary is missing output keys.
+            return None
+
+    @staticmethod
+    def synthesis_output_to_timing_input(output_dict: dict) -> Optional[dict]:
+        """
+        Generate the appropriate inputs for running timing tools from the
+        outputs of synthesis run.
+        Does not merge the results with any project dictionaries.
+        :param output_dict: Dict containing synthesis.outputs.*
+        :return: timing.inputs.* settings generated from output_dict,
+                 or None if output_dict was invalid
+        """
+        try:
+            input_files = deeplist(output_dict["synthesis.outputs.output_files"])
+            result = {
+                "timing.inputs.input_files": input_files,
+                "timing.inputs.input_files_meta": "append",
+                "timing.inputs.top_module": output_dict["synthesis.inputs.top_module"],
+                "timing.inputs.post_synth_sdc": output_dict["synthesis.outputs.sdc"],
+                "timing.inputs.sdf_file": output_dict["synthesis.outputs.sdf_file"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             return result
@@ -805,7 +1038,7 @@ class HammerDriver:
                 "sim.inputs.all_regs": output_dict["par.outputs.all_regs"],
                 "sim.inputs.seq_cells": output_dict["par.outputs.seq_cells"],
                 "sim.inputs.sdf_file": output_dict["par.outputs.sdf_file"],
-                "sim.inputs.level": 'gl',
+                "sim.inputs.level": 'par',
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             return result
@@ -820,7 +1053,7 @@ class HammerDriver:
         outputs of par run.
         Does not merge the results with any project dictionaries.
         :param output_dict: Dict containing par.outputs.*
-        :return: sim.inputs.* settings generated from output_dict,
+        :return: power.inputs.* settings generated from output_dict,
                  or None if output_dict was invalid
         """
         try:
@@ -828,6 +1061,58 @@ class HammerDriver:
                 "power.inputs.top_module": output_dict["par.inputs.top_module"],
                 "power.inputs.netlist": output_dict["par.outputs.output_netlist"],
                 "power.inputs.spefs": output_dict["par.outputs.spefs"],
+                "vlsi.builtins.is_complete": False
+            }  # type: Dict[str, Any]
+            return result
+        except KeyError:
+            # KeyError means that the given dictionary is missing output keys.
+            return None
+
+    @staticmethod
+    def par_output_to_formal_input(output_dict: dict) -> Optional[dict]:
+        """
+        Generate the appropriate inputs for running formal tools from the
+        outputs of par run.
+        Does not merge the results with any project dictionaries.
+        :param output_dict: Dict containing par.outputs.*
+        :return: formal.inputs.* settings generated from output_dict,
+                 or None if output_dict was invalid
+        """
+        try:
+            reference_files = deeplist(output_dict["par.inputs.input_files"])
+            input_files = deeplist([output_dict["par.outputs.output_sim_netlist"]])
+            result = {
+                "formal.inputs.input_files": input_files,
+                "formal.inputs.input_files_meta": "append",
+                "formal.inputs.reference_files": reference_files,
+                "formal.inputs.reference_files_meta": "append",
+                "formal.inputs.top_module": output_dict["par.inputs.top_module"],
+                "vlsi.builtins.is_complete": False
+            }  # type: Dict[str, Any]
+            return result
+        except KeyError:
+            # KeyError means that the given dictionary is missing output keys.
+            return None
+
+    @staticmethod
+    def par_output_to_timing_input(output_dict: dict) -> Optional[dict]:
+        """
+        Generate the appropriate inputs for running timing tools from the
+        outputs of par run.
+        Does not merge the results with any project dictionaries.
+        :param output_dict: Dict containing par.outputs.*
+        :return: timing.inputs.* settings generated from output_dict,
+                 or None if output_dict was invalid
+        """
+        try:
+            input_files = deeplist([output_dict["par.outputs.output_netlist"]])
+            result = {
+                "timing.inputs.input_files": input_files,
+                "timing.inputs.input_files_meta": "append",
+                "timing.inputs.top_module": output_dict["par.inputs.top_module"],
+                "timing.inputs.spefs": output_dict["par.outputs.spefs"],
+                "timing.inputs.sdf_file": output_dict["par.outputs.sdf_file"],
+                "timing.inputs.ilms": output_dict["par.outputs.output_ilms"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             return result
@@ -1075,6 +1360,10 @@ class HammerDriver:
                 "power.inputs.waveforms_meta": "append",
                 "power.inputs.saifs": output_dict["sim.outputs.saifs"],
                 "power.inputs.saifs_meta": "append",
+                "power.inputs.top_module": output_dict["sim.outputs.output_top_module"],
+                "power.inputs.tb_name": output_dict["sim.outputs.output_tb_name"],
+                "power.inputs.tb_dut": output_dict["sim.outputs.output_tb_dut"],
+                "power.inputs.level": output_dict["sim.outputs.output_level"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             return result
@@ -1166,6 +1455,88 @@ class HammerDriver:
         output_config = {}  # type: Dict[str, Any]
         try:
             output_config.update(self.power_tool.export_config_outputs())
+        except ValueError as e:
+            self.log.fatal(e.args[0])
+            return False, {}
+
+        return run_succeeded, output_config
+
+    def run_formal(self, hook_actions: Optional[List[HammerToolHookAction]] = None, force_override: bool = False) -> \
+            Tuple[bool, dict]:
+        """
+        Run formal verification based on the given database.
+        The output config dict returned does NOT have a copy of the input config settings.
+
+        :param hook_actions: List of hook actions, or leave as None to use the hooks sets in set_formal_hooks.
+                             Hooks from set_formal_hooks, if present, will be appended afterwards.
+        :param force_override: Set to true to overwrite instead of append.
+        :return: Tuple of (success, output config dict)
+        """
+        if self.formal_tool is None:
+            self.log.error("Must load formal tool before calling run_formal")
+            return False, {}
+
+        # TODO: think about artifact storage?
+        self.log.info("Starting formal with tool '%s'" % (self.formal_tool.name))
+        if hook_actions is None:
+            hooks_to_use = self.post_custom_formal_tool_hooks
+        else:
+            if force_override:
+                hooks_to_use = hook_actions
+            else:
+                hooks_to_use = hook_actions + self.post_custom_formal_tool_hooks
+
+        run_succeeded = self.formal_tool.run(hooks_to_use)
+        if not run_succeeded:
+            self.log.error("Formal tool %s failed! Please check its output." % self.formal_tool.name)
+            # Allow the flow to keep running, just in case.
+            # TODO: make this an option
+
+        # Record output from the formal tool into the JSON output.
+        output_config = {}  # type: Dict[str, Any]
+        try:
+            output_config.update(self.formal_tool.export_config_outputs())
+        except ValueError as e:
+            self.log.fatal(e.args[0])
+            return False, {}
+
+        return run_succeeded, output_config
+
+    def run_timing(self, hook_actions: Optional[List[HammerToolHookAction]] = None, force_override: bool = False) -> \
+            Tuple[bool, dict]:
+        """
+        Run timing analysis based on the given database.
+        The output config dict returned does NOT have a copy of the input config settings.
+
+        :param hook_actions: List of hook actions, or leave as None to use the hooks sets in set_timing_hooks.
+                             Hooks from set_timing_hooks, if present, will be appended afterwards.
+        :param force_override: Set to true to overwrite instead of append.
+        :return: Tuple of (success, output config dict)
+        """
+        if self.timing_tool is None:
+            self.log.error("Must load timing tool before calling run_timing")
+            return False, {}
+
+        # TODO: think about artifact storage?
+        self.log.info("Starting timing with tool '%s'" % (self.timing_tool.name))
+        if hook_actions is None:
+            hooks_to_use = self.post_custom_timing_tool_hooks
+        else:
+            if force_override:
+                hooks_to_use = hook_actions
+            else:
+                hooks_to_use = hook_actions + self.post_custom_timing_tool_hooks
+
+        run_succeeded = self.timing_tool.run(hooks_to_use)
+        if not run_succeeded:
+            self.log.error("Timing tool %s failed! Please check its output." % self.timing_tool.name)
+            # Allow the flow to keep running, just in case.
+            # TODO: make this an option
+
+        # Record output from the timing tool into the JSON output.
+        output_config = {}  # type: Dict[str, Any]
+        try:
+            output_config.update(self.timing_tool.export_config_outputs())
         except ValueError as e:
             self.log.fatal(e.args[0])
             return False, {}
@@ -1284,6 +1655,24 @@ class HammerDriver:
 
             hier_placement_constraints = {key: list(map(partial(PlacementConstraint.from_masters_and_dict, masters), lst))
                                           for key, lst in combined_raw_placement_dict.items()}
+            # Iterate over project configs to find which ones contain hierarchical constraints
+            # For each file that does append its path to the special key in the extracted
+            # hierarchical constraints section.
+            hier_constraint_source = ""  # type: str
+            for project_conf in self.project_configs:
+                if "vlsi.inputs.hierarchical.constraints" in project_conf:
+                    hier_constraint_source = project_conf[hammer_config._CONFIG_PATH_KEY]
+                    pc = project_conf["vlsi.inputs.hierarchical.constraints"]  # type: List[Dict]
+                    # Add CONFIG_PATH_KEY to actual project configs for each project config's hierarchical constraint
+                    # keys then update project configs at the end
+                    for md in pc:
+                        md  # one entry dict with a list
+                        for m in md.keys():
+                            if hammer_config._CONFIG_PATH_KEY in md[m][-1]:
+                                pass
+                            else:
+                                md[m].append({hammer_config._CONFIG_PATH_KEY: hier_constraint_source})
+            self.update_project_configs(self.project_configs)
             list_of_hier_constraints = self.database.get_setting(
                     "vlsi.inputs.hierarchical.constraints") # type: List[Dict]
             hier_constraints = reduce(add_dicts, list_of_hier_constraints, {})

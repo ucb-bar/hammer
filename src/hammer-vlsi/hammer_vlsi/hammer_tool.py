@@ -170,7 +170,7 @@ class HammerTool(metaclass=ABCMeta):
         if pst.location == HookLocation.PersistentPostStep:
             self.logger.debug("Running persistent sub-step '{pstep}' after '{step}' (post-step: '{post_step}'".format(pstep=pst.step.name, step=target_step.name, post_step=pst.target_name))
         pst_out = pst.step.func(self)
-        assert isinstance(pst_out, bool)
+        assert pst_out, "Persistent step {step} failed!".format(step=pst.step.name)
         return pst_out
 
     def do_pre_steps(self, first_step: HammerToolStep) -> bool:
@@ -182,13 +182,13 @@ class HammerTool(metaclass=ABCMeta):
         :param first_step: First step to be taken.
         :return: True if successful, False otherwise.
         """
-        pst_out = False
+        pst_out = True
         # Run persistent hooks first
         for pst in list(filter(lambda p: p.location == HookLocation.PersistentStep, self.persistent_steps)):
-            pst_out = self.run_persistent_step(pst, first_step)
+            pst_out = pst_out and self.run_persistent_step(pst, first_step)
         # If pre-persistent hooks target the first step, run them first
         for pst in list(filter(lambda p: p.location == HookLocation.PersistentPreStep and p.target_name == self.first_step.name, self.persistent_steps)):
-            pst_out = self.run_persistent_step(pst, first_step)
+            pst_out = pst_out and self.run_persistent_step(pst, first_step)
         return pst_out
 
     def do_between_steps(self, prev: HammerToolStep, next: HammerToolStep) -> bool:

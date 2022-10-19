@@ -204,19 +204,58 @@ def main(args) -> int:
                               ],
                               outputs=[
                                   InterfaceVar("output_waveforms", "List[str]", "paths to output waveforms"),
-                                  InterfaceVar("output_saifs", "List[str]", "paths to output activity files")
+                                  InterfaceVar("output_saifs", "List[str]", "paths to output activity files"),
+                                  InterfaceVar("output_top_module", "str", "top RTL module"),
+                                  InterfaceVar("output_tb_name", "str", "sim testbench name"),
+                                  InterfaceVar("output_tb_dut", "str", "sim DUT instance name"),
+                                  InterfaceVar("output_level", "str", "simulation flow level")
                               ]
                               )
     HammerPowerTool = Interface(module="HammerPowerTool",
                                 filename="hammer_vlsi/hammer_vlsi_impl.py",
                                 inputs=[
-                                  InterfaceVar("par_database", "str", "path to par database for power analysis"),
+                                  InterfaceVar("flow_database", "str", "path to syn or par database for power analysis"),
+                                  InterfaceVar("input_files", "List[str]", "paths to RTL input files or design netlist"),
                                   InterfaceVar("spefs", "List[str]", "list of spef files for power anlaysis"),
+                                  InterfaceVar("sdc", "Optional[str]","(optional) input SDC constraint file"),
                                   InterfaceVar("waveforms", "List[str]", "list of waveform dump files for dynamic power analysis"),
-                                  InterfaceVar("saifs", "List[str]", "list of activity files for dynamic power analysis")
+                                  InterfaceVar("saifs", "List[str]", "list of activity files for dynamic power analysis"),
+                                  InterfaceVar("top_module", "str", "top RTL module"),
+                                  InterfaceVar("tb_name", "str", "testbench name"),
+                                  InterfaceVar("tb_dut", "str", "DUT instance name")
                                 ],
                                 outputs=[]
                                 )
+    HammerFormalTool = Interface(module="HammerFormalTool",
+                            filename="hammer_vlsi/hammer_vlsi_impl.py",
+                            inputs=[
+                                InterfaceVar("check", "str",
+                                    "formal verification check type to run"),
+                                InterfaceVar("input_files", "List[str]",
+                                    "input collection of implementation design files"),
+                                InterfaceVar("reference_files", "List[str]",
+                                    "input collection of reference design files"),
+                                InterfaceVar("top_module", "str", "top RTL module"),
+                                InterfaceVar("post_synth_sdc", "Optional[str]",
+                                    "(optional) input post-synthesis SDC constraint file")
+                            ],
+                            outputs=[]
+                            )
+    HammerTimingTool = Interface(module="HammerTimingTool",
+                            filename="hammer_vlsi/hammer_vlsi_impl.py",
+                            inputs=[
+                                InterfaceVar("input_files", "List[str]",
+                                    "input collection of design files"),
+                                InterfaceVar("top_module", "str", "top RTL module"),
+                                InterfaceVar("post_synth_sdc", "Optional[str]",
+                                    "(optional) input post-synthesis SDC constraint file"),
+                                InterfaceVar("spefs", "Optional[List]",
+                                    "(optional) list of SPEF files"),
+                                InterfaceVar("sdf_file", "Optional[str]",
+                                    "(optional) input SDF file")
+                            ],
+                            outputs=[]
+                            )
     HammerPCBDeliverableTool = Interface(module="HammerPCBDeliverableTool",
                                        filename="hammer_vlsi/hammer_vlsi_impl.py",
                                        inputs=[],
@@ -238,6 +277,8 @@ def main(args) -> int:
     generate_interface(HammerSRAMGeneratorTool)
     generate_interface(HammerSimTool)
     generate_interface(HammerPowerTool)
+    generate_interface(HammerFormalTool)
+    generate_interface(HammerTimingTool)
     generate_interface(HammerPCBDeliverableTool)
 
     if selected_file == "":

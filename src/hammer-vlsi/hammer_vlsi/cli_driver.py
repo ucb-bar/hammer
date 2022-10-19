@@ -7,22 +7,38 @@
 #  See LICENSE for licence details.
 
 import argparse
+import importlib.util
 import json
 import os
 import subprocess
 import sys
+import tempfile
+import warnings
 
+def is_ruamel_missing() -> bool:
+    return importlib.util.find_spec("ruamel") is None
+
+if is_ruamel_missing():
+    warnings.warn("ruamel package not found, cannot output key histories")
+else:
+    import ruamel.yaml  # type: ignore
 from .hammer_vlsi_impl import HammerTool, HammerVLSISettings
 from .hooks import HammerToolHookAction, HammerStartStopStep
 from .driver import HammerDriver, HammerDriverOptions
 from .hammer_build_systems import BuildSystems
 
+from functools import reduce
+from textwrap import dedent
 from typing import List, Dict, Tuple, Any, Callable, Optional, Union, cast
 
 from hammer_utils import add_dicts, deeplist, deepdict, get_or_else, check_function_type
 
 from hammer_config import HammerJSONEncoder
+from hammer_config.config_src import load_config_from_paths
 
+
+KEY_DIR = tempfile.mkdtemp()
+KEY_PATH = os.path.join(KEY_DIR, "key-history.json")
 
 def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callable[[str], None]) -> List[str]:
     """Parse a possibly null list of files, validate the existence of each file, and return a list of paths (possibly
@@ -60,6 +76,32 @@ def dump_config_to_json_file(output_path: str, config: dict) -> None:
     with open(output_path, "w") as f:
         f.write(json.dumps(config, cls=HammerJSONEncoder, indent=4))
 
+def dump_config_to_yaml_file(output_path: str, config: Any) -> None:
+    """
+    Helper function to dump the given config in YAML form
+    to the given output path while overwriting it if it already exists.
+    :param output_path: Output path
+    :param config: Config dictionary to dump
+    """
+    yaml = ruamel.yaml.YAML()
+    yaml.indent(offset=2)
+    with open(output_path, 'w') as f:
+        yaml.dump(config, f)
+
+def add_key_history(config: dict, history: dict) -> Any:
+    """
+    Generates a YAML file with comments indicating what files modified said keys.
+    """
+    new = ruamel.yaml.CommentedMap()
+    curr_slot = 0
+    for k, v in config.items():
+        if k in history:
+            pretty_hist = ', '.join(history[k])
+            new.insert(curr_slot, k, v, comment=f"Modified by: {pretty_hist}")
+        else:
+            new.insert(curr_slot, k, v)
+        curr_slot += 1
+    return new
 
 # Type signature of a CLIDriver action that returns a config dictionary.
 CLIActionConfigType = Callable[[HammerDriver, Callable[[str], None]], Optional[dict]]
@@ -76,12 +118,12 @@ CLIActionType = Union[CLIActionConfigType, CLIActionStringType]
 
 def is_config_action(func: CLIActionType) -> bool:
     """Return True if the given function is a CLIActionConfigType."""
-    return check_function_type(func, [HammerDriver, Callable[[str], None]], Optional[dict]) is None
+    return check_function_type(func, [HammerDriver, cast(type, Callable[[str], None])], cast(type, Optional[dict])) is None
 
 
 def is_string_action(func: CLIActionType) -> bool:
     """Return True if the given function is a CLIActionConfigType."""
-    return check_function_type(func, [HammerDriver, Callable[[str], None]], Optional[str]) is None
+    return check_function_type(func, [HammerDriver, cast(type, Callable[[str], None])], cast(type, Optional[str])) is None
 
 
 def check_CLIActionType_type(func: CLIActionType) -> None:
@@ -89,11 +131,12 @@ def check_CLIActionType_type(func: CLIActionType) -> None:
     Check that the given CLIActionType obeys its function type signature.
     Raises TypeError if the function is of the incorrect type.
     """
-    config_check = check_function_type(func, [HammerDriver, Callable[[str], None]], Optional[dict])
+    s = [HammerDriver, cast(type, Callable[[str], None])]
+    config_check = check_function_type(func, s, cast(type, Optional[dict]))
     if config_check is None:
         return
 
-    string_check = check_function_type(func, [HammerDriver, Callable[[str], None]], Optional[str])
+    string_check = check_function_type(func, s, cast(type, Optional[str]))
     if string_check is None:
         return
 
@@ -118,6 +161,8 @@ class CLIDriver:
         self.sram_generator_rundir = ""  # type: Optional[str]
         self.sim_rundir = ""  # type: Optional[str]
         self.power_rundir = "" # type: Optional[str]
+        self.formal_rundir = "" # type: Optional[str]
+        self.timing_rundir = "" # type: Optional[str]
         self.pcb_rundir = ""  # type: Optional[str]
 
         # If a subclass has defined these, don't clobber them in init
@@ -167,6 +212,14 @@ class CLIDriver:
             check_CLIActionType_type(self.power_action) # type: ignore
         else:
             self.power_action = self.create_power_action([]) # type: CLIActionConfigType
+        if hasattr(self, "formal_action"):
+            check_CLIActionType_type(self.formal_action) # type: ignore
+        else:
+            self.formal_action = self.create_formal_action([]) # type: CLIActionConfigType
+        if hasattr(self, "timing_action"):
+            check_CLIActionType_type(self.timing_action) # type: ignore
+        else:
+            self.timing_action = self.create_timing_action([]) # type: CLIActionConfigType
 
         # Dictionaries of module-CLIActionConfigType for hierarchical flows.
         # See all_hierarchical_actions() below.
@@ -177,6 +230,8 @@ class CLIDriver:
         self.hierarchical_lvs_actions = {}  # type: Dict[str, CLIActionConfigType]
         self.hierarchical_sim_actions = {}  # type: Dict[str, CLIActionConfigType]
         self.hierarchical_power_actions = {}  # type: Dict[str, CLIActionConfigType]
+        self.hierarchical_formal_actions = {}  # type: Dict[str, CLIActionConfigType]
+        self.hierarchical_timing_actions = {}  # type: Dict[str, CLIActionConfigType]
         self.hierarchical_auto_action = None  # type: Optional[CLIActionConfigType]
 
     def action_map(self) -> Dict[str, CLIActionType]:
@@ -188,6 +243,7 @@ class CLIDriver:
             "dump": self.dump_action,
             "dump-macrosizes": self.dump_macrosizes_action,
             "dump_macrosizes": self.dump_macrosizes_action,
+            "info": self.info_action,
             "sram-generator": self.sram_generator_action,
             "sram_generator": self.sram_generator_action,
             "pcb": self.pcb_action,
@@ -225,10 +281,26 @@ class CLIDriver:
             "par_sim": self.par_sim_action,
             "par-sim": self.par_sim_action,
             "power": self.power_action,
+            "syn-to-power": self.syn_to_power_action,
+            "syn_to_power": self.syn_to_power_action,
             "par-to-power": self.par_to_power_action,
             "par_to_power": self.par_to_power_action,
             "sim-to-power": self.sim_to_power_action,
-            "sim_to_power": self.sim_to_power_action
+            "sim_to_power": self.sim_to_power_action,
+            "formal": self.formal_action,
+            "synthesis_to_formal": self.synthesis_to_formal_action,
+            "synthesis-to-formal": self.synthesis_to_formal_action,
+            "syn_to_formal": self.synthesis_to_formal_action,
+            "syn-to-formal": self.synthesis_to_formal_action,
+            "par_to_formal": self.par_to_formal_action,
+            "par-to-formal": self.par_to_formal_action,
+            "timing": self.timing_action,
+            "synthesis_to_timing": self.synthesis_to_timing_action,
+            "synthesis-to-timing": self.synthesis_to_timing_action,
+            "syn_to_timing": self.synthesis_to_timing_action,
+            "syn-to-timing": self.synthesis_to_timing_action,
+            "par_to_timing": self.par_to_timing_action,
+            "par-to-timing": self.par_to_timing_action
         }, self.all_hierarchical_actions)
 
     @staticmethod
@@ -237,6 +309,68 @@ class CLIDriver:
         Just dump the parsed project configuration as the output.
         """
         return driver.project_config
+
+    @staticmethod
+    def info_action(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        """
+        Return the descripion of any key.
+        """
+        defaults_path = os.path.join(os.getcwd(), "src", "hammer-vlsi", "defaults.yml")
+        if not is_ruamel_missing():
+            with open(defaults_path, 'r', encoding="utf-8") as f:
+                yaml = ruamel.yaml.YAML()
+                data = yaml.load(f)
+            with open(KEY_PATH, 'r', encoding="utf-8") as f:
+                yaml = ruamel.yaml.YAML()
+                history = yaml.load(f)
+        else:
+            warnings.warn("Cannot provide key descriptions without the ruamel.yaml package.")
+            return driver.project_config
+        while True:
+            curr_level = data
+            overall_key = []
+            while isinstance(curr_level, ruamel.yaml.CommentedMap):
+                print()
+                for k in curr_level.keys():
+                    if "_meta" not in k:
+                        print(k)
+                while True:
+                    try:
+                        key = input("Select from the current level of keys: ")
+                        next_level = curr_level[key]
+                        break
+                    except KeyError:
+                        print(f"ERROR: Key {key} could not be found at the current level, try again.")
+                overall_key.append(key)
+                if not isinstance(next_level, ruamel.yaml.CommentedMap):
+                    flat_key = '.'.join(overall_key)
+                    if not driver.database.has_setting(flat_key):
+                        val = curr_level.get(key)
+                        warnings.warn(f"{flat_key} is not in the project configuration, the default value is displayed.")
+                    else:
+                        val = driver.database.get_setting(flat_key)
+                    if key in curr_level.ca.items:
+                        comment = curr_level.ca.items[key][2].value.strip().replace('\n', ' ')  # NOTE: only takes in comment immediately after the key-value pair
+                    else:
+                        comment = "no comment provided"
+                    key_hist = history[flat_key] if flat_key in history else "no history provided"
+                    print(dedent(f"""
+                    ----------------------------------------
+                    Key: {flat_key}
+                    Value: {val}
+                    Description: {comment}
+                    History: {key_hist}
+                    ----------------------------------------
+                    """))
+                    while True:
+                        continue_input = input("Continue querying keys? [y/n]: ")
+                        if continue_input.lower() == 'y':
+                            break
+                        if continue_input.lower() == 'n':
+                            return driver.project_config
+                        print("Please input either [y]es or [n]o.")
+                    break
+                curr_level = next_level
 
     @staticmethod
     def dump_macrosizes_action(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[str]:
@@ -292,6 +426,20 @@ class CLIDriver:
     def get_extra_power_hooks(self) -> List[HammerToolHookAction]:
         """
         Return a list of extra power hooks in this project.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_extra_formal_hooks(self) -> List[HammerToolHookAction]:
+        """
+        Return a list of extra formal hooks in this project.
+        To be overridden by subclasses.
+        """
+        return list()
+
+    def get_extra_timing_hooks(self) -> List[HammerToolHookAction]:
+        """
+        Return a list of extra timing hooks in this project.
         To be overridden by subclasses.
         """
         return list()
@@ -377,6 +525,22 @@ class CLIDriver:
         return self.create_action("power", hooks if len(hooks) > 0 else None,
                                   pre_action_func, post_load_func, post_run_func)
 
+    def create_formal_action(self, custom_hooks: List[HammerToolHookAction],
+                          pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_load_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
+        hooks = self.get_extra_formal_hooks() + custom_hooks  # type: List[HammerToolHookAction]
+        return self.create_action("formal", hooks if len(hooks) > 0 else None,
+                                  pre_action_func, post_load_func, post_run_func)
+
+    def create_timing_action(self, custom_hooks: List[HammerToolHookAction],
+                          pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_load_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
+        hooks = self.get_extra_timing_hooks() + custom_hooks  # type: List[HammerToolHookAction]
+        return self.create_action("timing", hooks if len(hooks) > 0 else None,
+                                  pre_action_func, post_load_func, post_run_func)
+
     def create_sram_generator_action(self, custom_hooks: List[HammerToolHookAction],
                           pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
                           post_load_func: Optional[Callable[[HammerDriver], None]] = None,
@@ -430,6 +594,8 @@ class CLIDriver:
             # 3. Tech-supplied hooks
             # 4. User-supplied hooks
             assert driver.tech is not None, "must have a technology"
+            with open(KEY_PATH, 'r') as f:
+                key_history = json.load(f)
             if action_type == "synthesis" or action_type == "syn":
                 if not driver.load_synthesis_tool(get_or_else(self.syn_rundir, "")):
                     return None
@@ -446,6 +612,9 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output-full.json"),
                                          self.get_full_config(driver, output))
+                if not is_ruamel_missing():
+                    dump_config_to_yaml_file(os.path.join(driver.syn_tool.run_dir, "syn-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
             elif action_type == "par":
                 if not driver.load_par_tool(get_or_else(self.par_rundir, "")):
@@ -463,6 +632,9 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.par_tool.run_dir, "par-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.par_tool.run_dir, "par-output-full.json"),
                                          self.get_full_config(driver, output))
+                if not is_ruamel_missing():
+                    dump_config_to_yaml_file(os.path.join(driver.par_tool.run_dir, "par-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
             elif action_type == "drc":
                 if not driver.load_drc_tool(get_or_else(self.drc_rundir, "")):
@@ -480,6 +652,9 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.drc_tool.run_dir, "drc-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.drc_tool.run_dir, "drc-output-full.json"),
                                          self.get_full_config(driver, output))
+                if not is_ruamel_missing():
+                    dump_config_to_yaml_file(os.path.join(driver.drc_tool.run_dir, "drc-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
             elif action_type == "lvs":
                 if not driver.load_lvs_tool(get_or_else(self.lvs_rundir, "")):
@@ -497,6 +672,9 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.lvs_tool.run_dir, "lvs-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.lvs_tool.run_dir, "lvs-output-full.json"),
                                          self.get_full_config(driver, output))
+                if not is_ruamel_missing():
+                    dump_config_to_yaml_file(os.path.join(driver.lvs_tool.run_dir, "lvs-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
             elif action_type == "sram_generator":
                 if not driver.load_sram_generator_tool(get_or_else(self.sram_generator_rundir, "")):
@@ -528,6 +706,9 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.sim_tool.run_dir, "sim-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.sim_tool.run_dir, "sim-output-full.json"),
                                          self.get_full_config(driver, output))
+                if not is_ruamel_missing():
+                    dump_config_to_yaml_file(os.path.join(driver.sim_tool.run_dir, "sim-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
             elif action_type == "power":
                 if not driver.load_power_tool(get_or_else(self.power_rundir, "")):
@@ -541,6 +722,46 @@ class CLIDriver:
                     return None
                 dump_config_to_json_file(os.path.join(driver.power_tool.run_dir, "power-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.power_tool.run_dir, "power-output-full.json"),
+                                         self.get_full_config(driver, output))
+                if not is_ruamel_missing():
+                    dump_config_to_yaml_file(os.path.join(driver.power_tool.run_dir, "power-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
+                post_run_func_checked(driver)
+            elif action_type == "formal":
+                if not driver.load_formal_tool(get_or_else(self.formal_rundir, "")):
+                    return None
+                else:
+                    post_load_func_checked(driver)
+                assert driver.formal_tool is not None, "load_formal_tool was unsuccessful"
+                success, output = driver.run_formal(
+                        driver.formal_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_formal_hooks(driver.formal_tool.name) + \
+                        list(extra_hooks or []))
+                if not success:
+                    driver.log.error("Formal tool did not succeed")
+                    return None
+                dump_config_to_json_file(os.path.join(driver.formal_tool.run_dir, "formal-output.json"), output)
+                dump_config_to_json_file(os.path.join(driver.formal_tool.run_dir, "formal-output-full.json"),
+                                         self.get_full_config(driver, output))
+                if not is_ruamel_missing():
+                    dump_config_to_yaml_file(os.path.join(driver.formal_tool.run_dir, "formal-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
+                post_run_func_checked(driver)
+            elif action_type == "timing":
+                if not driver.load_timing_tool(get_or_else(self.timing_rundir, "")):
+                    return None
+                else:
+                    post_load_func_checked(driver)
+                assert driver.timing_tool is not None, "load_timing_tool was unsuccessful"
+                success, output = driver.run_timing(
+                        driver.timing_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_timing_hooks(driver.timing_tool.name) + \
+                        list(extra_hooks or []))
+                if not success:
+                    driver.log.error("Timing tool did not succeed")
+                    return None
+                dump_config_to_json_file(os.path.join(driver.timing_tool.run_dir, "timing-output.json"), output)
+                dump_config_to_json_file(os.path.join(driver.timing_tool.run_dir, "timing-output-full.json"),
                                          self.get_full_config(driver, output))
                 post_run_func_checked(driver)
             elif action_type == "pcb":
@@ -559,6 +780,9 @@ class CLIDriver:
                 dump_config_to_json_file(os.path.join(driver.pcb_tool.run_dir, "pcb-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.pcb_tool.run_dir, "pcb-output-full.json"),
                                          self.get_full_config(driver, output))
+                if not is_ruamel_missing():
+                    dump_config_to_yaml_file(os.path.join(driver.pcb_tool.run_dir, "pcb-output-history.yml"),
+                                            add_key_history(self.get_full_config(driver, output), key_history))
                 post_run_func_checked(driver)
             else:
                 raise ValueError("Invalid action_type = " + str(action_type))
@@ -621,6 +845,15 @@ class CLIDriver:
         else:
             return self.get_full_config(driver, lvs_input_only)
 
+    def syn_to_power_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        """Create a full config to run the output."""
+        power_input_only = HammerDriver.synthesis_output_to_power_input(driver.project_config)
+        if power_input_only is None:
+            driver.log.error("Input config does not appear to contain valid syn outputs")
+            return None
+        else:
+            return self.get_full_config(driver, power_input_only)
+
     def par_to_power_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
         """Create a full config to run the output."""
         power_input_only = HammerDriver.par_output_to_power_input(driver.project_config)
@@ -638,6 +871,42 @@ class CLIDriver:
             return None
         else:
             return self.get_full_config(driver, power_input_only)
+
+    def synthesis_to_formal_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        """Create a full config to run the output."""
+        formal_input_only = HammerDriver.synthesis_output_to_formal_input(driver.project_config)
+        if formal_input_only is None:
+            driver.log.error("Input config does not appear to contain valid synthesis outputs")
+            return None
+        else:
+            return self.get_full_config(driver, formal_input_only)
+
+    def par_to_formal_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        """Create a full config to run the output."""
+        formal_input_only = HammerDriver.par_output_to_formal_input(driver.project_config)
+        if formal_input_only is None:
+            driver.log.error("Input config does not appear to contain valid par outputs")
+            return None
+        else:
+            return self.get_full_config(driver, formal_input_only)
+
+    def synthesis_to_timing_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        """Create a full config to run the output."""
+        timing_input_only = HammerDriver.synthesis_output_to_timing_input(driver.project_config)
+        if timing_input_only is None:
+            driver.log.error("Input config does not appear to contain valid synthesis outputs")
+            return None
+        else:
+            return self.get_full_config(driver, timing_input_only)
+
+    def par_to_timing_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        """Create a full config to run the output."""
+        timing_input_only = HammerDriver.par_output_to_timing_input(driver.project_config)
+        if timing_input_only is None:
+            driver.log.error("Input config does not appear to contain valid par outputs")
+            return None
+        else:
+            return self.get_full_config(driver, timing_input_only)
 
 
     def create_synthesis_par_action(self, synthesis_action: CLIActionConfigType, par_action: CLIActionConfigType) -> CLIActionConfigType:
@@ -803,6 +1072,18 @@ class CLIDriver:
                 "power_{block}"
             ], module, action)
 
+        for module, action in self.hierarchical_formal_actions.items():
+            add_variants([
+                "formal-{block}",
+                "formal_{block}"
+            ], module, action)
+
+        for module, action in self.hierarchical_timing_actions.items():
+            add_variants([
+                "timing-{block}",
+                "timing_{block}"
+            ], module, action)
+
         return actions
 
     def get_extra_hierarchical_synthesis_hooks(self, driver: HammerDriver) -> Dict[str, List[HammerToolHookAction]]:
@@ -853,6 +1134,24 @@ class CLIDriver:
     def get_extra_hierarchical_power_hooks(self, driver: HammerDriver) -> Dict[str, List[HammerToolHookAction]]:
         """
         Return a list of extra hierarchical power hooks in this project.
+        To be overridden by subclasses.
+
+        :return: Dictionary of (module name, list of hooks)
+        """
+        return dict()
+
+    def get_extra_hierarchical_formal_hooks(self, driver: HammerDriver) -> Dict[str, List[HammerToolHookAction]]:
+        """
+        Return a list of extra hierarchical formal hooks in this project.
+        To be overridden by subclasses.
+
+        :return: Dictionary of (module name, list of hooks)
+        """
+        return dict()
+
+    def get_extra_hierarchical_timing_hooks(self, driver: HammerDriver) -> Dict[str, List[HammerToolHookAction]]:
+        """
+        Return a list of extra hierarchical timing hooks in this project.
         To be overridden by subclasses.
 
         :return: Dictionary of (module name, list of hooks)
@@ -945,6 +1244,30 @@ class CLIDriver:
         """
         return self.hierarchical_power_actions[module]
 
+    def set_hierarchical_formal_action(self, module: str, action: CLIActionConfigType) -> None:
+        """
+        Set the action associated with hierarchical formal for the given module (in hierarchical flows).
+        """
+        self.hierarchical_formal_actions[module] = action
+
+    def get_hierarchical_formal_action(self, module: str) -> CLIActionConfigType:
+        """
+        Get the action associated with hierarchical formal for the given module (in hierarchical flows).
+        """
+        return self.hierarchical_formal_actions[module]
+
+    def set_hierarchical_timing_action(self, module: str, action: CLIActionConfigType) -> None:
+        """
+        Set the action associated with hierarchical timing for the given module (in hierarchical flows).
+        """
+        self.hierarchical_timing_actions[module] = action
+
+    def get_hierarchical_timing_action(self, module: str) -> CLIActionConfigType:
+        """
+        Get the action associated with hierarchical timing for the given module (in hierarchical flows).
+        """
+        return self.hierarchical_timing_actions[module]
+
     def valid_actions(self) -> List[str]:
         """Get the list of valid actions for the command-line driver."""
         return list(self.action_map().keys())
@@ -1027,6 +1350,18 @@ class CLIDriver:
         self.lvs_rundir = get_nonempty_str(args['lvs_rundir'])
         self.sim_rundir = get_nonempty_str(args['sim_rundir'])
         self.power_rundir = get_nonempty_str(args['power_rundir'])
+        self.formal_rundir = get_nonempty_str(args['formal_rundir'])
+        self.timing_rundir = get_nonempty_str(args['timing_rundir'])
+
+        # Intercept keys for determining key origin
+        project_configs_yaml = load_config_from_paths(project_configs)
+        project_configs_yaml_keys = [set(i.keys()) for i in project_configs_yaml]
+        key_history: Dict[str, List[str]] = {i: [] for i in reduce(lambda x, y: x.union(y), project_configs_yaml_keys)}
+        for cfg_file, cfg in zip(project_configs, project_configs_yaml_keys):
+            for key in cfg:
+                key_history[key].append(cfg_file)
+        with open(KEY_PATH, 'w') as f:
+            json.dump(key_history, f)
 
         # Stage control: from/to
         from_step = get_nonempty_str(args['from_step'])
@@ -1069,6 +1404,12 @@ class CLIDriver:
                 HammerStartStopStep(step=start_step, inclusive=start_incl),
                 HammerStartStopStep(step=stop_step, inclusive=stop_incl)))
             driver.set_post_custom_power_tool_hooks(HammerTool.make_start_stop_hooks(
+                HammerStartStopStep(step=start_step, inclusive=start_incl),
+                HammerStartStopStep(step=stop_step, inclusive=stop_incl)))
+            driver.set_post_custom_formal_tool_hooks(HammerTool.make_start_stop_hooks(
+                HammerStartStopStep(step=start_step, inclusive=start_incl),
+                HammerStartStopStep(step=stop_step, inclusive=stop_incl)))
+            driver.set_post_custom_timing_tool_hooks(HammerTool.make_start_stop_hooks(
                 HammerStartStopStep(step=start_step, inclusive=start_incl),
                 HammerStartStopStep(step=stop_step, inclusive=stop_incl)))
 
@@ -1127,6 +1468,20 @@ class CLIDriver:
                     base_project_config[0] = deeplist(driver.project_configs)
                     d.update_project_configs(deeplist(base_project_config[0]) + [config])
 
+                def formal_pre_func(d: HammerDriver) -> None:
+                    self.lvs_rundir = os.path.join(d.obj_dir, "formal-{module}".format(
+                        module=module))  # TODO(edwardw): fix this ugly os.path.join; it doesn't belong here.
+                    # TODO(edwardw): remove ugly hack to store stuff in parent context
+                    base_project_config[0] = deeplist(driver.project_configs)
+                    d.update_project_configs(deeplist(base_project_config[0]) + [config])
+
+                def timing_pre_func(d: HammerDriver) -> None:
+                    self.lvs_rundir = os.path.join(d.obj_dir, "timing-{module}".format(
+                        module=module))  # TODO(edwardw): fix this ugly os.path.join; it doesn't belong here.
+                    # TODO(edwardw): remove ugly hack to store stuff in parent context
+                    base_project_config[0] = deeplist(driver.project_configs)
+                    d.update_project_configs(deeplist(base_project_config[0]) + [config])
+
                 def post_run(d: HammerDriver, rundir: str) -> None:
                     # Write out the configs used/generated for logging/debugging.
                     with open(os.path.join(rundir, "full_config.json"), "w") as f:
@@ -1156,6 +1511,12 @@ class CLIDriver:
                 def power_post_run(d: HammerDriver) -> None:
                     post_run(d, get_or_else(self.power_rundir, ""))
 
+                def formal_post_run(d: HammerDriver) -> None:
+                    post_run(d, get_or_else(self.formal_rundir, ""))
+
+                def timing_post_run(d: HammerDriver) -> None:
+                    post_run(d, get_or_else(self.timing_rundir, ""))
+
                 syn_action = self.create_synthesis_action(self.get_extra_hierarchical_synthesis_hooks(driver).get(module, []),
                                                           pre_action_func=syn_pre_func, post_load_func=None,
                                                           post_run_func=syn_post_run)
@@ -1182,6 +1543,14 @@ class CLIDriver:
                                                     pre_action_func=power_pre_func, post_load_func=None,
                                                     post_run_func=power_post_run)
                 self.set_hierarchical_power_action(module, power_action)
+                formal_action = self.create_formal_action(self.get_extra_hierarchical_formal_hooks(driver).get(module, []),
+                                                    pre_action_func=formal_pre_func, post_load_func=None,
+                                                    post_run_func=formal_post_run)
+                self.set_hierarchical_formal_action(module, formal_action)
+                timing_action = self.create_timing_action(self.get_extra_hierarchical_timing_hooks(driver).get(module, []),
+                                                    pre_action_func=timing_pre_func, post_load_func=None,
+                                                    post_run_func=timing_post_run)
+                self.set_hierarchical_timing_action(module, timing_action)
 
             create_actions(module_iter, config_iter)
 
@@ -1280,7 +1649,7 @@ class CLIDriver:
         else:
             with open(args["output"], "w") as f:
                 f.write(output_str)
-            print(output_str)
+            print("Action {action} config output written to {file}".format(action=action, file=args["output"]))
             return 0
 
 
@@ -1318,6 +1687,10 @@ class CLIDriver:
                             help='(optional) Directory to store simulation results in')
         parser.add_argument("--power_rundir", required=False, default="",
                             help='(optional) Directory to store power results in')
+        parser.add_argument("--formal_rundir", required=False, default="",
+                            help='(optional) Directory to store formal results in')
+        parser.add_argument("--timing_rundir", required=False, default="",
+                            help='(optional) Directory to store timing results in')
         # Optional arguments for step control.
         parser.add_argument("--start_before_step", "--from_step", dest="from_step", required=False,
                             help="Run the given action from before the given step (inclusive). Not compatible with --start_after_step.")
