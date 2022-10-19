@@ -48,6 +48,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             self.global_placement,
             self.resize,
             self.detailed_placement,
+            self.check_detailed_placement,
             # CTS
             self.clock_tree,
             self.add_fillers, 
@@ -425,34 +426,36 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
 
     def macro_placement(self) -> bool:
-        # TODO: did I understand the par.blockage_spacing key correctly?
-        spacing = self.get_setting("par.blockage_spacing")
+        floorplan_mode = str(self.get_setting("par.openroad.floorplan_mode"))
+        if floorplan_mode == 'auto':
+            # TODO: did I understand the par.blockage_spacing key correctly?
+            spacing = self.get_setting("par.blockage_spacing")
 
-        self.block_append(r"""
-        ################################################################
-        # Auto Macro Placement (for any unplaced macros)
-        
-        proc find_macros {} {
-            set macros ""
-            set block [[[ord::get_db] getChip] getBlock]
-            foreach inst [$block getInsts] {
-                set inst_master [$inst getMaster]
-                # BLOCK means MACRO cells
-                if { [string match [$inst_master getType] "BLOCK"] } {
-                    append macros " " $inst
+            self.block_append(r"""
+            ################################################################
+            # Auto Macro Placement (for any unplaced macros)
+            
+            proc find_macros {} {
+                set macros ""
+                set block [[[ord::get_db] getChip] getBlock]
+                foreach inst [$block getInsts] {
+                    set inst_master [$inst getMaster]
+                    # BLOCK means MACRO cells
+                    if { [string match [$inst_master getType] "BLOCK"] } {
+                        append macros " " $inst
+                    }
                 }
+                return $macros
             }
-            return $macros
-        }
-        """, verbose=False)
-        self.block_append(f"""
-        if {{[find_macros] != ""}} {{
-            # Timing Driven Mixed Sized Placement
-            global_placement -density 0.6 -pad_left 1 -pad_right 1
-            # ParquetFP-based macro cell placer, “TritonMacroPlacer”
-            macro_placement -halo "{spacing} {spacing}" -channel "{2*spacing} {2*spacing}"
-        }}
-        """)
+            """, verbose=False)
+            self.block_append(f"""
+            if {{[find_macros] != ""}} {{
+                # Timing Driven Mixed Sized Placement
+                global_placement -density 0.6 -pad_left 1 -pad_right 1
+                # ParquetFP-based macro cell placer, “TritonMacroPlacer”
+                macro_placement -halo "{spacing} {spacing}" -channel "{2*spacing} {2*spacing}"
+            }}
+            """)
         return True
 
 
@@ -736,6 +739,11 @@ pdngen::specify_grid macro {{
         improve_placement
         optimize_mirroring
 
+        """)
+        return True
+
+    def check_detailed_placement(self) -> bool:
+        self.block_append(f"""
         utl::info FLW 12 "Placement violations [check_placement -verbose]."
 
         # post resize timing report (ideal clocks)
@@ -746,7 +754,6 @@ pdngen::specify_grid macro {{
         # Check slew repair
         report_check_types -max_slew -max_capacitance -max_fanout -violators
 
-        # check_placement -verbose
         """)
         return True
 
@@ -1131,7 +1138,14 @@ pdngen::specify_grid macro {{
                 )
             else:
                 orientation = constraint.orientation if constraint.orientation is not None else "r0"
+                # openroad names orientations differently from hammer
+                #   hammer:   r0|r90|r180|r270|mx|my|mx90 |my90
+                #   openroad: R0|R90|R180|R270|MX|MY|MXR90|MYR90
                 orientation = orientation.upper()
+                if constraint.orientation == "mx90":
+                    orientation = "MXR90"
+                elif constraint.orientation == "my90":
+                    orientation = "MYR90"
                 if constraint.create_physical:
                     pass
                 if constraint.type == PlacementConstraintType.Dummy:
@@ -1141,7 +1155,7 @@ pdngen::specify_grid macro {{
                 # for OpenROAD
                 elif constraint.type in [PlacementConstraintType.HardMacro, PlacementConstraintType.Hierarchical]:
                     inst_name=new_path
-                    floorplan_cmd = f"place_cell -inst_name {inst_name} -origin {{ {constraint.x} {constraint.y} }} -orient {orientation} -status FIRM"
+                    floorplan_cmd = f"place_cell -inst_name {inst_name} -orient {orientation} -origin {{ {constraint.x} {constraint.y} }} -status FIRM"
                     
                     output.append("# only place macro if it is present in design")
                     output.append(f'if {{[[set block [ord::get_db_block]] findInst {inst_name}] == "NULL"}} {{')

@@ -53,8 +53,10 @@ The plugin is still the best reference for what each step does, the explanations
 ### Macro Placement
 
 Currently, there are two ways to place macros.
-The first is to use the ``vlsi.inputs.placement_constraints`` key to specify the path and (x,y) coordinate of each macro in the design.
-The alternative method is to not specify any macro placement, which will cause them to be placed automatically, leading to poor-quality but sane results.
+
+If ``par.openroad.floorplan_mode`` == ``generate``, use the ``vlsi.inputs.placement_constraints`` key to specify the path and (x,y) coordinate of each macro in the design.
+
+If ``par.openroad.floorplan_mode`` == ``auto``, the macros will be placed automatically using OpenROAD's ``macro_placement`` command, leading to poor-quality but sane results.
 
 The plugin will first honor all macro placements specified in ``vlsi.inputs.placement_constraints``,
 then will run the ``macro_placement`` command anyways to place any remaining macros in the design.
