@@ -11,6 +11,8 @@ par.openroad:
   # Generate the TCL file but do not run it yet.
   generate_only: bool
 
+  make_issue_archive: bool # Generate a tar archive of the build/par-rundir directory with a runme.sh script to reproduce the results
+
   # Floorplanning SDC constraints to use.
   # Valid options are:
   # - blank - Specify no floorplanning constraints (likely won't work)

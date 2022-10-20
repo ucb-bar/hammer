@@ -8,16 +8,19 @@ par.openroad:
 
   generate_only: false # Generate the TCL file but do not run it yet.
 
+  create_issue_archive: true # Generate a tar archive of the build/par-rundir directory with a runme.sh script to reproduce the results
+  # type: bool
+
   floorplan_mode: generate # Floorplanning SDC constraints to use.
   # Valid options are:
   # - blank - Specify no floorplanning constraints (likely won't work)
   # - manual - Specify the contents of a manual SDC floorplanning script to use in floorplan_script_contents.
   # - generate - Generate a floorplan from the hammer-vlsi config/IR.
-  # - auto - Use Innovus's `plan_design` command to auto-generate a floorplan. Will have poor, but sane results
-  #   If you specify this, you must also specify the floorplanning_script config below. The floorplanning_script config will be ignored in other modes.
-  # TODO(edwardw): Put in new floorplanning thing here when done.
+  # - auto - Use OpenROAD's `macro_placement` command to auto-generate a floorplan. Will have poor, but sane results
+  #   If you specify 'manual', you must also specify the floorplanning_script config below. The floorplanning_script config will be ignored in other modes.
 
   floorplan_script_contents: null
+  # type: Optional[str]
 
   openrcx_techfile: null # Optional: OpenRCX RC tech file
   # type: Optional[str]

@@ -16,6 +16,7 @@ from datetime import datetime
 from typing import List, Optional, Dict, Any, Tuple, Callable
 from decimal import Decimal
 from pathlib import Path
+from textwrap import dedent
 
 from hammer_logging import HammerVLSILogging
 from hammer_utils import deepdict, optional_map
@@ -199,9 +200,16 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         # TODO: no support for ILM
         self.output_ilms = []
 
-        self.output_gds = self.output_gds_filename
-        self.output_netlist = self.output_netlist_filename
-        self.output_sim_netlist = self.output_sim_netlist_filename
+        self.output_gds = ""
+        self.output_netlist = ""
+        self.output_sim_netlist = ""
+
+        if os.path.isfile(self.output_gds_filename):
+            self.output_gds = self.output_gds_filename
+        if os.path.isfile(self.output_netlist_filename):
+            self.output_netlist = self.output_netlist_filename
+        if os.path.isfile(self.output_sim_netlist_filename):
+            self.output_sim_netlist = self.output_sim_netlist_filename
 
         # TODO: support outputting the following
         self.hcells_list = []
@@ -232,26 +240,38 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         - Conditional copy/sourcing of LEFs & LIBs
         - Conditional copy of .pdn file
         """
+        
+        if not self.get_setting("par.openroad.create_issue_archive"):
+            self.logger.error(f"ERROR: OpenROAD returned with a nonzero exit code.")
+            self.logger.info("To create a tar archive of the issue, set: \n\tpar.openroad.create_issue_archive: true \n      in your YAML configs and re-run the previous command")
+            return True
+        
         now = datetime.now().strftime("%Y-%m-%d_%H-%M")
         tag = f"{self.top_module}_{platform.platform()}_{now}"
         issue_dir = os.path.join(self.run_dir, tag)
         os.mkdir(issue_dir)
+        issue_dir_rel_path = os.path.relpath(issue_dir)
 
         # Dump the log
-        with open(os.path.join(issue_dir, f"{self.top_module}.log")) as f:
+        with open(os.path.join(issue_dir, f"{self.top_module}.log"),'w') as f:
             f.write(output)
 
         # runme script
         runme = os.path.join(issue_dir, "runme.sh")
-        with open(runme) as f:
-            f.write("#!/bin/bash")
-            f.write("openroad -no_init -exit par.tcl")
+        with open(runme,'w') as f:
+            f.write(dedent("""\
+                #!/bin/bash
+                openroad -no_init -exit par.tcl"""))
         os.chmod(runme, 0o755) # +x
 
         # Gather files in self.run_dir
         file_exts = [".tcl", ".sdc", ".pdn", ".lef"]
-        for match in list(filter(lambda x: any(ext in file_exts for ext in x), os.listdir(self.run_dir))):
-            shutil.copy2(os.path.join(self.run_dir, match), os.path.join(issue_dir, match))
+        for match in list(filter(lambda x: any(ext in x for ext in file_exts), os.listdir(self.run_dir))):
+            src = os.path.join(self.run_dir, match)
+            dest = os.path.join(issue_dir, match)
+            self.logger.info(f"Copying: {src} -> {dest}")
+            shutil.copy2(src, dest)
+        self.logger.info(f"Done with copying files with these extensions: {file_exts}")
 
         # Verilog
         abspath_input_files = list(map(lambda name: os.path.join(os.getcwd(), name), self.input_files))
@@ -282,8 +302,13 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         subprocess.call(["sed", "-i", "s/\(exec klayout\|-rd\|-rm\)/# \\1/g", os.path.join(issue_dir, "par.tcl")])
 
         # Tar up the directory, delete it
-        subprocess.call(["tar", "-zcf", f"{tag}.tar.gz", issue_dir])
+        subprocess.call(["tar",
+                        "-C", os.path.relpath(self.run_dir),
+                        "-zcf", f"{tag}.tar.gz", tag])
         shutil.rmtree(issue_dir)
+        self.logger.error(f"ERROR: OpenROAD returned with a nonzero exit code.")
+        self.logger.error(f"Failed place-and-route run was archived to: {tag}.tar.gz")
+        self.logger.info("To disable archive creation after each OpenROAD error, add this to your YAML config: \n\tpar.openroad.create_issue_archive: false")
 
         return True
 
@@ -332,16 +357,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         if bool(self.get_setting("par.openroad.generate_only")):
             self.logger.info("Generate-only mode: command-line is " + " ".join(args))
         else:
-            # Temporarily disable colours/tag to make run output more readable.
-            # TODO: think of a more elegant way to do this?
-            HammerVLSILogging.enable_colour = False
-            HammerVLSILogging.enable_tag = False
-            self.run_executable(args, cwd=self.run_dir)  # TODO: check for errors and deal with them
-            HammerVLSILogging.enable_colour = True
-            HammerVLSILogging.enable_tag = True
-
-        # TODO: check that par run was successful
-
+            self.run_executable(args, cwd=self.run_dir)
         return True
 
     def get_timing_libs(self, corner: Optional[MMMCCorner] = None) -> str:
