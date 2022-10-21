@@ -8,7 +8,7 @@ par.openroad:
 
   generate_only: false # Generate the TCL file but do not run it yet.
 
-  create_archive: false # Skip running OpenROAD and just
+  create_archive: false
   # generate the tar.gz archive of the current build/par-rundir directory with a runme.sh script to reproduce the results
   # regardless of whether OpenROAD ran successfully or not
   # type: bool

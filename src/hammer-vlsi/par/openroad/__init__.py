@@ -81,10 +81,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     def do_pre_steps(self, first_step: HammerToolStep) -> bool:
         assert super().do_pre_steps(first_step)
-        # Create archive of previous PAR run
-        if self.get_setting("par.openroad.create_archive"):
-            self.handle_errors("",0)  # give it a zero exit code to indicate OpenROAD didn't run before this
-            exit(0)
         # Restore from the last checkpoint if we're not starting over.
         if first_step != self.first_step:
             self.read_lef()
@@ -237,14 +233,17 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         """
         Package a tarball of the design for submission to OpenROAD developers.
         Based on the make <design>_issue target in OpenROAD-flow-scripts/flow/util/utils.mk
+        output: the entire log output of the OpenROAD run
+        code: exit code from OpenROAD
         TODOs:
         - Check error code to determine if this needs to actually be done
         - Split par.tcl into constituent steps, conditional filter out everything after floorplan
         - Conditional copy/sourcing of LEFs & LIBs
         - Conditional copy of .pdn file
         """
+        self.ran_handle_errors = True
         if code != 0:
-            self.logger.error(f"ERROR: OpenROAD returned with a nonzero exit code: {code}.")
+            self.logger.error(f"ERROR: OpenROAD returned with a nonzero exit code: {code}.")            
 
         # don't create an archive
         if not (self.get_setting("par.openroad.create_archive") or self.get_setting("par.openroad.create_archive_after_error")):
@@ -314,7 +313,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         shutil.rmtree(issue_dir)
         
         if self.get_setting("par.openroad.create_archive"):
-            self.logger.info("To run OpenROAD normally, remove the par.openroad.create_archive key from your YAML configs (or set it to false)")
+            self.logger.info("To disable archive creation after each OpenROAD run, remove the par.openroad.create_archive key from your YAML configs (or set it to false)")
         if self.get_setting("par.openroad.create_archive_after_error"):
             self.logger.info("To disable archive creation after each OpenROAD error, add this to your YAML config: \n\tpar.openroad.create_archive_after_error: false")
         self.logger.error(f"Place-and-route run was archived to: {tag}.tar.gz")
@@ -362,11 +361,13 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             "-exit",                # exit after reading par_tcl_filename
             par_tcl_filename
         ]
-
         if bool(self.get_setting("par.openroad.generate_only")):
             self.logger.info("Generate-only mode: command-line is " + " ".join(args))
         else:
-            self.run_executable(args, cwd=self.run_dir)
+            self.ran_handle_errors = False
+            output = self.run_executable(args, cwd=self.run_dir)
+            if not self.ran_handle_errors and self.get_setting("par.openroad.create_archive"):
+                self.handle_errors(output,0)  # give it a zero exit code to indicate OpenROAD didn't run before this
         return True
 
     def get_timing_libs(self, corner: Optional[MMMCCorner] = None) -> str:
