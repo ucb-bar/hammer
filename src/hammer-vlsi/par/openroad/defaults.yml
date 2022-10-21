@@ -8,7 +8,13 @@ par.openroad:
 
   generate_only: false # Generate the TCL file but do not run it yet.
 
-  create_issue_archive: true # Generate a tar archive of the build/par-rundir directory with a runme.sh script to reproduce the results
+  create_archive: false # Skip running OpenROAD and just
+  # generate the tar.gz archive of the current build/par-rundir directory with a runme.sh script to reproduce the results
+  # regardless of whether OpenROAD ran successfully or not
+  # type: bool
+
+  create_archive_after_error: true 
+  # if OpenROAD errors, generate the tar.gz archive of the current build/par-rundir directory with a runme.sh script to reproduce the results
   # type: bool
 
   floorplan_mode: generate # Floorplanning SDC constraints to use.

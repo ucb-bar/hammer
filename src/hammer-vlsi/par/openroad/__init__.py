@@ -81,7 +81,10 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     def do_pre_steps(self, first_step: HammerToolStep) -> bool:
         assert super().do_pre_steps(first_step)
-        # self.cmds = []
+        # Create archive of previous PAR run
+        if self.get_setting("par.openroad.create_archive"):
+            self.handle_errors("",0)  # give it a zero exit code to indicate OpenROAD didn't run before this
+            exit(0)
         # Restore from the last checkpoint if we're not starting over.
         if first_step != self.first_step:
             self.read_lef()
@@ -240,17 +243,20 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         - Conditional copy/sourcing of LEFs & LIBs
         - Conditional copy of .pdn file
         """
-        
-        if not self.get_setting("par.openroad.create_issue_archive"):
-            self.logger.error(f"ERROR: OpenROAD returned with a nonzero exit code.")
-            self.logger.info("To create a tar archive of the issue, set: \n\tpar.openroad.create_issue_archive: true \n      in your YAML configs and re-run the previous command")
+        if code != 0:
+            self.logger.error(f"ERROR: OpenROAD returned with a nonzero exit code: {code}.")
+
+        # don't create an archive
+        if not (self.get_setting("par.openroad.create_archive") or self.get_setting("par.openroad.create_archive_after_error")):
+            self.logger.info("To create a tar archive of the issue, set: \n\tpar.openroad.create_archive: true \n      in your YAML configs and re-run your par command")
             return True
-        
+
+        self.logger.error("Generating a tar.gz archive of build/par-rundir to reproduce these results.")
+
         now = datetime.now().strftime("%Y-%m-%d_%H-%M")
         tag = f"{self.top_module}_{platform.platform()}_{now}"
         issue_dir = os.path.join(self.run_dir, tag)
         os.mkdir(issue_dir)
-        issue_dir_rel_path = os.path.relpath(issue_dir)
 
         # Dump the log
         with open(os.path.join(issue_dir, f"{self.top_module}.log"),'w') as f:
@@ -306,9 +312,12 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                         "-C", os.path.relpath(self.run_dir),
                         "-zcf", f"{tag}.tar.gz", tag])
         shutil.rmtree(issue_dir)
-        self.logger.error(f"ERROR: OpenROAD returned with a nonzero exit code.")
-        self.logger.error(f"Failed place-and-route run was archived to: {tag}.tar.gz")
-        self.logger.info("To disable archive creation after each OpenROAD error, add this to your YAML config: \n\tpar.openroad.create_issue_archive: false")
+        
+        if self.get_setting("par.openroad.create_archive"):
+            self.logger.info("To run OpenROAD normally, remove the par.openroad.create_archive key from your YAML configs (or set it to false)")
+        if self.get_setting("par.openroad.create_archive_after_error"):
+            self.logger.info("To disable archive creation after each OpenROAD error, add this to your YAML config: \n\tpar.openroad.create_archive_after_error: false")
+        self.logger.error(f"Place-and-route run was archived to: {tag}.tar.gz")
 
         return True
 
@@ -819,7 +828,7 @@ pdngen::specify_grid macro {{
         set_placement_padding -global -left 0 -right 0
         detailed_placement
 
-        improve_placement
+        # improve_placement
         optimize_mirroring
 
         """)
@@ -827,7 +836,7 @@ pdngen::specify_grid macro {{
 
     def check_detailed_placement(self) -> bool:
         self.block_append(f"""
-        utl::info FLW 12 "Placement violations [check_placement -verbose]."
+        check_placement -verbose
 
         # post resize timing report (ideal clocks)
         report_worst_slack -min -digits 3
@@ -910,7 +919,7 @@ pdngen::specify_grid macro {{
         # Filler cell insertion
         set_placement_padding -global -left 0 -right 0
         detailed_placement
-        improve_placement
+        # improve_placement
         check_placement -verbose
 
         # optimize_mirroring - tries to reduce wirelength
