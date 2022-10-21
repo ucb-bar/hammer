@@ -1105,6 +1105,7 @@ class HammerTool(metaclass=ABCMeta):
             no_con = False if not "no_connect" in raw_assign else raw_assign["no_connect"]
             x = raw_assign["x"]
             y = raw_assign["y"]
+
             group = None if not "group" in raw_assign else raw_assign["group"]
             cell = None if not "custom_cell" in raw_assign else raw_assign["custom_cell"]
             if name is None and not no_con:
@@ -1116,6 +1117,9 @@ class HammerTool(metaclass=ABCMeta):
         return BumpsDefinition(x=self.get_setting("vlsi.inputs.bumps.x"),
             y=self.get_setting("vlsi.inputs.bumps.y"),
             pitch=Decimal(str(self.get_setting("vlsi.inputs.bumps.pitch"))),
+            man_x_offset=Decimal(str(self.get_setting("vlsi.inputs.bumps.man_x_offset"))),
+            man_y_offset=Decimal(str(self.get_setting("vlsi.inputs.bumps.man_y_offset"))),
+
             cell=self.get_setting("vlsi.inputs.bumps.cell"), assignments=assignments)
 
     def generate_visualization(self) -> None:

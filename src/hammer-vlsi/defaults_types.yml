@@ -188,6 +188,10 @@ vlsi.inputs:
     x: int
     # y (int) - number of bumps in the y dimension
     y: int
+    # Manual x offset
+    man_x_offset: float
+    # Manual y offset
+    man_y_offset: float
     # pitch (float) - pitch of bumps in microns
     pitch: float
     # cell (str) - Name of the default bump cell
