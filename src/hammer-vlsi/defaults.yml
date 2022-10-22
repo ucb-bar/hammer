@@ -244,6 +244,7 @@ vlsi.inputs:
   #   - "hardmacro" (places this hard macro at a particular spot)
   #   - "hierarchical" (marks this instance as part of hierarchical place and route)
   #   - "obstruction" (creates a blockage at a particular spot; see obs_types)
+  #   - "overlap" (places this overlapping macro at a particular spot but does not add any halos/obstructions)
   # orientation (Optional[str]) - The orientation
   # - Optional for all types
   # - Valid options:
@@ -260,15 +261,15 @@ vlsi.inputs:
   # y (float) - y coordinate in um
   # - Required for all types
   # width (float) - width in um
-  # - Required for all types, but can be auto-filled for hierarchical and hardmacro if left blank
+  # - Required for all types, but can be auto-filled for hierarchical, hardmacro, and overlap if left blank
   # height (float) - height in um
-  # - Required for all types, but can be auto-filled for hierarchical and hardmacro if left blank
-  # master (Optional[str]) - The master module name of the hierarchical or hardmacro constraint.
+  # - Required for all types, but can be auto-filled for hierarchical, hardmacro, and overlap if left blank
+  # master (Optional[str]) - The master module name of the hierarchical, hardmacro, or overlap constraint.
   #                          For example, if this hardmacro is an instance of "my_amplifier", this
   #                          field should be set to "my_amplifier".
-  # - Required for hierarchical and optional for hardmacro, disallowed otherwise
+  # - Required for hierarchical and optional for hardmacro and overlap, disallowed otherwise
   # create_physical (Optional[bool]) - Create an instance of a physical-only cell that does not exist in addition to placing it
-  # - Optional for hardmacro, disallowed otherwise
+  # - Optional for hardmacro and overlap, disallowed otherwise
   # margins (Optional[Margins]) - margins for the top-level module.
   # - Required for toplevel, disallowed otherwise
   # - Contains the following keys:
@@ -277,7 +278,7 @@ vlsi.inputs:
   #   - "top"    (margin from the top side of the core PNR area to the edge of the chip)
   #   - "bottom" (margin from the bottom side of the core PNR area to the edge of the chip)
   # top_layer (str) - Specifies the highest layer used by this hierarchical or hardmacro, used to keep other wires away
-  # - Optional for hierarchical and hardmacro
+  # - Optional for hierarchical and hardmacro, disallowed otherwise
   # layers (List[str]) - A list of strings that enumerates layer(s) blocked by the obstruction otherwise all layers are blocked
   # - Required for the obstruction type, disallowed otherwise
   # obs_types (List[str]) - A list of the types of obstructions for the given geometry
