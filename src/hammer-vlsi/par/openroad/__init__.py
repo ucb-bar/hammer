@@ -706,9 +706,7 @@ pdngen::specify_grid macro {{
         self.block_append(f"""
         ################################################################
         # Power distribution network insertion
-        # pdngen -verbose {power_straps_tcl_path}
-        source /tools/C/nayiri/sky130/chipyard-nov22_tapeout/vlsi/pdn.tcl
-        pdngen -verbose
+        pdngen -verbose {power_straps_tcl_path}
         """)
         return True 
 
