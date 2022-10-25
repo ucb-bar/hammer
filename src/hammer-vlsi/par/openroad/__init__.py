@@ -51,7 +51,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             self.global_placement,
             self.resize,
             self.detailed_placement,
-            self.check_detailed_placement,
             # CTS
             self.clock_tree,
             self.add_fillers,
@@ -862,6 +861,12 @@ pdngen::specify_grid macro {{
         return True
 
     def check_detailed_placement(self) -> bool:
+        """
+        for any step that runs the detailed_placement command,
+            run this function at the start of the NEXT step
+            so that the post-step database is saved and in the case of a check_placement error,
+            the database it may be opened in the OpenROAD gui for debugging the error
+        """
         self.block_append(f"""
         check_placement -verbose
 
@@ -877,6 +882,7 @@ pdngen::specify_grid macro {{
         return True
 
     def clock_tree(self) -> bool:
+        self.check_detailed_placement()
         clock_port = self.get_clock_ports()[0]
         self.clock_port_name = clock_port.name
 
@@ -890,8 +896,6 @@ pdngen::specify_grid macro {{
             cts_args=f"-root_buf {cts_buffer_cell} -buf_list {cts_buffer_cell}"
 
         self.block_append(f"""
-        check_placement -verbose
-
         ################################################################
         # Clock Tree Synthesis
         # Run TritonCTS
@@ -927,41 +931,28 @@ pdngen::specify_grid macro {{
         repair_timing -hold
 
         detailed_placement
-        check_placement -verbose
-
-        # Post timing repair.
-        report_worst_slack -min -digits 3
-        report_worst_slack -max -digits 3
-        report_tns -digits 3
-
-
         """)
         return True
 
 
     def add_fillers(self) -> bool:
+        self.check_detailed_placement()
         """add decap and filler cells"""
         self.block_append(f"""        
         ################################################################
-        # Filler cell insertion
-        set_placement_padding -global -left 0 -right 0
-        detailed_placement
-        # improve_placement
-        check_placement -verbose
-
+        # Add Fillers
         # optimize_mirroring - tries to reduce wirelength
         # Capture utilization before fillers make it 100%
         utl::metric "utilization" [format %.1f [expr [rsz::utilization] * 100]]
         utl::metric "design_area" [sta::format_area [rsz::design_area] 0]
 
         filler_placement {{ {self.fill_cells} }}
-        # detailed_placement
-        check_placement -verbose
         """)
         return True
 
 
     def global_route(self) -> bool:
+        self.check_detailed_placement()
         metals=self.get_stackup().metals[1:]
 
         self.block_append(f"""
