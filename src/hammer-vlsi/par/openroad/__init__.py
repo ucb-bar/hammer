@@ -256,9 +256,10 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         if self.create_archive_mode in ['after_error','always']:
             self.create_archive(output, code)
         else:
-            self.logger.info("To create a tar archive of the issue, set: \n\tpar.openroad.create_archive_mode: latest_run \n      in your YAML configs and re-run your par command")            
+            self.logger.info("""To create a tar archive of the issue, set:
+            par.openroad.create_archive_mode: latest_run
+        in your YAML configs and re-run your par command""")            
         return True
-
 
     def create_archive(self, output: str, code: int) -> bool:
         """
@@ -938,7 +939,7 @@ pdngen::specify_grid macro {{
         """add decap and filler cells"""
         self.block_append(f"""        
         ################################################################
-        # Add Fillers
+        # Filler cell insertion
         # optimize_mirroring - tries to reduce wirelength
         # Capture utilization before fillers make it 100%
         utl::metric "utilization" [format %.1f [expr [rsz::utilization] * 100]]
