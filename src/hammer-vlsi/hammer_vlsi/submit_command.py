@@ -15,7 +15,7 @@ import sys
 import datetime
 from abc import abstractmethod
 from functools import reduce
-from typing import Any, Dict, List, NamedTuple, Optional
+from typing import Any, Dict, List, Tuple, NamedTuple, Optional
 
 from hammer_config import HammerDatabase
 from hammer_logging import HammerVLSILoggingContext
@@ -29,7 +29,7 @@ class HammerSubmitCommand:
 
     @abstractmethod
     def submit(self, args: List[str], env: Dict[str, str],
-               logger: HammerVLSILoggingContext, cwd: str = None) -> str:
+               logger: HammerVLSILoggingContext, cwd: str = None) -> Tuple[str, int]:
         """
         Submit the job to the job submission system. This function MUST block
         until the command is complete.
@@ -39,7 +39,7 @@ class HammerSubmitCommand:
         :param env: The environment variables to set for the command
         :param logger: The logging context
         :param cwd: Working directory (leave as None to use the current working directory).
-        :return: The command output
+        :return: Tuple of the command output and a return code
         """
         pass
 
@@ -121,7 +121,7 @@ class HammerSubmitCommand:
 class HammerLocalSubmitCommand(HammerSubmitCommand):
 
     def submit(self, args: List[str], env: Dict[str, str],
-               logger: HammerVLSILoggingContext, cwd: str = None) -> str:
+               logger: HammerVLSILoggingContext, cwd: str = None) -> Tuple[str, int]:
         # Just run the command on this host.
 
         prog_tag = self.get_program_tag(args)
@@ -150,9 +150,10 @@ class HammerLocalSubmitCommand(HammerSubmitCommand):
                 output_buf += line
             else:
                 break
-        # TODO: check errors
+        # check errors
+        proc.communicate()
 
-        return output_buf
+        return output_buf, proc.returncode
 
     def read_settings(self, settings: Dict[str, Any], tool_namespace: str) -> None:
         # Should never get here
@@ -232,7 +233,7 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
         return args
 
     def submit(self, args: List[str], env: Dict[str, str],
-               logger: HammerVLSILoggingContext, cwd: str = None) -> str:
+               logger: HammerVLSILoggingContext, cwd: str = None) -> Tuple[str, int]:
         # TODO fix output capturing
 
         prog_tag = self.get_program_tag(args)
@@ -256,6 +257,7 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
                 output_buf += line
             else:
                 break
-        # TODO: check errors
+        # check errors
+        proc.communicate()
 
-        return output_buf
+        return output_buf, proc.returncode

@@ -73,3 +73,23 @@ OpenROAD uses an external tool called KLayout, which executes a custom Python sc
 to write the final design to a GDS file.
 This is the same process used in the default VLSI flow from OpenROAD.
 
+Issue Archiving
+---------------
+This plugin supports generating a tar.gz archive of the current build/par-rundir directory with a runme.sh script to reproduce the results.
+This feature is enabled with the ``par.openroad.create_archive_mode`` YAML key, which can take the following values:
+* ``after_error`` - if OpenROAD errors, create an archive of the run
+* ``always`` - create an archive after every par run (regardless of whether OpenROAD errors)
+* ``latest_run`` - create an archive of latest par run (don't run OpenROAD, useful if OpenROAD gets stuck on endless optimization iterations but never actually "errors")
+* ``none`` - never create an archive
+
+Creating an archive does the following:
+* Generates a issue directory based on the date/time, top module, OS platform
+* Dumps the logger output
+* Generates a runme.sh script
+* Copies .tcl, .sdc, .pdn, and .lef files in par-rundir to the issue dir
+* Copies all input Verilog to issue dir
+* Copies all input LEFs to issue dir (some may not be used since they are hacked in read_lef())
+* Copies all input LIBs to issue dir
+* Hacks copied par.tcl script to remove all abspaths
+* Hacks copied par.tcl script to comment out write_gds block w/ KLayout
+* Tars up issue dir

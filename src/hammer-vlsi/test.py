@@ -1402,16 +1402,18 @@ class HammerSubmitCommandTest(unittest.TestCase):
         """ Test that a local submission produces the desired output """
         with self.create_context("local") as c:
             cmd = c.submit_command
-            output = cmd.submit(c.echo_command, c.env, c.logger).splitlines()
+            (output, returncode) = cmd.submit(c.echo_command, c.env, c.logger)
 
-            self.assertEqual(output[0], ' '.join(c.echo_command_args))
+            self.assertEqual(output.splitlines()[0], ' '.join(c.echo_command_args))
+            self.assertEqual(returncode, 0)
 
     def test_lsf_submit(self) -> None:
         """ Test that an LSF submission produces the desired output """
         with self.create_context("lsf") as c:
             cmd = c.submit_command
             assert isinstance(cmd, hammer_vlsi.HammerLSFSubmitCommand)
-            output = cmd.submit(c.echo_command, c.env, c.logger).splitlines()
+            (raw_output, returncode) = cmd.submit(c.echo_command, c.env, c.logger)
+            output = raw_output.splitlines()
 
             self.assertEqual(output[0], "BLOCKING is: 1")
             self.assertEqual(output[1], "QUEUE is: %s" % get_or_else(cmd.settings.queue, ""))
@@ -1428,6 +1430,8 @@ class HammerSubmitCommandTest(unittest.TestCase):
 
             self.assertEqual(output[4 + has_resource], "COMMAND is: %s" % ' '.join(c.echo_command))
             self.assertEqual(output[5 + has_resource], ' '.join(c.echo_command_args))
+
+            self.assertEqual(returncode, 0)
 
 
 class HammerSignoffToolTestContext:
