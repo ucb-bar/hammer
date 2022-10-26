@@ -236,6 +236,8 @@ BumpAssignment = NamedTuple('BumpAssignment', [
     ('no_connect', Optional[bool]),
     ('x', Decimal),
     ('y', Decimal),
+    ('x_offset', Decimal),
+    ('y_offset', Decimal),
     ('group', Optional[str]),
     ('custom_cell', Optional[str])
 ])
@@ -243,8 +245,8 @@ BumpAssignment = NamedTuple('BumpAssignment', [
 BumpsDefinition = NamedTuple('BumpsDefinition', [
     ('x', int),
     ('y', int),
-    ('man_x_offset', Decimal),
-    ('man_y_offset', Decimal),
+    ('global_x_offset', Decimal),
+    ('global_y_offset', Decimal),
     ('pitch', Decimal),
     ('cell', str),
     ('assignments', List[BumpAssignment])
