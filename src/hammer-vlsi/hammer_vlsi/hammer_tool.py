@@ -1258,6 +1258,8 @@ class HammerTool(metaclass=ABCMeta):
                     # already enforced to have width & height
                     obs_rects += '<rect x="{}" y="{}" width="{}" height="{}" class="obs" />\n'.format(c.x, top.height-c.y-c.height, c.width, c.height)
                     obs_text += '<text text-anchor="middle" x="{}" y="{}" class="bold10pt">{}</text>\n'.format(c.x+c.width/2, top.height-c.y-c.height/2, shorten(c.path))
+                elif c.type == PlacementConstraintType.Overlap:
+                    self.logger.info('Overlap constraint {} skipped from visualization.'.format(c.path))
 
             # Draw order: obstructions, macros, orientation lines
             fsvg.write("</g>\n".join([obs_rects, obs_text, macro_rects, macro_text, orient_lines]) + "</g>\n")
