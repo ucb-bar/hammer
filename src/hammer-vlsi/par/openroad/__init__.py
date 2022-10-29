@@ -7,13 +7,16 @@
 
 # NOTE: any hard-coded values are from OpenROAD example flow
 
-import glob
 import os
+import shutil
 import errno
-from textwrap import dedent as dd
+import platform
+import subprocess
+from datetime import datetime
 from typing import List, Optional, Dict, Any, Tuple, Callable
 from decimal import Decimal
 from pathlib import Path
+from textwrap import dedent
 
 from hammer_logging import HammerVLSILogging
 from hammer_utils import deepdict, optional_map
@@ -40,18 +43,17 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             self.floorplan_design,
             self.place_bumps,
             self.macro_placement,
-            self.place_tapcells, 
-            self.power_straps, 
+            self.place_tapcells,
+            self.power_straps,
             # PLACE
             self.initial_global_placement,
             self.io_placement,
             self.global_placement,
             self.resize,
             self.detailed_placement,
-            self.check_detailed_placement,
             # CTS
             self.clock_tree,
-            self.add_fillers, 
+            self.add_fillers,
             # ROUTING
             self.global_route,
             self.detailed_route,
@@ -77,8 +79,22 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         self.attr_setter("__step_transitions", value)
 
     def do_pre_steps(self, first_step: HammerToolStep) -> bool:
+        self.created_archive = False
+        if self.create_archive_mode  == "latest_run":
+            # since OpenROAD won't be run, get OpenROAD "output" from previous run's log
+            if not os.path.exists(self.openroad_log):
+                self.logger.error("""ERROR: OpenROAD place-and-route must be run before creating an archive. To fix this error:
+        1. In your YAML configs, set par.openroad.create_archive_mode : none
+        2. Re-run the previous command
+        3. Set par.openroad.create_archive_mode : latest_run""")
+                exit(1)
+            self.logger.warning("Skipping place-and-route run and creating an archive of the latest OpenROAD place-and-route run (because par.openroad.create_archive_mode key was set to 'latest_run')")
+            # NOTE: openroad log will be empty if OpenROAD was terminated (e.g. by Ctrl-C)
+            with open(self.openroad_log,'r') as f:
+                output = f.read()
+            self.create_archive(output,0)  # give it a zero exit code to indicate OpenROAD didn't error before this
+            exit(0)
         assert super().do_pre_steps(first_step)
-        # self.cmds = []
         # Restore from the last checkpoint if we're not starting over.
         if first_step != self.first_step:
             self.read_lef()
@@ -164,7 +180,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     @property
     def generated_scripts_dir(self) -> str:
         return os.path.join(self.run_dir, "generated-scripts")
-    
+
     @property
     def open_chip_script(self) -> str:
         return os.path.join(self.generated_scripts_dir, "open_chip")
@@ -172,6 +188,14 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     @property
     def open_chip_tcl(self) -> str:
         return self.open_chip_script + ".tcl"
+
+    @property
+    def openroad_log(self) -> str:
+        return os.path.join(self.run_dir,"openroad.log")
+    
+    @property
+    def create_archive_mode(self) -> str:
+        return self.get_setting("par.openroad.create_archive_mode")
 
     def tech_lib_filter(self) -> List[Callable[[hammer_tech.Library], bool]]:
         """ Filter only libraries from tech plugin """
@@ -197,9 +221,16 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         # TODO: no support for ILM
         self.output_ilms = []
 
-        self.output_gds = self.output_gds_filename
-        self.output_netlist = self.output_netlist_filename
-        self.output_sim_netlist = self.output_sim_netlist_filename
+        self.output_gds = ""
+        self.output_netlist = ""
+        self.output_sim_netlist = ""
+
+        if os.path.isfile(self.output_gds_filename):
+            self.output_gds = self.output_gds_filename
+        if os.path.isfile(self.output_netlist_filename):
+            self.output_netlist = self.output_netlist_filename
+        if os.path.isfile(self.output_sim_netlist_filename):
+            self.output_sim_netlist = self.output_sim_netlist_filename
 
         # TODO: support outputting the following
         self.hcells_list = []
@@ -218,6 +249,100 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     def tool_config_prefix(self) -> str:
         return "par.openroad"
+
+
+    def handle_errors(self, output: str, code: int) -> bool:
+        self.logger.error(f"ERROR: OpenROAD returned with a nonzero exit code: {code}.")
+        if self.create_archive_mode in ['after_error','always']:
+            self.create_archive(output, code)
+        else:
+            self.logger.info("""To create a tar archive of the issue, set:
+            par.openroad.create_archive_mode: latest_run
+        in your YAML configs and re-run your par command""")            
+        return True
+
+    def create_archive(self, output: str, code: int) -> bool:
+        """
+        Package a tarball of the design for submission to OpenROAD developers.
+        Based on the make <design>_issue target in OpenROAD-flow-scripts/flow/util/utils.mk
+        output: the entire log output of the OpenROAD run
+        code: exit code from OpenROAD
+        TODOs:
+        - Split par.tcl into constituent steps, conditional filter out everything after floorplan
+        - Conditional copy/sourcing of LEFs & LIBs
+        - Conditional copy of .pdn file
+        """
+        self.created_archive = True
+
+        self.logger.error("Generating a tar.gz archive of build/par-rundir to reproduce these results.")
+
+        now = datetime.now().strftime("%Y-%m-%d_%H-%M")
+        tag = f"{self.top_module}_{platform.platform()}_{now}"
+        issue_dir = os.path.join(self.run_dir, tag)
+        os.mkdir(issue_dir)
+
+        # Dump the log
+        with open(os.path.join(issue_dir, f"{self.top_module}.log"),'w') as f:
+            f.write(output)
+
+        # runme script
+        runme = os.path.join(issue_dir, "runme.sh")
+        with open(runme,'w') as f:
+            f.write(dedent("""\
+                #!/bin/bash
+                openroad -no_init -exit par.tcl"""))
+        os.chmod(runme, 0o755) # +x
+
+        # Gather files in self.run_dir
+        file_exts = [".tcl", ".sdc", ".pdn", ".lef"]
+        for match in list(filter(lambda x: any(ext in x for ext in file_exts), os.listdir(self.run_dir))):
+            src = os.path.join(self.run_dir, match)
+            dest = os.path.join(issue_dir, match)
+            self.logger.info(f"Copying: {src} -> {dest}")
+            shutil.copy2(src, dest)
+        self.logger.info(f"Done with copying files with these extensions: {file_exts}")
+
+        # Verilog
+        abspath_input_files = list(map(lambda name: os.path.join(os.getcwd(), name), self.input_files))
+        for verilog_file in abspath_input_files:
+            shutil.copy2(verilog_file, os.path.join(issue_dir, os.path.basename(verilog_file)))
+
+        # LEF
+        # This will also copy LEF files that were then hacked in read_lef() but already copied above
+        lef_files = self.technology.read_libs([
+            hammer_tech.filters.lef_filter
+        ], hammer_tech.HammerTechnologyUtils.to_plain_item)
+        if self.hierarchical_mode.is_nonleaf_hierarchical():
+            ilm_lefs = list(map(lambda ilm: ilm.lef, self.get_input_ilms()))
+            lef_files.extend(ilm_lefs)
+        for lef_file in lef_files:
+            shutil.copy2(lef_file, os.path.join(issue_dir, os.path.basename(lef_file)))
+
+        # LIB
+        corners = self.get_mmmc_corners()  # type: List[MMMCCorner]
+        for corner in corners:
+            for lib_file in self.get_timing_libs(corner).split():
+                shutil.copy2(lib_file, os.path.join(issue_dir, os.path.basename(lib_file)))
+
+        # Hack par.tcl script
+        # Remove abspaths to files since they are now in issue_dir
+        subprocess.call(["sed", "-i", "s/\(.* \)\(.*\/\)\(.*\)/\\1\\3/g", os.path.join(issue_dir, "par.tcl")])
+        # Comment out exec klayout block
+        subprocess.call(["sed", "-i", "s/\(exec klayout\|-rd\|-rm\)/# \\1/g", os.path.join(issue_dir, "par.tcl")])
+
+        # Tar up the directory, delete it
+        subprocess.call(["tar",
+                        "-C", os.path.relpath(self.run_dir),
+                        "-zcf", f"{tag}.tar.gz", tag])
+        shutil.rmtree(issue_dir)
+        
+        if self.create_archive_mode == 'always':
+            self.logger.info("To disable archive creation after each OpenROAD run, remove the par.openroad.create_archive_mode key from your YAML configs (or set it to 'none' or 'after_error')")
+        if self.create_archive_mode == 'after_error':
+            self.logger.info("To disable archive creation after each OpenROAD error, add this to your YAML config: \n\tpar.openroad.create_archive_mode: none")
+        self.logger.error(f"Place-and-route run was archived to: {tag}.tar.gz")
+
+        return True
 
     def gui(self) -> str:
         cmds=[]
@@ -256,24 +381,19 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         args = [
             self.get_setting("par.openroad.openroad_bin"),
             "-no_init",             # do not read .openroad init file
+            "-log", self.openroad_log,
             "-threads", num_threads,
             "-exit",                # exit after reading par_tcl_filename
             par_tcl_filename
         ]
-
         if bool(self.get_setting("par.openroad.generate_only")):
             self.logger.info("Generate-only mode: command-line is " + " ".join(args))
         else:
-            # Temporarily disable colours/tag to make run output more readable.
-            # TODO: think of a more elegant way to do this?
-            HammerVLSILogging.enable_colour = False
-            HammerVLSILogging.enable_tag = False
-            self.run_executable(args, cwd=self.run_dir)  # TODO: check for errors and deal with them
-            HammerVLSILogging.enable_colour = True
-            HammerVLSILogging.enable_tag = True
-
+            output = self.run_executable(args, cwd=self.run_dir)
+            if not self.created_archive and self.create_archive_mode  == "always":
+                self.create_archive(output,0)  # give it a zero exit code to indicate OpenROAD didn't error before this
         return True
-    
+
     def get_timing_libs(self, corner: Optional[MMMCCorner] = None) -> str:
         """
         Helper function to get the list of ASCII timing .lib files in space separated format.
@@ -306,13 +426,10 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             if lef_file_libname in lef_file_libnames:
                 lef_file_libname=f"{lef_file_libname}_{unique_id}.{lef_file_ext}"
                 new_lef_file=f"{self.run_dir}/{lef_file_libname}"
-                with open(lef_file,'r') as f_old:
-                    with open(new_lef_file,'w') as f_new:
-                        for line in f_old: 
-                            f_new.write(line)
-                lef_file=new_lef_file
+                shutil.copyfile(lef_file, new_lef_file)
                 unique_id+=1
-            lef_file_libnames.append(lef_file_libname)
+                lef_file_libnames.append(lef_file_libname)
+                lef_file = new_lef_file
             self.append(f"read_lef {lef_file}")
         self.append("")
         return True
@@ -333,7 +450,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                 else:
                     raise ValueError("Unsupported MMMCCornerType")
                 corner_names.append(corner_name)
-            
+
             cmds.append(f"define_corners {' '.join(corner_names)}")
             for corner,corner_name in zip(corners,corner_names):
                 lib_files=self.get_timing_libs(corner)
@@ -357,7 +474,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         if prefix == 'm':
             return ''
         return ''
-        
+
     def read_sdc(self) -> bool:
         # overwrite SDC file to exclude group_path command
         # change units in SDC file (1000.0fF and 1000.0ps cause errors)
@@ -736,15 +853,21 @@ pdngen::specify_grid macro {{
         set_placement_padding -global -left 0 -right 0
         detailed_placement
 
-        improve_placement
+        # improve_placement
         optimize_mirroring
 
         """)
         return True
 
     def check_detailed_placement(self) -> bool:
+        """
+        for any step that runs the detailed_placement command,
+            run this function at the start of the NEXT step
+            so that the post-step database is saved and in the case of a check_placement error,
+            the database it may be opened in the OpenROAD gui for debugging the error
+        """
         self.block_append(f"""
-        utl::info FLW 12 "Placement violations [check_placement -verbose]."
+        check_placement -verbose
 
         # post resize timing report (ideal clocks)
         report_worst_slack -min -digits 3
@@ -758,6 +881,7 @@ pdngen::specify_grid macro {{
         return True
 
     def clock_tree(self) -> bool:
+        self.check_detailed_placement()
         clock_port = self.get_clock_ports()[0]
         self.clock_port_name = clock_port.name
 
@@ -771,8 +895,6 @@ pdngen::specify_grid macro {{
             cts_args=f"-root_buf {cts_buffer_cell} -buf_list {cts_buffer_cell}"
 
         self.block_append(f"""
-        check_placement -verbose
-
         ################################################################
         # Clock Tree Synthesis
         # Run TritonCTS
@@ -808,41 +930,28 @@ pdngen::specify_grid macro {{
         repair_timing -hold
 
         detailed_placement
-        check_placement -verbose
-
-        # Post timing repair.
-        report_worst_slack -min -digits 3
-        report_worst_slack -max -digits 3
-        report_tns -digits 3
-
-
         """)
         return True
 
 
     def add_fillers(self) -> bool:
+        self.check_detailed_placement()
         """add decap and filler cells"""
         self.block_append(f"""        
         ################################################################
         # Filler cell insertion
-        set_placement_padding -global -left 0 -right 0
-        detailed_placement
-        improve_placement
-        check_placement -verbose
-
         # optimize_mirroring - tries to reduce wirelength
         # Capture utilization before fillers make it 100%
         utl::metric "utilization" [format %.1f [expr [rsz::utilization] * 100]]
         utl::metric "design_area" [sta::format_area [rsz::design_area] 0]
 
         filler_placement {{ {self.fill_cells} }}
-        # detailed_placement
-        check_placement -verbose
         """)
         return True
 
 
     def global_route(self) -> bool:
+        self.check_detailed_placement()
         metals=self.get_stackup().metals[1:]
 
         self.block_append(f"""

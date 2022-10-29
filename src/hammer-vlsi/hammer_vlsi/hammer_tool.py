@@ -1025,8 +1025,21 @@ class HammerTool(metaclass=ABCMeta):
         :param cwd: Working directory (leave as None to use the current working directory).
         :return: Output from the command or an error message.
         """
+        (output, returncode) = self.submit_command.submit(args, self._subprocess_env, self.logger, cwd)
 
-        return self.submit_command.submit(args, self._subprocess_env, self.logger, cwd)
+        if returncode != 0: # negative number denotes killed/terminated
+            self.handle_errors(output, returncode)
+
+        return output
+
+    def handle_errors(self, output: str, code: int) -> bool:
+        """
+        Function to run on tool error (nonzero return code).
+        Intended to be overridden by subclasses.
+
+        :return: True if successful, False otherwise.
+        """
+        return True
 
     # TODO: these helper functions might get a bit out of hand, put them somewhere more organized?
     def get_clock_ports(self) -> List[ClockPort]:
