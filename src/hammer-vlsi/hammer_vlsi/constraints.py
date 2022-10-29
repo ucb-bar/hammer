@@ -522,6 +522,7 @@ class PlacementConstraintType(Enum):
     HardMacro = 4
     Hierarchical = 5
     Obstruction = 6
+    Overlap = 7
 
     @classmethod
     def __mapping(cls) -> Dict[str, "PlacementConstraintType"]:
@@ -531,7 +532,8 @@ class PlacementConstraintType(Enum):
             "toplevel": PlacementConstraintType.TopLevel,
             "hardmacro": PlacementConstraintType.HardMacro,
             "hierarchical": PlacementConstraintType.Hierarchical,
-            "obstruction": PlacementConstraintType.Obstruction
+            "obstruction": PlacementConstraintType.Obstruction,
+            "overlap": PlacementConstraintType.Overlap
         }
 
     @staticmethod
@@ -614,12 +616,12 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         # This field is disallowed otherwise
         master = None  # type: Optional[str]
         if "master" in constraint:
-            if constraint_type not in [PlacementConstraintType.Hierarchical, PlacementConstraintType.HardMacro]:
-                raise ValueError("Constraints other than Hierarchical and HardMacro must not contain master: {}".format(constraint))
+            if constraint_type not in [PlacementConstraintType.Hierarchical, PlacementConstraintType.HardMacro, PlacementConstraintType.Overlap]:
+                raise ValueError("Constraints other than Hierarchical, HardMacro, and Overlap must not contain master: {}".format(constraint))
             master = str(constraint["master"])
         else:
             if constraint_type == PlacementConstraintType.Hierarchical:
-                raise ValueError("Hierarchical constraint must contain master: {}".format(constraint))
+                raise ValueError("Hierarchical constraints must contain master: {}".format(constraint))
         return master
 
     @staticmethod
@@ -636,7 +638,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         constraint_type = PlacementConstraintType.from_str(str(constraint["type"]))
         master = PlacementConstraint._get_master(constraint_type, constraint)
 
-        checked_types = [PlacementConstraintType.Hierarchical, PlacementConstraintType.HardMacro]
+        checked_types = [PlacementConstraintType.Hierarchical, PlacementConstraintType.HardMacro, PlacementConstraintType.Overlap]
         width_check = None  # type: Optional[Decimal]
         height_check = None  # type: Optional[Decimal]
         # Get the "Master" values
@@ -649,7 +651,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
                 height_check = Decimal(str(matches[0].height))
             else:
                 raise ValueError("Could not find a master for hierarchical cell {} in masters list.".format(master))
-        elif constraint_type == PlacementConstraintType.HardMacro:
+        elif constraint_type in [PlacementConstraintType.HardMacro, PlacementConstraintType.Overlap]:
             # TODO(johnwright) for now we're allowing HardMacros to be flexible- checks are performed if the data exists, but otherwise
             # we will "trust" the provided width and height. They aren't actually used, so this is not super important at the moment.
             # ucb-bar/hammer#414
@@ -754,30 +756,29 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         master = PlacementConstraint._get_master(constraint_type, constraint)
 
         ### Create physical ###
-        # This field is optional in HardMacro constraints
+        # This field is optional in HardMacro and Overlap constraints
         # This field is disallowed otherwise
         create_physical = None  # type: Optional[bool]
         if "create_physical" in constraint:
-            if constraint_type != PlacementConstraintType.HardMacro:
-                raise ValueError("Non-HardMacro constraint must not contain create_physical: {}".format(constraint))
+            if constraint_type not in [PlacementConstraintType.HardMacro, PlacementConstraintType.Overlap]:
+                raise ValueError("Constraints other than HardMacro or Overlap must not specify create_physical: {}".format(constraint))
             if master is None:
-                raise ValueError("HardMacro specifying a constraint must also specify a master: {}".format(constraint))
+                raise ValueError("HardMacro or Overlap constraint specifying create_physical must also specify a master: {}".format(constraint))
             create_physical = constraint["create_physical"]
             assert isinstance(create_physical, bool)
 
-
         ### Width & height ###
         # These fields are mandatory for Hierarchical, Dummy, Placement, TopLevel, and Obstruction constraints
-        # These fields are optional for HardMacro constraints
-        # TODO(ucb-bar/hammer#414) make them mandatory for HardMacro once there's a more robust way of automatically getting that data into hammer
+        # These fields are optional for HardMacro and Overlap constraints
+        # TODO(ucb-bar/hammer#414) make them mandatory for HardMacro and Overlap once there's a more robust way of automatically getting that data into hammer
         # This is not None because we don't want to make width optional for the reason above
         width = Decimal(0)
         if "width" in constraint:
             width = Decimal(str(constraint["width"]))
         else:
             # TODO(ucb-bar/hammer#414) remove this allowance and just raise the error
-            if constraint_type != PlacementConstraintType.HardMacro:
-                raise ValueError("Non-HardMacro constraint must contain a width: {}".format(constraint))
+            if constraint_type not in [PlacementConstraintType.HardMacro, PlacementConstraintType.Overlap]:
+                raise ValueError("Non-HardMacro or Overlap constraint must contain a width: {}".format(constraint))
 
         # This is not None because we don't want to make height optional for the reason above
         height = Decimal(0)
@@ -785,8 +786,8 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             height = Decimal(str(constraint["height"]))
         else:
             # TODO(ucb-bar/hammer#414) remove this allowance and just raise the error
-            if constraint_type != PlacementConstraintType.HardMacro:
-                raise ValueError("Non-HardMacro constraint must contain a height: {}".format(constraint))
+            if constraint_type not in [PlacementConstraintType.HardMacro, PlacementConstraintType.Overlap]:
+                raise ValueError("Non-HardMacro or Overlap constraint must contain a height: {}".format(constraint))
 
         ### X & Y coordinates ###
         # These fields are mandatory in all constraints

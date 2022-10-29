@@ -731,5 +731,35 @@ class PlacementConstraintTest(unittest.TestCase):
         self.assertEqual(tc.orientation, "mx")
         self.assertEqual(tc.master, "bar")
 
+    def test_master_overlap(self) -> None:
+        d = {"type": "overlap",
+             "path": "path/to/placement",
+             "x": Decimal(4),
+             "y": Decimal(6),
+             "width": Decimal(10),
+             "height": Decimal(20),
+             "orientation": "mx",
+             "create_physical": True,
+             "master": "overlap_cell"}
+        tc = PlacementConstraint.from_dict(d)
+        self.assertEqual(tc.type, PlacementConstraintType.Overlap)
+        self.assertEqual(tc.path, "path/to/placement")
+        self.assertEqual(tc.x, Decimal(4))
+        self.assertEqual(tc.y, Decimal(6))
+        self.assertEqual(tc.width, Decimal(10))
+        self.assertEqual(tc.height, Decimal(20))
+        self.assertEqual(tc.orientation, "mx")
+        self.assertEqual(tc.create_physical, True)
+        self.assertEqual(tc.master, "overlap_cell")
+        with self.assertRaises(ValueError):
+            m = {"margins": Margins.empty().to_dict()}
+            # This should assert because margins are not allowed
+            tc = PlacementConstraint.from_dict(add_dicts(d, m))
+        with self.assertRaises(ValueError):
+            tl = {"top_layer": "m4"}
+            # This should assert because top layer is not allowed
+            tc = PlacementConstraint.from_dict(add_dicts(d, tl))
+
+
 if __name__ == '__main__':
     unittest.main()
