@@ -1145,12 +1145,12 @@ class HammerTechnology:
         except:
             pass
 
-        for tar_file in extract_list:
-            if (tar_file.endswith('.gz')):
-                if (os.path.splitext(os.path.basename((tar_file)))[0] not in os.listdir(dest_path)):
-                    shutil.copy(tar_file, dest_path)
+        for file in extract_list:
+            if (file.endswith('.gz')):
+                if (os.path.splitext(os.path.basename((file)))[0] not in os.listdir(dest_path)):
+                    shutil.copy(file, dest_path)
             else:
-                full_list.append(tar_file)
+                full_list.append(file)  # append non-zipped files
             
         libs = os.listdir(dest_path)
         full_paths = list(map(lambda l: os.path.join(dest_path, os.path.basename(l)), libs))
@@ -1158,7 +1158,9 @@ class HammerTechnology:
         for _path in full_paths:
             subprocess.call(["gzip -d {_path}".format(_path=_path)], shell=True)
         
-        for extracted_file in libs:
+        libs = os.listdir(dest_path)
+        full_paths = list(map(lambda l: os.path.join(dest_path, os.path.basename(l)), libs))
+        for extracted_file in full_paths:
             full_list.append(extracted_file)
                
         return full_list
