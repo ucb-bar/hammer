@@ -7,6 +7,7 @@ par.openroad:
   # the version is actually calculated by the OpenROADTool class
 
   generate_only: false # Generate the TCL file but do not run it yet.
+  # type: bool
 
   create_archive_mode: after_error
   # Generate the tar.gz archive of the current build/par-rundir directory with a runme.sh script to reproduce the results
@@ -16,7 +17,7 @@ par.openroad:
   # - latest_run - create an archive of latest par run (don't run OpenROAD)
   #                  (useful if OpenROAD gets stuck on endless optimization iterations but never actually "errors")
   # - none - never create an archive
-  # type: Optional[str]
+  # type: str
 
   floorplan_mode: generate # Floorplanning SDC constraints to use.
   # Valid options are:
@@ -25,6 +26,15 @@ par.openroad:
   # - generate - Generate a floorplan from the hammer-vlsi config/IR.
   # - auto - Use OpenROAD's `macro_placement` command to auto-generate a floorplan. Will have poor, but sane results
   #   If you specify 'manual', you must also specify the floorplanning_script config below. The floorplanning_script config will be ignored in other modes.
+
+  floorplan_origin_pos: bottom_left
+  # Only used when floorplan_mode == generate
+  # By default, OpenROAD places the macros THEN rotates them, but it is convenient to always 
+  #   have the macro (x,y) position correspond with bottom left corner of the placed macro
+  # Valid options are:
+  # - bottom_left - width & height of macro must be specified to use this option (or else will use 'rotated' option)
+  # - rotated
+  # type: str
 
   floorplan_script_contents: null
   # type: Optional[str]

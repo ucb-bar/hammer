@@ -34,12 +34,13 @@ class SKY130Tech(HammerTechnology):
         self.setup_lvs_deck()
         print('Loaded Sky130 Tech')
 
+    @property
+    def pdk_dir(self) -> str:
+        return Path(self.get_setting("technology.sky130.sky130B"))
 
     # Copy and hack the cdl, replacing pfet_01v8_hvt/nfet_01v8 with phighvt/nshort
     def setup_cdl(self) -> None:
-        setting_dir = self.get_setting("technology.sky130.sky130A")
-        setting_dir = Path(setting_dir)
-        source_path = setting_dir / 'libs.ref' / self.library_name / 'cdl' / f'{self.library_name}.cdl'
+        source_path = self.pdk_dir / 'libs.ref' / self.library_name / 'cdl' / f'{self.library_name}.cdl'
         if not source_path.exists():
             raise FileNotFoundError(f"CDL not found: {source_path}")
 
@@ -61,11 +62,8 @@ class SKY130Tech(HammerTechnology):
     #   - primitives.v: set default nettype to 'wire' instead of 'none'
     #           (the open-source RTL sim tools don't treat undeclared signals as errors)
     def setup_verilog(self) -> None:
-        setting_dir = self.get_setting("technology.sky130.sky130A")
-        setting_dir = Path(setting_dir)
-
         # <library_name>.v
-        source_path = setting_dir / 'libs.ref' / self.library_name / 'verilog' / f'{self.library_name}.v'
+        source_path = self.pdk_dir / 'libs.ref' / self.library_name / 'verilog' / f'{self.library_name}.v'
         if not source_path.exists():
             raise FileNotFoundError(f"Verilog not found: {source_path}")
 
@@ -83,7 +81,7 @@ class SKY130Tech(HammerTechnology):
                     df.write(line)
 
         # primitives.v
-        source_path = setting_dir / 'libs.ref' / self.library_name / 'verilog' / 'primitives.v'
+        source_path = self.pdk_dir / 'libs.ref' / self.library_name / 'verilog' / 'primitives.v'
         if not source_path.exists():
             raise FileNotFoundError(f"Verilog not found: {source_path}")
 
@@ -101,9 +99,7 @@ class SKY130Tech(HammerTechnology):
 
     # Copy and hack the tech-lef, adding this very important `licon` section
     def setup_techlef(self) -> None:
-        setting_dir = self.get_setting("technology.sky130.sky130A")
-        setting_dir = Path(setting_dir)
-        source_path = setting_dir / 'libs.ref' / self.library_name / 'techlef' / f'{self.library_name}__nom.tlef'
+        source_path = self.pdk_dir / 'libs.ref' / self.library_name / 'techlef' / f'{self.library_name}__nom.tlef'
         if not source_path.exists():
             raise FileNotFoundError(f"Tech-LEF not found: {source_path}")
 
