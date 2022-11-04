@@ -751,11 +751,8 @@ class HammerDatabase:
         :param check_type: Flag to enforce type checking
         :return: The given config
         """
-        # assumes user is running HAMMER from home directory
-        CFG_PATH = os.path.join(
-            find_dir("hammer", os.path.expanduser('~')), "src", "hammer-vlsi"
-        )
-        defaults = unpack(load_config_from_defaults(CFG_PATH)[1])
+        cfg_path = os.path.join(os.path.dirname(__file__), "..", "hammer-vlsi")
+        defaults = unpack(load_config_from_defaults(cfg_path)[1])
 
         IGNORE = ["vlsi.builtins.hammer_vlsi_path", "vlsi.builtins.is_complete"]
         if key not in self.get_config():
@@ -1115,13 +1112,6 @@ def load_config_types_from_defaults(path: str, strict: bool = False) -> List[dic
         os.path.join(path, "defaults_types.json"),
         os.path.join(path, "defaults_types.yml")
     ])
-
-def find_dir(name: str, path: str) -> Union[str, os.PathLike[str]]:
-    """Finds a directory given a starting path."""
-    for root, dirs, _ in os.walk(path):
-        if name in dirs:
-            return os.path.join(root, name)
-    return os.getcwd()
 
 class NamedType(Enum):
     STR = "str"
