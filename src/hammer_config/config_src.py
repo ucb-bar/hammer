@@ -127,7 +127,7 @@ def deepsubst_transclude(path: str, params: MetaDirectiveParams) -> str:
     :param params: The MetaDirectiveParams which contain the local path.
     :return: The contents of the file at path
     """
-    with open(path, "r") as f:
+    with open(path, "r", encoding="utf-8") as f:
         file_contents = str(f.read())
     return file_contents
 
@@ -151,9 +151,9 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
             config_dict[key] = []
 
         if not isinstance(config_dict[key], list):
-            raise ValueError("Trying to append to non-list setting %s" % (key))
+            raise ValueError(f"Trying to append to non-list setting {key}")
         if not isinstance(value, list):
-            raise ValueError("Trying to append to list %s with non-list %s" % (key, str(value)))
+            raise ValueError(f"Trying to append to list {key} with non-list {value}")
         config_dict[key] += value
 
     def append_rename(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[Tuple[Any, str]]:
@@ -269,7 +269,7 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
                 assert isinstance(i, str)
             subst_strings = value
         else:
-            raise ValueError("subst must operate on a str or List[str]; got {0} instead".format(value))
+            raise ValueError(f"subst must operate on a str or List[str]; got {value} instead")
 
         output_vars = []  # type: List[str]
 
@@ -296,8 +296,7 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
     def crossref_check_and_cast(k: Any) -> str:
         if not isinstance(k, str):
             raise ValueError("crossref (if used with lists) can only be used only with lists of strings")
-        else:
-            return k
+        return k
 
     def crossref_action(config_dict: dict, key: str, value: Any, params: MetaDirectiveParams) -> None:
         """
@@ -305,9 +304,9 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
         If the reference is a list, then apply the crossref for each element
         of the list.
         """
-        if type(value) == str:
+        if isinstance(value, str):
             config_dict[key] = config_dict[value]
-        elif type(value) == list:
+        elif isinstance(value, list):
             def check_and_get(k: Any) -> Any:
                 return config_dict[crossref_check_and_cast(k)]
 
@@ -319,33 +318,30 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
             raise NotImplementedError("crossref not implemented on other types yet")
 
     def crossref_targets(key: str, value: Any) -> List[str]:
-        if type(value) == str:
+        if isinstance(value, str):
             return [value]
-        elif type(value) == list:
+        if isinstance(value, list):
             return list(map(crossref_check_and_cast, value))
-        elif isinstance(value, numbers.Number):
+        if isinstance(value, numbers.Number):
             # bools are instances of numbers.Number for some weird reason
             raise ValueError("crossref cannot be used with numbers and bools")
-        else:
-            raise NotImplementedError("crossref not implemented on other types yet")
+        raise NotImplementedError("crossref not implemented on other types yet")
 
     def crossref_rename(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[
         Tuple[Any, str]]:
         def change_if_target(x: str) -> str:
             if x == target_setting:
                 return replacement_setting
-            else:
-                return x
+            return x
 
-        if type(value) == str:
+        if isinstance(value, str):
             return [change_if_target(value)], "crossref"
-        elif type(value) == list:
+        if isinstance(value, list):
             return list(map(change_if_target, map(crossref_check_and_cast, value))), "crossref"
-        elif isinstance(value, numbers.Number):
+        if isinstance(value, numbers.Number):
             # bools are instances of numbers.Number for some weird reason
             raise ValueError("crossref cannot be used with numbers and bools")
-        else:
-            raise NotImplementedError("crossref not implemented on other types yet")
+        raise NotImplementedError("crossref not implemented on other types yet")
 
     directives['crossref'] = MetaDirective(action=crossref_action,
                                            target_settings=crossref_targets,
@@ -415,9 +411,9 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
             if isinstance(oldval, str):
                 # This is just regular subst
                 return subst_str(oldval, lambda key: config_dict[key])
-            elif isinstance(oldval, list):
+            if isinstance(oldval, list):
                 return list(map(do_subst, oldval))
-            elif isinstance(oldval, dict):
+            if isinstance(oldval, dict):
                 # We need to check for _deepsubst_meta here
                 newval = {}  # type: Dict
                 for k, v in oldval.items():
@@ -425,10 +421,10 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
                         if k.endswith("_deepsubst_meta"):
                             base = k.replace("_deepsubst_meta", "")
                             if base not in oldval:
-                                raise ValueError("Deepsubst meta key provided, but there is no matching base key: {}".format(k))
+                                raise ValueError(f"Deepsubst meta key provided, but there is no matching base key: {k}")
                             # Note that we don't add the meta back to newval.
                         else:
-                            meta_key = "{}_deepsubst_meta".format(k)
+                            meta_key = f"{k}_deepsubst_meta"
                             if meta_key in oldval:
                                 # Do the deepsubst_meta, whatever it is.
                                 meta = oldval[meta_key]
@@ -436,10 +432,10 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
                                     if isinstance(v, str):
                                         newval[k] = DeepSubstMetaDirectives[meta](v, params)
                                     else:
-                                        raise ValueError("Deepsubst metas not supported on non-string values: {}".format(str(v)))
+                                        raise ValueError(f"Deepsubst metas not supported on non-string values: {v}")
                                 else:
-                                    raise ValueError("Unknown deepsubst_meta type: {}. Valid options are [{}].".format(str(meta),
-                                        ", ".join(DeepSubstMetaDirectives.keys())))
+                                    err_keys = ", ".join(DeepSubstMetaDirectives.keys())
+                                    raise ValueError(f"Unknown deepsubst_meta type: {meta}. Valid options are [{err_keys}].")
                             else:
                                 newval[k] = do_subst(v)
                     else:
@@ -447,8 +443,7 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
                         # Will this ever happen? It's possible you could have {1: "foo"}...
                         newval[k] = do_subst(v)
                 return newval
-            else:
-                return oldval
+            return oldval
 
         config_dict[key] = do_subst(value)
 
@@ -459,7 +454,7 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
         if isinstance(value, str):
             # This is just regular subst
             return subst_targets(key, value)
-        elif isinstance(value, list) or isinstance(value, dict):
+        if isinstance(value, (dict, list)):
             # Recursively find all strings
             def find_strings(x: Union[List, Dict]) -> List[str]:
                 iterator = x  # type: Iterable[Any]
@@ -475,8 +470,7 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
                 return output
 
             return find_strings(value)
-        else:
-            raise ValueError("deepsubst cannot be used with this type: {}".format(type(value)))
+        raise ValueError(f"deepsubst cannot be used with this type: {value}")
 
     def deepsubst_rename(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[Tuple[Any, str]]:
         """
@@ -542,10 +536,9 @@ def reverse_unpack(input_dict: dict) -> dict:
     def get_subdict(parts: List[str], current_root: dict) -> dict:
         if len(parts) == 0:
             return current_root
-        else:
-            if parts[0] not in current_root:
-                current_root[parts[0]] = {}
-            return get_subdict(parts[1:], current_root[parts[0]])
+        if parts[0] not in current_root:
+            current_root[parts[0]] = {}
+        return get_subdict(parts[1:], current_root[parts[0]])
 
     for key, value in input_dict.items():
         key_parts = key.split(".")
@@ -602,20 +595,18 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
             # processed at the very end.
             if meta_type.startswith("dynamic"):
                 raise ValueError(
-                    "Found meta type {meta_type}. "
+                    f"Found meta type {meta_type}. "
                     "Dynamic meta directives were renamed to lazy meta directives after issue #134. "
-                    "Please change your metas from dynamic* to lazy*".format(
-                        meta_type=meta_type))
+                    "Please change your metas from dynamic* to lazy*")
             if meta_type.startswith("lazy"):
                 lazy_base_meta_type = meta_type[len("lazy"):]
 
                 if lazy_base_meta_type not in get_meta_directives():
-                    raise ValueError("The type of lazy meta variable %s is not supported (%s)" % (meta_key, meta_type))
+                    raise ValueError(f"The type of lazy meta variable {meta_key} is not supported ({meta_type})" % (meta_key, meta_type))
 
                 if seen_lazy:
                     raise ValueError("Multiple lazy directives in a single directive array not supported yet")
-                else:
-                    seen_lazy = True
+                seen_lazy = True
 
                 update_dict = {}  # type: dict
 
@@ -625,18 +616,15 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
                     # If it does, rename this lazy meta to reference a new base.
                     # e.g. if a (dict 2) -> a (dict 1), rename "a (dict 1)" to a_1.
                     next_index = _get_next_free_index(newdict)
-                    new_base_setting = "{setting}_{index}".format(
-                        setting=setting,
-                        index=next_index)
+                    new_base_setting = f"{setting}_{next_index}"
                     new_value_meta = get_meta_directives()[lazy_base_meta_type].rename_target(setting,
                                                                                               meta_dict[setting],
                                                                                               setting,
                                                                                               new_base_setting)  # type: Optional[Tuple[Any, str]]
                     if new_value_meta is None:
                         raise ValueError(
-                            "Failed to rename lazy setting which depends on itself ({})".format(setting))
-                    else:
-                        new_value, new_meta = new_value_meta
+                            f"Failed to rename lazy setting which depends on itself ({setting})")
+                    new_value, new_meta = new_value_meta
 
                     # Rename base setting to new_base_setting, and add the new setting.
                     update_dict.update({
@@ -656,14 +644,13 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
                     })
                 newdict.update(update_dict)
                 continue
-            else:
-                if seen_lazy:
-                    raise ValueError("Cannot use a non-lazy meta directive after a lazy one")
+            if seen_lazy:
+                raise ValueError("Cannot use a non-lazy meta directive after a lazy one")
 
             try:
                 meta_func = get_meta_directives()[meta_type].action
-            except KeyError:
-                raise ValueError("The type of meta variable %s is not supported (%s)" % (meta_key, meta_type))
+            except KeyError as exc:
+                raise ValueError(f"The type of meta variable {meta_key} is not supported ({meta_type})") from exc
             meta_func(newdict, setting, meta_dict[setting],
                       MetaDirectiveParams(meta_path=meta_dict.get(_CONFIG_PATH_KEY, "unspecified")))
             # Update meta_dict if there are multiple meta directives.
@@ -764,8 +751,8 @@ class HammerDatabase:
         :param check_type: Flag to enforce type checking
         :return: The given config
         """
-        CFG_PATH = os.path.join(os.path.dirname(os.getcwd()), "hammer-vlsi")
-        defaults = unpack(load_config_from_defaults(CFG_PATH)[1])
+        cfg_path = os.path.join(os.path.dirname(__file__), "..", "hammer-vlsi")
+        defaults = unpack(load_config_from_defaults(cfg_path)[1])
 
         IGNORE = ["vlsi.builtins.hammer_vlsi_path", "vlsi.builtins.is_complete"]
         if key not in self.get_config():
@@ -809,9 +796,8 @@ class HammerDatabase:
         """
         if key not in self.get_config_types():
             raise KeyError(f"Key type {key} is missing")
-        else:
-            value = self.get_config_types()[key]
-            return nullvalue if value is None else value
+        value = self.get_config_types()[key]
+        return nullvalue if value is None else value
 
     def set_setting_type(self, key: str, value: Any) -> None:
         """
@@ -843,7 +829,7 @@ class HammerDatabase:
 
         if value is None and not exp_value_type.optional:
             raise TypeError(f"Key {key} is missing and non-optional")
-        elif value is None and exp_value_type.optional:
+        if value is None and exp_value_type.optional:
             return True
 
         if exp_value_type.primary == NamedType.ANY:
@@ -959,19 +945,17 @@ def load_config_from_file(filename: str, strict: bool = False) -> dict:
         raise ValueError("Invalid config type " + filename)
 
     try:
-        with open(filename, "r") as f:
+        with open(filename, "r", encoding="utf-8") as f:
             file_contents = f.read()
     except FileNotFoundError as e:
         if strict:
             raise e
-        else:
-            # If the config didn't exist, just return a blank dictionary.
-            return {}
+        # If the config didn't exist, just return a blank dictionary.
+        return {}
 
     if file_contents.strip() == "":
         return {}
-    else:
-        return load_config_from_string(file_contents, is_yaml, path=os.path.dirname(filename))
+    return load_config_from_string(file_contents, is_yaml, path=os.path.dirname(filename))
 
 
 def combine_configs(configs: Iterable[dict]) -> dict:
@@ -1184,7 +1168,7 @@ def parse_setting_type(setting_type: str) -> ConfigType:
             tertiary_k=NamedType(recursive_type.tertiary_k),
             tertiary_v=NamedType(recursive_type.tertiary_v)
         )
-    elif primary_type == "list":
+    if primary_type == "list":
         if m_sec is None:
             raise RuntimeError("Not a valid inner configuration type")
         secondary_type_full = m_sec.group(1)
