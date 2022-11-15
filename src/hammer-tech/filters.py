@@ -308,6 +308,15 @@ class LibraryFilterHolder:
         return LibraryFilter.new("nxtgrd", "NxtGrd file", is_file=True, paths_func=select_nxtgrd_file)
 
     @property
+    def name_filter(self) -> LibraryFilter:
+        def select_name(lib: "Library") -> List[str]:
+            if lib.name is not None:
+                return [lib.name]
+            else:
+                return []
+        return LibraryFilter.new("name", "Library Name", is_file=False, paths_func=select_name)
+
+    @property
     def spice_model_file_filter(self) -> LibraryFilter:
         """Select spice model files."""
         def select_spice_model_file(lib: "Library") -> List[str]:
