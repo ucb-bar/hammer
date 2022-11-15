@@ -8,6 +8,7 @@
 
 import os
 import warnings
+import json
 from typing import TYPE_CHECKING, Any, Callable, List
 
 from library_filter import LibraryFilter
@@ -315,6 +316,21 @@ class LibraryFilterHolder:
             else:
                 return []
         return LibraryFilter.new("name", "Library Name", is_file=False, paths_func=select_name)
+
+    def name_and_X_filter(self, other_filters: List[LibraryFilter]) -> LibraryFilter:
+        def select_others(lib: "Library") -> List[str]:
+            other_data = []
+            for other_filter in other_filters:
+                other_data.extend(other_filter.paths_func(lib))
+            return other_data
+
+        def extract_name_and_others(lib: "Library", paths: List[str]) -> List[str]:
+            if lib.name is not None:
+                return [json.dumps({lib.name: paths})]
+            else:
+                return []
+
+        return LibraryFilter.new("name_and_more", "Library Details", is_file=False, paths_func=select_others, extraction_func=extract_name_and_others)
 
     @property
     def spice_model_file_filter(self) -> LibraryFilter:
