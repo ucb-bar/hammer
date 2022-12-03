@@ -9,10 +9,8 @@ STA Setup Keys
 
 * Namespace: ``vlsi.core``
 
-    * ``timing_tool_path``
-        * Set to the directory containing the tool plugin directory for the STA tool, typically ``/path/to/tool_plugin/timing``. This will be the parent directory of the directory containing ``__init__.py`` and ``defaults.yml``.
     * ``timing_tool``
-        * Actual name of the STA tool that is setup in the directory ``timing_tool_path``, e.g. ``tempus``
+        * Module of the STA tool, e.g. ``hammer.timing.tempus``
 
 STA Input Keys
 -------------------------------

@@ -9,10 +9,8 @@ Formal Verification Setup Keys
 
 * Namespace: ``vlsi.core``
 
-    * ``formal_tool_path``
-        * Set to the directory containing the tool plugin directory for the formal tool, typically ``/path/to/tool_plugin/formal``. This will be the parent directory of the directory containing ``__init__.py`` and ``defaults.yml``.
     * ``formal_tool``
-        * Actual name of the formal verification tool that is setup in the directory ``formal_tool_path``, e.g. ``conformal``
+        * Python module of the formal verification tool e.g. ``hammer.formal.conformal``
 
 Formal Verification Input Keys
 -------------------------------

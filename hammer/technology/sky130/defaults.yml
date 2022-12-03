@@ -1,0 +1,127 @@
+# Settings for the sky130 technology
+technology.sky130:
+  sky130A: "/path/to/sky130A" # This should be output files from the OpenPDKs compilation process.
+  # This is $PDK_ROOT/share/pdk/sky130A from the README.
+  # required
+
+  sky130_nda: "/path/to/skywater-src-nda" # sky130_nda directory contains the NDA files
+  # this key is OPTIONAL, no NDA files will be used if it does not point to a valid path
+  # By default, this is used to populate pdk_home below.
+  # It should contain s8/V2.0.1
+  
+  openram_lib: "/path/to/sky130_sram_macros" # RAM paths
+  # OpenRAM
+  
+  dffram_lib:  "/path/to/dffram/compiler/build" # DFFRAM currently not supported
+  
+  pdk_home: "${technology.sky130.sky130_nda}/s8/V2.0.1" # Shouldn't need to change these
+  pdk_home_meta: lazysubst
+  lvs_deck_sources: 
+    - "${technology.sky130.pdk_home}/LVS/Calibre/lvsControlFile_s8"
+  lvs_deck_sources_meta: lazysubst
+
+mentor.extra_env_vars_meta: lazydeepsubst # Mentor environment variables
+# Override this in project
+mentor.extra_env_vars:
+  - PDK_HOME: "${technology.sky130.sky130_nda}/s8/V2.0.1"
+
+drc.magic.rcfile: "${technology.sky130.sky130A}/libs.tech/magic/sky130A.magicrc" # Startup files for magic and netgen
+drc.magic.rcfile_meta: lazysubst
+lvs.netgen.setup_file: "${technology.sky130.sky130A}/libs.tech/netgen/setup.tcl"
+lvs.netgen.setup_file_meta: lazysubst
+
+# Set some defaults for this technology.
+vlsi:
+  core:
+    technology: sky130
+    node: 130
+    sram_generator_tool: "hammer.technology.sky130.sram_compiler"
+  inputs:
+    supplies: # Supply voltages.
+    # TODO: add ability to tie pin to net in Hammer Innovus plugin
+      power:  [ {name: "VDD",  pin: "VDD"}, 
+                {name: "VPWR", pin: "VPWR", tie: "VDD"},
+                {name: "VPB",  pin: "VPB" , tie: "VDD"}]
+      ground: [ {name: "VSS",  pin: "VSS"},
+                {name: "VGND", pin: "VGND", tie: "VSS"},
+                {name: "VNB",  pin: "VNB" , tie: "VSS"}]
+      VDD: "1.8 V"
+      GND: "0 V"
+
+    mmmc_corners: [
+      {
+        name: "ss_100C_1v60",
+        type: "setup",
+        voltage: "1.60 V",
+        temp: "100 C"
+      },
+      {
+        name: "ff_n40C_1v95",
+        type: "hold",
+        voltage: "1.95 V",
+        temp: "-40 C"
+      },
+      {
+        name: "tt_025C_1v80",
+        type: "extra",
+        voltage: "1.80 V",
+        temp: "25 C"
+      }
+    ] # mmmc corners config
+  technology:
+    placement_site: "unithd" # Set standard cell LEF placement site
+
+    bump_block_cut_layer: "via4" # Set the layer that blocks vias under bumps
+
+    tap_cell_interval: "15" # Set the interval and offset for tap cells
+    tap_cell_offset: "5"
+
+technology.core:
+  stackup: "sky130_fd_sc_hd" # This key should exist in the stackups list in the tech json
+  std_cell_rail_layer: "met1" # This should specify the TOPMOST metal layer the standard cells use for power rails
+  # Note that this is not usually stackup specific; it is based on the std cell libraries themselves
+  tap_cell_rail_reference: "sky130_fd_sc_hd__tap*" # This is used to provide a reference master for generating standard cells
+  std_cell_supplies: 
+  # default power pins are VDD/VSS
+    power:  ["VPWR"]
+    ground: ["VGND"]
+  
+synthesis.yosys:
+  latch_map_file: "${technology.sky130.sky130A}/libs.tech/openlane/sky130_fd_sc_hd/latch_map.v"
+  latch_map_file_meta: lazysubst
+
+par.inputs:
+  gds_merge: true
+  gds_map_mode: manual
+  gds_map_resource: ["hammer.technology.sky130/extra", "sky130_lefpin.map"]
+  gds_map_resource_meta: lazysubst
+
+par.openroad:
+  openrcx_techfile: ["hammer.technology.sky130.extra", "sky130hd.rcx_rules"]
+  openrcx_techfile_meta: lazysubst
+  klayout_techfile_source: "${technology.sky130.sky130A}/libs.tech/klayout/sky130A.lyt"
+  klayout_techfile_source_meta: lazysubst
+
+par.power_straps_mode: generate # Power Straps
+par.generate_power_straps_method: by_tracks
+par.blockage_spacing: 2.0
+par.blockage_spacing_top_layer: met4
+par.generate_power_straps_options:
+  by_tracks:
+    strap_layers:
+      - met2
+      - met3
+      - met4
+      - met5
+    pin_layers:
+      - met5
+    blockage_spacing_met2: 4.0
+    track_width: 6
+    track_width_met5: 2
+    track_spacing: 1
+    track_start: 10
+    track_start_met5: 1
+    power_utilization: 0.1
+    power_utilization_met2: 0.05
+    power_utilization_met4: 0.15
+    power_utilization_met5: 0.5

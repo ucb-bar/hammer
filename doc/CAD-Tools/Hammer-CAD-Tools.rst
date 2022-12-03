@@ -7,13 +7,16 @@ Hammer currently has open-source CAD tool plugins in the ``hammer/src/hammer-vls
 
 The structure of each repository is as follows:
 
-* ACTION
+* hammer
 
-    * TOOL_NAME
+    * ACTION
 
-        * ``__init__.py`` contains the methods needed to implement the tool
-        * ``defaults.yml`` contains the default Hammer IR needed by the tool
+        * TOOL_NAME
+
+            * ``__init__.py`` contains the methods needed to implement the tool
+            * ``defaults.yml`` contains the default Hammer IR needed by the tool
         
         
 ACTION is the Hammer action name (e.g. ``par``, ``synthesis``, ``drc``, etc.).
-TOOL_NAME is the name of the tool, which is referenced in your configuration. For example, having ``vlsi.core.par_tool_path: par_tool_foo`` in your configuration would expect a TOOL_NAME of ``par_tool_foo``.
+TOOL_NAME is the name of the tool, which is referenced in your configuration.
+For example, if ACTION is ``par`` and TOOL_NAME is ``par_tool_foo``, the configuration would reference it as ``hammer.par.par_tool_foo``.

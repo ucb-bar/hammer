@@ -1,0 +1,626 @@
+# Core configuration data types for the defaults for hammer-vlsi.
+# e.g. foo: str in this file means that the default type for foo is str.
+
+vlsi.core:
+  # Technology to use. hammer-vlsi will read this and load the appropriate technology libraries.
+  technology: str
+
+  # Technology node dimension (nm) to use.
+  # Some tools change what they do as this changes.
+  node: int
+
+  # Build system to use, if any.
+  build_system: str
+
+  # Synthesis tool to use.
+  synthesis_tool: str
+
+  # Place and route tool to use.
+  par_tool: str
+
+  # DRC tool to use.
+  drc_tool: str
+
+  # LVS tool to use.
+  lvs_tool: str
+
+  # SRAM Generator tool to use.
+  sram_generator_tool: str
+
+  # Sim tool to use.
+  sim_tool: str
+
+  # Power analysis tool to use.
+  power_tool: str
+
+  # Formal verification/check tool to use.
+  formal_tool: str
+
+  # Static timing analysis tool to use.
+  timing_tool: str
+
+  # PCB deliverable tool to use.
+  pcb_tool: str
+
+  # Maximum threads to use in a CAD tool invocation.
+  max_threads: int
+
+vlsi.technology:
+  # Placement site for macros. (Optional[str])
+  placement_site: Optional[str]
+
+  # Top cut/via layer for blockage under bumps. (Optional[str])
+  bump_block_cut_layer: Optional[str]
+
+  # Extra semiconductor IP libraries/stdcell libs/hard macros. (List[ExtraLibrary])
+  # ExtraLibrary is serialized as a list[dict[str, str]]
+  # TODO: Extralibrary does not have a clean JSON serialization as of late
+  extra_libraries: list[dict[str, Any]]
+
+  # Extra information about macro sizes.
+  extra_macro_sizes: list[dict[str, str]]
+
+  # Path where tarballs have been extracted.
+  extracted_tarballs_dir: Optional[str]
+
+# General VLSI inputs.
+# These will vary per run of hammer-vlsi.
+vlsi.inputs:
+  # Supply voltages and names
+  supplies:
+    power: list[dict[str, str]]
+    ground: list[dict[str, str]]
+    VDD: str
+    GND: str
+
+  hierarchical:
+    # Hierarchical par mode. (str)
+    mode: str
+
+    # Top RTL module in the hierarchical flow. (str)
+    top_module: str
+
+    # Used by HammerDriver to generate configurations for hierarchical place-and-route.
+    # type: (str)
+    config_source: str
+
+    # Manual hierarchical definitions used only if hierarchical_definition_source is set to manual mode.
+    manual_modules: list[dict[str, list]]
+
+    # Manual hierarchical placement constraints used only if hierarchical_definition_source is set to manual mode.
+    manual_placement_constraints: list[dict[str, list]]
+
+    # Manual hierarchical constraints. Overrides generic constraints on a per module basis.
+    constraints: list[dict[str, list]]
+
+  # ILMs for hierarchical mode.
+  ilms: list[dict[str, str]]
+
+  # Multi-mode multi-corner setups, overrides supplies
+  mmmc_corners: list[dict[str, str]]
+
+  # Clock ports of the top-level module.
+  clocks: list[dict[str, str]]
+
+  # Default output pin load capacitance.
+  default_output_load: int
+
+  # List of output load constraints.
+  output_loads: list[dict[str, str]]
+
+  # List of delay constraints.
+  delays: list[dict[str, str]]
+
+  # List of custom sdc constraints to use. (List[str])
+  custom_sdc_constraints: list[str]
+
+  # List of placement constraints for floorplanning.
+  placement_constraints: list[dict[str, Any]]
+
+  # Don't use list mode. (str)
+  dont_use_mode: str
+  # Optional: list of cells to mark as don't use
+  # type: list[str]
+  dont_use_list: list[str]
+
+  # Power specification mode. (str)
+  power_spec_mode: str
+  # Optional: Power specification type. (str)
+  power_spec_type: Optional[str]
+  # Optional: Contents of a power specification in the above type (str)
+  power_spec_contents: Optional[str]
+
+  # SRAM Parameters
+  sram_parameters: list[dict[str, Any]]
+
+  # Bumps settings mode. (str)
+  bumps_mode: str
+  # BumpsDefinition struct members
+  bumps:
+    # x (int) - number of bumps in the x dimension
+    x: int
+    # y (int) - number of bumps in the y dimension
+    y: int
+    # pitch (float) - pitch of bumps in microns
+    pitch: float
+    # cell (str) - Name of the default bump cell
+    cell: str
+    # assignments - List of BumpAssignment structs. You must specify one of name or no_connect.
+    assignments: list[dict[str, str]]
+
+  # Naming scheme for the bumps' actual physical pin designators
+  # type: str
+  bumps_pin_naming_scheme: str
+
+  # Pin placement mode. (str)
+  pin_mode: str
+  pin:
+    # Pin generation modes.
+    generate_mode: str
+
+    # List of PinAssignment Structs.
+    assignments: list[dict[str, str]]
+
+  # List of decap constraints (DecapConstraint struct).
+  decaps: list[dict[str, str]]
+
+  # SVG visualization of placement constraints and bumps for the current hierarchical module.
+  visualization:
+    # Type of visualization to draw
+    # type: str
+    mode: str
+    # Name of the desired output SVG file
+    # type: str
+    svg_file: str
+    # Depth of paths to shorten for better readability in the SVG
+    # type: int
+    shorten_path_depth: int
+
+vlsi.submit:
+  # The submit command to use. "none", "local", or null will run on the current host. See hammer_submit_command.py for other options.
+  command: str
+  # type: list[Dict[str, Dict[str, Any]]]
+  settings: list[dict[str, dict]]
+
+# Specific inputs for the synthesis tool.
+synthesis.inputs:
+  # Input files.
+  input_files: list[str]
+
+  # Top RTL module.
+  top_module: Optional[str]
+
+# Syntheis tool settings
+synthesis:
+  # Clock gating mode.
+  clock_gating_mode: str
+
+# inherit settings from vlsi.submit but allow us to override them
+synthesis.submit:
+  command: str
+  settings: list[dict[str, dict]]
+
+# Specific inputs for the place and route tool.
+par.inputs:
+  # Input post-synthesis netlist files.
+  input_files: list[str]
+
+  # Top RTL module.
+  top_module: Optional[str]
+
+  # Optional: SDC input file from post-synthesis.
+  post_synth_sdc: Optional[str]
+
+  # GDS output map mode.
+  # type: str
+  gds_map_mode: str
+  # Optional: GDS map file path. Used only if gds_map_mode above is set to manual.
+  # type: Optional[str]
+  gds_map_file: Optional[str]
+  # Optional: GDS map resource. Used if you want to point to a GDS map file inside a Python package.
+  gds_map_resource: Optional[list[str]]
+
+  # If true, tell the place and route tool to merge any library/macro GDSes into
+  # the final GDS.
+  # type: bool
+  gds_merge: bool
+
+  # Physical only cells mode.
+  # type: str
+  physical_only_cells_mode: str
+  # List of cells that are only physical.
+  # type: list[str]
+  physical_only_cells_list: list[str]
+
+  # GDS output precision. Controlled by a mode and a precision value.
+  # type: str
+  gds_precision_mode: str
+
+  # GDS output precision when written by PAR tool.
+  # type: int
+  gds_precision: int
+
+# Place-and-route settings
+par:
+  # Submission command settings
+  # inherit settings from vlsi.submit but allow us to override them
+  submit:
+    command: str
+    settings: list[dict[str, dict]]
+
+  # Power straps configuration.
+  power_straps_mode: str
+  power_straps_script_contents: Optional[str]
+
+  # Spacing around blocks and hardmacros in microns
+  blockage_spacing: float
+
+  # Top metal layer that is pulled back around blocks and hardmacros
+  # type: Optional[str]
+  blockage_spacing_top_layer: Optional[str]
+
+  # If power_straps_mode is 'generate', which method to use.
+  generate_power_straps_method: str
+
+  # Default settings for power strap generation modes
+  generate_power_straps_options:
+    by_tracks:
+      # Spacing from end of strap to a block or blockage
+      # type: Decimal
+      blockage_spacing: float
+
+      # Number of routing tracks to be consumed by an individual strap
+      # type: int
+      track_width: int
+
+      # The first track to contain a power stripe
+      # type: int
+      track_start: int
+
+      # Absolute offset for straps relative to the design bounding box origin
+      # type: Decimal
+      track_offset: float
+
+      # Number of routing tracks between sets of straps (0 is recommended)
+      # type: int
+      track_spacing: int
+
+      # Ratio of total routing tracks to dedicate to power straps, which is used to calculate set pitch
+      # type: float
+      power_utilization: float
+
+      # Layers to put power pins on
+      # type: list[str]
+      pin_layers: list[str]
+
+      # List of layers on which to place power straps (std cell rail layer is implied - do not include it)
+      # type: list[str]
+      strap_layers: list[str]
+
+# DRC settings
+drc.inputs:
+  # Top RTL module.
+  # type: str
+  top_module: Optional[str]
+
+  # Input layout file.
+  # type: str
+  layout_file: Optional[str]
+
+  # Valid modes are auto, manual, prepend, and append
+  # type: str
+  additional_drc_text_mode: str
+  # Custom DRC command text to add after the boilerplate commands at the top of the run file.
+  # type: str
+  additional_drc_text: str
+
+  # DRC rules to run.
+  # type: list[str]
+  drc_rules_to_run: list[str]
+
+# inherit settings from vlsi.submit but allow us to override them
+drc.submit:
+  command: str
+  settings: list[dict[str, dict]]
+
+# LVS settings
+lvs.inputs:
+  # Top RTL module.
+  top_module: Optional[str]
+
+  # Input layout file
+  layout_file: Optional[str]
+
+  # Input list of schematic files
+  schematic_files: list[str]
+
+  # Input list of ILMStructs
+  ilms: list[str]
+
+  # Valid modes are auto, manual, prepend, and append
+  additional_lvs_text_mode: str
+  # Custom LVS command text to add after the boilerplate commands at the top of the run file
+  additional_lvs_text: str
+
+lvs.submit:
+  command: str
+  settings: list[dict[str, dict]]
+
+# inherit settings from vlsi.submit but allow us to override them
+sram_generator.submit:
+  command: str
+  settings: list[dict[str, dict]]
+
+# PCB deliverable settings.
+pcb.inputs:
+  # Top RTL module.
+  top_module: Optional[str]
+
+pcb.submit:
+  # Submission command settings
+  # inherit settings from vlsi.submit but allow us to override them
+  command: str
+  settings: list[dict[str, dict]]
+
+technology.core:
+    # Key name for the technology stackup
+    # type: str
+    stackup: Optional[str]
+    # Key name for the technology's special cells
+    # type: str
+    special_cells: Optional[str]
+    # This should specify the TOPMOST metal layer the standard cells use for power rails
+    # type: str
+    std_cell_rail_layer: Optional[str]
+    # This is used to provide a reference master for generating standard cell rails
+    # type: str
+    tap_cell_rail_reference: Optional[str]
+
+    # Name of standard cell power/ground rails
+    std_cell_supplies:
+      power: list[str]
+      ground: list[str]
+
+# Specific inputs for the simulation tool.
+sim.inputs:
+  # Top RTL module for simulation
+  # type: str
+  top_module: Optional[str]
+
+  # Input files for simulation including verilog sources, testharness/testbench, etc.
+  # type: list[str]
+  input_files: list[str]
+
+  # Permissive options for the simulator generation
+  # type: list[str]
+  options: list[str]
+
+  # Define options passed when generating the simulation executable
+  # type: list[str]
+  defines: list[str]
+
+  # C compiler options used when generating the simulation executable
+  # type: list[str]
+  compiler_cc_opts: list[str]
+
+  # C linker options used when generating the simulation executable
+  # type: list[str]
+  compiler_ld_opts: list[str]
+
+  # Simulation timescale
+  # type: str
+  timescale: Optional[str]
+
+  # Benchmarks to run with the simulator executable
+  # type: list[str]
+  benchmarks: list[str]
+
+  # Maximum number of simulations to run in parallel.
+  # type: int
+  parallel_runs: int
+
+  # Hierarchical path to the top level instance of the "dut" from the testbench.
+  # type: str
+  tb_dut: str
+
+  # Name of the simulation testbench/test driver module
+  tb_name: str
+
+  # Simulation mode for simulation at different levels of the VLSI flow
+  # type: FlowLevel
+  level: str
+
+  # Path to a list of all registers in the design passed from synthesis or place-and-route
+  # type: str
+  all_regs: str
+
+  # Path to a list of all sequential standard cells in the design passed from synthesis or place-and-route
+  # type: str
+  seq_cells: str
+
+  # SDF File
+  # type: str
+  sdf_file: Optional[str]
+
+  # Simulation force value used for register initialization for gate level sims
+  # type: int
+  gl_register_force_value: int
+
+  # Turns time annotated sim on or off
+  # type: bool
+  timing_annotated: bool
+
+  # Settings related to activity file (SAIF) dumping
+  saif:
+    # How Hammer determines whether and when to start or stop the activity dumping
+    # type: str
+    mode: str
+    # The times the simulator should begin and end its dumping of the SAIF file.
+    # type: TimeValue
+    start_time: str
+    # type: TimeValue
+    end_time: str
+    # The raw triggers that will occur when the dump should start and when the dump should end.
+    # type: str
+    start_trigger_raw: str
+    end_trigger_raw: str
+
+  # Flags to run with the simulator
+  # type: list[str]
+  execution_flags: list[str]
+
+  # Flags that are to be pre-pended to the simulator execution flags in "execution_flags"
+  # type: list[str]
+  execution_flags_prepend: list[str]
+
+  # Flags that are to be appended to the simulator execution flags in "execution_flags"
+  # type: list[str]
+  execution_flags_append: list[str]
+
+  # Determines whether or not the simulation executable that is generated with the above inputs will actually be executed with the given flags or if the executable will just be generated in the specified run directory.
+  # type: bool
+  execute_sim: bool
+
+sim.submit:
+  command: str
+  settings: list[dict[str, dict]]
+
+# Specific inputs for the power tool.
+# These may vary based on the specific tool plugin
+power.inputs:
+  # Top RTL module for power analysis
+  # type: str
+  top_module: str
+
+  # The path to a place and route database of the design to be analyzed
+  # type: str
+  database: Optional[str]
+
+  # The name of the test bench from the simulation.
+  # type: str
+  tb_name: str
+
+  # The name of the device under test (DUT) from the simulation.
+  # type: str
+  tb_dut: str
+
+  # The paths of all spef (extraction) files needed for the design.
+  # type: list[str]
+  spefs: list[str]
+
+  # A list of paths to waveforms to be used for dynamic power analysis.
+  # type: list[str]
+  waveforms: list[str]
+
+  # A list of paths to SAIF activity files to be used for dynamic power analysis.
+  # type: list[str]
+  saifs: list[str]
+
+  # If overridden to ``true``, the power tool will report for only the extra MMMC corners, saving runtime.
+  # type: bool
+  extra_corners_only: bool
+
+  # A list of the paths to the design inputs files (HDL or netlist) for power analysis
+  # type: List[str]
+  input_files: list[str]
+
+  # SDC input file
+  # type: str
+  sdc: str
+
+  # Power report configs that are run in addition to the average power reports in power.inputs.waveforms
+  # type: List[PowerReport]
+  # PowerReport struct members:
+  # waveform_path (str) - Path to the waveform for the report
+  # module (str) - Optional. the path to the module to report power for (default here is the Chipyard top level)
+  # levels (int) - Optional. the number of levels in the design hierachy to report
+  # start_time (str) - Optional. The start time of the power report in the waveform
+  # end_time (str) - Optional. The end time of the power report in the waveform
+  # toggle_signal (str) - Optional. Path to the signal to generate report windows based on toggles
+  # num_toggles (int) - Optional (must be specified if num_toggles is specified). The number of toggles of the toggle_signal for each frame to report power
+  # frame_count (int) - Optional. The number of frames to report the power for
+  # report_name (str) - Optional. Name of the power report
+  # example: report_configs: [{waveform_path: "/path/to/fsdb", module: "chiptop", levels:3, start_time: "0ns", end_time: "1ns", toggle_signal:"/ChipTop/clock", num_toggles:1, frame_count:1000, report_name: "my_fsdb_report"}]
+  report_configs: list[dict[str, str]]
+
+  # Power analysis mode for different levels of the VLSI flow
+  # Valid options are:
+  #   "rtl" for rtl level power analysis
+  #   "syn" for post-syn power analysis
+  #   "par" for post-par power analysis
+  # type: FlowLevel
+  level: str
+
+  # Optional: A list of analysis start times corresponding to each waveform used for dynamic power analysis.
+  # type: Optional[List[str]]
+  start_times: list[str]
+
+  # Optional: A list of analysis end times corresponding to each waveform used for dynamic power analysis.
+  # type: Optional[List[str]]
+  end_times: list[str]
+
+power.submit:
+  command: str
+  settings: list[dict[str, dict]]
+
+# Specific inputs for the formal tool.
+formal.inputs:
+  # Check type to run. Support varies based on the specific tool plugin.
+  # type: str
+  check: str
+
+  # Input files.
+  # type: List[str]
+  input_files: list[str]
+
+  # The reference (golden) design files for equivalence checks
+  # type: List[str]
+  reference_files: list[str]
+
+  # Top RTL module for running verification on
+  # type: str
+  top_module: Optional[str]
+
+formal.submit:
+  command: str
+  settings: list[dict[str, dict]]
+
+# Specific inputs for the timing tool.
+timing.inputs:
+  # Input Verilog files.
+  # type: List[str]
+  input_files: list[str]
+
+  # Top RTL module
+  # type: str
+  top_module: Optional[str]
+
+  # Optional: SDC input file from post-synthesis.
+  # type: Optional[str]
+  post_synth_sdc: Optional[str]
+
+  # Optional: Input SPEF files from post-P&R.
+  # type: Optional[List[str]]
+  spefs: Optional[list[str]]
+
+  # Optional: Input SDF file
+  # type: Optional[str]
+  sdf_file: Optional[str]
+
+  # Max paths to report
+  # type: int
+  max_paths: int
+
+
+timing.submit:
+  command: str
+  settings: list[dict[str, dict]]
+
+technology.pcb:
+  # Desired pad opening diameter (in post-shrink um)
+  # type: Decimal
+  bump_pad_opening_diameter: Optional[int]
+
+  # Desired pad metal diameter (in post-shrink um)
+  # type: Decimal
+  bump_pad_metal_diameter: Optional[int]

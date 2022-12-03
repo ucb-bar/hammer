@@ -1,14 +1,14 @@
-Highly Agile Masks Made Effortlessly from RTL 
+Highly Agile Masks Made Effortlessly from RTL (HAMMER)
 =============================================
 
 This is the master (unstable) development branch.
 
 Documentation
 =============
-The main documentation is found at https://hammer-vlsi.readthedocs.io
-Docs sources are available at `doc/` for offline reading.
+The documentation is found at https://hammer-vlsi.readthedocs.io
+Doc sources are available at `doc/` for offline reading.
 
-Hammer currently requires Python 3.6+.
+Hammer currently requires Python 3.8+.
 
 For a deeper dive into available options and environment configuration:
 

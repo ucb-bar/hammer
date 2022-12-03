@@ -242,11 +242,9 @@ Example with the file ``test-config.yml``:
 
     vlsi:
         core:
-            technology: "nop"
-            technology_path: ["src/hammer-vlsi/technology"]
+            technology: "hammer.technology.nop"
 
-            synthesis_tool: "nop"
-            synthesis_tool_path: ["src/hammer-vlsi/synthesis"]
+            synthesis_tool: "hammer.synthesis.nop"
 
 ``test/syn-rundir/syn-output-history.yml`` after executing the command ``hammer-vlsi -p test-config.yml --obj_dir test syn``:
 
@@ -258,11 +256,7 @@ Example with the file ``test-config.yml``:
     synthesis.inputs.top_module: z1top.xdc # Modified by: test-config.yml
 
     vlsi.core.technology: nop # Modified by: test-config.yml
-    vlsi.core.technology_path: # Modified by: test-config.yml
-      - src/hammer-vlsi/technology
-    vlsi.core.synthesis_tool: nop # Modified by: test-config.yml
-    vlsi.core.synthesis_tool_path: # Modified by: test-config.yml
-      - src/hammer-vlsi/synthesis
+    vlsi.core.synthesis_tool: hammer.synthesis.nop # Modified by: test-config.yml
 
 Example with the files ``test-config.yml`` and ``test-config2.yml``, respectively:
 
@@ -274,11 +268,9 @@ Example with the files ``test-config.yml`` and ``test-config2.yml``, respectivel
 
     vlsi:
         core:
-            technology: "nop"
-            technology_path: ["src/hammer-vlsi/technology"]
+            technology: "hammer.technology.nop"
 
-            synthesis_tool: "nop"
-            synthesis_tool_path: ["src/hammer-vlsi/synthesis"]
+            synthesis_tool: "hammer.synthesis.nop"
 
   .. code-block:: yaml
 
@@ -289,19 +281,16 @@ Example with the files ``test-config.yml`` and ``test-config2.yml``, respectivel
     vlsi:
         core:
             technology: "${foo.subst}"
-            technology_path: ["/dev/null"]
-            technology_path_meta: subst
 
-            par_tool: "nop"
-            par_tool_path: ["src/hammer-vlsi/par"]
+            par_tool: "hammer.par.nop"
 
-    foo.subst: "nop2"
+    foo.subst: "hammer.technology.nop2"
 
 ``test/syn-rundir/par-output-history.yml`` after executing the command ``hammer-vlsi -p test-config.yml -p test-config2.yml --obj_dir test syn-par``:
 
   .. code-block:: yaml
 
-    foo.subst: nop2 # Modified by: test-config2.yml
+    foo.subst: hammer.technology.nop2 # Modified by: test-config2.yml
     par.inputs.input_files:  # Modified by: test-config2.yml
       - foo
       - bar
@@ -310,15 +299,9 @@ Example with the files ``test-config.yml`` and ``test-config2.yml``, respectivel
       - foo
       - bar
     synthesis.inputs.top_module: z1top.xdc # Modified by: test-config.yml
-    vlsi.core.technology: nop2 # Modified by: test-config.yml, test-config2.yml
-    vlsi.core.technology_path: # Modified by: test-config.yml, test-config2.yml
-      - /dev/null
-    vlsi.core.synthesis_tool: nop # Modified by: test-config.yml
-    vlsi.core.synthesis_tool_path: # Modified by: test-config.yml
-      - src/hammer-vlsi/synthesis
-    vlsi.core.par_tool: nop # Modified by: test-config2.yml
-    vlsi.core.par_tool_path: # Modified by: test-config2.yml
-      - src/hammer-vlsi/par
+    vlsi.core.technology: hammer.technology.nop2 # Modified by: test-config.yml, test-config2.yml
+    vlsi.core.synthesis_tool: hammer.synthesis.nop # Modified by: test-config.yml
+    vlsi.core.par_tool: hammer.par.nop # Modified by: test-config2.yml
 
 Key Description Lookup
 ----------------------

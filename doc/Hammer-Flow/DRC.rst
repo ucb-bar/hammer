@@ -9,13 +9,9 @@ DRC Setup Keys
 
 * Namespace: ``vlsi.core``
 
-    * ``drc_tool_path``
-
-        * Set to the directory containing the tool plugin directory for the DRC tool, typically ``/path/to/tool_plugin/drc``. This will be the parent directory of the directory containing ``__init__.py`` and ``defaults.yml``.
-
     * ``drc_tool``
         
-        * Actual name of the DRC tool that is setup in the directory, ``drc_tool_path``, e.g. ``calibre``
+        * Module of the DRC tool e.g. ``hammer.drc.calibre``
 
 DRC Input Keys
 --------------
