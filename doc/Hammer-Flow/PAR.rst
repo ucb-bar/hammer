@@ -11,13 +11,9 @@ P&R Setup Keys
 
 * Namespace: ``vlsi.core``
 
-    * ``par_tool_path``
-
-        * Set to the directory containing the tool plugin directory for the place-and-route tool, typically ``/path/to/tool_plugin/par``. This will be the parent directory of the directory containing ``__init__.py`` and ``defaults.yml``.
-
     * ``par_tool``
         
-        * Actual name of the P&R tool that is setup in the directory, ``par_tool_path``, e.g. ``innovus``
+        * Module of the P&R tool, e.g. ``hammer.par.innovus``
 
 
 P&R Input Keys

@@ -9,13 +9,8 @@ Synthesis Setup Keys
 
 * Namespace: ``vlsi.core``
   
-    * ``synthesis_tool_path``
-
-        * Set to the directory containing the tool plugin directory for the DRC tool, typically ``/path/to/tool_plugin/synthesis``. This will be the parent directory of the directory containing ``__init__.py`` and ``defaults.yml``.
-
     * ``synthesis_tool``
-
-        * Actual name of the synthesis tool that is setup in the directory ``synthesis_tool_path``, e.g. ``genus``
+        * Module of the synthesis tool, e.g. ``hammer.synthesis.genus``
 
 Synthesis Input Keys
 -------------------------------

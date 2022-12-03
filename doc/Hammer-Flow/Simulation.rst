@@ -9,10 +9,8 @@ Simulation Setup Keys
 
 * Namespace: ``vlsi.core``
 
-    * ``sim_tool_path``
-        * Set to the directory containing the tool plugin directory for the sim tool, typically ``/path/to/tool_plugin/sim``. This will be the parent directory of the directory containing ``__init__.py`` and ``defaults.yml``.
     * ``sim_tool``
-        * Actual name of the simulation tool that is setup in the directory ``sim_tool_path``, e.g. ``vcs``
+        * Module of the simulation tool, e.g. ``hammer.sim.vcs``
 
 Simulation Input Keys
 -------------------------------

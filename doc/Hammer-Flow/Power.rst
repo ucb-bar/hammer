@@ -9,10 +9,8 @@ Power Setup Keys
 
 * Namespace: ``vlsi.core``
 
-    * ``power_tool_path``
-        * Set to the directory containing the tool plugin directory for the power tool, typically ``/path/to/tool_plugin/power``. This will be the parent directory of the directory containing ``__init__.py`` and ``defaults.yml``.
     * ``power_tool``
-        * Actual name of the power tool that is setup in the directory ``power_tool_path``, e.g. ``voltus``
+        * Module of the power tool, e.g. ``hammer.power.voltus``
 
 Simulation Input Keys
 -------------------------------

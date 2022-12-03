@@ -1,0 +1,79 @@
+[tool.poetry]
+name = "hammer-vlsi"
+version = "0.0.1"
+description = "Hammer is a physical design framework that wraps around vendor specific technologies and tools to provide a single API to create ASICs."
+authors = ["Colin Schmidt <colin.schmidt@sifive.com>", "Edward Wang <edward.c.wang@compdigitec.com>", "John Wright <johnwright@eecs.berkeley.edu>"]
+maintainers = ["Harrison Liew <harrisonliew@berkeley.edu>", "Daniel Grubb <dpgrubb@berkeley.edu>"]
+readme = "README.md"
+repository = "https://github.com/ucb-bar/hammer"
+packages = [
+    {include = "hammer"}
+]
+
+[tool.poetry.scripts]
+hammer-generate-mdf = "hammer.shell.hammer_generate_mdf:main"
+get-config = "hammer.shell.get_config:main"
+hammer-vlsi = "hammer.shell.hammer_vlsi:main"
+hammer-shell-test = "hammer.shell.hammer_shell_test:main"
+readlink-array = "hammer.shell.readlink_array:main"
+yaml2json = "hammer.shell.yaml2json:main"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pydantic = "^1.9.2"
+PyYAML = "^6.0"
+"ruamel.yaml" = "^0.17.21"
+numpy = "^1.23.0"
+
+gdstk = { version = "^0.9.0", optional = true }
+
+[tool.poetry.extras]
+asap7 = ["gdstk"]
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.1"
+mypy = "^0.991"
+types-PyYAML = "^6.0.0"
+tox = "^3.25.1"
+Sphinx = "^5.1.1"
+sphinx-rtd-theme = "^1.0.0"
+myst-parser = "^0.18.0"
+pylint = "^2.15"
+
+[[tool.poetry.source]]
+name = "testpypi"
+url = "https://test.pypi.org/legacy/"
+default = false
+secondary = false
+
+[build-system]
+requires = ["poetry-core>=1.0.8", "setuptools>=65.3"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py38,py39,py310
+isolated_build = True
+
+[testenv]
+deps = pytest
+commands =
+  pytest tests/ {posargs}
+"""
+
+[tool.pylint.format]
+# Maximum number of characters on a single line.
+max-line-length = 120
+
+[tool.pylint.reports]
+output-format = "text"
+reports = true
+
+[tool.pylint."messages control"]
+
+# Disable no-else-return since it's sometimes clearer to use else
+# Also emulates a functional programming style
+# Disable len-as-condition since len(lst) == 0 is more clear on types
+# where as if <var> is confusing since it's not clear what <var> is.
+disable = ["no-else-return", "len-as-condition"]

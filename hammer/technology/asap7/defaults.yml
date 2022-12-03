@@ -1,0 +1,94 @@
+# Settings for the asap7 technology to be overriden by the project.
+technology.asap7:
+  tarball_dir: "libs" # Path to the directory which contains the asap7 Calibre decks tarball (i.e. ASAP7_PDK_CalibreDeck.tar)
+  pdk_install_dir: "${technology.asap7.tarball_dir}/asap7PDK_r1p7" # Path to the directory containing the PDK files
+  pdk_install_dir_meta: lazysubst
+  stdcell_install_dir: "${technology.asap7.tarball_dir}/asap7sc7p5t_27" # Path to the directory containing the standard cell collateral
+  stdcell_install_dir_meta: lazysubst
+
+# Set some defaults for this technology.
+# For quick performance evaluations, use the typical voltage+temperature corners.
+vlsi:
+  core.node: 28 # Technology dimension
+  # The PaR tool actually runs in the 4x scaled up lef/gds.
+  # after PaR, post_par_script in asap7/__init__.py will scale down the generated gds to 7nm.
+  inputs:
+    supplies: # Supply voltages.
+      VDD: "0.70 V"
+      GND: "0 V"
+    mmmc_corners: [
+      {
+        "name": "PVT_0P63V_100C",
+        "type": "setup",
+        "voltage": "0.63 V",
+        "temp": "100 C"
+      },
+      {
+        "name": "PVT_0P77V_0C",
+        "type": "hold",
+        "voltage": "0.77 V",
+        "temp": "0 C"
+      }
+    ] # mmmc corners config.
+
+  technology:
+    placement_site: "asap7sc7p5t" # Set standard cell LEF placement site
+
+    bump_block_cut_layer: "V9" # Set the layer that blocks vias under bumps
+
+    tap_cell_interval: "50" # Set the interval and offset for tap cells
+    tap_cell_offset: "10.564" # Set the interval and offset for tap cells
+
+
+technology.core:
+  stackup: "asap7_3Ma_2Mb_2Mc_2Md" # This key should exist in the stackups list in the tech json
+  std_cell_rail_layer: "M1" # This should specify the TOPMOST metal layer the standard cells use for power rails
+  # Note that this is not usually stackup specific; it is based on the std cell libraries themselves
+  tap_cell_rail_reference: "{TAPCELL*}" # This is used to provide a reference master for generating standard cells
+
+synthesis.yosys:
+  latch_map_resource: ["hammer.technology.asap7", "latch_map.v"]
+  latch_map_resource_meta: lazysubst
+
+par.inputs:
+  gds_merge: true # gds_merge: true is mandatory,
+  # The shrink script in __init__.py filters stdcells but expects all other input GDSs to be 4x upscaled.
+  # If user decides to set this to false, all other GDSs (e.g. hard macros) need to be 1x scaled
+  # TODO: change export_config_outputs for PaR inputs to expose gds_merge to output json
+
+par.power_straps_mode: generate # Power straps (most DRC-clean)
+par.generate_power_straps_method: by_tracks
+par.generate_power_straps_options:
+  by_tracks:
+    strap_layers:
+      - M3
+      - M4
+      - M5
+      - M6
+      - M7
+      - M8
+      - M9
+    pin_layers:
+      - M9
+    track_width: 7 # minimum allowed for M2 & M3
+    track_spacing: 0
+    track_spacing_M3: 28 # space straps apart evenly, in conjunction w/ track_utilization_M3
+    track_start: 10
+    power_utilization: 0.25
+    power_utilization_M3: 0.6 # together with track_spacing_M3 results in approx. 0.25 eff. utilization
+    power_utilization_M8: 1.0
+    power_utilization_M9: 1.0
+
+power.voltus:
+  lef_layer_map: "lefdefLayer.map"
+  lef_layer_map_meta: "prependlocal"
+
+mentor.extra_env_vars:
+  - VAR_M4_YOFFSET: "0"
+  - VAR_M5_XOFFSET: "0"
+  - VAR_M6_YOFFSET: "0"
+  - VAR_M7_XOFFSET: "0"
+mentor.layerprops: "calibre.layerprops"
+mentor.layerprops_meta: "prependlocal"
+drc.calibre.version: "2017.3_38.30" # 2017-year only Calibre supported by decks
+lvs.calibre.version: "2017.3_38.30"

@@ -9,13 +9,9 @@ LVS Setup Keys
 
 * Namespace: ``vlsi.core``
 
-    * ``lvs_tool_path``
-
-        * Set to the directory containing the tool plugin directory for the LVS tool, typically ``/path/to/tool_plugin/lvs``. This will be the parent directory of the directory containing ``__init__.py`` and ``defaults.yml``.
-
     * ``lvs_tool``
         
-        * Actual name of the lvs tool that is setup in the directory, ``lvs_tool_path``, e.g. ``calibre``
+        * Module of the lvs tool, e.g. ``hammer.lvs.calibre``
 
 LVS Input Keys
 --------------

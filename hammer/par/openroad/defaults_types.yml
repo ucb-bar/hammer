@@ -1,0 +1,40 @@
+# Configuration options and defaults for OpenROAD's par tools.
+# The values specified in this file are the defaults.
+
+par.openroad:
+  # Location of the binary.
+  openroad_bin: str
+  # this is just to make hammer happy (although, it is never called AFAICT).
+  # the version is actually calculated by the OpenROADTool class
+  version: str
+
+  # Generate the TCL file but do not run it yet.
+  generate_only: bool
+
+  create_archive_mode: Optional[str]
+  # generate the tar.gz archive of the current build/par-rundir directory with a runme.sh script to reproduce the results
+  # Valid options are:
+  # - after_error - if OpenROAD errors, create an archive of the run
+  # - always - create an archive after every par run (regardless of whether OpenROAD errors)
+  # - previous_run - create an archive of latest par run 
+  #                  (useful if OpenROAD gets stuck on endless optimization iterations but never actually "errors")
+  # - none - never create an archive
+
+  # Floorplanning SDC constraints to use.
+  # Valid options are:
+  # - blank - Specify no floorplanning constraints (likely won't work)
+  # - manual - Specify the contents of a manual SDC floorplanning script to use in floorplan_script_contents.
+  # - generate - Generate a floorplan from the hammer-vlsi config/IR.
+  # - auto - Use Innovus's `plan_design` command to auto-generate a floorplan. Will have poor, but sane results
+  #   If you specify this, you must also specify the floorplanning_script config below. The floorplanning_script config will be ignored in other modes.
+  # TODO(edwardw): Put in new floorplanning thing here when done.
+  floorplan_mode: str
+  floorplan_script_contents: Optional[str]
+
+  # Optional: OpenRCX RC tech file
+  # Should be set in technology plugin
+  openrcx_techfile: Optional[list[str]]
+
+  # Optional: KLayout tech file
+  # Should be set in technology plugin
+  klayout_techfile_source: Optional[str]

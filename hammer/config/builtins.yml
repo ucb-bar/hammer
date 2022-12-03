@@ -1,0 +1,9 @@
+# Built-in variables set by the hammer-vlsi system.
+# These settings should not be overridden.
+vlsi.builtins:
+  # Hammer will set this flag internally to false for Hammer IR snippets that
+  # are not full configs that can be used to drive a Hammer run.
+  # e.g. syn-outputs generated from a synthesis run that only contain
+  # synthesis.output.* keys.
+  # Users should not need to set or modify this key directly.
+  is_complete: true
