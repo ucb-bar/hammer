@@ -50,6 +50,12 @@ def syn_out_full_path(tmpdir: Path) -> str:
 def syn_to_par_out_path(tmpdir: Path) -> str:
     return os.path.join(syn_rundir(tmpdir), "syn_par_out.json")
 
+def obj_dir_path(tmpdir: Path) -> str:
+    return os.path.join(tmpdir / "obj_dir")
+
+def log_path(tmpdir: Path) -> str:
+    return os.path.join(tmpdir / "hammer-vlsi.log")
+
 
 postprocess_fn_type = Optional[Callable[[Dict[str, Any]], Dict[str, Any]]]
 top_module = "dummy"
@@ -101,7 +107,9 @@ def run_syn_to_par_with_output(tmpdir: Path) -> None:
             "-p", config_path(tmpdir),
             "--output", syn_out_path(tmpdir),
             "--syn_rundir", syn_rundir(tmpdir),
-            "--par_rundir", par_rundir(tmpdir)
+            "--par_rundir", par_rundir(tmpdir),
+            "--obj_dir", obj_dir_path(tmpdir),
+            "--log", log_path(tmpdir)
         ])
     assert cm.value.code == 0
     # Now run syn-to-par with the main config as well as the outputs.
@@ -112,7 +120,9 @@ def run_syn_to_par_with_output(tmpdir: Path) -> None:
             "-p", syn_out_path(tmpdir),
             "--output", syn_to_par_out_path(tmpdir),
             "--syn_rundir", syn_rundir(tmpdir),
-            "--par_rundir", par_rundir(tmpdir)
+            "--par_rundir", par_rundir(tmpdir),
+            "--obj_dir", obj_dir_path(tmpdir),
+            "--log", log_path(tmpdir)
         ])
     assert cm.value.code == 0
 
@@ -168,8 +178,10 @@ class TestCLIDriver:
                     "syn-to-par",  # action
                     "-p", config_path(tmpdir),
                     "--log", log_path,
+                    "--output", syn_out_path(tmpdir),
                     "--syn_rundir", syn_rundir(tmpdir),
-                    "--par_rundir", par_rundir(tmpdir)
+                    "--par_rundir", par_rundir(tmpdir),
+                    "--obj_dir", obj_dir_path(tmpdir),
                 ])
             assert cm.value.code == 1
         assert c.log_contains("Input config does not appear to contain valid synthesis outputs")
@@ -188,7 +200,10 @@ class TestCLIDriver:
                 "syn-par",  # action
                 "-p", config_path(tmpdir),
                 "--syn_rundir", syn_rundir(tmpdir),
-                "--par_rundir", par_rundir(tmpdir)
+                "--par_rundir", par_rundir(tmpdir),
+                "--obj_dir", obj_dir_path(tmpdir),
+                "--log", log_path(tmpdir),
+                "--output", syn_out_path(tmpdir),
             ])
             assert cm.value.code == 0
 
@@ -217,7 +232,9 @@ class TestCLIDriver:
                 "-p", config_path(tmpdir),
                 "--output", syn_out_path(tmpdir),
                 "--syn_rundir", syn_rundir(tmpdir),
-                "--par_rundir", par_rundir(tmpdir)
+                "--par_rundir", par_rundir(tmpdir),
+                "--obj_dir", obj_dir_path(tmpdir),
+                "--log", log_path(tmpdir)
             ])
         assert cm.value.code == 0
 
@@ -256,7 +273,9 @@ class TestCLIDriver:
                 "-p", config_unpacked_path,
                 "--output", syn_out_path(tmpdir),
                 "--syn_rundir", syn_rundir(tmpdir),
-                "--par_rundir", syn_rundir(tmpdir)
+                "--par_rundir", syn_rundir(tmpdir),
+                "--obj_dir", obj_dir_path(tmpdir),
+                "--log", log_path(tmpdir)
             ])
         assert cm.value.code == 0
 
@@ -310,7 +329,9 @@ class TestCLIDriver:
             CLIDriver().main(args=[
                 "auto",  # action
                 "-p", config_path(tmpdir),
-                "--obj_dir", syn_rundir(tmpdir)
+                "--obj_dir", syn_rundir(tmpdir),
+                "--log", log_path(tmpdir),
+                "--output", str(tmpdir / "output.json")
             ])
         assert cm.value.code == 0
 
@@ -350,7 +371,9 @@ class TestCLIDriver:
             CLIDriver().main(args=[
                 "auto",  # action
                 "-p", config_path(tmpdir),
-                "--obj_dir", syn_rundir(tmpdir)
+                "--obj_dir", syn_rundir(tmpdir),
+                "--log", log_path(tmpdir),
+                "--output", str(tmpdir / "output.json")
             ])
         assert cm.value.code == 0
 
@@ -378,7 +401,9 @@ class TestCLIDriver:
                 "-p", config_path(tmpdir),
                 "--output", syn_out_path(tmpdir),
                 "--syn_rundir", syn_rundir(tmpdir),
-                "--par_rundir", syn_rundir(tmpdir)
+                "--par_rundir", syn_rundir(tmpdir),
+                "--obj_dir", obj_dir_path(tmpdir),
+                "--log", log_path(tmpdir)
             ])
         assert cm.value.code == 0
 
@@ -409,7 +434,10 @@ class TestCLIDriver:
                 "syn",  # action
                 "-p", config_path(tmpdir),
                 "--syn_rundir", syn_rundir(tmpdir),
-                "--par_rundir", syn_rundir(tmpdir)
+                "--par_rundir", syn_rundir(tmpdir),
+                "--obj_dir", obj_dir_path(tmpdir),
+                "--log", log_path(tmpdir),
+                "--output", syn_out_path(tmpdir),
             ])
         assert cm.value.code == 0
 
@@ -455,6 +483,8 @@ class TestCLIDriver:
                 "-p", config_path(tmp_path),
                 "--output", syn_out_path(tmp_path),
                 "--syn_rundir", syn_rundir(tmp_path),
+                "--obj_dir", obj_dir_path(tmp_path),
+                "--log", log_path(tmp_path)
             ])
         assert cm.value.code == 0
 
@@ -466,6 +496,8 @@ class TestCLIDriver:
                 "-p", history_path,
                 "--output", syn_to_par_out_path(tmp_path),
                 "--syn_rundir", syn_rundir(tmp_path),
-                "--par_rundir", par_rundir(tmp_path)
+                "--par_rundir", par_rundir(tmp_path),
+                "--obj_dir", obj_dir_path(tmp_path),
+                "--log", log_path(tmp_path)
             ])
         assert cm.value.code == 0
