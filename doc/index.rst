@@ -1,14 +1,19 @@
-.. Hammer documentation master file, created by
-   sphinx-quickstart on Wed Sep 25 13:36:12 2019.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to Hammer's documentation!
 ==================================
 
-Hammer is a physical design framework that wraps around vendor specific technologies and tools to provide a single API to create ASICs. Hammer allows for reusability in ASIC design while still providing the designers leeway to make their own modifications.
+Hammer is a physical design framework that wraps around vendor specific technologies and tools to provide a single API to create ASICs.
+Hammer allows for reusability in ASIC design while still providing the designers leeway to make their own modifications.
 
-.. include:: Hammer-Intro.rst
+Introduction to Hammer
+===============================
+
+Hammer (Higly Agile Masks Made Efforlessly from RTL) is a framework for building physical design generators for digital VLSI flows.
+It is an evolving set of APIs that enable reuse in an effort to speed up VLSI flows, which have traditionally been entirely rebuilt for different projects, technologies, and tools.
+
+Hammer is able to generate scripts and collateral for a growing range of CAD tools while remaining technology-agnostic using a well-defined set of common APIs.
+Tool- and technology-specific concerns live inside plugins, implement APIs, and provide a set of working default configurations.
+
+The vision of Hammer is to reduce the cycle time on VLSI designs, enabling rapid RTL design space exploration and allowing a designer to investigate the impact of various parameters like timing constraints and floorplans without needing to worry about low-level details.
 
 .. toctree::
    :maxdepth: 3
@@ -17,29 +22,14 @@ Hammer is a physical design framework that wraps around vendor specific technolo
 
    Hammer-Basics/index
 
-   :maxdepth: 3
-   :caption: Technology:
-   :numbered:
    Technology/index
    
-   :maxdepth: 3
-   :caption: CAD Tools:
-   :numbered:
    CAD-Tools/index
 
-   :maxdepth: 3
-   :caption: Hammer Flow:
-   :numbered:
    Hammer-Flow/index
 
-   :maxdepth: 3
-   :caption: Hammer Use:
-   :numbered:
    Hammer-Use/index
 
-   :maxdepth: 3
-   :caption: Examples:
-   :numbered:
    Examples/index
 
 
