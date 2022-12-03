@@ -339,7 +339,7 @@ export lol=abc"cat"
         driver = hammer_vlsi.HammerDriver(
             hammer_vlsi.HammerDriver.get_default_driver_options()._replace(project_configs=[
                 proj_config
-            ]))
+            ], log_file=f"{tmpdir}/hammer-vlsi.log", obj_dir=f"{tmpdir}/obj_dir"))
 
         syn_tool = BadExportTool()
         driver.set_up_synthesis_tool(syn_tool, "bad_tool", run_dir=tmpdir)
@@ -712,7 +712,7 @@ export lol=abc"cat"
         driver = hammer_vlsi.HammerDriver(
             hammer_vlsi.HammerDriver.get_default_driver_options()._replace(project_configs=[
                 proj_config
-            ]))
+            ], log_file=f"{tmpdir}/hammer-vlsi.log", obj_dir=f"{tmpdir}/obj_dir"))
 
         # This should not assert
         hier_settings = driver.get_hierarchical_settings()
@@ -747,7 +747,7 @@ export lol=abc"cat"
         driver = hammer_vlsi.HammerDriver(
             hammer_vlsi.HammerDriver.get_default_driver_options()._replace(project_configs=[
                 proj_config
-            ]))
+            ], log_file=f"{tmpdir}/hammer-vlsi.log", obj_dir=f"{tmpdir}/obj_dir"))
 
         # This should assert because we mismatched SubModA's width and height with the master values
         with pytest.raises(ValueError):
