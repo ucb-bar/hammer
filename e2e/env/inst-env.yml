@@ -1,0 +1,7 @@
+mentor.mentor_home: "/share/instsww/mgc"
+mentor.MGLS_LICENSE_FILE: "1717@bwrcflex-1.eecs.berkeley.edu:1717@bwrcflex-2.eecs.berkeley.edu"
+cadence.cadence_home: "/home/ff/eecs151/hammer-tools/cadence"
+cadence.CDS_LIC_FILE: "5280@license-srv.eecs.berkeley.edu"
+synopsys.synopsys_home: "/home/ff/eecs151/hammer-tools/synopsys"
+synopsys.SNPSLMD_LICENSE_FILE: "27005@license-srv.eecs.berkeley.edu"
+synopsys.MGLS_LICENSE_FILE: "1717@bwrcflex-1.eecs.berkeley.edu:1717@bwrcflex-2.eecs.berkeley.edu"

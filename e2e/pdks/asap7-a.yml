@@ -1,0 +1,13 @@
+vlsi.core.technology: asap7
+technology.asap7.pdk_install_dir: "/nscratch/asap7/asap7-master/asap7PDK_r1p7"
+technology.asap7.stdcell_install_dir: "/nscratch/asap7/asap7-master/asap7sc7p5t_27"
+
+synthesis.genus.version: "211"
+par.innovus.version: "211"
+
+sim.vcs.version: "S-2021.09-SP1-1"
+sim.vcs.verdi_home: "/ecad/tools/synopsys/verdi/S-2021.09-SP1-1"
+sim.vcs.verdi_home_meta: lazysubst
+
+lvs.calibre.version: "2022.2_24.16"
+drc.calibre.version: "2022.2_24.16"
