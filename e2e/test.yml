@@ -1,0 +1,38 @@
+# Generate Make include to aid in tlow
+vlsi.core.build_system: make
+
+vlsi.inputs.power_spec_type: "cpf"
+vlsi.inputs.power_spec_mode: "auto"
+
+synthesis.inputs:
+  top_module: "pass"
+  input_files: ["src/pass.v"]
+
+# Specify clock signals
+vlsi.inputs.clocks: [
+  {name: "clock", period: "5ns", uncertainty: "0.1ns"}
+]
+
+# Tool options.
+vlsi.core.synthesis_tool: "hammer.synthesis.genus"
+
+vlsi.core.par_tool: "hammer.par.innovus"
+par.innovus.design_flow_effort: "standard"
+par.inputs.gds_merge: true
+par.innovus.floorplan_mode: "auto"
+vlsi.inputs.placement_constraints:
+  - path: "pass"
+    type: toplevel
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+    margins:
+      left: 0
+      right: 0
+      top: 0
+      bottom: 0
+
+vlsi.core.sim_tool: "hammer.sim.vcs"
+
+vlsi.core.lvs_tool: "hammer.lvs.calibre"
