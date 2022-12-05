@@ -1,0 +1,114 @@
+[
+  {
+    "type": "sram",
+    "name": "sramgen_sram_4096x32m8w8_replica_v1",
+    "source": "sram22",
+    "depth": "4096",
+    "width": 32,
+    "family": "1rw",
+    "mask": "true",
+    "vt": "svt",
+    "mux": 8,
+    "ports": [
+      {
+        "address port name": "addr",
+        "clock port name": "clk",
+        "write enable port name": "we",
+        "output port name": "dout",
+        "input port name": "din",
+        "mask port name": "wmask",
+        "mask granularity": 8,
+        "address port polarity": "active high",
+        "clock port polarity": "active high",
+        "write enable port polarity": "active high",
+        "output port polarity": "active high",
+        "input port polarity": "active high",
+        "mask port polarity": "active high"
+      }
+    ]
+  },
+  {
+    "type": "sram",
+    "name": "sramgen_sram_256x32m4w8_replica_v1",
+    "source": "sram22",
+    "depth": "256",
+    "width": 32,
+    "family": "1rw",
+    "mask": "true",
+    "vt": "svt",
+    "mux": 4,
+    "ports": [
+      {
+        "address port name": "addr",
+        "clock port name": "clk",
+        "write enable port name": "we",
+        "output port name": "dout",
+        "input port name": "din",
+        "mask port name": "wmask",
+        "mask granularity": 8,
+        "address port polarity": "active high",
+        "clock port polarity": "active high",
+        "write enable port polarity": "active high",
+        "output port polarity": "active high",
+        "input port polarity": "active high",
+        "mask port polarity": "active high"
+      }
+    ]
+  },
+  {
+    "type": "sram",
+    "name": "sramgen_sram_128x64m4w8_replica_v1",
+    "source": "sram22",
+    "depth": "128",
+    "width": 64,
+    "family": "1rw",
+    "mask": "true",
+    "vt": "svt",
+    "mux": 4,
+    "ports": [
+      {
+        "address port name": "addr",
+        "clock port name": "clk",
+        "write enable port name": "we",
+        "output port name": "dout",
+        "input port name": "din",
+        "mask port name": "wmask",
+        "mask granularity": 8,
+        "address port polarity": "active high",
+        "clock port polarity": "active high",
+        "write enable port polarity": "active high",
+        "output port polarity": "active high",
+        "input port polarity": "active high",
+        "mask port polarity": "active high"
+      }
+    ]
+  },
+  {
+    "type": "sram",
+    "name": "sramgen_sram_64x8m4w4_replica_v1",
+    "source": "sram22",
+    "depth": "64",
+    "width": 8,
+    "family": "1rw",
+    "mask": "true",
+    "vt": "svt",
+    "mux": 4,
+    "ports": [
+      {
+        "address port name": "addr",
+        "clock port name": "clk",
+        "write enable port name": "we",
+        "output port name": "dout",
+        "input port name": "din",
+        "mask port name": "wmask",
+        "mask granularity": 4,
+        "address port polarity": "active high",
+        "clock port polarity": "active high",
+        "write enable port polarity": "active high",
+        "output port polarity": "active high",
+        "input port polarity": "active high",
+        "mask port polarity": "active high"
+      }
+    ]
+  }
+]

@@ -1,0 +1,2 @@
+sramgen_sram_512x32m4w8_replica_v1
+sramgen_sram_64x32m4w32_replica_v1
