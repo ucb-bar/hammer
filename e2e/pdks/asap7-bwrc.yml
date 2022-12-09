@@ -1,4 +1,4 @@
-vlsi.core.technology: asap7
+vlsi.core.technology: "hammer.technology.asap7"
 technology.asap7.pdk_install_dir: "/tools/B/asap7/asap7PDK_r1p7"
 technology.asap7.stdcell_install_dir: "/tools/B/asap7/asap7sc7p5t_27"
 technology.asap7.tarball_dir: "/tools/B/asap7/"
