@@ -356,7 +356,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     def run_openroad(self) -> bool:
         # Quit OpenROAD.
-        self.append("exit")
+        self.verbose_append("exit")
 
         # Create par script.
         par_tcl_filename = os.path.join(self.run_dir, "par.tcl")
@@ -530,10 +530,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         remove_buffers
 
         # IO Placement (random)
-        {self.place_pins_tcl(random=True)}
-
         """)
-        
+        # {self.place_pins_tcl(random=True)}
         return True
     
 
@@ -601,6 +599,78 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         finally:
             self.logger.warning(
                 "You have not overridden place_tap_cells. By default this step adds a simple set of tapcells or does nothing; you will have trouble with power strap creation later.")
+        return True
+
+    def write_power_straps_tcl(self, power_straps_tcl_path) -> bool:
+        pwr_nets=self.get_all_power_nets()
+        gnd_nets=self.get_all_ground_nets()
+        primary_pwr_net=pwr_nets[0].name
+        primary_gnd_net=gnd_nets[0].name
+        all_metal_layer_names = [layer.name for layer in self.get_stackup().metals]
+
+        strap_layers = self.get_setting("par.generate_power_straps_options.by_tracks.strap_layers").copy()
+        std_cell_rail_layer = str(self.get_setting("technology.core.std_cell_rail_layer"))
+        strap_layers.insert(0,std_cell_rail_layer)
+        
+        add_pdn_connect_tcl=""
+        for i in range(0,len(strap_layers)-1):
+            add_pdn_connect_tcl+=f"add_pdn_connect -grid grid -layers {{{strap_layers[i]} {strap_layers[i+1]}}}\n"
+        
+        global_connections_pwr_tcl=f"add_global_connection -net {{{primary_pwr_net}}} -inst_pattern {{.*}} -pin_pattern {{^{primary_pwr_net}$}} -power"
+        global_connections_gnd_tcl=f"add_global_connection -net {{{primary_gnd_net}}} -inst_pattern {{.*}} -pin_pattern {{^{primary_gnd_net}$}} -ground"
+        for pwr_net in pwr_nets:
+            if pwr_net.tie is not None:
+                global_connections_pwr_tcl += f"\n add_global_connection -net {{{primary_pwr_net}}} -inst_pattern {{.*}} -pin_pattern {{{pwr_net.name}}}"
+        for gnd_net in gnd_nets:
+            if gnd_net.tie is not None:
+                global_connections_gnd_tcl += f"\n add_global_connection -net {{{primary_gnd_net}}} -inst_pattern {{.*}} -pin_pattern {{{gnd_net.name}}}"
+
+        blockage_spacing = self.get_setting("par.blockage_spacing")
+        blockage_spacing_halo = ' '.join([str(blockage_spacing) for i in range(4)])
+        
+        tcl = f"""
+        ####################################
+        # global connections
+        ####################################
+        {global_connections_pwr_tcl}
+        {global_connections_gnd_tcl}
+        # add_global_connection -net {{primary_pwr_net}} -inst_pattern {{.*}} -pin_pattern {{^VDDPE$}}
+        # add_global_connection -net {{primary_pwr_net}} -inst_pattern {{.*}} -pin_pattern {{^VDDCE$}}
+        # add_global_connection -net {{primary_gnd_net}} -inst_pattern {{.*}} -pin_pattern {{^VSSE$}}
+        global_connect
+        ####################################
+        # voltage domains
+        ####################################
+        # AO is hard-coded in cpf generation too
+        #   but OpenROAD errors when using AO instead of CORE
+        set_voltage_domain -name {{CORE}} -power {{{primary_pwr_net}}} -ground {{{primary_gnd_net}}}
+        ####################################
+        # standard cell grid
+        ####################################
+        define_pdn_grid -name {{grid}} -voltage_domains {{CORE}}
+        {' '.join(self.create_power_straps_tcl())}
+        {add_pdn_connect_tcl}
+        ####################################
+        # macro grids
+        ####################################
+        ####################################
+        # grid for: CORE_macro_grid_1
+        ####################################
+        # TODO: generate this!!! met4/met5 hardcoded
+        define_pdn_grid -name {{CORE_macro_grid_1}} -voltage_domains {{CORE}} -macro -orient {{R0 R180 MX MY}} -halo {{ {blockage_spacing_halo} }} -default -grid_over_boundary
+        add_pdn_connect -grid {{CORE_macro_grid_1}} -layers {{met3 met4}}
+        
+        ####################################
+        # grid for: CORE_macro_grid_2
+        ####################################
+        define_pdn_grid -name {{CORE_macro_grid_2}} -voltage_domains {{CORE}} -macro -orient {{R90 R270 MXR90 MYR90}} -halo {{ {blockage_spacing_halo} }} -default -grid_over_boundary
+        add_pdn_connect -grid {{CORE_macro_grid_2}} -layers {{met3 met4}}
+        """
+
+        with open(power_straps_tcl_path,'w') as power_straps_tcl_file:
+            for line in tcl.split('\n'):
+                power_straps_tcl_file.write(line.strip()+'\n')
+        
         return True
 
     def generate_pdn_config(self, pdn_config_path) -> bool:
@@ -701,13 +771,16 @@ pdngen::specify_grid macro {{
     
     def power_straps(self) -> bool:
         """Place the power straps for the design."""
-        power_straps_tcl_path = os.path.join(self.run_dir, "power_straps.pdn")
-        # power_straps_tcl_path = os.path.join(self.run_dir, "power_straps.tcl")
-        self.generate_pdn_config(power_straps_tcl_path)
+        # power_straps_tcl_path = os.path.join(self.run_dir, "power_straps.pdn")
+        power_straps_tcl_path = os.path.join(self.run_dir, "power_straps.tcl")
+        # self.generate_pdn_config(power_straps_tcl_path)
+        self.write_power_straps_tcl(power_straps_tcl_path)
         self.block_append(f"""
         ################################################################
         # Power distribution network insertion
-        pdngen -verbose {power_straps_tcl_path}
+        # pdngen -verbose {power_straps_tcl_path}
+        source -verbose {power_straps_tcl_path}
+        pdngen -verbose
         """)
         return True 
 
@@ -768,25 +841,42 @@ pdngen::specify_grid macro {{
                     ver_layers.append(pin_layer_name)
         # determine commands for side specified in pin assignments
         #   can only be done in openroad by "excluding" the entire length of the other 3 sides from pin placement
-        side=""
+        
+        cmds = ""
         for pin in pin_assignments:
-            if pin.side == "bottom":
-                side="-exclude top:* -exclude right:* -exclude left:*"
-            elif pin.side == "top":
-                side="-exclude bottom:* -exclude right:* -exclude left:*"
-            elif pin.side == "left":
-                side="-exclude top:* -exclude right:* -exclude bottom:*"
-            elif pin.side == "right":
-                side="-exclude top:* -exclude bottom:* -exclude left:*"
-
-        return f"place_pins {random_arg} -hor_layers {{{' '.join(hor_layers)}}} -ver_layers {{{' '.join(ver_layers)}}} {side}"
+            
+            if '*' not in pin.pins:
+                # cmds += "place_pin -pin_name {n} -layer {l} -location {{{xy}}}\n".format(
+                #     n=pin.name,
+                #     l=pin.layers[0],
+                #     xy=" ".join(pin.location)
+                # )
+                cmd = [
+                    "place_pin", "-pin_name", pin.pins,
+                    "-layer", pin.layers[0],
+                    "-location", f"{{{pin.location[0]} {pin.location[1]}}}",
+                    "-pin_size", f"{{{pin.width} {pin.depth}}}",
+                ]
+                cmds += " ".join(cmd) + '\n'
+            else:
+                side=""
+                # if pin.side == "bottom":
+                #     side="-exclude top:* -exclude right:* -exclude left:*"
+                # elif pin.side == "top":
+                #     side="-exclude bottom:* -exclude right:* -exclude left:*"
+                # elif pin.side == "left":
+                #     side="-exclude top:* -exclude right:* -exclude bottom:*"
+                # elif pin.side == "right":
+                #     side="-exclude top:* -exclude bottom:* -exclude left:*"
+                cmds += f"place_pins {random_arg} -hor_layers {{{' '.join(hor_layers)}}} -ver_layers {{{' '.join(ver_layers)}}} {side}\n"
+        return cmds
 
     def io_placement(self) -> bool:
         self.block_append(f"""
         ################################################################
         # IO Placement
-        {self.place_pins_tcl()}
         """)
+        self.verbose_append(self.place_pins_tcl())
         return True
 
     
@@ -799,7 +889,8 @@ pdngen::specify_grid macro {{
         ################################################################
         # Global placement (with placed IOs, timing-driven, and routability-driven)
         set_dont_use {{{' '.join(self.get_dont_use_list())}}}
-        set_global_routing_layer_adjustment {metals[0].name}-{metals[-1].name} 0.3
+        # reduce the routing resources of all routing layers by 50%
+        set_global_routing_layer_adjustment {metals[0].name}-{metals[-1].name} 0.5
         set_routing_layers -signal {metals[0].name}-{metals[-1].name} -clock {metals[idx_clock_bottom_metal].name}-{metals[-1].name}
         # creates blockages around macros
         # set_macro_extension 2
@@ -807,7 +898,7 @@ pdngen::specify_grid macro {{
         # -density default is 0.7, overflow default is 0.1
         # set overflow higher (ex. 0.8) to make faster
         global_placement -routability_driven -overflow 0.2 -pad_left 4 -pad_right 4
-        # TODO: -routability_driven breaks this!!!
+        # TODO: -routability_driven sometimes breaks this!!!
 
         # estimate_parasitics -placement
         """)
@@ -957,7 +1048,8 @@ pdngen::specify_grid macro {{
         self.block_append(f"""
         ################################################################
         # Global routing
-        set_global_routing_layer_adjustment {metals[0].name}-{metals[-1].name} 0.7
+        # reduce the routing resources of all routing layers by 20%
+        set_global_routing_layer_adjustment {metals[0].name}-{metals[-1].name} 0.2
         set_routing_layers -signal {metals[0].name}-{metals[-1].name} -clock met3-met5
         # hard-coded in the example OpenROAD scripts
         # set_macro_extension 2
@@ -965,7 +1057,7 @@ pdngen::specify_grid macro {{
         # pin_access - this command caused openroad to crash
         # -allow_congestion and -allow_overflow added for now
 
-        global_route -allow_congestion -congestion_iterations 200 -verbose \\
+        global_route -congestion_iterations 200 -verbose \\
                      -guide_file {self.route_guide_path} 
 
         set_propagated_clock [all_clocks]
@@ -986,12 +1078,12 @@ pdngen::specify_grid macro {{
         set_thread_count {self.get_setting("vlsi.core.max_threads")}
 
         # NOTE: many other arguments available
-        detailed_route -guide {self.route_guide_path} \\
+        detailed_route \\
             -bottom_routing_layer {metals[0].name} \\
             -top_routing_layer {metals[-1].name} \\
-            -output_guide {self.run_dir}/{self.top_module}_output_guide.mod \\
             -output_drc {self.run_dir}/{self.top_module}_route_drc.rpt \\
             -output_maze {self.run_dir}/{self.top_module}_maze.log \\
+            -save_guide_updates \\
             -verbose 1
         """)
         return True
@@ -1024,7 +1116,7 @@ pdngen::specify_grid macro {{
         source_path = Path(self.get_setting("par.openroad.klayout_techfile_source"))
         klayout_techfile_filename = os.path.basename(source_path)
         if not source_path.exists():
-            self.logger.error("Klayout techfiles not specified in tech plugin. Klayout won't be able to write GDS file.")
+            self.logger.error(f"Klayout techfile not specified in tech plugin or doesn't exist. Klayout won't be able to write GDS file. (par.openroad.klayout_techfile_source: {source_path})")
             return False
             # raise FileNotFoundError(f"Klayout techfile not found: {source_path}")
 
@@ -1047,6 +1139,8 @@ pdngen::specify_grid macro {{
                 self.logger.info("Modifying Klayout Techfile: {} -> {}".format
                     (source_path, dest_path))
                 for line in sf:
+                    if "<lef-files>merged.lef</lef-files>" in line:
+                        continue
                     if '</lefdef>' in line:
                         df.write(insert_lines)
                     df.write(line)
@@ -1201,6 +1295,26 @@ pdngen::specify_grid macro {{
         """
         return f"initialize_floorplan -site {site} -die_area {{ 0 0 {width} {height}}} -core_area {{{left} {bottom} {width-right-left} {height-top-bottom}}}"
 
+    def rotate_coordinates(self, origin: Tuple[Decimal, Decimal], size: Tuple[Decimal, Decimal], orientation: str) -> Tuple[Decimal, Decimal]:
+        x,y = origin
+        width,height = size
+        if orientation == 'r0':
+            return (x,y)
+        elif orientation == 'r90':
+            return (x+height,y)
+        elif orientation == 'r180':
+            return (x+width,y+height)
+        elif orientation == 'r270':
+            return (x,y+width)
+        elif orientation == 'mx':
+            return (x,y+height)
+        elif orientation == 'my':
+            return (x+width,y)
+        elif orientation == 'mx90':
+            return (x,y)
+        elif orientation == 'my90':
+            return (x+height,y+width)
+
     def generate_floorplan_tcl(self) -> List[str]:
         """
         Generate a TCL floorplan for OpenROAD based on the input config/IR.
@@ -1223,6 +1337,7 @@ pdngen::specify_grid macro {{
 
         floorplan_constraints = self.get_placement_constraints()
         global_top_layer = self.get_setting("par.blockage_spacing_top_layer") #  type: Optional[str]
+        floorplan_origin_pos = self.get_setting("par.openroad.floorplan_origin_pos")
 
         ############## Actually generate the constraints ################
         for constraint in floorplan_constraints:
@@ -1250,11 +1365,11 @@ pdngen::specify_grid macro {{
                 # openroad names orientations differently from hammer
                 #   hammer:   r0|r90|r180|r270|mx|my|mx90 |my90
                 #   openroad: R0|R90|R180|R270|MX|MY|MXR90|MYR90
-                orientation = orientation.upper()
+                openroad_orientation = orientation.upper()
                 if constraint.orientation == "mx90":
-                    orientation = "MXR90"
+                    openroad_orientation = "MXR90"
                 elif constraint.orientation == "my90":
-                    orientation = "MYR90"
+                    openroad_orientation = "MYR90"
                 if constraint.create_physical:
                     pass
                 if constraint.type == PlacementConstraintType.Dummy:
@@ -1263,8 +1378,15 @@ pdngen::specify_grid macro {{
                     pass
                 # for OpenROAD
                 elif constraint.type in [PlacementConstraintType.HardMacro, PlacementConstraintType.Hierarchical]:
+                    x,y = constraint.x, constraint.y
+                    if floorplan_origin_pos == 'bottom_left':
+                        if constraint.width == None or constraint.height == None:
+                            self.logger.warning("Floorplan origin position 'bottom_left' cannot be applied to macro {new_path} because macro width/height are unspecified. Reverting to 'rotated' mode.")
+                        else:
+                            x,y = self.rotate_coordinates( (constraint.x,constraint.y), (constraint.width, constraint.height),  orientation )
+
                     inst_name=new_path
-                    floorplan_cmd = f"place_cell -inst_name {inst_name} -orient {orientation} -origin {{ {constraint.x} {constraint.y} }} -status FIRM"
+                    floorplan_cmd = f"place_cell -inst_name {inst_name} -orient {openroad_orientation} -origin {{ {x} {y} }} -status FIRM"
                     
                     output.append("# only place macro if it is present in design")
                     output.append(f'if {{[[set block [ord::get_db_block]] findInst {inst_name}] == "NULL"}} {{')
@@ -1284,10 +1406,31 @@ pdngen::specify_grid macro {{
                     # TODO: find equivalent for place/route halo in OpenROAD
 
                 elif constraint.type == PlacementConstraintType.Obstruction:
+                    # TODO: can OpenROAD even do this?!
                     pass
                 else:
                     assert False, "Should not reach here"
         return [chip_size_constraint] + output
+
+    def specify_std_cell_power_straps(self, blockage_spacing: Decimal, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
+        """
+        Generate a list of TCL commands that build the low-level standard cell power strap rails.
+        This will use the -master option to create power straps based on technology.core.tap_cell_rail_reference.
+        The layer is set by technology.core.std_cell_rail_layer, which should be the highest metal layer in the std cell rails.
+        :param bbox: The optional (2N)-point bounding box of the area to generate straps. By default the entire core area is used.
+        :param nets: A list of power net names (e.g. ["VDD", "VSS"]). Currently only two are supported.
+        :return: A list of TCL commands that will generate power straps on rails.
+        """
+        layer_name = self.get_setting("technology.core.std_cell_rail_layer")
+        layer = self.get_stackup().get_metal(layer_name)
+        # core_site_height = self.technology.config.sites[0].y
+        width = 2*layer.min_width
+        # pitch = 2*core_site_height  # since power/gnd rails alternate
+        tcl=[]
+        # followpins indicates that the stripe forms part of the stdcell rails, pitch and spacing are dictated by the stdcell rows, the -width is not needed if it can be determined from the cells
+        tcl.append(f"add_pdn_stripe -grid {{grid}} -layer {{{layer.name}}} -width {width} -offset 0 -followpins\n")
+        #  -pitch {pitch} 
+        return tcl
 
     def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool) -> List[str]:
         """
@@ -1308,8 +1451,8 @@ pdngen::specify_grid macro {{
         :return: A list of TCL commands that will generate power straps.
         """
         pdn_cfg = [f" {layer_name} {{width {width} pitch {pitch} offset {offset}}}"]
-        tcl = [f"add_pdn_stripe -grid {{grid}} -layer {{{layer_name}}} -width {width} -pitch {pitch} -offset {offset}\n"]
-        return pdn_cfg
+        tcl = [f"add_pdn_stripe -grid {{grid}} -layer {{{layer_name}}} -width {width} -pitch {pitch} -offset {offset} -spacing {spacing}\n"]
+        return tcl
     
     def process_sdc_file(self,post_synth_sdc) -> str:
         # overwrite SDC file to exclude group_path command

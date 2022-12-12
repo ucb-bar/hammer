@@ -34,7 +34,7 @@
     "depth": "64",
     "width": 32,
     "family": "1rw",
-    "mask": "true",
+    "mask": "false",
     "vt": "svt",
     "mux": 4,
     "ports": [

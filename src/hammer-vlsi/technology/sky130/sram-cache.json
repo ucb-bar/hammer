@@ -1,55 +1,181 @@
 [
-  {
-    "type": "sram",
-    "name": "sramgen_sram_512x32m4w8_replica_v1",
-    "source": "sram22",
-    "depth": "512",
-    "width": 32,
-    "family": "1rw",
-    "mask": "true",
-    "vt": "svt",
-    "mux": 4,
-    "ports": [
-      {
-        "address port name": "addr",
-        "address port polarity": "active high",
-        "clock port name": "clk",
-        "clock port polarity": "active high",
-        "write enable port name": "we",
-        "write enable port polarity": "active high",
-        "output port name": "dout",
-        "output port polarity": "active high",
-        "input port name": "din",
-        "input port polarity": "active high",
-        "mask port name": "wmask",
-        "mask granularity": 8,
-        "mask port polarity": "active high"
-      }
-    ]
-  },
-  {
-    "type": "sram",
-    "name": "sramgen_sram_64x32m4w32_replica_v1",
-    "source": "sram22",
-    "depth": "64",
-    "width": 32,
-    "family": "1rw",
-    "mask": "true",
-    "vt": "svt",
-    "mux": 4,
-    "ports": [
-      {
-        "address port name": "addr",
-        "address port polarity": "active high",
-        "clock port name": "clk",
-        "clock port polarity": "active high",
-        "write enable port name": "we",
-        "write enable port polarity": "active high",
-        "output port name": "dout",
-        "output port polarity": "active high",
-        "input port name": "din",
-        "input port polarity": "active high"
-      }
-    ]
-  }
-]
+
+{
+  "type" : "sram",
+  "name" : "sky130_sram_1kbyte_1rw1r_32x256_8",
+  "depth" : "256",
+  "width" : 32,
+  "family" : "1rw1r",
+  "mask" : "true",
+  "ports": [ {
+    "address port name" : "addr0",
+    "address port polarity" : "active high",
+    "clock port name" : "clk0",
+    "clock port polarity" : "positive edge",
+    "write enable port name" : "web0",
+    "write enable port polarity" : "active low",
+    "output port name" : "dout0",
+    "output port polarity" : "active high",
+    "input port name" : "din0",
+    "input port polarity" : "active high",
+    "chip enable port name" : "csb0",
+    "chip enable port polarity" : "active low",
+    "mask port name" : "wmask0",
+    "mask port polarity" : "active high",
+    "mask granularity" : 8
+  }, {
+    "address port name" : "addr1",
+    "address port polarity" : "active high",
+    "clock port name" : "clk1",
+    "clock port polarity" : "positive edge",
+    "output port name" : "dout1",
+    "output port polarity" : "active high",
+    "chip enable port name" : "csb1",
+    "chip enable port polarity" : "active low"
+  } ],
+  "extra ports" : []
+},
+
+{
+  "type" : "sram",
+  "name" : "sky130_sram_1kbyte_1rw1r_8x1024_8",
+  "depth" : "1024",
+  "width" : 8,
+  "family" : "1rw1r",
+  "mask" : "true",
+  "ports": [ {
+    "address port name" : "addr0",
+    "address port polarity" : "active high",
+    "clock port name" : "clk0",
+    "clock port polarity" : "positive edge",
+    "write enable port name" : "web0",
+    "write enable port polarity" : "active low",
+    "output port name" : "dout0",
+    "output port polarity" : "active high",
+    "input port name" : "din0",
+    "input port polarity" : "active high",
+    "chip enable port name" : "csb0",
+    "chip enable port polarity" : "active low",
+    "mask port name" : "wmask0",
+    "mask port polarity" : "active high",
+    "mask granularity" : 8
+  }, {
+    "address port name" : "addr1",
+    "address port polarity" : "active high",
+    "clock port name" : "clk1",
+    "clock port polarity" : "positive edge",
+    "output port name" : "dout1",
+    "output port polarity" : "active high",
+    "chip enable port name" : "csb1",
+    "chip enable port polarity" : "active low"
+  } ],
+  "extra ports" : []
+},
+
+{
+  "type" : "sram",
+  "name" : "sky130_sram_2kbyte_1rw1r_32x512_8",
+  "depth" : "512",
+  "width" : 32,
+  "family" : "1rw1r",
+  "mask" : "true",
+  "ports": [ {
+    "address port name" : "addr0",
+    "address port polarity" : "active high",
+    "clock port name" : "clk0",
+    "clock port polarity" : "positive edge",
+    "write enable port name" : "web0",
+    "write enable port polarity" : "active low",
+    "output port name" : "dout0",
+    "output port polarity" : "active high",
+    "input port name" : "din0",
+    "input port polarity" : "active high",
+    "chip enable port name" : "csb0",
+    "chip enable port polarity" : "active low",
+    "mask port name" : "wmask0",
+    "mask port polarity" : "active high",
+    "mask granularity" : 8
+  }, {
+    "address port name" : "addr1",
+    "address port polarity" : "active high",
+    "clock port name" : "clk1",
+    "clock port polarity" : "positive edge",
+    "output port name" : "dout1",
+    "output port polarity" : "active high",
+    "chip enable port name" : "csb1",
+    "chip enable port polarity" : "active low"
+  } ],
+  "extra ports" : []
+},
+
+{
+  "type" : "sram",
+  "name" : "sky130_sram_4kbyte_1rw1r_32x1024_8",
+  "depth" : "1024",
+  "width" : 32,
+  "family" : "1rw1r",
+  "mask" : "true",
+  "ports": [ {
+    "address port name" : "addr0",
+    "address port polarity" : "active high",
+    "clock port name" : "clk0",
+    "clock port polarity" : "positive edge",
+    "write enable port name" : "web0",
+    "write enable port polarity" : "active low",
+    "output port name" : "dout0",
+    "output port polarity" : "active high",
+    "input port name" : "din0",
+    "input port polarity" : "active high",
+    "chip enable port name" : "csb0",
+    "chip enable port polarity" : "active low",
+    "mask port name" : "wmask0",
+    "mask port polarity" : "active high",
+    "mask granularity" : 8
+  }, {
+    "address port name" : "addr1",
+    "address port polarity" : "active high",
+    "clock port name" : "clk1",
+    "clock port polarity" : "positive edge",
+    "output port name" : "dout1",
+    "output port polarity" : "active high",
+    "chip enable port name" : "csb1",
+    "chip enable port polarity" : "active low"
+  } ],
+  "extra ports" : []
+},
+
+{
+  "type" : "sram",
+  "name" : "sky130_sram_8kbyte_1rw1r_32x2048_8",
+  "depth" : "2048",
+  "width" : 32,
+  "family" : "1rw1r",
+  "mask" : "true",
+  "ports": [ {
+    "address port name" : "addr0",
+    "address port polarity" : "active high",
+    "clock port name" : "clk0",
+    "clock port polarity" : "positive edge",
+    "write enable port name" : "web0",
+    "write enable port polarity" : "active low",
+    "output port name" : "dout0",
+    "output port polarity" : "active high",
+    "input port name" : "din0",
+    "input port polarity" : "active high",
+    "chip enable port name" : "csb0",
+    "chip enable port polarity" : "active low",
+    "mask port name" : "wmask0",
+    "mask port polarity" : "active high",
+    "mask granularity" : 8
+  }, {
+    "address port name" : "addr1",
+    "address port polarity" : "active high",
+    "clock port name" : "clk1",
+    "clock port polarity" : "positive edge",
+    "output port name" : "dout1",
+    "output port polarity" : "active high",
+    "chip enable port name" : "csb1",
+    "chip enable port polarity" : "active low"
+  } ],
+  "extra ports" : []
+}]

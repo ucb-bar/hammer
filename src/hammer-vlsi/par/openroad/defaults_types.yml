@@ -31,6 +31,11 @@ par.openroad:
   floorplan_mode: str
   floorplan_script_contents: Optional[str]
 
+  floorplan_origin_pos: str
+  # Valid options are:
+  # - rotated
+  # - bottom_left
+
   # Optional: OpenRCX RC tech file
   # type: Optional[str]
   # Should be set in technology plugin

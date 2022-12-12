@@ -166,6 +166,7 @@ class SKY130Tech(HammerTechnology):
 
     def get_tech_drc_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         if not self.use_openram: return []
+        if not self.get_setting("technology.sky130.drc_blackbox_srams"): return []
         hooks = {"calibre": [
             HammerTool.make_post_insertion_hook("generate_drc_run_file", drc_blackbox_openram_srams)
             ]}
@@ -173,17 +174,27 @@ class SKY130Tech(HammerTechnology):
 
     def get_tech_lvs_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         if not self.use_openram: return []
+        if not self.get_setting("technology.sky130.drc_blackbox_srams"): return []
         hooks = {"calibre": [
             HammerTool.make_post_insertion_hook("generate_lvs_run_file", lvs_blackbox_openram_srams)
             ]}
         return hooks.get(tool_name, [])
 
 
-sky130_sram_names = []
-with open(f"{Path(__file__).parent.resolve()}/sram-cache.json",'r') as f:
-    dl = json.load(f)
-    for d in dl:
-        sky130_sram_names.append(d['name'])
+# sky130_sram_names = []
+# with open(f"{Path(__file__).parent.resolve()}/sram-cache.json",'r') as f:
+#     dl = json.load(f)
+#     for d in dl:
+#         sky130_sram_names.append(d['name'])
+sky130_sram_names = [
+    "sramgen_sram_512x32m4w8_replica_v1",
+    "sramgen_sram_64x32m4w32_replica_v1",
+    "sky130_sram_1kbyte_1rw1r_32x256_8",
+    "sky130_sram_1kbyte_1rw1r_8x1024_8",
+    "sky130_sram_2kbyte_1rw1r_32x512_8",
+    "sky130_sram_4kbyte_1rw1r_32x1024_8",
+    "sky130_sram_8kbyte_1rw1r_32x2048_8"
+]
 
 _tlef_overlap = '''
 LAYER OVERLAP
@@ -211,10 +222,10 @@ LVS FILTER D  OPEN  SOURCE
 LVS FILTER D  OPEN  LAYOUT
 '''
 
-# black-box SRAMs during LVS
-for name in sky130_sram_names:
-    LVS_DECK_INSERT_LINES += f"LVS BOX {name} \n"
-    LVS_DECK_INSERT_LINES += f"LVS FILTER {name} OPEN \n"
+# # black-box SRAMs during LVS
+# for name in sky130_sram_names:
+#     LVS_DECK_INSERT_LINES += f"LVS BOX {name} \n"
+#     LVS_DECK_INSERT_LINES += f"LVS FILTER {name} OPEN \n"
 
 # various Innovus database settings
 def sky130_innovus_settings(ht: HammerTool) -> bool:
@@ -253,10 +264,10 @@ set_db opt_fix_hold_verbose true
 ##########################################################
 #-------------------------------------------------------------------------------
 set_db cts_target_skew 0.03
-set_db cts_max_fanout 10
-#set_db cts_target_max_transition_time .3
+# set_db cts_max_fanout 10
+# set_db cts_target_max_transition_time .3
 # set_db opt_setup_target_slack 0.10
-# set_db opt_hold_target_slack 0.10
+set_db opt_hold_target_slack 0.05
 
 ##########################################################
 # Routing attributes  [get_db -category route]
