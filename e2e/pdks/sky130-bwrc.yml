@@ -1,0 +1,10 @@
+vlsi.core.technology: "hammer.technology.sky130"
+technology.sky130:
+  sky130A: "/tools/commercial/skywater/local/sky130A"
+
+synthesis.genus.version: "201"
+par.innovus.version: "191_ISR3"
+
+sim.vcs.version: "P-2019.06-SP2-5"
+sim.vcs.verdi_home: "/tools/synopsys/verdi/P-2019.06-SP2-12"
+sim.vcs.verdi_home_meta: lazysubst

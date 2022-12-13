@@ -1,0 +1,54 @@
+# Generate Make include to aid in flow
+vlsi.core.build_system: make
+
+vlsi.inputs.power_spec_type: "cpf"
+vlsi.inputs.power_spec_mode: "auto"
+
+synthesis.inputs:
+  top_module: "pass"
+  input_files: ["src/pass.v"]
+
+# Specify clock signals
+vlsi.inputs.clocks: [
+  {name: "clock", period: "5ns", uncertainty: "0.1ns"}
+]
+
+# Tool options.
+vlsi.core.synthesis_tool: "hammer.synthesis.genus"
+
+vlsi.core.par_tool: "hammer.par.innovus"
+par.innovus.design_flow_effort: "standard"
+par.inputs.gds_merge: true
+par.innovus.floorplan_mode: "generate"
+vlsi.inputs.placement_constraints:
+  - path: "pass"
+    type: toplevel
+    x: 0
+    y: 0
+    width: 10
+    height: 10
+    margins:
+      left: 0
+      right: 0
+      top: 0
+      bottom: 0
+
+vlsi.inputs.pin_mode: generated
+vlsi.inputs.pin.generate_mode: semi_auto
+vlsi.inputs.pin.assignments: [
+  {pins: "*", layers: ["M5"], side: "bottom"}
+]
+
+vlsi.inputs.delays: [
+  {name: "in", clock: "clock", delay: "1", direction: "input"},
+  {name: "out", clock: "clock", delay: "2", direction: "output"}
+]
+
+vlsi.core.sim_tool: "hammer.sim.vcs"
+vlsi.core.power_tool: "hammer.power.voltus"
+
+# SRAM Compiler compiler options
+vlsi.core.sram_generator_tool: "sram_compiler"
+# You should specify a location for the SRAM generator in the tech plugin
+vlsi.core.sram_generator_tool_path: ["hammer/src/hammer-vlsi/technology/asap7"]
+vlsi.core.sram_generator_tool_path_meta: "append"
