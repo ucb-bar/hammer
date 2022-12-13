@@ -1,0 +1,7 @@
+# Voltus Power Analysis
+
+power.inputs:
+  level: "par"
+  tb_name: "pass_tb"
+  tb_dut: "pass_0"
+  database: "/path/to/database"
