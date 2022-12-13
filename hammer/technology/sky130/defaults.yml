@@ -93,7 +93,7 @@ synthesis.yosys:
 par.inputs:
   gds_merge: true
   gds_map_mode: manual
-  gds_map_resource: ["hammer.technology.sky130/extra", "sky130_lefpin.map"]
+  gds_map_resource: ["hammer.technology.sky130.extra", "sky130_lefpin.map"]
   gds_map_resource_meta: lazysubst
 
 par.openroad:

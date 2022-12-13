@@ -1363,8 +1363,8 @@
   ],
   "stackups": [
     {
-      "grid_unit": 0.001,
       "name": "asap7_3Ma_2Mb_2Mc_2Md",
+      "grid_unit": 0.001,
       "metals": [
         {"name": "M1", "index": 1, "direction": "horizontal", "min_width": 0.072, "pitch": 0.144, "offset": 0.0, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 0.072}], "power_strap_width_table": [], "grid_unit": 0.001},
         {"name": "M2", "index": 2, "direction": "horizontal", "min_width": 0.072, "pitch": 0.144, "offset": -1.08, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 0.072}], "power_strap_width_table": [0.072, 0.36, 0.648, 0.936, 1.224, 1.512], "grid_unit": 0.001},

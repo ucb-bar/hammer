@@ -1,0 +1,11 @@
+# RTL Simulation
+
+sim.inputs:
+  top_module: pass
+  tb_dut: pass_0
+  tb_name: "pass_tb"
+  input_files: ['src/pass.v', 'src/pass_tb.v']
+  options: ['-timescale=1ns/10ps']
+  options_meta: append
+
+# sim.inputs.execute_sim: false

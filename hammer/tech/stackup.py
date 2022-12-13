@@ -84,7 +84,7 @@ class Metal(BaseModel):
     min_width: The minimum wire width for this layer.
     max_width: The maximum wire width for this layer.
     pitch: The minimum cross-mask pitch for this layer (NOT same-mask pitch
-           for multiply-patterned layers).
+           for multiple-patterned layers).
     offset: The routing track offset from the origin for the first track in this layer.
             (0 = first track is on an axis).
     power_strap_widths_and_spacings: A list of WidthSpacingTuples that specify the minimum
@@ -102,7 +102,7 @@ class Metal(BaseModel):
     pitch: Decimal
     offset: Decimal
     power_strap_widths_and_spacings: List[WidthSpacingTuple]
-    power_strap_width_table: List[Decimal]
+    power_strap_width_table: Optional[List[Decimal]] = []
     # Note: grid_unit is not currently parsed as part of the Metal data structure!
     # See #379
     grid_unit: Decimal
@@ -118,11 +118,12 @@ class Metal(BaseModel):
             snapped_value = coerce_to_grid(raw_value, grid_unit)
             if raw_value != snapped_value:
                 raise ValueError(f"{field} ({raw_value}) is not aligned to the grid_unit ({grid_unit})")
-        for width in values.get("power_strap_width_table"):
-            width = Decimal(str(width))
-            snapped_width = coerce_to_grid(width, grid_unit)
-            if width != snapped_width:
-                raise ValueError(f"Width {width} in power_strap_width_table is not aligned to the grid_unit ({grid_unit})")
+        if values.get("power_strap_width_table"):
+            for width in values.get("power_strap_width_table"):
+                width = Decimal(str(width))
+                snapped_width = coerce_to_grid(width, grid_unit)
+                if width != snapped_width:
+                    raise ValueError(f"Width {width} in power_strap_width_table is not aligned to the grid_unit ({grid_unit})")
         if values.get("max_width") is not None:
             max_width = Decimal(str(values.get("max_width")))
             snapped_width = coerce_to_grid(max_width, grid_unit)
