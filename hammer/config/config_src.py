@@ -748,10 +748,14 @@ class HammerDatabase:
         """
         if key not in self.get_config():
             raise KeyError("Key " + key + " is missing")
-        if key not in self.defaults:
-            warn(f"Key {key} does not have a default implementation")
-        if check_type:
-            self.check_setting(key)
+        if key not in IGNORE and key not in defaults:
+            # warn(f"Key {key} does not have a default implementation")
+            pass
+        if check_type and key not in IGNORE:
+            if key not in self.get_config_types():
+                warn(f"Key {key} is not associated with a type")
+            else:
+                self.check_setting(key)
         value = self.get_config()[key]
         return nullvalue if value is None else value
 
