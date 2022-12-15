@@ -707,12 +707,13 @@ class HammerTechnology:
         if not self.config.tarballs:
             return
         for tarball in self.config.tarballs:
-            if tarball.optional:
-                continue
-            target_path = os.path.join(self.extracted_tarballs_dir, tarball.root.path)
+            target_path = os.path.join(self.extracted_tarballs_dir, tarball.root.id)
             tarball_path = os.path.join(self.get_setting(tarball.root.path), tarball.root.id)
             if not os.path.isfile(tarball_path):
-                raise ValueError("Path {0} does not point to a valid tarball!".format(tarball_path))
+                if tarball.optional:
+                    continue
+                else:
+                    raise ValueError("Path {0} does not point to a valid tarball!".format(tarball_path))
             if os.path.isdir(target_path):
                 # If the folder already seems to exist, continue
                 continue

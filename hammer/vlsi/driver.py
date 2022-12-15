@@ -182,13 +182,14 @@ class HammerDriver:
                  None if an error occurred.
         """
         # Find the tool and read in their configs.
-        tool_name = self.database.get_setting("vlsi.core.{tool_type}_tool".format(tool_type=tool_type))
-        tool_get = load_tool(tool_name)
+        tool_module = self.database.get_setting("vlsi.core.{tool_type}_tool".format(tool_type=tool_type))
+        tool_get = load_tool(tool_module)
         if required_type is not None:
             if not isinstance(tool_get, required_type):
                 self.log.error("{tool_type} tool's type is incorrect: got {got}".format(tool_type=tool_type,
                                                                                         got=str(type(tool_get))))
                 return None
+        tool_name = tool_module.split('.')[-1]
         return tool_get, tool_name
 
     def set_up_synthesis_tool(self, syn_tool: HammerSynthesisTool,
@@ -239,6 +240,22 @@ class HammerDriver:
         self.tool_configs["synthesis"] = syn_tool.get_config()
         self.update_tool_configs()
         return True
+
+    def load_synthesis_tool(self, run_dir: str = "") -> bool:
+        """
+        Load the synthesis tool based on the given database.
+
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
+                        constructor.
+        :return: True if synthesis tool loading was successful, False otherwise.
+        """
+        config_result = self.instantiate_tool_from_config("synthesis", HammerSynthesisTool)
+        if config_result is None:
+            return False
+        else:
+            (syn_tool, name) = config_result
+            assert isinstance(syn_tool, HammerSynthesisTool)
+            return self.set_up_synthesis_tool(syn_tool, name, run_dir)
 
     def set_up_par_tool(self, par_tool: HammerPlaceAndRouteTool,
                         name: str, run_dir: str = "") -> bool:
@@ -292,22 +309,6 @@ class HammerDriver:
         self.update_tool_configs()
         return True
 
-    def load_synthesis_tool(self, run_dir: str = "") -> bool:
-        """
-        Load the synthesis tool based on the given database.
-
-        :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
-                        constructor.
-        :return: True if synthesis tool loading was successful, False otherwise.
-        """
-        config_result = self.instantiate_tool_from_config("synthesis", HammerSynthesisTool)
-        if config_result is None:
-            return False
-        else:
-            (syn_tool, name) = config_result
-            assert isinstance(syn_tool, HammerSynthesisTool)
-            return self.set_up_synthesis_tool(syn_tool, name, run_dir)
-
     def load_par_tool(self, run_dir: str = "") -> bool:
         """
         Load the place and route tool based on the given database.
@@ -324,13 +325,17 @@ class HammerDriver:
             assert isinstance(par_tool, HammerPlaceAndRouteTool)
             return self.set_up_par_tool(par_tool, name, run_dir)
 
-    def load_drc_tool(self, run_dir: str = "") -> bool:
+    def set_up_drc_tool(self, drc_tool: HammerDRCTool,
+                        name: str, run_dir: str = "") -> bool:
         """
-        Loads a DRC tool on a given database
-
-        :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
-                        constructor.
-        :return: True if DRC tool loading was successful, False otherwise.
+        Set up and store the given DRC tool instance for use in this
+        driver.
+        :param drc_tool: Tool instance.
+        :param name: Short name (e.g. "calibre") of the tool instance. Typically
+                     obtained from the database.
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the
+                        run_dir passed in the HammerDriver constructor.
+        :return: True if setup was successful.
         """
         if self.tech is None:
             self.log.error("Must load technology before loading DRC tool")
@@ -339,11 +344,7 @@ class HammerDriver:
         if run_dir == "":
             run_dir = os.path.join(self.obj_dir, "drc-rundir")
 
-        drc_tool_name = self.database.get_setting("vlsi.core.drc_tool")
-        drc_tool_get = load_tool(drc_tool_name)
-        assert isinstance(drc_tool_get, HammerDRCTool), "DRC tool must be a HammerDRCTool"
-        drc_tool = drc_tool_get  # type: HammerDRCTool
-        drc_tool.name = drc_tool_name
+        drc_tool.name = name
         drc_tool.logger = self.log.context("drc")
         drc_tool.technology = self.tech
         drc_tool.set_database(self.database)
@@ -366,18 +367,37 @@ class HammerDriver:
             return False
 
         self.drc_tool = drc_tool
-
         self.tool_configs["drc"] = drc_tool.get_config()
         self.update_tool_configs()
         return True
 
-    def load_lvs_tool(self, run_dir: str = "") -> bool:
+    def load_drc_tool(self, run_dir: str = "") -> bool:
         """
-        Loads an LVS tool on a given database
+        Loads a DRC tool on a given database
 
         :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
                         constructor.
-        :return: True if LVS tool loading was successful, False otherwise.
+        :return: True if DRC tool loading was successful, False otherwise.
+        """
+        config_result = self.instantiate_tool_from_config("drc", HammerDRCTool)
+        if config_result is None:
+            return False
+        else:
+            (drc_tool, name) = config_result
+            assert isinstance(drc_tool, HammerDRCTool)
+            return self.set_up_drc_tool(drc_tool, name, run_dir)
+
+    def set_up_lvs_tool(self, lvs_tool: HammerLVSTool,
+                        name: str, run_dir: str = "") -> bool:
+        """
+        Set up and store the given LVS tool instance for use in this
+        driver.
+        :param lvs_tool: Tool instance.
+        :param name: Short name (e.g. "calibre") of the tool instance. Typically
+                     obtained from the database.
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the
+                        run_dir passed in the HammerDriver constructor.
+        :return: True if setup was successful.
         """
         if self.tech is None:
             self.log.error("Must load technology before loading LVS tool")
@@ -386,11 +406,7 @@ class HammerDriver:
         if run_dir == "":
             run_dir = os.path.join(self.obj_dir, "lvs-rundir")
 
-        lvs_tool_name = self.database.get_setting("vlsi.core.lvs_tool")
-        lvs_tool_get = load_tool(lvs_tool_name)
-        assert isinstance(lvs_tool_get, HammerLVSTool), "LVS tool must be a HammerLVSTool"
-        lvs_tool = lvs_tool_get  # type: HammerLVSTool
-        lvs_tool.name = lvs_tool_name
+        lvs_tool.name = name
         lvs_tool.logger = self.log.context("lvs")
         lvs_tool.technology = self.tech
         lvs_tool.set_database(self.database)
@@ -418,18 +434,37 @@ class HammerDriver:
             return False
 
         self.lvs_tool = lvs_tool
-
         self.tool_configs["lvs"] = lvs_tool.get_config()
         self.update_tool_configs()
         return True
 
-    def load_sram_generator_tool(self, run_dir: str = "") -> bool:
+    def load_lvs_tool(self, run_dir: str = "") -> bool:
         """
-        Loads an SRAM Generator tool on a given database
+        Loads an LVS tool on a given database
 
         :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
                         constructor.
-        :return: True if SRAM Generator tool loading was successful, False otherwise.
+        :return: True if LVS tool loading was successful, False otherwise.
+        """
+        config_result = self.instantiate_tool_from_config("lvs", HammerLVSTool)
+        if config_result is None:
+            return False
+        else:
+            (lvs_tool, name) = config_result
+            assert isinstance(lvs_tool, HammerLVSTool)
+            return self.set_up_lvs_tool(lvs_tool, name, run_dir)
+
+    def set_up_sram_generator_tool(self, sram_generator_tool: HammerSRAMGeneratorTool,
+                        name: str, run_dir: str = "") -> bool:
+        """
+        Set up and store the given SRAM Generator tool instance for use in this
+        driver.
+        :param lvs_tool: Tool instance.
+        :param name: Short name (e.g. "sram_generator") of the tool instance. Typically
+                     obtained from the database.
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the
+                        run_dir passed in the HammerDriver constructor.
+        :return: True if setup was successful.
         """
         if self.tech is None:
             self.log.error("Must load technology before loading SRAM Generator tool")
@@ -438,11 +473,7 @@ class HammerDriver:
         if run_dir == "":
             run_dir = os.path.join(self.obj_dir, "sram_generator-rundir")
 
-        sram_generator_tool_name = self.database.get_setting("vlsi.core.sram_generator_tool")
-        sram_generator_tool_get = load_tool(sram_generator_tool_name)
-        assert isinstance(sram_generator_tool_get, HammerSRAMGeneratorTool), "SRAM Generator tool must be a HammerSRAMGeneratorTool"
-        sram_generator_tool = sram_generator_tool_get  # type: HammerSRAMGeneratorTool
-        sram_generator_tool.name = sram_generator_tool_name
+        sram_generator_tool.name = name
         sram_generator_tool.logger = self.log.context("sram_generator")
         sram_generator_tool.technology = self.tech
         sram_generator_tool.set_database(self.database)
@@ -457,10 +488,26 @@ class HammerDriver:
             self.log.warning("No SRAM parameters specified, no SRAMs will be generated.")
 
         self.sram_generator_tool = sram_generator_tool
-
         self.tool_configs["sram_generator"] = sram_generator_tool.get_config()
         self.update_tool_configs()
         return True
+
+    def load_sram_generator_tool(self, run_dir: str = "") -> bool:
+        """
+        Loads an SRAM Generator tool on a given database
+
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
+                        constructor.
+        :return: True if SRAM Generator tool loading was successful, False otherwise.
+        """
+        config_result = self.instantiate_tool_from_config("sram_generator", HammerSRAMGeneratorTool)
+        if config_result is None:
+            return False
+        else:
+            (sram_generator_tool, name) = config_result
+            assert isinstance(sram_generator_tool, HammerSRAMGeneratorTool)
+            return self.set_up_sram_generator_tool(sram_generator_tool, name, run_dir)
+
 
     def set_up_sim_tool(self, sim_tool: HammerSimTool,
                               name: str, run_dir: str = "") -> bool:
@@ -533,13 +580,17 @@ class HammerDriver:
             assert isinstance(sim_tool, HammerSimTool)
             return self.set_up_sim_tool(sim_tool, name, run_dir)
 
-    def load_power_tool(self, run_dir: str = "") -> bool:
+    def set_up_power_tool(self, power_tool: HammerPowerTool,
+                              name: str, run_dir: str = "") -> bool:
         """
-        Loads a power tool on a given database
-
-        :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
-                        constructor.
-        :return: True if power tool loading was successful, False otherwise.
+        Set up and store the given power tool instance for use in this
+        driver.
+        :param power_tool: Tool instance.
+        :param name: Short name (e.g. "vcs") of the tool instance. Typically
+                     obtained from the database.
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the
+                        run_dir passed in the HammerDriver constructor.
+        :return: True if setup was successful.
         """
         if self.tech is None:
             self.log.error("Must load technology before loading power tool")
@@ -548,11 +599,7 @@ class HammerDriver:
         if run_dir == "":
             run_dir = os.path.join(self.obj_dir, "power-rundir")
 
-        power_tool_name = self.database.get_setting("vlsi.core.power_tool")
-        power_tool_get = load_tool(power_tool_name)
-        assert isinstance(power_tool_get, HammerPowerTool), "Power tool must be a HammerPowerTool"
-        power_tool = power_tool_get  # type: HammerPowerTool
-        power_tool.name = power_tool_name
+        power_tool.name = name
         power_tool.logger = self.log.context("power")
         power_tool.technology = self.tech
         power_tool.set_database(self.database)
@@ -581,10 +628,25 @@ class HammerDriver:
             return False
 
         self.power_tool = power_tool
-
         self.tool_configs["power"] = power_tool.get_config()
         self.update_tool_configs()
         return True
+
+    def load_power_tool(self, run_dir: str = "") -> bool:
+        """
+        Loads a power tool on a given database
+
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
+                        constructor.
+        :return: True if power tool loading was successful, False otherwise.
+        """
+        config_result = self.instantiate_tool_from_config("power", HammerPowerTool)
+        if config_result is None:
+            return False
+        else:
+            (power_tool, name) = config_result
+            assert isinstance(power_tool, HammerPowerTool)
+            return self.set_up_power_tool(power_tool, name, run_dir)
 
     def set_up_formal_tool(self, formal_tool: HammerFormalTool,
                               name: str, run_dir: str = "") -> bool:
@@ -716,13 +778,17 @@ class HammerDriver:
             assert isinstance(timing_tool, HammerTimingTool)
             return self.set_up_timing_tool(timing_tool, name, run_dir)
 
-    def load_pcb_tool(self, run_dir: str = "") -> bool:
+    def set_up_pcb_tool(self, pcb_tool: HammerPCBDeliverableTool,
+                              name: str, run_dir: str = "") -> bool:
         """
-        Load the PCB deliverable tool based on the given database.
-
-        :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
-                        constructor.
-        :return: True if successful, false otherwise
+        Set up and store the given PCB deliverable tool instance for use in this
+        driver.
+        :param pcb_tool: Tool instance.
+        :param name: Short name (e.g. "pcb") of the tool instance. Typically
+                     obtained from the database.
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the
+                        run_dir passed in the HammerDriver constructor.
+        :return: True if setup was successful.
         """
         if self.tech is None:
             self.log.error("Must load technology before loading PCB deliverable tool")
@@ -731,11 +797,7 @@ class HammerDriver:
         if run_dir == "":
             run_dir = os.path.join(self.obj_dir, "pcb-rundir")
 
-        pcb_tool_name = self.database.get_setting("vlsi.core.pcb_tool")
-        pcb_tool_get = load_tool(pcb_tool_name)
-        assert isinstance(pcb_tool_get, HammerPCBDeliverableTool), "PCB deliverable tool must be a HammerPCBDeliverableTool"
-        pcb_tool = pcb_tool_get  # type: HammerPCBDeliverableTool
-        pcb_tool.name = pcb_tool_name
+        pcb_tool.name = name
         pcb_tool.logger = self.log.context("pcb")
         pcb_tool.technology = self.tech
         pcb_tool.set_database(self.database)
@@ -747,10 +809,25 @@ class HammerDriver:
         pcb_tool.run_dir = run_dir
 
         self.pcb_tool = pcb_tool
-
         self.tool_configs["pcb"] = pcb_tool.get_config()
         self.update_tool_configs()
         return True
+
+    def load_pcb_tool(self, run_dir: str = "") -> bool:
+        """
+        Load the PCB deliverable tool based on the given database.
+
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
+                        constructor.
+        :return: True if successful, false otherwise
+        """
+        config_result = self.instantiate_tool_from_config("pcb", HammerPCBDeliverableTool)
+        if config_result is None:
+            return False
+        else:
+            (pcb_tool, name) = config_result
+            assert isinstance(pcb_tool, HammerPCBDeliverableTool)
+            return self.set_up_pcb_tool(pcb_tool, name, run_dir)
 
     def set_post_custom_syn_tool_hooks(self, hooks: List[HammerToolHookAction]) -> None:
         """

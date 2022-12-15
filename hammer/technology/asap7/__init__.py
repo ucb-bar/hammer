@@ -248,9 +248,8 @@ def asap7_scale_final_gds(ht: HammerTool) -> bool:
     ht.append('''
 # Innovus <19.1 appends some bad LD_LIBRARY_PATHS, so remove them before executing python
 set env(LD_LIBRARY_PATH) [join [lsearch -not -all -inline [split $env(LD_LIBRARY_PATH) ":"] "*INNOVUS*"] ":"]
-{scale_script} {stdcells_file} {gds_file}
-'''.format(scale_script = os.path.join(os.path.dirname(__file__), 'gds_scale.py'),
-           stdcells_file = os.path.join(ht.technology.cache_dir, 'stdcells.txt'),
+asap7_gds_scale {stdcells_file} {gds_file}
+'''.format(stdcells_file = os.path.join(ht.technology.cache_dir, 'stdcells.txt'),
            gds_file = cadence_output_gds_name))
     return True
 
