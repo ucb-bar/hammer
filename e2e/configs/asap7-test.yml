@@ -46,6 +46,10 @@ vlsi.inputs.delays: [
 
 vlsi.core.sim_tool: "hammer.sim.vcs"
 vlsi.core.power_tool: "hammer.power.voltus"
+vlsi.core.timing_tool: "hammer.timing.tempus"
+vlsi.core.formal_tool: "hammer.formal.conformal"
+vlsi.core.drc_tool: "hammer.drc.calibre"
+vlsi.core.lvs_tool: "hammer.lvs.calibre"
 
 # SRAM Compiler compiler options
 vlsi.core.sram_generator_tool: "sram_compiler"
