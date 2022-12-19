@@ -197,21 +197,15 @@ endmodule
 """.format(NUMADDR=math.ceil(math.log2(params.depth)), NUMWORDS=params.depth, WORDLENGTH=params.width, NAME=sram_name,
            RAND_WIDTH=math.ceil(params.width / 32), specify=specify))
 
-        # lib_path ="{t}/{n}_{c}.lib".format(t=tech_cache_dir,n=sram_name,c=corner_str)
-        # if not os.path.exists(lib_path):
-        #    os.symlink("{b}/lib/{n}_lib/{n}_{c}.lib".format(b=base_dir,n=sram_name,c=corner_str),
-        #    "{t}/{n}_{c}.lib".format(t=tech_cache_dir,n=sram_name,c=corner_str))
+        package_dir = importlib.resources.files(self.package)
+
         nldm_lib_file = f"{sram_name}_{corner_str}.lib"
         lef_file = f"{sram_name}_x4.lef"
         gds_file = f"{sram_name}_x4.gds"
 
-        nldm_lib_dir = importlib.resources.files(f"{self.package}.memories.lib.{sram_name}_lib")
-        lef_dir = importlib.resources.files(f"{self.package}.memories.lef")
-        gds_dir = importlib.resources.files(f"{self.package}.memories.gds")
-
-        (Path(tech_cache_dir) / nldm_lib_file).write_text(nldm_lib_str)
-        (Path(tech_cache_dir) / lef_file).write_text(lef_str)
-        (Path(tech_cache_dir) / gds_file).write_bytes(gds_str)
+        nldm_lib_dir = package_dir / f"memories/lib/{sram_name}_lib"
+        lef_dir = package_dir / "memories/lef"
+        gds_dir = package_dir / "memories/gds"
 
         from hammer.tech import Corner, Supplies, Provide
         lib = ExtraLibrary(prefix=None, library=Library(

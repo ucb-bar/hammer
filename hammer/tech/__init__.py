@@ -637,10 +637,10 @@ class HammerTechnology:
         # 2. If the path has no path separator, the path is relative to the tech plugin package itself.
         #    Do not need to copy the resource into the cache dir because poetry packages all resources into site-packages.
         if os.sep not in path:
-            resource_path = importlib.resources(self.package) / path
+            resource_path = importlib.resources.files(self.package) / path
             assert resource_path.is_file(),\
                 f"{path} wasn't found in HammerTechnology Python package {self.package}"
-            return resource_path
+            return str(resource_path)
 
         # 3-5. The path consists of an identifier (prefix) and the rest of the path now
         id = path.split(os.path.sep)[0]

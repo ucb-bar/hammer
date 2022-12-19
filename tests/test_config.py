@@ -12,6 +12,9 @@ import hammer.config as hammer_config
 
 
 class TestHammerDatabase:
+    # For tests that don't check against any types
+    NO_TYPES = []
+
     def test_overriding(self) -> None:
         """
         Test that we can add a project first and technology after and still have it override.
@@ -19,7 +22,7 @@ class TestHammerDatabase:
         db = hammer_config.HammerDatabase()
         db.update_project([{"tech.x": "foo"}])
         assert db.get_setting("tech.x", check_type=False) == "foo"
-        db.update_technology([{"tech.x": "bar"}])
+        db.update_technology([{"tech.x": "bar"}], self.NO_TYPES)
         assert db.get_setting("tech.x", check_type=False) == "foo"
 
     def test_unpacking(self) -> None:
@@ -33,15 +36,15 @@ foo:
         adc: "yes"
         dac: "no"
 """, is_yaml=True)
-        db.update_core([config])
+        db.update_core([config], self.NO_TYPES)
         assert db.get_setting("foo.bar.adc", check_type=False) == "yes"
         assert db.get_setting("foo.bar.dac", check_type=False) == "no"
 
     def test_no_config_junk(self) -> None:
         """Test that no _config_path junk variables get left behind."""
         db = hammer_config.HammerDatabase()
-        db.update_core([hammer_config.load_config_from_string("key1: value1", is_yaml=True)])
-        db.update_technology([hammer_config.load_config_from_string("key2: value2", is_yaml=True)])
+        db.update_core([hammer_config.load_config_from_string("key1: value1", is_yaml=True)], self.NO_TYPES)
+        db.update_technology([hammer_config.load_config_from_string("key2: value2", is_yaml=True)], self.NO_TYPES)
         db.update_project([hammer_config.load_config_from_string("key3: value3", is_yaml=True)])
         for key in hammer_config.HammerDatabase.internal_keys():
             assert db.has_setting(key) is False, "Should not have internal key " + key
@@ -59,11 +62,11 @@ a.b:
 a.b.c: ["test"]
 a.b.c_meta: append
 """, is_yaml=True)
-        db.update_core([base])
+        db.update_core([base], self.NO_TYPES)
         assert db.get_setting("a.b.c", check_type=False) == []
         db.update_project([meta])
         assert db.get_setting("a.b.c", check_type=False) == ["test"]
-        db.update_technology([])
+        db.update_technology([], self.NO_TYPES)
         assert db.get_setting("a.b.c", check_type=False) == ["test"]
         db.update_environment([])
         assert db.get_setting("a.b.c", check_type=False) == ["test"]
@@ -82,11 +85,11 @@ foo.bar: "i'm yaml"
         db1 = hammer_config.HammerDatabase()
         yaml_config = hammer_config.load_config_from_string(yaml, is_yaml=True)
         json_config = hammer_config.load_config_from_string(json, is_yaml=False)
-        db1.update_core([hammer_config.combine_configs([yaml_config, json_config])])
+        db1.update_core([hammer_config.combine_configs([yaml_config, json_config])], self.NO_TYPES)
         assert db1.get_setting("foo.bar", check_type=False) == "i'm json"
 
         db2 = hammer_config.HammerDatabase()
-        db2.update_core([hammer_config.combine_configs([json_config, yaml_config])])
+        db2.update_core([hammer_config.combine_configs([json_config, yaml_config])], self.NO_TYPES)
         assert db2.get_setting("foo.bar", check_type=False) == "i'm yaml"
 
     def test_meta_json2list(self) -> None:
@@ -105,7 +108,7 @@ foo:
     "foo.pipeline_meta": "json2list"
 }
     """, is_yaml=False)
-        db.update_core([base, meta])
+        db.update_core([base, meta], self.NO_TYPES)
         assert db.get_setting("foo.flash", check_type=False) == "yes"
         assert db.get_setting("foo.max", check_type=False) == "min"
         assert db.get_setting("foo.pipeline", check_type=False) == ["1", "2"]
@@ -127,7 +130,7 @@ foo:
     "foo.pipeline": "[\\"1\\", \\"2\\"]"
 }
     """, is_yaml=False)
-        db.update_core([base, meta])
+        db.update_core([base, meta], self.NO_TYPES)
         assert db.get_setting("foo.flash", check_type=False) == "yes"
         assert db.get_setting("foo.max", check_type=False) == "min"
         assert db.get_setting("foo.pipeline", check_type=False) == ["1", "2"]
@@ -151,7 +154,7 @@ foo:
   "foo.uint_meta": "subst"
 }
 """, is_yaml=False)
-        db.update_core([base, meta])
+        db.update_core([base, meta], self.NO_TYPES)
         assert db.get_setting("foo.flash", check_type=False) == "yes"
         assert db.get_setting("foo.pipeline", check_type=False) == "yesman"
         assert db.get_setting("foo.uint", check_type=False) == ["1", "2"]
@@ -187,7 +190,7 @@ style: "waterfall"
   "style": "agile"
 }
 """, is_yaml=False)
-        db.update_core([base, meta])
+        db.update_core([base, meta], self.NO_TYPES)
         db.update_project([project])
         assert db.get_setting("foo.flash", check_type=False) == "yes"
         assert db.get_setting("foo.pipeline", check_type=False) == "yesman"
@@ -205,7 +208,7 @@ style: "waterfall"
         array: ["${target}bar"]
         array_meta: lazysubst
         """, is_yaml=True)
-        db.update_core([d])
+        db.update_core([d], self.NO_TYPES)
         assert db.get_setting("array", check_type=False) == ["foobar"]
 
     def test_meta_append(self) -> None:
@@ -227,7 +230,7 @@ foo:
   "foo.bar.dac": "current_weighted"
 }
 """, is_yaml=False)
-        db.update_core([base, meta])
+        db.update_core([base, meta], self.NO_TYPES)
         assert db.get_setting("foo.bar.dac", check_type=False) == "current_weighted"
         assert db.get_setting("foo.bar.dsl", check_type=False) == ["scala", "python"]
 
@@ -245,7 +248,7 @@ foo.bar.dsl: ["scala"]
   "foo.bar.languages_meta": "crossappend"
 }
 """, is_yaml=False)
-        db.update_core([base, meta])
+        db.update_core([base, meta], self.NO_TYPES)
         assert db.get_setting("foo.bar.dsl", check_type=False) == ["scala"]
         assert db.get_setting("foo.bar.languages", check_type=False) == ["scala", "python"]
 
@@ -264,7 +267,7 @@ snakes: ["python"]
   "foo.bar.languages_meta": "crossappendref"
 }
 """, is_yaml=False)
-        db.update_core([base, meta])
+        db.update_core([base, meta], self.NO_TYPES)
         assert db.get_setting("foo.bar.dsl", check_type=False) == ["scala"]
         assert db.get_setting("foo.bar.languages", check_type=False) == ["scala", "python"]
 
@@ -293,7 +296,7 @@ my:
   "indirect.numbers_meta": ["subst", "crossref"]
 }
 """, is_yaml=False)
-        db.update_core([base, meta])
+        db.update_core([base, meta], self.NO_TYPES)
         assert db.get_setting("just.numbers", check_type=False) == ["1", "2", "3"]
         assert db.get_setting("copies.numbers", check_type=False) == [["1", "2", "3"], ["world"]]
         assert db.get_setting("bools", check_type=False) == [False, True]
@@ -314,7 +317,7 @@ numbers_meta: crossref
 lazy.numbers: "numbers"
 lazy.numbers_meta: lazycrossref
     """, is_yaml=True)
-        db.update_core([base, meta])
+        db.update_core([base, meta], self.NO_TYPES)
         assert db.get_setting("lazy.numbers", check_type=False) == ["1", "2", "3"]
 
     def test_meta_crossref_errors(self) -> None:
@@ -337,7 +340,7 @@ my:
   "no_crossrefing_using_int_meta": "crossref"
 }
 """, is_yaml=False)
-            db.update_core([base, meta])
+            db.update_core([base, meta], self.NO_TYPES)
             db.get_setting("no_crossrefing_using_int", check_type=False)
         with pytest.raises(ValueError):
             meta = hammer_config.load_config_from_string("""
@@ -346,7 +349,7 @@ my:
   "no_crossrefing_using_bool_meta": "crossref"
 }
 """, is_yaml=False)
-            db.update_core([base, meta])
+            db.update_core([base, meta], self.NO_TYPES)
             db.get_setting("no_crossrefing_using_bool", check_type=False)
         with pytest.raises(ValueError):
             meta = hammer_config.load_config_from_string("""
@@ -355,7 +358,7 @@ my:
   "bad_list_meta": "crossref"
 }
 """, is_yaml=False)
-            db.update_core([base, meta])
+            db.update_core([base, meta], self.NO_TYPES)
             db.get_setting("bad_list", check_type=False)
 
     def test_meta_transclude(self) -> None:
@@ -381,7 +384,7 @@ chips:
 }
 """.replace("<path>", path), is_yaml=False)
 
-        db.update_core([base, meta])
+        db.update_core([base, meta], self.NO_TYPES)
 
         # Trigger merge before cleanup
         assert db.get_setting("chips.potato", check_type=False) == "tuber"
@@ -417,7 +420,7 @@ food:
 }
 """.replace("<path>", path), is_yaml=False)
 
-        db.update_core([base, meta])
+        db.update_core([base, meta], self.NO_TYPES)
 
         # Trigger merge before cleanup
         assert db.get_setting("food.dish", check_type=False) == "chips"
@@ -443,7 +446,7 @@ foo:
   "foo.bar.meta_test_meta": ["subst"]
 }
 """, is_yaml=False)
-        db.update_core([base, meta])
+        db.update_core([base, meta], self.NO_TYPES)
         assert db.get_setting("foo.bar.base_test", check_type=False) == "local_path"
         assert db.get_setting("foo.bar.meta_test", check_type=False) == "local_path"
 
@@ -465,7 +468,7 @@ test_meta: ["lazysubst", "lazycrossref"]
     "base": "hello2"
 }
     """, is_yaml=False)
-        db.update_core([base, meta])
+        db.update_core([base, meta], self.NO_TYPES)
         with pytest.raises(ValueError) as cm:
             assert db.get_setting("base", check_type=False) == "hello2"
             assert db.get_setting("test", check_type=False) == "def"
@@ -538,7 +541,7 @@ conglomerate_meta: "lazysubst"
   "global": "foobar"
 }
 """, is_yaml=False)
-        db.update_core([base, meta])
+        db.update_core([base, meta], self.NO_TYPES)
         assert db.get_setting("global", check_type=False) == "foobar"
         assert db.get_setting("tool1.common", check_type=False) == "foobar tool1"
         assert db.get_setting("tool1.a", check_type=False) == "foobar tool1 abc"
@@ -569,7 +572,7 @@ foo:
   "later_meta": "lazysubst"
 }
     """, is_yaml=False)
-        db.update_core([base])
+        db.update_core([base], self.NO_TYPES)
         db.update_project([project])
         assert db.get_setting("lolcat", check_type=False) == "whatever"
         assert db.get_setting("foo.twelve", check_type=False) == "whatever"
@@ -588,7 +591,7 @@ snakes: ["python"]
 tool: ["tool_1", "snakes"]
 tool_meta: "lazycrossappendref"
 """, is_yaml=True)
-        db.update_core([base])
+        db.update_core([base], self.NO_TYPES)
         assert db.get_setting("global", check_type=False) == ["hello", "world", "scala"]
         assert db.get_setting("tool", check_type=False) == ["hello", "world", "scala", "python"]
 
@@ -604,7 +607,7 @@ tool_1_meta: "lazycrossref"
 tool: ["tool_1", ["python"]]
 tool_meta: "lazycrossappend"
 """, is_yaml=True)
-        db.update_core([base])
+        db.update_core([base], self.NO_TYPES)
         assert db.get_setting("global", check_type=False) == ["hello", "world", "scala"]
         assert db.get_setting("tool", check_type=False) == ["hello", "world", "scala", "python"]
 
@@ -626,7 +629,7 @@ tool_meta: "lazycrossref"
   "tool_meta": "lazyappend"
 }
 """, is_yaml=False)
-        db.update_core([base, meta])
+        db.update_core([base, meta], self.NO_TYPES)
         assert db.get_setting("global", check_type=False) == ["hello", "world", "scala"]
         assert db.get_setting("tool", check_type=False) == ["hello", "world", "scala", "python"]
 
@@ -652,7 +655,7 @@ derivative_str_meta: "lazysubst"
     "derivative_str_meta": "lazysubst"
 }
         """, is_yaml=True)
-        db.update_core([base, config1, config2])
+        db.update_core([base, config1, config2], self.NO_TYPES)
         assert db.get_setting("derivative_str", check_type=False) == "hello_1_2"
 
     def test_self_reference_lazycrossref(self) -> None:
@@ -678,7 +681,7 @@ derivative_meta: "lazycrossref"
     "derivative_meta": "lazycrossref"
 }
         """, is_yaml=True)
-        db.update_core([base, config1, config2])
+        db.update_core([base, config1, config2], self.NO_TYPES)
         assert db.get_setting("base", check_type=False) == "tower"
 
     def test_self_reference_lazyappend(self) -> None:
@@ -702,7 +705,7 @@ global: ["hello", "world"]
   "global_meta": "lazyappend"
 }
 """, is_yaml=False)
-        db.update_core([base, config1])
+        db.update_core([base, config1], self.NO_TYPES)
         db.update_project([config2])
         assert db.get_setting("global", check_type=False) == ["hello", "world", "scala", "python"]
 
@@ -736,7 +739,7 @@ foo:
   }]
 }
 """, is_yaml=False)
-        db.update_core([base, meta])
+        db.update_core([base, meta], self.NO_TYPES)
         assert db.get_setting("foo.bar", check_type=False)[0]["base_test"] == os.path.join(cwd, "some_relative_path")
         assert db.get_setting("foo.bar", check_type=False)[1]["meta_test"] == os.path.join(cwd, "some/relative/path")
         # leading / should override the meta
@@ -768,7 +771,7 @@ foo:
   }]
 }
 """, is_yaml=False)
-        db.update_core([base, meta])
+        db.update_core([base, meta], self.NO_TYPES)
         assert db.get_setting("foo.bar", check_type=False)[0]["dsl"] == {"x": ["python", "is", "awesome"], "y": "sometimes"}
 
     def test_load_types(self) -> None:
@@ -825,9 +828,9 @@ foo:
         wrong: list[dict[str, str]]
 """, is_yaml=True)
 
-        db.update_core([base])
+        db.update_core([base], self.NO_TYPES)
         with pytest.raises(TypeError):
-            db.update_types([base_types])
+            db.update_core([base], [base_types])
 
         assert db.get_setting("foo.bar.adc") == [1, 2, 3]
 
@@ -853,9 +856,9 @@ foo:
         wrong: int
 """, is_yaml=True)
 
-        db.update_core([base])
+        db.update_core([base], self.NO_TYPES)
         with pytest.raises(TypeError):
-            db.update_types([base_types])
+            db.update_core([base], [base_types])
 
         assert db.get_setting("foo.bar.adc") == [{"name": "hi", "pin": 1}]
         assert db.get_setting("foo.bar.dac") == [{"name": ["hi"], "pin": [1, 2]}]
@@ -879,8 +882,7 @@ foo:
         quu: Optional[str]
 """, is_yaml=True)
 
-        db.update_core([base])
-        db.update_types([base_types])
+        db.update_core([base], [base_types])
 
         assert db.get_setting("foo.bar.adc") is None
         assert db.get_setting("foo.bar.quu") == "hi"
@@ -903,9 +905,9 @@ foo:
         quu: float
 """, is_yaml=True)
 
-        db.update_core([base])
+        db.update_core([base], self.NO_TYPES)
         with pytest.raises(TypeError):
-            db.update_types([base_types])
+            db.update_core([base], [base_types])
 
         assert db.get_setting("foo.bar.adc") == 3.14
 
@@ -914,15 +916,13 @@ foo:
         Test that all HAMMER defaults are properly type-checked.
         """
 
-        base = hammer_config.load_config_from_defaults("hammer.config")
-        base_types = hammer_config.load_config_from_defaults("hammer.config", types=True)
+        base, base_types = hammer_config.load_config_from_defaults("hammer.config", types=True)
         builtins_yml = importlib.resources.read_text("hammer.config", "builtins.yml")
         builtins = hammer_config.load_config_from_string(builtins_yml, is_yaml=True)
 
         db = hammer_config.HammerDatabase()
-        db.update_core(base)
+        db.update_core(base, base_types)
         db.update_builtins([builtins])
-        db.update_types(base_types)
 
         for k, v in db.get_config().items():
             assert db.get_setting(k) == v
