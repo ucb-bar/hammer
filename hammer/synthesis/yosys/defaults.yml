@@ -13,5 +13,3 @@ synthesis.yosys:
   # type: Optional[str]
   # Used by Yosys to do technology mapping of latches
   # Should be set in technology plugin
-  
-  

@@ -1336,7 +1336,7 @@ class CLIDriver:
         project_configs_yaml: List[dict] = []
         for conf_file in project_configs:
             config_str = Path(conf_file).read_text()
-            project_configs_yaml.append(hammer.config.load_config_from_string(config_str, is_yaml=True))
+            project_configs_yaml.append(hammer.config.load_config_from_string(config_str, is_yaml=True, path=str(Path(conf_file).resolve().parent)))
         project_configs_yaml_keys = [set(i.keys()) for i in project_configs_yaml]
         key_history: Dict[str, List[str]] = {i: [] for i in reduce(lambda x, y: x.union(y), project_configs_yaml_keys)}
         for cfg_file, cfg in zip(project_configs, project_configs_yaml_keys):

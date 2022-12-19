@@ -217,8 +217,6 @@ par.inputs:
   # Optional: GDS map file path. Used only if gds_map_mode above is set to manual.
   # type: Optional[str]
   gds_map_file: Optional[str]
-  # Optional: GDS map resource. Used if you want to point to a GDS map file inside a Python package.
-  gds_map_resource: Optional[list[str]]
 
   # If true, tell the place and route tool to merge any library/macro GDSes into
   # the final GDS.
@@ -336,6 +334,9 @@ lvs.inputs:
 
   # Input list of ILMStructs
   ilms: list[str]
+
+  # Input list of Hcells
+  hcells_list: list[str]
 
   # Valid modes are auto, manual, prepend, and append
   additional_lvs_text_mode: str

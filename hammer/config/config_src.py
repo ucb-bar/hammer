@@ -12,7 +12,7 @@ from warnings import warn
 from enum import Enum
 from importlib import resources
 
-from hammer.utils import deepdict, topological_sort
+from hammer.utils import deepdict, add_dicts, topological_sort
 from .yaml2json import load_yaml  # grumble grumble
 
 from functools import reduce, lru_cache
@@ -29,6 +29,9 @@ class HammerJSONEncoder(json.JSONEncoder):
             # from https://stackoverflow.com/questions/1960516/python-json-serialize-a-decimal-object
             return float(o)
         return super(HammerJSONEncoder, self).default(o)
+
+# Special key used for meta directives which require config paths like prependlocal.
+_CONFIG_PATH_KEY = "_config_path"
 
 # Special key used to keep track of the next available integer suffix to avoid
 # duplicate keys.
@@ -81,25 +84,38 @@ class MetaDirective(NamedTuple('MetaDirective', [
     __slots__ = ()
 
 
-def deepsubst_cwd(path: str) -> str:
+def deepsubst_cwd(config_dict: dict, path: str) -> str:
     """
     Prepend the current working directory (of the hammer runtime) to the beginning of the
     specified path.
 
+    :param config_dict: The original config dict (not used by this method).
     :param path: The string path to which the CWD is to be prepended.
-    :param params: The MetaDirectiveParams (not used by this method).
     :return: The path with CWD prepended.
     """
     # os.path.join handles the case where path is absolute
     # "If a component is an absolute path, all previous components are thrown away and joining continues from the absolute path component."
     return os.path.join(os.getcwd(), path)
 
-def deepsubst_transclude(path: str) -> str:
+def deepsubst_local(config_dict: dict, path: str) -> str:
+    """
+    Prepend the directory containing the config file containing this setting to the
+    beginning of the specified path.
+
+    :param config_dict: The original config dict.
+    :param path: The string path to which the local path is to be prepended.
+    :return: The path with local path of the config prepended.
+    """
+    # os.path.join handles the case where path is absolute
+    # "If a component is an absolute path, all previous components are thrown away and joining continues from the absolute path component."
+    return os.path.join(config_dict[_CONFIG_PATH_KEY], path)
+
+def deepsubst_transclude(config_dict: dict, path: str) -> str:
     """
     Load the path given as the new value of this key
 
+    :param config_dict: The original config dict (not used by this method).
     :param path: The string path to the file to be included
-    :param params: The MetaDirectiveParams which contain the local path.
     :return: The contents of the file at path
     """
     with open(path, "r", encoding="utf-8") as f:
@@ -108,8 +124,9 @@ def deepsubst_transclude(path: str) -> str:
 
 DeepSubstMetaDirectives = {
     "cwd": deepsubst_cwd,
+    "local": deepsubst_local,
     "transclude": deepsubst_transclude
-}  # type: Dict[str, Callable[[str], str]]
+}  # type: Dict[str, Callable[[Dict, str], str]]
 
 
 @lru_cache(maxsize=2)
@@ -356,6 +373,25 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
                                             target_settings=lambda key, value: [],
                                             rename_target=json2list_rename)
 
+    def prependlocal_action(config_dict: dict, key: str, value: Any) -> None:
+        """Prepend the local path of the config dict."""
+        if isinstance(value, list):
+            new_values = []
+            for v in value:
+                new_values.append(os.path.join(config_dict[_CONFIG_PATH_KEY], str(v)))
+            config_dict[key] = new_values
+        else:
+            config_dict[key] = os.path.join(config_dict[_CONFIG_PATH_KEY], str(value))
+
+    def prependlocal_rename(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[
+        Tuple[Any, str]]:
+        # This metal directive doesn't depend on any settings
+        return value, "prependlocal"
+
+    directives['prependlocal'] = MetaDirective(action=prependlocal_action,
+                                               target_settings=lambda key, value: [],
+                                               rename_target=prependlocal_rename)
+
     def deepsubst_action(config_dict: dict, key: str, value: Any) -> None:
         """
         Perform a deep substitution on the value provided. This will replace any variables that occur in strings
@@ -384,7 +420,7 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
                                 meta = oldval[meta_key]
                                 if meta in DeepSubstMetaDirectives:
                                     if isinstance(v, str):
-                                        newval[k] = DeepSubstMetaDirectives[meta](v)
+                                        newval[k] = DeepSubstMetaDirectives[meta](config_dict, v)
                                     else:
                                         raise ValueError(f"Deepsubst metas not supported on non-string values: {v}")
                                 else:
@@ -526,6 +562,10 @@ def update_and_expand_meta(config_dict: dict, meta_dict: dict) -> dict:
     meta_dict_keys = list(meta_dict.keys())
     meta_keys = filter(lambda k: k.endswith("_meta"), meta_dict_keys)
 
+    # Update current config path to match meta dict's (used by prependlocal/deepsubst_local)
+    if _CONFIG_PATH_KEY in meta_dict_keys:
+        newdict[_CONFIG_PATH_KEY] = meta_dict[_CONFIG_PATH_KEY]
+
     # Deal with meta directives.
     meta_len = len("_meta")
     for meta_key in meta_keys:
@@ -651,7 +691,7 @@ class HammerDatabase:
 
         self.__config_types = {}  # type: dict
 
-        self.defaults = unpack(load_config_from_defaults("hammer.config")[0])
+        self.defaults = {}  # type: dict
 
     @property
     def runtime(self) -> List[dict]:
@@ -660,7 +700,7 @@ class HammerDatabase:
     @staticmethod
     def internal_keys() -> Set[str]:
         """Internal keys that shouldn't show up in any final config."""
-        return {_NEXT_FREE_INDEX_KEY}
+        return {_CONFIG_PATH_KEY, _NEXT_FREE_INDEX_KEY}
 
     def get_config(self) -> dict:
         """
@@ -706,21 +746,12 @@ class HammerDatabase:
         :param check_type: Flag to enforce type checking
         :return: The given config
         """
-        #cfg_path = os.path.join(os.path.dirname(__file__), "..", "hammer-vlsi")
-        #defaults = unpack(load_config_from_defaults(cfg_path)[1])
-
-        IGNORE = ["vlsi.builtins.is_complete"]
         if key not in self.get_config():
             raise KeyError("Key " + key + " is missing")
-        if key not in IGNORE and key not in self.defaults:
+        if key not in self.defaults:
             warn(f"Key {key} does not have a default implementation")
-        if check_type and key not in IGNORE:
-            if self.get_config_types() == {}:
-                pass
-            elif key not in self.get_config_types():
-                warn(f"Key {key} is not associated with a type")
-            else:
-                self.check_setting(key)
+        if check_type:
+            self.check_setting(key)
         value = self.get_config()[key]
         return nullvalue if value is None else value
 
@@ -779,11 +810,21 @@ class HammerDatabase:
         """
         Checks a setting for correct typing.
         """
+        # Ignore all builtins
+        if any(key in unpack(builtin) for builtin in self.builtins):
+            return True
+
         if cfg is None:
             cfg = self.get_config()
-        exp_value_type = parse_setting_type(self.get_config_types()[key])
-        value = cfg[key]
+        if key not in self.get_config_types():
+            warn(f"Key {key} is not associated with a type")
+            return True
+        try:
+            exp_value_type = parse_setting_type(self.get_config_types()[key])
+        except ValueError as v:
+            raise ValueError(f'Key {key} has an invalid outer type: perhaps you have "List" instead of "list" or "Dict" instead of "dict"?') from v
 
+        value = cfg[key]
         if value is None and not exp_value_type.optional:
             raise TypeError(f"Key {key} is missing and non-optional")
         if value is None and exp_value_type.optional:
@@ -813,27 +854,31 @@ class HammerDatabase:
                     raise TypeError(f"Expected tertiary value type {exp_value_type.tertiary_v.value} for {key}, got type {v_type}")
         return True
 
-    def update_core(self, core_config: List[dict]) -> None:
+    def update_core(self, core_config: List[dict], core_config_types: List[dict]) -> None:
         """
         Update the core config with the given core config.
         """
-        for k in self.get_config_types().keys():
-            self.check_setting(k, cfg=combine_configs(core_config))
         self.core = core_config
+        self.update_defaults(core_config)
+        self.update_types(core_config_types, True)
         self.__config_cache_dirty = True
 
-    def update_tools(self, tools_config: List[dict]) -> None:
+    def update_tools(self, tools_config: List[dict], tool_config_types: List[dict]) -> None:
         """
         Update the tools config with the given tools config.
         """
         self.tools = tools_config
+        self.update_defaults(tools_config)
+        self.update_types(tool_config_types, True)
         self.__config_cache_dirty = True
 
-    def update_technology(self, technology_config: List[dict]) -> None:
+    def update_technology(self, technology_config: List[dict], technology_config_types: List[dict]) -> None:
         """
         Update the technology config with the given technology config.
         """
         self.technology = technology_config
+        self.update_defaults(technology_config)
+        self.update_types(technology_config_types, True)
         self.__config_cache_dirty = True
 
     def update_environment(self, environment_config: List[dict]) -> None:
@@ -857,12 +902,20 @@ class HammerDatabase:
         self.builtins = builtins_config
         self.__config_cache_dirty = True
 
+    def update_defaults(self, default_configs: List[dict]) -> None:
+        """
+        Update the default configs with the given config list.
+        This dict gets updated with each additional defaults config file.
+        """
+        for c in default_configs:
+            self.defaults = add_dicts(self.defaults, unpack(c))
+
     def update_types(self, config_types: List[dict], check_type: bool = True) -> None:
         """
         Update the types config with the given types config.
         """
         loaded_cfg = combine_configs(config_types)
-        self.__config_types = loaded_cfg
+        self.__config_types.update(loaded_cfg)
         if check_type:
             for k, v in loaded_cfg.items():
                 if not self.has_setting(k):
@@ -871,30 +924,44 @@ class HammerDatabase:
                     self.check_setting(k)
 
 
-def load_config_from_string(contents: str, is_yaml: bool) -> dict:
+def load_config_from_string(contents: str, is_yaml: bool, path: str = "unspecified") -> dict:
     """
     Load config from a string by loading it and unpacking it.
 
     :param contents: Contents of the config.
     :param is_yaml: True if the contents are yaml.
+    :param path: Path to the folder/package where the config file is located.
     :return: Loaded config dictionary, unpacked.
     """
     unpacked = unpack(load_yaml(contents) if is_yaml else json.loads(contents))
+    unpacked[_CONFIG_PATH_KEY] = path
     return unpacked
 
 
-def load_config_from_defaults(package: str, types: bool = False) -> List[dict]:
-    json_file = "defaults.json" if not types else "defaults_types.json"
-    yaml_file = "defaults.yml" if not types else "defaults_types.yml"
-    config_list: List[dict] = []
-    if importlib.resources.is_resource(package, json_file):
-        json_str = importlib.resources.read_text(package, json_file)
-        config_list.append(load_config_from_string(json_str, False))
-    if importlib.resources.is_resource(package, yaml_file):
-        yaml_str = importlib.resources.read_text(package, yaml_file)
-        config_list.append(load_config_from_string(yaml_str, True))
-    return config_list
+def load_config_from_defaults(package: str, types: bool = False) -> Tuple[List[dict], List[dict]]:
+    """
+    Load config from a package's defaults.
 
+    :param package: Package name
+    :param types: True if the types file(s) is to also be read
+    :return: Loaded config dictionary
+    """
+    package_path = importlib.resources.files(package)
+    json_file = package_path / "defaults.json"
+    json_types_file = package_path / "defaults_types.json"
+    yaml_file = package_path / "defaults.yml"
+    yaml_types_file = package_path / "defaults_types.yml"
+    config_list: List[dict] = []
+    config_types_list: List[dict] = []
+    if json_file.is_file():
+        config_list.append(load_config_from_string(json_file.read_text(), False, str(package_path)))
+    if json_types_file.is_file() and types:
+        config_types_list.append(load_config_from_string(json_types_file.read_text(), False, str(package_path)))
+    if yaml_file.is_file():
+        config_list.append(load_config_from_string(yaml_file.read_text(), True, str(package_path)))
+    if yaml_types_file.is_file() and types:
+        config_types_list.append(load_config_from_string(yaml_types_file.read_text(), True, str(package_path)))
+    return (config_list, config_types_list)
 
 def combine_configs(configs: Iterable[dict]) -> dict:
     """

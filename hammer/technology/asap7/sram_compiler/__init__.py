@@ -205,9 +205,9 @@ endmodule
         lef_file = f"{sram_name}_x4.lef"
         gds_file = f"{sram_name}_x4.gds"
 
-        nldm_lib_str = importlib.resources.read_text(f"{self.package}.memories.lib.{sram_name}_lib", nldm_lib_file)
-        lef_str = importlib.resources.read_text(f"{self.package}.memories.lef", lef_file)
-        gds_str = importlib.resources.read_binary(f"{self.package}.memories.gds", gds_file)
+        nldm_lib_dir = importlib.resources.files(f"{self.package}.memories.lib.{sram_name}_lib")
+        lef_dir = importlib.resources.files(f"{self.package}.memories.lef")
+        gds_dir = importlib.resources.files(f"{self.package}.memories.gds")
 
         (Path(tech_cache_dir) / nldm_lib_file).write_text(nldm_lib_str)
         (Path(tech_cache_dir) / lef_file).write_text(lef_str)
@@ -216,9 +216,9 @@ endmodule
         from hammer.tech import Corner, Supplies, Provide
         lib = ExtraLibrary(prefix=None, library=Library(
             name=sram_name,
-            nldm_liberty_file=f"{tech_cache_dir}/{nldm_lib_file}",
-            lef_file=f"{tech_cache_dir}/{lef_file}",
-            gds_file=f"{tech_cache_dir}/{gds_file}",
+            nldm_liberty_file=f"{nldm_lib_dir}/{nldm_lib_file}",
+            lef_file=f"{lef_dir}/{lef_file}",
+            gds_file=f"{gds_dir}/{gds_file}",
             # verilog_sim="{b}/behavioral/sram_behav_models.v".format(b=base_dir),
             verilog_sim=verilog_path,
             corner=Corner(nmos=speed_name, pmos=speed_name, temperature=str(corner.temp.value_in_units("C")) + " C"),

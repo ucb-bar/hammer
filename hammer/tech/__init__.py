@@ -364,16 +364,14 @@ class HammerTechnology:
         tech.name = technology_name
         tech.package = tech_module
 
-        tech_json = f"{technology_name}.tech.json"
-        tech_yaml = f"{technology_name}.tech.yml"
+        tech_json = importlib.resources.files(tech_module) / f"{technology_name}.tech.json"
+        tech_yaml = importlib.resources.files(tech_module) / f"{technology_name}.tech.yml"
 
-        if importlib.resources.is_resource(tech_module, tech_json):
-            json_str = importlib.resources.read_text(tech_module, tech_json)
-            tech.config = TechJSON.parse_raw(json_str)
+        if tech_json.is_file():
+            tech.config = TechJSON.parse_raw(tech_json.read_text())
             return tech
-        elif importlib.resources.is_resource(tech_module, tech_yaml):
-            json_str = json.dumps(load_yaml(importlib.resources.read_text(tech_module, tech_yaml)))
-            tech.config = TechJSON.parse_raw(json_str)
+        elif tech_yaml.is_file():
+            tech.config = TechJSON.parse_raw(json.dumps(load_yaml(tech_yaml.read_text())))
             return tech
         else:
             return None
@@ -402,10 +400,10 @@ class HammerTechnology:
         """
         return self._database.has_setting(key)
 
-    def get_config(self) -> List[dict]:
+    def get_config(self) -> Tuple[List[dict], List[dict]]:
         """Get the hammer configuration for this technology. Not to be confused with the ".tech.json" which
         self.config refers to. """
-        return hammer_config.load_config_from_defaults(self.package)
+        return hammer_config.load_config_from_defaults(self.package, types=True)
 
     @property
     def dont_use_list(self) -> Optional[List[str]]:
@@ -636,15 +634,12 @@ class HammerTechnology:
         if os.path.isabs(path):
             return path
 
-        # 2. If the path has no path separator, the path is relative to the tech plugin package itself
-        #    Copy the resource into the cache dir and return a pointer to it
+        # 2. If the path has no path separator, the path is relative to the tech plugin package itself.
+        #    Do not need to copy the resource into the cache dir because poetry packages all resources into site-packages.
         if os.sep not in path:
-            assert importlib.resources.is_resource(self.package, path),\
+            resource_path = importlib.resources(self.package) / path
+            assert resource_path.is_file(),\
                 f"{path} wasn't found in HammerTechnology Python package {self.package}"
-            resource_txt = importlib.resources.read_text(self.package, path)
-            resource_path = os.path.join(self.cache_dir, path)
-            with open(resource_path, "w") as f:
-                f.write(resource_txt)
             return resource_path
 
         # 3-5. The path consists of an identifier (prefix) and the rest of the path now
@@ -906,16 +901,20 @@ class HammerTechnology:
         :param lib: Library to check
         :return: True if the supplies of this library match the inputs for this run, False otherwise.
         """
-        if lib.supplies is None:
-            # TODO: add some sort of wildcard value for supplies for libraries which _actually_ should
-            # always be used.
-            self.logger.warning("Lib %s has no supplies annotation! Using anyway." % (lib.json()))
-            return True
         # If we are using MMMC assume all libraries will be used.
         # TODO: Read the corners and filter out libraries that don't match any of them.
         # Requires a refactor because MMMCCorner parsing is only in HammerTool now.
         # See issue #275.
         if self.get_setting("vlsi.inputs.mmmc_corners"):
+            return True
+        if lib.supplies is None:
+            # TODO: add some sort of wildcard value for supplies for libraries which _actually_ should
+            # always be used.
+            if lib.provides is not None:
+                for provided in lib.provides:
+                    if provided.lib_type is not None and provided.lib_type == "technology":
+                        return True
+            self.logger.warning("Lib %s has no supplies annotation! Using anyway." % (lib.json()))
             return True
         return self.get_setting("vlsi.inputs.supplies.VDD") == lib.supplies.VDD and self.get_setting(
             "vlsi.inputs.supplies.GND") == lib.supplies.GND

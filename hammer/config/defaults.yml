@@ -472,8 +472,6 @@ par.inputs:
   # type: bool
   gds_merge: false
 
-  gds_map_resource: null
-
   physical_only_cells_mode: auto # Physical only cells mode.
   # type: str
   # The list of physical only cells are cells which don't have a logic function.
@@ -606,6 +604,8 @@ lvs.inputs:
   schematic_files: [] # Input list of schematic files
 
   ilms: [] # Input list of ILMStructs
+
+  hcells_list: [] # Input list of LVS Hcells
 
   additional_lvs_text_mode: "auto" # Valid modes are auto, manual, prepend, and append
   additional_lvs_text: "" # Custom LVS command text to add after the boilerplate commands at the top of the run file
