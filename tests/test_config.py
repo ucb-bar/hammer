@@ -7,13 +7,14 @@ import tempfile
 import warnings
 import pytest
 import importlib.resources
+from typing import List, Dict
 
 import hammer.config as hammer_config
 
 
 class TestHammerDatabase:
     # For tests that don't check against any types
-    NO_TYPES = []
+    NO_TYPES = []  # type: List[Dict]
 
     def test_overriding(self) -> None:
         """

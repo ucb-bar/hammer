@@ -821,8 +821,8 @@ class HammerDatabase:
             return True
         try:
             exp_value_type = parse_setting_type(self.get_config_types()[key])
-        except ValueError as v:
-            raise ValueError(f'Key {key} has an invalid outer type: perhaps you have "List" instead of "list" or "Dict" instead of "dict"?') from v
+        except ValueError as ve:
+            raise ValueError(f'Key {key} has an invalid outer type: perhaps you have "List" instead of "list" or "Dict" instead of "dict"?') from ve
 
         value = cfg[key]
         if value is None and not exp_value_type.optional:
