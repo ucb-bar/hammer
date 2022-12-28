@@ -858,9 +858,9 @@ class HammerDatabase:
                     raise TypeError(f"Expected tertiary value type {exp_value_type.tertiary_v.value} for {key}, got type {v_type}")
         return True
 
-    def get_settings_from_dict(self, key_default_dict: Dict[str, str], key_prefix: str, optional_keys: List[str] = []) -> Dict[str, str]:
+    def get_settings_from_dict(self, key_default_dict: Dict[str, str], key_prefix: str = "", optional_keys: List[str] = []) -> Dict[str, str]:
         """
-        Gets input values for multiple keys of similar "type" (e.g., sim.inputs).
+        Gets input values for multiple keys.
         :param key_default_dict: Specify a dictionary of requested keys and default values.
         :param key_prefix: Specify a prefix for the given keys.
         :optional_keys: Specify optional keys where if no setting is provided a default value of None will be provided.
@@ -870,7 +870,10 @@ class HammerDatabase:
         opt_dict={}
         for key, default_value in key_default_dict.items():
             try: 
-                extracted_value = self.get_setting(f"{key_prefix}.{key}", default_value)
+                if not key_prefix:
+                    extracted_value = self.get_setting(f"{key}", default_value)
+                else:
+                    extracted_value = self.get_setting(f"{key_prefix}.{key}", default_value)
                 opt_dict[key] = extracted_value
             except KeyError:
                 if key not in optional_keys:
