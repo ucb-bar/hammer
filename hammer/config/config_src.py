@@ -858,7 +858,7 @@ class HammerDatabase:
                     raise TypeError(f"Expected tertiary value type {exp_value_type.tertiary_v.value} for {key}, got type {v_type}")
         return True
 
-    def get_settings_from_dict(self, key_default_dict: Dict[str, str], key_prefix: str = "", optional_keys: List[str] = []) -> Dict[str, str]:
+    def get_settings_from_dict(self, key_default_dict: Dict[str, Any], key_prefix: str = "", optional_keys: List[str] = []) -> Dict[str, str]:
         """
         Gets input values for multiple keys.
         :param key_default_dict: Specify a dictionary of requested keys and default values.

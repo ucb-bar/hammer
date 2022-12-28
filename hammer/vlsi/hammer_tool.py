@@ -905,7 +905,7 @@ class HammerTool(metaclass=ABCMeta):
         """
         self._database.set_setting(key, value)
 
-    def get_settings_from_dict(self, key_default_dict: Dict[str, str], key_prefix: str = "", optional_keys: List[str] = []) -> Dict[str, str]:
+    def get_settings_from_dict(self, key_default_dict: Dict[str, Any], key_prefix: str = "", optional_keys: List[str] = []) -> Dict[str, str]:
         """
         Gets input values for multiple keys.
         """
