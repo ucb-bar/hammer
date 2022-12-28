@@ -858,7 +858,29 @@ class HammerDatabase:
                     raise TypeError(f"Expected tertiary value type {exp_value_type.tertiary_v.value} for {key}, got type {v_type}")
         return True
 
-    def update_core(self, core_config: List[dict], core_config_types: List[dict]) -> None:
+    def get_settings_from_dict(self, key_default_dict: Dict[str, str], key_prefix: str, optional_keys: List[str] = []) -> Dict[str, str]:
+        """
+        Gets input values for multiple keys of similar "type" (e.g., sim.inputs).
+        :param key_default_dict: Specify a dictionary of requested keys and default values.
+        :param key_prefix: Specify a prefix for the given keys.
+        :optional_keys: Specify optional keys where if no setting is provided a default value of None will be provided.
+        :return: A dictionary of keys and corresponding input values.
+        """
+
+        opt_dict={}
+        for key, default_value in key_default_dict.items():
+            try: 
+                extracted_value = self.get_setting(f"{key_prefix}.{key}", default_value)
+                opt_dict[key] = extracted_value
+            except KeyError:
+                if key not in optional_keys:
+                    raise ValueError(f"Missing a mandatory requested key: {key_prefix}.{key}")
+                else: 
+                    opt_dict[key] = None
+            
+        return opt_dict
+
+    def update_core(self, core_config: List[dict]) -> None:
         """
         Update the core config with the given core config.
         """

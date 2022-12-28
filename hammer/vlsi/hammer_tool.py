@@ -905,6 +905,12 @@ class HammerTool(metaclass=ABCMeta):
         """
         self._database.set_setting(key, value)
 
+    def get_settings_from_dict(self, key_default_dict: Dict[str, str], key_prefix: str, optional_keys: List[str] = []) -> Dict[str, str]:
+        """
+        Gets input values for multiple keys of similar "type" (e.g., sim.inputs).
+        """
+        return self._database.get_settings_from_dict(key_default_dict, key_prefix, optional_keys)
+
     def create_enter_script(self, enter_script_location: str = "", raw: bool = False) -> None:
         """
         Create the enter script inside the rundir which can be used to
