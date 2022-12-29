@@ -44,10 +44,9 @@ def submit_command_test_context(tmp_path, cmd_type: str) -> Iterator[SubmitComma
         "synthesis.mocksynth.temp_folder": temp_dir,
         "synthesis.submit.command": cmd_type
     }
-    if cmd_type is "lsf":
-        assert resources.is_resource("utils", "mock_bsub.sh")
-        with resources.path("utils", "mock_bsub.sh") as b:
-            bsub_binary = str(b)
+    if cmd_type == "lsf":
+        assert resources.files("utils").joinpath("mock_bsub.sh").is_file()
+        bsub_binary = str(resources.files("utils").joinpath("mock_bsub.sh"))
         json_content.update({
             "synthesis.submit.settings": [{"lsf": {
                 "queue": "myqueue",

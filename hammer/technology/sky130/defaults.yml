@@ -93,12 +93,12 @@ synthesis.yosys:
 par.inputs:
   gds_merge: true
   gds_map_mode: manual
-  gds_map_resource: ["hammer.technology.sky130.extra", "sky130_lefpin.map"]
-  gds_map_resource_meta: lazysubst
+  gds_map_file: "extra/sky130_lefpin.map"
+  gds_map_file_meta: prependlocal
 
 par.openroad:
-  openrcx_techfile: ["hammer.technology.sky130.extra", "sky130hd.rcx_rules"]
-  openrcx_techfile_meta: lazysubst
+  openrcx_techfile: "extra/sky130hd.rcx_rules"
+  openrcx_techfile_meta: prependlocal
   klayout_techfile_source: "${technology.sky130.sky130A}/libs.tech/klayout/sky130A.lyt"
   klayout_techfile_source_meta: lazysubst
 

@@ -292,7 +292,7 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
             else:
                 # Cap each group at 50
                 while group in groups and len(groups[group]) >= 50:
-                    match = re.match("^(.*)_(\d+)$", group)
+                    match = re.match(r"^(.*)_(\d+)$", group)
                     if match:
                         old = int(match.group(2))
                         group = match.group(1) + "_{new}".format(new=old+1)

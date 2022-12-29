@@ -1,6 +1,6 @@
 # Hammer Setup
 
-Hammer depends on Python 3.8+.
+Hammer depends on Python 3.9+.
 
 The default technology, ASAP7, has some extra requirements. See its [README](https://github.com/ucb-bar/hammer/blob/master/hammer/technology/asap7/README.md) for instructions.
 
@@ -150,7 +150,7 @@ Success: no issues found in 25 source files
 
 ### Testing Different Python Versions with tox
 
-hammer is supposed to work with Python 3.8+, so we run its unit tests on all supported Python versions using `tox` and `pyenv`.
+hammer is supposed to work with Python 3.9+, so we run its unit tests on all supported Python versions using `tox` and `pyenv`.
 
 1. [Install `pyenv`](https://github.com/pyenv/pyenv-installer)
 
@@ -166,7 +166,6 @@ Then restart your shell again.
 See the `.python-version` file at the root of hammer and install those Python versions using `pyenv`.
 
 ```shell
-pyenv install 3.8.12
 pyenv install 3.9.13
 pyenv install 3.10.6
 ```
@@ -176,7 +175,6 @@ Once the Python interpreters are installed, run `pyenv versions` from the root o
 ```shell
 pyenv versions
   system
-* 3.8.12 (set by .../hammer/.python-version)
 * 3.9.13 (set by .../hammer/.python-version)
 * 3.10.6 (set by .../hammer/.python-version)
 ```
@@ -192,13 +190,13 @@ This will run the pytest unit tests using all the Python versions specified in `
 You can run tests only on a particular environment with `-e`
 
 ```shell
-tox -e py38 # only run tests on Python 3.8
+tox -e py39 # only run tests on Python 3.9
 ```
 
 You can pass command line arguments to the pytest invocation within a tox virtualenv with `--`
 
 ```shell
-tox -e py38 -- -k "lsf" -v
+tox -e py39 -- -k "lsf" -v
 ```
 
 ### Adding / Updating Dependencies

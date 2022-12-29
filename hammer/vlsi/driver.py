@@ -86,7 +86,7 @@ class HammerDriver:
                 self.log.error("Environment config %s does not exist!" % (config))
             config_str = Path(config).read_text()
             is_yaml = config.endswith(".yml")
-            self.database.update_environment([hammer_config.load_config_from_string(config_str, is_yaml)])
+            self.database.update_environment([hammer_config.load_config_from_string(config_str, is_yaml, str(Path(config).resolve().parent))])
 
         # Read in the project config to find the syn, par, and tech.
         project_configs: List[dict] = []
@@ -95,7 +95,7 @@ class HammerDriver:
                 self.log.error("Project config %s does not exist!" % (config))
             config_str = Path(config).read_text()
             is_yaml = config.endswith(".yml")
-            project_configs.append(hammer_config.load_config_from_string(config_str, is_yaml))
+            project_configs.append(hammer_config.load_config_from_string(config_str, is_yaml, str(Path(config).resolve().parent)))
         project_configs.append(extra_project_config)
         self.project_configs = []  # type: List[dict]
         self.update_project_configs(project_configs)
@@ -107,6 +107,7 @@ class HammerDriver:
         # Keep track of what the synthesis and par configs are since
         # update_tools() just takes a whole list.
         self.tool_configs = {}  # type: Dict[str, List[dict]]
+        self.tool_config_types = {}  # type: Dict[str, List[dict]]
 
         # Initialize tool fields.
         self.syn_tool = None  # type: Optional[HammerSynthesisTool]
@@ -157,7 +158,7 @@ class HammerDriver:
         else:
             tech: hammer_tech.HammerTechnology = tech_opt
         # Update database as soon as possible since e.g. extract_technology_files could use those settings
-        self.database.update_technology(tech.get_config())
+        self.database.update_technology(*tech.get_config())
         tech.logger = self.log.context("tech")
         tech.set_database(self.database)
         tech.cache_dir = cache_dir
@@ -170,7 +171,8 @@ class HammerDriver:
         Calls self.database.update_tools with self.tool_configs as a list.
         """
         tools = reduce(lambda a, b: a + b, list(self.tool_configs.values()))
-        self.database.update_tools(tools)
+        types = reduce(lambda a, b: a + b, list(self.tool_config_types.values()))
+        self.database.update_tools(tools, types)
 
     def instantiate_tool_from_config(self, tool_type: str,
                                      required_type: Optional[type] = None) -> Optional[Tuple[HammerTool, str]]:
@@ -210,7 +212,6 @@ class HammerDriver:
 
         if run_dir == "":
             run_dir = os.path.join(self.obj_dir, "syn-rundir")
-        print(syn_tool)
         # TODO: generate this automatically
         syn_tool.name = name
         syn_tool.logger = self.log.context("synthesis")
@@ -237,7 +238,7 @@ class HammerDriver:
             return False
 
         self.syn_tool = syn_tool
-        self.tool_configs["synthesis"] = syn_tool.get_config()
+        self.tool_configs["synthesis"], self.tool_config_types["synthesis"] = syn_tool.get_config()
         self.update_tool_configs()
         return True
 
@@ -305,7 +306,7 @@ class HammerDriver:
             return False
 
         self.par_tool = par_tool
-        self.tool_configs["par"] = par_tool.get_config()
+        self.tool_configs["par"], self.tool_config_types["par"] = par_tool.get_config()
         self.update_tool_configs()
         return True
 
@@ -367,7 +368,7 @@ class HammerDriver:
             return False
 
         self.drc_tool = drc_tool
-        self.tool_configs["drc"] = drc_tool.get_config()
+        self.tool_configs["drc"], self.tool_config_types["drc"] = drc_tool.get_config()
         self.update_tool_configs()
         return True
 
@@ -434,7 +435,7 @@ class HammerDriver:
             return False
 
         self.lvs_tool = lvs_tool
-        self.tool_configs["lvs"] = lvs_tool.get_config()
+        self.tool_configs["lvs"], self.tool_config_types["lvs"] = lvs_tool.get_config()
         self.update_tool_configs()
         return True
 
@@ -488,7 +489,7 @@ class HammerDriver:
             self.log.warning("No SRAM parameters specified, no SRAMs will be generated.")
 
         self.sram_generator_tool = sram_generator_tool
-        self.tool_configs["sram_generator"] = sram_generator_tool.get_config()
+        self.tool_configs["sram_generator"], self.tool_config_types["sram_generator"] = sram_generator_tool.get_config()
         self.update_tool_configs()
         return True
 
@@ -560,7 +561,7 @@ class HammerDriver:
             return False
 
         self.sim_tool = sim_tool
-        self.tool_configs["simulation"] = sim_tool.get_config()
+        self.tool_configs["simulation"], self.tool_config_types["simulation"] = sim_tool.get_config()
         self.update_tool_configs()
         return True
 
@@ -628,7 +629,7 @@ class HammerDriver:
             return False
 
         self.power_tool = power_tool
-        self.tool_configs["power"] = power_tool.get_config()
+        self.tool_configs["power"], self.tool_config_types["power"] = power_tool.get_config()
         self.update_tool_configs()
         return True
 
@@ -698,7 +699,7 @@ class HammerDriver:
 
         self.formal_tool = formal_tool
 
-        self.tool_configs["formal"] = formal_tool.get_config()
+        self.tool_configs["formal"], self.tool_config_types["formal"] = formal_tool.get_config()
         self.update_tool_configs()
         return True
 
@@ -758,7 +759,7 @@ class HammerDriver:
 
         self.timing_tool = timing_tool
 
-        self.tool_configs["timing"] = timing_tool.get_config()
+        self.tool_configs["timing"], self.tool_config_types["timing"] = timing_tool.get_config()
         self.update_tool_configs()
         return True
 
@@ -809,7 +810,7 @@ class HammerDriver:
         pcb_tool.run_dir = run_dir
 
         self.pcb_tool = pcb_tool
-        self.tool_configs["pcb"] = pcb_tool.get_config()
+        self.tool_configs["pcb"], self.tool_config_types["pcb"] = pcb_tool.get_config()
         self.update_tool_configs()
         return True
 

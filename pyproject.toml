@@ -20,7 +20,7 @@ yaml2json = "hammer.shell.yaml2json:main"
 asap7_gds_scale = "hammer.technology.asap7.gds_scale:main"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 pydantic = "^1.9.2"
 PyYAML = "^6.0"
 "ruamel.yaml" = "^0.17.21"
