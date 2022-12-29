@@ -37,7 +37,7 @@ class VerilogUtils:
         # Remove comments first to avoid false matches in the comments
         new_v = VerilogUtils.remove_comments(v)
 
-        regex = "module\s+" + re.escape(module)
+        regex = r"module\s+" + re.escape(module)
         return re.search(regex, new_v) is not None
 
     @staticmethod
@@ -53,5 +53,5 @@ class VerilogUtils:
             # Don't risk touching the source if we don't think the module exists.
             return v
 
-        regex = "(module\s+" + re.escape(module) + ".+?endmodule)"
+        regex = r"(module\s+" + re.escape(module) + ".+?endmodule)"
         return re.sub(regex, "", v, flags=re.DOTALL)

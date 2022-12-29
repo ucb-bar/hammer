@@ -186,7 +186,7 @@ class TestHammerTechnology(HasGetTech):
         tech.cache_dir = tech_dir
 
         database = hammer_config.HammerDatabase()
-        database.update_technology(tech.get_config())
+        database.update_technology(*tech.get_config())
         HammerVLSISettings.load_builtins_and_core(database)
         tech.set_database(database)
         outputs = tech.process_library_filter(pre_filts=[], filt=hammer_tech.filters.gds_filter,
@@ -219,7 +219,7 @@ class TestHammerTechnology(HasGetTech):
         tech.cache_dir = tech_dir
 
         database = hammer_config.HammerDatabase()
-        database.update_technology(tech.get_config())
+        database.update_technology(*tech.get_config())
         HammerVLSISettings.load_builtins_and_core(database)
         tech.set_database(database)
         outputs = tech.process_library_filter(pre_filts=[], filt=hammer_tech.filters.gds_filter,
@@ -254,7 +254,7 @@ class TestHammerTechnology(HasGetTech):
         tech.cache_dir = tech_dir
 
         database = hammer_config.HammerDatabase()
-        database.update_technology(tech.get_config())
+        database.update_technology(*tech.get_config())
         HammerVLSISettings.load_builtins_and_core(database)
         tech.set_database(database)
         outputs = tech.process_library_filter(pre_filts=[], filt=hammer_tech.filters.gds_filter,
@@ -351,7 +351,7 @@ class TestHammerTechnology(HasGetTech):
         tech.cache_dir = tech_dir
 
         database = hammer_config.HammerDatabase()
-        database.update_technology(tech.get_config())
+        database.update_technology(*tech.get_config())
         HammerVLSISettings.load_builtins_and_core(database)
         tech.set_database(database)
         outputs = tech.process_library_filter(pre_filts=[], filt=hammer_tech.filters.lef_filter,

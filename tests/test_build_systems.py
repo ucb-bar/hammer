@@ -66,7 +66,7 @@ class TestHammerBuildSystems:
         bridge_tasks = {"syn-to-sim", "syn-to-par", "par-to-sim", "par-to-lvs", "par-to-drc", "syn-to-power", "par-to-power", "sim-rtl-to-power", "sim-syn-to-power", "sim-par-to-power", "syn-to-formal", "par-to-formal", "syn-to-timing", "par-to-timing"}
         expected_targets = tasks.copy()
         expected_targets.update(bridge_tasks)
-        expected_targets.update({"redo-" + x for x in expected_targets if x is not "pcb"})
+        expected_targets.update({"redo-" + x for x in expected_targets if x != "pcb"})
         expected_targets.update({os.path.join(tmpdir, x + "-rundir", x + "-output-full.json") for x in tasks if x not in {"sim-rtl", "sim-syn", "sim-par", "power-rtl", "power-syn", "power-par", "formal-syn", "formal-par", "timing-syn", "timing-par"}})
         expected_targets.update({os.path.join(tmpdir, x + "-rundir", x.split('-')[0] + "-output-full.json") for x in tasks if x in {"sim-rtl", "sim-syn", "sim-par", "power-rtl", "power-syn", "power-par", "formal-syn", "formal-par", "timing-syn", "timing-par"}})
         expected_targets.update({os.path.join(tmpdir, x + "-input.json") for x in tasks if x not in {"syn", "pcb", "sim-rtl", "power-rtl"}})

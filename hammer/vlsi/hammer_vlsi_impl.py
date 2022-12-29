@@ -110,16 +110,21 @@ class HammerVLSISettings:
         """
 
         # Load in builtins.
-        builtins_yml = resources.read_text("hammer.config", "builtins.yml")
+        builtins_yml = resources.files("hammer.config") / "builtins.yml"
         database.update_builtins([
-            hammer_config.load_config_from_string(builtins_yml, True),#, ("hammer.config", "builtins.yml")),
+            hammer_config.load_config_from_string(builtins_yml.read_text(), True),
             HammerVLSISettings.get_config()
         ])
 
         # Read in core defaults.
-        database.update_core(hammer_config.load_config_from_defaults("hammer.config"))
-        database.update_types(hammer_config.load_config_from_defaults("hammer.config", types=True))
+        database.update_core(*hammer_config.load_config_from_defaults("hammer.config", types=True))
 
+        # Read in vendor-common defaults.
+        # TODO: move these defaults into respective vendor plugin packages
+        for pkg in ["hammer.common.cadence", "hammer.common.synopsys", "hammer.common.mentor", "hammer.common.openroad"]:
+            config, types = hammer_config.load_config_from_defaults(pkg, types=True)
+            database.update_defaults(config)
+            database.update_types(types, check_type=False)
 
 from .hammer_tool import HammerTool, HammerToolStep
 
