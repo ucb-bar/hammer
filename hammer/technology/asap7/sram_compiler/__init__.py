@@ -197,28 +197,22 @@ endmodule
 """.format(NUMADDR=math.ceil(math.log2(params.depth)), NUMWORDS=params.depth, WORDLENGTH=params.width, NAME=sram_name,
            RAND_WIDTH=math.ceil(params.width / 32), specify=specify))
 
-        # lib_path ="{t}/{n}_{c}.lib".format(t=tech_cache_dir,n=sram_name,c=corner_str)
-        # if not os.path.exists(lib_path):
-        #    os.symlink("{b}/lib/{n}_lib/{n}_{c}.lib".format(b=base_dir,n=sram_name,c=corner_str),
-        #    "{t}/{n}_{c}.lib".format(t=tech_cache_dir,n=sram_name,c=corner_str))
+        package_dir = importlib.resources.files(self.package)
+
         nldm_lib_file = f"{sram_name}_{corner_str}.lib"
         lef_file = f"{sram_name}_x4.lef"
         gds_file = f"{sram_name}_x4.gds"
 
-        nldm_lib_str = importlib.resources.read_text(f"{self.package}.memories.lib.{sram_name}_lib", nldm_lib_file)
-        lef_str = importlib.resources.read_text(f"{self.package}.memories.lef", lef_file)
-        gds_str = importlib.resources.read_binary(f"{self.package}.memories.gds", gds_file)
-
-        (Path(tech_cache_dir) / nldm_lib_file).write_text(nldm_lib_str)
-        (Path(tech_cache_dir) / lef_file).write_text(lef_str)
-        (Path(tech_cache_dir) / gds_file).write_bytes(gds_str)
+        nldm_lib_dir = package_dir / f"memories/lib/{sram_name}_lib"
+        lef_dir = package_dir / "memories/lef"
+        gds_dir = package_dir / "memories/gds"
 
         from hammer.tech import Corner, Supplies, Provide
         lib = ExtraLibrary(prefix=None, library=Library(
             name=sram_name,
-            nldm_liberty_file=f"{tech_cache_dir}/{nldm_lib_file}",
-            lef_file=f"{tech_cache_dir}/{lef_file}",
-            gds_file=f"{tech_cache_dir}/{gds_file}",
+            nldm_liberty_file=f"{nldm_lib_dir}/{nldm_lib_file}",
+            lef_file=f"{lef_dir}/{lef_file}",
+            gds_file=f"{gds_dir}/{gds_file}",
             # verilog_sim="{b}/behavioral/sram_behav_models.v".format(b=base_dir),
             verilog_sim=verilog_path,
             corner=Corner(nmos=speed_name, pmos=speed_name, temperature=str(corner.temp.value_in_units("C")) + " C"),

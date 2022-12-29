@@ -39,7 +39,7 @@ def signoff_test_context(tmp_path, tool_type: str) -> Iterator[SignoffToolTestCo
         "%s.temp_folder" % tool_type: temp_dir,
         "%s.submit.command" % tool_type: "local"
     }  # type: Dict[str, Any]
-    if tool_type is "lvs":
+    if tool_type == "lvs":
         json_content.update({
             "lvs.inputs.schematic_files": ["/dev/null"],
             "lvs.inputs.hcells_list": []

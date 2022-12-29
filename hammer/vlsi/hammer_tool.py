@@ -11,7 +11,6 @@ from abc import ABCMeta, abstractmethod
 from functools import reduce
 from typing import Any, Callable, Dict, Iterable, List, Optional, Set, Tuple, cast
 from inspect import cleandoc
-import importlib.resources
 from pathlib import Path
 
 import hammer.config as hammer_config
@@ -165,9 +164,9 @@ class HammerTool(metaclass=ABCMeta):
         if pst.location == HookLocation.PersistentStep:
             self.logger.debug("Running persistent sub-step '{pstep}' before '{step}'".format(pstep=pst.step.name, step=target_step.name))
         if pst.location == HookLocation.PersistentPreStep:
-            self.logger.debug("Running persistent sub-step '{pstep}' before '{step}' (pre-step: '{pre_step}'".format(pstep=pst.step.name, step=target_step.name, pre_step=pst.target_name))
+            self.logger.debug("Running persistent sub-step '{pstep}' before '{step}' (pre-step: '{pre_step}')".format(pstep=pst.step.name, step=target_step.name, pre_step=pst.target_name))
         if pst.location == HookLocation.PersistentPostStep:
-            self.logger.debug("Running persistent sub-step '{pstep}' after '{step}' (post-step: '{post_step}'".format(pstep=pst.step.name, step=target_step.name, post_step=pst.target_name))
+            self.logger.debug("Running persistent sub-step '{pstep}' after '{step}' (post-step: '{post_step}')".format(pstep=pst.step.name, step=target_step.name, post_step=pst.target_name))
         pst_out = pst.step.func(self)
         assert pst_out, "Persistent step {step} failed!".format(step=pst.step.name)
         return pst_out
@@ -884,9 +883,9 @@ class HammerTool(metaclass=ABCMeta):
             f.write(db_contents)
         return path
 
-    def get_config(self) -> List[dict]:
+    def get_config(self) -> Tuple[List[dict], List[dict]]:
         """Get the config for this tool."""
-        return hammer_config.load_config_from_defaults(self.package)
+        return hammer_config.load_config_from_defaults(self.package, types=True)
 
     def get_setting(self, key: str, nullvalue: Any = None) -> Any:
         """
@@ -1383,9 +1382,6 @@ class HammerTool(metaclass=ABCMeta):
         manual_map_file: Optional[str] = str(self.get_setting("par.inputs.gds_map_file")) if self.get_setting(
             "par.inputs.gds_map_file") is not None else None
 
-        manual_map_resource: Optional[List[str]] = self.get_setting("par.inputs.gds_map_resource") if self.get_setting(
-            "par.inputs.gds_map_resource") is not None else None
-
         # tech_map_file will only be used in auto mode
         tech_map_file_raw = self.technology.config.gds_map_file
         tech_map_file_optional = str(
@@ -1398,11 +1394,7 @@ class HammerTool(metaclass=ABCMeta):
             if manual_map_file:
                 map_file = manual_map_file
             else:
-                assert manual_map_resource
-                text = importlib.resources.files(manual_map_resource[0]).joinpath(manual_map_resource[1]).read_text()
-                manual_map_resource_path = Path(self.technology.cache_dir) / manual_map_resource[1]
-                manual_map_resource_path.write_text(text)
-                map_file = str(manual_map_resource_path)
+                raise ValueError("par.inputs.gds_map_mode set to manual but no par.inputs.gds_map_file specified!")
         elif gds_map_mode == "empty":
             map_file = None
         else:

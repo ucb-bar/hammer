@@ -102,7 +102,7 @@ class Metal(BaseModel):
     pitch: Decimal
     offset: Decimal
     power_strap_widths_and_spacings: List[WidthSpacingTuple]
-    power_strap_width_table: Optional[List[Decimal]] = []
+    power_strap_width_table: List[Decimal] = []
     # Note: grid_unit is not currently parsed as part of the Metal data structure!
     # See #379
     grid_unit: Decimal

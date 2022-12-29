@@ -1,0 +1,13 @@
+synopsys:
+  # Directory where Synopsys tools are installed.
+  synopsys_home: str
+
+  # License server information, to be overridden by some project generator.
+  # e.g. "port_a@server:port_b@server"
+  SNPSLMD_LICENSE_FILE: str
+  MGLS_LICENSE_FILE: str
+
+  # Extra environment variables.
+  # List of dictionaries of variable-values.
+  # e.g. "MY_VAR=foo" -> [ {"MY_VAR": "foo"} ]
+  extra_env_vars: list[dict[str, str]]
