@@ -989,7 +989,7 @@ foo:
         """
 
         base, base_types = hammer_config.load_config_from_defaults("hammer.config", types=True)
-        builtins_yml = importlib.resources.read_text("hammer.config", "builtins.yml")
+        builtins_yml = importlib.resources.files("hammer.config").joinpath("builtins.yml").read_text()
         builtins = hammer_config.load_config_from_string(builtins_yml, is_yaml=True)
 
         db = hammer_config.HammerDatabase()
