@@ -998,3 +998,42 @@ foo:
 
         for k, v in db.get_config().items():
             assert db.get_setting(k) == v
+
+    def test_get_settings_from_dict(self) -> None:
+        """
+        Test functionality, error handling, of utility funct: `get_settings_from_dict`.
+        """
+        
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+key_1: True
+key_2: ["i", "c", "v"]
+key_3: 123
+key_4: 
+abc.key: "largo"
+def.a_key: "west"
+def.b_key: "bank"
+""", is_yaml=True)
+
+        db.update_core([base], self.NO_TYPES)
+        # 1st input tests basic functionality for mandatory keys.
+        # 2nd input tests requests using a shared key_prefix.
+        # 3rd input tests output when an optional key is queried for but not found. 
+        # Note it must NOT use a default value if it was not specified to begin with.
+        inputs   = [{"key_1": False, "key_2": [], "key_3": [], "key_4": "lvs", "abc.key": ""},
+                    {"a_key": "", "b_key": ""},
+                    {"key_1": False, "key_2": [], "opt_key":"123"}]
+        prefixes = ["", "def", ""]
+        opts     = [[],[], ["opt_key"]]
+        refs     = [{"key_1": True, "key_2": ["i", "c", "v"], "key_3": 123, "key_4": "lvs", "abc.key": "largo"},
+                    {"a_key": "west", "b_key": "bank"},
+                    {"key_1": True, "key_2": ["i", "c", "v"], "opt_key": None}]
+
+        # Test prefix functionality.
+        for (input_dict, prefix, opt, ref) in zip(inputs, prefixes, opts, refs):
+            assert db.get_settings_from_dict(input_dict, prefix, opt) == ref
+        
+        # In the final case, test error handling when mandatory keys are not specified.
+        with pytest.raises(ValueError):
+            db.get_settings_from_dict({"false_key": ""}) 
+        
