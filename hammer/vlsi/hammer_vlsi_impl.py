@@ -10,6 +10,8 @@ import os
 import sys
 import json
 from typing import Iterable
+import inspect
+import datetime
 
 import hammer.config as hammer_config
 from hammer.utils import deepdict, coerce_to_grid
@@ -2023,6 +2025,11 @@ class TCLTool(HammerTool):
 class SynopsysTool(HasSDCSupport, TCLTool, HammerTool):
     """Mix-in trait with functions useful for Synopsys-based tools."""
 
+    ## FIXME: not used by any Synopsys tool
+    @property
+    def post_synth_sdc(self) -> Optional[str]:
+        return None
+
     @property
     def env_vars(self) -> Dict[str, str]:
         """
@@ -2049,6 +2056,25 @@ class SynopsysTool(HasSDCSupport, TCLTool, HammerTool):
         if "-" in date:
             minor_version = int(date.split("-")[1][2:])
         return (year * 100 + month) * 100 + minor_version
+
+    @property
+    def header(self) -> str:
+        """
+        Header for all generated Tcl scripts
+        """
+        header_text = f"""
+        # ---------------------------------------------------------------------------------
+        # Portions Copyright ©{datetime.date.today().year} Synopsys, Inc. All rights reserved. Portions of
+        # these TCL scripts are proprietary to and owned by Synopsys, Inc. and may only be
+        # used for internal use by educational institutions (including United States
+        # government labs, research institutes and federally funded research and
+        # development centers) on Synopsys tools for non-profit research, development,
+        # instruction, and other non-commercial uses or as otherwise specifically set forth
+        # by written agreement with Synopsys. All other use, reproduction, modification, or
+        # distribution of these TCL scripts is strictly prohibited.
+        # ---------------------------------------------------------------------------------
+        """
+        return inspect.cleandoc(header_text)
 
     def get_synopsys_rm_tarball(self, product: str, settings_key: str = "") -> str:
         """Locate reference methodology tarball.

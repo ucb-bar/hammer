@@ -8,7 +8,7 @@ readme = "README.md"
 repository = "https://github.com/ucb-bar/hammer"
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 hammer-vlsi = {path = "../.", extras = ["asap7"], develop = true}
 hammer-cadence-plugins = {path = "hammer-cadence-plugins", develop = true}
 hammer-synopsys-plugins = {path = "hammer-synopsys-plugins", develop = true}
@@ -21,7 +21,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py38,py39,py310
+envlist = py39,py310
 isolated_build = True
 
 [testenv]
