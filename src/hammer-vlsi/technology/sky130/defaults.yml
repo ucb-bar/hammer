@@ -46,10 +46,12 @@ vlsi:
     # TODO: add ability to tie pin to net in Hammer Innovus plugin
       power:  [ {name: "VDD",  pin: "VDD"}, 
                 {name: "VPWR", pin: "VPWR", tie: "VDD"},
-                {name: "VPB",  pin: "VPB" , tie: "VDD"}]
+                {name: "VPB",  pin: "VPB" , tie: "VDD"},
+                {name: "vdd",  pin: "vdd",  tie: "VDD"}]
       ground: [ {name: "VSS",  pin: "VSS"},
                 {name: "VGND", pin: "VGND", tie: "VSS"},
-                {name: "VNB",  pin: "VNB" , tie: "VSS"}]
+                {name: "VNB",  pin: "VNB" , tie: "VSS"},
+                {name: "vss",  pin: "vss",  tie: "VSS"}]
       VDD: "1.8 V"
       GND: "0 V"
 
@@ -104,7 +106,10 @@ par.inputs:
 par.openroad:
   openrcx_techfile: "${vlsi.builtins.hammer_vlsi_path}/technology/sky130/extra/sky130hd.rcx_rules"
   openrcx_techfile_meta: lazysubst
-  klayout_techfile_source: "${technology.sky130.sky130A}/libs.tech/klayout/tech/sky130A.lyt"
+  setrc_file: "${vlsi.builtins.hammer_vlsi_path}/technology/sky130/extra/setRC.tcl"
+  setrc_file_meta: lazysubst
+  # klayout_techfile_source: "${technology.sky130.sky130A}/libs.tech/klayout/tech/sky130A.lyt"
+  klayout_techfile_source: "${vlsi.builtins.hammer_vlsi_path}/technology/sky130/extra/sky130A.lyt"
   klayout_techfile_source_meta: lazysubst
 
 par.power_straps_mode: generate # Power Straps

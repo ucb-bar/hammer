@@ -153,9 +153,9 @@ class SKY130Tech(HammerTechnology):
     
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {
-            "openroad": [
-            HammerTool.make_pre_insertion_hook("detailed_placement",   sky130_set_wire_rc)
-            ],
+            # "openroad": [
+            # HammerTool.make_pre_insertion_hook("detailed_placement",   sky130_set_wire_rc)
+            # ],
             "innovus": [
             HammerTool.make_post_insertion_hook("init_design",      sky130_innovus_settings),
             HammerTool.make_pre_insertion_hook("place_tap_cells",   sky130_add_endcaps),

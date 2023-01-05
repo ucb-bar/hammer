@@ -51,7 +51,8 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
             #        volt = str(corner.voltage.value_in_units("V")).replace(".","p"),
             #        temp = str(int(corner.temp.value_in_units("C"))).replace(".","p"))
 
-            base_dir="/tools/C/rahulkumar/sky130/share/sram"
+            # base_dir="/tools/C/rahulkumar/sky130/share/sram"
+            base_dir="/tools/C/nayiri/sky130/tmp_srams"
             lib_path="{b}/{n}/{n}_{c}.lib".format(b=base_dir,n=sram_name,c=corner_str)
             if not os.path.exists(lib_path):
                 self.logger.error(f"SKY130 {params.family} SRAM cache does not support corner: {corner_str}")

@@ -46,7 +46,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             self.place_tapcells,
             self.power_straps,
             # PLACE
-            self.initial_global_placement,
+            # self.initial_global_placement,
             self.io_placement,
             self.global_placement,
             self.resize,
@@ -97,10 +97,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         assert super().do_pre_steps(first_step)
         # Restore from the last checkpoint if we're not starting over.
         if first_step != self.first_step:
-            self.read_lef()
-            self.append(self.read_liberty())
-            self.append("read_db pre_{step}".format(step=first_step.name))
-            self.read_sdc()
+            self.init_design(first_step=first_step)
+
         return True
 
     def do_between_steps(self, prev: HammerToolStep, next: HammerToolStep) -> bool:
@@ -149,7 +147,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     @property
     def output_spef_paths(self) -> str:
-        return os.path.join(self.run_dir, "{top}.par.spef".format(top=self.top_module))
+        return [os.path.join(self.run_dir, "{top}.par.spef".format(top=self.top_module))]
 
     @property
     def route_guide_path(self) -> str:
@@ -175,7 +173,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     @property
     def output_sim_netlist_filename(self) -> str:
-        return os.path.join(self.run_dir, "{top}.sim.v".format(top=self.top_module))
+        # return os.path.join(self.run_dir, "{top}.sim.v".format(top=self.top_module))
+        return self.output_netlist_filename
     
     @property
     def generated_scripts_dir(self) -> str:
@@ -217,13 +216,22 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         return ' '.join(list(map(lambda c: str(c), stdfillers[0].name)))
 
 
+    def export_config_outputs(self) -> Dict[str, Any]:
+        outputs = dict(super().export_config_outputs())
+        outputs["par.outputs.seq_cells"] = self.output_seq_cells
+        outputs["par.outputs.all_regs"] = self.output_all_regs
+        outputs["par.outputs.sdf_file"] = self.output_sdf_path
+        outputs["par.outputs.spefs"] = self.output_spef_paths
+        return outputs
+
+
     def fill_outputs(self) -> bool:
         # TODO: no support for ILM
         self.output_ilms = []
 
-        self.output_gds = ""
-        self.output_netlist = ""
-        self.output_sim_netlist = ""
+        self.output_gds = self.output_gds_filename
+        self.output_netlist = self.output_netlist_filename
+        self.output_sim_netlist = self.output_sim_netlist_filename
 
         if os.path.isfile(self.output_gds_filename):
             self.output_gds = self.output_gds_filename
@@ -236,16 +244,30 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         self.hcells_list = []
         self.output_all_regs = ""
         self.output_seq_cells = ""
-        self.sdf_file = ""
+        
+
+        if self.ran_write_design:
+            if not os.path.isfile(self.output_gds_filename):
+                raise ValueError("Output GDS %s not found" % (self.output_gds_filename))
+
+            if not os.path.isfile(self.output_netlist_filename):
+                raise ValueError("Output netlist %s not found" % (self.output_netlist_filename))
+
+            if not os.path.isfile(self.output_sim_netlist_filename):
+                raise ValueError("Output sim netlist %s not found" % (self.output_sim_netlist_filename))
+
+            if not os.path.isfile(self.output_sdf_path):
+                raise ValueError("Output SDF %s not found" % (self.output_sdf_path))
+
+            for spef_path in self.output_spef_paths:
+                if not os.path.isfile(spef_path):
+                    raise ValueError("Output SPEF %s not found" % (spef_path))
+        else:
+            self.logger.info("Did not run write_design")
+
+        self.remove_pcells_from_netlist()
 
         return True
-
-    def export_config_outputs(self) -> Dict[str, Any]:
-        outputs = dict(super().export_config_outputs())
-        outputs["par.outputs.seq_cells"] = self.output_seq_cells
-        outputs["par.outputs.all_regs"] = self.output_all_regs
-        outputs["par.outputs.sdf_file"] = self.sdf_file
-        return outputs
 
     def tool_config_prefix(self) -> str:
         return "par.openroad"
@@ -323,6 +345,11 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         for corner in corners:
             for lib_file in self.get_timing_libs(corner).split():
                 shutil.copy2(lib_file, os.path.join(issue_dir, os.path.basename(lib_file)))
+
+        # RC file
+        setrc_file = self.get_setting('par.openroad.setrc_file')
+        if os.path.exists(setrc_file):
+            shutil.copy2(setrc_file, os.path.join(issue_dir, os.path.basename(setrc_file)))
 
         # Hack par.tcl script
         # Remove abspaths to files since they are now in issue_dir
@@ -407,10 +434,11 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         lib_args = self.technology.read_libs([hammer_tech.filters.timing_lib_with_ecsm_filter], hammer_tech.HammerTechnologyUtils.to_plain_item, extra_pre_filters=pre_filters)
         return " ".join(lib_args)
 
-    def read_lef(self) -> bool:
+    def read_lef(self) -> str:
         # OpenROAD names the LEF libraries by filename:
         #   foo.tlef and foo.lef evaluate to the same library "foo"
         #   solution: copy foo.lef to foo1.lef
+        cmds = []
         lef_files = self.technology.read_libs([
             hammer_tech.filters.lef_filter
         ], hammer_tech.HammerTechnologyUtils.to_plain_item)
@@ -430,9 +458,9 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                 unique_id+=1
                 lef_file_libnames.append(lef_file_libname)
                 lef_file = new_lef_file
-            self.append(f"read_lef {lef_file}")
-        self.append("")
-        return True
+            cmds.append(f"read_lef {lef_file}")
+        cmds.append("")
+        return '\n'.join(cmds)
 
     def read_liberty(self) -> str:
         cmds=[]
@@ -481,14 +509,14 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
         sdc_files = self.generate_sdc_files()
         for sdc_file in sdc_files[:-1]:
-            self.append(f"read_sdc -echo {sdc_file}")
+            self.block_append(f"read_sdc -echo {sdc_file}")
 
         return True
 
     #========================================================================
     # par main steps
     #========================================================================
-    def init_design(self) -> bool:
+    def init_design(self, first_step=None) -> bool:
         # set up useful variables
         clock_port = self.get_clock_ports()[0]
         self.clock_port_name = clock_port.name
@@ -496,16 +524,27 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         tech = self.get_setting('vlsi.core.technology')
 
         # start routine
-        self.read_lef()
-        self.append(self.read_liberty())
+        self.block_append(self.read_lef())
+        self.block_append(self.read_liberty())
         
-        # read_verilog
-        # We are switching working directories and we still need to find paths.
-        abspath_input_files = list(map(lambda name: os.path.join(os.getcwd(), name), self.input_files))
-        for verilog_file in abspath_input_files:
-            self.append(f"read_verilog {verilog_file}")
-        self.append(f"link_design {self.top_module}\n")
+        if first_step and first_step != self.first_step:
+            self.append("read_db pre_{step}".format(step=first_step.name))
+        else:
+            # read_verilog
+            # We are switching working directories and we still need to find paths.
+            abspath_input_files = list(map(lambda name: os.path.join(os.getcwd(), name), self.input_files))
+            for verilog_file in abspath_input_files:
+                self.block_append(f"read_verilog {verilog_file}")
+            self.block_append(f"link_design {self.top_module}\n")
         self.read_sdc()
+
+        # set wire RC
+        setrc_file = self.get_setting('par.openroad.setrc_file')
+        if os.path.exists(setrc_file):
+            self.block_append(f"source {setrc_file}")
+        else:
+            self.logger.warning("OpenROAD par.openroad.setrc_file is not specified or does not exist. Layer capacitance/resistance values may be inaccurate.")
+        
         return True
 
     def floorplan_design(self) -> bool:
@@ -523,15 +562,15 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
         # Make tracks
         # create routing tracks""")
-        self.append(self.generate_make_tracks_tcl())
+        self.block_append(self.generate_make_tracks_tcl())
         self.block_append(f"""
         
         # remove buffers inserted by synthesis 
         remove_buffers
 
         # IO Placement (random)
+        {self.place_pins_tcl(random=True)}
         """)
-        # {self.place_pins_tcl(random=True)}
         return True
     
 
@@ -616,24 +655,36 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         for i in range(0,len(strap_layers)-1):
             add_pdn_connect_tcl+=f"add_pdn_connect -grid grid -layers {{{strap_layers[i]} {strap_layers[i+1]}}}\n"
         
-        global_connections_pwr_tcl=f"add_global_connection -net {{{primary_pwr_net}}} -inst_pattern {{.*}} -pin_pattern {{^{primary_pwr_net}$}} -power"
-        global_connections_gnd_tcl=f"add_global_connection -net {{{primary_gnd_net}}} -inst_pattern {{.*}} -pin_pattern {{^{primary_gnd_net}$}} -ground"
+        # global_connections_pwr_tcl=f"add_global_connection -net {{{primary_pwr_net}}} -inst_pattern {{.*}} -pin_pattern {{^{primary_pwr_net}$}} -power"
+        # global_connections_gnd_tcl=f"add_global_connection -net {{{primary_gnd_net}}} -inst_pattern {{.*}} -pin_pattern {{^{primary_gnd_net}$}} -ground"
+        global_connections_tcl = ""
         for pwr_net in pwr_nets:
             if pwr_net.tie is not None:
-                global_connections_pwr_tcl += f"\n add_global_connection -net {{{primary_pwr_net}}} -inst_pattern {{.*}} -pin_pattern {{{pwr_net.name}}}"
+                net = pwr_net.tie
+            else:
+                net = primary_pwr_net
+            global_connections_tcl += f"\n add_global_connection -net {{{net}}} -inst_pattern {{.*}} -pin_pattern {{^{pwr_net.name}$}} -power"
         for gnd_net in gnd_nets:
             if gnd_net.tie is not None:
-                global_connections_gnd_tcl += f"\n add_global_connection -net {{{primary_gnd_net}}} -inst_pattern {{.*}} -pin_pattern {{{gnd_net.name}}}"
+                net = gnd_net.tie
+            else:
+                net = primary_gnd_net
+            global_connections_tcl += f"\n add_global_connection -net {{{net}}} -inst_pattern {{.*}} -pin_pattern {{^{gnd_net.name}$}} -ground"
 
         blockage_spacing = self.get_setting("par.blockage_spacing")
         blockage_spacing_halo = ' '.join([str(blockage_spacing) for i in range(4)])
         
         tcl = f"""
+        #connect_pin VDD vdd
+        #connect_pin VSS vss
         ####################################
         # global connections
         ####################################
-        {global_connections_pwr_tcl}
-        {global_connections_gnd_tcl}
+        {global_connections_tcl}
+        #add_global_connection -net {{{primary_pwr_net}}} -inst_pattern {{.*}} -pin_pattern {{vdd}}
+        #add_global_connection -net {{{primary_gnd_net}}} -inst_pattern {{.*}} -pin_pattern {{vss}}
+        #add_global_connection -net {{{primary_pwr_net}}} -inst_pattern {{.*}} -pin_pattern {{^vdd$}}
+        #add_global_connection -net {{{primary_gnd_net}}} -inst_pattern {{.*}} -pin_pattern {{^vss$}}
         # add_global_connection -net {{primary_pwr_net}} -inst_pattern {{.*}} -pin_pattern {{^VDDPE$}}
         # add_global_connection -net {{primary_pwr_net}} -inst_pattern {{.*}} -pin_pattern {{^VDDCE$}}
         # add_global_connection -net {{primary_gnd_net}} -inst_pattern {{.*}} -pin_pattern {{^VSSE$}}
@@ -779,8 +830,8 @@ pdngen::specify_grid macro {{
         ################################################################
         # Power distribution network insertion
         # pdngen -verbose {power_straps_tcl_path}
-        source -verbose {power_straps_tcl_path}
-        pdngen -verbose
+        source -echo -verbose {power_straps_tcl_path}
+        pdngen
         """)
         return True 
 
@@ -792,28 +843,29 @@ pdngen::specify_grid macro {{
         self.block_append(f"""
         ################################################################
         # Global placement (without placed IOs, timing-driven, and routability-driven)
-        global_placement -overflow 0.2 -density 0.6 -pad_left 4 -pad_right 4
+        global_placement -density 0.6 -pad_left 4 -pad_right 4
         """)
         return True     
 
 
     def place_pins_tcl(self,random=False) -> str:
-        random_arg=""
-        if random: random_arg="-random"
+        # random_arg=""
+        # if random: random_arg="-random"
 
         stackup = self.get_stackup()
         all_metal_layer_names = [layer.name for layer in self.get_stackup().metals]
         pin_assignments = self.get_pin_assignments()
-        hor_layers=[]
-        ver_layers=[]
+        hor_layers=set()
+        ver_layers=set()
+        # TODO: fix how this is done if individual pins are specified
         for pin in pin_assignments:
             if pin.layers is not None and len(pin.layers) > 0:
                 for pin_layer_name in pin.layers:
                     layer = self.get_stackup().get_metal(pin_layer_name)
                     if layer.direction==RoutingDirection.Horizontal:
-                        hor_layers.append(pin_layer_name)
+                        hor_layers.add(pin_layer_name)
                     if layer.direction==RoutingDirection.Vertical:
-                        ver_layers.append(pin_layer_name)
+                        ver_layers.add(pin_layer_name)
         
         # both hor_layers and ver_layers arguments are required
         # if missing, auto-choose one or both
@@ -824,8 +876,8 @@ pdngen::specify_grid macro {{
             #   or use pin layer in either hor_layers or ver_layers
             pin_layer_names=["",""]
             pin_layer_names[0]=all_metal_layer_names[int(len(all_metal_layer_names)/2)]
-            if (hor_layers): pin_layer_names[0]=hor_layers[0]
-            if (ver_layers): pin_layer_names[0]=ver_layers[0]
+            if (hor_layers): pin_layer_names[0]=list(hor_layers)[0]
+            if (ver_layers): pin_layer_names[0]=list(ver_layers)[0]
             pin_layer_idx_1=all_metal_layer_names.index(pin_layer_names[0])
             if (pin_layer_idx_1 < len(all_metal_layer_names)-1): 
                 pin_layer_names[1]=all_metal_layer_names[pin_layer_idx_1+1]
@@ -836,47 +888,52 @@ pdngen::specify_grid macro {{
             for pin_layer_name in pin_layer_names:
                 layer = self.get_stackup().get_metal(pin_layer_name)
                 if (layer.direction==RoutingDirection.Horizontal) and (pin_layer_name not in hor_layers):
-                    hor_layers.append(pin_layer_name)
+                    hor_layers.add(pin_layer_name)
                 if (layer.direction==RoutingDirection.Vertical)   and (pin_layer_name not in ver_layers):
-                    ver_layers.append(pin_layer_name)
+                    ver_layers.add(pin_layer_name)
         # determine commands for side specified in pin assignments
         #   can only be done in openroad by "excluding" the entire length of the other 3 sides from pin placement
         
+        # TODO: temporary
+        hor_layers = [list(hor_layers)[0]]
+        ver_layers = [list(ver_layers)[0]]
         cmds = ""
-        for pin in pin_assignments:
-            
-            if '*' not in pin.pins:
-                # cmds += "place_pin -pin_name {n} -layer {l} -location {{{xy}}}\n".format(
-                #     n=pin.name,
-                #     l=pin.layers[0],
-                #     xy=" ".join(pin.location)
-                # )
-                cmd = [
-                    "place_pin", "-pin_name", pin.pins,
-                    "-layer", pin.layers[0],
-                    "-location", f"{{{pin.location[0]} {pin.location[1]}}}",
-                    "-pin_size", f"{{{pin.width} {pin.depth}}}",
-                ]
-                cmds += " ".join(cmd) + '\n'
-            else:
-                side=""
-                # if pin.side == "bottom":
-                #     side="-exclude top:* -exclude right:* -exclude left:*"
-                # elif pin.side == "top":
-                #     side="-exclude bottom:* -exclude right:* -exclude left:*"
-                # elif pin.side == "left":
-                #     side="-exclude top:* -exclude right:* -exclude bottom:*"
-                # elif pin.side == "right":
-                #     side="-exclude top:* -exclude bottom:* -exclude left:*"
-                cmds += f"place_pins {random_arg} -hor_layers {{{' '.join(hor_layers)}}} -ver_layers {{{' '.join(ver_layers)}}} {side}\n"
-        return cmds
+        if random:
+                cmds += f"place_pins -random -hor_layers {{{' '.join(hor_layers)}}} -ver_layers {{{' '.join(ver_layers)}}}\n"
+        else:
+            for pin in pin_assignments:
+                if '*' not in pin.pins:
+                    # cmds += "place_pin -pin_name {n} -layer {l} -location {{{xy}}}\n".format(
+                    #     n=pin.name,
+                    #     l=pin.layers[0],
+                    #     xy=" ".join(pin.location)
+                    # )
+                    cmd = [
+                        "place_pin", "-pin_name", pin.pins,
+                        "-layer", pin.layers[0],
+                        "-location", f"{{{pin.location[0]} {pin.location[1]}}}",
+                        "-pin_size", f"{{{pin.width} {pin.depth}}}",
+                    ]
+                    cmds += " ".join(cmd) + '\n'
+                else:
+                    side=""
+                    if pin.side == "bottom":
+                        side="-exclude top:* -exclude right:* -exclude left:*"
+                    elif pin.side == "top":
+                        side="-exclude bottom:* -exclude right:* -exclude left:*"
+                    elif pin.side == "left":
+                        side="-exclude top:* -exclude right:* -exclude bottom:*"
+                    elif pin.side == "right":
+                        side="-exclude top:* -exclude bottom:* -exclude left:*"
+                    cmds += f"place_pins -hor_layers {{{' '.join(hor_layers)}}} -ver_layers {{{' '.join(ver_layers)}}} {side}\n"
+        return cmds.strip()
 
     def io_placement(self) -> bool:
         self.block_append(f"""
         ################################################################
         # IO Placement
         """)
-        self.verbose_append(self.place_pins_tcl())
+        self.block_append(self.place_pins_tcl())
         return True
 
     
@@ -897,7 +954,7 @@ pdngen::specify_grid macro {{
 
         # -density default is 0.7, overflow default is 0.1
         # set overflow higher (ex. 0.8) to make faster
-        global_placement -routability_driven -overflow 0.2 -pad_left 4 -pad_right 4
+        global_placement -pad_left 4 -pad_right 4 -routability_driven
         # TODO: -routability_driven sometimes breaks this!!!
 
         # estimate_parasitics -placement
@@ -924,7 +981,12 @@ pdngen::specify_grid macro {{
         ################################################################
         # Resizing & Buffering
         estimate_parasitics -placement
-        repair_design -slew_margin 0 -cap_margin 0
+        buffer_ports
+        # Perform buffer insertion
+        # set_debug_level RSZ repair_net 1
+        # insert buffers on nets to repair max slew, max capacitance, max fanout violations, and on long wires to reduce RC delay in the wire
+        repair_design 
+        # -slew_margin 0 -cap_margin 0
 
         # Repair tie lo/hi fanout
         set tielo_lib_name [get_name [get_property [lindex [get_lib_cell {tie_lo_cell}] 0] library]]
@@ -936,12 +998,14 @@ pdngen::specify_grid macro {{
 
 
     def detailed_placement(self) -> bool:
+        padding = self.get_setting('par.openroad.placement_padding.detailed_placement')
         self.block_append(f"""
         ################################################################
         # Detail placement
 
         # default detail_place_pad value in OpenROAD = 2
-        set_placement_padding -global -left 0 -right 0
+        set_placement_padding -global -left {padding} -right {padding}
+        # set_debug_level DPL place 5
         detailed_placement
 
         # improve_placement
@@ -958,6 +1022,8 @@ pdngen::specify_grid macro {{
             the database it may be opened in the OpenROAD gui for debugging the error
         """
         self.block_append(f"""
+
+        # Check Detailed Placement
         check_placement -verbose
 
         # post resize timing report (ideal clocks)
@@ -985,13 +1051,15 @@ pdngen::specify_grid macro {{
             cts_buffer_cell = cts_buffer_cells[0].name[0]
             cts_args=f"-root_buf {cts_buffer_cell} -buf_list {cts_buffer_cell}"
 
+        padding_clock_tree = self.get_setting('par.openroad.placement_padding.clock_tree')
+        padding_final = self.get_setting('par.openroad.placement_padding.final')
         self.block_append(f"""
         ################################################################
         # Clock Tree Synthesis
         # Run TritonCTS
         repair_clock_inverters
 
-        set_placement_padding -global -left 2 -right 2
+        set_placement_padding -global -left {padding_clock_tree} -right {padding_clock_tree}
 
         repair_clock_inverters
         clock_tree_synthesis {cts_args} -sink_clustering_enable \\
@@ -1002,6 +1070,8 @@ pdngen::specify_grid macro {{
 
         # CTS leaves a long wire from the pad to the clock tree root.
         repair_clock_nets
+
+        estimate_parasitics -placement
         
         # place clock buffers
         detailed_placement
@@ -1009,16 +1079,17 @@ pdngen::specify_grid macro {{
         ###########################
         # Setup/hold timing repair
 
-        set_placement_padding -global -left 0 -right 0
+        set_placement_padding -global -left {padding_final} -right {padding_final}
 
         set_propagated_clock [all_clocks]
 
         # -placement|-global_routing
         estimate_parasitics -placement
 
-        repair_timing -setup
+        # repair_timing -setup
+        # repair_timing -hold
 
-        repair_timing -hold
+        repair_timing
 
         detailed_placement
         """)
@@ -1057,7 +1128,7 @@ pdngen::specify_grid macro {{
         # pin_access - this command caused openroad to crash
         # -allow_congestion and -allow_overflow added for now
 
-        global_route -congestion_iterations 200 -verbose \\
+        global_route -verbose \\
                      -guide_file {self.route_guide_path} 
 
         set_propagated_clock [all_clocks]
@@ -1091,6 +1162,7 @@ pdngen::specify_grid macro {{
 
     def extraction(self) -> bool:
         sed_expr=r"{s/\\//g}"  # use sed find+replace to remove '\' character
+        spef_path = self.output_spef_paths[0]
         self.block_append(f"""
         ################################################################
         # Extraction
@@ -1099,12 +1171,12 @@ pdngen::specify_grid macro {{
         extract_parasitics -ext_model_file {self.get_setting("par.openroad.openrcx_techfile")}
 
         # touch the file in case write_spef fails
-        exec touch {self.output_spef_paths}
-        write_spef {self.output_spef_paths}
+        # exec touch {spef_path}
+        write_spef {spef_path}
         # remove backslashes in instances so that read_spef recognizes the instances
-        exec sed -i {sed_expr} {self.output_spef_paths}
+        exec sed -i {sed_expr} {spef_path}
 
-        read_spef {self.output_spef_paths}
+        # read_spef {spef_path}
         """)
         # alternative: use global routing based parasitics inlieu of rc extraction
         #   >> estimate_parasitics -global_routing
@@ -1146,6 +1218,51 @@ pdngen::specify_grid macro {{
                     df.write(line)
         return True
 
+    def write_netlist(self) -> bool:
+        self.block_append(f"""
+        # write netlist
+        set physical_only_cells "{" ".join(self.get_physical_only_cells())}"
+        """)
+        self.block_append("""
+        set physical_only_insts {}
+        set insts [get_cells -hierarchical *]
+        foreach inst $insts {
+            set inst_master [get_name [get_property -object_type cell $inst cell]]
+            if {[lsearch $physical_only_cells $inst_master] >= 0} {
+                set inst_name [get_name $inst]
+                lappend physical_only_insts  $inst_name
+            }
+        }
+        """, verbose=False)
+        self.block_append(f"""
+        write_verilog -include_pwr_gnd -remove_cells $physical_only_insts {self.output_netlist_filename}
+        """, verbose=False)
+        return True
+
+    def remove_pcells_from_netlist(self):
+        lines_4 = 'sky130_fd_sc_hd__tap_1'
+        lines_2 = 'sky130_fd_sc_hd__tapvpwrvgnd_1'
+        fill_cells = {
+            "sky130_fd_sc_hd__fill_1",
+            "sky130_fd_sc_hd__fill_2",
+            "sky130_fd_sc_hd__fill_4",
+            "sky130_fd_sc_hd__fill_8",
+        }
+        with open(self.output_netlist_filename, 'r') as f:
+            lines = f.readlines()
+
+            lines_nonempty = [l for l in lines if len(l.strip()) > 0]
+            first_words = [l.split()[0] for l in lines_nonempty]
+            lines_no_fillers = [lines_nonempty[i] for i in range(len(lines_nonempty)) if first_words[i] not in fill_cells]
+
+            first_words = [l.split()[0] for l in lines_no_fillers]
+            lines_no_tapvpwrvgnd = [lines_no_fillers[0]] + [lines_no_fillers[i] for i in range(1,len(lines_no_fillers)) if first_words[i] != lines_2 and first_words[i-1] != lines_2]
+
+            first_words = [l.split()[0] for l in lines_no_tapvpwrvgnd]
+            lines_no_tap_1 = lines_no_tapvpwrvgnd[0:3] + [lines_no_tapvpwrvgnd[i] for i in range(3,len(lines_no_tapvpwrvgnd)) if first_words[i] != lines_4 and first_words[i-1] != lines_4 and first_words[i-2] != lines_4 and first_words[i-3] != lines_4]
+        with open(self.output_netlist_filename,'w') as f:
+            f.write(''.join(lines_no_tap_1))
+        return
 
     def write_gds(self) -> bool:
         self.setup_klayout_techfile()
@@ -1158,16 +1275,24 @@ pdngen::specify_grid macro {{
             gds_files.extend(ilm_gds)
 
         tech_base_dir=self.get_setting('vlsi.builtins.hammer_vlsi_path')
+        config_file = "/tools/B/nayiri/openroad/OpenROAD-flow-scripts/flow/platforms/sky130hd/fill.json"
 
+        # TODO: EVENTUALLY REMOVE!!
+        # for now don't export SRAMs
+        gds_files = [gds_files[0]]
         self.block_append(f"""
         # write gds
+        # klayout args explained: https://www.klayout.de/command_args.html
+        # -d 40: noisy log output and timing
+        set in_files "{" ".join(gds_files)}"
         exec klayout -zz \\
+                -d 0 \\
                 -rd design_name={self.top_module} \\
                 -rd in_def={self.output_def_filename} \\
-                -rd in_files={" ".join(gds_files)} \\
+                -rd in_files=$in_files \\
                 -rd seal_file= \\
                 -rd tech_file={self.klayout_techfile_path} \\
-                -rd config_file= \\
+                -rd config_file={config_file} \\
                 -rd out_file={self.output_gds_filename} \\
                 -rm {tech_base_dir}/hammer_vlsi/vendor/def2stream.py
         """) 
@@ -1176,7 +1301,7 @@ pdngen::specify_grid macro {{
 
     def write_sdf(self) -> bool:
         corners = self.get_mmmc_corners()  
-        self.append(f"write_sdf -corner setup {self.output_sdf_path}")
+        self.block_append(f"write_sdf -corner setup {self.output_sdf_path}")
         return True
 
 
@@ -1228,8 +1353,10 @@ pdngen::specify_grid macro {{
         write_def {self.output_def_filename}
 
         # write netlist
-        write_verilog -include_pwr_gnd -remove_cells {{{self.fill_cells}}} {self.output_netlist_filename}
+        write_verilog -include_pwr_gnd {self.output_netlist_filename}
         """)
+
+        # self.write_netlist()
 
         # TODO: look at IR drop analysis from ~OpenROAD-flow-scripts/flow/scripts/final_report.tcl
         # Static IR drop analysis
@@ -1243,7 +1370,7 @@ pdngen::specify_grid macro {{
         # Make sure that generated-scripts exists.
         os.makedirs(self.generated_scripts_dir, exist_ok=True)
 
-        self.write_reports()
+        # self.write_reports()
 
         self.ran_write_design=True
 
@@ -1390,7 +1517,7 @@ pdngen::specify_grid macro {{
                     
                     output.append("# only place macro if it is present in design")
                     output.append(f'if {{[[set block [ord::get_db_block]] findInst {inst_name}] == "NULL"}} {{')
-                    output.append(f'  puts "(ERROR) Cell/macro {inst_name} not found!"')
+                    output.append(f'  puts "(WARNING) Cell/macro {inst_name} not found!"')
                     output.append("} else {")
                     output.append(f'  puts "{floorplan_cmd}"')
                     output.append(f"  {floorplan_cmd}")
@@ -1451,7 +1578,8 @@ pdngen::specify_grid macro {{
         :return: A list of TCL commands that will generate power straps.
         """
         pdn_cfg = [f" {layer_name} {{width {width} pitch {pitch} offset {offset}}}"]
-        tcl = [f"add_pdn_stripe -grid {{grid}} -layer {{{layer_name}}} -width {width} -pitch {pitch} -offset {offset} -spacing {spacing}\n"]
+        pins_tcl = ("-extend_to_boundary" if (add_pins) else "")
+        tcl = [f"add_pdn_stripe -grid {{grid}} -layer {{{layer_name}}} -width {width} -pitch {pitch} -offset {offset} -spacing {spacing} {pins_tcl}\n"]
         return tcl
     
     def process_sdc_file(self,post_synth_sdc) -> str:

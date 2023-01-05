@@ -46,3 +46,10 @@ par.openroad:
   klayout_techfile_source: null # Optional: KLayout tech file
   # type: Optional[str]
   # Should be set in technology plugin
+
+  setrc_file: null
+
+  placement_padding:
+    detailed_placement: 2
+    clock_tree: 1
+    final: 0
