@@ -1,17 +1,20 @@
 .. _technology:
 
-Technology Setup and Use
+Hammer Technology Plugins
 ========================================
 
-These guides will walk you through how to set up a technology to be used in Hammer.
+This guide will walk you through how to set up a technology plugin to be used in Hammer.
 
-You may use the included `free ASAP7 PDK <https://github.com/ucb-bar/hammer/tree/master/src/hammer-vlsi/technology/asap7>`__ or the `open-source Sky130 PDK <https://github.com/ucb-bar/hammer/tree/master/src/hammer-vlsi/technology/sky130>`__ plugins as reference when building your own technology plugin.
+You may use the included `free ASAP7 PDK <https://github.com/ucb-bar/hammer/tree/master/hammer/technology/asap7>`__ or the `open-source Sky130 PDK <https://github.com/ucb-bar/hammer/tree/master/hammer/technology/sky130>`__ plugins as reference when building your own technology plugin.
 
-Technologies should have their own folder along with a corresponding ".tech.json" file. For example, "asap7" would have a "asap7.tech.json" file inside of the "asap7" folder.
+Technology plugins must be structured as Python packages underneath the ``hammer`` package. The package should contain an class object named ``tech`` to create an instance of the technology. This object should be a subclass of ``HammerTechnology``.
+
+Technology plugins must also have ``.tech.json`` and ``defaults.yml`` files. See the following sections for how to write them.
 
 .. toctree::
    :maxdepth: 2
    :caption: Hammer Technology:
 
+   Tech-class
    Tech-json
    Tech-defaults

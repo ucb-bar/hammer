@@ -6,7 +6,7 @@ The default technology, ASAP7, has some extra requirements. See its [README](htt
 
 ## User Setup
 
-You can install hammer from PyPI:
+You can install Hammer from PyPI:
 
 ```shell
 pip install hammer-vlsi
@@ -28,18 +28,19 @@ Note: certain tools and technologies will have additional system requirements. F
 
 ### Installing Hammer as a Source Dependency
 
-In some cases, it is useful to install hammer as a source dependency.
-For instance, when developing tool or PDK plugins alongside a new feature or API changes in main hammer, installing hammer as a source dependency will allow you to make changes in main hammer and see them reflected immediately when running code for your tool/PDK plugin.
+In some cases, it is useful to install Hammer as a source dependency.
+For instance, when developing tool or PDK plugins alongside a new feature or API changes in main Hammer, installing hammer as a source dependency will allow you to make changes in main hammer and see them reflected immediately when running code for your tool/PDK plugin.
 
+(poetry_project)=
 #### From Another Poetry Project
 
 Hammer tool (e.g. `hammer-cadence-plugins`) and PDK plugin repositories are poetry projects (with a `pyproject.toml` in their root).
-To depend on hammer as a source dependency, first clone hammer somewhere on your disk.
-Then add this snippet to the tool/PDK plugin repo's `pyproject.toml` (and remove any PyPI dependency on hammer):
+To depend on Hammer as a source dependency, first clone Hammer somewhere on your disk.
+Then add this snippet to the tool/PDK plugin repo's `pyproject.toml` (and remove any PyPI dependency on Hammer):
 
 ```toml
 [tool.poetry.dependencies]
-#hammer-vlsi = "^0.1.0"
+#hammer-vlsi = "^1.0.0"
 hammer-vlsi = {path = "path/to/hammer", extras = ["asap7"], develop = true}
 ```
 
@@ -49,17 +50,17 @@ You only need to specify `extras` if you need the `asap7` optional dependency (g
 
 #### From a Generic Python Project
 
-Other repos, such as Chipyard, are not poetry projects, but still depend on hammer.
-To use hammer as a source dependency:
+Other repos, such as Chipyard, are not poetry projects, but still depend on Hammer.
+To use Hammer as a source dependency:
 
 1. Remove the PyPI hammer-vlsi dependency from the project (e.g. by editing a conda env.yml file and rerunning dependency resolution)
-1. Clone hammer somewhere on your disk
+1. Clone Hammer somewhere on your disk
 1. Activate the virtualenv of the project (e.g. Chipyard)
-1. Run `pip install -e .` from the root of hammer *within the project's virtualenv*
+1. Run `pip install -e .` from the root of Hammer *within the project's virtualenv*
 
 ## Developer Setup
 
-1. Clone hammer with `git`
+1. Clone Hammer with `git`
 
 ```shell
 git clone git@github.com:ucb-bar/hammer
@@ -79,7 +80,7 @@ poetry config virtualenvs.in-project true
 poetry install
 ```
 
-4. Activate the virtualenv. Within the virtualenv, hammer is installed and you can access its scripts defined in
+4. Activate the virtualenv. Within the virtualenv, Hammer is installed and you can access its scripts defined in
     `pyproject.toml` (in `[tool.poetry.scripts]`)
 
 ```shell
@@ -94,7 +95,7 @@ You should install the [Pydantic plugin](https://plugins.jetbrains.com/plugin/12
 
 ### Unit Tests with pytest
 
-Within the poetry virtualenv, from the root of hammer, run the tests (`-v` will print out each test name explicitly)
+Within the poetry virtualenv, from the root of Hammer, run the tests (`-v` will print out each test name explicitly)
 
 ```shell
 pytest tests/ -v
@@ -136,7 +137,7 @@ There is a [small issue with the ruamel.yaml package typechecking](https://githu
 touch .venv/lib/python3.10/site-packages/ruamel/py.typed
 ```
 
-Inside your poetry virtualenv, from the root of hammer, run:
+Inside your poetry virtualenv, from the root of Hammer, run:
 
 ```shell
 mypy --namespace-packages --warn-unused-ignores -p hammer
@@ -150,7 +151,7 @@ Success: no issues found in 25 source files
 
 ### Testing Different Python Versions with tox
 
-hammer is supposed to work with Python 3.9+, so we run its unit tests on all supported Python versions using `tox` and `pyenv`.
+Hammer is supposed to work with Python 3.9+, so we run its unit tests on all supported Python versions using `tox` and `pyenv`.
 
 1. [Install `pyenv`](https://github.com/pyenv/pyenv-installer)
 
@@ -204,7 +205,7 @@ tox -e py39 -- -k "lsf" -v
 To add a new Python (`pip`) dependency, modify `pyproject.toml`.
 If the dependency is only used for development, add it under the key `[tool.poetry.dev-dependencies]`, otherwise add it under the key `[tool.poetry.dependencies]`.
 Then run `poetry update` and `poetry install`.
-The updated `poetry.lock` file should be committed to hammer.
+The updated `poetry.lock` file should be committed to Hammer.
 
 To update an existing dependency, modify `pyproject.toml` with the new version constraint.
 Run `poetry update` and `poetry install` and commit `poetry.lock`.
