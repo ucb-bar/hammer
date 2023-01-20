@@ -1,3 +1,5 @@
+![Logo design by @kenhoberkeley](doc/logo_transparent.png)
+
 Highly Agile Masks Made Effortlessly from RTL (HAMMER)
 =============================================
 

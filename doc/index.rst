@@ -1,5 +1,8 @@
-Welcome to Hammer's documentation!
-==================================
+.. image:: logo_transparent.png
+   :width: 600
+   :alt: Logo design by @kenhoberkeley
+
+|
 
 Hammer is a physical design framework that wraps around vendor specific technologies and tools to provide a single API to create ASICs.
 Hammer allows for reusability in ASIC design while still providing the designers leeway to make their own modifications.
