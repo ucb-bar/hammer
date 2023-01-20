@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "hammer-vlsi"
-version = "0.0.1"
+version = "0.0.0"
 description = "Hammer is a physical design framework that wraps around vendor specific technologies and tools to provide a single API to create ASICs."
 authors = ["Colin Schmidt <colin.schmidt@sifive.com>", "Edward Wang <edward.c.wang@compdigitec.com>", "John Wright <johnwright@eecs.berkeley.edu>"]
 maintainers = ["Harrison Liew <harrisonliew@berkeley.edu>", "Daniel Grubb <dpgrubb@berkeley.edu>"]
