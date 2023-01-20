@@ -10,4 +10,5 @@ This documentation will give an overview of Hammer, its basic setup, its compone
 
    Hammer-Overview
    Hammer-Setup 
+   Migration-Guide
     

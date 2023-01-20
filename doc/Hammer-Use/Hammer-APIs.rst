@@ -5,7 +5,7 @@ Hammer APIs
 
 Hammer has a growing collection of APIs that use objects defined by the technology plugin, such as stackups and special cells. They expose useful extracted information from Hammer IR to other methods, such as in tool plugins that will implement this information in a tool-compatible manner.
 
-For syntax details about the Hammer IR needed to use these APIs, refer to the `defaults.yml <https://github.com/ucb-bar/hammer/blob/master/src/hammer-vlsi/defaults.yml>`__.
+For syntax details about the Hammer IR needed to use these APIs, refer to the `defaults.yml <https://github.com/ucb-bar/hammer/blob/master/hammer/config/defaults.yml>`__.
 
 Power Specification
 -------------------

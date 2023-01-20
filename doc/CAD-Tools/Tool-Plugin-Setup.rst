@@ -1,7 +1,7 @@
 Setting up a Hammer CAD Tool Plugin
 ================================================
 
-This guide will discuss what a Hammer user may do if they want to implement their own CAD tool plugin or extend the current CAD tool plugins. There are some basic mock-up examples of how this can be done in the ``par`` and ``synthesis`` directories inside ``hammer/src/hammer-vlsi/``.
+This guide will discuss what a Hammer user may do if they want to implement their own CAD tool plugin or extend the current CAD tool plugins. There are some basic mock-up examples of how this can be done in the ``par`` and ``synthesis`` directories inside ``hammer/``.
 
 Tool Class
 ------------------------------------------------
@@ -51,3 +51,8 @@ The name of the output JSON files will be related to the activity type (e.g. ``p
 The ``-full`` verison contains the entire Hammer IR database, while the other version contains only the output entries created by this activity.
 The individual fields are created when the ``export_config_outputs`` method is called.
 Each implementation of this tool must override this method with a new one that calls its ``super`` method and appends any additional output fields to the output dictionary, as necessary.
+
+defaults.yml
+-----------------------------------------------
+
+Each tool may optionally implement a set of default :ref:`config`. These defaults may set different values for global Hammer IR configuration, or add new tool-specific keys. Tool-specific keys must have a namespace in the format ``<action>.<tool_name>.<key_name>``. This file should have a companion ``defaults_types.yml`` that defines the required types as well.

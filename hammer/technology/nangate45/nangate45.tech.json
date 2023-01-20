@@ -3,29 +3,29 @@
   "grid_unit": "0.005",
   "time_unit": "1 ps",
   "installs": [{
-    "path": "nangate45",
-    "base var": "technology.nangate45.install_dir"
+    "id": "nangate45",
+    "path": "technology.nangate45.install_dir"
   }],
 
-  "gds map file": "nangate45/layermap.txt",
+  "gds_map_file": "nangate45/layermap.txt",
   
-  "drc decks": [{
-    "tool name": "openroad",
-    "deck name": "drc",
+  "drc_decks": [{
+    "tool_name": "openroad",
+    "deck_name": "drc",
     "path": "nangate45/FreePDK45.lydrc"
   }],
   "additional_drc_text": "",
   
-  "lvs decks": [],
+  "lvs_decks": [],
   "additional_lvs_text": "", 
 
   "libraries": [{
-    "lef file": "nangate45/lef/NangateOpenCellLibrary.tech.lef",
+    "lef_file": "nangate45/lef/NangateOpenCellLibrary.tech.lef",
     "provides": [{"lib_type": "technology"}]
   },{
-    "nldm liberty file": "nangate45/lib/NangateOpenCellLibrary_typical.lib",
-    "lef file": "nangate45/lef/NangateOpenCellLibrary.macro.lef",
-    "gds file": "nangate45/gds/NangateOpenCellLibrary.gds",
+    "nldm_liberty_file": "nangate45/lib/NangateOpenCellLibrary_typical.lib",
+    "lef_file": "nangate45/lef/NangateOpenCellLibrary.macro.lef",
+    "gds_file": "nangate45/gds/NangateOpenCellLibrary.gds",
     "corner": {
       "nmos": "typical",
       "pmos": "typical",
@@ -137,11 +137,11 @@
   "sites": [
     {"name": "FreePDK45_38x28_10R_NP_162NW_34O", "x": 0.19, "y": 1.4} 
   ],
-  "physical only cells list": [
+  "physical_only_cells_list": [
     "FILLCELL_X1","FILLCELL_X2","FILLCELL_X4",
     "FILLCELL_X8","FILLCELL_X16","FILLCELL_X32"
   ],
-  "special cells": [
+  "special_cells": [
     {"cell_type": "tapcell", "name": ["FILLCELL_X1"]},
     {"cell_type": "stdfiller", "name": [
       "FILLCELL_X1","FILLCELL_X2","FILLCELL_X4",
