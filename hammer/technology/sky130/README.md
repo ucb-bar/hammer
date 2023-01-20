@@ -1,6 +1,6 @@
 Sky130 Technology Library
 =========================
-HAMMER now supports the Skywater 130nm Technology process. The [SkyWater Open Source PDK](https://skywater-pdk.readthedocs.io/) is a collaboration between Google and SkyWater Technology Foundry to provide a fully open source Process Design Kit (PDK) and related resources, which can be used to create manufacturable designs at SkyWater’s facility.
+Hammer now supports the Skywater 130nm Technology process. The [SkyWater Open Source PDK](https://skywater-pdk.readthedocs.io/) is a collaboration between Google and SkyWater Technology Foundry to provide a fully open source Process Design Kit (PDK) and related resources, which can be used to create manufacturable designs at SkyWater’s facility.
 The Skywater 130nm PDK files are located in a repo called [skywater-pdk](https://github.com/google/skywater-pdk/) A tool called [Open-PDKs (open_pdks)](https://github.com/RTimothyEdwards/open_pdks/) was developed to generate all the files typically found in a PDK.
 Open-PDKs uses the contents in `skywater-pdk`, and outputs files to a directory called `sky130A`.
 
@@ -94,7 +94,7 @@ This generates all the Sky130 PDK files and installs them to `$PDK_ROOT/share/pd
 
 Known DRC Issues
 ----------------
-The HAMMER flow generates DRC-clean digital logic when run with the Calibre DRC deck and SRAMs excluded. 
+The Hammer flow generates DRC-clean digital logic when run with the Calibre DRC deck and SRAMs excluded. 
 
 TODO: summarize issues with SRAMs and open-source Magic DRC checks.
 

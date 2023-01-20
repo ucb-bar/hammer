@@ -2,7 +2,7 @@
 
 ![Hammer CI](https://github.com/ucb-bar/hammer/actions/workflows/pr.yml/badge.svg?event=push)
 
-Highly Agile Masks Made Effortlessly from RTL (HAMMER)
+Highly Agile Masks Made Effortlessly from RTL (Hammer)
 =============================================
 
 This is the master (unstable) development branch.

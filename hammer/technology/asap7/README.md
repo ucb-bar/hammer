@@ -1,7 +1,7 @@
 ASAP7 Technology Library
 ========================
 
-HAMMER's default demonstration PDK is [ASAP7](http://asap.asu.edu/asap/). There are some special setup and known issues with this open PDK.
+Hammer's default demonstration PDK is [ASAP7](http://asap.asu.edu/asap/). There are some special setup and known issues with this open PDK.
 
 Setup and Environment
 ---------------------
