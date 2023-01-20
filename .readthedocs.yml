@@ -3,7 +3,7 @@ formats: all
 
 # Set Python version & poetry tools
 build:
-  os: ubuntu-20.04
+  os: ubuntu-latest
   tools:
     python: '3.10'
   jobs:

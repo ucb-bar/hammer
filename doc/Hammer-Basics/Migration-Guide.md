@@ -4,6 +4,8 @@ Hammer's software infrastructure changed significantly for version 1.0.0. In ord
 
 This guide is relevant for both plugin developers and general users.
 
+[The documentation for old Hammer is cached here](https://hammer-vlsi.readthedocs.io/en/0.1.0/).
+
 ## `import` Statements
 
 When importing Hammer classes and/or methods, replace old statements:
