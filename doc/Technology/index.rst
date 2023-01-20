@@ -18,3 +18,6 @@ Technology plugins must also have ``.tech.json`` and ``defaults.yml`` files. See
    Tech-class
    Tech-json
    Tech-defaults
+   Sky130
+   ASAP7
+   Nangate45

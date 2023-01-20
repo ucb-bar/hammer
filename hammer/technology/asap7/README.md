@@ -1,10 +1,10 @@
 ASAP7 Technology Library
-===========
+========================
 
 HAMMER's default demonstration PDK is [ASAP7](http://asap.asu.edu/asap/). There are some special setup and known issues with this open PDK.
 
 Setup and Environment
-=====================
+---------------------
 
 In addition to requirements for `hammer-vlsi`, using ASAP7 also requires:
 - ASAP7 PDK version 1p7, available [here on GitHub](https://github.com/The-OpenROAD-Project/asap7). We recommend downloading an archive of or shallow cloning the repository.
@@ -27,7 +27,8 @@ python -m pip install gdspy --user
 Or, replace the pip installation with installation from source in the `hammer/src/tools/gdspy` submodule.
 
 Dummy SRAMs
-===========
+-----------
+
 The ASAP7 plugin comes with a set of dummy SRAMs, which are **NOT** used by default (not included in the default tech.json).
 
 They are **completely blank** (full obstructions on layers M1-M3, will not pass DRC & LVS).
@@ -40,7 +41,7 @@ All pins are on M4, with the signal all on the left side and the power stripes r
 Finally, the SRAMCompiler in `sram_compiler/__init__.py` is used to generate the ExtraLibrarys (including .lib, .lef, .gds) needed by the particular design.
 
 Known Issues
-=================
+------------
 
 1. `ICG*DC*` cells are set as don't use due to improper LEF width.
 

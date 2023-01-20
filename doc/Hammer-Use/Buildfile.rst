@@ -21,7 +21,7 @@ Because ``hammer.d`` uses ``?=`` assignment, the settings created in the top-lev
 An example of this setup is found in `Chipyard <https://github.com/ucb-bar/chipyard/blob/master/vlsi/Makefile>`__.
 
 
-To enable interactive usage, ``hammer.d`` also containts a set of companion "redo" targets (e.g. ``redo-par`` and ``redo-syn``).
+To enable interactive usage, ``hammer.d`` also contains a set of companion "redo" targets (e.g. ``redo-par`` and ``redo-syn``).
 These targets intentionally have no dependency information; they are for advanced users to make changes to the input config and/or edit the design manually, then continue the flow.
 Additional arguments can be passed to the "redo" targets with the ``HAMMER_EXTRA_ARGS`` environment variable, for the following example uses:
 

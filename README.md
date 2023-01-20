@@ -1,6 +1,6 @@
 ![Logo design by @kenhoberkeley](doc/logo_transparent.png)
 
-![Hammer CI](https://github.com/ucb-bar/hammer/blob/master/.github/workflows/pr.yml/badge.svg?event=push)
+![Hammer CI](https://github.com/ucb-bar/hammer/actions/workflows/pr.yml/badge.svg?event=push)
 
 Highly Agile Masks Made Effortlessly from RTL (HAMMER)
 =============================================
