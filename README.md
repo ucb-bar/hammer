@@ -1,4 +1,4 @@
-![Logo design by @kenhoberkeley](doc/logo_transparent.png)
+![Logo design by @kenhoberkeley](https://github.com/ucb-bar/hammer/raw/master/doc/logo_transparent.png)
 
 ![Hammer PR CI](https://github.com/ucb-bar/hammer/actions/workflows/pr.yml/badge.svg?event=push) ![Hammer publish CI](https://github.com/ucb-bar/hammer/actions/workflows/publish.yml/badge.svg)
 
@@ -28,4 +28,9 @@ History
 =======
 The list of contributors can be found in the Git history of the project, or online at https://github.com/ucb-bar/hammer/graphs/contributors
 
-The Hammer project builds upon the legacy of the [PLSI project by Palmer Dabbelt](https://www2.eecs.berkeley.edu/Pubs/TechRpts/2017/EECS-2017-77.html), a previous project which aimed to build a portable VLSI flow. The Hammer project is grateful for the feedback and lessons learned which provided valuable insight that ultimately led to the design and software architecture of Hammer as it is now.
+The Hammer project builds upon the legacy of the PLSI project by Palmer Dabbelt, a previous project which aimed to build a portable VLSI flow. The Hammer project is grateful for the feedback and lessons learned which provided valuable insight that ultimately led to the design and software architecture of Hammer as it is now.
+
+Below is the list of Hammer publications in reverse chronological order:
+- [Hammer: a modular and reusable physical design flow tool (DAC 2022)](https://dl.acm.org/doi/abs/10.1145/3489517.3530672)
+- [A Methodology for Reusable Physical Design (ISQED 2020)](https://ieeexplore.ieee.org/document/9136999)
+- [PLSI: A Portable VLSI Flow (Master's Thesis, 2017)](https://www2.eecs.berkeley.edu/Pubs/TechRpts/2017/EECS-2017-77.html)

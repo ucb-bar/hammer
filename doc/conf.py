@@ -18,7 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'Hammer'
-copyright = '2019, Berkeley Architecture Research'
+copyright = '2023, Berkeley Architecture Research'
 author = 'Berkeley Architecture Research'
 
 # The full version, including alpha/beta/rc tags

@@ -6,6 +6,30 @@ This guide is relevant for both plugin developers and general users.
 
 [The documentation for old Hammer is cached here](https://hammer-vlsi.readthedocs.io/en/0.1.0/).
 
+## Selecting Plugins
+
+Previously, tech and tool plugins were selected with a combination of tool name and relative plugin path:
+
+```yaml
+vlsi.core.technology: <tech_name>
+vlsi.core.technology_path: ["hammer-<tech_name>-plugin"]
+vlsi.core.technology_path_meta: append
+
+vlsi.core.synthesis_tool: <syn_tool_name>
+vlsi.core.synthesis_tool_path: ["hammer-<vendor>-plugin/syn"]
+vlsi.core.synthesis_tool_meta: append
+```
+
+Now, you simply need to specify the package name:
+
+```yaml
+vlsi.core.technology: hammer.technology.<tech_name>
+
+vlsi.core.synthesis_tool: hammer.synthesis.<syn_tool_name>
+```
+
+See the [](plugin_package) section below for details about plugin package structure.
+
 ## `import` Statements
 
 When importing Hammer classes and/or methods, replace old statements:
@@ -76,6 +100,8 @@ is now:
   }
 ]
 ```
+
+(plugin_package)=
 
 ## Plugin File Structure
 
