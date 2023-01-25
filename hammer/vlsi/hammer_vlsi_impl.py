@@ -811,7 +811,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         :param dim_name: Provide a dimensional argument (x, y, z!)
         """
         default  = "vlsi.inputs.bumps." + key
-        override = default + "_" + "dim_name"
+        override = default + "_" + dim_name
 
         try:
             return self.get_setting(override)
@@ -825,8 +825,8 @@ class HammerPlaceAndRouteTool(HammerTool):
         """
         Return pitches in the x and y directions. 
         """
-        pitch_x = self._get_by_bump_dim_setting('pitch', 'x')
-        pitch_y = self._get_by_bump_dim_setting('pitch', 'y')
+        pitch_x = self._get_by_bump_dim_setting("pitch", "x")
+        pitch_y = self._get_by_bump_dim_setting("pitch", "y")
         
         return {'x': pitch_x, 'y': pitch_y}
     
