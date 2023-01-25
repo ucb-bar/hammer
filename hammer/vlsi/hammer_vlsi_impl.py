@@ -783,7 +783,7 @@ class HammerPlaceAndRouteTool(HammerTool):
             try:
                 return self.get_setting(default)
             except KeyError:
-                raise ValueError("No value set for key {}".format(default))
+                raise ValueError("No value set for key {}".format(default))        
 
     def _get_by_tracks_track_pitch(self, layer_name: str) -> int:
         """
@@ -804,6 +804,32 @@ class HammerPlaceAndRouteTool(HammerTool):
         consumed_tracks = 2 * track_width + track_spacing
         return round(consumed_tracks / power_utilization)
 
+    def _get_by_bump_dim_setting(self, key: str, dim_name: str) -> Any:
+        """
+        Return bump settings based on the dimension.
+        :param key: The base key name (e.g., pitch). Do not include the namespace or metal override
+        :param dim_name: Provide a dimensional argument (x, y, z!)
+        """
+        default  = "vlsi.inputs.bumps." + key
+        override = default + "_" + "dim_name"
+
+        try:
+            return self.get_setting(override)
+        except KeyError:
+            try:
+                return self.get_setting(default)
+            except KeyError:
+                raise ValueError("No value set for key {}".format(default))        
+
+    def get_by_bump_dim_pitch(self) -> Dict[str, float]:
+        """
+        Return pitches in the x and y directions. 
+        """
+        pitch_x = self._get_by_bump_dim_setting('pitch', 'x')
+        pitch_y = self._get_by_bump_dim_setting('pitch', 'y')
+        
+        return {'x': pitch_x, 'y': pitch_y}
+    
     @abstractmethod
     def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool) -> List[str]:
         """

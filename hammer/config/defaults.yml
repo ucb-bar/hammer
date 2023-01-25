@@ -301,7 +301,13 @@ vlsi.inputs:
   # BumpsDefinition struct members
     x: 0 # x (int) - number of bumps in the x dimension
     y: 0 # y (int) - number of bumps in the y dimension
-    pitch: 0.0 # pitch (float) - pitch of bumps in microns
+    
+    # pitch (float) - pitch of bumps in microns
+    # Overrideable by appending _<dim name>
+    # type: float
+    pitch: 0.0
+    global_x_offset: 0.0 # offset the bump map in the x-axis (float)
+    global_y_offset: 0.0 # offset the bump map in the y-axis (float)    
     cell: "" # cell (str) - Name of the default bump cell
     assignments: [] # assignments - List of BumpAssignment structs. You must specify one of name or no_connect.
     # If both are specified the bump will be left unconnected
