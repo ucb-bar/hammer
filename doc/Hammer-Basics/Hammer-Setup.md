@@ -12,10 +12,16 @@ You can install Hammer from PyPI:
 pip install hammer-vlsi
 ```
 
-If you are using ASAP7, you need to install hammer-vlsi with the asap7 extra dependency (gdstk).
+If you are using ASAP7, you need to install hammer-vlsi with the asap7 extra dependency (gdspy or gdstk). By default, gdspy is installed:
 
 ```shell
 pip install hammer-vlsi[asap7]
+```
+
+If instead, you want to install gdstk:
+
+```shell
+pip install hammer-vlsi[asap7-gdstk]
 ```
 
 After installation, verify that you can run the `hammer-vlsi` script from the command line.
