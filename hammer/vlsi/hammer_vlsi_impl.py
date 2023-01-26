@@ -821,7 +821,7 @@ class HammerPlaceAndRouteTool(HammerTool):
             except KeyError:
                 raise ValueError("No value set for key {}".format(default))        
 
-    def get_by_bump_dim_pitch(self) -> Dict[str, float]:
+    def _get_by_bump_dim_pitch(self) -> Dict[str, float]:
         """
         Return pitches in the x and y directions. 
         """
@@ -891,6 +891,30 @@ class HammerSignoffTool(HammerTool):
         :return: The number of signoff issues raised by the tool
         """
         pass
+
+class DummyParTool(HammerPlaceAndRouteTool):
+    """
+    This is a dummy implementation of PAR tool.
+    """
+
+    def fill_outputs(self) -> bool:
+        return True
+
+    def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool) -> List[str]:
+        return []
+
+    @property
+    def specify_std_cell_power_straps(self, blockage_spacing: Decimal, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
+        return []
+    def tool_config_prefix(self) -> str:
+        return ""
+
+    def version_number(self, version: str) -> int:
+        return 1
+
+    @property
+    def steps(self) -> List[HammerToolStep]:
+        return []
 
 class HammerDRCTool(HammerSignoffTool):
 

@@ -1115,7 +1115,7 @@ class HammerTool(metaclass=ABCMeta):
                 assignments.append(BumpAssignment(name=name, no_connect=no_con,
                     x=x, y=y, group=group, custom_cell=cell))
         
-        pitch_settings = self.get_by_bump_dim_pitch()
+        pitch_settings = self._get_by_bump_dim_pitch()
 
         return BumpsDefinition(
             x=self.get_setting("vlsi.inputs.bumps.x"),
