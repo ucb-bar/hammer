@@ -811,7 +811,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         :param dim_name: Provide a dimensional argument (x, y, z!)
         """
         default  = "vlsi.inputs.bumps." + key
-        override = default + "_" + "dim_name"
+        override = default + "_" + dim_name
 
         try:
             return self.get_setting(override)
