@@ -143,6 +143,10 @@ vlsi.inputs:
     y: int
     # pitch (float) - pitch of bumps in microns
     pitch: float
+    # global_x_offset (float) - offset the bump map in the x-axis 
+    global_x_offset: float
+    # global_y_offset (float) - offset the bump map in the y-axis 
+    global_y_offset: float
     # cell (str) - Name of the default bump cell
     cell: str
     # assignments - List of BumpAssignment structs. You must specify one of name or no_connect.

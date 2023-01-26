@@ -1114,9 +1114,16 @@ class HammerTool(metaclass=ABCMeta):
             else:
                 assignments.append(BumpAssignment(name=name, no_connect=no_con,
                     x=x, y=y, group=group, custom_cell=cell))
-        return BumpsDefinition(x=self.get_setting("vlsi.inputs.bumps.x"),
+        
+        pitch_settings = self.get_by_bump_dim_pitch()
+
+        return BumpsDefinition(
+            x=self.get_setting("vlsi.inputs.bumps.x"),
             y=self.get_setting("vlsi.inputs.bumps.y"),
-            pitch=Decimal(str(self.get_setting("vlsi.inputs.bumps.pitch"))),
+            pitch_x = Decimal(str(pitch_settings['x'])),
+            pitch_y = Decimal(str(pitch_settings['y'])),
+            global_x_offset=Decimal(str(self.get_setting("vlsi.inputs.bumps.global_x_offset"))),
+            global_y_offset=Decimal(str(self.get_setting("vlsi.inputs.bumps.global_y_offset"))),
             cell=self.get_setting("vlsi.inputs.bumps.cell"), assignments=assignments)
 
     def generate_visualization(self) -> None:
