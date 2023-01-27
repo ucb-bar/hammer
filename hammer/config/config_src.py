@@ -729,6 +729,11 @@ class HammerDatabase:
         """Alias for get_setting()."""
         return self.get_setting(key)
 
+    def get_suffix(self, key: str, suffix: str) -> Any:
+        """Alias for get_setting_suffix()."""
+        return self.get_setting_suffix(key, suffix)
+
+
     def __getitem__(self, key: str) -> Any:
         """Alias for get_setting()."""
         return self.get_setting(key)
@@ -753,6 +758,33 @@ class HammerDatabase:
         if check_type:
             self.check_setting(key)
         value = self.get_config()[key]
+        return nullvalue if value is None else value
+
+    def get_setting_suffix(self, key: str, suffix: str, nullvalue: Any = None, check_type: bool = True) -> Any:
+        """
+        Retrieve a key, first trying with a suffix but returning base if found.
+
+        :param key: Desired key.
+        :param suffix: Required suffix to search for.
+        :param nullvalue: Value to return out for nulls.
+        :param check_type: Flag to enforce type checking
+        :return: The given config
+        """
+        default  = key
+        override = default + "_" + suffix
+        value = None
+        try: 
+            value = self.get_config()[override]
+        except:
+            try:
+                value = self.get_config()[default]
+            except:
+                raise KeyError(f"Both base key: {default} and overriden key: {override} are missing.")
+
+        if default not in self.defaults:
+            warn(f"Base key: {default} does not have a default implementation")
+        if check_type:
+            self.check_setting(default)
         return nullvalue if value is None else value
 
     def set_setting(self, key: str, value: Any) -> None:

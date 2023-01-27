@@ -15,7 +15,7 @@ from hammer.vlsi.constraints import DelayConstraint, ClockPort, PinAssignment, P
     PinAssignmentSemiAutoError, PlacementConstraint, PlacementConstraintType, Margins, \
     BumpAssignment, BumpsDefinition, BumpsPinNamingScheme, DecapConstraint
 from hammer.vlsi.units import TimeValue, CapacitanceValue
-
+from hammer.par.mockpar import MockPlaceAndRoute
 
 class TestClockConstraint:
     def check_src(self, yaml_src: str, ref_port: ClockPort) -> None:
@@ -120,7 +120,7 @@ class TestBumps:
             BumpAssignment(name="VDD",no_connect=False,x=Decimal(203),y=Decimal(21),group=None,custom_cell=None),
             BumpAssignment(name="VSS",no_connect=False,x=Decimal(202),y=Decimal(20),group=None,custom_cell=None)
         ]
-        definition = BumpsDefinition(x=204,y=204,pitch=Decimal("1.23"),cell="bumpcell",assignments=assignments)
+        definition = BumpsDefinition(x=204,y=204,pitch_x=Decimal("1.23"), pitch_y=Decimal("3.14"), global_x_offset=0, global_y_offset=0, cell="bumpcell",assignments=assignments)
 
         for a in assignments:
             if a.name == "foo":
@@ -181,17 +181,36 @@ class TestBumps:
         assignments = [
             BumpAssignment(name="foo",no_connect=False,x=Decimal(1),y=Decimal(1),group=None,custom_cell=None)
         ]
-        definition = BumpsDefinition(x=420,y=420,pitch=Decimal("1.23"),cell="bumpcell",assignments=assignments)
+        definition = BumpsDefinition(x=420,y=420, pitch_x=Decimal("1.23"), pitch_y=Decimal("3.14"), global_x_offset=0, global_y_offset=0, cell="bumpcell",assignments=assignments)
         assert BumpsPinNamingScheme.A1.name_bump(definition, assignments[0]) == "YY420"
 
-        definition = BumpsDefinition(x=421,y=421,pitch=Decimal("1.23"),cell="bumpcell",assignments=assignments)
+        definition = BumpsDefinition(x=421,y=421, pitch_x=Decimal("1.23"), pitch_y=Decimal("3.14"), global_x_offset=0, global_y_offset=0, cell="bumpcell",assignments=assignments)
         assert BumpsPinNamingScheme.A1.name_bump(definition, assignments[0]) == "AAA421"
 
-        definition = BumpsDefinition(x=8420,y=8420,pitch=Decimal("1.23"),cell="bumpcell",assignments=assignments)
+        definition = BumpsDefinition(x=8420,y=8420, pitch_x=Decimal("1.23"), pitch_y=Decimal("3.14"), global_x_offset=0, global_y_offset=0, cell="bumpcell",assignments=assignments)
         assert BumpsPinNamingScheme.A1.name_bump(definition, assignments[0]) == "YYY8420"
 
-        definition = BumpsDefinition(x=8421,y=8421,pitch=Decimal("1.23"),cell="bumpcell",assignments=assignments)
+        definition = BumpsDefinition(x=8421,y=8421, pitch_x=Decimal("1.23"), pitch_y=Decimal("3.14"), global_x_offset=0, global_y_offset=0, cell="bumpcell",assignments=assignments)
         assert BumpsPinNamingScheme.A1.name_bump(definition, assignments[0]) == "AAAA8421"
+        
+    def test_get_by_bump_dim_pitch(self) -> None:
+        """
+        Test the extraction of x, y, pitches.
+        """
+        db = hammer_config.HammerDatabase()
+        db.update_project([{"vlsi.inputs.bumps.pitch": 1}])
+        tool = MockPlaceAndRoute()
+        tool.set_database(db)
+
+        pitch_set = tool._get_by_bump_dim_pitch()
+        assert pitch_set == {'x': 1, 'y': 1}
+
+        db = hammer_config.HammerDatabase()
+        db.update_project([{"vlsi.inputs.bumps.pitch_x": 1}, {"vlsi.inputs.bumps.pitch": 2}])
+        tool.set_database(db)
+        
+        pitch_set = tool._get_by_bump_dim_pitch()
+        assert pitch_set == {'x': 1, 'y': 2}
 
     def test_bump_sort(self) -> None:
         assignments = [
@@ -205,7 +224,7 @@ class TestBumps:
             BumpAssignment(name="VDD",no_connect=False,x=Decimal(203),y=Decimal(21),group=None,custom_cell=None),
             BumpAssignment(name="VSS",no_connect=False,x=Decimal(202),y=Decimal(20),group=None,custom_cell=None)
         ]
-        definition = BumpsDefinition(x=204,y=204,pitch=Decimal("1.23"),cell="bumpcell",assignments=assignments)
+        definition = BumpsDefinition(x=204,y=204,pitch_x=Decimal("1.23"), pitch_y=Decimal("3.14"), global_x_offset=0, global_y_offset=0, cell="bumpcell",assignments=assignments)
 
         idxs = [0, 3, 6, 2, 1]
 
@@ -214,7 +233,6 @@ class TestBumps:
 
         sorted_assignments = BumpsPinNamingScheme.A0.sort_by_name(definition, assignments)
         assert sorted_assignments == [assignments[x] for x in [4, 3, 5, 6, 7, 8, 2, 1, 0]]
-
 
 class TestDelayConstraint:
     def test_round_trip(self) -> None:

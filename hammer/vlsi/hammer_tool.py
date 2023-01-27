@@ -899,6 +899,19 @@ class HammerTool(metaclass=ABCMeta):
         except AttributeError:
             raise ValueError("Internal error: no database set by hammer-vlsi")
 
+    def get_setting_suffix(self, key: str, suffix: str, nullvalue: Any = None) -> Any:
+        """
+        Get a particular setting from the database with a suffix.
+
+        :param key: Key of the setting to receive.
+        :param suffix: Suffix to search for on top of the base.
+        :param nullvalue: Value to return in case of null (leave as None to use the default).
+        """
+        try:
+            return self._database.get_setting_suffix(key, suffix, nullvalue)
+        except AttributeError:
+            raise ValueError("Internal error: no database set by hammer-vlsi")
+
     def set_setting(self, key: str, value: Any) -> None:
         """
         Set a runtime setting in the database.
@@ -1092,6 +1105,15 @@ class HammerTool(metaclass=ABCMeta):
     def get_independent_ground_nets(self) -> List[Supply]:
         return list(filter(lambda x: x.tie is None, self.get_all_ground_nets()))
 
+    def _get_by_bump_dim_pitch(self) -> Dict[str, float]:
+        """
+        Return pitches in the x and y directions. 
+        """
+        pitch_x = self.get_setting_suffix('vlsi.inputs.bumps.pitch', 'x')
+        pitch_y = self.get_setting_suffix('vlsi.inputs.bumps.pitch', 'y')
+
+        return {'x': pitch_x, 'y': pitch_y}
+
     def get_bumps(self) -> Optional[BumpsDefinition]:
         bumps_mode = self.get_setting("vlsi.inputs.bumps_mode")
         if bumps_mode == "empty":
@@ -1114,9 +1136,16 @@ class HammerTool(metaclass=ABCMeta):
             else:
                 assignments.append(BumpAssignment(name=name, no_connect=no_con,
                     x=x, y=y, group=group, custom_cell=cell))
-        return BumpsDefinition(x=self.get_setting("vlsi.inputs.bumps.x"),
+        
+        pitch_settings = self._get_by_bump_dim_pitch()
+
+        return BumpsDefinition(
+            x=self.get_setting("vlsi.inputs.bumps.x"),
             y=self.get_setting("vlsi.inputs.bumps.y"),
-            pitch=Decimal(str(self.get_setting("vlsi.inputs.bumps.pitch"))),
+            pitch_x = Decimal(str(pitch_settings['x'])),
+            pitch_y = Decimal(str(pitch_settings['y'])),
+            global_x_offset=Decimal(str(self.get_setting("vlsi.inputs.bumps.global_x_offset"))),
+            global_y_offset=Decimal(str(self.get_setting("vlsi.inputs.bumps.global_y_offset"))),
             cell=self.get_setting("vlsi.inputs.bumps.cell"), assignments=assignments)
 
     def generate_visualization(self) -> None:
@@ -1267,12 +1296,13 @@ class HammerTool(metaclass=ABCMeta):
                 fsvg.write("</g>\n</svg>\n")
                 fsvg.close()
                 return
-            bp = bumps.pitch
+            bp_x = bumps.pitch_x
+            bp_y = bumps.pitch_y
             bump_radius = get_macro_wh(bumps.cell)[0]/2
             # Bumps API centers bumps in design
-            x_os = (top.width-(bumps.x-1)*bp)/2
-            y_os = (top.height-(bumps.y-1)*bp)/2
-            fsvg.write('<text x="{}" y="{}" text-anchor="start" class="bold10pt">bump pitch: {}um</text>\n'.format(10, title_height/2+10, bp))
+            x_os = (top.width-(bumps.x-1)*bp_x)/2
+            y_os = (top.height-(bumps.y-1)*bp_y)/2
+            fsvg.write('<text x="{}" y="{}" text-anchor="start" class="bold10pt">bump pitch x: {}um</text>\n'.format(10, title_height/2+10, bp_x))
             fsvg.write('<text x="{}" y="{}" text-anchor="start" class="bold10pt">bump grid: {} x {}</text>\n'.format(10, title_height/2+30, bumps.x, bumps.y))
             bump_circles = bump_text = bump_lblx = bump_lbly = '<g transform="{}">\n'.format(translate)
 
@@ -1288,10 +1318,10 @@ class HammerTool(metaclass=ABCMeta):
                 elif b.name in [g.name for g in g_nets]:
                     bump_type = 'ground'
 
-                b_x = x_os+Decimal(str(b.x-1))*bp
+                b_x = x_os+Decimal(str(b.x-1))*bp_x
                 if is_pcb_tool: # mirror about y-axis
                     b_x = top.width - b_x
-                b_y = top.height-y_os-Decimal(str(b.y-1))*bp
+                b_y = top.height-y_os-Decimal(str(b.y-1))*bp_y
 
                 bump_circles += '<circle cx="{}" cy="{}" r="{}" class="{}" />\n'.format(b_x, b_y, bump_radius, bump_type)
                 if viz_mode == "bumps" or not is_pcb_tool: # don't print pad designator also
@@ -1305,13 +1335,13 @@ class HammerTool(metaclass=ABCMeta):
 
             # Mark every 5th bump (helpful for large chips)
             for i in range(4, bumps.x, 5):
-                lbl_x = x_os+i*bp
+                lbl_x = x_os+i*bp_x
                 if is_pcb_tool: # mirror about y-axis
                     lbl_x = top.width - lbl_x
                 bump_lblx += '<text text-anchor="middle" x="{}" y="{}" class="bold12pt">{}</text>\n'.format(lbl_x, top.height-10, i+1)
                 bump_lblx += '<text text-anchor="middle" x="{}" y="{}" class="bold12pt">{}</text>\n'.format(lbl_x, 15, i+1)
             for i in range(4, bumps.y, 5):
-                lbl_y = top.height-y_os-i*bp
+                lbl_y = top.height-y_os-i*bp_y
                 bump_lbly += '<text text-anchor="start" x="{}" y="{}" class="bold12pt">{}</text>\n'.format(5, lbl_y, i+1)
                 bump_lbly += '<text text-anchor="end" x="{}" y="{}" class="bold12pt">{}</text>\n'.format(top.width-5, lbl_y, i+1)
 

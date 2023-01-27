@@ -775,15 +775,8 @@ class HammerPlaceAndRouteTool(HammerTool):
         :param key: The base key name (e.g. track_spacing). Do not include the namespace or metal override.
         :return: The value associated with the key, after applying any metal overrides
         """
-        default = "par.generate_power_straps_options.by_tracks." + key
-        override = default + "_" + layer_name
-        try:
-            return self.get_setting(override)
-        except KeyError:
-            try:
-                return self.get_setting(default)
-            except KeyError:
-                raise ValueError("No value set for key {}".format(default))
+        key = "par.generate_power_straps_options.by_tracks." + key
+        return self.get_setting_suffix(key, layer_name)
 
     def _get_by_tracks_track_pitch(self, layer_name: str) -> int:
         """

@@ -395,6 +395,17 @@ class HammerTechnology:
             print(e)  # TODO: fix the root cause
             return None
 
+    def get_setting_suffix(self, key: str) -> Any:
+        """Get a particular setting from the database with a suffix.
+        """
+        try:
+            return self._database.get(key)
+        except AttributeError:
+            raise ValueError("Internal error: no database set by hammer-vlsi")
+        except KeyError as e:  # this function is expected to return Optional[str] from extracted_tarballs_dir()
+            print(e)  # TODO: fix the root cause
+            return None
+
     def has_setting(self, key: str) -> bool:
         """Check if a setting exists in the database.
         """
