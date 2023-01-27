@@ -9,11 +9,8 @@
 # pylint: disable=invalid-name
 
 import json
-import queue
-from copy import deepcopy
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Optional
 import uuid
 
 import networkx as nx
@@ -56,7 +53,6 @@ class Node:
     push_dir:          str
     required_inputs:   list[str]
     required_outputs:  list[str]
-    children:          list
     status:            Status    = Status.NOT_RUN
     __uuid:            uuid.UUID = field(default_factory=uuid.uuid4)
     optional_inputs:   list[str] = field(default_factory=list)
@@ -75,7 +71,6 @@ class Node:
             self.pull_dir,
             tuple(self.required_inputs),
             tuple(self.required_outputs),
-            tuple(self.children),
             tuple(self.optional_inputs),
             tuple(self.optional_outputs),
             self.status
@@ -98,51 +93,10 @@ class Node:
 
 @dataclass
 class Graph:
-    root: Node
+    edge_list: dict[Node, list[Node]]
 
     def __post_init__(self) -> None:
-        self.networkx = self.to_networkx()
-
-    def to_json(self, indent: Optional[int] = None) -> str:
-        """Writes the graph as a JSON string and saves it to a file.
-
-        Returns:
-            dict: Entire flowgraph as a JSON.
-        """
-        out_dict = asdict(self.root)
-        return json.dumps(out_dict, indent=indent, cls=StatusEncoder)
-
-    def to_networkx(self) -> nx.DiGraph:
-        """Turns our graph into an NetworkX directed graph.
-
-        Returns:
-            nx.DiGraph: NetworkX directed graph.
-        """
-        q = queue.LifoQueue()
-        explored = []
-        q.put(self.root)
-        edge_list = {}
-        while not q.empty():
-            v = q.get()
-            if v not in explored:
-                explored.append(v)
-                # edge_list[v.action] = tuple(c.action for c in v.children)
-                edge_list[v] = tuple(c for c in v.children)
-                for c in v.children:
-                    q.put(c)
-        return nx.DiGraph(edge_list)
-
-    @staticmethod
-    def from_json(dump: str) -> dict:
-        """Converts a JSON into an instance of Graph.
-
-        Args:
-            dump (str): JSON with the correct schema for a Graph.
-
-        Returns:
-            dict: Dictionary containing graph information.
-        """
-        return json.loads(dump, object_hook=as_status)
+        self.networkx = nx.DiGraph(self.edge_list)
 
     def verify(self) -> bool:
         """Checks if a graph is valid via its inputs and outputs.
@@ -161,13 +115,11 @@ class Graph:
         Returns:
             bool: If the particular node is valid.
         """
-        if v == self.root:
-            return True
         parent_outs = \
             set().union(*(set(p.required_outputs) for p in self.networkx.predecessors(v))) \
             | set().union(*(set(p.optional_outputs) for p in self.networkx.predecessors(v)))
         inputs = set(v.required_inputs) | set(v.optional_inputs)
-        return parent_outs >= inputs
+        return self.networkx.in_degree(v) == 0 or parent_outs >= inputs
 
 
 def convert_to_acyclic(g: Graph) -> Graph:
@@ -179,22 +131,22 @@ def convert_to_acyclic(g: Graph) -> Graph:
     Returns:
         Graph: Graph with cloned nodes.
     """
-    g_copy = deepcopy(g)
-    cycles = sorted(nx.simple_cycles(g_copy.networkx))
+    cycles = sorted(nx.simple_cycles(g.networkx))
+    new_edge_list = g.edge_list.copy()
     for cycle in cycles:
-        start, end = cycle[0], cycle[1]
-        end_copy = Node(
-            end.action,
-            end.tool,
-            end.pull_dir, end.push_dir,
-            end.required_inputs, end.required_outputs,
-            end.status,
-            end.optional_inputs, end.optional_outputs
+        cut_start, cut_end = cycle[0], cycle[1]
+        cut_end_copy = Node(
+            cut_end.action,
+            cut_end.tool,
+            cut_end.pull_dir, cut_end.push_dir,
+            cut_end.required_inputs, cut_end.required_outputs,
+            cut_end.status,
+            cut_end.optional_inputs, cut_end.optional_outputs
         )
-        end.children = []
-    return Graph(g_copy.root)
+        cut_start_children = new_edge_list[cut_start]
+        new_edge_list[cut_start] = []
+        new_edge_list[cut_end_copy] = cut_start_children
+    return Graph(new_edge_list)
 
-# TODO: networkx backend
 # TODO: use run_main_args_parsed
 # TODO: refresh graph
-# TODO: unique id for nodes
