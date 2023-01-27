@@ -1298,10 +1298,12 @@ class HammerTool(metaclass=ABCMeta):
                 return
             bp_x = bumps.pitch_x
             bp_y = bumps.pitch_y
+            global_x_os = bumps.global_x_offset
+            global_y_os = bumps.global_y_offset
             bump_radius = get_macro_wh(bumps.cell)[0]/2
             # Bumps API centers bumps in design
-            x_os = (top.width-(bumps.x-1)*bp_x)/2
-            y_os = (top.height-(bumps.y-1)*bp_y)/2
+            x_os = (top.width-(bumps.x-1)*bp_x)/2 + global_x_os
+            y_os = (top.height-(bumps.y-1)*bp_y)/2 + global_y_os
             fsvg.write('<text x="{}" y="{}" text-anchor="start" class="bold10pt">bump pitch x: {}um</text>\n'.format(10, title_height/2+10, bp_x))
             fsvg.write('<text x="{}" y="{}" text-anchor="start" class="bold10pt">bump grid: {} x {}</text>\n'.format(10, title_height/2+30, bumps.x, bumps.y))
             bump_circles = bump_text = bump_lblx = bump_lbly = '<g transform="{}">\n'.format(translate)
