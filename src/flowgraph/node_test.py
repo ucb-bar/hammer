@@ -16,7 +16,6 @@ class NodeTest(unittest.TestCase):
             ["bryan-test.yml"],
             ["syn-out.json"],
             [],
-            []
         )
         # logging.info(test)
         self.assertEqual(test.action, "syn")
@@ -28,14 +27,12 @@ class NodeTest(unittest.TestCase):
             ["syn-out.json"],
             ["par-out.json"],
             [],
-            []
         )
         root = Node(
             "syn", "nop", "syn_dir", "",
             ["bryan-test.yml"],
             ["syn-out.json"],
             [child1],
-            []
         )
         graph = Graph(root)
         # logging.info(nx.nodes(graph.networkx))
@@ -50,14 +47,12 @@ class NodeTest(unittest.TestCase):
             ["syn-out.json"],
             ["par-out.json"],
             [],
-            []
         )
         root = Node(
             "syn", "nop", "syn_dir", "",
             ["bryan-test.yml"],
             ["syn-out.json"],
             [child1],
-            []
         )
         graph = Graph(root)
         graph_json = graph.to_json(indent=4)
@@ -87,10 +82,12 @@ class NodeTest(unittest.TestCase):
         v0.children.append(v1)
         v1.children.append(v2)
         v2.children.append(v0)
+
         g = Graph(v0)
         self.assertTrue(len(nx.find_cycle(g.networkx)) > 0)
+
         g_acyclic = node.convert_to_acyclic(g)
-        logging.info(g_acyclic.networkx)
+        print(g_acyclic)
         with self.assertRaises(nx.NetworkXNoCycle):
             nx.find_cycle(g_acyclic.networkx)
 

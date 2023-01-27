@@ -57,10 +57,10 @@ class Node:
     required_inputs:   list[str]
     required_outputs:  list[str]
     children:          list
-    optional_inputs:   list[str] = field(default_factory=list)
-    optional_outputs:  list[str] = field(default_factory=list)
     status:            Status    = Status.NOT_RUN
     __uuid:            uuid.UUID = field(default_factory=uuid.uuid4)
+    optional_inputs:   list[str] = field(default_factory=list)
+    optional_outputs:  list[str] = field(default_factory=list)
 
     def __key(self) -> tuple:
         """Key value for hashing.
@@ -126,7 +126,8 @@ class Graph:
             v = q.get()
             if v not in explored:
                 explored.append(v)
-                edge_list[v.action] = tuple(c.action for c in v.children)
+                # edge_list[v.action] = tuple(c.action for c in v.children)
+                edge_list[v] = tuple(c for c in v.children)
                 for c in v.children:
                     q.put(c)
         return nx.DiGraph(edge_list)
@@ -179,14 +180,21 @@ def convert_to_acyclic(g: Graph) -> Graph:
         Graph: Graph with cloned nodes.
     """
     g_copy = deepcopy(g)
-    cycles = nx.simple_cycles(g_copy.networkx)
+    cycles = sorted(nx.simple_cycles(g_copy.networkx))
     for cycle in cycles:
         start, end = cycle[0], cycle[1]
-        end_copy = deepcopy(end)
-        end_copy.children = []
-        start.children[start.children.index(end)] = end_copy
-        print(start.children[start.children.index(end_copy)].children)
+        end_copy = Node(
+            end.action,
+            end.tool,
+            end.pull_dir, end.push_dir,
+            end.required_inputs, end.required_outputs,
+            end.status,
+            end.optional_inputs, end.optional_outputs
+        )
+        end.children = []
     return Graph(g_copy.root)
 
+# TODO: networkx backend
+# TODO: use run_main_args_parsed
 # TODO: refresh graph
 # TODO: unique id for nodes
