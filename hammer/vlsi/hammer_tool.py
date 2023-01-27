@@ -899,6 +899,19 @@ class HammerTool(metaclass=ABCMeta):
         except AttributeError:
             raise ValueError("Internal error: no database set by hammer-vlsi")
 
+    def get_setting_suffix(self, key: str, suffix: str, nullvalue: Any = None) -> Any:
+        """
+        Get a particular setting from the database with a suffix.
+
+        :param key: Key of the setting to receive.
+        :param suffix: Suffix to search for on top of the base.
+        :param nullvalue: Value to return in case of null (leave as None to use the default).
+        """
+        try:
+            return self._database.get_setting_suffix(key, suffix, nullvalue)
+        except AttributeError:
+            raise ValueError("Internal error: no database set by hammer-vlsi")
+
     def set_setting(self, key: str, value: Any) -> None:
         """
         Set a runtime setting in the database.
@@ -1091,6 +1104,15 @@ class HammerTool(metaclass=ABCMeta):
 
     def get_independent_ground_nets(self) -> List[Supply]:
         return list(filter(lambda x: x.tie is None, self.get_all_ground_nets()))
+
+    def _get_by_bump_dim_pitch(self) -> Dict[str, float]:
+        """
+        Return pitches in the x and y directions. 
+        """
+        pitch_x = self.get_setting_suffix('vlsi.inputs.bumps.pitch', 'x')
+        pitch_y = self.get_setting_suffix('vlsi.inputs.bumps.pitch', 'y')
+
+        return {'x': pitch_x, 'y': pitch_y}
 
     def get_bumps(self) -> Optional[BumpsDefinition]:
         bumps_mode = self.get_setting("vlsi.inputs.bumps_mode")

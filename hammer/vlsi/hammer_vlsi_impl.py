@@ -775,15 +775,8 @@ class HammerPlaceAndRouteTool(HammerTool):
         :param key: The base key name (e.g. track_spacing). Do not include the namespace or metal override.
         :return: The value associated with the key, after applying any metal overrides
         """
-        default = "par.generate_power_straps_options.by_tracks." + key
-        override = default + "_" + layer_name
-        try:
-            return self.get_setting(override)
-        except KeyError:
-            try:
-                return self.get_setting(default)
-            except KeyError:
-                raise ValueError("No value set for key {}".format(default))
+        key = "par.generate_power_straps_options.by_tracks." + key
+        return self.get_setting_suffix(key, layer_name)
 
     def _get_by_tracks_track_pitch(self, layer_name: str) -> int:
         """
@@ -803,32 +796,6 @@ class HammerPlaceAndRouteTool(HammerTool):
         # This strategy uses pairs of power and ground
         consumed_tracks = 2 * track_width + track_spacing
         return round(consumed_tracks / power_utilization)
-
-    def _get_by_bump_dim_setting(self, key: str, dim_name: str) -> Any:
-        """
-        Return bump settings based on the dimension.
-        :param key: The base key name (e.g., pitch). Do not include the namespace or metal override
-        :param dim_name: Provide a dimensional argument (x, y, z!)
-        """
-        default  = "vlsi.inputs.bumps." + key
-        override = default + "_" + dim_name
-
-        try:
-            return self.get_setting(override)
-        except KeyError:
-            try:
-                return self.get_setting(default)
-            except KeyError:
-                raise ValueError("No value set for key {}".format(default))        
-
-    def _get_by_bump_dim_pitch(self) -> Dict[str, float]:
-        """
-        Return pitches in the x and y directions. 
-        """
-        pitch_x = self._get_by_bump_dim_setting('pitch', 'x')
-        pitch_y = self._get_by_bump_dim_setting('pitch', 'y')
-
-        return {'x': pitch_x, 'y': pitch_y}
 
     @abstractmethod
     def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool) -> List[str]:
@@ -891,30 +858,6 @@ class HammerSignoffTool(HammerTool):
         :return: The number of signoff issues raised by the tool
         """
         pass
-
-class DummyParTool(HammerPlaceAndRouteTool):
-    """
-    This is a dummy implementation of PAR tool.
-    """
-
-    def fill_outputs(self) -> bool:
-        return True
-
-    def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool) -> List[str]:
-        return []
-
-    @property
-    def specify_std_cell_power_straps(self, blockage_spacing: Decimal, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
-        return []
-    def tool_config_prefix(self) -> str:
-        return ""
-
-    def version_number(self, version: str) -> int:
-        return 1
-
-    @property
-    def steps(self) -> List[HammerToolStep]:
-        return []
 
 class HammerDRCTool(HammerSignoffTool):
 

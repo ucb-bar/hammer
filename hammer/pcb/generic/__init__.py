@@ -111,18 +111,19 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
         sorted_assignments = naming_scheme.sort_by_name(bumps, assignments)
 
         # Use post-shrink pitch
-        pitch = self.technology.get_post_shrink_length(bumps.pitch)
+        pitch_x = self.technology.get_post_shrink_length(bumps.pitch_x)
+        pitch_y = self.technology.get_post_shrink_length(bumps.pitch_y)
 
         # There is no meaningful verion for this file
         # Set the units to metric (mm)
         output = "VER 0.0\nUNIT M\n"
-        x_offset = ((1 - bumps.x) * pitch) / 2  # type: Decimal
-        y_offset = ((1 - bumps.y) * pitch) / 2  # type: Decimal
+        x_offset = ((1 - bumps.x) * pitch_x) / 2  # type: Decimal
+        y_offset = ((1 - bumps.y) * pitch_y) / 2  # type: Decimal
         for bump in sorted_assignments:
             # note that the flip-chip mirroring happens here
             name = naming_scheme.name_bump(bumps, bump)
-            x = um2mm(Decimal(str(bumps.x - bump.x)) * pitch + x_offset, 3)
-            y = um2mm(Decimal(str(bump.y - 1)) * pitch + y_offset, 3)
+            x = um2mm(Decimal(str(bumps.x - bump.x)) * pitch_x + x_offset, 3)
+            y = um2mm(Decimal(str(bump.y - 1)) * pitch_y + y_offset, 3)
             # Fields in order (with valid options):
             # Name
             # X position (mm)
@@ -182,14 +183,15 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
         bumps, assignments = self.get_bumps_and_assignments()
 
         # Use post-shrink pitch
-        pitch = self.technology.get_post_shrink_length(bumps.pitch)
+        pitch_x = self.technology.get_post_shrink_length(bumps.pitch_x)
+        pitch_y = self.technology.get_post_shrink_length(bumps.pitch_y)
 
         # Here is a good ref for the PADS V9 format:
         # ftp://ftp.freecalypso.org/pub/CAD/PADS/pdfdocs/Plib_ASCII.pdf
 
         # for now, let's make the outline 4 pitches larger than the bump array
-        outline_width = ((bumps.x + 3) * pitch)
-        outline_height = ((bumps.y + 3) * pitch)
+        outline_width = ((bumps.x + 3) * pitch_x)
+        outline_height = ((bumps.y + 3) * pitch_y)
 
         output = "*PADS-LIBRARY-PCB-DECALS-V9*\n\n"
         # Fields in order from left to right
@@ -216,20 +218,20 @@ class GenericPCBDeliverableTool(HammerPCBDeliverableTool):
         # we'll dog-ear the outline to indicate the reference bump in the top left
         # x and y are in mm, not um
         output += "{x} {y}\n".format(x=um2mm(-outline_width/2, 3),           y=um2mm(-outline_height/2, 3))
-        output += "{x} {y}\n".format(x=um2mm(-outline_width/2, 3),           y=um2mm( outline_height/2 - 2*pitch, 3))
-        output += "{x} {y}\n".format(x=um2mm(-outline_width/2 + 2*pitch, 3), y=um2mm( outline_height/2, 3))
+        output += "{x} {y}\n".format(x=um2mm(-outline_width/2, 3),           y=um2mm( outline_height/2 - 2*pitch_y, 3))
+        output += "{x} {y}\n".format(x=um2mm(-outline_width/2 + 2*pitch_x, 3), y=um2mm( outline_height/2, 3))
         output += "{x} {y}\n".format(x=um2mm( outline_width/2, 3),           y=um2mm( outline_height/2, 3))
         output += "{x} {y}\n".format(x=um2mm( outline_width/2, 3),           y=um2mm(-outline_height/2, 3))
         output += "{x} {y}\n".format(x=um2mm(-outline_width/2, 3),           y=um2mm(-outline_height/2, 3))
 
         # create all of the terminals
-        x_offset = ((1 - bumps.x) * pitch) / 2  # type: Decimal
-        y_offset = ((1 - bumps.y) * pitch) / 2  # type: Decimal
+        x_offset = ((1 - bumps.x) * pitch_x) / 2  # type: Decimal
+        y_offset = ((1 - bumps.y) * pitch_y) / 2  # type: Decimal
         naming_scheme = self.naming_scheme
         for bump in bumps.assignments:
             # note that the flip-chip mirroring happens here
-            x = um2mm(Decimal(str(bumps.x - bump.x)) * pitch + x_offset, 3)
-            y = um2mm(Decimal(str(bump.y - 1)) * pitch + y_offset, 3)
+            x = um2mm(Decimal(str(bumps.x - bump.x)) * pitch_x + x_offset, 3)
+            y = um2mm(Decimal(str(bump.y - 1)) * pitch_y + y_offset, 3)
             label = naming_scheme.name_bump(bumps, bump)
             output += "T{x} {y} {x} {y} {label}\n".format(x=x, y=y, label=label)
 

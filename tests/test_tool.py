@@ -387,6 +387,8 @@ export lol=abc"cat"
                      "y": 14,
                      "pitch": 200,
                      "cell": "MY_REDACTED_BUMP_CELL",
+                     "global_x_offset": 1,
+                     "global_y_offset": 1,
                      "assignments": [
                          {"name": "reset", "x": 5, "y": 3},
                          {"no_connect": true, "x": 5, "y": 4},

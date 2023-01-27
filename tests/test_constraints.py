@@ -10,12 +10,12 @@ import pytest
 import hammer.config as hammer_config
 from hammer.utils import add_dicts
 from hammer.tech import MacroSize
-from hammer.vlsi import DummyHammerTool, DummyParTool
+from hammer.vlsi import DummyHammerTool
 from hammer.vlsi.constraints import DelayConstraint, ClockPort, PinAssignment, PinAssignmentError, \
     PinAssignmentSemiAutoError, PlacementConstraint, PlacementConstraintType, Margins, \
     BumpAssignment, BumpsDefinition, BumpsPinNamingScheme, DecapConstraint
 from hammer.vlsi.units import TimeValue, CapacitanceValue
-
+from hammer.par.mockpar import MockPlaceAndRoute
 
 class TestClockConstraint:
     def check_src(self, yaml_src: str, ref_port: ClockPort) -> None:
@@ -192,22 +192,6 @@ class TestBumps:
 
         definition = BumpsDefinition(x=8421,y=8421, pitch_x=Decimal("1.23"), pitch_y=Decimal("3.14"), global_x_offset=0, global_y_offset=0, cell="bumpcell",assignments=assignments)
         assert BumpsPinNamingScheme.A1.name_bump(definition, assignments[0]) == "AAAA8421"
-
-    def test_get_by_bump_dim_setting(self) -> None:
-        """
-        Test that we can extract a bump related key by dimensionality.
-        Note that the dimension is not optional because the underlying code now requires x, y.
-        """
-        db = hammer_config.HammerDatabase()
-        db.update_project([{"vlsi.inputs.bumps.pitch": 1}, {"vlsi.inputs.bumps.pitch_b_x": 2}])
-        tool = DummyParTool()
-        tool.set_database(db)
-
-        pitch_x = tool._get_by_bump_dim_setting('pitch', 'x')
-        assert pitch_x == 1
-
-        pitch_x = tool._get_by_bump_dim_setting('pitch_b', 'x')
-        assert pitch_x == 2
         
     def test_get_by_bump_dim_pitch(self) -> None:
         """
@@ -215,7 +199,7 @@ class TestBumps:
         """
         db = hammer_config.HammerDatabase()
         db.update_project([{"vlsi.inputs.bumps.pitch": 1}])
-        tool = DummyParTool()
+        tool = MockPlaceAndRoute()
         tool.set_database(db)
 
         pitch_set = tool._get_by_bump_dim_pitch()
