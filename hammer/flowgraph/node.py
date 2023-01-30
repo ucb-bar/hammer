@@ -9,11 +9,14 @@
 # pylint: disable=invalid-name
 
 import json
+import os
+import uuid
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-import uuid
 
 import networkx as nx
+
+from hammer.vlsi import cli_driver
 
 
 class Status(Enum):
@@ -104,7 +107,7 @@ class Graph:
         Returns:
             bool: If graph is valid.
         """
-        return all(self.__process(v) for v in nx.nodes(self.networkx))
+        return all(self.__process(v) for v in convert_to_acyclic(self).networkx)
 
     def __process(self, v: Node) -> bool:
         """Process a specific vertex of a graph.
@@ -121,6 +124,50 @@ class Graph:
         inputs = set(v.required_inputs) | set(v.optional_inputs)
         return self.networkx.in_degree(v) == 0 or parent_outs >= inputs
 
+    def run(self, start: Node) -> None:
+        """Run a HAMMER flowgraph."""
+        if not self.verify():
+            raise RuntimeError("Flowgraph is invalid")
+        if start not in self.networkx:
+            raise RuntimeError("Node not in flowgraph")
+
+        start.status = Status.RUNNING
+        arg_list = {
+            "action": start.action,
+            'environment_config': None,
+            'configs': [os.path.join(start.pull_dir, i) for i in start.required_inputs],
+            'log': None,
+            'obj_dir': start.push_dir,
+            'syn_rundir': '',
+            'par_rundir': '',
+            'drc_rundir': '',
+            'lvs_rundir': '',
+            'sim_rundir': '',
+            'power_rundir': '',
+            'formal_rundir': '',
+            'timing_rundir': '',
+            # TODO: sub-step determinations
+            'from_step': None,
+            'after_step': None,
+            'to_step': None,
+            'until_step': None,
+            'only_step': None,
+            'output': 'output.json',
+            'verilog': None,
+            'firrtl': None,
+            'top': None,
+            'cad_files': None
+        }
+
+        driver = cli_driver.CLIDriver()
+        try:
+            driver.run_main_parsed(arg_list)
+            start.status = Status.COMPLETE
+            for c in nx.neighbors(self.networkx, start):
+                self.run(c)
+        except Exception as e:
+            start.status = Status.INCOMPLETE
+            raise e
 
 def convert_to_acyclic(g: Graph) -> Graph:
     """Eliminates cycles in a flowgraph for analysis.
@@ -148,5 +195,4 @@ def convert_to_acyclic(g: Graph) -> Graph:
         new_edge_list[cut_end_copy] = cut_start_children
     return Graph(new_edge_list)
 
-# TODO: use run_main_args_parsed
 # TODO: refresh graph

@@ -2,8 +2,8 @@ import logging
 import unittest
 
 import networkx as nx
-import node
-from node import Graph, Node
+from hammer.flowgraph import node
+from hammer.flowgraph.node import Graph, Node
 
 
 class NodeTest(unittest.TestCase):
