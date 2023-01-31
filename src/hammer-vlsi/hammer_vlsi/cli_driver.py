@@ -84,8 +84,11 @@ def dump_config_to_yaml_file(output_path: str, config: Any) -> None:
     """
     yaml = ruamel.yaml.YAML()
     yaml.indent(offset=2)
-    with open(output_path, 'w') as f:
-        yaml.dump(config, f)
+    try:
+        with open(output_path, 'w') as f:
+            yaml.dump(config, f)
+    except:
+        return 
 
 def add_key_history(config: dict, history: dict) -> Any:
     """
