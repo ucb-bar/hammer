@@ -17,7 +17,7 @@ from functools import lru_cache, reduce
 from typing import (Any, Callable, Dict, Iterable, List, NamedTuple, Optional,
                     Set, Tuple, Union)
 
-from hammer.logging import HammerVLSILogging
+from hammer.logging import HammerVLSILogging, HammerVLSILoggingContext
 from hammer.utils import add_dicts, deepdict, topological_sort
 
 from .yaml2json import load_yaml  # grumble grumble
