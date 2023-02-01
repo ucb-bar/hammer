@@ -10,7 +10,6 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-import warnings
 import importlib.resources
 
 import ruamel.yaml
@@ -69,7 +68,7 @@ def dump_config_to_json_file(output_path: str, config: dict) -> None:
     with open(output_path, "w") as f:
         f.write(json.dumps(config, cls=HammerJSONEncoder, indent=4))
 
-def dump_config_to_yaml_file(output_path: str, config: Any) -> None:
+def dump_config_to_yaml_file(output_path: str, config: dict) -> None:
     """
     Helper function to dump the given config in YAML form
     to the given output path while overwriting it if it already exists.
@@ -77,7 +76,7 @@ def dump_config_to_yaml_file(output_path: str, config: Any) -> None:
     :param config: Config dictionary to dump
     """
     yaml = ruamel.yaml.YAML()
-    yaml.indent(offset=2)
+    yaml.indent(offset=2, sequence=4)
     with open(output_path, 'w') as f:
         yaml.dump(config, f)
 
@@ -328,13 +327,13 @@ class CLIDriver:
                         next_level = curr_level[key]
                         break
                     except KeyError:
-                        print(f"ERROR: Key {key} could not be found at the current level, try again.")
+                        driver.log.error(f"Key {key} could not be found at the current level, try again.")
                 overall_key.append(key)
                 if not isinstance(next_level, ruamel.yaml.CommentedMap):
                     flat_key = '.'.join(overall_key)
                     if not driver.database.has_setting(flat_key):
                         val = curr_level.get(key)
-                        warnings.warn(f"{flat_key} is not in the project configuration, the default value is displayed.")
+                        driver.log.warning(f"{flat_key} is not in the project configuration, the default value is displayed.")
                     else:
                         val = driver.database.get_setting(flat_key)
                     if key in curr_level.ca.items:
@@ -356,7 +355,7 @@ class CLIDriver:
                             break
                         if continue_input.lower() == 'n':
                             return driver.project_config
-                        print("Please input either [y]es or [n]o.")
+                        driver.log.error("Please input either [y]es or [n]o.")
                     break
                 curr_level = next_level
 
