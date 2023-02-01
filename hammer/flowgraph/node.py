@@ -8,14 +8,14 @@
 
 # pylint: disable=invalid-name
 
-import json
 import os
 import uuid
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from enum import Enum
 
 import networkx as nx
 
+from hammer.logging import HammerVLSILogging
 from hammer.vlsi import cli_driver
 
 
@@ -28,19 +28,6 @@ class Status(Enum):
     INCOMPLETE = "INCOMPLETE"
     INVALID    = "INVALID"
     COMPLETE   = "COMPLETE"
-
-
-class StatusEncoder(json.JSONEncoder):
-    def default(self, o: Status) -> str:
-        if isinstance(o, Status):
-            return o.name
-        return super().default(o)
-
-
-def as_status(dct):
-    if "status" in dct:
-        dct["status"] = Status[dct["status"]]
-    return dct
 
 
 # make sure union of required/optional outs is superset of children required/optional inputs
@@ -82,18 +69,6 @@ class Node:
     def __hash__(self) -> int:
         return hash(self.__key)
 
-    def to_json(self) -> dict:
-        """Writes the node to a JSON string.
-
-        Args:
-            fname (str): File name to write to.
-
-        Returns:
-            str: Node represented as a JSON.
-        """
-        return asdict(self)
-
-
 @dataclass
 class Graph:
     edge_list: dict[Node, list[Node]]
@@ -132,6 +107,8 @@ class Graph:
             raise RuntimeError("Node not in flowgraph")
 
         start.status = Status.RUNNING
+        ctxt = HammerVLSILogging.context()
+        ctxt.info(f"Running graph step {start.action}")
         arg_list = {
             "action": start.action,
             'environment_config': None,
@@ -152,7 +129,7 @@ class Graph:
             'to_step': None,
             'until_step': None,
             'only_step': None,
-            'output': 'output.json',
+            'output': os.path.join(start.push_dir, start.required_outputs[0]),
             'verilog': None,
             'firrtl': None,
             'top': None,

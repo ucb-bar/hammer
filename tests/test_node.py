@@ -1,7 +1,12 @@
 import logging
+import os
+import tempfile
 import unittest
 
 import networkx as nx
+import pytest
+from networkx.readwrite import json_graph
+
 from hammer.flowgraph import node
 from hammer.flowgraph.node import Graph, Node
 
@@ -15,7 +20,6 @@ class NodeTest(unittest.TestCase):
             ["bryan-test.yml"],
             ["syn-out.json"],
         )
-        # logging.info(test)
         self.assertEqual(test.action, "syn")
 
     def test_complex_graph(self) -> None:
@@ -32,6 +36,8 @@ class NodeTest(unittest.TestCase):
         )
         graph = Graph({root: [child1]})
         self.assertTrue(graph.verify())
+        self.assertEqual(len(graph.networkx), 2)
+        self.assertEqual(graph.networkx.number_of_edges(), 1)
 
     def test_cycle_reduction(self) -> None:
         """Test that cycles are reduced to an acyclic graph."""
@@ -59,7 +65,10 @@ class NodeTest(unittest.TestCase):
         g_acyclic = node.convert_to_acyclic(g)
         with self.assertRaises(nx.NetworkXNoCycle):
             nx.find_cycle(g_acyclic.networkx)
+        self.assertEqual(len(g_acyclic.networkx), 4)
+        self.assertEqual(g.networkx.number_of_edges(), 3)
 
+    @pytest.mark.xfail(raises=ImportError, reason="Matplotlib currently not imported")
     def test_visualization(self) -> None:
         """Test visualization of flowgraph."""
         import matplotlib.pyplot as plt
@@ -116,6 +125,79 @@ class NodeTest(unittest.TestCase):
         plt.axis("off")
         plt.legend(loc="upper left", markerscale=0.2)
         plt.savefig("/home/bngo/Research/hammer/graph.png", bbox_inches="tight", dpi=200)
+
+    def test_run_basic(self) -> None:
+        """Test a basic syn -> par -> drc flow, all with nop tools."""
+        with tempfile.TemporaryDirectory() as td:
+            os.mkdir(os.path.join(td, "syn_dir"))
+            os.mkdir(os.path.join(td, "par_dir"))
+            os.mkdir(os.path.join(td, "drc_dir"))
+
+            with open(os.path.join(td, "syn_dir", "syn-in.yml"), 'w', encoding="utf-8") as tf1:
+                tf1.write("""
+synthesis.inputs:
+    input_files: ["LICENSE", "README.md"]
+    top_module: "z1top.xdc"
+
+par.inputs:
+    input_files: ["LICENSE", "README.md"]
+    top_module: "z1top.xdc"
+
+drc.inputs:
+    input_files: ["LICENSE", "README.md"]
+    top_module: "z1top.xdc"
+
+lvs.inputs:
+    input_files: ["LICENSE", "README.md"]
+    schematic_files: ["LICENSE", "README.md"]
+    top_module: "z1top.xdc"
+    hcells_list: []
+
+pcb.inputs:
+    top_module: "z1top.xdc"
+
+formal.inputs:
+    input_files: ["LICENSE", "README.md"]
+    top_module: "z1top.xdc"
+
+sim.inputs:
+    input_files: ["LICENSE", "README.md"]
+    top_module: "z1top.xdc"
+
+vlsi:
+    core:
+        technology: "hammer.technology.nop"
+
+        synthesis_tool: "hammer.synthesis.nop"
+        par_tool: "hammer.par.nop"
+        drc_tool: "hammer.drc.nop"
+        lvs_tool: "hammer.lvs.nop"
+        power_tool: "hammer.power.nop"
+        sim_tool: "mocksim"
+""")
+
+            v0 = Node(
+                "syn-to-par", "nop", os.path.join(td, "syn_dir"), os.path.join(td, "par_dir"),
+                ["syn-in.yml"],
+                ["syn-out.json"],
+            )
+            v1 = Node(
+                "par-to-drc", "nop", os.path.join(td, "par_dir"), os.path.join(td, "drc_dir"),
+                ["syn-out.json"],
+                ["par-out.json"],
+            )
+            v2 = Node(
+                "drc", "nop", os.path.join(td, "drc_dir"), os.path.join(td, "out_dir"),
+                ["par-out.json"],
+                ["drc-out.json"],
+            )
+            g = Graph({
+                v0: [v1],
+                v1: [v2],
+                v2: []
+            })
+            g.run(v0)
+
 
 
 if __name__ == "__main__":
