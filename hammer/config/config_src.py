@@ -6,20 +6,21 @@
 
 # pylint: disable=invalid-name
 import importlib.resources
-from decimal import Decimal
-from typing import Iterable, List, Union, Callable, Any, Dict, Set, NamedTuple, Tuple, Optional
-from warnings import warn
-from enum import Enum
-from importlib import resources
-
-from hammer.utils import deepdict, add_dicts, topological_sort
-from .yaml2json import load_yaml  # grumble grumble
-
-from functools import reduce, lru_cache
 import json
 import numbers
 import os
 import re
+from decimal import Decimal
+from enum import Enum
+from functools import lru_cache, reduce
+from typing import (Any, Callable, Dict, Iterable, List, NamedTuple, Optional,
+                    Set, Tuple, Union)
+
+from hammer.logging import HammerVLSILogging
+from hammer.utils import add_dicts, deepdict, topological_sort
+
+from .yaml2json import load_yaml  # grumble grumble
+
 
 # A helper class that writes Decimals as strings
 # TODO(ucb-bar/hammer#378) get rid of this and serialize units
@@ -693,6 +694,8 @@ class HammerDatabase:
 
         self.defaults = {}  # type: dict
 
+        self.logger = HammerVLSILogging().context()  # type: HammerVLSILoggingContext
+
     @property
     def runtime(self) -> List[dict]:
         return [self._runtime]
@@ -754,7 +757,7 @@ class HammerDatabase:
         if key not in self.get_config():
             raise KeyError("Key " + key + " is missing")
         if key not in self.defaults:
-            warn(f"Key {key} does not have a default implementation")
+            self.logger.warning(f"Key {key} does not have a default implementation")
         if check_type:
             self.check_setting(key)
         value = self.get_config()[key]
@@ -782,7 +785,7 @@ class HammerDatabase:
                 raise KeyError(f"Both base key: {default} and overriden key: {override} are missing.")
 
         if default not in self.defaults:
-            warn(f"Base key: {default} does not have a default implementation")
+            self.logger.warning(f"Base key: {default} does not have a default implementation")
         if check_type:
             self.check_setting(default)
         return nullvalue if value is None else value
@@ -849,7 +852,7 @@ class HammerDatabase:
         if cfg is None:
             cfg = self.get_config()
         if key not in self.get_config_types():
-            warn(f"Key {key} is not associated with a type")
+            self.logger.warning(f"Key {key} is not associated with a type")
             return True
         try:
             exp_value_type = parse_setting_type(self.get_config_types()[key])
@@ -976,7 +979,7 @@ class HammerDatabase:
         if check_type:
             for k, v in loaded_cfg.items():
                 if not self.has_setting(k):
-                    warn(f"Key {k} has a type {v} is not yet implemented")
+                    self.logger.warning(f"Key {k} has a type {v} is not yet implemented")
                 elif k != "_config_path":
                     self.check_setting(k)
 
