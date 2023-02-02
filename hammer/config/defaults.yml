@@ -92,6 +92,8 @@ vlsi.technology:
   # the extracted contents of foobar.tar.gz.
   # If this is not specified, then the tarballs will be extracted to obj/<tech_dir>/extracted/.
 
+  timing_lib_pref: "NLDM"
+
 # General VLSI inputs.
 # These will vary per run of hammer-vlsi.
 vlsi.inputs:
