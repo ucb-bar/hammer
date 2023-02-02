@@ -93,6 +93,10 @@ vlsi.technology:
   # If this is not specified, then the tarballs will be extracted to obj/<tech_dir>/extracted/.
 
   timing_lib_pref: "NLDM"
+  # Select a timing lib preference, available options include:
+  # NLDM, ECSM, and CCS (lower or upper case acceptable). 
+  # If no preference is specified, then the following preference order is followed:
+  # NLDM -> ECSM -> CCS
 
 # General VLSI inputs.
 # These will vary per run of hammer-vlsi.
