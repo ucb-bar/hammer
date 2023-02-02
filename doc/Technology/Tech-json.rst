@@ -24,10 +24,6 @@ The user may supply the PDK to Hammer as an already extracted directory and/or a
     {
       "id": "$STDCELLS",
       "path": "technology.asap7.stdcell_install_dir"
-    },
-    {
-      "path": "tech-asap7-cache",
-      "base var": ""
     }
   ],
   "tarballs": [

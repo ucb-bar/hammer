@@ -1,6 +1,7 @@
 vlsi.core.technology: "hammer.technology.sky130"
 technology.sky130:
   sky130A: "/tools/commercial/skywater/local/sky130A"
+  openram_lib: "/tools/commercial/skywater/local/sky130_sram_macros"
   sky130_nda: "/tools/commercial/skywater/swtech130/skywater-src-nda-20221031"
 
 synthesis.genus.version: "201"
