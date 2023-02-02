@@ -3,6 +3,7 @@ import os
 from typing import List, Dict, Any
 import sys
 from pathlib import Path
+from abc import ABCMeta, abstractmethod
 
 import pytest
 
@@ -69,6 +70,141 @@ class TestHammerTool(HasGetTech):
             "drink {0}/orange".format(tech_dir)
         ]
 
+    def test_timing_lib_with_preference_filter(self, tmp_path, request) -> None:
+        """
+        Test that the library preference filter works as expected.
+        """
+        import hammer.config as hammer_config
+
+        tech_dir_base = str(tmp_path)
+        tech_name = request.function.__name__  # create unique technology folders for each test
+        tech_dir = HammerToolTestHelpers.create_tech_dir(tech_dir_base, tech_name)
+        tech_json_filename = os.path.join(tech_dir, f"{tech_name}.tech.json")
+        tech_json = {
+            "name": f"{tech_name}",
+            "libraries": [
+                {
+                    "ecsm_liberty_file": "eggs.ecsm",
+                    "ccs_liberty_file": "eggs.ccs",
+                    "nldm_liberty_file": "eggs.nldm"
+                },
+                {
+                    "ccs_liberty_file": "custard.ccs",
+                    "nldm_liberty_file": "custard.nldm"
+                },
+                {
+                    "nldm_liberty_file": "noodles.nldm"
+                },
+                {
+                    "ecsm_liberty_file": "eggplant.ecsm"
+                },
+                {
+                    "ccs_liberty_file": "cookies.ccs"
+                }
+            ]
+            
+        }
+        with open(tech_json_filename, "w") as f:
+            f.write(json.dumps(tech_json, cls=HammerJSONEncoder, indent=4))
+        (Path(tech_dir) / "eggs.ecsm").write_text("eggs ecsm")
+        (Path(tech_dir) / "eggs.ccs").write_text("eggs ccs")
+        (Path(tech_dir) / "eggs.nldm").write_text("eggs nldm")
+        (Path(tech_dir) / "custard.ccs").write_text("custard ccs")
+        (Path(tech_dir) / "custard.nldm").write_text("custard nldm")
+        (Path(tech_dir) / "noodles.nldm").write_text("noodles nldm")
+        (Path(tech_dir) / "eggplant.ecsm").write_text("eggplant ecsm")
+        (Path(tech_dir) / "cookies.ccs").write_text("cookies ccs")
+
+        sys.path.append(tech_dir_base)
+        tech = self.get_tech(hammer_tech.HammerTechnology.load_from_module(tech_name))
+        tech.cache_dir = tech_dir
+
+        logger = HammerVLSILogging.context("")
+        logger.logging_class.clear_callbacks()
+        tech.logger = logger
+    
+        class Tool(hammer_vlsi.DummyHammerTool, metaclass=ABCMeta):
+            
+            def __init__(self, removal=False):
+                self.geek = "GeekforGeeks"
+
+            
+            lib_outputs = []  # type: List[str]
+            @property
+            def steps(self) -> List[hammer_vlsi.HammerToolStep]:
+                return self.make_steps_from_methods([
+                    self.step_one,
+                    self.step_two,
+                    self.step_three
+                ])
+
+            # Test default NLDM preference.
+            def step_one(self) -> bool:
+                Tool.lib_outputs = tech.read_libs([hammer_tech.filters.get_timing_lib_with_preference()],
+                                                  hammer_tech.HammerTechnologyUtils.to_plain_item,
+                                                  must_exist=False)
+                return True
+
+            # Test lower case key input.
+            def step_two(self) -> bool:
+                Tool.lib_outputs = tech.read_libs([hammer_tech.filters.get_timing_lib_with_preference("ecsm")],
+                                                  hammer_tech.HammerTechnologyUtils.to_plain_item,
+                                                  must_exist=False)
+                return True
+
+            def step_three(self) -> bool:
+                Tool.lib_outputs = tech.read_libs([hammer_tech.filters.get_timing_lib_with_preference("CCS")],
+                                                  hammer_tech.HammerTechnologyUtils.to_plain_item,
+                                                  must_exist=False)
+                return True
+
+        test = Tool()
+        test.logger = HammerVLSILogging.context("")
+        test.run_dir = str(tmp_path / "rundir")
+        test.technology = tech
+        test.set_database(hammer_config.HammerDatabase())
+        tech.set_database(hammer_config.HammerDatabase())
+        
+        # Test the default case:
+        test.run(hook_actions=[
+            hammer_vlsi.HammerTool.make_removal_hook("step_two"),
+            hammer_vlsi.HammerTool.make_removal_hook("step_three")])
+
+        assert set(Tool.lib_outputs) == {
+            "{0}/eggs.nldm".format(tech_dir),
+            "{0}/custard.nldm".format(tech_dir),
+            "{0}/noodles.nldm".format(tech_dir),
+            "{0}/eggplant.ecsm".format(tech_dir),
+            "{0}/cookies.ccs".format(tech_dir)
+        }
+
+        # Test the lower case input key and non-default ECSM preference.
+        test.run(hook_actions=[
+            hammer_vlsi.HammerTool.make_removal_hook("step_one"),
+            hammer_vlsi.HammerTool.make_removal_hook("step_three")])
+
+        assert set(Tool.lib_outputs) == {
+            "{0}/eggs.ecsm".format(tech_dir),
+            "{0}/custard.nldm".format(tech_dir),
+            "{0}/noodles.nldm".format(tech_dir),
+            "{0}/eggplant.ecsm".format(tech_dir),
+            "{0}/cookies.ccs".format(tech_dir)
+        }
+
+        # Test the non-default CCS preference.
+        test.run(hook_actions=[
+            hammer_vlsi.HammerTool.make_removal_hook("step_one"),
+            hammer_vlsi.HammerTool.make_removal_hook("step_two")])
+        
+        assert set(Tool.lib_outputs) == {
+            "{0}/eggs.ccs".format(tech_dir),
+            "{0}/custard.ccs".format(tech_dir),
+            "{0}/noodles.nldm".format(tech_dir),
+            "{0}/eggplant.ecsm".format(tech_dir),
+            "{0}/cookies.ccs".format(tech_dir)
+        }
+
+        
     def test_timing_lib_ecsm_filter(self, tmp_path, request) -> None:
         """
         Test that the ECSM-first filter works as expected.

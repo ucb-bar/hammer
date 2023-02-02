@@ -1258,6 +1258,45 @@ class LibraryFilterHolder:
             is_file=True
         )
 
+    def get_timing_lib_with_preference(self, lib_pref: str = "NLDM") -> LibraryFilter:
+        """
+        Select ASCII .lib timing libraries. Prefers NLDM, then ECSM, then CCS if multiple are present for
+        a single given .lib.
+        """
+        lib_pref = lib_pref.upper() 
+
+        def paths_func(lib: Library) -> List[str]:
+            pref_list = ["NLDM", "ECSM", "CCS"]
+            index = None
+            
+            try:
+                index = pref_list.index(lib_pref)
+            except: 
+                raise ValueError("Library preference must be one of NLDM, ECSM, or CCS.")
+            pref_list.insert(0, pref_list.pop(index))
+
+            for elem in pref_list: 
+                if elem == "NLDM":
+                    if lib.nldm_liberty_file is not None:
+                        return [lib.nldm_liberty_file]
+                elif elem == "ECSM":
+                    if lib.ecsm_liberty_file is not None:
+                        return [lib.ecsm_liberty_file]
+                elif elem == "CCS":
+                    if lib.ccs_liberty_file is not None:
+                        return [lib.ccs_liberty_file]
+                else:
+                    pass
+                
+            return []
+
+        return LibraryFilter(
+            tag="timing_lib_with_nldm",
+            description="ECSM/CCS/NLDM timing lib (liberty ASCII .lib)",
+            paths_func=paths_func,
+            is_file=True
+        )
+
     @property
     def qrc_tech_filter(self) -> LibraryFilter:
         """

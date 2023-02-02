@@ -63,6 +63,9 @@ vlsi.technology:
   # Path where tarballs have been extracted.
   extracted_tarballs_dir: Optional[str]
 
+  # A preference for the timing lib.
+  timing_lib_pref: str
+
 # General VLSI inputs.
 # These will vary per run of hammer-vlsi.
 vlsi.inputs:
