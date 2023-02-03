@@ -204,7 +204,8 @@ class VCS(HammerSimTool, SynopsysTool):
             args.extend(["+delay_mode_zero"])
 
 
-        args.extend(["-top", tb_name])
+        if tb_name != "":
+            args.extend(["-top", tb_name])
 
         args.extend(['-o', self.simulator_executable_path])
 
