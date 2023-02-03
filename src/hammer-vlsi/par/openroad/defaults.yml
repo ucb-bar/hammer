@@ -50,6 +50,9 @@ par.openroad:
   setrc_file: null
 
   placement_padding:
+    global_placement: 3
     detailed_placement: 2
     clock_tree: 1
     final: 0
+    # For different placement steps in PAR, keys set left and right padding in multiples of the row site width
+    # type: int

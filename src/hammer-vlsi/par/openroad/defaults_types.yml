@@ -49,6 +49,7 @@ par.openroad:
   setrc_file: Optional[str]
 
   placement_padding:
+    global_placement: int
     detailed_placement: int
     clock_tree: int
     final: int

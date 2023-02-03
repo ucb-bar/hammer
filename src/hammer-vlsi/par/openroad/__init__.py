@@ -12,11 +12,12 @@ import shutil
 import errno
 import platform
 import subprocess
+import re
 from datetime import datetime
 from typing import List, Optional, Dict, Any, Tuple, Callable
 from decimal import Decimal
 from pathlib import Path
-from textwrap import dedent
+from textwrap import indent, dedent
 
 from hammer_logging import HammerVLSILogging
 from hammer_utils import deepdict, optional_map
@@ -47,12 +48,14 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             self.power_straps,
             # PLACE
             # self.initial_global_placement,
-            self.io_placement,
             self.global_placement,
+            self.io_placement,
             self.resize,
             self.detailed_placement,
             # CTS
             self.clock_tree,
+            # self.cts,
+            # self.cts_repair,
             self.add_fillers,
             # ROUTING
             self.global_route,
@@ -80,9 +83,10 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     def do_pre_steps(self, first_step: HammerToolStep) -> bool:
         self.created_archive = False
+        self.ran_write_design = False
         if self.create_archive_mode  == "latest_run":
             # since OpenROAD won't be run, get OpenROAD "output" from previous run's log
-            if not os.path.exists(self.openroad_log):
+            if not os.path.exists(self.openroad_latest_log):
                 self.logger.error("""ERROR: OpenROAD place-and-route must be run before creating an archive. To fix this error:
         1. In your YAML configs, set par.openroad.create_archive_mode : none
         2. Re-run the previous command
@@ -90,7 +94,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                 exit(1)
             self.logger.warning("Skipping place-and-route run and creating an archive of the latest OpenROAD place-and-route run (because par.openroad.create_archive_mode key was set to 'latest_run')")
             # NOTE: openroad log will be empty if OpenROAD was terminated (e.g. by Ctrl-C)
-            with open(self.openroad_log,'r') as f:
+            with open(self.openroad_latest_log,'r') as f:
                 output = f.read()
             self.create_archive(output,0)  # give it a zero exit code to indicate OpenROAD didn't error before this
             exit(0)
@@ -143,7 +147,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     @property
     def output_sdf_path(self) -> str:
-        return os.path.join(self.run_dir, "{top}.par.sdf".format(top=self.top_module))
+        return os.path.join(self.run_dir, "{top}.par.sdf.gz".format(top=self.top_module))
 
     @property
     def output_spef_paths(self) -> str:
@@ -187,14 +191,26 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     @property
     def open_chip_tcl(self) -> str:
         return self.open_chip_script + ".tcl"
-
+    
     @property
-    def openroad_log(self) -> str:
+    def openroad_latest_log(self) -> str:
         return os.path.join(self.run_dir,"openroad.log")
     
     @property
     def create_archive_mode(self) -> str:
         return self.get_setting("par.openroad.create_archive_mode")
+    
+    @property
+    def reports_dir(self) -> str:
+        return os.path.join(self.run_dir, "reports")
+    
+    @property
+    def clock_port_name(self) -> str:
+        clock_port = self.get_clock_ports()[0]
+        return clock_port.name
+
+    def reports_path(self, rpt_name) -> str:
+        return os.path.join(self.reports_dir, rpt_name)
 
     def tech_lib_filter(self) -> List[Callable[[hammer_tech.Library], bool]]:
         """ Filter only libraries from tech plugin """
@@ -370,11 +386,83 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         self.logger.error(f"Place-and-route run was archived to: {tag}.tar.gz")
 
         return True
+    
+    # def indent(self, cmds, n=4, first_line=False) -> str:
+    #     """
+    #     indent all lines in cmds by n spaces
+    #         cmds (str or list[str]): commands
+    #         n (int): number of spaces to indent each line by
+    #         first_line (bool): if True, indent first line of commands as well (else don't indent first line)
+    #     """
+    #     if isinstance(cmds, str):
+    #         cmds = cmds.split("\n")
+    #     indent = ' ' * n
+    #     separator = '\n' + indent
+    #     cmds = separator.join(cmds)
+    #     if first_line:
+    #         cmds = indent + cmds
+    #     print(cmds)
+    #     return cmds
 
     def gui(self) -> str:
         cmds=[]
-        cmds.append(self.read_liberty())
-        cmds.append("read_db latest")
+        self.block_tcl_append(f"""
+        set db_name $::env(db_name)
+        set fast $::env(fast)
+
+        set fast_msg "\[Fast Load\] "
+        if {{!$fast}} {{
+            set fast_msg ""
+            {indent(self.read_liberty(), prefix=4*3*' ').strip()}
+        }}
+
+        """, cmds, clean=True, verbose=False)
+
+        # cmds.append(self.read_liberty())
+        self.block_tcl_append("""
+        puts "Reading $db_name database..."
+        read_db $db_name
+        """, cmds, clean=True, verbose=False)
+
+        step_names = [s.name for s in self.steps]
+        self.block_tcl_append(f"""
+        # Determine step & index
+        set steps {{ {' '.join(step_names)} }}
+        """, cmds, clean=True, verbose=False)
+        self.block_tcl_append("""
+        set step [string map {pre_ ""} $db_name]
+        set step [string map {post_ ""} $step]
+        set step_idx [lsearch $steps $step]
+        if { [string range $db_name 0 3] == "pre_" } {
+            set step_idx [expr $step_idx - 1]
+        }
+        set step [lindex $steps $step_idx]
+        """, cmds, clean=True, verbose=False)
+
+        spef_file  = self.output_spef_paths[0]
+        self.block_tcl_append(f"""
+        if {{!$fast}} {{
+            # TODO: need to read a later SDC with updated clock constraints?
+            {indent(self.read_sdc(), prefix=4*3*' ').strip()}
+            {self.set_rc()}
+            if {{ $step_idx >= [lsearch $steps "clock_tree"] }} {{
+                puts "Post-CTS, propagate clocks..."
+                set_propagated_clock [all_clocks]
+            }}
+
+            if {{ ($step_idx >= [lsearch $steps "extraction"]) && ([file exists {spef_file}] == 1) }} {{
+                puts "Post-extraction, reading SPEF..."
+                read_spef -quiet {spef_file}
+            }} elseif {{ $step_idx >= [lsearch $steps "global_placement"] }} {{
+            puts "Post-placement & pre-extraction, estimating parasitics from placement..."
+            estimate_parasitics -placement
+            }}
+        }}
+
+        puts "Loaded Step $step_idx: $step ($db_name)."
+
+        """, cmds, clean=True, verbose=False)
+
         return '\n'.join(cmds)
 
     #=========================================================================
@@ -384,6 +472,9 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     def run_openroad(self) -> bool:
         # Quit OpenROAD.
         self.verbose_append("exit")
+
+        # Create reports directory
+        os.makedirs(self.reports_dir, exist_ok=True)
 
         # Create par script.
         par_tcl_filename = os.path.join(self.run_dir, "par.tcl")
@@ -395,14 +486,41 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             f.write(self.gui())
 
         with open(self.open_chip_script, "w") as f:
-            f.write("""#!/bin/bash
-        cd {run_dir}
+            f.write(dedent(f"""\
+        #!/bin/bash
+        # usage: ./open_chip [openroad_database_name] [fast]
+        #   if openroad_database_name unspecified, load latest
+        cd {self.run_dir}
         source enter
-        $OPENROAD_BIN -no_init -gui {open_chip_tcl}
-                """.format(run_dir=self.run_dir, open_chip_tcl=self.open_chip_tcl))
+        fast_arg="fast"
+        # ./open_chip or  ./open_chip fast
+        if [ -z $1 ] || ([ $1 == $fast_arg ] && [ -z $2 ])
+        then
+            export db_name=$(readlink latest)
+        else
+            # ./open_chip <db_name>
+            # ./open_chip <db_name> fast
+            if [ -z $2 ] || [ $2 == $fast_arg ]
+            then
+                export db_name=$1
+            # ./open_chip fast <db_name>
+            else
+                export db_name=$2
+            fi
+        fi
+        export fast=0
+        if ([ ! -z $1 ] && [ $1 == $fast_arg ]) || ([ ! -z $2 ] && [ $2 == $fast_arg ])
+        then
+            export fast=1
+        fi
+        $OPENROAD_BIN -no_init -gui {self.open_chip_tcl}
+        """))
         os.chmod(self.open_chip_script, 0o755)
 
         num_threads = str(self.get_setting("vlsi.core.max_threads"))
+
+        now = datetime.now().strftime("%Y%m%d-%H%M%S")
+        self.openroad_log = os.path.join(self.run_dir,f"openroad-{now}.log")
 
         # Build args.
         args = [
@@ -419,6 +537,10 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             output = self.run_executable(args, cwd=self.run_dir)
             if not self.created_archive and self.create_archive_mode  == "always":
                 self.create_archive(output,0)  # give it a zero exit code to indicate OpenROAD didn't error before this
+        # create reports
+        self.log_to_reports()
+        # copy openroad-{timestamp}.log to openroad.log
+        shutil.copyfile(self.openroad_log, self.openroad_latest_log)
         return True
 
     def get_timing_libs(self, corner: Optional[MMMCCorner] = None) -> str:
@@ -503,25 +625,37 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             return ''
         return ''
 
-    def read_sdc(self) -> bool:
+    def read_sdc(self) -> str:
         # overwrite SDC file to exclude group_path command
         # change units in SDC file (1000.0fF and 1000.0ps cause errors)
 
+        cmds = []
         sdc_files = self.generate_sdc_files()
         for sdc_file in sdc_files[:-1]:
-            self.block_append(f"read_sdc -echo {sdc_file}")
-
-        return True
+            cmds.append(f"read_sdc -echo {sdc_file}")
+        cmds.append("")
+        return '\n'.join(cmds)
+    
+    def set_rc(self) -> str:
+        # set layer/wire RC
+        cmd = ""
+        setrc_file = self.get_setting('par.openroad.setrc_file')
+        if os.path.exists(setrc_file):
+            cmd = f"source {setrc_file}"
+        else:
+            self.logger.warning("OpenROAD par.openroad.setrc_file is not specified or does not exist. Layer capacitance/resistance values may be inaccurate.")
+        return cmd
 
     #========================================================================
     # par main steps
     #========================================================================
     def init_design(self, first_step=None) -> bool:
         # set up useful variables
-        clock_port = self.get_clock_ports()[0]
-        self.clock_port_name = clock_port.name
         tech_base_dir=self.get_setting('vlsi.core.technology_path')[-1]
         tech = self.get_setting('vlsi.core.technology')
+
+        # class variables
+        self.macro_top_layers = set()
 
         # start routine
         self.block_append(self.read_lef())
@@ -536,15 +670,30 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             for verilog_file in abspath_input_files:
                 self.block_append(f"read_verilog {verilog_file}")
             self.block_append(f"link_design {self.top_module}\n")
-        self.read_sdc()
+        self.block_append(self.read_sdc())
 
-        # set wire RC
-        setrc_file = self.get_setting('par.openroad.setrc_file')
-        if os.path.exists(setrc_file):
-            self.block_append(f"source {setrc_file}")
-        else:
-            self.logger.warning("OpenROAD par.openroad.setrc_file is not specified or does not exist. Layer capacitance/resistance values may be inaccurate.")
+        self.block_append(self.set_rc())
+
+        self.block_append(f"""
+        set_dont_use {{{' '.join(self.get_dont_use_list())}}}
+        """)
+
+        # step-dependent commands
+        step_names = [s.name for s in self.steps]
+        if first_step and step_names.index(first_step.name) > step_names.index('clock_tree'):
+            self.block_append("set_propagated_clock [all_clocks]")
         
+        if first_step and step_names.index(first_step.name) > step_names.index('extraction') \
+            and os.path.exists(self.output_spef_paths[0]):
+            self.block_append(f"""
+            # Read Spef for OpenSTA
+            read_spef {self.output_spef_paths[0]}
+            """)
+        elif first_step and step_names.index(first_step.name) > step_names.index('global_placement'):
+            self.block_append("estimate_parasitics -placement")
+
+        self.create_write_reports_tcl()
+        self.block_append(f"source {self.write_reports_tcl}")
         return True
 
     def floorplan_design(self) -> bool:
@@ -605,7 +754,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             self.block_append(f"""
             if {{[find_macros] != ""}} {{
                 # Timing Driven Mixed Sized Placement
-                global_placement -density 0.6 -pad_left 1 -pad_right 1
+                global_placement -density 0.6 -pad_left 4 -pad_right 4
                 # ParquetFP-based macro cell placer, “TritonMacroPlacer”
                 macro_placement -halo "{spacing} {spacing}" -channel "{2*spacing} {2*spacing}"
             }}
@@ -645,7 +794,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         gnd_nets=self.get_all_ground_nets()
         primary_pwr_net=pwr_nets[0].name
         primary_gnd_net=gnd_nets[0].name
-        all_metal_layer_names = [layer.name for layer in self.get_stackup().metals]
+        stackup = self.get_stackup()
+        all_metal_layer_names = [layer.name for layer in stackup.metals]
 
         strap_layers = self.get_setting("par.generate_power_straps_options.by_tracks.strap_layers").copy()
         std_cell_rail_layer = str(self.get_setting("technology.core.std_cell_rail_layer"))
@@ -657,37 +807,56 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         
         # global_connections_pwr_tcl=f"add_global_connection -net {{{primary_pwr_net}}} -inst_pattern {{.*}} -pin_pattern {{^{primary_pwr_net}$}} -power"
         # global_connections_gnd_tcl=f"add_global_connection -net {{{primary_gnd_net}}} -inst_pattern {{.*}} -pin_pattern {{^{primary_gnd_net}$}} -ground"
-        global_connections_tcl = ""
+        self.global_connections_tcl = ""
         for pwr_net in pwr_nets:
             if pwr_net.tie is not None:
                 net = pwr_net.tie
             else:
                 net = primary_pwr_net
-            global_connections_tcl += f"\n add_global_connection -net {{{net}}} -inst_pattern {{.*}} -pin_pattern {{^{pwr_net.name}$}} -power"
+            self.global_connections_tcl += f"\n add_global_connection -net {{{net}}} -inst_pattern {{.*}} -pin_pattern {{^{pwr_net.name}$}} -power"
         for gnd_net in gnd_nets:
             if gnd_net.tie is not None:
                 net = gnd_net.tie
             else:
                 net = primary_gnd_net
-            global_connections_tcl += f"\n add_global_connection -net {{{net}}} -inst_pattern {{.*}} -pin_pattern {{^{gnd_net.name}$}} -ground"
+            self.global_connections_tcl += f"\n add_global_connection -net {{{net}}} -inst_pattern {{.*}} -pin_pattern {{^{gnd_net.name}$}} -ground"
 
         blockage_spacing = self.get_setting("par.blockage_spacing")
         blockage_spacing_halo = ' '.join([str(blockage_spacing) for i in range(4)])
+
+        pdn_grid_tcl = ""
+        i = 1
+        for layer in self.macro_top_layers:
+            layer_idx = stackup.get_metal(layer).index
+            try:
+                # get next layer up if it's valid
+                # TODO: should restrict layers to those specified by power straps
+                next_layer = stackup.get_metal_by_index(layer_idx+1).name
+            except: 
+                continue
+
+            grid1_name = f"CORE_macro_grid_{i}"
+            grid2_name = f"CORE_macro_grid_{i+1}"
+            i += 2
+            pdn_grid_tcl += f"""
+            ####################################
+            # grid for: {grid1_name}
+            ####################################
+            define_pdn_grid -name {{{grid1_name}}} -voltage_domains {{CORE}} -macro -orient {{R0 R180 MX MY}} -halo {{ {blockage_spacing_halo} }} -default -grid_over_boundary
+            add_pdn_connect -grid {{{grid1_name}}} -layers {{{layer} {next_layer}}}
+            
+            ####################################
+            # grid for: {grid2_name}
+            ####################################
+            define_pdn_grid -name {{{grid2_name}}} -voltage_domains {{CORE}} -macro -orient {{R90 R270 MXR90 MYR90}} -halo {{ {blockage_spacing_halo} }} -default -grid_over_boundary
+            add_pdn_connect -grid {{{grid2_name}}} -layers {{{layer} {next_layer}}}
+            """
         
         tcl = f"""
-        #connect_pin VDD vdd
-        #connect_pin VSS vss
         ####################################
         # global connections
         ####################################
-        {global_connections_tcl}
-        #add_global_connection -net {{{primary_pwr_net}}} -inst_pattern {{.*}} -pin_pattern {{vdd}}
-        #add_global_connection -net {{{primary_gnd_net}}} -inst_pattern {{.*}} -pin_pattern {{vss}}
-        #add_global_connection -net {{{primary_pwr_net}}} -inst_pattern {{.*}} -pin_pattern {{^vdd$}}
-        #add_global_connection -net {{{primary_gnd_net}}} -inst_pattern {{.*}} -pin_pattern {{^vss$}}
-        # add_global_connection -net {{primary_pwr_net}} -inst_pattern {{.*}} -pin_pattern {{^VDDPE$}}
-        # add_global_connection -net {{primary_pwr_net}} -inst_pattern {{.*}} -pin_pattern {{^VDDCE$}}
-        # add_global_connection -net {{primary_gnd_net}} -inst_pattern {{.*}} -pin_pattern {{^VSSE$}}
+        {self.global_connections_tcl}
         global_connect
         ####################################
         # voltage domains
@@ -701,22 +870,23 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         define_pdn_grid -name {{grid}} -voltage_domains {{CORE}}
         {' '.join(self.create_power_straps_tcl())}
         {add_pdn_connect_tcl}
-        ####################################
-        # macro grids
-        ####################################
-        ####################################
-        # grid for: CORE_macro_grid_1
-        ####################################
-        # TODO: generate this!!! met4/met5 hardcoded
-        define_pdn_grid -name {{CORE_macro_grid_1}} -voltage_domains {{CORE}} -macro -orient {{R0 R180 MX MY}} -halo {{ {blockage_spacing_halo} }} -default -grid_over_boundary
-        add_pdn_connect -grid {{CORE_macro_grid_1}} -layers {{met3 met4}}
-        
-        ####################################
-        # grid for: CORE_macro_grid_2
-        ####################################
-        define_pdn_grid -name {{CORE_macro_grid_2}} -voltage_domains {{CORE}} -macro -orient {{R90 R270 MXR90 MYR90}} -halo {{ {blockage_spacing_halo} }} -default -grid_over_boundary
-        add_pdn_connect -grid {{CORE_macro_grid_2}} -layers {{met3 met4}}
+        {pdn_grid_tcl}
         """
+        # ####################################
+        # # macro grids
+        # ####################################
+        # ####################################
+        # # grid for: CORE_macro_grid_1
+        # ####################################
+        # define_pdn_grid -name {{CORE_macro_grid_1}} -voltage_domains {{CORE}} -macro -orient {{R0 R180 MX MY}} -halo {{ {blockage_spacing_halo} }} -default -grid_over_boundary
+        # add_pdn_connect -grid {{CORE_macro_grid_1}} -layers {{met3 met4}}
+        
+        # ####################################
+        # # grid for: CORE_macro_grid_2
+        # ####################################
+        # define_pdn_grid -name {{CORE_macro_grid_2}} -voltage_domains {{CORE}} -macro -orient {{R90 R270 MXR90 MYR90}} -halo {{ {blockage_spacing_halo} }} -default -grid_over_boundary
+        # add_pdn_connect -grid {{CORE_macro_grid_2}} -layers {{met3 met4}}
+        
 
         with open(power_straps_tcl_path,'w') as power_straps_tcl_file:
             for line in tcl.split('\n'):
@@ -724,101 +894,101 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         
         return True
 
-    def generate_pdn_config(self, pdn_config_path) -> bool:
+#     def generate_pdn_config(self, pdn_config_path) -> bool:
 
-        pwr_nets=self.get_all_power_nets()
-        gnd_nets=self.get_all_ground_nets()
-        primary_pwr_net=pwr_nets[0].name
-        primary_gnd_net=gnd_nets[0].name
-        all_metal_layer_names = [layer.name for layer in self.get_stackup().metals]
+#         pwr_nets=self.get_all_power_nets()
+#         gnd_nets=self.get_all_ground_nets()
+#         primary_pwr_net=pwr_nets[0].name
+#         primary_gnd_net=gnd_nets[0].name
+#         all_metal_layer_names = [layer.name for layer in self.get_stackup().metals]
 
-        strap_layers = self.get_setting("par.generate_power_straps_options.by_tracks.strap_layers").copy()
-        std_cell_rail_layer_name = str(self.get_setting("technology.core.std_cell_rail_layer"))
-        std_cell_rail_layer = self.get_stackup().get_metal(std_cell_rail_layer_name)
-        std_cell_rail_minwidth = std_cell_rail_layer.min_width
+#         strap_layers = self.get_setting("par.generate_power_straps_options.by_tracks.strap_layers").copy()
+#         std_cell_rail_layer_name = str(self.get_setting("technology.core.std_cell_rail_layer"))
+#         std_cell_rail_layer = self.get_stackup().get_metal(std_cell_rail_layer_name)
+#         std_cell_rail_minwidth = std_cell_rail_layer.min_width
 
-        # std_cell_rail_layer_minwidth = 
-        strap_layers.insert(0,std_cell_rail_layer_name)
-        top_strap_layer = strap_layers[-1]
-        straps = '\n    '.join(self.create_power_straps_tcl())
+#         # std_cell_rail_layer_minwidth = 
+#         strap_layers.insert(0,std_cell_rail_layer_name)
+#         top_strap_layer = strap_layers[-1]
+#         straps = '\n    '.join(self.create_power_straps_tcl())
         
-        metal_pairs=" "
-        for i in range(0,len(strap_layers)-1):
-            metal_pairs+=f"{{{strap_layers[i]} {strap_layers[i+1]}}} "
+#         metal_pairs=" "
+#         for i in range(0,len(strap_layers)-1):
+#             metal_pairs+=f"{{{strap_layers[i]} {strap_layers[i+1]}}} "
         
-        global_connections_pwr=""
-        for pwr_net in pwr_nets:
-            if pwr_net.tie is not None:
-                global_connections_pwr += f"\n    {{inst_name .* pin_name {pwr_net.name}}}"
+#         global_connections_pwr=""
+#         for pwr_net in pwr_nets:
+#             if pwr_net.tie is not None:
+#                 global_connections_pwr += f"\n    {{inst_name .* pin_name {pwr_net.name}}}"
         
-        global_connections_gnd=""
-        for gnd_net in gnd_nets:
-            if gnd_net.tie is not None:
-                global_connections_gnd += f"\n    {{inst_name .* pin_name {gnd_net.name}}}"
+#         global_connections_gnd=""
+#         for gnd_net in gnd_nets:
+#             if gnd_net.tie is not None:
+#                 global_connections_gnd += f"\n    {{inst_name .* pin_name {gnd_net.name}}}"
 
-        # blockages
-        top_blockage_layer = self.get_setting("par.blockage_spacing_top_layer")
-        top_blockage_layer_idx = all_metal_layer_names.index(top_blockage_layer)
-        blockage_layers = all_metal_layer_names[:top_blockage_layer_idx+1]
+#         # blockages
+#         top_blockage_layer = self.get_setting("par.blockage_spacing_top_layer")
+#         top_blockage_layer_idx = all_metal_layer_names.index(top_blockage_layer)
+#         blockage_layers = all_metal_layer_names[:top_blockage_layer_idx+1]
 
-        pdn_cfg=f"""\
-# Floorplan information - core boundary coordinates, std. cell row height,
-# minimum track pitch as defined in LEF
+#         pdn_cfg=f"""\
+# # Floorplan information - core boundary coordinates, std. cell row height,
+# # minimum track pitch as defined in LEF
 
 
-# POWER or GROUND #Std. cell rails starting with power or ground rails at the bottom of the core area
-set ::rails_start_with "POWER" ;
+# # POWER or GROUND #Std. cell rails starting with power or ground rails at the bottom of the core area
+# set ::rails_start_with "POWER" ;
 
-# POWER or GROUND #Upper metal stripes starting with power or ground rails at the left/bottom of the core area
-set ::stripes_start_with "POWER" ;
+# # POWER or GROUND #Upper metal stripes starting with power or ground rails at the left/bottom of the core area
+# set ::stripes_start_with "POWER" ;
 
-# Power nets
-set ::power_nets  "{primary_pwr_net}"
-set ::ground_nets "{primary_gnd_net}"
+# # Power nets
+# set ::power_nets  "{primary_pwr_net}"
+# set ::ground_nets "{primary_gnd_net}"
 
-set pdngen::global_connections {{
-  {primary_pwr_net} {{    {global_connections_pwr}
-  }}
-  {primary_gnd_net} {{    {global_connections_gnd}
-  }}
-}}
-##===> Power grid strategy
-# Ensure pitches and offsets will make the stripes fall on track
+# set pdngen::global_connections {{
+#   {primary_pwr_net} {{    {global_connections_pwr}
+#   }}
+#   {primary_gnd_net} {{    {global_connections_gnd}
+#   }}
+# }}
+# ##===> Power grid strategy
+# # Ensure pitches and offsets will make the stripes fall on track
 
-pdngen::specify_grid stdcell {{
-  name grid
-  rails {{
-    {std_cell_rail_layer_name} {{width {std_cell_rail_minwidth} offset 0}}
-  }}
-  straps {{
-    {straps}
-  }}
-  connect {{{metal_pairs}}}
-}}
+# pdngen::specify_grid stdcell {{
+#   name grid
+#   rails {{
+#     {std_cell_rail_layer_name} {{width {std_cell_rail_minwidth} offset 0}}
+#   }}
+#   straps {{
+#     {straps}
+#   }}
+#   connect {{{metal_pairs}}}
+# }}
 
-pdngen::specify_grid macro {{
-  orient {{R0 R180 MX MY}}
-  power_pins  "{' '.join(self.get_setting("technology.core.std_cell_supplies.power"))}"
-  ground_pins "{' '.join(self.get_setting("technology.core.std_cell_supplies.ground"))}"
-  blockages "{" ".join(blockage_layers)}"
-  connect {{{{{top_blockage_layer}_PIN_ver {top_strap_layer}}}}}
-}}
+# pdngen::specify_grid macro {{
+#   orient {{R0 R180 MX MY}}
+#   power_pins  "{' '.join(self.get_setting("technology.core.std_cell_supplies.power"))}"
+#   ground_pins "{' '.join(self.get_setting("technology.core.std_cell_supplies.ground"))}"
+#   blockages "{" ".join(blockage_layers)}"
+#   connect {{{{{top_blockage_layer}_PIN_ver {top_strap_layer}}}}}
+# }}
 
-# Need a different strategy for rotated rams to connect to rotated pins
-# No clear way to do this for a 5 metal layer process
-pdngen::specify_grid macro {{
-    orient {{R90 R270 MXR90 MYR90}}
-    power_pins "{' '.join(self.get_setting("technology.core.std_cell_supplies.power"))}"
-    ground_pins "{' '.join(self.get_setting("technology.core.std_cell_supplies.ground"))}"
-    blockages "{" ".join(blockage_layers)}"
-    connect {{{{{top_blockage_layer}_PIN_hor {top_strap_layer}}}}}
-}}
-"""
+# # Need a different strategy for rotated rams to connect to rotated pins
+# # No clear way to do this for a 5 metal layer process
+# pdngen::specify_grid macro {{
+#     orient {{R90 R270 MXR90 MYR90}}
+#     power_pins "{' '.join(self.get_setting("technology.core.std_cell_supplies.power"))}"
+#     ground_pins "{' '.join(self.get_setting("technology.core.std_cell_supplies.ground"))}"
+#     blockages "{" ".join(blockage_layers)}"
+#     connect {{{{{top_blockage_layer}_PIN_hor {top_strap_layer}}}}}
+# }}
+# """
 
-        with open(pdn_config_path, "w") as f:
-            f.write(pdn_cfg)
+#         with open(pdn_config_path, "w") as f:
+#             f.write(pdn_cfg)
         
-        return True
+#         return True
     
     def power_straps(self) -> bool:
         """Place the power straps for the design."""
@@ -835,17 +1005,17 @@ pdngen::specify_grid macro {{
         """)
         return True 
 
-    def initial_global_placement(self) -> bool:
-        metals=self.get_stackup().metals[1:]
-        spacing = self.get_setting("par.blockage_spacing")
-        idx_clock_bottom_metal=min(2,len(metals)-1)
+    # def initial_global_placement(self) -> bool:
+    #     metals=self.get_stackup().metals[1:]
+    #     spacing = self.get_setting("par.blockage_spacing")
+    #     idx_clock_bottom_metal=min(2,len(metals)-1)
         
-        self.block_append(f"""
-        ################################################################
-        # Global placement (without placed IOs, timing-driven, and routability-driven)
-        global_placement -density 0.6 -pad_left 4 -pad_right 4
-        """)
-        return True     
+    #     self.block_append(f"""
+    #     ################################################################
+    #     # Global placement (without placed IOs, timing-driven, and routability-driven)
+    #     global_placement -density 0.5 -pad_left 5 -pad_right 5 -routability_driven
+    #     """)
+    #     return True     
 
 
     def place_pins_tcl(self,random=False) -> str:
@@ -894,7 +1064,7 @@ pdngen::specify_grid macro {{
         # determine commands for side specified in pin assignments
         #   can only be done in openroad by "excluding" the entire length of the other 3 sides from pin placement
         
-        # TODO: temporary
+        #*** TODO: temporary
         hor_layers = [list(hor_layers)[0]]
         ver_layers = [list(ver_layers)[0]]
         cmds = ""
@@ -941,11 +1111,11 @@ pdngen::specify_grid macro {{
         metals=self.get_stackup().metals[1:]
         spacing = self.get_setting("par.blockage_spacing")
         idx_clock_bottom_metal=min(2,len(metals)-1)
-        
+        padding = self.get_setting('par.openroad.placement_padding.global_placement')
         self.block_append(f"""
         ################################################################
         # Global placement (with placed IOs, timing-driven, and routability-driven)
-        set_dont_use {{{' '.join(self.get_dont_use_list())}}}
+        # set_dont_use {{{' '.join(self.get_dont_use_list())}}}
         # reduce the routing resources of all routing layers by 50%
         set_global_routing_layer_adjustment {metals[0].name}-{metals[-1].name} 0.5
         set_routing_layers -signal {metals[0].name}-{metals[-1].name} -clock {metals[idx_clock_bottom_metal].name}-{metals[-1].name}
@@ -953,11 +1123,9 @@ pdngen::specify_grid macro {{
         # set_macro_extension 2
 
         # -density default is 0.7, overflow default is 0.1
-        # set overflow higher (ex. 0.8) to make faster
-        global_placement -pad_left 4 -pad_right 4 -routability_driven
-        # TODO: -routability_driven sometimes breaks this!!!
+        global_placement -density 0.6 -pad_left {padding} -pad_right {padding} -routability_driven -timing_driven
 
-        # estimate_parasitics -placement
+        estimate_parasitics -placement
         """)
 
         return True
@@ -1011,6 +1179,9 @@ pdngen::specify_grid macro {{
         # improve_placement
         optimize_mirroring
 
+        estimate_parasitics -placement
+
+        {self.write_reports(prefix='dpl')}
         """)
         return True
 
@@ -1019,28 +1190,16 @@ pdngen::specify_grid macro {{
         for any step that runs the detailed_placement command,
             run this function at the start of the NEXT step
             so that the post-step database is saved and in the case of a check_placement error,
-            the database it may be opened in the OpenROAD gui for debugging the error
+            the database may be opened in the OpenROAD gui for debugging the error
         """
         self.block_append(f"""
-
         # Check Detailed Placement
         check_placement -verbose
-
-        # post resize timing report (ideal clocks)
-        report_worst_slack -min -digits 3
-        report_worst_slack -max -digits 3
-        report_tns -digits 3
-
-        # Check slew repair
-        report_check_types -max_slew -max_capacitance -max_fanout -violators
-
         """)
         return True
 
     def clock_tree(self) -> bool:
         self.check_detailed_placement()
-        clock_port = self.get_clock_ports()[0]
-        self.clock_port_name = clock_port.name
 
         cts_buffer_cells = self.technology.get_special_cell_by_type(CellType.CTSBuffer)
 
@@ -1053,45 +1212,52 @@ pdngen::specify_grid macro {{
 
         padding_clock_tree = self.get_setting('par.openroad.placement_padding.clock_tree')
         padding_final = self.get_setting('par.openroad.placement_padding.final')
+
+        setup_margin = self.get_setting('par.openroad.setup_margin')
+        hold_margin = self.get_setting('par.openroad.hold_margin')
+
         self.block_append(f"""
         ################################################################
         # Clock Tree Synthesis
         # Run TritonCTS
         repair_clock_inverters
 
-        set_placement_padding -global -left {padding_clock_tree} -right {padding_clock_tree}
-
-        repair_clock_inverters
         clock_tree_synthesis {cts_args} -sink_clustering_enable \\
                                         -sink_clustering_size 30 \\
                                         -sink_clustering_max_diameter 100
         
         set_propagated_clock [all_clocks]
 
+        estimate_parasitics -placement
+
         # CTS leaves a long wire from the pad to the clock tree root.
         repair_clock_nets
 
         estimate_parasitics -placement
-        
+
+        set_placement_padding -global -left {padding_clock_tree} -right {padding_clock_tree}
+
         # place clock buffers
         detailed_placement
+        """)
 
+        self.block_append(f"""
         ###########################
         # Setup/hold timing repair
-
-        set_placement_padding -global -left {padding_final} -right {padding_final}
-
-        set_propagated_clock [all_clocks]
-
-        # -placement|-global_routing
+        
         estimate_parasitics -placement
 
+        # TODO: dont hard-code
+        repair_timing -setup -setup_margin {setup_margin}
+        repair_timing -hold -setup_margin {setup_margin} -hold_margin {hold_margin}
         # repair_timing -setup
         # repair_timing -hold
 
-        repair_timing
+        set_placement_padding -global -left {padding_final} -right {padding_final}
 
         detailed_placement
+
+        {self.write_reports(prefix='cts_rsz')}
         """)
         return True
 
@@ -1099,16 +1265,33 @@ pdngen::specify_grid macro {{
     def add_fillers(self) -> bool:
         self.check_detailed_placement()
         """add decap and filler cells"""
-        self.block_append(f"""        
-        ################################################################
-        # Filler cell insertion
-        # optimize_mirroring - tries to reduce wirelength
-        # Capture utilization before fillers make it 100%
-        utl::metric "utilization" [format %.1f [expr [rsz::utilization] * 100]]
-        utl::metric "design_area" [sta::format_area [rsz::design_area] 0]
+        decaps = self.technology.get_special_cell_by_type(CellType.Decap)
+        stdfillers = self.technology.get_special_cell_by_type(CellType.StdFiller)
+        
+        fill_cells = []
+        if len(decaps) == 0:
+            self.logger.info("The technology plugin 'special cells: decap' field does not exist. It should specify a list of decap cells. Filling with stdfiller instead.")
+        else:
+            # Decap cells as fillers
+            fill_cells += list(map(lambda c: str(c), decaps[0].name))
+        
+        # ***TODO: revert
+        fill_cells = []
+        if len(stdfillers) == 0:
+            self.logger.warning("The technology plugin 'special cells: stdfiller' field does not exist. It should specify a list of (non IO) filler cells. No filler will be added. You can override this with an add_fillers hook if you do not specify filler cells in the technology plugin.")
+        else:
+            # Then the rest is stdfillers
+            fill_cells += list(map(lambda c: str(c), stdfillers[0].name))
+        
+            self.block_append(f"""        
+            ################################################################
+            # Filler cell insertion
 
-        filler_placement {{ {self.fill_cells} }}
-        """)
+            set_propagated_clock [all_clocks]
+
+            filler_placement {{ {' '.join(fill_cells)} }}
+
+            """)
         return True
 
 
@@ -1119,19 +1302,17 @@ pdngen::specify_grid macro {{
         self.block_append(f"""
         ################################################################
         # Global routing
-        # reduce the routing resources of all routing layers by 20%
-        set_global_routing_layer_adjustment {metals[0].name}-{metals[-1].name} 0.2
+        # reduce the routing resources of all routing layers by 50%
+        set_global_routing_layer_adjustment {metals[0].name}-{metals[-1].name} 0.5
         set_routing_layers -signal {metals[0].name}-{metals[-1].name} -clock met3-met5
         # hard-coded in the example OpenROAD scripts
         # set_macro_extension 2
 
-        # pin_access - this command caused openroad to crash
-        # -allow_congestion and -allow_overflow added for now
 
-        global_route -verbose \\
-                     -guide_file {self.route_guide_path} 
+        global_route -guide_file {self.route_guide_path} -congestion_iterations 150 -verbose -congestion_report_file {self.run_dir}/congestion.rpt
 
         set_propagated_clock [all_clocks]
+
         estimate_parasitics -global_routing
 
         check_antennas -report_file {self.run_dir}/antenna.log -report_violating_nets
@@ -1145,6 +1326,8 @@ pdngen::specify_grid macro {{
         self.block_append(f"""
         ################################################################
         # Detailed routing
+
+        set_propagated_clock [all_clocks]
 
         set_thread_count {self.get_setting("vlsi.core.max_threads")}
 
@@ -1174,12 +1357,12 @@ pdngen::specify_grid macro {{
         # exec touch {spef_path}
         write_spef {spef_path}
         # remove backslashes in instances so that read_spef recognizes the instances
-        exec sed -i {sed_expr} {spef_path}
+        # exec sed -i {sed_expr} {spef_path}
 
-        # read_spef {spef_path}
+        # Read Spef for OpenSTA
+        read_spef {self.output_spef_paths[0]}
         """)
-        # alternative: use global routing based parasitics inlieu of rc extraction
-        #   >> estimate_parasitics -global_routing
+
         return True
 
 
@@ -1240,28 +1423,27 @@ pdngen::specify_grid macro {{
         return True
 
     def remove_pcells_from_netlist(self):
-        lines_4 = 'sky130_fd_sc_hd__tap_1'
         lines_2 = 'sky130_fd_sc_hd__tapvpwrvgnd_1'
         fill_cells = {
             "sky130_fd_sc_hd__fill_1",
             "sky130_fd_sc_hd__fill_2",
             "sky130_fd_sc_hd__fill_4",
             "sky130_fd_sc_hd__fill_8",
+            "sky130_fd_sc_hd__tap_1"
         }
         with open(self.output_netlist_filename, 'r') as f:
             lines = f.readlines()
 
-            lines_nonempty = [l for l in lines if len(l.strip()) > 0]
-            first_words = [l.split()[0] for l in lines_nonempty]
-            lines_no_fillers = [lines_nonempty[i] for i in range(len(lines_nonempty)) if first_words[i] not in fill_cells]
+            lines0 = [l for l in lines if len(l.strip()) > 0]
+            first_words = [l.split()[0] for l in lines0]
+            lines1 = lines0[:3] + [lines0[i] for i in range(3,len(lines0)) if first_words[i] not in fill_cells and first_words[i-1] not in fill_cells and first_words[i-2] not in fill_cells and first_words[i-3] not in fill_cells]
 
-            first_words = [l.split()[0] for l in lines_no_fillers]
-            lines_no_tapvpwrvgnd = [lines_no_fillers[0]] + [lines_no_fillers[i] for i in range(1,len(lines_no_fillers)) if first_words[i] != lines_2 and first_words[i-1] != lines_2]
+            first_words = [l.split()[0] for l in lines1]
+            lines2 = [lines1[0]] + [lines1[i] for i in range(1,len(lines1)) if first_words[i] != lines_2 and first_words[i-1] != lines_2]
 
-            first_words = [l.split()[0] for l in lines_no_tapvpwrvgnd]
-            lines_no_tap_1 = lines_no_tapvpwrvgnd[0:3] + [lines_no_tapvpwrvgnd[i] for i in range(3,len(lines_no_tapvpwrvgnd)) if first_words[i] != lines_4 and first_words[i-1] != lines_4 and first_words[i-2] != lines_4 and first_words[i-3] != lines_4]
+        shutil.copy2(self.output_netlist_filename, self.output_netlist_filename + '_orig')
         with open(self.output_netlist_filename,'w') as f:
-            f.write(''.join(lines_no_tap_1))
+            f.write(''.join(lines2))
         return
 
     def write_gds(self) -> bool:
@@ -1275,10 +1457,10 @@ pdngen::specify_grid macro {{
             gds_files.extend(ilm_gds)
 
         tech_base_dir=self.get_setting('vlsi.builtins.hammer_vlsi_path')
-        config_file = "/tools/B/nayiri/openroad/OpenROAD-flow-scripts/flow/platforms/sky130hd/fill.json"
+        layer_map_file=self.get_setting('par.inputs.gds_map_file')
 
         # TODO: EVENTUALLY REMOVE!!
-        # for now don't export SRAMs
+        #***for now don't export SRAMs
         gds_files = [gds_files[0]]
         self.block_append(f"""
         # write gds
@@ -1290,9 +1472,10 @@ pdngen::specify_grid macro {{
                 -rd design_name={self.top_module} \\
                 -rd in_def={self.output_def_filename} \\
                 -rd in_files=$in_files \\
+                -rd config_file= \\
                 -rd seal_file= \\
                 -rd tech_file={self.klayout_techfile_path} \\
-                -rd config_file={config_file} \\
+                -rd layer_map={layer_map_file} \\
                 -rd out_file={self.output_gds_filename} \\
                 -rm {tech_base_dir}/hammer_vlsi/vendor/def2stream.py
         """) 
@@ -1301,7 +1484,8 @@ pdngen::specify_grid macro {{
 
     def write_sdf(self) -> bool:
         corners = self.get_mmmc_corners()  
-        self.block_append(f"write_sdf -corner setup {self.output_sdf_path}")
+        self.block_append(f"write_sdf -corner setup -gzip {self.output_sdf_path}")
+        # self.append(f"exec touch {self.output_sdf_path}")
         return True
 
 
@@ -1314,40 +1498,112 @@ pdngen::specify_grid macro {{
         # TODO: currently no analagous OpenROAD default script
         return True
 
+    @property
+    def write_reports_tcl(self) -> str:
+        return os.path.join(self.run_dir, "write_reports.tcl")
+    
 
-    def write_reports(self) -> bool:
-        # TODO: write all these to report files
-        self.block_append("""
+    def generate_report(self, cmd: str, rpt_name: str, output_buffer: List[str]) -> bool:
+        self.tcl_append(f'puts "(hammer: begin_report > {self.reports_path(rpt_name)})"', output_buffer)
+        self.block_tcl_append(cmd, output_buffer, clean=True)
+        self.tcl_append(f'puts "(hammer: end_report)"\n', output_buffer)
+        return True
+
+    def create_write_reports_tcl(self) -> bool:
+        # NOTE: both report_check_types and report_power commands have [> filename] option but it just generates an empty file...
+        write_reports_cmds = []
+        prefix = "${prefix}"
+        self.block_tcl_append("""
         ################################################################
-        # Final Report
-        report_checks -path_delay min_max -format full_clock_expanded -fields {input_pin slew capacitance} -digits 3
-        report_worst_slack -min -digits 3
-        report_worst_slack -max -digits 3
+        # Write Reports Function
+        proc write_reports { prefix } {
+        """, write_reports_cmds, clean=True, verbose=False)
+
+        # self.generate_report("report_check_types -max_slew -max_capacitance -max_fanout -violators -digits 3",
+        #     f"{prefix}_sta.check_types.rpt")
+        
+        # self.generate_report("report_check_types -max_delay -max_skew -digits 3",
+            # f"{prefix}_sta.check_types.delay_skew.rpt")
+
+        group_count = 200
+        for corner in ['setup','hold','extra']:
+            self.generate_report(f"report_checks -sort_by_slack -path_delay min -fields {{slew cap input nets fanout}} -format full_clock_expanded -path_group {self.clock_port_name} -group_count {group_count} -corner {corner}",
+                f"{prefix}_sta.checks.min.{corner}.rpt", write_reports_cmds)
+            self.generate_report(f"report_checks -sort_by_slack -path_delay max -fields {{slew cap input nets fanout}} -format full_clock_expanded -path_group {self.clock_port_name} -group_count {group_count} -corner {corner}",
+                f"{prefix}_sta.checks.max.{corner}.rpt", write_reports_cmds)
+        
+        self.generate_report(f"report_checks -sort_by_slack -unconstrained -fields {{slew cap input nets fanout}} -format full_clock_expanded -group_count {group_count}",
+            f"{prefix}_sta.checks.unconstrained.rpt", write_reports_cmds)
+        
+        self.generate_report(f"""
+        report_units
+        report_units_metric
         report_tns -digits 3
-        report_check_types -max_slew -max_capacitance -max_fanout -violators -digits 3
+        report_tns_metric
+        report_wns -digits 3
+        report_worst_slack -max -digits 3
+        report_worst_slack -min -digits 3
+        report_worst_slack_metric
         report_clock_skew -digits 3
-        report_power -corner "hold"
-
-        report_floating_nets -verbose
+        report_clock_skew_metric
+        """, f"{prefix}_sta.summary.rpt", write_reports_cmds)
+        
+        self.generate_report("report_floating_nets -verbose",
+            f"{prefix}_sta.floating_nets.rpt", write_reports_cmds)
+        
+        self.generate_report("""
         report_design_area
+        report_design_area_metrics
+        """, f"{prefix}_sta.area.rpt", write_reports_cmds)
+        
+        self.generate_report("""
+        report_power -corner setup -digits 3
+        report_power_metric -corner setup
+        report_power -corner hold -digits 3
+        report_power_metric -corner hold
+        """, f"{prefix}_sta.power.rpt", write_reports_cmds)
+        
+        self.tcl_append("}\n", write_reports_cmds)
 
-        utl::metric "worst_slack_min" [sta::worst_slack -min]
-        utl::metric "worst_slack_max" [sta::worst_slack -max]
-        utl::metric "tns_max" [sta::total_negative_slack -max]
-        utl::metric "clock_skew" [sta::worst_clock_skew -setup]
-        utl::metric "max_slew_violations" [sta::max_slew_violation_count]
-        utl::metric "max_fanout_violations" [sta::max_fanout_violation_count]
-        utl::metric "max_capacitance_violations" [sta::max_capacitance_violation_count]
-        # report clock period as a metric for updating limits
-        utl::metric "clock_period" [get_property [lindex [all_clocks] 0] period]
-        """)
+        with open(self.write_reports_tcl, 'w') as f:
+            f.write('\n'.join(write_reports_cmds))
+
+    def write_reports(self, prefix: str) -> str:
+        return f"write_reports {prefix}"
+    
+    def log_to_reports(self) -> bool: 
+        ''' Parse OpenROAD log to create reports
+        '''  
+        with open(self.openroad_log,'r') as f:
+            writing_rpt = False
+            rpt = []
+            rpt_name = None
+            for line in f:
+                if line.startswith('(hammer: end_report'):
+                    writing_rpt = False
+                    with open(rpt_name,'w') as fw:
+                        fw.write(''.join(rpt))
+                    rpt = []
+                    rpt_name = None
+                if writing_rpt:
+                    rpt.append(line)
+                if line.startswith('(hammer: begin_report'):
+                    writing_rpt = True
+                    match = re.match(r"^.*begin_report > (.*)\)",line)
+                    rpt_name = match.group(1)
         return True
 
 
     def write_design(self) -> bool:
+
         self.block_append(f"""
         ################################################################
         # Write Design
+
+        {self.write_reports(prefix='rcx')}
+
+        # Ensure all OR created (rsz/cts) instances are connected
+        global_connect
 
         # write DEF (need this to write GDS)
         write_def {self.output_def_filename}
@@ -1369,8 +1625,6 @@ pdngen::specify_grid macro {{
 
         # Make sure that generated-scripts exists.
         os.makedirs(self.generated_scripts_dir, exist_ok=True)
-
-        # self.write_reports()
 
         self.ran_write_design=True
 
@@ -1487,6 +1741,7 @@ pdngen::specify_grid macro {{
                     right=margins.right,
                     top=margins.top
                 )
+                self.block_tcl_append(chip_size_constraint, output)
             else:
                 orientation = constraint.orientation if constraint.orientation is not None else "r0"
                 # openroad names orientations differently from hammer
@@ -1515,13 +1770,25 @@ pdngen::specify_grid macro {{
                     inst_name=new_path
                     floorplan_cmd = f"place_cell -inst_name {inst_name} -orient {openroad_orientation} -origin {{ {x} {y} }} -status FIRM"
                     
-                    output.append("# only place macro if it is present in design")
-                    output.append(f'if {{[[set block [ord::get_db_block]] findInst {inst_name}] == "NULL"}} {{')
-                    output.append(f'  puts "(WARNING) Cell/macro {inst_name} not found!"')
-                    output.append("} else {")
-                    output.append(f'  puts "{floorplan_cmd}"')
-                    output.append(f"  {floorplan_cmd}")
-                    output.append("}")
+                    # output.append("# only place macro if it is present in design")
+                    # output.append(f'if {{[[set block [ord::get_db_block]] findInst {inst_name}] == "NULL"}} {{')
+                    # output.append(f'  puts "(WARNING) Cell/macro {inst_name} not found!"')
+                    # output.append("} else {")
+                    # output.append(f'  puts "(hammer) {floorplan_cmd}"')
+                    # output.append(f"  {floorplan_cmd}")
+                    # output.append("}")
+                    
+                    self.block_tcl_append(f"""
+                    # only place macro if it is present in design
+                    if {{[[set block [ord::get_db_block]] findInst {inst_name}] == "NULL"}} {{
+                        puts "(WARNING) Cell/macro {inst_name} not found!"
+                    }} else {{
+                        puts "(hammer) {floorplan_cmd}"
+                        {floorplan_cmd}
+                    }}
+                    """, output, clean=True, verbose=False)
+                    
+                    
                     # TODO: add place_cell option [-status (PLACED|FIRM)]
                     spacing = self.get_setting("par.blockage_spacing")
                     if constraint.top_layer is not None:
@@ -1530,6 +1797,7 @@ pdngen::specify_grid macro {{
                         current_top_layer = global_top_layer
                     else:
                         current_top_layer = None
+                    self.macro_top_layers.add(current_top_layer)
                     # TODO: find equivalent for place/route halo in OpenROAD
 
                 elif constraint.type == PlacementConstraintType.Obstruction:
@@ -1537,7 +1805,7 @@ pdngen::specify_grid macro {{
                     pass
                 else:
                     assert False, "Should not reach here"
-        return [chip_size_constraint] + output
+        return output
 
     def specify_std_cell_power_straps(self, blockage_spacing: Decimal, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
         """
