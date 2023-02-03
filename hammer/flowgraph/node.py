@@ -30,10 +30,8 @@ class Status(Enum):
     COMPLETE   = "COMPLETE"
 
 
-# make sure union of required/optional outs is superset of children required/optional inputs
 # separate required validity checking and optional validity checking
 # meta dict for tech compatibilty
-# for cycles, reduce to DAG via cloning of one of the nodes
 
 @dataclass
 class Node:
@@ -134,17 +132,18 @@ class Graph:
             'cad_files': None
         }
 
+        ctxt = HammerVLSILogging.context(start.action)
+        ctxt.info(f"Running graph step {start.action}")
         driver = cli_driver.CLIDriver()
-        try:
-            ctxt = HammerVLSILogging.context(start.action)
-            # ctxt.info(f"Running graph step {start.action}")
-            driver.run_main_parsed(arg_list)
+        code = driver.run_main_parsed(arg_list)
+        if code == 0:
             start.status = Status.COMPLETE
-            for c in nx.neighbors(self.networkx, start):
-                self.run(c)
-        except Exception as e:
+        else:
             start.status = Status.INCOMPLETE
-            raise e
+            raise RuntimeError(f"Step {start.action} failed")
+
+        for c in nx.neighbors(self.networkx, start):
+            self.run(c)
 
 def convert_to_acyclic(g: Graph) -> Graph:
     """Eliminates cycles in a flowgraph for analysis.
@@ -155,7 +154,7 @@ def convert_to_acyclic(g: Graph) -> Graph:
     Returns:
         Graph: Graph with cloned nodes.
     """
-    cycles = sorted(nx.simple_cycles(g.networkx))
+    cycles = nx.simple_cycles(g.networkx)
     new_edge_list = g.edge_list.copy()
     for cycle in cycles:
         cut_start, cut_end = cycle[0], cycle[1]
@@ -171,5 +170,3 @@ def convert_to_acyclic(g: Graph) -> Graph:
         new_edge_list[cut_start] = []
         new_edge_list[cut_end_copy] = cut_start_children
     return Graph(new_edge_list)
-
-# TODO: refresh graph
