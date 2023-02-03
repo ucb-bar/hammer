@@ -349,12 +349,12 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
     def write_outputs(self) -> bool:
         hier_mapped_v_path=os.path.join(self.run_dir, f"{self.top_module}.mapped.hier.v")
         self.block_append(f"""
-        write_verilog -noattr -noexpr -nohex -nodec -defparam "{hier_mapped_v_path}"
+        write_verilog -noattr -noexpr -nohex -nodec -defparam "{self.mapped_v_path}"
 
         # flatten
 
-        # OpenROAD will throw an error if the verilog from Yosys is not flattened
-        # UPDATE ON THIS: nvm, it somehow works now...
+        # # OpenROAD will throw an error if the verilog from Yosys is not flattened
+        # # UPDATE ON THIS: nvm, it somehow works now...
         # write_verilog -noattr -noexpr -nohex -nodec -defparam "{self.mapped_v_path}"
 
         # BLIF file seems to be easier to parse than mapped verilog for find_regs functions so leave for now
