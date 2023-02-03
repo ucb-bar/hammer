@@ -4,8 +4,6 @@
  <description>SkyWater 130nm technology</description>
  <group/>
  <dbu>0.001</dbu>
- <base-path>/tools/C/nayiri/sky130/chipyard-nov22_tapeout2/vlsi/hammer/src/hammer-vlsi/technology/sky130/extra/</base-path>
- <layer-properties_file>sky130A.lyp</layer-properties_file>
  <add-other-layers>true</add-other-layers>
  <reader-options>
   <gds2>
@@ -41,6 +39,8 @@
    <produce-pins>true</produce-pins>
    <special-pins-suffix-string>.pin</special-pins-suffix-string>
    <special-pins-datatype-string>16</special-pins-datatype-string>
+   <pins-suffix-string>.pin</pins-suffix-string>
+   <pins-datatype-string>16</pins-datatype-string>
    <produce-lef-pins>true</produce-lef-pins>
    <special-lef_pins-suffix-string>.pin</special-lef_pins-suffix-string>
    <special-lef_pins-datatype-string>16</special-lef_pins-datatype-string>
@@ -70,7 +70,6 @@
    <macro-resolution-mode>default</macro-resolution-mode>
    <separate-groups>false</separate-groups>
    <map-file/>
-   <lef-files>merged.lef</lef-files>
   </lefdef>
   <dxf>
    <dbu>0.001</dbu>

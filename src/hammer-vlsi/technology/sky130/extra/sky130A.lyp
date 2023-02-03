@@ -7234,7 +7234,7 @@
   <line-style/>
   <valid>true</valid>
   <visible>true</visible>
-  <transparent>false</transparent>
+  <transparent>true</transparent>
   <width/>
   <marked>false</marked>
   <xfill>false</xfill>
