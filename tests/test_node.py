@@ -1,14 +1,13 @@
-import logging
 import os
 import tempfile
 import unittest
 
 import networkx as nx
 import pytest
-from networkx.readwrite import json_graph
 
 from hammer.flowgraph import node
-from hammer.flowgraph.node import Graph, Node
+from hammer.flowgraph.node import Graph, Node, Status
+from hammer.logging import HammerVLSILogging
 
 
 class NodeTest(unittest.TestCase):
@@ -127,7 +126,10 @@ class NodeTest(unittest.TestCase):
         plt.savefig("/home/bngo/Research/hammer/graph.png", bbox_inches="tight", dpi=200)
 
     def test_run_basic(self) -> None:
-        """Test a basic syn -> par -> drc flow, all with nop tools."""
+        """Test a basic syn -> par flow, all with nop tools."""
+        HammerVLSILogging.clear_callbacks()
+        HammerVLSILogging.add_callback(HammerVLSILogging.callback_buffering)
+
         with tempfile.TemporaryDirectory() as td:
             os.mkdir(os.path.join(td, "syn_dir"))
             os.mkdir(os.path.join(td, "par_dir"))
@@ -176,30 +178,34 @@ vlsi:
         sim_tool: "mocksim"
 """)
 
-            v0 = Node(
-                "syn-to-par", "nop", os.path.join(td, "syn_dir"), os.path.join(td, "par_dir"),
+            syn = Node(
+                "syn", "nop",
+                os.path.join(td, "syn_dir"), os.path.join(td, "s2p_dir"),
                 ["syn-in.yml"],
                 ["syn-out.json"],
             )
-            v1 = Node(
-                "par-to-drc", "nop", os.path.join(td, "par_dir"), os.path.join(td, "drc_dir"),
+            s2p = Node(
+                "syn-to-par", "nop",
+                os.path.join(td, "s2p_dir"), os.path.join(td, "par_dir"),
                 ["syn-out.json"],
-                ["par-out.json"],
+                ["s2p-out.json"],
             )
-            v2 = Node(
-                "drc", "nop", os.path.join(td, "drc_dir"), os.path.join(td, "out_dir"),
+            par = Node(
+                "par", "nop",
+                os.path.join(td, "par_dir"), os.path.join(td, "out_dir"),
+                ["s2p-out.json"],
                 ["par-out.json"],
-                ["drc-out.json"],
             )
             g = Graph({
-                v0: [v1],
-                v1: [v2],
-                v2: []
+                syn: [s2p],
+                s2p: [par],
+                par: []
             })
-            g.run(v0)
+            g.run(syn)
 
+        for n in g.networkx:
+            self.assertEqual(n.status, Status.COMPLETE)
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
     unittest.main()

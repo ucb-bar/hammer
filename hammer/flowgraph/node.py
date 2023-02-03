@@ -107,8 +107,6 @@ class Graph:
             raise RuntimeError("Node not in flowgraph")
 
         start.status = Status.RUNNING
-        ctxt = HammerVLSILogging.context()
-        ctxt.info(f"Running graph step {start.action}")
         arg_list = {
             "action": start.action,
             'environment_config': None,
@@ -129,7 +127,7 @@ class Graph:
             'to_step': None,
             'until_step': None,
             'only_step': None,
-            'output': os.path.join(start.push_dir, start.required_outputs[0]),
+            'output': os.path.join(start.push_dir, start.required_outputs[0]),  # TODO: fix this
             'verilog': None,
             'firrtl': None,
             'top': None,
@@ -138,6 +136,8 @@ class Graph:
 
         driver = cli_driver.CLIDriver()
         try:
+            ctxt = HammerVLSILogging.context(start.action)
+            # ctxt.info(f"Running graph step {start.action}")
             driver.run_main_parsed(arg_list)
             start.status = Status.COMPLETE
             for c in nx.neighbors(self.networkx, start):
