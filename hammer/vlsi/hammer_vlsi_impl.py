@@ -118,15 +118,17 @@ class HammerVLSISettings:
             HammerVLSISettings.get_config()
         ])
 
-        # Read in core defaults.
-        database.update_core(*hammer_config.load_config_from_defaults("hammer.config", types=True))
-
-        # Read in vendor-common defaults.
-        # TODO: move these defaults into respective vendor plugin packages
-        for pkg in ["hammer.common.cadence", "hammer.common.synopsys", "hammer.common.mentor", "hammer.common.openroad"]:
+        # Read in core and vendor-common defaults.
+        # TODO: vendor-common defaults should be in respective vendor plugin packages
+        # and considered tool configs instead
+        core_defaults = []  # type: List[dict]
+        core_defaults_types = []  # type: List[dict]
+        vendors = ["cadence", "synopsys", "mentor", "openroad"]
+        for pkg in ["hammer.config"] + list(map(lambda v: "hammer.common." + v, vendors)):
             config, types = hammer_config.load_config_from_defaults(pkg, types=True)
-            database.update_defaults(config)
-            database.update_types(types, check_type=False)
+            core_defaults.extend(config)
+            core_defaults_types.extend(types)
+        database.update_core(core_defaults, core_defaults_types)
 
 from .hammer_tool import HammerTool, HammerToolStep
 

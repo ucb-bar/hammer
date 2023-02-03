@@ -6,7 +6,7 @@ synthesis.genus.version: "211"
 par.innovus.version: "211"
 
 sim.vcs.version: "S-2021.09-SP1-1"
-sim.vcs.verdi_home: "/ecad/tools/synopsys/verdi/S-2021.09-SP1-1"
+sim.vcs.verdi_home: "/ecad/tools/synopsys/verdi/${sim.vcs.version}"
 sim.vcs.verdi_home_meta: lazysubst
 
 lvs.calibre.version: "2022.2_24.16"
