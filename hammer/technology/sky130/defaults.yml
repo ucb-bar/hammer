@@ -99,7 +99,7 @@ par.inputs:
 par.openroad:
   openrcx_techfile: "extra/sky130hd.rcx_rules"
   openrcx_techfile_meta: prependlocal
-  klayout_techfile_source: "${technology.sky130.sky130A}/libs.tech/klayout/sky130A.lyt"
+  klayout_techfile_source: "${technology.sky130.sky130A}/libs.tech/klayout/tech/sky130A.lyt"
   klayout_techfile_source_meta: lazysubst
 
 par.power_straps_mode: generate # Power Straps

@@ -33,7 +33,7 @@ par.openroad:
 
   # Optional: OpenRCX RC tech file
   # Should be set in technology plugin
-  openrcx_techfile: Optional[list[str]]
+  openrcx_techfile: Optional[str]
 
   # Optional: KLayout tech file
   # Should be set in technology plugin
