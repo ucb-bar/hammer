@@ -106,7 +106,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         # Write a checkpoint to disk.
         self.verbose_append("write_db pre_{step}".format(step=next.name))
         # Symlink the database to latest for open_chip script later.
-        self.append("ln -sfn pre_{step} latest".format(step=next.name))
+        self.append("exec ln -sfn pre_{step} latest".format(step=next.name))
         self._step_transitions = self._step_transitions + [(prev.name, next.name)]
         return True
 
@@ -129,7 +129,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             last = "post_{step}".format(step=self._step_transitions[-1][1])
             self.verbose_append("write_db {last}".format(last=last))
             # Symlink the database to latest for open_chip script later.
-            self.verbose_append("ln -sfn {last} latest".format(last=last))
+            self.verbose_append("exec ln -sfn {last} latest".format(last=last))
 
         return self.run_openroad()
 

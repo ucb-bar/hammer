@@ -25,3 +25,7 @@ dist/
 /DVEfiles
 /opendatabase.log
 
+# e2e outputs
+e2e/obj_dir
+e2e/build*
+e2e/output.json

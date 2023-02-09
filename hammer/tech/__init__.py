@@ -314,8 +314,7 @@ class HammerTechnology:
     def expand_tech_cache_path(self, path) -> str:
         """ Replace occurrences of the cache directory's basename with
             the full path to the cache dir."""
-        cache_dir_basename = os.path.basename(self.cache_dir)
-        return path.replace(cache_dir_basename, self.cache_dir)
+        return path.replace("cache", self.cache_dir)
 
     # @classmethod
     def ensure_dirs_exist(self, path) -> None:

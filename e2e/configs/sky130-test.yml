@@ -74,6 +74,4 @@ vlsi.core.sim_tool: "hammer.sim.vcs"
 vlsi.core.power_tool: "hammer.power.voltus"
 
 # SRAM Compiler compiler options
-vlsi.core.sram_generator_tool: "sram_compiler"
-vlsi.core.sram_generator_tool_path: ["hammer/src/hammer-vlsi/technology/sky130"]
-vlsi.core.sram_generator_tool_path_meta: "append"
+vlsi.core.sram_generator_tool: "hammer.technology.sky130.sram_compiler"

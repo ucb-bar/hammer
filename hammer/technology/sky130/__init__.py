@@ -7,6 +7,7 @@ import re
 import os, shutil
 from pathlib import Path
 from typing import NamedTuple, List, Optional, Tuple, Dict, Set, Any
+import importlib
 
 import hammer.tech
 from hammer.tech import HammerTechnology
@@ -144,7 +145,7 @@ class SKY130Tech(HammerTechnology):
                         (source_path, dest_path))
                     df.write(matcher.sub("", sf.read()))
                     df.write(LVS_DECK_INSERT_LINES)
-    
+
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {
             "openroad": [
@@ -153,7 +154,7 @@ class SKY130Tech(HammerTechnology):
             "innovus": [
             HammerTool.make_post_insertion_hook("init_design",      sky130_innovus_settings),
             HammerTool.make_pre_insertion_hook("place_tap_cells",   sky130_add_endcaps),
-            HammerTool.make_pre_insertion_hook("power_straps",      sky130_connect_nets),            
+            HammerTool.make_pre_insertion_hook("power_straps",      sky130_connect_nets),
             HammerTool.make_pre_insertion_hook("write_design",      sky130_connect_nets2)
             ]}
         return hooks.get(tool_name, [])
@@ -303,11 +304,11 @@ add_endcaps
 def sky130_set_wire_rc(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerPlaceAndRouteTool), "set wire rc only for par"
     assert isinstance(ht, TCLTool), "set wire rc can only run on TCL tools"
-    sky130_plugin_path=ht.get_setting('vlsi.core.technology_path')[-1]
+    rc_file=importlib.resources.files("hammer.technology.sky130") / "extra/sky130hd.rc"
     ht.append(f"""
 ################################################################
 # Repair max slew/cap/fanout violations and normalize slews
-source {sky130_plugin_path}/sky130/extra/sky130hd.rc
+source {rc_file}
 set_wire_rc -signal -layer "met2"
 set_wire_rc -clock  -layer "met5"
     """)
