@@ -238,6 +238,7 @@ Key History
 -----------
 
 With the ``ruamel.yaml`` package, Hammer can emit what files have modified any configuration keys in YAML format.
+Turning on key history is accomplished with the ``--dump-history`` command-line flag.
 The file is named ``{action}-output-history.yml`` and is located in the output folder of the given action.
 
 Example with the file ``test-config.yml``:
@@ -254,7 +255,7 @@ Example with the file ``test-config.yml``:
 
             synthesis_tool: "hammer.synthesis.nop"
 
-``test/syn-rundir/syn-output-history.yml`` after executing the command ``hammer-vlsi -p test-config.yml --obj_dir test syn``:
+``test/syn-rundir/syn-output-history.yml`` after executing the command ``hammer-vlsi --dump-history -p test-config.yml --obj_dir test syn``:
 
   .. code-block:: yaml
 
@@ -294,7 +295,7 @@ Example with the files ``test-config.yml`` and ``test-config2.yml``, respectivel
 
     foo.subst: "hammer.technology.nop2"
 
-``test/syn-rundir/par-output-history.yml`` after executing the command ``hammer-vlsi -p test-config.yml -p test-config2.yml --obj_dir test syn-par``:
+``test/syn-rundir/par-output-history.yml`` after executing the command ``hammer-vlsi --dump-history -p test-config.yml -p test-config2.yml --obj_dir test syn-par``:
 
   .. code-block:: yaml
 

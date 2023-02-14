@@ -457,7 +457,17 @@ class TestCLIDriver:
 
         set_up_run(tmp_path)
         history_path = os.path.join(syn_rundir(tmp_path), "syn-output-history.yml")
-        run_syn_to_par_with_output(tmp_path)
+        with pytest.raises(SystemExit) as cm:
+            CLIDriver().main(args=[
+                "syn",  # action
+                "-p", config_path(tmp_path),
+                "--output", syn_out_path(tmp_path),
+                "--syn_rundir", syn_rundir(tmp_path),
+                "--obj_dir", obj_dir_path(tmp_path),
+                "--log", log_path(tmp_path),
+                "--dump-history"
+            ])
+        assert cm.value.code == 0
 
         # History file should have comments
         with open(config_path(tmp_path), 'r') as f:
@@ -484,7 +494,8 @@ class TestCLIDriver:
                 "--output", syn_out_path(tmp_path),
                 "--syn_rundir", syn_rundir(tmp_path),
                 "--obj_dir", obj_dir_path(tmp_path),
-                "--log", log_path(tmp_path)
+                "--log", log_path(tmp_path),
+                "--dump-history"
             ])
         assert cm.value.code == 0
 

@@ -575,10 +575,10 @@ class Margins(NamedTuple('Margins', [
 
     def to_dict(self) -> dict:
         return {
-            "left": self.left,
-            "bottom": self.bottom,
-            "right": self.right,
-            "top": self.top
+            "left": str(self.left),
+            "bottom": str(self.bottom),
+            "right": str(self.right),
+            "top": str(self.top)
         }
 
 

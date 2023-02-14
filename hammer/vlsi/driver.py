@@ -132,6 +132,8 @@ class HammerDriver:
         self.post_custom_timing_tool_hooks = [] # type: List[HammerToolHookAction]
         self.post_custom_pcb_tool_hooks = []  # type: List[HammerToolHookAction]
 
+        self._dump_history = False
+
     @property
     def project_config(self) -> dict:
         return hammer_config.combine_configs(self.project_configs)
@@ -1804,3 +1806,11 @@ class HammerDriver:
             output.append((module, constraint_dict))
 
         return (output, dependency_graph)
+
+    @property
+    def dump_history(self) -> bool:
+        return self._dump_history
+    
+    @dump_history.setter
+    def dump_history(self, new_dump_history: bool) -> None:
+        self._dump_history = new_dump_history
