@@ -11,9 +11,10 @@ import os, shutil
 import json
 from pathlib import Path
 from typing import NamedTuple, List, Optional, Tuple, Dict, Set, Any
+from textwrap import indent, dedent
 
 import hammer_tech
-from hammer_tech import HammerTechnology
+from hammer_tech import HammerTechnology, RoutingDirection
 from hammer_vlsi import HammerTool, HammerPlaceAndRouteTool, TCLTool, HammerDRCTool, HammerLVSTool, HammerToolHookAction
 
 import specialcells
@@ -231,6 +232,35 @@ LVS FILTER D  OPEN  LAYOUT
 def sky130_innovus_settings(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
     assert isinstance(ht, TCLTool), "innovus settings can only run on TCL tools"
+    """ 
+    Power pins are only created when pin layers are set in hammer IR key par.generate_power_straps_options.by_tracks.pin_layers
+        AND one side of the power straps has a floorplan margin of 0
+        so issue a warning if this is not the case
+    """
+    floorplan_mode = str(ht.get_setting("par.innovus.floorplan_mode"))
+    power_strap_pin_layers = ht.get_setting("par.generate_power_straps_options.by_tracks.pin_layers")
+    directions = set()
+    for layer in power_strap_pin_layers:
+        metal = ht.get_stackup().get_metal(layer)
+        directions.add(metal.direction)
+    if floorplan_mode != 'manual':
+        floorplan_constraints = ht.get_placement_constraints()
+        for constraint in floorplan_constraints:
+            new_path = "/".join(constraint.path.split("/")[1:])
+            if new_path == "":
+                margins = constraint.margins
+                if  ( (RoutingDirection.Vertical in directions) and (margins.top > 0 and margins.bottom > 0) ) or \
+                    ( (RoutingDirection.Horizontal in directions) and (margins.left > 0 and margins.right > 0) ):
+                    ht.logger.warning(dedent("""\
+                        One floorplan side corresponding with one of metal layer(s) specified in power straps pin_layers YAML key must have a margin of 0 to create power pins (which is required to pass LVS).
+                        e.g. par.generate_power_straps_options.by_tracks.pin_layers: [met4]
+                             vlsi.inputs.placement_constraints:
+                               - path: <name>
+                                 type: toplevel
+                                 margins:
+                                   <top or bottom>: 0
+                        """))
+    
     """Settings for every tool invocation"""
     ht.append(
         '''

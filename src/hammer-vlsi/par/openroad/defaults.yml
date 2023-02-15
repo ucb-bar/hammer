@@ -49,10 +49,54 @@ par.openroad:
 
   setrc_file: null
 
-  placement_padding:
-    global_placement: 3
-    detailed_placement: 2
-    clock_tree: 1
-    final: 0
-    # For different placement steps in PAR, keys set left and right padding in multiples of the row site width
-    # type: int
+  
+  # Step parameter configurations
+
+  global_placement:
+    timing_driven: False
+    routability_driven: True
+    density: 0.6
+    placement_padding: 3
+    routing_adjustment: 0.5
+  
+  detailed_placement:
+    placement_padding: 2
+
+  clock_tree:
+    placement_padding: 1
+  
+  clock_tree_resize:
+    setup_margin: 0.05
+    hold_margin: 0.2
+    hold_max_buffer_percent: 60
+    placement_padding: 0
+  
+  global_route: 
+    routing_adjustment: 0.3
+  
+  global_route_resize:
+    hold_margin: 0.2
+    routing_adjustment: 0.1
+  
+
+
+
+
+  # alternative method: <param>.<step_name>
+
+  # hold_margin:
+  #   clock_tree: 0.2
+  #   global_route_resize: 0.4
+
+  # routing_adjustment:
+  #   global_placement: 0.5
+  #   global_route: 0.3
+  #   global_route_resize: 0.1
+
+  # placement_padding:
+  #   global_placement: 3
+  #   detailed_placement: 2
+  #   clock_tree: 1
+  #   final: 0
+  #   # For different placement steps in PAR, keys set left and right padding in multiples of the row site width
+  #   # type: int
