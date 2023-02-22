@@ -175,7 +175,7 @@ class SKY130Tech(HammerTechnology):
 
     def get_tech_lvs_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         if not self.use_openram: return []
-        if not self.get_setting("technology.sky130.drc_blackbox_srams"): return []
+        if not self.get_setting("technology.sky130.lvs_blackbox_srams"): return []
         hooks = {"calibre": [
             HammerTool.make_post_insertion_hook("generate_lvs_run_file", lvs_blackbox_openram_srams)
             ]}

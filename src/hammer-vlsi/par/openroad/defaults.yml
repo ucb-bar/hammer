@@ -76,7 +76,7 @@ par.openroad:
   
   global_route_resize:
     hold_margin: 0.2
-    routing_adjustment: 0.1
+    routing_adjustment: 0.3
   
 
 

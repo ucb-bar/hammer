@@ -112,10 +112,6 @@ for i in main_layout.each_cell():
 print("[INFO] Reading DEF ...")
 main_layout.read(in_def, layoutOptions)
 
-#print("[INFO] Reporting cells after loading DEF ...")
-#for i in main_layout.each_cell():
-#  print("[INFO] '{0}'".format(i.name))
-
 # Clear cells
 top_cell_index = main_layout.cell(design_name).cell_index()
 
@@ -127,11 +123,25 @@ for i in main_layout.each_cell():
     if not i.name.startswith("VIA_"):
       i.clear()
 
+cntr = 0
+# layout_cell_names = {i.name for i in main_layout.each_cell()}
+layout_cell_names = set()
 # Load in the gds to merge
 print("[INFO] Merging GDS/OAS files...")
 for fil in in_files.split():
   print("\t{0}".format(fil))
-  main_layout.read(fil)
+  # Uniquefy duplicate cell names
+  print("[INFO] Uniquefying duplicate cell names...")
+  new_layout = pya.Layout()
+  new_layout.read(fil)
+  for i in new_layout.each_cell():
+    if i.name in layout_cell_names:
+      cntr += 1
+      i.name = f"{i.name}_unique{cntr}"
+    else:
+      layout_cell_names.add(i.name)
+  new_layout.write('tmp.gds')
+  main_layout.read('tmp.gds')
 
 # Copy the top level only to a new layout
 print("[INFO] Copying toplevel cell '{0}'".format(design_name))

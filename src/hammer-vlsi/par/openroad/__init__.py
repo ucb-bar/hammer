@@ -482,6 +482,9 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         with open(par_tcl_filename, "w") as f:
             f.write("\n".join(self.output))
 
+        # Make sure that generated-scripts exists.
+        os.makedirs(self.generated_scripts_dir, exist_ok=True)
+
         # Create open_chip script pointing to latest (symlinked to post_<last ran step>).
         with open(self.open_chip_tcl, "w") as f:
             f.write(self.gui())
@@ -660,9 +663,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         tech_base_dir=self.get_setting('vlsi.core.technology_path')[-1]
         tech = self.get_setting('vlsi.core.technology')
 
-        # class variables
-        self.macro_top_layers = set()
-
         # start routine
         self.block_append(self.read_lef())
         self.block_append(self.read_liberty())
@@ -676,6 +676,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             for verilog_file in abspath_input_files:
                 self.block_append(f"read_verilog {verilog_file}")
             self.block_append(f"link_design {self.top_module}\n")
+        
         self.block_append(self.read_sdc())
 
         self.block_append(self.set_rc())
@@ -740,7 +741,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     def macro_placement(self) -> bool:
         floorplan_mode = str(self.get_setting('par.openroad.floorplan_mode'))
         if floorplan_mode == 'auto':
-            # TODO: did I understand the par.blockage_spacing key correctly?
             spacing = self.get_setting('par.blockage_spacing')
             padding = self.get_setting('par.openroad.global_placement.placement_padding')
             self.block_append(r"""
@@ -797,6 +797,24 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             self.logger.warning(
                 "You have not overridden place_tap_cells. By default this step adds a simple set of tapcells or does nothing; you will have trouble with power strap creation later.")
         return True
+    
+
+    @property
+    def macro_top_layers(self) -> List[str]:
+        layers = set()
+        floorplan_constraints = self.get_placement_constraints()
+        global_top_layer = self.get_setting('par.blockage_spacing_top_layer')
+        ############## Actually generate the constraints ################
+        for constraint in floorplan_constraints:
+            current_top_layer = None
+            if constraint.top_layer is not None:
+                current_top_layer = constraint.top_layer #  type: Optional[str]
+            elif global_top_layer is not None:
+                current_top_layer = global_top_layer
+            if current_top_layer is not None:
+                layers.add(current_top_layer)
+        return list(layers)
+
 
     def write_power_straps_tcl(self, power_straps_tcl_path) -> bool:
         pwr_nets=self.get_all_power_nets()
@@ -1341,26 +1359,26 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                     df.write(line)
         return True
 
-    def write_netlist(self) -> bool:
-        self.block_append(f"""
-        # write netlist
-        set physical_only_cells "{" ".join(self.get_physical_only_cells())}"
-        """)
-        self.block_append("""
-        set physical_only_insts {}
-        set insts [get_cells -hierarchical *]
-        foreach inst $insts {
-            set inst_master [get_name [get_property -object_type cell $inst cell]]
-            if {[lsearch $physical_only_cells $inst_master] >= 0} {
-                set inst_name [get_name $inst]
-                lappend physical_only_insts  $inst_name
-            }
-        }
-        """, verbose=False)
-        self.block_append(f"""
-        write_verilog -include_pwr_gnd -remove_cells $physical_only_insts {self.output_netlist_filename}
-        """, verbose=False)
-        return True
+    # def write_netlist(self) -> bool:
+    #     self.block_append(f"""
+    #     # write netlist
+    #     set physical_only_cells "{" ".join(self.get_physical_only_cells())}"
+    #     """)
+    #     self.block_append("""
+    #     set physical_only_insts {}
+    #     set insts [get_cells -hierarchical *]
+    #     foreach inst $insts {
+    #         set inst_master [get_name [get_property -object_type cell $inst cell]]
+    #         if {[lsearch $physical_only_cells $inst_master] >= 0} {
+    #             set inst_name [get_name $inst]
+    #             lappend physical_only_insts  $inst_name
+    #         }
+    #     }
+    #     """, verbose=False)
+    #     self.block_append(f"""
+    #     write_verilog -include_pwr_gnd -remove_cells $physical_only_insts {self.output_netlist_filename}
+    #     """, verbose=False)
+    #     return True
 
     def remove_pcells_from_netlist(self):
         lines_2 = 'sky130_fd_sc_hd__tapvpwrvgnd_1'
@@ -1386,8 +1404,11 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             f.write(''.join(lines2))
         return
 
-    def write_gds(self) -> bool:
+    def write_gds(self) -> str:
+        cmds = []
+
         self.setup_klayout_techfile()
+
 
         gds_files = self.technology.read_libs([
             hammer_tech.filters.gds_filter
@@ -1399,15 +1420,18 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         tech_base_dir=self.get_setting('vlsi.builtins.hammer_vlsi_path')
         layer_map_file=self.get_setting('par.inputs.gds_map_file')
 
-        # TODO: EVENTUALLY REMOVE!!
-        #***for now don't export SRAMs
-        gds_files = [gds_files[0]]
-        self.block_append(f"""
+        klayout_path = os.path.join(self.run_dir, 'klayout')
+        os.makedirs(klayout_path, exist_ok=True)
+        os.environ['KLAYOUT_PATH'] = klayout_path
+        self.block_tcl_append(f"""
+        # write DEF (need this to write GDS)
+        write_def {self.output_def_filename}
+
         # write gds
         # klayout args explained: https://www.klayout.de/command_args.html
-        # -d 40: noisy log output and timing
         set in_files {{ {" ".join(gds_files)} }}
-        exec klayout -zz -d 0 -rd out_file={self.output_gds_filename} \\
+        exec klayout -rd out_file={self.output_gds_filename} \\
+                -zz -d 40 \\
                 -rd design_name={self.top_module} \\
                 -rd in_def={self.output_def_filename} \\
                 -rd in_files=$in_files \\
@@ -1416,16 +1440,18 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                 -rd tech_file={self.klayout_techfile_path} \\
                 -rd layer_map={layer_map_file} \\
                 -rm {tech_base_dir}/hammer_vlsi/vendor/def2stream.py
-        """) 
-        return True
+        """, cmds, clean=False, verbose=False)
+        return '\n'.join(cmds).strip()
 
 
-    def write_sdf(self) -> bool:
-        corners = self.get_mmmc_corners()  
-        # TODO: eventually write multiple corners
-        self.block_append(f"write_sdf -corner setup -gzip {self.output_sdf_path}")
-        # self.append(f"exec touch {self.output_sdf_path}")
-        return True
+    def write_sdf(self) -> str:
+        corners = self.get_mmmc_corners()
+        cmds = []
+        # are multiple corners necessary? Tempus only supports reading one SDF
+        self.block_tcl_append(f"""
+        write_sdf -corner setup -gzip {self.output_sdf_path}
+        """, cmds, clean=False, verbose=False)
+        return '\n'.join(cmds).strip()
 
 
     def write_spefs(self) -> bool:
@@ -1546,29 +1572,24 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         # Ensure all OR created (rsz/cts) instances are connected
         global_connect
 
-        # write DEF (need this to write GDS)
-        write_def {self.output_def_filename}
-
         # write netlist
-        write_verilog -include_pwr_gnd {self.output_netlist_filename}
-        """)
+        write_verilog -remove_cells {{ {" ".join(self.get_physical_only_cells())} }} -include_pwr_gnd {self.output_netlist_filename}
 
-        # self.write_netlist()
+        # GDS streamout.
+        {self.write_gds()}
+
+        # Write SDF
+        {self.write_sdf()}
+
+        """)
 
         # TODO: look at IR drop analysis from ~OpenROAD-flow-scripts/flow/scripts/final_report.tcl
         # Static IR drop analysis
 
-        # GDS streamout.
-        self.write_gds()
-
-        # Write SDF
-        self.write_sdf()
-
-        # Make sure that generated-scripts exists.
-        os.makedirs(self.generated_scripts_dir, exist_ok=True)
+        # # Make sure that generated-scripts exists.
+        # os.makedirs(self.generated_scripts_dir, exist_ok=True)
 
         self.ran_write_design=True
-
         return True
 
 
@@ -1710,14 +1731,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                     inst_name=new_path
                     floorplan_cmd = f"place_cell -inst_name {inst_name} -orient {openroad_orientation} -origin {{ {x} {y} }} -status FIRM"
                     
-                    # output.append("# only place macro if it is present in design")
-                    # output.append(f'if {{[[set block [ord::get_db_block]] findInst {inst_name}] == "NULL"}} {{')
-                    # output.append(f'  puts "(WARNING) Cell/macro {inst_name} not found!"')
-                    # output.append("} else {")
-                    # output.append(f'  puts "(hammer) {floorplan_cmd}"')
-                    # output.append(f"  {floorplan_cmd}")
-                    # output.append("}")
-                    
                     self.block_tcl_append(f"""
                     # only place macro if it is present in design
                     if {{[[set block [ord::get_db_block]] findInst {inst_name}] == "NULL"}} {{
@@ -1728,16 +1741,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                     }}
                     """, output, clean=True, verbose=False)
                     
-                    
-                    # TODO: add place_cell option [-status (PLACED|FIRM)]
                     spacing = self.get_setting('par.blockage_spacing')
-                    if constraint.top_layer is not None:
-                        current_top_layer = constraint.top_layer #  type: Optional[str]
-                    elif global_top_layer is not None:
-                        current_top_layer = global_top_layer
-                    else:
-                        current_top_layer = None
-                    self.macro_top_layers.add(current_top_layer)
+
                     # TODO: find equivalent for place/route halo in OpenROAD
 
                 elif constraint.type == PlacementConstraintType.Obstruction:
@@ -1746,6 +1751,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                 else:
                     assert False, "Should not reach here"
         return output
+
 
     def specify_std_cell_power_straps(self, blockage_spacing: Decimal, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
         """

@@ -1622,7 +1622,7 @@ class HammerTool(metaclass=ABCMeta):
                 indent_len = len(line) - len(line.lstrip())
                 indent = ' ' * indent_len
                 puts_cmd = line.strip("\\ ") # remove leading/trailing characters
-                escape_str = '"[]'  # NOTE: there may be more characters that need to be escaped!
+                escape_str = '"[]$'  # NOTE: there may be more characters that need to be escaped!
                 for c in escape_str:  # escape characters in commands for puts command
                     puts_cmd = puts_cmd.replace(c, '\\'+c)
                 if puts_cmd != "":
