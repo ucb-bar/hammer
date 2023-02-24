@@ -781,7 +781,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         :param spacing: The spacing between straps in a group.
         :param offset: The offset to start the first group.
         :param bbox: The optional (2N)-point bounding box of the area to generate straps. By default the entire core area is used.
-        :params nets: A list of poewr nets to create (e.g. ["VDD", "VSS"], ["VDDA", "VSS", "VDDB"], ... etc.).
+        :params nets: A list of power nets to create (e.g. ["VDD", "VSS"], ["VDDA", "VSS", "VDDB"], ... etc.).
         """
         check_abut = self.get_setting("par.power_straps_abutment")
 
@@ -846,7 +846,7 @@ class HammerPlaceAndRouteTool(HammerTool):
                     o_ll_y = po.y
                     o_ur_x = po.x + po.width
                     o_ur_y = po.y + po.height
-                    # Check fpo.or any overlap
+                    # Check for any overlap
                     if not(m_ur_x <= o_ll_x or o_ur_x <= m_ll_x or m_ur_y <= o_ll_y or o_ur_y <= m_ll_y):
                         self.logger.error(f"Hardmacro instance \"{macro.path}\" is partially/fully obstructed on layer {layer.name} by power obstruction \"{po.path}\"! Double check that you will supply power to it.")
 
