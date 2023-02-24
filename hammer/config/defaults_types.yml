@@ -257,6 +257,9 @@ par:
   power_straps_mode: str
   power_straps_script_contents: Optional[str]
 
+  # Macro power strap abutment checks
+  power_straps_abutment: bool
+
   # Spacing around blocks and hardmacros in microns
   blockage_spacing: float
 

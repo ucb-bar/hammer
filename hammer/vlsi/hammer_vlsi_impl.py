@@ -12,10 +12,11 @@ import json
 from typing import Iterable
 import inspect
 import datetime
+from statistics import mode
 
 import hammer.config as hammer_config
-from hammer.utils import deepdict, coerce_to_grid
-from hammer.tech import ExtraLibrary
+from hammer.utils import deepdict, coerce_to_grid, get_or_else
+from hammer.tech import ExtraLibrary, RoutingDirection
 
 from .constraints import *
 from .units import VoltageValue, TimeValue
@@ -653,6 +654,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         else:
             raise NotImplementedError("Power strap generation method %s is not implemented" % method)
 
+
     def specify_power_straps_by_tracks(self, layer_name: str, bottom_via_layer: str, blockage_spacing: Decimal, track_pitch: int, track_width: int, track_spacing: int, track_start: int, track_offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool, layer_is_all_power: bool) -> List[str]:
         """
         Generate a list of TCL commands that will create power straps on a given layer by specifying the desired track consumption.
@@ -695,6 +697,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         density = Decimal(len(nets)) * width / pitch * Decimal(100)
         if density > Decimal(85):
             self.logger.warning("CAUTION! Your {layer} power strap density is {density}%. Check your technology's DRM to see if this violates maximum density rules.".format(layer=layer_name, density=density))
+        self._get_power_straps_for_hardmacros(layer_name, pitch, width, spacing, offset, bbox, nets)
         return self.specify_power_straps(layer_name, bottom_via_layer, blockage_spacing, pitch, width, spacing, offset, bbox, nets, add_pins)
 
     def specify_all_power_straps_by_tracks(self, layer_names: List[str], ground_net: str, power_nets: List[str], power_weights: List[int], bbox: Optional[List[Decimal]], pin_layers: List[str]) -> List[str]:
@@ -730,6 +733,9 @@ class HammerPlaceAndRouteTool(HammerTool):
         bottom_via_layer = rail_layer_name
         # The last layer we used
         last = rail_layer
+
+        substrate_json = []  # type: List[Dict[str, Any]]
+
         for layer_name in layer_names:
             layer = self.get_stackup().get_metal(layer_name)
             assert layer.index > last.index, "Must build power straps bottom-up"
@@ -759,7 +765,206 @@ class HammerPlaceAndRouteTool(HammerTool):
                 group_pitch = sum_weights * track_pitch
                 output.extend(self.specify_power_straps_by_tracks(layer_name, last.name, blockage_spacing, group_pitch, track_width, track_spacing, track_start, group_offset, bbox, nets, add_pins, layer_is_all_power))
             last = layer
+
+        self._dump_power_straps_for_hardmacros()
         return output
+
+    _hardmacro_power_straps = []  # type: List[Dict[str, Any]]
+
+    def _get_power_straps_for_hardmacros(self, layer_name: str, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str]) -> None:
+        """
+        Generates power strap information for hardmacros in the design.
+
+        :param layer_name: The layer name of the metal on which to create straps.
+        :param pitch: The pitch between groups of power straps (i.e. from left edge of strap A to the next left edge of strap A).
+        :param width: The width of each strap in a group.
+        :param spacing: The spacing between straps in a group.
+        :param offset: The offset to start the first group.
+        :param bbox: The optional (2N)-point bounding box of the area to generate straps. By default the entire core area is used.
+        :params nets: A list of poewr nets to create (e.g. ["VDD", "VSS"], ["VDDA", "VSS", "VDDB"], ... etc.).
+        """
+        check_abut = self.get_setting("par.power_straps_abutment")
+
+        fp_consts = self.get_placement_constraints()
+        # Limit only to hardmacro type. Other types are not relevant.
+        hardmacros = list(filter(lambda c: c.type == PlacementConstraintType.HardMacro, fp_consts))
+
+        # Need to check against power obstructions
+        obs = list(filter(lambda c: c.type == PlacementConstraintType.Obstruction, fp_consts))
+        pwr_obs = list(filter(lambda c: ObstructionType.Power in c.obs_types, obs))
+
+        # Get stackup information
+        stackup = self.get_stackup()
+        layer = stackup.get_metal(layer_name)
+        dbu = stackup.grid_unit
+
+        for macro in hardmacros:
+            # Skip if master is not given
+            if macro.master is None:
+                continue
+            # Skip if hardmacro is physical only
+            if get_or_else(macro.create_physical, False):
+                continue
+            # Confine to {top_layer, top_layer + 1}, skip if not given
+            if macro.top_layer is None:
+                continue
+            else:
+                top_idx = stackup.get_metal(macro.top_layer).index
+                if layer.index < top_idx or layer.index > top_idx + 1:
+                    continue
+
+            # Skip and log error if macro falls outside bbox (TODO: support rectilinear bbox)
+            oob = False
+            orientation = get_or_else(macro.orientation, "r0").lower()
+            if bbox is not None:
+                # Check ll corner if width & height are given
+                if macro.width is not None and macro.height is not None:
+                    # Width/height swap depending on rotation
+                    if orientation in ["r90", "r270"]:
+                        oob = macro.x + macro.height < bbox[0] or macro.y + macro.height < bbox[1]
+                    oob = macro.x + macro.width < bbox[0] or macro.y + macro.height < bbox[1]
+                oob = macro.x > bbox[2] or macro.y > bbox[3]
+            if oob:
+                self.logger.error(f"Hardmacro instance \"{macro.path}\" is not placed within the power strap bounding box for layer {layer.name}! Double check that you will supply power to it.")
+                continue
+
+            # Log error if there is a power obstruction intersects with macro (no skip)
+            check_layer_idx = top_idx + (not check_abut)
+            layer_pwr_obs = list(filter(lambda o: layer_name in o.layers and layer.index == check_layer_idx, pwr_obs))
+            if len(layer_pwr_obs) > 0 and macro.width is not None and macro.height is not None:
+                m_ll_x = macro.x
+                m_ll_y = macro.y
+                m_ur_x = macro.x + macro.width
+                m_ur_y = macro.y + macro.height
+                # Width/height swap depending on rotation
+                if orientation.lower() in ["r90", "r270"]:
+                    m_ur_x = macro.x + macro.height
+                    m_ur_y = macro.y + macro.width
+
+                for obs in layer_pwr_obs:
+                    o_ll_x = obs.x
+                    o_ll_y = obs.y
+                    o_ur_x = obs.x + obs.width
+                    o_ur_y = obs.y + obs.height
+                    # Check for any overlap
+                    if not(m_ur_x <= o_ll_x or o_ur_x <= m_ll_x or m_ur_y <= o_ll_y or o_ur_y <= m_ll_y):
+                        self.logger.error(f"Hardmacro instance \"{macro.path}\" is partially/fully obstructed on layer {layer.name} by power obstruction \"{obs.path}\"! Double check that you will supply power to it.")
+
+            # Translate offset to the macro's origin
+            if layer.direction == RoutingDirection.Vertical:
+                offset_trans = pitch - ((macro.x - offset) % pitch)
+            elif layer.direction == RoutingDirection.Horizontal:
+                offset_trans = pitch - ((macro.y - offset) % pitch)
+            else: # redistribution not supported
+                continue
+
+            # Append instance info
+            self._hardmacro_power_straps.append({
+                "master": macro.master,
+                "top_layer": macro.top_layer,
+                "path": macro.path,
+                "orientation": orientation,
+                "layer": layer_name,
+                "direction": layer.direction,
+                "net_order": nets,
+                "width": int(width / dbu),
+                "spacing": int(spacing / dbu),
+                "group_pitch": int(pitch / dbu),
+                "offset": int(offset_trans / dbu)
+                })
+
+    def _dump_power_straps_for_hardmacros(self) -> None:
+        """
+        Postprocess the list of hardmacro power straps and dump it to a JSON file.
+        All hardmacro instances conforming to the following will be checked and have power strap info dumped:
+        - "master" is specified
+        - "physical_only" is False
+        - "top_layer" is specified
+        For a given master, the following checks are made:
+        - If power strap abutment checks are turned on, the offset of a majority of instances with
+          conforming orientation is considered the desired one. Non-conforming instances are marked
+          with a modified master name and the user is warned that abutment may fail.
+        - If power strap abutment checks are turned off, the availability of top_layer + 1 is checked.
+          If it is not available, the user is warned that the instance may not be connected to supplies.
+        """
+        check_abut = self.get_setting("par.power_straps_abutment")
+
+        output = []  # type: List[Dict[str, Any]]
+        misaligned_insts = {}  # type: Dict[str, List[str]]
+
+        # Valid orientations based on layer direction
+        valid_orients = {"vertical": ["r0", "mx"], "horizontal": ["r0", "my"]}
+
+        # Get masters and process all instances of each
+        masters = set(map(lambda m: m["master"], self._hardmacro_power_straps))
+
+        for master in masters:
+            insts = list(filter(lambda m: m["master"] == master, self._hardmacro_power_straps))
+            # All instances of this master should specify the same top_layer
+            if len(set(map(lambda m: m["top_layer"], insts))) > 1:
+                self.logger.error(f"Some instances of hardmacro {master} have conflicting \"top_layer\" fields. Check your placement constraints.")
+
+            # Get the parameters of top_layer + 1 first (offset doesn't matter)
+            above_insts = list(filter(lambda m: m["top_layer"] != m["layer"], insts))
+            copy_fields = ["layer", "direction", "net_order", "width", "spacing", "group_pitch"]
+            if len(above_insts) > 0:  # in some cases top_layer == top layer in power strap API
+                above_desc = {k: above_insts[0][k] for k in copy_fields}
+            elif not check_abut:
+                self.logger.error(f"par.power_straps_abutment is False, but you do not have power straps generated on layer {above_insts[0]['layer']} above instances of module {master}! Double check that you will supply power to them.")
+
+            # Filter for top_layer == layer and valid/bad orientation
+            abut_insts = list(filter(lambda m: m["top_layer"] == m["layer"] and
+                                                m["orientation"] in valid_orients[m["direction"]],
+                                                insts))
+            bad_orient_insts = list(filter(lambda m: m["top_layer"] == m["layer"] and
+                                                m["orientation"] not in valid_orients[m["direction"]],
+                                                insts))
+
+            variant_cnt = 0
+            while len(abut_insts) + len(bad_orient_insts) > 0:
+                # Get offset value with most occurrences in abut_insts first, then bad_orient_insts
+                if len(abut_insts) > 0:
+                    max_count_offset = mode(map(lambda m: m["offset"], abut_insts))
+                    insts = list(filter(lambda m: m["offset"] == max_count_offset, abut_insts))
+                    abut_insts = list(filter(lambda m: m["offset"] != max_count_offset, abut_insts))
+                else:
+                    max_count_offset = mode(map(lambda m: m["offset"], bad_orient_insts))
+                    insts = list(filter(lambda m: m["offset"] == max_count_offset, bad_orient_insts))
+                    bad_orient_insts = list(filter(lambda m: m["offset"] != max_count_offset, bad_orient_insts))
+
+                # Generate description
+                master_module = master
+                if variant_cnt > 0:  # bad module placement
+                    if master not in misaligned_insts:
+                        misaligned_insts[master] = list(map(lambda m: m["path"], insts))
+                    else:
+                        misaligned_insts[master].extend(list(map(lambda m: m["path"], insts)))
+                    master_module = master_module + "_" + str(variant_cnt)
+
+                abut_desc = {k: insts[0][k] for k in copy_fields}
+                abut_desc["offset"] = max_count_offset
+                abut_desc["inst_paths"] = list(map(lambda m: m["path"], insts))
+                abut_desc["inst_orientations"] = list(map(lambda m: m["orientation"], insts))
+
+                if len(above_insts) > 0:
+                    above_desc["inst_paths"] = list(map(lambda m: m["path"], insts))
+                    above_desc["inst_orientations"] = list(map(lambda m: m["orientation"], insts))
+                    output.append({master_module: [abut_desc, above_desc.copy()]})
+                else:
+                    output.append({master_moduel: [abut_desc]})
+
+                variant_cnt += 1
+
+        if check_abut and misaligned_insts:
+            self.logger.error("par.power_straps_abutment is True, but multiple instances of the same hardmacro "
+                    "are not placed on the same multiple of its top_layer or are mirrored across the axis parallel "
+                    "to that layer's direction! You must move them for abutment to work or else you must generate "
+                    "different versions of your hardmacros with different top layer power. Offending masters and "
+                    f"instances are:\n{json.dumps(misaligned_insts, indent=4)}")
+
+        json_str = json.dumps(output, indent=4)
+        with open(os.path.join(self.run_dir, "power_straps.json"), 'w') as f:
+            f.write(json_str)
 
     _power_straps_last_index = -1
 

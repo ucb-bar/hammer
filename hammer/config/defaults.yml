@@ -526,6 +526,19 @@ par:
   # - generate - Generate power straps from Hammer IR.
   power_straps_script_contents: null
 
+  power_straps_abutment: false # Check hardmacro power strap abutment (true) or via down (false) support.
+  # Instances of hardmacros will be checked to ensure that its "orientation", "x", and "y" allow for 
+  # a single "master" macro to support power strap abutment on its "top_layer".
+  # Instances to be checked must specify the following in their placement constraints:
+  # - "master" and "top_layer" (required)
+  # - "create_physical": false
+  # - "width" and "height" (optional) enable more rigorous checks.
+  # If true, orientation and location are checked for conformity:
+  # - "r0" or "mx" only allowed if "top_layer" is routed vertically, "r0" or "my" otherwise.
+  # - Placement is equal to the pitch of power straps on the "top_layer".
+  # If false, availability of power on the layer above "top_layer" is verified for supply using vias.
+  # type: bool
+
   blockage_spacing: 0.0 # Spacing around blocks and hardmacros in microns
   # Used by power straps and floorplanning
   # type: Decimal
