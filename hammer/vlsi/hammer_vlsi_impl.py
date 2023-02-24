@@ -791,7 +791,7 @@ class HammerPlaceAndRouteTool(HammerTool):
 
         # Need to check against power obstructions
         obs = list(filter(lambda c: c.type == PlacementConstraintType.Obstruction, fp_consts))
-        pwr_obs = list(filter(lambda c: ObstructionType.Power in c.obs_types, obs))
+        pwr_obs = list(filter(lambda c: c.obs_types is not None and ObstructionType.Power in c.obs_types, obs))
 
         # Get stackup information
         stackup = self.get_stackup()
@@ -830,8 +830,8 @@ class HammerPlaceAndRouteTool(HammerTool):
 
             # Log error if there is a power obstruction intersects with macro (no skip)
             check_layer_idx = top_idx + (not check_abut)
-            layer_pwr_obs = list(filter(lambda o: layer_name in o.layers and layer.index == check_layer_idx, pwr_obs))
-            if len(layer_pwr_obs) > 0 and macro.width is not None and macro.height is not None:
+            layer_pwr_obs = list(filter(lambda o: o.layers is not None and layer_name in o.layers, pwr_obs))
+            if layer.index == check_layer_idx and len(layer_pwr_obs) > 0 and macro.width is not None and macro.height is not None:
                 m_ll_x = macro.x
                 m_ll_y = macro.y
                 m_ur_x = macro.x + macro.width
@@ -841,14 +841,14 @@ class HammerPlaceAndRouteTool(HammerTool):
                     m_ur_x = macro.x + macro.height
                     m_ur_y = macro.y + macro.width
 
-                for obs in layer_pwr_obs:
-                    o_ll_x = obs.x
-                    o_ll_y = obs.y
-                    o_ur_x = obs.x + obs.width
-                    o_ur_y = obs.y + obs.height
-                    # Check for any overlap
+                for po in layer_pwr_obs:
+                    o_ll_x = po.x
+                    o_ll_y = po.y
+                    o_ur_x = po.x + po.width
+                    o_ur_y = po.y + po.height
+                    # Check fpo.or any overlap
                     if not(m_ur_x <= o_ll_x or o_ur_x <= m_ll_x or m_ur_y <= o_ll_y or o_ur_y <= m_ll_y):
-                        self.logger.error(f"Hardmacro instance \"{macro.path}\" is partially/fully obstructed on layer {layer.name} by power obstruction \"{obs.path}\"! Double check that you will supply power to it.")
+                        self.logger.error(f"Hardmacro instance \"{macro.path}\" is partially/fully obstructed on layer {layer.name} by power obstruction \"{po.path}\"! Double check that you will supply power to it.")
 
             # Translate offset to the macro's origin
             if layer.direction == RoutingDirection.Vertical:
@@ -951,7 +951,7 @@ class HammerPlaceAndRouteTool(HammerTool):
                     above_desc["inst_orientations"] = list(map(lambda m: m["orientation"], insts))
                     output.append({master_module: [abut_desc, above_desc.copy()]})
                 else:
-                    output.append({master_moduel: [abut_desc]})
+                    output.append({master_module: [abut_desc]})
 
                 variant_cnt += 1
 
