@@ -774,6 +774,12 @@ class HammerPlaceAndRouteTool(HammerTool):
     def _get_power_straps_for_hardmacros(self, layer_name: str, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str]) -> None:
         """
         Generates power strap information for hardmacros in the design.
+        Also applies a set of checks per instance:
+        - That master is specified and is in the list of power_straps_abutment_macros (if provided)
+        - It is not a physical only cell
+        - It does not fall outside the power strap bbox
+        - No power obstructions on the relevant layer overlap it
+        - All straps within a group can fully abut/overlap it
 
         :param layer_name: The layer name of the metal on which to create straps.
         :param pitch: The pitch between groups of power straps (i.e. from left edge of strap A to the next left edge of strap A).
