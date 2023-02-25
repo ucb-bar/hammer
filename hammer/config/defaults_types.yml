@@ -260,6 +260,9 @@ par:
   # Macro power strap abutment checks
   power_straps_abutment: bool
 
+  # Limit strap check/dump to certain macros
+  power_straps_abutment_macros: Optional[list[str]]
+
   # Spacing around blocks and hardmacros in microns
   blockage_spacing: float
 

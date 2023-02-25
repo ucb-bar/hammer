@@ -802,6 +802,9 @@ class HammerPlaceAndRouteTool(HammerTool):
             # Skip if master is not given
             if macro.master is None:
                 continue
+            elif self.get_setting("par.power_straps_abutment_macros") is not None:
+                if macro.master not in self.get_setting("par.power_straps_abutment_macros"):
+                    continue
             # Skip if hardmacro is physical only
             if get_or_else(macro.create_physical, False):
                 continue
@@ -828,7 +831,7 @@ class HammerPlaceAndRouteTool(HammerTool):
                 self.logger.error(f"Hardmacro instance \"{macro.path}\" is not placed within the power strap bounding box for layer {layer.name}! Double check that you will supply power to it.")
                 continue
 
-            # Log error if there is a power obstruction intersects with macro (no skip)
+            # Log error if a power obstruction intersects with macro (no skip)
             check_layer_idx = top_idx + (not check_abut)
             layer_pwr_obs = list(filter(lambda o: o.layers is not None and layer_name in o.layers, pwr_obs))
             if layer.index == check_layer_idx and len(layer_pwr_obs) > 0 and macro.width is not None and macro.height is not None:
@@ -857,6 +860,22 @@ class HammerPlaceAndRouteTool(HammerTool):
                 offset_trans = pitch - ((macro.y - offset) % pitch)
             else: # redistribution not supported
                 continue
+            # Offset can't be less than strap width/2, bump to next group
+            if offset_trans < width / 2:
+                offset_trans += pitch
+            # If offset + width of group is larger than width/height, at least first strap in group can't abut
+            last_edge = offset_trans + (len(nets) - 1) * (width + spacing) + width / 2
+            oob = False
+            if macro.width is not None and macro.height is not None:
+                if layer.direction == RoutingDirection.Vertical:
+                     oob = (orientation in ["r90", "r270"] and last_edge > macro.height) or last_edge > macro.width
+                if layer.direction == RoutingDirection.Horizontal:
+                     oob = (orientation in ["r90", "r270"] and last_edge > macro.width) or last_edge > macro.height
+            if oob and layer.index == check_layer_idx:
+                if check_abut:
+                    self.logger.error(f"Hardmacro instance \"{macro.path}\" is placed such that a full group of power straps on layer {layer.name} cannot abut it! Double check your macro placement/size vs. power strap group pitch.")
+                else:
+                    self.logger.error(f"Hardmacro instance \"{macro.path}\" is placed such that a full group of power straps on layer {layer.name} cannot via down! Double check your macro placement/size vs. power strap group pitch.")
 
             # Append instance info
             self._hardmacro_power_straps.append({
@@ -957,9 +976,9 @@ class HammerPlaceAndRouteTool(HammerTool):
 
         if check_abut and misaligned_insts:
             self.logger.error("par.power_straps_abutment is True, but multiple instances of the same hardmacro "
-                    "are not placed on the same multiple of its top_layer or are mirrored across the axis parallel "
-                    "to that layer's direction! You must move them for abutment to work or else you must generate "
-                    "different versions of your hardmacros with different top layer power. Offending masters and "
+                    "are not placed on its \"top_layer\" power strap pitch or are mirrored across the axis parallel "
+                    "to that layer's direction! Adjust them for proper power strap abutment or generate alternate "
+                    "versions of your hardmacros with different top layer power patterns. Offending masters and "
                     f"instances are:\n{json.dumps(misaligned_insts, indent=4)}")
 
         json_str = json.dumps(output, indent=4)
