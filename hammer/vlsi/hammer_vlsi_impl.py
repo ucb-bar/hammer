@@ -861,16 +861,13 @@ class HammerPlaceAndRouteTool(HammerTool):
 
             # Translate offset to the macro's origin
             if layer.direction == RoutingDirection.Vertical:
-                offset_trans = pitch - ((macro.x - offset) % pitch)
+                offset_trans = (macro.x - offset) % pitch
             elif layer.direction == RoutingDirection.Horizontal:
-                offset_trans = pitch - ((macro.y - offset) % pitch)
+                offset_trans = (macro.y - offset) % pitch
             else: # redistribution not supported
                 continue
-            # Offset can't be less than strap width/2, bump to next group
-            if offset_trans < width / 2:
-                offset_trans += pitch
             # If offset + width of group is larger than width/height, at least first strap in group can't abut
-            last_edge = offset_trans + (len(nets) - 1) * (width + spacing) + width / 2
+            last_edge = offset_trans + (len(nets) - 1) * (width + spacing) + width
             oob = False
             if macro.width is not None and macro.height is not None:
                 if layer.direction == RoutingDirection.Vertical:
