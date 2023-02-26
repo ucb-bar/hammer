@@ -861,9 +861,9 @@ class HammerPlaceAndRouteTool(HammerTool):
 
             # Translate offset to the macro's origin
             if layer.direction == RoutingDirection.Vertical:
-                offset_trans = (macro.x - offset) % pitch
+                offset_trans = (offset - macro.x) % pitch
             elif layer.direction == RoutingDirection.Horizontal:
-                offset_trans = (macro.y - offset) % pitch
+                offset_trans = (offset - macro.y) % pitch
             else: # redistribution not supported
                 continue
             # If offset + width of group is larger than width/height, at least first strap in group can't abut
