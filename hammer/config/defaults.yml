@@ -437,6 +437,9 @@ synthesis.inputs:
   top_module: null # Top RTL module.
   # Set to null to not specify from the JSON.
 
+  # Specify a list of modules that should be retimed automatically
+  retime_modules: [] # List of modules to be retimed
+
 synthesis:
 # Syntheis tool settings
   clock_gating_mode: auto # Clock gating mode.
