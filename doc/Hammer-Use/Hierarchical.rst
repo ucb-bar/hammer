@@ -62,9 +62,11 @@ Based on the structure in ``vlsi.inputs.hierarchical.manual_modules``, Hammer co
 
 These are enumerated in the auto-generated Makefile, ``hammer.d``, which is placed in the directory pointed to by the ``--obj_dir`` command line flag when the ``buildfile`` action is run. This action must be run BEFORE executing your flow. If you adjust the hierarchy, you must re-run this action.
 
-To perform a flow action (syn, par, etc.) for a module using the auto-generated Makefile, the name of the action is appended with the module name. For example, the generated Make target for synthesis of ``ModuleA`` is ``syn-ModuleA``. A graphical example of the auto-generated flow with ``RocketTile`` under a ``ChipTop`` is shown below:
+To perform a flow action (syn, par, etc.) for a module using the auto-generated Makefile, the name of the action is appended with the module name. For example, the generated Make target for synthesis of ``ModuleA`` is ``syn-ModuleA``. A graphical example of the auto-generated dependency graph with ``RocketTile`` under a ``ChipTop`` is shown below:
 
 .. image:: hier.svg
+
+The auto-generated Makefile also has ``redo-`` targets corresponding to each generated action, e.g. ``redo-syn-ModuleA``. These targets break the dependency graph and allow you to re-run any action with new input configuration without forcing the flow to re-run from the beginning of the graph.
 
 Cadence Implementation
 ----------------------
