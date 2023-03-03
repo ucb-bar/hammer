@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 import unittest
@@ -5,13 +6,14 @@ from textwrap import dedent
 
 import networkx as nx
 import pytest
+from networkx.readwrite import json_graph
 
 from hammer.flowgraph import node
 from hammer.flowgraph.node import Graph, Node, Status
 from hammer.logging import HammerVLSILogging
 
 
-class NodeTest(unittest.TestCase):
+class TestNode(unittest.TestCase):
 
     def test_initialize_node(self) -> None:
         """Test that we can instantiate a node."""
@@ -386,13 +388,93 @@ class NodeTest(unittest.TestCase):
             with pytest.raises(Exception):
                 g.run(syn)
 
-            print(syn.status)
-            print(s2p_bad.status)
-            print(par.status)
             self.assertEqual(syn.status, Status.COMPLETE)
             self.assertEqual(s2p_bad.status, Status.INCOMPLETE)
             self.assertEqual(par.status, Status.NOT_RUN)
 
+    def test_encode_decode(self) -> None:
+        """
+        Test that a flowgraph can be encoded and decoded.
+        """
+        HammerVLSILogging.clear_callbacks()
+        HammerVLSILogging.add_callback(HammerVLSILogging.callback_buffering)
+
+        cfg = dedent("""
+            synthesis.inputs:
+                input_files: ["LICENSE", "README.md"]
+                top_module: "z1top.xdc"
+
+            par.inputs:
+                input_files: ["LICENSE", "README.md"]
+                top_module: "z1top.xdc"
+
+            drc.inputs:
+                input_files: ["LICENSE", "README.md"]
+                top_module: "z1top.xdc"
+
+            lvs.inputs:
+                input_files: ["LICENSE", "README.md"]
+                schematic_files: ["LICENSE", "README.md"]
+                top_module: "z1top.xdc"
+                hcells_list: []
+
+            pcb.inputs:
+                top_module: "z1top.xdc"
+
+            formal.inputs:
+                input_files: ["LICENSE", "README.md"]
+                top_module: "z1top.xdc"
+
+            sim.inputs:
+                input_files: ["LICENSE", "README.md"]
+                top_module: "z1top.xdc"
+
+            vlsi:
+                core:
+                    technology: "hammer.technology.nop"
+
+                    synthesis_tool: "hammer.synthesis.nop"
+                    par_tool: "hammer.par.nop"
+                    drc_tool: "hammer.drc.nop"
+                    lvs_tool: "hammer.lvs.nop"
+                    power_tool: "hammer.power.nop"
+                    sim_tool: "mocksim"
+        """)
+
+        with tempfile.TemporaryDirectory() as td:
+            os.mkdir(os.path.join(td, "syn_dir"))
+            os.mkdir(os.path.join(td, "par_dir"))
+
+            with open(os.path.join(td, "syn_dir", "syn-in.yml"), 'w', encoding="utf-8") as tf1:
+                tf1.write(cfg)
+            syn = Node(
+                "syn", "nop",
+                os.path.join(td, "syn_dir"), os.path.join(td, "s2p_dir"),
+                ["syn-in.yml"],
+                ["syn-out.json"],
+            )
+            s2p = Node(
+                "syn-to-par", "nop",
+                os.path.join(td, "s2p_dir"), os.path.join(td, "par_dir"),
+                ["syn-out.json"],
+                ["s2p-out.json"],
+            )
+            par = Node(
+                "par", "nop",
+                os.path.join(td, "par_dir"), os.path.join(td, "out_dir"),
+                ["s2p-out.json"],
+                ["par-out.json"],
+            )
+            g = Graph({
+                syn: [s2p],
+                s2p: [par],
+                par: []
+            })
+
+            out = json.dumps(g.to_json(), cls=node.NodeEncoder)
+            g_dec = json.loads(out, object_hook=node.as_node)
+            # print(g.to_json())
+            print(json_graph.node_link_graph(g_dec).nodes)
 
 if __name__ == "__main__":
     unittest.main()
