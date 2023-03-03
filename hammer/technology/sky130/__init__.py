@@ -24,6 +24,8 @@ class SKY130Tech(HammerTechnology):
     def post_install_script(self) -> None:
         self.library_name = 'sky130_fd_sc_hd'
         # check whether variables were overriden to point to a valid path
+        print(self.get_setting("technology.sky130.openram_lib"))
+        print(self.get_setting("technology.sky130.sky130_nda"))
         self.use_openram = os.path.exists(self.get_setting("technology.sky130.openram_lib"))
         self.use_nda_files = os.path.exists(self.get_setting("technology.sky130.sky130_nda"))
         self.setup_cdl()
@@ -182,6 +184,25 @@ class SKY130Tech(HammerTechnology):
             "sky130_sram_2kbyte_1rw1r_32x512_8"
         ]
 
+    @staticmethod
+    def sky130_sram_names() -> List[str]:
+        return [
+            "sramgen_sram_32x32m2w8_replica_v1",
+            "sramgen_sram_64x32m4w32_replica_v1",
+            "sramgen_sram_512x32m4w8_replica_v1",
+            "sramgen_sram_1024x32m8w8_replica_v1",
+            "sramgen_sram_1024x32m8w32_replica_v1",
+            "sramgen_sram_1024x64m8w32_replica_v1",
+            "sramgen_sram_2048x32m8w8_replica_v1",
+            "sramgen_sram_4096x32m8w8_replica_v1",
+
+            "sky130_sram_1kbyte_1rw1r_32x256_8",
+            "sky130_sram_1kbyte_1rw1r_8x1024_8",
+            "sky130_sram_2kbyte_1rw1r_32x512_8",
+            "sky130_sram_4kbyte_1rw1r_32x1024_8",
+            "sky130_sram_8kbyte_1rw1r_32x2048_8"
+        ]
+
 
 _the_tlef_edit = '''
 LAYER licon
@@ -204,7 +225,7 @@ LVS FILTER D  OPEN  LAYOUT
 '''
 
 # black-box SRAMs during LVS
-for name in SKY130Tech.openram_sram_names():
+for name in SKY130Tech.sky130_sram_names():
     LVS_DECK_INSERT_LINES += f"LVS BOX {name} \n"
     LVS_DECK_INSERT_LINES += f"LVS FILTER {name} OPEN \n"
 
@@ -317,7 +338,7 @@ set_wire_rc -clock  -layer "met5"
 def drc_blackbox_openram_srams(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerDRCTool), "Exlude SRAMs only in DRC"
     drc_box = ''
-    for name in SKY130Tech.openram_sram_names():
+    for name in SKY130Tech.sky130_sram_names():
         drc_box += f"\nEXCLUDE CELL {name}"
     run_file = ht.drc_run_file  # type: ignore
     with open(run_file, "a") as f:
@@ -327,7 +348,7 @@ def drc_blackbox_openram_srams(ht: HammerTool) -> bool:
 def lvs_blackbox_openram_srams(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerLVSTool), "Blackbox and filter SRAMs only in LVS"
     lvs_box = ''
-    for name in SKY130Tech.openram_sram_names():
+    for name in SKY130Tech.sky130_sram_names():
         lvs_box += f"\nLVS BOX {name}"
         lvs_box += f"\nLVS FILTER {name} OPEN "
     run_file = ht.lvs_run_file  # type: ignore

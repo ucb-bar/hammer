@@ -55,7 +55,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
     def post_synth_sdc(self) -> Optional[str]:
         # No post-synth SDC input for synthesis...
         return None
-
+    
     @property
     def all_regs_path(self) -> str:
         return os.path.join(self.run_dir, "find_regs_paths.json")
@@ -63,7 +63,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
     @property
     def all_cells_path(self) -> str:
         return os.path.join(self.run_dir, "find_regs_cells.json")
-
+    
     def fill_outputs(self) -> bool:
         # TODO: actually generate the following for simulation
         # Check that the regs paths were written properly if the write_regs step was run
@@ -121,7 +121,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
     @property
     def mapped_sdc_path(self) -> str:
         return os.path.join(self.run_dir, "{}.mapped.sdc".format(self.top_module))
-
+    
     @property
     def mapped_blif_path(self) -> str:
         return os.path.join(self.run_dir, "{}.mapped.blif".format(self.top_module))
@@ -202,7 +202,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         self.synth_cap_load = 33.5 # SYNTH_CAP_LOAD
         self.max_fanout = 5 # default SYNTH_MAX_FANOUT = 5
 
-
+        
         self.driver_cell = None
         driver_cells = self.technology.get_special_cell_by_type(CellType.Driver)
         if len(driver_cells) == 0:
@@ -221,9 +221,9 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
             corner_tt = next((corner for corner in corners if corner.type == MMMCCornerType.Extra), None)
         except:
             raise ValueError("An extra corner is required for Yosys.")
-
+            
         self.liberty_files_tt = self.get_timing_libs(corner_tt)
-
+        
         self.append("yosys -import")
 
         # replaces undef (x) constants with defined (0/1) constants.
@@ -231,13 +231,13 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
 
         # We are switching working directories and Yosys still needs to find paths.
         abspath_input_files = list(map(lambda name: os.path.join(os.getcwd(), name), self.input_files))  # type: List[str]
-
+        
         # Add any verilog_synth wrappers (which are needed in some technologies e.g. for SRAMs) which need to be
         # synthesized.
         abspath_input_files += self.technology.read_libs([
             hammer_tech.filters.verilog_synth_filter
         ], hammer_tech.HammerTechnologyUtils.to_plain_item)
-
+        
         for verilog_file in abspath_input_files:
             self.append(f"read_verilog -sv {verilog_file}")
 
@@ -253,7 +253,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
             latch_map = f"techmap -map {self.get_setting('synthesis.yosys.latch_map_file')}"
         else:  # TODO: make the else case better
             latch_map = ""
-
+        
         self.block_append(f"""
         # TODO: verify this command, it was in yosys manual but not in OpenLANE script
         yosys proc
@@ -281,7 +281,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         return True
 
     def syn_map(self) -> bool:
-
+        
         self.block_append(f"""
         # Technology mapping for cells
         # ABC supports multiple liberty files, but the hook from Yosys to ABC doesn't
@@ -311,7 +311,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
 
         if len(tie_hi_cells) != 1 or len (tie_lo_cells) != 1 or tie_hi_cells[0].output_ports is None or tie_lo_cells[0].output_ports is None:
             self.logger.warning("Hi and Lo tiecells and their input ports are unspecified or improperly specified and will not be added during synthesis.")
-        else:
+        else:   
             tie_hi_cell = tie_hi_cells[0].name[0]
             tie_hi_port = tie_hi_cells[0].output_ports[0]
             tie_lo_cell = tie_lo_cells[0].name[0]
@@ -343,21 +343,22 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         tee -o {self.run_dir}/{self.top_module}.synth_stat.txt stat -top {self.top_module} -liberty {self.liberty_files_tt.split()[0]}
         """)
         return True
-
+    
     def write_outputs(self) -> bool:
         hier_mapped_v_path=os.path.join(self.run_dir, f"{self.top_module}.mapped.hier.v")
         self.block_append(f"""
-        write_verilog -noattr -noexpr -nohex -nodec -defparam "{hier_mapped_v_path}"
-
-        flatten
-
-        # OpenROAD will throw an error if the verilog from Yosys is not flattened
         write_verilog -noattr -noexpr -nohex -nodec -defparam "{self.mapped_v_path}"
 
+        # flatten
+
+        # # OpenROAD will throw an error if the verilog from Yosys is not flattened
+        # # UPDATE ON THIS: nvm, it somehow works now...
+        # write_verilog -noattr -noexpr -nohex -nodec -defparam "{self.mapped_v_path}"
+
         # BLIF file seems to be easier to parse than mapped verilog for find_regs functions so leave for now
-        write_blif -top {self.top_module} "{self.mapped_blif_path}"
+        # write_blif -top {self.top_module} "{self.mapped_blif_path}"
         """)
         self.ran_write_outputs = True
         return True
-
+    
 tool = YosysSynth

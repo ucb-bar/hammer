@@ -11,7 +11,7 @@ par.openroad:
   # Generate the TCL file but do not run it yet.
   generate_only: bool
 
-  create_archive_mode: Optional[str]
+  create_archive_mode: str
   # generate the tar.gz archive of the current build/par-rundir directory with a runme.sh script to reproduce the results
   # Valid options are:
   # - after_error - if OpenROAD errors, create an archive of the run
@@ -31,10 +31,48 @@ par.openroad:
   floorplan_mode: str
   floorplan_script_contents: Optional[str]
 
+  floorplan_origin_pos: str
+  # Valid options are:
+  # - rotated
+  # - bottom_left
+
   # Optional: OpenRCX RC tech file
+  # type: Optional[str]
   # Should be set in technology plugin
   openrcx_techfile: Optional[str]
 
   # Optional: KLayout tech file
+  # type: Optional[str]
   # Should be set in technology plugin
   klayout_techfile_source: Optional[str]
+
+  setrc_file: Optional[str]
+
+
+  # Step parameter configurations
+
+  global_placement:
+    timing_driven: bool
+    routability_driven: bool
+    density: float
+    placement_padding: int
+    routing_adjustment: float
+  
+  detailed_placement:
+    placement_padding: int
+
+  clock_tree:
+    placement_padding: int
+  
+  clock_tree_resize:
+    setup_margin: float
+    hold_margin: float
+    hold_max_buffer_percent: int
+    placement_padding: int
+  
+  global_route: 
+    routing_adjustment: float
+  
+  global_route_resize:
+    hold_margin: float
+    routing_adjustment: float

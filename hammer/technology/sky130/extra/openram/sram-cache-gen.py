@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+#
 #  Script to generate the ASAP7 dummy SRAM cache.
 #
 #  See LICENSE for licence details.

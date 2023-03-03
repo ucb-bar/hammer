@@ -8,6 +8,10 @@ technology.sky130:
   # this key is OPTIONAL, no NDA files will be used if it does not point to a valid path
   # By default, this is used to populate pdk_home below.
   # It should contain s8/V2.0.1
+
+  sram22_sky130_macros: "/path/to/sram22_sky130_macros"  # SRAM path
+  # /path/to/sram22_sky130_macros
+  # Sram22
   
   openram_lib: "/path/to/sky130_sram_macros" # RAM paths
   # OpenRAM
@@ -19,6 +23,10 @@ technology.sky130:
   lvs_deck_sources: 
     - "${technology.sky130.pdk_home}/LVS/Calibre/lvsControlFile_s8"
   lvs_deck_sources_meta: lazysubst
+
+  drc_blackbox_srams: false
+  lvs_blackbox_srams: false
+  
 
 mentor.extra_env_vars_meta: lazydeepsubst # Mentor environment variables
 # Override this in project
@@ -41,10 +49,12 @@ vlsi:
     # TODO: add ability to tie pin to net in Hammer Innovus plugin
       power:  [ {name: "VDD",  pin: "VDD"}, 
                 {name: "VPWR", pin: "VPWR", tie: "VDD"},
-                {name: "VPB",  pin: "VPB" , tie: "VDD"}]
+                {name: "VPB",  pin: "VPB" , tie: "VDD"},
+                {name: "vdd",  pin: "vdd",  tie: "VDD"}]
       ground: [ {name: "VSS",  pin: "VSS"},
                 {name: "VGND", pin: "VGND", tie: "VSS"},
-                {name: "VNB",  pin: "VNB" , tie: "VSS"}]
+                {name: "VNB",  pin: "VNB" , tie: "VSS"},
+                {name: "vss",  pin: "vss",  tie: "VSS"}]
       VDD: "1.8 V"
       GND: "0 V"
 
@@ -99,8 +109,13 @@ par.inputs:
 par.openroad:
   openrcx_techfile: "extra/sky130hd.rcx_rules"
   openrcx_techfile_meta: prependlocal
+  setrc_file: "extra/setRC.tcl"
+  setrc_file_meta: prependlocal
   klayout_techfile_source: "${technology.sky130.sky130A}/libs.tech/klayout/tech/sky130A.lyt"
   klayout_techfile_source_meta: lazysubst
+  macro_placement:
+    halo: [40, 40]
+    orient_all: r90  # required for Sram22
 
 par.power_straps_mode: generate # Power Straps
 par.generate_power_straps_method: by_tracks
