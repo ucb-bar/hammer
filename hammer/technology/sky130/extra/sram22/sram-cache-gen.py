@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# type: ignore
+#   tell mypy to ignore this file during typechecking
 # -*- coding: utf-8 -*-
 #
 #  Script to generate the SRAM22 sram-cache.json

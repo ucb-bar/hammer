@@ -164,7 +164,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         return os.path.join(self.run_dir, "{top}.par.sdf.gz".format(top=self.top_module))
 
     @property
-    def output_spef_paths(self) -> str:
+    def output_spef_paths(self) -> List[str]:
         return [os.path.join(self.run_dir, "{top}.par.spef".format(top=self.top_module))]
 
     @property
@@ -417,7 +417,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     
 
     def gui(self) -> str:
-        cmds=[]
+        cmds: List[str] = []
         self.block_tcl_append(f"""
         set db_name $::env(db_name)
         set timing $::env(timing)
@@ -588,7 +588,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         # OpenROAD names the LEF libraries by filename:
         #   foo.tlef and foo.lef evaluate to the same library "foo"
         #   solution: copy foo.lef to foo1.lef
-        cmds = []
+        cmds = [""]
         lef_files = self.technology.read_libs([
             hammer_tech.filters.lef_filter
         ], hammer_tech.HammerTechnologyUtils.to_plain_item)
@@ -662,7 +662,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         # overwrite SDC file to exclude group_path command
         # change units in SDC file (1000.0fF and 1000.0ps cause errors)
 
-        cmds = []
+        cmds = [""]
         sdc_files = self.generate_sdc_files()
         for sdc_file in sdc_files[:-1]:
             cmds.append(f"read_sdc -echo {sdc_file}")
@@ -720,7 +720,9 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             elif step_names.index(first_step.name) > step_names.index('global_placement'):
                 self.block_append("estimate_parasitics -placement")
 
-        self.create_write_reports_tcl()
+        with open(self.write_reports_tcl, 'w') as f:
+            f.write('\n'.join(self.create_write_reports_tcl()))
+
         self.block_append(f"source {self.write_reports_tcl}")
 
         # [par] [Exec openroad -no_init -log /...] Error: par.tcl, 76 Invalid method. Must be one of: getBBox getPlacementStatus isFixed isPlaced setPlacementStatus getEcoCreate getEcoDestroy getEcoModify setEcoCreate setEcoDestroy setEcoModify getUserFlag1 setUserFlag1 clearUserFlag1 getUserFlag2 setUserFlag2 clearUserFlag2 getUserFlag3 setUserFlag3 clearUserFlag3 setDoNotTouch isDoNotTouch getBlock getMaster getGroup getITerms getFirstOutput getRegion getModule findITerm getConnectivity bindBlock unbindBlock resetHierarchy getChild getParent getChildren isHierarchical getHalo getWeight setWeight getSourceType setSourceType getITerm swapMaster getLevel setLevel
@@ -862,13 +864,10 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         global_top_layer = self.get_setting('par.blockage_spacing_top_layer')
         ############## Actually generate the constraints ################
         for constraint in floorplan_constraints:
-            current_top_layer = None
             if constraint.top_layer is not None:
-                current_top_layer = constraint.top_layer #  type: Optional[str]
+                layers.add(constraint.top_layer)
             elif global_top_layer is not None:
-                current_top_layer = global_top_layer
-            if current_top_layer is not None:
-                layers.add(current_top_layer)
+                layers.add(global_top_layer)                
         return list(layers)
 
 
@@ -984,7 +983,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         # if random: random_arg="-random"
 
         stackup = self.get_stackup()
-        all_metal_layer_names = [layer.name for layer in self.get_stackup().metals]
+        all_metal_layer_names = [layer.name for layer in stackup.metals]
         pin_assignments = self.get_pin_assignments()
         hor_layers=set()
         ver_layers=set()
@@ -992,7 +991,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         for pin in pin_assignments:
             if pin.layers is not None and len(pin.layers) > 0:
                 for pin_layer_name in pin.layers:
-                    layer = self.get_stackup().get_metal(pin_layer_name)
+                    layer = stackup.get_metal(pin_layer_name)
                     if layer.direction==RoutingDirection.Horizontal:
                         hor_layers.add(pin_layer_name)
                     if layer.direction==RoutingDirection.Vertical:
@@ -1017,7 +1016,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             else: # edge-case
                 pin_layer_names[1]=all_metal_layer_names[pin_layer_idx_1]
             for pin_layer_name in pin_layer_names:
-                layer = self.get_stackup().get_metal(pin_layer_name)
+                layer = stackup.get_metal(pin_layer_name)
                 if (layer.direction==RoutingDirection.Horizontal) and (pin_layer_name not in hor_layers):
                     hor_layers.add(pin_layer_name)
                 if (layer.direction==RoutingDirection.Vertical)   and (pin_layer_name not in ver_layers):
@@ -1029,19 +1028,15 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                 cmds += f"place_pins -random -hor_layers {{{' '.join(hor_layers)}}} -ver_layers {{{' '.join(ver_layers)}}}\n"
         else:
             for pin in pin_assignments:
-                if '*' not in pin.pins:
-                    # cmds += "place_pin -pin_name {n} -layer {l} -location {{{xy}}}\n".format(
-                    #     n=pin.name,
-                    #     l=pin.layers[0],
-                    #     xy=" ".join(pin.location)
-                    # )
+                if ('*' not in pin.pins) and (pin.location is not None):
+                    pin_layer_name = pin.layers[0] if pin.layers else all_metal_layer_names[-1]
                     cmd = [
                         "place_pin", "-pin_name", pin.pins,
-                        "-layer", pin.layers[0],
+                        "-layer", pin_layer_name,
                         "-location", f"{{{pin.location[0]} {pin.location[1]}}}",
                         "-pin_size", f"{{{pin.width} {pin.depth}}}",
                     ]
-                    cmds += " ".join(cmd) + '\n'
+                    cmds += " ".join(list(cmd)) + '\n'
                 else:
                     side=""
                     if pin.side == "bottom":
@@ -1269,7 +1264,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         return True
 
     @property
-    def global_route_cmd(self) -> bool:
+    def global_route_cmd(self) -> str:
         cmd = f"""
         global_route -guide_file {self.route_guide_path} -congestion_iterations 150 -verbose -congestion_report_file {self.run_dir}/congestion.rpt
         estimate_parasitics -global_routing
@@ -1412,7 +1407,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                     if '</lefdef>' in line:
                         df.write(insert_lines)
                     df.write(line)
-        return klayout_techfile_path
+        return str(klayout_techfile_path)
 
     # def write_netlist(self) -> bool:
     #     self.block_append(f"""
@@ -1460,7 +1455,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         return
 
     def write_gds(self) -> str:
-        cmds = []
+        cmds: List[str] = []
 
         klayout_techfile_path = self.setup_klayout_techfile()
 
@@ -1506,7 +1501,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     def write_sdf(self) -> str:
         corners = self.get_mmmc_corners()
-        cmds = []
+        cmds = [""]
         # are multiple corners necessary? Tempus only supports reading one SDF
         self.block_tcl_append(f"""
         write_sdf -corner setup -gzip {self.output_sdf_path}
@@ -1534,9 +1529,9 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         self.tcl_append(f'puts "(hammer: end_report)"\n', output_buffer)
         return True
 
-    def create_write_reports_tcl(self) -> bool:
+    def create_write_reports_tcl(self) -> str:
         # NOTE: both report_check_types and report_power commands have [> filename] option but it just generates an empty file...
-        write_reports_cmds = []
+        write_reports_cmds = [""]
         prefix = "${prefix}"
         self.block_tcl_append("""
         ################################################################
@@ -1596,8 +1591,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         
         self.tcl_append("}\n", write_reports_cmds)
 
-        with open(self.write_reports_tcl, 'w') as f:
-            f.write('\n'.join(write_reports_cmds))
+        return '\n'.join(write_reports_cmds)
+
 
     def write_reports(self, prefix: str) -> str:
         return f"write_reports {prefix}"
@@ -1607,21 +1602,24 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         '''  
         with open(self.openroad_log,'r') as f:
             writing_rpt = False
-            rpt = []
-            rpt_name = None
+            rpt: List[str] = []
+            rpt_name = ""
             for line in f:
                 if line.startswith('(hammer: end_report'):
                     writing_rpt = False
-                    with open(rpt_name,'w') as fw:
-                        fw.write(''.join(rpt))
+                    if rpt_name != "":
+                        with open(rpt_name,'w') as fw:
+                            fw.write(''.join(rpt))
+                    else:
+                        self.logger.error("Report name not found!")
                     rpt = []
-                    rpt_name = None
                 if writing_rpt:
                     rpt.append(line)
                 if line.startswith('(hammer: begin_report'):
                     writing_rpt = True
                     match = re.match(r"^.*begin_report > (.*)\)",line)
-                    rpt_name = match.group(1)
+                    if match:
+                        rpt_name = match.group(1)
         return True
 
 
@@ -1724,6 +1722,9 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             return (x,y)
         elif orientation == 'my90':
             return (x+height,y+width)
+        else:
+            self.logger.error(f"Invalid orientation {orientation}")
+            return (x,y)
 
     def convert_orientation_hammer2openroad(self, orientation) -> str:
         # None case
@@ -1794,13 +1795,14 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                 # for OpenROAD
                 elif constraint.type in [PlacementConstraintType.HardMacro, PlacementConstraintType.Hierarchical]:
                     x,y = constraint.x, constraint.y
+                    orientation = constraint.orientation if constraint.orientation else 'r0'
                     if floorplan_origin_pos == 'bottom_left':
                         if constraint.width == None or constraint.height == None:
                             self.logger.warning("Floorplan origin position 'bottom_left' cannot be applied to macro {new_path} because macro width/height are unspecified. Reverting to 'rotated' mode.")
                         else:
-                            x,y = self.rotate_coordinates( (constraint.x,constraint.y), (constraint.width, constraint.height),  constraint.orientation )
+                            x,y = self.rotate_coordinates( (constraint.x,constraint.y), (constraint.width, constraint.height),  orientation )
                             pass
-                    orientation = self.convert_orientation_hammer2openroad(constraint.orientation)
+                    orientation = self.convert_orientation_hammer2openroad(orientation)
                     inst_name=new_path
 
                     floorplan_cmd = f"""place_cell -inst_name {inst_name} -orient {orientation} -origin $origin -status FIRM"""

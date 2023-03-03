@@ -104,6 +104,9 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
                 corner={'nmos': speed_name, 'pmos': speed_name, 'temperature': str(corner.temp.value_in_units("C")) + " C"},
                 supplies={'VDD': str(corner.voltage.value_in_units("V")) + " V", 'GND': "0 V"},
                 provides=[{'lib_type': "sram", 'vt': params.vt}]))
+        else:
+            self.logger.error(f"SRAM {params.name} not supported")
+            return ExtraLibrary(prefix=None, library=Library())
 
 
     def setup_openram_spice(self,sram_name) -> None:
