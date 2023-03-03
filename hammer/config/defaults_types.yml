@@ -197,6 +197,9 @@ synthesis.inputs:
   # Top RTL module.
   top_module: Optional[str]
 
+  # Specify a list of modules that should be retimed automatically
+  retime_modules: list[str]
+
 # Syntheis tool settings
 synthesis:
   # Clock gating mode.
