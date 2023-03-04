@@ -2,14 +2,11 @@
 # The values specified in this file are the defaults.
 
 par.openroad:
-  # Location of the binary.
-  openroad_bin: str
-  # this is just to make hammer happy (although, it is never called AFAICT).
+  openroad_bin: str # Location of the binary.
+  version: str  # this is just to make hammer happy (although, it is never called AFAICT).
   # the version is actually calculated by the OpenROADTool class
-  version: str
 
-  # Generate the TCL file but do not run it yet.
-  generate_only: bool
+  generate_only: bool # Generate the TCL file but do not run it yet.
 
   create_archive_mode: str
   # generate the tar.gz archive of the current build/par-rundir directory with a runme.sh script to reproduce the results
@@ -20,36 +17,45 @@ par.openroad:
   #                  (useful if OpenROAD gets stuck on endless optimization iterations but never actually "errors")
   # - none - never create an archive
 
-  # Floorplanning SDC constraints to use.
+  floorplan_mode: str  # Floorplanning SDC constraints to use.
   # Valid options are:
   # - blank - Specify no floorplanning constraints (likely won't work)
   # - manual - Specify the contents of a manual SDC floorplanning script to use in floorplan_script_contents.
   # - generate - Generate a floorplan from the hammer-vlsi config/IR.
-  # - auto - Use Innovus's `plan_design` command to auto-generate a floorplan. Will have poor, but sane results
-  #   If you specify this, you must also specify the floorplanning_script config below. The floorplanning_script config will be ignored in other modes.
-  # TODO(edwardw): Put in new floorplanning thing here when done.
-  floorplan_mode: str
-  floorplan_script_contents: Optional[str]
+  # - auto_macro - Use OpenROAD's `macro_placement` command to auto-generate macro placements.
+  #   If you specify 'manual', you must also specify the floorplanning_script config below. The floorplanning_script config will be ignored in other modes.
+
+  floorplan_script_contents: Optional[str] 
+  # type: Optional[str]
 
   floorplan_origin_pos: str
+  # Only used when floorplan_mode == generate
+  # By default, OpenROAD places the macros THEN rotates them, but it is convenient to always 
+  #   have the macro (x,y) position correspond with bottom left corner of the placed macro
   # Valid options are:
+  # - bottom_left - width & height of macro must be specified to use this option (or else will use 'rotated' option)
   # - rotated
-  # - bottom_left
+  # type: str
 
-  # Optional: OpenRCX RC tech file
+  openrcx_techfile: Optional[str]  # Optional: OpenRCX RC tech file
   # type: Optional[str]
   # Should be set in technology plugin
-  openrcx_techfile: Optional[str]
 
-  # Optional: KLayout tech file
+  klayout_techfile_source: Optional[str]  # Optional: KLayout tech file
   # type: Optional[str]
   # Should be set in technology plugin
-  klayout_techfile_source: Optional[str]
 
   setrc_file: Optional[str]
 
+  def2stream_file: str
 
   # Step parameter configurations
+
+  macro_placement:
+    halo: Tuple[int, int]     # placement halo around macros - [vertical, horizontal] widths
+    channel: Optional[Tuple[int, int]]      # channel width between macros, default is 2*halo - [vertical, horizontal] widths
+    snap_layer: str
+    orient_all: str
 
   global_placement:
     timing_driven: bool

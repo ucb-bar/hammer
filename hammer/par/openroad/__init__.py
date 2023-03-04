@@ -51,9 +51,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             # CTS
             self.clock_tree,
             self.clock_tree_resize,
-            # alternate step names:
-            # self.cts,
-            # self.cts_repair,
             self.add_fillers,
             # ROUTING
             self.global_route,
@@ -79,7 +76,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     @_step_transitions.setter
     def _step_transitions(self, value: List[Tuple[str, str]]) -> None:
         self.attr_setter("__step_transitions", value)
-    
+
     @property
     def _steps_to_run(self) -> List[str]:
         """
@@ -193,7 +190,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     def output_sim_netlist_filename(self) -> str:
         # return os.path.join(self.run_dir, "{top}.sim.v".format(top=self.top_module))
         return self.output_netlist_filename
-    
+
     @property
     def generated_scripts_dir(self) -> str:
         return os.path.join(self.run_dir, "generated-scripts")
@@ -205,19 +202,19 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     @property
     def open_chip_tcl(self) -> str:
         return self.open_chip_script + ".tcl"
-    
+
     @property
     def openroad_latest_log(self) -> str:
         return os.path.join(self.run_dir,"openroad.log")
-    
+
     @property
     def create_archive_mode(self) -> str:
         return self.get_setting('par.openroad.create_archive_mode')
-    
+
     @property
     def reports_dir(self) -> str:
         return os.path.join(self.run_dir, "reports")
-    
+
     @property
     def clock_port_name(self) -> str:
         clock_port = self.get_clock_ports()[0]
@@ -282,7 +279,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         self.hcells_list = []
         self.output_all_regs = ""
         self.output_seq_cells = ""
-        
+
 
         if self.ran_write_design:
             if not os.path.isfile(self.output_gds_filename):
@@ -301,7 +298,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                 if not os.path.isfile(spef_path):
                     raise ValueError("Output SPEF %s not found" % (spef_path))
             self.remove_pcells_from_netlist()
-        
+
         else:
             self.logger.info("Did not run write_design")
 
@@ -319,7 +316,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         else:
             self.logger.info("""To create a tar archive of the issue, set:
             par.openroad.create_archive_mode: latest_run
-        in your YAML configs and re-run your par command""")            
+        in your YAML configs and re-run your par command""")
         return True
 
     def create_archive(self, output: str, code: int) -> bool:
@@ -389,7 +386,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         setrc_file = self.get_setting('par.openroad.setrc_file')
         if setrc_file and os.path.exists(setrc_file):
             shutil.copy2(setrc_file, os.path.join(issue_dir, os.path.basename(setrc_file)))
-        
+
         # RCX File
         openrcx_file = self.get_setting('par.openroad.openrcx_techfile')
         if openrcx_file and os.path.exists(openrcx_file):
@@ -406,7 +403,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                         "-C", os.path.relpath(self.run_dir),
                         "-zcf", f"{tag}.tar.gz", tag])
         shutil.rmtree(issue_dir)
-        
+
         if self.create_archive_mode == 'always':
             self.logger.info("To disable archive creation after each OpenROAD run, remove the par.openroad.create_archive_mode key from your YAML configs (or set it to 'none' or 'after_error')")
         if self.create_archive_mode == 'after_error':
@@ -414,7 +411,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         self.logger.error(f"Place-and-route run was archived to: {tag}.tar.gz")
 
         return True
-    
+
 
     def gui(self) -> str:
         cmds: List[str] = []
@@ -481,7 +478,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             puts "  ./generated_scripts/open_chip \[db_name\] timing"
         }
         puts "Loaded Step $step_idx: $step ($db_name)."
-        
+
         """, cmds, clean=True, verbose=False)
 
         return '\n'.join(cmds)
@@ -611,7 +608,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             cmds.append(f"read_lef {lef_file}")
         cmds.append("")
         return '\n'.join(cmds)
-    
+
     @property
     def corner_names(self) -> List[str]:
         corner_names = []
@@ -668,7 +665,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             cmds.append(f"read_sdc -echo {sdc_file}")
         cmds.append("")
         return '\n'.join(cmds)
-    
+
     def set_rc(self) -> str:
         # set layer/wire RC
         cmd = ""
@@ -687,7 +684,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         # start routine
         self.block_append(self.read_lef())
         self.block_append(self.read_liberty())
-        
+
         if first_step and first_step != self.first_step:
             self.block_append(f"read_db pre_{first_step.name}")
         else:
@@ -697,7 +694,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             for verilog_file in abspath_input_files:
                 self.block_append(f"read_verilog {verilog_file}")
             self.block_append(f"link_design {self.top_module}\n")
-        
+
         self.block_append(self.read_sdc())
 
         self.block_append(self.set_rc())
@@ -711,7 +708,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         if first_step:
             if step_names.index(first_step.name) > step_names.index('clock_tree'):
                 self.block_append("set_propagated_clock [all_clocks]")
-            
+
             if step_names.index(first_step.name) > step_names.index('extraction') \
                 and os.path.exists(self.output_spef_paths[0]):
                 self.block_append(self.read_spef())
@@ -724,11 +721,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             f.write('\n'.join(self.create_write_reports_tcl()))
 
         self.block_append(f"source {self.write_reports_tcl}")
-
-        # [par] [Exec openroad -no_init -log /...] Error: par.tcl, 76 Invalid method. Must be one of: getBBox getPlacementStatus isFixed isPlaced setPlacementStatus getEcoCreate getEcoDestroy getEcoModify setEcoCreate setEcoDestroy setEcoModify getUserFlag1 setUserFlag1 clearUserFlag1 getUserFlag2 setUserFlag2 clearUserFlag2 getUserFlag3 setUserFlag3 clearUserFlag3 setDoNotTouch isDoNotTouch getBlock getMaster getGroup getITerms getFirstOutput getRegion getModule findITerm getConnectivity bindBlock unbindBlock resetHierarchy getChild getParent getChildren isHierarchical getHalo getWeight setWeight getSourceType setSourceType getITerm swapMaster getLevel setLevel
-
-        # configure cget -acquire -disown -delete getName getConstName getOrigin setOrigin getWidth setWidth getHeight setHeight isFiller getType isBlock isCore isPad isEndCap isCover isCoreAutoPlaceable setType getLEQ setLEQ getEEQ setEEQ setSymmetryX getSymmetryX setSymmetryY getSymmetryY setSymmetryR90 getSymmetryR90 getMTerms findMTerm getLib getObstructions getPlacementBoundary transform setFrozen isFrozen setSequential isSequential setMark isMarked isSpecialPower setSpecialPower getMTermCount setSite getSite getMasterId staCell staSetCell
-
 
         self.block_append(r"""
         proc find_macros {} {
@@ -777,15 +769,15 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         # create routing tracks""")
         self.block_append(self.generate_make_tracks_tcl())
         self.block_append(f"""
-        
-        # remove buffers inserted by synthesis 
+
+        # remove buffers inserted by synthesis
         remove_buffers
 
         # IO Placement (random)
         {self.place_pins_tcl(random=True)}
         """)
         return True
-    
+
 
     def place_bumps(self) -> bool:
         # placeholder for tutorials
@@ -855,7 +847,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             self.logger.warning(
                 "You have not overridden place_tap_cells. By default this step adds a simple set of tapcells or does nothing; you will have trouble with power strap creation later.")
         return True
-    
+
 
     @property
     def macro_top_layers(self) -> List[str]:
@@ -867,7 +859,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             if constraint.top_layer is not None:
                 layers.add(constraint.top_layer)
             elif global_top_layer is not None:
-                layers.add(global_top_layer)                
+                layers.add(global_top_layer)
         return list(layers)
 
 
@@ -882,11 +874,11 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         strap_layers = self.get_setting('par.generate_power_straps_options.by_tracks.strap_layers').copy()
         std_cell_rail_layer = str(self.get_setting('technology.core.std_cell_rail_layer'))
         strap_layers.insert(0,std_cell_rail_layer)
-        
+
         add_pdn_connect_tcl=""
         for i in range(0,len(strap_layers)-1):
             add_pdn_connect_tcl+=f"add_pdn_connect -grid grid -layers {{{strap_layers[i]} {strap_layers[i+1]}}}\n"
-        
+
         # global_connections_pwr_tcl=f"add_global_connection -net {{{primary_pwr_net}}} -inst_pattern {{.*}} -pin_pattern {{^{primary_pwr_net}$}} -power"
         # global_connections_gnd_tcl=f"add_global_connection -net {{{primary_gnd_net}}} -inst_pattern {{.*}} -pin_pattern {{^{primary_gnd_net}$}} -ground"
         self.global_connections_tcl = ""
@@ -914,7 +906,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                 # get next layer up if it's valid
                 # TODO: should restrict layers to those specified by power straps
                 next_layer = stackup.get_metal_by_index(layer_idx+1).name
-            except: 
+            except:
                 continue
 
             grid1_name = f"CORE_macro_grid_{i}"
@@ -926,14 +918,14 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             ####################################
             define_pdn_grid -name {{{grid1_name}}} -voltage_domains {{CORE}} -macro -orient {{R0 R180 MX MY}} -halo {{ {blockage_spacing_halo} }} -default -grid_over_boundary
             add_pdn_connect -grid {{{grid1_name}}} -layers {{{layer} {next_layer}}}
-            
+
             ####################################
             # grid for: {grid2_name}
             ####################################
             define_pdn_grid -name {{{grid2_name}}} -voltage_domains {{CORE}} -macro -orient {{R90 R270 MXR90 MYR90}} -halo {{ {blockage_spacing_halo} }} -default -grid_over_boundary
             add_pdn_connect -grid {{{grid2_name}}} -layers {{{layer} {next_layer}}}
             """
-        
+
         tcl = f"""
         ####################################
         # global connections
@@ -958,7 +950,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         with open(power_straps_tcl_path,'w') as power_straps_tcl_file:
             for line in tcl.split('\n'):
                 power_straps_tcl_file.write(line.strip()+'\n')
-        
+
         return True
 
 
@@ -975,7 +967,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         source -echo -verbose {power_straps_tcl_path}
         pdngen
         """)
-        return True 
+        return True
 
 
     def place_pins_tcl(self,random=False) -> str:
@@ -996,7 +988,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                         hor_layers.add(pin_layer_name)
                     if layer.direction==RoutingDirection.Vertical:
                         ver_layers.add(pin_layer_name)
-        
+
         # both hor_layers and ver_layers arguments are required
         # if missing, auto-choose one or both
         # TODO: Hammer currently throws an error if both horizontal + vertical pin layers are specified
@@ -1009,9 +1001,9 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             if (hor_layers): pin_layer_names[0]=list(hor_layers)[0]
             if (ver_layers): pin_layer_names[0]=list(ver_layers)[0]
             pin_layer_idx_1=all_metal_layer_names.index(pin_layer_names[0])
-            if (pin_layer_idx_1 < len(all_metal_layer_names)-1): 
+            if (pin_layer_idx_1 < len(all_metal_layer_names)-1):
                 pin_layer_names[1]=all_metal_layer_names[pin_layer_idx_1+1]
-            elif (pin_layer_idx_1 > 0): 
+            elif (pin_layer_idx_1 > 0):
                 pin_layer_names[1]=all_metal_layer_names[pin_layer_idx_1-1]
             else: # edge-case
                 pin_layer_names[1]=all_metal_layer_names[pin_layer_idx_1]
@@ -1058,7 +1050,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         self.block_append(self.place_pins_tcl())
         return True
 
-    
+
     def global_placement(self) -> bool:
         metals=self.get_stackup().metals[1:]
         routing_adj = self.get_setting('par.openroad.global_placement.routing_adjustment')
@@ -1095,7 +1087,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             self.logger.warning("Hi and Lo tiecells are unspecified or improperly specified and will not be added.")
         elif tie_hi_cells[0].output_ports is None or tie_lo_cells[0].output_ports is None:
             self.logger.warning("Hi and Lo tiecells output ports are unspecified or improperly specified and will not be added.")
-        else:   
+        else:
             tie_hi_cell = tie_hi_cells[0].name[0]
             tie_hi_port = tie_hi_cells[0].output_ports[0]
             tie_lo_cell = tie_lo_cells[0].name[0]
@@ -1109,7 +1101,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         # Perform buffer insertion
         # set_debug_level RSZ repair_net 1
         # insert buffers on nets to repair max slew, max capacitance, max fanout violations, and on long wires to reduce RC delay in the wire
-        repair_design 
+        repair_design
         # -slew_margin 0 -cap_margin 0
 
         # Repair tie lo/hi fanout
@@ -1155,7 +1147,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         check_placement -verbose
         """)
         return True
-    
+
     @property
     def report_num_instances(self) -> str:
         return dedent("""
@@ -1187,7 +1179,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         clock_tree_synthesis {cts_args} -sink_clustering_enable \\
                                         -sink_clustering_size 30 \\
                                         -sink_clustering_max_diameter 100
-        
+
         set_propagated_clock [all_clocks]
 
         estimate_parasitics -placement
@@ -1205,7 +1197,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         estimate_parasitics -placement
         """)
         return True
-    
+
     def clock_tree_resize(self) -> bool:
         setup_margin = self.get_setting('par.openroad.clock_tree_resize.setup_margin')
         hold_margin = self.get_setting('par.openroad.clock_tree_resize.hold_margin')
@@ -1238,7 +1230,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         """add decap and filler cells"""
         decaps = self.technology.get_special_cell_by_type(CellType.Decap)
         stdfillers = self.technology.get_special_cell_by_type(CellType.StdFiller)
-        
+
         fill_cells = []
         if len(decaps) == 0:
             self.logger.info("The technology plugin 'special cells: decap' field does not exist. It should specify a list of decap cells. Filling with stdfiller instead.")
@@ -1251,8 +1243,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         else:
             # Then the rest is stdfillers
             fill_cells += list(map(lambda c: str(c), stdfillers[0].name))
-        
-            self.block_append(f"""        
+
+            self.block_append(f"""
             ################################################################
             # Filler cell insertion
 
@@ -1283,22 +1275,22 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         # reduce the routing resources of all routing layers by X%
         set_global_routing_layer_adjustment {metals[0].name}-{metals[-1].name} {routing_adj}
         set_routing_layers -signal {metals[0].name}-{metals[-1].name} -clock {metals[idx_clock_bottom_metal].name}-{metals[-1].name}
-        
+
         # hard-coded in the example OpenROAD scripts
         # set_macro_extension 2
 
         {self.global_route_cmd}
         """)
         return True
-    
-    # this would ideally be a separate step but openroad fails 
+
+    # this would ideally be a separate step but openroad fails
     #   when estimate_parasitics -global_routing is run when global_route wasn't previously run
     #   (i.e. when loading a database)
     def global_route_resize(self) -> bool:
         routing_adj = self.get_setting('par.openroad.global_route_resize.routing_adjustment')
         metals=self.get_stackup().metals[1:]
         hold_margin = self.get_setting('par.openroad.global_route_resize.hold_margin')
-        
+
 
         self.block_append(f"""
         ###########################
@@ -1324,7 +1316,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     def detailed_route(self) -> bool:
         metals=self.get_stackup().metals[1:]
-        
+
         self.block_append(f"""
         ################################################################
         # Detailed routing
@@ -1392,7 +1384,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         tech_lib_lefs = self.technology.read_libs([hammer_tech.filters.lef_filter], hammer_tech.HammerTechnologyUtils.to_plain_item, self.tech_lib_filter())
         # tech_lef = tech_lib_lefs[0]
         extra_lib_lefs = self.technology.read_libs([hammer_tech.filters.lef_filter], hammer_tech.HammerTechnologyUtils.to_plain_item, self.extra_lib_filter())
-        
+
         insert_lines=''
         for lef_file in tech_lib_lefs+extra_lib_lefs:
             insert_lines += f"<lef-files>{lef_file}</lef-files>\n"
@@ -1409,26 +1401,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                     df.write(line)
         return str(klayout_techfile_path)
 
-    # def write_netlist(self) -> bool:
-    #     self.block_append(f"""
-    #     # write netlist
-    #     set physical_only_cells "{" ".join(self.get_physical_only_cells())}"
-    #     """)
-    #     self.block_append("""
-    #     set physical_only_insts {}
-    #     set insts [get_cells -hierarchical *]
-    #     foreach inst $insts {
-    #         set inst_master [get_name [get_property -object_type cell $inst cell]]
-    #         if {[lsearch $physical_only_cells $inst_master] >= 0} {
-    #             set inst_name [get_name $inst]
-    #             lappend physical_only_insts  $inst_name
-    #         }
-    #     }
-    #     """, verbose=False)
-    #     self.block_append(f"""
-    #     write_verilog -include_pwr_gnd -remove_cells $physical_only_insts {self.output_netlist_filename}
-    #     """, verbose=False)
-    #     return True
 
     def remove_pcells_from_netlist(self):
         lines_2 = 'sky130_fd_sc_hd__tapvpwrvgnd_1'
@@ -1510,7 +1482,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
 
     def write_spefs(self) -> bool:
-        
+
         return True
 
 
@@ -1521,7 +1493,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     @property
     def write_reports_tcl(self) -> str:
         return os.path.join(self.run_dir, "write_reports.tcl")
-    
+
 
     def generate_report(self, cmd: str, rpt_name: str, output_buffer: List[str]) -> bool:
         self.tcl_append(f'puts "(hammer: begin_report > {self.reports_path(rpt_name)})"', output_buffer)
@@ -1541,7 +1513,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
         # self.generate_report("report_check_types -max_slew -max_capacitance -max_fanout -violators -digits 3",
         #     f"{prefix}_sta.check_types.rpt")
-        
+
         # self.generate_report("report_check_types -max_delay -max_skew -digits 3",
             # f"{prefix}_sta.check_types.delay_skew.rpt")
 
@@ -1551,10 +1523,10 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                 f"{prefix}_sta.checks.min.{corner}.rpt", write_reports_cmds)
             self.generate_report(f"report_checks -sort_by_slack -path_delay max -fields {{slew cap input nets fanout}} -format full_clock_expanded -path_group {self.clock_port_name} -group_count {group_count} -corner {corner}",
                 f"{prefix}_sta.checks.max.{corner}.rpt", write_reports_cmds)
-        
+
         self.generate_report(f"report_checks -sort_by_slack -unconstrained -fields {{slew cap input nets fanout}} -format full_clock_expanded -group_count {group_count}",
             f"{prefix}_sta.checks.unconstrained.rpt", write_reports_cmds)
-        
+
         self.generate_report(f"""
         report_units
         report_units_metric
@@ -1571,16 +1543,16 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         report_clock_skew -digits 3
         report_clock_skew_metric
         """, f"{prefix}_sta.summary.rpt", write_reports_cmds)
-        
+
         self.generate_report("report_floating_nets -verbose",
             f"{prefix}_sta.floating_nets.rpt", write_reports_cmds)
-        
+
         self.generate_report(f"""
         report_design_area
         report_design_area_metrics
         {indent(self.report_num_instances, prefix=' '*4*2)}
         """, f"{prefix}_sta.util.rpt", write_reports_cmds)
-        
+
         report_power = ""
         for corner in self.corner_names:
             report_power += f"""
@@ -1588,7 +1560,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             report_power_metric -corner {corner}
             """
         self.generate_report(report_power, f"{prefix}_sta.power.rpt", write_reports_cmds)
-        
+
         self.tcl_append("}\n", write_reports_cmds)
 
         return '\n'.join(write_reports_cmds)
@@ -1596,10 +1568,10 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     def write_reports(self, prefix: str) -> str:
         return f"write_reports {prefix}"
-    
-    def log_to_reports(self) -> bool: 
+
+    def log_to_reports(self) -> bool:
         ''' Parse OpenROAD log to create reports
-        '''  
+        '''
         with open(self.openroad_log,'r') as f:
             writing_rpt = False
             rpt: List[str] = []
@@ -1657,15 +1629,15 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     def generate_make_tracks_tcl(self) -> str:
         output = []
-        # initialize_floorplan removes existing tracks 
-        #   --> use the make_tracks command to add routing tracks 
+        # initialize_floorplan removes existing tracks
+        #   --> use the make_tracks command to add routing tracks
         #       to a floorplan (with no arguments it uses default from tech LEF)
         layers = self.get_setting('par.generate_power_straps_options.by_tracks.strap_layers')
         for metal in self.get_stackup().metals:
             # TODO: might need separate x/y pitch definition in stackup
             output.append(f"make_tracks {metal.name} -x_offset {metal.offset} -x_pitch {metal.pitch} -y_offset {metal.offset} -y_pitch {metal.pitch}")
         return "\n".join(output)
-    
+
 
     @property
     def floorplan_mode(self) -> str:
@@ -1785,7 +1757,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                 )
                 self.block_tcl_append(chip_size_constraint, output)
             elif self.floorplan_mode == 'generate':
-                
+
                 if constraint.create_physical:
                     pass
                 if constraint.type == PlacementConstraintType.Dummy:
@@ -1806,7 +1778,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                     inst_name=new_path
 
                     floorplan_cmd = f"""place_cell -inst_name {inst_name} -orient {orientation} -origin $origin -status FIRM"""
-                    
+
                     self.block_tcl_append(f"""
                     set inst [[ord::get_db_block] findInst {inst_name}]
                     set inst_master [$inst getMaster]
@@ -1829,7 +1801,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                         {floorplan_cmd}
                     }}
                     """, output, clean=True, verbose=False)
-                    
+
                     spacing = self.get_setting('par.blockage_spacing')
 
                     # TODO: find equivalent for place/route halo in OpenROAD
@@ -1859,7 +1831,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         tcl=[]
         # followpins indicates that the stripe forms part of the stdcell rails, pitch and spacing are dictated by the stdcell rows, the -width is not needed if it can be determined from the cells
         tcl.append(f"add_pdn_stripe -grid {{grid}} -layer {{{layer.name}}} -width {width} -offset 0 -followpins\n")
-        #  -pitch {pitch} 
+        #  -pitch {pitch}
         return tcl
 
     def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool) -> List[str]:
@@ -1884,7 +1856,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         pins_tcl = "-extend_to_boundary" if (add_pins) else ""
         tcl = [f"add_pdn_stripe -grid {{grid}} -layer {{{layer_name}}} -width {width} -pitch {pitch} -offset {offset} -spacing {spacing} {pins_tcl}\n"]
         return tcl
-    
+
     def process_sdc_file(self,post_synth_sdc) -> str:
         # overwrite SDC file to exclude group_path command
         # change units in SDC file (1000.0fF and 1000.0ps cause errors)

@@ -7,7 +7,6 @@ par.openroad:
   # the version is actually calculated by the OpenROADTool class
 
   generate_only: false # Generate the TCL file but do not run it yet.
-  # type: bool
 
   create_archive_mode: none
   # Generate the tar.gz archive of the current build/par-rundir directory with a runme.sh script to reproduce the results
@@ -27,6 +26,9 @@ par.openroad:
   # - auto_macro - Use OpenROAD's `macro_placement` command to auto-generate macro placements.
   #   If you specify 'manual', you must also specify the floorplanning_script config below. The floorplanning_script config will be ignored in other modes.
 
+  floorplan_script_contents: null
+  # type: Optional[str]
+
   floorplan_origin_pos: bottom_left
   # Only used when floorplan_mode == generate
   # By default, OpenROAD places the macros THEN rotates them, but it is convenient to always 
@@ -35,9 +37,6 @@ par.openroad:
   # - bottom_left - width & height of macro must be specified to use this option (or else will use 'rotated' option)
   # - rotated
   # type: str
-
-  floorplan_script_contents: null
-  # type: Optional[str]
 
   openrcx_techfile: null # Optional: OpenRCX RC tech file
   # type: Optional[str]
@@ -52,7 +51,6 @@ par.openroad:
   # TODO: maybe find a better location for this file??
   def2stream_file: "../../vlsi/vendor/def2stream.py"
   def2stream_file_meta: prependlocal
-
   
   # Step parameter configurations
 
@@ -61,7 +59,7 @@ par.openroad:
     channel: null      # channel width between macros, default is 2*halo - [vertical, horizontal] widths
     snap_layer: par.blockage_spacing_top_layer
     snap_layer_meta: lazycrossref
-    orient_all: R0
+    orient_all: r0
 
   global_placement:
     timing_driven: False
@@ -89,25 +87,3 @@ par.openroad:
     hold_margin: 0.2
     routing_adjustment: 0.3
   
-
-
-
-
-  # alternative method: <param>.<step_name>
-
-  # hold_margin:
-  #   clock_tree: 0.2
-  #   global_route_resize: 0.4
-
-  # routing_adjustment:
-  #   global_placement: 0.5
-  #   global_route: 0.3
-  #   global_route_resize: 0.1
-
-  # placement_padding:
-  #   global_placement: 3
-  #   detailed_placement: 2
-  #   clock_tree: 1
-  #   final: 0
-  #   # For different placement steps in PAR, keys set left and right padding in multiples of the row site width
-  #   # type: int
