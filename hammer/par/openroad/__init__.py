@@ -398,7 +398,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
         # Hack par.tcl script
         # Remove abspaths to files since they are now in issue_dir
-        # subprocess.call(["sed", "-i", "s/\(.* \)\(.*\/\)\(.*\)/\\1\\3/g", os.path.join(issue_dir, "par.tcl")])
         subprocess.call(["sed", "-i", "-E", r"/repair_tie_fanout/! s#(/[^/ ]+)+/([^/ ]+/)*([^/ ]+)#\3#g", os.path.join(issue_dir, "par.tcl")])
         # Comment out exec klayout block
         klayout_bin = self.get_setting('par.openroad.klayout_bin')
@@ -897,8 +896,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         for i in range(0,len(strap_layers)-1):
             add_pdn_connect_tcl+=f"add_pdn_connect -grid grid -layers {{{strap_layers[i]} {strap_layers[i+1]}}}\n"
 
-        # global_connections_pwr_tcl=f"add_global_connection -net {{{primary_pwr_net}}} -inst_pattern {{.*}} -pin_pattern {{^{primary_pwr_net}$}} -power"
-        # global_connections_gnd_tcl=f"add_global_connection -net {{{primary_gnd_net}}} -inst_pattern {{.*}} -pin_pattern {{^{primary_gnd_net}$}} -ground"
         self.global_connections_tcl = ""
         for pwr_net in pwr_nets:
             if pwr_net.tie is not None:
@@ -989,9 +986,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
 
     def place_pins_tcl(self,random=False) -> str:
-        # random_arg=""
-        # if random: random_arg="-random"
-
         stackup = self.get_stackup()
         all_metal_layer_names = [layer.name for layer in stackup.metals]
         pin_assignments = self.get_pin_assignments()
@@ -1145,7 +1139,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
         estimate_parasitics -placement
 
-        {self.write_reports(prefix='dpl')}
+        write_reports dpl
         """)
         return True
 
@@ -1234,7 +1228,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
         estimate_parasitics -placement
 
-        {self.write_reports(prefix='cts_rsz')}
+        write_reports cts_rsz
         """)
         return True
 
@@ -1297,9 +1291,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         """)
         return True
 
-    # this would ideally be a separate step but openroad fails
-    #   when estimate_parasitics -global_routing is run when global_route wasn't previously run
-    #   (i.e. when loading a database)
+
     def global_route_resize(self) -> bool:
         routing_adj = self.get_setting('par.openroad.global_route_resize.routing_adjustment')
         metals=self.get_stackup().metals[1:]
@@ -1323,7 +1315,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         self.add_fillers()
         self.block_append(f"""
         {self.global_route_cmd}
-        {self.write_reports(prefix='grt_rsz')}
+        write_reports grt_rsz
         """)
         return True
 
@@ -1359,7 +1351,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         return '\n'.join(cmds)
 
     def extraction(self) -> bool:
-        sed_expr=r"{s/\\//g}"  # use sed find+replace to remove '\' character
         spef_path = self.output_spef_paths[0]
         self.block_append(f"""
         ################################################################
@@ -1374,8 +1365,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
         self.block_append(f"""
         write_spef {spef_path}
-        # remove backslashes in instances so that read_spef recognizes the instances
-        # exec sed -i {sed_expr} {spef_path}
 
         # Read Spef for OpenSTA
         {indent(self.read_spef(), prefix=2*4*' ').strip()}
@@ -1399,7 +1388,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
         # klayout needs all lefs
         tech_lib_lefs = self.technology.read_libs([hammer_tech.filters.lef_filter], hammer_tech.HammerTechnologyUtils.to_plain_item, self.tech_lib_filter())
-        # tech_lef = tech_lib_lefs[0]
         extra_lib_lefs = self.technology.read_libs([hammer_tech.filters.lef_filter], hammer_tech.HammerTechnologyUtils.to_plain_item, self.extra_lib_filter())
 
         insert_lines=''
@@ -1468,18 +1456,12 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
 
     def write_sdf(self) -> str:
-        corners = self.get_mmmc_corners()
         cmds = [""]
         # are multiple corners necessary? Tempus only supports reading one SDF
         self.block_tcl_append(f"""
         write_sdf -corner setup -gzip {self.output_sdf_path}
         """, cmds, clean=False, verbose=False)
         return '\n'.join(cmds).strip()
-
-
-    def write_spefs(self) -> bool:
-
-        return True
 
 
     def write_regs(self) -> bool:
@@ -1498,6 +1480,14 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         return True
 
     def create_write_reports_tcl(self) -> List[str]:
+        '''
+        Creates the write_repors.tcl command that is sourced at the beginning of an OpenROAD session,
+            and is called with the command "write_reports <prefix>"
+        Output report info with header and footer, to be read by the log_to_reports() function
+            and written to the appropriate report file after OpenROAD completes.
+        The <cmd>_metric(s) commands tells OpenROAD to dump this metric into the JSON 
+            file specified by the -metrics flag in the tool invocation (see self.metrics_file)
+        '''
         # NOTE: both report_check_types and report_power commands have [> filename] option but it just generates an empty file...
         write_reports_cmds = [""]
         prefix = "${prefix}"
@@ -1560,10 +1550,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
         return write_reports_cmds
 
-
-    def write_reports(self, prefix: str) -> str:
-        return f"write_reports {prefix}"
-
     def log_to_reports(self) -> bool:
         ''' Parse OpenROAD log to create reports
         '''
@@ -1596,7 +1582,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         ################################################################
         # Write Design
 
-        {self.write_reports(prefix='rcx')}
+        write_reports rcx
 
         # Ensure all OR created (rsz/cts) instances are connected
         global_connect

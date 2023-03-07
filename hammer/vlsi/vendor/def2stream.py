@@ -1,3 +1,5 @@
+# type: ignore
+#   tell mypy to ignore this file during typechecking
 import pya
 import re
 import json
