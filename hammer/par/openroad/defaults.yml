@@ -2,9 +2,11 @@
 # The values specified in this file are the defaults.
 
 par.openroad:
-  openroad_bin: "openroad" # Location of the binary.
+  openroad_bin: "openroad" # Location of the openroad binary.
   version: "dummy-value" # this is just to make hammer happy (although, it is never called AFAICT).
   # the version is actually calculated by the OpenROADTool class
+
+  klayout_bin: "klayout" # Location of the klayout binary.
 
   generate_only: false # Generate the TCL file but do not run it yet.
 
@@ -21,16 +23,18 @@ par.openroad:
   floorplan_mode: generate # Floorplanning SDC constraints to use.
   # Valid options are:
   # - blank - Specify no floorplanning constraints (likely won't work)
-  # - manual - Specify the contents of a manual SDC floorplanning script to use in floorplan_script_contents.
   # - generate - Generate a floorplan from the hammer-vlsi config/IR.
   # - auto_macro - Use OpenROAD's `macro_placement` command to auto-generate macro placements.
-  #   If you specify 'manual', you must also specify the floorplanning_script config below. The floorplanning_script config will be ignored in other modes.
+  #                Chip top-level constraints must still be specified (i.e. width, height)
+  # - manual - Specify the contents of a manual floorplanning script to use in floorplan_script_contents.
+  #            If you specify 'manual', you must also specify the floorplanning_script config below. The floorplanning_script config will be ignored in other modes.
+  # type: str
 
   floorplan_script_contents: null
   # type: Optional[str]
 
   floorplan_origin_pos: bottom_left
-  # Only used when floorplan_mode == generate
+  # Only used when par.openroad.floorplan_mode == generate
   # By default, OpenROAD places the macros THEN rotates them, but it is convenient to always 
   #   have the macro (x,y) position correspond with bottom left corner of the placed macro
   # Valid options are:
@@ -38,35 +42,41 @@ par.openroad:
   # - rotated
   # type: str
 
-  openrcx_techfile: null # Optional: OpenRCX RC tech file
-  # type: Optional[str]
+  setrc_file: null # Gate Resizer layer RC settings
   # Should be set in technology plugin
+  # type: Optional[str]
+
+  openrcx_techfiles: null # Optional: OpenRCX RC tech files
+  # Usually one per corner
+  # Should be set in technology plugin
+  # type: Optional[list[str]]
 
   klayout_techfile_source: null # Optional: KLayout tech file
-  # type: Optional[str]
   # Should be set in technology plugin
-
-  setrc_file: null
-
-  # TODO: maybe find a better location for this file??
-  def2stream_file: "../../vlsi/vendor/def2stream.py"
-  def2stream_file_meta: prependlocal
+  # type: Optional[str]
   
-  # Step parameter configurations
+  def2stream_file: "../../vlsi/vendor/def2stream.py" # Python script to convert DEF to GDS using Klayout
+  def2stream_file_meta: prependlocal
+  # Original script found here: https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts/blob/master/flow/util/def2stream.py
+  # Modified to uniquefy duplicate module names in hierarchical designs
+  #   otherwise KLayout uses the GDS of the first instance with that name for all instances
+  # type: str
+  
 
-  macro_placement:
-    halo: [10, 10]     # placement halo around macros - [vertical, horizontal] widths
-    channel: null      # channel width between macros, default is 2*halo - [vertical, horizontal] widths
-    snap_layer: par.blockage_spacing_top_layer
+  # Step parameter configurations
+  macro_placement:  # NOTE: macro_placement settings are only used when par.openroad.floorplan_mode == auto_macro
+    halo: [10, 10]            # placement halo around macros - [vertical, horizontal] widths
+    channel: null             # channel width between macros, default is 2*halo - [vertical, horizontal] widths
+    snap_layer: par.blockage_spacing_top_layer  # snap macro origins to this routing layer track
     snap_layer_meta: lazycrossref
-    orient_all: r0
+    orient_all: r0            # rotate all macros to this orientation
 
   global_placement:
     timing_driven: False
     routability_driven: True
     density: 0.6
-    placement_padding: 3
-    routing_adjustment: 0.5
+    placement_padding: 3      # sets left and right padding in multiples of the row site width
+    routing_adjustment: 0.5   # reduce routing resources by this proportion (i.e. by 50%)
   
   detailed_placement:
     placement_padding: 2
@@ -77,11 +87,11 @@ par.openroad:
   clock_tree_resize:
     setup_margin: 0.05
     hold_margin: 0.2
-    hold_max_buffer_percent: 60
+    hold_max_buffer_percent: 60   #  maximum number of buffers to insert to repair hold violations as a percentage of the number of instances in the design
     placement_padding: 0
   
   global_route: 
-    routing_adjustment: 0.3
+    routing_adjustment: 0.3       # reduce routing resources by this proportion (i.e. by 30%)
   
   global_route_resize:
     hold_margin: 0.2

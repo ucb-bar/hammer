@@ -188,7 +188,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     @property
     def output_sim_netlist_filename(self) -> str:
-        # return os.path.join(self.run_dir, "{top}.sim.v".format(top=self.top_module))
         return self.output_netlist_filename
 
     @property
@@ -214,11 +213,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     @property
     def reports_dir(self) -> str:
         return os.path.join(self.run_dir, "reports")
-
-    @property
-    def clock_port_name(self) -> str:
-        clock_port = self.get_clock_ports()[0]
-        return clock_port.name
 
     @property
     def metrics_dir(self) -> str:
@@ -297,7 +291,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             for spef_path in self.output_spef_paths:
                 if not os.path.isfile(spef_path):
                     raise ValueError("Output SPEF %s not found" % (spef_path))
-            self.remove_pcells_from_netlist()
 
         else:
             self.logger.info("Did not run write_design")
@@ -352,7 +345,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         os.chmod(runme, 0o755) # +x
 
         # Gather files in self.run_dir
-        file_exts = [".tcl", ".sdc", ".pdn", ".lef"]
+        file_exts = [".tcl", ".sdc", ".lef"]
         for match in list(filter(lambda x: any(ext in x for ext in file_exts), os.listdir(self.run_dir))):
             src = os.path.join(self.run_dir, match)
             dest = os.path.join(issue_dir, match)
@@ -388,15 +381,28 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             shutil.copy2(setrc_file, os.path.join(issue_dir, os.path.basename(setrc_file)))
 
         # RCX File
-        openrcx_file = self.get_setting('par.openroad.openrcx_techfile')
-        if openrcx_file and os.path.exists(openrcx_file):
-            shutil.copy2(openrcx_file, os.path.join(issue_dir, os.path.basename(openrcx_file)))
+        openrcx_files = self.get_setting('par.openroad.openrcx_techfiles')
+        for openrcx_file in openrcx_files:
+            if os.path.exists(openrcx_file):
+                shutil.copy2(openrcx_file, os.path.join(issue_dir, os.path.basename(openrcx_file)))
+        
+        # KLayout tech file
+        klayout_techfile_path = self.setup_klayout_techfile()
+        if klayout_techfile_path and os.path.exists(klayout_techfile_path):
+            shutil.copy2(klayout_techfile_path, os.path.join(issue_dir, os.path.basename(klayout_techfile_path)))
+        
+        # DEF2Stream file
+        def2stream_file = self.get_setting('par.openroad.def2stream_file')
+        if os.path.exists(def2stream_file):
+            shutil.copy2(def2stream_file, os.path.join(issue_dir, os.path.basename(def2stream_file)))
 
         # Hack par.tcl script
         # Remove abspaths to files since they are now in issue_dir
-        subprocess.call(["sed", "-i", "s/\(.* \)\(.*\/\)\(.*\)/\\1\\3/g", os.path.join(issue_dir, "par.tcl")])
+        # subprocess.call(["sed", "-i", "s/\(.* \)\(.*\/\)\(.*\)/\\1\\3/g", os.path.join(issue_dir, "par.tcl")])
+        subprocess.call(["sed", "-i", "-E", r"/repair_tie_fanout/! s#(/[^/ ]+)+/([^/ ]+/)*([^/ ]+)#\3#g", os.path.join(issue_dir, "par.tcl")])
         # Comment out exec klayout block
-        subprocess.call(["sed", "-i", "s/\(exec klayout\)/# \\1/g", os.path.join(issue_dir, "par.tcl")])
+        klayout_bin = self.get_setting('par.openroad.klayout_bin')
+        subprocess.call(["sed", "-i", f"s/\(exec {klayout_bin}\)/# \\1/g", os.path.join(issue_dir, "par.tcl")])
 
         # Tar up the directory, delete it
         subprocess.call(["tar",
@@ -729,12 +735,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             foreach inst [$block getInsts] {
                 set inst_master [$inst getMaster]
                 if { [string match [$inst_master getType] "BLOCK"] } {
-                    set origin [$inst_master getOrigin]
-                    append macros [$inst getName] "\n"
-                    append macros "\t- master: " [$inst_master getName] " \n"
-                    append macros "\t- width:  " [$inst_master getWidth] " \n"
-                    append macros "\t- height: " [$inst_master getHeight] " \n"
-                    append macros "\t- origin: " [lindex $origin 0] ", " [lindex $origin 1] " \n"
+                    append macros [$inst getName] " "
                 }
             }
             return $macros
@@ -743,21 +744,38 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
         return True
 
+    @property
+    def macros_list_file(self) -> str:
+        return os.path.join(self.run_dir, "macros.txt")
+
     def floorplan_design(self) -> bool:
 
         floorplan_tcl = os.path.join(self.run_dir, "floorplan.tcl")
         with open(floorplan_tcl, "w") as f:
             f.write("\n".join(self.create_floorplan_tcl()))
 
-        self.block_append("""
+        self.block_append(f"""
         ################################################################
         # Floorplan Design
 
         # Print paths to macros to file
-        set macros_file "./macros.txt"
+        set macros_file {self.macros_list_file}
         set macros_file [open $macros_file "w"]
-        puts [find_macros]
-        puts $macros_file [find_macros]
+        """, verbose=False)
+        self.block_append(r"""
+        set macros ""
+        foreach macro [find_macros] {
+            set inst [[ord::get_db_block] findInst $macro]
+            set inst_master [$inst getMaster]
+            append macros $macro " \n"
+            append macros "\t- master: " [$inst_master getName] " \n"
+            append macros "\t- width:  " [$inst_master getWidth] " \n"
+            append macros "\t- height: " [$inst_master getHeight] " \n"
+            set origin [$inst_master getOrigin]
+            append macros "\t- origin: " [lindex $origin 0] ", " [lindex $origin 1] " \n"
+        }
+        puts $macros
+        puts $macros_file $macros
         close $macros_file
         """, verbose=False)
 
@@ -1119,11 +1137,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         ################################################################
         # Detail placement
 
-        # default detail_place_pad value in OpenROAD = 2
-        # system/bootROMDomainWrapper/bootrom
-        # set_placement_padding -instances [get_cells system/bootROMDomainWrapper/bootrom/*] -left 7 -right 7
         set_placement_padding -global -left {padding} -right {padding}
-        # set_debug_level DPL place 5
         detailed_placement
 
         # improve_placement
@@ -1351,11 +1365,14 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         ################################################################
         # Extraction
         define_process_corner -ext_model_index 0 X
+        """)
 
-        extract_parasitics -ext_model_file {self.get_setting('par.openroad.openrcx_techfile')}
+        corners = self.get_mmmc_corners()
+        corner_cnt = len(corners) if corners else 1
+        for openrcx_file in self.get_setting('par.openroad.openrcx_techfiles'):
+            self.block_append(f"extract_parasitics -ext_model_file {openrcx_file} -corner_cnt {corner_cnt}")
 
-        # touch the file in case write_spef fails
-        # exec touch {spef_path}
+        self.block_append(f"""
         write_spef {spef_path}
         # remove backslashes in instances so that read_spef recognizes the instances
         # exec sed -i {sed_expr} {spef_path}
@@ -1402,30 +1419,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         return str(klayout_techfile_path)
 
 
-    def remove_pcells_from_netlist(self):
-        lines_2 = 'sky130_fd_sc_hd__tapvpwrvgnd_1'
-        fill_cells = {
-            "sky130_fd_sc_hd__fill_1",
-            "sky130_fd_sc_hd__fill_2",
-            "sky130_fd_sc_hd__fill_4",
-            "sky130_fd_sc_hd__fill_8",
-            "sky130_fd_sc_hd__tap_1"
-        }
-        with open(self.output_netlist_filename, 'r') as f:
-            lines = f.readlines()
-
-            lines0 = [l for l in lines if len(l.strip()) > 0]
-            first_words = [l.split()[0] for l in lines0]
-            lines1 = lines0[:3] + [lines0[i] for i in range(3,len(lines0)) if first_words[i] not in fill_cells and first_words[i-1] not in fill_cells and first_words[i-2] not in fill_cells and first_words[i-3] not in fill_cells]
-
-            first_words = [l.split()[0] for l in lines1]
-            lines2 = [lines1[0]] + [lines1[i] for i in range(1,len(lines1)) if first_words[i] != lines_2 and first_words[i-1] != lines_2]
-
-        shutil.copy2(self.output_netlist_filename, self.output_netlist_filename + '_orig')
-        with open(self.output_netlist_filename,'w') as f:
-            f.write(''.join(lines2))
-        return
-
     def write_gds(self) -> str:
         cmds: List[str] = []
 
@@ -1441,6 +1434,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
         layer_map_file=self.get_setting('par.inputs.gds_map_file')
 
+        # the first entry of $KLAYOUT_PATH will be the one where the configuration is stored when KLayout exits
+        #   otherwise KLayout tries to write everything to the same directory as the klayout binary and throws an error if it is not writeable
         klayout_path = os.path.join(self.run_dir, 'klayout')
         os.makedirs(klayout_path, exist_ok=True)
         os.environ['KLAYOUT_PATH'] = klayout_path
@@ -1450,6 +1445,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             raise FileNotFoundError(f"Def2stream Python script not found for Klayout not specified in openroad plugin or doesn't exist. Klayout won't be able to write GDS file. ('par.openroad.def2stream_file': {def2stream_file})")
         def2stream_file = self.get_setting('par.openroad.def2stream_file')
 
+        klayout_bin = self.get_setting('par.openroad.klayout_bin')
         self.block_tcl_append(f"""
         # write DEF (need this to write GDS)
         write_def {self.output_def_filename}
@@ -1457,7 +1453,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         # write gds
         # klayout args explained: https://www.klayout.de/command_args.html
         set in_files {{ {" ".join(gds_files)} }}
-        exec klayout -rd out_file={self.output_gds_filename} \\
+        exec {klayout_bin} -rd out_file={self.output_gds_filename} \\
                 -zz -d 40 \\
                 -rd design_name={self.top_module} \\
                 -rd in_def={self.output_def_filename} \\
@@ -1501,7 +1497,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         self.tcl_append(f'puts "(hammer: end_report)"\n', output_buffer)
         return True
 
-    def create_write_reports_tcl(self) -> str:
+    def create_write_reports_tcl(self) -> List[str]:
         # NOTE: both report_check_types and report_power commands have [> filename] option but it just generates an empty file...
         write_reports_cmds = [""]
         prefix = "${prefix}"
@@ -1511,18 +1507,17 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         proc write_reports { prefix } {
         """, write_reports_cmds, clean=True, verbose=False)
 
-        # self.generate_report("report_check_types -max_slew -max_capacitance -max_fanout -violators -digits 3",
-        #     f"{prefix}_sta.check_types.rpt")
+        self.generate_report("report_check_types -max_slew -max_capacitance -max_fanout -violators -digits 3",
+            f"{prefix}_sta.check_types.slew_cap_fanout.rpt", write_reports_cmds)
 
-        # self.generate_report("report_check_types -max_delay -max_skew -digits 3",
-            # f"{prefix}_sta.check_types.delay_skew.rpt")
+        self.generate_report("report_check_types -max_delay -max_skew -digits 3",
+            f"{prefix}_sta.check_types.delay_skew.rpt", write_reports_cmds)
 
         group_count = 200
-        for corner in self.corner_names:
-            self.generate_report(f"report_checks -sort_by_slack -path_delay min -fields {{slew cap input nets fanout}} -format full_clock_expanded -path_group {self.clock_port_name} -group_count {group_count} -corner {corner}",
-                f"{prefix}_sta.checks.min.{corner}.rpt", write_reports_cmds)
-            self.generate_report(f"report_checks -sort_by_slack -path_delay max -fields {{slew cap input nets fanout}} -format full_clock_expanded -path_group {self.clock_port_name} -group_count {group_count} -corner {corner}",
-                f"{prefix}_sta.checks.max.{corner}.rpt", write_reports_cmds)
+        for corner in ['setup', 'hold']:
+            path_delay = 'max' if corner == 'setup' else 'min'
+            self.generate_report(f"report_checks -sort_by_slack -path_delay {path_delay} -fields {{slew cap input nets fanout}} -format full_clock_expanded -group_count {group_count} -corner {corner}",
+                f"{prefix}_sta.checks.{path_delay}.{corner}.rpt", write_reports_cmds)
 
         self.generate_report(f"report_checks -sort_by_slack -unconstrained -fields {{slew cap input nets fanout}} -format full_clock_expanded -group_count {group_count}",
             f"{prefix}_sta.checks.unconstrained.rpt", write_reports_cmds)
@@ -1563,7 +1558,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
         self.tcl_append("}\n", write_reports_cmds)
 
-        return '\n'.join(write_reports_cmds)
+        return write_reports_cmds
 
 
     def write_reports(self, prefix: str) -> str:
@@ -1781,11 +1776,11 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
                     self.block_tcl_append(f"""
                     set inst [[ord::get_db_block] findInst {inst_name}]
-                    set inst_master [$inst getMaster]
                     # only place macro if it is present in design
                     if {{$inst == "NULL"}} {{
                         puts "(WARNING) Cell/macro {inst_name} not found!"
                     }} else {{
+                        set inst_master [$inst getMaster]
                         set origin [$inst_master getOrigin]
                         set origin_x [expr [lindex $origin 0] / 1000]
                         set origin_y [expr [lindex $origin 1] / 1000]

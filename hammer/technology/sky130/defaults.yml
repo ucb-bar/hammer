@@ -107,10 +107,13 @@ par.inputs:
   gds_map_file_meta: prependlocal
 
 par.openroad:
-  openrcx_techfile: "extra/sky130hd.rcx_rules"
-  openrcx_techfile_meta: prependlocal
   setrc_file: "extra/setRC.tcl"
   setrc_file_meta: prependlocal
+  openrcx_techfiles: 
+    - "${technology.sky130.sky130A}/libs.tech/openlane/rules.openrcx.sky130A.max.spef_extractor"
+    - "${technology.sky130.sky130A}/libs.tech/openlane/rules.openrcx.sky130A.min.spef_extractor"
+    - "${technology.sky130.sky130A}/libs.tech/openlane/rules.openrcx.sky130A.nom.spef_extractor"
+  openrcx_techfiles_meta: lazysubst
   klayout_techfile_source: "${technology.sky130.sky130A}/libs.tech/klayout/tech/sky130A.lyt"
   klayout_techfile_source_meta: lazysubst
   macro_placement:

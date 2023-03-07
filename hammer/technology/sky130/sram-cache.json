@@ -191,6 +191,31 @@
   },
   {
     "type": "sram",
+    "name": "sramgen_sram_4096x8m8w8_replica_v1",
+    "source": "sram22",
+    "depth": "4096",
+    "width": 8,
+    "family": "1rw",
+    "mask": "true",
+    "vt": "svt",
+    "mux": 8,
+    "ports": [
+      {
+        "address port name": "addr",
+        "address port polarity": "active high",
+        "clock port name": "clk",
+        "clock port polarity": "active high",
+        "write enable port name": "we",
+        "write enable port polarity": "active high",
+        "output port name": "dout",
+        "output port polarity": "active high",
+        "input port name": "din",
+        "input port polarity": "active high"
+      }
+    ]
+  },
+  {
+    "type": "sram",
     "name": "sramgen_sram_4096x32m8w8_replica_v1",
     "source": "sram22",
     "depth": "4096",

@@ -24,8 +24,6 @@ class SKY130Tech(HammerTechnology):
     def post_install_script(self) -> None:
         self.library_name = 'sky130_fd_sc_hd'
         # check whether variables were overriden to point to a valid path
-        print(self.get_setting("technology.sky130.openram_lib"))
-        print(self.get_setting("technology.sky130.sky130_nda"))
         self.use_openram = os.path.exists(self.get_setting("technology.sky130.openram_lib"))
         self.use_nda_files = os.path.exists(self.get_setting("technology.sky130.sky130_nda"))
         self.setup_cdl()
@@ -150,9 +148,6 @@ class SKY130Tech(HammerTechnology):
 
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {
-            "openroad": [
-            HammerTool.make_pre_insertion_hook("detailed_placement",   sky130_set_wire_rc)
-            ],
             "innovus": [
             HammerTool.make_post_insertion_hook("init_design",      sky130_innovus_settings),
             HammerTool.make_pre_insertion_hook("place_tap_cells",   sky130_add_endcaps),
@@ -320,19 +315,6 @@ set_db add_endcaps_right_edge       {endcap_cell}
 add_endcaps
     '''
     )
-    return True
-
-def sky130_set_wire_rc(ht: HammerTool) -> bool:
-    assert isinstance(ht, HammerPlaceAndRouteTool), "set wire rc only for par"
-    assert isinstance(ht, TCLTool), "set wire rc can only run on TCL tools"
-    rc_file=importlib.resources.files("hammer.technology.sky130") / "extra/sky130hd.rc"
-    ht.append(f"""
-################################################################
-# Repair max slew/cap/fanout violations and normalize slews
-source {rc_file}
-set_wire_rc -signal -layer "met2"
-set_wire_rc -clock  -layer "met5"
-    """)
     return True
 
 def drc_blackbox_openram_srams(ht: HammerTool) -> bool:
