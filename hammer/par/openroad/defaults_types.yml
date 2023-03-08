@@ -11,6 +11,8 @@ par.openroad:
 
   create_archive_mode: str
 
+  write_reports: bool
+
   floorplan_mode: str
 
   floorplan_script_contents: Optional[str] 

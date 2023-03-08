@@ -20,6 +20,10 @@ par.openroad:
   #                  (useful if OpenROAD gets stuck on endless optimization iterations but never actually "errors")
   # type: str
 
+  write_reports: true  # generate various timing/area/power reports throughout the PAR flow
+  # setting this to false significantly speeds up runs and reduces log output
+  # type: bool
+
   floorplan_mode: generate # Floorplanning SDC constraints to use.
   # Valid options are:
   # - blank - Specify no floorplanning constraints (likely won't work)

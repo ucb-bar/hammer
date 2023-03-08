@@ -517,31 +517,43 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         with open(self.open_chip_script, "w") as f:
             f.write(dedent(f"""\
         #!/bin/bash
-        # usage: ./open_chip [openroad_database_name] [timing]
-        #   if openroad_database_name unspecified, load latest
+
+        usage() {{
+            echo ""
+            echo "Usage: ${{0}} [-t] [openroad_db_name]"
+            echo ""
+            echo "Options"
+            echo "  openroad_db_name    : Name of database to load (default=latest)"
+            echo "  -t, --timing        : Load timing info (default=disabled because of slow load time)"
+            echo "  -h, --help          : Display this message"
+            echo ""
+            exit
+        }}
+
         cd {self.run_dir}
         source enter
-        timing_arg="timing"
-        # ./open_chip or  ./open_chip timing
-        if [ -z $1 ] || ([ $1 == $timing_arg ] && [ -z $2 ])
-        then
-            export db_name=$(readlink latest)
-        else
-            # ./open_chip <db_name>
-            # ./open_chip <db_name> timing
-            if [ -z $2 ] || [ $2 == $timing_arg ]
-            then
-                export db_name=$1
-            # ./open_chip timing <db_name>
-            else
-                export db_name=$2
-            fi
-        fi
+
+        export db_name=$(readlink latest)
         export timing=0
-        if ([ ! -z $1 ] && [ $1 == $timing_arg ]) || ([ ! -z $2 ] && [ $2 == $timing_arg ])
-        then
-            export timing=1
-        fi
+
+        while [ "$1" != "" ];
+        do
+            case $1 in
+                -h | --help )
+                    usage ;;
+                -t | --timing)
+                    export timing=1 ;;
+                * )
+                    if [ -f $1 ]; then
+                        export db_name=$1
+                    else
+                        error "invalid option $1"
+                        usage
+                    fi ;;
+            esac
+            shift
+        done
+
         $OPENROAD_BIN -no_init -gui {self.open_chip_tcl}
         """))
         os.chmod(self.open_chip_script, 0o755)
@@ -1139,7 +1151,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
         estimate_parasitics -placement
 
-        write_reports dpl
+        {self.write_reports(prefix='dpl')}
         """)
         return True
 
@@ -1228,7 +1240,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
         estimate_parasitics -placement
 
-        write_reports cts_rsz
+        {self.write_reports(prefix='cts_rsz')}
         """)
         return True
 
@@ -1315,7 +1327,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         self.add_fillers()
         self.block_append(f"""
         {self.global_route_cmd}
-        write_reports grt_rsz
+        {self.write_reports(prefix='grt_rsz')}
         """)
         return True
 
@@ -1467,6 +1479,12 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     def write_regs(self) -> bool:
         # TODO: currently no analagous OpenROAD default script
         return True
+    
+    def write_reports(self, prefix: str) -> str:
+        if self.get_setting('par.openroad.write_reports'):
+            return f"write_reports {prefix}"
+        else:
+            return ""
 
     @property
     def write_reports_tcl(self) -> str:
@@ -1553,6 +1571,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     def log_to_reports(self) -> bool:
         ''' Parse OpenROAD log to create reports
         '''
+        if not self.get_setting('par.openroad.write_reports'):
+            return True
         with open(self.openroad_log,'r') as f:
             writing_rpt = False
             rpt: List[str] = []
@@ -1582,7 +1602,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         ################################################################
         # Write Design
 
-        write_reports rcx
+        {self.write_reports(prefix='rcx')}
 
         # Ensure all OR created (rsz/cts) instances are connected
         global_connect
