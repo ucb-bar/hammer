@@ -1,0 +1,29 @@
+name: Feature Request
+description: File a feature request
+labels: ["enhancement"]
+body:
+  - type: checkboxes
+    attributes:
+      label: Background Work
+      description: Yes, I searched the following areas for a prior feature/solution.
+      options:
+        - label: Yes, I searched the [Development](https://github.com/ucb-bar/hammer/discussions/categories/development) section of the Discussions and have read the [posting guidelines](https://github.com/ucb-bar/hammer/discussions/717)
+          required: true
+        - label: Yes, I searched the [documentation](https://hammer-vlsi.readthedocs.io/)
+          required: true
+        - label: This feature is specific to Hammer, i.e., does not belong in a plugin repository instead
+          required: true
+
+  - type: textarea
+    attributes:
+      label: Feature Description
+      description: Description of desired feature.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: Motivating Example
+      description: A concise example demonstrating the feature.
+    validations:
+      required: false
