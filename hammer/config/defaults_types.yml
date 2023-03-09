@@ -52,6 +52,14 @@ vlsi.technology:
   # Top cut/via layer for blockage under bumps. (Optional[str])
   bump_block_cut_layer: Optional[str]
 
+  # Spacing between columns of tap cells
+  # type: float
+  tap_cell_interval: float
+
+  # Offset of the first column of tape cells from the edge of the floorplan
+  # type: float
+  tap_cell_offset: float 
+
   # Extra semiconductor IP libraries/stdcell libs/hard macros. (List[ExtraLibrary])
   # ExtraLibrary is serialized as a list[dict[str, str]]
   # TODO: Extralibrary does not have a clean JSON serialization as of late
