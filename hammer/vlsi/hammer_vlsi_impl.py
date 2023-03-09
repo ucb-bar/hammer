@@ -1634,7 +1634,7 @@ class HammerPowerTool(HammerTool):
             if "levels" in config:
                 report = report._replace(levels=config["levels"])
             if "start_time" in config:
-                start_time = report._replace(start_time=TimeValue(config["start_time"]))
+                report = report._replace(start_time=TimeValue(config["start_time"]))
             if "end_time" in config:
                 report = report._replace(end_time=TimeValue(config["end_time"]))
             if "toggle_signal" in config:
