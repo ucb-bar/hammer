@@ -12,7 +12,7 @@ Main Hammer
 
 Hammer provides the Python backend for a Hammer project and exposes a set of APIs that are typical of modern VLSI flows. These APIs are then implemented by a tool plugin and a technology plugin of the designer's choice. The structure of Hammer is meant to enable re-use and portability between technologies.
 
-Hammer takes its inputs and serializes its state in form of YML and JSON files. The designer sets a variety of settings in the form of keys in different namespaces that are designated in Hammer to control its functionality. These keys are contained in ``hammer/hammer/config/defaults.yml``. This file shows all of the keys that are a part of main Hammer and provides sensible defaults that may be overridden or are set to null if they must be provided by the designer.
+Hammer takes its inputs and serializes its state in the form of YAML and JSON files. The designer sets a variety of settings in the form of keys in different namespaces that are designated in Hammer to control its functionality. These keys are contained in ``hammer/hammer/config/defaults.yml``. This file shows all of the keys that are a part of main Hammer and provides sensible defaults that may be overridden or are set to null if they must be provided by the designer.
 
 Here is an example of a snippet that would be included in the user's input configuration.
 
@@ -97,7 +97,7 @@ For the full list of Hammer command-line arguments, run `hammer-vlsi --help` or 
 Summary
 -------
 
-The software architecture as described above is shown in the diagram below, which is taken from the DAC paper.
+The software architecture as described above is shown in the diagram below, which is taken from `the Hammer DAC paper <https://dl.acm.org/doi/abs/10.1145/3489517.3530672>`_.
 
 .. image:: arch.png
     :width: 600

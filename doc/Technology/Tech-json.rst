@@ -161,8 +161,8 @@ There is an optional ``size`` list. For each element in its corresponding ``name
 
 Don't Use, Physical-Only Cells
 --------------------------------
-The ``dont use list`` is used to denote cells that should be excluded due to things like bad timing models or layout.
-The ``physical only cells list`` is used to denote cells that contain only physical geometry, which means that they should be excluded from netlisting for simulation and LVS. Examples from the ASAP7 plugin are below:
+The ``dont_use_list`` is used to denote cells that should be excluded due to things like bad timing models or layout.
+The ``physical_only_cells_list`` is used to denote cells that contain only physical geometry, which means that they should be excluded from netlisting for simulation and LVS. Examples from the ASAP7 plugin are below:
 
 .. code-block:: json
 
