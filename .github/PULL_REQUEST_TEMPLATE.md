@@ -1,4 +1,4 @@
-<-- Provide a brief description of the PR immediately below this comment, if the title is insufficient -->
+<!-- Provide a brief description of the PR immediately below this comment, if the title is insufficient -->
 
 **Related PRs / Issues**
 <!-- List any related PRs/issues here, if applicable -->
