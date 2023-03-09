@@ -8,6 +8,7 @@ import os, shutil
 from pathlib import Path
 from typing import NamedTuple, List, Optional, Tuple, Dict, Set, Any
 import importlib
+import json
 
 import hammer.tech
 from hammer.tech import HammerTechnology
@@ -24,8 +25,8 @@ class SKY130Tech(HammerTechnology):
     def post_install_script(self) -> None:
         self.library_name = 'sky130_fd_sc_hd'
         # check whether variables were overriden to point to a valid path
-        self.use_openram = os.path.exists(self.get_setting("technology.sky130.openram_lib"))
         self.use_nda_files = os.path.exists(self.get_setting("technology.sky130.sky130_nda"))
+        self.use_sram22 = os.path.exists(self.get_setting("technology.sky130.sram22_sky130_macros"))
         self.setup_cdl()
         self.setup_verilog()
         self.setup_techlef()
@@ -157,17 +158,21 @@ class SKY130Tech(HammerTechnology):
         return hooks.get(tool_name, [])
 
     def get_tech_drc_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
-        if not self.use_openram: return []
-        hooks = {"calibre": [
-            HammerTool.make_post_insertion_hook("generate_drc_run_file", drc_blackbox_openram_srams)
-            ]}
+        calibre_hooks = []
+        if self.get_setting("technology.sky130.drc_blackbox_srams"):
+            calibre_hooks.append(HammerTool.make_post_insertion_hook("generate_drc_run_file", drc_blackbox_openram_srams))
+        hooks = {"calibre": calibre_hooks
+                 }
         return hooks.get(tool_name, [])
 
     def get_tech_lvs_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
-        if not self.use_openram: return []
-        hooks = {"calibre": [
-            HammerTool.make_post_insertion_hook("generate_lvs_run_file", lvs_blackbox_openram_srams)
-            ]}
+        calibre_hooks = []
+        if self.use_sram22:
+            calibre_hooks.append(HammerTool.make_post_insertion_hook("generate_lvs_run_file", sram22_lvs_recognize_gates_all))
+        if self.get_setting("technology.sky130.lvs_blackbox_srams"):
+            calibre_hooks.append(HammerTool.make_post_insertion_hook("generate_lvs_run_file", lvs_blackbox_openram_srams))
+        hooks = {"calibre": calibre_hooks
+                 }
         return hooks.get(tool_name, [])
 
     @staticmethod
@@ -178,25 +183,15 @@ class SKY130Tech(HammerTechnology):
             "sky130_sram_1kbyte_1rw1r_8x1024_8",
             "sky130_sram_2kbyte_1rw1r_32x512_8"
         ]
-
+    
     @staticmethod
     def sky130_sram_names() -> List[str]:
-        return [
-            "sramgen_sram_32x32m2w8_replica_v1",
-            "sramgen_sram_64x32m4w32_replica_v1",
-            "sramgen_sram_512x32m4w8_replica_v1",
-            "sramgen_sram_1024x32m8w8_replica_v1",
-            "sramgen_sram_1024x32m8w32_replica_v1",
-            "sramgen_sram_1024x64m8w32_replica_v1",
-            "sramgen_sram_2048x32m8w8_replica_v1",
-            "sramgen_sram_4096x32m8w8_replica_v1",
-
-            "sky130_sram_1kbyte_1rw1r_32x256_8",
-            "sky130_sram_1kbyte_1rw1r_8x1024_8",
-            "sky130_sram_2kbyte_1rw1r_32x512_8",
-            "sky130_sram_4kbyte_1rw1r_32x1024_8",
-            "sky130_sram_8kbyte_1rw1r_32x2048_8"
-        ]
+        sky130_sram_names = []
+        with open(f"{Path(__file__).parent.resolve()}/sram-cache.json",'r') as f:
+            dl = json.load(f)
+            for d in dl:
+                sky130_sram_names.append(d['name'])
+        return sky130_sram_names
 
 
 _the_tlef_edit = '''
@@ -322,8 +317,7 @@ def drc_blackbox_openram_srams(ht: HammerTool) -> bool:
     drc_box = ''
     for name in SKY130Tech.sky130_sram_names():
         drc_box += f"\nEXCLUDE CELL {name}"
-    run_file = ht.drc_run_file  # type: ignore
-    with open(run_file, "a") as f:
+    with open(ht.drc_run_file, "a") as f:
         f.write(drc_box)
     return True
 
@@ -333,9 +327,14 @@ def lvs_blackbox_openram_srams(ht: HammerTool) -> bool:
     for name in SKY130Tech.sky130_sram_names():
         lvs_box += f"\nLVS BOX {name}"
         lvs_box += f"\nLVS FILTER {name} OPEN "
-    run_file = ht.lvs_run_file  # type: ignore
-    with open(run_file, "a") as f:
+    with open(ht.lvs_run_file, "a") as f:
         f.write(lvs_box)
+    return True
+
+def sram22_lvs_recognize_gates_all(ht: HammerTool) -> bool:
+    assert isinstance(ht, HammerLVSTool), "Change 'LVS RECOGNIZE GATES' from 'NONE' to 'ALL' for Sram22"
+    with open(ht.lvs_run_file, "a") as f:
+        f.write("LVS RECOGNIZE GATES ALL")
     return True
 
 tech = SKY130Tech()
