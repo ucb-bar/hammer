@@ -41,6 +41,8 @@ tox = "^3.25.1"
 Sphinx = "^5.1.1"
 sphinx-rtd-theme = "^1.0.0"
 myst-parser = "^0.18.0"
+sphinx-jsonschema = "^1.19.1"
+sphinx_rtd_size = "^0.2.0"
 pylint = "^2.15"
 
 [[tool.poetry.source]]
