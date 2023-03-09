@@ -3,14 +3,15 @@
 Hammer Tech JSON
 ===============================
 
-The ``tech.json`` for a given technology sets up some general information about the install of the PDK, sets up DRC rule decks, sets up pointers to PDK files, and supplies technology stackup information. For a full schema that the tech JSON supports, please see the ``TechJSON`` Pydantic model class in ``hammer/tech/__init__.py``.
+The ``tech.json`` for a given technology sets up some general information about the install of the PDK, sets up DRC rule decks, sets up pointers to PDK files, and supplies technology stackup information. 
+For the full schema of the tech JSON, please see the :ref:`full_schema` section below, which is derived from the ``TechJSON`` Pydantic BaseModel in ``hammer/tech/__init__.py``.
 
 Technology Install
 ---------------------------------
 
-The user may supply the PDK to Hammer as an already extracted directory and/or as a tarball that Hammer can automatically extract. Setting ``technology.TECH_NAME.`` ``install_dir`` and/or ``tarball_dir`` (key is setup in the defaults.yml) will fill in as the path prefix for paths supplied to PDK files in the rest of the ``tech.json``. :numref:`install-example` shows an example of the installs and tarballs from the ASAP7 plugin.
+The user may supply the PDK to Hammer as an already extracted directory and/or as a tarball that Hammer can automatically extract. Setting ``technology.TECH_NAME.`` ``install_dir`` and/or ``tarball_dir`` (key is setup in the defaults.yml) will fill in as the path prefix for paths supplied to PDK files in the rest of the ``tech.json``.
+Below is an example of the installs and tarballs from the ASAP7 plugin.
 
-.. _install-example:
 .. code-block:: json
 
   "name": "ASAP7 Library",
@@ -42,9 +43,9 @@ The ``id`` field is used within the file listings further down in the file to pr
 DRC/LVS Deck Setup
 ---------------------------------
 
-As many DRC & LVS decks for as many tools can be specified in the ``drc decks`` and ``lvs decks`` keys. Additional DRC/LVS commands can be appended to the generated run files by specifying raw text in the ``additional_drc_text`` and ``additional_lvs_text`` keys. :numref:`deck-example` shows an example of an LVS deck from the ASAP7 plugin.
+As many DRC & LVS decks for as many tools can be specified in the ``drc decks`` and ``lvs decks`` keys. Additional DRC/LVS commands can be appended to the generated run files by specifying raw text in the ``additional_drc_text`` and ``additional_lvs_text`` keys. 
+Below is an example of an LVS deck from the ASAP7 plugin.
 
-.. _deck-example:
 .. code-block:: json
 
   "lvs_decks": [
@@ -61,10 +62,9 @@ The file pointers, in this case, use the tarball prefix because Hammer will be e
 Library Setup
 ---------------------------------
 
-The ``libraries`` key also must be setup in the JSON plugin. This will tell Hammer where to find all of the relevant files for standard cells and other blocks for the VLSI flow. :numref:`library-example` shows an example of the start of the library setup and one entry from the ASAP7 plugin.
+The ``libraries`` key also must be setup in the JSON plugin. This will tell Hammer where to find all of the relevant files for standard cells and other blocks for the VLSI flow. 
+Below is an example of the start of the library setup and one entry from the ASAP7 plugin.
 
-
-.. _library-example:
 .. code-block:: json
 
   "libraries": [
@@ -118,9 +118,9 @@ For a list of pre-built library filters, refer to the properties in the ``Librar
 
 Stackup
 --------------------------------
-The ``stackups`` sets up the important metal layer information for Hammer to use. :numref:`stackups-example` shows an example of one metal layer in the ``metals`` list from the ASAP7 example tech plugin.   
+The ``stackups`` sets up the important metal layer information for Hammer to use. 
+Below is an example of one metal layer in the ``metals`` list from the ASAP7 example tech plugin.   
 
-.. _stackups-example:
 .. code-block:: json
 
         {"name": "M3", "index": 3, "direction": "vertical", "min_width": 0.072, "pitch": 0.144, "offset": 0.0, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 0.072}], "power_strap_width_table": [0.072, 0.36, 0.648, 0.936, 1.224, 1.512]}
@@ -132,7 +132,6 @@ Sites
 --------------------------------
 The ``sites`` field specifies the unit standard cell size of the technology for Hammer.
 
-.. _sites-example:
 .. code-block:: json
 
   "sites": [
@@ -143,9 +142,9 @@ This is an example from the ASAP7 tech plugin in which the ``name`` parameter sp
 
 Special Cells
 --------------------------------
-The ``special_cells`` field specifies a set of cells in the technology that have special functions. :numref:`special-cells-example` shows a subset of the ASAP7 tech plugin for 2 types of cells: ``tapcell`` and ``stdfiller``.
+The ``special_cells`` field specifies a set of cells in the technology that have special functions. 
+The example below shows a subset of the ASAP7 tech plugin for 2 types of cells: ``tapcell`` and ``stdfiller``.
 
-.. _special-cells-example:
 .. code-block:: json
 
   "special_cells": [
@@ -196,3 +195,12 @@ The ``physical only cells list`` is used to denote cells that contain only physi
     "FILLER_ASAP7_75t_R", "FILLER_ASAP7_75t_L", "FILLER_ASAP7_75t_SL", "FILLER_ASAP7_75t_SRAM", 
     "FILLERxp5_ASAP7_75t_R", "FILLERxp5_ASAP7_75t_L", "FILLERxp5_ASAP7_75t_SL", "FILLERxp5_ASAP7_75t_SRAM"
   ],
+
+.. _full_schema:
+Full Schema
+-----------
+
+Note that in the the schema tables presented below, items with ``#/definitions/<class_name>`` are defined in other schema tables. This is done for documentation clarity, but in your JSON file, those items would be hierarchically nested.
+
+.. jsonschema:: schema.json
+   :lift_definitions:

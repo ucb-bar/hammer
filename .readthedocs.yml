@@ -11,6 +11,7 @@ build:
       - pip install poetry myst-parser
       - poetry config virtualenvs.create false
       - poetry install
+      - python3 -c 'from hammer.tech import TechJSON; print(TechJSON.schema_json(indent=2))' > doc/Technology/schema.json
 
 # Build documentation with Sphinx
 sphinx:
