@@ -188,7 +188,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     @property
     def output_sim_netlist_filename(self) -> str:
-        return self.output_netlist_filename
+        return os.path.join(self.run_dir, "{top}.sim.v".format(top=self.top_module))
 
     @property
     def generated_scripts_dir(self) -> str:
@@ -222,6 +222,15 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     def metrics_file(self) -> str:
         return os.path.join(self.metrics_dir, f"metrics-{self._steps_to_run[-1]}.json")
 
+    @property
+    def fill_cells(self) -> str:
+        stdfillers = self.technology.get_special_cell_by_type(CellType.StdFiller)
+        return ' '.join(list(map(lambda c: str(c), stdfillers[0].name)))
+    
+    @property
+    def timing_driven(self) -> bool:
+        return self.get_setting('par.openroad.timing_driven')
+
     def reports_path(self, rpt_name) -> str:
         return os.path.join(self.reports_dir, rpt_name)
 
@@ -238,11 +247,6 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     def filter_for_extra_libs(self, lib: hammer_tech.Library) -> bool:
         return lib in list(map(lambda el: el.store_into_library(), self.technology.get_extra_libraries()))
-
-    @property
-    def fill_cells(self) -> str:
-        stdfillers = self.technology.get_special_cell_by_type(CellType.StdFiller)
-        return ' '.join(list(map(lambda c: str(c), stdfillers[0].name)))
 
 
     def export_config_outputs(self) -> Dict[str, Any]:
@@ -768,7 +772,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         self.block_append(f"""
         ################################################################
         # Floorplan Design
-
+        """)
+        self.block_append(f"""
         # Print paths to macros to file
         set macros_file {self.macros_list_file}
         set macros_file [open $macros_file "w"]
@@ -1170,10 +1175,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     @property
     def report_num_instances(self) -> str:
-        return dedent("""
-        # get number of instances
-        puts "Design has [llength [get_cells *]] instances."
-        """)
+        return dedent("""puts "Design has [llength [get_cells *]] instances." """)
 
     def clock_tree(self) -> bool:
         self.check_detailed_placement()
@@ -1219,29 +1221,30 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         return True
 
     def clock_tree_resize(self) -> bool:
-        setup_margin = self.get_setting('par.openroad.clock_tree_resize.setup_margin')
-        hold_margin = self.get_setting('par.openroad.clock_tree_resize.hold_margin')
-        hold_max_buffer_percent = self.get_setting('par.openroad.clock_tree_resize.hold_max_buffer_percent')
-        padding_final = self.get_setting('par.openroad.clock_tree_resize.placement_padding')
+        if self.timing_driven:
+            setup_margin = self.get_setting('par.openroad.clock_tree_resize.setup_margin')
+            hold_margin = self.get_setting('par.openroad.clock_tree_resize.hold_margin')
+            hold_max_buffer_percent = self.get_setting('par.openroad.clock_tree_resize.hold_max_buffer_percent')
+            padding_final = self.get_setting('par.openroad.clock_tree_resize.placement_padding')
 
-        self.block_append(f"""
-        ###########################
-        # Post-CTS Timing repair
-        {indent(self.report_num_instances, prefix=' '*4*2)}
+            self.block_append(f"""
+            ###########################
+            # Post-CTS Timing repair
+            {self.report_num_instances}
 
-        repair_timing -setup -setup_margin {setup_margin}
-        repair_timing -hold -setup_margin {setup_margin} -hold_margin {hold_margin} -max_buffer_percent {hold_max_buffer_percent}  -allow_setup_violations
+            repair_timing -setup -setup_margin {setup_margin}
+            repair_timing -hold -setup_margin {setup_margin} -hold_margin {hold_margin} -max_buffer_percent {hold_max_buffer_percent}  -allow_setup_violations
 
-        set_placement_padding -global -left {padding_final} -right {padding_final}
+            set_placement_padding -global -left {padding_final} -right {padding_final}
 
-        detailed_placement
+            detailed_placement
 
-        optimize_mirroring
+            optimize_mirroring
 
-        estimate_parasitics -placement
+            estimate_parasitics -placement
 
-        {self.write_reports(prefix='cts_rsz')}
-        """)
+            {self.write_reports(prefix='cts_rsz')}
+            """)
         return True
 
 
@@ -1305,30 +1308,31 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
 
     def global_route_resize(self) -> bool:
-        routing_adj = self.get_setting('par.openroad.global_route_resize.routing_adjustment')
-        metals=self.get_stackup().metals[1:]
-        hold_margin = self.get_setting('par.openroad.global_route_resize.hold_margin')
+        if self.timing_driven:
+            routing_adj = self.get_setting('par.openroad.global_route_resize.routing_adjustment')
+            metals=self.get_stackup().metals[1:]
+            hold_margin = self.get_setting('par.openroad.global_route_resize.hold_margin')
 
 
-        self.block_append(f"""
-        ###########################
-        # Post-GRT Timing repair
+            self.block_append(f"""
+            ###########################
+            # Post-GRT Timing repair
 
-        remove_fillers
+            remove_fillers
 
-        set_global_routing_layer_adjustment {metals[0].name}-{metals[-1].name} {routing_adj}
-        repair_timing -hold -hold_margin {hold_margin} -allow_setup_violations
+            set_global_routing_layer_adjustment {metals[0].name}-{metals[-1].name} {routing_adj}
+            repair_timing -hold -hold_margin {hold_margin} -allow_setup_violations
 
-        detailed_placement
+            detailed_placement
 
-        # post-timing optimizations STA
-        estimate_parasitics -global_routing
-        """)
-        self.add_fillers()
-        self.block_append(f"""
-        {self.global_route_cmd}
-        {self.write_reports(prefix='grt_rsz')}
-        """)
+            # post-timing optimizations STA
+            estimate_parasitics -global_routing
+            """)
+            self.add_fillers()
+            self.block_append(f"""
+            {self.global_route_cmd}
+            {self.write_reports(prefix='grt_rsz')}
+            """)
         return True
 
 
@@ -1481,7 +1485,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         return True
     
     def write_reports(self, prefix: str) -> str:
-        if self.get_setting('par.openroad.write_reports'):
+        if self.get_setting('par.openroad.write_reports') and self.timing_driven:
             return f"write_reports {prefix}"
         else:
             return ""
@@ -1553,7 +1557,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         self.generate_report(f"""
         report_design_area
         report_design_area_metrics
-        {indent(self.report_num_instances, prefix=' '*4*2)}
+        {self.report_num_instances}
         """, f"{prefix}_sta.util.rpt", write_reports_cmds)
 
         report_power = ""
@@ -1598,6 +1602,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
     def write_design(self) -> bool:
 
+        phys_cells_str = " ".join(self.get_physical_only_cells())
+
         self.block_append(f"""
         ################################################################
         # Write Design
@@ -1608,7 +1614,10 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         global_connect
 
         # write netlist
-        write_verilog -remove_cells {{ {" ".join(self.get_physical_only_cells())} }} -include_pwr_gnd {self.output_netlist_filename}
+        write_verilog -remove_cells {{ {phys_cells_str} }} -include_pwr_gnd {self.output_netlist_filename}
+
+        # write sim netlist
+        write_verilog -remove_cells {{ {phys_cells_str} }} {self.output_sim_netlist_filename}
 
         # GDS streamout.
         {self.write_gds()}

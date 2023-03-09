@@ -20,6 +20,10 @@ par.openroad:
   #                  (useful if OpenROAD gets stuck on endless optimization iterations but never actually "errors")
   # type: str
 
+  timing_driven: true  # generate GDS as fast as possible
+  # skips as many optimizations as possible, including write_reports
+  # type: bool
+
   write_reports: true  # generate various timing/area/power reports throughout the PAR flow
   # setting this to false significantly speeds up runs and reduces log output
   # type: bool
@@ -76,8 +80,9 @@ par.openroad:
     orient_all: r0            # rotate all macros to this orientation
 
   global_placement:
-    timing_driven: False
-    routability_driven: True
+    timing_driven: par.openroad.timing_driven
+    timing_driven_meta: lazycrossref
+    routability_driven: true
     density: 0.6
     placement_padding: 3      # sets left and right padding in multiples of the row site width
     routing_adjustment: 0.5   # reduce routing resources by this proportion (i.e. by 50%)

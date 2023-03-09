@@ -11,6 +11,8 @@ par.openroad:
 
   create_archive_mode: str
 
+  fast_flow: false
+
   write_reports: bool
 
   floorplan_mode: str
