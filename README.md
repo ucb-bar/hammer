@@ -17,8 +17,8 @@ Hammer currently requires Python 3.9+.
 For a deeper dive into available options and environment configuration:
 
 * [Core Hammer settings](hammer/config/defaults.yml)
-* [Setup documentation](doc/Hammer-Basics/Hammer-Setup.md)
-* [Hammer technology library schema](hammer/tech/__init__.py)
+* [Setup documentation](https://hammer-vlsi.readthedocs.io/en/latest/Hammer-Basics/Hammer-Setup.html)
+* [Hammer technology library schema](https://hammer-vlsi.readthedocs.io/en/latest/Technology/Tech-json.html#full-schema)
 * For CAD tool settings, please see the relevant `defaults.yml` for those plugins.
 
 Hammer is an integral component of UC Berkeley Architecture Research's [Chipyard framework](https://github.com/ucb-bar/chipyard).
