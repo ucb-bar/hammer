@@ -1088,7 +1088,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         density = self.get_setting('par.openroad.global_placement.density')
         padding = self.get_setting('par.openroad.global_placement.placement_padding')
         routability_driven = "-routability_driven" if self.get_setting('par.openroad.global_placement.routability_driven') else ""
-        timing_driven = "-timing_driven" if self.get_setting('par.openroad.global_placement.timing_driven') else ""
+        timing_driven = "-timing_driven" if self.timing_driven and self.get_setting('par.openroad.global_placement.timing_driven') else ""
         self.block_append(f"""
         ################################################################
         # Global placement (with placed IOs, timing-driven, and routability-driven)

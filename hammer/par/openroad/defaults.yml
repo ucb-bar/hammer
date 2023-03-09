@@ -80,8 +80,7 @@ par.openroad:
     orient_all: r0            # rotate all macros to this orientation
 
   global_placement:
-    timing_driven: par.openroad.timing_driven
-    timing_driven_meta: lazycrossref
+    timing_driven: false
     routability_driven: true
     density: 0.6
     placement_padding: 3      # sets left and right padding in multiples of the row site width
