@@ -8,13 +8,17 @@ PDK Setup
 
 All Sky130 PDK files required for the Hammer VLSI flow can now be [installed via conda](https://anaconda.org/litex-hub/open_pdks.sky130a) by running:
 
-    conda install -c litex-hub open_pdks.sky130a
+```shell
+conda install -c litex-hub open_pdks.sky130a
+```
 
 We recommend using the conda install, but the [manual PDK setup is documented below](#manual-pdk-setup) (although it may be outdated).
 
 Now in your Hammer YAML configs, point to the location of this install:
 
-    technology.sky130.sky130A: "/path/to/conda/env/share/pdk/sky130A"
+```yaml
+technology.sky130.sky130A: "/path/to/conda/env/share/pdk/sky130A"
+```
 
 
 SRAM Macros
@@ -29,11 +33,15 @@ and [OpenRAM](https://github.com/efabless/sky130_sram_macros),
 but starting with Hammer v1.0.2 only Sram22 macros will be supported.
 To obtain these macros, clone their github repo:
 
-    git clone https://github.com/rahulk29/sram22_sky130_macros
+```shell
+git clone https://github.com/rahulk29/sram22_sky130_macros
+```
 
 Then set the respective Hammer YAML key:
 
-    technology.sky130.sram22_sky130_macros: "/path/to/sram22_sky130_macros"
+```yaml
+technology.sky130.sram22_sky130_macros: "/path/to/sram22_sky130_macros"
+```
 
 Note that the various configurations of the SRAMs available are encoded in the file ``sram-cache.json``.
 To modify this file to include different configurations, or switch to using the OpenRAM SRAMs,
@@ -47,7 +55,9 @@ Therefore this NDA PDK is not used to generate a GDS.
 
 If you have access to the NDA repo, you should add this path to your Hammer YAML configs:
 
-    technology.sky130.sky130_nda: "/path/to/skywater-src-nda"
+```yaml
+technology.sky130.sky130_nda: "/path/to/skywater-src-nda"
+```
 
 We use the Calibre decks in the ``s8`` PDK, version ``V2.0.1``, 
 see [here for the DRC deck path](https://github.com/ucb-bar/hammer/blob/612b4b662a774b1cab5cf25e8f41c6a771388e47/hammer/technology/sky130/sky130.tech.json#L16) 
@@ -120,8 +130,10 @@ We recommend adhering to this file structure for Hammer as well.
 All the files reside in a root folder (named something like `skywater` or `sky130`).
 The environment variable `$PDK_ROOT` should be set to this folder's path:
 
-    export PDK_ROOT=<path-to-skywater-directory>
-    
+```shell
+export PDK_ROOT=<path-to-skywater-directory>
+```
+
 `$PDK_ROOT` contains the following:
 
 * `skywater-pdk`
@@ -148,32 +160,37 @@ The environment variable `$PDK_ROOT` should be set to this folder's path:
  
  If using conda, these installs alone caused the Magic install to work:
 
-    conda install -c intel tcl 
-    conda install -c anaconda tk 
-    conda install -c anaconda libglu
-
+```shell
+conda install -c intel tcl 
+conda install -c anaconda tk 
+conda install -c anaconda libglu
+```
 
 ### PDK Install
 
 In `$PDK_ROOT`, clone the skywater-pdk repo and generate the liberty files for each library:
 
-    git clone https://github.com/google/skywater-pdk.git
-    cd skywater-pdk
-    # Expect a large download! ~7GB at time of writing.
-    git submodule init libraries/*/latest
-    git submodule update
-    # Regenerate liberty files
-    make timing
+```shell
+git clone https://github.com/google/skywater-pdk.git
+cd skywater-pdk
+# Expect a large download! ~7GB at time of writing.
+git submodule init libraries/*/latest
+git submodule update
+# Regenerate liberty files
+make timing
+```
 
 Again in `$PDK_ROOT`, clone the open_pdks repo and run the install process to generate the `sky130A` directory:
 
-    git clone https://github.com/RTimothyEdwards/open_pdks.git
-    cd open_pdks
-    ./configure \
+```shell
+git clone https://github.com/RTimothyEdwards/open_pdks.git
+cd open_pdks
+./configure \
     --enable-sky130-pdk=$PDK_ROOT/skywater-pdk/libraries \
     --prefix=$PDK_ROOT \
-    make
-    make install
+make
+make install
+```
 
 This generates all the Sky130 PDK files and installs them to `$PDK_ROOT/share/pdk/sky130A`
 
