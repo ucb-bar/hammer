@@ -1710,9 +1710,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     
     def rotate_coordinates(self, origin: Tuple[Decimal, Decimal], orientation: str) -> Tuple[str, str]:
         # TODO: need to figure out origin translations for rotations besides R90/R270
-        x,y = origin
-        x = str(x)
-        y = str(y)
+        x = str(origin[0])
+        y = str(origin[1])
         if orientation == 'r0':
             return (x,y)
         elif orientation == 'r90':
@@ -1809,8 +1808,10 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                 elif constraint.type in [PlacementConstraintType.HardMacro, PlacementConstraintType.Hierarchical]:
                     x,y = constraint.x, constraint.y
                     orientation = constraint.orientation if constraint.orientation else 'r0'
+                    x_expr = str(x)
+                    y_expr = str(y)
                     if floorplan_origin_pos == 'bottom_left':
-                        x,y = self.rotate_coordinates( (constraint.x,constraint.y), orientation )
+                        x_expr,y_expr = self.rotate_coordinates( (constraint.x,constraint.y), orientation )
                     orientation = self.convert_orientation_hammer2openroad(orientation)
                     inst_name=new_path
 
@@ -1829,8 +1830,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                         set origin [$inst_master getOrigin]
                         set origin_x [expr [lindex $origin 0] / 1000]
                         set origin_y [expr [lindex $origin 1] / 1000]
-                        set x {x}
-                        set y {y}
+                        set x {x_expr}
+                        set y {y_expr}
                         set origin "$x $y"
                         puts "(hammer) {floorplan_cmd}"
                         {floorplan_cmd}
