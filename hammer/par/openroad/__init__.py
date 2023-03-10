@@ -1685,7 +1685,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         """
         return f"initialize_floorplan -site {site} -die_area {{ 0 0 {width} {height}}} -core_area {{{left} {bottom} {width-right-left} {height-top-bottom}}}"
 
-    def rotate_coordinates(self, origin: Tuple[Decimal, Decimal], size: Tuple[Decimal, Decimal], orientation: str) -> Tuple[Decimal, Decimal]:
+    def rotate_coordinates_old(self, origin: Tuple[Decimal, Decimal], size: Tuple[Decimal, Decimal], orientation: str) -> Tuple[Decimal, Decimal]:
         x,y = origin
         width,height = size
         if orientation == 'r0':
@@ -1704,6 +1704,37 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             return (x,y)
         elif orientation == 'my90':
             return (x+height,y+width)
+        else:
+            self.logger.error(f"Invalid orientation {orientation}")
+            return (x,y)
+    
+    def rotate_coordinates(self, origin: Tuple[Decimal, Decimal], orientation: str) -> Tuple[str, str]:
+        # TODO: need to figure out origin translations for rotations besides R90/R270
+        x,y = origin
+        x = str(x)
+        y = str(y)
+        if orientation == 'r0':
+            return (x,y)
+        elif orientation == 'r90':
+            return (f"[expr {x} + $height - $origin_y]",
+                    f"[expr {y} + $origin_x]")
+        elif orientation == 'r180':
+            return (f"[expr {x} + $width]",
+                    f"[expr {y} + $height]")
+        elif orientation == 'r270':
+            return (f"[expr {x} + $origin_y]",
+                    f"[expr {y} + $width - $origin_x]")
+        elif orientation == 'mx':
+            return (x,
+                    f"[expr {y} + $height]")
+        elif orientation == 'my':
+            return (f"[expr {x} + $width]",
+                    y)
+        elif orientation == 'mx90':
+            return (x,y)
+        elif orientation == 'my90':
+            return (f"[expr {x} + $height]",
+                    f"[expr {y} + $width]")
         else:
             self.logger.error(f"Invalid orientation {orientation}")
             return (x,y)
@@ -1779,11 +1810,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                     x,y = constraint.x, constraint.y
                     orientation = constraint.orientation if constraint.orientation else 'r0'
                     if floorplan_origin_pos == 'bottom_left':
-                        if constraint.width == None or constraint.height == None:
-                            self.logger.warning("Floorplan origin position 'bottom_left' cannot be applied to macro {new_path} because macro width/height are unspecified. Reverting to 'rotated' mode.")
-                        else:
-                            x,y = self.rotate_coordinates( (constraint.x,constraint.y), (constraint.width, constraint.height),  orientation )
-                            pass
+                        x,y = self.rotate_coordinates( (constraint.x,constraint.y), orientation )
                     orientation = self.convert_orientation_hammer2openroad(orientation)
                     inst_name=new_path
 
@@ -1796,16 +1823,14 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                         puts "(WARNING) Cell/macro {inst_name} not found!"
                     }} else {{
                         set inst_master [$inst getMaster]
+                        # TODO: can we not hard-code 1000? get units somehow?
+                        set width [expr [$inst_master getWidth] / 1000]
+                        set height [expr [$inst_master getHeight] / 1000]
                         set origin [$inst_master getOrigin]
                         set origin_x [expr [lindex $origin 0] / 1000]
                         set origin_y [expr [lindex $origin 1] / 1000]
-                        if {{ "{orientation}" == "R90" }} {{
-                            set x [expr {x} - $origin_y]
-                            set y [expr {y} + $origin_x]
-                        }} elseif {{ "{orientation}" == "R270" }} {{
-                            set x [expr {x} + $origin_y]
-                            set y [expr {y} - $origin_x]
-                        }}
+                        set x {x}
+                        set y {y}
                         set origin "$x $y"
                         puts "(hammer) {floorplan_cmd}"
                         {floorplan_cmd}

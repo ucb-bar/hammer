@@ -46,7 +46,7 @@ par.openroad:
   # By default, OpenROAD places the macros THEN rotates them, but it is convenient to always 
   #   have the macro (x,y) position correspond with bottom left corner of the placed macro
   # Valid options are:
-  # - bottom_left - width & height of macro must be specified to use this option (or else will use 'rotated' option)
+  # - bottom_left
   # - rotated
   # type: str
 
