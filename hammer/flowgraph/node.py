@@ -246,9 +246,22 @@ class Graph:
         """
         return json_graph.node_link_data(self.networkx)
 
-    def visualize(self) -> Any:
+    def to_d2(self) -> Any:
         raise NotImplementedError()
 
+    def to_mermaid(self, fname: str) -> None:
+        """Converts the flowgraph into Mermaid format for visualization.
+
+        Args:
+            fname (str): Output file name.
+        """
+        with open(fname, 'w', encoding="utf-8") as f:
+            f.write("stateDiagram-v2\n")
+            for start in self.networkx:
+                f.writelines(
+                    f"    {start.action} --> {child.action}\n"
+                    for child in nx.neighbors(self.networkx, start)
+                )
 
 def convert_to_acyclic(g: Graph) -> Graph:
     """Eliminates cycles in a flowgraph for analysis.
@@ -280,7 +293,5 @@ def convert_to_acyclic(g: Graph) -> Graph:
 # TODO: serialization format
 # TODO: cycles are conditional on user input
 # TODO: put x-to-y actions between connections
-# TODO: hooks into nodes
-# TODO: stopping/starting flows
 # TODO: d2 stuff
 # TODO: write tests for hooks/steps
