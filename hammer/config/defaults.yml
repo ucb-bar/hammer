@@ -60,6 +60,12 @@ vlsi.technology:
   bump_block_cut_layer: null # Top cut/via layer for blockage under bumps. (Optional[str])
   # Only used if using vlsi.inputs.bumps
   # TODO: remove this after stackup supports vias ucb-bar/hammer#354
+  
+  tap_cell_interval: 10.0 # Spacing between columns of tap cells (float)
+  # Must be overridden by technology plugin defaults or else you will have DRC/latch-up errors.
+
+  tap_cell_offset: 0.0 # Offset of the first column of tape cells from the edge of the floorplan (float)
+  # Should be overridden by technology plugin defaults.
 
   extra_libraries: [] # Extra semiconductor IP libraries/stdcell libs/hard macros. (List[ExtraLibrary])
   # Used for non-technology-vendor-provided custom IP blocks.
