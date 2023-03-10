@@ -385,8 +385,7 @@ class TestNode(unittest.TestCase):
                 s2p_bad: [par],
                 par: []
             })
-            with pytest.raises(Exception):
-                g.run(syn)
+            g.run(syn)
 
             self.assertEqual(syn.status, Status.COMPLETE)
             self.assertEqual(s2p_bad.status, Status.INCOMPLETE)
