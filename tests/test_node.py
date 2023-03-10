@@ -391,6 +391,133 @@ class TestNode(unittest.TestCase):
             self.assertEqual(s2p_bad.status, Status.INCOMPLETE)
             self.assertEqual(par.status, Status.NOT_RUN)
 
+    def test_resume_graph(self) -> None:
+        """
+        Test that a user can stop and start a flow if needed.
+        """
+        HammerVLSILogging.clear_callbacks()
+        HammerVLSILogging.add_callback(HammerVLSILogging.callback_buffering)
+
+        cfg = dedent("""
+            synthesis.inputs:
+                input_files: ["LICENSE", "README.md"]
+                top_module: "z1top.xdc"
+
+            par.inputs:
+                input_files: ["LICENSE", "README.md"]
+                top_module: "z1top.xdc"
+
+            drc.inputs:
+                input_files: ["LICENSE", "README.md"]
+                top_module: "z1top.xdc"
+
+            lvs.inputs:
+                input_files: ["LICENSE", "README.md"]
+                schematic_files: ["LICENSE", "README.md"]
+                top_module: "z1top.xdc"
+                hcells_list: []
+
+            pcb.inputs:
+                top_module: "z1top.xdc"
+
+            formal.inputs:
+                input_files: ["LICENSE", "README.md"]
+                top_module: "z1top.xdc"
+
+            sim.inputs:
+                input_files: ["LICENSE", "README.md"]
+                top_module: "z1top.xdc"
+
+            vlsi:
+                core:
+                    technology: "hammer.technology.nop"
+
+                    synthesis_tool: "hammer.synthesis.nop"
+                    par_tool: "hammer.par.nop"
+                    drc_tool: "hammer.drc.nop"
+                    lvs_tool: "hammer.lvs.nop"
+                    power_tool: "hammer.power.nop"
+                    sim_tool: "mocksim"
+        """)
+
+        with tempfile.TemporaryDirectory() as td:
+            os.mkdir(os.path.join(td, "syn_dir"))
+            os.mkdir(os.path.join(td, "par_dir"))
+
+            with open(os.path.join(td, "syn_dir", "syn-in.yml"), 'w', encoding="utf-8") as tf1:
+                tf1.write(cfg)
+
+            syn = Node(
+                "syn", "nop",
+                os.path.join(td, "syn_dir"), os.path.join(td, "s2p_dir"),
+                ["syn-in.yml"],
+                ["syn-out.json"],
+            )
+            s2p_bad = Node(
+                "blah", "nop",
+                os.path.join(td, "s2p_dir"), os.path.join(td, "par_dir"),
+                ["syn-out.json"],
+                ["s2p-out.json"],
+            )
+            par = Node(
+                "par", "nop",
+                os.path.join(td, "par_dir"), os.path.join(td, "out_dir"),
+                ["s2p-out.json"],
+                ["par-out.json"],
+            )
+            g = Graph({
+                syn: [s2p_bad],
+                s2p_bad: [par],
+                par: []
+            })
+            g_failed_run = g.run(syn)
+
+            self.assertEqual(syn.status, Status.COMPLETE)
+            self.assertEqual(s2p_bad.status, Status.INCOMPLETE)
+            self.assertEqual(par.status, Status.NOT_RUN)
+
+            s2p_bad.action = "syn-to-par"
+            g_good = g_failed_run.run(s2p_bad)
+            for n in g_good.networkx:
+                self.assertEqual(n.status, Status.COMPLETE)
+
+    def test_mermaid(self) -> None:
+        """
+        Test that Mermaid visualization works.
+        """
+        with tempfile.TemporaryDirectory() as td:
+            os.mkdir(os.path.join(td, "syn_dir"))
+            os.mkdir(os.path.join(td, "par_dir"))
+
+            syn = Node(
+                "syn", "nop",
+                os.path.join(td, "syn_dir"), os.path.join(td, "s2p_dir"),
+                ["syn-in.yml"],
+                ["syn-out.json"],
+            )
+            s2p = Node(
+                "syn-to-par", "nop",
+                os.path.join(td, "s2p_dir"), os.path.join(td, "par_dir"),
+                ["syn-out.json"],
+                ["s2p-out.json"],
+            )
+            par = Node(
+                "par", "nop",
+                os.path.join(td, "par_dir"), os.path.join(td, "out_dir"),
+                ["s2p-out.json"],
+                ["par-out.json"],
+            )
+            g = Graph({
+                syn: [s2p],
+                s2p: [par],
+                par: []
+            })
+
+            g.to_mermaid(os.path.join(td, "mermaid.txt"))
+            with open(os.path.join(td, "mermaid.txt"), 'r', encoding="utf-8") as f:
+                s = f.readlines()
+                self.assertListEqual(s, ["stateDiagram-v2\n", "    syn --> syn-to-par\n", "    syn-to-par --> par\n"])
+
     def test_encode_decode(self) -> None:
         """
         Test that a flowgraph can be encoded and decoded.
