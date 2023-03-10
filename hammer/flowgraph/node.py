@@ -8,12 +8,16 @@
 
 # pylint: disable=invalid-name
 
+import importlib
+import json
 import os
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from enum import Enum
+from typing import Any, Union
 
 import networkx as nx
+from networkx.readwrite import json_graph
 
 from hammer.logging import HammerVLSILogging
 from hammer.vlsi import cli_driver
@@ -35,6 +39,11 @@ class Status(Enum):
 
 @dataclass
 class Node:
+    """Defines a node for an action in a flowgraph.
+
+    Returns:
+        Node: Complete description of an action.
+    """
     action:            str
     tool:              str
     pull_dir:          str
@@ -42,9 +51,17 @@ class Node:
     required_inputs:   list[str]
     required_outputs:  list[str]
     status:            Status    = Status.NOT_RUN
-    __uuid:            uuid.UUID = field(default_factory=uuid.uuid4)
+    # __uuid:            uuid.UUID = field(default_factory=uuid.uuid4)
+    driver:            str       = ""
     optional_inputs:   list[str] = field(default_factory=list)
     optional_outputs:  list[str] = field(default_factory=list)
+    step_controls:     dict[str, str] = field(default_factory=lambda: {
+        "from_step": "",
+        "after_step": "",
+        "to_step": "",
+        "until_step": "",
+        "only_step": "",
+    })
 
     def __key(self) -> tuple:
         """Key value for hashing.
@@ -61,15 +78,69 @@ class Node:
             tuple(self.required_outputs),
             tuple(self.optional_inputs),
             tuple(self.optional_outputs),
-            self.status
+            self.status,
+            tuple(self.step_controls.items())
         )
 
     def __hash__(self) -> int:
+        """Dunder method for uniquely hashing a `Node` object.
+
+        Returns:
+            int: Hash of a `Node`.
+        """
         return hash(self.__key)
+
+    def __is_privileged(self) -> bool:
+        """Private method for checking if
+        step control is applied to a `Node`.
+
+        Returns:
+            bool: If the node is allowed to be the starting point of a flow.
+        """
+        return any(i != "" for i in self.step_controls.values())
+
+    @property
+    def privileged(self) -> bool:
+        """Property for determining node privilege.
+
+        Returns:
+            bool: If the node is allowed to be the starting point of a flow.
+        """
+        return self.__is_privileged()
+
+class NodeEncoder(json.JSONEncoder):
+    def default(self, o: Any) -> Any:
+        if isinstance(o, Node):
+            return asdict(o)
+        elif isinstance(o, Status):
+            return o.value
+        return super().default(o)
+
+def as_node(dct: dict) -> Union[Node, dict]:
+    if "action" in dct:
+        return Node(
+            dct["action"],
+            dct["tool"],
+            dct["pull_dir"],
+            dct["push_dir"],
+            dct["required_inputs"],
+            dct["required_outputs"],
+            Status(dct["status"]),
+            dct["optional_inputs"],
+            dct["optional_outputs"],
+        )
+    return dct
 
 @dataclass
 class Graph:
+    """Defines a flowgraph.
+
+    Returns:
+        Graph: HAMMER flowgraph.
+    """
     edge_list: dict[Node, list[Node]]
+    driver: str = ""
+    # driver: cli_driver.CLIDriver = field(default_factory=cli_driver.CLIDriver)
 
     def __post_init__(self) -> None:
         self.networkx = nx.DiGraph(self.edge_list)
@@ -97,14 +168,32 @@ class Graph:
         inputs = set(v.required_inputs) | set(v.optional_inputs)
         return self.networkx.in_degree(v) == 0 or parent_outs >= inputs
 
-    def run(self, start: Node) -> None:
-        """Run a HAMMER flowgraph."""
-        if not self.verify():
-            raise RuntimeError("Flowgraph is invalid")
-        if start not in self.networkx:
-            raise RuntimeError("Node not in flowgraph")
+    def run(self, start: Node) -> Any:
+        """Runs a flowgraph.
 
-        start.status = Status.RUNNING
+        Args:
+            start (Node): Node to start the run on.
+
+        Raises:
+            RuntimeError: If the flowgraph is invalid.
+            RuntimeError: If the starting node is not in the flowgraph.
+        """
+        if not self.verify():
+            raise RuntimeError("Flowgraph is invalid. Please check your flow's inputs and outputs.")
+        if start not in self.networkx:
+            raise RuntimeError("Node not in flowgraph. Did you construct the graph correctly?")
+        if not start.privileged and any(i.privileged for i in self.networkx):
+            raise RuntimeError("Attempting to run non-privileged node in privileged flow. Please complete your stepped flow first.")
+
+        if start.driver != "":
+            driver_pkg_path, driver_module = self.driver.rsplit('.', 1)
+            driver_pkg = importlib.import_module(driver_pkg_path)
+            driver = getattr(driver_pkg, driver_module)()
+            if not isinstance(driver, cli_driver.CLIDriver):
+                raise TypeError(f"Driver {driver} does not extend CLIDriver, cannot run a flow.")
+        else:
+            driver = cli_driver.CLIDriver()
+
         arg_list = {
             "action": start.action,
             'environment_config': None,
@@ -120,30 +209,46 @@ class Graph:
             'formal_rundir': '',
             'timing_rundir': '',
             # TODO: sub-step determinations
-            'from_step': None,
-            'after_step': None,
-            'to_step': None,
-            'until_step': None,
-            'only_step': None,
+            'from_step': start.step_controls["from_step"],
+            'after_step': start.step_controls["after_step"],
+            'to_step': start.step_controls["to_step"],
+            'until_step': start.step_controls["until_step"],
+            'only_step': start.step_controls["only_step"],
             'output': os.path.join(start.push_dir, start.required_outputs[0]),  # TODO: fix this
             'verilog': None,
             'firrtl': None,
             'top': None,
-            'cad_files': None
+            'cad_files': None,
+            'dump_history': False
         }
 
+        start.status = Status.RUNNING
         ctxt = HammerVLSILogging.context(start.action)
         ctxt.info(f"Running graph step {start.action}")
-        driver = cli_driver.CLIDriver()
         code = driver.run_main_parsed(arg_list)
         if code == 0:
             start.status = Status.COMPLETE
         else:
             start.status = Status.INCOMPLETE
-            raise RuntimeError(f"Step {start.action} failed")
+            ctxt.fatal(f"Step {start.action} failed")
+            return self
 
         for c in nx.neighbors(self.networkx, start):
             self.run(c)
+
+        return self
+
+    def to_json(self) -> dict:
+        """Encodes a graph as a JSON string.
+
+        Returns:
+            str: JSON dump of a flowgraph.
+        """
+        return json_graph.node_link_data(self.networkx)
+
+    def visualize(self) -> Any:
+        raise NotImplementedError()
+
 
 def convert_to_acyclic(g: Graph) -> Graph:
     """Eliminates cycles in a flowgraph for analysis.
@@ -170,3 +275,12 @@ def convert_to_acyclic(g: Graph) -> Graph:
         new_edge_list[cut_start] = []
         new_edge_list[cut_end_copy] = cut_start_children
     return Graph(new_edge_list)
+
+
+# TODO: serialization format
+# TODO: cycles are conditional on user input
+# TODO: put x-to-y actions between connections
+# TODO: hooks into nodes
+# TODO: stopping/starting flows
+# TODO: d2 stuff
+# TODO: write tests for hooks/steps
