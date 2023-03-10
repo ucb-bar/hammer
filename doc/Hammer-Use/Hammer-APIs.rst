@@ -35,29 +35,54 @@ Power Straps
 ------------
 Power strap constraints are specified using multiple Hammer IR keys in the ``par`` namespace.You can find the keys in <tech>/defaults.yml under the tech plugin directory. An example from asap7 (https://github.com/ucb-bar/hammer/blob/master/hammer/technology/asap7/defaults.yml) is as follows:
 
-par.power_straps_mode: generate # Power straps (most DRC-clean)
-par.generate_power_straps_method: by_tracks
-par.generate_power_straps_options:
-by_tracks:
-      strap_layers:
-            - M3
-              
-                - M4
-                            - M5
-                                    - M6
-                                            - M7
-                                                    - M8
-                                                            - M9
-                                                                  pin_layers:
-                                                                        - M9
-                                                                              track_width: 7 # minimum allowed for M2 & M3
-                                                                                  track_spacing: 0
-                                                                                      track_spacing_M3: 28 # space straps apart evenly, in conjunction w/ track_utilization_M3
-                                                                                          track_start: 10
-                                                                                              power_utilization: 0.25
-                                                                                                  power_utilization_M3: 0.6 # together with track_spacing_M3 results in approx. 0.25 eff. utilization
-                                                                                                      power_utilization_M8: 1.0
-                                                                                                          power_utilization_M9: 1.0ear
+.. literalinclude:: ../../hammer/technology/asap7/defaults.yml
+   :language: yaml
+   :linenos:
+   :lines: 59-80
+   :caption: ASAP7 default power straps setting
+..
+
+The default keys for all hammer configs are defined in https://github.com/ucb-bar/hammer/blob/master/hammer/config/defaults.yml, which contains detailed comments on what each key does. Here is the default setting and parameter descriptions for power strap generation.
+
+.. literalinclude:: ../../hammer/config/defaults.yml
+   :language: yaml
+   :linenos:
+   :lines: 560-598
+   :caption: Hammer global default power straps setting
+..
+
+The currently supported API supports power strap generation by tracks, which auto-calculates power strap width, spacing, set-to-set distance, and offsets based on basic DRC rules specified in the technology Stackup object. 
+
+The technology Stackup information (“stackups”) can be found in the <tech>.tech.json file under the tech plugin directory. The “stackups” usually are located near the end of the <tech>.tech.json file. An example from asap7 (https://github.com/ucb-bar/hammer/blob/master/hammer/technology/asap7/asap7.tech.json) is as follows:
+
+.. literalinclude:: ../../hammer/technology/asap7/asap7.tech.json
+   :language: json
+   :linenos:
+   :lines: 1364-1381
+   :caption: ASAP7 stackup object
+..
+
+The keys in the Stackup object are defined in  https://github.com/ucb-bar/hammer/blob/master/hammer/tech/stackup.py as follows.
+
+.. literalinclude:: ../../hammer/tech/stackup.py
+   :linenos:
+   :lines: 79-98
+   :caption: Description for a metal layer/stackup
+..
+
+The basic pieces of information needed are the desired track utilization per strap and overall power strap density. Powerstraps are routed in pairs of Vdd and Vss. Based on the effective power utilization and track spacing, there are three ways to route powerstraps.
+
+For track spacing = 0 and effective power utilization = 100%, powerstraps are routed as follows.
+
+.. image:: strap_100util.png
+
+For track spacing = 0 and effective power utilization < 100%, powerstraps are routed as follows.
+
+.. image:: strap_0spacing_not100util.png
+
+For track spacing > 0 and effective power utilization < 100%, powerstraps are routed as follows.
+
+.. image:: strap_not0spacing_not100util.png
 
 The currently supported API supports power strap generation by tracks, which auto-calculates power strap width, spacing, set-to-set distance, and offsets based on basic DRC rules specified in the technology Stackup object. The basic pieces of information needed are the desired track utilization per strap and overall power strap density. Different values can be specified on a layer-by-layer basis by appending ``_<layer name>`` to the end of the desired option.
 
