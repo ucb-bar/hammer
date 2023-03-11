@@ -2,39 +2,106 @@
 # The values specified in this file are the defaults.
 
 par.openroad:
-  openroad_bin: "openroad" # Location of the binary.
+  openroad_bin: "openroad" # Location of the openroad binary.
   version: "dummy-value" # this is just to make hammer happy (although, it is never called AFAICT).
   # the version is actually calculated by the OpenROADTool class
 
+  klayout_bin: "klayout" # Location of the klayout binary.
+
   generate_only: false # Generate the TCL file but do not run it yet.
 
-  create_archive_mode: after_error
+  create_archive_mode: none
   # Generate the tar.gz archive of the current build/par-rundir directory with a runme.sh script to reproduce the results
   # Valid options are:
+  # - none - never create an archive
   # - after_error - if OpenROAD errors, create an archive of the run
   # - always - create an archive after every par run (regardless of whether OpenROAD errors)
   # - latest_run - create an archive of latest par run (don't run OpenROAD)
   #                  (useful if OpenROAD gets stuck on endless optimization iterations but never actually "errors")
-  # - none - never create an archive
-  # type: Optional[str]
+  # type: str
+
+  timing_driven: true  # generate GDS as fast as possible
+  # skips as many optimizations as possible, including write_reports
+  # type: bool
+
+  write_reports: true  # generate various timing/area/power reports throughout the PAR flow
+  # setting this to false significantly speeds up runs and reduces log output
+  # type: bool
 
   floorplan_mode: generate # Floorplanning SDC constraints to use.
   # Valid options are:
   # - blank - Specify no floorplanning constraints (likely won't work)
-  # - manual - Specify the contents of a manual SDC floorplanning script to use in floorplan_script_contents.
   # - generate - Generate a floorplan from the hammer-vlsi config/IR.
-  # - auto - Use OpenROAD's `macro_placement` command to auto-generate a floorplan. Will have poor, but sane results
-  #   If you specify 'manual', you must also specify the floorplanning_script config below. The floorplanning_script config will be ignored in other modes.
+  # - auto_macro - Use OpenROAD's `macro_placement` command to auto-generate macro placements.
+  #                Chip top-level constraints must still be specified (i.e. width, height)
+  # - manual - Specify the contents of a manual floorplanning script to use in floorplan_script_contents.
+  #            If you specify 'manual', you must also specify the floorplanning_script config below. The floorplanning_script config will be ignored in other modes.
+  # type: str
 
   floorplan_script_contents: null
   # type: Optional[str]
 
-  openrcx_techfile: null
-  # type: Optional[str]
-  # Optional: OpenRCX RC tech file
-  # Should be set in technology plugin
+  floorplan_origin_pos: bottom_left
+  # Only used when par.openroad.floorplan_mode == generate
+  # By default, OpenROAD places the macros THEN rotates them, but it is convenient to always 
+  #   have the macro (x,y) position correspond with bottom left corner of the placed macro
+  # Valid options are:
+  # - bottom_left
+  # - rotated
+  # type: str
 
-  klayout_techfile_source: null
-  # type: Optional[str]
-  # Optional: KLayout tech file
+  setrc_file: null # Gate Resizer layer RC settings
   # Should be set in technology plugin
+  # type: Optional[str]
+
+  openrcx_techfiles: null # Optional: OpenRCX RC tech files
+  # Usually one per corner
+  # Should be set in technology plugin
+  # type: Optional[list[str]]
+
+  klayout_techfile_source: null # Optional: KLayout tech file
+  # Should be set in technology plugin
+  # type: Optional[str]
+  
+  def2stream_file: "../../vlsi/vendor/def2stream.py" # Python script to convert DEF to GDS using Klayout
+  def2stream_file_meta: prependlocal
+  # Original script found here: https://github.com/The-OpenROAD-Project/OpenROAD-flow-scripts/blob/master/flow/util/def2stream.py
+  # Modified to uniquefy duplicate module names in hierarchical designs
+  #   otherwise KLayout uses the GDS of the first instance with that name for all instances
+  # type: str
+  
+
+  # Step parameter configurations
+  macro_placement:  # NOTE: macro_placement settings are only used when par.openroad.floorplan_mode == auto_macro
+    halo: [10, 10]            # placement halo around macros - [vertical, horizontal] widths
+    channel: null             # channel width between macros, default is 2*halo - [vertical, horizontal] widths
+    snap_layer: par.blockage_spacing_top_layer  # snap macro origins to this routing layer track
+    snap_layer_meta: lazycrossref
+    orient_all: r0            # rotate all macros to this orientation
+
+  global_placement:
+    timing_driven: false
+    routability_driven: true
+    density: 0.6
+    placement_padding: 3      # sets left and right padding in multiples of the row site width
+    routing_adjustment: 0.5   # reduce routing resources by this proportion (i.e. by 50%)
+  
+  detailed_placement:
+    placement_padding: 2
+
+  clock_tree:
+    placement_padding: 1
+  
+  clock_tree_resize:
+    setup_margin: 0.05
+    hold_margin: 0.2
+    hold_max_buffer_percent: 60   #  maximum number of buffers to insert to repair hold violations as a percentage of the number of instances in the design
+    placement_padding: 0
+  
+  global_route: 
+    routing_adjustment: 0.3       # reduce routing resources by this proportion (i.e. by 30%)
+  
+  global_route_resize:
+    hold_margin: 0.2
+    routing_adjustment: 0.3
+  

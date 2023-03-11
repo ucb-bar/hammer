@@ -93,8 +93,6 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
             if not os.path.isfile(self.mapped_sdc_path):
                 raise ValueError("Output SDC %s not found" % (self.mapped_sdc_path)) # better error?
 
-            # if not os.path.isfile(self.output_sdf_path):
-            #     raise ValueError("Output SDF %s not found" % (self.output_sdf_path))
         else:
             self.logger.info("Did not run write_outputs")
 
@@ -273,10 +271,6 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
             self.verbose_append(f"dfflibmap -liberty {liberty_file}")
         self.verbose_append("opt")
 
-        # merges shareable resources into a single resource. A SAT solver
-        # is used to determine if two resources are share-able.
-        # self.append('share -aggressive')
-
         self.write_sdc_file()
         return True
 
@@ -347,15 +341,16 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
     def write_outputs(self) -> bool:
         hier_mapped_v_path=os.path.join(self.run_dir, f"{self.top_module}.mapped.hier.v")
         self.block_append(f"""
-        write_verilog -noattr -noexpr -nohex -nodec -defparam "{hier_mapped_v_path}"
-
-        flatten
-
-        # OpenROAD will throw an error if the verilog from Yosys is not flattened
         write_verilog -noattr -noexpr -nohex -nodec -defparam "{self.mapped_v_path}"
 
+        # flatten
+
+        # # OpenROAD will throw an error if the verilog from Yosys is not flattened
+        # # UPDATE ON THIS: nvm, it somehow works now...
+        # write_verilog -noattr -noexpr -nohex -nodec -defparam "{self.mapped_v_path}"
+
         # BLIF file seems to be easier to parse than mapped verilog for find_regs functions so leave for now
-        write_blif -top {self.top_module} "{self.mapped_blif_path}"
+        # write_blif -top {self.top_module} "{self.mapped_blif_path}"
         """)
         self.ran_write_outputs = True
         return True
