@@ -33,7 +33,7 @@ Pin constraints are specified using the Hammer IR key ``vlsi.inputs.pin``. PinAs
 
 Power Straps
 ------------
-Power strap constraints are specified using multiple Hammer IR keys in the ``par`` namespace.You can find the keys in <tech>/defaults.yml under the tech plugin directory. An example from asap7 (https://github.com/ucb-bar/hammer/blob/master/hammer/technology/asap7/defaults.yml) is as follows:
+Power strap constraints are specified using multiple Hammer IR keys in the ``par`` namespace.You can find the keys in <tech>/defaults.yml under the tech plugin directory. An example from `asap7 <https://github.com/ucb-bar/hammer/blob/master/hammer/technology/asap7/defaults.yml>`__ is as follows:
 
 .. literalinclude:: ../../hammer/technology/asap7/defaults.yml
    :language: yaml
@@ -42,18 +42,18 @@ Power strap constraints are specified using multiple Hammer IR keys in the ``par
    :caption: ASAP7 default power straps setting
 ..
 
-The default keys for all hammer configs are defined in https://github.com/ucb-bar/hammer/blob/master/hammer/config/defaults.yml, which contains detailed comments on what each key does. Here is the default setting and parameter descriptions for power strap generation.
+The default keys for all hammer configs are defined in the `defaults.yml <https://github.com/ucb-bar/hammer/blob/master/hammer/config/defaults.yml>`__, which contains detailed comments on what each key does. Here is the default setting and parameter descriptions for power strap generation.
 
 .. literalinclude:: ../../hammer/config/defaults.yml
    :language: yaml
    :linenos:
-   :lines: 560-598
+   :lines: 570-604
    :caption: Hammer global default power straps setting
 ..
 
 The currently supported API supports power strap generation by tracks, which auto-calculates power strap width, spacing, set-to-set distance, and offsets based on basic DRC rules specified in the technology Stackup object. 
 
-The technology Stackup information (“stackups”) can be found in the <tech>.tech.json file under the tech plugin directory. The “stackups” usually are located near the end of the <tech>.tech.json file. An example from asap7 (https://github.com/ucb-bar/hammer/blob/master/hammer/technology/asap7/asap7.tech.json) is as follows:
+The technology Stackup information (“stackups”) can be found in the <tech>.tech.json file under the tech plugin directory. The “stackups” usually are located near the end of the <tech> ``.tech.json`` file. An example from `asap7 <(https://github.com/ucb-bar/hammer/blob/master/hammer/technology/asap7/asap7.tech.json>`__ is as follows:
 
 .. literalinclude:: ../../hammer/technology/asap7/asap7.tech.json
    :language: json
@@ -62,9 +62,10 @@ The technology Stackup information (“stackups”) can be found in the <tech>.t
    :caption: ASAP7 stackup object
 ..
 
-The keys in the Stackup object are defined in  https://github.com/ucb-bar/hammer/blob/master/hammer/tech/stackup.py as follows.
+The keys in the Stackup object are defined in `stackup.py <https://github.com/ucb-bar/hammer/blob/master/hammer/tech/stackup.py>`__ as follows.
 
 .. literalinclude:: ../../hammer/tech/stackup.py
+   :language: none
    :linenos:
    :lines: 79-98
    :caption: Description for a metal layer/stackup
