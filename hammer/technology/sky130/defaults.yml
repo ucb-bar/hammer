@@ -83,8 +83,8 @@ vlsi:
 
     bump_block_cut_layer: "via4" # Set the layer that blocks vias under bumps
 
-    tap_cell_interval: 15 # Set the interval and offset for tap cells
-    tap_cell_offset: 5
+    tap_cell_interval: 15.0 # Set the interval and offset for tap cells
+    tap_cell_offset: 5.0
 
 technology.core:
   stackup: "sky130_fd_sc_hd" # This key should exist in the stackups list in the tech json
