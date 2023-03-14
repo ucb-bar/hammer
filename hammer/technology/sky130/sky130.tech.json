@@ -33,7 +33,6 @@
   "libraries": [
     {
       "lef_file": "cache/sky130_fd_sc_hd__nom.tlef",
-      "spice_file": "$SKY130_NDA/s8/V2.0.1/LVS/Calibre/source.cdl",
       "verilog_sim": "cache/primitives.v",
       "provides": [
         {
