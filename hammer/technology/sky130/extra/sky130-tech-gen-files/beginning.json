@@ -4,18 +4,14 @@
   "time_unit": "1 ns",
   "installs": [
     {
-      "path": "$SKY130A",
-      "base var": "technology.sky130.sky130A"
-    },
-    {
-      "path": "tech-sky130-cache",
-      "base var": ""
+      "id": "$SKY130A",
+      "path": "technology.sky130.sky130A"
     }
   ],
   "libraries": [
     {
-      "lef file": "tech-sky130-cache/sky130_fd_sc_hd.tlef",
-      "verilog sim": "tech-sky130-cache/primitives.v",
+      "lef_file": "tech-sky130-cache/sky130_fd_sc_hd__nom.tlef",
+      "verilog_sim": "tech-sky130-cache/primitives.v",
       "provides": [
         {
           "lib_type": "technology"
