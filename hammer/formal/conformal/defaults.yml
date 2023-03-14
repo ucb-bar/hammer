@@ -1,0 +1,23 @@
+# Configuration options and defaults for Conformal.
+# The values specified in this file are the defaults.
+
+formal.conformal:
+  # Location of the binary
+  conformal_lec_bin: "${cadence.cadence_home}/CONFRML/CONFRML${formal.conformal.version}/bin/lec"
+  conformal_lec_bin_meta: lazysubst # we want later overrides to be able to affect this
+  conformal_ccd_bin: "${cadence.cadence_home}/CONFRML/CONFRML${formal.conformal.version}/bin/ccd"
+  conformal_ccd_bin_meta: lazysubst # we want later overrides to be able to affect this
+
+  # Conformal version to use
+  # Used to locate the binary - e.g. the '212' in ${cadence.cadence_home}/CONFRML/CONFRML212/bin/lec
+  version: "212"
+
+  # Highest installed license level
+  # Valid options: L, XL, GXL
+  license: "GXL"
+
+formal.inputs:
+  # Check type to run. Supported types in this plugin:
+  # - lec: logical equivalence checking
+  # Note: select features will require a XL/GXL license (see license_level key).
+  check: "lec"

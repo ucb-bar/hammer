@@ -1,0 +1,11 @@
+# Configuration options and defaults for Joules.
+# The values specified in this file are the defaults.
+
+power.joules:
+  # Location of the binary.
+  joules_bin: "${cadence.cadence_home}/JLS/JLS${power.joules.version}/bin/joules"
+  joules_bin_meta: lazysubst # we want later overrides to be able to affect this
+
+  # Joules version to use.
+  # Used to locate the binary - e.g. the '201' in ${cadence.cadence_home}/JLS/JLS201/bin/joules
+  version: "201"

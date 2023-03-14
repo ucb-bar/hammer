@@ -3,6 +3,7 @@ import os, tempfile, subprocess
 from pathlib import Path
 
 from hammer.vlsi import MMMCCorner, MMMCCornerType, HammerTool, HammerToolStep, HammerSRAMGeneratorTool, SRAMParameters
+from hammer.tech import Corner, Supplies, Provide
 from hammer.vlsi.units import VoltageValue, TemperatureValue
 from hammer.tech import Library, ExtraLibrary
 from typing import NamedTuple, Dict, Any, List
@@ -34,7 +35,7 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
 
         if params.family != "1rw" and params.family != "1rw1r":
             self.logger.error("SKY130 SRAM cache does not support family:{f}".format(f=params.family))
-            return ExtraLibrary(prefix=None, library=None)
+            return ExtraLibrary(prefix=None, library=None)  # type: ignore
 
         if params.name.startswith("sramgen_sram"):
             self.logger.info(f"Compiling {params.family} memories to SRAM22 instances")
@@ -62,9 +63,9 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
                 gds_file="{b}/{n}/{n}.gds".format(b=base_dir,n=sram_name),
                 spice_file="{b}/{n}/{n}.spice".format(b=base_dir,n=sram_name),
                 verilog_sim="{b}/{n}/{n}.v".format(b=base_dir,n=sram_name),
-                corner={'nmos': speed_name, 'pmos': speed_name, 'temperature': str(corner.temp.value_in_units("C")) + " C"},
-                supplies={'VDD': str(corner.voltage.value_in_units("V")) + " V", 'GND': "0 V"},
-                provides=[{'lib_type': "sram", 'vt': params.vt}]))
+                corner=Corner(nmos=speed_name, pmos=speed_name, temperature=str(corner.temp.value_in_units("C")) + " C"),
+                supplies=Supplies(VDD=str(corner.voltage.value_in_units("V")) + " V", GND="0 V"),
+                provides=[Provide(lib_type="sram", vt=params.vt)]))
 
         # TODO: remove OpenRAM support very soon
         elif params.name.startswith("sky130_sram_"):
@@ -101,9 +102,9 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
                 gds_file="{b}/{n}/{n}.gds".format(b=base_dir,n=sram_name),
                 spice_file="{b}/{n}/{n}.lvs.sp".format(b=cache_dir,n=sram_name),
                 verilog_sim="{b}/{n}/{n}.v".format(b=cache_dir,n=sram_name),
-                corner={'nmos': speed_name, 'pmos': speed_name, 'temperature': str(corner.temp.value_in_units("C")) + " C"},
-                supplies={'VDD': str(corner.voltage.value_in_units("V")) + " V", 'GND': "0 V"},
-                provides=[{'lib_type': "sram", 'vt': params.vt}]))
+                corner=Corner(nmos=speed_name, pmos=speed_name, temperature=str(corner.temp.value_in_units("C")) + " C"),
+                supplies=Supplies(VDD=str(corner.voltage.value_in_units("V")) + " V", GND="0 V"),
+                provides=[Provide(lib_type="sram", vt=params.vt)]))
         else:
             self.logger.error(f"SRAM {params.name} not supported")
             return ExtraLibrary(prefix=None, library=Library())

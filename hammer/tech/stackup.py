@@ -102,7 +102,7 @@ class Metal(BaseModel):
     index: int
     direction: RoutingDirection
     min_width: Decimal
-    max_width: Optional[Decimal]
+    max_width: Optional[Decimal] = None
     pitch: Decimal
     offset: Decimal
     power_strap_widths_and_spacings: List[WidthSpacingTuple]
