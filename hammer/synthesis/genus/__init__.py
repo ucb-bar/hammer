@@ -83,7 +83,7 @@ class Genus(HammerSynthesisTool, CadenceTool):
 
     @property
     def steps(self) -> List[HammerToolStep]:
-        return self.make_steps_from_methods([
+        steps_methods = [
             self.init_environment,
             self.syn_generic,
             self.syn_map,
@@ -91,7 +91,10 @@ class Genus(HammerSynthesisTool, CadenceTool):
             self.write_regs,
             self.generate_reports,
             self.write_outputs
-        ])
+        ]
+        if self.get_setting("synthesis.inputs.retime_modules"):
+            steps_methods.insert(1, self.retime_modules)
+        return self.make_steps_from_methods(steps_methods)
 
     def do_pre_steps(self, first_step: HammerToolStep) -> bool:
         assert super().do_pre_steps(first_step)
@@ -259,6 +262,21 @@ class Genus(HammerSynthesisTool, CadenceTool):
         # Set "don't use" cells.
         for l in self.generate_dont_use_commands():
             self.append(l)
+
+        return True
+
+    def retime_modules(self) -> bool:
+        retime_mods = self.get_setting("synthesis.inputs.retime_modules")
+
+        if retime_mods:
+            rt_tcl = (
+                f"set rt_mods [get_designs \"{' '.join(retime_mods)}\"]\n" \
+                "foreach rt_mod $rt_mods {\n" \
+                "  set_db $rt_mod .retime true\n" \
+                "}\n" \
+                "set_db / .retime_verification_flow true"
+            )
+            self.append(rt_tcl)
 
         return True
 
