@@ -120,7 +120,7 @@ class Genus(HammerSynthesisTool, CadenceTool):
     @property
     def mapped_hier_v_path(self) -> str:
         if self.version() >= self.version_number("191"):
-            return os.path.join(self.run_dir, "{top}_noilm.mapped.v".format(self.top_module))
+            return os.path.join(self.run_dir, "{}_noilm.mapped.v".format(self.top_module))
         else:
             return os.path.join(self.run_dir, "genus_invs_des/genus.v.gz")
 
