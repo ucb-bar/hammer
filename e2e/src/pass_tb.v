@@ -5,9 +5,9 @@ module pass_tb;
     reg clk = 0;
     always #(5) clk = ~clk;
 
-    reg in; 
+    reg in;
     wire out;
-    
+
     pass pass_0 (
         .clock(clk),
         .in(in),
@@ -21,11 +21,11 @@ module pass_tb;
 
         in = 0;
         repeat(3) @(posedge clk);
-        
+
         #1;
 
         in = 1;
-        
+
         if (out == 1) begin
             $display("***Test Failed***");
         end
