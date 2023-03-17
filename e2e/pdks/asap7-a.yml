@@ -7,10 +7,7 @@ par.innovus.version: "211"
 
 sim.vcs.version: "P-2019.06-SP1"
 sim.vcs.verdi_home: "/ecad/tools/synopsys/verdi/P-2019.06-SP2-2"
-#sim.vcs.verdi_home: "/ecad/tools/synopsys/verdi/${sim.vcs.version}"
 sim.vcs.verdi_home_meta: lazysubst
-#sim.vcs.vcs_home: "/ecad/tools/synopsys/vcs/${sim.vcs.version}"
-#sim.vcs.vcs_home: lazysubst
 
 lvs.calibre.version: "2022.2_24.16"
 drc.calibre.version: "2022.2_24.16"

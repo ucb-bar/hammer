@@ -143,3 +143,7 @@ par.generate_power_straps_options:
     power_utilization_met2: 0.05
     power_utilization_met4: 0.15
     power_utilization_met5: 0.5
+
+sim.inputs:
+  defines: ["FUNCTIONAL", "UNIT_DELAY=#1"]
+  defines_meta: append
