@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import List, Dict, Any
 
-from hammer.tech.stackup import Metal, WidthSpacingTuple, Stackup
+from hammer.tech.stackup import Metal, WidthSpacingTuple, Stackup, RoutingDirection
 from hammer.tech import Site
 from hammer.utils import coerce_to_grid
 
@@ -47,7 +47,7 @@ class StackupTestHelper:
         return Metal(
             name="M{}".format(index),
             index=index,
-            direction="vertical" if (index % 2 == 1) else "horizontal",
+            direction=RoutingDirection("vertical" if (index % 2 == 1) else "horizontal"),
             min_width=coerce_to_grid(StackupTestHelper.index_to_min_width_fn(index), grid_unit),
             pitch=coerce_to_grid(StackupTestHelper.index_to_min_pitch_fn(index), grid_unit),
             offset=coerce_to_grid(StackupTestHelper.index_to_offset_fn(index), grid_unit),

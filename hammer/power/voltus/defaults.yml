@@ -1,0 +1,27 @@
+# Configuration options and defaults for Voltus.
+# The values specified in this file are the defaults.
+
+power.voltus:
+  # Location of the binary.
+  voltus_bin: "${cadence.cadence_home}/SSV/SSV${power.voltus.version}/bin/voltus"
+  voltus_bin_meta: lazysubst # we want later overrides to be able to affect this
+
+  # Voltus version to use.
+  # Used to locate the binary - e.g. the '181' in ${cadence.cadence_home}/VOLTUS/VOLTUS181/bin/voltus
+  version: "211"
+
+  # Optional LEF <-> QRC layer mapping file if layers within are mismatched
+  # Should be provided by the technology in a tab-separated 4-column format
+  #   Column 1: layer type (metal, via)
+  #   Column 2: layer name in QRC tech file
+  #   Column 3: lefdef (exact string)
+  #   Column 4: layer name in tech LEF file
+  lef_layer_map: null
+
+  # If true, generate power grid views of the macros contained in vlsi.inputs.extra_libraries
+  # Each library is required to have a name. If the library has a power grid view provided, they are skipped.
+  macro_pgv: true
+
+  # Accuracy for rail analysis (choices are "xd" and "hd")
+  # If left null, accuracy will be selected based on which PG views can be generated
+  rail_accuracy: null

@@ -1031,7 +1031,7 @@ def.b_key: "bank"
 
         # Test prefix functionality.
         for (input_dict, prefix, opt, ref) in zip(inputs, prefixes, opts, refs):
-            assert db.get_settings_from_dict(input_dict, prefix, opt) == ref
+            assert db.get_settings_from_dict(input_dict, prefix, opt) == ref  # type: ignore
         
         # In the final case, test error handling when mandatory keys are not specified.
         with pytest.raises(ValueError):

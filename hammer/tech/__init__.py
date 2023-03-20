@@ -101,32 +101,32 @@ class PathPrefix(BaseModel):
 class Library(BaseModel):
     # TODO: refactor into library types, currently a Library is defined by just a small
     #   set of these fields (e.g. lef, gds, lib, verilog for stdcell libraries)
-    name: Optional[str]
-    ccs_liberty_file: Optional[str]
-    ccs_library_file: Optional[str]
-    ecsm_liberty_file: Optional[str]
-    ecsm_library_file: Optional[str]
-    corner: Optional[Corner]
-    itf_files: Optional[MinMaxCap]
-    lef_file: Optional[str]
-    klayout_techfile: Optional[str]
-    spice_file: Optional[str]
-    gds_file: Optional[str]
-    milkyway_lib_in_dir: Optional[str]
-    milkyway_techfile: Optional[str]
-    nldm_liberty_file: Optional[str]
-    nldm_library_file: Optional[str]
-    openaccess_techfile: Optional[str]
-    provides: Optional[List[Provide]]
-    qrc_techfile: Optional[str]
-    supplies: Optional[Supplies]
-    tluplus_files: Optional[MinMaxCap]
-    tluplus_map_file: Optional[TLUPlusMapFile]
-    verilog_sim: Optional[str]
-    verilog_synth: Optional[str]
-    spice_model_file: Optional[SpiceModelFile]
-    power_grid_library: Optional[str]
-    extra_prefixes: Optional[List[PathPrefix]]
+    name: Optional[str] = None
+    ccs_liberty_file: Optional[str] = None
+    ccs_library_file: Optional[str] = None
+    ecsm_liberty_file: Optional[str] = None
+    ecsm_library_file: Optional[str] = None
+    corner: Optional[Corner] = None
+    itf_files: Optional[MinMaxCap] = None
+    lef_file: Optional[str] = None
+    klayout_techfile: Optional[str] = None
+    spice_file: Optional[str] = None
+    gds_file: Optional[str] = None
+    milkyway_lib_in_dir: Optional[str] = None
+    milkyway_techfile: Optional[str] = None
+    nldm_liberty_file: Optional[str] = None
+    nldm_library_file: Optional[str] = None
+    openaccess_techfile: Optional[str] = None
+    provides: Optional[List[Provide]] = None
+    qrc_techfile: Optional[str] = None
+    supplies: Optional[Supplies] = None
+    tluplus_files: Optional[MinMaxCap] = None
+    tluplus_map_file: Optional[TLUPlusMapFile] = None
+    verilog_sim: Optional[str] = None
+    verilog_synth: Optional[str] = None
+    spice_model_file: Optional[SpiceModelFile] = None
+    power_grid_library: Optional[str] = None
+    extra_prefixes: Optional[List[PathPrefix]] = None
 
 
 PathsFunctionType = Callable[[Library], List[str]]

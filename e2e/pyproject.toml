@@ -10,8 +10,6 @@ repository = "https://github.com/ucb-bar/hammer"
 [tool.poetry.dependencies]
 python = "^3.9"
 hammer-vlsi = {path = "../.", extras = ["asap7"], develop = true}
-hammer-cadence-plugins = {path = "hammer-cadence-plugins", develop = true}
-hammer-synopsys-plugins = {path = "hammer-synopsys-plugins", develop = true}
 hammer-mentor-plugins = {path = "hammer-mentor-plugins", develop = true}
 
 [build-system]

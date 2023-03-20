@@ -1,25 +1,9 @@
-# Generate Make include to aid in flow
-vlsi.core.build_system: make
-
-vlsi.inputs.power_spec_type: "cpf"
-vlsi.inputs.power_spec_mode: "auto"
-
-synthesis.inputs:
-  top_module: "pass"
-  input_files: ["src/pass.v"]
-
 # Specify clock signals
 vlsi.inputs.clocks: [
   {name: "clock", period: "5ns", uncertainty: "0.1ns"}
 ]
 
 # Tool options.
-vlsi.core.synthesis_tool: "hammer.synthesis.genus"
-
-vlsi.core.par_tool: "hammer.par.innovus"
-par.innovus.design_flow_effort: "standard"
-par.inputs.gds_merge: true
-par.innovus.floorplan_mode: "generate"
 vlsi.inputs.placement_constraints:
   - path: "pass"
     type: toplevel
@@ -44,12 +28,6 @@ vlsi.inputs.delays: [
   {name: "out", clock: "clock", delay: "2", direction: "output"}
 ]
 
-vlsi.core.sim_tool: "hammer.sim.vcs"
-vlsi.core.power_tool: "hammer.power.voltus"
-vlsi.core.timing_tool: "hammer.timing.tempus"
-vlsi.core.formal_tool: "hammer.formal.conformal"
-vlsi.core.drc_tool: "hammer.drc.calibre"
-vlsi.core.lvs_tool: "hammer.lvs.calibre"
 
 # SRAM Compiler compiler options
 vlsi.core.sram_generator_tool: "hammer.technology.asap7.sram_compiler"

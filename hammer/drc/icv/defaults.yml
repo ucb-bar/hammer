@@ -1,0 +1,37 @@
+# Default settings for ICV DRC, for project/technology configuration and overriding.
+drc.icv:
+    # Location of the binary
+    icv_drc_bin: "${synopsys.synopsys_home}/icv/${drc.icv.version}/bin/LINUX.64/icv"
+    icv_drc_bin_meta: lazysubst
+
+    icv_vue_bin: "${synopsys.synopsys_home}/icv/${drc.icv.version}/bin/LINUX.64/icv_vue"
+    icv_vue_bin_meta: lazysubst
+
+    icvwb_bin: "${synopsys.synopsys_home}/icvwb/${drc.icv.icvwb_version}/bin/icvwb"
+    icvwb_bin_meta: lazysubst
+
+    ICV_HOME_DIR: "${synopsys.synopsys_home}/icv/${drc.icv.version}"
+    ICV_HOME_DIR_meta: lazysubst
+
+    # type: str
+    version: "S-2021.06-SP3-2"
+    # type: str
+    icvwb_version: "S-2021.06-SP2"
+    # Port for VUE (violation browser) to communicate with ICVWB (layout browser)
+    # Any open port 1000 to 65536 allowed
+    # type: int
+    icvwb_port: 1234
+
+    # Symbolic variables passed as -D flags to ICV command.
+    # Alternatively, #define <var> <val> can be appended as additional_drc_text.
+    # type: List[Dict[str, str]]
+    defines: []
+
+    # Preprocessor include directories passed as -I to the ICV command.
+    # type: List[str]
+    include_dirs: []
+
+    # Config runset file passed in as -config_runset to the ICV command.
+    # Generally used for waivers.
+    # type: Optional[str]
+    config_runset: null

@@ -1,0 +1,35 @@
+# Configuration options and defaults for Innovus.
+# The values specified in this file are the defaults.
+
+par.innovus:
+  # Location of the binary.
+  innovus_bin: "${cadence.cadence_home}/INNOVUS/INNOVUS${par.innovus.version}/bin/innovus"
+  innovus_bin_meta: lazysubst # we want later overrides to be able to affect this
+
+  # Innovus version to use.
+  # Used to locate the binary - e.g. the '171' in ${cadence.cadence_home}/INNOVUS/INNOVUS171/bin/innovus
+  # 171_ISR3 supports ILMs properly in contrast to 171.
+  version: "171_ISR3"
+
+  # Design flow effort.
+  # Valid options: express (fastest), standard, and extreme (slowest).
+  # Default: express to increase turnaround speed.
+  design_flow_effort: "express"
+
+  # Floorplanning SDC constraints to use.
+  # Valid options are:
+  # - blank - Specify no floorplanning constraints (likely won't work)
+  # - manual - Specify the contents of a manual SDC floorplanning script to use in floorplan_script_contents.
+  # - generate - Generate a floorplan from the hammer-vlsi config/IR.
+  # - auto - Use Innovus's `plan_design` command to auto-generate a floorplan. Will have poor, but sane results
+  #   If you specify this, you must also specify the floorplanning_script config below. The floorplanning_script config will be ignored in other modes.
+  # TODO(edwardw): Put in new floorplanning thing here when done.
+  floorplan_mode: generate
+  floorplan_script_contents: null
+
+  # Use "clock concurrent optimization" in clock tree synthesis.
+  # If true, uses the ccopt_design command which includes this feature
+  # by default in Innovus Common UI.
+  # Note that this requires an optional licence (enccco).
+  # type: bool
+  use_cco: true
