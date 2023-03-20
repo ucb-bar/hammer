@@ -35,7 +35,7 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
 
         if params.family != "1rw" and params.family != "1rw1r":
             self.logger.error("SKY130 SRAM cache does not support family:{f}".format(f=params.family))
-            return ExtraLibrary(prefix=None, library=None)  # type: ignore
+            return ExtraLibrary(prefix=None, library=None)
 
         if params.name.startswith("sramgen_sram"):
             self.logger.info(f"Compiling {params.family} memories to SRAM22 instances")
@@ -55,7 +55,7 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
             lib_path="{b}/{n}/{n}_{c}.lib".format(b=base_dir,n=sram_name,c=corner_str)
             if not os.path.exists(lib_path):
                 self.logger.error(f"SKY130 {params.family} SRAM cache does not support corner: {corner_str}")
-            
+
             return ExtraLibrary(prefix=None, library=Library(
                 name=sram_name,
                 nldm_liberty_file=lib_path,
@@ -115,7 +115,7 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
         dest_path = f"{os.path.abspath(self.technology.cache_dir)}/{sram_name}/{sram_name}.lvs.sp"
         self.technology.ensure_dirs_exist(dest_path)
         if not source_path.exists():
-            raise FileNotFoundError(f"SRAM Spice file not found: {source_path}")        
+            raise FileNotFoundError(f"SRAM Spice file not found: {source_path}")
         with open(source_path,'r') as sf:
             with open(dest_path,'w') as df:
                 self.logger.info("Modifying SRAM SPICE file: {} -> {}".format

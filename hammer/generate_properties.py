@@ -294,7 +294,7 @@ def main(args) -> int:
         if dry_run:
             print(contents, end='')
         else:
-            with open(filename, "w") as f:  # type: ignore
+            with open(filename, "w") as f:
                 f.write(contents)
 
     return 0
