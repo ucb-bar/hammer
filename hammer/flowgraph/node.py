@@ -139,11 +139,10 @@ class Graph:
         Graph: HAMMER flowgraph.
     """
     edge_list: dict[Node, list[Node]]
-    driver: str = ""
-    # driver: cli_driver.CLIDriver = field(default_factory=cli_driver.CLIDriver)
+    auto_auxiliary: bool = True
 
     def __post_init__(self) -> None:
-        self.networkx = nx.DiGraph(self.edge_list)
+        self.networkx = nx.DiGraph(Graph.insert_auxiliary_actions(self.edge_list) if self.auto_auxiliary else self.edge_list)
 
     def verify(self) -> bool:
         """Checks if a graph is valid via its inputs and outputs.
@@ -168,6 +167,69 @@ class Graph:
         inputs = set(v.required_inputs) | set(v.optional_inputs)
         return self.networkx.in_degree(v) == 0 or parent_outs >= inputs
 
+    @staticmethod
+    def insert_auxiliary_actions(edge_list: dict[Node, list[Node]]) -> dict[Node, list[Node]]:
+        """Inserts x-to-y actions between two semantically related actions (e.g. if syn and par are connected, then we have to insert a syn-to-par node here).
+
+        Args:
+            edge_list (dict[Node, list[Node]]): Edge list without auxiliary actions.
+
+        Returns:
+            dict[Node, list[Node]]: Transformed edge list with auxiliary actions.
+        """
+        valid_auxiliary_actions = [
+            ("synthesis", "par"),
+            ("syn", "par"),
+            ("heir-par", "syn"),
+            ("heir_par", "syn"),
+            ("par", "drc"),
+            ("par", "lvs"),
+            ("synthesis", "sim"),
+            ("syn", "sim"),
+            ("par", "sim"),
+            ("syn", "power"),
+            ("par", "power"),
+            ("sim", "power"),
+            ("synthesis", "formal"),
+            ("syn", "formal"),
+            ("par", "formal"),
+            ("synthesis", "timing"),
+            ("syn", "timing"),
+            ("par", "timing"),
+        ]
+
+        changes = []
+        edge_list_copy = edge_list.copy()
+        for parent_idx, (parent, children) in enumerate(edge_list.items()):
+            for child_idx, child in enumerate(children):
+                if (parent.action, child.action) in valid_auxiliary_actions:
+                    aux_action = f"{parent.action}-to-{child.action}"
+                    aux_node = Node(
+                        aux_action,
+                        parent.tool,
+                        os.path.join(os.path.dirname(parent.pull_dir), f"{aux_action}-dir"),
+                        child.pull_dir,
+                        parent.required_outputs,
+                        [f"{aux_action}-out.json"],
+                    )
+                    changes.append((parent_idx, child_idx, aux_node))
+
+        for parent_idx, child_idx, aux_node in changes:
+            parent, children = list(edge_list_copy.items())[parent_idx]
+            parent.push_dir = os.path.join(
+                os.path.dirname(parent.pull_dir),
+                f"{aux_node.action}-dir")
+
+            child = children[child_idx]
+            child.required_inputs = aux_node.required_outputs
+
+            children[child_idx] = aux_node
+            if aux_node not in edge_list_copy:
+                edge_list_copy[aux_node] = []
+            edge_list_copy[aux_node].append(child)
+        return edge_list_copy
+
+
     def run(self, start: Node) -> Any:
         """Runs a flowgraph.
 
@@ -186,7 +248,7 @@ class Graph:
             raise RuntimeError("Attempting to run non-privileged node in privileged flow. Please complete your stepped flow first.")
 
         if start.driver != "":
-            driver_pkg_path, driver_module = self.driver.rsplit('.', 1)
+            driver_pkg_path, driver_module = start.driver.rsplit('.', 1)
             driver_pkg = importlib.import_module(driver_pkg_path)
             driver = getattr(driver_pkg, driver_module)()
             if not isinstance(driver, cli_driver.CLIDriver):
@@ -208,7 +270,6 @@ class Graph:
             'power_rundir': '',
             'formal_rundir': '',
             'timing_rundir': '',
-            # TODO: sub-step determinations
             'from_step': start.step_controls["from_step"],
             'after_step': start.step_controls["after_step"],
             'to_step': start.step_controls["to_step"],
@@ -292,6 +353,5 @@ def convert_to_acyclic(g: Graph) -> Graph:
 
 # TODO: serialization format
 # TODO: cycles are conditional on user input
-# TODO: put x-to-y actions between connections
-# TODO: d2 stuff
 # TODO: write tests for hooks/steps
+# TODO: make custom driver and tech for steps

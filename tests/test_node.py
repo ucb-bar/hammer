@@ -27,14 +27,14 @@ class TestNode(unittest.TestCase):
     def test_complex_graph(self) -> None:
         """Creating a more complex graph."""
         root = Node(
-            "syn", "nop", "syn_dir", "",
+            "foo", "nop", "foo_dir", "",
             ["foo.yml"],
-            ["syn-out.json"],
+            ["foo-out.json"],
         )
         child1 = Node(
-            "par", "nop", "syn_dir", "par_dir",
-            ["syn-out.json"],
-            ["par-out.json"],
+            "bar", "nop", "foo_dir", "bar_dir",
+            ["foo-out.json"],
+            ["bar-out.json"],
         )
         graph = Graph({root: [child1]})
         self.assertEqual(len(graph.networkx), 2)
@@ -44,14 +44,14 @@ class TestNode(unittest.TestCase):
     def test_invalid_graph(self) -> None:
         """Test that invalid flowgraphs are detected."""
         root = Node(
-            "syn", "nop", "syn_dir", "",
+            "foo", "nop", "foo_dir", "",
             ["foo.yml"],
-            ["syn-out.json"],
+            ["foo-out.json"],
         )
         child1 = Node(
-            "par", "nop", "syn_dir", "par_dir",
-            ["syn-in.json"],
-            ["par-out.json"],
+            "bar", "nop", "foo_dir", "bar_dir",
+            ["foo-in.json"],
+            ["bar-out.json"],
         )
         graph = Graph({root: [child1]})
         self.assertFalse(graph.verify())
@@ -165,64 +165,6 @@ class TestNode(unittest.TestCase):
         with self.assertRaises(nx.NetworkXNoCycle):
             nx.find_cycle(g_acyclic.networkx)
 
-    @pytest.mark.xfail(raises=ImportError, reason="Matplotlib currently not imported")
-    def test_visualization(self) -> None:
-        """Test visualization of flowgraph."""
-        import matplotlib.pyplot as plt
-        v0 = Node(
-            "syn", "nop", "syn_dir", "par_dir",
-            ["syn-in.json"],
-            ["syn-out.json"],
-        )
-        v1 = Node(
-            "par", "nop", "par_dir", "drc_dir",
-            ["syn-out.json", "par-in.json", "drc-out.json"],
-            ["par-out.json"],
-        )
-        v2 = Node(
-            "drc", "nop", "drc_dir", "par_dir",
-            ["par-out.json", "drc-in.json"],
-            ["drc-out.json"],
-        )
-        g = Graph({
-            v0.action: [v1.action],
-            v1.action: [v2.action],
-            v2.action: []
-        }).networkx
-        g.add_edge(v0.pull_dir, v0.action)
-        g.add_edge(v0.action, v0.push_dir)
-        g.add_edge(v1.pull_dir, v1.action)
-        g.add_edge(v1.action, v1.push_dir)
-        g.add_edge(v2.pull_dir, v2.action)
-        g.add_edge(v2.action, v2.push_dir)
-        pos = nx.planar_layout(g)
-        blue = "#003262"
-        yellow = "#fdb515"
-        nx.draw_networkx_nodes(g, pos=pos,
-            nodelist=[v0.action, v1.action, v2.action], node_size=1500, node_color=blue, label="Action")
-        nx.draw_networkx_nodes(g, pos=pos,
-            nodelist=[
-                v0.pull_dir, v0.push_dir,
-                v1.pull_dir, v1.push_dir,
-                v2.pull_dir, v2.push_dir
-            ], node_size=1500, node_color=yellow, label="Push/Pull Directory")
-        nx.draw_networkx_labels(g, pos=pos, font_size=8, font_color="whitesmoke")
-        nx.draw_networkx_edges(g, pos=pos,
-            nodelist=[v0.action, v1.action, v2.action],
-            node_size=1500, arrowsize=15, connectionstyle="arc3, rad=0.2", edge_color=blue)
-        nx.draw_networkx_edges(g, pos=pos,
-            edgelist=[
-                (v0.pull_dir, v0.action),
-                (v0.action, v0.push_dir),
-                (v1.pull_dir, v1.action),
-                (v1.action, v1.push_dir),
-                (v2.pull_dir, v2.action),
-                (v2.action, v2.push_dir),
-            ], node_size=1500, arrowsize=15, connectionstyle="arc3, rad=0.2", edge_color=yellow)
-        plt.axis("off")
-        plt.legend(loc="upper left", markerscale=0.2)
-        plt.savefig("/home/bngo/Research/hammer/graph.png", bbox_inches="tight", dpi=200)
-
     def test_run_basic(self) -> None:
         """Test a basic syn -> par flow, all with nop tools."""
         HammerVLSILogging.clear_callbacks()
@@ -299,7 +241,7 @@ class TestNode(unittest.TestCase):
                 syn: [s2p],
                 s2p: [par],
                 par: []
-            })
+            }, auto_auxiliary=False)
             g.run(syn)
 
         for n in g.networkx:
@@ -384,7 +326,7 @@ class TestNode(unittest.TestCase):
                 syn: [s2p_bad],
                 s2p_bad: [par],
                 par: []
-            })
+            }, auto_auxiliary=False)
             g.run(syn)
 
             self.assertEqual(syn.status, Status.COMPLETE)
@@ -469,7 +411,7 @@ class TestNode(unittest.TestCase):
                 syn: [s2p_bad],
                 s2p_bad: [par],
                 par: []
-            })
+            }, auto_auxiliary=False)
             g_failed_run = g.run(syn)
 
             self.assertEqual(syn.status, Status.COMPLETE)
@@ -511,12 +453,94 @@ class TestNode(unittest.TestCase):
                 syn: [s2p],
                 s2p: [par],
                 par: []
-            })
+            }, auto_auxiliary=False)
 
-            g.to_mermaid(os.path.join(td, "mermaid.txt"))
-            with open(os.path.join(td, "mermaid.txt"), 'r', encoding="utf-8") as f:
+            g.to_mermaid(os.path.join(td, "mermaid.md"))
+            with open(os.path.join(td, "mermaid.md"), 'r', encoding="utf-8") as f:
                 s = f.readlines()
-                self.assertListEqual(s, ["stateDiagram-v2\n", "    syn --> syn-to-par\n", "    syn-to-par --> par\n"])
+                self.assertListEqual(s,
+                                     ["stateDiagram-v2\n",
+                                      "    syn --> syn-to-par\n",
+                                      "    syn-to-par --> par\n"])
+
+    def test_auto_auxiliary(self) -> None:
+        """
+        Test that auxiliary actions are automatically inserted.
+        """
+        HammerVLSILogging.clear_callbacks()
+        HammerVLSILogging.add_callback(HammerVLSILogging.callback_buffering)
+
+        cfg = dedent("""
+            synthesis.inputs:
+                input_files: ["LICENSE", "README.md"]
+                top_module: "z1top.xdc"
+
+            par.inputs:
+                input_files: ["LICENSE", "README.md"]
+                top_module: "z1top.xdc"
+
+            drc.inputs:
+                input_files: ["LICENSE", "README.md"]
+                top_module: "z1top.xdc"
+
+            lvs.inputs:
+                input_files: ["LICENSE", "README.md"]
+                schematic_files: ["LICENSE", "README.md"]
+                top_module: "z1top.xdc"
+                hcells_list: []
+
+            pcb.inputs:
+                top_module: "z1top.xdc"
+
+            formal.inputs:
+                input_files: ["LICENSE", "README.md"]
+                top_module: "z1top.xdc"
+
+            sim.inputs:
+                input_files: ["LICENSE", "README.md"]
+                top_module: "z1top.xdc"
+
+            vlsi:
+                core:
+                    technology: "hammer.technology.nop"
+
+                    synthesis_tool: "hammer.synthesis.nop"
+                    par_tool: "hammer.par.nop"
+                    drc_tool: "hammer.drc.nop"
+                    lvs_tool: "hammer.lvs.nop"
+                    power_tool: "hammer.power.nop"
+                    sim_tool: "mocksim"
+        """)
+
+        with tempfile.TemporaryDirectory() as td:
+            os.mkdir(os.path.join(td, "syn_dir"))
+            os.mkdir(os.path.join(td, "par_dir"))
+
+            with open(os.path.join(td, "syn_dir", "syn-in.yml"), 'w', encoding="utf-8") as tf1:
+                tf1.write(cfg)
+
+            syn = Node(
+                "syn", "nop",
+                os.path.join(td, "syn_dir"), os.path.join(td, "par_dir"),
+                ["syn-in.yml"],
+                ["syn-out.json"],
+            )
+            par = Node(
+                "par", "nop",
+                os.path.join(td, "par_dir"), os.path.join(td, "out_dir"),
+                ["syn-out.json"],
+                ["par-out.json"],
+            )
+            g = Graph({
+                syn: [par],
+                par: []
+            })
+            self.assertEqual(len(g.networkx), 3)  # check that there are three nodes
+            self.assertEqual(len(g.networkx.edges), 2)  # check that there are two edge connections
+            g.run(syn)
+
+        for n in g.networkx:
+            self.assertEqual(n.status, Status.COMPLETE)
 
     def test_encode_decode(self) -> None:
         """
