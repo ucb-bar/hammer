@@ -20,7 +20,7 @@ import networkx as nx
 from networkx.readwrite import json_graph
 
 from hammer.logging import HammerVLSILogging
-from hammer.vlsi import cli_driver
+from hammer.vlsi.cli_driver import CLIDriver
 
 
 class Status(Enum):
@@ -52,7 +52,7 @@ class Node:
     required_outputs:  list[str]
     status:            Status    = Status.NOT_RUN
     # __uuid:            uuid.UUID = field(default_factory=uuid.uuid4)
-    driver:            str       = ""
+    driver:            CLIDriver = field(default_factory=CLIDriver)
     optional_inputs:   list[str] = field(default_factory=list)
     optional_outputs:  list[str] = field(default_factory=list)
     step_controls:     dict[str, str] = field(default_factory=lambda: {
@@ -247,14 +247,16 @@ class Graph:
         if not start.privileged and any(i.privileged for i in self.networkx):
             raise RuntimeError("Attempting to run non-privileged node in privileged flow. Please complete your stepped flow first.")
 
-        if start.driver != "":
-            driver_pkg_path, driver_module = start.driver.rsplit('.', 1)
-            driver_pkg = importlib.import_module(driver_pkg_path)
-            driver = getattr(driver_pkg, driver_module)()
-            if not isinstance(driver, cli_driver.CLIDriver):
-                raise TypeError(f"Driver {driver} does not extend CLIDriver, cannot run a flow.")
-        else:
-            driver = cli_driver.CLIDriver()
+        # if start.driver != "":
+        #     driver_pkg_path, driver_module = start.driver.rsplit('.', 1)
+        #     driver_pkg = importlib.import_module(driver_pkg_path)
+        #     driver = getattr(driver_pkg, driver_module)()
+        #     if not isinstance(driver, cli_driver.CLIDriver):
+        #         raise TypeError(f"Driver {driver} does not extend CLIDriver, cannot run a flow.")
+        # else:
+        #     driver = cli_driver.CLIDriver()
+
+        driver = start.driver
 
         arg_list = {
             "action": start.action,
@@ -306,9 +308,6 @@ class Graph:
             str: JSON dump of a flowgraph.
         """
         return json_graph.node_link_data(self.networkx)
-
-    def to_d2(self) -> Any:
-        raise NotImplementedError()
 
     def to_mermaid(self) -> str:
         """Converts the flowgraph into Mermaid format for visualization.

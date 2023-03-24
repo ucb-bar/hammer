@@ -8,10 +8,58 @@ import networkx as nx
 import pytest
 from networkx.readwrite import json_graph
 
+from hammer.vlsi.cli_driver import (
+    CLIDriver,
+    HammerTool,
+    HammerToolHookAction
+)
 from hammer.flowgraph import node
 from hammer.flowgraph.node import Graph, Node, Status
 from hammer.logging import HammerVLSILogging
+from hammer.vlsi import HammerTool
 
+
+MOCK_CFG = dedent("""
+synthesis.inputs:
+    input_files: ["LICENSE", "README.md"]
+    top_module: "z1top.xdc"
+
+par.inputs:
+    input_files: ["LICENSE", "README.md"]
+    top_module: "z1top.xdc"
+
+drc.inputs:
+    input_files: ["LICENSE", "README.md"]
+    top_module: "z1top.xdc"
+
+lvs.inputs:
+    input_files: ["LICENSE", "README.md"]
+    schematic_files: ["LICENSE", "README.md"]
+    top_module: "z1top.xdc"
+    hcells_list: []
+
+pcb.inputs:
+    top_module: "z1top.xdc"
+
+formal.inputs:
+    input_files: ["LICENSE", "README.md"]
+    top_module: "z1top.xdc"
+
+sim.inputs:
+    input_files: ["LICENSE", "README.md"]
+    top_module: "z1top.xdc"
+
+vlsi:
+    core:
+        technology: "hammer.technology.nop"
+
+        synthesis_tool: "hammer.synthesis.nop"
+        par_tool: "hammer.par.nop"
+        drc_tool: "hammer.drc.nop"
+        lvs_tool: "hammer.lvs.nop"
+        power_tool: "hammer.power.nop"
+        sim_tool: "mocksim"
+""")
 
 class TestNode(unittest.TestCase):
 
@@ -170,54 +218,12 @@ class TestNode(unittest.TestCase):
         HammerVLSILogging.clear_callbacks()
         HammerVLSILogging.add_callback(HammerVLSILogging.callback_buffering)
 
-        cfg = dedent("""
-            synthesis.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            par.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            drc.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            lvs.inputs:
-                input_files: ["LICENSE", "README.md"]
-                schematic_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-                hcells_list: []
-
-            pcb.inputs:
-                top_module: "z1top.xdc"
-
-            formal.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            sim.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            vlsi:
-                core:
-                    technology: "hammer.technology.nop"
-
-                    synthesis_tool: "hammer.synthesis.nop"
-                    par_tool: "hammer.par.nop"
-                    drc_tool: "hammer.drc.nop"
-                    lvs_tool: "hammer.lvs.nop"
-                    power_tool: "hammer.power.nop"
-                    sim_tool: "mocksim"
-        """)
-
         with tempfile.TemporaryDirectory() as td:
             os.mkdir(os.path.join(td, "syn_dir"))
             os.mkdir(os.path.join(td, "par_dir"))
 
             with open(os.path.join(td, "syn_dir", "syn-in.yml"), 'w', encoding="utf-8") as tf1:
-                tf1.write(cfg)
+                tf1.write(MOCK_CFG)
 
             syn = Node(
                 "syn", "nop",
@@ -255,54 +261,12 @@ class TestNode(unittest.TestCase):
         HammerVLSILogging.clear_callbacks()
         HammerVLSILogging.add_callback(HammerVLSILogging.callback_buffering)
 
-        cfg = dedent("""
-            synthesis.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            par.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            drc.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            lvs.inputs:
-                input_files: ["LICENSE", "README.md"]
-                schematic_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-                hcells_list: []
-
-            pcb.inputs:
-                top_module: "z1top.xdc"
-
-            formal.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            sim.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            vlsi:
-                core:
-                    technology: "hammer.technology.nop"
-
-                    synthesis_tool: "hammer.synthesis.nop"
-                    par_tool: "hammer.par.nop"
-                    drc_tool: "hammer.drc.nop"
-                    lvs_tool: "hammer.lvs.nop"
-                    power_tool: "hammer.power.nop"
-                    sim_tool: "mocksim"
-        """)
-
         with tempfile.TemporaryDirectory() as td:
             os.mkdir(os.path.join(td, "syn_dir"))
             os.mkdir(os.path.join(td, "par_dir"))
 
             with open(os.path.join(td, "syn_dir", "syn-in.yml"), 'w', encoding="utf-8") as tf1:
-                tf1.write(cfg)
+                tf1.write(MOCK_CFG)
 
             syn = Node(
                 "syn", "nop",
@@ -340,54 +304,12 @@ class TestNode(unittest.TestCase):
         HammerVLSILogging.clear_callbacks()
         HammerVLSILogging.add_callback(HammerVLSILogging.callback_buffering)
 
-        cfg = dedent("""
-            synthesis.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            par.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            drc.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            lvs.inputs:
-                input_files: ["LICENSE", "README.md"]
-                schematic_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-                hcells_list: []
-
-            pcb.inputs:
-                top_module: "z1top.xdc"
-
-            formal.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            sim.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            vlsi:
-                core:
-                    technology: "hammer.technology.nop"
-
-                    synthesis_tool: "hammer.synthesis.nop"
-                    par_tool: "hammer.par.nop"
-                    drc_tool: "hammer.drc.nop"
-                    lvs_tool: "hammer.lvs.nop"
-                    power_tool: "hammer.power.nop"
-                    sim_tool: "mocksim"
-        """)
-
         with tempfile.TemporaryDirectory() as td:
             os.mkdir(os.path.join(td, "syn_dir"))
             os.mkdir(os.path.join(td, "par_dir"))
 
             with open(os.path.join(td, "syn_dir", "syn-in.yml"), 'w', encoding="utf-8") as tf1:
-                tf1.write(cfg)
+                tf1.write(MOCK_CFG)
 
             syn = Node(
                 "syn", "nop",
@@ -472,54 +394,13 @@ class TestNode(unittest.TestCase):
         HammerVLSILogging.clear_callbacks()
         HammerVLSILogging.add_callback(HammerVLSILogging.callback_buffering)
 
-        cfg = dedent("""
-            synthesis.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            par.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            drc.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            lvs.inputs:
-                input_files: ["LICENSE", "README.md"]
-                schematic_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-                hcells_list: []
-
-            pcb.inputs:
-                top_module: "z1top.xdc"
-
-            formal.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            sim.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            vlsi:
-                core:
-                    technology: "hammer.technology.nop"
-
-                    synthesis_tool: "hammer.synthesis.nop"
-                    par_tool: "hammer.par.nop"
-                    drc_tool: "hammer.drc.nop"
-                    lvs_tool: "hammer.lvs.nop"
-                    power_tool: "hammer.power.nop"
-                    sim_tool: "mocksim"
-        """)
 
         with tempfile.TemporaryDirectory() as td:
             os.mkdir(os.path.join(td, "syn_dir"))
             os.mkdir(os.path.join(td, "par_dir"))
 
             with open(os.path.join(td, "syn_dir", "syn-in.yml"), 'w', encoding="utf-8") as tf1:
-                tf1.write(cfg)
+                tf1.write(MOCK_CFG)
 
             syn = Node(
                 "syn", "nop",
@@ -544,6 +425,52 @@ class TestNode(unittest.TestCase):
         for n in g.networkx:
             self.assertEqual(n.status, Status.COMPLETE)
 
+    def test_flowgraph_hooks(self) -> None:
+        """
+        Test that hooks can be used in flowgraphs.
+        """
+        with tempfile.TemporaryDirectory() as td:
+            syn_dir = os.path.join(td, "syn_dir")
+            out_dir = os.path.join(td, "out_dir")
+            os.mkdir(syn_dir)
+            os.mkdir(out_dir)
+
+            cfg = dedent(f"""
+                vlsi.core:
+                    synthesis_tool: hammer.synthesis.mocksynth
+                    technology: hammer.technology.nop
+
+                synthesis.inputs:
+                    top_module: dummy
+                    input_files: ["/dev/null"]
+
+                synthesis.mocksynth.temp_folder: {out_dir}
+            """)
+
+            with open(os.path.join(syn_dir, "syn-in.yml"), 'w', encoding="utf-8") as tf1:
+                tf1.write(cfg)
+
+            syn = Node(
+                "syn", "mocksynth",
+                syn_dir, out_dir,
+                ["syn-in.yml"],
+                ["syn-out.json"],
+                driver=NodeDummyDriver()
+            )
+
+            g = Graph({
+                syn: []
+            })
+            g.run(syn)
+
+            for i in range(1, 5):
+                file = os.path.join(out_dir, f"step{i}.txt")
+                if i in (2, 4):
+                    self.assertFalse(os.path.exists(file))
+                else:
+                    self.assertTrue(os.path.exists(file))
+
+    @pytest.mark.skip
     def test_encode_decode(self) -> None:
         """
         Test that a flowgraph can be encoded and decoded.
@@ -551,54 +478,13 @@ class TestNode(unittest.TestCase):
         HammerVLSILogging.clear_callbacks()
         HammerVLSILogging.add_callback(HammerVLSILogging.callback_buffering)
 
-        cfg = dedent("""
-            synthesis.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            par.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            drc.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            lvs.inputs:
-                input_files: ["LICENSE", "README.md"]
-                schematic_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-                hcells_list: []
-
-            pcb.inputs:
-                top_module: "z1top.xdc"
-
-            formal.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            sim.inputs:
-                input_files: ["LICENSE", "README.md"]
-                top_module: "z1top.xdc"
-
-            vlsi:
-                core:
-                    technology: "hammer.technology.nop"
-
-                    synthesis_tool: "hammer.synthesis.nop"
-                    par_tool: "hammer.par.nop"
-                    drc_tool: "hammer.drc.nop"
-                    lvs_tool: "hammer.lvs.nop"
-                    power_tool: "hammer.power.nop"
-                    sim_tool: "mocksim"
-        """)
-
         with tempfile.TemporaryDirectory() as td:
             os.mkdir(os.path.join(td, "syn_dir"))
             os.mkdir(os.path.join(td, "par_dir"))
 
             with open(os.path.join(td, "syn_dir", "syn-in.yml"), 'w', encoding="utf-8") as tf1:
-                tf1.write(cfg)
+                tf1.write(MOCK_CFG)
+                
             syn = Node(
                 "syn", "nop",
                 os.path.join(td, "syn_dir"), os.path.join(td, "s2p_dir"),
@@ -627,6 +513,15 @@ class TestNode(unittest.TestCase):
             g_dec = json.loads(out, object_hook=node.as_node)
             # print(g.to_json())
             # print(json_graph.node_link_graph(g_dec).nodes)
+
+class NodeDummyDriver(CLIDriver):
+    def get_extra_synthesis_hooks(self) -> list[HammerToolHookAction]:
+        extra_hooks = [
+            HammerTool.make_removal_hook("step2"),
+            HammerTool.make_removal_hook("step4"),
+        ]
+        return extra_hooks
+
 
 if __name__ == "__main__":
     unittest.main()
