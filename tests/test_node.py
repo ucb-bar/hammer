@@ -455,13 +455,15 @@ class TestNode(unittest.TestCase):
                 par: []
             }, auto_auxiliary=False)
 
-            g.to_mermaid(os.path.join(td, "mermaid.md"))
-            with open(os.path.join(td, "mermaid.md"), 'r', encoding="utf-8") as f:
+            fname = g.to_mermaid()
+            with open(fname, 'r', encoding="utf-8") as f:
                 s = f.readlines()
                 self.assertListEqual(s,
-                                     ["stateDiagram-v2\n",
+                                     ["```mermaid\n",
+                                      "stateDiagram-v2\n",
                                       "    syn --> syn-to-par\n",
-                                      "    syn-to-par --> par\n"])
+                                      "    syn-to-par --> par\n",
+                                      "```\n"])
 
     def test_auto_auxiliary(self) -> None:
         """
@@ -535,8 +537,8 @@ class TestNode(unittest.TestCase):
                 syn: [par],
                 par: []
             })
-            self.assertEqual(len(g.networkx), 3)  # check that there are three nodes
-            self.assertEqual(len(g.networkx.edges), 2)  # check that there are two edge connections
+            self.assertEqual(g.networkx.number_of_nodes(), 3)  # check that there are three nodes
+            self.assertEqual(g.networkx.number_of_edges(), 2)  # check that there are two edge connections
             g.run(syn)
 
         for n in g.networkx:
@@ -624,7 +626,7 @@ class TestNode(unittest.TestCase):
             out = json.dumps(g.to_json(), cls=node.NodeEncoder)
             g_dec = json.loads(out, object_hook=node.as_node)
             # print(g.to_json())
-            print(json_graph.node_link_graph(g_dec).nodes)
+            # print(json_graph.node_link_graph(g_dec).nodes)
 
 if __name__ == "__main__":
     unittest.main()

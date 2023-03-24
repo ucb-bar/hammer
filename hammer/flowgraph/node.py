@@ -310,19 +310,26 @@ class Graph:
     def to_d2(self) -> Any:
         raise NotImplementedError()
 
-    def to_mermaid(self, fname: str) -> None:
+    def to_mermaid(self) -> str:
         """Converts the flowgraph into Mermaid format for visualization.
 
         Args:
             fname (str): Output file name.
+
+        Returns:
+            str: Path to Mermaid Markdown file.
         """
+        folder = os.path.dirname(list(self.networkx.nodes)[0].pull_dir)
+        fname = os.path.join(folder, "graph_viz.md")
         with open(fname, 'w', encoding="utf-8") as f:
-            f.write("stateDiagram-v2\n")
+            f.write("```mermaid\nstateDiagram-v2\n")
             for start in self.networkx:
                 f.writelines(
                     f"    {start.action} --> {child.action}\n"
                     for child in nx.neighbors(self.networkx, start)
                 )
+            f.write("```\n")
+        return fname
 
 def convert_to_acyclic(g: Graph) -> Graph:
     """Eliminates cycles in a flowgraph for analysis.
