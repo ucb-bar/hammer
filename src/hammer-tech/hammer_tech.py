@@ -942,7 +942,7 @@ class HammerTechnology:
         if lib.supplies is None:
             # TODO: add some sort of wildcard value for supplies for libraries which _actually_ should
             # always be used.
-            if lib.provides is not None and any([p.lib_type is not None and p.lib_type == "technology" for p in lib.provides]): #lib.provides.lib_type is not None and lib.provides.lib_type == "technology":
+            if lib.provides is not None and any([p.lib_type is not None and p.lib_type == "technology" for p in lib.provides]):
                 # We expect tech lefs to not need supplies
                 pass
             else:
