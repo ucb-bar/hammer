@@ -942,7 +942,11 @@ class HammerTechnology:
         if lib.supplies is None:
             # TODO: add some sort of wildcard value for supplies for libraries which _actually_ should
             # always be used.
-            self.logger.warning("Lib %s has no supplies annotation! Using anyway." % (lib.serialize()))
+            if lib.provides is not None and any([p.lib_type is not None and p.lib_type == "technology" for p in lib.provides]): #lib.provides.lib_type is not None and lib.provides.lib_type == "technology":
+                # We expect tech lefs to not need supplies
+                pass
+            else:
+                self.logger.warning(f"Lib:{lib.as_dict()} has no supplies annotation! Using anyway.")
             return True
         # If we are using MMMC assume all libraries will be used.
         # TODO: Read the corners and filter out libraries that don't match any of them.
