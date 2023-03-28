@@ -8,7 +8,6 @@
 
 # pylint: disable=invalid-name
 
-import importlib
 import json
 import os
 import uuid
@@ -247,23 +246,34 @@ class Graph:
         if not start.privileged and any(i.privileged for i in self.networkx):
             raise RuntimeError("Attempting to run non-privileged node in privileged flow. Please complete your stepped flow first.")
 
-        # if start.driver != "":
-        #     driver_pkg_path, driver_module = start.driver.rsplit('.', 1)
-        #     driver_pkg = importlib.import_module(driver_pkg_path)
-        #     driver = getattr(driver_pkg, driver_module)()
-        #     if not isinstance(driver, cli_driver.CLIDriver):
-        #         raise TypeError(f"Driver {driver} does not extend CLIDriver, cannot run a flow.")
-        # else:
-        #     driver = cli_driver.CLIDriver()
+        start_code = Graph.__run_single(start)
+        if start_code != 0:
+            return self
+        else:
+            for _, c in nx.bfs_edges(self.networkx, start):
+                code = Graph.__run_single(c)
+                if code != 0:
+                    break
+        return self
 
-        driver = start.driver
+    @staticmethod
+    def __run_single(node: Node) -> int:
+        """Helper function to run a HAMMER node.
+
+        Args:
+            node (Node): Node to run action on.
+
+        Returns:
+            int: Status code.
+        """
+        driver = node.driver
 
         arg_list = {
-            "action": start.action,
+            "action": node.action,
             'environment_config': None,
-            'configs': [os.path.join(start.pull_dir, i) for i in start.required_inputs],
+            'configs': [os.path.join(node.pull_dir, i) for i in node.required_inputs],
             'log': None,
-            'obj_dir': start.push_dir,
+            'obj_dir': node.push_dir,
             'syn_rundir': '',
             'par_rundir': '',
             'drc_rundir': '',
@@ -272,12 +282,12 @@ class Graph:
             'power_rundir': '',
             'formal_rundir': '',
             'timing_rundir': '',
-            'from_step': start.step_controls["from_step"],
-            'after_step': start.step_controls["after_step"],
-            'to_step': start.step_controls["to_step"],
-            'until_step': start.step_controls["until_step"],
-            'only_step': start.step_controls["only_step"],
-            'output': os.path.join(start.push_dir, start.required_outputs[0]),  # TODO: fix this
+            'from_step': node.step_controls["from_step"],
+            'after_step': node.step_controls["after_step"],
+            'to_step': node.step_controls["to_step"],
+            'until_step': node.step_controls["until_step"],
+            'only_step': node.step_controls["only_step"],
+            'output': os.path.join(node.push_dir, node.required_outputs[0]),  # TODO: fix this
             'verilog': None,
             'firrtl': None,
             'top': None,
@@ -285,21 +295,16 @@ class Graph:
             'dump_history': False
         }
 
-        start.status = Status.RUNNING
-        ctxt = HammerVLSILogging.context(start.action)
-        ctxt.info(f"Running graph step {start.action}")
+        node.status = Status.RUNNING
+        ctxt = HammerVLSILogging.context(node.action)
+        ctxt.info(f"Running graph step {node.action}")
         code = driver.run_main_parsed(arg_list)
         if code == 0:
-            start.status = Status.COMPLETE
+            node.status = Status.COMPLETE
         else:
-            start.status = Status.INCOMPLETE
-            ctxt.fatal(f"Step {start.action} failed")
-            return self
-
-        for c in nx.neighbors(self.networkx, start):
-            self.run(c)
-
-        return self
+            node.status = Status.INCOMPLETE
+            ctxt.fatal(f"Step {node.action} failed")
+        return code
 
     def to_json(self) -> dict:
         """Encodes a graph as a JSON string.
