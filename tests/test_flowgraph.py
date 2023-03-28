@@ -382,8 +382,8 @@ class TestFlowgraph(unittest.TestCase):
                 self.assertListEqual(s,
                                      ["```mermaid\n",
                                       "stateDiagram-v2\n",
-                                      "    syn --> syn-to-par\n",
-                                      "    syn-to-par --> par\n",
+                                      "    syn --> syn_to_par\n",
+                                      "    syn_to_par --> par\n",
                                       "```\n"])
 
     def test_auto_auxiliary(self) -> None:

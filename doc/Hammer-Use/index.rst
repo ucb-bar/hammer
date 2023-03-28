@@ -13,3 +13,4 @@ This documentation will walk through more advanced features of the Hammer infras
    Hooks
    Buildfile
    Hierarchical
+   Flowgraphs

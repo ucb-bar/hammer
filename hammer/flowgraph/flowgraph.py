@@ -24,7 +24,6 @@ from hammer.vlsi.cli_driver import CLIDriver
 
 class Status(Enum):
     """Represents the status of a node in the flowgraph.
-    https://tinyurl.com/2bstth7y
     """
     NOT_RUN    = "NOT_RUN"
     RUNNING    = "RUNNING"
@@ -195,7 +194,6 @@ class Graph:
         ]
 
         changes = []
-        edge_list_copy = edge_list.copy()
         for parent_idx, (parent, children) in enumerate(edge_list.items()):
             for child_idx, child in enumerate(children):
                 if (parent.action, child.action) in valid_auxiliary_actions:
@@ -210,6 +208,7 @@ class Graph:
                     )
                     changes.append((parent_idx, child_idx, aux_node))
 
+        edge_list_copy = edge_list.copy()
         for parent_idx, child_idx, aux_node in changes:
             parent, children = list(edge_list_copy.items())[parent_idx]
             parent.push_dir = os.path.join(
@@ -321,12 +320,12 @@ class Graph:
             str: Path to Mermaid Markdown file.
         """
         folder = os.path.dirname(list(self.networkx.nodes)[0].pull_dir)
-        fname = os.path.join(folder, "graph_viz.md")
+        fname = os.path.join(folder, "graph-viz.md")
         with open(fname, 'w', encoding="utf-8") as f:
             f.write("```mermaid\nstateDiagram-v2\n")
             for start in self.networkx:
                 f.writelines(
-                    f"    {start.action} --> {child.action}\n"
+                    f"    {start.action.replace('-', '_')} --> {child.action.replace('-', '_')}\n"
                     for child in nx.neighbors(self.networkx, start)
                 )
             f.write("```\n")
