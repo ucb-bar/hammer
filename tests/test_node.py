@@ -6,17 +6,16 @@ from textwrap import dedent
 
 import networkx as nx
 import pytest
-from networkx.readwrite import json_graph
 
 from hammer.vlsi.cli_driver import (
     CLIDriver,
     HammerTool,
     HammerToolHookAction
 )
-from hammer.flowgraph import node
-from hammer.flowgraph.node import Graph, Node, Status
+
+from hammer import flowgraph
+from hammer.flowgraph import convert_to_acyclic, Graph, Node, Status
 from hammer.logging import HammerVLSILogging
-from hammer.vlsi import HammerTool
 
 
 MOCK_CFG = dedent("""
@@ -127,7 +126,7 @@ class TestNode(unittest.TestCase):
             v2: [v0],
         })
         self.assertTrue(len(nx.find_cycle(g.networkx)) > 0)
-        g_acyclic = node.convert_to_acyclic(g)
+        g_acyclic = convert_to_acyclic(g)
         with self.assertRaises(nx.NetworkXNoCycle):
             nx.find_cycle(g_acyclic.networkx)
         self.assertEqual(len(g_acyclic.networkx), 4)
@@ -162,7 +161,7 @@ class TestNode(unittest.TestCase):
             v3: [v0]
         })
         self.assertTrue(len(nx.find_cycle(g.networkx)) > 0)
-        g_acyclic = node.convert_to_acyclic(g)
+        g_acyclic = convert_to_acyclic(g)
         with self.assertRaises(nx.NetworkXNoCycle):
             nx.find_cycle(g_acyclic.networkx)
         self.assertEqual(len(g_acyclic.networkx), 5)
@@ -209,7 +208,7 @@ class TestNode(unittest.TestCase):
             v5: [v3]
         })
         self.assertTrue(len(nx.find_cycle(g.networkx)) > 0)
-        g_acyclic = node.convert_to_acyclic(g)
+        g_acyclic = convert_to_acyclic(g)
         with self.assertRaises(nx.NetworkXNoCycle):
             nx.find_cycle(g_acyclic.networkx)
 
@@ -509,8 +508,8 @@ class TestNode(unittest.TestCase):
                 par: []
             })
 
-            out = json.dumps(g.to_json(), cls=node.NodeEncoder)
-            g_dec = json.loads(out, object_hook=node.as_node)
+            out = json.dumps(g.to_json(), cls=flowgraph.NodeEncoder)
+            g_dec = json.loads(out, object_hook=flowgraph.as_node)
             # print(g.to_json())
             # print(json_graph.node_link_graph(g_dec).nodes)
 

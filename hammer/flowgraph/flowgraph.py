@@ -33,9 +33,6 @@ class Status(Enum):
     COMPLETE   = "COMPLETE"
 
 
-# separate required validity checking and optional validity checking
-# meta dict for tech compatibilty
-
 @dataclass
 class Node:
     """Defines a node for an action in a flowgraph.
@@ -364,5 +361,3 @@ def convert_to_acyclic(g: Graph) -> Graph:
 
 # TODO: serialization format
 # TODO: cycles are conditional on user input
-# TODO: write tests for hooks/steps
-# TODO: make custom driver and tech for steps
