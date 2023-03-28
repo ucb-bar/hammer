@@ -60,7 +60,7 @@ vlsi:
         sim_tool: "mocksim"
 """)
 
-class TestNode(unittest.TestCase):
+class TestFlowgraph(unittest.TestCase):
 
     def test_initialize_node(self) -> None:
         """Test that we can instantiate a node."""
