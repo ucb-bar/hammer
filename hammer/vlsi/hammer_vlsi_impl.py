@@ -2059,11 +2059,52 @@ class HammerTimingTool(HammerTool):
     ### END Generated interface HammerTimingTool ###
 
 class HasUPFSupport(HammerTool):
-    """Mix-in trait with functions useful for tools with UPF style power
-    constraints"""
-    @property
-    def upf_power_specification(self) -> str:
-        raise NotImplementedError("Automatic generation of UPF power specifications is not supported yet.")
+   """Mix-in trait with functions useful for tools with UPF style power constraints"""
+   @property
+   def upf_power_specification(self) -> str:
+        #Constants and objects
+        output = [] # type: List[str]
+        domain = "AO"
+        #Header
+        output.append("set_design_top {t}".format(t=self.top_module))
+        vdd = VoltageValue(self.get_setting("vlsi.inputs.supplies.VDD"))
+        #Create Single Power Domain
+        output.append("create_power_domain {d} \\".format(d=domain))
+        output.append("\t-elements {.}")
+        #Get Supply Nets
+        power_nets = self.get_all_power_nets() 
+        ground_nets = self.get_all_ground_nets()
+        #Create Supply Ports 
+        for pg_net in (power_nets+ground_nets):
+            if(pg_net.pin != None):
+                #Create Supply Nets
+                output.append("create_supply_net {p} -domain {d}".format(p=pg_net.name, d=domain))
+                output.append("create_supply_port {p} -domain {d} \\".format(p=pg_net.name, d=domain))
+                output.append("\t-direction in")
+                #Connect Supply Net
+                output.append("connect_supply_net {p} -ports {p}".format(p=pg_net.name))
+        #Set Domain Supply Net
+        output.append("set_domain_supply_net {d} \\".format(d=domain))
+        output.append("\t-primary_power_net {p} \\".format(p=power_nets[0].name))
+        output.append("\t-primary_ground_net {g}".format(g=ground_nets[0].name))
+        #Add Port States 
+        for p_net in power_nets:
+            if(p_net.pin != None):
+                output.append("add_port_state {g} \\".format(g=p_net.name))
+                output.append("\t-state {{default {v}}}".format(v=vdd.value))
+        for g_net in ground_nets:
+            if(g_net.pin != None):
+                output.append("add_port_state {g} \\".format(g=g_net.name))
+                output.append("\t-state {default off}")
+        #Create Power State Table
+        output.append("create_pst pwr_state_table \\")
+        output.append("\t-supplies {{{p} {g}}}".format(p=" ".join(map(lambda x: x.name, power_nets)),g=" ".join(map(lambda x: x.name, ground_nets)) ))
+        #Add Power States
+        output.append("add_pst_state {d} \\".format(d="aon"))
+        output.append("\t-pst {pwr_state_table} \\")
+        output.append("\t-state {{{s}}}".format(s=" ".join(map(lambda x: "default", power_nets+ground_nets))))
+	    #End of File
+        return "\n".join(output)
 
 
 class HasCPFSupport(HammerTool):
