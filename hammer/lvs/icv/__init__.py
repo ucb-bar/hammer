@@ -182,7 +182,7 @@ class ICVLVS(HammerLVSTool, SynopsysTool):
                 f.write(" -I " + " -I ".join(include_dirs))
 
             # Config runset file
-            config_rs = self.get_setting("drc.icv.config_runset")  # type: Optional[str]
+            config_rs = self.get_setting("lvs.icv.config_runset")  # type: Optional[str]
             if config_rs is not None:
                 f.write(" -config_runset" + config_rs)
         return True
