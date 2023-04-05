@@ -294,7 +294,7 @@ vlsi.inputs:
   # Specifies what kind/version/type of power specification to use
   # Valid options:
   # cpf - Use the common power format commonly used in Cadence tools
-  # upf - Use the universal power format, IEEE 1801-2015
+  # upf - Use the universal power format, IEEE 1801-2009
   power_spec_contents: null # Optional: Contents of a power specification in the above type (str)
 
   sram_parameters: [] # SRAM Parameters
