@@ -68,8 +68,9 @@ This list can be used to instantiate a ``Graph``:
     )
     graph = Graph({root: [child1]})
 
-``Graph`` instances by default *automatically* insert auxiliary actions.
-This means that actions such as ``syn-to-par`` or ``par-to-drc`` no longer need to be specified in a flow; the nodes are inserted by the flowgraph tool.
+Using the Hammer CLI tool, separate actions are manually linked via an *auxiliary* action, such as ``syn-to-par``.
+By using a flowgraph, ``Graph`` instances by default *automatically* insert auxiliary actions.
+This means that actions no longer need to be specified in a flow; the necessary nodes are inserted by the flowgraph tool.
 This feature can be disabled by setting ``auto_auxiliary=False``.
 
 A ``Graph`` can be run by calling the ``run`` method and passing in a starting node.
