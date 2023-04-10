@@ -357,7 +357,7 @@ lvs.inputs:
   schematic_files: list[str]
 
   # Input list of ILMStructs
-  ilms: list[str]
+  ilms: list[dict[str, Any]]
 
   # Input list of Hcells
   hcells_list: list[str]
