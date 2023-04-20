@@ -92,7 +92,7 @@ class ICVLVS(HammerLVSTool, SynopsysTool):
         with open(self.view_lvs_script, "w") as f:
             f.write("""
         cd {run_dir}
-        source enter
+        source ./enter
         # Start Synopsys IC Validator WorkBench and wait for port to open before starting VUE
         {icvwb} -socket {port} -run {macrofile} {gds} &
         while ! nc -z localhost {port}; do
