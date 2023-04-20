@@ -108,10 +108,10 @@ vlsi.inputs:
   ilms: list[dict[str, str]]
 
   # Multi-mode multi-corner setups, overrides supplies
-  mmmc_corners: list[dict[str, str]]
+  mmmc_corners: list[dict[str, Any]]
 
   # Clock ports of the top-level module.
-  clocks: list[dict[str, str]]
+  clocks: list[dict[str, Any]]
 
   # Default output pin load capacitance.
   default_output_load: int
@@ -120,7 +120,7 @@ vlsi.inputs:
   output_loads: list[dict[str, str]]
 
   # List of delay constraints.
-  delays: list[dict[str, str]]
+  delays: list[dict[str, Any]]
 
   # List of custom sdc constraints to use. (List[str])
   custom_sdc_constraints: list[str]
@@ -161,7 +161,7 @@ vlsi.inputs:
     # cell (str) - Name of the default bump cell
     cell: str
     # assignments - List of BumpAssignment structs. You must specify one of name or no_connect.
-    assignments: list[dict[str, str]]
+    assignments: list[dict[str, Any]]
 
   # Naming scheme for the bumps' actual physical pin designators
   # type: str
@@ -174,10 +174,10 @@ vlsi.inputs:
     generate_mode: str
 
     # List of PinAssignment Structs.
-    assignments: list[dict[str, str]]
+    assignments: list[dict[str, Any]]
 
   # List of decap constraints (DecapConstraint struct).
-  decaps: list[dict[str, str]]
+  decaps: list[dict[str, Any]]
 
   # SVG visualization of placement constraints and bumps for the current hierarchical module.
   visualization:
