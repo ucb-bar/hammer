@@ -81,10 +81,11 @@ class Joules(HammerPowerTool, CadenceTool):
         # Replace . to / formatting in case argument passed from sim tool
         tb_dut = self.tb_dut.replace(".", "/")
 
-
+        # We are switching working directories and Joules still needs to find paths.
+        abspath_input_files = list(map(lambda name: os.path.join(os.getcwd(), name), self.input_files))  # type: List[str]
         if self.level == FlowLevel.RTL:
             # Read in the design files
-            verbose_append("read_hdl -sv {}".format(" ".join(self.input_files)))
+            verbose_append("read_hdl -sv {}".format(" ".join(abspath_input_files)))
 
         # Setup the power specification
         power_spec_arg = self.map_power_spec_name()
@@ -103,7 +104,7 @@ class Joules(HammerPowerTool, CadenceTool):
             verbose_append("elaborate {TOP_MODULE}".format(TOP_MODULE=top_module))
         elif self.level == FlowLevel.SYN:
             # Read in the synthesized netlist
-            verbose_append("read_netlist {}".format(" ".join(self.input_files)))
+            verbose_append("read_netlist {}".format(" ".join(abspath_input_files)))
 
             # Read in the post-synth SDCs
             verbose_append("read_sdc {}".format(self.sdc))
@@ -121,6 +122,7 @@ class Joules(HammerPowerTool, CadenceTool):
         # Generate average power report for all waveforms
         waveforms = self.waveforms
         for i, waveform in enumerate(waveforms):
+            waveform = os.path.join(os.getcwd(), waveform)
             verbose_append("read_stimulus -file {WAVE} -dut_instance {TB}/{DUT} -alias {WAVE_NAME}_{NUM} -append".format(WAVE=waveform, TB=tb_name, DUT=tb_dut, WAVE_NAME=os.path.basename(waveform), NUM=i))
 
         # Generate Specified and Custom Reports
@@ -128,6 +130,7 @@ class Joules(HammerPowerTool, CadenceTool):
 
         for i, report in enumerate(reports):
             waveform = os.path.basename(report.waveform_path)
+            waveform = os.path.join(os.getcwd(), waveform)
 
             read_stim_cmd = "read_stimulus -file {WAVE_PATH} -dut_instance {TB}/{DUT} -append".format(WAVE_PATH=report.waveform_path, TB=tb_name, DUT=tb_dut)
 
