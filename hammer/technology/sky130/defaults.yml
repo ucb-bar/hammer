@@ -106,7 +106,7 @@ par.inputs:
   gds_map_file: "extra/sky130_lefpin.map"
   gds_map_file_meta: prependlocal
 
-par.openroad:
+par.openroad:  # openroad setup/files
   setrc_file: "extra/setRC.tcl"
   setrc_file_meta: prependlocal
   openrcx_techfiles: 
@@ -119,6 +119,10 @@ par.openroad:
   macro_placement:
     halo: [40, 40]
     orient_all: r90  # required for Sram22
+
+drc.klayout:  # klayout files
+  layout_properties_file: "${technology.sky130.sky130A}/libs.tech/klayout/tech/sky130A.lyp"
+  layout_properties_file_meta: lazysubst
 
 par.power_straps_mode: generate # Power Straps
 par.generate_power_straps_method: by_tracks

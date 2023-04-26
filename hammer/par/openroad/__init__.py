@@ -1417,6 +1417,12 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                 for line in sf:
                     if "<lef-files>merged.lef</lef-files>" in line:
                         continue
+                    if '<no-zero-length-paths>' in line:
+                        """ we want to disallow zero length paths (i.e. convert to a polygon instead)
+                            otherwise calibre throws an error during DRC/LVS
+                            but setting this flag to 'true' doesn't seem to work
+                        """
+                        line = line.replace('<no-zero-length-paths>false','<no-zero-length-paths>true')
                     if '</lefdef>' in line:
                         df.write(insert_lines)
                     df.write(line)
