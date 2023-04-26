@@ -295,7 +295,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         \t$(HAMMER_EXEC) {env_confs} -p {syn_out} $(HAMMER_EXTRA_ARGS) -o {par_in} --obj_dir {obj_dir} syn-to-par
 
         redo-power-syn{suffix}:
-        \t$(HAMMER_EXEC) {env_confs} -p {power_sim_syn_in} $(HAMMER_EXTRA_ARGS) --power_rundir {power_syn_run_dir} --obj_dir {obj_dir} power{suffix}
+        \t$(HAMMER_EXEC) {env_confs} -p {power_sim_syn_in} -p {power_syn_in} $(HAMMER_EXTRA_ARGS) --power_rundir {power_syn_run_dir} --obj_dir {obj_dir} power{suffix}
 
         redo-par{suffix}:
         \t$(HAMMER_EXEC) {env_confs} -p {par_in} $(HAMMER_EXTRA_ARGS) --obj_dir {obj_dir} par{suffix}
