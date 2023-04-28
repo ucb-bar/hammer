@@ -58,7 +58,7 @@ class Klayout(HammerDRCTool, TCLTool):
     
     @property 
     def report_name(self) -> str:
-        return os.path.join(self.run_dir, f"{self.top_module}.lydrc")
+        return os.path.join(self.run_dir, f"klayout-drc_results-{self.top_module}.rpt")
 
     #=========================================================================
     # useful subroutines
@@ -72,11 +72,10 @@ class Klayout(HammerDRCTool, TCLTool):
         klayout_bin = self.get_setting('drc.klayout.klayout_bin')
         args = [
             klayout_bin,
-            "-b", # batch mode    
+            "-b", # batch mode
             "-r", drc_decks[0].path, # Execute main script on startup (after having loaded files etc.)
-            # script variables:
-            "-rd", f"input={self.layout_file}",
-            "-rd", f"report={self.report_name}",
+            "-rd", f"input={self.layout_file}", # script variables
+            "-rd", f"report={self.report_name}", # drc report
         ]
         """
         Create view_drc script. This opens interactive window but has to run DRC
