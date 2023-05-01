@@ -104,8 +104,6 @@ tech.load(tech_file)
 layoutOptions = tech.load_layout_options
 if len(layer_map) > 0:
   layoutOptions.lefdef_config.map_file = layer_map
-print("layoutOptions", layoutOptions)
-print("layer_map", layoutOptions.layer_map)
 
 # Load def file
 main_layout = pya.Layout()
