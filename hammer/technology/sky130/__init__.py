@@ -35,8 +35,8 @@ class SKY130Tech(HammerTechnology):
 
 
     def setup_cdl(self) -> None:
-        ''' Only for Calibre LVS
-            Copy and hack the cdl, replacing pfet_01v8_hvt/nfet_01v8 with phighvt/nshort
+        ''' Copy and hack the cdl, replacing pfet_01v8_hvt/nfet_01v8 with 
+            respective names in LVS deck
         '''
         setting_dir = self.get_setting("technology.sky130.sky130A")
         setting_dir = Path(setting_dir)

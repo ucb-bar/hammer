@@ -57,7 +57,7 @@ class Klayout(HammerDRCTool, TCLTool):
         return os.path.join(self.generated_scripts_dir, "view_drc")
     
     @property 
-    def report_name(self) -> str:
+    def drc_report_name(self) -> str:
         return os.path.join(self.run_dir, f"klayout-drc_results-{self.top_module}.rpt")
 
     #=========================================================================
@@ -75,11 +75,10 @@ class Klayout(HammerDRCTool, TCLTool):
             "-b", # batch mode
             "-r", drc_decks[0].path, # Execute main script on startup (after having loaded files etc.)
             "-rd", f"input={self.layout_file}", # script variables
-            "-rd", f"report={self.report_name}", # drc report
+            "-rd", f"report={self.drc_report_name}", # drc report
         ]
         """
-        Create view_drc script. This opens interactive window but has to run DRC
-        all over again because there is no DRC database that can be loaded in.
+        Create view_drc script. This opens interactive window and loads DRC database.
         """
         os.makedirs(self.generated_scripts_dir, exist_ok=True)
         lyp_file = self.get_setting('drc.klayout.layout_properties_file')
@@ -87,8 +86,7 @@ class Klayout(HammerDRCTool, TCLTool):
         with open(self.view_drc_script, "w") as f:
             f.write(dd(f"""
             cd {self.run_dir}
-            {klayout_bin} {self.layout_file} -m {self.report_name} {lyp_arg}
-            #   -m: load RDB (report database) file (into previous layout view)
+            {klayout_bin} {self.layout_file} -m {self.drc_report_name} {lyp_arg}
             """))
         os.chmod(self.view_drc_script, 0o755)
 

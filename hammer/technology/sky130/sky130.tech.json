@@ -21,7 +21,7 @@
     {
       "tool_name": "klayout",
       "deck_name": "klayout_drc",
-      "path": "$SKY130A/libs.tech/klayout/drc/sky130A_mr.drc"
+      "path": "$SKY130A/libs.tech/klayout/drc/sky130A.lydrc"
     }
   ],
   "additional_drc_text": "",
