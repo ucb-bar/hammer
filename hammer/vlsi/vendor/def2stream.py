@@ -198,6 +198,21 @@ if seal_file:
       print("[INFO] Merging '{0}' as child of '{1}'".format(cell.name, top_cell.name))
       top.insert(pya.CellInstArray(cell.cell_index(), pya.Trans()))
 
+# Remove zero path lengths
+#   this in lyt file doesn't work: <no-zero-length-paths>true</no-zero-length-paths>
+print("Removing zero-length paths...")
+for cell in top_only_layout.each_cell():
+  for layer_idx in top_only_layout.layer_indexes():
+    for shape in cell.each_shape(layer_idx):
+      if shape.is_path():
+        path = shape.path
+        paths = [(p.x, p.y) for p in path.each_point()]
+        paths_unique = set(paths)
+        if len(paths_unique) < len(paths):
+          polygon = path.polygon()
+          print(f"\tlayer_index: {layer_idx},", shape)
+          shape.delete()
+
 # Write out the GDS
 print("[INFO] Writing out GDS/OAS '{0}'".format(out_file))
 top_only_layout.write(out_file)

@@ -34,8 +34,10 @@ class SKY130Tech(HammerTechnology):
         print('Loaded Sky130 Tech')
 
 
-    # Copy and hack the cdl, replacing pfet_01v8_hvt/nfet_01v8 with phighvt/nshort
     def setup_cdl(self) -> None:
+        ''' Copy and hack the cdl, replacing pfet_01v8_hvt/nfet_01v8 with 
+            respective names in LVS deck
+        '''
         setting_dir = self.get_setting("technology.sky130.sky130A")
         setting_dir = Path(setting_dir)
         source_path = setting_dir / 'libs.ref' / self.library_name / 'cdl' / f'{self.library_name}.cdl'
@@ -46,13 +48,24 @@ class SKY130Tech(HammerTechnology):
         os.makedirs(cache_tech_dir_path, exist_ok=True)
         dest_path = cache_tech_dir_path / f'{self.library_name}.cdl'
 
+        # device names expected in LVS decks
+        if (self.get_setting('vlsi.core.lvs_tool') == "hammer.lvs.calibre"):
+            pmos = 'phighvt'
+            nmos = 'nshort'
+        elif (self.get_setting('vlsi.core.lvs_tool') == "hammer.lvs.netgen"):
+            pmos = 'sky130_fd_pr__pfet_01v8_hvt'
+            nmos = 'sky130_fd_pr__nfet_01v8'
+        else:
+            shutil.copy2(source_path, dest_path)
+            return
+
         with open(source_path, 'r') as sf:
             with open(dest_path, 'w') as df:
                 self.logger.info("Modifying CDL netlist: {} -> {}".format
                     (source_path, dest_path))
                 for line in sf:
-                    line = line.replace('pfet_01v8_hvt', 'phighvt')
-                    line = line.replace('nfet_01v8'    , 'nshort')
+                    line = line.replace('pfet_01v8_hvt', pmos)
+                    line = line.replace('nfet_01v8'    , nmos)
                     df.write(line)
 
     # Copy and hack the verilog

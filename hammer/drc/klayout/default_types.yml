@@ -1,0 +1,10 @@
+# Default types of all of the configuration options for Klayout's tools
+#   specified in defaults.yml
+drc.klayout:
+  klayout_bin: str
+  
+  version: str
+
+  generate_only: bool
+
+  layout_properties_file: Optional[str]
