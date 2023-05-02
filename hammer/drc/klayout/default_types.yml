@@ -7,6 +7,4 @@ drc.klayout:
 
   generate_only: bool
 
-  technology_file: Optional[str]
-
   layout_properties_file: Optional[str]

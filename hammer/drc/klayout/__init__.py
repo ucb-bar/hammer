@@ -19,7 +19,8 @@ class Klayout(HammerDRCTool, TCLTool):
     @property
     def steps(self) -> List[HammerToolStep]:
         return self.make_steps_from_methods([
-            # no steps
+            self.set_klayout_args,
+            self.create_view_drc_script,
         ])
 
     def do_post_steps(self) -> bool:
@@ -35,7 +36,7 @@ class Klayout(HammerDRCTool, TCLTool):
         return True
     
     def tool_config_prefix(self) -> str:
-        return "drc.magic"
+        return "drc.klayout"
 
     def drc_results_pre_waived(self) -> Dict[str, int]:
         return {}
@@ -59,28 +60,57 @@ class Klayout(HammerDRCTool, TCLTool):
     @property 
     def drc_report_name(self) -> str:
         return os.path.join(self.run_dir, f"klayout-drc_results-{self.top_module}.rpt")
+    
+    @property
+    def klayout_args(self) -> List[str]:
+        """
+        Private helper property to set arguments for klayout execution.
+        """
+        return self.attr_getter("_klayout_args", [])
+
+    @klayout_args.setter
+    def klayout_args(self, value:  List[str]) -> None:
+        self.attr_setter("_klayout_args", value)
 
     #=========================================================================
     # useful subroutines
     #=========================================================================
 
     def run_klayout(self) -> bool:
+        if bool(self.get_setting("drc.klayout.generate_only")):
+            self.logger.info("Generate-only mode: command-line is " + \
+                             " ".join(self.klayout_args))
+        else:
+            self.run_executable(self.klayout_args, cwd=self.run_dir) # TODO: check for errors
+
+        return True
+    
+    #========================================================================
+    # drc main steps
+    #========================================================================
+
+    def set_klayout_args(self) -> bool:
         drc_decks = self.get_drc_decks()
         if len(drc_decks) == 0 or len(drc_decks) > 1:
             self.logger.error("None or more than 1 tech file (DRC deck) found. Klayout only supports 1.")
 
         klayout_bin = self.get_setting('drc.klayout.klayout_bin')
-        args = [
+        self.klayout_args = [
             klayout_bin,
             "-b", # batch mode
             "-r", drc_decks[0].path, # Execute main script on startup (after having loaded files etc.)
             "-rd", f"input={self.layout_file}", # script variables
             "-rd", f"report={self.drc_report_name}", # drc report
         ]
+        return True
+    
+    def create_view_drc_script(self) -> bool:
         """
         Create view_drc script. This opens interactive window and loads DRC database.
         """
         os.makedirs(self.generated_scripts_dir, exist_ok=True)
+
+        klayout_bin = self.get_setting('drc.klayout.klayout_bin')
         lyp_file = self.get_setting('drc.klayout.layout_properties_file')
         lyp_arg = "" if lyp_file is None else f"-l {lyp_file}"
         with open(self.view_drc_script, "w") as f:
@@ -89,13 +119,6 @@ class Klayout(HammerDRCTool, TCLTool):
             {klayout_bin} {self.layout_file} -m {self.drc_report_name} {lyp_arg}
             """))
         os.chmod(self.view_drc_script, 0o755)
-
-        if bool(self.get_setting("drc.klayout.generate_only")):
-            self.logger.info("Generate-only mode: command-line is " + \
-                             " ".join(args))
-        else:
-            self.run_executable(args, cwd=self.run_dir) # TODO: check for errors
-
         return True
 
 tool = Klayout
