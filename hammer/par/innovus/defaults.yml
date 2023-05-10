@@ -6,6 +6,9 @@ par.innovus:
   innovus_bin: "${cadence.cadence_home}/INNOVUS/INNOVUS${par.innovus.version}/bin/innovus"
   innovus_bin_meta: lazysubst # we want later overrides to be able to affect this
 
+  # Additional command line arguments passed to Innovus
+  innovus_bin_args: []
+
   # Innovus version to use.
   # Used to locate the binary - e.g. the '171' in ${cadence.cadence_home}/INNOVUS/INNOVUS171/bin/innovus
   # 171_ISR3 supports ILMs properly in contrast to 171.

@@ -255,7 +255,7 @@ class Tempus(HammerTimingTool, CadenceTool):
             "-no_gui", # no GUI
             "-stylus", # common UI
             "-files", timing_script
-        ]
+        ] + self.get_setting("timing.tempus.tempus_bin_args")
 
         # Temporarily disable colours/tag to make run output more readable.
         # TODO: think of a more elegant way to do this?

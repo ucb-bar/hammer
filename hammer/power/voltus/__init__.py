@@ -730,8 +730,9 @@ class Voltus(HammerPowerTool, CadenceTool):
             self.get_setting("power.voltus.voltus_bin"),
             "-no_gui",
             "-common_ui",
-            "-init"
         ]
+        base_args.extend(self.get_setting("power.voltus.voltus_bin_args"))
+        base_args.append("-init")
 
         HammerVLSILogging.enable_colour = False
         HammerVLSILogging.enable_tag = False

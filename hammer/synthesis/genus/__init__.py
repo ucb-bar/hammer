@@ -383,7 +383,7 @@ class Genus(HammerSynthesisTool, CadenceTool):
             self.get_setting("synthesis.genus.genus_bin"),
             "-f", syn_tcl_filename,
             "-no_gui"
-        ]
+        ] + self.get_setting("synthesis.genus.genus_bin_args")
 
         if bool(self.get_setting("synthesis.genus.generate_only")):
             self.logger.info("Generate-only mode: command-line is " + " ".join(args))

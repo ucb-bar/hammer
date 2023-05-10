@@ -239,7 +239,7 @@ class Joules(HammerPowerTool, CadenceTool):
             self.get_setting("power.joules.joules_bin"),
             "-files", joules_tcl_filename,
             "-common_ui"
-        ]
+        ] + self.get_setting("power.joules.joules_bin_args")
 
         HammerVLSILogging.enable_colour = False
         HammerVLSILogging.enable_tag = False
