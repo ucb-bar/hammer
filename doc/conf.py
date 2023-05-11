@@ -17,12 +17,12 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'Hammer'
-copyright = '2023, Berkeley Architecture Research'
-author = 'Berkeley Architecture Research'
+project = "Hammer"
+copyright = "2023, Berkeley Architecture Research"
+author = "Berkeley Architecture Research"
 
 # The full version, including alpha/beta/rc tags
-release = '1.0.0'
+release = "1.0.0"
 
 
 # -- General configuration ---------------------------------------------------
@@ -32,30 +32,32 @@ release = '1.0.0'
 # ones.
 extensions = [
     "myst_parser",
-    "sphinxcontrib.mermaid"
+    "sphinx-jsonschema",
+    "sphinx_rtd_size",
+    "sphinxcontrib.mermaid",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
-source_suffix = '.rst'
+source_suffix = ".rst"
 
-master_doc = 'index'
+master_doc = "index"
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = "sphinx_rtd_theme"
 
 html_theme_options = {
-    'collapse_navigation': False,
+    "collapse_navigation": False,
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
