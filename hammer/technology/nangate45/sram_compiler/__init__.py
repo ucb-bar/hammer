@@ -8,7 +8,7 @@ from hammer.vlsi import MMMCCorner, MMMCCornerType, HammerTool, \
                         HammerToolStep, HammerSRAMGeneratorTool, SRAMParameters
 from hammer.vlsi.vendor import OpenROADTool
 from hammer.vlsi.units import VoltageValue, TemperatureValue
-from hammer.tech import Library, ExtraLibrary
+from hammer.tech import Library, ExtraLibrary, Corner, Provide, Supplies
 from typing import NamedTuple, Dict, Any, List, Optional
 from abc import ABCMeta, abstractmethod
 
@@ -67,15 +67,15 @@ class Nangate45SRAMGenerator(OpenROADTool, HammerSRAMGeneratorTool):
             name=sram_name,
             nldm_liberty_file=dst_lib,
             lef_file=dst_lef,
-            corner = {
-              'nmos': "typical",
-              'pmos': "typical",
-              'temperature': str(corner.temp.value_in_units("C")) +" C"
-            },
-            supplies = {
-              'VDD': str(corner.voltage.value_in_units("V")) + " V", 
-              'VSS': "0 V" 
-            },
-            provides = [{'lib_type': "sram", 'vt': params.vt}]))
+            corner=Corner(
+              nmos="typical",
+              pmos="typical",
+              temperature=str(corner.temp.value_in_units("C")) +" C"
+            ),
+            supplies=Supplies(
+              VDD=str(corner.voltage.value_in_units("V")) + " V",
+              GND="0 V"
+            ),
+            provides=[Provide(lib_type="sram", vt=params.vt)]))
 
 tool=Nangate45SRAMGenerator

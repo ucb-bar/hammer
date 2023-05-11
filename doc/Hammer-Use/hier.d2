@@ -1,0 +1,45 @@
+direction: down
+
+RocketTile: {
+  sim-rtl-RocketTile -> sim-rtl-to-power-RocketTile -> power-rtl-RocketTile
+
+  syn-RocketTile -> syn-to-sim-RocketTile -> sim-syn-RocketTile -> sim-syn-to-power-RocketTile -> power-syn-RocketTile
+  syn-RocketTile -> syn-to-power-RocketTile -> power-syn-RocketTile
+
+  syn-RocketTile -> syn-to-par-RocketTile -> par-RocketTile
+
+  par-RocketTile -> par-sim-RocketTile -> sim-par-RocketTile -> sim-par-to-power-RocketTile -> power-par-RocketTile
+  par-RocketTile -> par-to-power-RocketTile -> power-par-RocketTile
+
+  par-RocketTile -> par-to-drc-RocketTile -> drc-RocketTile
+  par-RocketTile -> par-to-lvs-RocketTile -> lvs-RocketTile
+  par-RocketTile -> par-to-timing-RocketTile -> timing-par-RocketTile
+  par-RocketTile -> par-to-formal-RocketTile -> formal-par-RocketTile
+
+  syn-RocketTile -> syn-to-timing-RocketTile -> timing-syn-RocketTile
+  syn-RocketTile -> syn-to-formal-RocketTile -> formal-syn-RocketTile
+}
+
+RocketTile.par-RocketTile -> hier-par-to-syn
+hier-par-to-syn -> ChipTop.sim-rtl-ChipTop
+hier-par-to-syn -> ChipTop.syn-ChipTop
+
+ChipTop: {
+  sim-rtl-ChipTop -> sim-rtl-to-power-ChipTop -> power-rtl-ChipTop
+
+  syn-ChipTop -> syn-to-sim-ChipTop -> sim-syn-ChipTop -> sim-syn-to-power-ChipTop -> power-syn-ChipTop
+  syn-ChipTop -> syn-to-power-ChipTop -> power-syn-ChipTop
+
+  syn-ChipTop -> syn-to-par-ChipTop -> par-ChipTop
+
+  par-ChipTop -> par-to-sim-ChipTop -> sim-par-ChipTop -> sim-par-to-power-ChipTop -> power-par-ChipTop
+  par-ChipTop -> par-to-power-ChipTop -> power-par-ChipTop
+
+  par-ChipTop -> par-to-drc-ChipTop -> drc-ChipTop
+  par-ChipTop -> par-to-lvs-ChipTop -> lvs-ChipTop
+  par-ChipTop -> par-to-timing-ChipTop -> timing-par-ChipTop
+  par-ChipTop -> par-to-formal-ChipTop -> formal-par-ChipTop
+
+  syn-ChipTop -> syn-to-formal-ChipTop -> formal-syn-ChipTop
+  syn-ChipTop -> syn-to-timing-ChipTop -> timing-syn-ChipTop
+}

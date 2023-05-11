@@ -9,11 +9,11 @@ technology.sky130:
   # this key is OPTIONAL, no NDA files will be used if it does not point to a valid path
   # By default, this is used to populate pdk_home below.
   # It should contain s8/V2.0.1
-  sky130_nda: Optional[str]
+  sky130_nda: str
   
   # RAM paths
   # OpenRAM
-  openram_lib: Optional[str]
+  openram_lib: str
   # DFFRAM currently not supported
   dffram_lib:  Optional[str]
 

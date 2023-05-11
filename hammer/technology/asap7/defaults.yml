@@ -36,8 +36,8 @@ vlsi:
 
     bump_block_cut_layer: "V9" # Set the layer that blocks vias under bumps
 
-    tap_cell_interval: "50" # Set the interval and offset for tap cells
-    tap_cell_offset: "10.564" # Set the interval and offset for tap cells
+    tap_cell_interval: 50.0 # Set the interval and offset for tap cells
+    tap_cell_offset: 10.564 # Set the interval and offset for tap cells
 
 
 technology.core:

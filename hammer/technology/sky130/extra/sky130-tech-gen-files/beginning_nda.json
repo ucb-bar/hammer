@@ -4,41 +4,36 @@
   "time_unit": "1 ns",
   "installs": [
     {
-      "path": "$SKY130_NDA",
-      "base var": "technology.sky130.sky130_nda"
+      "id": "$SKY130_NDA",
+      "path": "technology.sky130.sky130_nda"
     },
     {
-      "path": "$SKY130A",
-      "base var": "technology.sky130.sky130A"
-    },
-    {
-      "path": "tech-sky130-cache",
-      "base var": ""
+      "id": "$SKY130A",
+      "path": "technology.sky130.sky130A"
     }
   ],
-  "layer map file": "$SKY130_NDA/s8/V2.0.1/VirtuosoOA/libs/technology_library/technology_library.layermap",
-  "drc decks": [
+  "layer_map_file": "$SKY130_NDA/s8/V2.0.1/VirtuosoOA/libs/technology_library/technology_library.layermap",
+  "drc_decks": [
     {
-      "tool name": "calibre",
-      "deck name": "all_drc",
+      "tool_name": "calibre",
+      "deck_name": "all_drc",
       "path": "$SKY130_NDA/s8/V2.0.1/DRC/Calibre/s8_drcRules"
     }
   ],
   "additional_drc_text": "",
-  "lvs decks": [
+  "lvs_decks": [
     {
-      "tool name": "calibre",
-      "deck name": "all_lvs",
-      "old path": "$SKY130_NDA/s8/V2.0.1/LVS/Calibre/lvsRules_s8",
-      "path": "tech-sky130-cache/lvsControlFile_s8"
+      "tool_name": "calibre",
+      "deck_name": "all_lvs",
+      "old_path": "$SKY130_NDA/s8/V2.0.1/LVS/Calibre/lvsRules_s8",
+      "path": "cache/lvsControlFile_s8"
     }
   ],
   "additional_lvs_text": "",
   "libraries": [
     {
-      "lef file": "tech-sky130-cache/sky130_fd_sc_hd.tlef",
-      "spice file": "$SKY130_NDA/s8/V2.0.1/LVS/Calibre/source.cdl",
-      "verilog sim": "tech-sky130-cache/primitives.v",
+      "lef_file": "cache/sky130_fd_sc_hd__nom.tlef",
+      "verilog_sim": "cache/primitives.v",
       "provides": [
         {
           "lib_type": "technology"

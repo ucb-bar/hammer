@@ -1,12 +1,4 @@
-[submodule "e2e/hammer-cadence-plugins"]
-	path = e2e/hammer-cadence-plugins
-	url = git@github.com:ucb-bar/hammer-cadence-plugins
-	branch = packaging
 [submodule "e2e/hammer-mentor-plugins"]
 	path = e2e/hammer-mentor-plugins
 	url = git@github.com:ucb-bar/hammer-mentor-plugins
-	branch = packaging
-[submodule "e2e/hammer-synopsys-plugins"]
-	path = e2e/hammer-synopsys-plugins
-	url = git@github.com:ucb-bar/hammer-synopsys-plugins
-	branch = packaging
+	branch = master

@@ -1,0 +1,36 @@
+sim.xcelium:
+  # Tool version (e.g., "XCELIUM2103")
+  version: "XCELIUM2103"
+
+  # Path to xcelium binary.
+  xcelium_bin: "${cadence.cadence_home}/XCELIUM/${sim.xcelium.version}/tools/xcelium/bin/64bit/xrun"  
+  xcelium_bin_meta: lazysubst
+
+  # Path to xmsimrc_def file.
+  xmsimrc_def: "${cadence.cadence_home}/XCELIUM/${sim.xcelium.version}/tools/xcelium/files/xmsimrc"
+  xmsimrc_def_meta: lazysubst
+
+  # ----------------------------
+  # XRUN Top-Level Customization 
+  # ----------------------------
+  # If true, enable fast recompilation. 
+  enhanced_recompile: True
+  # Specifies alternative name for xcelium.d working directory
+  xmlibdirname: null
+  # Specifies alternative location for xcelium.d working directory
+  xmlibdirpath: null
+  # Specifies alternative scratch location for sims.
+  simtmp: null
+  # Create an elaborated snapshot of specified name.
+  snapshot: null
+  # If true, enables +rwc access globally. Makes debug easier but slows performance.
+  global_access: False
+  # If true, enable multicore (similar to sim.vcs.fgp)
+  # By default it should not be TRUE as there are numerous potential limitations in tcl,
+  # build switches, and general simulator features.
+  mce: False
+  # Opts to access compilation step in xcelium.
+  compile_opts: null
+  # Opts to access elaboration step in xcelium.
+  elab_opts: null
+

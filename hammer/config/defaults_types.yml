@@ -52,6 +52,14 @@ vlsi.technology:
   # Top cut/via layer for blockage under bumps. (Optional[str])
   bump_block_cut_layer: Optional[str]
 
+  # Spacing between columns of tap cells
+  # type: float
+  tap_cell_interval: float
+
+  # Offset of the first column of tape cells from the edge of the floorplan
+  # type: float
+  tap_cell_offset: float 
+
   # Extra semiconductor IP libraries/stdcell libs/hard macros. (List[ExtraLibrary])
   # ExtraLibrary is serialized as a list[dict[str, str]]
   # TODO: Extralibrary does not have a clean JSON serialization as of late
@@ -100,10 +108,10 @@ vlsi.inputs:
   ilms: list[dict[str, str]]
 
   # Multi-mode multi-corner setups, overrides supplies
-  mmmc_corners: list[dict[str, str]]
+  mmmc_corners: list[dict[str, Any]]
 
   # Clock ports of the top-level module.
-  clocks: list[dict[str, str]]
+  clocks: list[dict[str, Any]]
 
   # Default output pin load capacitance.
   default_output_load: int
@@ -112,7 +120,7 @@ vlsi.inputs:
   output_loads: list[dict[str, str]]
 
   # List of delay constraints.
-  delays: list[dict[str, str]]
+  delays: list[dict[str, Any]]
 
   # List of custom sdc constraints to use. (List[str])
   custom_sdc_constraints: list[str]
@@ -153,7 +161,7 @@ vlsi.inputs:
     # cell (str) - Name of the default bump cell
     cell: str
     # assignments - List of BumpAssignment structs. You must specify one of name or no_connect.
-    assignments: list[dict[str, str]]
+    assignments: list[dict[str, Any]]
 
   # Naming scheme for the bumps' actual physical pin designators
   # type: str
@@ -166,10 +174,10 @@ vlsi.inputs:
     generate_mode: str
 
     # List of PinAssignment Structs.
-    assignments: list[dict[str, str]]
+    assignments: list[dict[str, Any]]
 
   # List of decap constraints (DecapConstraint struct).
-  decaps: list[dict[str, str]]
+  decaps: list[dict[str, Any]]
 
   # SVG visualization of placement constraints and bumps for the current hierarchical module.
   visualization:
@@ -260,6 +268,12 @@ par:
   power_straps_mode: str
   power_straps_script_contents: Optional[str]
 
+  # Macro power strap abutment checks
+  power_straps_abutment: bool
+
+  # Limit strap check/dump to certain macros
+  power_straps_abutment_macros: Optional[list[str]]
+
   # Spacing around blocks and hardmacros in microns
   blockage_spacing: float
 
@@ -343,7 +357,7 @@ lvs.inputs:
   schematic_files: list[str]
 
   # Input list of ILMStructs
-  ilms: list[str]
+  ilms: list[dict[str, Any]]
 
   # Input list of Hcells
   hcells_list: list[str]

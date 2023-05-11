@@ -98,14 +98,15 @@ class Magic(HammerDRCTool, TCLTool):
                 args = " ".join(args),
                 gds = self.layout_file,
                 run_script = self.view_drc_tcl
-                )))
+                )).strip())
         os.chmod(self.view_drc_script, 0o755)
         with open(self.view_drc_tcl, "w") as f:
             f.write(dd("""
+            gds read {gds}
             load {top}
             select top cell
             drc check
-            """.format(top = self.top_module)))
+            """.format(gds = self.layout_file, top = self.top_module)).strip())
 
         # Finally append the no GUI options and full Tcl run script
         args.extend(["-noconsole", "-dnull", run_script])

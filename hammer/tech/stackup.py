@@ -84,7 +84,11 @@ class Metal(BaseModel):
     min_width: The minimum wire width for this layer.
     max_width: The maximum wire width for this layer.
     pitch: The minimum cross-mask pitch for this layer (NOT same-mask pitch
-           for multiple-patterned layers).
+           for multiple-patterned layers). Width of routing grid for a given layer. 
+           To route denser wires on chip, multiple masks are required. 
+           During fabrication, the masks are applied separately with some spatial offsets 
+           to achieve denser line patterning. For more information on multiple-patterning, 
+           check https://en.wikipedia.org/wiki/Multiple_patterning
     offset: The routing track offset from the origin for the first track in this layer.
             (0 = first track is on an axis).
     power_strap_widths_and_spacings: A list of WidthSpacingTuples that specify the minimum
@@ -98,7 +102,7 @@ class Metal(BaseModel):
     index: int
     direction: RoutingDirection
     min_width: Decimal
-    max_width: Optional[Decimal]
+    max_width: Optional[Decimal] = None
     pitch: Decimal
     offset: Decimal
     power_strap_widths_and_spacings: List[WidthSpacingTuple]

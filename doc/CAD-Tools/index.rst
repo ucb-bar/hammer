@@ -14,3 +14,4 @@ The package should contain an class object named 'tool' to create an instance of
    Hammer-CAD-Tools
    Tool-Plugin-Setup
    OpenROAD
+   ICV

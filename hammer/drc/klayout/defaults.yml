@@ -1,0 +1,13 @@
+# Configuration options and defaults for klayout DRC.
+# The values specified in this file are the defaults.
+drc.klayout:
+  klayout_bin: "klayout" # Change this if klayout is not on your PATH.
+  
+  version: "dummy-value" # this is just to make hammer happy (although, it is never called AFAICT).
+  # the version is actually calculated by the Klayout class
+
+  generate_only: false # Generate the run script but do not run it yet.
+
+  layout_properties_file: null # Optional: KLayout layer properties file
+  # Should be set in technology plugin
+  # type: Optional[str]

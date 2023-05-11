@@ -1,0 +1,12 @@
+# Default settings for synthesis in Genus, for project/technology configuration and overriding.
+synthesis.genus:
+  # Location of the binary.
+  genus_bin: "${cadence.cadence_home}/GENUS/GENUS${synthesis.genus.version}/bin/genus"
+  genus_bin_meta: lazysubst # we want later overrides to be able to affect this
+
+  # Genus version to use.
+  # Used to locate the binary - e.g. the '171' in ${cadence.cadence_home}/GENUS/GENUS171/bin/genus
+  version: "171"
+
+  # Generate the TCL file but do not run it yet.
+  generate_only: false

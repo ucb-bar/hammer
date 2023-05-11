@@ -1,0 +1,16 @@
+# Configuration options and defaults for Tempus.
+# The values specified in this file are the defaults.
+
+timing.tempus:
+  # Location of the binary
+  tempus_bin: "${cadence.cadence_home}/SSV/SSV${timing.tempus.version}/bin/tempus"
+  tempus_bin_meta: lazysubst # we want later overrides to be able to affect this
+
+  # Tempus version to use
+  # Used to locate the binary - e.g. the '211_ISR3' in ${cadence.cadence_home}/SSV/SSV211_ISR3/bin/tempus
+  version: "211_ISR3"
+
+  # Enable signal integrity delay and glitch analysis
+  # Note: your tech libs should have noise models!
+  # type: bool
+  si_glitch: false

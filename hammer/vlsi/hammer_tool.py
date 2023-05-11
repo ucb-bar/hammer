@@ -1627,3 +1627,37 @@ class HammerTool(metaclass=ABCMeta):
         cleaned = cleandoc(cmd) if clean else cmd
         output_buffer.append("""puts "{0}" """.format(cleaned.replace('"', '\"')))
         output_buffer.append(cleaned)
+
+    @staticmethod
+    def block_tcl_append(cmds: str, output_buffer: List[str], clean: bool = False, verbose: bool = True) -> None:
+        """
+        Helper function to echo and run a command.
+
+        :param cmd: TCL command to run
+        :param output_buffer: Buffer in which to enqueue the resulting TCL lines
+        :param clean: True if you want to trim the leading indendation from the string, False otherwise. See inspect.cleandoc() for what this does.
+        """
+        verbose_commands = []
+        commands = cmds.split('\n')
+        # remove first line if it's empty because it messes up indentation
+        if len(commands[0].strip()) == 0:
+            commands = commands[1:]
+        prev_line = ""
+        for line in commands:
+            # add "verbose" statement (echo TCL command to terminal)
+            #   if line isn't (1) empty, (2) part of a multiline command,(3) a comment, or (4) contains a wrapping bracket
+            # we can't just use verbose_append because it blindly echoes all commands
+            empty = not any(c.isalpha() for c in line)
+            num_braces = line.count('{') + line.count('}')
+            if verbose and not (empty or '\\' in prev_line or ('#' in line) or (num_braces % 2 == 1)):
+                indent_len = len(line) - len(line.lstrip())
+                indent = ' ' * indent_len
+                puts_cmd = line.strip("\\ ") # remove leading/trailing characters
+                escape_str = '"[]$'  # NOTE: there may be more characters that need to be escaped!
+                for c in escape_str:  # escape characters in commands for puts command
+                    puts_cmd = puts_cmd.replace(c, '\\'+c)
+                if puts_cmd != "":
+                    verbose_commands.append(f'{indent}puts "(hammer) {puts_cmd}"')
+            verbose_commands.append(line)
+            prev_line = line
+        HammerTool.tcl_append('\n'.join(verbose_commands), output_buffer=output_buffer, clean=clean)

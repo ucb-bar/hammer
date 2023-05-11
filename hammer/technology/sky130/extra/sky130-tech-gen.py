@@ -1,94 +1,99 @@
-'''
-    Purpose: generate the json file required by the Hammer Sky130 tech plugin
-    Usage:
-        export PDK_ROOT=<path-to-dir-containing-sky130-setup>
-        python sky130-tech-gen.py
-    Output:
-        sky130.tech.json: specifies Sky130 PDK file locations and various details
-'''
-
+#!/usr/bin/env python3
+# type: ignore
+#   tell mypy to ignore this file during typechecking
+# -*- coding: utf-8 -*-
+#
+#  Generate Hammer Sky130 tech plugin file: sky130.tech.json
+#
+#  See LICENSE for licence details.
+import sys
 import json
 import os
-from pathlib import Path 
 
 use_nda_files=True
 library='sky130_fd_sc_hd'
 
-PDK_ROOT = os.getenv('PDK_ROOT')
-if PDK_ROOT is None:
-    print("Error: Must set $PDK_ROOT to the directory that contains skywater-pdk and the root of the sky130A install.")
-    exit()
-SKY130A = os.path.join(PDK_ROOT, 'share/pdk/sky130A')
+def main(args) -> int:
+    if len(args) != 3:
+        print("Usage: ./sky130-tech-gen.py /path/to/sky130A sky130.tech.json")
+        return 1
 
-if use_nda_files:
-    with open('sky130-tech-gen-files/beginning_nda.json', 'r') as f: data = json.load(f)
-else:
-    with open('sky130-tech-gen-files/beginning.json', 'r') as f: data = json.load(f)
+    SKY130A = sys.argv[1]
 
-with open('sky130-tech-gen-files/cells.json', 'r') as f:
-    cells = json.load(f)
-data["physical only cells list"] = cells["physical only cells list"]
-data["dont use list"] = cells["dont use list"]
-data["special cells"] = cells["special cells"]
+    if use_nda_files:
+        with open('sky130-tech-gen-files/beginning_nda.json', 'r') as f: data = json.load(f)
+    else:
+        with open('sky130-tech-gen-files/beginning.json', 'r') as f: data = json.load(f)
 
-SKYWATER_LIBS = os.path.join('$SKY130A','libs.ref',library)
-LIBRARY_PATH  = os.path.join(SKY130A,'libs.ref',library,'lib')
-lib_corner_files=os.listdir(LIBRARY_PATH)
-for cornerfilename in lib_corner_files:
-    if (not (library in cornerfilename) ) : continue
-    if ('ccsnoise' in cornerfilename): continue # ignore duplicate corner.lib/corner_ccsnoise.lib files
+    with open('sky130-tech-gen-files/cells.json', 'r') as f:
+        cells = json.load(f)
+    data["physical_only_cells_list"] = cells["physical_only_cells_list"]
+    data["dont_use_list"] = cells["dont_use_list"]
+    data["special_cells"] = cells["special_cells"]
 
-    tmp = cornerfilename.replace('.lib','')
-    if (tmp+'_ccsnoise.lib' in lib_corner_files): 
-      cornerfilename=tmp+'_ccsnoise.lib' # use ccsnoise version of lib file
+    SKYWATER_LIBS = os.path.join('$SKY130A', 'libs.ref', library)
+    LIBRARY_PATH  = os.path.join(  SKY130A,  'libs.ref', library, 'lib')
+    lib_corner_files=os.listdir(LIBRARY_PATH)
+    for cornerfilename in lib_corner_files:
+        if (not (library in cornerfilename) ) : continue
+        if ('ccsnoise' in cornerfilename): continue # ignore duplicate corner.lib/corner_ccsnoise.lib files
 
-    cornername = tmp.split('__')[1]
-    cornerparts = cornername.split('_')
+        tmp = cornerfilename.replace('.lib','')
+        if (tmp+'_ccsnoise.lib' in lib_corner_files): 
+            cornerfilename=tmp+'_ccsnoise.lib' # use ccsnoise version of lib file
 
-    speed = cornerparts[0]
-    if (speed == 'ff'): speed = 'fast'
-    if (speed == 'tt'): speed = 'typical'
-    if (speed == 'ss'): speed = 'slow'
+        cornername = tmp.split('__')[1]
+        cornerparts = cornername.split('_')
 
-    temp = cornerparts[1]
-    temp = temp.replace('n','-')
-    temp = temp.split('C')[0]+' C'
+        speed = cornerparts[0]
+        if (speed == 'ff'): speed = 'fast'
+        if (speed == 'tt'): speed = 'typical'
+        if (speed == 'ss'): speed = 'slow'
 
-    vdd = cornerparts[2]
-    vdd = vdd.split('v')[0]+'.'+vdd.split('v')[1]+' V'
+        temp = cornerparts[1]
+        temp = temp.replace('n','-')
+        temp = temp.split('C')[0]+' C'
 
-    lib_entry = {
-      "nldm liberty file":  os.path.join(SKYWATER_LIBS,'lib',       cornerfilename),
-      "verilog sim":        os.path.join('tech-sky130-cache',       library+'.v'),
-      "lef file":           os.path.join(SKYWATER_LIBS,'lef',       library+'.lef'),
-      "spice file":         os.path.join('tech-sky130-cache',       library+'.cdl'),
-      "gds file":           os.path.join(SKYWATER_LIBS,'gds',       library+'.gds'),
-      "corner": {
-        "nmos": speed,
-        "pmos": speed,
-        "temperature": temp
-      },
-      "supplies": {
-        "VDD": vdd,
-        "GND": "0 V"
-      },
-      "provides": [
-        {
-          "lib_type": "stdcell",
-          "vt": "RVT" 
+        vdd = cornerparts[2]
+        vdd = vdd.split('v')[0]+'.'+vdd.split('v')[1]+' V'
+
+        lib_entry = {
+            "nldm_liberty_file":  os.path.join(SKYWATER_LIBS,'lib', cornerfilename),
+            "verilog_sim":        os.path.join('cache',             library+'.v'),
+            "lef_file":           os.path.join(SKYWATER_LIBS,'lef', library+'.lef'),
+            "spice_file":         os.path.join('cache',             library+'.cdl'),
+            "gds_file":           os.path.join(SKYWATER_LIBS,'gds', library+'.gds'),
+            "corner": {
+                "nmos": speed,
+                "pmos": speed,
+                "temperature": temp
+            },
+            "supplies": {
+                "VDD": vdd,
+                "GND": "0 V"
+            },
+            "provides": [
+                {
+                "lib_type": "stdcell",
+                "vt": "RVT" 
+                }
+            ]
         }
-      ]
-    }
 
-    data["libraries"].append(lib_entry)
+        data["libraries"].append(lib_entry)
 
-with open('sky130-tech-gen-files/stackups.json', 'r') as f:
-    stackups = json.load(f)
-data["stackups"] = [stackups]
+    with open('sky130-tech-gen-files/stackups.json', 'r') as f:
+        stackups = json.load(f)
+    data["stackups"] = [stackups]
 
-with open('sky130-tech-gen-files/sites.json', 'r') as f:
-    sites = json.load(f)
-data["sites"] = sites["sites"]
+    with open('sky130-tech-gen-files/sites.json', 'r') as f:
+        sites = json.load(f)
+    data["sites"] = sites["sites"]
 
-with open('../sky130.tech.json', 'w') as f:
-    json.dump(data, f, indent=2)
+    with open(sys.argv[2], 'w') as f:
+        json.dump(data, f, indent=2)
+    
+    return 0
+
+if __name__ == '__main__':
+  sys.exit(main(sys.argv))
