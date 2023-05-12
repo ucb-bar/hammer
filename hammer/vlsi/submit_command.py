@@ -20,7 +20,8 @@ from hammer.logging import HammerVLSILoggingContext
 from hammer.utils import add_dicts, get_or_else
 
 __all__ = ['HammerSubmitCommand', 'HammerLocalSubmitCommand',
-           'HammerLSFSettings', 'HammerLSFSubmitCommand']
+           'HammerLSFSettings', 'HammerLSFSubmitCommand',
+           'HammerSlurmSettings', 'HammerSlurmSubmitCommand']
 
 
 class HammerSubmitCommand:
@@ -333,7 +334,7 @@ class HammerSlurmSubmitCommand(HammerSubmitCommand):
         return args
 
     def submit(self, args: List[str], env: Dict[str, str],
-               logger: HammerVLSILoggingContext, cwd: str = None) -> str:
+               logger: HammerVLSILoggingContext, cwd: Optional[str] = None) -> Tuple[str, int]:
         prog_tag = self.get_program_tag(args)
 
         subprocess_format_str = 'Executing subprocess: {srun_args} {args}'
@@ -358,6 +359,7 @@ class HammerSlurmSubmitCommand(HammerSubmitCommand):
         # TODO: check errors
 
         # Refresh output directory (fixes NFS issue)
-        os.path.exists(cwd)
+        if cwd is not None:
+            os.path.exists(cwd)
 
         return output_buf, proc.returncode
