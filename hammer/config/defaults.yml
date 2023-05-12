@@ -427,7 +427,8 @@ vlsi.inputs:
     # type: int
 
 vlsi.submit:
-  command: "local" # The submit command to use. "none", "local", or null will run on the current host. See hammer_submit_command.py for other options.
+  command: "local" # The submit command to use. "none", "local", or null will run on the current host. "lsf" and "slurm" are also supported.
+  # See hammer/vlsi/submit_command.py for all options and their associated settings.
   settings: [] # type: List[Dict[str, Dict[str, Any]]]
   # The list substitutes settings in order of appearance, and the first Dict key is the command.
   # The second dict key is the name of that command's setting, followed by whatever type it takes.
