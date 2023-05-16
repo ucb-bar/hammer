@@ -84,10 +84,10 @@ class Metal(BaseModel):
     min_width: The minimum wire width for this layer.
     max_width: The maximum wire width for this layer.
     pitch: The minimum cross-mask pitch for this layer (NOT same-mask pitch
-           for multiple-patterned layers). Width of routing grid for a given layer. 
-           To route denser wires on chip, multiple masks are required. 
-           During fabrication, the masks are applied separately with some spatial offsets 
-           to achieve denser line patterning. For more information on multiple-patterning, 
+           for multiple-patterned layers). Width of routing grid for a given layer.
+           To route denser wires on chip, multiple masks are required.
+           During fabrication, the masks are applied separately with some spatial offsets
+           to achieve denser line patterning. For more information on multiple-patterning,
            check https://en.wikipedia.org/wiki/Multiple_patterning
     offset: The routing track offset from the origin for the first track in this layer.
             (0 = first track is on an axis).
@@ -393,11 +393,15 @@ class Stackup(BaseModel):
     def get_metal_by_index(self, index: int) -> Metal:
         """
         Get a given metal layer by index.
+        If index is given as -1, return the highest metal layer (by index).
 
         :param index: Index of the metal layer
         :return: A metal layer object
         """
-        for m in self.metals:
-            if m.index == index:
-                return m
+        if index == -1:
+            return max(self.metals, key=lambda m: m.index)
+        else:
+            for m in self.metals:
+                if m.index == index:
+                    return m
         raise ValueError("Metal with index %d is not defined in stackup %s" % (index, self.name))

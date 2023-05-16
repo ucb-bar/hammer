@@ -397,11 +397,21 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         self.verbose_append("set_db assign_pins_edit_in_batch true")
 
         promoted_pins = []  # type: List[str]
+        # Set the top/bottom layers for promoting macro pins
+        self.append(f"set_db assign_pins_promoted_macro_bottom_layer {self.get_stackup().get_metal_by_index(1).name}")
+        self.append(f"set_db assign_pins_promoted_macro_top_layer {self.get_stackup().get_metal_by_index(-1).name}")
+        self.append('set all_ppins ""')
         for pin in pin_assignments:
             if pin.preplaced:
-                # First set promoted pins
-                self.verbose_append("set_promoted_macro_pin -pins {{ {p} }}".format(p=pin.pins))
-                promoted_pins.extend(pin.pins.split())
+                # Find the pin object that should be promoted. Only one of the two (driver_pins or load_pins) should be non-empty.
+                self.verbose_append(f'set ppins [get_db [get_nets {pin.pins}] .driver_pins]')
+                self.verbose_append(f'if {{$ppins eq ""}} {{set ppins [get_db [get_nets {pin.pins}] .load_pins]}}')
+                self.verbose_append("lappend all_ppins $ppins")
+                # First promote the pin
+                self.verbose_append("set_promoted_macro_pin -insts [get_db $ppins .inst.name] -pins [get_db $ppins .base_name]"
+                # Then set them to don't touch and skip routing
+                self.verbose_append("set_dont_touch [get_db $ppins .net]")
+                self.verbose_append("set_db [get_db $ppins .net] .skip_routing true")
             else:
                 # TODO: Do we need pin blockages for our layers?
                 # Seems like we will only need special pin blockages if the vias are larger than the straps
@@ -461,10 +471,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
 
                 self.verbose_append(" ".join(cmd))
 
-        # In case the * wildcard is used after preplaced pins, this will place promoted pins correctly.
-        # Innovus errors instead of warns if the name matching does not work (e.g. bad wildcards).
-        for ppin in promoted_pins:
-            self.verbose_append("assign_io_pins -move_fixed_pin -pins [get_db [get_db pins -if {{.name == {p} }}] .net.name]".format(p=ppin))
+        # In case the * wildcard is used after preplaced pins, this will put back the promoted pins correctly.
+        self.verbose_append("if {[llength $all_ppins] ne 0} {assign_io_pins -move_fixed_pin -pins [get_db $all_ppins .net.name]}")
 
         self.verbose_append("set_db assign_pins_edit_in_batch false")
         return True
@@ -1009,7 +1017,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                             ury=constraint.y+constraint.height
                         ))
                     if ObstructionType.Route in obs_types:
-                        output.append("create_route_blockage -layers {{{layers}}} -spacing 0 -{area_flag} {{{x} {y} {urx} {ury}}}".format(
+                        output.append("create_route_blockage -except_pg_nets -layers {{{layers}}} -spacing 0 -{area_flag} {{{x} {y} {urx} {ury}}}".format(
                             x=constraint.x,
                             y=constraint.y,
                             urx=constraint.x+constraint.width,
