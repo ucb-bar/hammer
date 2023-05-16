@@ -66,6 +66,9 @@ vlsi.technology:
 
   tap_cell_offset: 0.0 # Offset of the first column of tape cells from the edge of the floorplan (float)
   # Should be overridden by technology plugin defaults.
+  
+  routing_layers: null # If specified, set/override the [bottom, top] layers used for routing. (Optional[Tuple[int, int]])
+  # Both must match the index number (not name) of layers used in the stackup.
 
   extra_libraries: [] # Extra semiconductor IP libraries/stdcell libs/hard macros. (List[ExtraLibrary])
   # Used for non-technology-vendor-provided custom IP blocks.

@@ -249,6 +249,18 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         # Match SDC time units to timing libraries
         verbose_append("set_library_unit -time 1{}".format(self.get_time_unit().value_prefix + self.get_time_unit().unit))
 
+        # Set the top and bottom global/detail routing layers.
+        layers = self.get_setting("vlsi.technology.routing_layers")
+        if layers is not None:
+            if self.version() >= self.version_number("201"):
+                verbose_append(f"set_db design_bottom_layer {layers[0]}")
+                verbose_append(f"set_db design_bottom_layer {layers[1]}")
+            else:
+                verbose_append(f"set_db route_early_global_bottom_layer {layers[0]}")
+                verbose_append(f"set_db route_early_global_bottom_layer {layers[1]}")
+                verbose_append(f"set_db route_design_bottom_layer {layers[0]}")
+                verbose_append(f"set_db route_design_bottom_layer {layers[1]}")
+
         # Read LEF layouts.
         lef_files = self.technology.read_libs([
             hammer_tech.filters.lef_filter
@@ -408,7 +420,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                 self.verbose_append(f'if {{$ppins eq ""}} {{set ppins [get_db [get_nets {pin.pins}] .load_pins]}}')
                 self.verbose_append("lappend all_ppins $ppins")
                 # First promote the pin
-                self.verbose_append("set_promoted_macro_pin -insts [get_db $ppins .inst.name] -pins [get_db $ppins .base_name]"
+                self.verbose_append("set_promoted_macro_pin -insts [get_db $ppins .inst.name] -pins [get_db $ppins .base_name]")
                 # Then set them to don't touch and skip routing
                 self.verbose_append("set_dont_touch [get_db $ppins .net]")
                 self.verbose_append("set_db [get_db $ppins .net] .skip_routing true")

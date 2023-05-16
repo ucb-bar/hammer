@@ -39,6 +39,8 @@ vlsi:
     tap_cell_interval: 50.0 # Set the interval and offset for tap cells
     tap_cell_offset: 10.564 # Set the interval and offset for tap cells
 
+    routing_layers: [2, 7]
+
 
 technology.core:
   stackup: "asap7_3Ma_2Mb_2Mc_2Md" # This key should exist in the stackups list in the tech json

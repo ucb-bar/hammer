@@ -60,6 +60,9 @@ vlsi.technology:
   # type: float
   tap_cell_offset: float 
 
+  # Set the [bottom, top] layer used for routing. (Optional[Tuple[int, int]])
+  routing_layers: Optional[list[int]]
+
   # Extra semiconductor IP libraries/stdcell libs/hard macros. (List[ExtraLibrary])
   # ExtraLibrary is serialized as a list[dict[str, str]]
   # TODO: Extralibrary does not have a clean JSON serialization as of late

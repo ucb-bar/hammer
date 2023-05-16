@@ -35,7 +35,7 @@ class SKY130Tech(HammerTechnology):
 
 
     def setup_cdl(self) -> None:
-        ''' Copy and hack the cdl, replacing pfet_01v8_hvt/nfet_01v8 with 
+        ''' Copy and hack the cdl, replacing pfet_01v8_hvt/nfet_01v8 with
             respective names in LVS deck
         '''
         setting_dir = self.get_setting("technology.sky130.sky130A")
@@ -196,7 +196,7 @@ class SKY130Tech(HammerTechnology):
             "sky130_sram_1kbyte_1rw1r_8x1024_8",
             "sky130_sram_2kbyte_1rw1r_32x512_8"
         ]
-    
+
     @staticmethod
     def sky130_sram_names() -> List[str]:
         sky130_sram_names = []
@@ -275,7 +275,6 @@ set_db opt_hold_target_slack 0.10
 #-------------------------------------------------------------------------------
 set_db route_design_antenna_diode_insertion 1
 set_db route_design_antenna_cell_name "sky130_fd_sc_hd__diode_2"
-set_db route_design_bottom_routing_layer 2
 
 set_db route_design_high_freq_search_repair true
 set_db route_design_detail_post_route_spread_wire true
