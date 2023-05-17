@@ -1053,7 +1053,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
     def specify_std_cell_power_straps(self, blockage_spacing: Decimal, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
         """
         Generate a list of TCL commands that build the low-level standard cell power strap rails.
-        This will use the -master option to create power straps based on technology.core.tap_cell_rail_reference.
+        This will use the -master option to create power straps based on the tapcells in the special cells list.
         The layer is set by technology.core.std_cell_rail_layer, which should be the highest metal layer in the std cell rails.
 
         :param bbox: The optional (2N)-point bounding box of the area to generate straps. By default the entire core area is used.
@@ -1069,12 +1069,12 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             "set_db add_stripes_stacked_via_top_layer {}".format(layer_name),
             "set_db add_stripes_spacing_from_block {}".format(blockage_spacing)
         ]
-        tapcell = self.get_setting("technology.core.tap_cell_rail_reference")
+        tapcells = self.technology.get_special_cell_by_type(CellType.TapCell)[0].name
         options = [
             "-pin_layer", layer_name,
             "-layer", layer_name,
             "-over_pins", "1",
-            "-master", "\"{}\"".format(tapcell),
+            "-master", "\"{}\"".format(" ".join(tapcells)),
             "-block_ring_bottom_layer_limit", layer_name,
             "-block_ring_top_layer_limit", layer_name,
             "-pad_core_ring_bottom_layer_limit", layer_name,

@@ -688,9 +688,6 @@ technology.core:
     std_cell_rail_layer: null # This should specify the TOPMOST metal layer the standard cells use for power rails
     # Note that this is not usually stackup specific; it is based on the std cell library
     # type: str
-    tap_cell_rail_reference: null # This is used to provide a reference master for generating standard cell rails
-    # Can be a wildcard/glob
-    # type: str
     std_cell_supplies:
     # Names of the power and ground rails of the standard cells
         power: ["VDD"]

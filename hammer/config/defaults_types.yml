@@ -400,9 +400,6 @@ technology.core:
     # This should specify the TOPMOST metal layer the standard cells use for power rails
     # type: str
     std_cell_rail_layer: Optional[str]
-    # This is used to provide a reference master for generating standard cell rails
-    # type: str
-    tap_cell_rail_reference: Optional[str]
 
     # Name of standard cell power/ground rails
     std_cell_supplies:

@@ -6,6 +6,7 @@
 
 from hammer.vlsi import HammerPlaceAndRouteTool, DummyHammerTool, HammerToolStep, deepdict
 from hammer.config import HammerJSONEncoder
+from hammer.tech.specialcells import CellType, SpecialCell
 
 from typing import Dict, List, Any, Optional
 from decimal import Decimal
@@ -69,7 +70,7 @@ class MockPlaceAndRoute(HammerPlaceAndRouteTool, DummyHammerTool):
         self._power_straps_check_index(layer_name)
         output_dict = {
             "layer_name": layer_name,
-            "tap_cell_name": self.get_setting("technology.core.tap_cell_rail_reference"),
+            "tap_cell_name": self.technology.get_special_cell_by_type(CellType.TapCell)[0].name[0],
             "bbox": [] if bbox is None else list(map(str, bbox)),
             "nets": list(map(str, nets))
         }

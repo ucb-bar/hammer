@@ -1053,7 +1053,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         """
         Generate a list of TCL commands that build the low-level standard cell power strap rails.
         This is a low-level, cad-tool-specific API. It is designed to be called by higher-level methods, so calling this directly is not recommended.
-        This will create power straps based on technology.core.tap_cell_rail_reference.
+        This will create power straps based on the tapcells in the special cells list.
         The layer is set by technology.core.std_cell_rail_layer, which should be the highest metal layer in the std cell rails.
         This method should be called before any calls to specify_power_straps.
 
@@ -2072,9 +2072,9 @@ class HasUPFSupport(HammerTool):
         output.append(f'create_power_domain {domain} \\')
         output.append(f'\t-elements {{.}}')
         #Get Supply Nets
-        power_nets = self.get_all_power_nets() 
+        power_nets = self.get_all_power_nets()
         ground_nets = self.get_all_ground_nets()
-        #Create Supply Ports 
+        #Create Supply Ports
         for pg_net in (power_nets+ground_nets):
             if(pg_net.pin != None):
                 #Create Supply Nets
@@ -2087,7 +2087,7 @@ class HasUPFSupport(HammerTool):
         output.append(f'set_domain_supply_net {domain} \\')
         output.append(f'\t-primary_power_net {power_nets[0].name} \\')
         output.append(f'\t-primary_ground_net {ground_nets[0].name}')
-        #Add Port States 
+        #Add Port States
         for p_net in power_nets:
             if(p_net.pin != None):
                 output.append(f'add_port_state {p_net.name} \\')
