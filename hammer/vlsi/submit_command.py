@@ -268,7 +268,7 @@ class HammerSlurmSettings(NamedTuple('HammerSlurmSettings', [
     ('srun_binary', str),
     ('num_cpus', Optional[int]),
     ('partition', Optional[str]),
-    ('extra_args', List[str])
+    ('extra_args', Optional[List[str]])
 ])):
     __slots__ = ()
 
@@ -317,7 +317,7 @@ class HammerSlurmSubmitCommand(HammerSubmitCommand):
         """
         Set the settings class variable
 
-        :param value: The HammerSlurmSettings NapedTuple to use
+        :param value: The HammerSlurmSettings NamedTuple to use
         """
         setattr(self, "_settings", value)
 
