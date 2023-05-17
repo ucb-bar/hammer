@@ -669,7 +669,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         # "auto", i.e. not "manual", means not specifying anything extra.
 
         self.verbose_append(
-            "write_stream -mode ALL {map_file} {merge_options} {unit} {gds}".format(
+            "write_stream -mode ALL -format stream {map_file} {merge_options} {unit} {gds}".format(
             map_file=map_file,
             merge_options=merge_options,
             gds=self.output_gds_filename,
