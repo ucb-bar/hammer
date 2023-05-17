@@ -291,7 +291,7 @@ class HammerSlurmSettings(NamedTuple('HammerSlurmSettings', [
         try:
             extra_args = settings["extra_args"]
         except KeyError:
-            extra_args = []
+            extra_args = None
 
         return HammerSlurmSettings(
             srun_binary=srun_binary,
@@ -330,7 +330,8 @@ class HammerSlurmSubmitCommand(HammerSubmitCommand):
             args.extend(["--partition", self.settings.partition])
         if self.settings.num_cpus is not None:
             args.extend(["--ntasks", "%d" % self.settings.num_cpus])
-        args.extend(self.settings.extra_args)
+        if self.settings.extra_args is not None:
+            args.extend(self.settings.extra_args)
         return args
 
     def submit(self, args: List[str], env: Dict[str, str],
