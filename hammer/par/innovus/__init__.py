@@ -253,13 +253,13 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         layers = self.get_setting("vlsi.technology.routing_layers")
         if layers is not None:
             if self.version() >= self.version_number("201"):
-                verbose_append(f"set_db design_bottom_layer {layers[0]}")
-                verbose_append(f"set_db design_bottom_layer {layers[1]}")
+                verbose_append(f"set_db design_bottom_routing_layer {layers[0]}")
+                verbose_append(f"set_db design_top_routing_layer {layers[1]}")
             else:
                 verbose_append(f"set_db route_early_global_bottom_layer {layers[0]}")
-                verbose_append(f"set_db route_early_global_bottom_layer {layers[1]}")
+                verbose_append(f"set_db route_early_global_top_layer {layers[1]}")
                 verbose_append(f"set_db route_design_bottom_layer {layers[0]}")
-                verbose_append(f"set_db route_design_bottom_layer {layers[1]}")
+                verbose_append(f"set_db route_design_top_layer {layers[1]}")
 
         # Read LEF layouts.
         lef_files = self.technology.read_libs([
