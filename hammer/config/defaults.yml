@@ -646,8 +646,6 @@ lvs.inputs:
 
   schematic_files: [] # Input list of schematic files
 
-  ilms: [] # Input list of ILMStructs
-
   hcells_list: [] # Input list of LVS Hcells
 
   additional_lvs_text_mode: "auto" # Valid modes are auto, manual, prepend, and append

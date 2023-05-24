@@ -389,7 +389,9 @@ class HammerPlaceAndRouteTool(HammerTool):
     def export_config_outputs(self) -> Dict[str, Any]:
         outputs = deepdict(super().export_config_outputs())
         outputs["par.outputs.output_ilms"] = list(map(lambda s: s.to_setting(), self.output_ilms))
-        outputs["par.outputs.output_ilms_meta"] = "append"
+        outputs["par.outputs.output_ilms_meta"] = "append"  # to coalesce ILMs for current level of hierarchy
+        outputs["vlsi.inputs.ilms"] = list(map(lambda s: s.to_setting(), self.get_input_ilms(full_tree=True)))
+        outputs["vlsi.inputs.ilms_meta"] = "append"  # to coalesce ILMs for entire hierarchical tree
         outputs["par.outputs.output_gds"] = str(self.output_gds)
         outputs["par.outputs.output_netlist"] = str(self.output_netlist)
         outputs["par.outputs.output_sim_netlist"] = str(self.output_sim_netlist)
@@ -1201,6 +1203,9 @@ class HammerLVSTool(HammerSignoffTool):
         outputs["lvs.inputs.top_module"] = self.top_module
         return outputs
 
+    def get_input_ilms(self, full_tree=True) -> List[ILMStruct]:
+        return super().get_input_ilms(full_tree)
+
     @abstractmethod
     def fill_outputs(self) -> bool:
         pass
@@ -1330,26 +1335,6 @@ class HammerLVSTool(HammerSignoffTool):
         if not (isinstance(value, List)):
             raise TypeError("hcells_list must be a List[str]")
         self.attr_setter("_hcells_list", value)
-
-
-    @property
-    def ilms(self) -> List[ILMStruct]:
-        """
-        Get the list of (optional) input ILM information for hierarchical mode.
-
-        :return: The list of (optional) input ILM information for hierarchical mode.
-        """
-        try:
-            return self.attr_getter("_ilms", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the list of (optional) input ILM information for hierarchical mode yet")
-
-    @ilms.setter
-    def ilms(self, value: List[ILMStruct]) -> None:
-        """Set the list of (optional) input ILM information for hierarchical mode."""
-        if not (isinstance(value, List)):
-            raise TypeError("ilms must be a List[ILMStruct]")
-        self.attr_setter("_ilms", value)
 
 
     ### Outputs ###

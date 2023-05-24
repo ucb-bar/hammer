@@ -1107,7 +1107,7 @@ class HammerTool(metaclass=ABCMeta):
 
     def _get_by_bump_dim_pitch(self) -> Dict[str, float]:
         """
-        Return pitches in the x and y directions. 
+        Return pitches in the x and y directions.
         """
         pitch_x = self.get_setting_suffix('vlsi.inputs.bumps.pitch', 'x')
         pitch_y = self.get_setting_suffix('vlsi.inputs.bumps.pitch', 'y')
@@ -1136,7 +1136,7 @@ class HammerTool(metaclass=ABCMeta):
             else:
                 assignments.append(BumpAssignment(name=name, no_connect=no_con,
                     x=x, y=y, group=group, custom_cell=cell))
-        
+
         pitch_settings = self._get_by_bump_dim_pitch()
 
         return BumpsDefinition(
@@ -1538,13 +1538,16 @@ class HammerTool(metaclass=ABCMeta):
         # TODO how does python cache this? Do we need to avoid re-processing this every time?
         return self.technology.get_stackup_by_name(self.get_setting("technology.core.stackup"))
 
-    def get_input_ilms(self) -> List[ILMStruct]:
+    def get_input_ilms(self, full_tree=False) -> List[ILMStruct]:
         """
         Get a list of input ILM modules for hierarchical mode.
+        :param full_tree: if true, obtains the full tree (up to the current level of hierarchy) from vlsi.inputs.ilms.
+        Otherwise, obtains only children ilms from par.outputs.output_ilms
         """
-        ilms = self.get_setting("vlsi.inputs.ilms")  # type: List[dict]
-        assert isinstance(ilms, list)
-        return list(map(ILMStruct.from_setting, ilms))
+        if full_tree:
+            return list(map(ILMStruct.from_setting, self.get_setting("vlsi.inputs.ilms")))
+        else:
+            return list(map(ILMStruct.from_setting, self.get_setting("par.outputs.output_ilms")))
 
     def get_output_load_constraints(self) -> List[OutputLoadConstraint]:
         """

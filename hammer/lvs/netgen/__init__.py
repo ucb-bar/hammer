@@ -193,7 +193,7 @@ class Netgen(HammerLVSTool, TCLTool):
         # libs for circuit2. auto format detection (somewhat dangerous).
         self.append('puts "Reading schematics..."')
         library_spice_files = self.technology.read_libs([hammer_tech.filters.spice_filter], hammer_tech.HammerTechnologyUtils.to_plain_item)
-        ilms = list(map(lambda x: x.netlist, self.ilms))  # type: List[str]
+        ilms = list(map(lambda x: x.netlist, self.get_input_ilms()))  # type: List[str]
         for sch in self.schematic_files + ilms + library_spice_files:
             self.append('puts "Reading {}..."'.format(sch))
             self.append("readnet {} 2".format(sch))

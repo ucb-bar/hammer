@@ -4,7 +4,7 @@
 #
 #  See LICENSE for licence details.
 
-from hammer.vlsi import HammerPlaceAndRouteTool, DummyHammerTool, HammerToolStep, deepdict
+from hammer.vlsi import HammerPlaceAndRouteTool, DummyHammerTool, HammerToolStep, deepdict, HierarchicalMode, ILMStruct
 from hammer.config import HammerJSONEncoder
 from hammer.tech.specialcells import CellType, SpecialCell
 
@@ -32,7 +32,8 @@ class MockPlaceAndRoute(HammerPlaceAndRouteTool, DummyHammerTool):
     @property
     def steps(self) -> List[HammerToolStep]:
         return self.make_steps_from_methods([
-            self.power_straps
+            self.power_straps,
+            self.get_ilms
         ])
 
     def power_straps(self) -> bool:
@@ -76,12 +77,25 @@ class MockPlaceAndRoute(HammerPlaceAndRouteTool, DummyHammerTool):
         }
         return [json.dumps(output_dict, cls=HammerJSONEncoder)]
 
+    def get_ilms(self) -> bool:
+        if self.hierarchical_mode in [HierarchicalMode.Hierarchical, HierarchicalMode.Top]:
+            with open(os.path.join(self.run_dir, "input_ilms.json"), "w") as f:
+                f.write(json.dumps(list(map(lambda s: s.to_setting(), self.get_input_ilms()))))
+        return True
+
     def fill_outputs(self) -> bool:
         self.output_gds = "/dev/null"
-        self.output_ilms = []
         self.output_netlist = "/dev/null"
         self.output_sim_netlist = "/dev/null"
         self.hcells_list = []
+        if self.hierarchical_mode in [HierarchicalMode.Leaf, HierarchicalMode.Hierarchical]:
+            self.output_ilms = [
+                ILMStruct(dir="/dev/null", data_dir="/dev/null", module=self.top_module,
+                          lef="/dev/null", gds=self.output_gds, netlist=self.output_netlist,
+                          sim_netlist=self.output_sim_netlist)
+            ]
+        else:
+            self.output_ilms = []
         return True
 
 

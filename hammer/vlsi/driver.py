@@ -422,7 +422,6 @@ class HammerDriver:
         lvs_tool.layout_file = self.database.get_setting("lvs.inputs.layout_file", nullvalue="")
         lvs_tool.top_module = self.database.get_setting("lvs.inputs.top_module", nullvalue="")
         lvs_tool.hcells_list = self.database.get_setting("lvs.inputs.hcells_list", nullvalue=[])
-        lvs_tool.ilms = list(map(lambda x: ILMStruct.from_setting(x), self.database.get_setting("lvs.inputs.ilms", nullvalue=[])))
         missing_inputs = False
         if lvs_tool.top_module == "":
             self.log.error("Top module not specified for LVS")
@@ -1173,7 +1172,6 @@ class HammerDriver:
                 "timing.inputs.top_module": output_dict["par.inputs.top_module"],
                 "timing.inputs.spefs": output_dict["par.outputs.spefs"],
                 "timing.inputs.sdf_file": output_dict["par.outputs.sdf_file"],
-                "timing.inputs.ilms": output_dict["par.outputs.output_ilms"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             return result
@@ -1238,7 +1236,7 @@ class HammerDriver:
         """
         try:
             result = {
-                "vlsi.inputs.ilms": output_dict["par.outputs.output_ilms"],
+                "vlsi.inputs.ilms": output_dict["vlsi.inputs.ilms"] + output_dict["par.outputs.output_ilms"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             return result
@@ -1282,7 +1280,6 @@ class HammerDriver:
                 "lvs.inputs.top_module": output_dict["par.inputs.top_module"],
                 "lvs.inputs.layout_file": output_dict["par.outputs.output_gds"],
                 "lvs.inputs.schematic_files": [output_dict["par.outputs.output_netlist"]],
-                "lvs.inputs.ilms": output_dict["par.outputs.output_ilms"],
                 "lvs.inputs.hcells_list": output_dict["par.outputs.hcells_list"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
@@ -1810,7 +1807,7 @@ class HammerDriver:
     @property
     def dump_history(self) -> bool:
         return self._dump_history
-    
+
     @dump_history.setter
     def dump_history(self, new_dump_history: bool) -> None:
         self._dump_history = new_dump_history
