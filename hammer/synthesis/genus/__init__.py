@@ -106,7 +106,11 @@ class Genus(HammerSynthesisTool, CadenceTool):
     def do_between_steps(self, prev: HammerToolStep, next: HammerToolStep) -> bool:
         assert super().do_between_steps(prev, next)
         # Write a checkpoint to disk.
-        self.verbose_append("write_db -to_file pre_{step}".format(step=next.name))
+        if self.version() >= self.version_number("221"):
+            # -common now enables database reading in Innovus
+            self.verbose_append("write_db -common -to_file pre_{step}".format(step=next.name))
+        else:
+            self.verbose_append("write_db -to_file pre_{step}".format(step=next.name))
         return True
 
     def do_post_steps(self) -> bool:
@@ -197,7 +201,6 @@ class Genus(HammerSynthesisTool, CadenceTool):
             # Innovus will create instances named CLKGATE_foo, CLKGATE_bar, etc.
             verbose_append("set_db lp_clock_gating_prefix  {CLKGATE}")
             verbose_append("set_db lp_insert_clock_gating  true")
-            verbose_append("set_db lp_clock_gating_hierarchical true")
             verbose_append("set_db lp_insert_clock_gating_incremental true")
             verbose_append("set_db lp_clock_gating_register_aware true")
 
@@ -357,11 +360,15 @@ class Genus(HammerSynthesisTool, CadenceTool):
 
         verbose_append("write_sdf > {run_dir}/{top}.mapped.sdf".format(run_dir=self.run_dir, top=top))
 
-        # We just get "Cannot trace ILM directory. Data corrupted."
-        # -hierarchical needs to be used for non-leaf modules
-        is_hier = self.hierarchical_mode != HierarchicalMode.Leaf # self.hierarchical_mode != HierarchicalMode.Flat
-        verbose_append("write_design -innovus {hier_flag} -gzip_files {top}".format(
-            hier_flag="-hierarchical" if is_hier else "", top=top))
+        if self.version() >= self.version_number("221"):
+            # New write_design is now meant for non-Cadence tools. write_db -common is now for Innovus-compatible databases.
+            verbose_append("write_design -gzip_files {top}".format(top=top))
+        else:
+            # We just get "Cannot trace ILM directory. Data corrupted."
+            # -hierarchical needs to be used for non-leaf modules
+            is_hier = self.hierarchical_mode != HierarchicalMode.Leaf # self.hierarchical_mode != HierarchicalMode.Flat
+            verbose_append("write_design -innovus {hier_flag} -gzip_files {top}".format(
+                hier_flag="-hierarchical" if is_hier else "", top=top))
 
         self.ran_write_outputs = True
 
