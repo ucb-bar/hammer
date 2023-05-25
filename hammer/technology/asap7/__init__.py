@@ -200,9 +200,6 @@ def asap7_innovus_settings(ht: HammerTool) -> bool:
     Note that the particular routing layer settings here will persist in Innovus;
     this hook only serves as an example of what commands may need to persist."""
     ht.append('''
-set_db route_design_bottom_routing_layer 2
-set_db route_design_top_routing_layer 7
-
 # Ignore 1e+31 removal arcs for ASYNC DFF cells
 set_db timing_analysis_async_checks no_async
 

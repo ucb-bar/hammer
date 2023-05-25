@@ -60,6 +60,9 @@ vlsi.technology:
   # type: float
   tap_cell_offset: float 
 
+  # Set the [bottom, top] layer used for routing. (Optional[Tuple[int, int]])
+  routing_layers: Optional[list[int]]
+
   # Extra semiconductor IP libraries/stdcell libs/hard macros. (List[ExtraLibrary])
   # ExtraLibrary is serialized as a list[dict[str, str]]
   # TODO: Extralibrary does not have a clean JSON serialization as of late
@@ -356,9 +359,6 @@ lvs.inputs:
   # Input list of schematic files
   schematic_files: list[str]
 
-  # Input list of ILMStructs
-  ilms: list[dict[str, Any]]
-
   # Input list of Hcells
   hcells_list: list[str]
 
@@ -397,9 +397,6 @@ technology.core:
     # This should specify the TOPMOST metal layer the standard cells use for power rails
     # type: str
     std_cell_rail_layer: Optional[str]
-    # This is used to provide a reference master for generating standard cell rails
-    # type: str
-    tap_cell_rail_reference: Optional[str]
 
     # Name of standard cell power/ground rails
     std_cell_supplies:

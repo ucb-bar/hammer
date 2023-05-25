@@ -272,6 +272,66 @@ snakes: ["python"]
         assert db.get_setting("foo.bar.dsl", check_type=False) == ["scala"]
         assert db.get_setting("foo.bar.languages", check_type=False) == ["scala", "python"]
 
+    def test_meta_prepend(self) -> None:
+        """
+        Test that the meta attribute "prepend" works.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo:
+    bar:
+        adc: "yes"
+        dac: "no"
+        dsl: ["scala"]
+""", is_yaml=True)
+        meta = hammer_config.load_config_from_string("""
+{
+  "foo.bar.dsl": ["python"],
+  "foo.bar.dsl_meta": "prepend",
+  "foo.bar.dac": "current_weighted"
+}
+""", is_yaml=False)
+        db.update_core([base, meta], self.NO_TYPES)
+        assert db.get_setting("foo.bar.dac", check_type=False) == "current_weighted"
+        assert db.get_setting("foo.bar.dsl", check_type=False) == ["python", "scala"]
+
+    def test_meta_crossprepend(self) -> None:
+        """
+        Test that the meta attribute "crossprepend" works.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo.bar.dsl: ["scala"]
+""", is_yaml=True)
+        meta = hammer_config.load_config_from_string("""
+{
+  "foo.bar.languages": ["foo.bar.dsl", ["python"]],
+  "foo.bar.languages_meta": "crossprepend"
+}
+""", is_yaml=False)
+        db.update_core([base, meta], self.NO_TYPES)
+        assert db.get_setting("foo.bar.dsl", check_type=False) == ["scala"]
+        assert db.get_setting("foo.bar.languages", check_type=False) == ["python", "scala"]
+
+    def test_meta_crossprependref(self) -> None:
+        """
+        Test that the meta attribute "crossprependref" works.
+        """
+        db = hammer_config.HammerDatabase()
+        base = hammer_config.load_config_from_string("""
+foo.bar.dsl: ["scala"]
+snakes: ["python"]
+""", is_yaml=True)
+        meta = hammer_config.load_config_from_string("""
+{
+  "foo.bar.languages": ["foo.bar.dsl", "snakes"],
+  "foo.bar.languages_meta": "crossprependref"
+}
+""", is_yaml=False)
+        db.update_core([base, meta], self.NO_TYPES)
+        assert db.get_setting("foo.bar.dsl", check_type=False) == ["scala"]
+        assert db.get_setting("foo.bar.languages", check_type=False) == ["python", "scala"]
+
     def test_meta_crossref(self) -> None:
         """
         Test that the meta attribute "crossref" works.
@@ -1003,13 +1063,13 @@ foo:
         """
         Test functionality, error handling, of utility funct: `get_settings_from_dict`.
         """
-        
+
         db = hammer_config.HammerDatabase()
         base = hammer_config.load_config_from_string("""
 key_1: True
 key_2: ["i", "c", "v"]
 key_3: 123
-key_4: 
+key_4:
 abc.key: "largo"
 def.a_key: "west"
 def.b_key: "bank"
@@ -1018,7 +1078,7 @@ def.b_key: "bank"
         db.update_core([base], self.NO_TYPES)
         # 1st input tests basic functionality for mandatory keys.
         # 2nd input tests requests using a shared key_prefix.
-        # 3rd input tests output when an optional key is queried for but not found. 
+        # 3rd input tests output when an optional key is queried for but not found.
         # Note it must NOT use a default value if it was not specified to begin with.
         inputs   = [{"key_1": False, "key_2": [], "key_3": [], "key_4": "lvs", "abc.key": ""},
                     {"a_key": "", "b_key": ""},
@@ -1032,8 +1092,8 @@ def.b_key: "bank"
         # Test prefix functionality.
         for (input_dict, prefix, opt, ref) in zip(inputs, prefixes, opts, refs):
             assert db.get_settings_from_dict(input_dict, prefix, opt) == ref  # type: ignore
-        
+
         # In the final case, test error handling when mandatory keys are not specified.
         with pytest.raises(ValueError):
-            db.get_settings_from_dict({"false_key": ""}) 
-        
+            db.get_settings_from_dict({"false_key": ""})
+

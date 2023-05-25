@@ -4,8 +4,9 @@
 #
 #  See LICENSE for licence details.
 
-from hammer.vlsi import HammerPlaceAndRouteTool, DummyHammerTool, HammerToolStep, deepdict
+from hammer.vlsi import HammerPlaceAndRouteTool, DummyHammerTool, HammerToolStep, deepdict, HierarchicalMode, ILMStruct
 from hammer.config import HammerJSONEncoder
+from hammer.tech.specialcells import CellType, SpecialCell
 
 from typing import Dict, List, Any, Optional
 from decimal import Decimal
@@ -31,7 +32,8 @@ class MockPlaceAndRoute(HammerPlaceAndRouteTool, DummyHammerTool):
     @property
     def steps(self) -> List[HammerToolStep]:
         return self.make_steps_from_methods([
-            self.power_straps
+            self.power_straps,
+            self.get_ilms
         ])
 
     def power_straps(self) -> bool:
@@ -69,18 +71,31 @@ class MockPlaceAndRoute(HammerPlaceAndRouteTool, DummyHammerTool):
         self._power_straps_check_index(layer_name)
         output_dict = {
             "layer_name": layer_name,
-            "tap_cell_name": self.get_setting("technology.core.tap_cell_rail_reference"),
+            "tap_cell_name": self.technology.get_special_cell_by_type(CellType.TapCell)[0].name[0],
             "bbox": [] if bbox is None else list(map(str, bbox)),
             "nets": list(map(str, nets))
         }
         return [json.dumps(output_dict, cls=HammerJSONEncoder)]
 
+    def get_ilms(self) -> bool:
+        if self.hierarchical_mode in [HierarchicalMode.Hierarchical, HierarchicalMode.Top]:
+            with open(os.path.join(self.run_dir, "input_ilms.json"), "w") as f:
+                f.write(json.dumps(list(map(lambda s: s.to_setting(), self.get_input_ilms()))))
+        return True
+
     def fill_outputs(self) -> bool:
         self.output_gds = "/dev/null"
-        self.output_ilms = []
         self.output_netlist = "/dev/null"
         self.output_sim_netlist = "/dev/null"
         self.hcells_list = []
+        if self.hierarchical_mode in [HierarchicalMode.Leaf, HierarchicalMode.Hierarchical]:
+            self.output_ilms = [
+                ILMStruct(dir="/dev/null", data_dir="/dev/null", module=self.top_module,
+                          lef="/dev/null", gds=self.output_gds, netlist=self.output_netlist,
+                          sim_netlist=self.output_sim_netlist)
+            ]
+        else:
+            self.output_ilms = []
         return True
 
 

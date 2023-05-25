@@ -389,7 +389,9 @@ class HammerPlaceAndRouteTool(HammerTool):
     def export_config_outputs(self) -> Dict[str, Any]:
         outputs = deepdict(super().export_config_outputs())
         outputs["par.outputs.output_ilms"] = list(map(lambda s: s.to_setting(), self.output_ilms))
-        outputs["par.outputs.output_ilms_meta"] = "append"
+        outputs["par.outputs.output_ilms_meta"] = "append"  # to coalesce ILMs for current level of hierarchy
+        outputs["vlsi.inputs.ilms"] = list(map(lambda s: s.to_setting(), self.get_input_ilms(full_tree=True)))
+        outputs["vlsi.inputs.ilms_meta"] = "append"  # to coalesce ILMs for entire hierarchical tree
         outputs["par.outputs.output_gds"] = str(self.output_gds)
         outputs["par.outputs.output_netlist"] = str(self.output_netlist)
         outputs["par.outputs.output_sim_netlist"] = str(self.output_sim_netlist)
@@ -1053,7 +1055,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         """
         Generate a list of TCL commands that build the low-level standard cell power strap rails.
         This is a low-level, cad-tool-specific API. It is designed to be called by higher-level methods, so calling this directly is not recommended.
-        This will create power straps based on technology.core.tap_cell_rail_reference.
+        This will create power straps based on the tapcells in the special cells list.
         The layer is set by technology.core.std_cell_rail_layer, which should be the highest metal layer in the std cell rails.
         This method should be called before any calls to specify_power_straps.
 
@@ -1201,6 +1203,9 @@ class HammerLVSTool(HammerSignoffTool):
         outputs["lvs.inputs.top_module"] = self.top_module
         return outputs
 
+    def get_input_ilms(self, full_tree=True) -> List[ILMStruct]:
+        return super().get_input_ilms(full_tree)
+
     @abstractmethod
     def fill_outputs(self) -> bool:
         pass
@@ -1330,26 +1335,6 @@ class HammerLVSTool(HammerSignoffTool):
         if not (isinstance(value, List)):
             raise TypeError("hcells_list must be a List[str]")
         self.attr_setter("_hcells_list", value)
-
-
-    @property
-    def ilms(self) -> List[ILMStruct]:
-        """
-        Get the list of (optional) input ILM information for hierarchical mode.
-
-        :return: The list of (optional) input ILM information for hierarchical mode.
-        """
-        try:
-            return self.attr_getter("_ilms", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the list of (optional) input ILM information for hierarchical mode yet")
-
-    @ilms.setter
-    def ilms(self, value: List[ILMStruct]) -> None:
-        """Set the list of (optional) input ILM information for hierarchical mode."""
-        if not (isinstance(value, List)):
-            raise TypeError("ilms must be a List[ILMStruct]")
-        self.attr_setter("_ilms", value)
 
 
     ### Outputs ###
@@ -2072,9 +2057,9 @@ class HasUPFSupport(HammerTool):
         output.append(f'create_power_domain {domain} \\')
         output.append(f'\t-elements {{.}}')
         #Get Supply Nets
-        power_nets = self.get_all_power_nets() 
+        power_nets = self.get_all_power_nets()
         ground_nets = self.get_all_ground_nets()
-        #Create Supply Ports 
+        #Create Supply Ports
         for pg_net in (power_nets+ground_nets):
             if(pg_net.pin != None):
                 #Create Supply Nets
@@ -2087,7 +2072,7 @@ class HasUPFSupport(HammerTool):
         output.append(f'set_domain_supply_net {domain} \\')
         output.append(f'\t-primary_power_net {power_nets[0].name} \\')
         output.append(f'\t-primary_ground_net {ground_nets[0].name}')
-        #Add Port States 
+        #Add Port States
         for p_net in power_nets:
             if(p_net.pin != None):
                 output.append(f'add_port_state {p_net.name} \\')

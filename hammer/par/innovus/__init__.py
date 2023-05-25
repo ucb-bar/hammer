@@ -249,6 +249,18 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         # Match SDC time units to timing libraries
         verbose_append("set_library_unit -time 1{}".format(self.get_time_unit().value_prefix + self.get_time_unit().unit))
 
+        # Set the top and bottom global/detail routing layers.
+        layers = self.get_setting("vlsi.technology.routing_layers")
+        if layers is not None:
+            if self.version() >= self.version_number("201"):
+                verbose_append(f"set_db design_bottom_routing_layer {layers[0]}")
+                verbose_append(f"set_db design_top_routing_layer {layers[1]}")
+            else:
+                verbose_append(f"set_db route_early_global_bottom_layer {layers[0]}")
+                verbose_append(f"set_db route_early_global_top_layer {layers[1]}")
+                verbose_append(f"set_db route_design_bottom_layer {layers[0]}")
+                verbose_append(f"set_db route_design_top_layer {layers[1]}")
+
         # Read LEF layouts.
         lef_files = self.technology.read_libs([
             hammer_tech.filters.lef_filter
@@ -397,11 +409,21 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         self.verbose_append("set_db assign_pins_edit_in_batch true")
 
         promoted_pins = []  # type: List[str]
+        # Set the top/bottom layers for promoting macro pins
+        self.append(f"set_db assign_pins_promoted_macro_bottom_layer {self.get_stackup().get_metal_by_index(1).name}")
+        self.append(f"set_db assign_pins_promoted_macro_top_layer {self.get_stackup().get_metal_by_index(-1).name}")
+        self.append('set all_ppins ""')
         for pin in pin_assignments:
             if pin.preplaced:
-                # First set promoted pins
-                self.verbose_append("set_promoted_macro_pin -pins {{ {p} }}".format(p=pin.pins))
-                promoted_pins.extend(pin.pins.split())
+                # Find the pin object that should be promoted. Only one of the two (driver_pins or load_pins) should be non-empty.
+                self.append(f'set ppins [get_db [get_nets {pin.pins}] .driver_pins]')
+                self.append(f'if {{$ppins eq ""}} {{set ppins [get_db [get_nets {pin.pins}] .load_pins]}}')
+                self.append("lappend all_ppins $ppins")
+                # First promote the pin
+                self.append("set_promoted_macro_pin -insts [get_db $ppins .inst.name] -pins [get_db $ppins .base_name]")
+                # Then set them to don't touch and skip routing
+                self.append("set_dont_touch [get_db $ppins .net]")
+                self.append("set_db [get_db $ppins .net] .skip_routing true")
             else:
                 # TODO: Do we need pin blockages for our layers?
                 # Seems like we will only need special pin blockages if the vias are larger than the straps
@@ -461,10 +483,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
 
                 self.verbose_append(" ".join(cmd))
 
-        # In case the * wildcard is used after preplaced pins, this will place promoted pins correctly.
-        # Innovus errors instead of warns if the name matching does not work (e.g. bad wildcards).
-        for ppin in promoted_pins:
-            self.verbose_append("assign_io_pins -move_fixed_pin -pins [get_db [get_db pins -if {{.name == {p} }}] .net.name]".format(p=ppin))
+        # In case the * wildcard is used after preplaced pins, this will put back the promoted pins correctly.
+        self.verbose_append("if {[llength $all_ppins] ne 0} {assign_io_pins -move_fixed_pin -pins [get_db $all_ppins .net.name]}")
 
         self.verbose_append("set_db assign_pins_edit_in_batch false")
         return True
@@ -1009,7 +1029,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                             ury=constraint.y+constraint.height
                         ))
                     if ObstructionType.Route in obs_types:
-                        output.append("create_route_blockage -layers {{{layers}}} -spacing 0 -{area_flag} {{{x} {y} {urx} {ury}}}".format(
+                        output.append("create_route_blockage -except_pg_nets -layers {{{layers}}} -spacing 0 -{area_flag} {{{x} {y} {urx} {ury}}}".format(
                             x=constraint.x,
                             y=constraint.y,
                             urx=constraint.x+constraint.width,
@@ -1033,7 +1053,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
     def specify_std_cell_power_straps(self, blockage_spacing: Decimal, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
         """
         Generate a list of TCL commands that build the low-level standard cell power strap rails.
-        This will use the -master option to create power straps based on technology.core.tap_cell_rail_reference.
+        This will use the -master option to create power straps based on the tapcells in the special cells list.
         The layer is set by technology.core.std_cell_rail_layer, which should be the highest metal layer in the std cell rails.
 
         :param bbox: The optional (2N)-point bounding box of the area to generate straps. By default the entire core area is used.
@@ -1049,12 +1069,12 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             "set_db add_stripes_stacked_via_top_layer {}".format(layer_name),
             "set_db add_stripes_spacing_from_block {}".format(blockage_spacing)
         ]
-        tapcell = self.get_setting("technology.core.tap_cell_rail_reference")
+        tapcells = self.technology.get_special_cell_by_type(CellType.TapCell)[0].name
         options = [
             "-pin_layer", layer_name,
             "-layer", layer_name,
             "-over_pins", "1",
-            "-master", "\"{}\"".format(tapcell),
+            "-master", "\"{}\"".format(" ".join(tapcells)),
             "-block_ring_bottom_layer_limit", layer_name,
             "-block_ring_top_layer_limit", layer_name,
             "-pad_core_ring_bottom_layer_limit", layer_name,

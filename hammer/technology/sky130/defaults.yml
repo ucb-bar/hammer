@@ -86,11 +86,12 @@ vlsi:
     tap_cell_interval: 15.0 # Set the interval and offset for tap cells
     tap_cell_offset: 5.0
 
+    routing_layers: [2, 6]
+
 technology.core:
   stackup: "sky130_fd_sc_hd" # This key should exist in the stackups list in the tech json
   std_cell_rail_layer: "met1" # This should specify the TOPMOST metal layer the standard cells use for power rails
   # Note that this is not usually stackup specific; it is based on the std cell libraries themselves
-  tap_cell_rail_reference: "sky130_fd_sc_hd__tap*" # This is used to provide a reference master for generating standard cells
   std_cell_supplies: 
   # default power pins are VDD/VSS
     power:  ["VPWR"]

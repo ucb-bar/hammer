@@ -228,6 +228,94 @@ def get_meta_directives() -> Dict[str, MetaDirective]:
                                                  target_settings=crossappendref_targets,
                                                  rename_target=crossappendref_rename)
 
+    def prepend_action(config_dict: dict, key: str, value: Any) -> None:
+        if key not in config_dict:
+            config_dict[key] = []
+
+        if not isinstance(config_dict[key], list):
+            raise ValueError(f"Trying to prepend to non-list setting {key}")
+        if not isinstance(value, list):
+            raise ValueError(f"Trying to prepend to list {key} with non-list {value}")
+        config_dict[key] = value + config_dict[key]
+
+    def prepend_rename(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[Tuple[Any, str]]:
+        return [replacement_setting, value], "crossprepend"
+
+    # prepend depends only on itself
+    directives['prepend'] = MetaDirective(action=prepend_action,
+                                         target_settings=lambda key, value: [key],
+                                         rename_target=prepend_rename)
+
+    def crossprepend_decode(value: Any) -> Tuple[str, list]:
+        assert isinstance(value, list), "crossprepend takes a list of two elements"
+        assert len(value) == 2, "crossprepend takes a list of two elements"
+        target_setting = value[0]  # type: str
+        prepend_value = value[1]  # type: list
+        assert isinstance(target_setting, str), "crossprepend target setting must be a string"
+        assert isinstance(prepend_value, list), "crossprepend must prepend a list"
+        return target_setting, prepend_value
+
+    # crossprepend takes a list that has two elements.
+    # The first is the target list (the list to prepend to), and the second is
+    # a list to prepend to the target list.
+    # e.g. if base has ["1"] and crossprepend has ["base", ["2", "3"]], then
+    # the result will be ["2", "3", "1"].
+    def crossprepend_action(config_dict: dict, key: str, value: Any) -> None:
+        target_setting, prepend_value = crossprepend_decode(value)
+        config_dict[key] = prepend_value + config_dict[target_setting]
+
+    def crossprepend_targets(key: str, value: Any) -> List[str]:
+        target_setting, prepend_value = crossprepend_decode(value)
+        return [target_setting]
+
+    def crossprepend_rename(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[
+        Tuple[Any, str]]:
+        crossprepend_target, prepend_value = crossprepend_decode(value)
+        return [replacement_setting if crossprepend_target == target_setting else crossprepend_target,
+                prepend_value], "crossprepend"
+
+    directives['crossprepend'] = MetaDirective(action=crossprepend_action,
+                                              target_settings=crossprepend_targets,
+                                              rename_target=crossprepend_rename)
+
+    def crossprependref_decode(value: Any) -> Tuple[str, str]:
+        assert isinstance(value, list), "crossprependref takes a list of two elements"
+        assert len(value) == 2, "crossprependref takes a list of two elements"
+        target_key = value[0]  # type: str
+        prepend_key = value[1]  # type: str
+        assert isinstance(target_key, str), "crossprependref target setting must be a string"
+        assert isinstance(prepend_key, str), "crossprepend prepend list setting must be a string"
+        return target_key, prepend_key
+
+    # crossprependref takes a list that has two elements.
+    # The first is the target list (the list to prepend to), and the second is
+    # a setting that contains a list to prepend.
+    # e.g. if base has ["1"], app has ["2", "3"], and crossprepend has ["base", "app"], the result
+    # is ["2", "3", "1"].
+    def crossprependref_action(config_dict: dict, key: str, value: Any) -> None:
+        target_setting, prepend_setting = crossprependref_decode(value)
+        config_dict[key] = config_dict[prepend_setting] + config_dict[target_setting]
+
+    def crossprependref_targets(key: str, value: Any) -> List[str]:
+        target_setting, prepend_setting = crossprependref_decode(value)
+        return [target_setting, prepend_setting]
+
+    def crossprependref_rename(key: str, value: Any, target_setting: str, replacement_setting: str) -> Optional[
+        Tuple[Any, str]]:
+        target, prepend = crossprependref_decode(value)
+
+        def replace_if_target_setting(setting: str) -> str:
+            """Helper function to replace the given setting with the
+            replacement if it is equal to target_setting."""
+            return replacement_setting if setting == target_setting else setting
+
+        return [replace_if_target_setting(target),
+                replace_if_target_setting(prepend)], "crossprependref"
+
+    directives['crossprependref'] = MetaDirective(action=crossprependref_action,
+                                                 target_settings=crossprependref_targets,
+                                                 rename_target=crossprependref_rename)
+
     def subst_str(input_str: str, replacement_func: Callable[[str], str]) -> str:
         """Substitute ${...}"""
         return re.sub(__VARIABLE_EXPANSION_REGEX, lambda x: replacement_func(x.group(1)), input_str)
@@ -777,7 +865,7 @@ class HammerDatabase:
         default  = key
         override = default + "_" + suffix
         value = None
-        try: 
+        try:
             value = self.get_config()[override]
         except:
             try:
@@ -901,7 +989,7 @@ class HammerDatabase:
 
         opt_dict={}
         for key, default_value in key_default_dict.items():
-            try: 
+            try:
                 if not key_prefix:
                     extracted_value = self.get_setting(f"{key}", default_value)
                 else:
@@ -910,7 +998,7 @@ class HammerDatabase:
             except KeyError:
                 if key not in optional_keys:
                     raise ValueError(f"Missing a mandatory requested key: {key_prefix}.{key}")
-                else: 
+                else:
                     opt_dict[key] = None
 
         return opt_dict

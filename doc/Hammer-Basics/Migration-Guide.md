@@ -28,7 +28,7 @@ vlsi.core.technology: hammer.technology.<tech_name>
 vlsi.core.synthesis_tool: hammer.synthesis.<syn_tool_name>
 ```
 
-See the [](plugin_package) section below for details about plugin package structure.
+The package name is defined by the file structure of the plugin package. See the [](plugin_package) section below for details.
 
 ## `import` Statements
 
@@ -115,7 +115,7 @@ mytech/
     layer.map         # some tech-specific file
 action/
     action_tool/
-        __init__.py   # contains action_tool-specific hooks
+        __init__.py   # contains action_tool-specific hooks for mytech technology
         tool.options  # some tech-specific file needed by this tool
 ```
 
@@ -130,9 +130,11 @@ hammer/
         layer.map         # some tech-specific file
         action/
             action_tool/
-                __init__.py   # contains action_tool-specific hooks
+                __init__.py   # contains action_tool-specific hooks for mytech technology
                 tool.options  # some tech-specific file needed for this tool
 ```
+
+In this case, the technology package name is `hammer.mytech` (note that standalone plugin repositories may not be `hammer.technology.mytech`, unlike the ones included in the main Hammer repository).
 
 ## Resource Files
 
