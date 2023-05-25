@@ -16,8 +16,8 @@ Hook methods need to take in an instance of a particular ``HammerTool``, which p
 Hooks (depending on how they are included, see below) get turned into step objects that can be targeted with ``--from/after/to/until_step`` and other hooks.
 
 Hooks can live in a Python file inside the design root so that it is available to the class that needs to extend the default ``CLIDriver``.
-An example of some skeletons of hooks are found in `Chipyard <https://github.com/ucb-bar/chipyard/blob/master/vlsi/example-vlsi>`__.
-For more comprehensive examples, refer to the hooks unit tests in the ``HammerToolHooksTest`` class of `test.py <https://github.com/ucb-bar/hammer/blob/master/src/hammer-vlsi/test.py>`__.
+An example of some skeletons of hooks are found in `Chipyard <https://github.com/ucb-bar/chipyard/blob/main/vlsi/example-vlsi>`__.
+For more comprehensive examples, refer to the hooks unit tests in the ``TestHammerToolHooks`` class of `test_hooks.py <https://github.com/ucb-bar/hammer/blob/master/tests/test_hooks.py>`__.
 
 Including Hooks
 ----------------
