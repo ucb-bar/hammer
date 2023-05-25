@@ -416,14 +416,14 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         for pin in pin_assignments:
             if pin.preplaced:
                 # Find the pin object that should be promoted. Only one of the two (driver_pins or load_pins) should be non-empty.
-                self.verbose_append(f'set ppins [get_db [get_nets {pin.pins}] .driver_pins]')
-                self.verbose_append(f'if {{$ppins eq ""}} {{set ppins [get_db [get_nets {pin.pins}] .load_pins]}}')
-                self.verbose_append("lappend all_ppins $ppins")
+                self.append(f'set ppins [get_db [get_nets {pin.pins}] .driver_pins]')
+                self.append(f'if {{$ppins eq ""}} {{set ppins [get_db [get_nets {pin.pins}] .load_pins]}}')
+                self.append("lappend all_ppins $ppins")
                 # First promote the pin
-                self.verbose_append("set_promoted_macro_pin -insts [get_db $ppins .inst.name] -pins [get_db $ppins .base_name]")
+                self.append("set_promoted_macro_pin -insts [get_db $ppins .inst.name] -pins [get_db $ppins .base_name]")
                 # Then set them to don't touch and skip routing
-                self.verbose_append("set_dont_touch [get_db $ppins .net]")
-                self.verbose_append("set_db [get_db $ppins .net] .skip_routing true")
+                self.append("set_dont_touch [get_db $ppins .net]")
+                self.append("set_db [get_db $ppins .net] .skip_routing true")
             else:
                 # TODO: Do we need pin blockages for our layers?
                 # Seems like we will only need special pin blockages if the vias are larger than the straps
