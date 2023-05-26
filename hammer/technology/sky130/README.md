@@ -150,6 +150,49 @@ The NDA version of the Sky130 PDK is only required for Siemens Calibre to perfor
 It is NOT REQUIRED for the remaining commercial flow, as well as the open-source tool flow.
 Therefore this NDA PDK is not used to generate a GDS.
 
+The IO ring required by efabless for MPW/ChipIgnite can be created in Innovus using the `sky130_fd_io` and `sky130_ef_io `IO cell libraries. Here are the steps to use them:
+
+1. `extra/efabless_template.io` is a template IO file. You should modify this by replacing the `<inst_path>`s with the paths to the IO cell instances in your netlist. **DO NOT MODIFY THE POSITIONS OF THE CELLS OR REPLACE CLAMP CELLS WITH IO CELLS**.
+
+    a. For pad assignment: the ordering in the instance lists are from left to right (for top/bottom edges) and **bottom to top (for left/right edges)**.
+
+    b. Refer to [this documentation](https://skywater-pdk.readthedocs.io/en/main/contents/libraries/sky130_fd_io/docs/user_guide.html) for how to configure the pins of the IO cells (not exhaustive).
+
+    c. Your chip reset signal must go thru the `xres4v2` cell. Since this is in your netlist, you must remove the `cell=...` instantiation from your IO file (it is only in the template for clarity) and update the inst name. Otherwise a separate instance will be placed instead.
+
+    d. The `ENABLE_INP_H` pin must be hard-tied to `TIE_HI_ESD` or `TIE_LO_ESD`. Since this is at a higher voltage, verify that this is routed as a wire only (no buffers can be inserted).
+
+    e. `ENABLE_H` must be low at chip startup before going high. Absent using the power detector cell from the NDA IO library, you may elect to connect this to a reset signal.
+
+2. Then, in your design YAML file, specify your IO file with the following. The top-level constraint must be exactly as below:
+
+        technology.sky130.io_file: <path/to/ring.io>
+        technology.sky130.io_file_meta: prependlocal
+
+        path: Top
+        type: toplevel
+        x: 0
+        y: 0
+        width: 3588
+        height: 5188
+        margins:
+          left: 200.1
+          right: 200.1
+          top: 201.28
+          bottom: 201.28
+
+3. In your CLIDriver, you must import the following hook from the tech plugin and insert it as a `post_insertion_hook` after `floorplan_design`.
+
+        from hammer.technology.sky130 import efabless_ring_io
+
+4. If you want to use the NDA s8iom0s8 library, you must include the `s8io.yml` file with `-p` on the `hammer-vlsi` command line, and then change the cells to that library in the IO file. Net names in the hook above will need to be lower-cased.
+
+NDA Files
+---------
+The NDA version of the Sky130 PDK is only required for Siemens Calibre to perform DRC/LVS signoff with the commercial VLSI flow.
+It is NOT REQUIRED for the remaining commercial flow, as well as the open-source tool flow.
+Therefore this NDA PDK is not used to generate a GDS.
+
 If you have access to the NDA repo, you should add this path to your Hammer YAML configs:
 
 ```yaml
@@ -215,4 +258,77 @@ Documentation:
 
   * Additional useful documentation for the PDK
 
+
+## Manual PDK Setup
+
+### PDK Structure
+
+OpenLANE expects a certain file structure for the Sky130 PDK. 
+We recommend adhering to this file structure for Hammer as well.
+All the files reside in a root folder (named something like `skywater` or `sky130`).
+The environment variable `$PDK_ROOT` should be set to this folder's path:
+
+```shell
+export PDK_ROOT=<path-to-skywater-directory>
+```
+
+`$PDK_ROOT` contains the following:
+
+* `skywater-pdk`
+
+  * Original PDK source files
+
+* `open_pdks`
+
+  * install of Open-PDKs tool
+
+* `share/pdk/sky130A`
+
+  * output files from Open-PDKs compilation process
+
+
+### Prerequisites for PDK Setup
+
+* [Magic](http://opencircuitdesign.com/magic/)
+
+  * required for `open_pdks` file generation
+  * tricky to install, closely follow the directions on the `Install` page of the website
+  
+    * as the directions indicate, you will likely need to manually specify the location of the Tcl/Tk package installation using `--with-tcl` and `--with-tk`
+ 
+ If using conda, these installs alone caused the Magic install to work:
+
+```shell
+conda install -c intel tcl 
+conda install -c anaconda tk 
+conda install -c anaconda libglu
+```
+
+### PDK Install
+
+In `$PDK_ROOT`, clone the skywater-pdk repo and generate the liberty files for each library:
+
+```shell
+git clone https://github.com/google/skywater-pdk.git
+cd skywater-pdk
+# Expect a large download! ~7GB at time of writing.
+git submodule init libraries/*/latest
+git submodule update
+# Regenerate liberty files
+make timing
+```
+
+Again in `$PDK_ROOT`, clone the open_pdks repo and run the install process to generate the `sky130A` directory:
+
+```shell
+git clone https://github.com/RTimothyEdwards/open_pdks.git
+cd open_pdks
+./configure \
+    --enable-sky130-pdk=$PDK_ROOT/skywater-pdk/libraries \
+    --prefix=$PDK_ROOT \
+make
+make install
+```
+
+This generates all the Sky130 PDK files and installs them to `$PDK_ROOT/share/pdk/sky130A`
 
