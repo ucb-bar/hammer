@@ -319,6 +319,27 @@ add_endcaps
     )
     return True
 
+def efabless_ring_io(ht: HammerTool) -> bool:
+    assert isinstance(ht, HammerPlaceAndRouteTool), "endcap insertion only for par"
+    assert isinstance(ht, TCLTool), "endcap insertion can only run on TCL tools"
+    io_file = ht.get_setting("technology.sky130.io_file")
+    ht.append(f"read_io_file {io_file} -no_die_size_adjust")
+    ht.append('''
+        connect_global_net VDDA -type pg_pin -pin_base_name vdda -verbose
+        connect_global_net VDDIO -type pg_pin -pin_base_name vddio* -verbose
+        connect_global_net VDD -type pg_pin -pin_base_name vccd -verbose
+        connect_global_net VDD -type pg_pin -pin_base_name vcchib -verbose
+        connect_global_net VDD -type pg_pin -pin_base_name vswitch -verbose
+        connect_global_net VSS -type pg_pin -pin_base_name vssa -verbose
+        connect_global_net VSS -type pg_pin -pin_base_name vssio* -verbose
+        connect_global_net VSS -type pg_pin -pin_base_name vssd -verbose
+        add_io_fillers -io_ring 1 -cells {s8iom0s8_top_filler s8iom0s8_top_filler_narrow} -side top -filler_orient r0
+        add_io_fillers -io_ring 1 -cells {s8iom0s8_top_filler s8iom0s8_top_filler_narrow} -side right -filler_orient r270
+        add_io_fillers -io_ring 1 -cells {s8iom0s8_top_filler s8iom0s8_top_filler_narrow} -side bottom -filler_orient r180
+        add_io_fillers -io_ring 1 -cells {s8iom0s8_top_filler s8iom0s8_top_filler_narrow} -side left -filler_orient r90
+    ''')
+    return True
+
 def drc_blackbox_srams(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerDRCTool), "Exlude SRAMs only in DRC"
     drc_box = ''
