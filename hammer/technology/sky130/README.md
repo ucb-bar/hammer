@@ -63,7 +63,40 @@ We use the Calibre decks in the ``s8`` PDK, version ``V2.0.1``,
 see [here for the DRC deck path](https://github.com/ucb-bar/hammer/blob/612b4b662a774b1cab5cf25e8f41c6a771388e47/hammer/technology/sky130/sky130.tech.json#L16) 
 and [here for the LVS deck path](https://github.com/ucb-bar/hammer/blob/612b4b662a774b1cab5cf25e8f41c6a771388e47/hammer/technology/sky130/sky130.tech.json#L24).
 
+### Sky130 s8io Library
 
+The IO ring expected by efabless for MPW/ChipIgnite can be created in Innovus using the NDA s8iom0s8 IO cell library. Here are the steps to use it:
+
+1. `extra/efabless_template.io` is a template IO file. You should modify this by replacing the `<inst_path>`s with the paths to the IO cell instances in your netlist. **DO NOT MODIFY THE POSITIONS OF THE CELLS OR REPLACE CLAMP CELLS WITH IO CELLS**
+
+    a. The ordering in the instance lists are from left to right (for top/bottom edges) and **bottom to top (for left/right edges)**. 
+
+    b. Refer [this documentation](https://skywater-pdk.readthedocs.io/en/main/contents/libraries/sky130_fd_io/docs/user_guide.html) for how to configure the pins of the GPIOs (not exhaustive).
+
+    c. By default, the `s8iom0s8_top_gpiov2` cell has a `tie_hi_esd` pin that must be tied to VDDIO, which is difficult to do in Innovus. It is suggested to make a custom version of this with that pin tied to VDDIO, export the GDS, and hack the CDL/GDS/LEF for that cell only, then add is separately as an extra library.
+
+2. Then, in your design YAML file, specify your IO file with the following. The top-level constraint must be exactly as below:
+
+        technology.sky130.io_file: <path/to/ring.io>
+        technology.sky130.io_file_meta: prependlocal
+
+        path: Top
+        type: toplevel
+        x: 0
+        y: 0
+        width: 3588
+        height: 5188
+        margins:
+          left: 200.1
+          right: 200.1
+          top: 201.28
+          bottom: 201.28
+
+3. In your CLIDriver, you must import the following hook from the tech plugin and insert is as a `post_insertion_hook` after `floorplan_design`.
+
+        from hammer.technology.sky130 import efabless_ring_io
+
+4. Finally, in order to get the libraries into your flow, you must include the `s8io.yml` file with `-p` on the `hammer-vlsi` command line.
 
 Resources
 ---------
@@ -193,7 +226,5 @@ make install
 ```
 
 This generates all the Sky130 PDK files and installs them to `$PDK_ROOT/share/pdk/sky130A`
-
-
 
 
