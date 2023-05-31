@@ -20,7 +20,7 @@
 (iopad
     (topleft
     (locals ring_number = 1)
-        (inst name = "corner_topleft"   orientation=R90 cell="sky130_ef_io_corner_pad")
+        (inst name = "corner_topleft"   orientation=R90 cell="sky130_ef_io__corner_pad")
     )
 
     (top
@@ -40,7 +40,7 @@
 
     (topright
     (locals ring_number = 1)
-        (inst name = "corner_topright"   orientation=R0 cell="sky130_ef_io_corner_pad")
+        (inst name = "corner_topright"   orientation=R0 cell="sky130_ef_io__corner_pad")
     )
 
     (right
@@ -69,7 +69,7 @@
 
     (bottomright
     (locals ring_number = 1)
-        (inst name = "corner_bottomright"   orientation=R270 cell="sky130_ef_io_corner_pad")
+        (inst name = "corner_bottomright"   orientation=R270 cell="sky130_ef_io__corner_pad")
     )
 
     (bottom
@@ -89,7 +89,7 @@
 
     (bottomleft
     (locals ring_number = 1)
-        (inst name = "corner_bottomleft"   orientation=R180 cell="sky130_ef_io_corner_pad")
+        (inst name = "corner_bottomleft"   orientation=R180 cell="sky130_ef_io__corner_pad")
     )
 
     (left

@@ -1147,19 +1147,31 @@ def efabless_ring_io(ht: HammerTool) -> bool:
     assert isinstance(ht, TCLTool), "IO ring instantiation can only run on TCL tools"
     io_file = ht.get_setting("technology.sky130.io_file")
     ht.append(f"read_io_file {io_file} -no_die_size_adjust")
+    p_nets = list(map(lambda s: s.name, ht.get_independent_power_nets()))
+    g_nets = list(map(lambda s: s.name, ht.get_independent_ground_nets()))
+    ht.append(f'''
+        # Global net connections
+        connect_global_net VDDA -type pg_pin -pin_base_name VDDA -verbose
+        connect_global_net VDDIO -type pg_pin -pin_base_name VDDIO* -verbose
+        connect_global_net {p_nets[0]} -type pg_pin -pin_base_name VCCD -verbose
+        connect_global_net {p_nets[0]} -type pg_pin -pin_base_name VCCHIB -verbose
+        connect_global_net {p_nets[0]} -type pg_pin -pin_base_name VSWITCH -verbose
+        connect_global_net {g_nets[0]} -type pg_pin -pin_base_name VSSA -verbose
+        connect_global_net {g_nets[0]} -type pg_pin -pin_base_name VSSIO* -verbose
+        connect_global_net {g_nets[0]} -type pg_pin -pin_base_name VSSD -verbose
+    ''')
     ht.append('''
-        connect_global_net VDDA -type pg_pin -pin_base_name vdda -verbose
-        connect_global_net VDDIO -type pg_pin -pin_base_name vddio* -verbose
-        connect_global_net VDD -type pg_pin -pin_base_name vccd -verbose
-        connect_global_net VDD -type pg_pin -pin_base_name vcchib -verbose
-        connect_global_net VDD -type pg_pin -pin_base_name vswitch -verbose
-        connect_global_net VSS -type pg_pin -pin_base_name vssa -verbose
-        connect_global_net VSS -type pg_pin -pin_base_name vssio* -verbose
-        connect_global_net VSS -type pg_pin -pin_base_name vssd -verbose
-        add_io_fillers -io_ring 1 -cells {s8iom0s8_top_filler s8iom0s8_top_filler_narrow} -side top -filler_orient r0
-        add_io_fillers -io_ring 1 -cells {s8iom0s8_top_filler s8iom0s8_top_filler_narrow} -side right -filler_orient r270
-        add_io_fillers -io_ring 1 -cells {s8iom0s8_top_filler s8iom0s8_top_filler_narrow} -side bottom -filler_orient r180
-        add_io_fillers -io_ring 1 -cells {s8iom0s8_top_filler s8iom0s8_top_filler_narrow} -side left -filler_orient r90
+        # IO fillers
+        set io_fillers {sky130_ef_io__com_bus_slice_20um sky130_ef_io__com_bus_slice_10um sky130_ef_io__com_bus_slice_5um sky130_ef_io__com_bus_slice_1um}
+        add_io_fillers -io_ring 1 -cells $io_fillers -side top -filler_orient r0
+        add_io_fillers -io_ring 1 -cells $io_fillers -side right -filler_orient r270
+        add_io_fillers -io_ring 1 -cells $io_fillers -side bottom -filler_orient r180
+        add_io_fillers -io_ring 1 -cells $io_fillers -side left -filler_orient r90
+    ''')
+    ht.append(f'''
+        # met5 power stripes
+        add_stripes -layer met5 -direction vertical -nets {{ {g_nets[0]} {p_nets[0]} }} -area {{204 890.8 234 4980.72}} -start 204.99 -width 13 -spacing 3 -number_of_sets 1
+        add_stripes -layer met5 -direction vertical -nets {{ {g_nets[0]} {p_nets[0]} }} -area {{3354 470.08 3384 4969.27}} -start 3354.1 -width 13 -spacing 3 -number_of_sets 1
     ''')
     return True
 
