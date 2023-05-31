@@ -73,6 +73,7 @@ IO Library
 The IO ring required by efabless for MPW/ChipIgnite can be created in Innovus using the `sky130_fd_io` and `sky130_ef_io `IO cell libraries. Here are the steps to use them:
 
 1. `extra/efabless_template.io` is a template IO file. You should modify this by replacing the `<inst_path>`s with the netlist paths to your GPIO & analog pads. **DO NOT MODIFY ANY POSITIONS OR REPLACE CLAMP CELLS WITH IO CELLS**.
+<<<<<<< HEAD
 
     a. For pad assignment: the ordering in the instance lists are from left to right (for top/bottom edges) and **bottom to top (for left/right edges)**.
 
@@ -148,8 +149,10 @@ The IO ring required by efabless for MPW/ChipIgnite can be created in Innovus us
 >>>>>>> e6d55b34 (typos, move section)
 
 1. `extra/efabless_template.io` is a template IO file. You should modify this by replacing the `<inst_path>`s with the paths to the IO cell instances in your netlist. **DO NOT MODIFY THE POSITIONS OF THE CELLS OR REPLACE CLAMP CELLS WITH IO CELLS**.
+=======
+>>>>>>> 525f7eda (More clarity)
 
-    a. The ordering in the instance lists are from left to right (for top/bottom edges) and **bottom to top (for left/right edges)**. 
+    a. For pad assignment: the ordering in the instance lists are from left to right (for top/bottom edges) and **bottom to top (for left/right edges)**.
 
     b. Refer to [this documentation](https://skywater-pdk.readthedocs.io/en/main/contents/libraries/sky130_fd_io/docs/user_guide.html) for how to configure the pins of the IO cells (not exhaustive).
 
@@ -158,8 +161,14 @@ The IO ring required by efabless for MPW/ChipIgnite can be created in Innovus us
 =======
     c. Your chip reset signal must go thru the `xres4v2` cell. Since this is in your netlist, you must remove the `cell=...` instantiation from your IO file (it is only in the template for clarity) and update the inst name. Otherwise a separate instance will be placed instead.
 
+<<<<<<< HEAD
     d. The `enable_inp_h` pin must be hard-tied to `TIE_HI_ESD` or `TIE_LO_ESD`. Since this is at a higher voltage, verify that this is routed as a wire only (no buffers can be inserted).
 >>>>>>> e6d55b34 (typos, move section)
+=======
+    d. The `ENABLE_INP_H` pin must be hard-tied to `TIE_HI_ESD` or `TIE_LO_ESD`. Since this is at a higher voltage, verify that this is routed as a wire only (no buffers can be inserted).
+
+    e. `ENABLE_H` must be low at chip startup before going high. Absent using the power detector cell from the NDA IO library, you may elect to connect this to a reset signal.
+>>>>>>> 525f7eda (More clarity)
 
 2. Then, in your design YAML file, specify your IO file with the following. The top-level constraint must be exactly as below:
 
@@ -182,7 +191,11 @@ The IO ring required by efabless for MPW/ChipIgnite can be created in Innovus us
 
         from hammer.technology.sky130 import efabless_ring_io
 
+<<<<<<< HEAD
 4. If you want to use the NDA s8 library instead, you must include the `s8io.yml` file with `-p` on the `hammer-vlsi` command line.
+=======
+4. If you want to use the NDA s8iom0s8 library, you must include the `s8io.yml` file with `-p` on the `hammer-vlsi` command line, and then change the cells to that library in the IO file. Net names in the hook above will need to be lower-cased.
+>>>>>>> 525f7eda (More clarity)
 
 NDA Files
 ---------
