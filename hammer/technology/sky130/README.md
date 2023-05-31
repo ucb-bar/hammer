@@ -65,15 +65,17 @@ and [here for the LVS deck path](https://github.com/ucb-bar/hammer/blob/612b4b66
 
 ### Sky130 IO Library
 
-The IO ring expected by efabless for MPW/ChipIgnite can be created in Innovus using the `sky130_fd_io` IO cell library. Here are the steps to use it:
+The IO ring rquired by efabless for MPW/ChipIgnite can be created in Innovus using the `sky130_fd_io` and `sky130_ef_io `IO cell libraries. Here are the steps to use them:
 
-1. `extra/efabless_template.io` is a template IO file. You should modify this by replacing the `<inst_path>`s with the paths to the IO cell instances in your netlist. **DO NOT MODIFY THE POSITIONS OF THE CELLS OR REPLACE CLAMP CELLS WITH IO CELLS**
+1. `extra/efabless_template.io` is a template IO file. You should modify this by replacing the `<inst_path>`s with the paths to the IO cell instances in your netlist. **DO NOT MODIFY THE POSITIONS OF THE CELLS OR REPLACE CLAMP CELLS WITH IO CELLS**.
 
     a. The ordering in the instance lists are from left to right (for top/bottom edges) and **bottom to top (for left/right edges)**. 
 
     b. Refer to [this documentation](https://skywater-pdk.readthedocs.io/en/main/contents/libraries/sky130_fd_io/docs/user_guide.html) for how to configure the pins of the IO cells (not exhaustive).
 
-    c. The `enable_inp_h` pin must be hard-tied to `tie_hi_esd` (or `tie_lo_esd`). Since this is at a higher voltage, this must be placed and routed as a wire only (no buffers can be inserted).
+    c. Your chip reset signal must go thru the `xres4x2` cell. Since this is in your netlist, remove the `cell=...` instantiation from your IO file. It is in the template for clarity.
+
+    d. The `enable_inp_h` pin must be hard-tied to `TIE_HI_ESD` or `TIE_LO_ESD`. Since this is at a higher voltage, verify that this is routed as a wire only (no buffers can be inserted).
 
 2. Then, in your design YAML file, specify your IO file with the following. The top-level constraint must be exactly as below:
 
@@ -87,16 +89,16 @@ The IO ring expected by efabless for MPW/ChipIgnite can be created in Innovus us
         width: 3588
         height: 5188
         margins:
-          left: 200.1
-          right: 200.1
-          top: 201.28
-          bottom: 201.28
+          left: 215
+          right: 215
+          top: 215
+          bottom: 215
 
 3. In your CLIDriver, you must import the following hook from the tech plugin and insert it as a `post_insertion_hook` after `floorplan_design`.
 
         from hammer.technology.sky130 import efabless_ring_io
 
-4. If you want to use the NDA s8 library instead, you must include the `s8io.yml` file with `-p` on the `hammer-vlsi` command line.
+4. If you want to use the NDA s8 library instead, you must include the `s8io.yml` file with `-p` on the `hammer-vlsi` command line, and then change the cells to that library in the IO file. Net names in the hook above will need to be lower-cased.
 
 Resources
 ---------
