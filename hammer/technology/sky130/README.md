@@ -9,35 +9,14 @@ PDK Setup
 The Skywater 130nm PDK files are located in a repo called [skywater-pdk](https://github.com/google/skywater-pdk/). A tool called [Open-PDKs (open_pdks)](https://github.com/RTimothyEdwards/open_pdks/) was developed to generate all the files typically found in a PDK.
 Open-PDKs uses the contents in `skywater-pdk`, and outputs files to a directory called `sky130A`.
 
+# TODO(elamdf) bring back manual pdk docs
 ### PDK Install
 
 ```shell
-# create a root directory that will contain all PDK files and supporting tools (install size is ~42GB)
-export PREFIX=/path/to/install/root
-mkdir -p $PREFIX
-cd $PREFIX
-
-# install magic via conda, required for open_pdks
-conda create -y -c litex-hub --prefix $PREFIX/.conda-signoff magic
-export PATH=$PREFIX/.conda-signoff/bin:$PATH
-
-# clone required repos
-git clone https://github.com/google/skywater-pdk.git
-git clone https://github.com/RTimothyEdwards/open_pdks.git
-
-# install Sky130 PDK via Open-PDKs
-#    we disable some install steps to save time
-cd $PREFIX/open_pdks
-./configure \
-    --enable-sky130-pdk=${PREFIX}/skywater-pdk/libraries --prefix=$PREFIX \
-    --disable-gf180mcu-pdk --disable-alpha-sky130 --disable-xschem-sky130 --disable-primitive-gf180mcu \
-    --disable-verification-gf180mcu --disable-io-gf180mcu --disable-sc-7t5v0-gf180mcu \
-    --disable-sc-9t5v0-gf180mcu --disable-sram-gf180mcu --disable-osu-sc-gf180mcu
-make
-make install
+conda install -c litex-hub open_pdks.sky130a
 ```
 
-This generates all the Sky130 PDK files and installs them to `$PREFIX/share/pdk/sky130A`
+We recommend using the conda install, but the [manual PDK setup is documented below](#manual-pdk-setup) (although it may be outdated).
 
 Now in your Hammer YAML configs, point to the location of this install:
 
@@ -150,19 +129,27 @@ The NDA version of the Sky130 PDK is only required for Siemens Calibre to perfor
 It is NOT REQUIRED for the remaining commercial flow, as well as the open-source tool flow.
 Therefore this NDA PDK is not used to generate a GDS.
 
-The IO ring required by efabless for MPW/ChipIgnite can be created in Innovus using the `sky130_fd_io` and `sky130_ef_io `IO cell libraries. Here are the steps to use them:
+If you have access to the NDA repo, you should add this path to your Hammer YAML configs:
 
-1. `extra/efabless_template.io` is a template IO file. You should modify this by replacing the `<inst_path>`s with the paths to the IO cell instances in your netlist. **DO NOT MODIFY THE POSITIONS OF THE CELLS OR REPLACE CLAMP CELLS WITH IO CELLS**.
+```yaml
+technology.sky130.sky130_nda: "/path/to/skywater-src-nda"
+```
 
-    a. For pad assignment: the ordering in the instance lists are from left to right (for top/bottom edges) and **bottom to top (for left/right edges)**.
+We use the Calibre decks in the ``s8`` PDK, version ``V2.0.1``, 
+see [here for the DRC deck path](https://github.com/ucb-bar/hammer/blob/612b4b662a774b1cab5cf25e8f41c6a771388e47/hammer/technology/sky130/sky130.tech.json#L16) 
+and [here for the LVS deck path](https://github.com/ucb-bar/hammer/blob/612b4b662a774b1cab5cf25e8f41c6a771388e47/hammer/technology/sky130/sky130.tech.json#L24).
 
-    b. Refer to [this documentation](https://skywater-pdk.readthedocs.io/en/main/contents/libraries/sky130_fd_io/docs/user_guide.html) for how to configure the pins of the IO cells (not exhaustive).
+### Sky130 s8io Library
 
-    c. Your chip reset signal must go thru the `xres4v2` cell. Since this is in your netlist, you must remove the `cell=...` instantiation from your IO file (it is only in the template for clarity) and update the inst name. Otherwise a separate instance will be placed instead.
+The IO ring expected by efabless for MPW/ChipIgnite can be created in Innovus using the NDA s8iom0s8 IO cell library. Here are the steps to use it:
 
-    d. The `ENABLE_INP_H` pin must be hard-tied to `TIE_HI_ESD` or `TIE_LO_ESD`. Since this is at a higher voltage, verify that this is routed as a wire only (no buffers can be inserted).
+1. `extra/efabless_template.io` is a template IO file. You should modify this by replacing the `<inst_path>`s with the paths to the IO cell instances in your netlist. **DO NOT MODIFY THE POSITIONS OF THE CELLS OR REPLACE CLAMP CELLS WITH IO CELLS**
 
-    e. `ENABLE_H` must be low at chip startup before going high. Absent using the power detector cell from the NDA IO library, you may elect to connect this to a reset signal.
+    a. The ordering in the instance lists are from left to right (for top/bottom edges) and **bottom to top (for left/right edges)**. 
+
+    b. Refer [this documentation](https://skywater-pdk.readthedocs.io/en/main/contents/libraries/sky130_fd_io/docs/user_guide.html) for how to configure the pins of the GPIOs (not exhaustive).
+
+    c. By default, the `s8iom0s8_top_gpiov2` cell has a `tie_hi_esd` pin that must be tied to VDDIO, which is difficult to do in Innovus. It is suggested to make a custom version of this with that pin tied to VDDIO, export the GDS, and hack the CDL/GDS/LEF for that cell only, then add is separately as an extra library.
 
 2. Then, in your design YAML file, specify your IO file with the following. The top-level constraint must be exactly as below:
 
@@ -185,23 +172,7 @@ The IO ring required by efabless for MPW/ChipIgnite can be created in Innovus us
 
         from hammer.technology.sky130 import efabless_ring_io
 
-4. If you want to use the NDA s8iom0s8 library, you must include the `s8io.yml` file with `-p` on the `hammer-vlsi` command line, and then change the cells to that library in the IO file. Net names in the hook above will need to be lower-cased.
-
-NDA Files
----------
-The NDA version of the Sky130 PDK is only required for Siemens Calibre to perform DRC/LVS signoff with the commercial VLSI flow.
-It is NOT REQUIRED for the remaining commercial flow, as well as the open-source tool flow.
-Therefore this NDA PDK is not used to generate a GDS.
-
-If you have access to the NDA repo, you should add this path to your Hammer YAML configs:
-
-```yaml
-technology.sky130.sky130_nda: "/path/to/skywater-src-nda"
-```
-
-We use the Calibre decks in the ``s8`` PDK, version ``V2.0.1``, 
-see [here for the DRC deck path](https://github.com/ucb-bar/hammer/blob/612b4b662a774b1cab5cf25e8f41c6a771388e47/hammer/technology/sky130/sky130.tech.json#L16) 
-and [here for the LVS deck path](https://github.com/ucb-bar/hammer/blob/612b4b662a774b1cab5cf25e8f41c6a771388e47/hammer/technology/sky130/sky130.tech.json#L24).
+4. Finally, in order to get the libraries into your flow, you must include the `s8io.yml` file with `-p` on the `hammer-vlsi` command line.
 
 Resources
 ---------

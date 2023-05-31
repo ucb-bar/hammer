@@ -1143,8 +1143,8 @@ add_stripes -create_pins 1 -block_ring_bottom_layer_limit met5 -block_ring_top_l
 def calibre_drc_blackbox_srams(ht: HammerTool) -> bool:
 =======
 def efabless_ring_io(ht: HammerTool) -> bool:
-    assert isinstance(ht, HammerPlaceAndRouteTool), "endcap insertion only for par"
-    assert isinstance(ht, TCLTool), "endcap insertion can only run on TCL tools"
+    assert isinstance(ht, HammerPlaceAndRouteTool), "IO ring instantiation only for par"
+    assert isinstance(ht, TCLTool), "IO ring instantiation can only run on TCL tools"
     io_file = ht.get_setting("technology.sky130.io_file")
     ht.append(f"read_io_file {io_file} -no_die_size_adjust")
     ht.append('''
