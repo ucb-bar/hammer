@@ -31,6 +31,7 @@ class SKY130Tech(HammerTechnology):
         self.setup_verilog()
         self.setup_techlef()
         self.setup_lvs_deck()
+        self.setup_io_lefs()
         print('Loaded Sky130 Tech')
 
 
@@ -159,6 +160,32 @@ class SKY130Tech(HammerTechnology):
                         (source_path, dest_path))
                     df.write(matcher.sub("", sf.read()))
                     df.write(LVS_DECK_INSERT_LINES)
+
+    # Power pins for clamps must be CLASS CORE
+    def setup_io_lefs(self) -> None:
+        sky130A_path = Path(self.get_setting('technology.sky130.sky130A'))
+        source_path = sky130A_path / 'libs.ref' / 'sky130_fd_io' / 'lef' / 'sky130_ef_io.lef'
+        if not source_path.exists():
+            raise FileNotFoundError(f"IO LEF not found: {source_path}")
+
+        cache_tech_dir_path = Path(self.cache_dir)
+        os.makedirs(cache_tech_dir_path, exist_ok=True)
+        dest_path = cache_tech_dir_path / 'sky130_ef_io.lef'
+
+        with open(source_path, 'r') as sf:
+            with open(dest_path, 'w') as df:
+                self.logger.info("Modifying IO LEF: {} -> {}".format
+                    (source_path, dest_path))
+                sl = sf.readlines()
+                for net in ['VCCD1', 'VSSD1']:
+                    start = [idx for idx,line in enumerate(sl) if 'PIN ' + net in line]
+                    end = [idx for idx,line in enumerate(sl) if 'END ' + net in line]
+                    intervals = zip(start, end)
+                    for intv in intervals:
+                        port_idx = [idx for idx,line in enumerate(sl[intv[0]:intv[1]]) if 'PORT' in line]
+                        for idx in port_idx:
+                            sl[intv[0]+idx]=sl[intv[0]+idx].replace('PORT', 'PORT\n      CLASS CORE ;')
+                df.writelines(sl)
 
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {
@@ -330,12 +357,12 @@ def efabless_ring_io(ht: HammerTool) -> bool:
         # Global net connections
         connect_global_net VDDA -type pg_pin -pin_base_name VDDA -verbose
         connect_global_net VDDIO -type pg_pin -pin_base_name VDDIO* -verbose
-        connect_global_net {p_nets[0]} -type pg_pin -pin_base_name VCCD -verbose
+        connect_global_net {p_nets[0]} -type pg_pin -pin_base_name VCCD* -verbose
         connect_global_net {p_nets[0]} -type pg_pin -pin_base_name VCCHIB -verbose
         connect_global_net {p_nets[0]} -type pg_pin -pin_base_name VSWITCH -verbose
         connect_global_net {g_nets[0]} -type pg_pin -pin_base_name VSSA -verbose
         connect_global_net {g_nets[0]} -type pg_pin -pin_base_name VSSIO* -verbose
-        connect_global_net {g_nets[0]} -type pg_pin -pin_base_name VSSD -verbose
+        connect_global_net {g_nets[0]} -type pg_pin -pin_base_name VSSD* -verbose
     ''')
     ht.append('''
         # IO fillers
@@ -346,10 +373,17 @@ def efabless_ring_io(ht: HammerTool) -> bool:
         add_io_fillers -io_ring 1 -cells $io_fillers -side left -filler_orient r90
     ''')
     ht.append(f'''
+        # Core ring
+        add_rings -follow io -layer met5 -nets {{ {p_nets[0]} {g_nets[0]} }} -offset 5 -width 13 -spacing 3
+        route_special -connect pad_pin -nets {{ {p_nets[0]} {g_nets[0]} }} -detailed_log
+    ''')
+    """
+    ht.append(f'''
         # met5 power stripes
         add_stripes -layer met5 -direction vertical -nets {{ {g_nets[0]} {p_nets[0]} }} -area {{204 890.8 234 4980.72}} -start 204.99 -width 13 -spacing 3 -number_of_sets 1
         add_stripes -layer met5 -direction vertical -nets {{ {g_nets[0]} {p_nets[0]} }} -area {{3354 470.08 3384 4969.27}} -start 3354.1 -width 13 -spacing 3 -number_of_sets 1
     ''')
+    """
     return True
 
 def drc_blackbox_srams(ht: HammerTool) -> bool:

@@ -127,18 +127,22 @@ def main(args) -> int:
 
         # gpiov2_pad_wrapped has separate GDS
         if cell_name == 'sky130_ef_io__gpiov2_pad_wrapped':
+            file_lib = 'sky130_ef_io'
             gds_file = cell_name + '.gds'
+            lef_file = 'cache/sky130_ef_io.lef'
         elif 'sky130_ef_io' in cell_name:
             file_lib = 'sky130_ef_io'
             gds_file = file_lib + '.gds'
+            lef_file = 'cache/' + file_lib + '.lef'
         else:
             file_lib = library
             gds_file = file_lib + '.gds'
+            lef_file = os.path.join(SKYWATER_LIBS,'lef', file_lib + '.lef')
 
         lib_entry = {
             "nldm_liberty_file":  os.path.join(SKYWATER_LIBS,'lib', cornerfilename),
             "verilog_sim":        os.path.join(SKYWATER_LIBS,'verilog', file_lib + '.v'),
-            "lef_file":           os.path.join(SKYWATER_LIBS,'lef', file_lib + '.lef'),
+            "lef_file":           lef_file,
             "spice_file":         os.path.join(SKYWATER_LIBS,'spice', file_lib + '.spice'),
             "gds_file":           os.path.join(SKYWATER_LIBS,'gds', gds_file),
             "corner": {
