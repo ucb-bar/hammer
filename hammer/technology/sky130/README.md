@@ -6,8 +6,7 @@ Hammer supports the Skywater 130nm Technology process. The [SkyWater Open Source
 PDK Setup
 ---------
 
-The Skywater 130nm PDK files are located in a repo called [skywater-pdk](https://github.com/google/skywater-pdk/). A tool called [Open-PDKs (open_pdks)](https://github.com/RTimothyEdwards/open_pdks/) was developed to generate all the files typically found in a PDK.
-Open-PDKs uses the contents in `skywater-pdk`, and outputs files to a directory called `sky130A`.
+All Sky130 PDK files required for the Hammer VLSI flow can now be [installed via conda](https://anaconda.org/litex-hub/open_pdks.sky130a) by running:
 
 # TODO(elamdf) bring back manual pdk docs
 ### PDK Install
@@ -141,15 +140,15 @@ and [here for the LVS deck path](https://github.com/ucb-bar/hammer/blob/612b4b66
 
 ### Sky130 s8io Library
 
-The IO ring expected by efabless for MPW/ChipIgnite can be created in Innovus using the NDA s8iom0s8 IO cell library. Here are the steps to use it:
+The IO ring expected by efabless for MPW/ChipIgnite can be created in Innovus using the `sky130_fd_io` IO cell library. Here are the steps to use it:
 
-1. `extra/efabless_template.io` is a template IO file. You should modify this by replacing the `<inst_path>`s with the paths to the IO cell instances in your netlist. **DO NOT MODIFY THE POSITIONS OF THE CELLS OR REPLACE CLAMP CELLS WITH IO CELLS**
+1. `extra/efabless_template.io` is a template IO file. You should modify this by replacing the `<inst_path>`s with the paths to the IO cell instances in your netlist. **DO NOT MODIFY THE POSITIONS OF THE CELLS OR REPLACE CLAMP CELLS WITH IO CELLS**.
 
     a. The ordering in the instance lists are from left to right (for top/bottom edges) and **bottom to top (for left/right edges)**. 
 
-    b. Refer [this documentation](https://skywater-pdk.readthedocs.io/en/main/contents/libraries/sky130_fd_io/docs/user_guide.html) for how to configure the pins of the GPIOs (not exhaustive).
+    b. Refer to [this documentation](https://skywater-pdk.readthedocs.io/en/main/contents/libraries/sky130_fd_io/docs/user_guide.html) for how to configure the pins of the IO cells (not exhaustive).
 
-    c. By default, the `s8iom0s8_top_gpiov2` cell has a `tie_hi_esd` pin that must be tied to VDDIO, which is difficult to do in Innovus. It is suggested to make a custom version of this with that pin tied to VDDIO, export the GDS, and hack the CDL/GDS/LEF for that cell only, then add is separately as an extra library.
+    c. The `enable_inp_h` pin must be hard-tied to `tie_hi_esd` (or `tie_lo_esd`). Since this is at a higher voltage, this must be placed and routed as a wire only (no buffers can be inserted).
 
 2. Then, in your design YAML file, specify your IO file with the following. The top-level constraint must be exactly as below:
 
@@ -172,7 +171,7 @@ The IO ring expected by efabless for MPW/ChipIgnite can be created in Innovus us
 
         from hammer.technology.sky130 import efabless_ring_io
 
-4. Finally, in order to get the libraries into your flow, you must include the `s8io.yml` file with `-p` on the `hammer-vlsi` command line.
+4. If you want to use the NDA s8 library instead, you must include the `s8io.yml` file with `-p` on the `hammer-vlsi` command line.
 
 Resources
 ---------
