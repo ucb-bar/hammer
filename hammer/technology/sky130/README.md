@@ -47,25 +47,10 @@ Note that the various configurations of the SRAMs available are encoded in the f
 To modify this file to include different configurations, or switch to using the OpenRAM SRAMs,
 navigate to ``./extra/[sram22|openram]`` and run the script ``./sram-cache-gen.py`` for usage information.
 
-NDA Files
----------
-The NDA version of the Sky130 PDK is only required for Siemens Calibre to perform DRC/LVS signoff with the commercial VLSI flow.
-It is NOT REQUIRED for the remaining commercial flow, as well as the open-source tool flow.
-Therefore this NDA PDK is not used to generate a GDS.
+IO Library
+----------
 
-If you have access to the NDA repo, you should add this path to your Hammer YAML configs:
-
-```yaml
-technology.sky130.sky130_nda: "/path/to/skywater-src-nda"
-```
-
-We use the Calibre decks in the ``s8`` PDK, version ``V2.0.1``, 
-see [here for the DRC deck path](https://github.com/ucb-bar/hammer/blob/612b4b662a774b1cab5cf25e8f41c6a771388e47/hammer/technology/sky130/sky130.tech.json#L16) 
-and [here for the LVS deck path](https://github.com/ucb-bar/hammer/blob/612b4b662a774b1cab5cf25e8f41c6a771388e47/hammer/technology/sky130/sky130.tech.json#L24).
-
-### Sky130 IO Library
-
-The IO ring rquired by efabless for MPW/ChipIgnite can be created in Innovus using the `sky130_fd_io` and `sky130_ef_io `IO cell libraries. Here are the steps to use them:
+The IO ring required by efabless for MPW/ChipIgnite can be created in Innovus using the `sky130_fd_io` and `sky130_ef_io `IO cell libraries. Here are the steps to use them:
 
 1. `extra/efabless_template.io` is a template IO file. You should modify this by replacing the `<inst_path>`s with the paths to the IO cell instances in your netlist. **DO NOT MODIFY THE POSITIONS OF THE CELLS OR REPLACE CLAMP CELLS WITH IO CELLS**.
 
@@ -73,7 +58,7 @@ The IO ring rquired by efabless for MPW/ChipIgnite can be created in Innovus usi
 
     b. Refer to [this documentation](https://skywater-pdk.readthedocs.io/en/main/contents/libraries/sky130_fd_io/docs/user_guide.html) for how to configure the pins of the IO cells (not exhaustive).
 
-    c. Your chip reset signal must go thru the `xres4x2` cell. Since this is in your netlist, remove the `cell=...` instantiation from your IO file. It is in the template for clarity.
+    c. Your chip reset signal must go thru the `xres4v2` cell. Since this is in your netlist, you must remove the `cell=...` instantiation from your IO file (it is only in the template for clarity) and update the inst name. Otherwise a separate instance will be placed instead.
 
     d. The `enable_inp_h` pin must be hard-tied to `TIE_HI_ESD` or `TIE_LO_ESD`. Since this is at a higher voltage, verify that this is routed as a wire only (no buffers can be inserted).
 
@@ -99,6 +84,22 @@ The IO ring rquired by efabless for MPW/ChipIgnite can be created in Innovus usi
         from hammer.technology.sky130 import efabless_ring_io
 
 4. If you want to use the NDA s8 library instead, you must include the `s8io.yml` file with `-p` on the `hammer-vlsi` command line, and then change the cells to that library in the IO file. Net names in the hook above will need to be lower-cased.
+
+NDA Files
+---------
+The NDA version of the Sky130 PDK is only required for Siemens Calibre to perform DRC/LVS signoff with the commercial VLSI flow.
+It is NOT REQUIRED for the remaining commercial flow, as well as the open-source tool flow.
+Therefore this NDA PDK is not used to generate a GDS.
+
+If you have access to the NDA repo, you should add this path to your Hammer YAML configs:
+
+```yaml
+technology.sky130.sky130_nda: "/path/to/skywater-src-nda"
+```
+
+We use the Calibre decks in the ``s8`` PDK, version ``V2.0.1``, 
+see [here for the DRC deck path](https://github.com/ucb-bar/hammer/blob/612b4b662a774b1cab5cf25e8f41c6a771388e47/hammer/technology/sky130/sky130.tech.json#L16) 
+and [here for the LVS deck path](https://github.com/ucb-bar/hammer/blob/612b4b662a774b1cab5cf25e8f41c6a771388e47/hammer/technology/sky130/sky130.tech.json#L24).
 
 Resources
 ---------
