@@ -1200,13 +1200,10 @@ def efabless_ring_io(ht: HammerTool) -> bool:
         add_rings -follow io -layer met5 -nets {{ {p_nets[0]} {g_nets[0]} }} -offset 5 -width 13 -spacing 3
         route_special -connect pad_pin -nets {{ {p_nets[0]} {g_nets[0]} }} -detailed_log
     ''')
-    """
-    ht.append(f'''
-        # met5 power stripes
-        add_stripes -layer met5 -direction vertical -nets {{ {g_nets[0]} {p_nets[0]} }} -area {{204 890.8 234 4980.72}} -start 204.99 -width 13 -spacing 3 -number_of_sets 1
-        add_stripes -layer met5 -direction vertical -nets {{ {g_nets[0]} {p_nets[0]} }} -area {{3354 470.08 3384 4969.27}} -start 3354.1 -width 13 -spacing 3 -number_of_sets 1
+    ht.append('''
+        # Prevent buffering on TIE_LO_ESD and TIE_HI_ESD
+        set_dont_touch [get_db [get_db pins -if {.name == *TIE*ESD}] .net]
     ''')
-    """
     return True
 
 def drc_blackbox_srams(ht: HammerTool) -> bool:
