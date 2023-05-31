@@ -12,6 +12,7 @@
       "path": "technology.sky130.sky130A"
     }
   ],
+  "layer_map_file": "$SKY130_NDA/s8/V2.0.1/VirtuosoOA/libs/technology_library/technology_library.layermap",
   "drc_decks": [
     {
       "tool_name": "calibre",
@@ -29,7 +30,7 @@
     {
       "tool_name": "calibre",
       "deck_name": "calibre_lvs",
-      "old path": "$SKY130_NDA/s8/V2.0.1/LVS/Calibre/lvsRules_s8",
+      "old_path": "$SKY130_NDA/s8/V2.0.1/LVS/Calibre/lvsRules_s8",
       "path": "cache/lvsControlFile_s8"
     }
   ],
@@ -395,6 +396,1414 @@
           "vt": "RVT"
         }
       ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_tt_tt_025C_1v80_3v30.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "025 C"
+      },
+      "supplies": {
+        "VDD": "1.80 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__gpiov2_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_wrapped_ff_ff_100C_1v95_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io__gpiov2_pad_wrapped.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__gpiov2_pad_wrapped",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_wrapped_ff_ff_n40C_1v95_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io__gpiov2_pad_wrapped.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__gpiov2_pad_wrapped",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_wrapped_ss_ss_100C_1v60_3v00.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io__gpiov2_pad_wrapped.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.60 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__gpiov2_pad_wrapped",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__gpiov2_pad_wrapped_tt_tt_025C_1v80_3v30.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io__gpiov2_pad_wrapped.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "025 C"
+      },
+      "supplies": {
+        "VDD": "1.80 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__gpiov2_pad_wrapped",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped3_pad_ff_100C_1v95_5v50_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vccd_lvc_clamped3_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped3_pad_ff_n40C_1v95_5v50_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vccd_lvc_clamped3_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped3_pad_ss_100C_1v60_3v00_3v00.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.60 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vccd_lvc_clamped3_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped3_pad_tt_025C_1v80_3v30_3v30.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "025 C"
+      },
+      "supplies": {
+        "VDD": "1.80 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vccd_lvc_clamped3_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ff_100C_1v95_5v50_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vccd_lvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vccd_lvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.60 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vccd_lvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vccd_lvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "025 C"
+      },
+      "supplies": {
+        "VDD": "1.80 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vccd_lvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vdda_hvc_clamped_pad_ff_100C_1v95_5v50_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vdda_hvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vdda_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vdda_hvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vdda_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.60 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vdda_hvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vdda_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "025 C"
+      },
+      "supplies": {
+        "VDD": "1.80 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vdda_hvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ff_100C_1v95_5v50_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vddio_hvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vddio_hvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.60 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vddio_hvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vddio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "025 C"
+      },
+      "supplies": {
+        "VDD": "1.80 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vddio_hvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssa_hvc_clamped_pad_ff_100C_1v95_5v50_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vssa_hvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssa_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vssa_hvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssa_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.60 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vssa_hvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssa_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "025 C"
+      },
+      "supplies": {
+        "VDD": "1.80 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vssa_hvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped3_pad_ff_100C_1v95_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vssd_lvc_clamped3_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped3_pad_ff_n40C_1v95_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vssd_lvc_clamped3_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped3_pad_ss_100C_1v60_3v00.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.60 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vssd_lvc_clamped3_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped3_pad_tt_025C_1v80_3v30.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "025 C"
+      },
+      "supplies": {
+        "VDD": "1.80 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vssd_lvc_clamped3_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped3_pad_tt_100C_1v80_3v30.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.80 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vssd_lvc_clamped3_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ff_100C_1v95_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vssd_lvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ff_n40C_1v95_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vssd_lvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_ss_100C_1v60_3v00.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.60 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vssd_lvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_025C_1v80_3v30.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "025 C"
+      },
+      "supplies": {
+        "VDD": "1.80 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vssd_lvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssd_lvc_clamped_pad_tt_100C_1v80_3v30.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.80 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vssd_lvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ff_100C_1v95_5v50_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vssio_hvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ff_n40C_1v95_5v50_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vssio_hvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_ss_100C_1v60_3v00_3v00.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.60 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vssio_hvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_ef_io__vssio_hvc_clamped_pad_tt_025C_1v80_3v30_3v30.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_ef_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_ef_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_ef_io.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "025 C"
+      },
+      "supplies": {
+        "VDD": "1.80 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_ef_io__vssio_hvc_clamped_pad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_gpiov2_ff_ff_100C_1v95_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_gpiov2",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_gpiov2_ff_ff_n40C_1v95_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_gpiov2",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_gpiov2_ss_ss_100C_1v60_3v00.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.60 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_gpiov2",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_gpiov2_tt_tt_025C_1v80_3v30.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "025 C"
+      },
+      "supplies": {
+        "VDD": "1.80 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_gpiov2",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_ground_hvc_wpad_ff_100C_1v95_5v50_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_ground_hvc_wpad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_ground_hvc_wpad_ff_n40C_1v95_5v50_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_ground_hvc_wpad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_ground_hvc_wpad_ss_100C_1v60_3v00_3v00.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.60 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_ground_hvc_wpad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_ground_hvc_wpad_tt_025C_1v80_3v30_3v30.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "025 C"
+      },
+      "supplies": {
+        "VDD": "1.80 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_ground_hvc_wpad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_ground_lvc_wpad_ff_100C_1v95_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_ground_lvc_wpad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_ground_lvc_wpad_ff_n40C_1v95_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_ground_lvc_wpad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_ground_lvc_wpad_ss_100C_1v60_3v00.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.60 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_ground_lvc_wpad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_ground_lvc_wpad_tt_025C_1v80_3v30.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "025 C"
+      },
+      "supplies": {
+        "VDD": "1.80 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_ground_lvc_wpad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_ground_lvc_wpad_tt_100C_1v80_3v30.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.80 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_ground_lvc_wpad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_power_hvc_wpad_ff_100C_1v95_5v50_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_power_hvc_wpad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_power_hvc_wpad_ff_n40C_1v95_5v50_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_power_hvc_wpad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_power_hvc_wpad_ss_100C_1v60_3v00_3v00.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.60 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_power_hvc_wpad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_power_hvc_wpad_tt_025C_1v80_3v30_3v30.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "025 C"
+      },
+      "supplies": {
+        "VDD": "1.80 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_power_hvc_wpad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_power_lvc_wpad_ff_100C_1v95_5v50_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_power_lvc_wpad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_power_lvc_wpad_ff_n40C_1v95_5v50_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_power_lvc_wpad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_power_lvc_wpad_ss_100C_1v60_3v00_3v00.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.60 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_power_lvc_wpad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_power_lvc_wpad_tt_025C_1v80_3v30_3v30.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "025 C"
+      },
+      "supplies": {
+        "VDD": "1.80 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_power_lvc_wpad",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_xres4v2_ff_ff_100C_1v95_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_xres4v2",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_xres4v2_ff_ff_n40C_1v95_5v50.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "fast",
+        "pmos": "fast",
+        "temperature": "-40 C"
+      },
+      "supplies": {
+        "VDD": "1.95 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_xres4v2",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_xres4v2_ss_ss_100C_1v60_3v00.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "slow",
+        "pmos": "slow",
+        "temperature": "100 C"
+      },
+      "supplies": {
+        "VDD": "1.60 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_xres4v2",
+          "vt": "RVT"
+        }
+      ]
+    },
+    {
+      "nldm_liberty_file": "$SKY130A/libs.ref/sky130_fd_io/lib/sky130_fd_io__top_xres4v2_tt_tt_025C_1v80_3v30.lib",
+      "verilog_sim": "$SKY130A/libs.ref/sky130_fd_io/verilog/sky130_fd_io.v",
+      "lef_file": "$SKY130A/libs.ref/sky130_fd_io/lef/sky130_fd_io.lef",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_fd_io.spice",
+      "gds_file": "$SKY130A/libs.ref/sky130_fd_io/gds/sky130_fd_io.gds",
+      "corner": {
+        "nmos": "typical",
+        "pmos": "typical",
+        "temperature": "025 C"
+      },
+      "supplies": {
+        "VDD": "1.80 V",
+        "GND": "0 V"
+      },
+      "provides": [
+        {
+          "lib_type": "sky130_fd_io__top_xres4v2",
+          "vt": "RVT"
+        }
+      ]
     }
   ],
   "physical_only_cells_list": [
@@ -497,8 +1906,8 @@
           "name": "li1",
           "index": 1,
           "direction": "vertical",
-          "pitch": 0.46,
-          "offset": 0.23,
+          "pitch": 0.34,
+          "offset": 0.17,
           "min_width": 0.17,
           "power_strap_widths_and_spacings": [
             {
