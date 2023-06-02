@@ -37,6 +37,7 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
             self.logger.error("SKY130 SRAM cache does not support family:{f}".format(f=params.family))
             return ExtraLibrary(prefix=None, library=None)  # type: ignore
 
+        # SRAM22 SRAMs
         if params.name.startswith("sram22"):
             self.logger.info(f"Compiling {params.family} memories to SRAM22 instances")
             # s=round(round(params.width*params.depth/8, -3)/1000) # size in kiB
@@ -52,19 +53,10 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
             #        temp = str(int(corner.temp.value_in_units("C"))).replace(".","p"))
 
             base_dir=self.get_setting('technology.sky130.sram22_sky130_macros')
-
-            found = False
-            for fidelity in ["rcc", "rc", "c"]:
-                lib_path="{b}/{n}/{n}_{c}.{f}.lib".format(b=base_dir,n=sram_name,c=corner_str, f=fidelity)
-                if os.path.exists(lib_path):
-                    found = True
-                    break
-                else:
-                    self.logger.warning(f"SKY130 {params.name} SRAM cache does not support corner {corner_str} with {fidelity} extraction")
-
-            if not found:
-                self.logger.error(f"SKY130 {params.name} SRAM cache does not support corner {corner_str}")
-
+            lib_path="{b}/{n}/{n}_{c}.lib".format(b=base_dir,n=sram_name,c=corner_str)
+            if not os.path.exists(lib_path):
+                self.logger.error(f"SKY130 {params.family} SRAM cache does not support corner: {corner_str}")
+            
             return ExtraLibrary(prefix=None, library=Library(
                 name=sram_name,
                 nldm_liberty_file=lib_path,
@@ -76,7 +68,7 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
                 supplies=Supplies(VDD=str(corner.voltage.value_in_units("V")) + " V", GND="0 V"),
                 provides=[Provide(lib_type="sram", vt=params.vt)]))
 
-        # TODO: remove OpenRAM support very soon
+        # OpenRAM SRAMs
         elif params.name.startswith("sky130_sram_"):
             self.logger.info(f"Compiling {params.family} memories to OpenRAM instances")
             base_dir = self.get_setting("technology.sky130.openram_lib")
