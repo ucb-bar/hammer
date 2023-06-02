@@ -30,8 +30,8 @@ def main(args: List[str]) -> int:
 
     for sram_name in list_of_srams:
         # SRAM22-generated single-port RAMs
-        if sram_name.startswith("sramgen_"):
-            match = re.match(r"sramgen_sram_(\d+)x(\d+)m(\d+)w(\d+)(\D*)", sram_name)
+        if sram_name.startswith("sram22_"):
+            match = re.match(r"sram22_(\d+)x(\d+)m(\d+)w(\d+)(\D*)", sram_name)
             if match:
                 width = int(match.group(2))
                 mask_gran = int(match.group(4))

@@ -37,7 +37,8 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
             self.logger.error("SKY130 SRAM cache does not support family:{f}".format(f=params.family))
             return ExtraLibrary(prefix=None, library=None)  # type: ignore
 
-        if params.name.startswith("sramgen_sram"):
+        # SRAM22 SRAMs
+        if params.name.startswith("sram22"):
             self.logger.info(f"Compiling {params.family} memories to SRAM22 instances")
             # s=round(round(params.width*params.depth/8, -3)/1000) # size in kiB
             w=params.width
@@ -67,7 +68,7 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
                 supplies=Supplies(VDD=str(corner.voltage.value_in_units("V")) + " V", GND="0 V"),
                 provides=[Provide(lib_type="sram", vt=params.vt)]))
 
-        # TODO: remove OpenRAM support very soon
+        # OpenRAM SRAMs
         elif params.name.startswith("sky130_sram_"):
             self.logger.info(f"Compiling {params.family} memories to OpenRAM instances")
             base_dir = self.get_setting("technology.sky130.openram_lib")
