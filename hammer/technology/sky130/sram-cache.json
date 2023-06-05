@@ -20,7 +20,10 @@
         "output port name": "dout",
         "output port polarity": "active high",
         "input port name": "din",
-        "input port polarity": "active high"
+        "input port polarity": "active high",
+        "mask port name": "wmask",
+        "mask granularity": 32,
+        "mask port polarity": "active high"
       }
     ]
   },
@@ -62,34 +65,6 @@
     "mask": "true",
     "vt": "svt",
     "mux": 8,
-    "ports": [
-      {
-        "address port name": "addr",
-        "address port polarity": "active high",
-        "clock port name": "clk",
-        "clock port polarity": "active high",
-        "write enable port name": "we",
-        "write enable port polarity": "active high",
-        "output port name": "dout",
-        "output port polarity": "active high",
-        "input port name": "din",
-        "input port polarity": "active high",
-        "mask port name": "wmask",
-        "mask granularity": 8,
-        "mask port polarity": "active high"
-      }
-    ]
-  },
-  {
-    "type": "sram",
-    "name": "sram22_2048x64m4w8",
-    "source": "sram22",
-    "depth": "2048",
-    "width": 64,
-    "family": "1rw",
-    "mask": "true",
-    "vt": "svt",
-    "mux": 4,
     "ports": [
       {
         "address port name": "addr",
@@ -185,7 +160,10 @@
         "output port name": "dout",
         "output port polarity": "active high",
         "input port name": "din",
-        "input port polarity": "active high"
+        "input port polarity": "active high",
+        "mask port name": "wmask",
+        "mask granularity": 8,
+        "mask port polarity": "active high"
       }
     ]
   },
@@ -210,7 +188,10 @@
         "output port name": "dout",
         "output port polarity": "active high",
         "input port name": "din",
-        "input port polarity": "active high"
+        "input port polarity": "active high",
+        "mask port name": "wmask",
+        "mask granularity": 32,
+        "mask port polarity": "active high"
       }
     ]
   },
@@ -291,7 +272,10 @@
         "output port name": "dout",
         "output port polarity": "active high",
         "input port name": "din",
-        "input port polarity": "active high"
+        "input port polarity": "active high",
+        "mask port name": "wmask",
+        "mask granularity": 24,
+        "mask port polarity": "active high"
       }
     ]
   },
@@ -316,7 +300,10 @@
         "output port name": "dout",
         "output port polarity": "active high",
         "input port name": "din",
-        "input port polarity": "active high"
+        "input port polarity": "active high",
+        "mask port name": "wmask",
+        "mask granularity": 32,
+        "mask port polarity": "active high"
       }
     ]
   },

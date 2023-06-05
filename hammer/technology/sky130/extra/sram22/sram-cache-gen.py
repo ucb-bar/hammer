@@ -64,10 +64,9 @@ def main(args: List[str]) -> int:
                 port_dict['input port name'] = "din"
                 port_dict['input port polarity'] = "active high"
                 
-                if mask_gran != width:
-                    port_dict['mask port name'] = "wmask"
-                    port_dict['mask granularity'] = mask_gran
-                    port_dict['mask port polarity'] = "active high"  # ???
+                port_dict['mask port name'] = "wmask"
+                port_dict['mask granularity'] = mask_gran
+                port_dict['mask port polarity'] = "active high"  # ???
                 
                 sram_dict['ports'].append(port_dict.copy())
 
