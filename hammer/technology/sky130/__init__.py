@@ -779,6 +779,10 @@ class SKY130Tech(HammerTechnology):
                         port_idx = [idx for idx,line in enumerate(sl[intv[0]:intv[1]]) if 'PORT' in line]
                         for idx in port_idx:
                             sl[intv[0]+idx]=sl[intv[0]+idx].replace('PORT', 'PORT\n      CLASS CORE ;')
+                # force class to spacer
+                # TODO: the disconnect_* slices are also broken like this, but we're not using them
+                start = [idx for idx, line in enumerate(sl) if 'MACRO sky130_ef_io__connect_vcchib_vccd_and_vswitch_vddio_slice_20um' in line]
+                sl[start[0] + 1] = sl[start[0] + 1].replace('AREAIO', 'SPACER')
                 df.writelines(sl)
 
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
