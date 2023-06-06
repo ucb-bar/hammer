@@ -48,8 +48,7 @@ pylint = "^2.15"
 [[tool.poetry.source]]
 name = "testpypi"
 url = "https://test.pypi.org/legacy/"
-default = false
-secondary = false
+priority = "explicit"
 
 [build-system]
 requires = ["poetry-core>=1.0.8", "setuptools>=65.3"]
