@@ -249,18 +249,6 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         # Match SDC time units to timing libraries
         verbose_append("set_library_unit -time 1{}".format(self.get_time_unit().value_prefix + self.get_time_unit().unit))
 
-        # Set the top and bottom global/detail routing layers.
-        layers = self.get_setting("vlsi.technology.routing_layers")
-        if layers is not None:
-            if self.version() >= self.version_number("201"):
-                verbose_append(f"set_db design_bottom_routing_layer {layers[0]}")
-                verbose_append(f"set_db design_top_routing_layer {layers[1]}")
-            else:
-                verbose_append(f"set_db route_early_global_bottom_layer {layers[0]}")
-                verbose_append(f"set_db route_early_global_top_layer {layers[1]}")
-                verbose_append(f"set_db route_design_bottom_layer {layers[0]}")
-                verbose_append(f"set_db route_design_top_layer {layers[1]}")
-
         # Read LEF layouts.
         lef_files = self.technology.read_libs([
             hammer_tech.filters.lef_filter
@@ -312,6 +300,19 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         # Setup power settings from cpf/upf
         for l in self.generate_power_spec_commands():
             verbose_append(l)
+
+        # Set the top and bottom global/detail routing layers.
+        # This must happen after the tech LEF is loaded
+        layers = self.get_setting("vlsi.technology.routing_layers")
+        if layers is not None:
+            if self.version() >= self.version_number("201"):
+                verbose_append(f"set_db design_bottom_routing_layer {layers[0]}")
+                verbose_append(f"set_db design_top_routing_layer {layers[1]}")
+            else:
+                verbose_append(f"set_db route_early_global_bottom_layer {layers[0]}")
+                verbose_append(f"set_db route_early_global_top_layer {layers[1]}")
+                verbose_append(f"set_db route_design_bottom_layer {layers[0]}")
+                verbose_append(f"set_db route_design_top_layer {layers[1]}")
 
         # Set design effort.
         verbose_append("set_db design_flow_effort {}".format(self.get_setting("par.innovus.design_flow_effort")))
