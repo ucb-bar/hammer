@@ -47,6 +47,62 @@ Note that the various configurations of the SRAMs available are encoded in the f
 To modify this file to include different configurations, or switch to using the OpenRAM SRAMs,
 navigate to ``./extra/[sram22|openram]`` and run the script ``./sram-cache-gen.py`` for usage information.
 
+IO Library
+----------
+
+The IO ring required by efabless for MPW/ChipIgnite can be created in Innovus using the `sky130_fd_io` and `sky130_ef_io `IO cell libraries. Here are the steps to use them:
+
+1. `extra/efabless_template.io` is a template IO file. You should modify this by replacing the `<inst_path>`s with the netlist paths to your GPIO & analog pads. **DO NOT MODIFY ANY POSITIONS OR REPLACE CLAMP CELLS WITH IO CELLS**.
+
+    a. For pad assignment: the ordering in the instance lists are from left to right (for top/bottom edges) and **bottom to top (for left/right edges)**.
+
+    b. Refer to [this documentation](https://skywater-pdk.readthedocs.io/en/main/contents/libraries/sky130_fd_io/docs/user_guide.html) for how to configure the pins of the IO cells (not exhaustive).
+
+    c. Your chip reset signal must go thru the `xres4v2` cell. Since this is in your netlist, you must remove the `cell=...` instantiation from your IO file (it is only in the template for clarity) and update the inst name. Otherwise a separate instance will be placed instead.
+
+    d. The `ENABLE_INP_H` pin must be hard-tied to `TIE_HI_ESD` or `TIE_LO_ESD`. Since this is at a higher voltage, verify that this is routed as a wire only (no buffers can be inserted).
+
+    e. `ENABLE_H` must be low at chip startup before going high. Absent using the power detector cell from the NDA IO library, you may elect to connect this to a reset signal.
+
+    f. This template file does not contain dedicated clamps for the `VSWITCH` or `VCCHIB` supplies (following Caravel). EFabless provides a `sky130_ef_io__connect_vcchib_vccd_and_vswitch_vddio_slice_20um` slice in `open_pdks` that replaces a standard 20um spacer with a slice that connects `VCCHIB` and `VCCD` together, and `VSWITCH` and `VDDIO` together. Note that this slice cannot be placed immediately to the right (in the R0 orientation) of a `*_clamped3_pad` cell, because otherwise they *will* create a supply short. The template IO file contains normal 20um spacer slices explicitly placed at these critical locations, and the provided hook instantiates the `connect` slice in place of the standard 20um spacer. This can be modified if desired. Caravel distributes the `*connect*` slices across the bottom edge of the padframe.
+
+2. Then, in your design YAML file, specify your IO file with the following. The top-level constraint must be exactly as below:
+
+    ```yaml
+    technology.sky130.io_file: <path/to/ring.io>
+    technology.sky130.io_file_meta: prependlocal
+
+    path: Top
+    type: toplevel
+    x: 0
+    y: 0
+    width: 3588
+    height: 5188
+    margins:
+      left: 249.78
+      right: 249.78
+      top: 252.08
+      bottom: 252.08
+    ```
+
+3. In your CLIDriver, you must import the following hook from the tech plugin and insert it as a `post_insertion_hook` after `floorplan_design`.
+
+    ```python
+    from hammer.technology.sky130 import efabless_ring_io
+    ```
+
+    In addition, to ensure ties to `TIE_HI_ESD` / `TIE_LO_ESD` are preserved during synthesis, a `post_insertion_hook` to `init_environment` should be added to `dont_touch` the IO cells
+
+    ```python
+    def donttouch_iocells(x: HammerTool) -> bool:
+        x.append('set_dont_touch [get_db insts -if {.base_cell.name == sky130_ef_io__*}] true')
+        return True
+    ```
+
+4. If you want to use the NDA s8iom0s8 library, you must include the `s8io.yml` file with `-p` on the `hammer-vlsi` command line, and then change the cells to that library in the IO file. Net names in the hook above will need to be lower-cased.
+
+5. DRC requires a rectangle of `areaid.lowTapDensity` (GDS layer 81/14) around the core area to check latchup correctly. Currently, this is not yet implemented in Hammer, and will need to be added manually in a GDS editor after GDS streamout.
+
 NDA Files
 ---------
 The NDA version of the Sky130 PDK is only required for Siemens Calibre to perform DRC/LVS signoff with the commercial VLSI flow.
@@ -62,8 +118,6 @@ technology.sky130.sky130_nda: "/path/to/skywater-src-nda"
 We use the Calibre decks in the ``s8`` PDK, version ``V2.0.1``, 
 see [here for the DRC deck path](https://github.com/ucb-bar/hammer/blob/612b4b662a774b1cab5cf25e8f41c6a771388e47/hammer/technology/sky130/sky130.tech.json#L16) 
 and [here for the LVS deck path](https://github.com/ucb-bar/hammer/blob/612b4b662a774b1cab5cf25e8f41c6a771388e47/hammer/technology/sky130/sky130.tech.json#L24).
-
-
 
 Resources
 ---------
@@ -193,7 +247,5 @@ make install
 ```
 
 This generates all the Sky130 PDK files and installs them to `$PDK_ROOT/share/pdk/sky130A`
-
-
 
 

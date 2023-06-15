@@ -26,6 +26,9 @@ technology.sky130:
 
   drc_blackbox_srams: false
   lvs_blackbox_srams: false
+
+  io_file: "extra/efabless_template.io"  # IO ring - take this template and modify for your own use
+  io_file_meta: prependlocal
   
 
 mentor.extra_env_vars_meta: lazydeepsubst # Mentor environment variables
