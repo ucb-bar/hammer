@@ -163,6 +163,7 @@ class SKY130Tech(HammerTechnology):
                     df.write(LVS_DECK_INSERT_LINES)
 
     # Power pins for clamps must be CLASS CORE
+    # connect/disconnect spacers must be CLASS PAD SPACER, not AREAIO
     def setup_io_lefs(self) -> None:
         sky130A_path = Path(self.get_setting('technology.sky130.sky130A'))
         source_path = sky130A_path / 'libs.ref' / 'sky130_fd_io' / 'lef' / 'sky130_ef_io.lef'
@@ -186,6 +187,14 @@ class SKY130Tech(HammerTechnology):
                         port_idx = [idx for idx,line in enumerate(sl[intv[0]:intv[1]]) if 'PORT' in line]
                         for idx in port_idx:
                             sl[intv[0]+idx]=sl[intv[0]+idx].replace('PORT', 'PORT\n      CLASS CORE ;')
+                for cell in [
+                    'sky130_ef_io__connect_vcchib_vccd_and_vswitch_vddio_slice_20um',
+                    'sky130_ef_io__disconnect_vccd_slice_5um',
+                    'sky130_ef_io__disconnect_vdda_slice_5um',
+                ]:
+                    # force class to spacer
+                    start = [idx for idx, line in enumerate(sl) if f'MACRO {cell}' in line]
+                    sl[start[0] + 1] = sl[start[0] + 1].replace('AREAIO', 'SPACER')
                 df.writelines(sl)
 
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
