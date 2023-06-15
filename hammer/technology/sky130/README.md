@@ -66,24 +66,28 @@ The IO ring required by efabless for MPW/ChipIgnite can be created in Innovus us
 
 2. Then, in your design YAML file, specify your IO file with the following. The top-level constraint must be exactly as below:
 
-        technology.sky130.io_file: <path/to/ring.io>
-        technology.sky130.io_file_meta: prependlocal
+    ```yaml
+    technology.sky130.io_file: <path/to/ring.io>
+    technology.sky130.io_file_meta: prependlocal
 
-        path: Top
-        type: toplevel
-        x: 0
-        y: 0
-        width: 3588
-        height: 5188
-        margins:
-          left: 249.78
-          right: 249.78
-          top: 252.08
-          bottom: 252.08
+    path: Top
+    type: toplevel
+    x: 0
+    y: 0
+    width: 3588
+    height: 5188
+    margins:
+      left: 249.78
+      right: 249.78
+      top: 252.08
+      bottom: 252.08
+    ```
 
 3. In your CLIDriver, you must import the following hook from the tech plugin and insert it as a `post_insertion_hook` after `floorplan_design`.
 
-        from hammer.technology.sky130 import efabless_ring_io
+    ```python
+    from hammer.technology.sky130 import efabless_ring_io
+    ```
 
     In addition, to ensure ties to `TIE_HI_ESD` / `TIE_LO_ESD` are preserved during synthesis, a `post_insertion_hook` to `init_environment` should be added to `dont_touch` the IO cells
 

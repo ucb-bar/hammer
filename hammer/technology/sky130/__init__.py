@@ -362,38 +362,38 @@ def efabless_ring_io(ht: HammerTool) -> bool:
     p_nets = list(map(lambda s: s.name, ht.get_independent_power_nets()))
     g_nets = list(map(lambda s: s.name, ht.get_independent_ground_nets()))
     ht.append(f'''
-        # Global net connections
-        connect_global_net VDDA -type pg_pin -pin_base_name VDDA -verbose
-        connect_global_net VDDIO -type pg_pin -pin_base_name VDDIO* -verbose
-        connect_global_net {p_nets[0]} -type pg_pin -pin_base_name VCCD* -verbose
-        connect_global_net {p_nets[0]} -type pg_pin -pin_base_name VCCHIB -verbose
-        connect_global_net {p_nets[0]} -type pg_pin -pin_base_name VSWITCH -verbose
-        connect_global_net {g_nets[0]} -type pg_pin -pin_base_name VSSA -verbose
-        connect_global_net {g_nets[0]} -type pg_pin -pin_base_name VSSIO* -verbose
-        connect_global_net {g_nets[0]} -type pg_pin -pin_base_name VSSD* -verbose
+# Global net connections
+connect_global_net VDDA -type pg_pin -pin_base_name VDDA -verbose
+connect_global_net VDDIO -type pg_pin -pin_base_name VDDIO* -verbose
+connect_global_net {p_nets[0]} -type pg_pin -pin_base_name VCCD* -verbose
+connect_global_net {p_nets[0]} -type pg_pin -pin_base_name VCCHIB -verbose
+connect_global_net {p_nets[0]} -type pg_pin -pin_base_name VSWITCH -verbose
+connect_global_net {g_nets[0]} -type pg_pin -pin_base_name VSSA -verbose
+connect_global_net {g_nets[0]} -type pg_pin -pin_base_name VSSIO* -verbose
+connect_global_net {g_nets[0]} -type pg_pin -pin_base_name VSSD* -verbose
     ''')
     ht.append('''
-        # IO fillers
-        set io_fillers {sky130_ef_io__com_bus_slice_20um sky130_ef_io__com_bus_slice_10um sky130_ef_io__com_bus_slice_5um sky130_ef_io__com_bus_slice_1um}
-        add_io_fillers -prefix IO_FILLER -io_ring 1 -cells $io_fillers -side top -filler_orient r0
-        add_io_fillers -prefix IO_FILLER -io_ring 1 -cells $io_fillers -side right -filler_orient r270
-        add_io_fillers -prefix IO_FILLER -io_ring 1 -cells $io_fillers -side bottom -filler_orient r180
-        add_io_fillers -prefix IO_FILLER -io_ring 1 -cells $io_fillers -side left -filler_orient r90
-        # Fix placement
-        set io_filler_insts [get_db insts IO_FILLER_*]
-        set_db $io_filler_insts .place_status fixed
+# IO fillers
+set io_fillers {sky130_ef_io__com_bus_slice_20um sky130_ef_io__com_bus_slice_10um sky130_ef_io__com_bus_slice_5um sky130_ef_io__com_bus_slice_1um}
+add_io_fillers -prefix IO_FILLER -io_ring 1 -cells $io_fillers -side top -filler_orient r0
+add_io_fillers -prefix IO_FILLER -io_ring 1 -cells $io_fillers -side right -filler_orient r270
+add_io_fillers -prefix IO_FILLER -io_ring 1 -cells $io_fillers -side bottom -filler_orient r180
+add_io_fillers -prefix IO_FILLER -io_ring 1 -cells $io_fillers -side left -filler_orient r90
+# Fix placement
+set io_filler_insts [get_db insts IO_FILLER_*]
+set_db $io_filler_insts .place_status fixed
     ''')
     # An offset of 40um is used to place the core ring inside the core area. It
     # can be decreased down to 5um as desired, but will require additional
     # routing / settings to connect the core power stripes to the ring.
     ht.append(f'''
-        # Core ring
-        add_rings -follow io -layer met5 -nets {{ {p_nets[0]} {g_nets[0]} }} -offset 40 -width 13 -spacing 3
-        route_special -connect pad_pin -nets {{ {p_nets[0]} {g_nets[0]} }} -detailed_log
+# Core ring
+add_rings -follow io -layer met5 -nets {{ {p_nets[0]} {g_nets[0]} }} -offset 40 -width 13 -spacing 3
+route_special -connect pad_pin -nets {{ {p_nets[0]} {g_nets[0]} }} -detailed_log
     ''')
     ht.append('''
-        # Prevent buffering on TIE_LO_ESD and TIE_HI_ESD
-        set_dont_touch [get_db [get_db pins -if {.name == *TIE*ESD}] .net]
+# Prevent buffering on TIE_LO_ESD and TIE_HI_ESD
+set_dont_touch [get_db [get_db pins -if {.name == *TIE*ESD}] .net]
     ''')
     return True
 
