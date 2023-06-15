@@ -85,6 +85,14 @@ The IO ring required by efabless for MPW/ChipIgnite can be created in Innovus us
 
         from hammer.technology.sky130 import efabless_ring_io
 
+    In addition, to ensure ties to `TIE_HI_ESD` / `TIE_LO_ESD` are preserved during synthesis, a `post_insertion_hook` to `init_environment` should be added to `dont_touch` the IO cells
+
+    ```python
+    def donttouch_iocells(x: HammerTool) -> bool:
+        x.append('set_dont_touch [get_db insts -if {.base_cell.name == sky130_ef_io__*}] true')
+        return True
+    ```
+
 4. If you want to use the NDA s8iom0s8 library, you must include the `s8io.yml` file with `-p` on the `hammer-vlsi` command line, and then change the cells to that library in the IO file. Net names in the hook above will need to be lower-cased.
 
 5. DRC requires a rectangle of `areaid.lowTapDensity` (GDS layer 81/14) around the core area to check latchup correctly. Currently, this is not yet implemented in Hammer, and will need to be added manually in a GDS editor after GDS streamout.
