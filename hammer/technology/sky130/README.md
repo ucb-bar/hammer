@@ -76,16 +76,18 @@ The IO ring required by efabless for MPW/ChipIgnite can be created in Innovus us
         width: 3588
         height: 5188
         margins:
-          left: 215
-          right: 215
-          top: 215
-          bottom: 215
+          left: 249.78
+          right: 249.78
+          top: 252.08
+          bottom: 252.08
 
 3. In your CLIDriver, you must import the following hook from the tech plugin and insert it as a `post_insertion_hook` after `floorplan_design`.
 
         from hammer.technology.sky130 import efabless_ring_io
 
 4. If you want to use the NDA s8iom0s8 library, you must include the `s8io.yml` file with `-p` on the `hammer-vlsi` command line, and then change the cells to that library in the IO file. Net names in the hook above will need to be lower-cased.
+
+5. DRC requires a rectangle of `areaid.lowTapDensity` (GDS layer 81/14) around the core area to check latchup correctly. Currently, this is not yet implemented in Hammer, and will need to be added manually in a GDS editor after GDS streamout.
 
 NDA Files
 ---------

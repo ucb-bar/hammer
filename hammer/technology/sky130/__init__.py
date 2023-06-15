@@ -383,9 +383,12 @@ def efabless_ring_io(ht: HammerTool) -> bool:
         set io_filler_insts [get_db insts IO_FILLER_*]
         set_db $io_filler_insts .place_status fixed
     ''')
+    # An offset of 40um is used to place the core ring inside the core area. It
+    # can be decreased down to 5um as desired, but will require additional
+    # routing / settings to connect the core power stripes to the ring.
     ht.append(f'''
         # Core ring
-        add_rings -follow io -layer met5 -nets {{ {p_nets[0]} {g_nets[0]} }} -offset 5 -width 13 -spacing 3
+        add_rings -follow io -layer met5 -nets {{ {p_nets[0]} {g_nets[0]} }} -offset 40 -width 13 -spacing 3
         route_special -connect pad_pin -nets {{ {p_nets[0]} {g_nets[0]} }} -detailed_log
     ''')
     ht.append('''
