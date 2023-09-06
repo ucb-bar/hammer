@@ -7,7 +7,7 @@ import inspect
 
 from hammer.vlsi import HammerTool, HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, ILMStruct
 from hammer.vlsi.constraints import MMMCCorner, MMMCCornerType
-from hammer.utils import optional_map, add_dicts
+from hammer.utils import optional_map, add_dicts, reduce_list_str, add_lists
 import hammer.tech as hammer_tech
 
 
@@ -146,9 +146,16 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
             blank_sdc = os.path.join(self.run_dir, "blank.sdc")
             self.run_executable(["touch", blank_sdc])
             sdc_files_arg = "-sdc_files {{ {} }}".format(blank_sdc)
-        append_mmmc("create_constraint_mode -name {name} {sdc_files_arg}".format(
+        if self.hierarchical_mode.is_nonleaf_hierarchical():
+            ilm_sdcs = reduce_list_str(add_lists, list(map(lambda ilm: ilm.sdcs, self.get_input_ilms())))  # type: List[str]
+            ilm_sdc_files_arg = "-ilm_sdc_files [list {sdc_files}]".format(
+                sdc_files=" ".join(ilm_sdcs))
+        else:
+            ilm_sdc_files_arg = ""
+        append_mmmc("create_constraint_mode -name {name} {sdc_files_arg} {ilm_sdc_files_arg}".format(
             name=constraint_mode,
-            sdc_files_arg=sdc_files_arg
+            sdc_files_arg=sdc_files_arg,
+            ilm_sdc_files_arg=ilm_sdc_files_arg
         ))
 
         corners = self.get_mmmc_corners()  # type: List[MMMCCorner]

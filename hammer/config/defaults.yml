@@ -161,6 +161,7 @@ vlsi.inputs:
   # gds (str) - path to the GDS file
   # netlist (str) - path to the netlist file
   # sim_netlist (str) - Optional. If specified, this netlist is appended for hierarchical simulation
+  # sdcs (List(str)) - paths to the SDC file(s) needed for parent constraints
 
   mmmc_corners: [] # Multi-mode multi-corner setups, overrides supplies
   # MMMC struct members:

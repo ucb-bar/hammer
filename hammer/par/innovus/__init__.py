@@ -55,7 +55,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                           lef=os.path.join(self.run_dir, "{top}ILM.lef".format(top=self.top_module)),
                           gds=self.output_gds_filename,
                           netlist=self.output_netlist_filename,
-                          sim_netlist=self.output_sim_netlist_filename)
+                          sim_netlist=self.output_sim_netlist_filename,
+                          sdcs=self.output_ilm_sdcs)
             ]
         else:
             self.output_ilms = []
@@ -136,6 +137,17 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             return list(map(lambda c: os.path.join(self.run_dir, "{top}.{corner}.par.spef".format(top=self.top_module, corner=c.name)), corners))
         else:
             return [os.path.join(self.run_dir, "{top}.par.spef".format(top=self.top_module))]
+
+    @property
+    def output_ilm_sdcs(self) -> List[str]:
+        corners = self.get_mmmc_corners()
+        if corners:
+            filtered = list(filter(lambda c: c.type in [MMMCCornerType.Setup, MMMCCornerType.Hold], corners))
+            ctype_map = {MMMCCornerType.Setup: "setup", MMMCCornerType.Hold: "hold"}
+            return list(map(lambda c: os.path.join(self.run_dir, "{top}_postRoute_{corner_name}.{corner_type}_view.core.sdc".format(
+                top=self.top_module, corner_name=c.name, corner_type=ctype_map[c.type])), filtered))
+        else:
+            return [os.path.join(self.run_dir, "{top}_postRoute.core.sdc".format(top=self.top_module))]
 
     @property
     def env_vars(self) -> Dict[str, str]:
@@ -505,10 +517,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
     def clock_tree(self) -> bool:
         """Setup and route a clock tree for clock nets."""
         if self.hierarchical_mode.is_nonleaf_hierarchical():
-            self.verbose_append('''
-            flatten_ilm
-            update_constraint_mode -name my_constraint_mode -ilm_sdc_files {sdc}
-            '''.format(sdc=self.post_synth_sdc), clean=True)
+            self.verbose_append("flatten_ilm")
         if len(self.get_clock_ports()) > 0:
             # Ignore clock tree when there are no clocks
             self.verbose_append("create_clock_tree_spec")
@@ -824,6 +833,10 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         self.verbose_append("write_lef_abstract -5.8 {top}ILM.lef".format(top=self.top_module))
         self.verbose_append("write_ilm -model_type all -to_dir {ilm_dir_name} -type_flex_ilm ilm".format(
             ilm_dir_name=self.ilm_dir_name))
+        # Need to append -hierarchical after get_pins in SDCs for parent timing analysis
+        for sdc_out in self.output_ilm_sdcs:
+            self.verbose_append('gzip -d -c {ilm_dir_name}/mmmc/ilm_data/{top}/{sdc_in}.gz | sed "s/get_pins/get_pins -hierarchical/g" > {sdc_out}'.format(
+                ilm_dir_name=self.ilm_dir_name, top=self.top_module, sdc_in=os.path.basename(sdc_out), sdc_out=sdc_out))
         self.ran_write_ilm = True
         return True
 
