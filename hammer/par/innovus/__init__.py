@@ -835,7 +835,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             ilm_dir_name=self.ilm_dir_name))
         # Need to append -hierarchical after get_pins in SDCs for parent timing analysis
         for sdc_out in self.output_ilm_sdcs:
-            self.verbose_append('gzip -d -c {ilm_dir_name}/mmmc/ilm_data/{top}/{sdc_in}.gz | sed "s/get_pins/get_pins -hierarchical/g" > {sdc_out}'.format(
+            self.append('gzip -d -c {ilm_dir_name}/mmmc/ilm_data/{top}/{sdc_in}.gz | sed "s/get_pins/get_pins -hierarchical/g" > {sdc_out}'.format(
                 ilm_dir_name=self.ilm_dir_name, top=self.top_module, sdc_in=os.path.basename(sdc_out), sdc_out=sdc_out))
         self.ran_write_ilm = True
         return True
