@@ -87,12 +87,13 @@ class MockPlaceAndRoute(HammerPlaceAndRouteTool, DummyHammerTool):
         self.output_gds = "/dev/null"
         self.output_netlist = "/dev/null"
         self.output_sim_netlist = "/dev/null"
+        self.output_ilm_sdcs = ["/dev/null"]
         self.hcells_list = []
         if self.hierarchical_mode in [HierarchicalMode.Leaf, HierarchicalMode.Hierarchical]:
             self.output_ilms = [
                 ILMStruct(dir="/dev/null", data_dir="/dev/null", module=self.top_module,
                           lef="/dev/null", gds=self.output_gds, netlist=self.output_netlist,
-                          sim_netlist=self.output_sim_netlist)
+                          sim_netlist=self.output_sim_netlist, sdcs=self.output_ilm_sdcs)
             ]
         else:
             self.output_ilms = []
