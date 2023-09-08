@@ -1,0 +1,6 @@
+# Default settings for Pegasus LVS, for project/technology configuration and overriding.
+lvs.pegasus:
+    # Location of the binary
+    pegasus_bin: str
+
+    version: str

@@ -1,0 +1,6 @@
+# Default settings for Pegasus DRC, for project/technology configuration and overriding.
+drc.pegasus:
+    # Location of the binary
+    pegasus_bin: str
+
+    version: str
