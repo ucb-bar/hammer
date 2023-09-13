@@ -874,7 +874,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             "-nowin",  # Prevent the GUI popping up.
             "-common_ui",
             "-files", par_tcl_filename
-        ]
+        ] + self.get_setting("par.innovus.innovus_bin_args")
 
         # Temporarily disable colours/tag to make run output more readable.
         # TODO: think of a more elegant way to do this?

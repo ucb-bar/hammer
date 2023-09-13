@@ -5,8 +5,10 @@ formal.conformal:
   # Location of the binary
   conformal_lec_bin: "${cadence.cadence_home}/CONFRML/CONFRML${formal.conformal.version}/bin/lec"
   conformal_lec_bin_meta: lazysubst # we want later overrides to be able to affect this
+  conformal_lec_args: [] # Additional command line arguments passed to Conformal
   conformal_ccd_bin: "${cadence.cadence_home}/CONFRML/CONFRML${formal.conformal.version}/bin/ccd"
   conformal_ccd_bin_meta: lazysubst # we want later overrides to be able to affect this
+  conformal_ccd_args: [] # Additional command line arguments passed to Conformal
 
   # Conformal version to use
   # Used to locate the binary - e.g. the '212' in ${cadence.cadence_home}/CONFRML/CONFRML212/bin/lec

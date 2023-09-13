@@ -6,6 +6,9 @@ power.joules:
   joules_bin: "${cadence.cadence_home}/JLS/JLS${power.joules.version}/bin/joules"
   joules_bin_meta: lazysubst # we want later overrides to be able to affect this
 
+  # Additional command line arguments passed to Joules
+  joules_bin_args: []
+
   # Joules version to use.
   # Used to locate the binary - e.g. the '201' in ${cadence.cadence_home}/JLS/JLS201/bin/joules
   version: "201"

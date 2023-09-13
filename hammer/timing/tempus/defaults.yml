@@ -6,6 +6,9 @@ timing.tempus:
   tempus_bin: "${cadence.cadence_home}/SSV/SSV${timing.tempus.version}/bin/tempus"
   tempus_bin_meta: lazysubst # we want later overrides to be able to affect this
 
+  # Additional command line arguments passed to Tempus
+  tempus_bin_args: []
+
   # Tempus version to use
   # Used to locate the binary - e.g. the '211_ISR3' in ${cadence.cadence_home}/SSV/SSV211_ISR3/bin/tempus
   version: "211_ISR3"

@@ -32,8 +32,10 @@ class Conformal(HammerFormalTool, CadenceTool):
     @property
     def start_cmd(self) -> List[str]:
         """ Generate required startup command based on the requested check and license level """
-        lec_bin = self.get_setting("formal.conformal.conformal_lec_bin")
-        ccd_bin = self.get_setting("formal.conformal.conformal_ccd_bin")
+        lec_bin = self.get_setting("formal.conformal.conformal_lec_bin") + \
+                  self.get_setting("formal.conformal.conformal_lec_bin_args")
+        ccd_bin = self.get_setting("formal.conformal.conformal_ccd_bin") + \
+                  self.get_setting("formal.conformal.conformal_ccd_bin_args")
         license = self.get_setting("formal.conformal.license")
         cmd = ["", ""]
         if not license in ["L", "XL", "GXL"]:

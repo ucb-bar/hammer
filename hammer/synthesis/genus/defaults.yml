@@ -4,6 +4,9 @@ synthesis.genus:
   genus_bin: "${cadence.cadence_home}/GENUS/GENUS${synthesis.genus.version}/bin/genus"
   genus_bin_meta: lazysubst # we want later overrides to be able to affect this
 
+  # Additional command line arguments passed to Genus
+  genus_bin_args: []
+
   # Genus version to use.
   # Used to locate the binary - e.g. the '171' in ${cadence.cadence_home}/GENUS/GENUS171/bin/genus
   version: "171"

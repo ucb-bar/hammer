@@ -6,6 +6,9 @@ power.voltus:
   voltus_bin: "${cadence.cadence_home}/SSV/SSV${power.voltus.version}/bin/voltus"
   voltus_bin_meta: lazysubst # we want later overrides to be able to affect this
 
+  # Additional command line arguments passed to Voltus
+  voltus_bin_args: []
+
   # Voltus version to use.
   # Used to locate the binary - e.g. the '181' in ${cadence.cadence_home}/VOLTUS/VOLTUS181/bin/voltus
   version: "211"
