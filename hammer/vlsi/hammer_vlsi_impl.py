@@ -81,6 +81,7 @@ class FlowLevel(Enum):
 
 PowerReport = NamedTuple('PowerReport', [
     ('waveform_path', str),
+    ('inst', Optional[str]),
     ('module', Optional[str]),
     ('levels', Optional[int]),
     ('start_time', Optional[TimeValue]),
@@ -88,7 +89,8 @@ PowerReport = NamedTuple('PowerReport', [
     ('toggle_signal', Optional[str]),
     ('num_toggles', Optional[int]),
     ('frame_count', Optional[int]),
-    ('report_name', Optional[str])
+    ('report_name', Optional[str]),
+    ('output_formats', Optional[List[str]])
 ])
 
 
@@ -1607,12 +1609,15 @@ class HammerPowerTool(HammerTool):
         output = []
         for config in configs:
             report = PowerReport(
-                waveform_path=config["waveform_path"], module=None,
+                waveform_path=config["waveform_path"],
+                inst=None, module=None,
                 levels=None, start_time=None,
                 end_time=None, toggle_signal=None,
                 num_toggles=None, frame_count=None,
-                report_name=None
+                report_name=None, output_formats=None
             )
+            if "inst" in config:
+                report = report._replace(inst=config["inst"])
             if "module" in config:
                 report = report._replace(module=config["module"])
             if "levels" in config:
@@ -1629,6 +1634,8 @@ class HammerPowerTool(HammerTool):
                 report = report._replace(frame_count=config["frame_count"])
             if "report_name" in config:
                 report = report._replace(report_name=config["report_name"])
+            if "output_formats" in config:
+                report = report._replace(output_formats=config["output_formats"])
             output.append(report)
         return output
 

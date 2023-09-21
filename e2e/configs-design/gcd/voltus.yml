@@ -1,0 +1,8 @@
+# Voltus Power Analysis
+
+vlsi.core.power_tool: "hammer.power.voltus"
+power.inputs:
+  level: "par"
+  tb_name: "gcd_tb"
+  tb_dut: "gcd_dut"
+  database: "/path/to/database"

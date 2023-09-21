@@ -1,0 +1,11 @@
+# Test Joules Flow
+
+vlsi.core.power_tool: "hammer.power.joules"
+
+power.inputs.input_files: ["src/pass.v"]
+power.inputs.top_module: "pass"
+power.inputs.tb_name: "pass_tb"
+power.inputs.tb_dut: "pass_0"
+power.inputs.waveforms: ["build-asap7-cm/test/sim-rtl-rundir/output.fsdb"]
+
+power.inputs.power_spec: "auto"

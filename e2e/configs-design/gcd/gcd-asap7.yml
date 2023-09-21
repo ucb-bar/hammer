@@ -1,0 +1,32 @@
+# Specify clock signals
+vlsi.inputs.clocks: [
+  {name: "clk", period: "5ns", uncertainty: "0.1ns"}
+]
+
+# Placement Constraints
+vlsi.inputs.placement_constraints:
+  - path: "gcd"
+    type: toplevel
+    x: 0
+    y: 0
+    width: 100
+    height: 100
+    margins:
+      left: 0
+      right: 0
+      top: 0
+      bottom: 0
+
+vlsi.inputs.pin_mode: generated
+vlsi.inputs.pin.generate_mode: semi_auto
+vlsi.inputs.pin.assignments: [
+  {pins: "*", layers: ["M5"], side: "bottom"}
+]
+
+vlsi.inputs.delays: [
+  {name: "in", clock: "clk", delay: "1", direction: "input"},
+  {name: "out", clock: "clk", delay: "2", direction: "output"}
+]
+
+# SRAM Compiler compiler options
+vlsi.core.sram_generator_tool: "hammer.technology.asap7.sram_compiler"

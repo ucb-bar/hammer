@@ -1,0 +1,57 @@
+# Specify clock signals
+vlsi.inputs.clocks: [
+  {name: "clock", period: "10ns", uncertainty: "0.1ns"}
+]
+
+# Placement Constraints
+vlsi.inputs.placement_constraints:
+  - path: "pass"
+    type: toplevel
+    x: 0
+    y: 0
+    width: 100
+    height: 100
+    margins:
+      left: 0
+      right: 0
+      top: 0
+      bottom: 0
+
+# Power Straps
+par.power_straps_mode: generate
+par.generate_power_straps_method: by_tracks
+par.blockage_spacing: 40.0
+par.blockage_spacing_top_layer: met4
+par.generate_power_straps_options:
+  by_tracks:
+    strap_layers:
+      - met4
+      - met5
+    pin_layers:
+      - met5
+    blockage_spacing_met2: 4.0
+    blockage_spacing_met4: 2.0
+    blockage_spacing_met4: 2.0
+    track_width: 3
+    track_width_met5: 1
+    track_spacing: 5
+    track_start: 10
+    track_start_met5: 1
+    power_utilization: 0.1
+    power_utilization_met4: 0.1
+    power_utilization_met5: 0.1
+
+# Pin placement constraints
+vlsi.inputs.pin_mode: generated
+vlsi.inputs.pin.generate_mode: semi_auto
+vlsi.inputs.pin.assignments: [
+  {pins: "*", layers: ["met4"], side: "bottom"}
+]
+
+vlsi.inputs.delays: [
+  {name: "in", clock: "clock", delay: "1", direction: "input"},
+  {name: "out", clock: "clock", delay: "2", direction: "output"}
+]
+
+# SRAM Compiler compiler options
+vlsi.core.sram_generator_tool: "hammer.technology.sky130.sram_compiler"

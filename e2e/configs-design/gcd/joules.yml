@@ -1,0 +1,11 @@
+# Test Joules Flow
+
+vlsi.core.power_tool: "hammer.power.joules"
+
+power.inputs.input_files: ["src/gcd.v"]
+power.inputs.top_module: "gcd"
+power.inputs.tb_name: "gcd_tb"
+power.inputs.tb_dut: "gcd_dut"
+power.inputs.waveforms: ["build-asap7-cm/gcd/sim-rtl-rundir/output.fsdb"]
+
+power.inputs.power_spec: "auto"

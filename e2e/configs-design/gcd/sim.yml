@@ -1,0 +1,14 @@
+# RTL Simulation
+
+sim.inputs:
+  top_module: gcd
+  tb_dut: gcd_dut
+  tb_name: "gcd_tb"
+  input_files: ['src/gcd.v', 'src/gcd_tb.v']
+  options: ['-timescale=1ns/10ps']
+  options_meta: append
+  defines: 
+    - "CLOCK_PERIOD=1.00"
+  defines_meta: 'append'
+
+# sim.inputs.execute_sim: false

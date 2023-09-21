@@ -1,0 +1,11 @@
+vlsi.core.technology: "hammer.technology.asap7"
+technology.asap7.pdk_install_dir: "/tools/B/asap7/asap7PDK_r1p7"
+technology.asap7.stdcell_install_dir: "/tools/B/asap7/asap7sc7p5t_27"
+technology.asap7.tarball_dir: "/tools/B/asap7/"
+
+synthesis.genus.version: "211"
+par.innovus.version: "211"
+
+sim.vcs.version: "S-2021.09-SP1-1"
+sim.vcs.verdi_home: "/tools/synopsys/verdi/${sim.vcs.version}"
+sim.vcs.verdi_home_meta: lazysubst
