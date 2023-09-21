@@ -87,9 +87,19 @@ class SRAMParameters(NamedTuple('SRAMParameters', [
 
 Supply = NamedTuple('Supply', [
     ('name', str),
-    ('pin', Optional[str]),
+    ('type', str),
+    ('voltage', VoltageValue),
+    ('domain', Optional[str]),
+    ('states', Optional[PowerState]),
+    ('interacts', Optional[List[str]]),
     ('tie', Optional[str]),
     ('weight', Optional[int])
+])
+
+PowerState = NamedTuple('PowerState', [
+    ('name', str),
+    ('voltage', VoltageValue),
+    ('expression', str)
 ])
 
 
@@ -526,6 +536,7 @@ class PlacementConstraintType(Enum):
     Hierarchical = 5
     Obstruction = 6
     Overlap = 7
+    PowerDomain = 8
 
     @classmethod
     def __mapping(cls) -> Dict[str, "PlacementConstraintType"]:
@@ -536,7 +547,8 @@ class PlacementConstraintType(Enum):
             "hardmacro": PlacementConstraintType.HardMacro,
             "hierarchical": PlacementConstraintType.Hierarchical,
             "obstruction": PlacementConstraintType.Obstruction,
-            "overlap": PlacementConstraintType.Overlap
+            "overlap": PlacementConstraintType.Overlap,
+            "powerdomain": PlacementConstraintType.PowerDomain
         }
 
     @staticmethod
@@ -584,7 +596,6 @@ class Margins(NamedTuple('Margins', [
             "top": str(self.top)
         }
 
-
 class PlacementConstraint(NamedTuple('PlacementConstraint', [
     ('path', str),
     ('type', PlacementConstraintType),
@@ -598,7 +609,9 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
     ('margins', Optional[Margins]),
     ('top_layer', Optional[str]),
     ('layers', Optional[List[str]]),
-    ('obs_types', Optional[List[ObstructionType]])
+    ('obs_types', Optional[List[ObstructionType]]),
+    ('power_domain', Optional[str]),
+    ('supply_connects', Optional[List[Tuple[str, str]]])
 ])):
     __slots__ = ()
 

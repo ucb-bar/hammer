@@ -60,13 +60,13 @@ vlsi.technology:
   bump_block_cut_layer: null # Top cut/via layer for blockage under bumps. (Optional[str])
   # Only used if using vlsi.inputs.bumps
   # TODO: remove this after stackup supports vias ucb-bar/hammer#354
-  
+
   tap_cell_interval: 10.0 # Spacing between columns of tap cells (float)
   # Must be overridden by technology plugin defaults or else you will have DRC/latch-up errors.
 
   tap_cell_offset: 0.0 # Offset of the first column of tape cells from the edge of the floorplan (float)
   # Should be overridden by technology plugin defaults.
-  
+
   routing_layers: null # If specified, set/override the [bottom, top] layers used for routing. (Optional[Tuple[int, int]])
   # Both must match the index number (not name) of layers used in the stackup.
 
@@ -103,7 +103,7 @@ vlsi.technology:
 
   timing_lib_pref: "NLDM"
   # Select a timing lib preference, available options include:
-  # NLDM, ECSM, and CCS (lower or upper case acceptable). 
+  # NLDM, ECSM, and CCS (lower or upper case acceptable).
   # If no preference is specified, then the following preference order is followed:
   # NLDM -> ECSM -> CCS
 
@@ -113,15 +113,21 @@ vlsi.inputs:
   # Supply voltages and names
   # Supply Struct:
   #   name (str) - The name of your supply's net
-  #   pin (Optional[str]) - The cell pin that this net should drive, no pins are connected when omitted
+  #   type (str) - "power" or "ground"
+  #   voltage (VoltageValue) - The default voltage of this supply
+  #   domain (Optional[str]) - The power domain that this supply is part of. If not specified, it is assumed to be in the always-on domain.
+  #   states (Optional[List[PowerState]]) - Encode a power state table. First item of the tuple is the name of the state and the second is the voltage.
+  #   interacts (Optional[List[str]]) - Names of other supplies that this one has datapath crossings with (infers level shifters, etc.)
   #   tie (Optional[str]) - Another supply this supply is tied to. Nets with this set will  not end up in your final layout.
   #   weight (Optional[int]) - The weight of this supply when building power straps (larger number = more straps).
   #     Not used for grounds. Mandatory, but defaults to 1 if omitted.
-  supplies:
-    power: [{name: "VDD", pin: "VDD"}] # power (List(Supply)): A list of of all power net(s) in the design
-    ground: [{name: "VSS", pin: "VSS"}] # ground (List(Supply)): A list of all ground net(s) in the design
-    VDD: "0.85 V" # VDD (str): The default voltage of the primary power net
-    GND: "0 V" # GND (str): The default voltage of the primary ground net
+  supplies: # List[Supply]
+    - name: "VDD"
+      type: "power"
+      voltage: "0.85 V"
+    - name: "VSS"
+      type: "ground"
+      voltage: "0 V"
 
   hierarchical:
     mode: flat # Hierarchical par mode. (str)
@@ -166,12 +172,12 @@ vlsi.inputs:
   mmmc_corners: [] # Multi-mode multi-corner setups, overrides supplies
   # MMMC struct members:
   # name (str) - name of the corner.
-  # type (str) - One of the following:
+  # type (MMMCCornerType) - One of the following:
   # - "setup" (corner used for setup timing)
   # - "hold" (corner used for hold timing)
   # - "extra" (misc. corner, e.g. nominal for power analysis)
-  # voltage (str) - voltage of the corner should match tech json
-  # temp (str) - temperature of the corner should match tech json
+  # voltage (VoltageValue) - voltage of the corner should match tech json
+  # temp (TemperatureValue) - temperature of the corner should match tech json
 
   clocks: [] # Clock ports of the top-level module.
   # type: List[ClockPort]
@@ -322,7 +328,7 @@ vlsi.inputs:
     # type: float
     pitch: 0.0
     global_x_offset: 0.0 # offset the bump map in the x-axis (float)
-    global_y_offset: 0.0 # offset the bump map in the y-axis (float)    
+    global_y_offset: 0.0 # offset the bump map in the y-axis (float)
     cell: "" # cell (str) - Name of the default bump cell
     assignments: [] # assignments - List of BumpAssignment structs. You must specify one of name or no_connect.
     # If both are specified the bump will be left unconnected
