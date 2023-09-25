@@ -19,7 +19,7 @@ TECH_CONF			?= configs-tech/$(tech)-bwrc.yml
 TOOLS_CONF			?= configs-tool/$(tools).yml
 DESIGN_CONF			?= configs-design/$(design)/common.yml
 DESIGN_TECH_CONF	?= configs-design/$(design)/$(tech).yml
-SIM_CONF			?= configs-design/$(design)/sim.yml
+SIM_CONF			?= configs-design/$(design)/sim-rtl.yml
 POWER_CONF			?= $(if $(findstring power-rtl,$(MAKECMDGOALS)), configs-design/$(design)/power-rtl-$(tech).yml, \
 					   $(if $(findstring power-syn,$(MAKECMDGOALS)), configs-design/$(design)/power-syn-$(tech).yml,))
 EXTRA_CONFS			?= $(extra)
@@ -38,12 +38,7 @@ build: $(HAMMER_D_MK)
 $(HAMMER_D_MK): 
 	hammer-vlsi --obj_dir $(OBJ_DIR) -e $(ENV_YML) $(HAMMER_EXTRA_ARGS) build
 
-
-# power-rtl: override POWER_CONF ?= configs-design/$(design)/power-rtl-$(tech).yml
-# power-syn: override POWER_CONF = configs-design/$(design)/power-syn-$(tech).yml
-
-sim-syn: override SIM_CONF = configs-design/$(design)/syn-sim.yml
-
-sim-par: override SIM_CONF = configs-design/$(design)/syn-par.yml
+sim-syn: override SIM_CONF = configs-design/$(design)/sim-syn.yml
+sim-par: override SIM_CONF = configs-design/$(design)/sim-par.yml
 
 -include $(HAMMER_D_MK)

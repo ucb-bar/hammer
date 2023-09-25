@@ -7,6 +7,8 @@ sim.inputs:
   input_files: ['src/pass_tb.v']
   input_files_meta: append
   level: "syn"
+  defines: ['CLOCK_PERIOD=1']
+  defines_meta: 'append'
   options: ['-timescale=1ns/10ps']
   options_meta: append
   timing_annotated: true

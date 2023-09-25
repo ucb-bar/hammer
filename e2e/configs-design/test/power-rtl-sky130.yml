@@ -2,10 +2,33 @@
 
 vlsi.core.power_tool: "hammer.power.joules"
 
-power.inputs.input_files: ["src/pass.v"]
-power.inputs.top_module: "pass"
-power.inputs.tb_name: "pass_tb"
-power.inputs.tb_dut: "pass_0"
-power.inputs.waveforms: ["build-asap7-cm/test/sim-rtl-rundir/output.fsdb"]
+power.inputs:
+  level: 'rtl'
+  input_files: ["src/pass.v"]
+  top_module: "pass"
+  tb_name: "pass_tb"
+  tb_dut: "pass_0"
+  waveforms: ["build-sky130-cm/test/sim-rtl-rundir/output.fsdb"]
+  report_configs:
+    - waveform_path: "build-sky130-cm/test/sim-rtl-rundir/output.fsdb"
+      # specify either interval_size or toggle_signal+num_toggles
+      # interval_size: 2.5ns
+      toggle_signal: clock
+      num_toggles: 1
+      output_formats:
+      - plot_profile
+      - report
 
 power.inputs.power_spec: "auto"
+
+# sim clock must match synthesized clock period
+sim.inputs:
+  defines: ['CLOCK_PERIOD=5']
+  defines_meta: 'append'
+  options: ['-timescale=1ns/100ps']
+  options_meta: append
+
+# clock period for Joules fast-synth
+vlsi.inputs.clocks: [
+  {name: "clock", period: "5ns", uncertainty: "100ps"}
+]

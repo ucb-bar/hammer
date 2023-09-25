@@ -280,7 +280,6 @@ class Joules(HammerPowerTool, CadenceTool):
     
 
     def report_power(self) -> bool:
-        self.verbose_append("set_db max_frame_count 100000000") # default is 1000, too low for most use-cases
         verbose_append = self.verbose_append
         top_module = self.get_setting("power.inputs.top_module")
         # Replace . to / formatting in case argument passed from sim tool
@@ -294,33 +293,40 @@ class Joules(HammerPowerTool, CadenceTool):
                     waveform_path=waveform,
                     inst=None, module=None,
                     levels=None, start_time=None,
-                    end_time=None, toggle_signal=None,
-                    num_toggles=None, frame_count=None,
-                    report_name=f"{waveform_name}", output_formats=['report']
+                    end_time=None, interval_size=None,
+                    toggle_signal=None, num_toggles=None,
+                    frame_count=None,
+                    report_name=waveform_name, output_formats=['report']
                 )
                             )
         power_report_configs += self.get_power_report_configs()
         for report in power_report_configs:
             abspath_waveform = os.path.join(os.getcwd(), report.waveform_path)
-            read_stim_cmd = f"read_stimulus -file {abspath_waveform} -dut_instance {self.tb_name}/{tb_dut} -interval_size 0.5ns"
+            read_stim_cmd = f"read_stimulus -file {abspath_waveform} -dut_instance {self.tb_name}/{tb_dut}"
 
-            # TODO: should we be hard-coding ns?
             if report.start_time:
                 read_stim_cmd += " -start {STIME}ns".format(STIME=report.start_time.value_in_units("ns"))
             if report.end_time:
                 read_stim_cmd += " -end {ETIME}ns".format(ETIME=report.end_time.value_in_units("ns"))
-            if report.toggle_signal:
+
+            frame_based_analysis = (report.interval_size or (report.toggle_signal and report.num_toggles))
+            if report.interval_size:
+                read_stim_cmd += " -interval_size {INTERVAL}ns".format(INTERVAL=report.interval_size.value_in_units("ns"))
+                if report.toggle_signal:
+                    self.logger.warning("Both interval_size and toggle_signal/num_toggles specified...only using interval_size for frame-based analysis.")
+            elif report.toggle_signal:
                 if report.num_toggles:
                     read_stim_cmd += " -cycles {NUM} {SIGNAL}".format(NUM=report.num_toggles, SIGNAL=report.toggle_signal)
                 else:
                     self.logger.error("Must specify the number of toggles if the toggle signal is specified.")
                     return False
+
             if report.frame_count:
                 read_stim_cmd += " -frame_count {FRAME_COUNT}".format(FRAME_COUNT=report.frame_count)
+
             stim_alias, new_stim = self.get_alias_name(read_stim_cmd)
 
             if new_stim:
-                # NOTE: this '-append' changed the actual power results, even when only one stimulus was present, unclear why?
                 verbose_append(f"{read_stim_cmd} -alias {stim_alias} -append")
                 # verbose_append(f"write_sdb -out {alias}.sdb") # NOTE: subsequent read_sdb command errors when reading this file back in, so don't cache for now
                 # TODO: avg mode saves time, run this based on output_formats mode?
@@ -333,7 +339,7 @@ class Joules(HammerPowerTool, CadenceTool):
             inst_str = f"-inst {report.inst}" if report.inst else ""
             module_str = f"-module {report.module}" if report.module else ""
             levels_str = f"-levels {report.levels}" if report.levels else ""
-            report_name = report.report_name if report.report_name else ""
+            report_name = report.report_name if report.report_name else waveform_name
             output_formats = set(report.output_formats) if report.output_formats else {'report'}                
 
             # frames TCL variable to be used across different commands
@@ -351,6 +357,9 @@ class Joules(HammerPowerTool, CadenceTool):
                 if levels_str == "": levels_str = "-levels all"
                 self.block_append(f"report_power -stims {stim_alias} -by_hierarchy {levels_str} -unit mW -out {report_path}.rpt")
             if {'plot_profile','profile','all'} & output_formats:
+                if not frame_based_analysis:
+                    self.logger.error("Must specify either interval_size or toggle_signal+num_toggles in power.inputs.report_configs to generate plot_profile report (frame-based analysis).")
+                    return False
                 report_path = report_name
                 if not report_path.startswith('/'):
                     save_dir = os.path.join(self.run_dir, 'plot_profile')

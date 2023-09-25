@@ -7,8 +7,7 @@ sim.inputs:
   input_files: ['src/gcd.v', 'src/gcd_tb.v']
   options: ['-timescale=1ns/10ps']
   options_meta: append
-  defines: 
-    - "CLOCK_PERIOD=1.00"
+  defines: ['CLOCK_PERIOD=1']
   defines_meta: 'append'
 
 # sim.inputs.execute_sim: false

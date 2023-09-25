@@ -1,13 +1,14 @@
 # Post-PAR Simulation
 
 sim.inputs:
-  top_module: gcd
-  tb_dut: gcd_dut
-  tb_name: "gcd_tb"
-  input_files: ['src/gcd_tb.v']
+  top_module: pass
+  tb_dut: pass_0
+  tb_name: "pass_tb"
+  input_files: ['src/pass_tb.v']
   input_files_meta: append
   level: "par"
+  defines: ['CLOCK_PERIOD=1']
+  defines_meta: 'append'
   options: ['-timescale=1ns/10ps']
   options_meta: append
   timing_annotated: false
-
