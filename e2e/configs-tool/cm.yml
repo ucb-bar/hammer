@@ -5,9 +5,7 @@ vlsi.core.build_system: make
 vlsi.core.synthesis_tool: "hammer.synthesis.genus"
 vlsi.core.par_tool: "hammer.par.innovus"
 vlsi.core.sim_tool: "hammer.sim.vcs"
-# need to bump down these versions because joules requires older FSDB version
-sim.vcs.version: "S-2021.09-SP1-1"
-sim.vcs.verdi_home: "/tools/synopsys/verdi/S-2021.09-SP1-1"
+
 vlsi.core.timing_tool: "hammer.timing.tempus"
 vlsi.core.formal_tool: "hammer.formal.conformal"
 vlsi.core.power_tool: "hammer.power.voltus"

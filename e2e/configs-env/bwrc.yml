@@ -1,7 +1,7 @@
 # Commercial tool version/paths
 synthesis.genus.version: "211"
 par.innovus.version: "211"
-sim.vcs.version: "S-2021.09-SP1-1"
+sim.vcs.version: "S-2021.09-SP1-1" # need to bump down these versions because joules requires older FSDB version
 sim.vcs.verdi_home: "/tools/synopsys/verdi/${sim.vcs.version}"
 sim.vcs.verdi_home_meta: lazysubst
 
