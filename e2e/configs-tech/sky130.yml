@@ -1,0 +1,11 @@
+vlsi.core.technology: "hammer.technology.sky130"
+
+vlsi.core.sram_generator_tool: "hammer.technology.sky130.sram_compiler"
+
+
+# Pin placement constraints
+vlsi.inputs.pin_mode: generated
+vlsi.inputs.pin.generate_mode: semi_auto
+vlsi.inputs.pin.assignments: [
+  {pins: "*", layers: ["met4"], side: "bottom"}
+]

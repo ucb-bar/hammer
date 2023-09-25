@@ -27,6 +27,3 @@ vlsi.inputs.delays: [
   {name: "in", clock: "clk", delay: "1", direction: "input"},
   {name: "out", clock: "clk", delay: "2", direction: "output"}
 ]
-
-# SRAM Compiler compiler options
-vlsi.core.sram_generator_tool: "hammer.technology.asap7.sram_compiler"

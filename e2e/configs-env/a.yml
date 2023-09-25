@@ -1,0 +1,26 @@
+# Commercial tool version/paths
+synthesis.genus.version: "211"
+par.innovus.version: "211"
+sim.vcs.version: "P-2019.06-SP1"
+sim.vcs.verdi_home: "/ecad/tools/synopsys/verdi/P-2019.06-SP2-2"
+sim.vcs.verdi_home_meta: lazysubst
+lvs.calibre.version: "2022.2_24.16"
+drc.calibre.version: "2022.2_24.16"
+
+# Open-source tool paths
+synthesis.yosys.yosys_bin: "/nscratch/vighneshiyer/miniconda3/envs/sky130/bin/yosys"
+par.openroad.openroad_bin: "/nscratch/vighneshiyer/miniconda3/envs/sky130/bin/openroad"
+drc.magic.magic_bin: "/nscratch/vighneshiyer/miniconda3/envs/sky130/bin/magic"
+lvs.netgen.netgen_bin: "/nscratch/vighneshiyer/miniconda3/envs/sky130/bin/netgen"
+
+# Sky130 paths
+technology.sky130:
+  sky130A: "/nscratch/vighneshiyer/miniconda3/envs/sky130/share/pdk/sky130A"
+  sram22_sky130_macros: "/nscratch/sky130/sram22_sky130_macros"
+  # sky130_nda:
+
+
+# ASAP7 paths
+vlsi.core.technology: "hammer.technology.asap7"
+technology.asap7.pdk_install_dir: "/nscratch/asap7/asap7-master/asap7PDK_r1p7"
+technology.asap7.stdcell_install_dir: "/nscratch/asap7/asap7-master/asap7sc7p5t_27"

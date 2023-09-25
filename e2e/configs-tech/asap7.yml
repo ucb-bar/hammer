@@ -1,0 +1,9 @@
+vlsi.core.technology: "hammer.technology.asap7"
+
+vlsi.core.sram_generator_tool: "hammer.technology.asap7.sram_compiler"
+
+vlsi.inputs.pin_mode: generated
+vlsi.inputs.pin.generate_mode: semi_auto
+vlsi.inputs.pin.assignments: [
+  {pins: "*", layers: ["M5"], side: "bottom"}
+]
