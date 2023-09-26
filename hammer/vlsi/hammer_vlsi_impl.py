@@ -2179,14 +2179,14 @@ class HasSDCSupport(HammerTool):
 
         # Also specify loads for specific pins.
         for load in self.get_output_load_constraints():
-            output.append("set_load {load} [get_port \"{name}\"]".format(
+            output.append("set_load {load} [get_port {name}]".format(
                 load=load.load,
                 name=load.name
             ))
 
         # Also specify delays for specific pins.
         for delay in self.get_delay_constraints():
-            output.append("set_{direction}_delay {delay} -clock {clock} [get_port \"{name}\"]".format(
+            output.append("set_{direction}_delay {delay} -clock {clock} [get_port {name}]".format(
                 delay=delay.delay.value_in_units(self.get_time_unit().value_prefix + self.get_time_unit().unit),
                 clock=delay.clock,
                 direction=delay.direction,

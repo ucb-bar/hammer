@@ -153,6 +153,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
     def env_vars(self) -> Dict[str, str]:
         v = dict(super().env_vars)
         v["INNOVUS_BIN"] = self.get_setting("par.innovus.innovus_bin")
+        if self.version() >= self.version_number("221"):  # support critical region resynthesis with DDI
+            v["PATH"] = f'{os.environ.copy()["PATH"]}:{os.path.dirname(self.get_setting("par.innovus.innovus_bin").replace("INNOVUS", "GENUS"))}'
         return v
 
     @property
