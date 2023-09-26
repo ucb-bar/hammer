@@ -4,7 +4,7 @@ vlsi_dir=$(abspath .)
 
 # minimal flow configuration variables
 design				?= test
-tech				?= sky130
+pdk					?= sky130
 tools				?= cm
 env					?= bwrc
 
@@ -12,25 +12,25 @@ extra				?=  # extra configs
 step				?=  # step flow control
 
 
-OBJ_DIR				?= $(vlsi_dir)/build-$(tech)-$(tools)/$(design)
+OBJ_DIR				?= $(vlsi_dir)/build-$(pdk)-$(tools)/$(design)
 
 # non-overlapping default configs
 ENV_YML				?= configs-env/$(env)-env.yml
 PATHS_YML			?= configs-env/$(env).yml
-TECH_CONF			?= configs-tech/$(tech).yml
+PDK_CONF			?= configs-pdk/$(pdk).yml
 TOOLS_CONF			?= configs-tool/$(tools).yml
 
 # design-specific overrides of default configs
 DESIGN_CONF			?= configs-design/$(design)/common.yml
-DESIGN_TECH_CONF	?= configs-design/$(design)/$(tech).yml
+DESIGN_PDK_CONF	?= configs-design/$(design)/$(pdk).yml
 SIM_CONF			?= $(if $(findstring sim-syn,$(MAKECMDGOALS)), configs-design/$(design)/sim-syn.yml, \
 					   $(if $(findstring sim-par,$(MAKECMDGOALS)), configs-design/$(design)/sim-par.yml, \
 					   configs-design/$(design)/sim-rtl.yml))
-POWER_CONF			?= $(if $(findstring power-rtl,$(MAKECMDGOALS)), configs-design/$(design)/power-rtl-$(tech).yml, \
-					   $(if $(findstring power-syn,$(MAKECMDGOALS)), configs-design/$(design)/power-syn-$(tech).yml,))
+POWER_CONF			?= $(if $(findstring power-rtl,$(MAKECMDGOALS)), configs-design/$(design)/power-rtl-$(pdk).yml, \
+					   $(if $(findstring power-syn,$(MAKECMDGOALS)), configs-design/$(design)/power-syn-$(pdk).yml,))
 
 
-CONFS				?= $(PATHS_YML) $(TECH_CONF) $(TOOLS_CONF) $(DESIGN_CONF) $(DESIGN_TECH_CONF) $(SIM_CONF) $(POWER_CONF) $(extra)
+CONFS				?= $(PATHS_YML) $(PDK_CONF) $(TOOLS_CONF) $(DESIGN_CONF) $(DESIGN_PDK_CONF) $(SIM_CONF) $(POWER_CONF) $(extra)
 HAMMER_EXTRA_ARGS	?= $(foreach conf, $(CONFS), -p $(conf)) $(step)
 
 

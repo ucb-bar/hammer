@@ -1,0 +1,3 @@
+vlsi.core.technology: "hammer.intech22"
+
+vlsi.core.sram_generator_tool: "hammer.intech22.sram_compiler"
