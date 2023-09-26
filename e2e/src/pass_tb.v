@@ -47,6 +47,7 @@ module pass_tb;
             $display("***Test Failed***");
         end
 
+        $display("***TEST COMPLETE***");
         $fsdbDumpoff;
         $finish;
 

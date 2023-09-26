@@ -846,15 +846,30 @@ power.inputs:
   # type: List[PowerReport]
   # PowerReport struct members:
   # waveform_path (str) - Path to the waveform for the report
-  # module (str) - Optional. the path to the module to report power for (default here is the Chipyard top level)
-  # levels (int) - Optional. the number of levels in the design hierachy to report
-  # start_time (str) - Optional. The start time of the power report in the waveform
-  # end_time (str) - Optional. The end time of the power report in the waveform
+  # inst (str) - Optional. Hierarchical or leaf instance to report power for
+  # module (str) - Optional. The module to report power for (default here is the Chipyard top level). All instances of this module are used for the power report.
+  # levels (int) - Optional. The number of levels in the design hierachy to report
+  # start_time (TimeValue) - Optional. The start time of the power report in the waveform
+  # end_time (TimeValue) - Optional. The end time of the power report in the waveform
+  # interval_size (TimeValue) - Optional. Divide the stimulus into frames of this size
   # toggle_signal (str) - Optional. Path to the signal to generate report windows based on toggles
-  # num_toggles (int) - Optional (must be specified if num_toggles is specified). The number of toggles of the toggle_signal for each frame to report power
-  # frame_count (int) - Optional. The number of frames to report the power for
-  # report_name (str) - Optional. Name of the power report
-  # example: report_configs: [{waveform_path: "/path/to/fsdb", module: "chiptop", levels:3, start_time: "0ns", end_time: "1ns", toggle_signal:"/ChipTop/clock", num_toggles:1, frame_count:1000, report_name: "my_fsdb_report"}]
+  # num_toggles (int) - Optional (must be specified if toggle_signal is specified). The number of toggles of the toggle_signal for each frame to report power
+  # frame_count (int) - Optional. The number of frames to report the power for. Default: 1
+  # report_name (str) - Optional. Name of the power report, but MUST NOT contain file extension.
+  #     If an absolute path is provided, this is used as the path (plus file extension).
+  #     If a relative path or just the filename is provided, output file will be saved to <power-rundir>/<output_format-type>/<report_name>.<ext>
+  #     Default: waveform file name
+  # output_formats (List[str]) - Optional. Report types to generate. Default: ["report"]
+  #   Valid options are:
+  #     "report" - average power report (*.rpt), default
+  #     "plot_profile" - power profile over time, requires frame-based analysis (*.png, *.png.data)
+  #     "write_profile" - profiles all power types on all categories for all the sub-hierarchies for a given design instance (*.fsdb)
+  #     "profile" - run plot_profile + dump_profile
+  #     "all" - generate all of the above report formats
+  
+  # examples:
+  #   report_configs: [{waveform_path: "/path/to/fsdb", module: "chiptop", levels:3, start_time: "0ns", end_time: "1ns", toggle_signal:"/ChipTop/clock", num_toggles:1, frame_count:1000, report_name: "my_fsdb_report"}]
+  #   report_configs: [{waveform_path: "/path/to/fsdb", inst: "ChipTop/system/tile_prci_domain/tile_reset_domain_tile", interval_size: "1ns", output_formats: ["plot_profile"]}]
 
   level: "rtl" # Power analysis mode for different levels of the VLSI flow
   # Valid options are:

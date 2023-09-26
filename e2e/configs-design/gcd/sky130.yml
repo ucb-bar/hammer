@@ -3,6 +3,10 @@ vlsi.inputs.clocks: [
   {name: "clk", period: "10ns", uncertainty: "0.1ns"}
 ]
 
+sim.inputs:
+  defines: ['CLOCK_PERIOD=10']
+  defines_meta: 'append'
+
 # Placement Constraints
 vlsi.inputs.placement_constraints:
   - path: "gcd"
@@ -46,9 +50,4 @@ vlsi.inputs.pin_mode: generated
 vlsi.inputs.pin.generate_mode: semi_auto
 vlsi.inputs.pin.assignments: [
   {pins: "*", layers: ["met4"], side: "bottom"}
-]
-
-vlsi.inputs.delays: [
-  {name: "in", clock: "clk", delay: "1", direction: "input"},
-  {name: "out", clock: "clk", delay: "2", direction: "output"}
 ]

@@ -5,9 +5,9 @@ sim.inputs:
   tb_dut: gcd_dut
   tb_name: "gcd_tb"
   input_files: ['src/gcd.v', 'src/gcd_tb.v']
-  options: ['-timescale=1ns/10ps']
-  options_meta: append
   defines: ['CLOCK_PERIOD=1']
   defines_meta: 'append'
+  options: ['-timescale=1ns/10ps']
+  options_meta: append
 
 # sim.inputs.execute_sim: false

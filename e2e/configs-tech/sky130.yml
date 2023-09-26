@@ -9,3 +9,9 @@ vlsi.inputs.pin.generate_mode: semi_auto
 vlsi.inputs.pin.assignments: [
   {pins: "*", layers: ["met4"], side: "bottom"}
 ]
+
+# TODO: _meta configs aren't propagated into action output configs, so tech/tool plugin _meta's are lost
+# ex. flags below are lost during sim-syn/par (but not sim-rtl)
+sim.inputs:
+  defines: ["FUNCTIONAL", "UNIT_DELAY=#1"]
+  defines_meta: 'append'

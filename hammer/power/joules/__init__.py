@@ -368,13 +368,13 @@ class Joules(HammerPowerTool, CadenceTool):
                 # NOTE: including the '-frames $frames ' argument results in this Joules error: "Error: Cannot specify frame#0 if other frames are specified with -frames.""
                 # NOTE: we don't include levels_str here bc category is total power anyways
                 self.block_append(f"plot_power_profile -stims {stim_alias} {inst_str} {module_str} -by_category {{total}} -types {{total}} -unit mW -format png -out {report_path}.png")
-            if {'dump_profile','profile','all'} & output_formats:
+            if {'write_profile','profile','all'} & output_formats:
                 report_path = report_name
                 if not report_path.startswith('/'):
-                    save_dir = os.path.join(self.run_dir, 'dump_profile')
+                    save_dir = os.path.join(self.run_dir, 'write_profile')
                     os.makedirs(save_dir, exist_ok=True)
                     report_path = os.path.join(save_dir, report_path)
-                verbose_append(f"dump_power_profile -stims {stim_alias} -root [get_insts -rtl_type hier] {levels_str} -unit mW -format fsdb -out {report_path}")
+                verbose_append(f"write_power_profile -stims {stim_alias} -root [get_insts -rtl_type hier] {levels_str} -unit mW -format fsdb -out {report_path}")
 
         saifs = self.get_setting("power.inputs.saifs")
         for saif in saifs:
