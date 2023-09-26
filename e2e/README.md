@@ -32,7 +32,7 @@ The outputs of the flow by default reside in `OBJ_DIR=build-<pdk>-<tools>/<desig
 ### Configs
 
 The Make variables `*_CONF` specify the configs to set up a flow.
-The order of precedence reads from left to right, where each file overrides all files to its left.
+The order of precedence reads from right to left (i.e. each file overrides all files to its left).
 These configs are summarized below.
 
 ```shell
@@ -46,8 +46,8 @@ CONFS ?= $(PDK_CONF) $(TOOLS_CONF) $(DESIGN_CONF) $(DESIGN_PDK_CONF) $(SIM_CONF)
 - Design-specific configs are located in `configs-design/<design>`, and are summarized below:
     - `DESIGN_CONF` - the common design config (design input files, anything else design-specific)
     - `DESIGN_PDK_CONF` - PDK-specific configs for this particular design (clock, placement, pin constraints)
-    - `SIM_CONF` - Simulation configs for post-RTL, Synthesis, and PnR simulation, respectively
-    - `POWER_CONF` - Power simulation configs for post-RTL, Synthesis, and PnR simulation, respectively.
+    - `SIM_CONF` - Simulation configs for post-RTL, Synthesis, or PnR simulation
+    - `POWER_CONF` - Power simulation configs for post-RTL, Synthesis, or PnR simulation
       (NOTE: The Makefile expects the power config filename for each simulation level + PDK to be in the format `power-{rtl,syn,par}-<pdk>.yml`,
       while the `joules.yml` and `voltus.yml` files serve as templates for the Cadence Joules/Voltus power tools)
 
@@ -55,7 +55,7 @@ CONFS ?= $(PDK_CONF) $(TOOLS_CONF) $(DESIGN_CONF) $(DESIGN_PDK_CONF) $(SIM_CONF)
 ## Run the Flow
 
 First, use Hammer to construct a Makefile fragment with targets for all parts of the RTL -> GDS flow.
-Specify the appropriate `env`/`tools`/`pdk`/`design` variables to select which configs will be used.
+Specify the appropriate `env/tools/pdk/design` variables to select which configs will be used.
 
 ```shell
 make build
@@ -64,7 +64,7 @@ make build
 
 Hammer will generate a Makefile fragment in `OBJ_DIR/hammer.d`.
 
-Then run the rest of the flow, making sure to set the `env`/`tools`/`pdk`/`design` variables as needed:
+Then run the rest of the flow, making sure to set the `env/tools/pdk/design` variables as needed:
 
 ```shell
 make sim-rtl
@@ -117,7 +117,7 @@ These actions are summarized in more detail:
 
 ### Flow Customization
 
-If at any point you would like to use custom config files (that will overwrite any previous configs), assign the `extra` Make variable to a space-separated list of these files.
+If at any point you would like to use custom config files (that will override any previous configs), assign the `extra` Make variable to a space-separated list of these files.
 For example, to run the `test` design with `sky130` through the commercial flow, but run LVS with Cadence Pegasus instead of the default Siemens Calibre,
 simply run the following:
 
@@ -125,7 +125,7 @@ simply run the following:
 make extra="configs-tool/pegasus.yml" build
 ```
 
-To invoke the [Hammer step flow control](https://hammer-vlsi.readthedocs.io/en/stable/Hammer-Use/Flow-Control.html), prepend 'redo-' to any VLSI flow action,
+To use the [Hammer step flow control](https://hammer-vlsi.readthedocs.io/en/stable/Hammer-Use/Flow-Control.html), prepend `redo-` to any VLSI flow action,
 then assign the `args` Make variable to the appropriate Hammer command line args.
 For example, to only run the `report_power` step of the `power-rtl` action (i.e. bypass synthesis), run the following:
 
@@ -137,7 +137,7 @@ make args="--only_step report_power" redo-power-rtl
 
 If you're not using a Berkeley EECS compute node, you can create your own environment setup.
 
-- Create corresponding configs for these files: `ENV_YML`, `PDK_CONF`, `TOOLS_CONF`, `DESIGN_CONF`, `DESIGN_PDK_CONF`, `SIM_CONF`, `POWER_CONF`
+- Create an environment config similar to those in `configs-env` for your node to specify the CAD tool license servers and paths/versions of CAD tools and the PDK, and set the `ENV_YML` variable to this file.
 - The rest of the flow should be identical
 
 ### ASAP7 Install
