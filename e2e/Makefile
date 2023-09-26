@@ -27,8 +27,9 @@ SIM_CONF			?= $(if $(findstring sim-syn,$(MAKECMDGOALS)), configs-design/$(desig
 					   $(if $(findstring sim-par,$(MAKECMDGOALS)), configs-design/$(design)/sim-par.yml, \
 					   configs-design/$(design)/sim-rtl.yml))
 POWER_CONF			?= $(if $(findstring power-rtl,$(MAKECMDGOALS)), configs-design/$(design)/power-rtl-$(pdk).yml, \
-					   $(if $(findstring power-syn,$(MAKECMDGOALS)), configs-design/$(design)/power-syn-$(pdk).yml,))
-
+					   $(if $(findstring power-syn,$(MAKECMDGOALS)), configs-design/$(design)/power-syn-$(pdk).yml, \
+					   $(if $(findstring power-par,$(MAKECMDGOALS)), configs-design/$(design)/power-par-$(pdk).yml, \
+					   ))) # default is none because these configs specify sim + syn clock period so shouldn't be included in other actions
 
 CONFS				?= $(PATHS_YML) $(PDK_CONF) $(TOOLS_CONF) $(DESIGN_CONF) $(DESIGN_PDK_CONF) $(SIM_CONF) $(POWER_CONF) $(extra)
 HAMMER_EXTRA_ARGS	?= $(foreach conf, $(CONFS), -p $(conf)) $(step)
