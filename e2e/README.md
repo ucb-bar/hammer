@@ -31,18 +31,18 @@ The outputs of the flow by default reside in `OBJ_DIR=build-<pdk>-<tools>/<desig
 
 ### Configs
 
-The Make variables `*_CONF` specify the configs to set up a flow.
-The order of precedence for the configs assigned to `CONFS`, listed below, reads from right to left 
-(i.e. each file overrides all files to its left),
-with the environment config (`ENV_YML`) taking precedence over all of these project configs (`CONFS`).
-These are summarized below.
+The Hammer configuration files consist of environment (`ENV_YML`) and project (`PROJ_YMLS`) configurations.
+The environment configs take precedence over ALL project configs.
+The order of precedence for the project configs reads from right to left (i.e. each file overrides all files to its left).
+All configuration files are summarized below.
 
 ```shell
+#         lowest precedence -------------------------------------------> highest precendence
 CONFS ?= $(PDK_CONF) $(TOOLS_CONF) $(DESIGN_CONF) $(DESIGN_PDK_CONF) $(SIM_CONF) $(POWER_CONF)
 ```
 
-- `ENV_YML`- Environment configs that specify CAD tool license servers and paths are in `configs-env`
-  This will take precedence over any other config file.
+- `ENV_YML`- Environment configs that specify CAD tool license servers and paths are in `configs-env`.
+  This will take precedence over any other config file
 - `PDK_CONF` - PDK configs shared across all runs with this PDK are in `configs-pdk`
 - `TOOLS_CONF` - Tool configs to select which CAD tool flow to use are in `configs-tools`
 - Design-specific configs are located in `configs-design/<design>`, and are summarized below:
