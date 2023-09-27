@@ -23,9 +23,13 @@ power.inputs.power_spec: "auto"
 
 # sim clock must match synthesized clock period
 sim.inputs:
+  top_module: pass
+  tb_dut: pass_0
+  tb_name: "pass_tb"
+  input_files: ['src/pass.v', 'src/pass_tb.v']
   defines: ['CLOCK_PERIOD=5']
   defines_meta: 'append'
-  options: ['-timescale=1ns/100ps']
+  options: ['-timescale=1ns/10ps']
   options_meta: append
 
 # clock period for Joules fast-synth

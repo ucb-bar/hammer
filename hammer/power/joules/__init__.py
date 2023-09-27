@@ -6,18 +6,14 @@
 #  See LICENSE for licence details.
 
 import shutil
-from typing import List, Dict, Optional, Callable, Tuple, Set, Any, cast
-from itertools import product
+from typing import List, Dict, Optional, Tuple
 
 import os
 import errno
-import json
 from textwrap import dedent
 
-from hammer.utils import get_or_else, optional_map, coerce_to_grid, check_on_grid, lcm_grid
-from hammer.vlsi import HammerPowerTool, HammerToolStep, MMMCCornerType, FlowLevel, TimeValue, PowerReport
+from hammer.vlsi import HammerPowerTool, HammerToolStep, MMMCCornerType, FlowLevel, PowerReport
 from hammer.logging import HammerVLSILogging
-import hammer.tech as hammer_tech
 
 from hammer.common.cadence import CadenceTool
 
@@ -26,12 +22,6 @@ class Joules(HammerPowerTool, CadenceTool):
     @property
     def post_synth_sdc(self) -> Optional[str]:
         return None
-    
-    @property
-    def power_db_path(self) -> str:
-        power_db_path = os.path.join(self.run_dir, "power_db")
-        os.makedirs(power_db_path, exist_ok=True)
-        return power_db_path
 
     def tool_config_prefix(self) -> str:
         return "power.joules"
@@ -138,20 +128,6 @@ class Joules(HammerPowerTool, CadenceTool):
         else:
             self.logger.error("The FlowLevel is invalid. The Joules plugin only supports RTL and post-synthesis analysis. Check your power tool setting and flow step.")
             return False
-    
-    def power_db_basename(self, stim_alias) -> str:
-        return os.path.join(self.power_db_path, stim_alias)
-    
-    # stimulus database
-    def sdb_path(self, stim_alias) -> str:
-        return os.path.join(self.power_db_path, stim_alias+'.sdb')
-    
-    # no clue what ADB is
-    def adb_path(self, stim_alias) -> str:
-        return os.path.join(self.power_db_path, stim_alias+'.adb')
-    
-    def pdb_path(self, stim_alias) -> str:
-        return os.path.join(self.power_db_path, stim_alias+'.pdb')
 
     def init_technology(self) -> bool:
         # libs, define RAMs, define corners
@@ -240,7 +216,6 @@ class Joules(HammerPowerTool, CadenceTool):
     def stim_aliases(self, value: List[str]) -> None:
         self.attr_setter("__stim_aliases", value)
 
-    # def get_alias_name(self, waveform, report=None) -> Tuple[str, bool]:
     def get_alias_name(self, read_stim_cmd) -> Tuple[str, bool]:
         """
         Return Tuple(
@@ -274,6 +249,7 @@ class Joules(HammerPowerTool, CadenceTool):
         tb_dut = self.tb_dut.replace(".", "/")
 
         power_report_configs = []
+        # create power report config for each waveform
         for waveform in self.waveforms:
             waveform_name = os.path.basename(waveform).split('.')[0]
             power_report_configs.append(
@@ -284,10 +260,8 @@ class Joules(HammerPowerTool, CadenceTool):
                     end_time=None, interval_size=None,
                     toggle_signal=None, num_toggles=None,
                     frame_count=None,
-                    report_name=waveform_name, output_formats=['report']
-                )
-                            )
-        power_report_configs += self.get_power_report_configs()
+                    report_name=waveform_name, output_formats=['report']))
+        power_report_configs += self.get_power_report_configs() # append report configs from yaml file
         for report in power_report_configs:
             abspath_waveform = os.path.join(os.getcwd(), report.waveform_path)
             read_stim_cmd = f"read_stimulus -file {abspath_waveform} -dut_instance {self.tb_name}/{tb_dut}"

@@ -32,15 +32,17 @@ The outputs of the flow by default reside in `OBJ_DIR=build-<pdk>-<tools>/<desig
 ### Configs
 
 The Make variables `*_CONF` specify the configs to set up a flow.
-The order of precedence reads from right to left (i.e. each file overrides all files to its left).
-These configs are summarized below.
+The order of precedence for the configs assigned to `CONFS`, listed below, reads from right to left 
+(i.e. each file overrides all files to its left),
+with the environment config (`ENV_YML`) taking precedence over all of these project configs (`CONFS`).
+These are summarized below.
 
 ```shell
 CONFS ?= $(PDK_CONF) $(TOOLS_CONF) $(DESIGN_CONF) $(DESIGN_PDK_CONF) $(SIM_CONF) $(POWER_CONF)
 ```
 
 - `ENV_YML`- Environment configs that specify CAD tool license servers and paths are in `configs-env`
-  (NOTE: this will take precedence over any other config file)
+  This will take precedence over any other config file.
 - `PDK_CONF` - PDK configs shared across all runs with this PDK are in `configs-pdk`
 - `TOOLS_CONF` - Tool configs to select which CAD tool flow to use are in `configs-tools`
 - Design-specific configs are located in `configs-design/<design>`, and are summarized below:

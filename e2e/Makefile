@@ -9,7 +9,7 @@ tools               ?= cm
 env                 ?= bwrc
 
 extra               ?=  # extra configs
-args                ?=  # step flow control
+args                ?=  # command-line args (including step flow control)
 
 
 OBJ_DIR             ?= $(vlsi_dir)/build-$(pdk)-$(tools)/$(design)
