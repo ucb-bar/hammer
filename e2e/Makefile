@@ -40,6 +40,6 @@ HAMMER_D_MK = $(OBJ_DIR)/hammer.d
 build: $(HAMMER_D_MK)
 
 $(HAMMER_D_MK):
-	hammer-vlsi --obj_dir $(OBJ_DIR) -e $(ENV_CONF) $(HAMMER_EXTRA_ARGS) build
+	hammer-vlsi --obj_dir $(OBJ_DIR) -e $(ENV_YML) $(HAMMER_EXTRA_ARGS) build
 
 -include $(HAMMER_D_MK)
