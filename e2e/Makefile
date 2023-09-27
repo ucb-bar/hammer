@@ -29,8 +29,8 @@ POWER_CONF          ?= $(if $(findstring power-rtl,$(MAKECMDGOALS)), configs-des
                        $(if $(findstring power-syn,$(MAKECMDGOALS)), configs-design/$(design)/power-syn-$(pdk).yml, \
                        $(if $(findstring power-par,$(MAKECMDGOALS)), configs-design/$(design)/power-par-$(pdk).yml, )))
 
-CONFS               ?= $(PDK_CONF) $(TOOLS_CONF) $(DESIGN_CONF) $(DESIGN_PDK_CONF) $(SIM_CONF) $(POWER_CONF) $(extra)
-HAMMER_EXTRA_ARGS   ?= $(foreach conf, $(CONFS), -p $(conf)) $(args)
+PROJ_YMLS           ?= $(PDK_CONF) $(TOOLS_CONF) $(DESIGN_CONF) $(DESIGN_PDK_CONF) $(SIM_CONF) $(POWER_CONF) $(extra)
+HAMMER_EXTRA_ARGS   ?= $(foreach conf, $(PROJ_YMLS), -p $(conf)) $(args)
 
 
 
@@ -40,6 +40,6 @@ HAMMER_D_MK = $(OBJ_DIR)/hammer.d
 build: $(HAMMER_D_MK)
 
 $(HAMMER_D_MK):
-	hammer-vlsi --obj_dir $(OBJ_DIR) -e $(ENV_YML) $(HAMMER_EXTRA_ARGS) build
+	hammer-vlsi --obj_dir $(OBJ_DIR) -e $(ENV_CONF) $(HAMMER_EXTRA_ARGS) build
 
 -include $(HAMMER_D_MK)
