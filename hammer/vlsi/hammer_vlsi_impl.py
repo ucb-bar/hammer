@@ -2182,7 +2182,7 @@ class HasSDCSupport(HammerTool):
         # Also specify loads for specific pins.
         for load in self.get_output_load_constraints():
             output.append("set_load {load} [get_port {name}]".format(
-                load=CapacitanceValue(load.load).value_in_units("fF", round_zeroes = True),
+                load=load.load.value_in_units("fF", round_zeroes = True),
                 name=load.name
             ))
 
