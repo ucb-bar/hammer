@@ -1,7 +1,7 @@
-# Generate Make include to aid in tlow
+# Generate Make include to aid in flow
 vlsi.core.build_system: make
 
-# Tool options.
+# Select tools
 vlsi.core.synthesis_tool: "hammer.synthesis.genus"
 vlsi.core.par_tool: "hammer.par.innovus"
 vlsi.core.sim_tool: "hammer.sim.vcs"

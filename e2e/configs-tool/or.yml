@@ -1,18 +1,17 @@
 # Generate Make include to aid in tlow
 vlsi.core.build_system: make
 
-# Tool options.
+# Select tools
 vlsi.core.synthesis_tool: "hammer.synthesis.yosys"
 vlsi.core.par_tool: "hammer.par.openroad"
-par.openroad.create_archive_mode: none
 vlsi.core.drc_tool: "hammer.drc.klayout"
-
-# for now use commercial tools
+# for now use commercial tools:
 vlsi.core.sim_tool: "hammer.sim.vcs"
 vlsi.core.timing_tool: "hammer.timing.tempus"
 vlsi.core.lvs_tool: "hammer.lvs.calibre"
-# vlsi.core.drc_tool: "hammer.drc.calibre"
 
+# Tool options
+par.openroad.create_archive_mode: none
 # speed up tutorial runs & declutter log output
 par.openroad.timing_driven: false
 par.openroad.write_reports: false
