@@ -12,7 +12,6 @@ from itertools import product
 import os
 import errno
 import json
-from datetime import datetime
 from textwrap import dedent
 
 from hammer.utils import get_or_else, optional_map, coerce_to_grid, check_on_grid, lcm_grid
@@ -240,16 +239,6 @@ class Joules(HammerPowerTool, CadenceTool):
     @stim_aliases.setter
     def stim_aliases(self, value: List[str]) -> None:
         self.attr_setter("__stim_aliases", value)
-    
-    @property
-    def _waveform_name(self) -> str:
-        """
-        Private helper property to keep track of which stimuli aliases have already been read
-        """
-        return self.attr_getter("__waveform_name", "")
-    @_waveform_name.setter
-    def _waveform_name(self, value: str) -> None:
-        self.attr_setter("__waveform_name", value)
 
     # def get_alias_name(self, waveform, report=None) -> Tuple[str, bool]:
     def get_alias_name(self, read_stim_cmd) -> Tuple[str, bool]:
@@ -270,7 +259,6 @@ class Joules(HammerPowerTool, CadenceTool):
         idx_waveform = cmds.index('-file')+1
         waveform_path = cmds[idx_waveform]
         waveform = os.path.basename(waveform_path)
-        self._waveform_name = waveform.split('.')[0]
         alias = waveform + "_".join(cmds[idx_waveform+1:])
         for c in "./-": # symbols that will likely cause an error
             alias = alias.replace(c,'_')
@@ -392,8 +380,12 @@ class Joules(HammerPowerTool, CadenceTool):
         verbose_append("exit")
 
         # Create power analysis script
-        now = datetime.now().strftime("%Y%m%d-%H%M%S")  # uniquefy TCL scripts so that multiple runs don't overwrite each other
-        joules_tcl_filename = os.path.join(self.run_dir, f"joules-{self._waveform_name}-{now}.tcl")
+        #   with unique filename so that multiple runs don't overwrite each others' TCL scripts
+        i = 0
+        joules_tcl_filename = os.path.join(self.run_dir, f"joules.{i}.tcl")
+        while os.path.exists(joules_tcl_filename):
+            i += 1
+            joules_tcl_filename = os.path.join(self.run_dir, f"joules.{i}.tcl")
         self.write_contents_to_path("\n".join(self.output), joules_tcl_filename)
 
         # Make sure that generated-scripts exists.
@@ -428,6 +420,8 @@ class Joules(HammerPowerTool, CadenceTool):
         HammerVLSILogging.enable_tag = False
 
         self.run_executable(args, cwd=self.run_dir)
+
+        shutil.copy2(joules_tcl_filename, os.path.join(self.run_dir, f"joules.tcl"))
 
         HammerVLSILogging.enable_colour = True
         HammerVLSILogging.enable_tag = True
