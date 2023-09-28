@@ -282,6 +282,22 @@ class Genus(HammerSynthesisTool, CadenceTool):
         return True
 
     def syn_generic(self) -> bool:
+        # Add clock mapping flow if special cells are specified
+        if self.version() >= self.version_number("2111"):
+            buffers = self.technology.get_special_cell_by_type(CellType.CTSBuffer)[0].name
+            if len(buffers) > 0:
+                self.append(f"set_db cts_buffer_cells {{{' '.join(buffers)}}}")
+            inverters = self.technology.get_special_cell_by_type(CellType.CTSInverter)[0].name
+            if len(inverters) > 0:
+                self.append(f"set_db cts_inverter_cells {{{' '.join(inverters)}}}")
+            gates = self.technology.get_special_cell_by_type(CellType.CTSGate)[0].name
+            if len(gates) > 0:
+                self.append(f"set_db cts_clock_gating_cells {{{' '.join(gates)}}}")
+            logics = self.technology.get_special_cell_by_type(CellType.CTSLogic)[0].name
+            if len(logics) > 0:
+                self.append(f"set_db cts_logic_cells {{{' '.join(logics)}}}")
+            if any(c > 0 for c in [len(buffers), len(inverters), len(gates), len(logics)]):
+                self.append("set_db map_clock_tree true")
         self.verbose_append("syn_generic")
         return True
 

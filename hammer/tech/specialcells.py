@@ -19,6 +19,9 @@ class CellType(str, Enum):
     TapCell = "tapcell"
     Driver = "driver"
     CTSBuffer = "ctsbuffer"
+    CTSInverter = "ctsinverter"
+    CTSGate = "ctsgate"
+    CTSLogic = "ctslogic"
 
 
 class SpecialCell(BaseModel):
