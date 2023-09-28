@@ -329,7 +329,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                 verbose_append(f"set_db route_design_top_layer {layers[1]}")
 
         # Set design effort.
-        verbose_append("set_db design_flow_effort {}".format(self.get_setting("par.innovus.design_flow_effort")))
+        verbose_append(f"set_db design_flow_effort {self.get_setting('par.innovus.design_flow_effort')}")
+        verbose_append(f"set_db design_power_effort {self.get_setting('par.innovus.design_power_effort')}")
 
         # Set "don't use" cells.
         for l in self.generate_dont_use_commands():

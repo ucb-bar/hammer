@@ -14,6 +14,10 @@ par.innovus:
   # Valid options: express (fastest), standard, and extreme (slowest).
   design_flow_effort: "standard"
 
+  # Design power effort.
+  # Valid options: none, low, high.
+  design_power_effort: "low"
+
   # Floorplanning SDC constraints to use.
   # Valid options are:
   # - blank - Specify no floorplanning constraints (likely won't work)
