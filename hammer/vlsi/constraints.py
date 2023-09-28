@@ -380,7 +380,7 @@ ClockPort = NamedTuple('ClockPort', [
 
 OutputLoadConstraint = NamedTuple('OutputLoadConstraint', [
     ('name', str),
-    ('load', float)
+    ('load', CapacitanceValue)
 ])
 
 

@@ -150,7 +150,7 @@ vlsi.inputs:
 
     constraints: [] # Manual hierarchical constraints. Overrides generic constraints on a per module basis.
     # Should be a list along the lines of [{"module1": <list of other hammer constraints>}].
-    # For example [{"mod1": [vlsi.inputs.default_output_load: 2], "mod2": [vlsi.inputs.clocks:<clock constraints>] }].
+    # For example [{"mod1": [vlsi.inputs.default_output_load: "2 pF"], "mod2": [vlsi.inputs.clocks:<clock constraints>] }].
 
   ilms: [] # ILMs for hierarchical mode.
   # ILM struct (ILMStruct) members:
@@ -188,13 +188,13 @@ vlsi.inputs:
   # group (str) - Optional. The name of the clock group this clock belongs to. Clocks in the same group will not be marked as asynchronous.
   #   Clocks with no group specified will all be placed in separate groups and thus marked as asynchronous to each other and all other groups.
 
-  default_output_load: 1 # Default output pin load capacitance.
-  # Default: 1pF
+  default_output_load: "1 pF" # Default output pin load capacitance.
+  # type: CapacitanceValue
 
   output_loads: [] # List of output load constraints.
   # Each item in the list should be a struct with the following members:
   # name (str) - Name of the output load (e.g. io_out)
-  # load (float) - Output load capacitance in pF.
+  # load (CapacitanceValue) - Output load capacitance (e.g. "1 pF").
 
   delays: [] # List of delay constraints.
   # These either constrain inputs to arrive after a certain delay relative
