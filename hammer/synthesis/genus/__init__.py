@@ -283,7 +283,7 @@ class Genus(HammerSynthesisTool, CadenceTool):
 
     def syn_generic(self) -> bool:
         # Add clock mapping flow if special cells are specified
-        if self.version() >= self.version_number("2111"):
+        if self.version() >= self.version_number("211"):
             buffers = self.technology.get_special_cell_by_type(CellType.CTSBuffer)[0].name
             if len(buffers) > 0:
                 self.append(f"set_db cts_buffer_cells {{{' '.join(buffers)}}}")
