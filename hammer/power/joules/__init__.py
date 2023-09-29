@@ -291,12 +291,16 @@ class Joules(HammerPowerTool, CadenceTool):
 
             stim_alias, new_stim = self.get_alias_name(read_stim_cmd)
 
-            if new_stim:
-                block_append(f"{read_stim_cmd} -alias {stim_alias} -append")
-                # block_append(f"write_sdb -out {alias}.sdb") # NOTE: subsequent read_sdb command errors when reading this file back in, so don't cache for now
-                # TODO: avg mode saves time, run this based on output_formats mode?
-                # block_append(f"compute_power -mode average -stim {stim_alias} -append")
-                block_append(f"compute_power -mode time_based -stim {stim_alias} -append")
+            # if new_stim:
+            # NOTE: only reading new stimuli with -append mode breaks frame-based power analysis 
+            #   with error message: "Invalid frame name /stim#2/frame#3. No stimulus read. Using vectorless power computation"
+            #   Interestingly, this does not happen when starting from a database checkpoint (i.e. after read_db pre_report_power)
+            #   For now, re-run read_stimulus for each power report config, even if it's an identical stimulus
+            block_append(f"{read_stim_cmd} -alias {stim_alias}")
+            # block_append(f"write_sdb -out {alias}.sdb") # NOTE: subsequent read_sdb command errors when reading this file back in, so don't cache for now
+            # TODO: avg mode saves time, run this based on output_formats mode?
+            # block_append(f"compute_power -mode average -stim {stim_alias} -append")
+            block_append(f"compute_power -mode time_based -stim {stim_alias} -append")
 
             # remove only file extension (last .*) in filename
             waveform_name = '.'.join(os.path.basename(report.waveform_path).split('.')[0:-1])
@@ -320,20 +324,14 @@ class Joules(HammerPowerTool, CadenceTool):
             # use set intersection to determine whether two lists have at least one element in common
             if {'report','all'} & output_formats:
                 # -frames $frames explodes the runtime & doesn't seem to change result
-                # NOTE: module_str causes it to error
-                if not report.levels: levels_str = "-levels all"
-                self.block_append(f"report_power -stims {stim_alias} {inst_str} {module_str} {m_levels_str} -unit mW -out {report_path}.power.rpt")
+                self.block_append(f"report_power -stims {stim_alias} {inst_str} {module_str} {levels_str} -unit mW -out {report_path}.power.rpt")
                 self.block_append(f"report_power -stims {stim_alias} -by_hierarchy {levels_str} -unit mW -out {report_path}.hier.power.rpt")
             if {'activity','all'} & output_formats:
-                if not report.levels: levels_str = "-levels 0"
-                self.block_append(f"report_activity -stims {stim_alias} {inst_str} {module_str} {m_levels_str} -out {report_path}.activity.rpt")
+                self.block_append(f"report_activity -stims {stim_alias} {inst_str} {module_str} {levels_str} -out {report_path}.activity.rpt")
                 self.block_append(f"report_activity -stims {stim_alias} -by_hierarchy {levels_str} -out {report_path}.hier.activity.rpt")
             if {'ppa','all'} & output_formats:
                 root_str = inst_str.replace('-inst','-root')
-                # TODO: this command causes internal error (but not when just running report_power step) 
-                # self.append(f"report_ppa {root_str} {module_str} -out {report_path}.ppa.rpt")
-            # TODO: any frame-based analysis gives this error message: "Invalid frame name /stim#2/frame#3. No stimulus read. Using vectorless power computation"
-            #   however, this does not happen when just running report_power step, similar to the report_ppa issue
+                self.block_append(f"report_ppa {root_str} {module_str} -out {report_path}.ppa.rpt")
             if {'plot_profile','profile','all'} & output_formats:
                 if not frame_based_analysis:
                     self.logger.error("Must specify either interval_size or toggle_signal+num_toggles in power.inputs.report_configs to generate plot_profile report (frame-based analysis).")
@@ -344,7 +342,7 @@ class Joules(HammerPowerTool, CadenceTool):
                 if not frame_based_analysis:
                     self.logger.error("Must specify either interval_size or toggle_signal+num_toggles in power.inputs.report_configs to generate write_profile report (frame-based analysis).")
                     return False
-                block_append(f"write_power_profile -stims {stim_alias} -root [get_insts -rtl_type hier] {levels_str} -unit mW -format fsdb -out {report_path}.profile")
+                block_append(f"write_power_profile -stims {stim_alias} -root [get_insts -rtl_type hier] {levels_str} -unit mW -format fsdb -out {report_path}.profile.fsdb")
 
         saifs = self.get_setting("power.inputs.saifs")
         for saif in saifs:
