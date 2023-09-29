@@ -9,25 +9,156 @@ synthesis.inputs:
   input_files: ["src/pass.v"]
 
 vlsi.inputs.hierarchical:
-  mode: hierarchical
+  mode: top_down
   top_module: ChipTop
   config_source: manual
   manual_modules:
     - ChipTop:
         - SubModA
-        - SubModB
-    - SubModA:
-        - SubModC
-        - SubModD
-    - SubModB:
-        - SubModE
+        #- SubModB
+    # - SubModA:
+    #     - SubModC
+    #     - SubModD
+    # - SubModB:
+    #     - SubModE
   manual_placement_constraints:
-    - ChipTop: []
-    - SubModA: []
-    - SubModB: []
-    - SubModC: []
-    - SubModD: []
-    - SubModE: []
+    - ChipTop: 
+      - path: "ChipTop"
+        type: toplevel
+        x: 0
+        y: 0
+        width: 1000
+        height: 1000
+        margins:
+          left: 0
+          right: 0
+          top: 0
+          bottom: 0
+      - path: "ChipTop/die_ring"
+        type: hardmacro
+        master: "die_ring"
+        create_physical: true
+        x: 0
+        y: 0
+      - path: "ChipTop/sys/_SubModA_"
+        type: hierarchical
+        master: SubModA
+        x: 0
+        y: 0
+        width: 100
+        height: 100
+        top_layer: m7
+      # - path: "ChipTop/sys/_SubModB_"
+      #   type: hierarchical
+      #   master: SubModB
+      #   x: 0
+      #   y: 0
+      #   width: 100
+      #   height: 100
+      #   top_layer: m7
+
+
+    - SubModA:
+      - path: "SubModA"
+        type: toplevel
+        x: 0
+        y: 0
+        width: 100
+        height: 100
+        margins:
+          left: 0
+          right: 0
+          top: 0
+          bottom: 0
+      - path: "SubModA/DIC"
+        type: hardmacro
+        master: "fdk22tic2_dicregcdply_cont"
+        create_physical: true
+        x: 2577.69 # 10.5 * 245.7 - 2.16
+        y: 491.4
+        top_layer: m6
+    #   - path: "SubModA/_SubModC_"
+    #     type: hierarchical
+    #     master: "SubModC"
+    #     x: 0
+    #     y: 0
+    #     width: 10
+    #     height: 10
+    #     top_layer: m8
+    #   - path: "SubModA/_SubModD_"
+    #     type: hierarchical
+    #     master: "SubModD"
+    #     x: 0
+    #     y: 0
+    #     width: 10
+    #     height: 10
+    #     top_layer: m8
+
+
+    # - SubModB:
+    #   - path: "SubModB"
+    #     type: toplevel
+    #     x: 0
+    #     y: 0
+    #     width: 100
+    #     height: 100
+    #     margins:
+    #       left: 0
+    #       right: 0
+    #       top: 0
+    #       bottom: 0
+    #   - path: "SubModB/DIC"
+    #     type: hardmacro
+    #     master: "fdk22tic2_dicregcdply_cont"
+    #     create_physical: true
+    #     x: 2577.69 # 10.5 * 245.7 - 2.16
+    #     y: 491.4
+    #     top_layer: m6
+    #   - path: "SubModB/_SubModE_"
+    #     type: hierarchical
+    #     master: "SubModE"
+    #     x: 0
+    #     y: 0
+    #     width: 10
+    #     height: 10
+    #     top_layer: m8
+
+    # - SubModC:
+    #   - path: "SubModC"
+    #     type: toplevel
+    #     x: 0
+    #     y: 0
+    #     width: 10
+    #     height: 10
+    #     margins:
+    #       left: 0
+    #       right: 0
+    #       top: 0
+    #       bottom: 0
+    # - SubModD:
+    #   - path: "SubModD"
+    #     type: toplevel
+    #     x: 0
+    #     y: 0
+    #     width: 10
+    #     height: 10
+    #     margins:
+    #       left: 0
+    #       right: 0
+    #       top: 0
+    #       bottom: 0
+    # - SubModE:
+    #   - path: "SubModE"
+    #     type: toplevel
+    #     x: 0
+    #     y: 0
+    #     width: 10
+    #     height: 10
+    #     margins:
+    #       left: 0
+    #       right: 0
+    #       top: 0
+    #       bottom: 0
 
 vlsi.core.synthesis_tool: "hammer.synthesis.mocksynth"
 synthesis.mocksynth.temp_folder: "obj_dir"
@@ -35,3 +166,76 @@ vlsi.core.par_tool: "hammer.par.mockpar"
 vlsi.core.sim_tool: "hammer.sim.mocksim"
 vlsi.core.drc_tool: "hammer.drc.mockdrc"
 vlsi.core.lvs_tool: "hammer.lvs.mocklvs"
+
+
+######
+
+
+# # Generate Make include to aid in flow
+# vlsi.core.build_system: make
+
+# # Placement Constraints
+# # For ASAP7, all numbers must be 4x larger than final GDS
+# vlsi.inputs.placement_constraints:
+#   - path: "ChipTop"
+#     type: toplevel
+#     x: 0
+#     y: 0
+#     width: 800
+#     height: 500
+#     margins:
+#       left: 0
+#       right: 0
+#       top: 0
+#       bottom: 0
+#   - path: "ChipTop/system/tile_prci_domain/tile_reset_domain_tile/dcache/data/data_arrays_0/data_arrays_0_ext/mem_0_0"
+#     type: hardmacro
+#     x: 550
+#     y: 25
+#     orientation: "r0"
+#     top_layer: "M4"
+#     master: "SRAM1RW4096x8"
+#   - path: "ChipTop/system/tile_prci_domain/tile_reset_domain_tile/dcache/data/data_arrays_0/data_arrays_0_ext/mem_0_1"
+#     type: hardmacro
+#     x: 550
+#     y: 270
+#     orientation: "r0"
+#     top_layer: "M4"
+#   - path: "ChipTop/system/tile_prci_domain/tile_reset_domain_tile/dcache/data/data_arrays_0/data_arrays_0_ext/mem_0_2"
+#     type: hardmacro
+#     x: 675
+#     y: 25
+#     orientation: "r0"
+#     top_layer: "M4"
+#     master: "SRAM1RW4096x8"
+#   - path: "ChipTop/system/tile_prci_domain/tile_reset_domain_tile/dcache/data/data_arrays_0/data_arrays_0_ext/mem_0_3"
+#     type: hardmacro
+#     x: 675
+#     y: 270
+#     orientation: "r0"
+#     top_layer: "M4"
+#     master: "SRAM1RW4096x8"
+#   - path: "ChipTop/system/tile_prci_domain/tile_reset_domain_tile/frontend/icache/tag_array_0/tag_array_0_ext/mem_0_0"
+#     type: hardmacro
+#     x: 125
+#     y: 150
+#     orientation: "my"
+#     top_layer: "M4"
+#     master: "SRAM1RW64x21"
+#   - path: "ChipTop/system/tile_prci_domain/tile_reset_domain_tile/frontend/icache/data_arrays_0_0/data_arrays_0_0_ext/mem_0_0"
+#     type: hardmacro
+#     x: 0
+#     y: 25
+#     orientation: "my"
+#     top_layer: "M4"
+#     master: "SRAM1RW1024x32"
+
+# # Pin placement constraints
+# vlsi.inputs.pin_mode: generated
+# vlsi.inputs.pin.generate_mode: semi_auto
+# vlsi.inputs.pin.assignments: [
+#   {pins: "*", layers: ["M5", "M7"], side: "bottom"}
+# ]
+
+# # SRAM Compiler compiler options
+# vlsi.core.sram_generator_tool: "hammer.technology.asap7.sram_compiler"

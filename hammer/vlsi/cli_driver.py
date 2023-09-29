@@ -816,6 +816,11 @@ class CLIDriver:
             return None
         else:
             return self.get_full_config(driver, syn_input_only)
+    
+    #modified
+    def hier_par_to_par_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        """ Create a full config to run the output. """
+        #par to par - 1 and par to par - 2
 
     def par_to_drc_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
         """ Create a full config to run the output. """
@@ -1599,6 +1604,11 @@ class CLIDriver:
         :return: The diplomacy graph
         """
         build_system = str(driver.database.get_setting("vlsi.core.build_system", "none"))
+        #DEBUG
+        # vlsi.core.build_system: make
+        # build_system = make
+        # later returns build_makefile 
+
         if build_system in BuildSystems:
             return BuildSystems[build_system](driver, append_error_func)
         else:
