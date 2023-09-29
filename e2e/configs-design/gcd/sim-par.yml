@@ -2,6 +2,6 @@
 
 sim.inputs:
   level: "par"
-  input_files: ['src/gcd_tb.v']
+  input_files: ["src/gcd_tb.v"]
   input_files_meta: append
   timing_annotated: true

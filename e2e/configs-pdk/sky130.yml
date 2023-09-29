@@ -14,4 +14,4 @@ vlsi.inputs.pin.assignments: [
 # ex. flags below are lost during sim-syn/par (but not sim-rtl)
 sim.inputs:
   defines: ["FUNCTIONAL", "UNIT_DELAY=#1"]
-  defines_meta: 'append'
+  defines_meta: "append"

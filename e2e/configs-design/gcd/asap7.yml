@@ -4,9 +4,9 @@ vlsi.inputs.clocks: [
 ]
 
 sim.inputs:
-  defines: ['CLOCK_PERIOD=5']
-  defines_meta: 'append'
-  options: ['-timescale=1ns/10ps']
+  defines: ["CLOCK_PERIOD=5"]
+  defines_meta: "append"
+  options: ["-timescale=1ns/10ps"]
   options_meta: append
 
 # Placement Constraints
@@ -22,12 +22,6 @@ vlsi.inputs.placement_constraints:
       right: 0
       top: 0
       bottom: 0
-
-vlsi.inputs.pin_mode: generated
-vlsi.inputs.pin.generate_mode: semi_auto
-vlsi.inputs.pin.assignments: [
-  {pins: "*", layers: ["M5"], side: "bottom"}
-]
 
 vlsi.inputs.delays: [
   {name: "reset",           clock: "clk", delay: "1", direction: "input"},

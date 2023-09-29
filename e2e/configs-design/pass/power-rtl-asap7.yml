@@ -3,7 +3,7 @@
 vlsi.core.power_tool: "hammer.power.joules"
 
 power.inputs:
-  level: 'rtl'
+  level: "rtl"
   input_files: ["src/pass.v"]
   waveforms: ["build-asap7-cm/pass/sim-rtl-rundir/output.fsdb"]
   report_configs:

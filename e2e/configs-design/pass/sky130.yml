@@ -23,13 +23,6 @@ vlsi.inputs.placement_constraints:
       top: 10
       bottom: 10
 
-# Pin placement constraints
-vlsi.inputs.pin_mode: generated
-vlsi.inputs.pin.generate_mode: semi_auto
-vlsi.inputs.pin.assignments: [
-  {pins: "*", layers: ["met4"], side: "bottom"}
-]
-
 vlsi.inputs.delays: [
   {name: "in", clock: "clock", delay: "1", direction: "input"},
   {name: "out", clock: "clock", delay: "2", direction: "output"}
