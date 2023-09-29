@@ -63,18 +63,18 @@ class Joules(HammerPowerTool, CadenceTool):
         self.joules_settings()
         # Restore from the last checkpoint if we're not starting over.
         if first_step != self.first_step:
-            self.verbose_append("read_db pre_{step}".format(step=first_step.name))
+            self.block_append("read_db pre_{step}".format(step=first_step.name))
             # NOTE: reading stimulus from this sdb file just errors out, unsure why
             # if os.path.exists(self.sdb_path):
-            #     self.verbose_append(f"read_stimulus -format sdb -file {self.sdb_path}")
+            #     self.block_append(f"read_stimulus -format sdb -file {self.sdb_path}")
         return True
 
     def do_between_steps(self, prev: HammerToolStep, next: HammerToolStep) -> bool:
         assert super().do_between_steps(prev, next)
         # Write a checkpoint to disk.
-        self.verbose_append("write_db -to_file pre_{step}".format(step=next.name))
+        self.block_append("write_db -all_root_attributes -to_file pre_{step}".format(step=next.name))
         # Symlink the database to latest for load_power script later.
-        self.verbose_append("ln -sfn pre_{step} latest".format(step=next.name))
+        self.block_append("ln -sfn pre_{step} latest".format(step=next.name))
         self._step_transitions = self._step_transitions + [(prev.name, next.name)]
         return True
 
@@ -95,9 +95,9 @@ class Joules(HammerPowerTool, CadenceTool):
         # TODO: this doesn't work if you're only running the very last step
         if len(self._step_transitions) > 0:
             last = "post_{step}".format(step=self._step_transitions[-1][1])
-            self.verbose_append("write_db -to_file {last}".format(last=last))
+            self.block_append("write_db -to_file {last}".format(last=last))
             # Symlink the database to latest for load_power script later.
-            self.verbose_append("ln -sfn {last} latest".format(last=last))
+            self.block_append("ln -sfn {last} latest".format(last=last))
 
         return self.run_joules()
     
@@ -114,12 +114,12 @@ class Joules(HammerPowerTool, CadenceTool):
     
     def joules_settings(self) -> bool:
         max_threads = self.get_setting("vlsi.core.max_threads")
-        self.verbose_append(f"set_multi_cpu_usage -local_cpu {max_threads}")
+        self.block_append(f"set_multi_cpu_usage -local_cpu {max_threads}")
         # use super-threading to parallelize synthesis (up to 8 CPUs)
-        self.verbose_append("set_db auto_super_thread 1")
-        # self.verbose_append(f"set_db super_thread_servers localhost")
-        self.verbose_append(f"set_db max_cpus_per_server {max_threads}")
-        self.verbose_append("set_db max_frame_count 100000000") # default is 1000, too low for most use-cases
+        self.block_append("set_db auto_super_thread 1")
+        # self.block_append(f"set_db super_thread_servers localhost")
+        self.block_append(f"set_db max_cpus_per_server {max_threads}")
+        self.block_append("set_db max_frame_count 100000000") # default is 1000, too low for most use-cases
         return True
 
     def check_level(self) -> bool:
@@ -131,23 +131,23 @@ class Joules(HammerPowerTool, CadenceTool):
 
     def init_technology(self) -> bool:
         # libs, define RAMs, define corners
-        verbose_append = self.verbose_append
+        block_append = self.block_append
 
         corners = self.get_mmmc_corners()
         if MMMCCornerType.Extra in list(map(lambda corner: corner.type, corners)):
             for corner in corners:
                 if corner.type is MMMCCornerType.Extra:
-                    verbose_append("read_libs {EXTRA_LIBS} -domain extra -infer_memory_cells".format(EXTRA_LIBS=self.get_timing_libs(corner)))
+                    block_append("read_libs {EXTRA_LIBS} -domain extra -infer_memory_cells".format(EXTRA_LIBS=self.get_timing_libs(corner)))
                     break
         elif MMMCCornerType.Setup in list(map(lambda corner: corner.type, corners)):
             for corner in corners:
                 if corner.type is MMMCCornerType.Setup:
-                    verbose_append("read_libs {SETUP_LIBS} -domain setup -infer_memory_cells".format(SETUP_LIBS=self.get_timing_libs(corner)))
+                    block_append("read_libs {SETUP_LIBS} -domain setup -infer_memory_cells".format(SETUP_LIBS=self.get_timing_libs(corner)))
                     break
         elif MMMCCornerType.Hold in list(map(lambda corner: corner.type, corners)):
             for corner in corners:
                 if corner.type is MMMCCornerType.Hold:
-                    verbose_append("read_libs {HOLD_LIBS} -domain hold -infer_memory_cells".format(HOLD_LIBS=self.get_timing_libs(corner)))
+                    block_append("read_libs {HOLD_LIBS} -domain hold -infer_memory_cells".format(HOLD_LIBS=self.get_timing_libs(corner)))
                     break
         else:
             self.logger.error("No corners found")
@@ -157,7 +157,7 @@ class Joules(HammerPowerTool, CadenceTool):
     def init_design(self) -> bool:
         if not self.check_level(): return False
         if not self.init_technology(): return False
-        verbose_append = self.verbose_append
+        block_append = self.block_append
 
         top_module = self.get_setting("power.inputs.top_module")
         # Replace . to / formatting in case argument passed from sim tool
@@ -167,7 +167,7 @@ class Joules(HammerPowerTool, CadenceTool):
             # We are switching working directories and Joules still needs to find paths.
             abspath_input_files = list(map(lambda name: os.path.join(os.getcwd(), name), self.input_files))  # type: List[str]
             # Read in the design files
-            verbose_append("read_hdl -sv {}".format(" ".join(abspath_input_files)))
+            block_append("read_hdl -sv {}".format(" ".join(abspath_input_files)))
 
         # Setup the power specification
         power_spec_arg = self.map_power_spec_name()
@@ -175,33 +175,36 @@ class Joules(HammerPowerTool, CadenceTool):
         if not power_spec_arg or not power_spec_file:
             return False
 
-        verbose_append("read_power_intent -{tpe} {spec} -module {TOP_MODULE}".format(tpe=power_spec_arg, spec=power_spec_file, TOP_MODULE=top_module))
+        block_append("read_power_intent -{tpe} {spec} -module {TOP_MODULE}".format(tpe=power_spec_arg, spec=power_spec_file, TOP_MODULE=top_module))
 
         # Set options pre-elaboration
-        verbose_append("set_db leakage_power_effort medium")
-        verbose_append("set_db lp_insert_clock_gating true")
+        block_append("set_db leakage_power_effort medium")
+        block_append("set_db lp_insert_clock_gating true")
 
         if self.level == FlowLevel.RTL:
             # Elaborate the design
-            verbose_append("elaborate {TOP_MODULE}".format(TOP_MODULE=top_module))
+            block_append("elaborate {TOP_MODULE}".format(TOP_MODULE=top_module))
         elif self.level == FlowLevel.SYN:
             # Read in the synthesized netlist
-            verbose_append("read_netlist {}".format(" ".join(self.input_files)))
+            block_append("read_netlist {}".format(" ".join(self.input_files)))
 
             # Read in the post-synth SDCs
-            verbose_append("read_sdc {}".format(self.sdc))
+            block_append("read_sdc {}".format(self.sdc))
+        
+        block_append("apply_power_intent")
+        block_append("commit_power_intent")
         
         return True
 
 
     def synthesize_design(self) -> bool:
-        verbose_append = self.verbose_append
+        block_append = self.block_append
 
         if self.level == FlowLevel.RTL:
             # Generate and read the SDCs
             sdc_files = self.generate_sdc_files()  # type: List[str]
-            verbose_append("read_sdc {}".format(" ".join(sdc_files)))
-            verbose_append("syn_power -effort medium")
+            block_append("read_sdc {}".format(" ".join(sdc_files)))
+            block_append("syn_power -effort medium")
 
         return True
 
@@ -243,7 +246,7 @@ class Joules(HammerPowerTool, CadenceTool):
     
 
     def report_power(self) -> bool:
-        verbose_append = self.verbose_append
+        block_append = self.block_append
         top_module = self.get_setting("power.inputs.top_module")
         # Replace . to / formatting in case argument passed from sim tool
         tb_dut = self.tb_dut.replace(".", "/")
@@ -289,11 +292,11 @@ class Joules(HammerPowerTool, CadenceTool):
             stim_alias, new_stim = self.get_alias_name(read_stim_cmd)
 
             if new_stim:
-                verbose_append(f"{read_stim_cmd} -alias {stim_alias} -append")
-                # verbose_append(f"write_sdb -out {alias}.sdb") # NOTE: subsequent read_sdb command errors when reading this file back in, so don't cache for now
+                block_append(f"{read_stim_cmd} -alias {stim_alias} -append")
+                # block_append(f"write_sdb -out {alias}.sdb") # NOTE: subsequent read_sdb command errors when reading this file back in, so don't cache for now
                 # TODO: avg mode saves time, run this based on output_formats mode?
-                # verbose_append(f"compute_power -mode average -stim {stim_alias} -append")
-                verbose_append(f"compute_power -mode time_based -stim {stim_alias} -append")
+                # block_append(f"compute_power -mode average -stim {stim_alias} -append")
+                block_append(f"compute_power -mode time_based -stim {stim_alias} -append")
 
             # remove only file extension (last .*) in filename
             waveform_name = '.'.join(os.path.basename(report.waveform_path).split('.')[0:-1])
@@ -301,57 +304,59 @@ class Joules(HammerPowerTool, CadenceTool):
             inst_str = f"-inst {report.inst}" if report.inst else ""
             module_str = f"-module {report.module}" if report.module else ""
             levels_str = f"-levels {report.levels}" if report.levels else ""
-            report_name = report.report_name if report.report_name else waveform_name
-            output_formats = set(report.output_formats) if report.output_formats else {'report'}                
+            m_levels_str = levels_str if report.module else ""
+            output_formats = set(report.output_formats) if report.output_formats else {'report'}  
+
+            report_path = report.report_name if report.report_name else waveform_name
+            if not report_path.startswith('/'):
+                save_dir = os.path.join(self.run_dir, 'reports')
+                os.makedirs(save_dir, exist_ok=True)
+                report_path = os.path.join(save_dir, report_path)              
 
             # frames TCL variable to be used across different commands
             self.append(f"set frames [get_sdb_frames -stims {stim_alias}]")
+            # NOTE: including the '-frames $frames ' argument results in this Joules error: "Error: Cannot specify frame#0 if other frames are specified with -frames.""
 
             # use set intersection to determine whether two lists have at least one element in common
             if {'report','all'} & output_formats:
-                report_path = report_name
-                if not report_path.startswith('/'):
-                    save_dir = os.path.join(self.run_dir, 'report')
-                    os.makedirs(save_dir, exist_ok=True)
-                    report_path = os.path.join(save_dir, report_path)
                 # -frames $frames explodes the runtime & doesn't seem to change result
                 # NOTE: module_str causes it to error
-                if levels_str == "": levels_str = "-levels all"
-                self.block_append(f"report_power -stims {stim_alias} -by_hierarchy {levels_str} -unit mW -out {report_path}.rpt")
+                if not report.levels: levels_str = "-levels all"
+                self.block_append(f"report_power -stims {stim_alias} {inst_str} {module_str} {m_levels_str} -unit mW -out {report_path}.power.rpt")
+                self.block_append(f"report_power -stims {stim_alias} -by_hierarchy {levels_str} -unit mW -out {report_path}.hier.power.rpt")
+            if {'activity','all'} & output_formats:
+                if not report.levels: levels_str = "-levels 0"
+                self.block_append(f"report_activity -stims {stim_alias} {inst_str} {module_str} {m_levels_str} -out {report_path}.activity.rpt")
+                self.block_append(f"report_activity -stims {stim_alias} -by_hierarchy {levels_str} -out {report_path}.hier.activity.rpt")
+            if {'ppa','all'} & output_formats:
+                root_str = inst_str.replace('-inst','-root')
+                self.block_append(f"report_ppa {root_str} {module_str} -out {report_path}.ppa.rpt")
             if {'plot_profile','profile','all'} & output_formats:
                 if not frame_based_analysis:
                     self.logger.error("Must specify either interval_size or toggle_signal+num_toggles in power.inputs.report_configs to generate plot_profile report (frame-based analysis).")
                     return False
-                report_path = report_name
-                if not report_path.startswith('/'):
-                    save_dir = os.path.join(self.run_dir, 'plot_profile')
-                    os.makedirs(save_dir, exist_ok=True)
-                    report_path = os.path.join(save_dir, report_path)
-                # NOTE: including the '-frames $frames ' argument results in this Joules error: "Error: Cannot specify frame#0 if other frames are specified with -frames.""
                 # NOTE: we don't include levels_str here bc category is total power anyways
-                self.block_append(f"plot_power_profile -stims {stim_alias} {inst_str} {module_str} -by_category {{total}} -types {{total}} -unit mW -format png -out {report_path}.png")
+                self.block_append(f"plot_power_profile -stims {stim_alias} {inst_str} {module_str} {m_levels_str} -by_category {{total}} -types {{total}} -unit mW -format png -out {report_path}.profile.png")
             if {'write_profile','profile','all'} & output_formats:
-                report_path = report_name
-                if not report_path.startswith('/'):
-                    save_dir = os.path.join(self.run_dir, 'write_profile')
-                    os.makedirs(save_dir, exist_ok=True)
-                    report_path = os.path.join(save_dir, report_path)
-                verbose_append(f"write_power_profile -stims {stim_alias} -root [get_insts -rtl_type hier] {levels_str} -unit mW -format fsdb -out {report_path}")
+                if not frame_based_analysis:
+                    self.logger.error("Must specify either interval_size or toggle_signal+num_toggles in power.inputs.report_configs to generate write_profile report (frame-based analysis).")
+                    return False
+                block_append(f"write_power_profile -stims {stim_alias} -root [get_insts -rtl_type hier] {levels_str} -unit mW -format fsdb -out {report_path}.profile")
 
         saifs = self.get_setting("power.inputs.saifs")
         for saif in saifs:
             saif_basename = os.path.basename(saif)
-            verbose_append("compute_power -mode time_based -stim {SAIF}".format(SAIF=saif_basename))
-            verbose_append("report_power -stims {SAIF} -indent_inst -unit mW -out {SAIF}.report".format(SAIF=saif_basename))
+            block_append("compute_power -mode time_based -stim {SAIF}".format(SAIF=saif_basename))
+            block_append("report_power -stims {SAIF} -indent_inst -unit mW -out {SAIF}.report".format(SAIF=saif_basename))
 
         return True
 
     def run_joules(self) -> bool:
-        verbose_append = self.verbose_append
+        block_append = self.block_append
 
         """Close out the power script and run Joules"""
         # Quit Joules
-        verbose_append("exit")
+        block_append("exit")
 
         # Create power analysis script
         #   with unique filename so that multiple runs don't overwrite each others' TCL scripts

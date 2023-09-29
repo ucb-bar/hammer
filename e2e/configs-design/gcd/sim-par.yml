@@ -9,5 +9,4 @@ sim.inputs:
   level: "par"
   options: ['-timescale=1ns/10ps']
   options_meta: append
-  timing_annotated: false
-
+  timing_annotated: true

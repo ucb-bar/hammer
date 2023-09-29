@@ -19,7 +19,7 @@ poetry shell
 The following variables in the Makefile select the target flow to run:
 
 - `design` - RTL name
-    - {`test`, `gcd`}
+    - {`pass`, `gcd`}
 - `pdk` - PDK name
     - {`sky130`, `asap7`}
 - `tools` - CAD tool flow
@@ -61,7 +61,7 @@ Specify the appropriate `env/tools/pdk/design` variables to select which configs
 
 ```shell
 make build
-# same as: `make env=bwrc tools=cm pdk=sky130 design=test build`
+# same as: `make env=bwrc tools=cm pdk=sky130 design=pass build`
 ```
 
 Hammer will generate a Makefile fragment in `OBJ_DIR/hammer.d`.
@@ -95,7 +95,7 @@ These actions are summarized in more detail:
     - Generated power reports in `OBJ_DIR/power-rtl-rundir/reports`
 - Synthesis
     - `make syn`
-    - Gate-level netlist in `OBJ_DIR/syn-rundir/pass.mapped.v`
+    - Gate-level netlist in `OBJ_DIR/syn-rundir/<design>.mapped.v`
 - Post-Synthesis simulation
     - `make syn-to-sim`
     - `make sim-syn`
@@ -108,19 +108,20 @@ These actions are summarized in more detail:
 - PnR
     - `make syn-to-par`
     - `make par`
-    - LVS netlist (`pass.lvs.v`) and GDS (`pass.gds`) in `OBJ_DIR/par-rundir`
+    - LVS netlist (`<design>.lvs.v`) and GDS (`<design>.gds`) in `OBJ_DIR/par-rundir`
 - Post-PnR simulation
     - `make par-to-sim`
     - `make sim-par`
 - Post-PnR Power simulation
     - `make par-to-power`
+    - `make sim-par-to-power`
     - `make power-par`
     - Generated power reports in `OBJ_DIR/power-par-rundir`
 
 ### Flow Customization
 
 If at any point you would like to use custom config files (that will override any previous configs), assign the `extra` Make variable to a space-separated list of these files.
-For example, to run the `test` design with `sky130` through the commercial flow, but run LVS with Cadence Pegasus instead of the default Siemens Calibre,
+For example, to run the `pass` design with `sky130` through the commercial flow, but run LVS with Cadence Pegasus instead of the default Siemens Calibre,
 simply run the following:
 
 ```shell
@@ -148,5 +149,5 @@ Clone the [asap7 repo](https://github.com/The-OpenROAD-Project/asap7) somewhere 
 
 ### Sky130 Install
 
-Refere to the [Hammer Sky130 plugin README](https://github.com/ucb-bar/hammer/tree/master/hammer/technology/sky130)
+Refer to the [Hammer Sky130 plugin README](https://github.com/ucb-bar/hammer/tree/master/hammer/technology/sky130)
 to install the Sky130 PDK, then reference the path in your `ENV_YML` config (only the `technology.sky130.sky130A` key is required).

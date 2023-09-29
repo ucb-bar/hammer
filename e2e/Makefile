@@ -3,7 +3,7 @@ vlsi_dir=$(abspath .)
 
 
 # minimal flow configuration variables
-design              ?= test
+design              ?= pass
 pdk                 ?= sky130
 tools               ?= cm
 env                 ?= bwrc

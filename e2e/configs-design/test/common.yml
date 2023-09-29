@@ -1,9 +1,0 @@
-# Generate Make include to aid in flow
-vlsi.core.build_system: make
-
-vlsi.inputs.power_spec_type: "cpf"
-vlsi.inputs.power_spec_mode: "auto"
-
-synthesis.inputs:
-  top_module: "pass"
-  input_files: ["src/pass.v"]
