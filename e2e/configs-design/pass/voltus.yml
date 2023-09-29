@@ -1,7 +1,6 @@
 # Voltus Power Analysis
 
 vlsi.core.power_tool: "hammer.power.voltus"
-
 power.inputs:
   level: "par"
   database: "/path/to/database"

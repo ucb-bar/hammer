@@ -1,0 +1,37 @@
+# Generate Make include to aid in flow
+vlsi.core.build_system: make
+
+vlsi.inputs.power_spec_type: "cpf"
+vlsi.inputs.power_spec_mode: "auto"
+
+synthesis.inputs:
+  top_module: "pass"
+  input_files: ["src/pass.v"]
+
+vlsi.inputs.hierarchical:
+  mode: hierarchical
+  top_module: ChipTop
+  config_source: manual
+  manual_modules:
+    - ChipTop:
+        - SubModA
+        - SubModB
+    - SubModA:
+        - SubModC
+        - SubModD
+    - SubModB:
+        - SubModE
+  manual_placement_constraints:
+    - ChipTop: []
+    - SubModA: []
+    - SubModB: []
+    - SubModC: []
+    - SubModD: []
+    - SubModE: []
+
+vlsi.core.synthesis_tool: "hammer.synthesis.mocksynth"
+synthesis.mocksynth.temp_folder: "obj_dir"
+vlsi.core.par_tool: "hammer.par.mockpar"
+vlsi.core.sim_tool: "hammer.sim.mocksim"
+vlsi.core.drc_tool: "hammer.drc.mockdrc"
+vlsi.core.lvs_tool: "hammer.lvs.mocklvs"

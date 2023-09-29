@@ -330,7 +330,10 @@ class Joules(HammerPowerTool, CadenceTool):
                 self.block_append(f"report_activity -stims {stim_alias} -by_hierarchy {levels_str} -out {report_path}.hier.activity.rpt")
             if {'ppa','all'} & output_formats:
                 root_str = inst_str.replace('-inst','-root')
-                self.block_append(f"report_ppa {root_str} {module_str} -out {report_path}.ppa.rpt")
+                # TODO: this command causes internal error (but not when just running report_power step) 
+                # self.append(f"report_ppa {root_str} {module_str} -out {report_path}.ppa.rpt")
+            # TODO: any frame-based analysis gives this error message: "Invalid frame name /stim#2/frame#3. No stimulus read. Using vectorless power computation"
+            #   however, this does not happen when just running report_power step, similar to the report_ppa issue
             if {'plot_profile','profile','all'} & output_formats:
                 if not frame_based_analysis:
                     self.logger.error("Must specify either interval_size or toggle_signal+num_toggles in power.inputs.report_configs to generate plot_profile report (frame-based analysis).")

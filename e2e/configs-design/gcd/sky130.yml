@@ -51,3 +51,14 @@ vlsi.inputs.pin.generate_mode: semi_auto
 vlsi.inputs.pin.assignments: [
   {pins: "*", layers: ["met4"], side: "bottom"}
 ]
+
+vlsi.inputs.delays: [
+  {name: "reset",           clock: "clk", delay: "1", direction: "input"},
+  {name: "operands_bits_A", clock: "clk", delay: "1", direction: "input"},
+  {name: "operands_bits_B", clock: "clk", delay: "1", direction: "input"},
+  {name: "operands_val",    clock: "clk", delay: "1", direction: "input"},
+  {name: "operands_rdy",    clock: "clk", delay: "1", direction: "output"},
+  {name: "result_bits_data",clock: "clk", delay: "1", direction: "output"},
+  {name: "result_val",      clock: "clk", delay: "1", direction: "output"},
+  {name: "result_rdy",      clock: "clk", delay: "1", direction: "input"} 
+]

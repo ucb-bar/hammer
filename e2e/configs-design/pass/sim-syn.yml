@@ -2,7 +2,6 @@
 
 sim.inputs:
   level: "syn"
-  input_files: ['src/gcd_tb.v']
+  input_files: ["src/pass_tb.v"]
   input_files_meta: append
   timing_annotated: true
-

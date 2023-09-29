@@ -14,6 +14,8 @@ synopsys.MGLS_LICENSE_FILE: "1717@bwrcflex-1.eecs.berkeley.edu:1717@bwrcflex-2.e
 # Commercial tool versions
 synthesis.genus.version: "211"
 par.innovus.version: "211"
+synthesis.genus.genus_bin: "/ecad/tools/cadence/GENUS/GENUS211/bin/genus"  # must point to binaries bc Hammer assumes DDI path now
+par.innovus.innovus_bin: "/ecad/tools/cadence/INNOVUS/INNOVUS211/bin/innovus"
 sim.vcs.version: "P-2019.06-SP1"
 sim.vcs.verdi_home: "/ecad/tools/synopsys/verdi/P-2019.06-SP2-2"
 sim.vcs.verdi_home_meta: lazysubst

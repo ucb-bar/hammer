@@ -149,5 +149,5 @@ Clone the [asap7 repo](https://github.com/The-OpenROAD-Project/asap7) somewhere 
 
 ### Sky130 Install
 
-Refer to the [Hammer Sky130 plugin README](https://github.com/ucb-bar/hammer/tree/master/hammer/technology/sky130)
+Refer to the [Hammer Sky130 plugin README](https://hammer-vlsi.readthedocs.io/en/stable/Technology/Sky130.html)
 to install the Sky130 PDK, then reference the path in your `ENV_YML` config (only the `technology.sky130.sky130A` key is required).
