@@ -1558,7 +1558,7 @@ class HammerTool(metaclass=ABCMeta):
         for load_src in output_loads:
             load = OutputLoadConstraint(
                 name=str(load_src["name"]),
-                load=float(load_src["load"])
+                load=CapacitanceValue(load_src["load"])
             )
             output.append(load)
         return output

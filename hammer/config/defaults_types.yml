@@ -117,7 +117,7 @@ vlsi.inputs:
   clocks: list[dict[str, Any]]
 
   # Default output pin load capacitance.
-  default_output_load: int
+  default_output_load: str
 
   # List of output load constraints.
   output_loads: list[dict[str, str]]

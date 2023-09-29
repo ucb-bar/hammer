@@ -153,6 +153,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
     def env_vars(self) -> Dict[str, str]:
         v = dict(super().env_vars)
         v["INNOVUS_BIN"] = self.get_setting("par.innovus.innovus_bin")
+        if self.version() >= self.version_number("221"):  # support critical region resynthesis with DDI
+            v["PATH"] = f'{os.environ.copy()["PATH"]}:{os.path.dirname(self.get_setting("par.innovus.innovus_bin").replace("INNOVUS", "GENUS"))}'
         return v
 
     @property
@@ -327,7 +329,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                 verbose_append(f"set_db route_design_top_layer {layers[1]}")
 
         # Set design effort.
-        verbose_append("set_db design_flow_effort {}".format(self.get_setting("par.innovus.design_flow_effort")))
+        verbose_append(f"set_db design_flow_effort {self.get_setting('par.innovus.design_flow_effort')}")
+        verbose_append(f"set_db design_power_effort {self.get_setting('par.innovus.design_power_effort')}")
 
         # Set "don't use" cells.
         for l in self.generate_dont_use_commands():
@@ -362,7 +365,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             # TODO: Fix this once the stackup supports vias ucb-bar/hammer#354
             block_layer = self.get_setting("vlsi.technology.bump_block_cut_layer")  # type: str
             for bump in bumps.assignments:
-                self.append("create_bump -cell {cell} -location_type cell_center -name_format \"Bump_{c}.{r}\" -orient r0 -location \"{x} {y}\"".format(
+                self.append("create_bump -allow_overlap_control keep_all -cell {cell} -location_type cell_center -name_format \"Bump_{c}.{r}\" -orient r0 -location \"{x} {y}\"".format(
                     cell = bump.custom_cell if bump.custom_cell is not None else bumps.cell,
                     c = bump.x,
                     r = bump.y,
@@ -523,6 +526,19 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             '''.format(sdc=self.post_synth_sdc), clean=True)
         if len(self.get_clock_ports()) > 0:
             # Ignore clock tree when there are no clocks
+            # If special cells are specified, explicitly set them instead of letting tool infer from libs
+            buffers = self.technology.get_special_cell_by_type(CellType.CTSBuffer)[0].name
+            if len(buffers) > 0:
+                self.append(f"set_db cts_buffer_cells {{{' '.join(buffers)}}}")
+            inverters = self.technology.get_special_cell_by_type(CellType.CTSInverter)[0].name
+            if len(inverters) > 0:
+                self.append(f"set_db cts_inverter_cells {{{' '.join(inverters)}}}")
+            gates = self.technology.get_special_cell_by_type(CellType.CTSGate)[0].name
+            if len(gates) > 0:
+                self.append(f"set_db cts_clock_gating_cells {{{' '.join(gates)}}}")
+            logics = self.technology.get_special_cell_by_type(CellType.CTSLogic)[0].name
+            if len(logics) > 0:
+                self.append(f"set_db cts_logic_cells {{{' '.join(logics)}}}")
             self.verbose_append("create_clock_tree_spec")
             if bool(self.get_setting("par.innovus.use_cco")):
                 # -hold is a secret flag for ccopt_design (undocumented anywhere)
