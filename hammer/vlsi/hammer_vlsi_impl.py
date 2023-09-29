@@ -2138,6 +2138,8 @@ class HasSDCSupport(HammerTool):
 
         clocks = self.get_clock_ports()
         time_unit = self.get_time_unit().value_prefix + self.get_time_unit().unit
+        output.append(f"set_units -time {time_unit}")
+
         for clock in clocks:
             # TODO: FIXME This assumes that library units are always in ns!!!
             if get_or_else(clock.generated, False):
