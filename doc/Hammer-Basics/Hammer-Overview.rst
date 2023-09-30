@@ -77,13 +77,18 @@ Using hooks requires the designer to extend the ``CLIDriver`` class. A good exam
 
     example-vlsi -e env.yml -p config.yml --obj_dir build par
 
-In both of these commands, an environment configuration is passed to Hammer using a ``-e`` flag, which in this case is ``env.yml``.
+Hammer configuration files consist of environment and project configurations.
+The environment configuration file, which in this case is ``env.yml``, is passed to Hammer using the ``-e`` flag.
 ``env.yml`` contains pointers to the required tool licenses and environment variables.
-These environment settings will not be propagated to the output configuration files after each action.
 
 Any number of other YML or JSON files can then be passed in using the ``-p`` flag.
 In this case, there is only one, ``config.yml``, and it needs to set all the required keys for the step of the flow being run.
 Passing in multiple files looks like ``-p config1.yml -p config2.yml``. Refer to the :ref:`config` section for the implications of multiple config files.
+
+The environment settings take precedence over all project configurations, 
+and are not propagated to the output configuration files after each action.
+The order of precedence for the project configs reads from right to left (i.e. each file overrides all files to its left in the command line).
+
 
 ``--obj_dir build`` designates what directory Hammer should use as a working directory.
 All default action run directories and output files will be placed here.
