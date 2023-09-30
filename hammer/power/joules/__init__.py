@@ -12,7 +12,8 @@ import os
 import errno
 from textwrap import dedent
 
-from hammer.vlsi import HammerPowerTool, HammerToolStep, MMMCCornerType, FlowLevel, PowerReport
+from hammer.vlsi import HammerPowerTool, HammerToolStep, HammerToolHookAction, HammerTool, \
+                        MMMCCornerType, FlowLevel, PowerReport
 from hammer.logging import HammerVLSILogging
 
 from hammer.common.cadence import CadenceTool
@@ -59,8 +60,6 @@ class Joules(HammerPowerTool, CadenceTool):
 
     def do_pre_steps(self, first_step: HammerToolStep) -> bool:
         assert super().do_pre_steps(first_step)
-        # TODO: is this the best place to put this? settings should run before ANY step
-        self.joules_settings()
         # Restore from the last checkpoint if we're not starting over.
         if first_step != self.first_step:
             self.block_append("read_db pre_{step}".format(step=first_step.name))
@@ -101,8 +100,8 @@ class Joules(HammerPowerTool, CadenceTool):
 
         return self.run_joules()
     
-    # def get_tool_hooks(self) -> List[HammerToolHookAction]:
-    #     return [self.make_persistent_hook(joules_global_settings)]
+    def get_tool_hooks(self) -> List[HammerToolHookAction]:
+        return [self.make_persistent_hook(joules_global_settings)]
 
     @property
     def steps(self) -> List[HammerToolStep]:
@@ -111,16 +110,6 @@ class Joules(HammerPowerTool, CadenceTool):
             self.synthesize_design,
             self.report_power,
         ])
-    
-    def joules_settings(self) -> bool:
-        max_threads = self.get_setting("vlsi.core.max_threads")
-        self.block_append(f"set_multi_cpu_usage -local_cpu {max_threads}")
-        # use super-threading to parallelize synthesis (up to 8 CPUs)
-        self.block_append("set_db auto_super_thread 1")
-        # self.block_append(f"set_db super_thread_servers localhost")
-        self.block_append(f"set_db max_cpus_per_server {max_threads}")
-        self.block_append("set_db max_frame_count 100000000") # default is 1000, too low for most use-cases
-        return True
 
     def check_level(self) -> bool:
         if self.level == FlowLevel.RTL or self.level == FlowLevel.SYN:
@@ -408,13 +397,21 @@ class Joules(HammerPowerTool, CadenceTool):
 
         return True
 
-# def joules_global_settings(ht: HammerTool) -> bool:
-#     """Settings that need to be reapplied at every tool invocation"""
-#     assert isinstance(ht, HammerPlaceAndRouteTool)
-#     assert isinstance(ht, CadenceTool)
-#     ht.create_enter_script()
+def joules_global_settings(ht: HammerTool) -> bool:
+    """Settings that need to be reapplied at every tool invocation"""
+    assert isinstance(ht, HammerPowerTool)
+    assert isinstance(ht, CadenceTool)
 
-#     return True
+    max_threads = ht.get_setting("vlsi.core.max_threads")
+    ht.block_append(f"set_multi_cpu_usage -local_cpu {max_threads}")
+    # use super-threading to parallelize synthesis (up to 8 CPUs)
+    ht.block_append("set_db auto_super_thread 1")
+    # self.block_append(f"set_db super_thread_servers localhost")
+    ht.block_append(f"set_db max_cpus_per_server {max_threads}")
+    ht.block_append("set_db max_frame_count 100000000") # default is 1000, too low for most use-cases
+    ht.create_enter_script()
+
+    return True
 
 
 tool = Joules
