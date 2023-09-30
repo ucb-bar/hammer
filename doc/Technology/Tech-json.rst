@@ -16,7 +16,6 @@ Below is an example of the installs and tarballs from the ASAP7 plugin.
 
   "name": "ASAP7 Library",
   "grid_unit": "0.001",
-  "time_unit": "1 ps",
   "installs": [
     {
       "id": "$PDK",

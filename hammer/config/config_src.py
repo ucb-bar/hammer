@@ -941,7 +941,8 @@ class HammerDatabase:
         if cfg is None:
             cfg = self.get_config()
         if key not in self.get_config_types():
-            self.logger.warning(f"Key {key} is not associated with a type")
+            #TODO: compile this at the beginning instead of emitting every instance
+            #self.logger.warning(f"Key {key} is not associated with a type")
             return True
         try:
             exp_value_type = parse_setting_type(self.get_config_types()[key])

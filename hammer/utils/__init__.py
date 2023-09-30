@@ -16,6 +16,7 @@ from decimal import Decimal
 
 from .verilog_utils import *
 from .lef_utils import *
+from .lib_utils import *
 
 
 def deepdict(x: dict) -> dict:

@@ -260,8 +260,6 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         verbose_append("set_db timing_analysis_cppr both")
         # Use OCV mode for timing analysis by default
         verbose_append("set_db timing_analysis_type ocv")
-        # Match SDC time units to timing libraries
-        verbose_append("set_library_unit -time 1{}".format(self.get_time_unit().value_prefix + self.get_time_unit().unit))
 
         # Read LEF layouts.
         lef_files = self.technology.read_libs([
@@ -559,8 +557,9 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         else:
             decap_cells = decaps[0].name
             decap_caps = []  # type: List[float]
+            cap_unit = self.get_cap_unit().value_prefix + self.get_cap_unit().unit
             if decaps[0].size is not None:
-                decap_caps = list(map(lambda x: CapacitanceValue(x).value_in_units("fF"), decaps[0].size))
+                decap_caps = list(map(lambda x: CapacitanceValue(x).value_in_units(cap_unit), decaps[0].size))
             if len(decap_cells) != len(decap_caps):
                 self.logger.error("Each decap cell in the name list must have a corresponding decapacitance value in the size list.")
             decap_consts = list(filter(lambda x: x.target=="capacitance", self.get_decap_constraints()))
@@ -580,7 +579,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                             assert isinstance(const.height, Decimal)
                             area_str = " ".join(("-area", str(const.x), str(const.y), str(const.x+const.width), str(const.y+const.height)))
                         self.verbose_append("add_decaps -effort high -total_cap {CAP} {AREA}".format(
-                            CAP=const.capacitance.value_in_units("fF"), AREA=area_str))
+                            CAP=const.capacitance.value_in_units(cap_unit), AREA=area_str))
 
         if len(stdfillers) == 0:
             self.logger.warning(

@@ -1,7 +1,6 @@
 {
   "name": "Skywater 130nm Library",
   "grid_unit": "0.001",
-  "time_unit": "1 ns",
   "installs": [
     {
       "id": "$SKY130_NDA",
