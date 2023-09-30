@@ -13,7 +13,4 @@ power.inputs:
       toggle_signal: clock
       num_toggles: 1
       output_formats:
-      - report
-      - activity
-      - ppa
-      - plot_profile
+      - all
