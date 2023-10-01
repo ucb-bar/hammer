@@ -7,5 +7,5 @@ power.joules:
   joules_bin_meta: lazysubst # we want later overrides to be able to affect this
 
   # Joules version to use.
-  # Used to locate the binary - e.g. the '211' in ${cadence.cadence_home}/JLS/JLS211/bin/joules
+  # Used to locate the binary - e.g. the '221' in ${cadence.cadence_home}/DDI/DDI221/JLS221/bin/joules
   version: "221"
