@@ -2142,8 +2142,8 @@ class HasSDCSupport(HammerTool):
         for clock in clocks:
             # hports causes some tools to crash
             if get_or_else(clock.generated, False):
-                if any("get_db hports" in p for p in [get_or_else(clock.path, ""), get_or_else(clock.source_path, "")]):
-                    self.logger.error("get_db hports will cause some tools to crash. Consider querying hpins instead.")
+                if any("hport" in p for p in [get_or_else(clock.path, ""), get_or_else(clock.source_path, "")]):
+                    self.logger.error(f"In clock constraints, hports are not supported by some tools. Consider using ports/pins/hpins instead. Offending clock name: ${clock.name}")
                 output.append("create_generated_clock -name {n} -source {m_path} -divide_by {div} {path}".
                         format(n=clock.name, m_path=clock.source_path, div=clock.divisor, path=clock.path))
             elif clock.path is not None:
