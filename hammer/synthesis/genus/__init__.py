@@ -284,19 +284,21 @@ class Genus(HammerSynthesisTool, CadenceTool):
     def syn_generic(self) -> bool:
         # Add clock mapping flow if special cells are specified
         if self.version() >= self.version_number("211"):
-            buffers = self.technology.get_special_cell_by_type(CellType.CTSBuffer)[0].name
-            if len(buffers) > 0:
-                self.append(f"set_db cts_buffer_cells {{{' '.join(buffers)}}}")
-            inverters = self.technology.get_special_cell_by_type(CellType.CTSInverter)[0].name
-            if len(inverters) > 0:
-                self.append(f"set_db cts_inverter_cells {{{' '.join(inverters)}}}")
-            gates = self.technology.get_special_cell_by_type(CellType.CTSGate)[0].name
-            if len(gates) > 0:
-                self.append(f"set_db cts_clock_gating_cells {{{' '.join(gates)}}}")
-            logics = self.technology.get_special_cell_by_type(CellType.CTSLogic)[0].name
-            if len(logics) > 0:
-                self.append(f"set_db cts_logic_cells {{{' '.join(logics)}}}")
-            if any(c > 0 for c in [len(buffers), len(inverters), len(gates), len(logics)]):
+            buffer_cells = self.technology.get_special_cell_by_type(CellType.CTSBuffer)
+            if len(buffer_cells) > 0:
+                self.append(f"set_db cts_buffer_cells {{{' '.join(buffer_cells[0].name)}}}")
+            inverter_cells = self.technology.get_special_cell_by_type(CellType.CTSInverter)
+            if len(inverter_cells) > 0:
+                self.append(f"set_db cts_inverter_cells {{{' '.join(inverter_cells[0].name)}}}")
+            gate_cells = self.technology.get_special_cell_by_type(CellType.CTSGate)
+            if len(gate_cells) > 0:
+                self.append(f"set_db cts_clock_gating_cells {{{' '.join(gate_cells[0].name)}}}")
+            logic_cells = self.technology.get_special_cell_by_type(CellType.CTSLogic)
+            if len(logic_cells) > 0:
+                self.append(f"set_db cts_logic_cells {{{' '.join(logic_cells[0].name)}}}")
+            # if any(c > 0 for c in [len(buffer_cells), len(inverter_cells), len(gate_cells), len(logic_cells)]):
+            if len(inverter_cells) > 0 and len(logic_cells) > 0:
+                # Clock mapping needs at least the attributes cts_inverter_cells and cts_logic_cells to be set
                 self.append("set_db map_clock_tree true")
         self.verbose_append("syn_generic")
         return True

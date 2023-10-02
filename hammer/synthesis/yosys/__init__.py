@@ -268,11 +268,12 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         # Technology mapping of flip-flops
         """)
         for liberty_file in self.liberty_files_tt.split():
-            self.verbose_append(f"dfflibmap -liberty {liberty_file}")
+            self.verbose_append(f"dfflibmap -map-only -liberty {liberty_file}")
         self.verbose_append("opt")
 
         self.write_sdc_file()
         return True
+
 
     def syn_map(self) -> bool:
 
@@ -280,6 +281,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         # Technology mapping for cells
         # ABC supports multiple liberty files, but the hook from Yosys to ABC doesn't
         # TODO: this is a bad way of getting one liberty file, need a way to merge all std cell lib files
+        # NOTE: this breaks for any PDK that has multiple LIB files for std cell library
         abc -D {self.clock_period} \\
             -constr "{self.mapped_sdc_path}" \\
             -liberty "{self.liberty_files_tt.split()[0]}" \\

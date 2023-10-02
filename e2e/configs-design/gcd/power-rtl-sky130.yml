@@ -1,0 +1,31 @@
+# Test Joules Flow
+
+vlsi.core.power_tool: "hammer.power.joules"
+
+power.inputs:
+  level: "rtl"
+  input_files: ["src/gcd.v"]
+  waveforms: ["build-sky130-cm/gcd/sim-rtl-rundir/output.fsdb"]
+  report_configs:
+    - waveform_path: "build-sky130-cm/gcd/sim-rtl-rundir/output.fsdb"
+      levels: 1
+      toggle_signal: /gcd/clk
+      num_toggles: 1
+      report_name: levels-1
+      output_formats:
+      - all
+    # the following two should produce equivalent results:
+    - waveform_path: "build-sky130-cm/gcd/sim-rtl-rundir/output.fsdb"
+      inst: /gcd/GCDctrl0
+      toggle_signal: /gcd/clk
+      num_toggles: 1
+      report_name: inst-GCDctrl0
+      output_formats:
+      - all
+    - waveform_path: "build-sky130-cm/gcd/sim-rtl-rundir/output.fsdb"
+      module: gcd_control
+      interval_size: 5ns
+      report_name: module-gcd_control
+      output_formats:
+      - all
+    

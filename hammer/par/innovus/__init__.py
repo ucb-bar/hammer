@@ -527,18 +527,18 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         if len(self.get_clock_ports()) > 0:
             # Ignore clock tree when there are no clocks
             # If special cells are specified, explicitly set them instead of letting tool infer from libs
-            buffers = self.technology.get_special_cell_by_type(CellType.CTSBuffer)[0].name
-            if len(buffers) > 0:
-                self.append(f"set_db cts_buffer_cells {{{' '.join(buffers)}}}")
-            inverters = self.technology.get_special_cell_by_type(CellType.CTSInverter)[0].name
-            if len(inverters) > 0:
-                self.append(f"set_db cts_inverter_cells {{{' '.join(inverters)}}}")
-            gates = self.technology.get_special_cell_by_type(CellType.CTSGate)[0].name
-            if len(gates) > 0:
-                self.append(f"set_db cts_clock_gating_cells {{{' '.join(gates)}}}")
-            logics = self.technology.get_special_cell_by_type(CellType.CTSLogic)[0].name
-            if len(logics) > 0:
-                self.append(f"set_db cts_logic_cells {{{' '.join(logics)}}}")
+            buffer_cells = self.technology.get_special_cell_by_type(CellType.CTSBuffer)
+            if len(buffer_cells) > 0:
+                self.append(f"set_db cts_buffer_cells {{{' '.join(buffer_cells[0].name)}}}")
+            inverter_cells = self.technology.get_special_cell_by_type(CellType.CTSInverter)
+            if len(inverter_cells) > 0:
+                self.append(f"set_db cts_inverter_cells {{{' '.join(inverter_cells[0].name)}}}")
+            gate_cells = self.technology.get_special_cell_by_type(CellType.CTSGate)
+            if len(gate_cells) > 0:
+                self.append(f"set_db cts_clock_gating_cells {{{' '.join(gate_cells[0].name)}}}")
+            logic_cells = self.technology.get_special_cell_by_type(CellType.CTSLogic)
+            if len(logic_cells) > 0:
+                self.append(f"set_db cts_logic_cells {{{' '.join(logic_cells[0].name)}}}")
             self.verbose_append("create_clock_tree_spec")
             if bool(self.get_setting("par.innovus.use_cco")):
                 # -hold is a secret flag for ccopt_design (undocumented anywhere)

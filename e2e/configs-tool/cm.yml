@@ -1,22 +1,13 @@
 # Generate Make include to aid in flow
 vlsi.core.build_system: make
 
-vlsi.inputs.power_spec_type: "cpf"
-vlsi.inputs.power_spec_mode: "auto"
-
-synthesis.inputs:
-  top_module: "pass"
-  input_files: ["src/pass.v"]
-
+# Select tools
 vlsi.core.synthesis_tool: "hammer.synthesis.genus"
-
 vlsi.core.par_tool: "hammer.par.innovus"
-par.innovus.design_flow_effort: "standard"
-par.inputs.gds_merge: true
-par.innovus.floorplan_mode: "generate"
-
 vlsi.core.sim_tool: "hammer.sim.vcs"
+
 vlsi.core.timing_tool: "hammer.timing.tempus"
 vlsi.core.formal_tool: "hammer.formal.conformal"
+vlsi.core.power_tool: "hammer.power.voltus"
 vlsi.core.drc_tool: "hammer.drc.calibre"
 vlsi.core.lvs_tool: "hammer.lvs.calibre"
