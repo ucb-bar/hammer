@@ -3,7 +3,7 @@
 module pass_tb;
 
     reg clk = 0;
-    always #(20) clk = ~clk;
+    always #(`CLOCK_PERIOD/2.0) clk = ~clk;
 
     reg in;
     wire out;
@@ -22,7 +22,7 @@ module pass_tb;
         in = 0;
         repeat(3) @(posedge clk);
 
-        #5;
+        #(`CLOCK_PERIOD/4.0);
 
         in = 1;
 
@@ -31,22 +31,23 @@ module pass_tb;
         end
 
         @(posedge clk);
-        #5;
+        #(`CLOCK_PERIOD/4.0);
 
         if (out == 0) begin
             $display("***Test Failed***");
         end
 
-        #5;
+        #(`CLOCK_PERIOD/4.0);
         in = 0;
 
         @(posedge clk);
-        #5;
+        #(`CLOCK_PERIOD/4.0);
 
         if (out == 1) begin
             $display("***Test Failed***");
         end
 
+        $display("***TEST COMPLETE***");
         $fsdbDumpoff;
         $finish;
 

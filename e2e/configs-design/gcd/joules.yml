@@ -1,0 +1,6 @@
+# Test Joules Flow
+
+vlsi.core.power_tool: "hammer.power.joules"
+
+power.inputs.input_files: ["/path/to/pass.v"]
+power.inputs.waveforms: ["path/to/waveform"]

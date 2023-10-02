@@ -1,0 +1,7 @@
+# Post-PAR Simulation
+
+sim.inputs:
+  level: "par"
+  input_files: ["src/pass_tb.v"]
+  input_files_meta: append
+  timing_annotated: true

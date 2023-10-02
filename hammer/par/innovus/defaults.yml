@@ -7,7 +7,7 @@ par.innovus:
   innovus_bin_meta: lazysubst # we want later overrides to be able to affect this
 
   # Innovus version to use.
-  # Used to locate the binary - e.g. the '221' in ${cadence.cadence_home}/DDI/DDI221/INNOVUS2211/bin/innovus
+  # Used to locate the binary - e.g. the '221' in ${cadence.cadence_home}/DDI/DDI221/INNOVUS221/bin/innovus
   version: "221"
 
   # Design flow effort.

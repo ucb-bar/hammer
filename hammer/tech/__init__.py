@@ -1139,14 +1139,11 @@ class HammerTechnology:
             else:
                 full_list.append(tar_file)
 
-        libs = os.listdir(dest_path)
-        full_paths = list(map(lambda l: os.path.join(dest_path, os.path.basename(l)), libs))
-
+        full_paths = [os.path.join(dest_path, os.path.basename(l)) for l in os.listdir(dest_path) if l.endswith('.gz')]
         for _path in full_paths:
-            subprocess.call(["gzip -d {_path}".format(_path=_path)], shell=True)
+            subprocess.call([f"gzip -d {_path}"], shell=True)
 
-        for extracted_file in libs:
-            full_list.append(extracted_file)
+        full_list += [os.path.join(dest_path, os.path.basename(l)) for l in os.listdir(dest_path)]
 
         return full_list
 

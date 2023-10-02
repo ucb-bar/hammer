@@ -1,0 +1,41 @@
+# Commercial tool licenses/paths
+mentor.mentor_home: "/ecad/tools/mentor"
+mentor.MGLS_LICENSE_FILE: "1717@bwrcflex-1.eecs.berkeley.edu:1717@bwrcflex-2.eecs.berkeley.edu"
+mentor.extra_env_vars: [{"LM_PROJECT": "bwrc_users", "USE_CALIBRE_VCO", "aoi"}]
+
+cadence.cadence_home: "/ecad/tools/cadence"
+cadence.CDS_LIC_FILE: "5280@bwrcflex-1.eecs.berkeley.edu:5280@bwrcflex-2.eecs.berkeley.edu"
+cadence.extra_env_vars: [{"LM_PROJECT": "bwrc_users"}]
+
+synopsys.synopsys_home: "/ecad/tools/synopsys"
+synopsys.SNPSLMD_LICENSE_FILE: "1701@bwrcflex-1.eecs.berkeley.edu:1701@bwrcflex-2.eecs.berkeley.edu"
+synopsys.MGLS_LICENSE_FILE: "1717@bwrcflex-1.eecs.berkeley.edu:1717@bwrcflex-2.eecs.berkeley.edu"
+
+# Commercial tool versions
+synthesis.genus.version: "211"
+par.innovus.version: "211"
+synthesis.genus.genus_bin: "/ecad/tools/cadence/GENUS/GENUS211/bin/genus"  # must point to binaries bc Hammer assumes DDI path now
+par.innovus.innovus_bin: "/ecad/tools/cadence/INNOVUS/INNOVUS211/bin/innovus"
+sim.vcs.version: "P-2019.06-SP1"
+sim.vcs.verdi_home: "/ecad/tools/synopsys/verdi/P-2019.06-SP2-2"
+sim.vcs.verdi_home_meta: lazysubst
+lvs.calibre.version: "2022.2_24.16"
+drc.calibre.version: "2022.2_24.16"
+
+# Open-source tool paths
+synthesis.yosys.yosys_bin: "/nscratch/vighneshiyer/miniconda3/envs/sky130/bin/yosys"
+par.openroad.openroad_bin: "/nscratch/vighneshiyer/miniconda3/envs/sky130/bin/openroad"
+drc.magic.magic_bin: "/nscratch/vighneshiyer/miniconda3/envs/sky130/bin/magic"
+lvs.netgen.netgen_bin: "/nscratch/vighneshiyer/miniconda3/envs/sky130/bin/netgen"
+
+# Sky130 paths
+technology.sky130:
+  sky130A: "/nscratch/vighneshiyer/miniconda3/envs/sky130/share/pdk/sky130A"
+  sram22_sky130_macros: "/nscratch/sky130/sram22_sky130_macros"
+  # sky130_nda:
+
+
+# ASAP7 paths
+vlsi.core.technology: "hammer.technology.asap7"
+technology.asap7.pdk_install_dir: "/nscratch/asap7/asap7-master/asap7PDK_r1p7"
+technology.asap7.stdcell_install_dir: "/nscratch/asap7/asap7-master/asap7sc7p5t_27"

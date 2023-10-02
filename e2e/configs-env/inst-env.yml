@@ -1,7 +1,16 @@
+# Commercial tool licenses/paths
 mentor.mentor_home: "/share/instsww/mgc"
 mentor.MGLS_LICENSE_FILE: "1717@bwrcflex-1.eecs.berkeley.edu:1717@bwrcflex-2.eecs.berkeley.edu"
+
 cadence.cadence_home: "/home/ff/eecs151/hammer-tools/cadence"
 cadence.CDS_LIC_FILE: "5280@license-srv.eecs.berkeley.edu"
+
 synopsys.synopsys_home: "/home/ff/eecs151/hammer-tools/synopsys"
 synopsys.SNPSLMD_LICENSE_FILE: "27005@license-srv.eecs.berkeley.edu"
 synopsys.MGLS_LICENSE_FILE: "1717@bwrcflex-1.eecs.berkeley.edu:1717@bwrcflex-2.eecs.berkeley.edu"
+
+# Commercial tool versions
+synthesis.genus.version: "191"
+par.innovus.version: "191"
+synthesis.genus.genus_bin: "/home/ff/eecs151/hammer-tools/cadence/GENUS/GENUS191/bin/genus"  # must point to binaries bc Hammer assumes DDI path now
+par.innovus.innovus_bin: "/home/ff/eecs151/hammer-tools/cadence/INNOVUS/INNOVUS191/bin/innovus"
