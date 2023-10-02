@@ -12,14 +12,17 @@ Main Hammer
 
 Hammer provides the Python backend for a Hammer project and exposes a set of APIs that are typical of modern VLSI flows. These APIs are then implemented by a tool plugin and a technology plugin of the designer's choice. The structure of Hammer is meant to enable re-use and portability between technologies.
 
-Hammer takes its inputs and serializes its state in the form of YAML and JSON files. The designer sets a variety of settings in the form of keys in different namespaces that are designated in Hammer to control its functionality. These keys are contained in ``hammer/hammer/config/defaults.yml``. This file shows all of the keys that are a part of main Hammer and provides sensible defaults that may be overridden or are set to null if they must be provided by the designer.
+Hammer takes its inputs and serializes its state in the form of YAML and JSON files, called Hammer IR. The designer sets a variety of settings in the form of keys in different namespaces that are designated in Hammer to control its functionality. 
+
+.. note::
+    Supported keys are contained in `defaults.yml <https://github.com/ucb-bar/hammer/blob/master/hammer/config/defaults.yml>__`. This file provides sensible defaults that may be overridden or are set to null if they must be provided by the designer.
 
 Here is an example of a snippet that would be included in the user's input configuration.
 
 .. _library-example:
 .. code-block:: yaml
 
-    vlsi.core.technology: "asap7"
+    vlsi.core.technology: "hammer.technology.asap7"
     vlsi.inputs.supplies:
         VDD: "0.7 V"
         GND: "0 V"
