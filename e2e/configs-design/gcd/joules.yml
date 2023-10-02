@@ -2,7 +2,5 @@
 
 vlsi.core.power_tool: "hammer.power.joules"
 
-power.inputs.input_files: ["src/gcd.v"]
-power.inputs.waveforms: ["build-asap7-cm/gcd/sim-rtl-rundir/output.fsdb"]
-
-power.inputs.power_spec: "auto"
+power.inputs.input_files: ["/path/to/pass.v"]
+power.inputs.waveforms: ["path/to/waveform"]
