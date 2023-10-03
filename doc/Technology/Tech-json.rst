@@ -196,6 +196,7 @@ The ``physical_only_cells_list`` is used to denote cells that contain only physi
   ],
 
 .. _full_schema:
+
 Full Schema
 -----------
 

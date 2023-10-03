@@ -1077,14 +1077,14 @@ class HammerTool(metaclass=ABCMeta):
         Return the library time value.
         """
         #TODO: support mixed technologies
-        return get_or_else(self.technology.time_unit, TimeValue("1 ns"))
+        return TimeValue(get_or_else(self.technology.time_unit, "1 ns"))
 
     def get_cap_unit(self) -> CapacitanceValue:
         """
         Return the library capacitance value.
         """
         #TODO: support mixed technologies
-        return get_or_else(self.technology.cap_unit, CapacitanceValue("1 pF"))
+        return CapacitanceValue(get_or_else(self.technology.cap_unit, "1 pF"))
 
     def get_all_supplies(self, key: str) -> List[Supply]:
         supplies = self.get_setting(key)
