@@ -24,7 +24,6 @@ from hammer.logging import HammerVLSILoggingContext
 from hammer.utils import (LEFUtils, LIBUtils, add_lists, deeplist, get_or_else,
                           in_place_unique, optional_map, reduce_list_str,
                           reduce_named, coerce_to_grid)
-from hammer.vlsi.units import TimeValue, CapacitanceValue
 
 if TYPE_CHECKING:
     from hammer.vlsi.hooks import HammerToolHookAction
@@ -350,9 +349,9 @@ class HammerTechnology:
         # Configuration
         self.config: TechJSON = None
 
-        # Units
-        self.time_unit: Optional[TimeValue] = None
-        self.cap_unit: Optional[CapacitanceValue] = None
+        # Units (converted to Time/CapacitanceValue later)
+        self.time_unit: Optional[str] = None
+        self.cap_unit: Optional[str] = None
 
     @classmethod
     def load_from_module(cls, tech_module: str) -> Optional["HammerTechnology"]:
@@ -388,16 +387,12 @@ class HammerTechnology:
                 [filters.get_timing_lib_with_preference("NLDM")],
                 HammerTechnologyUtils.to_plain_item)
         if len(libs) > 0:
-            tu = LIBUtils.get_time_unit(libs[0])
-            cu = LIBUtils.get_cap_unit(libs[0])
-            if tu is None:
+            self.time_unit = LIBUtils.get_time_unit(libs[0])
+            self.cap_unit = LIBUtils.get_cap_unit(libs[0])
+            if self.time_unit is None:
                 self.logger.error("Error in parsing first NLDM Liberty file for time units.")
-            else:
-                self.time_unit = TimeValue(tu)
-            if cu is None:
+            if self.cap_unit is None:
                 self.logger.error("Error in parsing first NLDM Liberty file for capacitance units.")
-            else:
-                self.cap_unit = CapacitanceValue(cu)
         else:
             self.logger.error("No NLDM libs defined. Time/cap units will be defined by the tool or another technology.")
 

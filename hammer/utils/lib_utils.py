@@ -36,7 +36,7 @@ class LIBUtils:
             match = next(line for line in lines if "capacitive_load_unit" in line)
             # attibute syntax: capacitive_load_unit(<value>,<unit>);
             # Also need to capitalize last f to F
-            split = re.split("\(|,|\)", match)
+            split = re.split(r"\(|,|\)", match)
             return split[1] + split[2].strip()[:-1] + split[2].strip()[-1].upper()
         except StopIteration:  # should not get here
             return None
