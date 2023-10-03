@@ -145,7 +145,7 @@ class HammerLocalSubmitCommand(HammerSubmitCommand):
         so = proc.stdout
         assert so is not None
         while True:
-            line = so.readline().decode("utf-8")
+            line = so.readline().decode("utf-8", errors="ignore")
             if line != '':
                 subprocess_logger.debug(line.rstrip())
                 output_buf += line
@@ -252,7 +252,7 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
         so = proc.stdout
         assert so is not None
         while True:
-            line = so.readline().decode("utf-8")
+            line = so.readline().decode("utf-8", errors="ignore")
             if line != '':
                 subprocess_logger.debug(line.rstrip())
                 output_buf += line
@@ -351,7 +351,7 @@ class HammerSlurmSubmitCommand(HammerSubmitCommand):
         so = proc.stdout
         assert so is not None
         while True:
-            line = so.readline().decode("utf-8")
+            line = so.readline().decode("utf-8", errors="ignore")
             if line != '':
                 subprocess_logger.debug(line.rstrip())
                 output_buf += line

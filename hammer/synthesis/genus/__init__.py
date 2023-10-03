@@ -250,15 +250,16 @@ class Genus(HammerSynthesisTool, CadenceTool):
                 verbose_append("set_db module:{top}/{mod} .preserve true".format(top=self.top_module, mod=ilm.module))
         verbose_append("init_design -top {}".format(self.top_module))
 
+        # Setup power settings from cpf/upf
+        # Difference from other tools: apply_power_intent after read
+        power_cmds = self.generate_power_spec_commands()
+        power_cmds.insert(1, "apply_power_intent -summary")
+        for l in power_cmds:
+            verbose_append(l)
+
         # Prevent floorplanning targets from getting flattened.
         # TODO: is there a way to track instance paths through the synthesis process?
         verbose_append("set_db root: .auto_ungroup none")
-
-        # Set units to pF and technology time unit.
-        # Must be done after elaboration.
-        verbose_append("set_units -capacitance 1.0pF")
-        verbose_append("set_load_unit -picofarads 1")
-        verbose_append("set_units -time 1.0{}".format(self.get_time_unit().value_prefix + self.get_time_unit().unit))
 
         # Set "don't use" cells.
         for l in self.generate_dont_use_commands():

@@ -25,7 +25,7 @@ from .hammer_vlsi_impl import HierarchicalMode
 from .hooks import (HammerStepFunction, HammerToolHookAction, HammerToolStep,
                     HookLocation, HammerStartStopStep)
 from .submit_command import HammerSubmitCommand
-from .units import TemperatureValue, TimeValue, VoltageValue
+from .units import TemperatureValue, TimeValue, VoltageValue, CapacitanceValue
 
 __all__ = ['HammerTool']
 
@@ -1076,8 +1076,15 @@ class HammerTool(metaclass=ABCMeta):
         """
         Return the library time value.
         """
-        return TimeValue(get_or_else(self.technology.config.time_unit, "1 ns"))
+        #TODO: support mixed technologies
+        return get_or_else(self.technology.time_unit, TimeValue("1 ns"))
 
+    def get_cap_unit(self) -> CapacitanceValue:
+        """
+        Return the library capacitance value.
+        """
+        #TODO: support mixed technologies
+        return get_or_else(self.technology.cap_unit, CapacitanceValue("1 pF"))
 
     def get_all_supplies(self, key: str) -> List[Supply]:
         supplies = self.get_setting(key)

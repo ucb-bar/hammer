@@ -38,7 +38,7 @@ Power strap constraints are specified using multiple Hammer IR keys in the ``par
 .. literalinclude:: ../../hammer/technology/asap7/defaults.yml
    :language: yaml
    :linenos:
-   :lines: 59-80
+   :lines: 60-81
    :caption: ASAP7 default power straps setting
 ..
 
@@ -47,7 +47,7 @@ The default keys for all hammer configs are defined in the `defaults.yml <https:
 .. literalinclude:: ../../hammer/config/defaults.yml
    :language: yaml
    :linenos:
-   :lines: 570-604
+   :lines: 572-610
    :caption: Hammer global default power straps setting
 ..
 

@@ -165,6 +165,7 @@ class HammerDriver:
         tech.set_database(self.database)
         tech.cache_dir = cache_dir
         tech.extract_technology_files()
+        tech.get_lib_units()
 
         self.tech = tech
 

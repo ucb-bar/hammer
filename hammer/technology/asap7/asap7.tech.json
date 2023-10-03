@@ -1,7 +1,6 @@
 {
   "name": "ASAP7 Library",
   "grid_unit": "0.001",
-  "time_unit": "1 ps",
   "installs": [
     {
       "id": "$PDK",
