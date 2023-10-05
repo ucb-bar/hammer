@@ -21,7 +21,7 @@ class LIBUtils:
         try:
             match = next(line for line in lines if "time_unit" in line)
             # attibute syntax: time_unit : <value><unit> ;
-            unit = re.split(" : | ; ", match)[1]
+            unit = re.split(" : | ; ", match)[1].replace('"', "").replace(";", "")
             return unit
         except StopIteration:  # should not get here
             return None
