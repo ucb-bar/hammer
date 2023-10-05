@@ -21,8 +21,7 @@ class LIBUtils:
         try:
             match = next(line for line in lines if "time_unit" in line)
             # attibute syntax: time_unit : <value><unit> ;
-            unit = re.split(" : | ; ", match)[1]
-            return unit
+            return re.split(":|;", match)[1].strip().strip('\"')
         except StopIteration:  # should not get here
             return None
 
@@ -37,7 +36,7 @@ class LIBUtils:
             # attibute syntax: capacitive_load_unit(<value>,<unit>);
             # Also need to capitalize last f to F
             split = re.split(r"\(|,|\)", match)
-            return split[1] + split[2].strip()[:-1] + split[2].strip()[-1].upper()
+            return split[1] + split[2].strip().strip('\"')[:-1] + split[2].strip().strip('\"')[-1].upper()
         except StopIteration:  # should not get here
             return None
 
