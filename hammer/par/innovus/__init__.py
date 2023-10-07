@@ -1061,22 +1061,22 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                             ury=constraint.y+constraint.height
                         ))
                     if ObstructionType.Route in obs_types:
-                        output.append("create_route_blockage -except_pg_nets -layers {{{layers}}} -spacing 0 -{area_flag} {{{x} {y} {urx} {ury}}}".format(
+                        output.append("create_route_blockage -except_pg_nets -{layers} -spacing 0 -{area_flag} {{{x} {y} {urx} {ury}}}".format(
                             x=constraint.x,
                             y=constraint.y,
                             urx=constraint.x+constraint.width,
                             ury=constraint.y+constraint.height,
                             area_flag="rects" if self.version() >= self.version_number("181") else "area",
-                            layers="all" if constraint.layers is None else " ".join(get_or_else(constraint.layers, []))
+                            layers="all {route}" if constraint.layers is None else f'layers {{{" ".join(get_or_else(constraint.layers, []))}}}'
                         ))
                     if ObstructionType.Power in obs_types:
-                        output.append("create_route_blockage -pg_nets -layers {{{layers}}} -{area_flag} {{{x} {y} {urx} {ury}}}".format(
+                        output.append("create_route_blockage -pg_nets -{layers} -{area_flag} {{{x} {y} {urx} {ury}}}".format(
                             x=constraint.x,
                             y=constraint.y,
                             urx=constraint.x+constraint.width,
                             ury=constraint.y+constraint.height,
                             area_flag="rects" if self.version() >= self.version_number("181") else "area",
-                            layers="all" if constraint.layers is None else " ".join(get_or_else(constraint.layers, []))
+                            layers="all {route}" if constraint.layers is None else f'layers {{{" ".join(get_or_else(constraint.layers, []))}}}'
                         ))
                 else:
                     assert False, "Should not reach here"
