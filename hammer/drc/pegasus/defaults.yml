@@ -1,0 +1,8 @@
+# Default settings for Pegasus DRC, for project/technology configuration and overriding.
+drc.pegasus:
+    # Location of the binary
+    pegasus_bin: "${cadence.cadence_home}/PEGASUS/PEGASUS${drc.pegasus.version}/bin/pegasus"
+    pegasus_bin_meta: lazysubst
+
+    # type: str
+    version: "231"

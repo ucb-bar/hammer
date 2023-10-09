@@ -9,6 +9,10 @@
     {
       "id": "$SKY130A",
       "path": "technology.sky130.sky130A"
+    },
+    {
+      "id": "$SKY130_CDS",
+      "path": "technology.sky130.sky130_cds"
     }
   ],
   "layer_map_file": "$SKY130_NDA/s8/V2.0.1/VirtuosoOA/libs/technology_library/technology_library.layermap",
@@ -22,6 +26,11 @@
       "tool_name": "klayout",
       "deck_name": "klayout_drc",
       "path": "$SKY130A/libs.tech/klayout/drc/sky130A.lydrc"
+    },
+    {
+      "tool_name": "pegasus",
+      "deck_name": "pegasus_drc",
+      "path": "$SKY130_CDS/pegasus/sky130_rev0006.drc.pvl"
     }
   ],
   "additional_drc_text": "",
@@ -31,6 +40,11 @@
       "deck_name": "calibre_lvs",
       "old_path": "$SKY130_NDA/s8/V2.0.1/LVS/Calibre/lvsRules_s8",
       "path": "cache/lvsControlFile_s8"
+    },
+    {
+      "tool_name": "pegasus",
+      "deck_name": "pegasus_lvs",
+      "path": "$SKY130_CDS/pegasus/sky130_rev0001.lvs.pvl"
     }
   ],
   "additional_lvs_text": "",

@@ -10,7 +10,11 @@ technology.sky130:
   # By default, this is used to populate pdk_home below.
   # It should contain s8/V2.0.1
   sky130_nda: str
-  
+
+  # This contains the Cadence PDK
+  # this key is OPTIONAL, and is only required if you are running Pegasus DRC/LVS.
+  sky130_cds: str
+
   # RAM paths
   # OpenRAM
   openram_lib: str

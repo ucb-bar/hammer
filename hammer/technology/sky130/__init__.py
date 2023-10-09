@@ -26,12 +26,10 @@ class SKY130Tech(HammerTechnology):
     def post_install_script(self) -> None:
         self.library_name = 'sky130_fd_sc_hd'
         # check whether variables were overriden to point to a valid path
-        self.use_nda_files = os.path.exists(self.get_setting("technology.sky130.sky130_nda"))
         self.use_sram22 = os.path.exists(self.get_setting("technology.sky130.sram22_sky130_macros"))
         self.setup_cdl()
         self.setup_verilog()
         self.setup_techlef()
-        self.setup_lvs_deck()
         self.setup_io_lefs()
         print('Loaded Sky130 Tech')
 
@@ -134,34 +132,6 @@ class SKY130Tech(HammerTechnology):
                     if line.strip() == 'END pwell':
                         df.write(_the_tlef_edit)
 
-    # Remove conflicting specification statements found in PDK LVS decks
-    def setup_lvs_deck(self) -> None:
-        if not self.use_nda_files: return
-        pattern = '.*({}).*\n'.format('|'.join(LVS_DECK_SCRUB_LINES))
-        matcher = re.compile(pattern)
-
-        source_paths = self.get_setting('technology.sky130.lvs_deck_sources')
-        lvs_decks = self.config.lvs_decks
-        if not lvs_decks:
-            return
-        for i in range(len(lvs_decks)):
-            deck = lvs_decks[i]
-            try:
-                source_path = Path(source_paths[i])
-            except IndexError:
-                self.logger.error(
-                    'No corresponding source for LVS deck {}'.format(deck))
-            if not source_path.exists():
-                raise FileNotFoundError(f"LVS deck not found: {source_path}")
-            dest_path = self.expand_tech_cache_path(str(deck.path))
-            self.ensure_dirs_exist(dest_path)
-            with open(source_path, 'r') as sf:
-                with open(dest_path, 'w') as df:
-                    self.logger.info("Modifying LVS deck: {} -> {}".format
-                        (source_path, dest_path))
-                    df.write(matcher.sub("", sf.read()))
-                    df.write(LVS_DECK_INSERT_LINES)
-
     # Power pins for clamps must be CLASS CORE
     # connect/disconnect spacers must be CLASS PAD SPACER, not AREAIO
     def setup_io_lefs(self) -> None:
@@ -216,7 +186,7 @@ class SKY130Tech(HammerTechnology):
         return hooks.get(tool_name, [])
 
     def get_tech_lvs_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
-        calibre_hooks = []
+        calibre_hooks = [HammerTool.make_post_insertion_hook("generate_lvs_run_file", setup_calibre_lvs_deck)]
         if self.use_sram22:
             calibre_hooks.append(HammerTool.make_post_insertion_hook("generate_lvs_run_file", sram22_lvs_recognize_gates_all))
         if self.get_setting("technology.sky130.lvs_blackbox_srams"):
@@ -250,19 +220,6 @@ LAYER licon
 END licon
 '''
 
-LVS_DECK_SCRUB_LINES = [
-    "VIRTUAL CONNECT REPORT",
-    "SOURCE PRIMARY",
-    "SOURCE SYSTEM SPICE",
-    "SOURCE PATH",
-    "ERC",
-    "LVS REPORT"
-]
-
-LVS_DECK_INSERT_LINES = '''
-LVS FILTER D  OPEN  SOURCE
-LVS FILTER D  OPEN  LAYOUT
-'''
 
 # various Innovus database settings
 def sky130_innovus_settings(ht: HammerTool) -> bool:
@@ -433,5 +390,51 @@ def sram22_lvs_recognize_gates_all(ht: HammerTool) -> bool:
     with open(run_file, "a") as f:
         f.write("LVS RECOGNIZE GATES ALL")
     return True
+
+
+LVS_DECK_SCRUB_LINES = [
+    "VIRTUAL CONNECT REPORT",
+    "SOURCE PRIMARY",
+    "SOURCE SYSTEM SPICE",
+    "SOURCE PATH",
+    "ERC",
+    "LVS REPORT"
+]
+
+LVS_DECK_INSERT_LINES = '''
+LVS FILTER D  OPEN  SOURCE
+LVS FILTER D  OPEN  LAYOUT
+'''
+
+def setup_calibre_lvs_deck(ht: HammerTool) -> bool:
+    assert isinstance(ht, HammerLVSTool), "Modify Calibre LVS deck for LVS only"
+    # Remove conflicting specification statements found in PDK LVS decks
+    pattern = '.*({}).*\n'.format('|'.join(LVS_DECK_SCRUB_LINES))
+    matcher = re.compile(pattern)
+
+    source_paths = ht.get_setting('technology.sky130.lvs_deck_sources')
+    lvs_decks = ht.technology.config.lvs_decks
+    if not lvs_decks:
+        return True
+    for i,deck in enumerate(lvs_decks):
+        if deck.tool_name != 'calibre': continue
+        try:
+            source_path = Path(source_paths[i])
+        except IndexError:
+            ht.logger.error(
+                'No corresponding source for LVS deck {}'.format(deck))
+            continue
+        if not source_path.exists():
+            raise FileNotFoundError(f"LVS deck not found: {source_path}")
+        dest_path = ht.technology.expand_tech_cache_path(str(deck.path))
+        ht.technology.ensure_dirs_exist(dest_path)
+        with open(source_path, 'r') as sf:
+            with open(dest_path, 'w') as df:
+                ht.logger.info("Modifying LVS deck: {} -> {}".format
+                    (source_path, dest_path))
+                df.write(matcher.sub("", sf.read()))
+                df.write(LVS_DECK_INSERT_LINES)
+    return True
+
 
 tech = SKY130Tech()

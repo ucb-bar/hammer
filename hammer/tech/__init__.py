@@ -724,7 +724,7 @@ class HammerTechnology:
             path_key = install.path
             install_path = str(self.get_setting(path_key))
             if not os.path.exists(install_path):
-                self.logger.error(f"The install path: {install_path} does not exist, looked at key {path_key}")
+                self.logger.warning(f"The install path: {install_path} does not exist, looked at key {path_key}")
                 return False
         return True
 

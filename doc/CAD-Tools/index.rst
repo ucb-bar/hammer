@@ -15,3 +15,4 @@ The package should contain an class object named 'tool' to create an instance of
    Tool-Plugin-Setup
    OpenROAD
    ICV
+   Pegasus
