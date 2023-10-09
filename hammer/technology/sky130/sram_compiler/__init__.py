@@ -60,7 +60,7 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
                     found = True
                     break
                 else:
-                    self.logger.warn(f"SKY130 {params.name} SRAM cache does not support corner {corner_str} with {fidelity} extraction")
+                    self.logger.warning(f"SKY130 {params.name} SRAM cache does not support corner {corner_str} with {fidelity} extraction")
 
             if not found:
                 self.logger.error(f"SKY130 {params.name} SRAM cache does not support corner {corner_str}")
