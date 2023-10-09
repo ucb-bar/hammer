@@ -34,6 +34,8 @@ def main(args) -> int:
 
     # Standard cells
     library='sky130_fd_sc_hd'
+    lef_library_ref= 'sky130_ef_sc_hd' # Until the official release fixes the divergent ef, fd, notation. Need this.
+    
     SKYWATER_LIBS = os.path.join('$SKY130A', 'libs.ref', library)
     LIBRARY_PATH  = os.path.join(  SKY130A,  'libs.ref', library, 'lib')
     lib_corner_files=os.listdir(LIBRARY_PATH)
@@ -64,7 +66,7 @@ def main(args) -> int:
         lib_entry = {
             "nldm_liberty_file":  os.path.join(SKYWATER_LIBS,'lib', cornerfilename),
             "verilog_sim":        os.path.join('cache',             library+'.v'),
-            "lef_file":           os.path.join(SKYWATER_LIBS,'lef', library+'.lef'),
+            "lef_file":           os.path.join(SKYWATER_LIBS,'lef', lef_library_ref+'.lef'),
             "spice_file":         os.path.join('cache',             library+'.cdl'),
             "gds_file":           os.path.join(SKYWATER_LIBS,'gds', library+'.gds'),
             "corner": {

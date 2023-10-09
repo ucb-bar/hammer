@@ -31,7 +31,7 @@ class SKY130Tech(HammerTechnology):
         self.setup_verilog()
         self.setup_techlef()
         self.setup_io_lefs()
-        print('Loaded Sky130 Tech')
+        self.logger.info('Loaded Sky130 Tech')
 
 
     def setup_cdl(self) -> None:
@@ -165,6 +165,34 @@ class SKY130Tech(HammerTechnology):
                     # force class to spacer
                     start = [idx for idx, line in enumerate(sl) if f'MACRO {cell}' in line]
                     sl[start[0] + 1] = sl[start[0] + 1].replace('AREAIO', 'SPACER')
+                    
+                # Current version has a one-off error that breaks lef parser.
+                self.logger.info("Fixing broken sky130_ef_io__analog_esd_pad LEF definition.")
+                start_broken_macro_list = ["MACRO sky130_ef_io__analog_esd_pad\n", "MACRO sky130_ef_io__analog_pad\n"]
+                end_broken_macro_list = ["END sky130_ef_io__analog_pad\n", "END sky130_ef_io__analog_noesd_pad\n"]
+                end_fixed_macro_list = ["END sky130_ef_io__analog_esd_pad\n", "END sky130_ef_io__analog_pad\n"]
+
+                for start_broken_macro, end_broken_macro, end_fixed_macro in zip(start_broken_macro_list, end_broken_macro_list, end_fixed_macro_list):
+                    # Get all start indices to be checked
+                    start_check_indices = [idx for idx, line in enumerate(sl) if line == start_broken_macro]
+                    
+                    # Extract broken macro
+                    for idx_broken_macro in  start_check_indices:
+                        # Find the start of the next_macro
+                        for idx in range(idx_broken_macro+1, len(sl)):
+                            if "MACRO" in sl[idx]:
+                                start_next_macro = idx
+                                break
+                        # Find the broken macro ending
+                        idx_end_broken_macro = len(sl)
+                        for idx in range(idx_broken_macro+1, len(sl)):
+                            if end_broken_macro in sl[idx]:
+                                idx_end_broken_macro = idx
+                                break
+                            
+                        if idx_end_broken_macro < start_next_macro: 
+                            sl[idx_end_broken_macro] = end_fixed_macro
+                
                 df.writelines(sl)
 
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
