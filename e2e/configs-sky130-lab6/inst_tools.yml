@@ -1,0 +1,52 @@
+# Written By: Ken Ho (FA23)
+# Contains tooling for EECS151
+
+# Generate Make include to aid in flow
+vlsi.core.build_system: make
+
+# Select tools
+vlsi.core.synthesis_tool: "hammer.synthesis.genus"
+vlsi.core.par_tool: "hammer.par.innovus"
+vlsi.core.sim_tool: "hammer.sim.vcs"
+
+vlsi.core.timing_tool: "hammer.timing.tempus"
+vlsi.core.formal_tool: "hammer.formal.conformal"
+vlsi.core.power_tool: "hammer.power.voltus"
+vlsi.core.drc_tool: "hammer.drc.pegasus"
+vlsi.core.lvs_tool: "hammer.lvs.pegasus"
+
+# Tooling versions
+# SRAM Compiler compiler options
+vlsi.core.sram_generator_tool: "hammer.technology.sky130.sram_compiler"
+# Specify this since we are not using macrocompiler
+vlsi.inputs.sram_parameters: "/home/ff/eecs151/fa23/hammer/hammer/technology/sky130/sram-cache.json"  
+vlsi.inputs.sram_parameters_meta: ["transclude", "json2list"]
+
+# Tool options. Replace with your tool plugin of choice.
+# Genus options
+synthesis.genus.version: "191"
+
+# Innovus options
+par.innovus.version: "191" # TODO
+par.innovus.design_flow_effort: "standard"
+par.inputs.gds_merge: true
+
+# Calibre options
+drc.calibre.calibre_drc_bin: "/share/instsww/mgc/CALIBRE/bin/calibre"
+drc.calibre.calibredrv_bin: "/share/instsww/mgc/CALIBRE/bin/calibredrv"
+drc.calibre.MGC_HOME: "/shared/instsww/mgc"
+lvs.calibre.calibre_lvs_bin: "/share/instsww/mgc/CALIBRE/bin/calibre"
+lvs.calibre.calibredrv_bin: "/share/instsww/mgc/CALIBRE/bin/calibredrv"
+lvs.calibre.v2lvs_bin: "/share/instsww/mgc/CALIBRE/bin/v2lvs"
+lvs.calibre.MGC_HOME: "/shared/instsww/mgc"
+
+# VCS options
+sim.vcs.version: "P-2019.06"  
+
+# Voltus options
+power.voltus.version: "181"  
+
+# Pegasus options (MODIFY THIS!)
+pegasus_bin: "${cadence.cadence_home}/PEGASUS/PEGASUS${drc.pegasus.version}/bin/pegasus"
+pegasus_bin_meta: lazysubs
+version: "231"

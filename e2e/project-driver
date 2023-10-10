@@ -1,0 +1,23 @@
+# Written By: Ken Ho (FA23)
+
+#!/usr/bin/env python
+
+import os
+import hammer.vlsi as hammer_vlsi
+from hammer.vlsi import CLIDriver, HammerTool, HammerToolHookAction, HammerDriver, HierarchicalMode
+from typing import Dict, Callable, Optional, List
+
+
+
+class ProjectDriver (CLIDriver):
+  
+  def get_extra_synthesis_hooks(self) -> List[HammerToolHookAction]:
+    extra_hooks = []
+    return extra_hooks
+
+  def get_extra_par_hooks(self) -> List[HammerToolHookAction]:
+    extra_hooks = []
+    return extra_hooks
+
+if __name__ == '__main__':
+    ProjectDriver().main()

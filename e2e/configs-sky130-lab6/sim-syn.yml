@@ -1,0 +1,24 @@
+# Written By: Ken Ho (FA23)
+# Contains correct GL settings for EECS151
+
+sim.inputs:
+  level: "syn"
+  input_files: ["src/gcd_tb.v", "build-sky130-inst/gcd/syn-rundir/gcd.mapped.v"]
+  input_files_meta: append
+  timing_annotated: true
+  sdf_file: "build-sky130-inst/gcd/syn-rundir/gcd.mapped.sdf"
+  all_regs: "build-sky130-inst/gcd/syn-rundir/find_regs_paths.json"
+  seq_cells: "build-sky130-inst/gcd/syn-rundir/find_regs_cells.json"
+  timescale: "1ns/10ps"
+  options:
+    - "-notice"
+    - "-line"
+    - "+lint=all"
+    - "+v2k"
+    - "-debug"
+    - "-sverilog"
+  top_module: "gcd"
+  tb_name: "gcd_tb"
+  defines: 
+    - "CLOCK_PERIOD=20.00"
+    - "UNIT_DELAY=#1"
