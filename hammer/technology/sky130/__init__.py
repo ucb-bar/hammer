@@ -136,8 +136,6 @@ class SKY130Tech(HammerTechnology):
                         sl[idx] = sl[idx].replace(elem, pattern_tuple[1])
                         self.logger.info(f"Incorrect reference `{elem}` to be replaced with: `{pattern_tuple[1]}` on raw line {idx}.")
                     
-               # if re.findall(capture_pattern)
-                #sl[idx] = re.sub(capture_pattern, pattern_tuple[1], sl[idx])
         # Write back into destination 
         with open(dest_path, 'w') as df:
             df.writelines(sl)
