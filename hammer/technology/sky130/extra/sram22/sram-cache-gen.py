@@ -10,28 +10,25 @@
 import sys
 import re
 import json
+import os
 
 from typing import List
 
 def main(args: List[str]) -> int:
     if len(args) != 3:
-        print("Usage: ./sram-cache-gen.py list-of-srams-1-per-line.txt output-file.json")
-        print("E.g.: ./sram-cache-gen.py srams.txt sram-cache.json")
+        print("Usage: ./sram-cache-gen.py /path/to/sram22_sky130_macros output-file.json")
+        print("E.g.: ./sram-cache-gen.py /tools/C/me/sram22_sky130_macros sram-cache.json")
         return 1
 
-    list_of_srams = []  # type: List[str]
-    with open(sys.argv[1]) as f:
-        for line in f:
-            list_of_srams.append(line)
-
-    print(str(len(list_of_srams)) + " SRAMs to cache")
+    list_of_srams: List[str] = [d.name for d in os.scandir(sys.argv[1]) if d.is_dir()]
+    print(f"Found {len(list_of_srams)} SRAMS to cache")
 
     sram_dicts = []
 
     for sram_name in list_of_srams:
         # SRAM22-generated single-port RAMs
-        if sram_name.startswith("sramgen_"):
-            match = re.match(r"sramgen_sram_(\d+)x(\d+)m(\d+)w(\d+)(\D*)", sram_name)
+        if sram_name.startswith("sram22_"):
+            match = re.match(r"^sram22_(\d+)x(\d+)m(\d+)w(\d+)$", sram_name)
             if match:
                 width = int(match.group(2))
                 mask_gran = int(match.group(4))
@@ -56,7 +53,7 @@ def main(args: List[str]) -> int:
                 port_dict['clock port polarity'] = "active high"
 
                 port_dict['write enable port name'] = "we"
-                port_dict['write enable port polarity'] = "active high" # ???
+                port_dict['write enable port polarity'] = "active high"
 
                 port_dict['output port name'] = "dout"
                 port_dict['output port polarity'] = "active high"
@@ -74,11 +71,7 @@ def main(args: List[str]) -> int:
                 sram_dicts.append(sram_dict.copy())
             
             else:
-                print("Unsupported memory: {n}".format(n=sram_name), file=sys.stderr)
-                return 1
-        else:
-            print("Unsupported memory: {n}".format(n=sram_name), file=sys.stderr)
-            return 1
+                print("Skipping unsupported memory: {n}".format(n=sram_name), file=sys.stderr)
 
     with open(sys.argv[2], "w") as f:
         json.dump(sram_dicts, f, indent=2)
