@@ -34,6 +34,7 @@ def main(args) -> int:
 
     # Standard cells
     library='sky130_fd_sc_hd'
+    
     SKYWATER_LIBS = os.path.join('$SKY130A', 'libs.ref', library)
     LIBRARY_PATH  = os.path.join(  SKY130A,  'libs.ref', library, 'lib')
     lib_corner_files=os.listdir(LIBRARY_PATH)
@@ -130,20 +131,23 @@ def main(args) -> int:
             file_lib = 'sky130_ef_io'
             gds_file = cell_name + '.gds'
             lef_file = 'cache/sky130_ef_io.lef'
+            spice_file = os.path.join(SKYWATER_LIBS,'cdl', file_lib + '.cdl')
         elif 'sky130_ef_io' in cell_name:
             file_lib = 'sky130_ef_io'
             gds_file = file_lib + '.gds'
             lef_file = 'cache/' + file_lib + '.lef'
+            spice_file = os.path.join(SKYWATER_LIBS,'cdl', file_lib + '.cdl')
         else:
             file_lib = library
             gds_file = file_lib + '.gds'
             lef_file = os.path.join(SKYWATER_LIBS,'lef', file_lib + '.lef')
+            spice_file = os.path.join(SKYWATER_LIBS,'spice', file_lib + '.spice')
 
         lib_entry = {
             "nldm_liberty_file":  os.path.join(SKYWATER_LIBS,'lib', cornerfilename),
             "verilog_sim":        os.path.join(SKYWATER_LIBS,'verilog', file_lib + '.v'),
             "lef_file":           lef_file,
-            "spice_file":         os.path.join(SKYWATER_LIBS,'spice', file_lib + '.spice'),
+            "spice_file":         spice_file,
             "gds_file":           os.path.join(SKYWATER_LIBS,'gds', gds_file),
             "corner": {
                 "nmos": speed,

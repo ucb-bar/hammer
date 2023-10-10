@@ -31,7 +31,7 @@ class SKY130Tech(HammerTechnology):
         self.setup_verilog()
         self.setup_techlef()
         self.setup_io_lefs()
-        print('Loaded Sky130 Tech')
+        self.logger.info('Loaded Sky130 Tech')
 
 
     def setup_cdl(self) -> None:
@@ -72,6 +72,7 @@ class SKY130Tech(HammerTechnology):
     #   - <library_name>.v: remove 'wire 1' and one endif line to fix syntax errors
     #   - primitives.v: set default nettype to 'wire' instead of 'none'
     #           (the open-source RTL sim tools don't treat undeclared signals as errors)
+    #   - Deal with numerous inconsistencies in timing specify blocks.
     def setup_verilog(self) -> None:
         setting_dir = self.get_setting("technology.sky130.sky130A")
         setting_dir = Path(setting_dir)
@@ -93,6 +94,51 @@ class SKY130Tech(HammerTechnology):
                     line = line.replace('wire 1','// wire 1')
                     line = line.replace('`endif SKY130_FD_SC_HD__LPFLOW_BLEEDER_FUNCTIONAL_V','`endif // SKY130_FD_SC_HD__LPFLOW_BLEEDER_FUNCTIONAL_V')
                     df.write(line)
+                    
+        # Additionally hack out the specifies
+        sl = []
+        with open(dest_path, 'r') as sf:
+            sl = sf.readlines()
+
+            # Find timing declaration
+            start_idx = [idx for idx, line in enumerate(sl) if "`ifndef SKY130_FD_SC_HD__LPFLOW_BLEEDER_1_TIMING_V" in line][0]
+                        
+            # Search for the broken statement
+            search_range = range(start_idx+1, len(sl))
+            broken_specify_idx = len(sl)-1
+            broken_substr = "(SHORT => VPWR) = (0:0:0,0:0:0,0:0:0,0:0:0,0:0:0,0:0:0);"
+            
+            broken_specify_idx = [idx for idx in search_range if broken_substr in sl[idx]][0]
+            endif_idx = [idx for idx in search_range if "`endif" in sl[idx]][0]
+            
+            # Now, delete all the specify statements if specify exists before an endif.
+            if broken_specify_idx < endif_idx:
+                self.logger.info("Removing incorrectly formed specify block.")
+                cell_def_range = range(start_idx+1, endif_idx)
+                start_specify_idx = [idx for idx in cell_def_range if "specify" in sl[idx]][0]
+                end_specify_idx = [idx for idx in cell_def_range if "endspecify" in sl[idx]][0]
+                sl[start_specify_idx:end_specify_idx+1] = [] # Dice            
+
+        # Deal with the nonexistent net tactfully (don't code in brittle replacements)
+        self.logger.info("Fixing broken net references with select specify blocks.")
+        pattern = r"^\s*wire SLEEP.*B.*delayed;"
+        capture_pattern = r".*(SLEEP.*?B.*?delayed).*"
+        pattern_idx = [(idx, re.findall(capture_pattern, value)[0]) for idx, value in enumerate(sl) if re.search(pattern, value)]
+        for list_idx, pattern_tuple in enumerate(pattern_idx):
+            if list_idx != len(pattern_idx)-1:
+                search_range = range(pattern_tuple[0]+1, pattern_idx[list_idx+1][0])
+            else: 
+                search_range = range(pattern_tuple[0]+1, len(sl))
+            for idx in search_range:
+                list = re.findall(capture_pattern, sl[idx])
+                for elem in list:
+                    if elem != pattern_tuple[1]:
+                        sl[idx] = sl[idx].replace(elem, pattern_tuple[1])
+                        self.logger.info(f"Incorrect reference `{elem}` to be replaced with: `{pattern_tuple[1]}` on raw line {idx}.")
+                    
+        # Write back into destination 
+        with open(dest_path, 'w') as df:
+            df.writelines(sl)
 
         # primitives.v
         source_path = setting_dir / 'libs.ref' / self.library_name / 'verilog' / 'primitives.v'
@@ -134,6 +180,7 @@ class SKY130Tech(HammerTechnology):
 
     # Power pins for clamps must be CLASS CORE
     # connect/disconnect spacers must be CLASS PAD SPACER, not AREAIO
+    # Current version has two errors in MACRO class definitions that break lef parser.
     def setup_io_lefs(self) -> None:
         sky130A_path = Path(self.get_setting('technology.sky130.sky130A'))
         source_path = sky130A_path / 'libs.ref' / 'sky130_fd_io' / 'lef' / 'sky130_ef_io.lef'
@@ -165,6 +212,29 @@ class SKY130Tech(HammerTechnology):
                     # force class to spacer
                     start = [idx for idx, line in enumerate(sl) if f'MACRO {cell}' in line]
                     sl[start[0] + 1] = sl[start[0] + 1].replace('AREAIO', 'SPACER')
+                    
+                # Current version has two one-off error that break lef parser.
+                self.logger.info("Fixing broken sky130_ef_io__analog_esd_pad LEF definition.")
+                start_broken_macro_list = ["MACRO sky130_ef_io__analog_esd_pad\n", "MACRO sky130_ef_io__analog_pad\n"]
+                end_broken_macro_list = ["END sky130_ef_io__analog_pad\n", "END sky130_ef_io__analog_noesd_pad\n"]
+                end_fixed_macro_list = ["END sky130_ef_io__analog_esd_pad\n", "END sky130_ef_io__analog_pad\n"]
+
+                for start_broken_macro, end_broken_macro, end_fixed_macro in zip(start_broken_macro_list, end_broken_macro_list, end_fixed_macro_list):
+                    # Get all start indices to be checked
+                    start_check_indices = [idx for idx, line in enumerate(sl) if line == start_broken_macro]
+                    
+                    # Extract broken macro
+                    for idx_broken_macro in  start_check_indices:
+                        # Find the start of the next_macro
+                        idx_start_next_macro = [idx for idx in range(idx_broken_macro+1, len(sl)) if "MACRO" in sl[idx]][0]
+                        # Find the broken macro ending
+                        idx_end_broken_macro = len(sl)
+                        idx_end_broken_macro = [idx for idx in range(idx_broken_macro+1, len(sl)) if end_broken_macro in sl[idx]][0]
+                        
+                        # Fix
+                        if idx_end_broken_macro < idx_start_next_macro: 
+                            sl[idx_end_broken_macro] = end_fixed_macro
+                
                 df.writelines(sl)
 
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
