@@ -93,6 +93,35 @@ class SKY130Tech(HammerTechnology):
                     line = line.replace('wire 1','// wire 1')
                     line = line.replace('`endif SKY130_FD_SC_HD__LPFLOW_BLEEDER_FUNCTIONAL_V','`endif // SKY130_FD_SC_HD__LPFLOW_BLEEDER_FUNCTIONAL_V')
                     df.write(line)
+                    
+        # Additionally hack the specifies into the right locations
+        sl = []
+        with open(dest_path, 'r') as sf:
+            sl = sf.readlines()
+
+            # Find timing declaration
+            start_idx = [idx for idx, line in enumerate(sl) if "`ifndef SKY130_FD_SC_HD__LPFLOW_BLEEDER_1_TIMING_V" in line][0]
+            print(start_idx)
+                        
+            # Search for the broken statement
+            search_range = range(start_idx+1, len(sl))
+            broken_specify_idx = len(sl)-1
+            broken_substr = "(SHORT => VPWR) = (0:0:0,0:0:0,0:0:0,0:0:0,0:0:0,0:0:0);"
+            
+            broken_specify_idx = [idx for idx in search_range if broken_substr in sl[idx]][0]
+            endif_idx = [idx for idx in search_range if "`endif" in sl[idx]][0]
+            
+            # Now, delete all the specify statements
+            if broken_specify_idx < endif_idx:
+                cell_def_range = range(start_idx+1, endif_idx)
+                start_specify_idx = [idx for idx in cell_def_range if "specify" in sl[idx]][0]
+                end_specify_idx = [idx for idx in cell_def_range if "endspecify" in sl[idx]][0]
+                sl[start_specify_idx:end_specify_idx+1] = [] # Dice            
+        
+        # Write back into destination
+        with open(dest_path, 'w') as df:
+            df.writelines(sl)
+
 
         # primitives.v
         source_path = setting_dir / 'libs.ref' / self.library_name / 'verilog' / 'primitives.v'
@@ -134,6 +163,7 @@ class SKY130Tech(HammerTechnology):
 
     # Power pins for clamps must be CLASS CORE
     # connect/disconnect spacers must be CLASS PAD SPACER, not AREAIO
+    # Current version has two errors in MACRO class definitions that break lef parser.
     def setup_io_lefs(self) -> None:
         sky130A_path = Path(self.get_setting('technology.sky130.sky130A'))
         source_path = sky130A_path / 'libs.ref' / 'sky130_fd_io' / 'lef' / 'sky130_ef_io.lef'
@@ -166,7 +196,7 @@ class SKY130Tech(HammerTechnology):
                     start = [idx for idx, line in enumerate(sl) if f'MACRO {cell}' in line]
                     sl[start[0] + 1] = sl[start[0] + 1].replace('AREAIO', 'SPACER')
                     
-                # Current version has a one-off error that breaks lef parser.
+                # Current version has two one-off error that break lef parser.
                 self.logger.info("Fixing broken sky130_ef_io__analog_esd_pad LEF definition.")
                 start_broken_macro_list = ["MACRO sky130_ef_io__analog_esd_pad\n", "MACRO sky130_ef_io__analog_pad\n"]
                 end_broken_macro_list = ["END sky130_ef_io__analog_pad\n", "END sky130_ef_io__analog_noesd_pad\n"]
@@ -179,18 +209,13 @@ class SKY130Tech(HammerTechnology):
                     # Extract broken macro
                     for idx_broken_macro in  start_check_indices:
                         # Find the start of the next_macro
-                        for idx in range(idx_broken_macro+1, len(sl)):
-                            if "MACRO" in sl[idx]:
-                                start_next_macro = idx
-                                break
+                        idx_start_next_macro = [idx for idx in range(idx_broken_macro+1, len(sl)) if "MACRO" in sl[idx]][0]
                         # Find the broken macro ending
                         idx_end_broken_macro = len(sl)
-                        for idx in range(idx_broken_macro+1, len(sl)):
-                            if end_broken_macro in sl[idx]:
-                                idx_end_broken_macro = idx
-                                break
-                            
-                        if idx_end_broken_macro < start_next_macro: 
+                        idx_end_broken_macro = [idx for idx in range(idx_broken_macro+1, len(sl)) if end_broken_macro in sl[idx]][0]
+                        
+                        # Fix
+                        if idx_end_broken_macro < idx_start_next_macro: 
                             sl[idx_end_broken_macro] = end_fixed_macro
                 
                 df.writelines(sl)
