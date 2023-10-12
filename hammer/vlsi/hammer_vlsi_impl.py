@@ -2211,6 +2211,11 @@ class HasSDCSupport(HammerTool):
                 name=delay.name
             ))
 
+        # set_dont_touch on any preplaced pins
+        for pin in self.get_pin_assignments():
+            if pin.preplaced:
+                output.append(f"set_dont_touch [get_nets {pin.pins}]")
+
         # Custom sdc constraints that are verbatim appended
         custom_sdc_constraints = self.get_setting("vlsi.inputs.custom_sdc_constraints")  # type: Union[List[str], str]
         if isinstance(custom_sdc_constraints, str):
