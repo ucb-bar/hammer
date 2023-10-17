@@ -321,10 +321,10 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         #        verbose_append(f"set_db design_bottom_routing_layer {layers[0]}")
         #        verbose_append(f"set_db design_top_routing_layer {layers[1]}")
         #    else:
-        verbose_append(f"set_db route_early_global_bottom_layer {layers[0]}")
-        verbose_append(f"set_db route_early_global_top_layer {layers[1]}")
-        verbose_append(f"set_db route_design_bottom_layer {layers[0]}")
-        verbose_append(f"set_db route_design_top_layer {layers[1]}")
+        #verbose_append(f"set_db route_early_global_bottom_layer {layers[0]}")
+        #verbose_append(f"set_db route_early_global_top_layer {layers[1]}")
+        #verbose_append(f"set_db route_design_bottom_layer {layers[0]}")
+        #verbose_append(f"set_db route_design_top_layer {layers[1]}")
 
         # Set design effort.
         verbose_append(f"set_db design_flow_effort {self.get_setting('par.innovus.design_flow_effort')}")
