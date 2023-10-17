@@ -315,16 +315,16 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
 
         # Set the top and bottom global/detail routing layers.
         # This must happen after the tech LEF is loaded
-        #layers = self.get_setting("vlsi.technology.routing_layers")
+        layers = self.get_setting("vlsi.technology.routing_layers")
         #if layers is not None:
         #    if self.version() >= self.version_number("201"):
         #        verbose_append(f"set_db design_bottom_routing_layer {layers[0]}")
         #        verbose_append(f"set_db design_top_routing_layer {layers[1]}")
         #    else:
-        #        verbose_append(f"set_db route_early_global_bottom_layer {layers[0]}")
-        #        verbose_append(f"set_db route_early_global_top_layer {layers[1]}")
-        #        verbose_append(f"set_db route_design_bottom_layer {layers[0]}")
-        #        verbose_append(f"set_db route_design_top_layer {layers[1]}")
+        verbose_append(f"set_db route_early_global_bottom_layer {layers[0]}")
+        verbose_append(f"set_db route_early_global_top_layer {layers[1]}")
+        verbose_append(f"set_db route_design_bottom_layer {layers[0]}")
+        verbose_append(f"set_db route_design_top_layer {layers[1]}")
 
         # Set design effort.
         verbose_append(f"set_db design_flow_effort {self.get_setting('par.innovus.design_flow_effort')}")

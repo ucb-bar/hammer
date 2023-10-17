@@ -22,3 +22,4 @@ sim.inputs:
   defines: 
     - "CLOCK_PERIOD=20.00"
     - "UNIT_DELAY=#1"
+    - "USE_VPD"

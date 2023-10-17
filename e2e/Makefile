@@ -15,13 +15,16 @@ OBJ_DIR             ?= $(vlsi_dir)/build-$(pdk)-$(tools)/$(design)
 
 # non-overlapping default configs
 ENV_YML             ?= configs-env/$(env)-env.yml
-PDK_CONF            ?= configs-pdk/$(pdk).yml
-TOOLS_CONF          ?= configs-sky130-lab6/inst_tools.yml
+#PDK_CONF            ?= configs-pdk/$(pdk).yml
+#TOOLS_CONF          ?= configs-sky130-lab6/inst_tools.yml
+
 
 # design-specific overrides of default configs
-DESIGN_CONF         ?= configs-design/$(design)/common.yml
-DESIGN_PDK_CONF     ?= configs-design/$(design)/$(pdk).yml
+#DESIGN_CONF         ?= configs-design/$(design)/common.yml
+#DESIGN_PDK_CONF     ?= configs-design/$(design)/$(pdk).yml
 SIM_CONF            ?= configs-sky130-lab6/sim-syn.yml
+TOOLS_CONF          ?= configs-sky130-lab6/inst_tools.yml
+DESIGN_CONF         ?= configs-sky130-lab6/common.yml
 #SIM_CONF            ?= $(if $(findstring rtl,$(MAKECMDGOALS)), configs-design/$(design)/sim-rtl.yml, \
 #                       $(if $(findstring syn,$(MAKECMDGOALS)), configs-design/$(design)/sim-syn.yml, \
 #                       $(if $(findstring par,$(MAKECMDGOALS)), configs-design/$(design)/sim-par.yml, )))
@@ -29,7 +32,9 @@ POWER_CONF          ?= $(if $(findstring power-rtl,$(MAKECMDGOALS)), configs-des
                        $(if $(findstring power-syn,$(MAKECMDGOALS)), configs-design/$(design)/power-syn-$(pdk).yml, \
                        $(if $(findstring power-par,$(MAKECMDGOALS)), configs-design/$(design)/power-par-$(pdk).yml, )))
 
-PROJ_YMLS           ?= $(PDK_CONF) $(TOOLS_CONF) $(DESIGN_CONF) $(DESIGN_PDK_CONF) $(SIM_CONF) $(POWER_CONF) $(extra)
+#PROJ_YMLS           ?= $(PDK_CONF) $(TOOLS_CONF) $(DESIGN_CONF) $(DESIGN_PDK_CONF) $(SIM_CONF) $(POWER_CONF) $(extra)
+PROJ_YMLS           ?= $(TOOLS_CONF) $(DESIGN_CONF) $(SIM_CONF) $(POWER_CONF) $(extra)
+
 HAMMER_EXTRA_ARGS   ?= $(foreach conf, $(PROJ_YMLS), -p $(conf)) $(args)
 
 

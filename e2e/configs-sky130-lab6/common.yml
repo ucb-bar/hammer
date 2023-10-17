@@ -2,8 +2,11 @@
 # Contains tooling for EECS151
 
 # Repoint on the instructional to match the latest stable build.
+vlsi.core.technology: "hammer.technology.sky130"
+
 technology.sky130:
-  sky130A: "/bwrcq/scratch/nayiri/sky130/sky130A"
+  sky130_cds: "/home/ff/eecs151/fa23/sky130/sky130_prelim_release_091123"
+  sky130A: "/home/ff/eecs151/fa23/pdk_final/sky130A"
 
 vlsi.core.build_system: make
 
