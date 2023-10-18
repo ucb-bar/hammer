@@ -42,6 +42,17 @@ class MockSim(HammerSimTool, DummyHammerTool):
                 f.write("\n")
         return True
 
+    def fill_outputs(self) -> bool:
+        # TODO: Not sure...
+        self.output_waveforms = []
+        self.output_saifs = []
+        self.output_top_module = self.top_module
+        self.output_tb_name = ""
+        self.output_tb_dut = ""
+        self.output_level = ""
+        
+        return True
+
 
 
 tool = MockSim
