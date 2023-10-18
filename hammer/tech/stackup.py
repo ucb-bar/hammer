@@ -390,16 +390,19 @@ class Stackup(BaseModel):
                 return m
         raise ValueError("Metal named %s is not defined in stackup %s" % (name, self.name))
 
-    def get_metals_up_to_layer(self, name: str) -> List[Metal]:
+    def get_metals_below_layer(self, name: str) -> List[Metal]:
         """
-        Get all the metals below and including the specified metal layer.
+        Get all the metals below the specified metal layer.
 
         :param index: Index of the metal layer
         :return: A list of metal layer objects
         """
         try:
             index = next(m.index for m in self.metals if m.name == name)
-            return list(filter(lambda m: m.index in range(1, index), self.metals))
+            if index > 1:
+                return list(filter(lambda m: m.index in range(1, index), self.metals))
+            else:
+                raise ValueError("There are no metals below layer %s in stackup %s" % (name, self.name))
         except StopIteration:
             raise ValueError("Metal named %s is not defined in stackup %s" % (name, self.name))
 
