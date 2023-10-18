@@ -1100,7 +1100,6 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         layer = self.get_stackup().get_metal(layer_name)
         results = [
             "# Power strap definition for layer {} (rails):\n".format(layer_name),
-            "reset_db -category add_stripes",
             "set_db add_stripes_stacked_via_bottom_layer {}".format(layer_name),
             "set_db add_stripes_stacked_via_top_layer {}".format(layer_name),
             "set_db add_stripes_spacing_from_block {}".format(blockage_spacing)
@@ -1148,10 +1147,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         # TODO warn if the straps are off-pitch
         results = ["# Power strap definition for layer %s:\n" % layer_name]
         results.extend([
-            "reset_db -category add_stripes",
             "set_db add_stripes_stacked_via_top_layer {}".format(layer_name),
             "set_db add_stripes_stacked_via_bottom_layer {}".format(bottom_via_layer_name),
-            "set_db add_stripes_trim_antenna_back_to_shape {stripe}",
             "set_db add_stripes_spacing_from_block {}".format(blockage_spacing)
         ])
         layer = self.get_stackup().get_metal(layer_name)
