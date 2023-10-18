@@ -19,6 +19,7 @@ sim.inputs:
     - "-sverilog"
   top_module: "gcd"
   tb_name: "gcd_tb"
+  tb_dut: "gcd_dut"
   defines: 
     - "CLOCK_PERIOD=20.00"
     - "UNIT_DELAY=#1"
