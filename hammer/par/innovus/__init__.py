@@ -1047,10 +1047,14 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                         current_top_layer = None
                     if current_top_layer is not None:
                         bot_layer = self.get_stackup().get_metal_by_index(1).name
+                        cover_layers = list(map(lambda m: m.name, self.get_stackup().get_metals_below_layer(current_top_layer)))
                         output.append("create_place_halo -insts {inst} -halo_deltas {{{s} {s} {s} {s}}} -snap_to_site".format(
                             inst=new_path, s=spacing))
                         output.append("create_route_halo -bottom_layer {b} -space {s} -top_layer {t} -inst {inst}".format(
                             inst=new_path, b=bot_layer, t=current_top_layer, s=spacing))
+                        output.append("create_route_blockage -pg_nets -inst {inst} -layers {{{layers}}} -cover".format(
+                            inst=new_path, layers=" ".join(cover_layers)))
+
                 elif constraint.type == PlacementConstraintType.Obstruction:
                     obs_types = get_or_else(constraint.obs_types, [])  # type: List[ObstructionType]
                     if ObstructionType.Place in obs_types:
@@ -1096,7 +1100,6 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         layer = self.get_stackup().get_metal(layer_name)
         results = [
             "# Power strap definition for layer {} (rails):\n".format(layer_name),
-            "reset_db -category add_stripes",
             "set_db add_stripes_stacked_via_bottom_layer {}".format(layer_name),
             "set_db add_stripes_stacked_via_top_layer {}".format(layer_name),
             "set_db add_stripes_spacing_from_block {}".format(blockage_spacing)
@@ -1144,10 +1147,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         # TODO warn if the straps are off-pitch
         results = ["# Power strap definition for layer %s:\n" % layer_name]
         results.extend([
-            "reset_db -category add_stripes",
             "set_db add_stripes_stacked_via_top_layer {}".format(layer_name),
             "set_db add_stripes_stacked_via_bottom_layer {}".format(bottom_via_layer_name),
-            "set_db add_stripes_trim_antenna_back_to_shape {stripe}",
             "set_db add_stripes_spacing_from_block {}".format(blockage_spacing)
         ])
         layer = self.get_stackup().get_metal(layer_name)
