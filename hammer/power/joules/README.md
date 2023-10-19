@@ -23,8 +23,7 @@ Known Issues
   * As a result, `read_stimulus`/`compute_power` cannot be a separate step in the plugin, because there is no way to save the results of these commands before running the various power reporting commands.
     Thus these two commands are run as part of the `report_power` step.
   * NOTE: this might not be a problem anymore with the new Joules version, so we should re-try this!!
-* Several output formats only run successfully when a power database is loaded from a checkpoint, the reason here being unclear.
-  For the following output formats, start from the `report_power` step to generate the correct report (i.e. `make redo-power-rtl HAMMER_EXTRA_ARGS="--start_before_step report_power"`)
+* Several output formats only run successfully when a power database is loaded from a checkpoint, the reason here being unclear. Currently, we simply re-load the `pre_report_power` database at the start of the `report_power` step, and all these issues are resolved. The issues are documented below for reference
   * `ppa` - the underlying `report_ppa` will error out completely unless run after loading the checkpoint
   * `profile` - the underlying `plot_power_profile` and `dump_power_profile` commands will print the warning `Invalid frame name /stim#X/frame#X. No stimulus read. Using vectorless power computation`,
     despite already reading and computing power for this exact stimulus.
