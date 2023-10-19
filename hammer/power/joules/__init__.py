@@ -240,6 +240,9 @@ class Joules(HammerPowerTool, CadenceTool):
         # Replace . to / formatting in case argument passed from sim tool
         tb_dut = self.tb_dut.replace(".", "/")
 
+        # Fixes issues seen with several different reporting commands
+        self.block_append("read_db pre_report_power")
+
         power_report_configs = []
         # create power report config for each waveform
         for waveform in self.waveforms:
