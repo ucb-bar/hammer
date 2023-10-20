@@ -27,6 +27,24 @@ make design=pass pdk=sky130 tools=or env=my drc
 make design=pass pdk=sky130 tools=or env=my lvs
 ```
 
+After Place-and-Route completes, the final database can be opened in an interactive OpenROAD session. Hammer generates a convenient script to launch these sessions:
+```shell
+cd ./build-sky130-or/pass/par-rundir
+./generated-scripts/open_chip
+```
+
+After DRC and LVS complete, the final results may be viewed with the following scripts:
+
+```shell
+# View DRC results:
+cd ./build-sky130-or/pass/drc-rundir
+./generated-scripts/view_drc
+
+# View LVS results:
+cd ./build-sky130-or/pass/lvs-rundir
+./generated-scripts/open_chip
+```
+
 ## Next Steps
 
 ### Commercial flow
