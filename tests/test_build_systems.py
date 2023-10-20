@@ -23,6 +23,7 @@ class TestHammerBuildSystems:
             m = re.match(r"^([^.\s:][^\s:]*)\s*:(.*)$", line)
             if m:
                 t = m.group(1)
+                print(t)
                 p = re.split(r"\s+", m.group(2))
                 assert t not in targets, "Found duplicate target {}".format(t)
                 targets[t] = p
@@ -134,13 +135,13 @@ class TestHammerBuildSystems:
         for task in bridge_tasks:
             expected_targets.update({task + "-" + x for x in mods})
             expected_targets.update({"redo-" + task + "-" + x for x in mods})
+        expected_targets.update({"hier-par-to-syn-TopMod", "redo-hier-par-to-syn-TopMod"})
 
         # Only non-leafs get a syn-*-input.json target
         expected_targets.update({os.path.join(tmpdir, "syn-" + x + "-input.json") for x in mods if x in {"TopMod"}})
         expected_targets.update({os.path.join(tmpdir, "sim-syn-" + x + "-input.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "par-" + x + "-input.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "sim-par-" + x + "-input.json") for x in mods})
-        #expected_targets.update({os.path.join(tmpdir, "power-rtl-" + x + "-input.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "power-syn-" + x + "-input.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "power-par-" + x + "-input.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "power-sim-rtl-" + x + "-input.json") for x in mods})

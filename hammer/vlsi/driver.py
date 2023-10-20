@@ -1662,19 +1662,20 @@ class HammerDriver:
     #Modified
     def get_user_hierarchical_mode(self) -> str:
         """
-        hierarchical mode specified in the design yml file has to be one of the two options:
-            hierarchical (the original bottom-up flow)
-            top_down (the top-down hierarchical partitioning as the name implies)
-        
+        hierarchical mode specified in the design yml file has to be one of the following options:
+            flat (the flat flow)
+            hierarchical or bottom_up (the bottom-up flow)
+            top_down (the top-down flow)
+
         if the mode specified is neither, it raises ValueError.
         """
 
         hier_mode_key = "vlsi.inputs.hierarchical.mode"
         hier_mode = str(self.database.get_setting(hier_mode_key))
 
-        if(hier_mode != "hierarchical" and hier_mode != "top_down" and hier_mode != ""):
+        if(hier_mode not in ["flat", "hierarchical", "bottom_up", "top_down"]):
             raise ValueError("Invalid value for " + hier_mode_key)
-        
+
         return hier_mode
 
 
@@ -1825,17 +1826,6 @@ class HammerDriver:
             }
             constraint_dict = reduce(add_dicts, hier_constraints.get(module, []), constraint_dict)
             output.append((module, constraint_dict))
-        
-        # #DEBUG
-        # print("")
-        # print("order")
-        # print(order)
-        # print("")
-        # print("output")
-        # print(output)
-        # print("")
-        # print("dependency graph")
-        # print(dependency_graph)
 
         return (output, dependency_graph)
 
