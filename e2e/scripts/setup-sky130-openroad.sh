@@ -2,7 +2,12 @@
 
 export e2e_dir=${PWD}
 
-export INSTALL_PREFIX=/tools/scratch/nayiri/tutorial-installs
+if [ ! -z $1 ]
+then
+    export INSTALL_PREFIX=$1
+else
+    export INSTALL_PREFIX=~/
+fi
 
 # install open-source tools
 conda create -y -c litex-hub --prefix ${INSTALL_PREFIX}/.conda-yosys yosys=0.27_4_gb58664d44
@@ -32,7 +37,7 @@ cd ${e2e_dir}
 export ENV_YML=${e2e_dir}/configs-env/my-env.yml
 echo "# My environment configs" > $ENV_YML
 echo "# pdk" > $ENV_YML
-echo "technology.sky130.sky130A: ${INSTALL_PREFIX}/.conda-sky130/share/pdk/sky130A" >> $ENV_YML
+echo "technology.sky130.sky130A: ${INSTALL_PREFIX}/share/pdk/sky130A" >> $ENV_YML
 echo "technology.sky130.sram22_sky130_macros: ${INSTALL_PREFIX}/sram22_sky130_macros" >> $ENV_YML
 echo "" >> $ENV_YML
 echo "# tools" >> $ENV_YML
