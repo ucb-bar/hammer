@@ -4,19 +4,19 @@ The following directions will get a simple ``pass`` design from RTL to GDS using
 
 ## Instructions
 
-First, run the setup script to install the OpenROAD tools using Conda, and Skywater 130 nm PDK using the [Open-PDKs tool](https://github.com/RTimothyEdwards/open_pdks)
+First, follow the [Hammer Developer Setup](https://hammer-vlsi.readthedocs.io/en/stable/Hammer-Basics/Hammer-Setup.html#developer-setup) to clone Hammer and install/activate the poetry virtual environment.
+
+Next, run the setup script to install the OpenROAD tools using Conda, and Skywater 130 nm PDK using the [Open-PDKs tool](https://github.com/RTimothyEdwards/open_pdks).
 This step will take a long time due to the amount and size of the required installs.
 
 ```shell
-git clone https://github.com/ucb-bar/hammer.git
 cd hammer/e2e
 ./scripts/setup-sky130-openroad.sh [INSTALL_PREFIX]  # default = ~/
 ```
 
 You should now have a file ``configs-env/my-env.yml`` containing all required tool and technology paths for this tutorial.
 To point to your custom environment setup, set the Make variable ``env=my``.
-Additionally, we set ``design``, ``pdk``, and ``tools`` to set the RTL design, PDK, and tool flow respecively.
-Again, a detailed explanation of this setup is located in the [Hammer End-to-End Integration Tests](https://hammer-vlsi.readthedocs.io/en/stable/Examples/e2e.html).
+Additionally, we set the ``design``, ``pdk``, and ``tools`` Make variables to the appropriate RTL design, PDK, and tools flow, respecively.
 Now simply run the VLSI flow:
 
 ```shell
@@ -45,7 +45,12 @@ cd ./build-sky130-or/pass/lvs-rundir
 ./generated-scripts/open_chip
 ```
 
+Congrats, you've just run your ``pass`` design from RTL to GDS with Hammer!
+
 ## Next Steps
+
+At this point, you should go through the [Hammer End-to-End Integration Tests](https://hammer-vlsi.readthedocs.io/en/stable/Examples/e2e.html) documentation to learn how to configure Hammer further. We've also outlined some common next steps below.
+
 
 ### Commercial flow
 
