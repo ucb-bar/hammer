@@ -345,6 +345,8 @@ class Genus(HammerSynthesisTool, CadenceTool):
         """Generate reports."""
         # TODO: extend report generation capabilities
         self.verbose_append("write_reports -directory reports -tag final")
+        # Write reports does not normally report unconstrained paths
+        self.verbose_append("report_timing -unconstrained -max_paths 50 > reports/final_unconstrained.rpt")
         return True
 
     def write_regs(self) -> bool:
