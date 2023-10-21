@@ -8,25 +8,10 @@ from .driver import HammerDriver
 import os
 import sys
 import textwrap
-from typing import List, Dict, Tuple, Callable, Optional
-from abc import abstractmethod
-from .hammer_vlsi_impl import HierarchicalMode
+from typing import List, Dict, Tuple, Callable, Optional, Union
 from hammer.utils import get_or_else
 
-class MakeRecipe:
-    @abstractmethod
-    def phony_target(self) -> str:
-        pass
-
-    @abstractmethod
-    def recipe(self) -> str:
-        pass
-
-    @abstractmethod
-    def redo_recipe(self) -> str:
-        pass
-
-class MakeActionRecipe(MakeRecipe):
+class MakeActionRecipe:
     def __init__(self,
         # Name of the action
         action: str,
@@ -45,10 +30,11 @@ class MakeActionRecipe(MakeRecipe):
         default_pconf = [os.path.join("{obj_dir}", f"{action}-input.json")]
         if self.base == "power":  # power inputs are different
             lvl = action.split("-")[-1]
+            in_json = os.path.join("{obj_dir}", f"power-sim-{lvl}-input.json")
             if lvl == "rtl":
-                default_pconf = [os.path.join("{obj_dir}", f"power-sim-{lvl}-input.json")]
+                default_pconf = [in_json]
             else:
-                default_pconf.append(os.path.join("{obj_dir}", f"power-sim-{lvl}-input.json"))
+                default_pconf.append(in_json)
         self.pconf_str = get_or_else(proj_confs, "-p " + " -p ".join(default_pconf))
         self.deps = get_or_else(deps_ovrd, " ".join(default_pconf))
 
@@ -57,7 +43,7 @@ class MakeActionRecipe(MakeRecipe):
 
     def recipe(self) -> str:
         return textwrap.dedent(f"""
-            {self.out_file}: {self.deps} $(HAMMER_{self.action.upper()}_DEPENDENCIES)
+            {self.out_file}: {self.deps} $(HAMMER_{self.action.upper().replace('-','_')}_DEPENDENCIES)
             \t$(HAMMER_EXEC) {{env_confs}} {self.pconf_str} $(HAMMER_EXTRA_ARGS) --{self.base}_rundir {self.rundir} --obj_dir {{obj_dir}} {self.base}{{suffix}}
             """)
 
@@ -67,7 +53,7 @@ class MakeActionRecipe(MakeRecipe):
             \t$(HAMMER_EXEC) {{env_confs}} {self.pconf_str} $(HAMMER_EXTRA_ARGS) --{self.base}_rundir {self.rundir} --obj_dir {{obj_dir}} {self.base}{{suffix}}
             """)
 
-class MakeLinkRecipe(MakeRecipe):
+class MakeLinkRecipe:
     def __init__(self,
         # Name of the action
         action: str,
@@ -80,7 +66,7 @@ class MakeLinkRecipe(MakeRecipe):
         self.base = x_base + "-to-" + y
         rd_suffix = "{suffix}" if hier else "-rundir"
         self.x_out = os.path.join("{obj_dir}", f"{x}{rd_suffix}", f"{x_base}-output-full.json")
-        # Actions that can happen after multiple actions (rtl, syn, par)
+        # Actions that can happen after multiple actions (syn, par)
         if y in ["sim", "power", "formal", "timing"]:
             y += "-" + x
         y_in_suffix = "{suffix}-input" if hier else "-input"
@@ -111,192 +97,9 @@ def build_noop(driver: HammerDriver, append_error_func: Callable[[str], None]) -
     dependency_graph = driver.get_hierarchical_dependency_graph()
     return dependency_graph
 
-def common_make_text(hier: bool = True) -> textwrap.dedent:
-    actions = [
-        MakeActionRecipe("sim-rtl", "{p_sim_rtl_in}", "{syn_deps}", hier=hier),
-        MakeActionRecipe("syn", "{p_syn_in}", "{syn_deps}", hier=hier),
-        MakeLinkRecipe("syn-to-sim", hier=hier),
-        MakeActionRecipe("sim-syn", hier=hier),
-        MakeLinkRecipe("syn-to-par", hier=hier),
-        MakeActionRecipe("par", hier=hier),
-        MakeLinkRecipe("par-to-sim", hier=hier),
-        MakeActionRecipe("sim-par", hier=hier),
-        MakeLinkRecipe("sim-par-to-power", hier=hier),
-        MakeLinkRecipe("par-to-power", hier=hier),
-        MakeActionRecipe("power-par", hier=hier),
-        MakeLinkRecipe("sim-rtl-to-power", hier=hier),
-        MakeActionRecipe("power-rtl", hier=hier),
-        MakeLinkRecipe("sim-syn-to-power", hier=hier),
-        MakeLinkRecipe("syn-to-power", hier=hier),
-        MakeActionRecipe("power-syn", hier=hier),
-        MakeLinkRecipe("par-to-drc", hier=hier),
-        MakeActionRecipe("drc", hier=hier),
-        MakeLinkRecipe("par-to-lvs", hier=hier),
-        MakeActionRecipe("lvs", hier=hier),
-        MakeLinkRecipe("syn-to-formal", hier=hier),
-        MakeActionRecipe("formal-syn", hier=hier),
-        MakeLinkRecipe("par-to-formal", hier=hier),
-        MakeActionRecipe("formal-par", hier=hier),
-        MakeLinkRecipe("syn-to-timing", hier=hier),
-        MakeActionRecipe("timing-syn", hier=hier),
-        MakeLinkRecipe("par-to-timing", hier=hier),
-        MakeActionRecipe("timing-par", hier=hier)
-    ]
-
-    make_text = textwrap.dedent("""
-            ####################################################################################
-            ## Steps for {mod}
-            ####################################################################################
-            """)
-    make_text += ".PHONY: " + " ".join([a.action + "{suffix}" for a in actions]) + "\n\n"
-    make_text += "\n".join([a.phony_target() for a in actions]) + "\n\n"
-    make_text += "\n".join([a.recipe() for a in actions]) + "\n\n"
-    make_text += textwrap.dedent("""
-            # Redo steps
-            # These intentionally break the dependency graph, but allow the flexibility to rerun a step after changing a config.
-            # Hammer doesn't know what settings impact synthesis only, e.g., so these are for power-users who "know better."
-            # The HAMMER_EXTRA_ARGS variable allows patching in of new configurations with -p or using flow control (--to_step or --from_step), for example.
-            """)
-    make_text += ".PHONY: " + " ".join(["redo-" + a.action + "{suffix}" for a in actions]) + "\n\n"
-    make_text += "\n".join([a.redo_recipe() for a in actions]) + "\n\n"
-    if hier:
-        make_text += "{par_to_syn}\n\n"
-    return make_text
-
-def top_down_nonleaf_make_text() -> textwrap.dedent:
-    """
-    If non-leaf node, par is broken up into two separate actions:
-        par-partition-{suffix}
-        par-assemble-{suffix}
-    """
-    actions = [
-        MakeActionRecipe("sim-rtl", "{p_sim_rtl_in}", "{syn_deps}"),
-        MakeActionRecipe("syn", "{p_syn_in}", "{syn_deps}"),
-        MakeLinkRecipe("syn-to-sim"),
-        MakeActionRecipe("sim-syn"),
-        MakeLinkRecipe("syn-to-par"),
-        MakeActionRecipe("par-partition"),
-        MakeActionRecipe("par-assemble"),
-        #MakeLinkRecipe("par-partition-to-par"),
-        #MakeLinkRecipe("par-to-par-assemble"),
-        MakeLinkRecipe("par-to-sim"),
-        MakeActionRecipe("sim-par"),
-        MakeLinkRecipe("sim-par-to-power"),
-        MakeLinkRecipe("par-to-power"),
-        MakeActionRecipe("power-par"),
-        MakeLinkRecipe("sim-rtl-to-power"),
-        MakeActionRecipe("power-rtl"),
-        MakeLinkRecipe("sim-syn-to-power"),
-        MakeLinkRecipe("syn-to-power"),
-        MakeActionRecipe("power-syn"),
-        MakeLinkRecipe("par-to-drc"),
-        MakeActionRecipe("drc"),
-        MakeLinkRecipe("par-to-lvs"),
-        MakeActionRecipe("lvs"),
-        MakeLinkRecipe("syn-to-formal"),
-        MakeActionRecipe("formal-syn"),
-        MakeLinkRecipe("par-to-formal"),
-        MakeActionRecipe("formal-par"),
-        MakeLinkRecipe("syn-to-timing"),
-        MakeActionRecipe("timing-syn"),
-        MakeLinkRecipe("par-to-timing"),
-        MakeActionRecipe("timing-par")
-    ]
-
-    """
-                    if top node
-                        {par_partition_in}: {par_in}
-            {par_partition_in}: {prereqs} ==> prereqs == par_partition_out from the previous level
-            \t$(HAMMER_EXEC) {env_confs} -p {prereqs} $(HAMMER_EXTRA_ARGS) -o {par_in} --obj_dir {obj_dir} syn-to-par
-
-            {par_assemble_in}: {prereqs} ==> prereqs == par_assemble_out or par_out from the previous level
-            \t$(HAMMER_EXEC) {env_confs} -p {prereqs} $(HAMMER_EXTRA_ARGS) -o {par_in} --obj_dir {obj_dir} syn-to-par
-
-            {par_partition_out}: {par_partition_in} $(HAMMER_PAR_DEPENDENCIES)
-            \t$(HAMMER_EXEC) {env_confs} -p {par_partition_in} $(HAMMER_EXTRA_ARGS) --obj_dir {obj_dir} par{suffix}
-
-            {par_assemble_out}: {par_assemble_in} $(HAMMER_PAR_DEPENDENCIES)
-            \t$(HAMMER_EXEC) {env_confs} -p {par_assemble_in} $(HAMMER_EXTRA_ARGS) --obj_dir {obj_dir} par{suffix}
-
-    """
-
-    make_text = textwrap.dedent("""
-            ####################################################################################
-            ## Steps for {mod}
-            ####################################################################################
-            """)
-    make_text += ".PHONY: " + " ".join([a.action + "{suffix}" for a in actions]) + "\n\n"
-    make_text += "\n".join([a.phony_target() for a in actions]) + "\n\n"
-    make_text += "\n".join([a.recipe() for a in actions]) + "\n\n"
-    make_text += textwrap.dedent("""
-            # Redo steps
-            # These intentionally break the dependency graph, but allow the flexibility to rerun a step after changing a config.
-            # Hammer doesn't know what settings impact synthesis only, e.g., so these are for power-users who "know better."
-            # The HAMMER_EXTRA_ARGS variable allows patching in of new configurations with -p or using flow control (--to_step or --from_step), for example.
-            """)
-    make_text += ".PHONY: " + " ".join(["redo-" + a.action + "{suffix}" for a in actions]) + "\n\n"
-    make_text += "\n".join([a.redo_recipe() for a in actions]) + "\n\n"
-    return make_text
-
-
-def top_down_leaf_make_text() -> textwrap.dedent:
-    """
-    If leaf node, par depends on the parent's par-partition
-    """
-    actions = [
-        MakeActionRecipe("sim-rtl", "{p_sim_rtl_in}", "{syn_deps}"),
-        MakeActionRecipe("syn", "{p_syn_in}", "{syn_deps}"),
-        MakeLinkRecipe("syn-to-sim"),
-        MakeActionRecipe("sim-syn"),
-        MakeLinkRecipe("syn-to-par"),
-        MakeLinkRecipe("par-partition-to-par"),
-        MakeActionRecipe("par", "{p_par_in}"),
-        MakeLinkRecipe("par-to-sim"),
-        MakeActionRecipe("sim-par"),
-        MakeLinkRecipe("sim-par-to-power"),
-        MakeLinkRecipe("par-to-power"),
-        MakeActionRecipe("power-par"),
-        MakeLinkRecipe("sim-rtl-to-power"),
-        MakeActionRecipe("power-rtl"),
-        MakeLinkRecipe("sim-syn-to-power"),
-        MakeLinkRecipe("syn-to-power"),
-        MakeActionRecipe("power-syn"),
-        MakeLinkRecipe("par-to-drc"),
-        MakeActionRecipe("drc"),
-        MakeLinkRecipe("par-to-lvs"),
-        MakeActionRecipe("lvs"),
-        MakeLinkRecipe("syn-to-formal"),
-        MakeActionRecipe("formal-syn"),
-        MakeLinkRecipe("par-to-formal"),
-        MakeActionRecipe("formal-par"),
-        MakeLinkRecipe("syn-to-timing"),
-        MakeActionRecipe("timing-syn"),
-        MakeLinkRecipe("par-to-timing"),
-        MakeActionRecipe("timing-par")
-    ]
-
-    make_text = textwrap.dedent("""
-            ####################################################################################
-            ## Steps for {mod}
-            ####################################################################################
-            """)
-    make_text += ".PHONY: " + " ".join([a.action + "{suffix}" for a in actions]) + "\n\n"
-    make_text += "\n".join([a.phony_target() for a in actions]) + "\n\n"
-    make_text += "\n".join([a.recipe() for a in actions]) + "\n\n"
-    make_text += textwrap.dedent("""
-            # Redo steps
-            # These intentionally break the dependency graph, but allow the flexibility to rerun a step after changing a config.
-            # Hammer doesn't know what settings impact synthesis only, e.g., so these are for power-users who "know better."
-            # The HAMMER_EXTRA_ARGS variable allows patching in of new configurations with -p or using flow control (--to_step or --from_step), for example.
-            """)
-    make_text += ".PHONY: " + " ".join(["redo-" + a.action + "{suffix}" for a in actions]) + "\n\n"
-    make_text += "\n".join([a.redo_recipe() for a in actions]) + "\n\n"
-    return make_text
-
-
 def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None]) -> dict:
     """
-    Build a Makefile include in the obj_dir called hammer.d. This is intended to be dynamically
+    Build a Makefile include in the obj_dir called hammer.mk. This is intended to be dynamically
     created and included into a top-level Makefile.
 
     The Makefile will contain targets for the following hammer actions, as well as any necessary
@@ -372,10 +175,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
     :param driver: The HammerDriver
     :return: The dependency graph
     """
-
-    #modified
     hierarchical_mode = driver.get_user_hierarchical_mode()
-
     dependency_graph = driver.get_hierarchical_dependency_graph()
     makefile = os.path.join(driver.obj_dir, "hammer.mk")
     os.symlink(makefile, os.path.join(driver.obj_dir, "hammer.d"))
@@ -406,84 +206,177 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
 
         """)
 
+    def mod_make_text(actions: List[Union[MakeActionRecipe, MakeLinkRecipe]]) -> str:
+        make_text = textwrap.dedent("""
+                ####################################################################################
+                ## Steps for {mod}
+                ####################################################################################
+                """)
+        make_text += ".PHONY: " + " ".join([a.action + "{suffix}" for a in actions]) + "\n\n"
+        make_text += "\n".join([a.phony_target() for a in actions]) + "\n\n"
+        make_text += "\n".join([a.recipe() for a in actions]) + "\n\n"
+        make_text += textwrap.dedent("""
+                # Redo steps
+                # These intentionally break the dependency graph, but allow the flexibility to rerun a step after changing a config.
+                # Hammer doesn't know what settings impact synthesis only, e.g., so these are for power-users who "know better."
+                # The HAMMER_EXTRA_ARGS variable allows patching in of new configurations with -p or using flow control (--to_step or --from_step), for example.
+                """)
+        make_text += ".PHONY: " + " ".join(["redo-" + a.action + "{suffix}" for a in actions]) + "\n\n"
+        make_text += "\n".join([a.redo_recipe() for a in actions]) + "\n\n"
+        make_text += "{custom_recipes}"
+        return make_text
+
+    def gen_actions(hier_mode: str) -> List[Union[MakeActionRecipe, MakeLinkRecipe]]:
+        hier = False if hier_mode == "flat" else True
+
+        # For top-down nodes where synthesis is not run
+        syn_only = [
+            MakeActionRecipe("syn", "{p_syn_in}", "{syn_deps}", hier=hier),
+            MakeLinkRecipe("syn-to-par", hier=hier),
+            MakeLinkRecipe("syn-to-sim", hier=hier),
+            MakeActionRecipe("sim-syn", hier=hier),
+            MakeLinkRecipe("sim-syn-to-power", hier=hier),
+            MakeLinkRecipe("syn-to-power", hier=hier),
+            MakeActionRecipe("power-syn", hier=hier),
+            MakeLinkRecipe("syn-to-formal", hier=hier),
+            MakeActionRecipe("formal-syn", hier=hier),
+            MakeLinkRecipe("syn-to-timing", hier=hier),
+            MakeActionRecipe("timing-syn", hier=hier),
+        ]  # type: List[Union[MakeActionRecipe, MakeLinkRecipe]]
+
+        # P&R is different for flat/bottom-up vs. top-down
+        par_only = [MakeActionRecipe("par", hier=hier)]  # type: List[Union[MakeActionRecipe, MakeLinkRecipe]]
+        top_down_par = [MakeActionRecipe("par-partition"), MakeActionRecipe("par-assemble")]  # type: List[Union[MakeActionRecipe, MakeLinkRecipe]]
+
+        # Common to all nodes
+        common = [
+            MakeActionRecipe("sim-rtl", "{p_sim_rtl_in}", "{syn_deps}", hier=hier),
+            MakeLinkRecipe("sim-rtl-to-power", hier=hier),
+            MakeActionRecipe("power-rtl", hier=hier),
+            MakeLinkRecipe("par-to-sim", hier=hier),
+            MakeActionRecipe("sim-par", hier=hier),
+            MakeLinkRecipe("sim-par-to-power", hier=hier),
+            MakeLinkRecipe("par-to-power", hier=hier),
+            MakeActionRecipe("power-par", hier=hier),
+            MakeLinkRecipe("par-to-drc", hier=hier),
+            MakeActionRecipe("drc", hier=hier),
+            MakeLinkRecipe("par-to-lvs", hier=hier),
+            MakeActionRecipe("lvs", hier=hier),
+            MakeLinkRecipe("par-to-formal", hier=hier),
+            MakeActionRecipe("formal-par", hier=hier),
+            MakeLinkRecipe("par-to-timing", hier=hier),
+            MakeActionRecipe("timing-par", hier=hier)
+        ]  # type: List[Union[MakeActionRecipe, MakeLinkRecipe]]
+
+        if hier_mode in ["flat", "bottom_up"]:
+            return syn_only + par_only + common
+        elif hier_mode == "top_down_top":
+            return syn_only + top_down_par + common
+        elif hier_mode == "top_down_hier":
+            return top_down_par + common
+        elif hier_mode == "top_down_leaf":
+            return par_only + common
+        else:
+            raise ValueError("Unknown hierarchical mode {}".format(hier_mode))
+
     if not dependency_graph:
         # Flat flow
         top_module = str(driver.database.get_setting("synthesis.inputs.top_module"))
-        output += common_make_text(hier=False).format(suffix="", mod=top_module, env_confs=env_confs,
-                                   p_sim_rtl_in=proj_confs, p_syn_in=proj_confs, obj_dir=obj_dir,
-                                   syn_deps=syn_deps, par_to_syn="")
+        output += mod_make_text(gen_actions("flat")).format(
+            suffix="", mod=top_module, env_confs=env_confs,
+            p_sim_rtl_in=proj_confs, p_syn_in=proj_confs, obj_dir=obj_dir,
+            syn_deps=syn_deps, custom_recipes="")
+
     else:
         # Top-down hierarchical flow
         if hierarchical_mode == "top_down":
             for node, edges in dependency_graph.items():
-
                 parent_edges = edges[0]
-
                 out_edges = edges[1]
 
+                # Common linking recipes
+                par_deps = os.path.join(obj_dir, f"par-assemble-{node}-input.json")
+                par_to_par_assemble = textwrap.dedent(f"""
+                    .PHONY: hier-par-to-par-assemble-{node}
+                    hier-par-to-par-assemble-{node}: {par_deps}
+
+                    {par_deps}: {{par_out_confs}}
+                    \t$(HAMMER_EXEC) {env_confs} {{pstring}} -o {par_deps} --obj_dir {obj_dir} hier-par-to-par-assemble
+
+                    redo-hier-par-to-par-assemble-{node}:
+                    \t$(HAMMER_EXEC) {env_confs} {{pstring}} -o {par_deps} --obj_dir {obj_dir} hier-par-to-par-assemble
+
+                    """)
+
+                par_deps = os.path.join(obj_dir, f"par-partition-{node}-input.json")
+                par_partition_to_par = textwrap.dedent(f"""
+                    .PHONY: hier-par-partition-to-par-{node}
+                    hier-par-partition-to-par-{node}: {par_deps}
+
+                    {par_deps}: {{par_out_confs}}
+                    \t$(HAMMER_EXEC) {env_confs} {{pstring}} -o {par_deps} --obj_dir {obj_dir} hier-par-partition-to-par
+
+                    redo-hier-par-partition-to-par-{node}:
+                    \t$(HAMMER_EXEC) {env_confs} {{pstring}} -o {par_deps} --obj_dir {obj_dir} hier-par-partition-to-par
+
+                    """)
+
                 if len(parent_edges) == 0:  # top node
-                    p_sim_rtl_in = proj_confs
-                    p_syn_in = proj_confs
+                    assemble_confs = [os.path.join(obj_dir, "par-" + x, "par-output-full.json") for x in out_edges]
+                    custom_recipes = par_to_par_assemble.format(
+                        pstring=" ".join(["-p " + x for x in assemble_confs]),
+                        par_out_confs=" ".join(assemble_confs)
+                    )
 
-                    # need to revert this each time
-                    syn_deps = "$(HAMMER_DEPENDENCIES)"
-
-                    output += top_down_nonleaf_make_text.format(
-                        suffix="-"+node, mod=node, env_confs=env_confs, obj_dir=obj_dir, syn_deps=syn_deps,
-                        p_sim_rtl_in=proj_confs, p_syn_in=p_syn_in)
+                    output += mod_make_text(gen_actions("top_down_top")).format(
+                        suffix="-"+node, mod=node, env_confs=env_confs, obj_dir=obj_dir,
+                        syn_deps="$(HAMMER_DEPENDENCIES)",
+                        p_sim_rtl_in=proj_confs, p_syn_in=proj_confs,
+                        custom_recipes=custom_recipes)
 
                 elif len(out_edges) == 0:  # leaf node
-                    p_sim_rtl_in = proj_confs
-                    p_syn_in = proj_confs
+                    partition_confs = [os.path.join(obj_dir, "par-" + x, "par-output-full.json") for x in parent_edges]
+                    custom_recipes = par_partition_to_par.format(
+                        pstring=" ".join(["-p " + x for x in partition_confs]),
+                        par_out_confs=" ".join(partition_confs)
+                    )
 
-                    # # need to revert this each time
-                    syn_deps = "$(HAMMER_DEPENDENCIES)"
-
-                    output += top_down_leaf_make_text.format(
+                    output += mod_make_text(gen_actions("top_down_leaf")).format(
                         suffix="-"+node, mod=node, env_confs=env_confs, obj_dir=obj_dir, syn_deps=syn_deps,
-                        p_sim_rtl_in=proj_confs, p_syn_in=p_syn_in)
+                        p_sim_rtl_in=proj_confs, p_syn_in=proj_confs, custom_recipes=custom_recipes)
 
                 else:  # hierarchical node
-                    p_sim_rtl_in = proj_confs
-                    p_syn_in = proj_confs
+                    partition_confs = [os.path.join(obj_dir, "par-" + x, "par-output-full.json") for x in parent_edges]
+                    custom_recipes = par_partition_to_par.format(
+                        pstring=" ".join(["-p " + x for x in partition_confs]),
+                        par_out_confs=" ".join(partition_confs)
+                    )
 
-                    # need to revert this each time
-                    syn_deps = "$(HAMMER_DEPENDENCIES)"
+                    assemble_confs = [os.path.join(obj_dir, "par-" + x, "par-output-full.json") for x in out_edges]
+                    custom_recipes += par_to_par_assemble.format(
+                        pstring=" ".join(["-p " + x for x in assemble_confs]),
+                        par_out_confs=" ".join(assemble_confs)
+                    )
 
-                    par_assem_confs = [os.path.join(obj_dir, "par-" + x, "par-output-full.json") if x.database.get_setting("vlsi.inputs.hierarchical.module_mode") == HierarchicalMode.Leaf else os.path.join(obj_dir, "par-assemble-" + x, "par-output-full.json") for x in out_edges]
-                    assem_prereqs = " ".join(par_assem_confs)
-                    assem_pstring = " ".join(["-p " + x for x in par_assem_confs])
-                    par_assemble_out = textwrap.dedent("""
-                        {par_assem_deps}: {prereqs}
-                        \t$(HAMMER_EXEC) {env_confs} {pstring} -o {syn_deps} --obj_dir {obj_dir} hier-par-to-syn
-                        """.format(assem_prereqs=assem_prereqs, env_confs=env_confs, assem_pstring=assem_pstring,
-                        obj_dir=obj_dir))
-
-
-                    output += top_down_nonleaf_make_text.format(
+                    output += mod_make_text(gen_actions("top_down_hier")).format(
                         suffix="-"+node, mod=node, env_confs=env_confs, obj_dir=obj_dir, syn_deps=syn_deps,
-                        p_sim_rtl_in=proj_confs, p_syn_in=p_syn_in)
+                        p_sim_rtl_in=proj_confs, p_syn_in=proj_confs, custom_recipes=custom_recipes)
 
         # Bottom-up hierarchical flow
         else:
             for node, edges in dependency_graph.items():
-
                 parent_edges = edges[0]
-
                 out_edges = edges[1]
 
-                # need to revert this each time
+                # need to revert these each time we encounter a leaf node
                 syn_deps = "$(HAMMER_DEPENDENCIES)"
                 p_syn_in = ""
                 par_to_syn = ""
 
                 if len(out_edges) > 0:
-
                     syn_deps = os.path.join(obj_dir, f"syn-{node}-input.json")
                     p_syn_in = f"-p {syn_deps}"
-
                     out_confs = [os.path.join(obj_dir, "par-" + x, "par-output-full.json") for x in out_edges]
-
                     pstring = " ".join(["-p " + x for x in out_confs])
                     par_to_syn = textwrap.dedent(f"""
                         .PHONY: hier-par-to-syn-{node}
@@ -494,11 +387,12 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
 
                         redo-hier-par-to-syn-{node}:
                         \t$(HAMMER_EXEC) {env_confs} {pstring} -o {syn_deps} --obj_dir {obj_dir} hier-par-to-syn
+
                         """)
 
-                output += common_make_text().format(
+                output += mod_make_text(gen_actions("bottom_up")).format(
                     suffix="-"+node, mod=node, env_confs=env_confs, obj_dir=obj_dir, syn_deps=syn_deps,
-                    par_to_syn=par_to_syn, p_sim_rtl_in=proj_confs, p_syn_in=p_syn_in)
+                    p_sim_rtl_in=proj_confs, p_syn_in=p_syn_in, custom_recipes=par_to_syn)
 
     with open(makefile, "w") as f:
         f.write(output)
