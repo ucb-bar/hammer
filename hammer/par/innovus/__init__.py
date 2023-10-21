@@ -1125,7 +1125,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         results.append("add_stripes " + " ".join(options) + "\n")
         return results
 
-    def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool) -> List[str]:
+    def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool, antenna_trim_shape: str) -> List[str]:
         """
         Generate a list of TCL commands that will create power straps on a given layer.
         This is a low-level, cad-tool-specific API. It is designed to be called by higher-level methods, so calling this directly is not recommended.
@@ -1141,6 +1141,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         :param bbox: The optional (2N)-point bounding box of the area to generate straps. By default the entire core area is used.
         :param nets: A list of power nets to create (e.g. ["VDD", "VSS"], ["VDDA", "VSS", "VDDB"],  ... etc.).
         :param add_pins: True if pins are desired on this layer; False otherwise.
+        :param antenna_trim_shape: Strategy for trimming strap antennae. {none/stripe}
         :return: A list of TCL commands that will generate power straps.
         """
         # TODO check that this has been not been called after a higher-level metal and error if so
@@ -1149,6 +1150,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         results.extend([
             "set_db add_stripes_stacked_via_top_layer {}".format(layer_name),
             "set_db add_stripes_stacked_via_bottom_layer {}".format(bottom_via_layer_name),
+            "set_db add_stripes_trim_antenna_back_to_shape {{{}}}".format(antenna_trim_shape),
             "set_db add_stripes_spacing_from_block {}".format(blockage_spacing)
         ])
         layer = self.get_stackup().get_metal(layer_name)

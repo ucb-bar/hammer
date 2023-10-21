@@ -50,7 +50,7 @@ class MockPlaceAndRoute(HammerPlaceAndRouteTool, DummyHammerTool):
                 output.append(json.loads(line))
         return output
 
-    def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool) -> List[str]:
+    def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool, antenna_trim_shape: str) -> List[str]:
         self._power_straps_check_index(layer_name)
         output_dict = {
             "layer_name": layer_name,
@@ -62,7 +62,8 @@ class MockPlaceAndRoute(HammerPlaceAndRouteTool, DummyHammerTool):
             "offset": str(offset),
             "bbox": [] if bbox is None else list(map(str, bbox)),
             "nets": list(map(str, nets)),
-            "add_pins": add_pins
+            "add_pins": add_pins,
+            "antenna_trim_shape": antenna_trim_shape
         }
         return [json.dumps(output_dict, cls=HammerJSONEncoder)]
 

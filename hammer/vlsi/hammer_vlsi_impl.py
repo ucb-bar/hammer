@@ -659,7 +659,7 @@ class HammerPlaceAndRouteTool(HammerTool):
             raise NotImplementedError("Power strap generation method %s is not implemented" % method)
 
 
-    def specify_power_straps_by_tracks(self, layer_name: str, bottom_via_layer: str, blockage_spacing: Decimal, track_pitch: int, track_width: int, track_spacing: int, track_start: int, track_offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool, layer_is_all_power: bool) -> List[str]:
+    def specify_power_straps_by_tracks(self, layer_name: str, bottom_via_layer: str, blockage_spacing: Decimal, track_pitch: int, track_width: int, track_spacing: int, track_start: int, track_offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool, layer_is_all_power: bool, antenna_trim_shape: str) -> List[str]:
         """
         Generate a list of TCL commands that will create power straps on a given layer by specifying the desired track consumption.
         This method assumes that power straps are built bottom-up, starting with standard cell rails.
@@ -675,6 +675,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         :param nets: A list of power nets to create (e.g. ["VDD", "VSS"], ["VDDA", "VSS", "VDDB"], ... etc.).
         :param add_pins: True if pins are desired on this layer; False otherwise.
         :param layer_is_all_power: True if there will be no signal wires on this layer.
+        :param antenna_trim_shape: Strategy for trimming strap antennae. {none/stripe}
         :return: A list of TCL commands that will generate power straps.
         """
         # Note: even track_widths will be snapped to a half-track
@@ -702,7 +703,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         if density > Decimal(85):
             self.logger.warning("CAUTION! Your {layer} power strap density is {density}%. Check your technology's DRM to see if this violates maximum density rules.".format(layer=layer_name, density=density))
         self._get_power_straps_for_hardmacros(layer_name, pitch, width, spacing, offset, bbox, nets)
-        return self.specify_power_straps(layer_name, bottom_via_layer, blockage_spacing, pitch, width, spacing, offset, bbox, nets, add_pins)
+        return self.specify_power_straps(layer_name, bottom_via_layer, blockage_spacing, pitch, width, spacing, offset, bbox, nets, add_pins, antenna_trim_shape)
 
     def specify_all_power_straps_by_tracks(self, layer_names: List[str], ground_net: str, power_nets: List[str], power_weights: List[int], bbox: Optional[List[Decimal]], pin_layers: List[str]) -> List[str]:
         """
@@ -752,6 +753,7 @@ class HammerPlaceAndRouteTool(HammerTool):
             track_start = int(self._get_by_tracks_metal_setting("track_start", layer_name))
             track_pitch = self._get_by_tracks_track_pitch(layer_name)
             track_offset = Decimal(str(self._get_by_tracks_metal_setting("track_offset", layer_name)))
+            antenna_trim_shape = self._get_by_tracks_metal_setting("antenna_trim_shape", layer_name)
             offset = layer.offset # TODO this is relaxable if we can auto-recalculate this based on hierarchical setting
 
             add_pins = layer_name in pin_layers
@@ -767,7 +769,7 @@ class HammerPlaceAndRouteTool(HammerTool):
                 nets = [ground_net, power_nets[i]]
                 group_offset = offset + track_offset + track_pitch * i * layer.pitch
                 group_pitch = sum_weights * track_pitch
-                output.extend(self.specify_power_straps_by_tracks(layer_name, last.name, blockage_spacing, group_pitch, track_width, track_spacing, track_start, group_offset, bbox, nets, add_pins, layer_is_all_power))
+                output.extend(self.specify_power_straps_by_tracks(layer_name, last.name, blockage_spacing, group_pitch, track_width, track_spacing, track_start, group_offset, bbox, nets, add_pins, layer_is_all_power, antenna_trim_shape))
             last = layer
 
         self._dump_power_straps_for_hardmacros()
@@ -1031,7 +1033,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         return round(consumed_tracks / power_utilization)
 
     @abstractmethod
-    def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool) -> List[str]:
+    def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool, antenna_trim_shape: str) -> List[str]:
         """
         Generate a list of TCL commands that will create power straps on a given layer.
         This is a low-level, cad-tool-specific API. It is designed to be called by higher-level methods, so calling this directly is not recommended.
@@ -1047,6 +1049,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         :param bbox: The optional (2N)-point bounding box of the area to generate straps. By default the entire core area is used.
         :param nets: A list of power nets to create (e.g. ["VDD", "VSS"], ["VDDA", "VSS", "VDDB"],  ... etc.).
         :param add_pins: True if pins are desired on this layer; False otherwise.
+        :param antenna_trim_shape: Strategy for trimming strap antennae. {none/stripe}
         :return: A list of TCL commands that will generate power straps.
         """
         # This should get overriden but be sure to use this check in your implementations
