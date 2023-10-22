@@ -308,7 +308,10 @@ class Genus(HammerSynthesisTool, CadenceTool):
             pcs = list(filter(lambda c: c.type == PlacementConstraintType.Hierarchical, self.get_placement_constraints()))
             for pc in pcs:
                 self.append("""
-if {{ [get_db hinst:{inst} .module.name] ne \"{master}\" }} {{
+# Attempt to deuniquify hinst:{inst}, incase it was uniquified
+set uniquified_name [get_db hinst:{inst} .module.name]
+if {{ $uniquified_name ne \"{master}\" }} {{
+    puts [format \"WARNING: instance hinst:{inst} was uniquified to be an instance of $uniquified_name, not {master}. Attempting to fix\"]
     change_link -instances {{{inst}}} -design_name module:{top}/{master}
 }}""".format(inst=pc.path, top=self.top_module, master=pc.master))
 
