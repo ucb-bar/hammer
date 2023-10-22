@@ -603,6 +603,10 @@ par:
       # Overrideable by appending _<layer name>
       # type: float
 
+      antenna_trim_shape: stripe # "none" or "stripe", specifies antenna trimming strategy
+      # Overrideable by appending _<layer name>
+      # type: str
+
       pin_layers: [] # Layers to put power pins on
       # type: List[str]
 

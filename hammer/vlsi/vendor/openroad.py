@@ -251,7 +251,8 @@ class OpenROADPlaceAndRouteTool(HammerPlaceAndRouteTool, OpenROADTool):
                              bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal,
                              width: Decimal, spacing: Decimal, offset: Decimal,
                              bbox: Optional[List[Decimal]], nets: List[str],
-                             add_pins: bool) -> List[str]:
+                             add_pins: bool,
+                             antenna_trim_shape: str) -> List[str]:
         # TODO: currently using openroad's powerstrap script
         return []
 

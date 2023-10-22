@@ -310,6 +310,10 @@ par:
       # type: int
       track_spacing: int
 
+      # Specifies antenna trimming strategy. none or stripe
+      # type: str
+      antenna_trim_shape: str
+
       # Ratio of total routing tracks to dedicate to power straps, which is used to calculate set pitch
       # type: float
       power_utilization: float
