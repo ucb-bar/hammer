@@ -4,7 +4,7 @@
 
 from hammer.vlsi import HammerTool, HammerToolStep, HammerToolHookAction, HierarchicalMode
 from hammer.utils import VerilogUtils
-from hammer.vlsi import HammerSynthesisTool
+from hammer.vlsi import HammerSynthesisTool, PlacementConstraintType
 from hammer.logging import HammerVLSILogging
 from hammer.vlsi import MMMCCornerType
 import hammer.tech as hammer_tech
@@ -302,6 +302,16 @@ class Genus(HammerSynthesisTool, CadenceTool):
                 # Clock mapping needs at least the attributes cts_inverter_cells and cts_logic_cells to be set
                 self.append("set_db map_clock_tree true")
         self.verbose_append("syn_generic")
+
+        # With DDI, hierarchical instances may be uniquified. Use change_link to deuniquify them
+        if self.hierarchical_mode.is_nonleaf_hierarchical():
+            pcs = list(filter(lambda c: c.type == PlacementConstraintType.Hierarchical, self.get_placement_constraints()))
+            for pc in pcs:
+                self.append("""
+if {{ [get_db hinst:{inst} .module.name] ne \"{master}\" }} {{
+    change_link -instances {{{inst}}} -design_name module:{top}/{master}
+}}""".format(inst=pc.path, top=self.top_module, master=pc.master))
+
         return True
 
     def syn_map(self) -> bool:
