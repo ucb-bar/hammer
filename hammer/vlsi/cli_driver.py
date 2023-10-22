@@ -1329,9 +1329,17 @@ class CLIDriver:
         obj_dir = get_nonempty_str(args['obj_dir'])
         if obj_dir is None:
             # Try getting object dir from environment variable.
-            obj_dir = get_nonempty_str(os.environ.get("HAMMER_DRIVER_OBJ_DIR", ""))
+            obj_dir = get_nonempty_str(os.environ.get("HAMMER_DRIVER_OBJ_DIR", ""))   
         if obj_dir is not None:
             options = options._replace(obj_dir=os.path.realpath(obj_dir))
+        
+        # if log is default make hammer dir if doesn't exist and update if custom obj_dir
+        if log is None:
+            log_dir = HammerDriver.get_default_log_file_dir(obj_dir)
+            if not os.path.exists(log_dir): 
+                os.makedirs(log_dir) 
+            options = options._replace(log_file=HammerDriver.get_default_log_file(obj_dir))
+
         # Syn/par rundir (optional)
         self.syn_rundir = get_nonempty_str(args['syn_rundir'])
         self.par_rundir = get_nonempty_str(args['par_rundir'])

@@ -40,14 +40,27 @@ HammerDriverOptions = NamedTuple('HammerDriverOptions', [
 
 
 class HammerDriver:
+
+    @staticmethod
+    def get_default_log_file_dir(obj_dir: str):
+        return os.path.join(obj_dir, "hammer_logs")
+
+    @staticmethod
+    def get_default_log_file(obj_dir: str):
+        log_file_dir = HammerDriver.get_default_log_file_dir(obj_dir)
+        return os.path.join(log_file_dir, datetime.datetime.now().strftime("hammer-vlsi-%Y%m%d-%H%M%S.log"))
+
     @staticmethod
     def get_default_driver_options() -> HammerDriverOptions:
         """Get default driver options."""
+        obj_dir = str((Path.cwd() / "obj_dir").resolve())
+        log_file = HammerDriver.get_default_log_file(obj_dir)
+        
         return HammerDriverOptions(
             environment_configs=[],
             project_configs=[],
-            log_file=datetime.datetime.now().strftime("hammer-vlsi-%Y%m%d-%H%M%S.log"),
-            obj_dir=str((Path.cwd() / "obj_dir").resolve())
+            log_file=log_file,
+            obj_dir=obj_dir
         )
 
     def __init__(self, options: HammerDriverOptions, extra_project_config: dict = {}) -> None:
