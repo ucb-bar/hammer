@@ -312,7 +312,7 @@ class Genus(HammerSynthesisTool, CadenceTool):
 set uniquified_name [get_db hinst:{inst} .module.name]
 if {{ $uniquified_name ne \"{master}\" }} {{
     puts [format \"WARNING: instance hinst:{inst} was uniquified to be an instance of $uniquified_name, not {master}. Attempting to fix\"]
-    change_link -instances {{{inst}}} -design_name module:{top}/{master}
+    change_link -copy_attributes -instances {{{inst}}} -design_name module:{top}/{master}
 }}""".format(inst=pc.path, top=self.top_module, master=pc.master))
 
         return True
