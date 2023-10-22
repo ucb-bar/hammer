@@ -304,7 +304,7 @@ class Genus(HammerSynthesisTool, CadenceTool):
         self.verbose_append("syn_generic")
 
         # With DDI, hierarchical instances may be uniquified. Use change_link to deuniquify them
-        if self.hierarchical_mode.is_nonleaf_hierarchical():
+        if self.hierarchical_mode.is_nonleaf_hierarchical() and self.version() >= self.version_number("211"):
             pcs = list(filter(lambda c: c.type == PlacementConstraintType.Hierarchical, self.get_placement_constraints()))
             for pc in pcs:
                 self.append("""
