@@ -326,6 +326,10 @@ par:
       # type: list[str]
       strap_layers: list[str]
 
+      # Indicates if Hammer should generate straps for the stdcell rail layer
+      # type: bool
+      generate_rail_layer: bool
+
 # DRC settings
 drc.inputs:
   # Top RTL module.

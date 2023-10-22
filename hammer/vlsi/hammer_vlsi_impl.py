@@ -646,6 +646,7 @@ class HammerPlaceAndRouteTool(HammerTool):
             namespace = "par.generate_power_straps_options.by_tracks"
             layers = self.get_setting("{}.strap_layers".format(namespace))
             pin_layers = self.get_setting("{}.pin_layers".format(namespace))
+            generate_rail_layer = self.get_setting("{}.generate_rail_layer".format(namespace))
             ground_net_names = list(map(lambda x: x.name, self.get_independent_ground_nets()))  # type: List[str]
             power_net_names = list(map(lambda x: x.name, self.get_independent_power_nets()))  # type: List[str]
             def get_weight(s: Supply) -> int:
@@ -654,7 +655,7 @@ class HammerPlaceAndRouteTool(HammerTool):
                 return s.weight
             weights = list(map(get_weight, self.get_independent_power_nets()))  # type: List[int]
             assert len(ground_net_names) == 1, "FIXME, I am assuming there's only 1 ground net"
-            return self.specify_all_power_straps_by_tracks(layers, ground_net_names[0], power_net_names, weights, bbox, pin_layers)
+            return self.specify_all_power_straps_by_tracks(layers, ground_net_names[0], power_net_names, weights, bbox, pin_layers, generate_rail_layer)
         else:
             raise NotImplementedError("Power strap generation method %s is not implemented" % method)
 
@@ -705,7 +706,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         self._get_power_straps_for_hardmacros(layer_name, pitch, width, spacing, offset, bbox, nets)
         return self.specify_power_straps(layer_name, bottom_via_layer, blockage_spacing, pitch, width, spacing, offset, bbox, nets, add_pins, antenna_trim_shape)
 
-    def specify_all_power_straps_by_tracks(self, layer_names: List[str], ground_net: str, power_nets: List[str], power_weights: List[int], bbox: Optional[List[Decimal]], pin_layers: List[str]) -> List[str]:
+    def specify_all_power_straps_by_tracks(self, layer_names: List[str], ground_net: str, power_nets: List[str], power_weights: List[int], bbox: Optional[List[Decimal]], pin_layers: List[str], generate_rail_layer: bool) -> List[str]:
         """
         Generate a list of TCL commands that will create power straps on a given set of layers by specifying the desired per-track track consumption and utilization.
         This will build standard cell power strap rails first. Layer-specific parameters are read from the hammer config:
@@ -729,11 +730,13 @@ class HammerPlaceAndRouteTool(HammerTool):
         for l in pin_layers:
             assert l in layer_names, "Pin layer {} must be in power strap layers".format(l)
 
+        output = []
         rail_layer_name = self.get_setting("technology.core.std_cell_rail_layer")
         rail_layer = self.get_stackup().get_metal(rail_layer_name)
-        blockage_spacing = coerce_to_grid(float(self._get_by_tracks_metal_setting("blockage_spacing", rail_layer_name)), rail_layer.grid_unit)
-        # TODO does the CPF help this, or do we need to be more explicit about the bbox for each domain
-        output = self.specify_std_cell_power_straps(blockage_spacing, bbox, [ground_net] + power_nets)
+        if generate_rail_layer:
+            blockage_spacing = coerce_to_grid(float(self._get_by_tracks_metal_setting("blockage_spacing", rail_layer_name)), rail_layer.grid_unit)
+            # TODO does the CPF help this, or do we need to be more explicit about the bbox for each domain
+            output.extend(self.specify_std_cell_power_straps(blockage_spacing, bbox, [ground_net] + power_nets))
         # The layer to via down to
         bottom_via_layer = rail_layer_name
         # The last layer we used
