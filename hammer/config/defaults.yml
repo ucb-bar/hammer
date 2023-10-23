@@ -613,6 +613,9 @@ par:
       strap_layers: [] # List of layers on which to place power straps (std cell rail layer is implied - do not include it)
       # type: List[str]
 
+      generate_rail_layer: true # If true, generates straps on the stdcell rail layer - technology.core.std_cell_rail_layer
+      # type: bool
+
 # DRC settings
 drc.inputs:
 # DRC settings
