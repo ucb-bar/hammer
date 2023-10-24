@@ -8,11 +8,12 @@ First, follow the [Hammer Developer Setup](https://hammer-vlsi.readthedocs.io/en
 
 Next, run the setup script to install the OpenROAD tools using Conda, and Skywater 130nm PDK using the [Open-PDKs tool](https://github.com/RTimothyEdwards/open_pdks).
 This step will take a long time due to the amount and size of the required installs.
-You should supply a ``PREFIX`` path to a directory that will serve as the root of all PDK files and supporting tools (total size of all files is ~42GB).
+You should supply a ``PREFIX`` path to a directory that will serve as the root of all PDK files and supporting tools (total size of all files is ~42GB),
+otherwise the script will default to installing to your home directory (``~/``).
 
 ```shell
 cd hammer/e2e
-./scripts/setup-sky130-openroad.sh [PREFIX]  # default = ~/
+./scripts/setup-sky130-openroad.sh [PREFIX]
 ```
 
 You should now have a file ``configs-env/my-env.yml`` containing all required tool and technology paths for this tutorial.
