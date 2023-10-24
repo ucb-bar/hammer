@@ -6,18 +6,42 @@ Hammer supports the Skywater 130nm Technology process. The [SkyWater Open Source
 PDK Setup
 ---------
 
-All Sky130 PDK files required for the Hammer VLSI flow can now be [installed via conda](https://anaconda.org/litex-hub/open_pdks.sky130a) by running:
+The Skywater 130nm PDK files are located in a repo called [skywater-pdk](https://github.com/google/skywater-pdk/). A tool called [Open-PDKs (open_pdks)](https://github.com/RTimothyEdwards/open_pdks/) was developed to generate all the files typically found in a PDK.
+Open-PDKs uses the contents in `skywater-pdk`, and outputs files to a directory called `sky130A`.
+
+### PDK Install
 
 ```shell
-conda install -c litex-hub open_pdks.sky130a
+# create a root directory for this install (install is ~GB)
+export PDK_ROOT=/path/to/install/root
+cd $PDK_ROOT
+
+# install magic via conda, required for open_pdks
+conda create -y -c litex-hub --prefix .conda-signoff magic
+export PATH=${PDK_ROOT}/.conda-signoff/bin:$PATH
+
+# clone required repos
+git clone https://github.com/google/skywater-pdk.git
+git clone https://github.com/RTimothyEdwards/open_pdks.git
+
+# install Sky130 PDK via Open-PDKs
+#    we disable some install steps to save time
+cd $PDK_ROOT/open_pdks
+./configure \
+    --enable-sky130-pdk=${PDK_ROOT}/skywater-pdk/libraries --prefix=$PDK_ROOT \
+    --disable-gf180mcu-pdk --disable-alpha-sky130 --disable-xschem-sky130 --disable-primitive-gf180mcu \
+    --disable-verification-gf180mcu --disable-io-gf180mcu --disable-sc-7t5v0-gf180mcu \
+    --disable-sc-9t5v0-gf180mcu --disable-sram-gf180mcu --disable-osu-sc-gf180mcu
+make
+make install
 ```
 
-We recommend using the conda install, but the [manual PDK setup is documented below](#manual-pdk-setup) (although it may be outdated).
+This generates all the Sky130 PDK files and installs them to `$PDK_ROOT/share/pdk/sky130A`
 
 Now in your Hammer YAML configs, point to the location of this install:
 
 ```yaml
-technology.sky130.sky130A: "/path/to/conda/env/share/pdk/sky130A"
+technology.sky130.sky130A: "<PDK_ROOT>/share/pdk/sky130A"
 ```
 
 
@@ -173,79 +197,5 @@ Documentation:
 * [Skywater130 Standard Cell and Primitives Overview](http://diychip.org/sky130/)
 
   * Additional useful documentation for the PDK
-
-
-## Manual PDK Setup
-
-### PDK Structure
-
-OpenLANE expects a certain file structure for the Sky130 PDK. 
-We recommend adhering to this file structure for Hammer as well.
-All the files reside in a root folder (named something like `skywater` or `sky130`).
-The environment variable `$PDK_ROOT` should be set to this folder's path:
-
-```shell
-export PDK_ROOT=<path-to-skywater-directory>
-```
-
-`$PDK_ROOT` contains the following:
-
-* `skywater-pdk`
-
-  * Original PDK source files
-
-* `open_pdks`
-
-  * install of Open-PDKs tool
-
-* `share/pdk/sky130A`
-
-  * output files from Open-PDKs compilation process
-
-
-### Prerequisites for PDK Setup
-
-* [Magic](http://opencircuitdesign.com/magic/)
-
-  * required for `open_pdks` file generation
-  * tricky to install, closely follow the directions on the `Install` page of the website
-  
-    * as the directions indicate, you will likely need to manually specify the location of the Tcl/Tk package installation using `--with-tcl` and `--with-tk`
- 
- If using conda, these installs alone caused the Magic install to work:
-
-```shell
-conda install -c intel tcl 
-conda install -c anaconda tk 
-conda install -c anaconda libglu
-```
-
-### PDK Install
-
-In `$PDK_ROOT`, clone the skywater-pdk repo and generate the liberty files for each library:
-
-```shell
-git clone https://github.com/google/skywater-pdk.git
-cd skywater-pdk
-# Expect a large download! ~7GB at time of writing.
-git submodule init libraries/*/latest
-git submodule update
-# Regenerate liberty files
-make timing
-```
-
-Again in `$PDK_ROOT`, clone the open_pdks repo and run the install process to generate the `sky130A` directory:
-
-```shell
-git clone https://github.com/RTimothyEdwards/open_pdks.git
-cd open_pdks
-./configure \
-    --enable-sky130-pdk=$PDK_ROOT/skywater-pdk/libraries \
-    --prefix=$PDK_ROOT \
-make
-make install
-```
-
-This generates all the Sky130 PDK files and installs them to `$PDK_ROOT/share/pdk/sky130A`
 
 
