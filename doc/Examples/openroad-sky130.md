@@ -1,6 +1,6 @@
 # Introduction with Sky130 and OpenROAD
 
-The following directions will get a simple ``pass`` design from RTL to GDS using the [OpenROAD tools](https://theopenroadproject.org) and the [Skywater 130nm PDK](https://github.com/google/skywater-pdk). These directions are meant to provide the minimal set of steps to do so, please reference the next section, [Hammer End-to-End Integration Tests](https://hammer-vlsi.readthedocs.io/en/stable/Examples/e2e.html), for more detailed descriptions of all files and commands.
+The following directions will get a simple ``pass`` design from RTL to GDS using the [OpenROAD tools](https://theopenroadproject.org) and the [Skywater 130nm PDK](https://github.com/google/skywater-pdk). These directions are meant to provide the minimal set of steps to do so, please reference the next section, [Hammer End-to-End Integration Tests](/doc/Examples/e2e.md), for more detailed descriptions of all files and commands.
 
 ## Instructions
 
