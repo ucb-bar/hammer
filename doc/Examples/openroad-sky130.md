@@ -1,10 +1,10 @@
 # Introduction with Sky130 and OpenROAD
 
-The following directions will get a simple ``pass`` design from RTL to GDS using the [OpenROAD tools](https://theopenroadproject.org) and the [Skywater 130nm PDK](https://github.com/google/skywater-pdk). These directions are meant to provide the minimal set of steps to do so, please reference the next section, [Hammer End-to-End Integration Tests](/doc/Examples/e2e.md), for more detailed descriptions of all files and commands.
+The following directions will get a simple ``pass`` design from RTL to GDS using the [OpenROAD tools](https://theopenroadproject.org) and the [Skywater 130nm PDK](https://github.com/google/skywater-pdk). These directions are meant to provide the minimal set of steps to do so, please reference the next section, [Hammer End-to-End Integration Tests](https://hammer-vlsi.readthedocs.io/en/stable/Examples/e2e.html), for more detailed descriptions of all files and commands.
 
 ## Instructions
 
-First, follow the [Hammer Developer Setup](/doc/Hammer-Basics/Hammer-Setup.md#developer-setup) to clone Hammer and install/activate the poetry virtual environment.
+First, follow the [Hammer Developer Setup](https://hammer-vlsi.readthedocs.io/en/stable/Hammer-Basics/Hammer-Setup.html#developer-setup) to clone Hammer and install/activate the poetry virtual environment.
 
 Next, run the setup script to install the OpenROAD tools using Conda, and Skywater 130nm PDK using the [Open-PDKs tool](https://github.com/RTimothyEdwards/open_pdks).
 This step will take a long time due to the amount and size of the required installs.
@@ -50,7 +50,7 @@ Congrats, you've just run your ``pass`` design from RTL to GDS with Hammer!
 
 ## Next Steps
 
-At this point, you should go through the [Hammer End-to-End Integration Tests](/doc/Examples/e2e.md) documentation to learn how to configure Hammer further. We've also outlined some common next steps below.
+At this point, you should go through the [Hammer End-to-End Integration Tests](https://hammer-vlsi.readthedocs.io/en/stable/Examples/e2e.html) documentation to learn how to configure Hammer further. We've also outlined some common next steps below.
 
 
 ### Commercial flow
@@ -88,7 +88,7 @@ make design=pass pdk=sky130 tools=cm env=<my_custom> build
 
 Running DRC/LVS with commercial tools requires access to an NDA-version of the Skywater PDK.
 We support running DRC/LVS with either Cadence Pegasus or Siemens Calibre.
-See the [Sky130 documentation](/doc/Technology/Sky130.md) for how to point to the NDA PDKs and run DRC/LVS with their respective tools.
+See the [Sky130 documentation](https://hammer-vlsi.readthedocs.io/en/stable/Technology/Sky130.html) for how to point to the NDA PDKs and run DRC/LVS with their respective tools.
 
 ### Chipyard flow
 
