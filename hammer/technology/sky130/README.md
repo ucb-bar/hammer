@@ -12,13 +12,14 @@ Open-PDKs uses the contents in `skywater-pdk`, and outputs files to a directory 
 ### PDK Install
 
 ```shell
-# create a root directory for this install (install is ~GB)
-export PDK_ROOT=/path/to/install/root
-cd $PDK_ROOT
+# create a root directory that will contain all PDK files and supporting tools (install size is ~42GB)
+export PREFIX=/path/to/install/root
+mkdir -p $PREFIX
+cd $PREFIX
 
 # install magic via conda, required for open_pdks
-conda create -y -c litex-hub --prefix .conda-signoff magic
-export PATH=${PDK_ROOT}/.conda-signoff/bin:$PATH
+conda create -y -c litex-hub --prefix $PREFIX/.conda-signoff magic
+export PATH=$PREFIX/.conda-signoff/bin:$PATH
 
 # clone required repos
 git clone https://github.com/google/skywater-pdk.git
@@ -26,9 +27,9 @@ git clone https://github.com/RTimothyEdwards/open_pdks.git
 
 # install Sky130 PDK via Open-PDKs
 #    we disable some install steps to save time
-cd $PDK_ROOT/open_pdks
+cd $PREFIX/open_pdks
 ./configure \
-    --enable-sky130-pdk=${PDK_ROOT}/skywater-pdk/libraries --prefix=$PDK_ROOT \
+    --enable-sky130-pdk=${PREFIX}/skywater-pdk/libraries --prefix=$PREFIX \
     --disable-gf180mcu-pdk --disable-alpha-sky130 --disable-xschem-sky130 --disable-primitive-gf180mcu \
     --disable-verification-gf180mcu --disable-io-gf180mcu --disable-sc-7t5v0-gf180mcu \
     --disable-sc-9t5v0-gf180mcu --disable-sram-gf180mcu --disable-osu-sc-gf180mcu
@@ -36,12 +37,12 @@ make
 make install
 ```
 
-This generates all the Sky130 PDK files and installs them to `$PDK_ROOT/share/pdk/sky130A`
+This generates all the Sky130 PDK files and installs them to `$PREFIX/share/pdk/sky130A`
 
 Now in your Hammer YAML configs, point to the location of this install:
 
 ```yaml
-technology.sky130.sky130A: "<PDK_ROOT>/share/pdk/sky130A"
+technology.sky130.sky130A: "<PREFIX>/share/pdk/sky130A"
 ```
 
 
