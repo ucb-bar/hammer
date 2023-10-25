@@ -11,6 +11,7 @@ from typing import List, Dict, Optional, Tuple
 import os
 import errno
 from textwrap import dedent
+from datetime import datetime
 
 from hammer.vlsi import HammerPowerTool, HammerToolStep, HammerToolHookAction, HammerTool, \
                         MMMCCornerType, FlowLevel, PowerReport
@@ -356,11 +357,8 @@ class Joules(HammerPowerTool, CadenceTool):
 
         # Create power analysis script
         #   with unique filename so that multiple runs don't overwrite each others' TCL scripts
-        i = 0
-        joules_tcl_filename = os.path.join(self.run_dir, f"joules.{i}.tcl")
-        while os.path.exists(joules_tcl_filename):
-            i += 1
-            joules_tcl_filename = os.path.join(self.run_dir, f"joules.{i}.tcl")
+        now = datetime.now().strftime("%Y%m%d-%H%M%S")
+        joules_tcl_filename = os.path.join(self.run_dir, f"joules-{now}.tcl")
         self.write_contents_to_path("\n".join(self.output), joules_tcl_filename)
 
         # Make sure that generated-scripts exists.
