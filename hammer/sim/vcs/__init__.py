@@ -64,7 +64,12 @@ class VCS(HammerSimTool, SynopsysTool):
 
     @property
     def simulator_executable_path(self) -> str:
-        return os.path.join(self.run_dir, "simv")
+        if 'DEBUG' in self.get_setting('sim.inputs.defines'):
+            return os.path.join(self.run_dir, "simv-debug")
+        elif 'OPM' in self.get_setting('sim.inputs.defines'):
+            return os.path.join(self.run_dir, "simv-opm")
+        else:
+            return os.path.join(self.run_dir, "simv")
 
     @property
     def run_tcl_path(self) -> str:
@@ -346,6 +351,8 @@ class VCS(HammerSimTool, SynopsysTool):
             ])
             args.extend(["-ucli", "-do", self.run_tcl_path])
         args.extend(exec_flags_append)
+
+        # args.extend(["-ucli", "-do", "/tools/scratch/nayiri/power/chipyard-intech16-sep23/vlsi/sampling.tcl"])
 
         HammerVLSILogging.enable_colour = False
         HammerVLSILogging.enable_tag = False
