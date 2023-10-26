@@ -394,8 +394,6 @@ class Joules(HammerPowerTool, CadenceTool):
 
         self.run_executable(args, cwd=self.run_dir)
 
-        shutil.copy2(joules_tcl_filename, os.path.join(self.run_dir, f"joules.tcl"))
-
         HammerVLSILogging.enable_colour = True
         HammerVLSILogging.enable_tag = True
 
