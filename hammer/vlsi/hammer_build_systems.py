@@ -26,9 +26,13 @@ class MakeActionRecipe:
         self.base = action.split("-")[0]
         rd_suffix = "{suffix}" if hier else "-rundir"
         self.rundir = os.path.join("{obj_dir}", f"{action}{rd_suffix}")
+        if self.base == "par":  # par partition & assemble should be run in the same dir
+            self.rundir = os.path.join("{obj_dir}", f"par{rd_suffix}")
         self.out_file = os.path.join(self.rundir, f"{self.base}-output-full.json")
+        if self.action == "par-partition":  # par-partition has a different output file
+            self.out_file = os.path.join(self.rundir, f"{self.base}-partition-output-full.json")
         default_pconf = [os.path.join("{obj_dir}", f"{action}-input.json")]
-        if self.base == "power":  # power inputs are different
+        if self.base == "power":  # power actions require at least 1 input file
             lvl = action.split("-")[-1]
             in_json = os.path.join("{obj_dir}", f"power-sim-{lvl}-input.json")
             if lvl == "rtl":
@@ -215,11 +219,11 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
 
         # P&R is different for flat/bottom-up vs. top-down
         common_par = [MakeActionRecipe("par", hier=hier)]  # type: List[Union[MakeActionRecipe, MakeLinkRecipe]]
-        top_down_leaf_par = [MakeActionRecipe("par", "{p_par_in}")]  # type: List[Union[MakeActionRecipe, MakeLinkRecipe]]
+        top_down_leaf_par = [MakeActionRecipe("par")]  # type: List[Union[MakeActionRecipe, MakeLinkRecipe]]
         top_down_top_par = [MakeActionRecipe("par-partition"),
-                            MakeActionRecipe("par-assemble", "{p_par_in}")]  # type: List[Union[MakeActionRecipe, MakeLinkRecipe]]
-        top_down_hier_par = [MakeActionRecipe("par-partition", "{p_par_part_in}"),
-                             MakeActionRecipe("par-assemble", "{p_par_ass_in}")]  # type: List[Union[MakeActionRecipe, MakeLinkRecipe]]
+                            MakeActionRecipe("par-assemble")]  # type: List[Union[MakeActionRecipe, MakeLinkRecipe]]
+        top_down_hier_par = [MakeActionRecipe("par-partition"),
+                             MakeActionRecipe("par-assemble")]  # type: List[Union[MakeActionRecipe, MakeLinkRecipe]]
 
         # Common to all nodes
         common = [
@@ -252,7 +256,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         else:
             raise ValueError(f"Unknown hierarchical mode {hier_mode}")
 
-    hierarchical_mode = driver.get_user_hierarchical_mode()
+    flow_mode = driver.get_hierarchical_flow_mode()
     dependency_graph = driver.get_hierarchical_dependency_graph()
     makefile = os.path.join(driver.obj_dir, "hammer.mk")
     os.symlink(makefile, os.path.join(driver.obj_dir, "hammer.d"))
@@ -293,7 +297,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
 
     else:
         # Top-down hierarchical flow
-        if hierarchical_mode == "top_down":
+        if flow_mode in ["top_down", "top-down"]:
             for node, edges in dependency_graph.items():
                 parent_edges = edges[0]
                 out_edges = edges[1]
@@ -315,7 +319,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
 
                     """)
 
-                partition_confs = [os.path.join(obj_dir, "par-" + x, "par-output-full.json") for x in parent_edges]
+                partition_confs = [os.path.join(obj_dir, "par-" + x, "par-partition-output-full.json") for x in parent_edges]
                 pstring=" ".join(["-p " + x for x in partition_confs])
                 par_out_confs=" ".join(partition_confs)
                 if len(out_edges) == 0:  # leaf node
@@ -344,14 +348,13 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
                 elif len(out_edges) == 0:  # leaf node
                     output += mod_make_text(gen_actions("top_down_leaf")).format(
                         suffix="-"+node, mod=node, env_confs=env_confs, obj_dir=obj_dir, syn_deps=syn_deps,
-                        p_sim_rtl_in=proj_confs, p_par_in="-p " + os.path.join(obj_dir, f"par-{node}-input.json"),
+                        p_sim_rtl_in=proj_confs,
                         custom_recipes=par_partition_to_par)
 
                 else:  # hierarchical node
                     output += mod_make_text(gen_actions("top_down_hier")).format(
                         suffix="-"+node, mod=node, env_confs=env_confs, obj_dir=obj_dir, syn_deps=syn_deps,
-                        p_sim_rtl_in=proj_confs, p_par_part_in="-p " + os.path.join(obj_dir, f"par-partition-{node}-input.json"),
-                        p_par_ass_in="-p " + os.path.join(obj_dir, f"par-assemble-{node}-input.json"),
+                        p_sim_rtl_in=proj_confs,
                         custom_recipes=par_partition_to_par + par_to_par_assemble)
 
         # Bottom-up hierarchical flow

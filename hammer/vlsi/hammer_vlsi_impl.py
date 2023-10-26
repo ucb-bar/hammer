@@ -22,17 +22,23 @@ from .units import VoltageValue, TimeValue
 
 class HierarchicalMode(Enum):
     Flat = 1
-    Leaf = 2
-    Hierarchical = 3
-    Top = 4
+    BULeaf = 2
+    BUHierarchical = 3
+    BUTop = 4
+    TDLeaf = 5
+    TDHierarchical = 6
+    TDTop = 7
 
     @classmethod
     def __mapping(cls) -> Dict[str, "HierarchicalMode"]:
         return {
             "flat": HierarchicalMode.Flat,
-            "leaf": HierarchicalMode.Leaf,
-            "hierarchical": HierarchicalMode.Hierarchical,
-            "top": HierarchicalMode.Top
+            "bu_leaf": HierarchicalMode.BULeaf,
+            "bu_hierarchical": HierarchicalMode.BUHierarchical,
+            "bu_top": HierarchicalMode.BUTop,
+            "td_leaf": HierarchicalMode.TDLeaf,
+            "td_hierarchical": HierarchicalMode.TDHierarchical,
+            "td_top": HierarchicalMode.TDTop
         }
 
     @staticmethod
@@ -50,7 +56,7 @@ class HierarchicalMode(Enum):
         Helper function that returns True if this mode is a non-leaf hierarchical mode (i.e. any block with
         hierarchical sub-blocks).
         """
-        return self == HierarchicalMode.Hierarchical or self == HierarchicalMode.Top
+        return self == HierarchicalMode.Hierarchical or self == HierarchicalMode.BUTop or self == HierarchicalMode.TDTop
 
 class FlowLevel(Enum):
     RTL = 1

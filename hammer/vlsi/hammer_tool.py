@@ -309,8 +309,7 @@ class HammerTool(metaclass=ABCMeta):
     @property
     def hierarchical_mode(self) -> HierarchicalMode:
         """
-        Input files for this tool library.
-        The exact nature of the files will depend on the type of library.
+        HierarchicalMode for the module being run through this tool.
         """
         try:
             return self.attr_getter("_hierarchical_mode", None)
@@ -320,8 +319,7 @@ class HammerTool(metaclass=ABCMeta):
     @hierarchical_mode.setter
     def hierarchical_mode(self, value: HierarchicalMode) -> None:
         """
-        Set the input files for this tool library.
-        The exact nature of the files will depend on the type of library.
+        HierarchicalMode for the module being run through this tool.
         """
         if not isinstance(value, HierarchicalMode):
             raise TypeError("hierarchical_mode must be a HierarchicalMode")

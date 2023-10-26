@@ -1659,10 +1659,9 @@ class HammerDriver:
         """
         return self._hierarchical_helper()[0]
 
-    #Modified
-    def get_user_hierarchical_mode(self) -> str:
+    def get_hierarchical_flow_mode(self) -> str:
         """
-        hierarchical mode specified in the design yml file has to be one of the following options:
+        hierarchical flow mode specified in the design yml file has to be one of the following options:
             flat (the flat flow)
             hierarchical or bottom_up (the bottom-up flow)
             top_down (the top-down flow)
@@ -1673,7 +1672,7 @@ class HammerDriver:
         hier_mode_key = "vlsi.inputs.hierarchical.mode"
         hier_mode = str(self.database.get_setting(hier_mode_key))
 
-        if(hier_mode not in ["flat", "hierarchical", "bottom_up", "top_down"]):
+        if(hier_mode not in ["flat", "hierarchical", "bottom_up", "bottom-up", "top_down", "top-down"]):
             raise ValueError("Invalid value for " + hier_mode_key)
 
         return hier_mode
@@ -1688,6 +1687,7 @@ class HammerDriver:
 
         :return: Tuple of (List of tuples of (module name, config snippet), the dependency graph)
         """
+        hier_flow_mode = str(self.database.get_setting("vlsi.inputs.hierarchical.mode"))
         hier_source_key = "vlsi.inputs.hierarchical.config_source"
         hier_source = str(self.database.get_setting(hier_source_key))
         hier_modules = {}  # type: Dict[str, List[str]]
@@ -1804,13 +1804,26 @@ class HammerDriver:
         output = []  # type: List[Tuple[str, dict]]
 
         for module in order:
-            mode = HierarchicalMode.Hierarchical
-            if module == top_module:
-                mode = HierarchicalMode.Top
-            elif module in leaf_modules:
-                mode = HierarchicalMode.Leaf
-            elif module in intermediate_modules:
-                mode = HierarchicalMode.Hierarchical
+            if hier_flow_mode in ["hierarchical", "bottom_up", "bottom-up"]:
+                mode = HierarchicalMode.BUHierarchical
+                if module == top_module:
+                    mode = HierarchicalMode.BUTop
+                elif module in leaf_modules:
+                    mode = HierarchicalMode.BULeaf
+                elif module in intermediate_modules:
+                    mode = HierarchicalMode.BUHierarchical
+                else:
+                    assert "Should not get here"
+            elif hier_flow_mode in ["top_down", "top-down"]:
+                mode = HierarchicalMode.TDHierarchical
+                if module == top_module:
+                    mode = HierarchicalMode.TDTop
+                elif module in leaf_modules:
+                    mode = HierarchicalMode.TDLeaf
+                elif module in intermediate_modules:
+                    mode = HierarchicalMode.TDHierarchical
+                else:
+                    assert "Should not get here"
             else:
                 assert "Should not get here"
 
