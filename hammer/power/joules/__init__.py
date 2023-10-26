@@ -267,7 +267,7 @@ class Joules(HammerPowerTool, CadenceTool):
             if report.end_time:
                 read_stim_cmd += " -end {ETIME}ns".format(ETIME=report.end_time.value_in_units("ns"))
 
-            frame_based_analysis = (report.interval_size or (report.toggle_signal and report.num_toggles))
+            time_based_analysis = (report.interval_size or (report.toggle_signal and report.num_toggles))
             if report.interval_size:
                 read_stim_cmd += " -interval_size {INTERVAL}ns".format(INTERVAL=report.interval_size.value_in_units("ns"))
                 if report.toggle_signal:
@@ -291,9 +291,8 @@ class Joules(HammerPowerTool, CadenceTool):
                 #   For now, re-run read_stimulus for each power report config, even if it's an identical stimulus
                 block_append(f"{read_stim_cmd} -alias {stim_alias} -append")
                 # block_append(f"write_sdb -out {alias}.sdb") # NOTE: subsequent read_sdb command errors when reading this file back in, so don't cache for now
-                # TODO: avg mode saves time, run this based on output_formats mode?
-                # block_append(f"compute_power -mode average -stim {stim_alias} -append")
-                block_append(f"compute_power -mode time_based -stim {stim_alias} -append")
+                mode = "time_based" if time_based_analysis else "average"
+                block_append(f"compute_power -mode {mode} -stim {stim_alias} -append")
 
             # remove only file extension (last .*) in filename
             waveform_name = '.'.join(os.path.basename(report.waveform_path).split('.')[0:-1])
@@ -329,13 +328,13 @@ class Joules(HammerPowerTool, CadenceTool):
             if {'area','all'} & output_formats:
                 self.block_append(f"report_area > {report_path}.area.rpt")
             if {'plot_profile','profile','all'} & output_formats:
-                if not frame_based_analysis:
+                if not time_based_analysis:
                     self.logger.error("Must specify either interval_size or toggle_signal+num_toggles in power.inputs.report_configs to generate plot_profile report (frame-based analysis).")
                     return False
                 # NOTE: we don't include levels_str here bc category is total power anyways
                 self.block_append(f"plot_power_profile -stims {stim_alias} {inst_str} {module_str} {m_levels_str} -by_category {{total}} -types {{total}} -unit mW -format png -out {report_path}.profile.png")
             if {'write_profile','profile','all'} & output_formats:
-                if not frame_based_analysis:
+                if not time_based_analysis:
                     self.logger.error("Must specify either interval_size or toggle_signal+num_toggles in power.inputs.report_configs to generate write_profile report (frame-based analysis).")
                     return False
                 block_append(f"write_power_profile -stims {stim_alias} -root [get_insts -rtl_type hier] {levels_str} -unit mW -format fsdb -out {report_path}.profile.fsdb")
