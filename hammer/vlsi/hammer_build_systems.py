@@ -60,7 +60,6 @@ class MakeActionRecipe:
         return textwrap.dedent(f"""
             redo-{self.action}{{suffix}}:
             \t$(HAMMER_EXEC) {{env_confs}} {self.pconf_str} $(HAMMER_EXTRA_ARGS) --{self.base}_rundir {self.rundir} --obj_dir {{obj_dir}} {self.base}{{suffix}}
-            {self.copy_text}
             """)
 
 class MakeLinkRecipe:

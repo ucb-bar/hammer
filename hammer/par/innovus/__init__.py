@@ -62,6 +62,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         else:
             self.output_ilms = []
 
+        # Output databases depends on whether we ran partition_design.
         if self.ran_partition_design:
             self.output_dbs = self.partition_dirs
         else:
@@ -251,9 +252,9 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             input_dbs = self.get_setting("par.inputs.input_dbs", [])
             # Run partition_design
             if self.partitioning:
-                steps = pre_partition + [self.partition_design]
+                steps = pre_partition + [self.partition_design] + post_partition
             else:
-                steps = [self.assemble_design] + post_partition + write_design_step
+                steps = [self.assemble_design] + write_design_step
         else:
             raise NotImplementedError("HierarchicalMode not implemented: " + str(self.hierarchical_mode))
         return self.make_steps_from_methods(steps)
@@ -659,6 +660,10 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         self.verbose_append("opt_design -post_route -setup -hold -expanded_views")
         if self.hierarchical_mode.is_nonleaf_hierarchical():
             self.verbose_append("unflatten_ilm")
+
+        # Write a post-partitioning database to continue from later
+        if self.get_setting("vlsi.inputs.hierarchical.mode") in {"top_down", "top-down"}:
+            self.verbose_append(f"write_db {self.post_partition_db} -def")
         return True
 
     def assemble_design(self) -> bool:
@@ -668,6 +673,10 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         input_dbs = self.get_setting("par.inputs.input_dbs")
         block_dir_text = " ".join(f"-block_dir {d}" for d in input_dbs)
         self.verbose_append(f"assemble_design -top_dir {self.post_partition_db} {block_dir_text}")
+        # Trim timing graph for top-level timing optimization
+        self.verbose_append("create_active_logic_view -type flat_top")
+        self.verbose_append("opt_design -post_route -incremental -expanded_views")
+        self.verbose_append("time_design -post_route")
         return True
 
     def write_netlist(self) -> bool:
@@ -931,9 +940,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             self.verbose_append(f"commit_partitions -partition {partition} -pg_pushdown_honor_1801")
             self.verbose_append(f"write_partitions {partition} -dir {dir} -def -verilog")
             self.verbose_append(f"write_partition_pins -partition {partition} {partition}_pin_info")
-        # Write a post-partitioning database to continue from later
-        self.verbose_append(f"write_db {self.post_partition_db}")
-        self.ran_write_partitions = True
+        self.ran_partition_design = True
         return True
 
     def run_innovus(self) -> bool:
@@ -1134,11 +1141,9 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                             inst=new_path, s=spacing))
                         output.append("create_route_halo -bottom_layer {b} -space {s} -top_layer {t} -inst {inst}".format(
                             inst=new_path, b=bot_layer, t=current_top_layer, s=spacing))
-<<<<<<< HEAD
                         output.append("create_route_blockage -pg_nets -inst {inst} -layers {{{layers}}} -cover".format(
                             inst=new_path, layers=" ".join(cover_layers)))
 
-=======
                 elif constraint.type == PlacementConstraintType.Hierarchical and td_hier:
                     output.append("create_boundary_constraint -type fence -hinst {inst} -rects {{{x1} {y1} {x2} {y2}}}".format(
                         inst=new_path,
@@ -1147,13 +1152,13 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                         y1=constraint.y,
                         y2=constraint.y + constraint.height
                     ))
-                    halo_top_layer = get_or_else(constraint.top_layer, global_top_layer)
+                    halo_top_layer_name = get_or_else(constraint.top_layer, global_top_layer)
+                    halo_top_layer_str = self.get_stackup().get_metal(halo_top_layer_name).index if halo_top_layer_name is not None else None
                     output.append("create_partition -hinst {inst} -place_halo {{{s} {s} {s} {s}}} -route_halo {s} {halo_top_layer_str}".format(
                         inst=new_path,
                         s=self.get_setting("par.blockage_spacing"),
-                        halo_top_layer_str = f"-route_halo_top_layer {halo_top_layer}" if halo_top_layer is not None else ""
+                        halo_top_layer_str=f"-route_halo_top_layer {halo_top_layer_idx}" if halo_top_layer_idx is not None else ""
                     ))
->>>>>>> ea4acf1 (suntestedInnovus implementationn, runs properly thru unit tests & mock_hier e2e test)
                 elif constraint.type == PlacementConstraintType.Obstruction:
                     obs_types = get_or_else(constraint.obs_types, [])  # type: List[ObstructionType]
                     if ObstructionType.Place in obs_types:
