@@ -133,6 +133,8 @@ def main(args) -> int:
                                         inputs=[
                                             InterfaceVar("input_files", "List[str]",
                                                          "input post-synthesis netlist files"),
+                                            InterfaceVar("input_dbs", "List[str]",
+                                                         "(optional) input database files/dirs for top-down hierarchical mode"),
                                             InterfaceVar("post_synth_sdc", "Optional[str]",
                                                          "(optional) input post-synthesis SDC constraint file"),
                                         ],
@@ -141,7 +143,9 @@ def main(args) -> int:
 
                                             # e.g. par-rundir/TopModuleILMDir/mmmc/ilm_data/TopModule. Has a bunch of files TopModule_postRoute*
                                             InterfaceVar("output_ilms", "List[ILMStruct]",
-                                                         "(optional) output ILM information for hierarchical mode"),
+                                                         "(optional) output ILM information for bottom-up hierarchical mode"),
+                                            InterfaceVar("output_dbs", "List[str]",
+                                                         "(optional) output database files/dirs for each partition in top-down hierarchical mode"),
                                             InterfaceVar("output_gds", "str", "path to the output GDS file"),
                                             InterfaceVar("output_netlist", "str", "path to the output netlist file"),
                                             InterfaceVar("output_sim_netlist", "str", "path to the output simulation netlist file"),

@@ -252,6 +252,14 @@ class CLIDriver:
             "syn-par": self.synthesis_par_action,
             "hier_par_to_syn": self.hier_par_to_syn_action,
             "hier-par-to-syn": self.hier_par_to_syn_action,
+            "par_partition": self.par_action,
+            "par-partition": self.par_action,
+            "par_assemble": self.par_action,
+            "par-assemble": self.par_action,
+            "hier_par_partition_to_par": self.hier_par_to_par_action,
+            "hier-par-partition-to-par": self.hier_par_to_par_action,
+            "hier_par_to_par_assemble": self.hier_par_to_par_action,
+            "hier-par-to-par-assemble": self.hier_par_to_par_action,
             "par_to_drc": self.par_to_drc_action,
             "par-to-drc": self.par_to_drc_action,
             "par_to_lvs": self.par_to_lvs_action,
@@ -817,10 +825,14 @@ class CLIDriver:
         else:
             return self.get_full_config(driver, syn_input_only)
 
-    #modified
     def hier_par_to_par_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
         """ Create a full config to run the output. """
-        #par to par - 1 and par to par - 2
+        par_input_only = HammerDriver.par_output_to_par_input(driver.project_config)
+        if par_input_only is None:
+            driver.log.error("Input config does not appear to contain valid par outputs")
+            return None
+        else:
+            return self.get_full_config(driver, par_input_only)
 
     def par_to_drc_action(self, driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
         """ Create a full config to run the output. """

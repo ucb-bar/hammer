@@ -293,6 +293,7 @@ class HammerDriver:
 
         # TODO: automate this based on the definitions
         par_tool.input_files = list(self.database.get_setting("par.inputs.input_files"))
+        par_tool.input_dbs = list(self.database.get_setting("par.inputs.input_dbs"))
         par_tool.top_module = self.database.get_setting("par.inputs.top_module", nullvalue="")
         par_tool.post_synth_sdc = self.database.get_setting("par.inputs.post_synth_sdc", nullvalue="")
         par_tool.output_all_regs = ""
@@ -1229,17 +1230,41 @@ class HammerDriver:
     def par_output_to_syn_input(output_dict: dict) -> Optional[dict]:
         """
         Generate the appropriate inputs for running the next level of synthesis from the
-        outputs of par run in a hierarchical flow.
+        outputs of par run in a bottom-up hierarchical flow.
         Does not merge the results with any project dictionaries.
         :param output_dict: Dict containing par.outputs.*
         :return: vlsi.inputs.* settings generated from output_dict,
                  or None if output_dict was invalid
         """
+        assert output_dict["vlsi.inputs.hierarchical.mode"] in {"hierarchical", "bottom-up", "bottom_up"},\
+            "par_output_to_syn_input should only be called in bottom-up hierarchical mode"
         try:
             result = {
                 "vlsi.inputs.ilms": output_dict["vlsi.inputs.ilms"] + output_dict["par.outputs.output_ilms"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
+            return result
+        except KeyError:
+            # KeyError means that the given dictionary is missing output keys.
+            return None
+
+    @staticmethod
+    def par_output_to_par_input(output_dict: dict) -> Optional[dict]:
+        """
+        Generate the appropriate inputs for running the next level of par from the
+        outputs of par run in a top-down hierarchical flow.
+        Does not merge the results with any project dictionaries.
+        :param output_dict: Dict containing par.outputs.*
+        :return: vlsi.inputs.* settings generated from output_dict,
+                 or None if output_dict was invalid
+        """
+        assert output_dict["vlsi.inputs.hierarchical.mode"] in {"top-down", "top_down"},\
+            "par_output_to_par_input should only be called in top-down hierarchical mode"
+        try:
+            result = {
+                "par.inputs.input_dbs": output_dict["par.outputs.output_dbs"],
+                "vlsi.builtins.is_complete": False
+            }
             return result
         except KeyError:
             # KeyError means that the given dictionary is missing output keys.
@@ -1830,6 +1855,7 @@ class HammerDriver:
             constraint_dict = {
                 "vlsi.inputs.hierarchical.module_mode": str(mode),
                 "synthesis.inputs.top_module": module,
+                "par.inputs.top_module": module,
                 "vlsi.inputs.placement_constraints": list(
                     map(PlacementConstraint.to_dict, hier_placement_constraints.get(module, [])))
             }

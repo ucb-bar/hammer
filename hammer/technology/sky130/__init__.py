@@ -349,7 +349,7 @@ set_db opt_consider_routing_congestion true
 set_db route_design_detail_use_multi_cut_via_effort medium
     '''
     )
-    if ht.hierarchical_mode in {HierarchicalMode.Top, HierarchicalMode.Flat}:
+    if ht.hierarchical_mode in {HierarchicalMode.BUTop, HierarchicalMode.TDTop, HierarchicalMode.Flat}:
         ht.append(
             '''
 # For top module: snap die to manufacturing grid, not placement grid

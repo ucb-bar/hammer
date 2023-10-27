@@ -9,11 +9,12 @@ synthesis.inputs:
   input_files: ["src/pass.v"]
 
 vlsi.inputs.hierarchical:
-  mode: hierarchical
-  top_module: ChipTop
+  #mode: hierarchical
+  mode: top-down
+  top_module: pass
   config_source: manual
   manual_modules:
-    - ChipTop:
+    - pass:
         - SubModA
         - SubModB
     - SubModA:
@@ -22,7 +23,7 @@ vlsi.inputs.hierarchical:
     - SubModB:
         - SubModE
   manual_placement_constraints:
-    - ChipTop: []
+    - pass: []
     - SubModA: []
     - SubModB: []
     - SubModC: []

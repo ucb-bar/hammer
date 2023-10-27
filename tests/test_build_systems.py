@@ -211,9 +211,9 @@ class TestHammerBuildSystems:
             expected_targets.add(task + "-TopMod")
             expected_targets.add("redo-" + task + "-TopMod")
             if task == "par-partition":
-                expected_targets.add(os.path.join(tmpdir, "par-TopMod", task + "-output-full.json"))
+                expected_targets.add(os.path.join(tmpdir, "par-TopMod", "par-partition-output-full.json"))
             elif task == "par-assemble":
-                expected_targets.add(os.path.join(tmpdir, "par-TopMod", task.split("-")[0] + "-output-full.json"))
+                expected_targets.add(os.path.join(tmpdir, "par-TopMod", "par-output-full.json"))
             else:
                 expected_targets.add(os.path.join(tmpdir, task + "-TopMod", task.split("-")[0] + "-output-full.json"))
             if task == "par-partition":
@@ -225,12 +225,14 @@ class TestHammerBuildSystems:
             expected_targets.add(task + "-HierMod")
             expected_targets.add("redo-" + task + "-HierMod")
             if task == "par-partition":
-                expected_targets.add(os.path.join(tmpdir, "par-HierMod", task + "-output-full.json"))
+                expected_targets.add(os.path.join(tmpdir, "par-HierMod", "par-partition-output-full.json"))
             elif task == "par-assemble":
-                expected_targets.add(os.path.join(tmpdir, "par-HierMod", task.split("-")[0] + "-output-full.json"))
+                expected_targets.add(os.path.join(tmpdir, "par-HierMod", "par-output-full.json"))
             else:
                 expected_targets.add(os.path.join(tmpdir, task + "-HierMod", task.split("-")[0] + "-output-full.json"))
-            if "rtl" not in task:
+            if task == "par-partition":
+                expected_targets.add(os.path.join(tmpdir, "par-HierMod-input.json"))
+            elif "rtl" not in task:
                 expected_targets.add(os.path.join(tmpdir, task + "-HierMod-input.json"))
         leaf_tasks = {"sim-rtl", "power-rtl", "par", "sim-par", "power-par", "drc", "lvs", "formal-par", "timing-par"}
         for task in leaf_tasks:

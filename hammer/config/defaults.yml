@@ -133,7 +133,11 @@ vlsi.inputs:
     # hierarchical - Same as bottom-up (legacy).
 
     module_mode: flat # Hierarchical par mode for the current module. (str)
-    # This is not user-set. It is dynamically set as you traverse through the hierarchical dependency graph.
+    # Generally not user-set. It is dynamically set as you traverse through the hierarchical dependency graph.
+
+    partitioning: true # Whether the current module in the top-down flow is undergoing partitioning. (bool)
+    # If false, it will be undergoing assembly.
+    # Generally not user-set. It is dynamically set as you traverse through the hierarchical dependency graph.
 
     top_module: "null" # Top RTL module in the hierarchical flow. (str)
     # Not to be confused with synthesis.inputs.top_module which specifies the synthesis module for this run.
@@ -480,6 +484,12 @@ par.inputs:
   input_files: [] # Input post-synthesis netlist files.
   # Typically a list of Verilog/VHDL files, depending on the tool.
   # For place and route, these should typically be post-synthesis netlists.
+
+  input_dbs: [] # Input databases.
+  # Input databases used in top-down hierarchical flow.
+  # Partitioning should be triggered if the post-partitioning database of the current module is not found in this list.
+  # Otherwise, assembly should be triggered.
+  # Generally set by linking steps, but can be manually overridden.
 
   top_module: null # Top RTL module.
 

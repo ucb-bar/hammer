@@ -94,6 +94,9 @@ vlsi.inputs:
     # Hierarchical par mode of the current module. (str)
     module_mode: str
 
+    # Partitioning status of the current module. (bool)
+    partitioning: bool
+
     # Top RTL module in the hierarchical flow. (str)
     top_module: str
 
@@ -228,6 +231,9 @@ synthesis.submit:
 par.inputs:
   # Input post-synthesis netlist files.
   input_files: list[str]
+
+  # Input databases.
+  input_dbs: list[str]
 
   # Top RTL module.
   top_module: Optional[str]

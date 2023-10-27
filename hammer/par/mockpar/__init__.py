@@ -33,7 +33,8 @@ class MockPlaceAndRoute(HammerPlaceAndRouteTool, DummyHammerTool):
     def steps(self) -> List[HammerToolStep]:
         return self.make_steps_from_methods([
             self.power_straps,
-            self.get_ilms
+            self.get_ilms,
+            self.partition
         ])
 
     def power_straps(self) -> bool:
@@ -79,10 +80,21 @@ class MockPlaceAndRoute(HammerPlaceAndRouteTool, DummyHammerTool):
         return [json.dumps(output_dict, cls=HammerJSONEncoder)]
 
     def get_ilms(self) -> bool:
-        if self.hierarchical_mode in [HierarchicalMode.Hierarchical, HierarchicalMode.Top]:
+        if self.hierarchical_mode.is_nonleaf_hierarchical():
             with open(os.path.join(self.run_dir, "input_ilms.json"), "w") as f:
                 f.write(json.dumps(list(map(lambda s: s.to_setting(), self.get_input_ilms()))))
         return True
+
+    def partition(self) -> bool:
+        partitioning = self.get_setting("vlsi.inputs.hierarchical.partitioning")
+        self.logger.info(f"Partitioning status: {partitioning}")
+        return True
+
+    def export_config_outputs(self) -> Dict[str, Any]:
+        outputs = dict(super().export_config_outputs())
+        if self.hierarchical_mode == HierarchicalMode.TDLeaf:
+            outputs["vlsi.inputs.hierarchical.partitioning"] = False
+        return outputs
 
     def fill_outputs(self) -> bool:
         self.output_gds = "/dev/null"
@@ -90,7 +102,7 @@ class MockPlaceAndRoute(HammerPlaceAndRouteTool, DummyHammerTool):
         self.output_sim_netlist = "/dev/null"
         self.output_ilm_sdcs = ["/dev/null"]
         self.hcells_list = []
-        if self.hierarchical_mode in [HierarchicalMode.Leaf, HierarchicalMode.Hierarchical]:
+        if self.hierarchical_mode in [HierarchicalMode.BULeaf, HierarchicalMode.BUHierarchical]:
             self.output_ilms = [
                 ILMStruct(dir="/dev/null", data_dir="/dev/null", module=self.top_module,
                           lef="/dev/null", gds=self.output_gds, netlist=self.output_netlist,
@@ -98,6 +110,16 @@ class MockPlaceAndRoute(HammerPlaceAndRouteTool, DummyHammerTool):
             ]
         else:
             self.output_ilms = []
+        if self.hierarchical_mode in [HierarchicalMode.TDTop, HierarchicalMode.TDHierarchical] and self.get_setting("vlsi.inputs.hierarchical.partitioning"):
+            man_mods = self.get_setting("vlsi.inputs.hierarchical.manual_modules")
+            child_mods = []  # type: List[str]
+            for mod_dict in man_mods:
+                if self.top_module in mod_dict:
+                    child_mods = mod_dict[self.top_module]
+                    break
+            self.output_dbs = list(map(lambda m: os.path.join("/dev/null", m), child_mods))
+        else:
+            self.output_dbs = [os.path.join("/dev/null", self.top_module)]
         return True
 
 

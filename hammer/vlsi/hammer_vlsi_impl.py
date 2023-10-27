@@ -54,9 +54,9 @@ class HierarchicalMode(Enum):
     def is_nonleaf_hierarchical(self) -> bool:
         """
         Helper function that returns True if this mode is a non-leaf hierarchical mode (i.e. any block with
-        hierarchical sub-blocks).
+        hierarchical sub-blocks). Used in bottom-up flows only.
         """
-        return self == HierarchicalMode.Hierarchical or self == HierarchicalMode.BUTop or self == HierarchicalMode.TDTop
+        return self in {HierarchicalMode.BUHierarchical, HierarchicalMode.BUTop}
 
 class FlowLevel(Enum):
     RTL = 1
@@ -401,6 +401,8 @@ class HammerPlaceAndRouteTool(HammerTool):
         outputs["par.outputs.output_ilms_meta"] = "append"  # to coalesce ILMs for current level of hierarchy
         outputs["vlsi.inputs.ilms"] = list(map(lambda s: s.to_setting(), self.get_input_ilms(full_tree=True)))
         outputs["vlsi.inputs.ilms_meta"] = "append"  # to coalesce ILMs for entire hierarchical tree
+        outputs["par.outputs.output_dbs"] = self.output_dbs
+        outputs["par.outputs.output_dbs_meta"] = "append"  # to coalesce dbs for current level of hierarchy
         outputs["par.outputs.output_gds"] = str(self.output_gds)
         outputs["par.outputs.output_netlist"] = str(self.output_netlist)
         outputs["par.outputs.output_sim_netlist"] = str(self.output_sim_netlist)
@@ -436,6 +438,26 @@ class HammerPlaceAndRouteTool(HammerTool):
 
 
     @property
+    def input_dbs(self) -> List[str]:
+        """
+        Get the (optional) input database files/dirs for top-down hierarchical mode.
+
+        :return: The (optional) input database files/dirs for top-down hierarchical mode.
+        """
+        try:
+            return self.attr_getter("_input_dbs", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the (optional) input database files/dirs for top-down hierarchical mode yet")
+
+    @input_dbs.setter
+    def input_dbs(self, value: List[str]) -> None:
+        """Set the (optional) input database files/dirs for top-down hierarchical mode."""
+        if not (isinstance(value, List)):
+            raise TypeError("input_dbs must be a List[str]")
+        self.attr_setter("_input_dbs", value)
+
+
+    @property
     def post_synth_sdc(self) -> Optional[str]:
         """
         Get the (optional) input post-synthesis SDC constraint file.
@@ -460,21 +482,41 @@ class HammerPlaceAndRouteTool(HammerTool):
     @property
     def output_ilms(self) -> List[ILMStruct]:
         """
-        Get the (optional) output ILM information for hierarchical mode.
+        Get the (optional) output ILM information for bottom-up hierarchical mode.
 
-        :return: The (optional) output ILM information for hierarchical mode.
+        :return: The (optional) output ILM information for bottom-up hierarchical mode.
         """
         try:
             return self.attr_getter("_output_ilms", None)
         except AttributeError:
-            raise ValueError("Nothing set for the (optional) output ILM information for hierarchical mode yet")
+            raise ValueError("Nothing set for the (optional) output ILM information for bottom-up hierarchical mode yet")
 
     @output_ilms.setter
     def output_ilms(self, value: List[ILMStruct]) -> None:
-        """Set the (optional) output ILM information for hierarchical mode."""
+        """Set the (optional) output ILM information for bottom-up hierarchical mode."""
         if not (isinstance(value, List)):
             raise TypeError("output_ilms must be a List[ILMStruct]")
         self.attr_setter("_output_ilms", value)
+
+
+    @property
+    def output_dbs(self) -> List[str]:
+        """
+        Get the (optional) output database files/dirs for each partition in top-down hierarchical mode.
+
+        :return: The (optional) output database files/dirs for each partition in top-down hierarchical mode.
+        """
+        try:
+            return self.attr_getter("_output_dbs", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the (optional) output database files/dirs for each partition in top-down hierarchical mode yet")
+
+    @output_dbs.setter
+    def output_dbs(self, value: List[str]) -> None:
+        """Set the (optional) output database files/dirs for each partition in top-down hierarchical mode."""
+        if not (isinstance(value, List)):
+            raise TypeError("output_dbs must be a List[str]")
+        self.attr_setter("_output_dbs", value)
 
 
     @property

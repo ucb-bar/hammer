@@ -26,12 +26,16 @@ class MakeActionRecipe:
         self.base = action.split("-")[0]
         rd_suffix = "{suffix}" if hier else "-rundir"
         self.rundir = os.path.join("{obj_dir}", f"{action}{rd_suffix}")
-        if self.base == "par":  # par partition & assemble should be run in the same dir
+        if self.base == "par":  # just make the rundir par-...
             self.rundir = os.path.join("{obj_dir}", f"par{rd_suffix}")
         self.out_file = os.path.join(self.rundir, f"{self.base}-output-full.json")
-        if self.action == "par-partition":  # par-partition has a different output file
-            self.out_file = os.path.join(self.rundir, f"{self.base}-partition-output-full.json")
-        default_pconf = [os.path.join("{obj_dir}", f"{action}-input.json")]
+        self.copy_text = ""
+        default_pconf = [os.path.join("{obj_dir}", f"{action}{{suffix}}-input.json")]
+        if self.action == "par-partition":  # copy json to different file
+            default_out_file = self.out_file
+            self.out_file = os.path.join(self.rundir, f"{action}-output-full.json")
+            self.copy_text = f"\tcp {default_out_file} {self.out_file}"
+            default_pconf = [os.path.join("{obj_dir}", "par{suffix}-input.json")]
         if self.base == "power":  # power actions require at least 1 input file
             lvl = action.split("-")[-1]
             in_json = os.path.join("{obj_dir}", f"power-sim-{lvl}-input.json")
@@ -43,18 +47,20 @@ class MakeActionRecipe:
         self.deps = get_or_else(deps_ovrd, " ".join(default_pconf))
 
     def phony_target(self) -> str:
-        return f"{self.action}{{suffix}}: {self.out_file}"
+        return f"{self.action}{{suffix}}: {self.out_file}\n"
 
     def recipe(self) -> str:
         return textwrap.dedent(f"""
             {self.out_file}: {self.deps} $(HAMMER_{self.action.upper().replace('-','_')}_DEPENDENCIES)
             \t$(HAMMER_EXEC) {{env_confs}} {self.pconf_str} $(HAMMER_EXTRA_ARGS) --{self.base}_rundir {self.rundir} --obj_dir {{obj_dir}} {self.base}{{suffix}}
+            {self.copy_text}
             """)
 
     def redo_recipe(self) -> str:
         return textwrap.dedent(f"""
             redo-{self.action}{{suffix}}:
             \t$(HAMMER_EXEC) {{env_confs}} {self.pconf_str} $(HAMMER_EXTRA_ARGS) --{self.base}_rundir {self.rundir} --obj_dir {{obj_dir}} {self.base}{{suffix}}
+            {self.copy_text}
             """)
 
 class MakeLinkRecipe:
@@ -77,7 +83,7 @@ class MakeLinkRecipe:
         self.y_in = os.path.join("{obj_dir}", f"{y}{y_in_suffix}.json")
 
     def phony_target(self) -> str:
-        return f"{self.action}{{suffix}}: {self.y_in}"
+        return f"{self.action}{{suffix}}: {self.y_in}\n"
 
     def recipe(self) -> str:
         return textwrap.dedent(f"""
@@ -259,7 +265,8 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
     flow_mode = driver.get_hierarchical_flow_mode()
     dependency_graph = driver.get_hierarchical_dependency_graph()
     makefile = os.path.join(driver.obj_dir, "hammer.mk")
-    os.symlink(makefile, os.path.join(driver.obj_dir, "hammer.d"))
+    if not os.path.exists(os.path.join(driver.obj_dir, "hammer.d")):
+        os.symlink(makefile, os.path.join(driver.obj_dir, "hammer.d"))
     default_dependencies = driver.options.project_configs + driver.options.environment_configs
     default_dependencies.extend(list(driver.database.get_setting("synthesis.inputs.input_files", [])))
     # Resolve the canonical path for each dependency
@@ -322,10 +329,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
                 partition_confs = [os.path.join(obj_dir, "par-" + x, "par-partition-output-full.json") for x in parent_edges]
                 pstring=" ".join(["-p " + x for x in partition_confs])
                 par_out_confs=" ".join(partition_confs)
-                if len(out_edges) == 0:  # leaf node
-                    par_deps = os.path.join(obj_dir, f"par-{node}-input.json")
-                else:
-                    par_deps = os.path.join(obj_dir, f"par-partition-{node}-input.json")
+                par_deps = os.path.join(obj_dir, f"par-{node}-input.json")
                 par_partition_to_par = textwrap.dedent(f"""
                     .PHONY: hier-par-partition-to-par-{node}
                     hier-par-partition-to-par-{node}: {par_deps}
