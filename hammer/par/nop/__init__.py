@@ -11,6 +11,7 @@ from decimal import Decimal
 class NopPlaceAndRoute(HammerPlaceAndRouteTool, DummyHammerTool):
     def fill_outputs(self) -> bool:
         self.output_ilms = []
+        self.output_dbs = []
         self.output_gds = "/dev/null"
         self.output_netlist = "/dev/null"
         self.output_sim_netlist = "/dev/null"

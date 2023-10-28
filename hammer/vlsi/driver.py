@@ -1828,9 +1828,10 @@ class HammerDriver:
 
         output = []  # type: List[Tuple[str, dict]]
 
+        # initialize
+        mode = HierarchicalMode.Flat
         for module in order:
             if hier_flow_mode in ["hierarchical", "bottom_up", "bottom-up"]:
-                mode = HierarchicalMode.BUHierarchical
                 if module == top_module:
                     mode = HierarchicalMode.BUTop
                 elif module in leaf_modules:
@@ -1840,7 +1841,6 @@ class HammerDriver:
                 else:
                     assert "Should not get here"
             elif hier_flow_mode in ["top_down", "top-down"]:
-                mode = HierarchicalMode.TDHierarchical
                 if module == top_module:
                     mode = HierarchicalMode.TDTop
                 elif module in leaf_modules:
