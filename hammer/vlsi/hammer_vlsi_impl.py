@@ -2084,7 +2084,7 @@ class HasUPFSupport(HammerTool):
         ground_nets = self.get_all_ground_nets()
         #Create Supply Ports
         for pg_net in (power_nets+ground_nets):
-            if(pg_net.pin != None):
+            if len(pg_net.pins):
                 #Create Supply Nets
                 output.append(f'create_supply_net {pg_net.name} -domain {domain}')
                 output.append(f'create_supply_port {pg_net.name} -domain {domain} \\')
@@ -2097,11 +2097,11 @@ class HasUPFSupport(HammerTool):
         output.append(f'\t-primary_ground_net {ground_nets[0].name}')
         #Add Port States
         for p_net in power_nets:
-            if(p_net.pin != None):
+            if len(p_net.pins):
                 output.append(f'add_port_state {p_net.name} \\')
                 output.append(f'\t-state {{default {vdd.value}}}')
         for g_net in ground_nets:
-            if(g_net.pin != None):
+            if len(g_net.pins):
                 output.append(f'add_port_state {g_net.name} \\')
                 output.append(f'\t-state {{default 0.0}}')
         #Create Power State Table
@@ -2140,8 +2140,9 @@ class HasCPFSupport(HammerTool):
         output.append(f'update_power_domain -name {domain} -primary_power_net {power_nets[0].name} -primary_ground_net {ground_nets[0].name}')
         # Assuming that all power/ground nets correspond to pins
         for pg_net in (power_nets+ground_nets):
-            if(pg_net.pin != None):
-                output.append(f'create_global_connection -domain {domain} -net {pg_net.name} -pins {pg_net.pin}')
+            if len(pg_net.pins):
+                pins_str = ' '.join(pg_net.pins)
+                output.append(f'create_global_connection -domain {domain} -net {pg_net.name} -pins [list {pins_str}]')
         # Create nominal operation condtion and power mode
         output.append(f'create_nominal_condition -name {condition} -voltage {vdd.value}')
         output.append(f'create_power_mode -name {mode} -default -domain_conditions {{{domain}@{condition}}}')

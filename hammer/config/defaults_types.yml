@@ -82,8 +82,8 @@ vlsi.technology:
 vlsi.inputs:
   # Supply voltages and names
   supplies:
-    power: list[dict[str, str]]
-    ground: list[dict[str, str]]
+    power: list[dict[str, Any]]
+    ground: list[dict[str, Any]]
     VDD: str
     GND: str
 

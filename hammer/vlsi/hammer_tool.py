@@ -1090,9 +1090,10 @@ class HammerTool(metaclass=ABCMeta):
         supplies = self.get_setting(key)
         output = []  # type: List[Supply]
         for raw_supply in supplies:
-            supply = Supply(name=raw_supply['name'], pin=None, tie=None, weight=1)
-            if 'pin' in raw_supply:
-                supply = supply._replace(pin=raw_supply['pin'])
+            supply = Supply(name=raw_supply['name'], pins=[], tie=None, weight=1)
+            assert 'pin' not in raw_supply, "supply.pin: str has been replaced with supply.pins: List[str]"
+            if 'pins' in raw_supply:
+                supply = supply._replace(pins=raw_supply['pins'])
             if 'tie' in raw_supply:
                 supply = supply._replace(tie=raw_supply['tie'])
             if 'weight' in raw_supply:

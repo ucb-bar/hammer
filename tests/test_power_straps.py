@@ -93,8 +93,8 @@ def simple_straps_options() -> Dict[str, Any]:
 
     straps_options = {
         "vlsi.inputs.supplies": {
-            "power": [{"name": "VDD", "pin": "VDD"}],
-            "ground": [{"name": "VSS", "pin": "VSS"}],
+            "power": [{"name": "VDD", "pins": ["VDD"]}],
+            "ground": [{"name": "VSS", "pins": ["VSS"]}],
             "VDD": "1.00 V",
             "GND": "0 V"
         },
@@ -129,8 +129,8 @@ def multiple_domains_straps_options() -> Dict[str, Any]:
 
     straps_options = {
         "vlsi.inputs.supplies": {
-            "power": [{"name": "VDD", "pin": "VDD"}, {"name": "VDD2", "pin": "VDD2"}],
-            "ground": [{"name": "VSS", "pin": "VSS"}],
+            "power": [{"name": "VDD", "pins": ["VDD"]}, {"name": "VDD2", "pins": ["VDD2"]}],
+            "ground": [{"name": "VSS", "pins": ["VSS"]}],
             "VDD": "1.00 V",
             "GND": "0 V"
         },

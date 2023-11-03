@@ -87,7 +87,7 @@ class SRAMParameters(NamedTuple('SRAMParameters', [
 
 Supply = NamedTuple('Supply', [
     ('name', str),
-    ('pin', Optional[str]),
+    ('pins', List[str]),
     ('tie', Optional[str]),
     ('weight', Optional[int])
 ])
