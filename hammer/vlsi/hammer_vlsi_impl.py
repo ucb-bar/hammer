@@ -649,17 +649,24 @@ class HammerPlaceAndRouteTool(HammerTool):
             generate_rail_layer = self.get_setting("{}.generate_rail_layer".format(namespace))
             ground_net_names = list(map(lambda x: x.name, self.get_independent_ground_nets()))  # type: List[str]
             power_net_names = list(map(lambda x: x.name, self.get_independent_power_nets()))  # type: List[str]
+            specified_power_net_names = self.get_setting("{}.power_nets".format(namespace))
+            if len(specified_power_net_names) != 0: # filter by user specified settings
+                assert all(map(lambda n: n in power_net_names, specified_power_net_names))
+                power_net_names = specified_power_net_names
             bottom_via_option = self.get_setting("{}.bottom_via_layer".format(namespace))
             if bottom_via_option == "rail":
                 bottom_via_layer = self.get_setting("technology.core.std_cell_rail_layer")
             else:
                 bottom_via_layer = bottom_via_option
 
-            def get_weight(s: Supply) -> int:
+            def get_weight(supply_name: str) -> int:
+                supply = list(filter(lambda s: s.name == supply_name, self.get_independent_power_nets()))
+                # Check that single supply with name exists
+                assert len(supply) == 1
                 # Check that it's not None
-                assert isinstance(s.weight, int)
-                return s.weight
-            weights = list(map(get_weight, self.get_independent_power_nets()))  # type: List[int]
+                assert isinstance(supply[0].weight, int)
+                return supply[0].weight
+            weights = list(map(get_weight, power_net_names))  # type: List[int]
             assert len(ground_net_names) == 1, "FIXME, I am assuming there's only 1 ground net"
             return self.specify_all_power_straps_by_tracks(layers, bottom_via_layer, ground_net_names[0], power_net_names, weights, bbox, pin_layers, generate_rail_layer)
         else:

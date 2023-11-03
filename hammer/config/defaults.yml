@@ -621,6 +621,9 @@ par:
       # Otherwise should be set to some layer name
       # type: str
 
+      power_nets: [] # List of power nets to generate straps for. If empty, generates straps for all nets in vlsi.inputs.supplies
+      # type: List[str]
+
 # DRC settings
 drc.inputs:
 # DRC settings

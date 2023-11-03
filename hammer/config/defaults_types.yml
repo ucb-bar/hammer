@@ -334,6 +334,10 @@ par:
       # type: str
       bottom_via_layer: str
 
+      # Indicates which power nets straps should be generated for
+      # type: list[str]
+      power_nets: list[str]
+
 # DRC settings
 drc.inputs:
   # Top RTL module.
