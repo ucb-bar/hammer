@@ -86,6 +86,7 @@ def simple_straps_options() -> Dict[str, Any]:
     power_utilization_M8 = 1.0
     track_start_M5 = 1
     track_offset_M5 = 1.2
+    bottom_via_layer = "rail"
 
     # VSS comes before VDD
     nets = ["VSS", "VDD"]
@@ -110,7 +111,8 @@ def simple_straps_options() -> Dict[str, Any]:
             "power_utilization": power_utilization,
             "power_utilization_M8": power_utilization_M8,
             "track_start_M5": track_start_M5,
-            "track_offset_M5": track_offset_M5
+            "track_offset_M5": track_offset_M5,
+            "bottom_via_layer": bottom_via_layer
         }
     }
     return straps_options
@@ -123,6 +125,7 @@ def multiple_domains_straps_options() -> Dict[str, Any]:
     track_spacing = 0
     power_utilization = 0.2
     power_utilization_M8 = 1.0
+    bottom_via_layer = "rail"
 
     straps_options = {
         "vlsi.inputs.supplies": {
@@ -139,7 +142,8 @@ def multiple_domains_straps_options() -> Dict[str, Any]:
             "track_width": track_width,
             "track_spacing": track_spacing,
             "power_utilization": power_utilization,
-            "power_utilization_M8": power_utilization_M8
+            "power_utilization_M8": power_utilization_M8,
+            "bottom_via_layer": bottom_via_layer
         }
     }
     return straps_options

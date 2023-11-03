@@ -330,6 +330,10 @@ par:
       # type: bool
       generate_rail_layer: bool
 
+      # Indicates bottom layer to via to during power strap generation
+      # type: str
+      bottom_via_layer: str
+
 # DRC settings
 drc.inputs:
   # Top RTL module.
