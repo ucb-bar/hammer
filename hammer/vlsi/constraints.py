@@ -89,7 +89,8 @@ Supply = NamedTuple('Supply', [
     ('name', str),
     ('pins', List[str]),
     ('tie', Optional[str]),
-    ('weight', Optional[int])
+    ('weight', Optional[int]),
+    ('voltage', Optional[str])
 ])
 
 

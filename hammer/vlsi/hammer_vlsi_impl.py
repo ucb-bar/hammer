@@ -2138,8 +2138,11 @@ class HasCPFSupport(HammerTool):
         # Define power and ground nets (HARD CODE)
         power_nets = self.get_all_power_nets() # type: List[Supply]
         ground_nets = self.get_all_ground_nets()# type: List[Supply]
-        vdd = VoltageValue(self.get_setting("vlsi.inputs.supplies.VDD")) # type: VoltageValue
-        output.append(f'create_power_nets -nets {{ {" ".join(map(lambda x: x.name, power_nets))} }} -voltage {vdd.value}')
+        for power_net in power_nets:
+            vdd = VoltageValue(self.get_setting("vlsi.inputs.supplies.VDD")) # type: VoltageValue
+            if power_net.voltage is not None:
+                vdd = VoltageValue(power_net.voltage)
+            output.append(f'create_power_nets -nets {power_net.name} -voltage {vdd.value}')
         output.append(f'create_ground_nets -nets {{ {" ".join(map(lambda x: x.name, ground_nets))} }}')
         # Define power domain and connections
         output.append(f'create_power_domain -name {domain} -default')
@@ -2151,7 +2154,8 @@ class HasCPFSupport(HammerTool):
                 pins_str = ' '.join(pg_net.pins)
                 output.append(f'create_global_connection -domain {domain} -net {pg_net.name} -pins [list {pins_str}]')
         # Create nominal operation condtion and power mode
-        output.append(f'create_nominal_condition -name {condition} -voltage {vdd.value}')
+        nominal_vdd = VoltageValue(self.get_setting("vlsi.inputs.supplies.VDD")) # type: VoltageValue
+        output.append(f'create_nominal_condition -name {condition} -voltage {nominal_vdd.value}')
         output.append(f'create_power_mode -name {mode} -default -domain_conditions {{{domain}@{condition}}}')
         # Footer
         output.append("end_design")
