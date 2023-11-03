@@ -616,6 +616,11 @@ par:
       generate_rail_layer: true # If true, generates straps on the stdcell rail layer - technology.core.std_cell_rail_layer
       # type: bool
 
+      bottom_via_layer: "rail" # Sets what the lowest power strap layer should generate vias to
+      # Usually should be set to rail, which will use technology.core.std_cell_rail_layer as this setting
+      # Otherwise should be set to some layer name
+      # type: str
+
 # DRC settings
 drc.inputs:
 # DRC settings
