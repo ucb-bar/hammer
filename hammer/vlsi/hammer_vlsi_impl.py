@@ -649,17 +649,24 @@ class HammerPlaceAndRouteTool(HammerTool):
             generate_rail_layer = self.get_setting("{}.generate_rail_layer".format(namespace))
             ground_net_names = list(map(lambda x: x.name, self.get_independent_ground_nets()))  # type: List[str]
             power_net_names = list(map(lambda x: x.name, self.get_independent_power_nets()))  # type: List[str]
+            specified_power_net_names = self.get_setting("{}.power_nets".format(namespace))
+            if len(specified_power_net_names) != 0: # filter by user specified settings
+                assert all(map(lambda n: n in power_net_names, specified_power_net_names))
+                power_net_names = specified_power_net_names
             bottom_via_option = self.get_setting("{}.bottom_via_layer".format(namespace))
             if bottom_via_option == "rail":
                 bottom_via_layer = self.get_setting("technology.core.std_cell_rail_layer")
             else:
                 bottom_via_layer = bottom_via_option
 
-            def get_weight(s: Supply) -> int:
+            def get_weight(supply_name: str) -> int:
+                supply = list(filter(lambda s: s.name == supply_name, self.get_independent_power_nets()))
+                # Check that single supply with name exists
+                assert len(supply) == 1
                 # Check that it's not None
-                assert isinstance(s.weight, int)
-                return s.weight
-            weights = list(map(get_weight, self.get_independent_power_nets()))  # type: List[int]
+                assert isinstance(supply[0].weight, int)
+                return supply[0].weight
+            weights = list(map(get_weight, power_net_names))  # type: List[int]
             assert len(ground_net_names) == 1, "FIXME, I am assuming there's only 1 ground net"
             return self.specify_all_power_straps_by_tracks(layers, bottom_via_layer, ground_net_names[0], power_net_names, weights, bbox, pin_layers, generate_rail_layer)
         else:
@@ -2084,25 +2091,28 @@ class HasUPFSupport(HammerTool):
         ground_nets = self.get_all_ground_nets()
         #Create Supply Ports
         for pg_net in (power_nets+ground_nets):
-            if(pg_net.pin != None):
-                #Create Supply Nets
-                output.append(f'create_supply_net {pg_net.name} -domain {domain}')
-                output.append(f'create_supply_port {pg_net.name} -domain {domain} \\')
-                output.append(f'\t-direction in')
+            pins = pg_net.pins if pg_net.pins is not None else [pg_net.name]
+            #Create Supply Nets
+            output.append(f'create_supply_net {pg_net.name} -domain {domain}')
+            output.append(f'create_supply_port {pg_net.name} -domain {domain} \\')
+            output.append(f'\t-direction in')
+            for pin in pins:
                 #Connect Supply Net
-                output.append(f'connect_supply_net {pg_net.name} -ports {pg_net.name}')
-                #Set Domain Supply Net
+                output.append(f'connect_supply_net {pg_net.name} -ports {pin}')
+        #Set Domain Supply Net
         output.append(f'set_domain_supply_net {domain} \\')
         output.append(f'\t-primary_power_net {power_nets[0].name} \\')
         output.append(f'\t-primary_ground_net {ground_nets[0].name}')
         #Add Port States
         for p_net in power_nets:
-            if(p_net.pin != None):
-                output.append(f'add_port_state {p_net.name} \\')
+            pins = p_net.pins if p_net.pins is not None else [p_net.name]
+            for pin in pins:
+                output.append(f'add_port_state {pin} \\')
                 output.append(f'\t-state {{default {vdd.value}}}')
         for g_net in ground_nets:
-            if(g_net.pin != None):
-                output.append(f'add_port_state {g_net.name} \\')
+            pins = g_net.pins if g_net.pins is not None else [g_net.name]
+            for pin in pins:
+                output.append(f'add_port_state {pin} \\')
                 output.append(f'\t-state {{default 0.0}}')
         #Create Power State Table
         output.append('create_pst pwr_state_table \\')
@@ -2131,8 +2141,11 @@ class HasCPFSupport(HammerTool):
         # Define power and ground nets (HARD CODE)
         power_nets = self.get_all_power_nets() # type: List[Supply]
         ground_nets = self.get_all_ground_nets()# type: List[Supply]
-        vdd = VoltageValue(self.get_setting("vlsi.inputs.supplies.VDD")) # type: VoltageValue
-        output.append(f'create_power_nets -nets {{ {" ".join(map(lambda x: x.name, power_nets))} }} -voltage {vdd.value}')
+        for power_net in power_nets:
+            vdd = VoltageValue(self.get_setting("vlsi.inputs.supplies.VDD")) # type: VoltageValue
+            if power_net.voltage is not None:
+                vdd = VoltageValue(power_net.voltage)
+            output.append(f'create_power_nets -nets {power_net.name} -voltage {vdd.value}')
         output.append(f'create_ground_nets -nets {{ {" ".join(map(lambda x: x.name, ground_nets))} }}')
         # Define power domain and connections
         output.append(f'create_power_domain -name {domain} -default')
@@ -2140,10 +2153,13 @@ class HasCPFSupport(HammerTool):
         output.append(f'update_power_domain -name {domain} -primary_power_net {power_nets[0].name} -primary_ground_net {ground_nets[0].name}')
         # Assuming that all power/ground nets correspond to pins
         for pg_net in (power_nets+ground_nets):
-            if(pg_net.pin != None):
-                output.append(f'create_global_connection -domain {domain} -net {pg_net.name} -pins {pg_net.pin}')
+            pins = pg_net.pins if pg_net.pins is not None else [pg_net.name]
+            if len(pins):
+                pins_str = ' '.join(pins)
+                output.append(f'create_global_connection -domain {domain} -net {pg_net.name} -pins [list {pins_str}]')
         # Create nominal operation condtion and power mode
-        output.append(f'create_nominal_condition -name {condition} -voltage {vdd.value}')
+        nominal_vdd = VoltageValue(self.get_setting("vlsi.inputs.supplies.VDD")) # type: VoltageValue
+        output.append(f'create_nominal_condition -name {condition} -voltage {nominal_vdd.value}')
         output.append(f'create_power_mode -name {mode} -default -domain_conditions {{{domain}@{condition}}}')
         # Footer
         output.append("end_design")

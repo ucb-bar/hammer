@@ -53,14 +53,14 @@ vlsi:
   inputs:
     supplies: # Supply voltages.
     # TODO: add ability to tie pin to net in Hammer Innovus plugin
-      power:  [ {name: "VDD",  pin: "VDD"}, 
-                {name: "VPWR", pin: "VPWR", tie: "VDD"},
-                {name: "VPB",  pin: "VPB" , tie: "VDD"},
-                {name: "vdd",  pin: "vdd",  tie: "VDD"}]
-      ground: [ {name: "VSS",  pin: "VSS"},
-                {name: "VGND", pin: "VGND", tie: "VSS"},
-                {name: "VNB",  pin: "VNB" , tie: "VSS"},
-                {name: "vss",  pin: "vss",  tie: "VSS"}]
+      power:  [ {name: "VDD",  pins: ["VDD" ]},
+                {name: "VPWR", pins: ["VPWR"], tie: "VDD"},
+                {name: "VPB",  pins: ["VPB" ], tie: "VDD"},
+                {name: "vdd",  pins: ["vdd" ], tie: "VDD"}]
+      ground: [ {name: "VSS",  pins: ["VSS" ]},
+                {name: "VGND", pins: ["VGND"], tie: "VSS"},
+                {name: "VNB",  pins: ["VNB" ], tie: "VSS"},
+                {name: "vss",  pina: ["vss" ], tie: "VSS"}]
       VDD: "1.8 V"
       GND: "0 V"
 
