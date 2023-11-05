@@ -113,7 +113,7 @@ vlsi.inputs:
   # Supply voltages and names
   # Supply Struct:
   #   name (str) - The name of your supply's net
-  #   pin (Optional[str]) - The cell pin that this net should drive, no pins are connected when omitted
+  #   pins (Optional[List[str]]) - The cell pin/s that this net should drive. If None, pin name is assumed to be net name. If empty, no pins are connected
   #   tie (Optional[str]) - Another supply this supply is tied to. Nets with this set will  not end up in your final layout.
   #   weight (Optional[int]) - The weight of this supply when building power straps (larger number = more straps).
   #     Not used for grounds. Mandatory, but defaults to 1 if omitted.

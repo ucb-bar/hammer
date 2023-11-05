@@ -2091,25 +2091,28 @@ class HasUPFSupport(HammerTool):
         ground_nets = self.get_all_ground_nets()
         #Create Supply Ports
         for pg_net in (power_nets+ground_nets):
-            if len(pg_net.pins):
-                #Create Supply Nets
-                output.append(f'create_supply_net {pg_net.name} -domain {domain}')
-                output.append(f'create_supply_port {pg_net.name} -domain {domain} \\')
-                output.append(f'\t-direction in')
+            pins = pg_net.pins if pg_net.pins is not None else [pg_net.name]
+            #Create Supply Nets
+            output.append(f'create_supply_net {pg_net.name} -domain {domain}')
+            output.append(f'create_supply_port {pg_net.name} -domain {domain} \\')
+            output.append(f'\t-direction in')
+            for pin in pins:
                 #Connect Supply Net
-                output.append(f'connect_supply_net {pg_net.name} -ports {pg_net.name}')
-                #Set Domain Supply Net
+                output.append(f'connect_supply_net {pg_net.name} -ports {pin}')
+        #Set Domain Supply Net
         output.append(f'set_domain_supply_net {domain} \\')
         output.append(f'\t-primary_power_net {power_nets[0].name} \\')
         output.append(f'\t-primary_ground_net {ground_nets[0].name}')
         #Add Port States
         for p_net in power_nets:
-            if len(p_net.pins):
-                output.append(f'add_port_state {p_net.name} \\')
+            pins = p_net.pins if p_net.pins is not None else [p_net.name]
+            for pin in pins:
+                output.append(f'add_port_state {pin} \\')
                 output.append(f'\t-state {{default {vdd.value}}}')
         for g_net in ground_nets:
-            if len(g_net.pins):
-                output.append(f'add_port_state {g_net.name} \\')
+            pins = g_net.pins if g_net.pins is not None else [g_net.name]
+            for pin in pins:
+                output.append(f'add_port_state {pin} \\')
                 output.append(f'\t-state {{default 0.0}}')
         #Create Power State Table
         output.append('create_pst pwr_state_table \\')
@@ -2150,8 +2153,9 @@ class HasCPFSupport(HammerTool):
         output.append(f'update_power_domain -name {domain} -primary_power_net {power_nets[0].name} -primary_ground_net {ground_nets[0].name}')
         # Assuming that all power/ground nets correspond to pins
         for pg_net in (power_nets+ground_nets):
-            if len(pg_net.pins):
-                pins_str = ' '.join(pg_net.pins)
+            pins = pg_net.pins if pg_net.pins is not None else [pg_net.name]
+            if len(pins):
+                pins_str = ' '.join(pins)
                 output.append(f'create_global_connection -domain {domain} -net {pg_net.name} -pins [list {pins_str}]')
         # Create nominal operation condtion and power mode
         nominal_vdd = VoltageValue(self.get_setting("vlsi.inputs.supplies.VDD")) # type: VoltageValue
