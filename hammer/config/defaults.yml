@@ -181,9 +181,9 @@ vlsi.inputs:
   # period (TimeValue) - Clock port period. e.g. "1 ns", "5ns". Default units: ns
   # path (str) - Optional. If specified, this is the RTL path to the clock. Otherwise, the path is the same as the name.
   # uncertainty (TimeValue) - Optional. Clock uncertainty. e.g. "1 ns", "5ns". Default units: ns
-  # generated (bool) - Optional. If specified this clock is generated from another clock, must specify source_path and divisor
+  # generated (bool) - Optional. If specified this clock is generated from another clock. Must specify source_path and divisor, but period becomes Optional.
   # source_path (str) - Required if generated. The path of the clock that this clock is generated from.
-  # divisor (int) - Required if generated. The amount this generated clock is slowed from the source clock e.g. 2 => this clock will be two times slower than the source clock.
+  # divisor (int) - Required if generated. The amount this generated clock is slower/faster than the source clock e.g. 2 => this clock will be two times slower than the source clock. Negative values imply inversion (falling edge in line with the source's rising edge).
   #   We are constrained to integers by SDC.
   # group (str) - Optional. The name of the clock group this clock belongs to. Clocks in the same group will not be marked as asynchronous.
   #   Clocks with no group specified will all be placed in separate groups and thus marked as asynchronous to each other and all other groups.
@@ -207,6 +207,7 @@ vlsi.inputs:
   # - "input"
   # - "output"
   # delay (TimeValue) - Delay applied to the I/O.
+  # corner (Optional[str]) - "setup" or "hold" will specify -max and -min flags. If empty, the same constraint will apply for setup and hold analysis.
 
   custom_sdc_constraints: [] # List of custom sdc constraints to use. (List[str])
   # These are appended after all other generated constraints (clock, pin, delay, load, etc.).
