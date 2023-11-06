@@ -268,7 +268,8 @@ class TestDelayConstraint:
                 name="mypin",
                 clock="clock",
                 direction="bad",
-                delay=TimeValue("20 ns")
+                delay=TimeValue("20 ns"),
+                corner=None
             )
 
         with pytest.raises(ValueError):
@@ -276,7 +277,8 @@ class TestDelayConstraint:
                 name="mypin",
                 clock="clock",
                 direction="inputt",
-                delay=TimeValue("20 ns")
+                delay=TimeValue("20 ns"),
+                corner=None
             )
 
         with pytest.raises(ValueError):
@@ -284,7 +286,8 @@ class TestDelayConstraint:
                 name="mypin",
                 clock="clock",
                 direction="inputoutput",
-                delay=TimeValue("20 ns")
+                delay=TimeValue("20 ns"),
+                corner=None
             )
 
         with pytest.raises(ValueError):
@@ -292,7 +295,8 @@ class TestDelayConstraint:
                 name="mypin",
                 clock="clock",
                 direction="",
-                delay=TimeValue("20 ns")
+                delay=TimeValue("20 ns"),
+                corner=None
             )
 
         # Test that the error is raised with the dict as well.
