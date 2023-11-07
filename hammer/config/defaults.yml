@@ -608,6 +608,7 @@ par:
       # type: str
 
       pin_layers: [] # Layers to put power pins on
+      # This is also used in bottom-up hierarchical flows to configure LEF generation
       # type: List[str]
 
       strap_layers: [] # List of layers on which to place power straps (std cell rail layer is implied - do not include it)
