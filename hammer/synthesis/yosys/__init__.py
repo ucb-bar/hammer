@@ -193,8 +193,10 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         clock_port = self.get_clock_ports()[0]
         self.clock_port_name = clock_port.name
         time_unit = "ps" # yosys requires time units in ps
+        assert clock_port.period is not None, "clock must have a period"
+        assert clock_port.uncertainty is not None, "clock must have an uncertainty"
         self.clock_period = int(clock_port.period.value_in_units(time_unit))
-        self.clock_uncertainty = int(clock_port.period.value_in_units(time_unit))
+        self.clock_uncertainty = int(clock_port.uncertainty.value_in_units(time_unit))
         self.clock_transition = 0.15 # SYNTH_CLOCK_TRANSITION
 
         self.synth_cap_load = 33.5 # SYNTH_CAP_LOAD

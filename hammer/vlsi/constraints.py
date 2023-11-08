@@ -370,7 +370,7 @@ class BumpsPinNamingScheme(Enum):
 
 ClockPort = NamedTuple('ClockPort', [
     ('name', str),
-    ('period', TimeValue),
+    ('period', Optional[TimeValue]),
     ('path', Optional[str]),
     ('uncertainty', Optional[TimeValue]),
     ('generated', Optional[bool]),
@@ -389,34 +389,43 @@ class DelayConstraint(NamedTuple('DelayConstraint', [
     ('name', str),
     ('clock', str),
     ('direction', str),
-    ('delay', TimeValue)
+    ('delay', TimeValue),
+    ('corner', Optional[str])
 ])):
     __slots__ = ()
 
-    def __new__(cls, name: str, clock: str, direction: str, delay: TimeValue) -> "DelayConstraint":
+    def __new__(cls, name: str, clock: str, direction: str, delay: TimeValue, corner: Optional[str]) -> "DelayConstraint":
         if direction not in ("input", "output"):
-            raise ValueError("Invalid direction {direction}".format(direction=direction))
-        return super().__new__(cls, name, clock, direction, delay)
+            raise ValueError(f"Invalid direction {direction} for a delay constraint")
+        if corner is not None:
+            if corner not in ("setup", "hold"):
+                raise ValueError(f"Invalid corner {corner} for a delay constraint")
+        return super().__new__(cls, name, clock, direction, delay, corner)
 
     @staticmethod
     def from_dict(delay_src: Dict[str, Any]) -> "DelayConstraint":
         direction = str(delay_src["direction"])
-        if direction not in ("input", "output"):
-            raise ValueError("Invalid direction {direction}".format(direction=direction))
+        corner = None  # type: Optional[str]
+        if "corner" in delay_src:
+            corner = str(delay_src["corner"])
         return DelayConstraint(
             name=str(delay_src["name"]),
             clock=str(delay_src["clock"]),
             direction=direction,
-            delay=TimeValue(delay_src["delay"])
+            delay=TimeValue(delay_src["delay"]),
+            corner=corner
         )
 
     def to_dict(self) -> dict:
-        return {
+        output = {
             "name": self.name,
             "clock": self.clock,
             "direction": self.direction,
             "delay": self.delay.str_value_in_units("ns", round_zeroes=False)
         }
+        if self.corner is not None:
+            output.update({"corner": self.corner})
+        return output
 
 class DecapConstraint(NamedTuple('DecapConstraint', [
     ('target', str),

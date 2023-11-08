@@ -1051,9 +1051,12 @@ class HammerTool(metaclass=ABCMeta):
         output = [] # type: List[ClockPort]
         for clock_port in clocks:
             clock = ClockPort(
-                name=clock_port["name"], period=TimeValue(clock_port["period"]),
+                name=clock_port["name"], period=None,
                 uncertainty=None, path=None, generated=None, source_path=None, divisor=None, group=None
             )
+            period_assert = False
+            if "period" in clock_port:
+                clock = clock._replace(period=TimeValue(clock_port["period"]))
             if "path" in clock_port:
                 clock = clock._replace(path=clock_port["path"])
             if "uncertainty" in clock_port:
@@ -1068,7 +1071,13 @@ class HammerTool(metaclass=ABCMeta):
                         source_path=clock_port["source_path"],
                         divisor=int(clock_port["divisor"])
                     )
+                else:
+                    period_assert = True
+            else:
+                period_assert = True
             clock = clock._replace(generated=generated)
+            if period_assert:
+                assert clock.period is not None, f"Non-generated clock {clock.name} must have a period specified."
             output.append(clock)
         return output
 

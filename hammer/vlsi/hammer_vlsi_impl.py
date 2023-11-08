@@ -2183,13 +2183,16 @@ class HasSDCSupport(HammerTool):
             if get_or_else(clock.generated, False):
                 if any("hport" in p for p in [get_or_else(clock.path, ""), get_or_else(clock.source_path, "")]):
                     self.logger.error(f"In clock constraints, hports are not supported by some tools. Consider using ports/pins/hpins instead. Offending clock name: ${clock.name}")
-                output.append("create_generated_clock -name {n} -source {m_path} -divide_by {div} {path}".
-                        format(n=clock.name, m_path=clock.source_path, div=clock.divisor, path=clock.path))
+                assert clock.divisor is not None, f"Generated clock {clock.name} must have a divisor"
+                output.append("create_generated_clock -name {n} -source {m_path} -divide_by {div} {invert} {path}".
+                        format(n=clock.name, m_path=clock.source_path, div=abs(clock.divisor), invert="-invert" if clock.divisor < 0 else "", path=clock.path))
             elif clock.path is not None:
                 if "get_db hports" in clock.path:
                     self.logger.error("get_db hports will cause some tools to crash. Consider querying hpins instead.")
+                assert clock.period is not None, f"Clock {clock.name} must have a period"
                 output.append("create_clock {0} -name {1} -period {2}".format(clock.path, clock.name, clock.period.value_in_units(time_unit)))
             else:
+                assert clock.period is not None, f"Clock {clock.name} must have a period"
                 output.append("create_clock {0} -name {0} -period {1}".format(clock.name, clock.period.value_in_units(time_unit)))
             if clock.uncertainty is not None:
                 output.append("set_clock_uncertainty {1} [get_clocks {0}]".format(clock.name, clock.uncertainty.value_in_units(time_unit)))
@@ -2232,10 +2235,12 @@ class HasSDCSupport(HammerTool):
 
         # Also specify delays for specific pins.
         for delay in self.get_delay_constraints():
-            output.append("set_{direction}_delay {delay} -clock {clock} [get_port {name}]".format(
+            minmax = {None: "", "setup": "-max", "hold": "-min"}
+            output.append("set_{direction}_delay {delay} -clock {clock} {minmax} [get_port {name}]".format(
                 delay=delay.delay.value_in_units(self.get_time_unit().value_prefix + self.get_time_unit().unit),
                 clock=delay.clock,
                 direction=delay.direction,
+                minmax=minmax[delay.corner],
                 name=delay.name
             ))
 

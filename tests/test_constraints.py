@@ -192,7 +192,7 @@ class TestBumps:
 
         definition = BumpsDefinition(x=8421,y=8421, pitch_x=Decimal("1.23"), pitch_y=Decimal("3.14"), global_x_offset=Decimal('0'), global_y_offset=Decimal('0'), cell="bumpcell",assignments=assignments)
         assert BumpsPinNamingScheme.A1.name_bump(definition, assignments[0]) == "AAAA8421"
-        
+
     def test_get_by_bump_dim_pitch(self) -> None:
         """
         Test the extraction of x, y, pitches.
@@ -208,7 +208,7 @@ class TestBumps:
         db = hammer_config.HammerDatabase()
         db.update_project([{"vlsi.inputs.bumps.pitch_x": 1}, {"vlsi.inputs.bumps.pitch": 2}])
         tool.set_database(db)
-        
+
         pitch_set = tool._get_by_bump_dim_pitch()
         assert pitch_set == {'x': 1, 'y': 2}
 
@@ -243,7 +243,8 @@ class TestDelayConstraint:
             name="mypin",
             clock="clock",
             direction="input",
-            delay=TimeValue("20 ns")
+            delay=TimeValue("20 ns"),
+            corner="setup"
         )
         copied = DelayConstraint.from_dict(orig.to_dict())
         assert orig == copied
@@ -252,7 +253,8 @@ class TestDelayConstraint:
             name="pin_2",
             clock="clock_20MHz",
             direction="output",
-            delay=TimeValue("0.3 ns")
+            delay=TimeValue("0.3 ns"),
+            corner="hold"
         )
         copied = DelayConstraint.from_dict(orig.to_dict())
         assert orig == copied
@@ -266,7 +268,8 @@ class TestDelayConstraint:
                 name="mypin",
                 clock="clock",
                 direction="bad",
-                delay=TimeValue("20 ns")
+                delay=TimeValue("20 ns"),
+                corner=None
             )
 
         with pytest.raises(ValueError):
@@ -274,7 +277,8 @@ class TestDelayConstraint:
                 name="mypin",
                 clock="clock",
                 direction="inputt",
-                delay=TimeValue("20 ns")
+                delay=TimeValue("20 ns"),
+                corner=None
             )
 
         with pytest.raises(ValueError):
@@ -282,7 +286,8 @@ class TestDelayConstraint:
                 name="mypin",
                 clock="clock",
                 direction="inputoutput",
-                delay=TimeValue("20 ns")
+                delay=TimeValue("20 ns"),
+                corner=None
             )
 
         with pytest.raises(ValueError):
@@ -290,7 +295,8 @@ class TestDelayConstraint:
                 name="mypin",
                 clock="clock",
                 direction="",
-                delay=TimeValue("20 ns")
+                delay=TimeValue("20 ns"),
+                corner=None
             )
 
         # Test that the error is raised with the dict as well.
@@ -300,6 +306,38 @@ class TestDelayConstraint:
                 "clock": "clock",
                 "direction": "",
                 "delay": "20 ns"
+            })
+
+    def test_invalid_corner(self) -> None:
+        """
+        Test that invalid corners are caught properly.
+        """
+        with pytest.raises(ValueError):
+            DelayConstraint(
+                name="mypin",
+                clock="clock",
+                direction="input",
+                delay=TimeValue("20 ns"),
+                corner="typical"
+            )
+
+        with pytest.raises(ValueError):
+            DelayConstraint(
+                name="mypin",
+                clock="clock",
+                direction="input",
+                delay=TimeValue("20 ns"),
+                corner=""
+            )
+
+        # Test that the error is raised with the dict as well.
+        with pytest.raises(ValueError):
+            DelayConstraint.from_dict({
+                "name": "mypin",
+                "clock": "clock",
+                "direction": "input",
+                "delay": "20 ns",
+                "corner": "typical"
             })
 
 
