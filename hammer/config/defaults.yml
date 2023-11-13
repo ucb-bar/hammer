@@ -884,7 +884,10 @@ power.inputs:
   #     Default: waveform file name
   #   output_formats (List[str]) - Optional. Report types to generate. Default: ["report"]
   #     Valid options are:
-  #       "report" - average power report (*.rpt), default
+  #       "report" - average power report (*.power.rpt, *.hier.power.rpt), default
+  #       "activity" - design activity during stimulus (*.activity.rpt, *.hier.activity.rpt)
+  #       "ppa" - power, performance, area characteristics of the design (*.ppa.rpt)
+  #       "area" - area report (*.area.rpt)
   #       "plot_profile" - power profile over time, requires frame-based analysis (*.png, *.png.data)
   #       "write_profile" - profiles all power types on all categories for all the sub-hierarchies for a given design instance (*.fsdb)
   #       "profile" - run plot_profile + dump_profile
