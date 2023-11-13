@@ -285,10 +285,6 @@ class Joules(HammerPowerTool, CadenceTool):
             stim_alias, new_stim = self.get_alias_name(read_stim_cmd)
 
             if new_stim:
-                # NOTE: only reading new stimuli with -append mode breaks frame-based power analysis 
-                #   with error message: "Invalid frame name /stim#2/frame#3. No stimulus read. Using vectorless power computation"
-                #   Interestingly, this does not happen when starting from a database checkpoint (i.e. after read_db pre_report_power)
-                #   For now, re-run read_stimulus for each power report config, even if it's an identical stimulus
                 block_append(f"{read_stim_cmd} -alias {stim_alias} -append")
                 # block_append(f"write_sdb -out {alias}.sdb") # NOTE: subsequent read_sdb command errors when reading this file back in, so don't cache for now
                 mode = "time_based" if time_based_analysis else "average"
