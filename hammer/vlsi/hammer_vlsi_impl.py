@@ -2137,37 +2137,45 @@ class HasCPFSupport(HammerTool):
     @property
     def cpf_power_specification(self) -> str:
         output = [] # type: list[str]
-        # Just names
-        domain = "AO"
-        condition = "nominal"
-        mode = "aon"
         # Header
         output.append("set_cpf_version 1.0e")
         output.append("set_hierarchy_separator /")
         output.append(f'set_design {self.top_module}')
         # Define power and ground nets (HARD CODE)
+        domains = self.get_all_power_domains()
         power_nets = self.get_all_power_nets() # type: list[Supply]
         ground_nets = self.get_all_ground_nets()# type: list[Supply]
         for power_net in power_nets:
-            vdd = VoltageValue(self.get_setting("vlsi.inputs.supplies.VDD")) # type: VoltageValue
-            if power_net.voltage is not None:
-                vdd = VoltageValue(power_net.voltage)
+            vdd = VoltageValue(power_net.voltage if power_net.voltage is not None else self.get_setting("vlsi.inputs.supplies.VDD"))
             output.append(f'create_power_nets -nets {power_net.name} -voltage {vdd.value}')
-        output.append(f'create_ground_nets -nets {{ {" ".join(map(lambda x: x.name, ground_nets))} }}')
+        output.append(f'create_ground_nets -nets {{ {" ".join(g_net.name for g_net in ground_nets)} }}')
         # Define power domain and connections
-        output.append(f'create_power_domain -name {domain} -default')
-        # Assume primary power are first in list
-        output.append(f'update_power_domain -name {domain} -primary_power_net {power_nets[0].name} -primary_ground_net {ground_nets[0].name}')
+        for domain in domains:
+            output.append(f'create_power_domain -name {domain.path}')
+            # Assume primary power are first in list
+        for p_net, g_net in [(p_net, ground_nets[0]) for p_net in power_nets]:
+            output.append(f'update_power_domain -name {p_net.domain} -primary_power_net {p_net.name} -primary_ground_net {g_net.name}')
         # Assuming that all power/ground nets correspond to pins
-        for pg_net in (power_nets+ground_nets):
+        for pg_net in power_nets + ground_nets:
             pins = pg_net.pins if pg_net.pins is not None else [pg_net.name]
-            if len(pins):
+            if len(pins) > 0:
                 pins_str = ' '.join(pins)
-                output.append(f'create_global_connection -domain {domain} -net {pg_net.name} -pins [list {pins_str}]')
-        # Create nominal operation condtion and power mode
+                output.append(f'create_global_connection -domain {pg_net.domain} -net {pg_net.name} -pins [list {pins_str}]')
+        # Create level shifters
+        for power_net in power_nets:
+            other_p_nets = ' '.join(p_net.name for p_net in power_nets if p_net != power_net)
+            output.append(f"create_level_shifter_rule -name {power_net.name}_LS -from {power_net.domain} -to [list {other_p_nets}]")
+        # Just names
+        condition = "nominal"
+        mode = "aon"
+        # Create nominal operation condition and power mode
         nominal_vdd = VoltageValue(self.get_setting("vlsi.inputs.supplies.VDD")) # type: VoltageValue
         output.append(f'create_nominal_condition -name {condition} -voltage {nominal_vdd.value}')
-        output.append(f'create_power_mode -name {mode} -default -domain_conditions {{{domain}@{condition}}}')
+        output.append(f'create_power_mode -name {mode} -default -domain_conditions {{AO@{condition}}}')
+        # Create other net operation conditions and power modes
+        for power_net in power_nets:
+            output.append(f'create_nominal_condition -name {power_net.name}_condition -voltage {power_net.voltage}')
+            output.append(f'create_power_mode -name {power_net.domain} -domain_conditions {{{power_net.domain}@{power_net.name}_condition}}')
         # Footer
         output.append("end_design")
         return "\n".join(output)
