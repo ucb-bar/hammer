@@ -611,7 +611,8 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
     ('margins', Optional[Margins]),
     ('top_layer', Optional[str]),
     ('layers', Optional[list[str]]),
-    ('obs_types', Optional[list[ObstructionType]])
+    ('obs_types', Optional[list[ObstructionType]]),
+    ('power_domain', Optional[str])
 ])):
     __slots__ = ()
 
@@ -768,6 +769,14 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             if constraint_type == PlacementConstraintType.Obstruction:
                 raise ValueError(f"Obstruction constraint must contain obs_types: {constraint}")
 
+        ### Power Domain ###
+        # This field is disallowed in PowerDomain constraints, optional otherwise
+        power_domain = None  # type: Optional[str]
+        if "power_domain" in constraint:
+            if constraint_type == PlacementConstraintType.PowerDomain:
+                raise ValueError(f"PowerDomain constraint must not contain power_domain: {constraint}")
+            power_domain = str(constraint["power_domain"])
+
         ### Master ###
         master = PlacementConstraint._get_master(constraint_type, constraint)
 
@@ -827,7 +836,8 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             margins=margins,
             top_layer=top_layer,
             layers=layers,
-            obs_types=obs_types
+            obs_types=obs_types,
+            power_domain=power_domain,
         )
 
     def to_dict(self) -> dict:
