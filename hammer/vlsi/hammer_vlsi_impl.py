@@ -13,10 +13,8 @@ from statistics import mode
 import hammer.config as hammer_config
 import hammer.tech as hammer_tech
 from hammer.utils import deepdict, coerce_to_grid, get_or_else
-from hammer.tech import ExtraLibrary, RoutingDirection
 
 from .constraints import *
-from .hammer_tool import HammerTool, HammerToolStep
 from .units import VoltageValue, TimeValue
 
 
@@ -94,6 +92,7 @@ PowerReport = NamedTuple('PowerReport', [
     ('output_formats', Optional[list[str]])
 ])
 
+from hammer.tech import ExtraLibrary, RoutingDirection
 
 class HammerVLSISettings:
     """
@@ -130,6 +129,7 @@ class HammerVLSISettings:
             core_defaults_types.extend(types)
         database.update_core(core_defaults, core_defaults_types)
 
+from .hammer_tool import HammerTool, HammerToolStep
 
 class DummyHammerTool(HammerTool):
     """
@@ -2081,19 +2081,21 @@ class HasUPFSupport(HammerTool):
         power_nets = self.get_all_power_nets()
         ground_nets = self.get_all_ground_nets()
         #Create Supply Ports
-        for pg_net in (power_nets+ground_nets):
+        for pg_net in power_nets + ground_nets:
             pins = pg_net.pins if pg_net.pins is not None else [pg_net.name]
             #Create Supply Nets
-            output.append(f'create_supply_net {pg_net.name} -domain {domain}')
-            output.append(f'create_supply_port {pg_net.name} -domain {domain} \\')
+            output.append(f'create_supply_net {pg_net.name} -domain {pg_net.domain}')
+            output.append(f'create_supply_port {pg_net.name} -domain {pg_net.domain} \\')
             output.append('\t-direction in')
             for pin in pins:
                 #Connect Supply Net
                 output.append(f'connect_supply_net {pg_net.name} -ports {pin}')
         #Set Domain Supply Net
-        output.append(f'set_domain_supply_net {domain} \\')
-        output.append(f'\t-primary_power_net {power_nets[0].name} \\')
-        output.append(f'\t-primary_ground_net {ground_nets[0].name}')
+        for p_net in power_nets:
+            for g_net in ground_nets:
+                output.append(f'set_domain_supply_net {p_net.domain} \\')
+                output.append(f'\t-primary_power_net {p_net.name} \\')
+                output.append(f'\t-primary_ground_net {g_net.name}')
         #Add Port States
         for p_net in power_nets:
             pins = p_net.pins if p_net.pins is not None else [p_net.name]
