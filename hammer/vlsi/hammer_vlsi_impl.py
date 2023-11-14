@@ -3,22 +3,22 @@
 #
 #  See LICENSE for licence details.
 
-from abc import abstractmethod
 import importlib
-import importlib.resources as resources
 import json
-from typing import Iterable
-import inspect
-import datetime
-from statistics import mode
 import os
+from abc import abstractmethod
+from importlib import resources
+from statistics import mode
 
 import hammer.config as hammer_config
+import hammer.tech as hammer_tech
 from hammer.utils import deepdict, coerce_to_grid, get_or_else
 from hammer.tech import ExtraLibrary, RoutingDirection
 
 from .constraints import *
+from .hammer_tool import HammerTool, HammerToolStep
 from .units import VoltageValue, TimeValue
+
 
 class HierarchicalMode(Enum):
     Flat = 1
@@ -27,7 +27,7 @@ class HierarchicalMode(Enum):
     Top = 4
 
     @classmethod
-    def __mapping(cls) -> Dict[str, "HierarchicalMode"]:
+    def __mapping(cls) -> dict[str, "HierarchicalMode"]:
         return {
             "flat": HierarchicalMode.Flat,
             "leaf": HierarchicalMode.Leaf,
@@ -39,8 +39,8 @@ class HierarchicalMode(Enum):
     def from_str(x: str) -> "HierarchicalMode":
         try:
             return HierarchicalMode.__mapping()[x]
-        except KeyError:
-            raise ValueError("Invalid string for HierarchicalMode: " + str(x))
+        except KeyError as exc:
+            raise ValueError(f"Invalid string for HierarchicalMode: {x}") from exc
 
     def __str__(self) -> str:
         return reverse_dict(HierarchicalMode.__mapping())[self]
@@ -58,7 +58,7 @@ class FlowLevel(Enum):
     PAR = 3
 
     @classmethod
-    def __mapping(cls) -> Dict[str, "FlowLevel"]:
+    def __mapping(cls) -> dict[str, "FlowLevel"]:
         return {
             "rtl": FlowLevel.RTL,
             "syn": FlowLevel.SYN,
@@ -69,8 +69,8 @@ class FlowLevel(Enum):
     def from_str(x: str) -> "FlowLevel":
         try:
             return FlowLevel.__mapping()[x]
-        except KeyError:
-            raise ValueError("Invalid string for FlowLevel: " + str(x))
+        except KeyError as exc:
+            raise ValueError(f"Invalid string for FlowLevel: {x}") from exc
 
     def __str__(self) -> str:
         return reverse_dict(FlowLevel.__mapping())[self]
@@ -91,11 +91,8 @@ PowerReport = NamedTuple('PowerReport', [
     ('num_toggles', Optional[int]),
     ('frame_count', Optional[int]),
     ('report_name', Optional[str]),
-    ('output_formats', Optional[List[str]])
+    ('output_formats', Optional[list[str]])
 ])
-
-
-import hammer.tech as hammer_tech
 
 
 class HammerVLSISettings:
@@ -124,8 +121,8 @@ class HammerVLSISettings:
         # Read in core and vendor-common defaults.
         # TODO: vendor-common defaults should be in respective vendor plugin packages
         # and considered tool configs instead
-        core_defaults = []  # type: List[dict]
-        core_defaults_types = []  # type: List[dict]
+        core_defaults = []  # type: list[dict]
+        core_defaults_types = []  # type: list[dict]
         vendors = ["cadence", "synopsys", "mentor", "openroad"]
         for pkg in ["hammer.config"] + list(map(lambda v: "hammer.common." + v, vendors)):
             config, types = hammer_config.load_config_from_defaults(pkg, types=True)
@@ -133,7 +130,6 @@ class HammerVLSISettings:
             core_defaults_types.extend(types)
         database.update_core(core_defaults, core_defaults_types)
 
-from .hammer_tool import HammerTool, HammerToolStep
 
 class DummyHammerTool(HammerTool):
     """
@@ -149,7 +145,7 @@ class DummyHammerTool(HammerTool):
         return 1
 
     @property
-    def steps(self) -> List[HammerToolStep]:
+    def steps(self) -> list[HammerToolStep]:
         return []
 
 class HammerSRAMGeneratorTool(HammerTool):
@@ -158,7 +154,7 @@ class HammerSRAMGeneratorTool(HammerTool):
     ### Inputs ###
 
     @property
-    def input_parameters(self) -> List[SRAMParameters]:
+    def input_parameters(self) -> list[SRAMParameters]:
         """
         Get the input sram parameters to be generated.
 
@@ -166,21 +162,21 @@ class HammerSRAMGeneratorTool(HammerTool):
         """
         try:
             return self.attr_getter("_input_parameters", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the input sram parameters to be generated yet")
+        except AttributeError as exc:
+            raise ValueError("Nothing set for the input sram parameters to be generated yet") from exc
 
     @input_parameters.setter
-    def input_parameters(self, value: List[SRAMParameters]) -> None:
+    def input_parameters(self, value: list[SRAMParameters]) -> None:
         """Set the input sram parameters to be generated."""
-        if not (isinstance(value, List)):
-            raise TypeError("input_parameters must be a List[SRAMParameters]")
+        if not isinstance(value, list):
+            raise TypeError("input_parameters must be a list[SRAMParameters]")
         self.attr_setter("_input_parameters", value)
 
 
     ### Outputs ###
 
     @property
-    def output_libraries(self) -> List[ExtraLibrary]:
+    def output_libraries(self) -> list[ExtraLibrary]:
         """
         Get the list of the hammer tech libraries corresponding to generated srams.
 
@@ -188,20 +184,20 @@ class HammerSRAMGeneratorTool(HammerTool):
         """
         try:
             return self.attr_getter("_output_libraries", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the list of the hammer tech libraries corresponding to generated srams yet")
+        except AttributeError as exc:
+            raise ValueError("Nothing set for the list of the hammer tech libraries corresponding to generated srams yet") from exc
 
     @output_libraries.setter
-    def output_libraries(self, value: List[ExtraLibrary]) -> None:
+    def output_libraries(self, value: list[ExtraLibrary]) -> None:
         """Set the list of the hammer tech libraries corresponding to generated srams."""
-        if not (isinstance(value, List)):
-            raise TypeError("output_libraries must be a List[ExtraLibrary]")
+        if not isinstance(value, list):
+            raise TypeError("output_libraries must be a list[ExtraLibrary]")
         self.attr_setter("_output_libraries", value)
 
     ### END Generated interface HammerSRAMGeneratorTool ###
 
     @property
-    def steps(self) -> List[HammerToolStep]:
+    def steps(self) -> list[HammerToolStep]:
         steps = [
             self.generate_all_srams_and_corners
             ]
@@ -210,12 +206,12 @@ class HammerSRAMGeneratorTool(HammerTool):
     def fill_outputs(self) -> bool:
         return True #we fill in output_libraries in generate_all_srams_and_corners
 
-    def export_config_outputs(self) -> Dict[str, Any]:
+    def export_config_outputs(self) -> dict[str, Any]:
         outputs = deepdict(super().export_config_outputs())
         simple_ex = []
         for ex in self.output_libraries: # type: ExtraLibrary
             simple_lib = json.loads(ex.library.json())
-            if(ex.prefix == None):
+            if ex.prefix is None:
                 new_ex = {"library": simple_lib}
             else:
                 new_ex = {"prefix": ex.prefix, "library": simple_lib}
@@ -228,15 +224,15 @@ class HammerSRAMGeneratorTool(HammerTool):
     # in techX16 you can generate only ever generate a single SRAM per run but can
     # generate multiple corners at once
     def generate_all_srams_and_corners(self) -> bool:
-        srams_corners = list(map(lambda c: self.generate_all_srams(c), self.get_mmmc_corners())) # type: List[List[ExtraLibrary]]
+        srams_corners = list(map(self.generate_all_srams, self.get_mmmc_corners())) # type: list[list[ExtraLibrary]]
         if len(srams_corners):
             self.output_libraries = reduce(list.__add__, srams_corners)
         else:
             self.output_libraries = []
         return True
 
-    def generate_all_srams(self, corner: MMMCCorner) -> List[ExtraLibrary]:
-        srams = list(map(lambda p: self.generate_sram(p, corner), self.input_parameters)) # type: List[ExtraLibrary]
+    def generate_all_srams(self, corner: MMMCCorner) -> list[ExtraLibrary]:
+        srams = list(map(lambda p: self.generate_sram(p, corner), self.input_parameters)) # type: list[ExtraLibrary]
         return srams
 
     # Run compiler for a single sram and corner
@@ -249,7 +245,7 @@ class HammerSynthesisTool(HammerTool):
     def fill_outputs(self) -> bool:
         pass
 
-    def export_config_outputs(self) -> Dict[str, Any]:
+    def export_config_outputs(self) -> dict[str, Any]:
         outputs = deepdict(super().export_config_outputs())
         outputs["synthesis.outputs.output_files"] = self.output_files
         outputs["synthesis.inputs.input_files"] = self.input_files
@@ -261,7 +257,7 @@ class HammerSynthesisTool(HammerTool):
     ### Inputs ###
 
     @property
-    def input_files(self) -> List[str]:
+    def input_files(self) -> list[str]:
         """
         Get the input collection of source RTL files (e.g. *.v).
 
@@ -269,21 +265,21 @@ class HammerSynthesisTool(HammerTool):
         """
         try:
             return self.attr_getter("_input_files", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the input collection of source RTL files (e.g. *.v) yet")
+        except AttributeError as exc:
+            raise ValueError("Nothing set for the input collection of source RTL files (e.g. *.v) yet") from exc
 
     @input_files.setter
-    def input_files(self, value: List[str]) -> None:
+    def input_files(self, value: list[str]) -> None:
         """Set the input collection of source RTL files (e.g. *.v)."""
-        if not (isinstance(value, List)):
-            raise TypeError("input_files must be a List[str]")
+        if not isinstance(value, list):
+            raise TypeError("input_files must be a list[str]")
         self.attr_setter("_input_files", value)
 
 
     ### Outputs ###
 
     @property
-    def output_files(self) -> List[str]:
+    def output_files(self) -> list[str]:
         """
         Get the output collection of mapped (post-synthesis) RTL files.
 
@@ -291,14 +287,14 @@ class HammerSynthesisTool(HammerTool):
         """
         try:
             return self.attr_getter("_output_files", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the output collection of mapped (post-synthesis) RTL files yet")
+        except AttributeError as exc:
+            raise ValueError("Nothing set for the output collection of mapped (post-synthesis) RTL files yet") from exc
 
     @output_files.setter
-    def output_files(self, value: List[str]) -> None:
+    def output_files(self, value: list[str]) -> None:
         """Set the output collection of mapped (post-synthesis) RTL files."""
-        if not (isinstance(value, List)):
-            raise TypeError("output_files must be a List[str]")
+        if not isinstance(value, list):
+            raise TypeError("output_files must be a list[str]")
         self.attr_setter("_output_files", value)
 
 
@@ -311,13 +307,13 @@ class HammerSynthesisTool(HammerTool):
         """
         try:
             return self.attr_getter("_output_sdc", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the (optional) output post-synthesis SDC constraints file yet")
+        except AttributeError as exc:
+            raise ValueError("Nothing set for the (optional) output post-synthesis SDC constraints file yet") from exc
 
     @output_sdc.setter
     def output_sdc(self, value: str) -> None:
         """Set the (optional) output post-synthesis SDC constraints file."""
-        if not (isinstance(value, str)):
+        if not isinstance(value, str):
             raise TypeError("output_sdc must be a str")
         self.attr_setter("_output_sdc", value)
 
@@ -331,13 +327,13 @@ class HammerSynthesisTool(HammerTool):
         """
         try:
             return self.attr_getter("_output_all_regs", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the path to output list of all registers in the design with output pin for gate level simulation yet")
+        except AttributeError as exc:
+            raise ValueError("Nothing set for the path to output list of all registers in the design with output pin for gate level simulation yet") from exc
 
     @output_all_regs.setter
     def output_all_regs(self, value: str) -> None:
         """Set the path to output list of all registers in the design with output pin for gate level simulation."""
-        if not (isinstance(value, str)):
+        if not isinstance(value, str):
             raise TypeError("output_all_regs must be a str")
         self.attr_setter("_output_all_regs", value)
 
@@ -351,13 +347,13 @@ class HammerSynthesisTool(HammerTool):
         """
         try:
             return self.attr_getter("_output_seq_cells", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the path to output collection of all sequential standard cells in design yet")
+        except AttributeError as exc:
+            raise ValueError("Nothing set for the path to output collection of all sequential standard cells in design yet") from exc
 
     @output_seq_cells.setter
     def output_seq_cells(self, value: str) -> None:
         """Set the path to output collection of all sequential standard cells in design."""
-        if not (isinstance(value, str)):
+        if not isinstance(value, str):
             raise TypeError("output_seq_cells must be a str")
         self.attr_setter("_output_seq_cells", value)
 
@@ -371,13 +367,13 @@ class HammerSynthesisTool(HammerTool):
         """
         try:
             return self.attr_getter("_sdf_file", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the output SDF file to be read for timing annotated gate level sims yet")
+        except AttributeError as exc:
+            raise ValueError("Nothing set for the output SDF file to be read for timing annotated gate level sims yet") from exc
 
     @sdf_file.setter
     def sdf_file(self, value: str) -> None:
         """Set the output SDF file to be read for timing annotated gate level sims."""
-        if not (isinstance(value, str)):
+        if not isinstance(value, str):
             raise TypeError("sdf_file must be a str")
         self.attr_setter("_sdf_file", value)
 
@@ -389,7 +385,7 @@ class HammerPlaceAndRouteTool(HammerTool):
     def fill_outputs(self) -> bool:
         pass
 
-    def export_config_outputs(self) -> Dict[str, Any]:
+    def export_config_outputs(self) -> dict[str, Any]:
         outputs = deepdict(super().export_config_outputs())
         outputs["par.outputs.output_ilms"] = list(map(lambda s: s.to_setting(), self.output_ilms))
         outputs["par.outputs.output_ilms_meta"] = "append"  # to coalesce ILMs for current level of hierarchy
@@ -410,7 +406,7 @@ class HammerPlaceAndRouteTool(HammerTool):
     ### Inputs ###
 
     @property
-    def input_files(self) -> List[str]:
+    def input_files(self) -> list[str]:
         """
         Get the input post-synthesis netlist files.
 
@@ -422,10 +418,10 @@ class HammerPlaceAndRouteTool(HammerTool):
             raise ValueError("Nothing set for the input post-synthesis netlist files yet")
 
     @input_files.setter
-    def input_files(self, value: List[str]) -> None:
+    def input_files(self, value: list[str]) -> None:
         """Set the input post-synthesis netlist files."""
-        if not (isinstance(value, List)):
-            raise TypeError("input_files must be a List[str]")
+        if not (isinstance(value, list)):
+            raise TypeError("input_files must be a list[str]")
         self.attr_setter("_input_files", value)
 
 
@@ -452,7 +448,7 @@ class HammerPlaceAndRouteTool(HammerTool):
     ### Outputs ###
 
     @property
-    def output_ilms(self) -> List[ILMStruct]:
+    def output_ilms(self) -> list[ILMStruct]:
         """
         Get the (optional) output ILM information for hierarchical mode.
 
@@ -460,14 +456,14 @@ class HammerPlaceAndRouteTool(HammerTool):
         """
         try:
             return self.attr_getter("_output_ilms", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the (optional) output ILM information for hierarchical mode yet")
+        except AttributeError as exc:
+            raise ValueError("Nothing set for the (optional) output ILM information for hierarchical mode yet") from exc
 
     @output_ilms.setter
-    def output_ilms(self, value: List[ILMStruct]) -> None:
+    def output_ilms(self, value: list[ILMStruct]) -> None:
         """Set the (optional) output ILM information for hierarchical mode."""
-        if not (isinstance(value, List)):
-            raise TypeError("output_ilms must be a List[ILMStruct]")
+        if not isinstance(value, list):
+            raise TypeError("output_ilms must be a list[ILMStruct]")
         self.attr_setter("_output_ilms", value)
 
 
@@ -480,13 +476,13 @@ class HammerPlaceAndRouteTool(HammerTool):
         """
         try:
             return self.attr_getter("_output_gds", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the path to the output GDS file yet")
+        except AttributeError as exc:
+            raise ValueError("Nothing set for the path to the output GDS file yet") from exc
 
     @output_gds.setter
     def output_gds(self, value: str) -> None:
         """Set the path to the output GDS file."""
-        if not (isinstance(value, str)):
+        if not isinstance(value, str):
             raise TypeError("output_gds must be a str")
         self.attr_setter("_output_gds", value)
 
@@ -532,7 +528,7 @@ class HammerPlaceAndRouteTool(HammerTool):
 
 
     @property
-    def hcells_list(self) -> List[str]:
+    def hcells_list(self) -> list[str]:
         """
         Get the list of cells to explicitly map hierarchically in LVS.
 
@@ -544,10 +540,10 @@ class HammerPlaceAndRouteTool(HammerTool):
             raise ValueError("Nothing set for the list of cells to explicitly map hierarchically in LVS yet")
 
     @hcells_list.setter
-    def hcells_list(self, value: List[str]) -> None:
+    def hcells_list(self, value: list[str]) -> None:
         """Set the list of cells to explicitly map hierarchically in LVS."""
-        if not (isinstance(value, List)):
-            raise TypeError("hcells_list must be a List[str]")
+        if not (isinstance(value, list)):
+            raise TypeError("hcells_list must be a list[str]")
         self.attr_setter("_hcells_list", value)
 
 
@@ -612,11 +608,11 @@ class HammerPlaceAndRouteTool(HammerTool):
 
     ### END Generated interface HammerPlaceAndRouteTool ###
 
-    def create_power_straps_tcl(self) -> List[str]:
+    def create_power_straps_tcl(self) -> list[str]:
         """
         Create power straps TCL commands depending on the mode.
         """
-        output = []  # type: List[str]
+        output = []  # type: list[str]
 
         power_straps_mode = str(self.get_setting("par.power_straps_mode"))
         if power_straps_mode == "manual":
@@ -634,7 +630,7 @@ class HammerPlaceAndRouteTool(HammerTool):
             output.append("# Blank power straps script specified from HAMMER")
         return output
 
-    def generate_power_straps_tcl(self) -> List[str]:
+    def generate_power_straps_tcl(self) -> list[str]:
         """
         Generate a TCL script to create power straps from the config/IR.
         :return: Power straps TCL script.
@@ -642,13 +638,13 @@ class HammerPlaceAndRouteTool(HammerTool):
         method = self.get_setting("par.generate_power_straps_method")
         if method == "by_tracks":
             # By default put straps everywhere
-            bbox = None # type: Optional[List[Decimal]]
+            bbox = None # type: Optional[list[Decimal]]
             namespace = "par.generate_power_straps_options.by_tracks"
             layers = self.get_setting("{}.strap_layers".format(namespace))
             pin_layers = self.get_setting("{}.pin_layers".format(namespace))
             generate_rail_layer = self.get_setting("{}.generate_rail_layer".format(namespace))
-            ground_net_names = list(map(lambda x: x.name, self.get_independent_ground_nets()))  # type: List[str]
-            power_net_names = list(map(lambda x: x.name, self.get_independent_power_nets()))  # type: List[str]
+            ground_net_names = list(map(lambda x: x.name, self.get_independent_ground_nets()))  # type: list[str]
+            power_net_names = list(map(lambda x: x.name, self.get_independent_power_nets()))  # type: list[str]
             specified_power_net_names = self.get_setting("{}.power_nets".format(namespace))
             if len(specified_power_net_names) != 0: # filter by user specified settings
                 assert all(map(lambda n: n in power_net_names, specified_power_net_names))
@@ -666,14 +662,14 @@ class HammerPlaceAndRouteTool(HammerTool):
                 # Check that it's not None
                 assert isinstance(supply[0].weight, int)
                 return supply[0].weight
-            weights = list(map(get_weight, power_net_names))  # type: List[int]
+            weights = list(map(get_weight, power_net_names))  # type: list[int]
             assert len(ground_net_names) == 1, "FIXME, I am assuming there's only 1 ground net"
             return self.specify_all_power_straps_by_tracks(layers, bottom_via_layer, ground_net_names[0], power_net_names, weights, bbox, pin_layers, generate_rail_layer)
         else:
             raise NotImplementedError("Power strap generation method %s is not implemented" % method)
 
 
-    def specify_power_straps_by_tracks(self, layer_name: str, bottom_via_layer: str, blockage_spacing: Decimal, track_pitch: int, track_width: int, track_spacing: int, track_start: int, track_offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool, layer_is_all_power: bool, antenna_trim_shape: str) -> List[str]:
+    def specify_power_straps_by_tracks(self, layer_name: str, bottom_via_layer: str, blockage_spacing: Decimal, track_pitch: int, track_width: int, track_spacing: int, track_start: int, track_offset: Decimal, bbox: Optional[list[Decimal]], nets: list[str], add_pins: bool, layer_is_all_power: bool, antenna_trim_shape: str) -> list[str]:
         """
         Generate a list of TCL commands that will create power straps on a given layer by specifying the desired track consumption.
         This method assumes that power straps are built bottom-up, starting with standard cell rails.
@@ -719,7 +715,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         self._get_power_straps_for_hardmacros(layer_name, pitch, width, spacing, offset, bbox, nets)
         return self.specify_power_straps(layer_name, bottom_via_layer, blockage_spacing, pitch, width, spacing, offset, bbox, nets, add_pins, antenna_trim_shape)
 
-    def specify_all_power_straps_by_tracks(self, layer_names: List[str], bottom_via_layer: str, ground_net: str, power_nets: List[str], power_weights: List[int], bbox: Optional[List[Decimal]], pin_layers: List[str], generate_rail_layer: bool) -> List[str]:
+    def specify_all_power_straps_by_tracks(self, layer_names: list[str], bottom_via_layer: str, ground_net: str, power_nets: list[str], power_weights: list[int], bbox: Optional[list[Decimal]], pin_layers: list[str], generate_rail_layer: bool) -> list[str]:
         """
         Generate a list of TCL commands that will create power straps on a given set of layers by specifying the desired per-track track consumption and utilization.
         This will build standard cell power strap rails first. Layer-specific parameters are read from the hammer config:
@@ -755,7 +751,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         # The last layer we used
         last = self.get_stackup().get_metal(bottom_via_layer)
 
-        substrate_json = []  # type: List[Dict[str, Any]]
+        substrate_json = []  # type: list[dict[str, Any]]
 
         for layer_name in layer_names:
             layer = self.get_stackup().get_metal(layer_name)
@@ -791,9 +787,9 @@ class HammerPlaceAndRouteTool(HammerTool):
         self._dump_power_straps_for_hardmacros()
         return output
 
-    _hardmacro_power_straps = []  # type: List[Dict[str, Any]]
+    _hardmacro_power_straps = []  # type: list[dict[str, Any]]
 
-    def _get_power_straps_for_hardmacros(self, layer_name: str, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str]) -> None:
+    def _get_power_straps_for_hardmacros(self, layer_name: str, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[list[Decimal]], nets: list[str]) -> None:
         """
         Generates power strap information for hardmacros in the design.
         Also applies a set of checks per instance:
@@ -893,9 +889,9 @@ class HammerPlaceAndRouteTool(HammerTool):
             oob = False
             if macro.width is not None and macro.height is not None:
                 if layer.direction == RoutingDirection.Vertical:
-                     oob = (orientation in ["r90", "r270"] and last_edge > macro.height) or last_edge > macro.width
+                    oob = (orientation in ["r90", "r270"] and last_edge > macro.height) or last_edge > macro.width
                 if layer.direction == RoutingDirection.Horizontal:
-                     oob = (orientation in ["r90", "r270"] and last_edge > macro.width) or last_edge > macro.height
+                    oob = (orientation in ["r90", "r270"] and last_edge > macro.width) or last_edge > macro.height
             if oob and layer.index == check_layer_idx:
                 if check_abut:
                     self.logger.error(f"Hardmacro instance \"{macro.path}\" is placed such that a full group of power straps on layer {layer.name} cannot abut it! Double check your macro placement/size vs. power strap group pitch.")
@@ -933,8 +929,8 @@ class HammerPlaceAndRouteTool(HammerTool):
         """
         check_abut = self.get_setting("par.power_straps_abutment")
 
-        output = []  # type: List[Dict[str, Any]]
-        misaligned_insts = {}  # type: Dict[str, List[str]]
+        output = []  # type: list[dict[str, Any]]
+        misaligned_insts = {}  # type: dict[str, list[str]]
 
         # Valid orientations based on layer direction
         valid_orients = {"vertical": ["r0", "mx"], "horizontal": ["r0", "my"]}
@@ -1007,7 +1003,7 @@ class HammerPlaceAndRouteTool(HammerTool):
                     f"instances are:\n{json.dumps(misaligned_insts, indent=4)}")
 
         json_str = json.dumps(output, indent=4)
-        with open(os.path.join(self.run_dir, "power_straps.json"), 'w') as f:
+        with open(os.path.join(self.run_dir, "power_straps.json"), 'w', encoding="utf-8") as f:
             f.write(json_str)
 
     _power_straps_last_index = -1
@@ -1049,7 +1045,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         return round(consumed_tracks / power_utilization)
 
     @abstractmethod
-    def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool, antenna_trim_shape: str) -> List[str]:
+    def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[list[Decimal]], nets: list[str], add_pins: bool, antenna_trim_shape: str) -> list[str]:
         """
         Generate a list of TCL commands that will create power straps on a given layer.
         This is a low-level, cad-tool-specific API. It is designed to be called by higher-level methods, so calling this directly is not recommended.
@@ -1073,7 +1069,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         return []
 
     @abstractmethod
-    def specify_std_cell_power_straps(self, blockage_spacing: Decimal, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
+    def specify_std_cell_power_straps(self, blockage_spacing: Decimal, bbox: Optional[list[Decimal]], nets: list[str]) -> list[str]:
         """
         Generate a list of TCL commands that build the low-level standard cell power strap rails.
         This is a low-level, cad-tool-specific API. It is designed to be called by higher-level methods, so calling this directly is not recommended.
@@ -1109,11 +1105,10 @@ class HammerSignoffTool(HammerTool):
 
         :return: The number of signoff issues raised by the tool
         """
-        pass
 
 class HammerDRCTool(HammerSignoffTool):
 
-    def export_config_outputs(self) -> Dict[str, Any]:
+    def export_config_outputs(self) -> dict[str, Any]:
         outputs = deepdict(super().export_config_outputs())
         outputs["drc.inputs.top_module"] = self.top_module
         return outputs
@@ -1123,7 +1118,7 @@ class HammerDRCTool(HammerSignoffTool):
         pass
 
     @abstractmethod
-    def globally_waived_drc_rules(self) -> List[str]:
+    def globally_waived_drc_rules(self) -> list[str]:
         # TODO(johnwright) how to waive specific instances of DRC rules, rather than blanket waivers
         # TODO(johnwright) should this go in the YAML file?
         """
@@ -1131,19 +1126,18 @@ class HammerDRCTool(HammerSignoffTool):
 
         :return: The list of waived DRC rule names.
         """
-        pass
 
-    def drc_rules_to_run(self) -> List[str]:
+    def drc_rules_to_run(self) -> list[str]:
         """
         Return a list of the specific DRC rules to run. If empty, run all rules (the default).
 
         :return: A list of DRC rules to run or an empty list if running all rules
         """
-        res = self.get_setting("drc.inputs.drc_rules_to_run", [])  # type: List[str]
+        res = self.get_setting("drc.inputs.drc_rules_to_run", [])  # type: list[str]
         assert isinstance(res, list)
         return res
 
-    def get_drc_decks(self) -> List[hammer_tech.DRCDeck]:
+    def get_drc_decks(self) -> list[hammer_tech.DRCDeck]:
         """ Get all DRC decks for this tool. """
         return self.technology.get_drc_decks_for_tool(self.name)
 
@@ -1177,16 +1171,15 @@ class HammerDRCTool(HammerSignoffTool):
         return add_drc_text
 
     @abstractmethod
-    def drc_results_pre_waived(self) -> Dict[str, int]:
-        """ Return a Dict mapping the DRC check name to an error count (pre-waivers). """
-        pass
+    def drc_results_pre_waived(self) -> dict[str, int]:
+        """ Return a dict mapping the DRC check name to an error count (pre-waivers). """
 
     def signoff_results(self) -> int:
         """ Return the count of unwaived DRC errors. """
         return sum(self.drc_results().values())
 
-    def drc_results(self) -> Dict[str, int]:
-        """ Return a Dict mapping the DRC check name to an error count (with waivers). """
+    def drc_results(self) -> dict[str, int]:
+        """ Return a dict mapping the DRC check name to an error count (with waivers). """
         res = self.drc_results_pre_waived()
         return {k: 0 if k in self.globally_waived_drc_rules() else int(res[k]) for k in res}
 
@@ -1220,12 +1213,12 @@ class HammerDRCTool(HammerSignoffTool):
 
 class HammerLVSTool(HammerSignoffTool):
 
-    def export_config_outputs(self) -> Dict[str, Any]:
+    def export_config_outputs(self) -> dict[str, Any]:
         outputs = deepdict(super().export_config_outputs())
         outputs["lvs.inputs.top_module"] = self.top_module
         return outputs
 
-    def get_input_ilms(self, full_tree=True) -> List[ILMStruct]:
+    def get_input_ilms(self, full_tree=True) -> list[ILMStruct]:
         return super().get_input_ilms(full_tree)
 
     @abstractmethod
@@ -1233,7 +1226,7 @@ class HammerLVSTool(HammerSignoffTool):
         pass
 
     @abstractmethod
-    def globally_waived_erc_rules(self) -> List[str]:
+    def globally_waived_erc_rules(self) -> list[str]:
         # TODO(johnwright) how to waive specific instances of ERC rules, rather than blanket waivers
         # TODO(johnwright) should this go in the YAML file?
         """
@@ -1241,28 +1234,25 @@ class HammerLVSTool(HammerSignoffTool):
 
         :return: The list of waived ERC rule names.
         """
-        pass
 
     @abstractmethod
-    def erc_results_pre_waived(self) -> Dict[str, int]:
-        """ Return a Dict mapping the ERC check name to an error count (pre-waivers). """
-        pass
+    def erc_results_pre_waived(self) -> dict[str, int]:
+        """ Return a dict mapping the ERC check name to an error count (pre-waivers). """
 
     def signoff_results(self) -> int:
         """ Return the count of unwaived ERC errors and LVS errors. """
         return sum(self.erc_results().values()) + len(self.lvs_results())
 
-    def erc_results(self) -> Dict[str, int]:
-        """ Return a Dict mapping the ERC check name to an error count (with waivers). """
+    def erc_results(self) -> dict[str, int]:
+        """ Return a dict mapping the ERC check name to an error count (with waivers). """
         res = self.erc_results_pre_waived()
         return {k: 0 if k in self.globally_waived_erc_rules() else int(res[k]) for k in res}
 
     @abstractmethod
-    def lvs_results(self) -> List[str]:
+    def lvs_results(self) -> list[str]:
         """ Return the LVS issue descriptions for each issue. An empty list means LVS passes. """
-        pass
 
-    def get_lvs_decks(self) -> List[hammer_tech.LVSDeck]:
+    def get_lvs_decks(self) -> list[hammer_tech.LVSDeck]:
         """ Get all the LVS decks for this tool. """
         return self.technology.get_lvs_decks_for_tool(self.name)
 
@@ -1320,7 +1310,7 @@ class HammerLVSTool(HammerSignoffTool):
 
 
     @property
-    def schematic_files(self) -> List[str]:
+    def schematic_files(self) -> list[str]:
         """
         Get the path to the input SPICE or Verilog schematic files (e.g. *.v or *.spi).
 
@@ -1332,15 +1322,15 @@ class HammerLVSTool(HammerSignoffTool):
             raise ValueError("Nothing set for the path to the input SPICE or Verilog schematic files (e.g. *.v or *.spi) yet")
 
     @schematic_files.setter
-    def schematic_files(self, value: List[str]) -> None:
+    def schematic_files(self, value: list[str]) -> None:
         """Set the path to the input SPICE or Verilog schematic files (e.g. *.v or *.spi)."""
-        if not (isinstance(value, List)):
-            raise TypeError("schematic_files must be a List[str]")
+        if not (isinstance(value, list)):
+            raise TypeError("schematic_files must be a list[str]")
         self.attr_setter("_schematic_files", value)
 
 
     @property
-    def hcells_list(self) -> List[str]:
+    def hcells_list(self) -> list[str]:
         """
         Get the list of cells to explicitly map hierarchically in LVS.
 
@@ -1352,10 +1342,10 @@ class HammerLVSTool(HammerSignoffTool):
             raise ValueError("Nothing set for the list of cells to explicitly map hierarchically in LVS yet")
 
     @hcells_list.setter
-    def hcells_list(self, value: List[str]) -> None:
+    def hcells_list(self, value: list[str]) -> None:
         """Set the list of cells to explicitly map hierarchically in LVS."""
-        if not (isinstance(value, List)):
-            raise TypeError("hcells_list must be a List[str]")
+        if not (isinstance(value, list)):
+            raise TypeError("hcells_list must be a list[str]")
         self.attr_setter("_hcells_list", value)
 
 
@@ -1365,7 +1355,7 @@ class HammerLVSTool(HammerSignoffTool):
 
 class HammerSimTool(HammerTool):
 
-    def export_config_outputs(self) -> Dict[str, Any]:
+    def export_config_outputs(self) -> dict[str, Any]:
         outputs = deepdict(super().export_config_outputs())
         outputs["sim.outputs.waveforms"] = self.output_waveforms
         outputs["sim.outputs.saifs"] = self.output_saifs
@@ -1381,10 +1371,10 @@ class HammerSimTool(HammerTool):
         return FlowLevel.from_str(self.get_setting("sim.inputs.level"))
 
     @property
-    def benchmarks(self) -> List[str]:
+    def benchmarks(self) -> list[str]:
         """Return the benchmarks to run."""
         # TODO(ucb-bar/hammer#462) We may want to make these keys that point to a "Benchmarks" library type
-        bms = list(self.get_setting("sim.inputs.benchmarks", []))  # type: List[str]
+        bms = list(self.get_setting("sim.inputs.benchmarks", []))  # type: list[str]
         return bms
 
     ### Generated interface HammerSimTool ###
@@ -1412,7 +1402,7 @@ class HammerSimTool(HammerTool):
 
 
     @property
-    def input_files(self) -> List[str]:
+    def input_files(self) -> list[str]:
         """
         Get the paths to input verilog files.
 
@@ -1424,10 +1414,10 @@ class HammerSimTool(HammerTool):
             raise ValueError("Nothing set for the paths to input verilog files yet")
 
     @input_files.setter
-    def input_files(self, value: List[str]) -> None:
+    def input_files(self, value: list[str]) -> None:
         """Set the paths to input verilog files."""
-        if not (isinstance(value, List)):
-            raise TypeError("input_files must be a List[str]")
+        if not (isinstance(value, list)):
+            raise TypeError("input_files must be a list[str]")
         self.attr_setter("_input_files", value)
 
 
@@ -1494,7 +1484,7 @@ class HammerSimTool(HammerTool):
     ### Outputs ###
 
     @property
-    def output_waveforms(self) -> List[str]:
+    def output_waveforms(self) -> list[str]:
         """
         Get the paths to output waveforms.
 
@@ -1506,15 +1496,15 @@ class HammerSimTool(HammerTool):
             raise ValueError("Nothing set for the paths to output waveforms yet")
 
     @output_waveforms.setter
-    def output_waveforms(self, value: List[str]) -> None:
+    def output_waveforms(self, value: list[str]) -> None:
         """Set the paths to output waveforms."""
-        if not (isinstance(value, List)):
-            raise TypeError("output_waveforms must be a List[str]")
+        if not (isinstance(value, list)):
+            raise TypeError("output_waveforms must be a list[str]")
         self.attr_setter("_output_waveforms", value)
 
 
     @property
-    def output_saifs(self) -> List[str]:
+    def output_saifs(self) -> list[str]:
         """
         Get the paths to output activity files.
 
@@ -1526,10 +1516,10 @@ class HammerSimTool(HammerTool):
             raise ValueError("Nothing set for the paths to output activity files yet")
 
     @output_saifs.setter
-    def output_saifs(self, value: List[str]) -> None:
+    def output_saifs(self, value: list[str]) -> None:
         """Set the paths to output activity files."""
-        if not (isinstance(value, List)):
-            raise TypeError("output_saifs must be a List[str]")
+        if not (isinstance(value, list)):
+            raise TypeError("output_saifs must be a list[str]")
         self.attr_setter("_output_saifs", value)
 
 
@@ -1621,7 +1611,7 @@ class HammerPowerTool(HammerTool):
         """Return the flow level."""
         return FlowLevel.from_str(self.get_setting("power.inputs.level"))
 
-    def get_power_report_configs(self) -> List[PowerReport]:
+    def get_power_report_configs(self) -> list[PowerReport]:
         """
         Get the power report config settings
         """
@@ -1687,7 +1677,7 @@ class HammerPowerTool(HammerTool):
 
 
     @property
-    def input_files(self) -> List[str]:
+    def input_files(self) -> list[str]:
         """
         Get the paths to RTL input files or design netlist.
 
@@ -1699,15 +1689,15 @@ class HammerPowerTool(HammerTool):
             raise ValueError("Nothing set for the paths to RTL input files or design netlist yet")
 
     @input_files.setter
-    def input_files(self, value: List[str]) -> None:
+    def input_files(self, value: list[str]) -> None:
         """Set the paths to RTL input files or design netlist."""
-        if not (isinstance(value, List)):
-            raise TypeError("input_files must be a List[str]")
+        if not (isinstance(value, list)):
+            raise TypeError("input_files must be a list[str]")
         self.attr_setter("_input_files", value)
 
 
     @property
-    def spefs(self) -> List[str]:
+    def spefs(self) -> list[str]:
         """
         Get the list of spef files for power anlaysis.
 
@@ -1719,10 +1709,10 @@ class HammerPowerTool(HammerTool):
             raise ValueError("Nothing set for the list of spef files for power anlaysis yet")
 
     @spefs.setter
-    def spefs(self, value: List[str]) -> None:
+    def spefs(self, value: list[str]) -> None:
         """Set the list of spef files for power anlaysis."""
-        if not (isinstance(value, List)):
-            raise TypeError("spefs must be a List[str]")
+        if not (isinstance(value, list)):
+            raise TypeError("spefs must be a list[str]")
         self.attr_setter("_spefs", value)
 
 
@@ -1747,7 +1737,7 @@ class HammerPowerTool(HammerTool):
 
 
     @property
-    def waveforms(self) -> List[str]:
+    def waveforms(self) -> list[str]:
         """
         Get the list of waveform dump files for dynamic power analysis.
 
@@ -1759,15 +1749,15 @@ class HammerPowerTool(HammerTool):
             raise ValueError("Nothing set for the list of waveform dump files for dynamic power analysis yet")
 
     @waveforms.setter
-    def waveforms(self, value: List[str]) -> None:
+    def waveforms(self, value: list[str]) -> None:
         """Set the list of waveform dump files for dynamic power analysis."""
-        if not (isinstance(value, List)):
-            raise TypeError("waveforms must be a List[str]")
+        if not (isinstance(value, list)):
+            raise TypeError("waveforms must be a list[str]")
         self.attr_setter("_waveforms", value)
 
 
     @property
-    def saifs(self) -> List[str]:
+    def saifs(self) -> list[str]:
         """
         Get the list of activity files for dynamic power analysis.
 
@@ -1779,10 +1769,10 @@ class HammerPowerTool(HammerTool):
             raise ValueError("Nothing set for the list of activity files for dynamic power analysis yet")
 
     @saifs.setter
-    def saifs(self, value: List[str]) -> None:
+    def saifs(self, value: list[str]) -> None:
         """Set the list of activity files for dynamic power analysis."""
-        if not (isinstance(value, List)):
-            raise TypeError("saifs must be a List[str]")
+        if not (isinstance(value, list)):
+            raise TypeError("saifs must be a list[str]")
         self.attr_setter("_saifs", value)
 
 
@@ -1876,7 +1866,7 @@ class HammerFormalTool(HammerTool):
 
 
     @property
-    def input_files(self) -> List[str]:
+    def input_files(self) -> list[str]:
         """
         Get the input collection of implementation design files.
 
@@ -1888,15 +1878,15 @@ class HammerFormalTool(HammerTool):
             raise ValueError("Nothing set for the input collection of implementation design files yet")
 
     @input_files.setter
-    def input_files(self, value: List[str]) -> None:
+    def input_files(self, value: list[str]) -> None:
         """Set the input collection of implementation design files."""
-        if not (isinstance(value, List)):
-            raise TypeError("input_files must be a List[str]")
+        if not (isinstance(value, list)):
+            raise TypeError("input_files must be a list[str]")
         self.attr_setter("_input_files", value)
 
 
     @property
-    def reference_files(self) -> List[str]:
+    def reference_files(self) -> list[str]:
         """
         Get the input collection of reference design files.
 
@@ -1908,10 +1898,10 @@ class HammerFormalTool(HammerTool):
             raise ValueError("Nothing set for the input collection of reference design files yet")
 
     @reference_files.setter
-    def reference_files(self, value: List[str]) -> None:
+    def reference_files(self, value: list[str]) -> None:
         """Set the input collection of reference design files."""
-        if not (isinstance(value, List)):
-            raise TypeError("reference_files must be a List[str]")
+        if not (isinstance(value, list)):
+            raise TypeError("reference_files must be a list[str]")
         self.attr_setter("_reference_files", value)
 
 
@@ -1971,7 +1961,7 @@ class HammerTimingTool(HammerTool):
     ### Inputs ###
 
     @property
-    def input_files(self) -> List[str]:
+    def input_files(self) -> list[str]:
         """
         Get the input collection of design files.
 
@@ -1983,10 +1973,10 @@ class HammerTimingTool(HammerTool):
             raise ValueError("Nothing set for the input collection of design files yet")
 
     @input_files.setter
-    def input_files(self, value: List[str]) -> None:
+    def input_files(self, value: list[str]) -> None:
         """Set the input collection of design files."""
-        if not (isinstance(value, List)):
-            raise TypeError("input_files must be a List[str]")
+        if not (isinstance(value, list)):
+            raise TypeError("input_files must be a list[str]")
         self.attr_setter("_input_files", value)
 
 
@@ -2031,7 +2021,7 @@ class HammerTimingTool(HammerTool):
 
 
     @property
-    def spefs(self) -> Optional[List]:
+    def spefs(self) -> Optional[list]:
         """
         Get the (optional) list of SPEF files.
 
@@ -2043,10 +2033,10 @@ class HammerTimingTool(HammerTool):
             return None
 
     @spefs.setter
-    def spefs(self, value: Optional[List]) -> None:
+    def spefs(self, value: Optional[list]) -> None:
         """Set the (optional) list of SPEF files."""
-        if not (isinstance(value, List) or (value is None)):
-            raise TypeError("spefs must be a Optional[List]")
+        if not (isinstance(value, list) or (value is None)):
+            raise TypeError("spefs must be a Optional[list]")
         self.attr_setter("_spefs", value)
 
 
@@ -2074,18 +2064,19 @@ class HammerTimingTool(HammerTool):
     ### END Generated interface HammerTimingTool ###
 
 class HasUPFSupport(HammerTool):
-   """Mix-in trait with functions useful for tools with UPF style power constraints"""
-   @property
-   def upf_power_specification(self) -> str:
-        output = [] # type: List[str]
-        domain = "AO"
+    """Mix-in trait with functions useful for tools with UPF style power constraints"""
+    @property
+    def upf_power_specification(self) -> str:
+        output = [] # type: list[str]
+        domains = self.get_all_power_domains()
         #Header
         output.append('upf_version 2.0')
         output.append(f'set_design_top {self.top_module}')
         vdd = VoltageValue(self.get_setting("vlsi.inputs.supplies.VDD"))
         #Create Single Power Domain
-        output.append(f'create_power_domain {domain} \\')
-        output.append(f'\t-elements {{.}}')
+        for domain in domains:
+            output.append(f'create_power_domain {domain.path} \\')
+            output.append('\t-elements {.}')
         #Get Supply Nets
         power_nets = self.get_all_power_nets()
         ground_nets = self.get_all_ground_nets()
@@ -2095,7 +2086,7 @@ class HasUPFSupport(HammerTool):
             #Create Supply Nets
             output.append(f'create_supply_net {pg_net.name} -domain {domain}')
             output.append(f'create_supply_port {pg_net.name} -domain {domain} \\')
-            output.append(f'\t-direction in')
+            output.append('\t-direction in')
             for pin in pins:
                 #Connect Supply Net
                 output.append(f'connect_supply_net {pg_net.name} -ports {pin}')
@@ -2113,13 +2104,13 @@ class HasUPFSupport(HammerTool):
             pins = g_net.pins if g_net.pins is not None else [g_net.name]
             for pin in pins:
                 output.append(f'add_port_state {pin} \\')
-                output.append(f'\t-state {{default 0.0}}')
+                output.append('\t-state {default 0.0}')
         #Create Power State Table
         output.append('create_pst pwr_state_table \\')
         output.append(f'\t-supplies {{{" ".join(map(lambda x: x.name, power_nets))} {" ".join(map(lambda x: x.name, ground_nets))}}}')
         #Add Power States
-        output.append(f'add_pst_state aon \\')
-        output.append(f'\t-pst {{pwr_state_table}} \\')
+        output.append('add_pst_state aon \\')
+        output.append('\t-pst {pwr_state_table} \\')
         output.append(f'\t-state {{{" ".join(map(lambda x: "default", power_nets+ground_nets))}}}')
         return "\n".join(output)
 
@@ -2129,7 +2120,7 @@ class HasCPFSupport(HammerTool):
     constraints"""
     @property
     def cpf_power_specification(self) -> str:
-        output = [] # type: List[str]
+        output = [] # type: list[str]
         # Just names
         domain = "AO"
         condition = "nominal"
@@ -2139,8 +2130,8 @@ class HasCPFSupport(HammerTool):
         output.append("set_hierarchy_separator /")
         output.append(f'set_design {self.top_module}')
         # Define power and ground nets (HARD CODE)
-        power_nets = self.get_all_power_nets() # type: List[Supply]
-        ground_nets = self.get_all_ground_nets()# type: List[Supply]
+        power_nets = self.get_all_power_nets() # type: list[Supply]
+        ground_nets = self.get_all_ground_nets()# type: list[Supply]
         for power_net in power_nets:
             vdd = VoltageValue(self.get_setting("vlsi.inputs.supplies.VDD")) # type: VoltageValue
             if power_net.voltage is not None:
@@ -2171,9 +2162,9 @@ class HasSDCSupport(HammerTool):
     @property
     def sdc_clock_constraints(self) -> str:
         """Generate TCL fragments for top module clock constraints."""
-        output = [] # type: List[str]
-        groups = {} # type: Dict[str, List[str]]
-        ungrouped_clocks = [] # type: List[str]
+        output = [] # type: list[str]
+        groups = {} # type: dict[str, list[str]]
+        ungrouped_clocks = [] # type: list[str]
 
         clocks = self.get_clock_ports()
         time_unit = self.get_time_unit().value_prefix + self.get_time_unit().unit
@@ -2215,7 +2206,7 @@ class HasSDCSupport(HammerTool):
     @property
     def sdc_pin_constraints(self) -> str:
         """Generate a fragment for I/O pin constraints."""
-        output = []  # type: List[str]
+        output = []  # type: list[str]
 
         cap_unit = self.get_cap_unit().value_prefix + self.get_cap_unit().unit
 
@@ -2250,7 +2241,7 @@ class HasSDCSupport(HammerTool):
                 output.append(f"set_dont_touch [get_nets {pin.pins}]")
 
         # Custom sdc constraints that are verbatim appended
-        custom_sdc_constraints = self.get_setting("vlsi.inputs.custom_sdc_constraints")  # type: Union[List[str], str]
+        custom_sdc_constraints = self.get_setting("vlsi.inputs.custom_sdc_constraints")  # type: Union[list[str], str]
         if isinstance(custom_sdc_constraints, str):
             custom_sdc_constraints = [custom_sdc_constraints]
         for custom in custom_sdc_constraints:
@@ -2266,13 +2257,12 @@ class HasSDCSupport(HammerTool):
 
         :return: The (optional) input post-synthesis SDC constraint file.
         """
-        pass
 
 class TCLTool(HammerTool):
     """Mix-in trait for tools which consume a flat TCL file as input"""
 
     @property
-    def output(self) -> List[str]:
+    def output(self) -> list[str]:
         """
         Buffered output to be put in <name>.tcl
         """
@@ -2296,13 +2286,13 @@ class MentorTool(HammerTool):
     """ Mix-in trait with functions useful for Mentor-Graphics-based tools. """
 
     @property
-    def env_vars(self) -> Dict[str, str]:
+    def env_vars(self) -> dict[str, str]:
         """
         Get the list of environment variables required for this tool.
         Note to subclasses: remember to include variables from super().env_vars!
         """
         # Use the base extra_env_variables and ensure that our custom variables are on top.
-        list_of_vars = self.get_setting("mentor.extra_env_vars")  # type: List[Dict[str, Any]]
+        list_of_vars = self.get_setting("mentor.extra_env_vars")  # type: list[dict[str, Any]]
         assert isinstance(list_of_vars, list)
 
         mentor_vars = {
@@ -2324,7 +2314,7 @@ class MentorTool(HammerTool):
 class MentorCalibreTool(MentorTool):
     """ Mix-in trait for Mentor's Calibre tool suite. """
     @property
-    def env_vars(self) -> Dict[str, str]:
+    def env_vars(self) -> dict[str, str]:
         """
         Get the list of environment variables required for this tool.
         Note to subclasses: remember to include variables from super().env_vars!
@@ -2370,7 +2360,7 @@ class HammerPCBDeliverableTool(HammerTool):
     ### Outputs ###
 
     @property
-    def output_footprints(self) -> List[str]:
+    def output_footprints(self) -> list[str]:
         """
         Get the list of the PCB footprint files for the project.
 
@@ -2382,15 +2372,15 @@ class HammerPCBDeliverableTool(HammerTool):
             raise ValueError("Nothing set for the list of the PCB footprint files for the project yet")
 
     @output_footprints.setter
-    def output_footprints(self, value: List[str]) -> None:
+    def output_footprints(self, value: list[str]) -> None:
         """Set the list of the PCB footprint files for the project."""
-        if not (isinstance(value, List)):
-            raise TypeError("output_footprints must be a List[str]")
+        if not (isinstance(value, list)):
+            raise TypeError("output_footprints must be a list[str]")
         self.attr_setter("_output_footprints", value)
 
 
     @property
-    def output_schematic_symbols(self) -> List[str]:
+    def output_schematic_symbols(self) -> list[str]:
         """
         Get the list of the PCB schematic symbol files for the project.
 
@@ -2402,10 +2392,10 @@ class HammerPCBDeliverableTool(HammerTool):
             raise ValueError("Nothing set for the list of the PCB schematic symbol files for the project yet")
 
     @output_schematic_symbols.setter
-    def output_schematic_symbols(self, value: List[str]) -> None:
+    def output_schematic_symbols(self, value: list[str]) -> None:
         """Set the list of the PCB schematic symbol files for the project."""
-        if not (isinstance(value, List)):
-            raise TypeError("output_schematic_symbols must be a List[str]")
+        if not (isinstance(value, list)):
+            raise TypeError("output_schematic_symbols must be a list[str]")
         self.attr_setter("_output_schematic_symbols", value)
 
     ### END Generated interface HammerPCBDeliverableTool ###
