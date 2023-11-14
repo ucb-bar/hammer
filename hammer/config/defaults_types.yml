@@ -84,6 +84,7 @@ vlsi.inputs:
   supplies:
     power: list[dict[str, Any]]
     ground: list[dict[str, Any]]
+    domain: Optional[str]
     VDD: str
     GND: str
 
