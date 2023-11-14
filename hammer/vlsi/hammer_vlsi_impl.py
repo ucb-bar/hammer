@@ -2106,6 +2106,21 @@ class HasUPFSupport(HammerTool):
             for pin in pins:
                 output.append(f'add_port_state {pin} \\')
                 output.append(f'\t-state {{default {g_net.voltage}}}')
+        # Create Level Shifters
+        for domain in domains:
+            # Input Shifter
+            output.append(f'set_level_shifter {domain.path}_INPUTS \\')
+            output.append(f'\t-domain {domain.path} \\')
+            output.append('\t-applies_to inputs \\')
+            output.append('\t-rule both \\')
+            output.append('\t-location automatic')
+
+            # Output Shifter
+            output.append(f'set_level_shifter {domain.path}_OUTPUTS \\')
+            output.append(f'\t-domain {domain.path} \\')
+            output.append('\t-applies_to outputs \\')
+            output.append('\t-rule both \\')
+            output.append('\t-location automatic')
         # Create Power State Table
         output.append('create_pst pwr_state_table \\')
         output.append(f'\t-supplies {{{" ".join(p_net.name for p_net in power_nets)} {" ".join(g_net.name for g_net in ground_nets)}}}')
