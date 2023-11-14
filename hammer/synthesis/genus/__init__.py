@@ -224,7 +224,7 @@ class Genus(HammerSynthesisTool, CadenceTool):
         ))
 
         # Load input files and check that they are all Verilog.
-        if not self.check_input_files([".v", ".sv"]):
+        if not self.check_input_files([".v", ".sv", "vh"]):
             return False
         # We are switching working directories and Genus still needs to find paths.
         abspath_input_files = list(map(lambda name: os.path.join(os.getcwd(), name), self.input_files))  # type: List[str]
