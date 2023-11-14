@@ -23,6 +23,7 @@ from hammer.tech.specialcells import CellType, SpecialCell
 import os
 import json
 from collections import Counter
+import re
 
 class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
 
@@ -248,6 +249,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         return True
 
     def syn_generic(self) -> bool:
+
         # TODO: is there a better way to do this? like self.get_setting()
         if self._database.has_setting("synthesis.yosys.latch_map_file"):
             latch_map = f"techmap -map {self.get_setting('synthesis.yosys.latch_map_file')}"
@@ -268,9 +270,10 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         {latch_map}
 
         # Technology mapping of flip-flops
+        # dfflibmap only supports one liberty file
         """)
         for liberty_file in self.liberty_files_tt.split():
-            self.verbose_append(f"dfflibmap -map-only -liberty {liberty_file}")
+            self.verbose_append(f"dfflibmap -liberty {liberty_file}")
         self.verbose_append("opt")
 
         self.write_sdc_file()
@@ -299,6 +302,9 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
 
         # Remove unused cells and wires
         opt_clean -purge
+
+        # Remove all $assert cells
+        chformal -assert -remove
         """)
         return True
 

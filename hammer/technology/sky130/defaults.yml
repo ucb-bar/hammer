@@ -47,7 +47,6 @@ lvs.netgen.setup_file_meta: lazysubst
 # Set some defaults for this technology.
 vlsi:
   core:
-    technology: sky130
     node: 130
     sram_generator_tool: "hammer.technology.sky130.sram_compiler"
   inputs:
