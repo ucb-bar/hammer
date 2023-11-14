@@ -43,3 +43,7 @@ $(HAMMER_D_MK):
 	hammer-vlsi --obj_dir $(OBJ_DIR) -e $(ENV_YML) $(HAMMER_EXTRA_ARGS) build
 
 -include $(HAMMER_D_MK)
+
+clean:
+    rm -rf $(OBJ_DIR)
+    find $(vlsi_dir) -name 'hammer-vlsi-*.log' -delete
