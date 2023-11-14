@@ -2069,51 +2069,50 @@ class HasUPFSupport(HammerTool):
     def upf_power_specification(self) -> str:
         output = [] # type: list[str]
         domains = self.get_all_power_domains()
-        #Header
+        # Header
         output.append('upf_version 2.0')
         output.append(f'set_design_top {self.top_module}')
-        vdd = VoltageValue(self.get_setting("vlsi.inputs.supplies.VDD"))
-        #Create Single Power Domain
+        # Create Power Domains
         for domain in domains:
             output.append(f'create_power_domain {domain.path} \\')
             output.append('\t-elements {.}')
-        #Get Supply Nets
+        # Get Supply Nets
         power_nets = self.get_all_power_nets()
         ground_nets = self.get_all_ground_nets()
-        #Create Supply Ports
+        # Create Supply Ports
         for pg_net in power_nets + ground_nets:
             pins = pg_net.pins if pg_net.pins is not None else [pg_net.name]
-            #Create Supply Nets
+            # Create Supply Nets
             output.append(f'create_supply_net {pg_net.name} -domain {pg_net.domain}')
             output.append(f'create_supply_port {pg_net.name} -domain {pg_net.domain} \\')
             output.append('\t-direction in')
             for pin in pins:
-                #Connect Supply Net
+                # Connect Supply Net
                 output.append(f'connect_supply_net {pg_net.name} -ports {pin}')
-        #Set Domain Supply Net
+        # Set Domain Supply Net
         for p_net in power_nets:
             for g_net in ground_nets:
                 output.append(f'set_domain_supply_net {p_net.domain} \\')
                 output.append(f'\t-primary_power_net {p_net.name} \\')
                 output.append(f'\t-primary_ground_net {g_net.name}')
-        #Add Port States
+        # Add Port States
         for p_net in power_nets:
             pins = p_net.pins if p_net.pins is not None else [p_net.name]
             for pin in pins:
                 output.append(f'add_port_state {pin} \\')
-                output.append(f'\t-state {{default {vdd.value}}}')
+                output.append(f'\t-state {{default {p_net.voltage}}}')
         for g_net in ground_nets:
             pins = g_net.pins if g_net.pins is not None else [g_net.name]
             for pin in pins:
                 output.append(f'add_port_state {pin} \\')
-                output.append('\t-state {default 0.0}')
-        #Create Power State Table
+                output.append(f'\t-state {{default {g_net.voltage}}}')
+        # Create Power State Table
         output.append('create_pst pwr_state_table \\')
-        output.append(f'\t-supplies {{{" ".join(map(lambda x: x.name, power_nets))} {" ".join(map(lambda x: x.name, ground_nets))}}}')
-        #Add Power States
+        output.append(f'\t-supplies {{{" ".join(p_net.name for p_net in power_nets)} {" ".join(g_net.name for g_net in ground_nets)}}}')
+        # Add Power States
         output.append('add_pst_state aon \\')
         output.append('\t-pst {pwr_state_table} \\')
-        output.append(f'\t-state {{{" ".join(map(lambda x: "default", power_nets+ground_nets))}}}')
+        output.append(f'\t-state {{{" ".join(map(lambda _: "default", power_nets+ground_nets))}}}')
         return "\n".join(output)
 
 
