@@ -1533,6 +1533,14 @@ class HammerTool(metaclass=ABCMeta):
         # so there is no need to pass the masters in here, meaning we can use from_dict.
         return list(map(PlacementConstraint.from_dict, constraints))
 
+    def get_all_power_domains(self) -> List[PlacementConstraint]:
+        """Return all power domains from placement constraints section.
+
+        Returns:
+            List[PlacementConstraint]: All power domains.
+        """
+        return [pd for pd in self.get_placement_constraints() if pd.type == PlacementConstraintType.PowerDomain]
+
     def get_mmmc_corners(self) -> List[MMMCCorner]:
         """
         Get a list of MMMC corners as specified in the config.
