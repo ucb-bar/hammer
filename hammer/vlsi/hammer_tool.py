@@ -3,6 +3,7 @@
 #
 #  See LICENSE for licence details.
 
+import dataclasses
 import inspect
 import os
 import re
@@ -1102,13 +1103,13 @@ class HammerTool(metaclass=ABCMeta):
             supply = Supply(name=raw_supply['name'], pins=[], tie=None, weight=1, voltage=None)
             assert 'pin' not in raw_supply, "supply.pin: str has been replaced with supply.pins: List[str]"
             if 'pins' in raw_supply:
-                supply = supply._replace(pins=raw_supply['pins'])
+                supply = dataclasses.replace(supply, pins=raw_supply['pins'])
             if 'tie' in raw_supply:
-                supply = supply._replace(tie=raw_supply['tie'])
+                supply = dataclasses.replace(supply, tie=raw_supply['tie'])
             if 'weight' in raw_supply:
-                supply = supply._replace(weight=raw_supply['weight'])
+                supply = dataclasses.replace(supply, weight=raw_supply['weight'])
             if 'voltage' in raw_supply:
-                supply = supply._replace(voltage=raw_supply['voltage'])
+                supply = dataclasses.replace(supply, voltage=raw_supply['voltage'])
             output.append(supply)
         return output
 
