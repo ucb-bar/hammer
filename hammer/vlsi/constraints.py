@@ -4,18 +4,19 @@
 #  See LICENSE for licence details.
 
 # pylint: disable=bad-continuation
+from dataclasses import dataclass
+from decimal import Decimal
+import math
 import operator
+import string
 from enum import Enum
 from functools import reduce
-from typing import Dict, NamedTuple, Optional, List, Any, Tuple, Union, cast
+from typing import NamedTuple, Optional, Any, Union, cast
 
 from hammer.utils import reverse_dict, get_or_else, add_dicts
 from hammer.tech import MacroSize
 from .units import TimeValue, VoltageValue, TemperatureValue, CapacitanceValue
 
-from decimal import Decimal
-import math
-import string
 
 # Struct that holds various paths related to ILMs.
 class ILMStruct(NamedTuple('ILMStruct', [
@@ -26,7 +27,7 @@ class ILMStruct(NamedTuple('ILMStruct', [
     ('gds', str),
     ('netlist', str),
     ('sim_netlist', Optional[str]),
-    ('sdcs', List[str])
+    ('sdcs', list[str])
 ])):
     __slots__ = ()
 
@@ -54,7 +55,7 @@ class ILMStruct(NamedTuple('ILMStruct', [
             gds=str(ilm["gds"]),
             netlist=str(ilm["netlist"]),
             sim_netlist=ilm.get("sim_netlist"),
-            sdcs=list(map(lambda x: str(x), ilm["sdcs"]))
+            sdcs=list(map(str, ilm["sdcs"]))
         )
 
 
@@ -85,13 +86,16 @@ class SRAMParameters(NamedTuple('SRAMParameters', [
         )
 
 
-Supply = NamedTuple('Supply', [
-    ('name', str),
-    ('pins', Optional[List[str]]),
-    ('tie', Optional[str]),
-    ('weight', Optional[int]),
-    ('voltage', Optional[str])
-])
+@dataclass
+class Supply:
+    """Supply constraint defined in defaults.yml."""
+
+    name: str
+    pins: Optional[list[str]]
+    tie: Optional[str]
+    weight: Optional[str]
+    voltage: Optional[str]
+    domain: Optional[str] = "AO"
 
 
 class PinAssignmentError(ValueError):
@@ -110,31 +114,30 @@ class PinAssignmentPreplacedError(PinAssignmentError):
         self.pin = pin
 
     def __str__(self) -> str:
-        return "Pins {p} assigned as a preplaced pin with layers or side. Assuming pins are preplaced pins and ignoring layers and side.".format(
-            p=self.pin.pins)
+        return f"Pins {self.pin.pins} assigned as a preplaced pin with layers or side. Assuming pins are preplaced pins and ignoring layers and side."
 
 
 class PinAssignment(NamedTuple('PinAssignment', [
     ('pins', str),
     ('side', Optional[str]),
-    ('layers', Optional[List[str]]),
+    ('layers', Optional[list[str]]),
     ('preplaced', bool),
-    ('location', Optional[Tuple[float, float]]),
+    ('location', Optional[tuple[float, float]]),
     ('width', Optional[float]),
     ('depth', Optional[float])
 ])):
     __slots__ = ()
 
-    def __new__(cls, pins: str, side: Optional[str] = None, layers: Optional[List[str]] = None,
+    def __new__(cls, pins: str, side: Optional[str] = None, layers: Optional[list[str]] = None,
                 preplaced: Optional[bool] = None,
-                location: Optional[Tuple[float, float]] = None, width: Optional[float] = None,
+                location: Optional[tuple[float, float]] = None, width: Optional[float] = None,
                 depth: Optional[float] = None) -> "PinAssignment":
         return super().__new__(cls, pins, side, layers, get_or_else(preplaced, False), location, width, depth)
 
     @staticmethod
-    def create(pins: str, side: Optional[str] = None, layers: Optional[List[str]] = None,
+    def create(pins: str, side: Optional[str] = None, layers: Optional[list[str]] = None,
                 preplaced: Optional[bool] = None,
-                location: Optional[Tuple[float, float]] = None, width: Optional[float] = None,
+                location: Optional[tuple[float, float]] = None, width: Optional[float] = None,
                 depth: Optional[float] = None) -> "PinAssignment":
         """
         Static method that works around the fact that mypy gets very confused at
@@ -143,7 +146,7 @@ class PinAssignment(NamedTuple('PinAssignment', [
         return PinAssignment(pins, side, layers, get_or_else(preplaced, False), location, width, depth)
 
     @staticmethod
-    def from_dict(raw_assign: Dict[str, Any], semi_auto: bool = True) -> "PinAssignment":
+    def from_dict(raw_assign: dict[str, Any], semi_auto: bool = True) -> "PinAssignment":
         pins = str(raw_assign["pins"])  # type: str
 
         side = None  # type: Optional[str]
@@ -157,15 +160,14 @@ class PinAssignment(NamedTuple('PinAssignment', [
                     raise PinAssignmentSemiAutoError("side set to internal")
             else:
                 raise PinAssignmentError(
-                    "Pins {p} have invalid side {s}. Assuming pins will be handled by CAD tool.".format(p=pins,
-                                                                                                        s=raw_side))
+                    f"Pins {pins} have invalid side {raw_side}. Assuming pins will be handled by CAD tool.")
 
         preplaced = raw_assign.get("preplaced", False)  # type: bool
         assert isinstance(preplaced, bool), "preplaced must be a bool"
 
-        location = None  # type: Optional[Tuple[float, float]]
+        location = None  # type: Optional[tuple[float, float]]
         if "location" in raw_assign:
-            location_raw = raw_assign["location"]  # type: Union[List[float], Tuple[float, float]]
+            location_raw = raw_assign["location"]  # type: Union[list[float], tuple[float, float]]
             assert len(location_raw) == 2, "location must be a Optional[Tuple[float, float]]"
             assert isinstance(location_raw[0], float), "location must be a Optional[Tuple[float, float]]"
             assert isinstance(location_raw[1], float), "location must be a Optional[Tuple[float, float]]"
@@ -185,9 +187,9 @@ class PinAssignment(NamedTuple('PinAssignment', [
         if not semi_auto and depth is not None:
             raise PinAssignmentSemiAutoError("depth requires semi_auto")
 
-        layers = None  # type: Optional[List[str]]
+        layers = None  # type: Optional[list[str]]
         if "layers" in raw_assign:
-            raw_layers = raw_assign["layers"]  # type: List[str]
+            raw_layers = raw_assign["layers"]  # type: list[str]
             assert isinstance(raw_layers, list), "layers must be a List[str]"
             for layer in "layers":
                 assert isinstance(layer, str), "layers must be a List[str]"
@@ -195,15 +197,14 @@ class PinAssignment(NamedTuple('PinAssignment', [
 
         if preplaced:
             should_be_none = reduce(operator.and_, map(lambda x: x is None, [side, location, width, depth]))
-            if len(get_or_else(layers, cast(List[str], []))) > 0 or not should_be_none:
+            if len(get_or_else(layers, cast(list[str], []))) > 0 or not should_be_none:
                 raise PinAssignmentPreplacedError(
                     PinAssignment(pins=pins, side=None, layers=[], preplaced=preplaced, location=None, width=None,
                                   depth=None))
         else:
-            if len(get_or_else(layers, cast(List[str], []))) == 0 or side is None:
+            if len(get_or_else(layers, cast(list[str], []))) == 0 or side is None:
                 raise PinAssignmentError(
-                    "Pins {p} assigned without layers or side. Assuming pins will be handled by CAD tool.".format(
-                        p=pins))
+                    f"Pins {pins} assigned without layers or side. Assuming pins will be handled by CAD tool.")
         return PinAssignment(
             pins=pins,
             side=side,
@@ -218,7 +219,7 @@ class PinAssignment(NamedTuple('PinAssignment', [
         base = {
             "pins": self.pins,
             "preplaced": self.preplaced
-        }  # type: Dict[str, Any]
+        }  # type: dict[str, Any]
         if self.side is not None:
             base['side'] = self.side
         if self.layers is not None:
@@ -249,7 +250,7 @@ BumpsDefinition = NamedTuple('BumpsDefinition', [
     ('global_x_offset', Decimal),
     ('global_y_offset', Decimal),
     ('cell', str),
-    ('assignments', List[BumpAssignment])
+    ('assignments', list[BumpAssignment])
 ])
 
 class BumpsPinNamingScheme(Enum):
@@ -260,7 +261,7 @@ class BumpsPinNamingScheme(Enum):
     Index = 4
 
     @classmethod
-    def __mapping(cls) -> Dict[str, "BumpsPinNamingScheme"]:
+    def __mapping(cls) -> dict[str, "BumpsPinNamingScheme"]:
         return {
             "A0": BumpsPinNamingScheme.A0,
             "A1": BumpsPinNamingScheme.A1,
@@ -273,13 +274,13 @@ class BumpsPinNamingScheme(Enum):
     def from_str(input_str: str) -> "BumpsPinNamingScheme":
         try:
             return BumpsPinNamingScheme.__mapping()[input_str]
-        except KeyError:
-            raise ValueError("Invalid bumps pin naming scheme: " + str(input_str))
+        except KeyError as exc:
+            raise ValueError(f"Invalid bumps pin naming scheme: {input_str}") from exc
 
     def __str__(self) -> str:
         return reverse_dict(BumpsPinNamingScheme.__mapping())[self]
 
-    def sort_by_name(self, definition: BumpsDefinition, assignments: List[BumpAssignment]) -> List[BumpAssignment]:
+    def sort_by_name(self, definition: BumpsDefinition, assignments: list[BumpAssignment]) -> list[BumpAssignment]:
         """
         Sort a list of bump assignments for a given bump definition by their name in a human-readable way.
 
@@ -323,7 +324,7 @@ class BumpsPinNamingScheme(Enum):
         elif self in [bpns.A0, bpns.A1, bpns.A00, bpns.A01]:
 
             if Decimal(col) != assignment.x or Decimal(row) != assignment.y:
-                raise ValueError("This bump naming scheme does not support fractional x and y assignments: x={x}, y={y}. Implement this, or increase the pitch and use blowouts.".format(x=assignment.x, y=assignment.y))
+                raise ValueError(f"This bump naming scheme does not support fractional x and y assignments: x={assignment.x}, y={assignment.y}. Implement this, or increase the pitch and use blowouts.")
 
             # Top right in GDS-land is A0 or A1 (this is top-left in board-land)
             col = definition.x - col
@@ -403,7 +404,7 @@ class DelayConstraint(NamedTuple('DelayConstraint', [
         return super().__new__(cls, name, clock, direction, delay, corner)
 
     @staticmethod
-    def from_dict(delay_src: Dict[str, Any]) -> "DelayConstraint":
+    def from_dict(delay_src: dict[str, Any]) -> "DelayConstraint":
         direction = str(delay_src["direction"])
         corner = None  # type: Optional[str]
         if "corner" in delay_src:
@@ -447,7 +448,7 @@ class DecapConstraint(NamedTuple('DecapConstraint', [
             width: Optional[Decimal],
             height: Optional[Decimal]) -> "DecapConstraint":
         if target not in ("capacitance", "density"):
-            raise ValueError("Invalid target {target}".format(target=target))
+            raise ValueError(f"Invalid target {target}")
         if target == "density" and density is None:
             raise ValueError("Need to specify decap density")
         if density is not None:
@@ -462,7 +463,7 @@ class DecapConstraint(NamedTuple('DecapConstraint', [
         return super().__new__(cls, target, density, capacitance, x, y, width, height)
 
     @staticmethod
-    def from_dict(decap_src: Dict[str, Any]) -> "DecapConstraint":
+    def from_dict(decap_src: dict[str, Any]) -> "DecapConstraint":
         density = None  # type: Optional[Decimal]
         if "density" in decap_src:
             density = Decimal(str(decap_src["density"]))
@@ -510,7 +511,7 @@ class ObstructionType(Enum):
     Power = 3
 
     @classmethod
-    def __mapping(cls) -> Dict[str, "ObstructionType"]:
+    def __mapping(cls) -> dict[str, "ObstructionType"]:
         return {
             "place": ObstructionType.Place,
             "route": ObstructionType.Route,
@@ -521,8 +522,8 @@ class ObstructionType(Enum):
     def from_str(input_str: str) -> "ObstructionType":
         try:
             return ObstructionType.__mapping()[input_str]
-        except KeyError:
-            raise ValueError("Invalid obstruction type: " + str(input_str))
+        except KeyError as exc:
+            raise ValueError(f"Invalid obstruction type: {input_str}") from exc
 
     def __str__(self) -> str:
         return reverse_dict(ObstructionType.__mapping())[self]
@@ -539,7 +540,7 @@ class PlacementConstraintType(Enum):
     PowerDomain = 8
 
     @classmethod
-    def __mapping(cls) -> Dict[str, "PlacementConstraintType"]:
+    def __mapping(cls) -> dict[str, "PlacementConstraintType"]:
         return {
             "dummy": PlacementConstraintType.Dummy,
             "placement": PlacementConstraintType.Placement,
@@ -609,8 +610,8 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
     ('orientation', Optional[str]),
     ('margins', Optional[Margins]),
     ('top_layer', Optional[str]),
-    ('layers', Optional[List[str]]),
-    ('obs_types', Optional[List[ObstructionType]])
+    ('layers', Optional[list[str]]),
+    ('obs_types', Optional[list[ObstructionType]])
 ])):
     __slots__ = ()
 
@@ -632,15 +633,15 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         master = None  # type: Optional[str]
         if "master" in constraint:
             if constraint_type not in [PlacementConstraintType.Hierarchical, PlacementConstraintType.HardMacro, PlacementConstraintType.Overlap]:
-                raise ValueError("Constraints other than Hierarchical, HardMacro, and Overlap must not contain master: {}".format(constraint))
+                raise ValueError(f"Constraints other than Hierarchical, HardMacro, and Overlap must not contain master: {constraint}")
             master = str(constraint["master"])
         else:
             if constraint_type == PlacementConstraintType.Hierarchical:
-                raise ValueError("Hierarchical constraints must contain master: {}".format(constraint))
+                raise ValueError(f"Hierarchical constraints must contain master: {constraint}")
         return master
 
     @staticmethod
-    def from_masters_and_dict(masters: List[MacroSize], constraint: dict) -> "PlacementConstraint":
+    def from_masters_and_dict(masters: list[MacroSize], constraint: dict) -> "PlacementConstraint":
         """
         Create a PlacementConstraint tuple from a constraint dict and a list of masters. This method differs from from_dict by
         allowing the width and height to be auto-filled from a list of masters for the Hierarchical and HardMacro constraint types.
@@ -665,7 +666,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
                 width_check = Decimal(str(matches[0].width))
                 height_check = Decimal(str(matches[0].height))
             else:
-                raise ValueError("Could not find a master for hierarchical cell {} in masters list.".format(master))
+                raise ValueError(f"Could not find a master for hierarchical cell {master} in masters list.")
         elif constraint_type in [PlacementConstraintType.HardMacro, PlacementConstraintType.Overlap]:
             # TODO(johnwright) for now we're allowing HardMacros to be flexible- checks are performed if the data exists, but otherwise
             # we will "trust" the provided width and height. They aren't actually used, so this is not super important at the moment.
@@ -694,9 +695,9 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         # Perform the check
         if constraint_type in checked_types:
             if height != height_check and height_check is not None:
-                raise ValueError("Optional height value {} must equal the master value {} for constraint: {}".format(height, height_check, constraint))
+                raise ValueError(f"Optional height value {height} must equal the master value {height_check} for constraint: {constraint}")
             if width != width_check and width_check is not None:
-                raise ValueError("Optional width value {} must equal the master value {} for constraint: {}".format(width, width_check, constraint))
+                raise ValueError(f"Optional width value {width} must equal the master value {width_check} for constraint: {constraint}")
 
         updated_constraint = constraint
         if width is not None:
@@ -716,12 +717,12 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         margins = None  # type: Optional[Margins]
         if "margins" in constraint:
             if constraint_type != PlacementConstraintType.TopLevel:
-                raise ValueError("Non-TopLevel constraint must not contain margins: {}".format(constraint))
+                raise ValueError(f"Non-TopLevel constraint must not contain margins: {constraint}")
             margins_dict = constraint["margins"]
             margins = Margins.from_dict(margins_dict)
         else:
             if constraint_type == PlacementConstraintType.TopLevel:
-                raise ValueError("TopLevel constraint must contain margins: {}".format(constraint))
+                raise ValueError(f"TopLevel constraint must contain margins: {constraint}")
 
         ### Orientation ###
         # This field is disallowed in TopLevel constraints
@@ -729,7 +730,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         orientation = None  # type: Optional[str]
         if "orientation" in constraint:
             if constraint_type == PlacementConstraintType.TopLevel:
-                raise ValueError("Non-TopLevel constraint must not contain orientation: {}".format(constraint))
+                raise ValueError(f"Non-TopLevel constraint must not contain orientation: {constraint}")
             orientation = str(constraint["orientation"])
 
         ### Top layer ###
@@ -738,16 +739,16 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         top_layer = None  # type: Optional[str]
         if "top_layer" in constraint:
             if constraint_type not in [PlacementConstraintType.Hierarchical, PlacementConstraintType.HardMacro]:
-                raise ValueError("Constraints other than Hierarchical and HardMacro must not contain top_layer: {}".format(constraint))
+                raise ValueError(f"Constraints other than Hierarchical and HardMacro must not contain top_layer: {constraint}")
             top_layer = str(constraint["top_layer"])
 
         ### Layers ###
         # This field is optional in Obstruction constraints
         # This field is disallowed otherwise
-        layers = None  # type: Optional[List[str]]
+        layers = None  # type: Optional[list[str]]
         if "layers" in constraint:
             if constraint_type != PlacementConstraintType.Obstruction:
-                raise ValueError("Non-Obstruction constraint must not contain layers: {}".format(constraint))
+                raise ValueError(f"Non-Obstruction constraint must not contain layers: {constraint}")
             layers = []
             for layer in constraint["layers"]:
                 layers.append(str(layer))
@@ -755,17 +756,17 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         ### Obstruction types ###
         # This field is mandatory in Obstruction constraints
         # This field is disallowed otherwise
-        obs_types = None  # type: Optional[List[ObstructionType]]
+        obs_types = None  # type: Optional[list[ObstructionType]]
         if "obs_types" in constraint:
             if constraint_type != PlacementConstraintType.Obstruction:
-                raise ValueError("Non-Obstruction constraint must not contain obs_types: {}".format(constraint))
+                raise ValueError(f"Non-Obstruction constraint must not contain obs_types: {constraint}")
             obs_types = []
             types = constraint["obs_types"]
             for obs_type in types:
                 obs_types.append(ObstructionType.from_str(str(obs_type)))
         else:
             if constraint_type == PlacementConstraintType.Obstruction:
-                raise ValueError("Obstruction constraint must contain obs_types: {}".format(constraint))
+                raise ValueError(f"Obstruction constraint must contain obs_types: {constraint}")
 
         ### Master ###
         master = PlacementConstraint._get_master(constraint_type, constraint)
@@ -776,9 +777,9 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         create_physical = None  # type: Optional[bool]
         if "create_physical" in constraint:
             if constraint_type not in [PlacementConstraintType.HardMacro, PlacementConstraintType.Overlap]:
-                raise ValueError("Constraints other than HardMacro or Overlap must not specify create_physical: {}".format(constraint))
+                raise ValueError(f"Constraints other than HardMacro or Overlap must not specify create_physical: {constraint}")
             if master is None:
-                raise ValueError("HardMacro or Overlap constraint specifying create_physical must also specify a master: {}".format(constraint))
+                raise ValueError(f"HardMacro or Overlap constraint specifying create_physical must also specify a master: {constraint}")
             create_physical = constraint["create_physical"]
             assert isinstance(create_physical, bool)
 
@@ -793,7 +794,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         else:
             # TODO(ucb-bar/hammer#414) remove this allowance and just raise the error
             if constraint_type not in [PlacementConstraintType.HardMacro, PlacementConstraintType.Overlap]:
-                raise ValueError("Non-HardMacro or Overlap constraint must contain a width: {}".format(constraint))
+                raise ValueError(f"Non-HardMacro or Overlap constraint must contain a width: {constraint}")
 
         # This is not None because we don't want to make height optional for the reason above
         height = Decimal(0)
@@ -802,14 +803,14 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
         else:
             # TODO(ucb-bar/hammer#414) remove this allowance and just raise the error
             if constraint_type not in [PlacementConstraintType.HardMacro, PlacementConstraintType.Overlap]:
-                raise ValueError("Non-HardMacro or Overlap constraint must contain a height: {}".format(constraint))
+                raise ValueError(f"Non-HardMacro or Overlap constraint must contain a height: {constraint}")
 
         ### X & Y coordinates ###
         # These fields are mandatory in all constraints
         if "x" not in constraint:
-            raise ValueError("Constraint must contain an x coordinate: {}".format(constraint))
+            raise ValueError(f"Constraint must contain an x coordinate: {constraint}")
         if "y" not in constraint:
-            raise ValueError("Constraint must contain an y coordinate: {}".format(constraint))
+            raise ValueError(f"Constraint must contain an y coordinate: {constraint}")
         x = Decimal(str(constraint["x"]))
         y = Decimal(str(constraint["y"]))
 
@@ -837,7 +838,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             "y": str(self.y),
             "width": str(self.width),
             "height": str(self.height)
-        }  # type: Dict[str, Any]
+        }  # type: dict[str, Any]
         if self.orientation is not None:
             output.update({"orientation": self.orientation})
         if self.master is not None:
@@ -869,7 +870,7 @@ class MMMCCornerType(Enum):
         elif input_str == "extra":
             return MMMCCornerType.Extra
         else:
-            raise ValueError("Invalid MMMC corner type '{}'".format(input_str))
+            raise ValueError(f"Invalid MMMC corner type '{input_str}'")
 
 
 MMMCCorner = NamedTuple('MMMCCorner', [
