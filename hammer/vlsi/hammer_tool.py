@@ -1110,6 +1110,8 @@ class HammerTool(metaclass=ABCMeta):
                 supply = dataclasses.replace(supply, weight=raw_supply['weight'])
             if 'voltage' in raw_supply:
                 supply = dataclasses.replace(supply, voltage=raw_supply['voltage'])
+            if 'domain' in raw_supply:
+                supply = dataclasses.replace(supply, domain=raw_supply['domain'])
             output.append(supply)
         return output
 
