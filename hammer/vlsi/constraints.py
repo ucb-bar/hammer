@@ -536,6 +536,7 @@ class PlacementConstraintType(Enum):
     Hierarchical = 5
     Obstruction = 6
     Overlap = 7
+    PowerDomain = 8
 
     @classmethod
     def __mapping(cls) -> Dict[str, "PlacementConstraintType"]:
@@ -546,15 +547,16 @@ class PlacementConstraintType(Enum):
             "hardmacro": PlacementConstraintType.HardMacro,
             "hierarchical": PlacementConstraintType.Hierarchical,
             "obstruction": PlacementConstraintType.Obstruction,
-            "overlap": PlacementConstraintType.Overlap
+            "overlap": PlacementConstraintType.Overlap,
+            "powerdomain": PlacementConstraintType.PowerDomain
         }
 
     @staticmethod
     def from_str(input_str: str) -> "PlacementConstraintType":
         try:
             return PlacementConstraintType.__mapping()[input_str]
-        except KeyError:
-            raise ValueError("Invalid placement constraint type: " + str(input_str))
+        except KeyError as exc:
+            raise ValueError(f"Invalid placement constraint type: {input_str}") from exc
 
     def __str__(self) -> str:
         return reverse_dict(PlacementConstraintType.__mapping())[self]
