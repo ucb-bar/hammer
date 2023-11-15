@@ -45,5 +45,4 @@ $(HAMMER_D_MK):
 -include $(HAMMER_D_MK)
 
 clean:
-    rm -rf $(OBJ_DIR)
-    find $(vlsi_dir) -name 'hammer-vlsi-*.log' -delete
+    rm -rf $(OBJ_DIR) hammer-vlsi-*.log
