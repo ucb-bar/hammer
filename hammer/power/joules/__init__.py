@@ -338,8 +338,13 @@ class Joules(HammerPowerTool, CadenceTool):
         saifs = self.get_setting("power.inputs.saifs")
         for saif in saifs:
             saif_basename = os.path.basename(saif)
-            block_append("compute_power -mode time_based -stim {SAIF}".format(SAIF=saif_basename))
-            block_append("report_power -stims {SAIF} -indent_inst -unit mW -out {SAIF}.report".format(SAIF=saif_basename))
+            read_stim_cmd = f"read_stimulus -file {saif} -dut_instance {self.tb_name}/{tb_dut} -format saif -append"
+            stim_alias, new_stim = self.get_alias_name(read_stim_cmd)
+            if new_stim:
+                block_append(f"{read_stim_cmd} -alias {stim_alias} -append")
+                block_append(f"compute_power -mode time_based -stim {stim_alias}")
+                report_path = os.path.join(self.run_dir, f"reports/{saif_basename}.report")
+                block_append(f"report_power -stims {stim_alias} -indent_inst -unit mW -out {report_path}")
 
         return True
 
