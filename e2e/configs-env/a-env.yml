@@ -15,9 +15,9 @@ synopsys.MGLS_LICENSE_FILE: "1717@bwrcflex-1.eecs.berkeley.edu:1717@bwrcflex-2.e
 synthesis.genus.version: "211"
 par.innovus.version: "211"
 power.joules.version: "201"
-synthesis.genus.genus_bin: "/ecad/tools/cadence/GENUS/GENUS211/bin/genus"  # must point to binaries bc Hammer assumes DDI path now
-par.innovus.innovus_bin: "/ecad/tools/cadence/INNOVUS/INNOVUS211/bin/innovus"
-power.joules.joules_bin: "/ecad/tools/cadence/JLS/JLS201/bin/joules"
+synthesis.genus.genus_bin: "/ecad/tools/cadence/DDI221/bin/genus"  # must point to binaries bc Hammer assumes DDI path now
+par.innovus.innovus_bin: "/ecad/tools/cadence/DDI221/bin/innovus"
+power.joules.joules_bin: "/ecad/tools/cadence/DDI221/bin/joules"
 sim.vcs.version: "S-2021.09-SP1-1"
 sim.vcs.verdi_home: "/ecad/tools/synopsys/verdi/S-2021.09-SP1-1"
 sim.vcs.verdi_home_meta: lazysubst
