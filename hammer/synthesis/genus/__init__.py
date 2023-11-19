@@ -282,6 +282,27 @@ class Genus(HammerSynthesisTool, CadenceTool):
 
         return True
 
+    def dedup_ilms(self) -> None:
+        """After DDI, syn_generic and syn_map will sometimes uniquify hierarchical ILMs,
+        despite .preserve being set on the ILM modules. From observation, the uniquified
+        modules are identical to the read-in ILM, so we can safely change_link to
+        dedup.
+
+        TODO: Correctly disable uniquification in Genus for hierarchical blocks"""
+
+        if self.hierarchical_mode.is_nonleaf_hierarchical() and self.version() >= self.version_number("211"):
+            pcs = list(filter(lambda c: c.type == PlacementConstraintType.Hierarchical, self.get_placement_constraints()))
+            for pc in pcs:
+                self.append("""
+# Attempt to deuniquify hinst:{inst}, incase it was uniquified
+set uniquified_name [get_db hinst:{inst} .module.name]
+if {{ $uniquified_name ne \"{master}\" }} {{
+    puts [format \"WARNING: instance hinst:{inst} was uniquified to be an instance of $uniquified_name, not {master}. Attempting to fix\"]
+    change_link -copy_attributes -instances {{{inst}}} -design_name module:{top}/{master}
+}}
+set_db hinst:{inst} .preserve true
+""".format(inst=pc.path, top=self.top_module, master=pc.master))
+
     def syn_generic(self) -> bool:
         # Add clock mapping flow if special cells are specified
         if self.version() >= self.version_number("211"):
@@ -303,17 +324,7 @@ class Genus(HammerSynthesisTool, CadenceTool):
                 self.append("set_db map_clock_tree true")
         self.verbose_append("syn_generic")
 
-        # With DDI, hierarchical instances may be uniquified. Use change_link to deuniquify them
-        if self.hierarchical_mode.is_nonleaf_hierarchical() and self.version() >= self.version_number("211"):
-            pcs = list(filter(lambda c: c.type == PlacementConstraintType.Hierarchical, self.get_placement_constraints()))
-            for pc in pcs:
-                self.append("""
-# Attempt to deuniquify hinst:{inst}, incase it was uniquified
-set uniquified_name [get_db hinst:{inst} .module.name]
-if {{ $uniquified_name ne \"{master}\" }} {{
-    puts [format \"WARNING: instance hinst:{inst} was uniquified to be an instance of $uniquified_name, not {master}. Attempting to fix\"]
-    change_link -copy_attributes -instances {{{inst}}} -design_name module:{top}/{master}
-}}""".format(inst=pc.path, top=self.top_module, master=pc.master))
+        self.dedup_ilms()
 
         return True
 
@@ -322,6 +333,9 @@ if {{ $uniquified_name ne \"{master}\" }} {{
         # Need to suffix modules for hierarchical simulation if not top
         if self.hierarchical_mode not in [HierarchicalMode.Flat, HierarchicalMode.Top]:
             self.verbose_append("update_names -module -log hier_updated_names.log -suffix _{MODULE}".format(MODULE=self.top_module))
+
+        self.dedup_ilms()
+
         return True
 
     def add_tieoffs(self) -> bool:
