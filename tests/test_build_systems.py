@@ -54,10 +54,10 @@ class TestHammerBuildSystems:
 
         CLIDriver.generate_build_inputs(driver, lambda x: None)
 
-        d_file = os.path.join(driver.obj_dir, "hammer.d")
-        assert os.path.exists(d_file)
+        mk_file = os.path.join(driver.obj_dir, "hammer.mk")
+        assert os.path.exists(mk_file)
 
-        with open(d_file, "r") as f:
+        with open(mk_file, "r") as f:
             contents = f.readlines()
 
         targets = self._read_targets_from_makefile(contents)
@@ -76,16 +76,16 @@ class TestHammerBuildSystems:
 
         # TODO at some point we should add more tests
 
-    def test_hier_makefile(self, tmpdir) -> None:
+    def test_bottom_up_makefile(self, tmpdir) -> None:
         """
-        Test that a Makefile for a hierarchical design is generated correctly.
+        Test that a Makefile for a bottom-up hierarchical design is generated correctly.
         """
         proj_config = os.path.join(str(tmpdir), "config.json")
 
         settings = {
                 "vlsi.core.technology": "hammer.technology.nop",
                 "vlsi.core.build_system": "make",
-                "vlsi.inputs.hierarchical.mode": "hierarchical",
+                "vlsi.inputs.hierarchical.mode": "bottom-up",
                 "vlsi.inputs.hierarchical.top_module": "TopMod",
                 "vlsi.inputs.hierarchical.config_source": "manual",
                 "vlsi.inputs.hierarchical.manual_modules": [{"TopMod": ["SubModA", "SubModB"]}],
@@ -115,10 +115,10 @@ class TestHammerBuildSystems:
 
         CLIDriver.generate_build_inputs(driver, lambda x: None)
 
-        d_file = os.path.join(driver.obj_dir, "hammer.d")
-        assert os.path.exists(d_file)
+        mk_file = os.path.join(driver.obj_dir, "hammer.mk")
+        assert os.path.exists(mk_file)
 
-        with open(d_file, "r") as f:
+        with open(mk_file, "r") as f:
             contents = f.readlines()
 
         targets = self._read_targets_from_makefile(contents)
@@ -134,13 +134,13 @@ class TestHammerBuildSystems:
         for task in bridge_tasks:
             expected_targets.update({task + "-" + x for x in mods})
             expected_targets.update({"redo-" + task + "-" + x for x in mods})
+        expected_targets.update({"hier-par-to-syn-TopMod", "redo-hier-par-to-syn-TopMod"})
 
         # Only non-leafs get a syn-*-input.json target
         expected_targets.update({os.path.join(tmpdir, "syn-" + x + "-input.json") for x in mods if x in {"TopMod"}})
         expected_targets.update({os.path.join(tmpdir, "sim-syn-" + x + "-input.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "par-" + x + "-input.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "sim-par-" + x + "-input.json") for x in mods})
-        #expected_targets.update({os.path.join(tmpdir, "power-rtl-" + x + "-input.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "power-syn-" + x + "-input.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "power-par-" + x + "-input.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "power-sim-rtl-" + x + "-input.json") for x in mods})
@@ -152,6 +152,112 @@ class TestHammerBuildSystems:
         expected_targets.update({os.path.join(tmpdir, "formal-par-" + x + "-input.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "timing-syn-" + x + "-input.json") for x in mods})
         expected_targets.update({os.path.join(tmpdir, "timing-par-" + x + "-input.json") for x in mods})
+
+        assert set(targets.keys()) == expected_targets
+
+        # TODO at some point we should add more tests
+
+    def test_top_down_makefile(self, tmpdir) -> None:
+        """
+        Test that a Makefile for a top-down hierarchical design is generated correctly.
+        """
+        proj_config = os.path.join(str(tmpdir), "config.json")
+
+        settings = {
+                "vlsi.core.technology": "hammer.technology.nop",
+                "vlsi.core.build_system": "make",
+                "vlsi.inputs.hierarchical.mode": "top-down",
+                "vlsi.inputs.hierarchical.top_module": "TopMod",
+                "vlsi.inputs.hierarchical.config_source": "manual",
+                "vlsi.inputs.hierarchical.manual_modules": [{"TopMod": ["HierMod"]}, {"HierMod": ["LeafMod"]}],
+                "vlsi.inputs.hierarchical.manual_placement_constraints": [
+                    {"TopMod": [
+                        {"path": "top", "type": "toplevel", "x": 0, "y": 0, "width": 1234, "height": 7890, "margins": {"left": 1, "top": 2, "right": 3, "bottom": 4}},
+                        {"path": "top/C", "type": "placement", "x": 2, "y": 102, "width": 30, "height": 40},
+                        {"path": "top/A", "type": "hierarchical", "x": 200, "y": 120, "master": "HierMod"}]},
+                    {"HierMod": [
+                        {"path": "a", "type": "toplevel", "x": 0, "y": 0, "width": 100, "height": 200, "margins": {"left": 0, "top": 0, "right": 0, "bottom": 0}},
+                        {"path": "top/B", "type": "hierarchical", "x": 10, "y": 30, "master": "LeafMod"}]},
+                    {"LeafMod": [
+                        {"path": "b", "type": "toplevel", "x": 0, "y": 0, "width": 340, "height": 160, "margins": {"left": 0, "top": 0, "right": 0, "bottom": 0}}]}
+                ]
+            }
+        with open(proj_config, "w") as f:
+            f.write(json.dumps(settings, cls=HammerJSONEncoder, indent=4))
+
+        options = HammerDriverOptions(
+            environment_configs=[],
+            project_configs=[proj_config],
+            log_file=os.path.join(str(tmpdir), "log.txt"),
+            obj_dir=str(tmpdir)
+        )
+
+        driver = HammerDriver(options)
+
+        CLIDriver.generate_build_inputs(driver, lambda x: None)
+
+        mk_file = os.path.join(driver.obj_dir, "hammer.mk")
+        assert os.path.exists(mk_file)
+
+        with open(mk_file, "r") as f:
+            contents = f.readlines()
+
+        targets = self._read_targets_from_makefile(contents)
+
+        mods = {"TopMod", "HierMod", "LeafMod"}
+        expected_targets = {"pcb", os.path.join(tmpdir, "pcb-rundir", "pcb-output-full.json")}
+        top_tasks = {"sim-rtl", "power-rtl", "syn", "sim-syn", "power-syn", "par-partition", "par-assemble", "sim-par", "power-par", "drc", "lvs", "formal-syn", "formal-par", "timing-syn", "timing-par"}
+        for task in top_tasks:
+            expected_targets.add(task + "-TopMod")
+            expected_targets.add("redo-" + task + "-TopMod")
+            if task == "par-partition":
+                expected_targets.add(os.path.join(tmpdir, "par-TopMod", "par-partition-output-full.json"))
+            elif task == "par-assemble":
+                expected_targets.add(os.path.join(tmpdir, "par-TopMod", "par-output-full.json"))
+            else:
+                expected_targets.add(os.path.join(tmpdir, task + "-TopMod", task.split("-")[0] + "-output-full.json"))
+            if task == "par-partition":
+                expected_targets.add(os.path.join(tmpdir, "par-TopMod-input.json"))
+            elif "rtl" not in task and task != "syn":
+                expected_targets.add(os.path.join(tmpdir, task + "-TopMod-input.json"))
+        hier_tasks = {"sim-rtl", "power-rtl", "par-partition", "par-assemble", "sim-par", "power-par", "drc", "lvs", "formal-par", "timing-par"}
+        for task in hier_tasks:
+            expected_targets.add(task + "-HierMod")
+            expected_targets.add("redo-" + task + "-HierMod")
+            if task == "par-partition":
+                expected_targets.add(os.path.join(tmpdir, "par-HierMod", "par-partition-output-full.json"))
+            elif task == "par-assemble":
+                expected_targets.add(os.path.join(tmpdir, "par-HierMod", "par-output-full.json"))
+            else:
+                expected_targets.add(os.path.join(tmpdir, task + "-HierMod", task.split("-")[0] + "-output-full.json"))
+            if task == "par-partition":
+                expected_targets.add(os.path.join(tmpdir, "par-HierMod-input.json"))
+            elif "rtl" not in task:
+                expected_targets.add(os.path.join(tmpdir, task + "-HierMod-input.json"))
+        leaf_tasks = {"sim-rtl", "power-rtl", "par", "sim-par", "power-par", "drc", "lvs", "formal-par", "timing-par"}
+        for task in leaf_tasks:
+            expected_targets.add(task + "-LeafMod")
+            expected_targets.add("redo-" + task + "-LeafMod")
+            expected_targets.add(os.path.join(tmpdir, task + "-LeafMod", task.split("-")[0] + "-output-full.json"))
+            if "rtl" not in task:
+                expected_targets.add(os.path.join(tmpdir, task + "-LeafMod-input.json"))
+        top_bridge_tasks = {"syn-to-sim", "syn-to-par", "par-to-sim", "par-to-lvs", "par-to-drc", "syn-to-power", "par-to-power", "sim-rtl-to-power", "sim-syn-to-power", "sim-par-to-power", "syn-to-formal", "par-to-formal", "syn-to-timing", "par-to-timing"}
+        for task in top_bridge_tasks:
+            expected_targets.add(task + "-TopMod")
+            expected_targets.add("redo-" + task + "-TopMod")
+        hier_leaf_bridge_tasks = {"par-to-sim", "par-to-lvs", "par-to-drc", "par-to-power", "sim-rtl-to-power", "sim-par-to-power", "par-to-formal", "par-to-timing"}
+        for task in hier_leaf_bridge_tasks:
+            expected_targets.update({task + "-" + x for x in {"HierMod", "LeafMod"}})
+            expected_targets.update({"redo-" + task + "-" + x for x in {"HierMod", "LeafMod"}})
+        # Hier linking tasks
+        expected_targets.update({"hier-par-partition-to-par-HierMod", "redo-hier-par-partition-to-par-HierMod"})
+        expected_targets.update({"hier-par-partition-to-par-LeafMod", "redo-hier-par-partition-to-par-LeafMod"})
+        expected_targets.update({"hier-par-to-par-assemble-HierMod", "redo-hier-par-to-par-assemble-HierMod"})
+        expected_targets.update({"hier-par-to-par-assemble-TopMod", "redo-hier-par-to-par-assemble-TopMod"})
+        # Extra power inputs
+        expected_targets.update({os.path.join(tmpdir, "power-sim-rtl-" + x + "-input.json") for x in mods})
+        expected_targets.add(os.path.join(tmpdir, "power-sim-syn-" + "TopMod-input.json"))
+        expected_targets.update({os.path.join(tmpdir, "power-sim-par-" + x + "-input.json") for x in mods})
 
         assert set(targets.keys()) == expected_targets
 

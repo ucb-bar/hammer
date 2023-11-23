@@ -58,7 +58,7 @@ vlsi.technology:
 
   # Offset of the first column of tape cells from the edge of the floorplan
   # type: float
-  tap_cell_offset: float 
+  tap_cell_offset: float
 
   # Set the [bottom, top] layer used for routing. (Optional[Tuple[int, int]])
   routing_layers: Optional[list[int]]
@@ -88,8 +88,14 @@ vlsi.inputs:
     GND: str
 
   hierarchical:
-    # Hierarchical par mode. (str)
+    # Flow mode. (str)
     mode: str
+
+    # Hierarchical par mode of the current module. (str)
+    module_mode: str
+
+    # Partitioning status of the current module. (bool)
+    partitioning: bool
 
     # Top RTL module in the hierarchical flow. (str)
     top_module: str
@@ -157,9 +163,9 @@ vlsi.inputs:
     y: int
     # pitch (float) - pitch of bumps in microns
     pitch: float
-    # global_x_offset (float) - offset the bump map in the x-axis 
+    # global_x_offset (float) - offset the bump map in the x-axis
     global_x_offset: float
-    # global_y_offset (float) - offset the bump map in the y-axis 
+    # global_y_offset (float) - offset the bump map in the y-axis
     global_y_offset: float
     # cell (str) - Name of the default bump cell
     cell: str
@@ -225,6 +231,9 @@ synthesis.submit:
 par.inputs:
   # Input post-synthesis netlist files.
   input_files: list[str]
+
+  # Input databases.
+  input_dbs: list[str]
 
   # Top RTL module.
   top_module: Optional[str]

@@ -60,13 +60,13 @@ vlsi.technology:
   bump_block_cut_layer: null # Top cut/via layer for blockage under bumps. (Optional[str])
   # Only used if using vlsi.inputs.bumps
   # TODO: remove this after stackup supports vias ucb-bar/hammer#354
-  
+
   tap_cell_interval: 10.0 # Spacing between columns of tap cells (float)
   # Must be overridden by technology plugin defaults or else you will have DRC/latch-up errors.
 
   tap_cell_offset: 0.0 # Offset of the first column of tape cells from the edge of the floorplan (float)
   # Should be overridden by technology plugin defaults.
-  
+
   routing_layers: null # If specified, set/override the [bottom, top] layers used for routing. (Optional[Tuple[int, int]])
   # Both must match the index number (not name) of layers used in the stackup.
 
@@ -103,7 +103,7 @@ vlsi.technology:
 
   timing_lib_pref: "NLDM"
   # Select a timing lib preference, available options include:
-  # NLDM, ECSM, and CCS (lower or upper case acceptable). 
+  # NLDM, ECSM, and CCS (lower or upper case acceptable).
   # If no preference is specified, then the following preference order is followed:
   # NLDM -> ECSM -> CCS
 
@@ -124,12 +124,20 @@ vlsi.inputs:
     GND: "0 V" # GND (str): The default voltage of the primary ground net
 
   hierarchical:
-    mode: flat # Hierarchical par mode. (str)
+    mode: flat # User-defined hierarchical flow mode. (str)
+    # This determines how the build system will handle hierarchical designs.
     # Valid options:
-    # flat - Perform a flat place and route run.
-    # leaf - Leaf module in a hierarchical run - same as flat except that an extra write_ilm step is added.
-    # hierarchical - Module which has sub-modules which are also hierarchical.
-    # top - Top module in a hierarchical run - runs an extra assemble_design step.
+    # flat - Perform a flat flow.
+    # top_down - Perform a top-down hierarchical flow.
+    # bottom_up - Perform a bottom-up hierarchical flow.
+    # hierarchical - Same as bottom-up (legacy).
+
+    module_mode: flat # Hierarchical par mode for the current module. (str)
+    # Generally not user-set. It is dynamically set as you traverse through the hierarchical dependency graph.
+
+    partitioning: true # Whether the current module in the top-down flow is undergoing partitioning. (bool)
+    # If false, it will be undergoing assembly.
+    # Generally not user-set. It is dynamically set as you traverse through the hierarchical dependency graph.
 
     top_module: "null" # Top RTL module in the hierarchical flow. (str)
     # Not to be confused with synthesis.inputs.top_module which specifies the synthesis module for this run.
@@ -324,7 +332,7 @@ vlsi.inputs:
     # type: float
     pitch: 0.0
     global_x_offset: 0.0 # offset the bump map in the x-axis (float)
-    global_y_offset: 0.0 # offset the bump map in the y-axis (float)    
+    global_y_offset: 0.0 # offset the bump map in the y-axis (float)
     cell: "" # cell (str) - Name of the default bump cell
     assignments: [] # assignments - List of BumpAssignment structs. You must specify one of name or no_connect.
     # If both are specified the bump will be left unconnected
@@ -477,6 +485,12 @@ par.inputs:
   input_files: [] # Input post-synthesis netlist files.
   # Typically a list of Verilog/VHDL files, depending on the tool.
   # For place and route, these should typically be post-synthesis netlists.
+
+  input_dbs: [] # Input databases.
+  # Input databases used in top-down hierarchical flow.
+  # Partitioning should be triggered if the post-partitioning database of the current module is not found in this list.
+  # Otherwise, assembly should be triggered.
+  # Generally set by linking steps, but can be manually overridden.
 
   top_module: null # Top RTL module.
 
@@ -892,7 +906,7 @@ power.inputs:
   #       "write_profile" - profiles all power types on all categories for all the sub-hierarchies for a given design instance (*.fsdb)
   #       "profile" - run plot_profile + dump_profile
   #       "all" - generate all of the above report formats
-  
+
   # examples:
   #   report_configs: [{waveform_path: "/path/to/fsdb", module: "chiptop", levels:3, start_time: "0ns", end_time: "1ns", toggle_signal:"/ChipTop/clock", num_toggles:1, frame_count:1000, report_name: "my_fsdb_report"}]
   #   report_configs: [{waveform_path: "/path/to/fsdb", inst: "ChipTop/system/tile_prci_domain/tile_reset_domain_tile", interval_size: "1ns", output_formats: ["plot_profile"]}]

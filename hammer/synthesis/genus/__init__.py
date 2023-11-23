@@ -331,7 +331,7 @@ set_db hinst:{inst} .preserve true
     def syn_map(self) -> bool:
         self.verbose_append("syn_map")
         # Need to suffix modules for hierarchical simulation if not top
-        if self.hierarchical_mode not in [HierarchicalMode.Flat, HierarchicalMode.Top]:
+        if self.hierarchical_mode not in [HierarchicalMode.Flat, HierarchicalMode.BUTop, HierarchicalMode.TDTop]:
             self.verbose_append("update_names -module -log hier_updated_names.log -suffix _{MODULE}".format(MODULE=self.top_module))
 
         self.dedup_ilms()
@@ -412,9 +412,8 @@ set_db hinst:{inst} .preserve true
         else:
             # We just get "Cannot trace ILM directory. Data corrupted."
             # -hierarchical needs to be used for non-leaf modules
-            is_hier = self.hierarchical_mode != HierarchicalMode.Leaf # self.hierarchical_mode != HierarchicalMode.Flat
             verbose_append("write_design -innovus {hier_flag} -gzip_files {top}".format(
-                hier_flag="-hierarchical" if is_hier else "", top=top))
+                hier_flag="-hierarchical" if self.hierarchical_mode.is_nonleaf_hierarchical() else "", top=top))
 
         self.ran_write_outputs = True
 

@@ -29,7 +29,7 @@ class MockLVS(HammerLVSTool, DummyHammerTool):
         return ["VDD is connected to VSS"]
 
     def get_ilms(self) -> bool:
-        if self.hierarchical_mode in [HierarchicalMode.Hierarchical, HierarchicalMode.Top]:
+        if self.hierarchical_mode.is_nonleaf_hierarchical():
             with open(os.path.join(self.run_dir, "input_ilms.json"), "w") as f:
                 f.write(json.dumps(list(map(lambda s: s.to_setting(), self.get_input_ilms()))))
         return True

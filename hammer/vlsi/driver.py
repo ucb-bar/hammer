@@ -221,7 +221,7 @@ class HammerDriver:
         syn_tool.set_database(self.database)
         syn_tool.run_dir = run_dir
         syn_tool.hierarchical_mode = HierarchicalMode.from_str(
-            self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+            self.database.get_setting("vlsi.inputs.hierarchical.module_mode"))
         syn_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
         syn_tool.top_module = self.database.get_setting("synthesis.inputs.top_module", nullvalue="")
         syn_tool.submit_command = HammerSubmitCommand.get("synthesis", self.database)
@@ -285,13 +285,14 @@ class HammerDriver:
         par_tool.set_database(self.database)
         par_tool.run_dir = run_dir
         par_tool.hierarchical_mode = HierarchicalMode.from_str(
-            self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+            self.database.get_setting("vlsi.inputs.hierarchical.module_mode"))
         par_tool.submit_command = HammerSubmitCommand.get("par", self.database)
 
         missing_inputs = False
 
         # TODO: automate this based on the definitions
         par_tool.input_files = list(self.database.get_setting("par.inputs.input_files"))
+        par_tool.input_dbs = list(self.database.get_setting("par.inputs.input_dbs"))
         par_tool.top_module = self.database.get_setting("par.inputs.top_module", nullvalue="")
         par_tool.post_synth_sdc = self.database.get_setting("par.inputs.post_synth_sdc", nullvalue="")
         par_tool.output_all_regs = ""
@@ -352,7 +353,7 @@ class HammerDriver:
         drc_tool.technology = self.tech
         drc_tool.set_database(self.database)
         drc_tool.hierarchical_mode = HierarchicalMode.from_str(
-            self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+            self.database.get_setting("vlsi.inputs.hierarchical.module_mode"))
         drc_tool.submit_command = HammerSubmitCommand.get("drc", self.database)
         drc_tool.run_dir = run_dir
         # TODO hierarchical
@@ -414,7 +415,7 @@ class HammerDriver:
         lvs_tool.technology = self.tech
         lvs_tool.set_database(self.database)
         lvs_tool.hierarchical_mode = HierarchicalMode.from_str(
-            self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+            self.database.get_setting("vlsi.inputs.hierarchical.module_mode"))
         lvs_tool.submit_command = HammerSubmitCommand.get("lvs", self.database)
         lvs_tool.run_dir = run_dir
 
@@ -539,7 +540,7 @@ class HammerDriver:
         sim_tool.input_files = self.database.get_setting("sim.inputs.input_files")
         sim_tool.top_module = self.database.get_setting("sim.inputs.top_module", nullvalue="")
         sim_tool.hierarchical_mode = HierarchicalMode.from_str(
-            self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+            self.database.get_setting("vlsi.inputs.hierarchical.module_mode"))
         # Special case: if non-leaf hierarchical and gate-level, append ilm sim netlists
         if sim_tool.hierarchical_mode.is_nonleaf_hierarchical() and sim_tool.level.is_gatelevel():
             for ilm in sim_tool.get_input_ilms():
@@ -606,7 +607,7 @@ class HammerDriver:
         power_tool.technology = self.tech
         power_tool.set_database(self.database)
         power_tool.hierarchical_mode = HierarchicalMode.from_str(
-            self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+            self.database.get_setting("vlsi.inputs.hierarchical.module_mode"))
         power_tool.submit_command = HammerSubmitCommand.get("power", self.database)
         power_tool.run_dir = run_dir
 
@@ -680,7 +681,7 @@ class HammerDriver:
         formal_tool.check = self.database.get_setting("formal.inputs.check")
         formal_tool.input_files = self.database.get_setting("formal.inputs.input_files")
         formal_tool.hierarchical_mode = HierarchicalMode.from_str(
-            self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+            self.database.get_setting("vlsi.inputs.hierarchical.module_mode"))
         # Special case: if non-leaf hierarchical, append ilm sim netlists
         if formal_tool.hierarchical_mode.is_nonleaf_hierarchical():
             for ilm in formal_tool.get_input_ilms():
@@ -749,7 +750,7 @@ class HammerDriver:
 
         timing_tool.input_files = self.database.get_setting("timing.inputs.input_files")
         timing_tool.hierarchical_mode = HierarchicalMode.from_str(
-            self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+            self.database.get_setting("vlsi.inputs.hierarchical.module_mode"))
         timing_tool.top_module = self.database.get_setting("timing.inputs.top_module")
         missing_inputs = False
         if len(timing_tool.input_files) == 0:
@@ -1228,17 +1229,41 @@ class HammerDriver:
     def par_output_to_syn_input(output_dict: dict) -> Optional[dict]:
         """
         Generate the appropriate inputs for running the next level of synthesis from the
-        outputs of par run in a hierarchical flow.
+        outputs of par run in a bottom-up hierarchical flow.
         Does not merge the results with any project dictionaries.
         :param output_dict: Dict containing par.outputs.*
         :return: vlsi.inputs.* settings generated from output_dict,
                  or None if output_dict was invalid
         """
+        assert output_dict["vlsi.inputs.hierarchical.mode"] in {"hierarchical", "bottom-up", "bottom_up"},\
+            "par_output_to_syn_input should only be called in bottom-up hierarchical mode"
         try:
             result = {
                 "vlsi.inputs.ilms": output_dict["vlsi.inputs.ilms"] + output_dict["par.outputs.output_ilms"],
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
+            return result
+        except KeyError:
+            # KeyError means that the given dictionary is missing output keys.
+            return None
+
+    @staticmethod
+    def par_output_to_par_input(output_dict: dict) -> Optional[dict]:
+        """
+        Generate the appropriate inputs for running the next level of par from the
+        outputs of par run in a top-down hierarchical flow.
+        Does not merge the results with any project dictionaries.
+        :param output_dict: Dict containing par.outputs.*
+        :return: vlsi.inputs.* settings generated from output_dict,
+                 or None if output_dict was invalid
+        """
+        assert output_dict["vlsi.inputs.hierarchical.mode"] in {"top-down", "top_down"},\
+            "par_output_to_par_input should only be called in top-down hierarchical mode"
+        try:
+            result = {
+                "par.inputs.input_dbs": output_dict["par.outputs.output_dbs"],
+                "vlsi.builtins.is_complete": False
+            }
             return result
         except KeyError:
             # KeyError means that the given dictionary is missing output keys.
@@ -1658,6 +1683,25 @@ class HammerDriver:
         """
         return self._hierarchical_helper()[0]
 
+    def get_hierarchical_flow_mode(self) -> str:
+        """
+        hierarchical flow mode specified in the design yml file has to be one of the following options:
+            flat (the flat flow)
+            hierarchical or bottom_up (the bottom-up flow)
+            top_down (the top-down flow)
+
+        if the mode specified is neither, it raises ValueError.
+        """
+
+        hier_mode_key = "vlsi.inputs.hierarchical.mode"
+        hier_mode = str(self.database.get_setting(hier_mode_key))
+
+        if(hier_mode not in ["flat", "hierarchical", "bottom_up", "bottom-up", "top_down", "top-down"]):
+            raise ValueError("Invalid value for " + hier_mode_key)
+
+        return hier_mode
+
+
     def _hierarchical_helper(self) -> Tuple[List[Tuple[str, dict]], Dict[str, Tuple[List[str], List[str]]]]:
         """
         Read settings from the database, determine leaf/hierarchical modules, an order of execution, and return an
@@ -1667,6 +1711,7 @@ class HammerDriver:
 
         :return: Tuple of (List of tuples of (module name, config snippet), the dependency graph)
         """
+        hier_flow_mode = str(self.database.get_setting("vlsi.inputs.hierarchical.mode"))
         hier_source_key = "vlsi.inputs.hierarchical.config_source"
         hier_source = str(self.database.get_setting(hier_source_key))
         hier_modules = {}  # type: Dict[str, List[str]]
@@ -1782,20 +1827,34 @@ class HammerDriver:
 
         output = []  # type: List[Tuple[str, dict]]
 
+        # initialize
+        mode = HierarchicalMode.Flat
         for module in order:
-            mode = HierarchicalMode.Hierarchical
-            if module == top_module:
-                mode = HierarchicalMode.Top
-            elif module in leaf_modules:
-                mode = HierarchicalMode.Leaf
-            elif module in intermediate_modules:
-                mode = HierarchicalMode.Hierarchical
+            if hier_flow_mode in ["hierarchical", "bottom_up", "bottom-up"]:
+                if module == top_module:
+                    mode = HierarchicalMode.BUTop
+                elif module in leaf_modules:
+                    mode = HierarchicalMode.BULeaf
+                elif module in intermediate_modules:
+                    mode = HierarchicalMode.BUHierarchical
+                else:
+                    assert "Should not get here"
+            elif hier_flow_mode in ["top_down", "top-down"]:
+                if module == top_module:
+                    mode = HierarchicalMode.TDTop
+                elif module in leaf_modules:
+                    mode = HierarchicalMode.TDLeaf
+                elif module in intermediate_modules:
+                    mode = HierarchicalMode.TDHierarchical
+                else:
+                    assert "Should not get here"
             else:
                 assert "Should not get here"
 
             constraint_dict = {
-                "vlsi.inputs.hierarchical.mode": str(mode),
+                "vlsi.inputs.hierarchical.module_mode": str(mode),
                 "synthesis.inputs.top_module": module,
+                "par.inputs.top_module": module,
                 "vlsi.inputs.placement_constraints": list(
                     map(PlacementConstraint.to_dict, hier_placement_constraints.get(module, [])))
             }

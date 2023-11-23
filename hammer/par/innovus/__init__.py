@@ -14,7 +14,7 @@ from hammer.vlsi import HammerTool, HammerPlaceAndRouteTool, HammerToolStep, Ham
 from hammer.vlsi.units import CapacitanceValue
 from hammer.logging import HammerVLSILogging
 import hammer.tech as hammer_tech
-from hammer.tech import RoutingDirection
+from hammer.tech import RoutingDirection, Metal, RoutingDirection
 from hammer.tech.specialcells import CellType
 from decimal import Decimal
 from hammer.common.cadence import CadenceTool
@@ -32,6 +32,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         outputs["par.outputs.all_regs"] = self.output_all_regs
         outputs["par.outputs.sdf_file"] = self.output_sdf_path
         outputs["par.outputs.spefs"] = self.output_spef_paths
+        outputs["vlsi.inputs.hierarchical.partitioning"] = self.partitioning
         return outputs
 
     def fill_outputs(self) -> bool:
@@ -60,6 +61,12 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             ]
         else:
             self.output_ilms = []
+
+        # Output databases depends on whether we ran partition_design.
+        if self.ran_partition_design:
+            self.output_dbs = list(map(lambda x: os.path.join(self.run_dir, f"{x}.enc.dat"), self.partitions))
+        else:
+            self.output_dbs = [self.output_innovus_lib_name]
 
         # Check that the regs paths were written properly if the write_regs step was run
         self.output_seq_cells = self.all_cells_path
@@ -214,40 +221,48 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
 
     @property
     def steps(self) -> List[HammerToolStep]:
-        steps = [
+        steps = []  # type: List[Callable[[], bool]]
+        pre_partition = [
             self.init_design,
             self.floorplan_design,
             self.place_bumps,
             self.place_tap_cells,
             self.power_straps,
-            self.place_pins,
+            self.place_pins
+        ]  # type: List[Callable[[], bool]]
+        post_partition = [
             self.place_opt_design,
             self.clock_tree,
             self.add_fillers,
             self.route_design,
             self.opt_design
-        ]
+        ]  # type: List[Callable[[], bool]]
         write_design_step = [
             self.write_regs,
             self.write_design
         ]  # type: List[Callable[[], bool]]
-        if self.hierarchical_mode == HierarchicalMode.Flat:
-            # Nothing to do
-            pass
-        elif self.hierarchical_mode == HierarchicalMode.Leaf:
-            # All modules in hierarchical must write an ILM
-            write_design_step += [self.write_ilm]
-        elif self.hierarchical_mode == HierarchicalMode.Hierarchical:
-            # All modules in hierarchical must write an ILM
-            write_design_step += [self.write_ilm]
-        elif self.hierarchical_mode == HierarchicalMode.Top:
-            # No need to write ILM at the top.
-            # Top needs assemble_design instead.
-            steps += [self.assemble_design]
-            pass
+
+        if self.hierarchical_mode in {HierarchicalMode.Flat, HierarchicalMode.BUTop}:
+            # Default
+            steps = pre_partition + post_partition + write_design_step
+        elif self.hierarchical_mode in {HierarchicalMode.BULeaf, HierarchicalMode.BUHierarchical}:
+            # All submodules in bottom-up hierarchical must write an ILM
+            steps = pre_partition + post_partition + write_design_step + [self.write_ilm]
+        elif self.hierarchical_mode == HierarchicalMode.TDTop and self.partitioning:
+            # Partition
+            steps = pre_partition + [self.partition_design] + post_partition
+        elif self.hierarchical_mode == HierarchicalMode.TDHierarchical and self.partitioning:
+            # Only add additional fp constraints & partition
+            steps = [self.floorplan_design, self.partition_design] + post_partition
+        elif self.hierarchical_mode in {HierarchicalMode.TDTop, HierarchicalMode.TDHierarchical}:
+            # Assemble
+            steps = [self.assemble_design] + write_design_step
+        elif self.hierarchical_mode == HierarchicalMode.TDLeaf:
+            # Add floorplan constraints and continue
+            steps = [self.floorplan_design] + post_partition + write_design_step
         else:
             raise NotImplementedError("HierarchicalMode not implemented: " + str(self.hierarchical_mode))
-        return self.make_steps_from_methods(steps + write_design_step)
+        return self.make_steps_from_methods(steps)
 
     def tool_config_prefix(self) -> str:
         return "par.innovus"
@@ -256,85 +271,102 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         """Initialize the design."""
         verbose_append = self.verbose_append
 
-        # Perform common path pessimism removal in setup and hold mode
-        verbose_append("set_db timing_analysis_cppr both")
-        # Use OCV mode for timing analysis by default
-        verbose_append("set_db timing_analysis_type ocv")
+        # Check for input databases
+        input_dbs = self.get_setting("par.inputs.input_dbs", [])
 
-        # Read LEF layouts.
-        lef_files = self.technology.read_libs([
-            hammer_tech.filters.lef_filter
-        ], hammer_tech.HammerTechnologyUtils.to_plain_item)
-        if self.hierarchical_mode.is_nonleaf_hierarchical():
-            ilm_lefs = list(map(lambda ilm: ilm.lef, self.get_input_ilms()))
-            lef_files.extend(ilm_lefs)
-        verbose_append("read_physical -lef {{ {files} }}".format(
-            files=" ".join(lef_files)
-        ))
+        # Initialize differently depending on hierarchical mode
+        if ((self.hierarchical_mode in {HierarchicalMode.Flat, HierarchicalMode.BUTop, HierarchicalMode.BULeaf, HierarchicalMode.BUHierarchical})
+                or (self.hierarchical_mode == HierarchicalMode.TDTop and self.partitioning)):
 
-        # Read timing libraries.
-        mmmc_path = os.path.join(self.run_dir, "mmmc.tcl")
-        self.write_contents_to_path(self.generate_mmmc_script(), mmmc_path)
-        verbose_append("read_mmmc {mmmc_path}".format(mmmc_path=mmmc_path))
+            # Perform common path pessimism removal in setup and hold mode
+            verbose_append("set_db timing_analysis_cppr both")
+            # Use OCV mode for timing analysis by default
+            verbose_append("set_db timing_analysis_type ocv")
 
-        # Read netlist.
-        # Innovus only supports structural Verilog for the netlist; the Verilog can be optionally compressed.
-        if not self.check_input_files([".v", ".v.gz"]):
+            # Read LEF layouts.
+            lef_files = self.technology.read_libs([
+                hammer_tech.filters.lef_filter
+            ], hammer_tech.HammerTechnologyUtils.to_plain_item)
+            if self.hierarchical_mode.is_nonleaf_hierarchical():
+                ilm_lefs = list(map(lambda ilm: ilm.lef, self.get_input_ilms()))
+                lef_files.extend(ilm_lefs)
+            verbose_append("read_physical -lef {{ {files} }}".format(
+                files=" ".join(lef_files)
+            ))
+
+            # Read timing libraries.
+            mmmc_path = os.path.join(self.run_dir, "mmmc.tcl")
+            self.write_contents_to_path(self.generate_mmmc_script(), mmmc_path)
+            verbose_append("read_mmmc {mmmc_path}".format(mmmc_path=mmmc_path))
+
+            # Read netlist.
+            # Innovus only supports structural Verilog for the netlist; the Verilog can be optionally compressed.
+            if not self.check_input_files([".v", ".v.gz"]):
+                return False
+
+            # We are switching working directories and we still need to find paths.
+            abspath_input_files = list(map(lambda name: os.path.join(os.getcwd(), name), self.input_files))
+            verbose_append("read_netlist {{ {files} }} -top {top}".format(
+                files=" ".join(abspath_input_files),
+                top=self.top_module
+            ))
+
+            if self.hierarchical_mode.is_nonleaf_hierarchical():
+                # Read ILMs.
+                for ilm in self.get_input_ilms():
+                    # Assumes that the ILM was created by Innovus (or at least the file/folder structure).
+                    verbose_append("read_ilm -cell {module} -directory {dir}".format(dir=ilm.dir, module=ilm.module))
+
+            # Emit init_power_nets and init_ground_nets in case CPF/UPF is not used
+            # commit_power_intent does not override power nets defined in "init_power_nets"
+            spec_mode = self.get_setting("vlsi.inputs.power_spec_mode")  # type: str
+            if spec_mode == "empty":
+                power_supplies = self.get_independent_power_nets()  # type: List[Supply]
+                power_nets = " ".join(map(lambda s: s.name, power_supplies))
+                ground_supplies = self.get_independent_ground_nets()  # type: List[Supply]
+                ground_nets = " ".join(map(lambda s: s.name, ground_supplies))
+                verbose_append("set_db init_power_nets {{{n}}}".format(n=power_nets))
+                verbose_append("set_db init_ground_nets {{{n}}}".format(n=ground_nets))
+
+            # Run init_design to validate data and start the Cadence place-and-route workflow.
+            verbose_append("init_design")
+
+            # Setup power settings from cpf/upf
+            for l in self.generate_power_spec_commands():
+                verbose_append(l)
+
+            # Set the top and bottom global/detail routing layers.
+            # This must happen after the tech LEF is loaded
+            layers = self.get_setting("vlsi.technology.routing_layers")
+            if layers is not None:
+                if self.version() >= self.version_number("201"):
+                    verbose_append(f"set_db design_bottom_routing_layer {layers[0]}")
+                    verbose_append(f"set_db design_top_routing_layer {layers[1]}")
+                else:
+                    verbose_append(f"set_db route_early_global_bottom_layer {layers[0]}")
+                    verbose_append(f"set_db route_early_global_top_layer {layers[1]}")
+                    verbose_append(f"set_db route_design_bottom_layer {layers[0]}")
+                    verbose_append(f"set_db route_design_top_layer {layers[1]}")
+
+            # Set design effort.
+            verbose_append(f"set_db design_flow_effort {self.get_setting('par.innovus.design_flow_effort')}")
+            verbose_append(f"set_db design_power_effort {self.get_setting('par.innovus.design_power_effort')}")
+
+            # Set "don't use" cells.
+            for l in self.generate_dont_use_commands():
+                self.append(l)
+            return True
+
+        elif ((self.hierarchical_mode == HierarchicalMode.TDHierarchical and self.partitioning)
+                or self.hierarchical_mode == HierarchicalMode.TDLeaf):
+            # Read DB from parent partitioning
+            input_dbs = self.get_setting("par.inputs.input_dbs")
+            this_db = next(filter(lambda db: db.endswith(self.top_module), input_dbs))
+            verbose_append(f"read_db {this_db}")
+            return True
+        else:
+            # Should not get here
             return False
-
-        # We are switching working directories and we still need to find paths.
-        abspath_input_files = list(map(lambda name: os.path.join(os.getcwd(), name), self.input_files))
-        verbose_append("read_netlist {{ {files} }} -top {top}".format(
-            files=" ".join(abspath_input_files),
-            top=self.top_module
-        ))
-
-        if self.hierarchical_mode.is_nonleaf_hierarchical():
-            # Read ILMs.
-            for ilm in self.get_input_ilms():
-                # Assumes that the ILM was created by Innovus (or at least the file/folder structure).
-                verbose_append("read_ilm -cell {module} -directory {dir}".format(dir=ilm.dir, module=ilm.module))
-
-        # Emit init_power_nets and init_ground_nets in case CPF/UPF is not used
-        # commit_power_intent does not override power nets defined in "init_power_nets"
-        spec_mode = self.get_setting("vlsi.inputs.power_spec_mode")  # type: str
-        if spec_mode == "empty":
-            power_supplies = self.get_independent_power_nets()  # type: List[Supply]
-            power_nets = " ".join(map(lambda s: s.name, power_supplies))
-            ground_supplies = self.get_independent_ground_nets()  # type: List[Supply]
-            ground_nets = " ".join(map(lambda s: s.name, ground_supplies))
-            verbose_append("set_db init_power_nets {{{n}}}".format(n=power_nets))
-            verbose_append("set_db init_ground_nets {{{n}}}".format(n=ground_nets))
-
-        # Run init_design to validate data and start the Cadence place-and-route workflow.
-        verbose_append("init_design")
-
-        # Setup power settings from cpf/upf
-        for l in self.generate_power_spec_commands():
-            verbose_append(l)
-
-        # Set the top and bottom global/detail routing layers.
-        # This must happen after the tech LEF is loaded
-        layers = self.get_setting("vlsi.technology.routing_layers")
-        if layers is not None:
-            if self.version() >= self.version_number("201"):
-                verbose_append(f"set_db design_bottom_routing_layer {layers[0]}")
-                verbose_append(f"set_db design_top_routing_layer {layers[1]}")
-            else:
-                verbose_append(f"set_db route_early_global_bottom_layer {layers[0]}")
-                verbose_append(f"set_db route_early_global_top_layer {layers[1]}")
-                verbose_append(f"set_db route_design_bottom_layer {layers[0]}")
-                verbose_append(f"set_db route_design_top_layer {layers[1]}")
-
-        # Set design effort.
-        verbose_append(f"set_db design_flow_effort {self.get_setting('par.innovus.design_flow_effort')}")
-        verbose_append(f"set_db design_power_effort {self.get_setting('par.innovus.design_power_effort')}")
-
-        # Set "don't use" cells.
-        for l in self.generate_dont_use_commands():
-            self.append(l)
-
-        return True
 
     def floorplan_design(self) -> bool:
         floorplan_tcl = os.path.join(self.run_dir, "floorplan.tcl")
@@ -522,7 +554,15 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             flatten_ilm
             update_constraint_mode -name my_constraint_mode -ilm_sdc_files {sdc}
             '''.format(sdc=self.post_synth_sdc), clean=True)
-        if len(self.get_clock_ports()) > 0:
+        # Check for clock constraints either in inputs or post-syn SDC file
+        clock_present = len(self.get_clock_ports()) > 0
+        if not clock_present and self.post_synth_sdc is not None:
+            with open(self.post_synth_sdc, "r") as f:
+                for line in f:
+                    if line.startswith("create_clock"):
+                        clock_present = True
+                        break
+        if clock_present:
             # Ignore clock tree when there are no clocks
             # If special cells are specified, explicitly set them instead of letting tool infer from libs
             buffer_cells = self.technology.get_special_cell_by_type(CellType.CTSBuffer)
@@ -633,10 +673,23 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         self.verbose_append("opt_design -post_route -setup -hold -expanded_views")
         if self.hierarchical_mode.is_nonleaf_hierarchical():
             self.verbose_append("unflatten_ilm")
+
+        # Write a post-partitioning database to continue from later
+        if self.get_setting("vlsi.inputs.hierarchical.mode") in {"top_down", "top-down"}:
+            self.verbose_append(f"write_db {self.post_partition_db} -def")
         return True
 
     def assemble_design(self) -> bool:
-        # TODO: implement the assemble_design step.
+        """
+        Assemble top and block directories
+        """
+        input_dbs = self.get_setting("par.inputs.input_dbs")
+        block_dir_text = " ".join(f"-block_dir {d}" for d in input_dbs)
+        self.verbose_append(f"assemble_design -top_dir {self.post_partition_db} {block_dir_text}")
+        # Trim timing graph for top-level timing optimization
+        self.verbose_append("create_active_logic_view -type flat_top")
+        self.verbose_append("opt_design -post_route -incremental -expanded_views")
+        self.verbose_append("time_design -post_route")
         return True
 
     def write_netlist(self) -> bool:
@@ -867,6 +920,52 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         self.ran_write_ilm = True
         return True
 
+    @property
+    def ran_partition_design(self) -> bool:
+        """The write_partitions stage sets this to True if it was run."""
+        return self.attr_getter("_ran_write_partitions", False)
+
+    @ran_partition_design.setter
+    def ran_partition_design(self, val: bool) -> None:
+        self.attr_setter("_ran_partition_design", val)
+
+    @property
+    def partitioning(self) -> bool:
+        return self.hierarchical_mode != HierarchicalMode.TDLeaf and self.get_setting("vlsi.inputs.hierarchical.partitioning")
+
+    @property
+    def partitions(self) -> List[str]:
+        partitions = list(filter(lambda x: x.type == PlacementConstraintType.Hierarchical, self.get_placement_constraints()))
+        return list(map(lambda x: get_or_else(x.master, ""), partitions))
+
+    @property
+    def post_partition_db(self) -> str:
+        return f"{self.top_module}_post_partition"
+
+    def partition_design(self) -> bool:
+        """Partitioning in top-down hierarchical."""
+        # Early global placement
+        self.verbose_append("place_design -concurrent_macros")
+        #TODO: feedthru insertion for narrow-channel/channel-less flows
+        # Early global routing
+        self.verbose_append(f"set_db route_early_global_honor_partition_fence {{{' '.join(self.partitions)}}}")
+        self.verbose_append(f"set_db route_early_global_honor_partition_pin {{{' '.join(self.partitions)}}}")
+        self.verbose_append(f"set_db route_early_global_honor_power_domain true")
+        self.verbose_append("route_early_global")
+        # Pin assignment
+        self.verbose_append("check_pin_assignment -pre_check")
+        self.verbose_append("assign_partition_pins")
+        self.verbose_append("check_pin_assignment -report_violating_pin")
+        # Timing budget
+        self.verbose_append("create_timing_budget")
+        # Write partition DBs
+        for partition in self.partitions:
+            self.verbose_append(f"commit_partitions -partition {partition} -pg_pushdown_honor_1801")
+            self.verbose_append(f"write_partitions {partition} -def -verilog")
+            self.verbose_append(f"write_partition_pins -partition {partition} {partition}_pin_info")
+        self.ran_partition_design = True
+        return True
+
     def run_innovus(self) -> bool:
         # Quit Innovus.
         self.verbose_append("exit")
@@ -940,7 +1039,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         else:
             if floorplan_mode != "blank":
                 self.logger.error("Invalid floorplan_mode {mode}. Using blank floorplan.".format(mode=floorplan_mode))
-            # Write blank floorplan
+            # Write blank floorpla/generaten
             output.append("# Blank floorplan specified from HAMMER")
         return output
 
@@ -989,6 +1088,10 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
 
         floorplan_constraints = self.get_placement_constraints()
         global_top_layer = self.get_setting("par.blockage_spacing_top_layer") #  type: Optional[str]
+
+        # Generate floorplans differently if top-down hierarchical
+        td_hier = self.get_setting("vlsi.inputs.hierarchical.mode") in {"top_down", "top-down"}
+        master_partitions = {}  # type: Dict[str, str]
 
         ############## Actually generate the constraints ################
         for constraint in floorplan_constraints:
@@ -1039,7 +1142,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                         orientation=orientation,
                         fixed=" -fixed" if constraint.create_physical else ""
                     ))
-                elif constraint.type in [PlacementConstraintType.HardMacro, PlacementConstraintType.Hierarchical]:
+                elif constraint.type == PlacementConstraintType.HardMacro or \
+                    (constraint.type == PlacementConstraintType.Hierarchical and not td_hier):
                     output.append("place_inst {inst} {x} {y} {orientation}{fixed}".format(
                         inst=new_path,
                         x=constraint.x,
@@ -1064,6 +1168,42 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                         output.append("create_route_blockage -pg_nets -inst {inst} -layers {{{layers}}} -cover".format(
                             inst=new_path, layers=" ".join(cover_layers)))
 
+                elif constraint.type == PlacementConstraintType.Hierarchical and td_hier:
+                    if not constraint.master in master_partitions:
+                        # Create a fence and master partition
+                        output.append("create_boundary_constraint -type fence -hinst {inst} -rects {{{x1} {y1} {x2} {y2}}}".format(
+                            inst=new_path,
+                            x1=constraint.x,
+                            x2=constraint.x + constraint.width,
+                            y1=constraint.y,
+                            y2=constraint.y + constraint.height
+                        ))
+                        halo_top_layer_name = get_or_else(constraint.top_layer, global_top_layer)
+                        halo_top_layer_idx = self.get_stackup().get_metal(halo_top_layer_name).index if halo_top_layer_name is not None else None
+                        reserved_layers = []  # type: List[Metal]
+                        tb_pin_layers = []  # type: List[Metal]
+                        lr_pin_layers = []  # type: List[Metal]
+                        if halo_top_layer_name is not None:
+                            reserved_layers = self.get_stackup().get_metals_below_layer(halo_top_layer_name) + [self.get_stackup().get_metal(halo_top_layer_name)]
+                        if len(reserved_layers) > 0:
+                            tb_pin_layers = list(filter(lambda m: m.direction == RoutingDirection.Vertical and m.index != 1, reserved_layers))
+                            lr_pin_layers = list(filter(lambda m: m.direction == RoutingDirection.Horizontal and m.index != 1, reserved_layers))
+                        output.append("create_partition -hinst {inst} -place_halo {{{s} {s} {s} {s}}} -route_halo {s} {halo_top_layer_str} {reserved_layers_str} {tb_pin_layers_str} {lr_pin_layers_str}".format(
+                            inst=new_path,
+                            s=self.get_setting("par.blockage_spacing"),
+                            halo_top_layer_str=f"-route_halo_top_layer {halo_top_layer_idx}" if halo_top_layer_idx is not None else "",
+                            reserved_layers_str=f"-reserved_layer {{{' '.join(list(map(lambda m: m.name, reserved_layers)))}}}" if len(reserved_layers) > 0 else "",
+                            tb_pin_layers_str="-pin_layer_top {{{layers}}} -pin_layer_bottom {{{layers}}}".format(layers=' '.join(list(map(lambda m: m.name, tb_pin_layers)))) if len(tb_pin_layers) > 0 else "",
+                            lr_pin_layers_str="-pin_layer_left {{{layers}}} -pin_layer_right {{{layers}}}".format(layers=' '.join(list(map(lambda m: m.name, lr_pin_layers)))) if len(lr_pin_layers) > 0 else ""
+                        ))
+                        master_partitions[get_or_else(constraint.master, "")] = new_path
+                    else:
+                        # Create a clone partition and place it
+                        output.append(f"create_partition -hinst {new_path} -copy_from {constraint.master}")
+                        output.append(f"place_partition_clone -hinst {new_path} -location {{{constraint.x} {constraint.y}}}")
+                        # Then legalize the placement to align with parent power grids
+                        # TODO: without a bunch of flags, this does automatic detection. May not work in many cases.
+                        output.append(f"align_partition_clones {constraint.master}")
                 elif constraint.type == PlacementConstraintType.Obstruction:
                     obs_types = get_or_else(constraint.obs_types, [])  # type: List[ObstructionType]
                     if ObstructionType.Place in obs_types:
@@ -1093,7 +1233,12 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                         ))
                 else:
                     assert False, "Should not reach here"
-        return [chip_size_constraint] + output
+
+        # If top-down hierarchical, chip size constraint is not needed for hier & leaf nodes
+        if td_hier and self.hierarchical_mode != HierarchicalMode.TDTop:
+            return output
+        else:
+            return [chip_size_constraint] + output
 
     def specify_std_cell_power_straps(self, blockage_spacing: Decimal, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
         """
