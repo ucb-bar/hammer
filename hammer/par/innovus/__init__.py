@@ -330,16 +330,23 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         verbose_append(f"set_db design_flow_effort {self.get_setting('par.innovus.design_flow_effort')}")
         verbose_append(f"set_db design_power_effort {self.get_setting('par.innovus.design_power_effort')}")
 
-        # Set "don't use" cells.
-        for l in self.generate_dont_use_commands():
-            self.append(l)
-
         return True
 
     def floorplan_design(self) -> bool:
         floorplan_tcl = os.path.join(self.run_dir, "floorplan.tcl")
         self.write_contents_to_path("\n".join(self.create_floorplan_tcl()), floorplan_tcl)
         self.verbose_append("source -echo -verbose {}".format(floorplan_tcl))
+
+        # Set "don't use" cells.
+        # This must happen after floorplan_design because it must run in flattened-mode
+        # (after ILMs are placed)
+        if self.hierarchical_mode.is_nonleaf_hierarchical():
+            self.verbose_append("flatten_ilm")
+        for l in self.generate_dont_use_commands():
+            self.append(l)
+        if self.hierarchical_mode.is_nonleaf_hierarchical():
+            self.verbose_append("unflatten_ilm")
+
         return True
 
     def place_bumps(self) -> bool:
