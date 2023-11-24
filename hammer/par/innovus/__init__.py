@@ -1073,15 +1073,18 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
 
                 elif constraint.type == PlacementConstraintType.Obstruction:
                     obs_types = get_or_else(constraint.obs_types, [])  # type: List[ObstructionType]
+                    assert '/' not in new_path, "'obstruction' placement constraints must be provided a path directly under the top level"
                     if ObstructionType.Place in obs_types:
-                        output.append("create_place_blockage -area {{{x} {y} {urx} {ury}}}".format(
+                        output.append("create_place_blockage -name {name}_place -area {{{x} {y} {urx} {ury}}}".format(
+                            name=new_path,
                             x=constraint.x,
                             y=constraint.y,
                             urx=constraint.x+constraint.width,
                             ury=constraint.y+constraint.height
                         ))
                     if ObstructionType.Route in obs_types:
-                        output.append("create_route_blockage -except_pg_nets -{layers} -spacing 0 -{area_flag} {{{x} {y} {urx} {ury}}}".format(
+                        output.append("create_route_blockage -name {name}_route -except_pg_nets -{layers} -spacing 0 -{area_flag} {{{x} {y} {urx} {ury}}}".format(
+                            name=new_path,
                             x=constraint.x,
                             y=constraint.y,
                             urx=constraint.x+constraint.width,
@@ -1090,7 +1093,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                             layers="all {route}" if constraint.layers is None else f'layers {{{" ".join(get_or_else(constraint.layers, []))}}}'
                         ))
                     if ObstructionType.Power in obs_types:
-                        output.append("create_route_blockage -pg_nets -{layers} -{area_flag} {{{x} {y} {urx} {ury}}}".format(
+                        output.append("create_route_blockage -name {name}_power -pg_nets -{layers} -{area_flag} {{{x} {y} {urx} {ury}}}".format(
+                            name=new_path,
                             x=constraint.x,
                             y=constraint.y,
                             urx=constraint.x+constraint.width,
