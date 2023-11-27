@@ -87,6 +87,7 @@ class Genus(HammerSynthesisTool, CadenceTool):
             self.init_environment,
             self.syn_generic,
             self.syn_map,
+            self.ispatial_opt,
             self.add_tieoffs,
             self.write_regs,
             self.generate_reports,
@@ -223,6 +224,14 @@ class Genus(HammerSynthesisTool, CadenceTool):
             files=" ".join(lef_files)
         ))
 
+        # Read qrc tech files for physical synthesis.
+        qrc_files = self.technology.read_libs([
+            hammer_tech.filters.qrc_tech_filter
+        ], hammer_tech.HammerTechnologyUtils.to_plain_item)
+        verbose_append("set_db qrc_tech_file {{ {files} }}".format(
+            files=" ".join(qrc_files)
+        ))
+
         # Load input files and check that they are all Verilog.
         if not self.check_input_files([".v", ".sv"]):
             return False
@@ -260,6 +269,14 @@ class Genus(HammerSynthesisTool, CadenceTool):
         # Prevent floorplanning targets from getting flattened.
         # TODO: is there a way to track instance paths through the synthesis process?
         verbose_append("set_db root: .auto_ungroup none")
+
+        # Set design effort.
+        verbose_append(f"set_db phys_flow_effort {self.get_setting('synthesis.genus.phys_flow_effort')}")
+
+        if self.get_setting("synthesis.genus.phys_flow_effort").lower() == "high":
+            self.verbose_append(f"set_db innovus_executable {self.get_setting('par.innovus.innovus_bin')}")
+            self.verbose_append("set_db invs_temp_dir innovus")
+            self.verbose_append("set_db opt_spatial_effort extreme")
 
         # Set "don't use" cells.
         for l in self.generate_dont_use_commands():
@@ -301,14 +318,28 @@ class Genus(HammerSynthesisTool, CadenceTool):
             if len(inverter_cells) > 0 and len(logic_cells) > 0:
                 # Clock mapping needs at least the attributes cts_inverter_cells and cts_logic_cells to be set
                 self.append("set_db map_clock_tree true")
-        self.verbose_append("syn_generic")
+
+        if self.get_setting("synthesis.genus.phys_flow_effort").lower() == "none":
+            self.verbose_append("syn_generic")
+        else:
+            self.verbose_append("create_floorplan -core_size { 350.0 400.0 0.0 0.0 350.0 400.0 }")
+            self.verbose_append("syn_generic -physical")
         return True
 
     def syn_map(self) -> bool:
-        self.verbose_append("syn_map")
+        if self.get_setting("synthesis.genus.phys_flow_effort").lower() == "none":
+            self.verbose_append("syn_map")
+        else:
+            self.verbose_append("syn_map -physical")
         # Need to suffix modules for hierarchical simulation if not top
         if self.hierarchical_mode not in [HierarchicalMode.Flat, HierarchicalMode.Top]:
             self.verbose_append("update_names -module -log hier_updated_names.log -suffix _{MODULE}".format(MODULE=self.top_module))
+        return True
+    
+    def ispatial_opt(self) -> bool:
+        if self.get_setting("synthesis.genus.phys_flow_effort").lower() == "high":
+            self.verbose_append("syn_opt -spatial")
+
         return True
 
     def add_tieoffs(self) -> bool:
@@ -345,6 +376,9 @@ class Genus(HammerSynthesisTool, CadenceTool):
         """Generate reports."""
         # TODO: extend report generation capabilities
         self.verbose_append("write_reports -directory reports -tag final")
+        if self.get_setting("synthesis.genus.phys_flow_effort").lower() != "none":
+            self.verbose_append("report_ple > reports/final_ple.rpt")
+            #qor done by write_reports 
         return True
 
     def write_regs(self) -> bool:

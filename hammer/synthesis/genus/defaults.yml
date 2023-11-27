@@ -8,5 +8,13 @@ synthesis.genus:
   # Used to locate the binary - e.g. the '221' in ${cadence.cadence_home}/DDI/DDI221/GENUS221/bin/genus
   version: "221"
 
+  # Physical flow effort.
+  # Valid options: high, medium, and none. Requires Genus Physical Option (GEN40) license and access to the Innovus System.
+  # High effort:     Provides the best QoR at the cost of runtime.  Requires Innovus.
+  # Medium effort:   Offers the best trade-off between the runtime and QoR and turns legalization off by default.  
+  #                  Requires Genus_Physical_Opt license.
+  # None:            Will result in the best runtime.  Works with all base Genus products.
+  phys_flow_effort: "medium"
+
   # Generate the TCL file but do not run it yet.
   generate_only: false
