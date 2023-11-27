@@ -304,7 +304,8 @@ class TestCLIDriver:
                 margins=None,
                 top_layer=None,
                 layers=None,
-                obs_types=None).to_dict()
+                obs_types=None,
+                power_domain=None).to_dict()
             output["vlsi.inputs.default_output_load"] = 1
             output["vlsi.inputs.hierarchical.top_module"] = top_module
             output["vlsi.inputs.hierarchical.flat"] = "hierarchical"
