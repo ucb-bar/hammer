@@ -116,6 +116,8 @@ vlsi.inputs:
   #   pins (Optional[List[str]]) - The cell pin/s that this net should drive. If None, pin name is assumed to be net name. If empty, no pins are connected
   #   tie (Optional[str]) - Another supply this supply is tied to. Nets with this set will  not end up in your final layout.
   #   weight (Optional[int]) - The weight of this supply when building power straps (larger number = more straps).
+  #   voltage (Optional[float]) - The voltage of the supply.
+  #   interacts (Optiona[List[str]]) - A list of supplies this one interacts with, used for inferring level shifters.
   #     Not used for grounds. Mandatory, but defaults to 1 if omitted.
   supplies:
     power: [{name: "VDD", pins: ["VDD"], domain: "AO", voltage: "0.85 V"}] # power (List(Supply)): A list of of all power net(s) in the design

@@ -2168,8 +2168,9 @@ class HasCPFSupport(HammerTool):
                 output.append(f'create_global_connection -domain {pg_net.domain} -net {pg_net.name} -pins [list {pins_str}]')
         # Create level shifters
         for power_net in power_nets:
-            other_p_nets = ' '.join(p_net.name for p_net in power_nets if p_net != power_net)
-            output.append(f"create_level_shifter_rule -name {power_net.name}_LS -from {power_net.domain} -to [list {other_p_nets}]")
+            if power_net.interacts is not None and power_net.interacts != []:
+                other_p_nets = ' '.join(power_net.interacts)
+                output.append(f"create_level_shifter_rule -name {power_net.name}_LS -from {power_net.domain} -to [list {other_p_nets}]")
         # Just names
         condition = "nominal"
         mode = "aon"

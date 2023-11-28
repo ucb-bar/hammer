@@ -4,7 +4,7 @@
 #  See LICENSE for licence details.
 
 # pylint: disable=bad-continuation
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from decimal import Decimal
 import math
 import operator
@@ -95,6 +95,7 @@ class Supply:
     tie: Optional[str]
     weight: Optional[str]
     voltage: Optional[str]
+    interacts: Optional[list[str]] = field(default_factory=list)
     domain: Optional[str] = "AO"
 
 
