@@ -11,6 +11,25 @@ Power Specification
 -------------------
 Simple power specs are specified using the Hammer IR key ``vlsi.inputs.supplies``, which is then translated into a a Supply object. ``hammer_vlsi_impl`` exposes the Supply objects to other APIs (e.g. power straps) and can generate the CPF/UPF files depending on which specification the tools support. Multi-mode multi-corner (MMMC) setups are also available by setting ``vlsi.inputs.mmmc_corners`` and manual power spec definitions are supported by setting the relevant ``vlsi.inputs.power_spec...`` keys.
 
+Power Domains
+-------------
+Hammer supports rudimentary intents for multiple power domains.
+Physical domains can be specified as a specific instance of a ``placement_constraint``.
+Furthermore, existing placement constraints can be repurposed as a power domain by setting the ``power_domain`` key.
+
+In order to connect the supplies to the power domains, the ``power`` and ``ground`` supply nets must be linked to a specific power domain and assigned a voltage level.
+There can only be *one* element in the ``ground`` list of supplies.
+
+.. code-block:: yaml
+
+    supplies:
+      power: [
+        {name: AO, pins: [VDD], domain: "AO", voltage: "0.85 V"},
+        {name: A, pins: [A], domain: "A", voltage: "0.45 V"},
+        {name: B, pins: [B], domain: "B", voltage: "0.5 V"},
+      ]
+      ground: [{name: VSS, pins: [VSS], voltage: "0 V"}]
+
 Timing Constraints
 ------------------
 Clock and pin timing constraints are specified using the Hammer IR keys ``vlsi.inputs.clocks/output_loads/delays``. These objects can be turned into SDC-style constraints by ``hammer_vlsi_impl`` for consumption by supported tools.
