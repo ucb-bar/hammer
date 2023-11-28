@@ -463,6 +463,7 @@ def genus_global_settings(ht: HammerTool) -> bool:
     # Generic Settings
     verbose_append("set_db hdl_error_on_blackbox true")
     verbose_append("set_db max_cpus_per_server {}".format(ht.get_setting("vlsi.core.max_threads")))
+    verbose_append("set_multi_cpu_usage -local_cpu {}".format(ht.get_setting("vlsi.core.max_threads")))
 
     return True
 
