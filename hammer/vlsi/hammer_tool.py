@@ -1051,9 +1051,12 @@ class HammerTool(metaclass=ABCMeta):
         output = [] # type: List[ClockPort]
         for clock_port in clocks:
             clock = ClockPort(
-                name=clock_port["name"], period=TimeValue(clock_port["period"]),
+                name=clock_port["name"], period=None,
                 uncertainty=None, path=None, generated=None, source_path=None, divisor=None, group=None
             )
+            period_assert = False
+            if "period" in clock_port:
+                clock = clock._replace(period=TimeValue(clock_port["period"]))
             if "path" in clock_port:
                 clock = clock._replace(path=clock_port["path"])
             if "uncertainty" in clock_port:
@@ -1068,7 +1071,13 @@ class HammerTool(metaclass=ABCMeta):
                         source_path=clock_port["source_path"],
                         divisor=int(clock_port["divisor"])
                     )
+                else:
+                    period_assert = True
+            else:
+                period_assert = True
             clock = clock._replace(generated=generated)
+            if period_assert:
+                assert clock.period is not None, f"Non-generated clock {clock.name} must have a period specified."
             output.append(clock)
         return output
 
@@ -1090,13 +1099,16 @@ class HammerTool(metaclass=ABCMeta):
         supplies = self.get_setting(key)
         output = []  # type: List[Supply]
         for raw_supply in supplies:
-            supply = Supply(name=raw_supply['name'], pin=None, tie=None, weight=1)
-            if 'pin' in raw_supply:
-                supply = supply._replace(pin=raw_supply['pin'])
+            supply = Supply(name=raw_supply['name'], pins=[], tie=None, weight=1, voltage=None)
+            assert 'pin' not in raw_supply, "supply.pin: str has been replaced with supply.pins: List[str]"
+            if 'pins' in raw_supply:
+                supply = supply._replace(pins=raw_supply['pins'])
             if 'tie' in raw_supply:
                 supply = supply._replace(tie=raw_supply['tie'])
             if 'weight' in raw_supply:
                 supply = supply._replace(weight=raw_supply['weight'])
+            if 'voltage' in raw_supply:
+                supply = supply._replace(voltage=raw_supply['voltage'])
             output.append(supply)
         return output
 

@@ -65,12 +65,11 @@ class HammerDriver:
         file_logger = HammerVLSIFileLogger(options.log_file)
         HammerVLSILogging.add_callback(file_logger.callback)
         self.log = HammerVLSILogging.context()  # type: HammerVLSILoggingContext
-
+        
         # Create a new hammer database.
         self.database = hammer_config.HammerDatabase()  # type: hammer_config.HammerDatabase
 
         self.log.info("Loading hammer-vlsi libraries and reading settings")
-
         # Store the run dir (this should already be canonicalized by the CLI driver).
         self.obj_dir = options.obj_dir  # type: str
 

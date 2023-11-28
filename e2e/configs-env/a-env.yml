@@ -8,29 +8,33 @@ cadence.CDS_LIC_FILE: "5280@bwrcflex-1.eecs.berkeley.edu:5280@bwrcflex-2.eecs.be
 cadence.extra_env_vars: [{"LM_PROJECT": "bwrc_users"}]
 
 synopsys.synopsys_home: "/ecad/tools/synopsys"
-synopsys.SNPSLMD_LICENSE_FILE: "1701@bwrcflex-1.eecs.berkeley.edu:1701@bwrcflex-2.eecs.berkeley.edu"
+synopsys.SNPSLMD_LICENSE_FILE: "1709@flex-lic.millennium.berkeley.edu:1701@bwrcflex-1.eecs.berkeley.edu:1701@bwrcflex-2.eecs.berkeley.edu"
 synopsys.MGLS_LICENSE_FILE: "1717@bwrcflex-1.eecs.berkeley.edu:1717@bwrcflex-2.eecs.berkeley.edu"
 
 # Commercial tool versions
 synthesis.genus.version: "211"
 par.innovus.version: "211"
+power.joules.version: "201"
 synthesis.genus.genus_bin: "/ecad/tools/cadence/GENUS/GENUS211/bin/genus"  # must point to binaries bc Hammer assumes DDI path now
 par.innovus.innovus_bin: "/ecad/tools/cadence/INNOVUS/INNOVUS211/bin/innovus"
-sim.vcs.version: "P-2019.06-SP1"
-sim.vcs.verdi_home: "/ecad/tools/synopsys/verdi/P-2019.06-SP2-2"
+power.joules.joules_bin: "/ecad/tools/cadence/JLS/JLS201/bin/joules"
+sim.vcs.version: "S-2021.09-SP1-1"
+sim.vcs.verdi_home: "/ecad/tools/synopsys/verdi/S-2021.09-SP1-1"
 sim.vcs.verdi_home_meta: lazysubst
 lvs.calibre.version: "2022.2_24.16"
 drc.calibre.version: "2022.2_24.16"
 
 # Open-source tool paths
-synthesis.yosys.yosys_bin: "/nscratch/vighneshiyer/miniconda3/envs/sky130/bin/yosys"
-par.openroad.openroad_bin: "/nscratch/vighneshiyer/miniconda3/envs/sky130/bin/openroad"
-drc.magic.magic_bin: "/nscratch/vighneshiyer/miniconda3/envs/sky130/bin/magic"
-lvs.netgen.netgen_bin: "/nscratch/vighneshiyer/miniconda3/envs/sky130/bin/netgen"
+synthesis.yosys.yosys_bin: "/nscratch/sky130/conda-yosys/bin/yosys"
+par.openroad.openroad_bin: "/nscratch/sky130/conda-openroad/bin/openroad"
+par.openroad.klayout_bin: "/nscratch/sky130/conda-klayout/bin/klayout"
+drc.klayout.klayout_bin: "/nscratch/sky130/conda-klayout/bin/klayout"
+drc.magic.magic_bin: "/nscratch/sky130/conda-signoff/bin/magic"
+lvs.netgen.netgen_bin: "/nscratch/sky130/conda-signoff/bin/netgen"
 
 # Sky130 paths
 technology.sky130:
-  sky130A: "/nscratch/vighneshiyer/miniconda3/envs/sky130/share/pdk/sky130A"
+  sky130A: "/nscratch/sky130/conda-sky130/share/pdk/sky130A"
   sram22_sky130_macros: "/nscratch/sky130/sram22_sky130_macros"
   # sky130_nda:
 

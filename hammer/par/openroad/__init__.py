@@ -1882,7 +1882,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         #  -pitch {pitch}
         return tcl
 
-    def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool) -> List[str]:
+    def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool, antenna_trim_shape: str) -> List[str]:
         """
         Generate a list of TCL commands that will create power straps on a given layer.
         This is a low-level, cad-tool-specific API. It is designed to be called by higher-level methods, so calling this directly is not recommended.
@@ -1898,6 +1898,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         :param bbox: The optional (2N)-point bounding box of the area to generate straps. By default the entire core area is used.
         :param nets: A list of power nets to create (e.g. ["VDD", "VSS"], ["VDDA", "VSS", "VDDB"],  ... etc.).
         :param add_pins: True if pins are desired on this layer; False otherwise.
+        :param antenna_trim_shape: Strategy for trimming strap antennae. {none/stripe}
         :return: A list of TCL commands that will generate power straps.
         """
         pdn_cfg = [f" {layer_name} {{width {width} pitch {pitch} offset {offset}}}"]

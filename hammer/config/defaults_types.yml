@@ -82,8 +82,8 @@ vlsi.technology:
 vlsi.inputs:
   # Supply voltages and names
   supplies:
-    power: list[dict[str, str]]
-    ground: list[dict[str, str]]
+    power: list[dict[str, Any]]
+    ground: list[dict[str, Any]]
     VDD: str
     GND: str
 
@@ -310,6 +310,10 @@ par:
       # type: int
       track_spacing: int
 
+      # Specifies antenna trimming strategy. none or stripe
+      # type: str
+      antenna_trim_shape: str
+
       # Ratio of total routing tracks to dedicate to power straps, which is used to calculate set pitch
       # type: float
       power_utilization: float
@@ -321,6 +325,18 @@ par:
       # List of layers on which to place power straps (std cell rail layer is implied - do not include it)
       # type: list[str]
       strap_layers: list[str]
+
+      # Indicates if Hammer should generate straps for the stdcell rail layer
+      # type: bool
+      generate_rail_layer: bool
+
+      # Indicates bottom layer to via to during power strap generation
+      # type: str
+      bottom_via_layer: str
+
+      # Indicates which power nets straps should be generated for
+      # type: list[str]
+      power_nets: list[str]
 
 # DRC settings
 drc.inputs:

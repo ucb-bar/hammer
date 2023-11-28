@@ -11,6 +11,7 @@ from typing import List, Dict, Optional, Tuple
 import os
 import errno
 from textwrap import dedent
+from datetime import datetime
 
 from hammer.vlsi import HammerPowerTool, HammerToolStep, HammerToolHookAction, HammerTool, \
                         MMMCCornerType, FlowLevel, PowerReport
@@ -240,6 +241,9 @@ class Joules(HammerPowerTool, CadenceTool):
         # Replace . to / formatting in case argument passed from sim tool
         tb_dut = self.tb_dut.replace(".", "/")
 
+        # Fixes issues seen with several different reporting commands
+        self.block_append("read_db pre_report_power")
+
         power_report_configs = []
         # create power report config for each waveform
         for waveform in self.waveforms:
@@ -263,7 +267,7 @@ class Joules(HammerPowerTool, CadenceTool):
             if report.end_time:
                 read_stim_cmd += " -end {ETIME}ns".format(ETIME=report.end_time.value_in_units("ns"))
 
-            frame_based_analysis = (report.interval_size or (report.toggle_signal and report.num_toggles))
+            time_based_analysis = (report.interval_size or (report.toggle_signal and report.num_toggles))
             if report.interval_size:
                 read_stim_cmd += " -interval_size {INTERVAL}ns".format(INTERVAL=report.interval_size.value_in_units("ns"))
                 if report.toggle_signal:
@@ -280,16 +284,11 @@ class Joules(HammerPowerTool, CadenceTool):
 
             stim_alias, new_stim = self.get_alias_name(read_stim_cmd)
 
-            # if new_stim:
-            # NOTE: only reading new stimuli with -append mode breaks frame-based power analysis 
-            #   with error message: "Invalid frame name /stim#2/frame#3. No stimulus read. Using vectorless power computation"
-            #   Interestingly, this does not happen when starting from a database checkpoint (i.e. after read_db pre_report_power)
-            #   For now, re-run read_stimulus for each power report config, even if it's an identical stimulus
-            block_append(f"{read_stim_cmd} -alias {stim_alias}")
-            # block_append(f"write_sdb -out {alias}.sdb") # NOTE: subsequent read_sdb command errors when reading this file back in, so don't cache for now
-            # TODO: avg mode saves time, run this based on output_formats mode?
-            # block_append(f"compute_power -mode average -stim {stim_alias} -append")
-            block_append(f"compute_power -mode time_based -stim {stim_alias} -append")
+            if new_stim:
+                block_append(f"{read_stim_cmd} -alias {stim_alias} -append")
+                # block_append(f"write_sdb -out {alias}.sdb") # NOTE: subsequent read_sdb command errors when reading this file back in, so don't cache for now
+                mode = "time_based" if time_based_analysis else "average"
+                block_append(f"compute_power -mode {mode} -stim {stim_alias} -append")
 
             # remove only file extension (last .*) in filename
             waveform_name = '.'.join(os.path.basename(report.waveform_path).split('.')[0:-1])
@@ -297,7 +296,7 @@ class Joules(HammerPowerTool, CadenceTool):
             inst_str = f"-inst {report.inst}" if report.inst else ""
             module_str = f"-module {report.module}" if report.module else ""
             levels_str = f"-levels {report.levels}" if report.levels else ""
-            m_levels_str = levels_str if report.module else ""
+            m_levels_str = levels_str if (report.module or report.inst) else ""
             output_formats = set(report.output_formats) if report.output_formats else {'report'}  
 
             report_path = report.report_name if report.report_name else waveform_name
@@ -313,22 +312,25 @@ class Joules(HammerPowerTool, CadenceTool):
             # use set intersection to determine whether two lists have at least one element in common
             if {'report','all'} & output_formats:
                 # -frames $frames explodes the runtime & doesn't seem to change result
-                self.block_append(f"report_power -stims {stim_alias} {inst_str} {module_str} {levels_str} -unit mW -out {report_path}.power.rpt")
-                self.block_append(f"report_power -stims {stim_alias} -by_hierarchy {levels_str} -unit mW -out {report_path}.hier.power.rpt")
+                h_levels_str = "-levels all" if levels_str == "" else levels_str
+                self.block_append(f"report_power -stims {stim_alias} {inst_str} {module_str} {m_levels_str} -unit mW -out {report_path}.power.rpt")
+                self.block_append(f"report_power -stims {stim_alias} {inst_str} {module_str} {m_levels_str} -by_hierarchy {h_levels_str} -unit mW -out {report_path}.hier.power.rpt")
             if {'activity','all'} & output_formats:
                 self.block_append(f"report_activity -stims {stim_alias} {inst_str} {module_str} {levels_str} -out {report_path}.activity.rpt")
                 self.block_append(f"report_activity -stims {stim_alias} -by_hierarchy {levels_str} -out {report_path}.hier.activity.rpt")
             if {'ppa','all'} & output_formats:
                 root_str = inst_str.replace('-inst','-root')
-                self.block_append(f"report_ppa {root_str} {module_str} -out {report_path}.ppa.rpt")
+                self.block_append(f"report_ppa {root_str} {module_str} > {report_path}.ppa.rpt")
+            if {'area','all'} & output_formats:
+                self.block_append(f"report_area > {report_path}.area.rpt")
             if {'plot_profile','profile','all'} & output_formats:
-                if not frame_based_analysis:
+                if not time_based_analysis:
                     self.logger.error("Must specify either interval_size or toggle_signal+num_toggles in power.inputs.report_configs to generate plot_profile report (frame-based analysis).")
                     return False
                 # NOTE: we don't include levels_str here bc category is total power anyways
                 self.block_append(f"plot_power_profile -stims {stim_alias} {inst_str} {module_str} {m_levels_str} -by_category {{total}} -types {{total}} -unit mW -format png -out {report_path}.profile.png")
             if {'write_profile','profile','all'} & output_formats:
-                if not frame_based_analysis:
+                if not time_based_analysis:
                     self.logger.error("Must specify either interval_size or toggle_signal+num_toggles in power.inputs.report_configs to generate write_profile report (frame-based analysis).")
                     return False
                 block_append(f"write_power_profile -stims {stim_alias} -root [get_insts -rtl_type hier] {levels_str} -unit mW -format fsdb -out {report_path}.profile.fsdb")
@@ -350,11 +352,8 @@ class Joules(HammerPowerTool, CadenceTool):
 
         # Create power analysis script
         #   with unique filename so that multiple runs don't overwrite each others' TCL scripts
-        i = 0
-        joules_tcl_filename = os.path.join(self.run_dir, f"joules.{i}.tcl")
-        while os.path.exists(joules_tcl_filename):
-            i += 1
-            joules_tcl_filename = os.path.join(self.run_dir, f"joules.{i}.tcl")
+        now = datetime.now().strftime("%Y%m%d-%H%M%S")
+        joules_tcl_filename = os.path.join(self.run_dir, f"joules-{now}.tcl")
         self.write_contents_to_path("\n".join(self.output), joules_tcl_filename)
 
         # Make sure that generated-scripts exists.
@@ -389,8 +388,6 @@ class Joules(HammerPowerTool, CadenceTool):
         HammerVLSILogging.enable_tag = False
 
         self.run_executable(args, cwd=self.run_dir)
-
-        shutil.copy2(joules_tcl_filename, os.path.join(self.run_dir, f"joules.tcl"))
 
         HammerVLSILogging.enable_colour = True
         HammerVLSILogging.enable_tag = True

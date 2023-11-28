@@ -22,9 +22,9 @@ TOOLS_CONF          ?= configs-tool/$(tools).yml
 # design-specific overrides of default configs
 DESIGN_CONF         ?= configs-design/$(design)/common.yml
 DESIGN_PDK_CONF     ?= configs-design/$(design)/$(pdk).yml
-SIM_CONF            ?= $(if $(findstring rtl,$(MAKECMDGOALS)), configs-design/$(design)/sim-rtl.yml, \
-                       $(if $(findstring syn,$(MAKECMDGOALS)), configs-design/$(design)/sim-syn.yml, \
-                       $(if $(findstring par,$(MAKECMDGOALS)), configs-design/$(design)/sim-par.yml, )))
+SIM_CONF            ?= $(if $(findstring -rtl,$(MAKECMDGOALS)), configs-design/$(design)/sim-rtl.yml, \
+                       $(if $(findstring -syn,$(MAKECMDGOALS)), configs-design/$(design)/sim-syn.yml, \
+                       $(if $(findstring -par,$(MAKECMDGOALS)), configs-design/$(design)/sim-par.yml, )))
 POWER_CONF          ?= $(if $(findstring power-rtl,$(MAKECMDGOALS)), configs-design/$(design)/power-rtl-$(pdk).yml, \
                        $(if $(findstring power-syn,$(MAKECMDGOALS)), configs-design/$(design)/power-syn-$(pdk).yml, \
                        $(if $(findstring power-par,$(MAKECMDGOALS)), configs-design/$(design)/power-par-$(pdk).yml, )))
@@ -43,3 +43,6 @@ $(HAMMER_D_MK):
 	hammer-vlsi --obj_dir $(OBJ_DIR) -e $(ENV_YML) $(HAMMER_EXTRA_ARGS) build
 
 -include $(HAMMER_D_MK)
+
+clean:
+    rm -rf $(OBJ_DIR) hammer-vlsi-*.log

@@ -113,13 +113,13 @@ vlsi.inputs:
   # Supply voltages and names
   # Supply Struct:
   #   name (str) - The name of your supply's net
-  #   pin (Optional[str]) - The cell pin that this net should drive, no pins are connected when omitted
+  #   pins (Optional[List[str]]) - The cell pin/s that this net should drive. If None, pin name is assumed to be net name. If empty, no pins are connected
   #   tie (Optional[str]) - Another supply this supply is tied to. Nets with this set will  not end up in your final layout.
   #   weight (Optional[int]) - The weight of this supply when building power straps (larger number = more straps).
   #     Not used for grounds. Mandatory, but defaults to 1 if omitted.
   supplies:
-    power: [{name: "VDD", pin: "VDD"}] # power (List(Supply)): A list of of all power net(s) in the design
-    ground: [{name: "VSS", pin: "VSS"}] # ground (List(Supply)): A list of all ground net(s) in the design
+    power: [{name: "VDD", pins: ["VDD"]}] # power (List(Supply)): A list of of all power net(s) in the design
+    ground: [{name: "VSS", pins: ["VSS"]}] # ground (List(Supply)): A list of all ground net(s) in the design
     VDD: "0.85 V" # VDD (str): The default voltage of the primary power net
     GND: "0 V" # GND (str): The default voltage of the primary ground net
 
@@ -181,9 +181,9 @@ vlsi.inputs:
   # period (TimeValue) - Clock port period. e.g. "1 ns", "5ns". Default units: ns
   # path (str) - Optional. If specified, this is the RTL path to the clock. Otherwise, the path is the same as the name.
   # uncertainty (TimeValue) - Optional. Clock uncertainty. e.g. "1 ns", "5ns". Default units: ns
-  # generated (bool) - Optional. If specified this clock is generated from another clock, must specify source_path and divisor
+  # generated (bool) - Optional. If specified this clock is generated from another clock. Must specify source_path and divisor, but period becomes Optional.
   # source_path (str) - Required if generated. The path of the clock that this clock is generated from.
-  # divisor (int) - Required if generated. The amount this generated clock is slowed from the source clock e.g. 2 => this clock will be two times slower than the source clock.
+  # divisor (int) - Required if generated. The amount this generated clock is slower/faster than the source clock e.g. 2 => this clock will be two times slower than the source clock. Negative values imply inversion (falling edge in line with the source's rising edge).
   #   We are constrained to integers by SDC.
   # group (str) - Optional. The name of the clock group this clock belongs to. Clocks in the same group will not be marked as asynchronous.
   #   Clocks with no group specified will all be placed in separate groups and thus marked as asynchronous to each other and all other groups.
@@ -207,6 +207,7 @@ vlsi.inputs:
   # - "input"
   # - "output"
   # delay (TimeValue) - Delay applied to the I/O.
+  # corner (Optional[str]) - "setup" or "hold" will specify -max and -min flags. If empty, the same constraint will apply for setup and hold analysis.
 
   custom_sdc_constraints: [] # List of custom sdc constraints to use. (List[str])
   # These are appended after all other generated constraints (clock, pin, delay, load, etc.).
@@ -603,10 +604,26 @@ par:
       # Overrideable by appending _<layer name>
       # type: float
 
+      antenna_trim_shape: stripe # "none" or "stripe", specifies antenna trimming strategy
+      # Overrideable by appending _<layer name>
+      # type: str
+
       pin_layers: [] # Layers to put power pins on
+      # This is also used in bottom-up hierarchical flows to configure LEF generation
       # type: List[str]
 
       strap_layers: [] # List of layers on which to place power straps (std cell rail layer is implied - do not include it)
+      # type: List[str]
+
+      generate_rail_layer: true # If true, generates straps on the stdcell rail layer - technology.core.std_cell_rail_layer
+      # type: bool
+
+      bottom_via_layer: "rail" # Sets what the lowest power strap layer should generate vias to
+      # Usually should be set to rail, which will use technology.core.std_cell_rail_layer as this setting
+      # Otherwise should be set to some layer name
+      # type: str
+
+      power_nets: [] # List of power nets to generate straps for. If empty, generates straps for all nets in vlsi.inputs.supplies
       # type: List[str]
 
 # DRC settings
@@ -867,7 +884,10 @@ power.inputs:
   #     Default: waveform file name
   #   output_formats (List[str]) - Optional. Report types to generate. Default: ["report"]
   #     Valid options are:
-  #       "report" - average power report (*.rpt), default
+  #       "report" - average power report (*.power.rpt, *.hier.power.rpt), default
+  #       "activity" - design activity during stimulus (*.activity.rpt, *.hier.activity.rpt)
+  #       "ppa" - power, performance, area characteristics of the design (*.ppa.rpt)
+  #       "area" - area report (*.area.rpt)
   #       "plot_profile" - power profile over time, requires frame-based analysis (*.png, *.png.data)
   #       "write_profile" - profiles all power types on all categories for all the sub-hierarchies for a given design instance (*.fsdb)
   #       "profile" - run plot_profile + dump_profile

@@ -26,10 +26,11 @@ drc.klayout.klayout_bin: "/tools/commercial/skywater/local/chipyard-tutorial/.co
 drc.magic.magic_bin: "/tools/commercial/skywater/local/chipyard-tutorial/.conda-signoff/bin/magic"
 lvs.netgen.netgen_bin: "/tools/commercial/skywater/local/chipyard-tutorial/.conda-signoff/bin/netgen"
 
+
 # Sky130 paths
 technology.sky130:
-  sky130A: "/tools/scratch/nayiri/sky130/open_pdks/sky130/sky130A"
-  sram22_sky130_macros: "/tools/commercial/skywater/local/chipyard-tutorial/sram22_sky130_macros"
+  sky130A: "/tools/commercial/skywater/local/sky130A"
+  sram22_sky130_macros: "/tools/commercial/skywater/local/sram22_sky130_macros"
   openram_lib: "/tools/commercial/skywater/local/sky130_sram_macros"
   sky130_nda: "/tools/commercial/skywater/swtech130/skywater-src-nda-20221031"
   sky130_cds: "/tools/commercial/skywater/sky130_cds/sky130_prelim_release_091123"

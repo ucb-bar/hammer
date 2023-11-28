@@ -4,7 +4,7 @@
 
 from hammer.vlsi import HammerTool, HammerToolStep, HammerToolHookAction, HierarchicalMode
 from hammer.utils import VerilogUtils
-from hammer.vlsi import HammerSynthesisTool
+from hammer.vlsi import HammerSynthesisTool, PlacementConstraintType
 from hammer.logging import HammerVLSILogging
 from hammer.vlsi import MMMCCornerType
 import hammer.tech as hammer_tech
@@ -233,7 +233,7 @@ class Genus(HammerSynthesisTool, CadenceTool):
         ))
 
         # Load input files and check that they are all Verilog.
-        if not self.check_input_files([".v", ".sv"]):
+        if not self.check_input_files([".v", ".sv", "vh"]):
             return False
         # We are switching working directories and Genus still needs to find paths.
         abspath_input_files = list(map(lambda name: os.path.join(os.getcwd(), name), self.input_files))  # type: List[str]
@@ -299,6 +299,27 @@ class Genus(HammerSynthesisTool, CadenceTool):
 
         return True
 
+    def dedup_ilms(self) -> None:
+        """After DDI, syn_generic and syn_map will sometimes uniquify hierarchical ILMs,
+        despite .preserve being set on the ILM modules. From observation, the uniquified
+        modules are identical to the read-in ILM, so we can safely change_link to
+        dedup.
+
+        TODO: Correctly disable uniquification in Genus for hierarchical blocks"""
+
+        if self.hierarchical_mode.is_nonleaf_hierarchical() and self.version() >= self.version_number("211"):
+            pcs = list(filter(lambda c: c.type == PlacementConstraintType.Hierarchical, self.get_placement_constraints()))
+            for pc in pcs:
+                self.append("""
+# Attempt to deuniquify hinst:{inst}, incase it was uniquified
+set uniquified_name [get_db hinst:{inst} .module.name]
+if {{ $uniquified_name ne \"{master}\" }} {{
+    puts [format \"WARNING: instance hinst:{inst} was uniquified to be an instance of $uniquified_name, not {master}. Attempting to fix\"]
+    change_link -copy_attributes -instances {{{inst}}} -design_name module:{top}/{master}
+}}
+set_db hinst:{inst} .preserve true
+""".format(inst=pc.path, top=self.top_module, master=pc.master))
+
     def syn_generic(self) -> bool:
         # Add clock mapping flow if special cells are specified
         if self.version() >= self.version_number("211"):
@@ -324,6 +345,9 @@ class Genus(HammerSynthesisTool, CadenceTool):
         else:
             self.verbose_append(f"read_def {self.get_setting('synthesis.genus.def_file')}")
             self.verbose_append("syn_generic -physical")
+
+        self.dedup_ilms()
+
         return True
 
     def syn_map(self) -> bool:
@@ -334,6 +358,9 @@ class Genus(HammerSynthesisTool, CadenceTool):
         # Need to suffix modules for hierarchical simulation if not top
         if self.hierarchical_mode not in [HierarchicalMode.Flat, HierarchicalMode.Top]:
             self.verbose_append("update_names -module -log hier_updated_names.log -suffix _{MODULE}".format(MODULE=self.top_module))
+
+        self.dedup_ilms()
+
         return True
     
     def ispatial_opt(self) -> bool:
@@ -379,6 +406,10 @@ class Genus(HammerSynthesisTool, CadenceTool):
         if self.get_setting("synthesis.genus.phys_flow_effort").lower() != "none":
             self.verbose_append("report_ple > reports/final_ple.rpt")
             #qor done by write_reports 
+
+        # Write reports does not normally report unconstrained paths
+        self.verbose_append("report_timing -unconstrained -max_paths 50 > reports/final_unconstrained.rpt")
+
         return True
 
     def write_regs(self) -> bool:
