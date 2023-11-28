@@ -1544,7 +1544,7 @@ class HammerTool(metaclass=ABCMeta):
         """
         return [
             pd for pd in self.get_placement_constraints()
-            if pd.type == PlacementConstraintType.PowerDomain or "power_domain" in pd
+            if pd.type == PlacementConstraintType.PowerDomain or pd.power_domain is not None
         ]
 
     def get_mmmc_corners(self) -> List[MMMCCorner]:

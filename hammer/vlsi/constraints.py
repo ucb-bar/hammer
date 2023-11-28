@@ -863,6 +863,8 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             output.update({"layers": self.layers})
         if self.obs_types is not None:
             output.update({"obs_types": list(map(str, self.obs_types))})
+        if self.power_domain is not None:
+            output.update({"power_domain": self.power_domain})
         return output
 
 
