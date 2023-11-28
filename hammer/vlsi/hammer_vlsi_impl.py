@@ -2174,7 +2174,8 @@ class HasCPFSupport(HammerTool):
         output.append(f'create_power_mode -name {mode} -default -domain_conditions {{AO@{condition}}}')
         # Create other net operation conditions and power modes
         for power_net in power_nets:
-            output.append(f'create_nominal_condition -name {power_net.name}_condition -voltage {power_net.voltage}')
+            pn_voltage = None if power_net.voltage is None else power_net.voltage.split()[0]
+            output.append(f'create_nominal_condition -name {power_net.name}_condition -voltage {pn_voltage}')
             output.append(f'create_power_mode -name {power_net.domain} -domain_conditions {{{power_net.domain}@{power_net.name}_condition}}')
         # Footer
         output.append("end_design")
