@@ -2074,7 +2074,8 @@ class HasUPFSupport(HammerTool):
         output.append(f'set_design_top {self.top_module}')
         # Create Power Domains
         for domain in domains:
-            output.append(f'create_power_domain {domain.path} \\')
+            pd_name = domain.path if domain.type == PlacementConstraintType.PowerDomain else domain.power_domain
+            output.append(f'create_power_domain {pd_name} \\')
             output.append('\t-elements {.}')
         # Get Supply Nets
         power_nets = self.get_all_power_nets()
@@ -2109,15 +2110,16 @@ class HasUPFSupport(HammerTool):
         # Create Level Shifters
         for domain in domains:
             # Input Shifter
-            output.append(f'set_level_shifter {domain.path}_INPUTS \\')
-            output.append(f'\t-domain {domain.path} \\')
+            pd_name = domain.path if domain.type == PlacementConstraintType.PowerDomain else domain.power_domain
+            output.append(f'set_level_shifter {pd_name}_INPUTS \\')
+            output.append(f'\t-domain {pd_name} \\')
             output.append('\t-applies_to inputs \\')
             output.append('\t-rule both \\')
             output.append('\t-location automatic')
 
             # Output Shifter
-            output.append(f'set_level_shifter {domain.path}_OUTPUTS \\')
-            output.append(f'\t-domain {domain.path} \\')
+            output.append(f'set_level_shifter {pd_name}_OUTPUTS \\')
+            output.append(f'\t-domain {pd_name} \\')
             output.append('\t-applies_to outputs \\')
             output.append('\t-rule both \\')
             output.append('\t-location automatic')
@@ -2150,7 +2152,10 @@ class HasCPFSupport(HammerTool):
             output.append(f'create_power_nets -nets {power_net.name} -voltage {vdd.value}')
         output.append(f'create_ground_nets -nets {{ {" ".join(g_net.name for g_net in ground_nets)} }}')
         # Define power domain and connections
-        for domain in domains:
+        first_domain = domains[0]
+        first_domain_name = first_domain.path if first_domain.type == PlacementConstraintType.PowerDomain else first_domain.power_domain
+        output.append(f'create_power_domain -name {first_domain_name} -default')
+        for domain in domains[1:]:
             output.append(f'create_power_domain -name {domain.path if domain.type == PlacementConstraintType.PowerDomain else domain.power_domain}')
             # Assume primary power are first in list
         for p_net, g_net in [(p_net, ground_nets[0]) for p_net in power_nets]:
