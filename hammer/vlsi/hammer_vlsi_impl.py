@@ -2151,7 +2151,7 @@ class HasCPFSupport(HammerTool):
         output.append(f'create_ground_nets -nets {{ {" ".join(g_net.name for g_net in ground_nets)} }}')
         # Define power domain and connections
         for domain in domains:
-            output.append(f'create_power_domain -name {domain.path}')
+            output.append(f'create_power_domain -name {domain.path if domain.type == PlacementConstraintType.PowerDomain else domain.power_domain}')
             # Assume primary power are first in list
         for p_net, g_net in [(p_net, ground_nets[0]) for p_net in power_nets]:
             output.append(f'update_power_domain -name {p_net.domain} -primary_power_net {p_net.name} -primary_ground_net {g_net.name}')
