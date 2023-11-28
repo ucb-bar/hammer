@@ -322,7 +322,7 @@ class Genus(HammerSynthesisTool, CadenceTool):
         if self.get_setting("synthesis.genus.phys_flow_effort").lower() == "none":
             self.verbose_append("syn_generic")
         else:
-            self.verbose_append("create_floorplan -core_size { 350.0 400.0 0.0 0.0 350.0 400.0 }")
+            self.verbose_append(f"read_def {self.get_setting('synthesis.genus.def_file')}")
             self.verbose_append("syn_generic -physical")
         return True
 
