@@ -261,6 +261,12 @@ class Genus(HammerSynthesisTool, CadenceTool):
         # TODO: is there a way to track instance paths through the synthesis process?
         verbose_append("set_db root: .auto_ungroup none")
 
+        # Enable metric tracking
+        verbose_append(f"set_db statistics_log_data {self.get_setting('synthesis.genus.track_qor_metrics')}")
+        verbose_append(f"set_db statistics_log_data {self.get_setting('synthesis.genus.track_qor_metrics')}")
+
+        verbose_append(f"set_db statistics_enable_power_report {self.get_setting('synthesis.genus.track_power_metrics')}")
+
         # Set "don't use" cells.
         for l in self.generate_dont_use_commands():
             self.append(l)
@@ -345,6 +351,9 @@ class Genus(HammerSynthesisTool, CadenceTool):
         """Generate reports."""
         # TODO: extend report generation capabilities
         self.verbose_append("write_reports -directory reports -tag final")
+
+        self.verbose_append("report_metric -format text -out_file reports/final_metrics.rpt")
+
         return True
 
     def write_regs(self) -> bool:

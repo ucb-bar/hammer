@@ -10,3 +10,9 @@ synthesis.genus:
 
   # Generate the TCL file but do not run it yet.
   generate_only: false
+
+  # Track QoR metrics for predefined stages during synthesis: elaborate, syn_generic, syn_map and syn_opt.
+  track_qor_metrics: true
+
+  # Track power metrics for same stages as above. Runtime intensive.
+  track_power_metrics: true
