@@ -941,7 +941,7 @@ class HammerDatabase:
 
         if cfg is None:
             cfg = self.get_config()
-        if key not in self.get_config_types():
+        if key not in self.get_config_types:
             #TODO: compile this at the beginning instead of emitting every instance
             #self.logger.warning(f"Key {key} is not associated with a type")
             return True
