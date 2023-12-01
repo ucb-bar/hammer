@@ -184,9 +184,7 @@ def main(args) -> int:
                                   InterfaceVar("schematic_files", "List[str]",
                                                "path to the input SPICE or Verilog schematic files (e.g. *.v or *.spi)"),
                                   InterfaceVar("hcells_list", "List[str]",
-                                               "list of cells to explicitly map hierarchically in LVS"),
-                                  InterfaceVar("ilms", "List[ILMStruct]",
-                                               "list of (optional) input ILM information for hierarchical mode")
+                                               "list of cells to explicitly map hierarchically in LVS")
                               ],
                               outputs=[]
                               )

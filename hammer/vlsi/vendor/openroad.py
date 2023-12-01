@@ -26,7 +26,7 @@ class OpenROADTool(HasSDCSupport, TCLTool, HammerTool):
     def env_vars(self) -> Dict[str, str]:
         """
         Get the list of environment variables required for this tool.
-        Note to subclasses: remember to include variables from 
+        Note to subclasses: remember to include variables from
         super().env_vars!
         """
         list_of_vars = self.get_setting("openroad.extra_env_vars")
@@ -36,7 +36,7 @@ class OpenROADTool(HasSDCSupport, TCLTool, HammerTool):
     def validate_openroad_installation(self) -> None:
         """
         make sure OPENROAD env-var is set, and klayout is in the path (since
-        klayout is not installed with OPENROAD as of version 1.1.0. this 
+        klayout is not installed with OPENROAD as of version 1.1.0. this
         should be called in steps that actually run tools or touch filepaths
         """
         if not shutil.which("openroad"):
@@ -114,7 +114,7 @@ class OpenROADTool(HasSDCSupport, TCLTool, HammerTool):
 
     def setup_openroad_rundir(self) -> bool:
         """
-        OpenROAD expects several files/dirs in the current run_dir, so we 
+        OpenROAD expects several files/dirs in the current run_dir, so we
         symlink them in from the OpenROAD-flow installation
         """
         # TODO: for now, just symlink in the read-only OpenROAD stuff, since
@@ -151,7 +151,9 @@ class OpenROADSynthesisTool(HammerSynthesisTool, OpenROADTool):
         """this string is used in the makefile fragment used by OpenROAD"""
 
         assert len(self.get_clock_ports()) == 1, "openroad only supports 1 root clock"
-        return str(self.get_clock_ports()[0].period.value_in_units("ns"))
+        period = self.get_clock_ports()[0].period
+        assert period is not None, "clock must have a period"
+        return str(period.value_in_units("ns"))
 
     def _floorplan_bbox(self) -> str:
         """this string is used in the makefile fragment used by OpenROAD"""
@@ -187,7 +189,7 @@ class OpenROADSynthesisTool(HammerSynthesisTool, OpenROADTool):
         abspath_input_files = list(map(lambda name:
                                        os.path.join(os.getcwd(), name), self.input_files))
 
-        # Add any verilog_synth wrappers (which are needed in some 
+        # Add any verilog_synth wrappers (which are needed in some
         # technologies e.g. for SRAMs) which need to be synthesized.
         abspath_input_files += self.technology.read_libs([
             hammer_tech.filters.verilog_synth_filter
@@ -251,7 +253,8 @@ class OpenROADPlaceAndRouteTool(HammerPlaceAndRouteTool, OpenROADTool):
                              bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal,
                              width: Decimal, spacing: Decimal, offset: Decimal,
                              bbox: Optional[List[Decimal]], nets: List[str],
-                             add_pins: bool) -> List[str]:
+                             add_pins: bool,
+                             antenna_trim_shape: str) -> List[str]:
         # TODO: currently using openroad's powerstrap script
         return []
 

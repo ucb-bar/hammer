@@ -4,6 +4,7 @@ technology.sky130:
   sram22_sky130_macros: "/tools/commercial/skywater/local/chipyard-tutorial/sram22_sky130_macros"
   openram_lib: "/tools/commercial/skywater/local/sky130_sram_macros"
   sky130_nda: "/tools/commercial/skywater/swtech130/skywater-src-nda-20221031"
+  sky130_cds: "/tools/commercial/skywater/sky130_cds/sky130_prelim_release_091123"
 
 synthesis.genus.version: "211"
 par.innovus.version: "211"

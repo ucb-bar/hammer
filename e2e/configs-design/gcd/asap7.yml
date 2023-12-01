@@ -1,0 +1,35 @@
+# Specify clock signals
+vlsi.inputs.clocks: [
+  {name: "clk", period: "5ns", uncertainty: "0.1ns"}
+]
+
+sim.inputs:
+  defines: ["CLOCK_PERIOD=5"]
+  defines_meta: "append"
+  options: ["-timescale=1ns/10ps"]
+  options_meta: append
+
+# Placement Constraints
+vlsi.inputs.placement_constraints:
+  - path: "gcd"
+    type: toplevel
+    x: 0
+    y: 0
+    width: 100
+    height: 100
+    margins:
+      left: 0
+      right: 0
+      top: 0
+      bottom: 0
+
+vlsi.inputs.delays: [
+  {name: "reset",           clock: "clk", delay: "1", direction: "input"},
+  {name: "operands_bits_A", clock: "clk", delay: "1", direction: "input"},
+  {name: "operands_bits_B", clock: "clk", delay: "1", direction: "input"},
+  {name: "operands_val",    clock: "clk", delay: "1", direction: "input"},
+  {name: "operands_rdy",    clock: "clk", delay: "1", direction: "output"},
+  {name: "result_bits_data",clock: "clk", delay: "1", direction: "output"},
+  {name: "result_val",      clock: "clk", delay: "1", direction: "output"},
+  {name: "result_rdy",      clock: "clk", delay: "1", direction: "input"} 
+]

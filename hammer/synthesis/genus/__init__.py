@@ -4,7 +4,7 @@
 
 from hammer.vlsi import HammerTool, HammerToolStep, HammerToolHookAction, HierarchicalMode
 from hammer.utils import VerilogUtils
-from hammer.vlsi import HammerSynthesisTool
+from hammer.vlsi import HammerSynthesisTool, PlacementConstraintType
 from hammer.logging import HammerVLSILogging
 from hammer.vlsi import MMMCCornerType
 import hammer.tech as hammer_tech
@@ -194,11 +194,9 @@ class Genus(HammerSynthesisTool, CadenceTool):
         # Clock gating setup
         if self.get_setting("synthesis.clock_gating_mode") == "auto":
             verbose_append("set_db lp_clock_gating_infer_enable  true")
-            # Innovus will create instances named CLKGATE_foo, CLKGATE_bar, etc.
+            # Genus will create instances named CLKGATE_foo, CLKGATE_bar, etc.
             verbose_append("set_db lp_clock_gating_prefix  {CLKGATE}")
             verbose_append("set_db lp_insert_clock_gating  true")
-            verbose_append("set_db lp_clock_gating_hierarchical true")
-            verbose_append("set_db lp_insert_clock_gating_incremental true")
             verbose_append("set_db lp_clock_gating_register_aware true")
 
         # Set up libraries.
@@ -226,7 +224,7 @@ class Genus(HammerSynthesisTool, CadenceTool):
         ))
 
         # Load input files and check that they are all Verilog.
-        if not self.check_input_files([".v", ".sv"]):
+        if not self.check_input_files([".v", ".sv", "vh"]):
             return False
         # We are switching working directories and Genus still needs to find paths.
         abspath_input_files = list(map(lambda name: os.path.join(os.getcwd(), name), self.input_files))  # type: List[str]
@@ -252,15 +250,16 @@ class Genus(HammerSynthesisTool, CadenceTool):
                 verbose_append("set_db module:{top}/{mod} .preserve true".format(top=self.top_module, mod=ilm.module))
         verbose_append("init_design -top {}".format(self.top_module))
 
+        # Setup power settings from cpf/upf
+        # Difference from other tools: apply_power_intent after read
+        power_cmds = self.generate_power_spec_commands()
+        power_cmds.insert(1, "apply_power_intent -summary")
+        for l in power_cmds:
+            verbose_append(l)
+
         # Prevent floorplanning targets from getting flattened.
         # TODO: is there a way to track instance paths through the synthesis process?
         verbose_append("set_db root: .auto_ungroup none")
-
-        # Set units to pF and technology time unit.
-        # Must be done after elaboration.
-        verbose_append("set_units -capacitance 1.0pF")
-        verbose_append("set_load_unit -picofarads 1")
-        verbose_append("set_units -time 1.0{}".format(self.get_time_unit().value_prefix + self.get_time_unit().unit))
 
         # Set "don't use" cells.
         for l in self.generate_dont_use_commands():
@@ -283,8 +282,50 @@ class Genus(HammerSynthesisTool, CadenceTool):
 
         return True
 
+    def dedup_ilms(self) -> None:
+        """After DDI, syn_generic and syn_map will sometimes uniquify hierarchical ILMs,
+        despite .preserve being set on the ILM modules. From observation, the uniquified
+        modules are identical to the read-in ILM, so we can safely change_link to
+        dedup.
+
+        TODO: Correctly disable uniquification in Genus for hierarchical blocks"""
+
+        if self.hierarchical_mode.is_nonleaf_hierarchical() and self.version() >= self.version_number("211"):
+            pcs = list(filter(lambda c: c.type == PlacementConstraintType.Hierarchical, self.get_placement_constraints()))
+            for pc in pcs:
+                self.append("""
+# Attempt to deuniquify hinst:{inst}, incase it was uniquified
+set uniquified_name [get_db hinst:{inst} .module.name]
+if {{ $uniquified_name ne \"{master}\" }} {{
+    puts [format \"WARNING: instance hinst:{inst} was uniquified to be an instance of $uniquified_name, not {master}. Attempting to fix\"]
+    change_link -copy_attributes -instances {{{inst}}} -design_name module:{top}/{master}
+}}
+set_db hinst:{inst} .preserve true
+""".format(inst=pc.path, top=self.top_module, master=pc.master))
+
     def syn_generic(self) -> bool:
+        # Add clock mapping flow if special cells are specified
+        if self.version() >= self.version_number("211"):
+            buffer_cells = self.technology.get_special_cell_by_type(CellType.CTSBuffer)
+            if len(buffer_cells) > 0:
+                self.append(f"set_db cts_buffer_cells {{{' '.join(buffer_cells[0].name)}}}")
+            inverter_cells = self.technology.get_special_cell_by_type(CellType.CTSInverter)
+            if len(inverter_cells) > 0:
+                self.append(f"set_db cts_inverter_cells {{{' '.join(inverter_cells[0].name)}}}")
+            gate_cells = self.technology.get_special_cell_by_type(CellType.CTSGate)
+            if len(gate_cells) > 0:
+                self.append(f"set_db cts_clock_gating_cells {{{' '.join(gate_cells[0].name)}}}")
+            logic_cells = self.technology.get_special_cell_by_type(CellType.CTSLogic)
+            if len(logic_cells) > 0:
+                self.append(f"set_db cts_logic_cells {{{' '.join(logic_cells[0].name)}}}")
+            # if any(c > 0 for c in [len(buffer_cells), len(inverter_cells), len(gate_cells), len(logic_cells)]):
+            if len(inverter_cells) > 0 and len(logic_cells) > 0:
+                # Clock mapping needs at least the attributes cts_inverter_cells and cts_logic_cells to be set
+                self.append("set_db map_clock_tree true")
         self.verbose_append("syn_generic")
+
+        self.dedup_ilms()
+
         return True
 
     def syn_map(self) -> bool:
@@ -292,6 +333,9 @@ class Genus(HammerSynthesisTool, CadenceTool):
         # Need to suffix modules for hierarchical simulation if not top
         if self.hierarchical_mode not in [HierarchicalMode.Flat, HierarchicalMode.Top]:
             self.verbose_append("update_names -module -log hier_updated_names.log -suffix _{MODULE}".format(MODULE=self.top_module))
+
+        self.dedup_ilms()
+
         return True
 
     def add_tieoffs(self) -> bool:
@@ -328,6 +372,8 @@ class Genus(HammerSynthesisTool, CadenceTool):
         """Generate reports."""
         # TODO: extend report generation capabilities
         self.verbose_append("write_reports -directory reports -tag final")
+        # Write reports does not normally report unconstrained paths
+        self.verbose_append("report_timing -unconstrained -max_paths 50 > reports/final_unconstrained.rpt")
         return True
 
     def write_regs(self) -> bool:
@@ -345,7 +391,10 @@ class Genus(HammerSynthesisTool, CadenceTool):
         verbose_append("write_hdl > {}".format(self.mapped_v_path))
         if self.hierarchical_mode.is_nonleaf_hierarchical() and self.version() >= self.version_number("191"):
             verbose_append("write_hdl -exclude_ilm > {}".format(self.mapped_hier_v_path))
-        verbose_append("write_script > {}.mapped.scr".format(top))
+        if self.version() >= self.version_number("221"):
+            verbose_append("write_template -full -outfile {}.mapped.scr".format(top))
+        else:
+            verbose_append("write_script > {}.mapped.scr".format(top))
         corners = self.get_mmmc_corners()
         if corners:
             # First setup corner is default view
@@ -357,11 +406,15 @@ class Genus(HammerSynthesisTool, CadenceTool):
 
         verbose_append("write_sdf > {run_dir}/{top}.mapped.sdf".format(run_dir=self.run_dir, top=top))
 
-        # We just get "Cannot trace ILM directory. Data corrupted."
-        # -hierarchical needs to be used for non-leaf modules
-        is_hier = self.hierarchical_mode != HierarchicalMode.Leaf # self.hierarchical_mode != HierarchicalMode.Flat
-        verbose_append("write_design -innovus {hier_flag} -gzip_files {top}".format(
-            hier_flag="-hierarchical" if is_hier else "", top=top))
+        if self.version() >= self.version_number("221"):
+            # New write_design is now meant for non-Cadence tools. write_db -common is now for Innovus-compatible databases.
+            verbose_append("write_design -gzip_files {top}".format(top=top))
+        else:
+            # We just get "Cannot trace ILM directory. Data corrupted."
+            # -hierarchical needs to be used for non-leaf modules
+            is_hier = self.hierarchical_mode != HierarchicalMode.Leaf # self.hierarchical_mode != HierarchicalMode.Flat
+            verbose_append("write_design -innovus {hier_flag} -gzip_files {top}".format(
+                hier_flag="-hierarchical" if is_hier else "", top=top))
 
         self.ran_write_outputs = True
 
@@ -410,6 +463,9 @@ def genus_global_settings(ht: HammerTool) -> bool:
     # Generic Settings
     verbose_append("set_db hdl_error_on_blackbox true")
     verbose_append("set_db max_cpus_per_server {}".format(ht.get_setting("vlsi.core.max_threads")))
+    verbose_append("set_multi_cpu_usage -local_cpu {}".format(ht.get_setting("vlsi.core.max_threads")))
+    verbose_append("set_db super_thread_debug_jobs true")
+    verbose_append("set_db super_thread_debug_directory super_thread_debug")
 
     return True
 

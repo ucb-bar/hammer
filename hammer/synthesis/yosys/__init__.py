@@ -193,8 +193,10 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         clock_port = self.get_clock_ports()[0]
         self.clock_port_name = clock_port.name
         time_unit = "ps" # yosys requires time units in ps
+        assert clock_port.period is not None, "clock must have a period"
+        assert clock_port.uncertainty is not None, "clock must have an uncertainty"
         self.clock_period = int(clock_port.period.value_in_units(time_unit))
-        self.clock_uncertainty = int(clock_port.period.value_in_units(time_unit))
+        self.clock_uncertainty = int(clock_port.uncertainty.value_in_units(time_unit))
         self.clock_transition = 0.15 # SYNTH_CLOCK_TRANSITION
 
         self.synth_cap_load = 33.5 # SYNTH_CAP_LOAD
@@ -268,11 +270,12 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         # Technology mapping of flip-flops
         """)
         for liberty_file in self.liberty_files_tt.split():
-            self.verbose_append(f"dfflibmap -liberty {liberty_file}")
+            self.verbose_append(f"dfflibmap -map-only -liberty {liberty_file}")
         self.verbose_append("opt")
 
         self.write_sdc_file()
         return True
+
 
     def syn_map(self) -> bool:
 
@@ -280,6 +283,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         # Technology mapping for cells
         # ABC supports multiple liberty files, but the hook from Yosys to ABC doesn't
         # TODO: this is a bad way of getting one liberty file, need a way to merge all std cell lib files
+        # NOTE: this breaks for any PDK that has multiple LIB files for std cell library
         abc -D {self.clock_period} \\
             -constr "{self.mapped_sdc_path}" \\
             -liberty "{self.liberty_files_tt.split()[0]}" \\

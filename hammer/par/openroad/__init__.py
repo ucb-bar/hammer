@@ -226,7 +226,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     def fill_cells(self) -> str:
         stdfillers = self.technology.get_special_cell_by_type(CellType.StdFiller)
         return ' '.join(list(map(lambda c: str(c), stdfillers[0].name)))
-    
+
     @property
     def timing_driven(self) -> bool:
         return self.get_setting('par.openroad.timing_driven')
@@ -389,12 +389,12 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         for openrcx_file in openrcx_files:
             if os.path.exists(openrcx_file):
                 shutil.copy2(openrcx_file, os.path.join(issue_dir, os.path.basename(openrcx_file)))
-        
+
         # KLayout tech file
         klayout_techfile_path = self.setup_klayout_techfile()
         if klayout_techfile_path and os.path.exists(klayout_techfile_path):
             shutil.copy2(klayout_techfile_path, os.path.join(issue_dir, os.path.basename(klayout_techfile_path)))
-        
+
         # DEF2Stream file
         def2stream_file = self.get_setting('par.openroad.def2stream_file')
         if os.path.exists(def2stream_file):
@@ -1081,10 +1081,16 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
 
 
     def global_placement(self) -> bool:
-        metals=self.get_stackup().metals[1:]
+        layers = self.get_setting("vlsi.technology.routing_layers")
+        if layers is not None:
+            bottom_layer = self.get_stackup().get_metal_by_index(layers[0]).name
+            top_layer = self.get_stackup().get_metal_by_index(layers[1]).name
+        else:
+            metals=self.get_stackup().metals[1:]
+            bottom_layer = metals[0].name
+            top_layer = metals[-1].name
         routing_adj = self.get_setting('par.openroad.global_placement.routing_adjustment')
         spacing = self.get_setting('par.blockage_spacing')
-        idx_clock_bottom_metal=min(2,len(metals)-1)
         density = self.get_setting('par.openroad.global_placement.density')
         padding = self.get_setting('par.openroad.global_placement.placement_padding')
         routability_driven = "-routability_driven" if self.get_setting('par.openroad.global_placement.routability_driven') else ""
@@ -1094,8 +1100,8 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         # Global placement (with placed IOs, timing-driven, and routability-driven)
         # set_dont_use {{{' '.join(self.get_dont_use_list())}}}
         # reduce the routing resources of all routing layers by X%
-        set_global_routing_layer_adjustment {metals[0].name}-{metals[-1].name} {routing_adj}
-        set_routing_layers -signal {metals[0].name}-{metals[-1].name} -clock {metals[idx_clock_bottom_metal].name}-{metals[-1].name}
+        set_global_routing_layer_adjustment {bottom_layer}-{top_layer} {routing_adj}
+        set_routing_layers -signal {bottom_layer}-{top_layer} -clock {bottom_layer}-{top_layer}
         # creates blockages around macros
         # set_macro_extension {spacing}
 
@@ -1489,7 +1495,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     def write_regs(self) -> bool:
         # TODO: currently no analagous OpenROAD default script
         return True
-    
+
     def write_reports(self, prefix: str) -> str:
         if self.get_setting('par.openroad.write_reports') and self.timing_driven:
             return f"write_reports {prefix}"
@@ -1513,7 +1519,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             and is called with the command "write_reports <prefix>"
         Output report info with header and footer, to be read by the log_to_reports() function
             and written to the appropriate report file after OpenROAD completes.
-        The <cmd>_metric(s) commands tells OpenROAD to dump this metric into the JSON 
+        The <cmd>_metric(s) commands tells OpenROAD to dump this metric into the JSON
             file specified by the -metrics flag in the tool invocation (see self.metrics_file)
         '''
         # NOTE: both report_check_types and report_power commands have [> filename] option but it just generates an empty file...
@@ -1713,7 +1719,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         else:
             self.logger.error(f"Invalid orientation {orientation}")
             return (x,y)
-    
+
     def rotate_coordinates(self, origin: Tuple[Decimal, Decimal], orientation: str) -> Tuple[str, str]:
         # TODO: need to figure out origin translations for rotations besides R90/R270
         x = str(origin[0])
@@ -1859,7 +1865,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
     def specify_std_cell_power_straps(self, blockage_spacing: Decimal, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
         """
         Generate a list of TCL commands that build the low-level standard cell power strap rails.
-        This will use the -master option to create power straps based on technology.core.tap_cell_rail_reference.
+        This will use the -master option to create power straps based on the tapcells in the special cells list.
         The layer is set by technology.core.std_cell_rail_layer, which should be the highest metal layer in the std cell rails.
         :param bbox: The optional (2N)-point bounding box of the area to generate straps. By default the entire core area is used.
         :param nets: A list of power net names (e.g. ["VDD", "VSS"]). Currently only two are supported.
@@ -1876,7 +1882,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         #  -pitch {pitch}
         return tcl
 
-    def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool) -> List[str]:
+    def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool, antenna_trim_shape: str) -> List[str]:
         """
         Generate a list of TCL commands that will create power straps on a given layer.
         This is a low-level, cad-tool-specific API. It is designed to be called by higher-level methods, so calling this directly is not recommended.
@@ -1892,6 +1898,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         :param bbox: The optional (2N)-point bounding box of the area to generate straps. By default the entire core area is used.
         :param nets: A list of power nets to create (e.g. ["VDD", "VSS"], ["VDDA", "VSS", "VDDB"],  ... etc.).
         :param add_pins: True if pins are desired on this layer; False otherwise.
+        :param antenna_trim_shape: Strategy for trimming strap antennae. {none/stripe}
         :return: A list of TCL commands that will generate power straps.
         """
         pdn_cfg = [f" {layer_name} {{width {width} pitch {pitch} offset {offset}}}"]

@@ -66,6 +66,9 @@ vlsi.technology:
 
   tap_cell_offset: 0.0 # Offset of the first column of tape cells from the edge of the floorplan (float)
   # Should be overridden by technology plugin defaults.
+  
+  routing_layers: null # If specified, set/override the [bottom, top] layers used for routing. (Optional[Tuple[int, int]])
+  # Both must match the index number (not name) of layers used in the stackup.
 
   extra_libraries: [] # Extra semiconductor IP libraries/stdcell libs/hard macros. (List[ExtraLibrary])
   # Used for non-technology-vendor-provided custom IP blocks.
@@ -110,13 +113,13 @@ vlsi.inputs:
   # Supply voltages and names
   # Supply Struct:
   #   name (str) - The name of your supply's net
-  #   pin (Optional[str]) - The cell pin that this net should drive, no pins are connected when omitted
+  #   pins (Optional[List[str]]) - The cell pin/s that this net should drive. If None, pin name is assumed to be net name. If empty, no pins are connected
   #   tie (Optional[str]) - Another supply this supply is tied to. Nets with this set will  not end up in your final layout.
   #   weight (Optional[int]) - The weight of this supply when building power straps (larger number = more straps).
   #     Not used for grounds. Mandatory, but defaults to 1 if omitted.
   supplies:
-    power: [{name: "VDD", pin: "VDD"}] # power (List(Supply)): A list of of all power net(s) in the design
-    ground: [{name: "VSS", pin: "VSS"}] # ground (List(Supply)): A list of all ground net(s) in the design
+    power: [{name: "VDD", pins: ["VDD"]}] # power (List(Supply)): A list of of all power net(s) in the design
+    ground: [{name: "VSS", pins: ["VSS"]}] # ground (List(Supply)): A list of all ground net(s) in the design
     VDD: "0.85 V" # VDD (str): The default voltage of the primary power net
     GND: "0 V" # GND (str): The default voltage of the primary ground net
 
@@ -147,7 +150,7 @@ vlsi.inputs:
 
     constraints: [] # Manual hierarchical constraints. Overrides generic constraints on a per module basis.
     # Should be a list along the lines of [{"module1": <list of other hammer constraints>}].
-    # For example [{"mod1": [vlsi.inputs.default_output_load: 2], "mod2": [vlsi.inputs.clocks:<clock constraints>] }].
+    # For example [{"mod1": [vlsi.inputs.default_output_load: "2 pF"], "mod2": [vlsi.inputs.clocks:<clock constraints>] }].
 
   ilms: [] # ILMs for hierarchical mode.
   # ILM struct (ILMStruct) members:
@@ -158,6 +161,7 @@ vlsi.inputs:
   # gds (str) - path to the GDS file
   # netlist (str) - path to the netlist file
   # sim_netlist (str) - Optional. If specified, this netlist is appended for hierarchical simulation
+  # sdcs (List(str)) - paths to the SDC file(s) needed for parent constraints
 
   mmmc_corners: [] # Multi-mode multi-corner setups, overrides supplies
   # MMMC struct members:
@@ -177,20 +181,20 @@ vlsi.inputs:
   # period (TimeValue) - Clock port period. e.g. "1 ns", "5ns". Default units: ns
   # path (str) - Optional. If specified, this is the RTL path to the clock. Otherwise, the path is the same as the name.
   # uncertainty (TimeValue) - Optional. Clock uncertainty. e.g. "1 ns", "5ns". Default units: ns
-  # generated (bool) - Optional. If specified this clock is generated from another clock, must specify source_path and divisor
+  # generated (bool) - Optional. If specified this clock is generated from another clock. Must specify source_path and divisor, but period becomes Optional.
   # source_path (str) - Required if generated. The path of the clock that this clock is generated from.
-  # divisor (int) - Required if generated. The amount this generated clock is slowed from the source clock e.g. 2 => this clock will be two times slower than the source clock.
+  # divisor (int) - Required if generated. The amount this generated clock is slower/faster than the source clock e.g. 2 => this clock will be two times slower than the source clock. Negative values imply inversion (falling edge in line with the source's rising edge).
   #   We are constrained to integers by SDC.
   # group (str) - Optional. The name of the clock group this clock belongs to. Clocks in the same group will not be marked as asynchronous.
   #   Clocks with no group specified will all be placed in separate groups and thus marked as asynchronous to each other and all other groups.
 
-  default_output_load: 1 # Default output pin load capacitance.
-  # Default: 1pF
+  default_output_load: "1 pF" # Default output pin load capacitance.
+  # type: CapacitanceValue
 
   output_loads: [] # List of output load constraints.
   # Each item in the list should be a struct with the following members:
   # name (str) - Name of the output load (e.g. io_out)
-  # load (float) - Output load capacitance in pF.
+  # load (CapacitanceValue) - Output load capacitance (e.g. "1 pF").
 
   delays: [] # List of delay constraints.
   # These either constrain inputs to arrive after a certain delay relative
@@ -203,9 +207,11 @@ vlsi.inputs:
   # - "input"
   # - "output"
   # delay (TimeValue) - Delay applied to the I/O.
+  # corner (Optional[str]) - "setup" or "hold" will specify -max and -min flags. If empty, the same constraint will apply for setup and hold analysis.
 
   custom_sdc_constraints: [] # List of custom sdc constraints to use. (List[str])
   # These are appended after all other generated constraints (clock, pin, delay, load, etc.).
+  # IMPORTANT: Since SDC is unitless, you must manually verify that your time & cap units match the tech library's units.
 
   placement_constraints: [] # List of placement constraints for floorplanning.
   # Each item is a struct member:
@@ -427,7 +433,8 @@ vlsi.inputs:
     # type: int
 
 vlsi.submit:
-  command: "local" # The submit command to use. "none", "local", or null will run on the current host. See hammer_submit_command.py for other options.
+  command: "local" # The submit command to use. "none", "local", or null will run on the current host. "lsf" and "slurm" are also supported.
+  # See hammer/vlsi/submit_command.py for all options and their associated settings.
   settings: [] # type: List[Dict[str, Dict[str, Any]]]
   # The list substitutes settings in order of appearance, and the first Dict key is the command.
   # The second dict key is the name of that command's setting, followed by whatever type it takes.
@@ -597,10 +604,26 @@ par:
       # Overrideable by appending _<layer name>
       # type: float
 
+      antenna_trim_shape: stripe # "none" or "stripe", specifies antenna trimming strategy
+      # Overrideable by appending _<layer name>
+      # type: str
+
       pin_layers: [] # Layers to put power pins on
+      # This is also used in bottom-up hierarchical flows to configure LEF generation
       # type: List[str]
 
       strap_layers: [] # List of layers on which to place power straps (std cell rail layer is implied - do not include it)
+      # type: List[str]
+
+      generate_rail_layer: true # If true, generates straps on the stdcell rail layer - technology.core.std_cell_rail_layer
+      # type: bool
+
+      bottom_via_layer: "rail" # Sets what the lowest power strap layer should generate vias to
+      # Usually should be set to rail, which will use technology.core.std_cell_rail_layer as this setting
+      # Otherwise should be set to some layer name
+      # type: str
+
+      power_nets: [] # List of power nets to generate straps for. If empty, generates straps for all nets in vlsi.inputs.supplies
       # type: List[str]
 
 # DRC settings
@@ -642,8 +665,6 @@ lvs.inputs:
 
   schematic_files: [] # Input list of schematic files
 
-  ilms: [] # Input list of ILMStructs
-
   hcells_list: [] # Input list of LVS Hcells
 
   additional_lvs_text_mode: "auto" # Valid modes are auto, manual, prepend, and append
@@ -683,9 +704,6 @@ technology.core:
     # type: str
     std_cell_rail_layer: null # This should specify the TOPMOST metal layer the standard cells use for power rails
     # Note that this is not usually stackup specific; it is based on the std cell library
-    # type: str
-    tap_cell_rail_reference: null # This is used to provide a reference master for generating standard cell rails
-    # Can be a wildcard/glob
     # type: str
     std_cell_supplies:
     # Names of the power and ground rails of the standard cells
@@ -844,17 +862,40 @@ power.inputs:
 
   report_configs: [] # Optional: Power report configs that are run in addition to the average power reports in power.inputs.waveforms
   # type: List[PowerReport]
-  # PowerReport struct members:
-  # waveform_path (str) - Path to the waveform for the report
-  # module (str) - Optional. the path to the module to report power for (default here is the Chipyard top level)
-  # levels (int) - Optional. the number of levels in the design hierachy to report
-  # start_time (str) - Optional. The start time of the power report in the waveform
-  # end_time (str) - Optional. The end time of the power report in the waveform
-  # toggle_signal (str) - Optional. Path to the signal to generate report windows based on toggles
-  # num_toggles (int) - Optional (must be specified if num_toggles is specified). The number of toggles of the toggle_signal for each frame to report power
-  # frame_count (int) - Optional. The number of frames to report the power for
-  # report_name (str) - Optional. Name of the power report
-  # example: report_configs: [{waveform_path: "/path/to/fsdb", module: "chiptop", levels:3, start_time: "0ns", end_time: "1ns", toggle_signal:"/ChipTop/clock", num_toggles:1, frame_count:1000, report_name: "my_fsdb_report"}]
+  ## PowerReport struct members:
+  #   waveform_path (str) - Path to the waveform for the report
+  #   start_time (TimeValue) - Optional. The start time of the power report in the waveform
+  #   end_time (TimeValue) - Optional. The end time of the power report in the waveform
+  ### Frame-based analysis: interval_size and toggle_signal+num_toggles are exclusive (interval_size takes precedence)
+  #   interval_size (TimeValue) - Optional. Divide the stimulus into frames of this size.
+  #   toggle_signal (str) - Optional. Path to the signal to generate report windows based on toggles
+  #   num_toggles (int) - Optional (must be specified if toggle_signal is specified). The number of toggles of the toggle_signal for each frame to report power
+  #   frame_count (int) - Optional. The number of frames to report the power for. Default: 1
+  #     Must be combined with interval_size or toggle_signal/num_toggles
+  ### Instance/Module Power Reporting: inst and module are exclusive (inst takes precedence)
+  #   inst (str) - Optional. Hierarchical or leaf instance to report power for. Takes precedence over module option.
+  #   module (str) - Optional. The module to report power for (default here is the Chipyard top level). All instances of this module are used for the power report.
+  #   levels (int) - Optional. The number of levels in the design hierachy to report. Default: unspecified (tool command default used)
+  #     If inst/module are specified, all children hierarchical instances upto the specified level are reported
+  ### Report Details:
+  #   report_name (str) - Optional. Name of the power report, but MUST NOT contain file extension.
+  #     If an absolute path is provided, this is used as the path
+  #     If a relative path or just the filename is provided, output file will be saved to <power-rundir>/reports/
+  #     Default: waveform file name
+  #   output_formats (List[str]) - Optional. Report types to generate. Default: ["report"]
+  #     Valid options are:
+  #       "report" - average power report (*.power.rpt, *.hier.power.rpt), default
+  #       "activity" - design activity during stimulus (*.activity.rpt, *.hier.activity.rpt)
+  #       "ppa" - power, performance, area characteristics of the design (*.ppa.rpt)
+  #       "area" - area report (*.area.rpt)
+  #       "plot_profile" - power profile over time, requires frame-based analysis (*.png, *.png.data)
+  #       "write_profile" - profiles all power types on all categories for all the sub-hierarchies for a given design instance (*.fsdb)
+  #       "profile" - run plot_profile + dump_profile
+  #       "all" - generate all of the above report formats
+  
+  # examples:
+  #   report_configs: [{waveform_path: "/path/to/fsdb", module: "chiptop", levels:3, start_time: "0ns", end_time: "1ns", toggle_signal:"/ChipTop/clock", num_toggles:1, frame_count:1000, report_name: "my_fsdb_report"}]
+  #   report_configs: [{waveform_path: "/path/to/fsdb", inst: "ChipTop/system/tile_prci_domain/tile_reset_domain_tile", interval_size: "1ns", output_formats: ["plot_profile"]}]
 
   level: "rtl" # Power analysis mode for different levels of the VLSI flow
   # Valid options are:

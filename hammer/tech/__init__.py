@@ -21,7 +21,7 @@ import hammer.config as hammer_config
 
 from hammer.config import load_yaml, HammerJSONEncoder
 from hammer.logging import HammerVLSILoggingContext
-from hammer.utils import (LEFUtils, add_lists, deeplist, get_or_else,
+from hammer.utils import (LEFUtils, LIBUtils, add_lists, deeplist, get_or_else,
                           in_place_unique, optional_map, reduce_list_str,
                           reduce_named, coerce_to_grid)
 
@@ -213,7 +213,6 @@ class Site(BaseModel):
 class TechJSON(BaseModel):
     name: str
     grid_unit: Optional[str]
-    time_unit: Optional[str]
     shrink_factor: Optional[str]
     installs: Optional[List[PathPrefix]]
     libraries: Optional[List[Library]]
@@ -350,6 +349,10 @@ class HammerTechnology:
         # Configuration
         self.config: TechJSON = None
 
+        # Units (converted to Time/CapacitanceValue later)
+        self.time_unit: Optional[str] = None
+        self.cap_unit: Optional[str] = None
+
     @classmethod
     def load_from_module(cls, tech_module: str) -> Optional["HammerTechnology"]:
         """Load a technology from a given module.
@@ -372,8 +375,26 @@ class HammerTechnology:
         elif tech_yaml.is_file():
             tech.config = TechJSON.parse_raw(json.dumps(load_yaml(tech_yaml.read_text())))
             return tech
-        else:
+        else: #TODO - from Pydantic model instance
             return None
+
+    def get_lib_units(self) -> None:
+        """
+        Get time and capacitance units from the first LIB file
+        Must be called right after the tech module is loaded.
+        """
+        libs = self.read_libs(
+                [filters.get_timing_lib_with_preference("NLDM")],
+                HammerTechnologyUtils.to_plain_item)
+        if len(libs) > 0:
+            self.time_unit = LIBUtils.get_time_unit(libs[0])
+            self.cap_unit = LIBUtils.get_cap_unit(libs[0])
+            if self.time_unit is None:
+                self.logger.error("Error in parsing first NLDM Liberty file for time units.")
+            if self.cap_unit is None:
+                self.logger.error("Error in parsing first NLDM Liberty file for capacitance units.")
+        else:
+            self.logger.error("No NLDM libs defined. Time/cap units will be defined by the tool or another technology.")
 
     def set_database(self, database: hammer_config.HammerDatabase) -> None:
         """Set the settings database for use by the tool."""
@@ -703,7 +724,7 @@ class HammerTechnology:
             path_key = install.path
             install_path = str(self.get_setting(path_key))
             if not os.path.exists(install_path):
-                self.logger.error(f"The install path: {install_path} does not exist, looked at key {path_key}")
+                self.logger.warning(f"The install path: {install_path} does not exist, looked at key {path_key}")
                 return False
         return True
 
@@ -1113,14 +1134,11 @@ class HammerTechnology:
             else:
                 full_list.append(tar_file)
 
-        libs = os.listdir(dest_path)
-        full_paths = list(map(lambda l: os.path.join(dest_path, os.path.basename(l)), libs))
-
+        full_paths = [os.path.join(dest_path, os.path.basename(l)) for l in os.listdir(dest_path) if l.endswith('.gz')]
         for _path in full_paths:
-            subprocess.call(["gzip -d {_path}".format(_path=_path)], shell=True)
+            subprocess.call([f"gzip -d {_path}"], shell=True)
 
-        for extracted_file in libs:
-            full_list.append(extracted_file)
+        full_list += [os.path.join(dest_path, os.path.basename(l)) for l in os.listdir(dest_path)]
 
         return full_list
 
@@ -1262,19 +1280,19 @@ class LibraryFilterHolder:
         Select ASCII .lib timing libraries. Prefers NLDM, then ECSM, then CCS if multiple are present for
         a single given .lib.
         """
-        lib_pref = lib_pref.upper() 
+        lib_pref = lib_pref.upper()
 
         def paths_func(lib: Library) -> List[str]:
             pref_list = ["NLDM", "ECSM", "CCS"]
             index = None
-            
+
             try:
                 index = pref_list.index(lib_pref)
-            except: 
+            except:
                 raise ValueError("Library preference must be one of NLDM, ECSM, or CCS.")
             pref_list.insert(0, pref_list.pop(index))
 
-            for elem in pref_list: 
+            for elem in pref_list:
                 if elem == "NLDM":
                     if lib.nldm_liberty_file is not None:
                         return [lib.nldm_liberty_file]
@@ -1286,7 +1304,7 @@ class LibraryFilterHolder:
                         return [lib.ccs_liberty_file]
                 else:
                     pass
-                
+
             return []
 
         return LibraryFilter(

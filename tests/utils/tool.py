@@ -86,7 +86,6 @@ tech = {tech_name}Technology()""")
         tech_json = {
             "name": tech_name,
             "grid_unit": "0.001",
-            "time_unit": "1 ns",
             "installs": [],
             "libraries": [
                 {"milkyway_techfile": "soy"},

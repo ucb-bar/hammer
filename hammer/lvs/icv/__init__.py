@@ -123,7 +123,7 @@ class ICVLVS(HammerLVSTool, SynopsysTool):
 
     def generate_top_icv_file(self) -> None:
         library_spice_files = self.technology.read_libs([hammer_tech.filters.spice_filter], hammer_tech.HammerTechnologyUtils.to_plain_item)
-        ilms = list(map(lambda x: x.netlist, self.ilms))  # type: List[str]
+        ilms = list(map(lambda x: x.netlist, self.get_input_ilms()))  # type: List[str]
 
         all_files = library_spice_files + self.schematic_files + ilms
         spice_files = list(filter(lambda x: get_filetype(x) is HammerFiletype.SPICE, all_files))

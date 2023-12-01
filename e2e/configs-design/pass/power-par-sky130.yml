@@ -1,0 +1,7 @@
+# Voltus Power Analysis
+
+vlsi.core.power_tool: "hammer.power.voltus"
+
+power.inputs:
+  level: "par"
+  database: "build-sky130-cm/pass/par-rundir/pass_FINAL"

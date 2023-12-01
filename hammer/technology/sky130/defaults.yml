@@ -8,6 +8,9 @@ technology.sky130:
   # this key is OPTIONAL, no NDA files will be used if it does not point to a valid path
   # By default, this is used to populate pdk_home below.
   # It should contain s8/V2.0.1
+  
+  sky130_cds: "/path/to/sky130_cds" # This contains the Cadence PDK
+  # this key is OPTIONAL, and is only required if you are running Pegasus DRC/LVS.
 
   sram22_sky130_macros: "/path/to/sram22_sky130_macros"  # SRAM path
   # /path/to/sram22_sky130_macros
@@ -26,6 +29,9 @@ technology.sky130:
 
   drc_blackbox_srams: false
   lvs_blackbox_srams: false
+
+  io_file: "extra/efabless_template.io"  # IO ring - take this template and modify for your own use
+  io_file_meta: prependlocal
   
 
 mentor.extra_env_vars_meta: lazydeepsubst # Mentor environment variables
@@ -47,14 +53,14 @@ vlsi:
   inputs:
     supplies: # Supply voltages.
     # TODO: add ability to tie pin to net in Hammer Innovus plugin
-      power:  [ {name: "VDD",  pin: "VDD"}, 
-                {name: "VPWR", pin: "VPWR", tie: "VDD"},
-                {name: "VPB",  pin: "VPB" , tie: "VDD"},
-                {name: "vdd",  pin: "vdd",  tie: "VDD"}]
-      ground: [ {name: "VSS",  pin: "VSS"},
-                {name: "VGND", pin: "VGND", tie: "VSS"},
-                {name: "VNB",  pin: "VNB" , tie: "VSS"},
-                {name: "vss",  pin: "vss",  tie: "VSS"}]
+      power:  [ {name: "VDD",  pins: ["VDD" ]},
+                {name: "VPWR", pins: ["VPWR"], tie: "VDD"},
+                {name: "VPB",  pins: ["VPB" ], tie: "VDD"},
+                {name: "vdd",  pins: ["vdd" ], tie: "VDD"}]
+      ground: [ {name: "VSS",  pins: ["VSS" ]},
+                {name: "VGND", pins: ["VGND"], tie: "VSS"},
+                {name: "VNB",  pins: ["VNB" ], tie: "VSS"},
+                {name: "vss",  pina: ["vss" ], tie: "VSS"}]
       VDD: "1.8 V"
       GND: "0 V"
 
@@ -86,11 +92,12 @@ vlsi:
     tap_cell_interval: 15.0 # Set the interval and offset for tap cells
     tap_cell_offset: 5.0
 
+    routing_layers: [2, 6]
+
 technology.core:
   stackup: "sky130_fd_sc_hd" # This key should exist in the stackups list in the tech json
   std_cell_rail_layer: "met1" # This should specify the TOPMOST metal layer the standard cells use for power rails
   # Note that this is not usually stackup specific; it is based on the std cell libraries themselves
-  tap_cell_rail_reference: "sky130_fd_sc_hd__tap*" # This is used to provide a reference master for generating standard cells
   std_cell_supplies: 
   # default power pins are VDD/VSS
     power:  ["VPWR"]

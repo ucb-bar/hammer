@@ -11,6 +11,7 @@ from hammer import vlsi as hammer_vlsi
 from hammer.config import HammerJSONEncoder
 from hammer.logging import HammerVLSILogging
 from hammer.utils import deepdict, add_dicts
+from hammer.tech.specialcells import CellType, SpecialCell
 from utils.stackup import StackupTestHelper
 from utils.tech import HasGetTech
 from utils.tool import HammerToolTestHelpers
@@ -40,6 +41,7 @@ def power_straps_test_context(tmp_path, tech_name: str, straps_options: Dict[str
         out_dict["stackups"] = [StackupTestHelper.create_test_stackup(8, StackupTestHelper.mfr_grid()).dict()]
         out_dict["sites"] = [StackupTestHelper.create_test_site(StackupTestHelper.mfr_grid()).dict()]
         out_dict["grid_unit"] = str(StackupTestHelper.mfr_grid())
+        out_dict["special_cells"] = [SpecialCell(cell_type=CellType.TapCell, name=["FakeTapCell"]).dict()]
         return out_dict
 
     HammerToolTestHelpers.write_tech_json(tech_json_filename, tech_name, add_stackup_and_site)
@@ -56,7 +58,6 @@ def power_straps_test_context(tmp_path, tech_name: str, straps_options: Dict[str
             "par.inputs.input_files": ("/dev/null",),
             "technology.core.stackup": "StackupWith8Metals",
             "technology.core.std_cell_rail_layer": "M1",
-            "technology.core.tap_cell_rail_reference": "FakeTapCell",
             "par.mockpar.temp_folder": tech_dir_base
         }, straps_options), cls=HammerJSONEncoder, indent=4))
 
@@ -85,14 +86,15 @@ def simple_straps_options() -> Dict[str, Any]:
     power_utilization_M8 = 1.0
     track_start_M5 = 1
     track_offset_M5 = 1.2
+    bottom_via_layer = "rail"
 
     # VSS comes before VDD
     nets = ["VSS", "VDD"]
 
     straps_options = {
         "vlsi.inputs.supplies": {
-            "power": [{"name": "VDD", "pin": "VDD"}],
-            "ground": [{"name": "VSS", "pin": "VSS"}],
+            "power": [{"name": "VDD", "pins": ["VDD"]}],
+            "ground": [{"name": "VSS", "pins": ["VSS"]}],
             "VDD": "1.00 V",
             "GND": "0 V"
         },
@@ -109,7 +111,8 @@ def simple_straps_options() -> Dict[str, Any]:
             "power_utilization": power_utilization,
             "power_utilization_M8": power_utilization_M8,
             "track_start_M5": track_start_M5,
-            "track_offset_M5": track_offset_M5
+            "track_offset_M5": track_offset_M5,
+            "bottom_via_layer": bottom_via_layer
         }
     }
     return straps_options
@@ -122,11 +125,12 @@ def multiple_domains_straps_options() -> Dict[str, Any]:
     track_spacing = 0
     power_utilization = 0.2
     power_utilization_M8 = 1.0
+    bottom_via_layer = "rail"
 
     straps_options = {
         "vlsi.inputs.supplies": {
-            "power": [{"name": "VDD", "pin": "VDD"}, {"name": "VDD2", "pin": "VDD2"}],
-            "ground": [{"name": "VSS", "pin": "VSS"}],
+            "power": [{"name": "VDD", "pins": ["VDD"]}, {"name": "VDD2", "pins": ["VDD2"]}],
+            "ground": [{"name": "VSS", "pins": ["VSS"]}],
             "VDD": "1.00 V",
             "GND": "0 V"
         },
@@ -138,7 +142,8 @@ def multiple_domains_straps_options() -> Dict[str, Any]:
             "track_width": track_width,
             "track_spacing": track_spacing,
             "power_utilization": power_utilization,
-            "power_utilization_M8": power_utilization_M8
+            "power_utilization_M8": power_utilization_M8,
+            "bottom_via_layer": bottom_via_layer
         }
     }
     return straps_options

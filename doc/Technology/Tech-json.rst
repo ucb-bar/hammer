@@ -16,7 +16,6 @@ Below is an example of the installs and tarballs from the ASAP7 plugin.
 
   "name": "ASAP7 Library",
   "grid_unit": "0.001",
-  "time_unit": "1 ps",
   "installs": [
     {
       "id": "$PDK",
@@ -151,7 +150,7 @@ The example below shows a subset of the ASAP7 tech plugin for 2 types of cells: 
     {"cell_type": "tapcell", "name": ["TAPCELL_ASAP7_75t_L"]},
     {"cell_type": "stdfiller", "name": ["FILLER_ASAP7_75t_R", "FILLER_ASAP7_75t_L", "FILLER_ASAP7_75t_SL", "FILLER_ASAP7_75t_SRAM", "FILLERxp5_ASAP7_75t_R", "FILLERxp5_ASAP7_75t_L", "FILLERxp5_ASAP7_75t_SL", "FILLERxp5_ASAP7_75t_SRAM"]},
 
-There are 8 ``cell_type`` s supported: ``tiehicell``, ``tielocell``, ``tiehilocell``, ``endcap``, ``iofiller``, ``stdfiller``, ``decap``, and ``tapcell``. Depending on the tech/tool, some of these cell types can only have 1 cell in the ``name`` list.
+See the ``SpecialCell`` subsection in the :ref:`full_schema` for a list of special cell types. Depending on the tech/tool, some of these cell types can only have 1 cell in the ``name`` list.
 
 There is an optional ``size`` list. For each element in its corresponding ``name`` list, a size (type: str) can be given. An example of how this is used is for ``decap`` cells, where each listed cell has a typical capacitance, which a place and route tool can then use to place decaps to hit a target total decapacitance value. After characterizing the ASAP7 decaps using Voltus, the nominal capacitance is filled into the ``size`` list:
 
@@ -197,6 +196,7 @@ The ``physical_only_cells_list`` is used to denote cells that contain only physi
   ],
 
 .. _full_schema:
+
 Full Schema
 -----------
 

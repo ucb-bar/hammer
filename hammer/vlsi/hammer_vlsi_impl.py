@@ -81,14 +81,17 @@ class FlowLevel(Enum):
 
 PowerReport = NamedTuple('PowerReport', [
     ('waveform_path', str),
+    ('inst', Optional[str]),
     ('module', Optional[str]),
     ('levels', Optional[int]),
     ('start_time', Optional[TimeValue]),
     ('end_time', Optional[TimeValue]),
+    ('interval_size', Optional[TimeValue]),
     ('toggle_signal', Optional[str]),
     ('num_toggles', Optional[int]),
     ('frame_count', Optional[int]),
-    ('report_name', Optional[str])
+    ('report_name', Optional[str]),
+    ('output_formats', Optional[List[str]])
 ])
 
 
@@ -389,7 +392,9 @@ class HammerPlaceAndRouteTool(HammerTool):
     def export_config_outputs(self) -> Dict[str, Any]:
         outputs = deepdict(super().export_config_outputs())
         outputs["par.outputs.output_ilms"] = list(map(lambda s: s.to_setting(), self.output_ilms))
-        outputs["par.outputs.output_ilms_meta"] = "append"
+        outputs["par.outputs.output_ilms_meta"] = "append"  # to coalesce ILMs for current level of hierarchy
+        outputs["vlsi.inputs.ilms"] = list(map(lambda s: s.to_setting(), self.get_input_ilms(full_tree=True)))
+        outputs["vlsi.inputs.ilms_meta"] = "append"  # to coalesce ILMs for entire hierarchical tree
         outputs["par.outputs.output_gds"] = str(self.output_gds)
         outputs["par.outputs.output_netlist"] = str(self.output_netlist)
         outputs["par.outputs.output_sim_netlist"] = str(self.output_sim_netlist)
@@ -641,20 +646,34 @@ class HammerPlaceAndRouteTool(HammerTool):
             namespace = "par.generate_power_straps_options.by_tracks"
             layers = self.get_setting("{}.strap_layers".format(namespace))
             pin_layers = self.get_setting("{}.pin_layers".format(namespace))
+            generate_rail_layer = self.get_setting("{}.generate_rail_layer".format(namespace))
             ground_net_names = list(map(lambda x: x.name, self.get_independent_ground_nets()))  # type: List[str]
             power_net_names = list(map(lambda x: x.name, self.get_independent_power_nets()))  # type: List[str]
-            def get_weight(s: Supply) -> int:
+            specified_power_net_names = self.get_setting("{}.power_nets".format(namespace))
+            if len(specified_power_net_names) != 0: # filter by user specified settings
+                assert all(map(lambda n: n in power_net_names, specified_power_net_names))
+                power_net_names = specified_power_net_names
+            bottom_via_option = self.get_setting("{}.bottom_via_layer".format(namespace))
+            if bottom_via_option == "rail":
+                bottom_via_layer = self.get_setting("technology.core.std_cell_rail_layer")
+            else:
+                bottom_via_layer = bottom_via_option
+
+            def get_weight(supply_name: str) -> int:
+                supply = list(filter(lambda s: s.name == supply_name, self.get_independent_power_nets()))
+                # Check that single supply with name exists
+                assert len(supply) == 1
                 # Check that it's not None
-                assert isinstance(s.weight, int)
-                return s.weight
-            weights = list(map(get_weight, self.get_independent_power_nets()))  # type: List[int]
+                assert isinstance(supply[0].weight, int)
+                return supply[0].weight
+            weights = list(map(get_weight, power_net_names))  # type: List[int]
             assert len(ground_net_names) == 1, "FIXME, I am assuming there's only 1 ground net"
-            return self.specify_all_power_straps_by_tracks(layers, ground_net_names[0], power_net_names, weights, bbox, pin_layers)
+            return self.specify_all_power_straps_by_tracks(layers, bottom_via_layer, ground_net_names[0], power_net_names, weights, bbox, pin_layers, generate_rail_layer)
         else:
             raise NotImplementedError("Power strap generation method %s is not implemented" % method)
 
 
-    def specify_power_straps_by_tracks(self, layer_name: str, bottom_via_layer: str, blockage_spacing: Decimal, track_pitch: int, track_width: int, track_spacing: int, track_start: int, track_offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool, layer_is_all_power: bool) -> List[str]:
+    def specify_power_straps_by_tracks(self, layer_name: str, bottom_via_layer: str, blockage_spacing: Decimal, track_pitch: int, track_width: int, track_spacing: int, track_start: int, track_offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool, layer_is_all_power: bool, antenna_trim_shape: str) -> List[str]:
         """
         Generate a list of TCL commands that will create power straps on a given layer by specifying the desired track consumption.
         This method assumes that power straps are built bottom-up, starting with standard cell rails.
@@ -670,6 +689,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         :param nets: A list of power nets to create (e.g. ["VDD", "VSS"], ["VDDA", "VSS", "VDDB"], ... etc.).
         :param add_pins: True if pins are desired on this layer; False otherwise.
         :param layer_is_all_power: True if there will be no signal wires on this layer.
+        :param antenna_trim_shape: Strategy for trimming strap antennae. {none/stripe}
         :return: A list of TCL commands that will generate power straps.
         """
         # Note: even track_widths will be snapped to a half-track
@@ -697,9 +717,9 @@ class HammerPlaceAndRouteTool(HammerTool):
         if density > Decimal(85):
             self.logger.warning("CAUTION! Your {layer} power strap density is {density}%. Check your technology's DRM to see if this violates maximum density rules.".format(layer=layer_name, density=density))
         self._get_power_straps_for_hardmacros(layer_name, pitch, width, spacing, offset, bbox, nets)
-        return self.specify_power_straps(layer_name, bottom_via_layer, blockage_spacing, pitch, width, spacing, offset, bbox, nets, add_pins)
+        return self.specify_power_straps(layer_name, bottom_via_layer, blockage_spacing, pitch, width, spacing, offset, bbox, nets, add_pins, antenna_trim_shape)
 
-    def specify_all_power_straps_by_tracks(self, layer_names: List[str], ground_net: str, power_nets: List[str], power_weights: List[int], bbox: Optional[List[Decimal]], pin_layers: List[str]) -> List[str]:
+    def specify_all_power_straps_by_tracks(self, layer_names: List[str], bottom_via_layer: str, ground_net: str, power_nets: List[str], power_weights: List[int], bbox: Optional[List[Decimal]], pin_layers: List[str], generate_rail_layer: bool) -> List[str]:
         """
         Generate a list of TCL commands that will create power straps on a given set of layers by specifying the desired per-track track consumption and utilization.
         This will build standard cell power strap rails first. Layer-specific parameters are read from the hammer config:
@@ -710,6 +730,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         These settings are all overridable by appending an underscore followed by the metal name (e.g. power_utilization_M3).
 
         :param layer_names: The list of metal layer names on which to create straps.
+        :param bottom_via_layer: The layer the lowest-strap layer will via down to. Usually the stdcell rail layer
         :param ground_net: The name of the ground net in this design. Only 1 ground net is supported.
         :param power_nets: A list of power nets to create (not ground).
         :param power_weights: Specifies the power strap placement pattern for multiple-domain designs (e.g. ["VDDA", "VDDB"] with [2, 1] will produce 2 VDDA straps for ever 1 VDDB strap).
@@ -723,15 +744,16 @@ class HammerPlaceAndRouteTool(HammerTool):
         for l in pin_layers:
             assert l in layer_names, "Pin layer {} must be in power strap layers".format(l)
 
+        output = []
         rail_layer_name = self.get_setting("technology.core.std_cell_rail_layer")
         rail_layer = self.get_stackup().get_metal(rail_layer_name)
-        blockage_spacing = coerce_to_grid(float(self._get_by_tracks_metal_setting("blockage_spacing", rail_layer_name)), rail_layer.grid_unit)
-        # TODO does the CPF help this, or do we need to be more explicit about the bbox for each domain
-        output = self.specify_std_cell_power_straps(blockage_spacing, bbox, [ground_net] + power_nets)
-        # The layer to via down to
-        bottom_via_layer = rail_layer_name
+        if generate_rail_layer:
+            blockage_spacing = coerce_to_grid(float(self._get_by_tracks_metal_setting("blockage_spacing", rail_layer_name)), rail_layer.grid_unit)
+            # TODO does the CPF help this, or do we need to be more explicit about the bbox for each domain
+            output.extend(self.specify_std_cell_power_straps(blockage_spacing, bbox, [ground_net] + power_nets))
+
         # The last layer we used
-        last = rail_layer
+        last = self.get_stackup().get_metal(bottom_via_layer)
 
         substrate_json = []  # type: List[Dict[str, Any]]
 
@@ -747,6 +769,7 @@ class HammerPlaceAndRouteTool(HammerTool):
             track_start = int(self._get_by_tracks_metal_setting("track_start", layer_name))
             track_pitch = self._get_by_tracks_track_pitch(layer_name)
             track_offset = Decimal(str(self._get_by_tracks_metal_setting("track_offset", layer_name)))
+            antenna_trim_shape = self._get_by_tracks_metal_setting("antenna_trim_shape", layer_name)
             offset = layer.offset # TODO this is relaxable if we can auto-recalculate this based on hierarchical setting
 
             add_pins = layer_name in pin_layers
@@ -762,7 +785,7 @@ class HammerPlaceAndRouteTool(HammerTool):
                 nets = [ground_net, power_nets[i]]
                 group_offset = offset + track_offset + track_pitch * i * layer.pitch
                 group_pitch = sum_weights * track_pitch
-                output.extend(self.specify_power_straps_by_tracks(layer_name, last.name, blockage_spacing, group_pitch, track_width, track_spacing, track_start, group_offset, bbox, nets, add_pins, layer_is_all_power))
+                output.extend(self.specify_power_straps_by_tracks(layer_name, last.name, blockage_spacing, group_pitch, track_width, track_spacing, track_start, group_offset, bbox, nets, add_pins, layer_is_all_power, antenna_trim_shape))
             last = layer
 
         self._dump_power_straps_for_hardmacros()
@@ -1026,7 +1049,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         return round(consumed_tracks / power_utilization)
 
     @abstractmethod
-    def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool) -> List[str]:
+    def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool, antenna_trim_shape: str) -> List[str]:
         """
         Generate a list of TCL commands that will create power straps on a given layer.
         This is a low-level, cad-tool-specific API. It is designed to be called by higher-level methods, so calling this directly is not recommended.
@@ -1042,6 +1065,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         :param bbox: The optional (2N)-point bounding box of the area to generate straps. By default the entire core area is used.
         :param nets: A list of power nets to create (e.g. ["VDD", "VSS"], ["VDDA", "VSS", "VDDB"],  ... etc.).
         :param add_pins: True if pins are desired on this layer; False otherwise.
+        :param antenna_trim_shape: Strategy for trimming strap antennae. {none/stripe}
         :return: A list of TCL commands that will generate power straps.
         """
         # This should get overriden but be sure to use this check in your implementations
@@ -1053,7 +1077,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         """
         Generate a list of TCL commands that build the low-level standard cell power strap rails.
         This is a low-level, cad-tool-specific API. It is designed to be called by higher-level methods, so calling this directly is not recommended.
-        This will create power straps based on technology.core.tap_cell_rail_reference.
+        This will create power straps based on the tapcells in the special cells list.
         The layer is set by technology.core.std_cell_rail_layer, which should be the highest metal layer in the std cell rails.
         This method should be called before any calls to specify_power_straps.
 
@@ -1201,6 +1225,9 @@ class HammerLVSTool(HammerSignoffTool):
         outputs["lvs.inputs.top_module"] = self.top_module
         return outputs
 
+    def get_input_ilms(self, full_tree=True) -> List[ILMStruct]:
+        return super().get_input_ilms(full_tree)
+
     @abstractmethod
     def fill_outputs(self) -> bool:
         pass
@@ -1330,26 +1357,6 @@ class HammerLVSTool(HammerSignoffTool):
         if not (isinstance(value, List)):
             raise TypeError("hcells_list must be a List[str]")
         self.attr_setter("_hcells_list", value)
-
-
-    @property
-    def ilms(self) -> List[ILMStruct]:
-        """
-        Get the list of (optional) input ILM information for hierarchical mode.
-
-        :return: The list of (optional) input ILM information for hierarchical mode.
-        """
-        try:
-            return self.attr_getter("_ilms", None)
-        except AttributeError:
-            raise ValueError("Nothing set for the list of (optional) input ILM information for hierarchical mode yet")
-
-    @ilms.setter
-    def ilms(self, value: List[ILMStruct]) -> None:
-        """Set the list of (optional) input ILM information for hierarchical mode."""
-        if not (isinstance(value, List)):
-            raise TypeError("ilms must be a List[ILMStruct]")
-        self.attr_setter("_ilms", value)
 
 
     ### Outputs ###
@@ -1622,12 +1629,16 @@ class HammerPowerTool(HammerTool):
         output = []
         for config in configs:
             report = PowerReport(
-                waveform_path=config["waveform_path"], module=None,
+                waveform_path=config["waveform_path"],
+                inst=None, module=None,
                 levels=None, start_time=None,
-                end_time=None, toggle_signal=None,
-                num_toggles=None, frame_count=None,
-                report_name=None
+                end_time=None, interval_size=None,
+                toggle_signal=None, num_toggles=None,
+                frame_count=None,
+                report_name=None, output_formats=None
             )
+            if "inst" in config:
+                report = report._replace(inst=config["inst"])
             if "module" in config:
                 report = report._replace(module=config["module"])
             if "levels" in config:
@@ -1636,6 +1647,8 @@ class HammerPowerTool(HammerTool):
                 report = report._replace(start_time=TimeValue(config["start_time"]))
             if "end_time" in config:
                 report = report._replace(end_time=TimeValue(config["end_time"]))
+            if "interval_size" in config:
+                report = report._replace(interval_size=TimeValue(config["interval_size"]))
             if "toggle_signal" in config:
                 report = report._replace(toggle_signal=config["toggle_signal"])
             if "num_toggles" in config:
@@ -1644,6 +1657,8 @@ class HammerPowerTool(HammerTool):
                 report = report._replace(frame_count=config["frame_count"])
             if "report_name" in config:
                 report = report._replace(report_name=config["report_name"])
+            if "output_formats" in config:
+                report = report._replace(output_formats=config["output_formats"])
             output.append(report)
         return output
 
@@ -2072,29 +2087,32 @@ class HasUPFSupport(HammerTool):
         output.append(f'create_power_domain {domain} \\')
         output.append(f'\t-elements {{.}}')
         #Get Supply Nets
-        power_nets = self.get_all_power_nets() 
+        power_nets = self.get_all_power_nets()
         ground_nets = self.get_all_ground_nets()
-        #Create Supply Ports 
+        #Create Supply Ports
         for pg_net in (power_nets+ground_nets):
-            if(pg_net.pin != None):
-                #Create Supply Nets
-                output.append(f'create_supply_net {pg_net.name} -domain {domain}')
-                output.append(f'create_supply_port {pg_net.name} -domain {domain} \\')
-                output.append(f'\t-direction in')
+            pins = pg_net.pins if pg_net.pins is not None else [pg_net.name]
+            #Create Supply Nets
+            output.append(f'create_supply_net {pg_net.name} -domain {domain}')
+            output.append(f'create_supply_port {pg_net.name} -domain {domain} \\')
+            output.append(f'\t-direction in')
+            for pin in pins:
                 #Connect Supply Net
-                output.append(f'connect_supply_net {pg_net.name} -ports {pg_net.name}')
-                #Set Domain Supply Net
+                output.append(f'connect_supply_net {pg_net.name} -ports {pin}')
+        #Set Domain Supply Net
         output.append(f'set_domain_supply_net {domain} \\')
         output.append(f'\t-primary_power_net {power_nets[0].name} \\')
         output.append(f'\t-primary_ground_net {ground_nets[0].name}')
-        #Add Port States 
+        #Add Port States
         for p_net in power_nets:
-            if(p_net.pin != None):
-                output.append(f'add_port_state {p_net.name} \\')
+            pins = p_net.pins if p_net.pins is not None else [p_net.name]
+            for pin in pins:
+                output.append(f'add_port_state {pin} \\')
                 output.append(f'\t-state {{default {vdd.value}}}')
         for g_net in ground_nets:
-            if(g_net.pin != None):
-                output.append(f'add_port_state {g_net.name} \\')
+            pins = g_net.pins if g_net.pins is not None else [g_net.name]
+            for pin in pins:
+                output.append(f'add_port_state {pin} \\')
                 output.append(f'\t-state {{default 0.0}}')
         #Create Power State Table
         output.append('create_pst pwr_state_table \\')
@@ -2123,8 +2141,11 @@ class HasCPFSupport(HammerTool):
         # Define power and ground nets (HARD CODE)
         power_nets = self.get_all_power_nets() # type: List[Supply]
         ground_nets = self.get_all_ground_nets()# type: List[Supply]
-        vdd = VoltageValue(self.get_setting("vlsi.inputs.supplies.VDD")) # type: VoltageValue
-        output.append(f'create_power_nets -nets {{ {" ".join(map(lambda x: x.name, power_nets))} }} -voltage {vdd.value}')
+        for power_net in power_nets:
+            vdd = VoltageValue(self.get_setting("vlsi.inputs.supplies.VDD")) # type: VoltageValue
+            if power_net.voltage is not None:
+                vdd = VoltageValue(power_net.voltage)
+            output.append(f'create_power_nets -nets {power_net.name} -voltage {vdd.value}')
         output.append(f'create_ground_nets -nets {{ {" ".join(map(lambda x: x.name, ground_nets))} }}')
         # Define power domain and connections
         output.append(f'create_power_domain -name {domain} -default')
@@ -2132,10 +2153,13 @@ class HasCPFSupport(HammerTool):
         output.append(f'update_power_domain -name {domain} -primary_power_net {power_nets[0].name} -primary_ground_net {ground_nets[0].name}')
         # Assuming that all power/ground nets correspond to pins
         for pg_net in (power_nets+ground_nets):
-            if(pg_net.pin != None):
-                output.append(f'create_global_connection -domain {domain} -net {pg_net.name} -pins {pg_net.pin}')
+            pins = pg_net.pins if pg_net.pins is not None else [pg_net.name]
+            if len(pins):
+                pins_str = ' '.join(pins)
+                output.append(f'create_global_connection -domain {domain} -net {pg_net.name} -pins [list {pins_str}]')
         # Create nominal operation condtion and power mode
-        output.append(f'create_nominal_condition -name {condition} -voltage {vdd.value}')
+        nominal_vdd = VoltageValue(self.get_setting("vlsi.inputs.supplies.VDD")) # type: VoltageValue
+        output.append(f'create_nominal_condition -name {condition} -voltage {nominal_vdd.value}')
         output.append(f'create_power_mode -name {mode} -default -domain_conditions {{{domain}@{condition}}}')
         # Footer
         output.append("end_design")
@@ -2153,14 +2177,22 @@ class HasSDCSupport(HammerTool):
 
         clocks = self.get_clock_ports()
         time_unit = self.get_time_unit().value_prefix + self.get_time_unit().unit
+
         for clock in clocks:
-            # TODO: FIXME This assumes that library units are always in ns!!!
+            # hports causes some tools to crash
             if get_or_else(clock.generated, False):
-                output.append("create_generated_clock -name {n} -source {m_path} -divide_by {div} {path}".
-                        format(n=clock.name, m_path=clock.source_path, div=clock.divisor, path=clock.path))
+                if any("hport" in p for p in [get_or_else(clock.path, ""), get_or_else(clock.source_path, "")]):
+                    self.logger.error(f"In clock constraints, hports are not supported by some tools. Consider using ports/pins/hpins instead. Offending clock name: ${clock.name}")
+                assert clock.divisor is not None, f"Generated clock {clock.name} must have a divisor"
+                output.append("create_generated_clock -name {n} -source {m_path} -divide_by {div} {invert} {path}".
+                        format(n=clock.name, m_path=clock.source_path, div=abs(clock.divisor), invert="-invert" if clock.divisor < 0 else "", path=clock.path))
             elif clock.path is not None:
+                if "get_db hports" in clock.path:
+                    self.logger.error("get_db hports will cause some tools to crash. Consider querying hpins instead.")
+                assert clock.period is not None, f"Clock {clock.name} must have a period"
                 output.append("create_clock {0} -name {1} -period {2}".format(clock.path, clock.name, clock.period.value_in_units(time_unit)))
             else:
+                assert clock.period is not None, f"Clock {clock.name} must have a period"
                 output.append("create_clock {0} -name {0} -period {1}".format(clock.name, clock.period.value_in_units(time_unit)))
             if clock.uncertainty is not None:
                 output.append("set_clock_uncertainty {1} [get_clocks {0}]".format(clock.name, clock.uncertainty.value_in_units(time_unit)))
@@ -2185,7 +2217,9 @@ class HasSDCSupport(HammerTool):
         """Generate a fragment for I/O pin constraints."""
         output = []  # type: List[str]
 
-        default_output_load = float(self.get_setting("vlsi.inputs.default_output_load"))
+        cap_unit = self.get_cap_unit().value_prefix + self.get_cap_unit().unit
+
+        default_output_load = CapacitanceValue(self.get_setting("vlsi.inputs.default_output_load")).value_in_units(cap_unit)
 
         # Specify default load.
         output.append("set_load {load} [all_outputs]".format(
@@ -2194,19 +2228,26 @@ class HasSDCSupport(HammerTool):
 
         # Also specify loads for specific pins.
         for load in self.get_output_load_constraints():
-            output.append("set_load {load} [get_port \"{name}\"]".format(
-                load=load.load,
+            output.append("set_load {load} [get_port {name}]".format(
+                load=load.load.value_in_units(cap_unit),
                 name=load.name
             ))
 
         # Also specify delays for specific pins.
         for delay in self.get_delay_constraints():
-            output.append("set_{direction}_delay {delay} -clock {clock} [get_port \"{name}\"]".format(
+            minmax = {None: "", "setup": "-max", "hold": "-min"}
+            output.append("set_{direction}_delay {delay} -clock {clock} {minmax} [get_port {name}]".format(
                 delay=delay.delay.value_in_units(self.get_time_unit().value_prefix + self.get_time_unit().unit),
                 clock=delay.clock,
                 direction=delay.direction,
+                minmax=minmax[delay.corner],
                 name=delay.name
             ))
+
+        # set_dont_touch on any preplaced pins
+        for pin in self.get_pin_assignments():
+            if pin.preplaced:
+                output.append(f"set_dont_touch [get_nets {pin.pins}]")
 
         # Custom sdc constraints that are verbatim appended
         custom_sdc_constraints = self.get_setting("vlsi.inputs.custom_sdc_constraints")  # type: Union[List[str], str]

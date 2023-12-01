@@ -96,6 +96,7 @@ Common meta actions
 -------------------
 
 * ``append``: append the elements provided to the base list. (See the above ``vlsi.tech.foobar65.bad_cells`` example.)
+* ``prepend``: prepend the elements provided to the base list. Useful where list order matters, but make sure the file containing this directive is at the end of the list of files passed to ``hammer-vlsi`` with ``-p``.
 * ``subst``: substitute variables into a string.
 
   Base:
@@ -161,6 +162,8 @@ Common meta actions
 
   Result: ``get_setting("foo.flash")`` returns ``noman``
 
+  In general, putting ``lazy`` in front of all other directives will defer the meta processing until the very end.
+
 * ``crossref`` - directly reference another setting. Example:
 
   Level 1:
@@ -177,6 +180,8 @@ Common meta actions
     foo.mob_meta: crossref
 
   Result: ``get_setting("foo.mob")`` returns ``yes``
+
+  You can also append/prepend instead of substitute using ``crossappendref`` and ``crossprependref``.
 
 * ``transclude`` - transclude the given path. Example:
 

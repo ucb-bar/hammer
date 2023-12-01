@@ -3,18 +3,20 @@
 
 par.innovus:
   # Location of the binary.
-  innovus_bin: "${cadence.cadence_home}/INNOVUS/INNOVUS${par.innovus.version}/bin/innovus"
+  innovus_bin: "${cadence.cadence_home}/DDI/DDI${par.innovus.version}/INNOVUS${par.innovus.version}/bin/innovus"
   innovus_bin_meta: lazysubst # we want later overrides to be able to affect this
 
   # Innovus version to use.
-  # Used to locate the binary - e.g. the '171' in ${cadence.cadence_home}/INNOVUS/INNOVUS171/bin/innovus
-  # 171_ISR3 supports ILMs properly in contrast to 171.
-  version: "171_ISR3"
+  # Used to locate the binary - e.g. the '221' in ${cadence.cadence_home}/DDI/DDI221/INNOVUS221/bin/innovus
+  version: "221"
 
   # Design flow effort.
   # Valid options: express (fastest), standard, and extreme (slowest).
-  # Default: express to increase turnaround speed.
-  design_flow_effort: "express"
+  design_flow_effort: "standard"
+
+  # Design power effort.
+  # Valid options: none, low, high.
+  design_power_effort: "low"
 
   # Floorplanning SDC constraints to use.
   # Valid options are:

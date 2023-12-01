@@ -9,6 +9,7 @@ import atexit
 import subprocess
 import termios
 import sys
+import os
 import datetime
 from abc import abstractmethod
 from functools import reduce
@@ -19,7 +20,8 @@ from hammer.logging import HammerVLSILoggingContext
 from hammer.utils import add_dicts, get_or_else
 
 __all__ = ['HammerSubmitCommand', 'HammerLocalSubmitCommand',
-           'HammerLSFSettings', 'HammerLSFSubmitCommand']
+           'HammerLSFSettings', 'HammerLSFSubmitCommand',
+           'HammerSlurmSettings', 'HammerSlurmSubmitCommand']
 
 
 class HammerSubmitCommand:
@@ -80,6 +82,8 @@ class HammerSubmitCommand:
             return HammerLocalSubmitCommand()
         elif submit_command_mode == "lsf":
             submit_command = HammerLSFSubmitCommand()
+        elif submit_command_mode == "slurm":
+            submit_command = HammerSlurmSubmitCommand()
         else:
             raise NotImplementedError(
                 "Submit command key for {0}: {1} is not implemented".format(
@@ -141,7 +145,7 @@ class HammerLocalSubmitCommand(HammerSubmitCommand):
         so = proc.stdout
         assert so is not None
         while True:
-            line = so.readline().decode("utf-8")
+            line = so.readline().decode("utf-8", errors="ignore")
             if line != '':
                 subprocess_logger.debug(line.rstrip())
                 output_buf += line
@@ -248,7 +252,7 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
         so = proc.stdout
         assert so is not None
         while True:
-            line = so.readline().decode("utf-8")
+            line = so.readline().decode("utf-8", errors="ignore")
             if line != '':
                 subprocess_logger.debug(line.rstrip())
                 output_buf += line
@@ -256,5 +260,107 @@ class HammerLSFSubmitCommand(HammerSubmitCommand):
                 break
         # check errors
         proc.communicate()
+
+        return output_buf, proc.returncode
+
+
+class HammerSlurmSettings(NamedTuple('HammerSlurmSettings', [
+    ('srun_binary', str),
+    ('num_cpus', Optional[int]),
+    ('partition', Optional[str]),
+    ('extra_args', Optional[List[str]])
+])):
+    __slots__ = ()
+
+    @staticmethod
+    def from_setting(settings: Dict[str, Any]) -> "HammerSlurmSettings":
+        if not isinstance(settings, dict):
+            raise ValueError("Must be a dictionary")
+        try:
+            srun_binary = settings["srun_binary"]
+        except KeyError:
+            raise ValueError("Missing mandatory key srun_binary for Slurm settings.")
+        try:
+            num_cpus = settings["num_cpus"]
+        except KeyError:
+            num_cpus = None
+        try:
+            partition = settings["partition"]
+        except KeyError:
+            partition = None
+        try:
+            extra_args = settings["extra_args"]
+        except KeyError:
+            extra_args = None
+
+        return HammerSlurmSettings(
+            srun_binary=srun_binary,
+            num_cpus=num_cpus,
+            partition=partition,
+            extra_args=extra_args
+        )
+
+
+class HammerSlurmSubmitCommand(HammerSubmitCommand):
+
+    # TODO use --output to set logfile AND have stdout/stderr output
+    #      Currently there is no option to specify a log file.
+
+    @property
+    def settings(self) -> HammerSlurmSettings:
+        if not hasattr(self, "_settings"):
+            raise ValueError("Nothing set for settings yet")
+        return getattr(self, "_settings")
+
+    @settings.setter
+    def settings(self, value: HammerSlurmSettings) -> None:
+        """
+        Set the settings class variable
+
+        :param value: The HammerSlurmSettings NamedTuple to use
+        """
+        setattr(self, "_settings", value)
+
+    def read_settings(self, settings: Dict[str, Any], tool_namespace: str) -> None:  # pylint: disable=unused-argument
+        self.settings = HammerSlurmSettings.from_setting(settings)
+
+    def srun_args(self) -> List[str]:
+        args = [self.settings.srun_binary]
+        if self.settings.partition is not None:
+            args.extend(["--partition", self.settings.partition])
+        if self.settings.num_cpus is not None:
+            args.extend(["--ntasks", "%d" % self.settings.num_cpus])
+        if self.settings.extra_args is not None:
+            args.extend(self.settings.extra_args)
+        return args
+
+    def submit(self, args: List[str], env: Dict[str, str],
+               logger: HammerVLSILoggingContext, cwd: Optional[str] = None) -> Tuple[str, int]:
+        prog_tag = self.get_program_tag(args)
+
+        subprocess_format_str = 'Executing subprocess: {srun_args} {args}'
+        logger.debug(subprocess_format_str.format(srun_args=' '.join(self.srun_args()),
+                                                  args=' '.join(args)))
+        subprocess_logger = logger.context("Exec " + prog_tag)
+        proc = subprocess.Popen(self.srun_args() + args,
+                                shell=False, stderr=subprocess.STDOUT,
+                                stdout=subprocess.PIPE, env=env, cwd=cwd)
+
+        output_buf = ""
+        # Log output and also capture output at the same time.
+        so = proc.stdout
+        assert so is not None
+        while True:
+            line = so.readline().decode("utf-8", errors="ignore")
+            if line != '':
+                subprocess_logger.debug(line.rstrip())
+                output_buf += line
+            else:
+                break
+        # TODO: check errors
+
+        # Refresh output directory (fixes NFS issue)
+        if cwd is not None:
+            os.path.exists(cwd)
 
         return output_buf, proc.returncode

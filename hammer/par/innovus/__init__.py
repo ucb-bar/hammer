@@ -55,7 +55,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                           lef=os.path.join(self.run_dir, "{top}ILM.lef".format(top=self.top_module)),
                           gds=self.output_gds_filename,
                           netlist=self.output_netlist_filename,
-                          sim_netlist=self.output_sim_netlist_filename)
+                          sim_netlist=self.output_sim_netlist_filename,
+                          sdcs=self.output_ilm_sdcs)
             ]
         else:
             self.output_ilms = []
@@ -138,9 +139,22 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             return [os.path.join(self.run_dir, "{top}.par.spef".format(top=self.top_module))]
 
     @property
+    def output_ilm_sdcs(self) -> List[str]:
+        corners = self.get_mmmc_corners()
+        if corners:
+            filtered = list(filter(lambda c: c.type in [MMMCCornerType.Setup, MMMCCornerType.Hold], corners))
+            ctype_map = {MMMCCornerType.Setup: "setup", MMMCCornerType.Hold: "hold"}
+            return list(map(lambda c: os.path.join(self.run_dir, "{top}_postRoute_{corner_name}.{corner_type}_view.core.sdc".format(
+                top=self.top_module, corner_name=c.name, corner_type=ctype_map[c.type])), filtered))
+        else:
+            return [os.path.join(self.run_dir, "{top}_postRoute.core.sdc".format(top=self.top_module))]
+
+    @property
     def env_vars(self) -> Dict[str, str]:
         v = dict(super().env_vars)
         v["INNOVUS_BIN"] = self.get_setting("par.innovus.innovus_bin")
+        if self.version() >= self.version_number("221"):  # support critical region resynthesis with DDI
+            v["PATH"] = f'{os.environ.copy()["PATH"]}:{os.path.dirname(self.get_setting("par.innovus.innovus_bin").replace("INNOVUS", "GENUS"))}'
         return v
 
     @property
@@ -246,8 +260,6 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         verbose_append("set_db timing_analysis_cppr both")
         # Use OCV mode for timing analysis by default
         verbose_append("set_db timing_analysis_type ocv")
-        # Match SDC time units to timing libraries
-        verbose_append("set_library_unit -time 1{}".format(self.get_time_unit().value_prefix + self.get_time_unit().unit))
 
         # Read LEF layouts.
         lef_files = self.technology.read_libs([
@@ -301,12 +313,22 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         for l in self.generate_power_spec_commands():
             verbose_append(l)
 
-        # Set design effort.
-        verbose_append("set_db design_flow_effort {}".format(self.get_setting("par.innovus.design_flow_effort")))
+        # Set the top and bottom global/detail routing layers.
+        # This must happen after the tech LEF is loaded
+        layers = self.get_setting("vlsi.technology.routing_layers")
+        if layers is not None:
+            if self.version() >= self.version_number("201"):
+                verbose_append(f"set_db design_bottom_routing_layer {layers[0]}")
+                verbose_append(f"set_db design_top_routing_layer {layers[1]}")
+            else:
+                verbose_append(f"set_db route_early_global_bottom_layer {layers[0]}")
+                verbose_append(f"set_db route_early_global_top_layer {layers[1]}")
+                verbose_append(f"set_db route_design_bottom_layer {layers[0]}")
+                verbose_append(f"set_db route_design_top_layer {layers[1]}")
 
-        # Set "don't use" cells.
-        for l in self.generate_dont_use_commands():
-            self.append(l)
+        # Set design effort.
+        verbose_append(f"set_db design_flow_effort {self.get_setting('par.innovus.design_flow_effort')}")
+        verbose_append(f"set_db design_power_effort {self.get_setting('par.innovus.design_power_effort')}")
 
         return True
 
@@ -314,6 +336,17 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         floorplan_tcl = os.path.join(self.run_dir, "floorplan.tcl")
         self.write_contents_to_path("\n".join(self.create_floorplan_tcl()), floorplan_tcl)
         self.verbose_append("source -echo -verbose {}".format(floorplan_tcl))
+
+        # Set "don't use" cells.
+        # This must happen after floorplan_design because it must run in flattened-mode
+        # (after ILMs are placed)
+        if self.hierarchical_mode.is_nonleaf_hierarchical():
+            self.verbose_append("flatten_ilm")
+        for l in self.generate_dont_use_commands():
+            self.append(l)
+        if self.hierarchical_mode.is_nonleaf_hierarchical():
+            self.verbose_append("unflatten_ilm")
+
         return True
 
     def place_bumps(self) -> bool:
@@ -337,7 +370,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             # TODO: Fix this once the stackup supports vias ucb-bar/hammer#354
             block_layer = self.get_setting("vlsi.technology.bump_block_cut_layer")  # type: str
             for bump in bumps.assignments:
-                self.append("create_bump -cell {cell} -location_type cell_center -name_format \"Bump_{c}.{r}\" -orient r0 -location \"{x} {y}\"".format(
+                self.append("create_bump -allow_overlap_control keep_all -cell {cell} -location_type cell_center -name_format \"Bump_{c}.{r}\" -orient r0 -location \"{x} {y}\"".format(
                     cell = bump.custom_cell if bump.custom_cell is not None else bumps.cell,
                     c = bump.x,
                     r = bump.y,
@@ -397,11 +430,21 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         self.verbose_append("set_db assign_pins_edit_in_batch true")
 
         promoted_pins = []  # type: List[str]
+        # Set the top/bottom layers for promoting macro pins
+        self.append(f"set_db assign_pins_promoted_macro_bottom_layer {self.get_stackup().get_metal_by_index(1).name}")
+        self.append(f"set_db assign_pins_promoted_macro_top_layer {self.get_stackup().get_metal_by_index(-1).name}")
+        self.append('set all_ppins ""')
         for pin in pin_assignments:
             if pin.preplaced:
-                # First set promoted pins
-                self.verbose_append("set_promoted_macro_pin -pins {{ {p} }}".format(p=pin.pins))
-                promoted_pins.extend(pin.pins.split())
+                # Find the pin object that should be promoted. Only one of the two (driver_pins or load_pins) should be non-empty.
+                self.append(f'set ppins [get_db [get_nets {pin.pins}] .driver_pins]')
+                self.append(f'if {{$ppins eq ""}} {{set ppins [get_db [get_nets {pin.pins}] .load_pins]}}')
+                self.append("lappend all_ppins $ppins")
+                # First promote the pin
+                self.append("set_promoted_macro_pin -insts [get_db $ppins .inst.name] -pins [get_db $ppins .base_name]")
+                # Then set them to don't touch and skip routing
+                self.append("set_dont_touch [get_db $ppins .net]")
+                self.append("set_db [get_db $ppins .net] .skip_routing true")
             else:
                 # TODO: Do we need pin blockages for our layers?
                 # Seems like we will only need special pin blockages if the vias are larger than the straps
@@ -461,10 +504,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
 
                 self.verbose_append(" ".join(cmd))
 
-        # In case the * wildcard is used after preplaced pins, this will place promoted pins correctly.
-        # Innovus errors instead of warns if the name matching does not work (e.g. bad wildcards).
-        for ppin in promoted_pins:
-            self.verbose_append("assign_io_pins -move_fixed_pin -pins [get_db [get_db pins -if {{.name == {p} }}] .net.name]".format(p=ppin))
+        # In case the * wildcard is used after preplaced pins, this will put back the promoted pins correctly.
+        self.verbose_append("if {[llength $all_ppins] ne 0} {assign_io_pins -move_fixed_pin -pins [get_db $all_ppins .net.name]}")
 
         self.verbose_append("set_db assign_pins_edit_in_batch false")
         return True
@@ -490,6 +531,19 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             '''.format(sdc=self.post_synth_sdc), clean=True)
         if len(self.get_clock_ports()) > 0:
             # Ignore clock tree when there are no clocks
+            # If special cells are specified, explicitly set them instead of letting tool infer from libs
+            buffer_cells = self.technology.get_special_cell_by_type(CellType.CTSBuffer)
+            if len(buffer_cells) > 0:
+                self.append(f"set_db cts_buffer_cells {{{' '.join(buffer_cells[0].name)}}}")
+            inverter_cells = self.technology.get_special_cell_by_type(CellType.CTSInverter)
+            if len(inverter_cells) > 0:
+                self.append(f"set_db cts_inverter_cells {{{' '.join(inverter_cells[0].name)}}}")
+            gate_cells = self.technology.get_special_cell_by_type(CellType.CTSGate)
+            if len(gate_cells) > 0:
+                self.append(f"set_db cts_clock_gating_cells {{{' '.join(gate_cells[0].name)}}}")
+            logic_cells = self.technology.get_special_cell_by_type(CellType.CTSLogic)
+            if len(logic_cells) > 0:
+                self.append(f"set_db cts_logic_cells {{{' '.join(logic_cells[0].name)}}}")
             self.verbose_append("create_clock_tree_spec")
             if bool(self.get_setting("par.innovus.use_cco")):
                 # -hold is a secret flag for ccopt_design (undocumented anywhere)
@@ -510,8 +564,9 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         else:
             decap_cells = decaps[0].name
             decap_caps = []  # type: List[float]
+            cap_unit = self.get_cap_unit().value_prefix + self.get_cap_unit().unit
             if decaps[0].size is not None:
-                decap_caps = list(map(lambda x: CapacitanceValue(x).value_in_units("fF"), decaps[0].size))
+                decap_caps = list(map(lambda x: CapacitanceValue(x).value_in_units(cap_unit), decaps[0].size))
             if len(decap_cells) != len(decap_caps):
                 self.logger.error("Each decap cell in the name list must have a corresponding decapacitance value in the size list.")
             decap_consts = list(filter(lambda x: x.target=="capacitance", self.get_decap_constraints()))
@@ -531,7 +586,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                             assert isinstance(const.height, Decimal)
                             area_str = " ".join(("-area", str(const.x), str(const.y), str(const.x+const.width), str(const.y+const.height)))
                         self.verbose_append("add_decaps -effort high -total_cap {CAP} {AREA}".format(
-                            CAP=const.capacitance.value_in_units("fF"), AREA=area_str))
+                            CAP=const.capacitance.value_in_units(cap_unit), AREA=area_str))
 
         if len(stdfillers) == 0:
             self.logger.warning(
@@ -669,7 +724,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         # "auto", i.e. not "manual", means not specifying anything extra.
 
         self.verbose_append(
-            "write_stream -mode ALL {map_file} {merge_options} {unit} {gds}".format(
+            "write_stream -mode ALL -format stream {map_file} {merge_options} {unit} {gds}".format(
             map_file=map_file,
             merge_options=merge_options,
             gds=self.output_gds_filename,
@@ -800,9 +855,22 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         self.verbose_append("time_design -post_route")
         self.verbose_append("time_design -post_route -hold")
         self.verbose_append("check_process_antenna")
-        self.verbose_append("write_lef_abstract -5.8 {top}ILM.lef".format(top=self.top_module))
+
+        # Currently, this assumes auto-power-straps by_tracks, and uses the pg pin layer
+        # to determine the top layer in the generated LEF
+        assert self.get_setting("par.generate_power_straps_method") == "by_tracks", "Hierarchical write_ilm currently requires auto power_straps by_tracks"
+        top_layer = self.get_setting("par.generate_power_straps_options.by_tracks.pin_layers")
+        assert len(top_layer) == 1, "Hierarchical write_ilm requires 1 pin layer specified"
+        self.verbose_append("write_lef_abstract -5.8 -top_layer {top_layer} -stripe_pins -pg_pin_layers {{{top_layer}}} {top}ILM.lef".format(
+            top=self.top_module,
+            top_layer=top_layer[0]
+        ))
         self.verbose_append("write_ilm -model_type all -to_dir {ilm_dir_name} -type_flex_ilm ilm".format(
             ilm_dir_name=self.ilm_dir_name))
+        # Need to append -hierarchical after get_pins in SDCs for parent timing analysis
+        for sdc_out in self.output_ilm_sdcs:
+            self.append('gzip -d -c {ilm_dir_name}/mmmc/ilm_data/{top}/{sdc_in}.gz | sed "s/get_pins/get_pins -hierarchical/g" > {sdc_out}'.format(
+                ilm_dir_name=self.ilm_dir_name, top=self.top_module, sdc_in=os.path.basename(sdc_out), sdc_out=sdc_out))
         self.ran_write_ilm = True
         return True
 
@@ -995,36 +1063,44 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                         current_top_layer = None
                     if current_top_layer is not None:
                         bot_layer = self.get_stackup().get_metal_by_index(1).name
+                        cover_layers = list(map(lambda m: m.name, self.get_stackup().get_metals_below_layer(current_top_layer)))
                         output.append("create_place_halo -insts {inst} -halo_deltas {{{s} {s} {s} {s}}} -snap_to_site".format(
                             inst=new_path, s=spacing))
                         output.append("create_route_halo -bottom_layer {b} -space {s} -top_layer {t} -inst {inst}".format(
                             inst=new_path, b=bot_layer, t=current_top_layer, s=spacing))
+                        output.append("create_route_blockage -pg_nets -inst {inst} -layers {{{layers}}} -cover".format(
+                            inst=new_path, layers=" ".join(cover_layers)))
+
                 elif constraint.type == PlacementConstraintType.Obstruction:
                     obs_types = get_or_else(constraint.obs_types, [])  # type: List[ObstructionType]
+                    assert '/' not in new_path, "'obstruction' placement constraints must be provided a path directly under the top level"
                     if ObstructionType.Place in obs_types:
-                        output.append("create_place_blockage -area {{{x} {y} {urx} {ury}}}".format(
+                        output.append("create_place_blockage -name {name}_place -area {{{x} {y} {urx} {ury}}}".format(
+                            name=new_path,
                             x=constraint.x,
                             y=constraint.y,
                             urx=constraint.x+constraint.width,
                             ury=constraint.y+constraint.height
                         ))
                     if ObstructionType.Route in obs_types:
-                        output.append("create_route_blockage -layers {{{layers}}} -spacing 0 -{area_flag} {{{x} {y} {urx} {ury}}}".format(
+                        output.append("create_route_blockage -name {name}_route -except_pg_nets -{layers} -spacing 0 -{area_flag} {{{x} {y} {urx} {ury}}}".format(
+                            name=new_path,
                             x=constraint.x,
                             y=constraint.y,
                             urx=constraint.x+constraint.width,
                             ury=constraint.y+constraint.height,
                             area_flag="rects" if self.version() >= self.version_number("181") else "area",
-                            layers="all" if constraint.layers is None else " ".join(get_or_else(constraint.layers, []))
+                            layers="all {route}" if constraint.layers is None else f'layers {{{" ".join(get_or_else(constraint.layers, []))}}}'
                         ))
                     if ObstructionType.Power in obs_types:
-                        output.append("create_route_blockage -pg_nets -layers {{{layers}}} -{area_flag} {{{x} {y} {urx} {ury}}}".format(
+                        output.append("create_route_blockage -name {name}_power -pg_nets -{layers} -{area_flag} {{{x} {y} {urx} {ury}}}".format(
+                            name=new_path,
                             x=constraint.x,
                             y=constraint.y,
                             urx=constraint.x+constraint.width,
                             ury=constraint.y+constraint.height,
                             area_flag="rects" if self.version() >= self.version_number("181") else "area",
-                            layers="all" if constraint.layers is None else " ".join(get_or_else(constraint.layers, []))
+                            layers="all {route}" if constraint.layers is None else f'layers {{{" ".join(get_or_else(constraint.layers, []))}}}'
                         ))
                 else:
                     assert False, "Should not reach here"
@@ -1033,7 +1109,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
     def specify_std_cell_power_straps(self, blockage_spacing: Decimal, bbox: Optional[List[Decimal]], nets: List[str]) -> List[str]:
         """
         Generate a list of TCL commands that build the low-level standard cell power strap rails.
-        This will use the -master option to create power straps based on technology.core.tap_cell_rail_reference.
+        This will use the -master option to create power straps based on the tapcells in the special cells list.
         The layer is set by technology.core.std_cell_rail_layer, which should be the highest metal layer in the std cell rails.
 
         :param bbox: The optional (2N)-point bounding box of the area to generate straps. By default the entire core area is used.
@@ -1044,17 +1120,16 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         layer = self.get_stackup().get_metal(layer_name)
         results = [
             "# Power strap definition for layer {} (rails):\n".format(layer_name),
-            "reset_db -category add_stripes",
             "set_db add_stripes_stacked_via_bottom_layer {}".format(layer_name),
             "set_db add_stripes_stacked_via_top_layer {}".format(layer_name),
             "set_db add_stripes_spacing_from_block {}".format(blockage_spacing)
         ]
-        tapcell = self.get_setting("technology.core.tap_cell_rail_reference")
+        tapcells = self.technology.get_special_cell_by_type(CellType.TapCell)[0].name
         options = [
             "-pin_layer", layer_name,
             "-layer", layer_name,
             "-over_pins", "1",
-            "-master", "\"{}\"".format(tapcell),
+            "-master", "\"{}\"".format(" ".join(tapcells)),
             "-block_ring_bottom_layer_limit", layer_name,
             "-block_ring_top_layer_limit", layer_name,
             "-pad_core_ring_bottom_layer_limit", layer_name,
@@ -1070,7 +1145,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         results.append("add_stripes " + " ".join(options) + "\n")
         return results
 
-    def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool) -> List[str]:
+    def specify_power_straps(self, layer_name: str, bottom_via_layer_name: str, blockage_spacing: Decimal, pitch: Decimal, width: Decimal, spacing: Decimal, offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool, antenna_trim_shape: str) -> List[str]:
         """
         Generate a list of TCL commands that will create power straps on a given layer.
         This is a low-level, cad-tool-specific API. It is designed to be called by higher-level methods, so calling this directly is not recommended.
@@ -1086,16 +1161,16 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         :param bbox: The optional (2N)-point bounding box of the area to generate straps. By default the entire core area is used.
         :param nets: A list of power nets to create (e.g. ["VDD", "VSS"], ["VDDA", "VSS", "VDDB"],  ... etc.).
         :param add_pins: True if pins are desired on this layer; False otherwise.
+        :param antenna_trim_shape: Strategy for trimming strap antennae. {none/stripe}
         :return: A list of TCL commands that will generate power straps.
         """
         # TODO check that this has been not been called after a higher-level metal and error if so
         # TODO warn if the straps are off-pitch
         results = ["# Power strap definition for layer %s:\n" % layer_name]
         results.extend([
-            "reset_db -category add_stripes",
             "set_db add_stripes_stacked_via_top_layer {}".format(layer_name),
             "set_db add_stripes_stacked_via_bottom_layer {}".format(bottom_via_layer_name),
-            "set_db add_stripes_trim_antenna_back_to_shape {stripe}",
+            "set_db add_stripes_trim_antenna_back_to_shape {{{}}}".format(antenna_trim_shape),
             "set_db add_stripes_spacing_from_block {}".format(blockage_spacing)
         ])
         layer = self.get_stackup().get_metal(layer_name)

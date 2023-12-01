@@ -1,7 +1,6 @@
 {
   "name": "Nangate45 Library",
   "grid_unit": "0.005",
-  "time_unit": "1 ps",
   "installs": [{
     "id": "nangate45",
     "path": "technology.nangate45.install_dir"

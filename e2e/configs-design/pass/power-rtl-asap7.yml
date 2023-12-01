@@ -1,0 +1,17 @@
+# Test Joules Flow
+
+vlsi.core.power_tool: "hammer.power.joules"
+
+power.inputs:
+  level: "rtl"
+  input_files: ["src/pass.v"]
+  waveforms: ["build-asap7-cm/pass/sim-rtl-rundir/output.fsdb"]
+  report_configs:
+    - waveform_path: "build-asap7-cm/pass/sim-rtl-rundir/output.fsdb"
+      # specify either interval_size or toggle_signal+num_toggles
+      # interval_size: 0.5ns
+      toggle_signal: clock
+      num_toggles: 1
+      output_formats:
+      - plot_profile
+      - report

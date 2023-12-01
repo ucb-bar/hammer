@@ -1,0 +1,7 @@
+# RTL Simulation
+
+sim.inputs:
+  level: "rtl"
+  input_files: ["src/pass.v", "src/pass_tb.v"]
+
+# sim.inputs.execute_sim: false

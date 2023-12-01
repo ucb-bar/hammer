@@ -25,7 +25,7 @@ from .hammer_vlsi_impl import HierarchicalMode
 from .hooks import (HammerStepFunction, HammerToolHookAction, HammerToolStep,
                     HookLocation, HammerStartStopStep)
 from .submit_command import HammerSubmitCommand
-from .units import TemperatureValue, TimeValue, VoltageValue
+from .units import TemperatureValue, TimeValue, VoltageValue, CapacitanceValue
 
 __all__ = ['HammerTool']
 
@@ -1051,9 +1051,12 @@ class HammerTool(metaclass=ABCMeta):
         output = [] # type: List[ClockPort]
         for clock_port in clocks:
             clock = ClockPort(
-                name=clock_port["name"], period=TimeValue(clock_port["period"]),
+                name=clock_port["name"], period=None,
                 uncertainty=None, path=None, generated=None, source_path=None, divisor=None, group=None
             )
+            period_assert = False
+            if "period" in clock_port:
+                clock = clock._replace(period=TimeValue(clock_port["period"]))
             if "path" in clock_port:
                 clock = clock._replace(path=clock_port["path"])
             if "uncertainty" in clock_port:
@@ -1068,7 +1071,13 @@ class HammerTool(metaclass=ABCMeta):
                         source_path=clock_port["source_path"],
                         divisor=int(clock_port["divisor"])
                     )
+                else:
+                    period_assert = True
+            else:
+                period_assert = True
             clock = clock._replace(generated=generated)
+            if period_assert:
+                assert clock.period is not None, f"Non-generated clock {clock.name} must have a period specified."
             output.append(clock)
         return output
 
@@ -1076,20 +1085,30 @@ class HammerTool(metaclass=ABCMeta):
         """
         Return the library time value.
         """
-        return TimeValue(get_or_else(self.technology.config.time_unit, "1 ns"))
+        #TODO: support mixed technologies
+        return TimeValue(get_or_else(self.technology.time_unit, "1 ns"))
 
+    def get_cap_unit(self) -> CapacitanceValue:
+        """
+        Return the library capacitance value.
+        """
+        #TODO: support mixed technologies
+        return CapacitanceValue(get_or_else(self.technology.cap_unit, "1 pF"))
 
     def get_all_supplies(self, key: str) -> List[Supply]:
         supplies = self.get_setting(key)
         output = []  # type: List[Supply]
         for raw_supply in supplies:
-            supply = Supply(name=raw_supply['name'], pin=None, tie=None, weight=1)
-            if 'pin' in raw_supply:
-                supply = supply._replace(pin=raw_supply['pin'])
+            supply = Supply(name=raw_supply['name'], pins=[], tie=None, weight=1, voltage=None)
+            assert 'pin' not in raw_supply, "supply.pin: str has been replaced with supply.pins: List[str]"
+            if 'pins' in raw_supply:
+                supply = supply._replace(pins=raw_supply['pins'])
             if 'tie' in raw_supply:
                 supply = supply._replace(tie=raw_supply['tie'])
             if 'weight' in raw_supply:
                 supply = supply._replace(weight=raw_supply['weight'])
+            if 'voltage' in raw_supply:
+                supply = supply._replace(voltage=raw_supply['voltage'])
             output.append(supply)
         return output
 
@@ -1107,7 +1126,7 @@ class HammerTool(metaclass=ABCMeta):
 
     def _get_by_bump_dim_pitch(self) -> Dict[str, float]:
         """
-        Return pitches in the x and y directions. 
+        Return pitches in the x and y directions.
         """
         pitch_x = self.get_setting_suffix('vlsi.inputs.bumps.pitch', 'x')
         pitch_y = self.get_setting_suffix('vlsi.inputs.bumps.pitch', 'y')
@@ -1136,7 +1155,7 @@ class HammerTool(metaclass=ABCMeta):
             else:
                 assignments.append(BumpAssignment(name=name, no_connect=no_con,
                     x=x, y=y, group=group, custom_cell=cell))
-        
+
         pitch_settings = self._get_by_bump_dim_pitch()
 
         return BumpsDefinition(
@@ -1538,13 +1557,16 @@ class HammerTool(metaclass=ABCMeta):
         # TODO how does python cache this? Do we need to avoid re-processing this every time?
         return self.technology.get_stackup_by_name(self.get_setting("technology.core.stackup"))
 
-    def get_input_ilms(self) -> List[ILMStruct]:
+    def get_input_ilms(self, full_tree=False) -> List[ILMStruct]:
         """
         Get a list of input ILM modules for hierarchical mode.
+        :param full_tree: if true, obtains the full tree (up to the current level of hierarchy) from vlsi.inputs.ilms.
+        Otherwise, obtains only children ilms from par.outputs.output_ilms
         """
-        ilms = self.get_setting("vlsi.inputs.ilms")  # type: List[dict]
-        assert isinstance(ilms, list)
-        return list(map(ILMStruct.from_setting, ilms))
+        if full_tree:
+            return list(map(ILMStruct.from_setting, self.get_setting("vlsi.inputs.ilms")))
+        else:
+            return list(map(ILMStruct.from_setting, self.get_setting("par.outputs.output_ilms")))
 
     def get_output_load_constraints(self) -> List[OutputLoadConstraint]:
         """
@@ -1555,7 +1577,7 @@ class HammerTool(metaclass=ABCMeta):
         for load_src in output_loads:
             load = OutputLoadConstraint(
                 name=str(load_src["name"]),
-                load=float(load_src["load"])
+                load=CapacitanceValue(load_src["load"])
             )
             output.append(load)
         return output

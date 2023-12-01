@@ -1,0 +1,19 @@
+# Generate Make include to aid in tlow
+vlsi.core.build_system: make
+
+vlsi.inputs.power_spec_type: "cpf"
+vlsi.inputs.power_spec_mode: "auto"
+
+synthesis.inputs:
+  top_module: "gcd"
+  input_files: ["src/gcd.v"]
+
+sim.inputs:
+  top_module: "gcd"
+  tb_name: "gcd_tb"
+  tb_dut: "gcd_dut"
+
+power.inputs:
+  top_module: "gcd"
+  tb_name: "gcd_tb"
+  tb_dut: "gcd_dut"

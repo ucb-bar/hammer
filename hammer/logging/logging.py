@@ -5,6 +5,7 @@
 from functools import reduce
 from enum import Enum
 from typing import Callable, Iterable, List, NamedTuple, Type, Optional
+import atexit 
 
 class Level(Enum):
     """
@@ -38,7 +39,6 @@ def with_default_callbacks(cls):
     cls.add_callback(cls.callback_buffering)
     return cls
 
-
 class HammerVLSIFileLogger:
     """A file logger for HammerVLSILogging."""
 
@@ -51,6 +51,8 @@ class HammerVLSIFileLogger:
         """
         self._file = open(output_path, "a")
         self._format_msg_callback = format_msg_callback
+        # close file when code exits 
+        atexit.register(self.close)
 
     def __enter__(self):
         return self
@@ -59,7 +61,8 @@ class HammerVLSIFileLogger:
         """
         Close this file logger.
         """
-        self._file.close()
+        if not self._file.closed:
+            self._file.close()
 
     def __exit__(self, exc_type, exc_value, traceback):
         self.close()

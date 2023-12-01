@@ -1,0 +1,168 @@
+vlsi.technology.extra_libraries_meta: [append, lazydeepsubst]
+vlsi.technology.extra_libraries:
+- library:
+    name: s8iom0s8_phys_only
+    gds_file: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/gds/s8iom0s8.gds
+    lef_file: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/lef/s8iom0s8.lef
+    spice_file: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/cdl/ic6/s8iom0s8.cdl
+    provides:
+    - lib_type: iocell
+
+- library:
+    name: s8iom0s8_top_ground_hvc_wpad
+    verilog_sim: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/verilog/s8iom0s8_top_ground_hvc_wpad.v
+    provides:
+    - lib_type: clamp
+
+- library:
+    name: s8iom0s8_top_power_hvc_wpad
+    verilog_sim: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/verilog/s8iom0s8_top_power_hvc_wpad.v
+    provides:
+    - lib_type: clamp
+
+- library:
+    name: s8iom0s8_top_ground_lvc_wpad
+    verilog_sim: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/verilog/s8iom0s8_top_ground_lvc_wpad.v
+    provides:
+    - lib_type: clamp
+
+- library:
+    name: s8iom0s8_top_power_lvc_wpad
+    verilog_sim: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/verilog/s8iom0s8_top_power_lvc_wpad.v
+    provides:
+    - lib_type: clamp
+
+- library:
+    name: s8iom0s8_top_xres4v2_SS
+    verilog_sim: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/verilog/s8iom0s8_top_xres4v2.v
+    nldm_liberty_file: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/lib/s8iom0s8_top_xres4v2_ss_ss_1p60v_x_3p00v_100C.lib
+    corner:
+      nmos: slow
+      pmos: slow
+      temperature: 100 C
+    supplies:
+      VDD: 1.60 V
+      GND: 0 V
+    provides:
+    - lib_type: iocell
+      vt: RVT
+
+- library:
+    name: s8iom0s8_top_xres4v2_FF
+    verilog_sim: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/verilog/s8iom0s8_top_xres4v2.v
+    nldm_liberty_file: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/lib/s8iom0s8_top_xres4v2_ff_ff_1p95v_x_5p50v_n40C.lib
+    corner:
+      nmos: fast
+      pmos: fast
+      temperature: -40 C
+    supplies:
+      VDD: 1.95 V
+      GND: 0 V
+    provides:
+    - lib_type: iocell
+      vt: RVT
+
+- library:
+    name: s8iom0s8_top_xres4v2_TT
+    verilog_sim: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/verilog/s8iom0s8_top_xres4v2.v
+    nldm_liberty_file: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/lib/s8iom0s8_top_xres4v2_tt_tt_1p80v_x_3p30v_025C.lib
+    corner:
+      nmos: typical
+      pmos: typical
+      temperature: 25 C
+    supplies:
+      VDD: 1.80 V
+      GND: 0 V
+    provides:
+    - lib_type: iocell
+      vt: RVT
+
+- library:
+    name: s8iom0s8_analog_pad_SS
+    verilog_sim: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/verilog/s8iom0s8_analog_pad.v
+    nldm_liberty_file: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/lib/s8iom0s8_analog_pad_ss_1.60v_3.00v_100C.lib
+    corner:
+      nmos: slow
+      pmos: slow
+      temperature: 100 C
+    supplies:
+      VDD: 1.60 V
+      GND: 0 V
+    provides:
+    - lib_type: iocell
+      vt: RVT
+
+- library:
+    name: s8iom0s8_analog_pad_FF
+    verilog_sim: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/verilog/s8iom0s8_analog_pad.v
+    nldm_liberty_file: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/lib/s8iom0s8_analog_pad_ff_1.95v_5.50v_-40C.lib
+    corner:
+      nmos: fast
+      pmos: fast
+      temperature: -40 C
+    supplies:
+      VDD: 1.95 V
+      GND: 0 V
+    provides:
+    - lib_type: iocell
+      vt: RVT
+
+- library:
+    name: s8iom0s8_analog_pad_TT
+    verilog_sim: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/verilog/s8iom0s8_analog_pad.v
+    nldm_liberty_file: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/lib/s8iom0s8_analog_pad_tt_1.80v_3.30v_025C.lib
+    corner:
+      nmos: typical
+      pmos: typical
+      temperature: 25 C
+    supplies:
+      VDD: 1.80 V
+      GND: 0 V
+    provides:
+    - lib_type: iocell
+      vt: RVT
+
+- library:
+    name: s8iom0s8_top_gpiov2_SS
+    verilog_sim: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/verilog/s8iom0s8_top_gpiov2.v
+    nldm_liberty_file: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/lib/s8iom0s8_top_gpiov2_ss_ss_1p60v_x_3p00v_100C.lib
+    corner:
+      nmos: slow
+      pmos: slow
+      temperature: 100 C
+    supplies:
+      VDD: 1.60 V
+      GND: 0 V
+    provides:
+    - lib_type: iocell
+      vt: RVT
+
+- library:
+    name: s8iom0s8_top_gpiov2_FF
+    verilog_sim: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/verilog/s8iom0s8_top_gpiov2.v
+    nldm_liberty_file: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/lib/s8iom0s8_top_gpiov2_ff_ff_1p95v_x_5p50v_n40C.lib
+    corner:
+      nmos: fast
+      pmos: fast
+      temperature: -40 C
+    supplies:
+      VDD: 1.95 V
+      GND: 0 V
+    provides:
+    - lib_type: iocell
+      vt: RVT
+
+- library:
+    name: s8iom0s8_top_gpiov2_TT
+    verilog_sim: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/verilog/s8iom0s8_top_gpiov2.v
+    nldm_liberty_file: ${technology.sky130.sky130_nda}/s8iom0s8/V0.2.1/lib/s8iom0s8_top_gpiov2_tt_tt_1p80v_x_3p30v_025C.lib
+    corner:
+      nmos: typical
+      pmos: typical
+      temperature: 25 C
+    supplies:
+      VDD: 1.80 V
+      GND: 0 V
+    provides:
+    - lib_type: iocell
+      vt: RVT
