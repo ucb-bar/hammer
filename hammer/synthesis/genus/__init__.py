@@ -355,17 +355,16 @@ set_db hinst:{inst} .preserve true
             self.verbose_append("syn_map")
         else:
             self.verbose_append("syn_map -physical")
+            
+        # High QoR optimization.
+        if self.get_setting("synthesis.genus.phys_flow_effort").lower() == "high":
+            self.verbose_append("syn_opt -spatial")
+
         # Need to suffix modules for hierarchical simulation if not top
         if self.hierarchical_mode not in [HierarchicalMode.Flat, HierarchicalMode.Top]:
             self.verbose_append("update_names -module -log hier_updated_names.log -suffix _{MODULE}".format(MODULE=self.top_module))
 
         self.dedup_ilms()
-
-        return True
-    
-    def ispatial_opt(self) -> bool:
-        if self.get_setting("synthesis.genus.phys_flow_effort").lower() == "high":
-            self.verbose_append("syn_opt -spatial")
 
         return True
 
