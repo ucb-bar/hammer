@@ -35,3 +35,7 @@ par.innovus:
   # Note that this requires an optional licence (enccco).
   # type: bool
   use_cco: true
+
+  # How many iterations to run opt_design
+  # If the first opt_design fails to converge by a small margin, the second run may achieve closure
+  opt_design_rounds: 1
