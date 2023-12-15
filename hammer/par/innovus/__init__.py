@@ -521,16 +521,16 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
 
     def place_opt_design(self) -> bool:
         """Place the design and do pre-routing optimization."""
-        self.verbose_append("place_opt_design")
-        return True
-
-    def clock_tree(self) -> bool:
-        """Setup and route a clock tree for clock nets."""
         if self.hierarchical_mode.is_nonleaf_hierarchical():
             self.verbose_append('''
             flatten_ilm
             update_constraint_mode -name my_constraint_mode -ilm_sdc_files {sdc}
             '''.format(sdc=self.post_synth_sdc), clean=True)
+        self.verbose_append("place_opt_design")
+        return True
+
+    def clock_tree(self) -> bool:
+        """Setup and route a clock tree for clock nets."""
         if len(self.get_clock_ports()) > 0:
             # Ignore clock tree when there are no clocks
             # If special cells are specified, explicitly set them instead of letting tool infer from libs
