@@ -383,7 +383,9 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                         self.append("deselect_bumps")
                     else:
                         self.append("assign_signal_to_bump -bumps \"Bump_{x}.{y}\" -net {n}".format(x=bump.x, y=bump.y, n=bump.name))
-                self.append("create_route_blockage {layer_options} \"{llx} {lly} {urx} {ury}\"".format(
+                self.append("create_route_blockage -name Bump_{x}_{y}_blockage {layer_options} \"{llx} {lly} {urx} {ury}\"".format(
+                    x = bump.x,
+                    y = bump.y,
                     layer_options="-layers {{{l}}} -rects".format(l=block_layer) if(self.version() >= self.version_number("181")) else "-cut_layers {{{l}}} -area".format(l=block_layer),
                     llx = "[get_db bump:Bump_{x}.{y} .bbox.ll.x]".format(x=bump.x, y=bump.y),
                     lly = "[get_db bump:Bump_{x}.{y} .bbox.ll.y]".format(x=bump.x, y=bump.y),
@@ -519,16 +521,16 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
 
     def place_opt_design(self) -> bool:
         """Place the design and do pre-routing optimization."""
-        self.verbose_append("place_opt_design")
-        return True
-
-    def clock_tree(self) -> bool:
-        """Setup and route a clock tree for clock nets."""
         if self.hierarchical_mode.is_nonleaf_hierarchical():
             self.verbose_append('''
             flatten_ilm
             update_constraint_mode -name my_constraint_mode -ilm_sdc_files {sdc}
             '''.format(sdc=self.post_synth_sdc), clean=True)
+        self.verbose_append("place_opt_design")
+        return True
+
+    def clock_tree(self) -> bool:
+        """Setup and route a clock tree for clock nets."""
         if len(self.get_clock_ports()) > 0:
             # Ignore clock tree when there are no clocks
             # If special cells are specified, explicitly set them instead of letting tool infer from libs

@@ -135,6 +135,10 @@ class TestHammerBuildSystems:
             expected_targets.update({task + "-" + x for x in mods})
             expected_targets.update({"redo-" + task + "-" + x for x in mods})
 
+        # Only non-leafs get a hier-par-to-syn target
+        expected_targets.update({"hier-par-to-syn-" + x for x in mods if x in {"TopMod"}})
+        expected_targets.update({"redo-hier-par-to-syn-" + x for x in mods if x in {"TopMod"}})
+
         # Only non-leafs get a syn-*-input.json target
         expected_targets.update({os.path.join(tmpdir, "syn-" + x + "-input.json") for x in mods if x in {"TopMod"}})
         expected_targets.update({os.path.join(tmpdir, "sim-syn-" + x + "-input.json") for x in mods})
