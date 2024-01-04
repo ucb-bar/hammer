@@ -22,10 +22,10 @@ Each ``Node`` "pulls" from a directory to feed in inputs and "pushes" output fil
 * A driver to run the node with; this enables backwards compatibility with :ref:`hooks <hooks>`.
 * Options to specify steps within an action; this enables backwards compatibility with :ref:`flow control <flow-control>`.
 
-    * ``from_step``
-    * ``after_step``
-    * ``to_step``
-    * ``until_step``
+    * ``start_before_step``
+    * ``start_after_step``
+    * ``stop_before_step``
+    * ``stop_after_step``
     * ``only_step``
 
 A minimal example of a ``Node``:
