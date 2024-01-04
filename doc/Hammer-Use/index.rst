@@ -11,6 +11,6 @@ This documentation will walk through more advanced features of the Hammer infras
    Hammer-APIs
    Flow-Control
    Hooks
+   Flowgraphs
    Buildfile
    Hierarchical
-   Flowgraphs
