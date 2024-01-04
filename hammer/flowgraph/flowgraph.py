@@ -51,10 +51,10 @@ class Node:
     optional_inputs:   list[str] = field(default_factory=list)
     optional_outputs:  list[str] = field(default_factory=list)
     step_controls:     dict[str, str] = field(default_factory=lambda: {
-        "from_step": "",
-        "after_step": "",
-        "to_step": "",
-        "until_step": "",
+        "start_before_step": "",
+        "start_after_step": "",
+        "stop_before_step": "",
+        "stop_after_step": "",
         "only_step": "",
     })
 
