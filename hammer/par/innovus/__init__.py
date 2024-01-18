@@ -330,16 +330,23 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         verbose_append(f"set_db design_flow_effort {self.get_setting('par.innovus.design_flow_effort')}")
         verbose_append(f"set_db design_power_effort {self.get_setting('par.innovus.design_power_effort')}")
 
-        # Set "don't use" cells.
-        for l in self.generate_dont_use_commands():
-            self.append(l)
-
         return True
 
     def floorplan_design(self) -> bool:
         floorplan_tcl = os.path.join(self.run_dir, "floorplan.tcl")
         self.write_contents_to_path("\n".join(self.create_floorplan_tcl()), floorplan_tcl)
         self.verbose_append("source -echo -verbose {}".format(floorplan_tcl))
+
+        # Set "don't use" cells.
+        # This must happen after floorplan_design because it must run in flattened-mode
+        # (after ILMs are placed)
+        if self.hierarchical_mode.is_nonleaf_hierarchical():
+            self.verbose_append("flatten_ilm")
+        for l in self.generate_dont_use_commands():
+            self.append(l)
+        if self.hierarchical_mode.is_nonleaf_hierarchical():
+            self.verbose_append("unflatten_ilm")
+
         return True
 
     def place_bumps(self) -> bool:
@@ -376,7 +383,9 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                         self.append("deselect_bumps")
                     else:
                         self.append("assign_signal_to_bump -bumps \"Bump_{x}.{y}\" -net {n}".format(x=bump.x, y=bump.y, n=bump.name))
-                self.append("create_route_blockage {layer_options} \"{llx} {lly} {urx} {ury}\"".format(
+                self.append("create_route_blockage -name Bump_{x}_{y}_blockage {layer_options} \"{llx} {lly} {urx} {ury}\"".format(
+                    x = bump.x,
+                    y = bump.y,
                     layer_options="-layers {{{l}}} -rects".format(l=block_layer) if(self.version() >= self.version_number("181")) else "-cut_layers {{{l}}} -area".format(l=block_layer),
                     llx = "[get_db bump:Bump_{x}.{y} .bbox.ll.x]".format(x=bump.x, y=bump.y),
                     lly = "[get_db bump:Bump_{x}.{y} .bbox.ll.y]".format(x=bump.x, y=bump.y),
@@ -512,16 +521,16 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
 
     def place_opt_design(self) -> bool:
         """Place the design and do pre-routing optimization."""
-        self.verbose_append("place_opt_design")
-        return True
-
-    def clock_tree(self) -> bool:
-        """Setup and route a clock tree for clock nets."""
         if self.hierarchical_mode.is_nonleaf_hierarchical():
             self.verbose_append('''
             flatten_ilm
             update_constraint_mode -name my_constraint_mode -ilm_sdc_files {sdc}
             '''.format(sdc=self.post_synth_sdc), clean=True)
+        self.verbose_append("place_opt_design")
+        return True
+
+    def clock_tree(self) -> bool:
+        """Setup and route a clock tree for clock nets."""
         if len(self.get_clock_ports()) > 0:
             # Ignore clock tree when there are no clocks
             # If special cells are specified, explicitly set them instead of letting tool infer from libs
@@ -1066,15 +1075,18 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
 
                 elif constraint.type == PlacementConstraintType.Obstruction:
                     obs_types = get_or_else(constraint.obs_types, [])  # type: List[ObstructionType]
+                    assert '/' not in new_path, "'obstruction' placement constraints must be provided a path directly under the top level"
                     if ObstructionType.Place in obs_types:
-                        output.append("create_place_blockage -area {{{x} {y} {urx} {ury}}}".format(
+                        output.append("create_place_blockage -name {name}_place -area {{{x} {y} {urx} {ury}}}".format(
+                            name=new_path,
                             x=constraint.x,
                             y=constraint.y,
                             urx=constraint.x+constraint.width,
                             ury=constraint.y+constraint.height
                         ))
                     if ObstructionType.Route in obs_types:
-                        output.append("create_route_blockage -except_pg_nets -{layers} -spacing 0 -{area_flag} {{{x} {y} {urx} {ury}}}".format(
+                        output.append("create_route_blockage -name {name}_route -except_pg_nets -{layers} -spacing 0 -{area_flag} {{{x} {y} {urx} {ury}}}".format(
+                            name=new_path,
                             x=constraint.x,
                             y=constraint.y,
                             urx=constraint.x+constraint.width,
@@ -1083,7 +1095,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                             layers="all {route}" if constraint.layers is None else f'layers {{{" ".join(get_or_else(constraint.layers, []))}}}'
                         ))
                     if ObstructionType.Power in obs_types:
-                        output.append("create_route_blockage -pg_nets -{layers} -{area_flag} {{{x} {y} {urx} {ury}}}".format(
+                        output.append("create_route_blockage -name {name}_power -pg_nets -{layers} -{area_flag} {{{x} {y} {urx} {ury}}}".format(
+                            name=new_path,
                             x=constraint.x,
                             y=constraint.y,
                             urx=constraint.x+constraint.width,
