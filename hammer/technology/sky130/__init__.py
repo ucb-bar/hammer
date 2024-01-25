@@ -249,19 +249,25 @@ class SKY130Tech(HammerTechnology):
 
     def get_tech_drc_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         calibre_hooks = []
+        pegasus_hooks = []
         if self.get_setting("technology.sky130.drc_blackbox_srams"):
-            calibre_hooks.append(HammerTool.make_post_insertion_hook("generate_drc_run_file", drc_blackbox_srams))
-        hooks = {"calibre": calibre_hooks
+            calibre_hooks.append(HammerTool.make_post_insertion_hook("generate_drc_run_file", calibre_drc_blackbox_srams))
+            pegasus_hooks.append(HammerTool.make_post_insertion_hook("generate_drc_run_file", pegasus_drc_blackbox_srams))
+        hooks = {"calibre": calibre_hooks,
+                "pegasus": pegasus_hooks
                  }
         return hooks.get(tool_name, [])
 
     def get_tech_lvs_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         calibre_hooks = [HammerTool.make_post_insertion_hook("generate_lvs_run_file", setup_calibre_lvs_deck)]
+        pegasus_hooks = []
         if self.use_sram22:
             calibre_hooks.append(HammerTool.make_post_insertion_hook("generate_lvs_run_file", sram22_lvs_recognize_gates_all))
         if self.get_setting("technology.sky130.lvs_blackbox_srams"):
-            calibre_hooks.append(HammerTool.make_post_insertion_hook("generate_lvs_run_file", lvs_blackbox_srams))
-        hooks = {"calibre": calibre_hooks
+            calibre_hooks.append(HammerTool.make_post_insertion_hook("generate_lvs_run_file", calibre_lvs_blackbox_srams))
+            pegasus_hooks.append(HammerTool.make_post_insertion_hook("generate_lvs_run_file", pegasus_lvs_blackbox_srams))
+        hooks = {"calibre": calibre_hooks,
+                "pegasus": pegasus_hooks
                  }
         return hooks.get(tool_name, [])
 
@@ -433,7 +439,7 @@ set_dont_touch [get_db [get_db pins -if {.name == *TIE*ESD}] .net]
     ''')
     return True
 
-def drc_blackbox_srams(ht: HammerTool) -> bool:
+def calibre_drc_blackbox_srams(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerDRCTool), "Exlude SRAMs only in DRC"
     drc_box = ''
     for name in SKY130Tech.sky130_sram_names():
@@ -443,12 +449,32 @@ def drc_blackbox_srams(ht: HammerTool) -> bool:
         f.write(drc_box)
     return True
 
-def lvs_blackbox_srams(ht: HammerTool) -> bool:
+def pegasus_drc_blackbox_srams(ht: HammerTool) -> bool:
+    assert isinstance(ht, HammerDRCTool), "Exlude SRAMs only in DRC"
+    drc_box = ''
+    for name in SKY130Tech.sky130_sram_names():
+        drc_box += f"\nexclude_cell {name}"
+    run_file = ht.drc_run_file  # type: ignore
+    with open(run_file, "a") as f:
+        f.write(drc_box)
+    return True
+
+def calibre_lvs_blackbox_srams(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerLVSTool), "Blackbox and filter SRAMs only in LVS"
     lvs_box = ''
     for name in SKY130Tech.sky130_sram_names():
         lvs_box += f"\nLVS BOX {name}"
         lvs_box += f"\nLVS FILTER {name} OPEN "
+    run_file = ht.lvs_run_file  # type: ignore
+    with open(run_file, "a") as f:
+        f.write(lvs_box)
+    return True
+
+def pegasus_lvs_blackbox_srams(ht: HammerTool) -> bool:
+    assert isinstance(ht, HammerLVSTool), "Blackbox and filter SRAMs only in LVS"
+    lvs_box = ''
+    for name in SKY130Tech.sky130_sram_names():
+        lvs_box += f"\nexclude_cell {name}"
     run_file = ht.lvs_run_file  # type: ignore
     with open(run_file, "a") as f:
         f.write(lvs_box)
