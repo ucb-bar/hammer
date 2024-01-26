@@ -44,7 +44,7 @@
     {
       "tool_name": "pegasus",
       "deck_name": "pegasus_lvs",
-      "path": "$SKY130_CDS/Sky130_LVS/Sky130_rev_0.0_1.0.lvs.pvl"
+      "path": "$SKY130_CDS/Sky130_LVS/Sky130_rev_0.0_0.1.lvs.pvl"
     }
   ],
   "additional_lvs_text": "",
