@@ -30,7 +30,7 @@
     {
       "tool_name": "pegasus",
       "deck_name": "pegasus_drc",
-      "path": "$SKY130_CDS/Sky130_DRC/sky130_rev_0.0_0.1.drc.pvl"
+      "path": "$SKY130_CDS/Sky130_DRC/sky130_rev_0.0_1.0.drc.pvl"
     }
   ],
   "additional_drc_text": "",
@@ -44,7 +44,7 @@
     {
       "tool_name": "pegasus",
       "deck_name": "pegasus_lvs",
-      "path": "$SKY130_CDS/Sky130_LVS/Sky130_rev_0.0_0.1.lvs.pvl"
+      "path": "$SKY130_CDS/Sky130_LVS/Sky130_rev_0.0_1.0.lvs.pvl"
     }
   ],
   "additional_lvs_text": "",
