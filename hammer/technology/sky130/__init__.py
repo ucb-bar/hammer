@@ -252,7 +252,7 @@ class SKY130Tech(HammerTechnology):
         pegasus_hooks = []
         if self.get_setting("technology.sky130.drc_blackbox_srams"):
             calibre_hooks.append(HammerTool.make_post_insertion_hook("generate_drc_run_file", calibre_drc_blackbox_srams))
-            pegasus_hooks.append(HammerTool.make_post_insertion_hook("generate_drc_run_file", pegasus_drc_blackbox_srams))
+            pegasus_hooks.append(HammerTool.make_post_insertion_hook("generate_drc_ctl_file", pegasus_drc_blackbox_srams))
         hooks = {"calibre": calibre_hooks,
                 "pegasus": pegasus_hooks
                  }
@@ -265,7 +265,7 @@ class SKY130Tech(HammerTechnology):
             calibre_hooks.append(HammerTool.make_post_insertion_hook("generate_lvs_run_file", sram22_lvs_recognize_gates_all))
         if self.get_setting("technology.sky130.lvs_blackbox_srams"):
             calibre_hooks.append(HammerTool.make_post_insertion_hook("generate_lvs_run_file", calibre_lvs_blackbox_srams))
-            pegasus_hooks.append(HammerTool.make_post_insertion_hook("generate_lvs_run_file", pegasus_lvs_blackbox_srams))
+            pegasus_hooks.append(HammerTool.make_post_insertion_hook("generate_lvs_ctl_file", pegasus_lvs_blackbox_srams))
         hooks = {"calibre": calibre_hooks,
                 "pegasus": pegasus_hooks
                  }
@@ -454,7 +454,7 @@ def pegasus_drc_blackbox_srams(ht: HammerTool) -> bool:
     drc_box = ''
     for name in SKY130Tech.sky130_sram_names():
         drc_box += f"\nexclude_cell {name}"
-    run_file = ht.drc_run_file  # type: ignore
+    run_file = ht.drc_ctl_file  # type: ignore
     with open(run_file, "a") as f:
         f.write(drc_box)
     return True
@@ -475,7 +475,7 @@ def pegasus_lvs_blackbox_srams(ht: HammerTool) -> bool:
     lvs_box = ''
     for name in SKY130Tech.sky130_sram_names():
         lvs_box += f"\nexclude_cell {name}"
-    run_file = ht.lvs_run_file  # type: ignore
+    run_file = ht.lvs_ctl_file  # type: ignore
     with open(run_file, "a") as f:
         f.write(lvs_box)
     return True
