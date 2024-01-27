@@ -49,20 +49,20 @@ class SKY130Tech(HammerTechnology):
         dest_path = cache_tech_dir_path / f'{self.library_name}.cdl'
 
         # device names expected in LVS decks
+        pmos = 'pfet_01v8_hvt'
+        nmos = 'nfet_01v8'
         if (self.get_setting('vlsi.core.lvs_tool') == "hammer.lvs.calibre"):
             pmos = 'phighvt'
             nmos = 'nshort'
         elif (self.get_setting('vlsi.core.lvs_tool') == "hammer.lvs.netgen"):
             pmos = 'sky130_fd_pr__pfet_01v8_hvt'
             nmos = 'sky130_fd_pr__nfet_01v8'
-        else:
-            shutil.copy2(source_path, dest_path)
-            return
 
         with open(source_path, 'r') as sf:
             with open(dest_path, 'w') as df:
                 self.logger.info("Modifying CDL netlist: {} -> {}".format
                     (source_path, dest_path))
+                df.write("*.SCALE MICRON\n")
                 for line in sf:
                     line = line.replace('pfet_01v8_hvt', pmos)
                     line = line.replace('nfet_01v8'    , nmos)
@@ -101,23 +101,23 @@ class SKY130Tech(HammerTechnology):
             sl = sf.readlines()
 
             # Find timing declaration
-            start_idx = [idx for idx, line in enumerate(sl) if "`ifndef SKY130_FD_SC_HD__LPFLOW_BLEEDER_1_TIMING_V" in line][0]
-                        
-            # Search for the broken statement
-            search_range = range(start_idx+1, len(sl))
-            broken_specify_idx = len(sl)-1
-            broken_substr = "(SHORT => VPWR) = (0:0:0,0:0:0,0:0:0,0:0:0,0:0:0,0:0:0);"
-            
-            broken_specify_idx = [idx for idx in search_range if broken_substr in sl[idx]][0]
-            endif_idx = [idx for idx in search_range if "`endif" in sl[idx]][0]
-            
-            # Now, delete all the specify statements if specify exists before an endif.
-            if broken_specify_idx < endif_idx:
-                self.logger.info("Removing incorrectly formed specify block.")
-                cell_def_range = range(start_idx+1, endif_idx)
-                start_specify_idx = [idx for idx in cell_def_range if "specify" in sl[idx]][0]
-                end_specify_idx = [idx for idx in cell_def_range if "endspecify" in sl[idx]][0]
-                sl[start_specify_idx:end_specify_idx+1] = [] # Dice            
+            # start_idx = [idx for idx, line in enumerate(sl) if "`ifndef SKY130_FD_SC_HD__LPFLOW_BLEEDER_1_TIMING_V" in line][0]
+            #             
+            # # Search for the broken statement
+            # search_range = range(start_idx+1, len(sl))
+            # broken_specify_idx = len(sl)-1
+            # broken_substr = "(SHORT => VPWR) = (0:0:0,0:0:0,0:0:0,0:0:0,0:0:0,0:0:0);"
+            # 
+            # broken_specify_idx = [idx for idx in search_range if broken_substr in sl[idx]][0]
+            # endif_idx = [idx for idx in search_range if "`endif" in sl[idx]][0]
+            # 
+            # # Now, delete all the specify statements if specify exists before an endif.
+            # if broken_specify_idx < endif_idx:
+            #     self.logger.info("Removing incorrectly formed specify block.")
+            #     cell_def_range = range(start_idx+1, endif_idx)
+            #     start_specify_idx = [idx for idx in cell_def_range if "specify" in sl[idx]][0]
+            #     end_specify_idx = [idx for idx in cell_def_range if "endspecify" in sl[idx]][0]
+            #     sl[start_specify_idx:end_specify_idx+1] = [] # Dice            
 
         # Deal with the nonexistent net tactfully (don't code in brittle replacements)
         self.logger.info("Fixing broken net references with select specify blocks.")
@@ -228,12 +228,12 @@ class SKY130Tech(HammerTechnology):
                         # Find the start of the next_macro
                         idx_start_next_macro = [idx for idx in range(idx_broken_macro+1, len(sl)) if "MACRO" in sl[idx]][0]
                         # Find the broken macro ending
-                        idx_end_broken_macro = len(sl)
-                        idx_end_broken_macro = [idx for idx in range(idx_broken_macro+1, len(sl)) if end_broken_macro in sl[idx]][0]
-                        
-                        # Fix
-                        if idx_end_broken_macro < idx_start_next_macro: 
-                            sl[idx_end_broken_macro] = end_fixed_macro
+                        # idx_end_broken_macro = len(sl)
+                        # idx_end_broken_macro = [idx for idx in range(idx_broken_macro+1, len(sl)) if end_broken_macro in sl[idx]][0]
+                        # 
+                        # # Fix
+                        # if idx_end_broken_macro < idx_start_next_macro: 
+                        #     sl[idx_end_broken_macro] = end_fixed_macro
                 
                 df.writelines(sl)
 
@@ -474,7 +474,7 @@ def pegasus_lvs_blackbox_srams(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerLVSTool), "Blackbox and filter SRAMs only in LVS"
     lvs_box = ''
     for name in SKY130Tech.sky130_sram_names():
-        lvs_box += f"\nexclude_cell {name}"
+        lvs_box += f"\nlvs_black_box {name} -gray"
     run_file = ht.lvs_ctl_file  # type: ignore
     with open(run_file, "a") as f:
         f.write(lvs_box)
