@@ -61,6 +61,7 @@ class PegasusLVS(HammerLVSTool, CadenceTool):
             "-check_schematic",  # check schematic integrity
             "-control", self.lvs_ctl_file,
             "-log_dir", f"{self.top_module}_logs",
+            "-rc_data", # for PEX
             "-ui_data"  # for results viewer
             ] + rules
 
