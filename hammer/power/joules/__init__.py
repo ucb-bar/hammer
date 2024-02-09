@@ -12,6 +12,7 @@ import os
 import errno
 from textwrap import dedent
 from datetime import datetime
+import random
 
 from hammer.vlsi import HammerPowerTool, HammerToolStep, HammerToolHookAction, HammerTool, \
                         MMMCCornerType, FlowLevel, PowerReport
@@ -357,8 +358,9 @@ class Joules(HammerPowerTool, CadenceTool):
 
         # Create power analysis script
         #   with unique filename so that multiple runs don't overwrite each others' TCL scripts
+        #   then add random number at end to prevent runs having the same timestamp
         now = datetime.now().strftime("%Y%m%d-%H%M%S")
-        joules_tcl_filename = os.path.join(self.run_dir, f"joules-{now}.tcl")
+        joules_tcl_filename = os.path.join(self.run_dir, f"joules-{now}-{random.randint(0, 10000)}.tcl")
         self.write_contents_to_path("\n".join(self.output), joules_tcl_filename)
 
         # Make sure that generated-scripts exists.
