@@ -309,10 +309,6 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         # Run init_design to validate data and start the Cadence place-and-route workflow.
         verbose_append("init_design")
 
-        # Setup power settings from cpf/upf
-        for l in self.generate_power_spec_commands():
-            verbose_append(l)
-
         # Set the top and bottom global/detail routing layers.
         # This must happen after the tech LEF is loaded
         layers = self.get_setting("vlsi.technology.routing_layers")
@@ -342,6 +338,11 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         # (after ILMs are placed)
         if self.hierarchical_mode.is_nonleaf_hierarchical():
             self.verbose_append("flatten_ilm")
+
+        # Setup power settings from cpf/upf
+        for l in self.generate_power_spec_commands():
+            self.verbose_append(l)
+
         for l in self.generate_dont_use_commands():
             self.append(l)
         if self.hierarchical_mode.is_nonleaf_hierarchical():
