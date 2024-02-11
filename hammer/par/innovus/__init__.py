@@ -1066,14 +1066,16 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                         current_top_layer = None
                     if current_top_layer is not None:
                         bot_layer = self.get_stackup().get_metal_by_index(1).name
-                        cover_layers = list(map(lambda m: m.name, self.get_stackup().get_metals_below_layer(current_top_layer)))
+                        cover_layers = list(map(lambda m: m.name, self.get_stackup().get_metals_incl_layer(current_top_layer)))
                         output.append("create_place_halo -insts {inst} -halo_deltas {{{s} {s} {s} {s}}} -snap_to_site".format(
                             inst=new_path, s=spacing))
                         output.append("create_route_halo -bottom_layer {b} -space {s} -top_layer {t} -inst {inst}".format(
                             inst=new_path, b=bot_layer, t=current_top_layer, s=spacing))
-                        output.append("create_route_blockage -pg_nets -inst {inst} -layers {{{layers}}} -cover".format(
+                        output.append("set place_halo_shape [get_db [get_db hinsts {inst}][get_db insts {inst}] .place_halo_polygon]".format(
+                            inst=new_path))
+                        output.append("create_route_blockage -pg_nets -layers {{{layers}}} -polygon $place_halo_shape".format(
                             inst=new_path, layers=" ".join(cover_layers)))
-
+                        
                 elif constraint.type == PlacementConstraintType.Obstruction:
                     obs_types = get_or_else(constraint.obs_types, [])  # type: List[ObstructionType]
                     assert '/' not in new_path, "'obstruction' placement constraints must be provided a path directly under the top level"
