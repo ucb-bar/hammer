@@ -1072,7 +1072,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                         output.append("create_route_halo -bottom_layer {b} -space {s} -top_layer {t} -inst {inst}".format(
                             inst=new_path, b=bot_layer, t=current_top_layer, s=spacing))
                         pg_pullback = -1*round(spacing*0.15 , 1)
-                        output.append("set pg_blockage_shape [get_computed_shapes [get_db [get_db hinsts {inst}][get_db insts {inst}] .place_halo_polygon] SIZE {pg_pullback}]".format(
+                        output.append("set pg_blockage_shape [lindex [get_computed_shapes -output polygon [get_db [get_db hinsts {inst}][get_db insts {inst}] .place_halo_polygon] SIZE {pg_pullback}] 0]".format(
                             inst=new_path, pg_pullback=pg_pullback))
                         output.append("create_route_blockage -pg_nets -layers {{{layers}}} -polygon $pg_blockage_shape".format(
                             inst=new_path, layers=" ".join(cover_layers)))
