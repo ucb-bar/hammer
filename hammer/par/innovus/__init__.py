@@ -1071,10 +1071,10 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                             inst=new_path, s=spacing))
                         output.append("create_route_halo -bottom_layer {b} -space {s} -top_layer {t} -inst {inst}".format(
                             inst=new_path, b=bot_layer, t=current_top_layer, s=spacing))
-                        halo_pullback = -1*round(spacing*0.1 , 1)
-                        output.append("set place_halo_shape [get_computed_shapes [get_db [get_db hinsts {inst}][get_db insts {inst}] .place_halo_polygon] SIZE {halo_pullback}]".format(
-                            inst=new_path, halo_pullback=halo_pullback))
-                        output.append("create_route_blockage -pg_nets -layers {{{layers}}} -polygon $place_halo_shape".format(
+                        pg_pullback = -1*round(spacing*0.15 , 1)
+                        output.append("set pg_blockage_shape [get_computed_shapes [get_db [get_db hinsts {inst}][get_db insts {inst}] .place_halo_polygon] SIZE {pg_pullback}]".format(
+                            inst=new_path, pg_pullback=pg_pullback))
+                        output.append("create_route_blockage -pg_nets -layers {{{layers}}} -polygon $pg_blockage_shape".format(
                             inst=new_path, layers=" ".join(cover_layers)))
                         
                 elif constraint.type == PlacementConstraintType.Obstruction:
