@@ -435,12 +435,13 @@ def pegasus_lvs_blackbox_srams(ht: HammerTool) -> bool:
     for name in SKY130Tech.sky130_sram_names():
         lvs_box += f"\nlvs_black_box {name} -gray"
     run_file = ht.lvs_ctl_file  # type: ignore
-    with open(run_file, "rw") as f:
+    with open(run_file, "r+") as f:
         # Remove SRAM SPICE file includes.
         pattern = 'schematic_path.*({}).*spice;\n'.format('|'.join(SKY130Tech.sky130_sram_names()))
         matcher = re.compile(pattern)
         contents = f.read()
         fixed_contents = matcher.sub("", contents) + lvs_box
+        f.seek(0)
         f.write(fixed_contents)
     return True
 
