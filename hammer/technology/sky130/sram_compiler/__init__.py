@@ -70,6 +70,7 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
                 nldm_liberty_file=lib_path,
                 lef_file="{b}/{n}/{n}.lef".format(b=base_dir,n=sram_name),
                 gds_file="{b}/{n}/{n}.gds".format(b=base_dir,n=sram_name),
+                spice_file="{b}/{n}/{n}.spice".format(b=base_dir,n=sram_name),
                 verilog_sim="{b}/{n}/{n}.v".format(b=base_dir,n=sram_name),
                 corner=Corner(nmos=speed_name, pmos=speed_name, temperature=str(corner.temp.value_in_units("C")) + " C"),
                 supplies=Supplies(VDD=str(corner.voltage.value_in_units("V")) + " V", GND="0 V"),
