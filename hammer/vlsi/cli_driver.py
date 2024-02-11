@@ -322,8 +322,8 @@ class CLIDriver:
                     if "_meta" not in k:
                         print(k)
                 while True:
+                    key = input("Select from the current level of keys: ")
                     try:
-                        key = input("Select from the current level of keys: ")
                         next_level = curr_level[key]
                         break
                     except KeyError:

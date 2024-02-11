@@ -24,7 +24,9 @@ python = "^3.9"
 pydantic = "^1.9.2"
 PyYAML = "^6.0"
 "ruamel.yaml" = "^0.17.21"
+networkx = "^3.0"
 numpy = "^1.23.0"
+sphinxcontrib-mermaid = "^0.8.1"
 
 gdstk = { version = "^0.9.0", optional = true }
 gdspy = { version = "1.4", optional = true }

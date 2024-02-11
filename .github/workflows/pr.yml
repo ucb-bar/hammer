@@ -60,4 +60,5 @@ jobs:
         id: type-checks
         run: |
           touch .venv/lib/python${{ matrix.python-version }}/site-packages/ruamel/py.typed
+          touch .venv/lib/python${{ matrix.python-version }}/site-packages/networkx/py.typed
           poetry run mypy --namespace-packages -p hammer

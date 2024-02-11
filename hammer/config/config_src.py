@@ -805,6 +805,7 @@ class HammerDatabase:
             self.__config_cache_dirty = False
         return self.__config_cache
 
+    @property
     def get_config_types(self) -> dict:
         """
         Get the types for the configuration of a database.
@@ -906,9 +907,9 @@ class HammerDatabase:
         :param nullvalue: Value to return for nulls.
         :return: Data type of key.
         """
-        if key not in self.get_config_types():
+        if key not in self.get_config_types:
             raise KeyError(f"Key type {key} is missing")
-        value = self.get_config_types()[key]
+        value = self.get_config_types[key]
         return nullvalue if value is None else value
 
     def set_setting_type(self, key: str, value: Any) -> None:
@@ -928,7 +929,7 @@ class HammerDatabase:
         :param key: Desired key.
         :return: True if the given setting exists.
         """
-        return key in self.get_config_types()
+        return key in self.get_config_types
 
     def check_setting(self, key: str, cfg: Optional[dict] = None) -> bool:
         """
@@ -940,12 +941,12 @@ class HammerDatabase:
 
         if cfg is None:
             cfg = self.get_config()
-        if key not in self.get_config_types():
+        if key not in self.get_config_types:
             #TODO: compile this at the beginning instead of emitting every instance
             #self.logger.warning(f"Key {key} is not associated with a type")
             return True
         try:
-            exp_value_type = parse_setting_type(self.get_config_types()[key])
+            exp_value_type = parse_setting_type(self.get_config_types[key])
         except ValueError as ve:
             raise ValueError(f'Key {key} has an invalid outer type: perhaps you have "List" instead of "list" or "Dict" instead of "dict"?') from ve
 
