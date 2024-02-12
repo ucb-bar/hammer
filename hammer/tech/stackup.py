@@ -415,6 +415,7 @@ class Stackup(BaseModel):
         """
         try:
             index = next(m.index for m in self.metals if m.name == name)
+            return list(filter(lambda m: m.index in range(1, index+1), self.metals))
         except StopIteration:
             raise ValueError("Metal named %s is not defined in stackup %s" % (name, self.name))
 
