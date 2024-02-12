@@ -422,6 +422,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             self.logger.fatal("Cannot find top-level constraints to place pins")
             return False
 
+        power_pin_layers = self.get_setting("par.generate_power_straps_options.by_tracks.pin_layers")
+        
         const = cast(PlacementConstraint, topconst)
         assert isinstance(const.margins, Margins), "Margins must be defined for the top level"
         fp_llx = const.margins.left
@@ -484,6 +486,9 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                     assign_arg = "-assign {{ {x} {y} }}".format(x=pin.location[0], y=pin.location[1])
 
                 layers_arg = ""
+                if set(pin.layers).intersection(set(power_pin_layers)):
+                    self.logger.error("Signal pins will be generated on the same layer(s) as power pins. Double-check to see if intended.")
+                
                 if pin.layers is not None and len(pin.layers) > 0:
                     layers_arg = "-layer {{ {} }}".format(" ".join(pin.layers))
 
@@ -1066,7 +1071,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                         current_top_layer = None
                     if current_top_layer is not None:
                         bot_layer = self.get_stackup().get_metal_by_index(1).name
-                        cover_layers = list(map(lambda m: m.name, self.get_stackup().get_metals_incl_layer(current_top_layer)))
+                        cover_layers = list(map(lambda m: m.name, self.get_stackup().get_metals_below_layer(current_top_layer)))
                         output.append("create_route_halo -bottom_layer {b} -space {s} -top_layer {t} -inst {inst}".format(     
                             inst=new_path, b=bot_layer, t=current_top_layer, s=spacing))
                         
@@ -1076,8 +1081,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                             inst=new_path, s=place_push_out))
                         output.append("set pg_blockage_shape [get_db [get_db hinsts {inst}][get_db insts {inst}] .place_halo_polygon]".format(
                             inst=new_path))
-                        output.append("create_route_blockage -pg_nets -layers {{{layers}}} -polygon $pg_blockage_shape".format(
-                            inst=new_path, layers=" ".join(cover_layers)))
+                        output.append("create_route_blockage -pg_nets -layers {{{layers}}} -polygon $pg_blockage_shape".format(layers=" ".join(cover_layers)))
                         
                 elif constraint.type == PlacementConstraintType.Obstruction:
                     obs_types = get_or_else(constraint.obs_types, [])  # type: List[ObstructionType]

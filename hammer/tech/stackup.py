@@ -415,10 +415,6 @@ class Stackup(BaseModel):
         """
         try:
             index = next(m.index for m in self.metals if m.name == name)
-            if index > 1:
-                return list(filter(lambda m: m.index in range(1, index+1), self.metals))
-            else:
-                raise ValueError("There are no metals below layer %s in stackup %s" % (name, self.name))
         except StopIteration:
             raise ValueError("Metal named %s is not defined in stackup %s" % (name, self.name))
 
