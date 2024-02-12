@@ -67,7 +67,7 @@
       ]
     },
     {
-      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io__analog_pad.spice",
+      "spice_file": "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io__analog.spice",
       "provides": [
         {
           "lib_type": "technology"
