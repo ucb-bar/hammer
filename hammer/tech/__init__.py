@@ -59,7 +59,7 @@ TLUPlusMapFile = str
 class SpiceModelFile(BaseModel):
     # Struct that holds information about Spice model files.
     path: str
-    lib_corner: str
+    lib_corner: Optional[str] = None
 
     def to_setting(self) -> dict:
         output = {'path': str(self.path)}
