@@ -486,7 +486,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                     assign_arg = "-assign {{ {x} {y} }}".format(x=pin.location[0], y=pin.location[1])
 
                 layers_arg = ""
-                if set(pin.layers).intersection(set(power_pin_layers)):
+                
+                if set(pin.layers or []).intersection(set(power_pin_layers)):
                     self.logger.error("Signal pins will be generated on the same layer(s) as power pins. Double-check to see if intended.")
                 
                 if pin.layers is not None and len(pin.layers) > 0:
@@ -1075,7 +1076,10 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                         output.append("create_route_halo -bottom_layer {b} -space {s} -top_layer {t} -inst {inst}".format(     
                             inst=new_path, b=bot_layer, t=current_top_layer, s=spacing))
                         
-                        place_push_out = round(spacing*1.2 , 1) # Push the place halo, and therefore PG blockage, further out from route halo so router is aware of straps before entering final routing.  
+                        if(self.get_setting("par.power_to_route_blockage_ratio") < 1):
+                            self.logger.warning("The power strap blockage region is smaller than the routing halo region for hard macros. Double-check if this is intended.")
+                            
+                        place_push_out = round(spacing*self.get_setting("par.power_to_route_blockage_ratio") , 1) # Push the place halo, and therefore PG blockage, further out from route halo so router is aware of straps before entering final routing.  
 
                         output.append("create_place_halo -insts {inst} -halo_deltas {{{s} {s} {s} {s}}} -snap_to_site".format(  
                             inst=new_path, s=place_push_out))
