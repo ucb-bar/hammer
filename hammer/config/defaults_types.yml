@@ -280,6 +280,9 @@ par:
   # Spacing around blocks and hardmacros in microns
   blockage_spacing: float
 
+  # Ratio between the power blockage + place halo relative to route blockage. Route blockage should be smaller. 
+  power_to_route_blockage_ratio: float
+
   # Top metal layer that is pulled back around blocks and hardmacros
   # type: Optional[str]
   blockage_spacing_top_layer: Optional[str]
