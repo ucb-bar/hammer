@@ -565,6 +565,8 @@ par:
   # Used by power straps and floorplanning
   # type: Decimal
 
+  power_to_route_blockage_ratio: 1.1 # By default, set the power halo + blockage spacing to 1.1x in every dimension relative to route blockage.
+
   blockage_spacing_top_layer: null # Top metal layer that is pulled back around blocks and hardmacros
   # Used by floorplanning.
   # Overridden by individual placement constraints on top_layer.
