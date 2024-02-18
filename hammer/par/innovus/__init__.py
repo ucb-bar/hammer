@@ -155,6 +155,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         v["INNOVUS_BIN"] = self.get_setting("par.innovus.innovus_bin")
         if self.version() >= self.version_number("221"):  # support critical region resynthesis with DDI
             v["PATH"] = f'{os.environ.copy()["PATH"]}:{os.path.dirname(self.get_setting("par.innovus.innovus_bin").replace("INNOVUS", "GENUS"))}'
+        if self.get_setting("par.innovus.signoff"):  # add path to Tempus
+            v["PATH"] = v["PATH"] + f':{self.get_setting("cadence.cadence_home")}/SSV/SSV{self.get_setting("par.innovus.version")}/bin'
         return v
 
     @property
@@ -223,10 +225,18 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             self.place_pins,
             self.place_opt_design,
             self.clock_tree,
-            self.add_fillers,
-            self.route_design,
-            self.opt_design
+            self.add_fillers
         ]
+        if self.version() >= self.version_number("231"):
+            # Route & post-route opt are now combined
+            steps += [self.route_opt_design]
+        else:
+            steps += [
+                self.route_design,
+                self.opt_design
+            ]
+        if self.get_setting("par.innovus.signoff"):
+            steps += [self.opt_signoff]
         write_design_step = [
             self.write_regs,
             self.write_design
@@ -392,6 +402,10 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                     lly = "[get_db bump:Bump_{x}.{y} .bbox.ll.y]".format(x=bump.x, y=bump.y),
                     urx = "[get_db bump:Bump_{x}.{y} .bbox.ur.x]".format(x=bump.x, y=bump.y),
                     ury = "[get_db bump:Bump_{x}.{y} .bbox.ur.y]".format(x=bump.x, y=bump.y)))
+
+            # Use early global bump router
+            if self.version() >= self.version_number("231") and self.get_setting("par.innovus.early_route_bumps"):
+                self.append("set_db route_early_global_route_bump_nets true")
         return True
 
     def place_tap_cells(self) -> bool:
@@ -528,11 +542,24 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
 
     def place_opt_design(self) -> bool:
         """Place the design and do pre-routing optimization."""
+        # First, check that no ports are left unplaced. Exit with error code for user to fix.
+        self.append('''
+            set unplaced_pins [get_db ports -if {.place_status == unplaced}]
+            if {$unplaced_pins ne ""} {
+                print_message -error "Some pins remain unplaced, which will cause invalid placement and routing. These are the unplaced pins: $unplaced_pins"
+                exit 2
+            }
+            ''', clean=True)
         if self.hierarchical_mode.is_nonleaf_hierarchical():
             self.verbose_append('''
             flatten_ilm
             update_constraint_mode -name my_constraint_mode -ilm_sdc_files {sdc}
             '''.format(sdc=self.post_synth_sdc), clean=True)
+
+        # Use place_opt_design V2 (POD-Turbo). Option must be explicitly set only in 22.1.
+        if self.version() >= self.version_number("221") and self.version() < self.version_number("231"):
+            self.verbose_append("set_db opt_enable_podv2_clock_opt_flow true")
+
         self.verbose_append("place_opt_design")
         return True
 
@@ -554,11 +581,18 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             if len(logic_cells) > 0:
                 self.append(f"set_db cts_logic_cells {{{' '.join(logic_cells[0].name)}}}")
             self.verbose_append("create_clock_tree_spec")
-            if bool(self.get_setting("par.innovus.use_cco")):
-                # -hold is a secret flag for ccopt_design (undocumented anywhere)
-                self.verbose_append("ccopt_design -hold -report_dir hammer_cts_debug -report_prefix hammer_cts")
+            if self.version() >= self.version_number("221"):
+                # Required for place_opt_design v2 (POD-Turbo)
+                if bool(self.get_setting("par.innovus.use_cco")):
+                    self.verbose_append("clock_opt_design -hold -timing_debug_report")
+                else:
+                    self.verbose_append("clock_opt_design -cts -timing_debug_report")
             else:
-                self.verbose_append("clock_design")
+                if bool(self.get_setting("par.innovus.use_cco")):
+                    # -hold is a secret flag for ccopt_design (undocumented anywhere)
+                    self.verbose_append("ccopt_design -hold -timing_debug_report")
+                else:
+                    self.verbose_append("clock_design")
         if self.hierarchical_mode.is_nonleaf_hierarchical():
             self.verbose_append("unflatten_ilm")
         return True
@@ -641,12 +675,93 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         self.verbose_append("route_design")
         return True
 
+    def opt_settings(self) -> str:
+        cmds = []
+        # Enable auto hold recovery if slack degrades
+        cmds.append("set_db opt_post_route_hold_recovery auto")
+        # Fix fanout load violations
+        cmds.append("set_db opt_fix_fanout_load true")
+        # Fix SI-induced slew violations (glitch fixing enabled by default)
+        cmds.append("set_db opt_post_route_fix_si_transitions true")
+        # Report reasons for not fixing hold
+        cmds.append("set_db opt_verbose true")
+        # Report reasons for not fixing DRVs
+        cmds.append("set_db opt_detail_drv_failure_reason true")
+        if self.version() >= self.version_number("221"):  # critical region resynthesis
+            # Report failure reasons
+            cmds.append("set_db opt_sequential_genus_restructure_report_failure_reason true")
+        return "\n".join(cmds)
+
     def opt_design(self) -> bool:
         """
         Post-route optimization and fix setup & hold time violations.
         -expanded_views creates timing reports for each MMMC view.
         """
-        self.verbose_append("opt_design -post_route -setup -hold -expanded_views")
+        self.append(self.opt_settings())
+        self.verbose_append("opt_design -post_route -setup -hold -expanded_views -timing_debug_report")
+        if self.hierarchical_mode.is_nonleaf_hierarchical():
+            self.verbose_append("unflatten_ilm")
+        return True
+
+    def route_opt_design(self) -> bool:
+        """
+        Routing and post-route optimization. New flow as default in 23.1.
+        Performs more optimization during the routing stage.
+        Fixes setup, hold, and DRV violations.
+        """
+        if self.hierarchical_mode.is_nonleaf_hierarchical():
+            self.verbose_append("flatten_ilm")
+
+        # Allow express design effort to complete running.
+        # By default, route_design will abort in express mode with
+        # "WARNING (NRIG-142) Express flow by default will not run routing".
+        self.verbose_append("set_db design_express_route true")
+
+        self.append(self.opt_settings())
+
+        self.verbose_append("route_opt_design -timing_debug_report")
+
+        if self.hierarchical_mode.is_nonleaf_hierarchical():
+            self.verbose_append("unflatten_ilm")
+        return True
+
+    def opt_signoff(self) -> bool:
+        """
+        Signoff timing and optimization.
+        Should only be run after all implementation flows to obtain better timing,
+        setup/hold fixing, DRV fixing, and power optimization.
+        Note: runs Tempus in batch mode.
+        """
+        if self.hierarchical_mode.is_nonleaf_hierarchical():
+            self.verbose_append("flatten_ilm")
+
+        # Options
+        # Set clock fixing cell list
+        regexp = ""
+        buffer_cells = self.technology.get_special_cell_by_type(CellType.CTSBuffer)
+        if len(buffer_cells) > 0:
+            regexp += "|".join(buffer_cells[0].name) + "|"
+        inverter_cells = self.technology.get_special_cell_by_type(CellType.CTSInverter)
+        if len(inverter_cells) > 0:
+            regexp += "|".join(inverter_cells[0].name) + "|"
+        gate_cells = self.technology.get_special_cell_by_type(CellType.CTSGate)
+        if len(gate_cells) > 0:
+            regexp += "|".join(gate_cells[0].name) + "|"
+        logic_cells = self.technology.get_special_cell_by_type(CellType.CTSLogic)
+        if len(logic_cells) > 0:
+            regexp += "|".join(logic_cells[0].name)
+        self.verbose_append(f"set_db opt_signoff_clock_cell_list [lsearch -regexp -all -inline [get_db lib_cells .base_name] {regexp}]")
+        # Fix DRVs
+        self.verbose_append("set_db opt_signoff_fix_data_drv true")
+        self.verbose_append("set_db opt_signoff_fix_clock_drv true")
+
+        # Signoff timing requires remote host setting
+        self.verbose_append(f"set_multi_cpu_usage -remote_host 1 -cpu_per_remote_host {self.get_setting('vlsi.core.max_threads')}")
+        self.verbose_append("time_design_signoff")
+
+        # Run
+        self.verbose_append("opt_signoff -all")
+
         if self.hierarchical_mode.is_nonleaf_hierarchical():
             self.verbose_append("unflatten_ilm")
         return True
@@ -746,7 +861,24 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             self.verbose_append("flatten_ilm")
 
         # Output the Standard Delay Format File for use in timing annotated gate level simulations
-        self.verbose_append("write_sdf {run_dir}/{top}.par.sdf".format(run_dir=self.run_dir, top=self.top_module))
+        corners = self.get_mmmc_corners()
+        if corners:
+            # Derive flags for min::type::max
+            max_view = next((c for c in corners if c.type is MMMCCornerType.Setup), None)
+            max_view_flag = ""
+            if max_view is not None:
+                max_view_flag = f"-max_view {max_view.name}.setup_view"
+            min_view = next((c for c in corners if c.type is MMMCCornerType.Hold), None)
+            min_view_flag = ""
+            if min_view is not None:
+                min_view_flag = f"-min_view {min_view.name}.hold_view"
+            typ_view = next((c for c in corners if c.type is MMMCCornerType.Extra), None)
+            typ_view_flag = ""
+            if typ_view is not None:
+                typ_view_flag = f"-typical_view {typ_view.name}.extra_view"
+            self.verbose_append(f"write_sdf {max_view_flag} {min_view_flag} {typ_view_flag} {self.run_dir}/{self.top_module}.par.sdf")
+        else:
+            self.verbose_append(f"write_sdf {self.run_dir}/{self.top_module}.par.sdf".format(run_dir=self.run_dir, top=self.top_module))
 
         return True
 
@@ -804,6 +936,10 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         return True
 
     def write_design(self) -> bool:
+        # Because implementation is done, enable report_timing -early/late and SDF writing
+        # without recalculating timing graph for each analysis view
+        self.append("set_db timing_enable_simultaneous_setup_hold_mode true")
+
         # Save the Innovus design.
         self.verbose_append("write_db {lib_name} -def -verilog".format(
             lib_name=self.output_innovus_lib_name

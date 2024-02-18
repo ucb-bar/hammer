@@ -35,3 +35,13 @@ par.innovus:
   # Note that this requires an optional licence (enccco).
   # type: bool
   use_cco: true
+
+  # Route bumps with early global router (version >= 23.1 only).
+  # By default, bumps are ignored for routing. If true, turn on early bump routing.
+  # This is useful for RC delay estimation if you don't have IO cells routed to bumps via the flip-chip router.
+  early_route_bumps: false
+
+  # Perform signoff timing, then timing/DRV/power optimization with opt_signoff.
+  # Should only be run at the very end, as runtime impact is significant.
+  # Requires the same version of Tempus to be installed at ${cadence.cadence_home}/SSV/SSV${par.innovus.bin}/bin
+  signoff: false
