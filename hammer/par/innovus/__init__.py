@@ -4,6 +4,7 @@
 
 import shutil
 from typing import List, Dict, Optional, Callable, Tuple, Any, cast
+from itertools import chain
 
 import os
 import errno
@@ -437,7 +438,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             return False
 
         power_pin_layers = self.get_setting("par.generate_power_straps_options.by_tracks.pin_layers")
-        
+
         const = cast(PlacementConstraint, topconst)
         assert isinstance(const.margins, Margins), "Margins must be defined for the top level"
         fp_llx = const.margins.left
@@ -500,10 +501,10 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                     assign_arg = "-assign {{ {x} {y} }}".format(x=pin.location[0], y=pin.location[1])
 
                 layers_arg = ""
-                
+
                 if set(pin.layers or []).intersection(set(power_pin_layers)):
                     self.logger.error("Signal pins will be generated on the same layer(s) as power pins. Double-check to see if intended.")
-                
+
                 if pin.layers is not None and len(pin.layers) > 0:
                     layers_arg = "-layer {{ {} }}".format(" ".join(pin.layers))
 
@@ -737,19 +738,10 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
 
         # Options
         # Set clock fixing cell list
-        regexp = ""
-        buffer_cells = self.technology.get_special_cell_by_type(CellType.CTSBuffer)
-        if len(buffer_cells) > 0:
-            regexp += "|".join(buffer_cells[0].name) + "|"
-        inverter_cells = self.technology.get_special_cell_by_type(CellType.CTSInverter)
-        if len(inverter_cells) > 0:
-            regexp += "|".join(inverter_cells[0].name) + "|"
-        gate_cells = self.technology.get_special_cell_by_type(CellType.CTSGate)
-        if len(gate_cells) > 0:
-            regexp += "|".join(gate_cells[0].name) + "|"
-        logic_cells = self.technology.get_special_cell_by_type(CellType.CTSLogic)
-        if len(logic_cells) > 0:
-            regexp += "|".join(logic_cells[0].name)
+        cell_types = [CellType.CTSBuffer, CellType.CTSInverter, CellType.CTSGate, CellType.CTSLogic]
+        cells_by_type = chain(*map(lambda c: self.technology.get_special_cell_by_type(c), cell_types))
+        flat_cells = chain(*map(lambda cells: cells.name, cells_by_type))
+        regexp = "|".join(flat_cells)
         self.verbose_append(f"set_db opt_signoff_clock_cell_list [lsearch -regexp -all -inline [get_db lib_cells .base_name] {regexp}]")
         # Fix DRVs
         self.verbose_append("set_db opt_signoff_fix_data_drv true")
@@ -1209,20 +1201,20 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                     if current_top_layer is not None:
                         bot_layer = self.get_stackup().get_metal_by_index(1).name
                         cover_layers = list(map(lambda m: m.name, self.get_stackup().get_metals_below_layer(current_top_layer)))
-                        output.append("create_route_halo -bottom_layer {b} -space {s} -top_layer {t} -inst {inst}".format(     
+                        output.append("create_route_halo -bottom_layer {b} -space {s} -top_layer {t} -inst {inst}".format(
                             inst=new_path, b=bot_layer, t=current_top_layer, s=spacing))
-                        
+
                         if(self.get_setting("par.power_to_route_blockage_ratio") < 1):
                             self.logger.warning("The power strap blockage region is smaller than the routing halo region for hard macros. Double-check if this is intended.")
-                            
-                        place_push_out = round(spacing*self.get_setting("par.power_to_route_blockage_ratio") , 1) # Push the place halo, and therefore PG blockage, further out from route halo so router is aware of straps before entering final routing.  
 
-                        output.append("create_place_halo -insts {inst} -halo_deltas {{{s} {s} {s} {s}}} -snap_to_site".format(  
+                        place_push_out = round(spacing*self.get_setting("par.power_to_route_blockage_ratio") , 1) # Push the place halo, and therefore PG blockage, further out from route halo so router is aware of straps before entering final routing.
+
+                        output.append("create_place_halo -insts {inst} -halo_deltas {{{s} {s} {s} {s}}} -snap_to_site".format(
                             inst=new_path, s=place_push_out))
                         output.append("set pg_blockage_shape [get_db [get_db hinsts {inst}][get_db insts {inst}] .place_halo_polygon]".format(
                             inst=new_path))
                         output.append("create_route_blockage -pg_nets -layers {{{layers}}} -polygon $pg_blockage_shape".format(layers=" ".join(cover_layers)))
-                        
+
                 elif constraint.type == PlacementConstraintType.Obstruction:
                     obs_types = get_or_else(constraint.obs_types, [])  # type: List[ObstructionType]
                     assert '/' not in new_path, "'obstruction' placement constraints must be provided a path directly under the top level"
