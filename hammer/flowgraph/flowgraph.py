@@ -201,7 +201,7 @@ class Graph:
                     aux_node = Node(
                         aux_action,
                         parent.tool,
-                        os.path.join(os.path.dirname(parent.pull_dir), f"{aux_action}-dir"),
+                        parent.push_dir,
                         child.pull_dir,
                         parent.required_outputs,
                         [f"{aux_action}-out.json"],
@@ -211,9 +211,6 @@ class Graph:
         edge_list_copy = edge_list.copy()
         for parent_idx, child_idx, aux_node in changes:
             parent, children = list(edge_list_copy.items())[parent_idx]
-            parent.push_dir = os.path.join(
-                os.path.dirname(parent.pull_dir),
-                f"{aux_node.action}-dir")
 
             child = children[child_idx]
             child.required_inputs = aux_node.required_outputs
