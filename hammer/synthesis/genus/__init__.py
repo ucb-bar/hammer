@@ -250,6 +250,9 @@ class Genus(HammerSynthesisTool, CadenceTool):
                 verbose_append("set_db module:{top}/{mod} .preserve true".format(top=self.top_module, mod=ilm.module))
         verbose_append("init_design -top {}".format(self.top_module))
 
+        # Report timing constraint issues
+        verbose_append("report_timing -lint -verbose")
+
         # Setup power settings from cpf/upf
         # Difference from other tools: apply_power_intent after read
         power_cmds = self.generate_power_spec_commands()
