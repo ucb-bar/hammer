@@ -207,10 +207,15 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
 
             # Finally, apply the analysis view.
             # TODO: should not need to analyze extra views as well. Defaulting to hold for now (min. runtime impact).
-            append_mmmc("set_analysis_view -setup {{ {setup_views} }} -hold {{ {hold_views} {extra_views} }}".format(
+            # First extra view is assumed to be for dynamic and leakage power calculation.
+            power_opts = ""
+            if len(extra_view_names) > 0:
+                power_opts = f"-dynamic {extra_view_names[0]} -leakage {extra_view_names[0]}"
+            append_mmmc("set_analysis_view -setup {{ {setup_views} }} -hold {{ {hold_views} {extra_views} }} {power}".format(
                 setup_views=" ".join(setup_view_names),
                 hold_views=" ".join(hold_view_names),
-                extra_views=" ".join(extra_view_names)
+                extra_views=" ".join(extra_view_names),
+                power=power_opts
             ))
         else:
             # First, create an Innovus library set.

@@ -8,7 +8,7 @@ par.innovus:
 
   # Innovus version to use.
   # Used to locate the binary - e.g. the '221' in ${cadence.cadence_home}/DDI/DDI221/INNOVUS221/bin/innovus
-  version: "221"
+  version: "231"
 
   # Design flow effort.
   # Valid options: express (fastest), standard, and extreme (slowest).
