@@ -544,7 +544,7 @@ class PlacementConstraintType(Enum):
             "dummy": PlacementConstraintType.Dummy,
             "placement": PlacementConstraintType.SoftPlacement,
             "soft_placement": PlacementConstraintType.SoftPlacement,
-            "hard_placement": PlacementConstraingType.HardPlacement,
+            "hard_placement": PlacementConstraintType.HardPlacement,
             "toplevel": PlacementConstraintType.TopLevel,
             "hardmacro": PlacementConstraintType.HardMacro,
             "hierarchical": PlacementConstraintType.Hierarchical,
