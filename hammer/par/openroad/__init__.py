@@ -1814,7 +1814,7 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
                     pass
                 if constraint.type == PlacementConstraintType.Dummy:
                     pass
-                elif constraint.type == PlacementConstraintType.Placement:
+                elif constraint.type in [PlacementConstraintType.SoftPlacement, PlacementConstraintType.HardPlacement]:
                     pass
                 # for OpenROAD
                 elif constraint.type in [PlacementConstraintType.HardMacro, PlacementConstraintType.Hierarchical]:

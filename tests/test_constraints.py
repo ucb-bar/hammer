@@ -621,7 +621,13 @@ class TestPlacementConstraint:
              "height": Decimal(20),
              "orientation": "r0"}
         tc = PlacementConstraint.from_dict(d)
-        assert tc.type == PlacementConstraintType.Placement
+        assert tc.type == PlacementConstraintType.SoftPlacement
+        d["type"] = "soft_placement"
+        tc = PlacementConstraint.from_dict(d)
+        assert tc.type == PlacementConstraintType.SoftPlacement
+        d["type"] = "hard_placement"
+        tc = PlacementConstraint.from_dict(d)
+        assert tc.type == PlacementConstraintType.HardPlacement
         assert tc.path == "path/to/placement"
         assert tc.x == Decimal(4)
         assert tc.y == Decimal(6)

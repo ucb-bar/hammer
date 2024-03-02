@@ -1118,9 +1118,6 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         """
         output = []  # type: List[str]
 
-        # TODO(edwardw): proper source locators/SourceInfo
-        output.append("# Floorplan automatically generated from HAMMER")
-
         # Top-level chip size constraint.
         # Default/fallback constraints if no other constraints are provided.
         # TODO snap this to a core site
@@ -1167,8 +1164,16 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                     ))
                 if constraint.type == PlacementConstraintType.Dummy:
                     pass
-                elif constraint.type == PlacementConstraintType.Placement:
-                    output.append("create_guide -name {name} -area {x1} {y1} {x2} {y2}".format(
+                elif constraint.type == PlacementConstraintType.SoftPlacement:
+                    output.append("create_boundary_constraint -type guide -hinst {name} -rects {{ {x1} {y1} {x2} {y2} }}".format(
+                        name=new_path,
+                        x1=constraint.x,
+                        x2=constraint.x + constraint.width,
+                        y1=constraint.y,
+                        y2=constraint.y + constraint.height
+                    ))
+                elif constraint.type == PlacementConstraintType.HardPlacement:
+                    output.append("create_boundary_constraint -type region -hinst {name} -rects {{ {x1} {y1} {x2} {y2} }}".format(
                         name=new_path,
                         x1=constraint.x,
                         x2=constraint.x + constraint.width,
