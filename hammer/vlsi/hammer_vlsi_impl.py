@@ -673,7 +673,9 @@ class HammerPlaceAndRouteTool(HammerTool):
             raise NotImplementedError("Power strap generation method %s is not implemented" % method)
 
 
-    def specify_power_straps_by_tracks(self, layer_name: str, bottom_via_layer: str, blockage_spacing: Decimal, track_pitch: int, track_width: int, track_spacing: int, track_start: int, track_offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool, layer_is_all_power: bool, antenna_trim_shape: str) -> List[str]:
+
+    def specify_power_straps_by_tracks(self, layer_name: str, bottom_via_layer: str, blockage_spacing: Decimal, track_pitch: int, track_width: int, track_spacing: int, track_start: int, track_offset: Decimal, bbox: Optional[List[Decimal]], nets: List[str], add_pins: bool, layer_is_all_power: bool, antenna_trim_shape: str, pattern: str) -> List[str]:
+
         """
         Generate a list of TCL commands that will create power straps on a given layer by specifying the desired track consumption.
         This method assumes that power straps are built bottom-up, starting with standard cell rails.
@@ -698,6 +700,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         width = Decimal(0)
         spacing = Decimal(0)
         strap_offset = Decimal(0)
+        
         if track_spacing == 0:
             # An all-power (100% utilization) layer results in us wanting to do a uniform strap pattern, so we can just calculate the
             # maximum width and minimum spacing from the desired pitch, instead of using TWWT.
@@ -710,6 +713,9 @@ class HammerPlaceAndRouteTool(HammerTool):
         else:
             width, spacing, strap_start = layer.get_width_spacing_start_twt(track_width, logger=self.logger.context(layer_name))
             spacing = 2*spacing + (track_spacing - 1) * layer.pitch + layer.min_width
+            if pattern == "mesh":
+                spacing = pitch / 2 - width
+
         offset = track_offset + track_start * layer.pitch + strap_start
         assert width > Decimal(0), "Width must be greater than zero. You probably have a malformed tech plugin on layer {}.".format(layer_name)
         assert spacing > Decimal(0), "Spacing must be greater than zero. You probably have a malformed tech plugin on layer {}.".format(layer_name)
@@ -762,7 +768,8 @@ class HammerPlaceAndRouteTool(HammerTool):
             assert layer.index > last.index, "Must build power straps bottom-up"
             if last.direction == layer.direction:
                 raise ValueError("Layers {a} and {b} run in the same direction, but have no power straps between them.".format(a=last.name, b=layer.name))
-
+            
+            pattern = self._get_by_tracks_metal_setting("pattern", layer_name)
             blockage_spacing = coerce_to_grid(float(self._get_by_tracks_metal_setting("blockage_spacing", layer_name)), layer.grid_unit)
             track_width = int(self._get_by_tracks_metal_setting("track_width", layer_name))
             track_spacing = int(self._get_by_tracks_metal_setting("track_spacing", layer_name))
@@ -785,7 +792,9 @@ class HammerPlaceAndRouteTool(HammerTool):
                 nets = [ground_net, power_nets[i]]
                 group_offset = offset + track_offset + track_pitch * i * layer.pitch
                 group_pitch = sum_weights * track_pitch
-                output.extend(self.specify_power_straps_by_tracks(layer_name, last.name, blockage_spacing, group_pitch, track_width, track_spacing, track_start, group_offset, bbox, nets, add_pins, layer_is_all_power, antenna_trim_shape))
+
+                output.extend(self.specify_power_straps_by_tracks(layer_name, last.name, blockage_spacing, group_pitch, track_width, track_spacing, track_start, group_offset, bbox, nets, add_pins, layer_is_all_power, antenna_trim_shape, pattern))
+
             last = layer
 
         self._dump_power_straps_for_hardmacros()
