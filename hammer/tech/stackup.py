@@ -7,7 +7,7 @@ from enum import Enum
 from functools import partial
 from typing import Any, List, Tuple, Optional
 
-from pydantic import BaseModel, root_validator
+from pydantic import model_validator, ConfigDict, BaseModel
 
 from hammer.utils import coerce_to_grid
 from hammer.logging import HammerVLSILoggingContext
@@ -110,11 +110,10 @@ class Metal(BaseModel):
     # Note: grid_unit is not currently parsed as part of the Metal data structure!
     # See #379
     grid_unit: Decimal
+    model_config = ConfigDict(use_enum_values=True)
 
-    class Config:
-        use_enum_values = True
-
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def widths_must_snap_to_grid(cls, values):
         grid_unit = Decimal(str(values.get("grid_unit")))
         for field in ["min_width", "pitch", "offset"]:

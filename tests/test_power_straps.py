@@ -4,7 +4,7 @@ from decimal import Decimal
 from typing import Dict, cast, List, Any, Iterator
 import sys
 
-from pydantic import BaseModel
+from pydantic import ConfigDict, BaseModel
 import pytest
 
 from hammer import vlsi as hammer_vlsi
@@ -22,9 +22,7 @@ class PowerStrapsTestContext(BaseModel):
     temp_dir: str
     driver: hammer_vlsi.HammerDriver
     logger = HammerVLSILogging.context("")
-
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 @pytest.fixture()

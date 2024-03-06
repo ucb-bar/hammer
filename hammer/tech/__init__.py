@@ -45,7 +45,7 @@ class MinMaxCap(BaseModel):
 
 class Provide(BaseModel):
     lib_type: str
-    vt: Optional[str]
+    vt: Optional[str] = None
 
 
 class Supplies(BaseModel):
@@ -212,22 +212,22 @@ class Site(BaseModel):
 
 class TechJSON(BaseModel):
     name: str
-    grid_unit: Optional[str]
-    shrink_factor: Optional[str]
-    installs: Optional[List[PathPrefix]]
-    libraries: Optional[List[Library]]
-    gds_map_file: Optional[str]
-    physical_only_cells_list: Optional[List[Cell]]
-    dont_use_list: Optional[List[Cell]]
-    drc_decks: Optional[List[DRCDeck]]
-    lvs_decks: Optional[List[LVSDeck]]
-    tarballs: Optional[List[Tarball]]
-    sites: Optional[List[Site]]
-    stackups: Optional[List[Stackup]]
-    special_cells: Optional[List[SpecialCell]]
-    extra_prefixes: Optional[List[PathPrefix]]
-    additional_lvs_text: Optional[str]
-    additional_drc_text: Optional[str]
+    grid_unit: Optional[str] = None
+    shrink_factor: Optional[str] = None
+    installs: Optional[List[PathPrefix]] = None
+    libraries: Optional[List[Library]] = None
+    gds_map_file: Optional[str] = None
+    physical_only_cells_list: Optional[List[Cell]] = None
+    dont_use_list: Optional[List[Cell]] = None
+    drc_decks: Optional[List[DRCDeck]] = None
+    lvs_decks: Optional[List[LVSDeck]] = None
+    tarballs: Optional[List[Tarball]] = None
+    sites: Optional[List[Site]] = None
+    stackups: Optional[List[Stackup]] = None
+    special_cells: Optional[List[SpecialCell]] = None
+    extra_prefixes: Optional[List[PathPrefix]] = None
+    additional_lvs_text: Optional[str] = None
+    additional_drc_text: Optional[str] = None
 
 
 def copy_library(lib: Library) -> Library:
@@ -246,7 +246,7 @@ def library_from_json(json: str) -> Library:
 
 # Struct that holds an extra library and possible prefix.
 class ExtraLibrary(BaseModel):
-    prefix: Optional[PathPrefix]
+    prefix: Optional[PathPrefix] = None
     library: Library
 
     def store_into_library(self) -> Library:

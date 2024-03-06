@@ -2,7 +2,7 @@ import json
 import os
 from typing import Dict, Any, Iterator
 
-from pydantic import BaseModel, validator
+from pydantic import field_validator, ConfigDict, BaseModel
 import pytest
 
 from hammer import vlsi as hammer_vlsi
@@ -15,11 +15,10 @@ class SignoffToolTestContext(BaseModel):
     driver: hammer_vlsi.HammerDriver
     tool_type: str
     temp_dir: str
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    class Config:
-        arbitrary_types_allowed = True
-
-    @validator("tool_type")
+    @field_validator("tool_type")
+    @classmethod
     def check_tool_type(cls, tool_type):
         if tool_type not in ["drc", "lvs"]:
             raise NotImplementedError("Have not created a test for %s yet" % tool_type)
