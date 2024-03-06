@@ -221,7 +221,8 @@ vlsi.inputs:
   # - Required for all types
   # - One of the following:
   #   - "dummy" (does nothing with this constraint)
-  #   - "placement" (creates a placement constraint for an instance)
+  #   - "placement" or "soft_placement" (creates a soft placement constraint for a hierarchical instance)
+  #   - "hard_placement" (creates a hard placement constraint for a hierarchical instance)
   #   - "toplevel" (top-level chip dimensions; may only occur once, for the top-level module)
   #   - "hardmacro" (places this hard macro at a particular spot)
   #   - "hierarchical" (marks this instance as part of hierarchical place and route)
