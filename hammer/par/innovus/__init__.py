@@ -567,6 +567,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
     def clock_tree(self) -> bool:
         """Setup and route a clock tree for clock nets."""
         if len(self.get_clock_ports()) > 0:
+            # Fix fanout load violations
+            self.verbose_append("set_db opt_fix_fanout_load true")
             # Ignore clock tree when there are no clocks
             # If special cells are specified, explicitly set them instead of letting tool infer from libs
             buffer_cells = self.technology.get_special_cell_by_type(CellType.CTSBuffer)
@@ -680,8 +682,6 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         cmds = []
         # Enable auto hold recovery if slack degrades
         cmds.append("set_db opt_post_route_hold_recovery auto")
-        # Fix fanout load violations
-        cmds.append("set_db opt_fix_fanout_load true")
         # Fix SI-induced slew violations (glitch fixing enabled by default)
         cmds.append("set_db opt_post_route_fix_si_transitions true")
         # Report reasons for not fixing hold
