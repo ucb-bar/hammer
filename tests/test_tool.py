@@ -12,9 +12,9 @@ from hammer.config import HammerJSONEncoder
 from hammer.logging import HammerVLSILogging, HammerVLSIFileLogger
 from hammer.logging.test import HammerLoggingCaptureContext
 from hammer.utils import deeplist, deepdict
-from utils.stackup import StackupTestHelper
-from utils.tech import HasGetTech
-from utils.tool import HammerToolTestHelpers, SingleStepTool, DummyTool
+from tests.utils.stackup import StackupTestHelper
+from tests.utils.tech import HasGetTech
+from tests.utils.tool import HammerToolTestHelpers, SingleStepTool, DummyTool
 
 
 class TestHammerTool(HasGetTech):

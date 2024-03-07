@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from hammer.tech.stackup import Metal
-from utils.stackup import StackupTestHelper
+from tests.utils.stackup import StackupTestHelper
 
 import json
 import pytest

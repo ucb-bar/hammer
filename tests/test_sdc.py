@@ -2,7 +2,7 @@ from typing import Optional
 
 from hammer import vlsi as hammer_vlsi, config as hammer_config
 from hammer import technology as hammer_techs
-from utils.tool import DummyTool
+from tests.utils.tool import DummyTool
 
 
 class SDCDummyTool(hammer_vlsi.HasSDCSupport, DummyTool):

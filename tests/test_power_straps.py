@@ -12,9 +12,9 @@ from hammer.config import HammerJSONEncoder
 from hammer.logging import HammerVLSILogging, HammerVLSILoggingContext
 from hammer.utils import deepdict, add_dicts
 from hammer.tech.specialcells import CellType, SpecialCell
-from utils.stackup import StackupTestHelper
-from utils.tech import HasGetTech
-from utils.tool import HammerToolTestHelpers
+from tests.utils.stackup import StackupTestHelper
+from tests.utils.tech import HasGetTech
+from tests.utils.tool import HammerToolTestHelpers
 
 
 class PowerStrapsTestContext(BaseModel):

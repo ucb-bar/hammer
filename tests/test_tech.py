@@ -20,9 +20,9 @@ from hammer.utils import deepdict
 from hammer.config import HammerJSONEncoder
 from decimal import Decimal
 
-from utils.tool import HammerToolTestHelpers, DummyTool
-from utils.tech import HasGetTech
-from utils.stackup import StackupTestHelper
+from tests.utils.tool import HammerToolTestHelpers, DummyTool
+from tests.utils.tech import HasGetTech
+from tests.utils.stackup import StackupTestHelper
 
 
 # Tests for the Hammer technology library (hammer_tech).
