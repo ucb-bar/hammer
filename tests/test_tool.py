@@ -12,9 +12,9 @@ from hammer.config import HammerJSONEncoder
 from hammer.logging import HammerVLSILogging, HammerVLSIFileLogger
 from hammer.logging.test import HammerLoggingCaptureContext
 from hammer.utils import deeplist, deepdict
-from utils.stackup import StackupTestHelper
-from utils.tech import HasGetTech
-from utils.tool import HammerToolTestHelpers, SingleStepTool, DummyTool
+from tests.utils.stackup import StackupTestHelper
+from tests.utils.tech import HasGetTech
+from tests.utils.tool import HammerToolTestHelpers, SingleStepTool, DummyTool
 
 
 class TestHammerTool(HasGetTech):
@@ -102,7 +102,7 @@ class TestHammerTool(HasGetTech):
                     "ccs_liberty_file": "cookies.ccs"
                 }
             ]
-            
+
         }
         with open(tech_json_filename, "w") as f:
             f.write(json.dumps(tech_json, cls=HammerJSONEncoder, indent=4))
@@ -122,13 +122,13 @@ class TestHammerTool(HasGetTech):
         logger = HammerVLSILogging.context("")
         logger.logging_class.clear_callbacks()
         tech.logger = logger
-    
+
         class Tool(hammer_vlsi.DummyHammerTool, metaclass=ABCMeta):
-            
+
             def __init__(self, removal=False):
                 self.geek = "GeekforGeeks"
 
-            
+
             lib_outputs = []  # type: List[str]
             @property
             def steps(self) -> List[hammer_vlsi.HammerToolStep]:
@@ -164,7 +164,7 @@ class TestHammerTool(HasGetTech):
         test.technology = tech
         test.set_database(hammer_config.HammerDatabase())
         tech.set_database(hammer_config.HammerDatabase())
-        
+
         # Test the default case:
         test.run(hook_actions=[
             hammer_vlsi.HammerTool.make_removal_hook("step_two"),
@@ -195,7 +195,7 @@ class TestHammerTool(HasGetTech):
         test.run(hook_actions=[
             hammer_vlsi.HammerTool.make_removal_hook("step_one"),
             hammer_vlsi.HammerTool.make_removal_hook("step_two")])
-        
+
         assert set(Tool.lib_outputs) == {
             "{0}/eggs.ccs".format(tech_dir),
             "{0}/custard.ccs".format(tech_dir),
@@ -204,7 +204,7 @@ class TestHammerTool(HasGetTech):
             "{0}/cookies.ccs".format(tech_dir)
         }
 
-        
+
     def test_timing_lib_ecsm_filter(self, tmp_path, request) -> None:
         """
         Test that the ECSM-first filter works as expected.
@@ -561,7 +561,7 @@ export lol=abc"cat"
 
         def add_stackup(in_dict: Dict[str, Any]) -> Dict[str, Any]:
             out_dict = deepdict(in_dict)
-            out_dict["stackups"] = [StackupTestHelper.create_test_stackup(8, StackupTestHelper.mfr_grid()).dict()]
+            out_dict["stackups"] = [StackupTestHelper.create_test_stackup(8, StackupTestHelper.mfr_grid()).model_dump()]
             return out_dict
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, tech_name, add_stackup)
@@ -619,7 +619,7 @@ export lol=abc"cat"
 
         def add_stackup(in_dict: Dict[str, Any]) -> Dict[str, Any]:
             out_dict = deepdict(in_dict)
-            out_dict["stackups"] = [StackupTestHelper.create_test_stackup(8, StackupTestHelper.mfr_grid()).dict()]
+            out_dict["stackups"] = [StackupTestHelper.create_test_stackup(8, StackupTestHelper.mfr_grid()).model_dump()]
             return out_dict
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, tech_name, add_stackup)
@@ -741,7 +741,7 @@ export lol=abc"cat"
 
         def add_stackup(in_dict: Dict[str, Any]) -> Dict[str, Any]:
             out_dict = deepdict(in_dict)
-            out_dict["stackups"] = [StackupTestHelper.create_test_stackup(8, StackupTestHelper.mfr_grid()).dict()]
+            out_dict["stackups"] = [StackupTestHelper.create_test_stackup(8, StackupTestHelper.mfr_grid()).model_dump()]
             return out_dict
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, tech_name, add_stackup)
@@ -817,7 +817,7 @@ export lol=abc"cat"
 
         def add_stackup(in_dict: Dict[str, Any]) -> Dict[str, Any]:
             out_dict = deepdict(in_dict)
-            out_dict["stackups"] = [StackupTestHelper.create_test_stackup(8, StackupTestHelper.mfr_grid()).dict()]
+            out_dict["stackups"] = [StackupTestHelper.create_test_stackup(8, StackupTestHelper.mfr_grid()).model_dump()]
             return out_dict
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, tech_name, add_stackup)
