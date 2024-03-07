@@ -214,7 +214,7 @@ class HammerSRAMGeneratorTool(HammerTool):
         outputs = deepdict(super().export_config_outputs())
         simple_ex = []
         for ex in self.output_libraries: # type: ExtraLibrary
-            simple_lib = json.loads(ex.library.json())
+            simple_lib = json.loads(ex.library.model_dump_json())
             if(ex.prefix == None):
                 new_ex = {"library": simple_lib}
             else:

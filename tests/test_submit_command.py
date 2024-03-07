@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Dict, Any, List, Iterator
+from typing import Dict, Any, List, Iterator, ClassVar
 import importlib.resources as resources
 
 from pydantic import field_validator, ConfigDict, BaseModel
@@ -8,14 +8,14 @@ import pytest
 
 from hammer import vlsi as hammer_vlsi
 from hammer.config import HammerJSONEncoder
-from hammer.logging import HammerVLSILogging
+from hammer.logging import HammerVLSILogging, HammerVLSILoggingContext
 from hammer.utils import get_or_else
 
 
 class SubmitCommandTestContext(BaseModel):
     echo_command_args: List[str] = ["go", "bears", "!"]
     echo_command: List[str] = ["echo", "go", "bears", "!"]
-    logger = HammerVLSILogging.context("")
+    logger: ClassVar[HammerVLSILoggingContext] = HammerVLSILogging.context("")
     env: Dict[Any, Any] = {}
     driver: hammer_vlsi.HammerDriver
     cmd_type: str

@@ -232,7 +232,7 @@ class TechJSON(BaseModel):
 
 def copy_library(lib: Library) -> Library:
     """Perform a deep copy of a Library."""
-    return Library.parse_raw(lib.json())
+    return Library.model_validate_json(lib.model_dump_json())
 
 
 def library_from_json(json: str) -> Library:
@@ -241,7 +241,7 @@ def library_from_json(json: str) -> Library:
     :param json: JSON string.
     :return: hammer_tech library.
     """
-    return Library.parse_raw(json)
+    return Library.model_validate_json(json)
 
 
 # Struct that holds an extra library and possible prefix.
@@ -271,7 +271,7 @@ class MacroSize(BaseModel):
     height: Decimal
 
     def to_setting(self) -> dict:
-        return self.dict()
+        return self.model_dump()
 
     @staticmethod
     def from_setting(d: dict) -> "MacroSize":
@@ -370,10 +370,10 @@ class HammerTechnology:
         tech_yaml = importlib.resources.files(tech_module) / f"{technology_name}.tech.yml"
 
         if tech_json.is_file():
-            tech.config = TechJSON.parse_raw(tech_json.read_text())
+            tech.config = TechJSON.model_validate_json(tech_json.read_text())
             return tech
         elif tech_yaml.is_file():
-            tech.config = TechJSON.parse_raw(json.dumps(load_yaml(tech_yaml.read_text())))
+            tech.config = TechJSON.model_validate_json(json.dumps(load_yaml(tech_yaml.read_text())))
             return tech
         else: #TODO - from Pydantic model instance
             return None
@@ -535,7 +535,7 @@ class HammerTechnology:
             raise TypeError("lib must be a dict")
 
         # Convert the dict to JSON...
-        return Library.parse_raw(json.dumps(lib, cls=HammerJSONEncoder))
+        return Library.model_validate_json(json.dumps(lib, cls=HammerJSONEncoder))
 
     @property
     def tech_defined_libraries(self) -> List[Library]:
@@ -582,7 +582,7 @@ class HammerTechnology:
                 name = str(lib_name)
             return [json.dumps([paths[0], name], cls=HammerJSONEncoder)]
 
-        lef_filter_plus = filters.lef_filter.copy(deep=True)
+        lef_filter_plus = filters.lef_filter.model_copy(deep=True)
         lef_filter_plus.extraction_func = extraction_func
 
         lef_names_filenames_serialized = self.process_library_filter(filt=lef_filter_plus,
@@ -779,7 +779,7 @@ class HammerTechnology:
         if not isinstance(extra_libs, list):
             raise ValueError("extra_libraries was not a list")
         else:
-            return [ExtraLibrary.parse_obj(lib) for lib in extra_libs]
+            return [ExtraLibrary.model_validate(lib) for lib in extra_libs]
 
     def get_available_libraries(self) -> List[Library]:
         """
@@ -945,7 +945,7 @@ class HammerTechnology:
                 for provided in lib.provides:
                     if provided.lib_type is not None and provided.lib_type == "technology":
                         return True
-            self.logger.warning("Lib %s has no supplies annotation! Using anyway." % (lib.json()))
+            self.logger.warning("Lib %s has no supplies annotation! Using anyway." % (lib.model_dump_json()))
             return True
         return self.get_setting("vlsi.inputs.supplies.VDD") == lib.supplies.VDD and self.get_setting(
             "vlsi.inputs.supplies.GND") == lib.supplies.GND

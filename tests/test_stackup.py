@@ -18,8 +18,8 @@ class TestStackup:
         """
         grid_unit = StackupTestHelper.mfr_grid()
         metal = StackupTestHelper.create_test_metal(3, grid_unit)
-        direct_metal = Metal.from_setting(grid_unit, StackupTestHelper.create_test_metal(3, grid_unit).dict())
-        json_string: str = metal.json()
+        direct_metal = Metal.from_setting(grid_unit, StackupTestHelper.create_test_metal(3, grid_unit).model_dump())
+        json_string: str = metal.model_dump_json()
         json_metal = Metal.from_setting(grid_unit, json.loads(json_string))  # type: Metal
         assert direct_metal == json_metal
 
@@ -128,8 +128,8 @@ class TestStackup:
         grid_unit = StackupTestHelper.mfr_grid()
         metal = StackupTestHelper.create_test_metal(1, grid_unit)
         metal.power_strap_width_table = StackupTestHelper.create_w_tbl(1, 5, grid_unit)
-        q_metal = Metal.from_setting(StackupTestHelper.mfr_grid(), metal.dict())
-        nq_metal = Metal.from_setting(StackupTestHelper.mfr_grid(), StackupTestHelper.create_test_metal(1, grid_unit).dict())
+        q_metal = Metal.from_setting(StackupTestHelper.mfr_grid(), metal.model_dump())
+        nq_metal = Metal.from_setting(StackupTestHelper.mfr_grid(), StackupTestHelper.create_test_metal(1, grid_unit).model_dump())
         for num_tracks in range(1, 20):
             # twt case
             wq, sq, oq = q_metal.get_width_spacing_start_twt(num_tracks, logger=None)

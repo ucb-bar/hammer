@@ -768,7 +768,7 @@ END LIBRARY""")
 
         def add_stackup(in_dict: Dict[str, Any]) -> Dict[str, Any]:
             out_dict = deepdict(in_dict)
-            out_dict.update({"stackups": [test_stackup.dict()]})
+            out_dict.update({"stackups": [test_stackup.model_dump()]})
             return out_dict
 
         HammerToolTestHelpers.write_tech_json(tech_json_filename, tech_name, add_stackup)
@@ -781,4 +781,4 @@ END LIBRARY""")
         database = hammer_config.HammerDatabase()
         tool.set_database(database)
 
-        assert tech.get_stackup_by_name(test_stackup.name) == Stackup.from_setting(tech.get_grid_unit(), test_stackup.dict())
+        assert tech.get_stackup_by_name(test_stackup.name) == Stackup.from_setting(tech.get_grid_unit(), test_stackup.model_dump())
