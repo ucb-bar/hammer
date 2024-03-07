@@ -7,9 +7,9 @@ build:
   tools:
     python: '3.10'
   jobs:
-    post_install:
+    post_create_environment:
       - pip install poetry myst-parser
-      - poetry config virtualenvs.create false
+    post_install:
       # VIRTUAL_ENV needs to be set manually for now.
       # See https://github.com/readthedocs/readthedocs.org/pull/11152/
       - VIRTUAL_ENV=$READTHEDOCS_VIRTUAL_ENV_PATH poetry install
