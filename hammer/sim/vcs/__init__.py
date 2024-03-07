@@ -240,6 +240,10 @@ class VCS(HammerSimTool, SynopsysTool):
         force_regs_filename = self.force_regs_file_path
         tb_prefix = self.get_setting("sim.inputs.tb_dut")
         saif_mode = self.get_setting("sim.inputs.saif.mode")
+        saif_start_time: Optional[TimeValue] = None
+        saif_end_time: Optional[TimeValue] = None
+        saif_start_trigger_raw: Optional[str] = None
+        saif_end_trigger_raw: Optional[str] = None
         if saif_mode == "time":
             saif_start_time = self.get_setting("sim.inputs.saif.start_time")
             saif_end_time = self.get_setting("sim.inputs.saif.end_time")
@@ -259,7 +263,9 @@ class VCS(HammerSimTool, SynopsysTool):
         if self.level == FlowLevel.RTL and saif_mode != "none":
             find_regs_run_tcl = []
             if saif_mode != "none":
+                stime: Optional[TimeValue] = None
                 if saif_mode == "time":
+                    assert saif_start_time
                     stime = TimeValue(saif_start_time[0])
                     find_regs_run_tcl.append("run {start}ns".format(start=stime.value_in_units("ns")))
                 elif saif_mode == "trigger_raw":
@@ -271,6 +277,8 @@ class VCS(HammerSimTool, SynopsysTool):
                 find_regs_run_tcl.append("power {dut}".format(dut=tb_prefix))
                 find_regs_run_tcl.append("config endofsim noexit")
                 if saif_mode == "time":
+                    assert saif_end_time
+                    assert stime
                     etime = TimeValue(saif_end_time)
                     find_regs_run_tcl.append("run {end}ns".format(end=(etime.value_in_units("ns") - stime.value_in_units("ns"))))
                 elif saif_mode == "trigger_raw":
@@ -288,7 +296,9 @@ class VCS(HammerSimTool, SynopsysTool):
             find_regs_run_tcl = []
             find_regs_run_tcl.append("source " + force_regs_filename)
             if saif_mode != "none":
+                stime: Optional[TimeValue] = None
                 if saif_mode == "time":
+                    assert saif_start_time
                     stime = TimeValue(saif_start_time[0])
                     find_regs_run_tcl.append("run {start}ns".format(start=stime.value_in_units("ns")))
                 elif saif_mode == "trigger_raw":
@@ -301,6 +311,8 @@ class VCS(HammerSimTool, SynopsysTool):
                 find_regs_run_tcl.append("power {dut}".format(dut=tb_prefix))
                 find_regs_run_tcl.append("config endofsim noexit")
                 if saif_mode == "time":
+                    assert saif_end_time
+                    assert stime
                     etime = TimeValue(saif_end_time)
                     find_regs_run_tcl.append("run {end}ns".format(end=(etime.value_in_units("ns") - stime.value_in_units("ns"))))
                 elif saif_mode == "trigger_raw":
