@@ -21,6 +21,8 @@ from hammer.vlsi import HammerTool, HammerPlaceAndRouteTool, TCLTool, HammerDRCT
 
 import hammer.tech.specialcells as specialcells
 from hammer.tech.specialcells import CellType, SpecialCell
+from hammer.utils import LEFUtils
+
 
 class SKY130Tech(HammerTechnology):
     """
@@ -31,6 +33,7 @@ class SKY130Tech(HammerTechnology):
         """Generate the tech config, based on the library type selected"""
         slib = self.get_setting("technology.sky130.stdcell_library")
         SKY130A = self.get_setting("technology.sky130.sky130A")
+        SKY130_CDS = self.get_setting("technology.sky130.sky130_cds")
 
         # Common tech LEF and IO cell spice netlists
         libs = [
@@ -262,8 +265,102 @@ class SKY130Tech(HammerTechnology):
                             metal_name = None
                 stackups.append(Stackup(name = slib, grid_unit = Decimal("0.001"), metals = metals))
 
-        elif slib == "sky130_scl":
-            raise NotImplementedError(f"sky130_scl not yet supported")
+        elif slib == "sky130_scl_9T_0.0.2": #sky130_scl":
+            base_slib = "sky130_scl"
+            phys_only = [
+                "sky130_fd_sc_hd__tap_1", "sky130_fd_sc_hd__tap_2", "sky130_fd_sc_hd__tapvgnd_1", "sky130_fd_sc_hd__tapvpwrvgnd_1",
+                "sky130_fd_sc_hd__fill_1", "sky130_fd_sc_hd__fill_2", "sky130_fd_sc_hd__fill_4", "sky130_fd_sc_hd__fill_8",
+                "sky130_fd_sc_hd__diode_2"]
+            dont_use = [
+                "*sdf*",
+                "sky130_fd_sc_hd__probe_p_*",
+                "sky130_fd_sc_hd__probec_p_*"
+            ]
+            spcl_cells = [
+                SpecialCell(cell_type = "tiehilocell", name = ["sky130_fd_sc_hd__conb_1"]),
+                SpecialCell(cell_type = "tiehicell", name = ["sky130_fd_sc_hd__conb_1"], output_ports = ["HI"]),
+                SpecialCell(cell_type = "tielocell", name = ["sky130_fd_sc_hd__conb_1"], output_ports = ["LO"]),
+                SpecialCell(cell_type = "endcap", name = ["sky130_fd_sc_hd__tap_1"]),
+                SpecialCell(cell_type = "tapcell", name = ["sky130_fd_sc_hd__tapvpwrvgnd_1"]),
+                SpecialCell(cell_type = "stdfiller", name = ["sky130_fd_sc_hd__fill_1", "sky130_fd_sc_hd__fill_2", "sky130_fd_sc_hd__fill_4", "sky130_fd_sc_hd__fill_8"]),
+                SpecialCell(cell_type = "decap", name = ["sky130_fd_sc_hd__decap_3", "sky130_fd_sc_hd__decap_4", "sky130_fd_sc_hd__decap_6", "sky130_fd_sc_hd__decap_8", "sky130_fd_sc_hd__decap_12"]),
+                SpecialCell(cell_type = "driver", name = ["sky130_fd_sc_hd__buf_4"], input_ports = ["A"], output_ports = ["X"]),
+                SpecialCell(cell_type = "ctsbuffer", name = ["sky130_fd_sc_hd__clkbuf_1"])
+            ]
+
+            # Generate standard cell library
+            library=slib
+
+            LIBRARY_PATH  = os.path.join(  SKY130_CDS,  'LIB', slib)
+            lib_corner_files=os.listdir(LIBRARY_PATH)
+            lib_corner_files.sort()
+            for cornerfilename in lib_corner_files:
+                if (not (library in cornerfilename) ) : continue
+                if ('ccsnoise' in cornerfilename): continue # ignore duplicate corner.lib/corner_ccsnoise.lib files
+
+                tmp = cornerfilename.replace('.lib','')
+                if (tmp+'_ccsnoise.lib' in lib_corner_files):
+                    cornerfilename=tmp+'_ccsnoise.lib' # use ccsnoise version of lib file
+
+                cornername = tmp.split('__')[1]
+                cornerparts = cornername.split('_')
+
+                speed = cornerparts[0]
+                if (speed == 'ff'): speed = 'fast'
+                if (speed == 'tt'): speed = 'typical'
+                if (speed == 'ss'): speed = 'slow'
+
+                temp = cornerparts[1]
+                temp = temp.replace('n','-')
+                temp = temp.split('C')[0]+' C'
+
+                vdd = cornerparts[2]
+                vdd = vdd.split('v')[0]+'.'+vdd.split('v')[1]+' V'
+
+                lib_entry = Library(
+                    nldm_liberty_file =  os.path.join(SKY130_CDS,'lib', cornerfilename),
+                    verilog_sim =        os.path.join('cache',             library+'.v'),
+                    lef_file =           os.path.join(SKY130_CDS,'lef', library+'.lef'),
+                    spice_file =         os.path.join('cache',             library+'.cdl'),
+                    gds_file =           os.path.join(SKY130_CDS,'gds', library+'.gds'),
+                    corner = Corner(
+                        nmos = speed,
+                        pmos = speed,
+                        temperature = temp
+                    ),
+                    supplies = Supplies(
+                        VDD = vdd,
+                        GND = "0 V"
+                    ),
+                    provides = [Provide(
+                        lib_type = "stdcell",
+                        vt = "RVT"
+                        )
+                    ]
+                )
+
+                libs.append(lib_entry)
+
+            # Generate stackup
+            metals = []  #type: List[Metal]
+            def is_float(string):
+                try:
+                    float(string)
+                    return True
+                except ValueError:
+                    return False
+
+            def get_min_from_line(line):
+                words = line.split()
+                nums = [float(w) for w in words if is_float(w)]
+                return min(nums)
+
+            # TODO elam is 9t ok to hard code
+            tlef_path = os.path.join(SKY130_CDS, 'LIB', library, 'lef', f"{base_slib}_9T.tlef")
+            metals = list(map(lambda m: Metal.model_validate(m), LEFUtils.get_metals(tlef_path)))
+            stackups.append(Stackup(name = slib, grid_unit = Decimal("0.001"), metals = metals))
+
+
         else:
             raise ValueError(f"Incorrect standard cell library selection: {slib}")
 
@@ -379,6 +476,7 @@ class SKY130Tech(HammerTechnology):
             sl = sf.readlines()
 
             # Find timing declaration
+            import pdb; pdb.set_trace()
             start_idx = [idx for idx, line in enumerate(sl) if "`ifndef SKY130_FD_SC_HD__LPFLOW_BLEEDER_1_TIMING_V" in line][0]
 
             # Search for the broken statement
