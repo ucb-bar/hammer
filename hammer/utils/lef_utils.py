@@ -161,10 +161,10 @@ class LEFUtils:
                     if "WIDTHTABLE" in line:
                         # definition on one line
                         if "LEF58_WIDTHTABLE" in line:
-                            metal["power_strap_width_table"] = list(filter(lambda s: is_float(s), line.split()))
+                            metal["power_strap_width_table"] = list(filter(lambda s: is_float(s), line.split()))  # type: ignore
                         # multiple tables, only want routing direction one
-                        if not any(s in line for x in ["ORTHOGONAL", "WRONGDIRECTION"]):
-                            metal["power_strap_width_table"] = list(filter(lambda s: is_float(s), line.split()))
+                        if not any(s in line for s in ["ORTHOGONAL", "WRONGDIRECTION"]):
+                            metal["power_strap_width_table"] = list(filter(lambda s: is_float(s), line.split()))  # type: ignore
 
                     if line.startswith("END"):
                         # TODO: grid_unit is not currently parsed as part of the Metal data structure!
