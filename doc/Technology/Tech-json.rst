@@ -1,16 +1,51 @@
 .. _tech-json:
 
-Hammer Tech JSON
+Hammer Tech Config (Tech JSON)
 ===============================
 
-The ``tech.json`` for a given technology sets up some general information about the install of the PDK, sets up DRC rule decks, sets up pointers to PDK files, and supplies technology stackup information. 
-For the full schema of the tech JSON, please see the :ref:`full_schema` section below, which is derived from the ``TechJSON`` Pydantic BaseModel in ``hammer/tech/__init__.py``.
+Technology plugins must set up some general information about the install of the PDK, set up DRC rule decks, set up pointers to PDK files, and supply technology stackup information. 
+Formerly, this information was provided in a static ``<tech_name>.tech.json`` file. We now encourage you to generate this information in the form of ``TechJSON`` Pydantic BaseModel instances (see ``hammer/tech/__init__.py`` for all BaseModel definitions). Instructions are given below for both forms, with examples from the Sky130 and ASAP7 plugins.
+
+For the full schema of the tech configuration, please see the :ref:`full_schema` section below, which is derived from ``TechJSON``.
 
 Technology Install
 ---------------------------------
 
-The user may supply the PDK to Hammer as an already extracted directory and/or as a tarball that Hammer can automatically extract. Setting ``technology.TECH_NAME.`` ``install_dir`` and/or ``tarball_dir`` (key is setup in the defaults.yml) will fill in as the path prefix for paths supplied to PDK files in the rest of the ``tech.json``.
-Below is an example of the installs and tarballs from the ASAP7 plugin.
+The user may supply the PDK to Hammer as an already extracted directory and/or as a tarball that Hammer can automatically extract. Setting ``technology.TECH_NAME.<dir>`` key (as defined in the plugin's ``defaults.yml``) will fill in as the path prefix for paths supplied to PDK files.
+
+Path prefixes can be supplied in multiple forms. The options are as follows (taken from ``prepend_dir_path`` in ``hammer/tech/__init__py``):
+
+#. Absolute path: the path starts with "/" and refers to an absolute path on the filesystem
+   * ``/path/to/a/lib/file.lib`` -> ``/path/to/a/lib/file.lib``
+#. Tech plugin relative path: the path has no "/"s and refers to a file directly inside the tech plugin folder
+   * ``techlib.lib`` -> ``<tech plugin package>/techlib.lib``
+#. Tech cache relative path: the path starts with an identifier which is "cache" (this is used in the SKY130 example below)
+   * ``cache/primitives.v`` -> ``<tech plugin cache dir>/primitives.v``
+#. Install relative path: the path starts with an install/tarball identifier (installs.id, tarballs.root.id) and refers to a file relative to that identifier's path
+   * ``pdkroot/dac/dac.lib`` -> ``/nfs/ecad/tsmc100/stdcells/dac/dac.lib``
+#. Library extra_prefix path: the path starts with an identifier present in the provided library's ``extra_prefixes`` Field
+   * ``lib1/cap150f.lib`` -> ``/design_files/caps/cap150f.lib``
+
+Below is an example of the installs and tarballs defining path prefixes from the Sky130 and ASAP7 plugins.
+
+Pydantic:
+
+.. code-block:: python
+
+  def gen_config(self) -> None:
+      #...
+      self.config = TechJSON(
+          name = "Skywater 130nm Library",
+          grid_unit = "0.001",
+          installs = [
+              PathPrefix(id = "$SKY130_NDA", path = "technology.sky130.sky130_nda"),
+              PathPrefix(id = "$SKY130A", path = "technology.sky130.sky130A"),
+              PathPrefix(id = "$SKY130_CDS", path = "technology.sky130.sky130_cds")
+          ],
+          #fields skipped...
+        )
+
+JSON:
 
 .. code-block:: json
 
@@ -37,13 +72,33 @@ Below is an example of the installs and tarballs from the ASAP7 plugin.
     }
   ],
 
-The ``id`` field is used within the file listings further down in the file to prefix ``path``, as shown in detail below. If the file listing begins with ``cache``, then this denotes files that exist in the tech cache, which are generally placed there by the tech plugin's post-installation script (see ASAP7's ``post_install_script`` method). Finally, the encrypted Calibre decks are provided in a tarball and denoted as optional.
+The ``id`` field is used within the file listings further down in the file to prefix ``path``, as shown in detail below. If the file listing begins with ``cache``, then this denotes files that exist in the tech cache, which are generally placed there by the tech plugin's post-installation script (see ASAP7's ``post_install_script`` method). In the ASAP7 example, the encrypted Calibre decks are provided in a tarball and denoted as optional.
 
 DRC/LVS Deck Setup
 ---------------------------------
 
 As many DRC & LVS decks for as many tools can be specified in the ``drc decks`` and ``lvs decks`` keys. Additional DRC/LVS commands can be appended to the generated run files by specifying raw text in the ``additional_drc_text`` and ``additional_lvs_text`` keys. 
-Below is an example of an LVS deck from the ASAP7 plugin.
+
+Pydantic:
+
+.. code-block:: python
+
+  def gen_config(self) -> None:
+      #...
+      self.config = TechJSON(
+          #fields skipped...
+          drc_decks = [
+              DRCDeck(tool_name = "calibre", deck_name = "calibre_drc", path = "$SKY130_NDA/s8/V2.0.1/DRC/Calibre/s8_drcRules"),
+              DRCDeck(tool_name = "klayout", deck_name = "klayout_drc", path = "$SKY130A/libs.tech/klayout/drc/sky130A.lydrc"),
+              DRCDeck(tool_name = "pegasus", deck_name = "pegasus_drc", path = "$SKY130_CDS/Sky130_DRC/sky130_rev_0.0_1.0.drc.pvl")
+          ],
+          additional_drc_text = "",
+          #fields skipped...
+      )
+
+The example above contains decks for 3 different tools, with file pointers using the installs prefixes defined before.
+
+JSON:
 
 .. code-block:: json
 
@@ -61,8 +116,59 @@ The file pointers, in this case, use the tarball prefix because Hammer will be e
 Library Setup
 ---------------------------------
 
-The ``libraries`` key also must be setup in the JSON plugin. This will tell Hammer where to find all of the relevant files for standard cells and other blocks for the VLSI flow. 
-Below is an example of the start of the library setup and one entry from the ASAP7 plugin.
+The ``libraries`` Field also must be set in the TechJSON instance. This will tell Hammer where to find all of the relevant files for standard cells and other blocks for the VLSI flow. Path prefixes are used most heavily here.
+
+The ``corner`` Field (BaseModel type: Corner) tells Hammer what process and temperature corner that these files correspond to.  The ``supplies`` Field (BaseModel type: Supplies) tells Hammer what the nominal supply for these cells are.  
+The ``provides`` Field (type: List[Provide]) has several sub-fields that tell Hammer what kind of library this is (examples include ``stdcell``, ``fiducials``, ``io pad cells``, ``bump``, and ``level shifters``) and the threshold voltage flavor of the cells, if applicable.
+Adding the tech LEF for the technology with the ``lib_type`` set as ``technology`` is necessary for place and route. This must be the first ``lef_file`` provided in the entire list of Libraries.
+
+Pydantic:
+
+.. code-block:: python
+
+  def gen_config(self) -> None:
+      #...
+      libs = [
+          Library(lef_file = "cache/sky130_fd_sc_hd__nom.tlef", verilog_sim = "cache/primitives.v", provides = [Provide(lib_type = "technology")]),
+          Library(spice_file = "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io__analog.spice", provides = [Provide(lib_type = "IO library")])
+      ]
+      #...
+      #Generate loops
+      SKYWATER_LIBS = os.path.join('$SKY130A', 'libs.ref', library)
+      for cornerfilename in lib_corner_files:
+          #...
+          lib_entry = Library(
+              nldm_liberty_file =  os.path.join(SKYWATER_LIBS,'lib', cornerfilename),
+              verilog_sim =        os.path.join(SKYWATER_LIBS,'verilog', file_lib + '.v'),
+              lef_file =           lef_file,
+              spice_file =         spice_file,
+              gds_file =           os.path.join(SKYWATER_LIBS,'gds', gds_file),
+              corner = Corner(
+                  nmos = speed,
+                  pmos = speed,
+                  temperature = temp
+              ),
+              supplies = Supplies(
+                  VDD = vdd,
+                  GND  ="0 V"
+              ),
+              provides = [Provide(
+                  lib_type = cell_name,
+                  vt = "RVT"
+                  )
+              ]
+          )
+          libs.append(lib_entry)
+      #...
+      self.config = TechJSON(
+          #fields skipped...
+          libraries = libs,
+          #fields skipped...
+      )
+
+In the above example, we use the ``$SKY130A`` prefix and some loops to generate Library entries. These loops are often derived from the directory structure of the standard cell library.
+
+JSON:
 
 .. code-block:: json
 
@@ -102,9 +208,7 @@ Below is an example of the start of the library setup and one entry from the ASA
       ]
     },
 
-The file pointers, in this case, use the ``$PDK`` and ``$STDCELLS`` prefix as defined in the installs.  The ``corner`` key tells Hammer what process and temperature corner that these files correspond to.  The ``supplies`` key tells Hammer what the nominal supply for these cells are.  
-The ``provides`` key has several sub-keys that tell Hammer what kind of library this is (examples include ``stdcell``, ``fiducials``, ``io pad cells``, ``bump``, and ``level shifters``) and the threshold voltage flavor of the cells, if applicable.
-Adding the tech LEF for the technology with the ``lib_type`` set as ``technology`` is necessary for place and route.
+The file pointers, in this case, use the ``$PDK`` and ``$STDCELLS`` prefix as defined in the installs.  
 
 .. _filters:
 
@@ -117,19 +221,54 @@ For a list of pre-built library filters, refer to the properties in the ``Librar
 
 Stackup
 --------------------------------
-The ``stackups`` sets up the important metal layer information for Hammer to use. 
-Below is an example of one metal layer in the ``metals`` list from the ASAP7 example tech plugin.   
+The ``stackups`` sets up the important metal layer information for Hammer to use. All this information is typically taken from the tech LEF and can be automatically filled in with a script.
+
+You can use ``LEFUtils.get_metals`` to generate the stackup information for simple tech LEFs:
+
+.. code-block:: python
+
+  from hammer.tech import *
+  from hammer.utils import LEFUtils
+  class SKY130Tech(HammerTechnology):
+      def gen_config(self) -> None:
+          #...
+          stackups = []  # type: List[Stackup]
+          tlef_path = os.path.join(SKY130A, 'libs.ref', library, 'techlef', f"{library}__min.tlef")
+          metals = list(map(lambda m: Metal.model_validate(m), LEFUtils.get_metals(tlef_path)))
+          stackups.append(Stackup(name = library, grid_unit = Decimal("0.001"), metals = metals))
+
+          self.config = TechJSON(
+              #fields skipped...
+              stackups = stackups,
+              #fields skipped...
+          )
+
+
+Below is an example of one metal layer in the ``metals`` list from the ASAP7 example tech plugin. This gives a better idea of the serialized fields in the Metal BaseModel. This is extracted by loading the tech LEF into Innovus, then using the ``hammer/par/innovus/dump_stackup_to_json.tcl`` script.
 
 .. code-block:: json
 
         {"name": "M3", "index": 3, "direction": "vertical", "min_width": 0.072, "pitch": 0.144, "offset": 0.0, "power_strap_widths_and_spacings": [{"width_at_least": 0.0, "min_spacing": 0.072}], "power_strap_width_table": [0.072, 0.36, 0.648, 0.936, 1.224, 1.512]}
 
-All this information is typically taken from the tech LEF and can be automatically filled in with a script. The metal layer name and layer number is specified. ``direction`` specifies the preferred routing direction for the layer. ``min_width`` and ``pitch`` specify the minimum width wire and the track pitch, respectively.  ``power_strap_widths_and_spacings`` is a list of pairs that specify design rules relating to the widths of wires and minimum required spacing between them. This information is used by Hammer when drawing power straps to make sure it is conforming to some basic design rules. 
+The metal layer name and layer number is specified. ``direction`` specifies the preferred routing direction for the layer. ``min_width`` and ``pitch`` specify the minimum width wire and the track pitch, respectively.  ``power_strap_widths_and_spacings`` is a list of pairs that specify design rules relating to the widths of wires and minimum required spacing between them. This information is used by Hammer when drawing power straps to make sure it is conforming to some basic design rules. 
 
         
 Sites
 --------------------------------
 The ``sites`` field specifies the unit standard cell size of the technology for Hammer.
+
+.. code-block:: python
+
+  def gen_config(self) -> None:
+      #...
+      self.config = TechJSON(
+          #fields skipped...
+          sites = [
+              Site(name = "unithd", x = Decimal("0.46"), y = Decimal("2.72")),
+              Site(name = "unithddbl", x = Decimal("0.46"), y = Decimal("5.44"))
+          ],
+          #fields skipped...
+      )
 
 .. code-block:: json
 
@@ -137,12 +276,24 @@ The ``sites`` field specifies the unit standard cell size of the technology for 
     {"name": "asap7sc7p5t", "x": 0.216, "y": 1.08}
   ]
 
-This is an example from the ASAP7 tech plugin in which the ``name`` parameter specifies the core site name used in the tech LEF, and the ``x`` and ``y`` parameters specify the width and height of the unit standard cell size, respectively.
+These are examples from the Sky130 and ASAP7 tech plugin in which the ``name`` parameter specifies the core site name used in the tech LEF, and the ``x`` and ``y`` parameters specify the width and height of the unit standard cell size, respectively.
 
 Special Cells
 --------------------------------
 The ``special_cells`` field specifies a set of cells in the technology that have special functions. 
-The example below shows a subset of the ASAP7 tech plugin for 2 types of cells: ``tapcell`` and ``stdfiller``.
+The example below shows a subset of the Sky130 and ASAP7 tech plugin for 2 types of cells: ``tapcell`` and ``stdfiller``.
+
+.. code-block:: python
+
+  def gen_config(self) -> None:
+      #...
+      self.config = TechJSON(
+          #fields skipped...
+          special_cells = [
+              SpecialCell(cell_type = CellType("tapcell"), name = ["sky130_fd_sc_hd__tapvpwrvgnd_1"]),
+              SpecialCell(cell_type = CellType("stdfiller"), name = ["sky130_fd_sc_hd__fill_1", "sky130_fd_sc_hd__fill_2", "sky130_fd_sc_hd__fill_4", "sky130_fd_sc_hd__fill_8"]),
+          ]
+      )
 
 .. code-block:: json
 
@@ -161,7 +312,25 @@ There is an optional ``size`` list. For each element in its corresponding ``name
 Don't Use, Physical-Only Cells
 --------------------------------
 The ``dont_use_list`` is used to denote cells that should be excluded due to things like bad timing models or layout.
-The ``physical_only_cells_list`` is used to denote cells that contain only physical geometry, which means that they should be excluded from netlisting for simulation and LVS. Examples from the ASAP7 plugin are below:
+The ``physical_only_cells_list`` is used to denote cells that contain only physical geometry, which means that they should be excluded from netlisting for simulation and LVS. Examples:
+
+.. code-block:: python
+
+  def gen_config(self) -> None:
+      #...
+      self.config = TechJSON(
+          #fields skipped...
+          physical_only_cells_list = [
+              "sky130_fd_sc_hd__tap_1", "sky130_fd_sc_hd__tap_2", "sky130_fd_sc_hd__tapvgnd_1", "sky130_fd_sc_hd__tapvpwrvgnd_1",
+              "sky130_fd_sc_hd__fill_1", "sky130_fd_sc_hd__fill_2", "sky130_fd_sc_hd__fill_4", "sky130_fd_sc_hd__fill_8",
+              "sky130_fd_sc_hd__diode_2"]
+          dont_use_list = [
+              "*sdf*",
+              "sky130_fd_sc_hd__probe_p_*",
+              "sky130_fd_sc_hd__probec_p_*"
+          ]
+          #fields skipped...
+      )
 
 .. code-block:: json
 

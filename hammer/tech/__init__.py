@@ -358,7 +358,6 @@ class HammerTechnology:
         pass
 
     @classmethod
-    #def load_from_module(cls, tech_module: str) -> Optional["HammerTechnology"]:
     def load_from_module(cls, tech_module: str) -> "HammerTechnology":
         """Load a technology from a given module.
 
@@ -371,13 +370,9 @@ class HammerTechnology:
         tech.name = technology_name
         tech.package = tech_module
 
-        #tech.config = tech.gen_config()
         tech_json = importlib.resources.files(tech_module) / f"{technology_name}.tech.json"
         tech_yaml = importlib.resources.files(tech_module) / f"{technology_name}.tech.yml"
 
-        #if tech.config is not None: # pydantic model already created
-        #    print("Tech gen")
-        #    return tech
         if tech_json.is_file():
             tech.config = TechJSON.model_validate_json(tech_json.read_text())
             return tech
@@ -659,13 +654,13 @@ class HammerTechnology:
             /path/to/a/lib/file.lib -> /path/to/a/lib/file.lib
         2. Tech plugin relative path: the path has no "/"s and refers to a file directly inside the tech plugin folder
             techlib.lib -> <tech plugin package>/techlib.lib
-        3. Tech cache relative path: the path starts with an identifier which is "cache" (this is used in the SKY130 tech JSON)
+        3. Tech cache relative path: the path starts with an identifier which is "cache" (this is used in the SKY130 Libraries)
             cache/primitives.v -> <tech plugin cache dir>/primitives.v
         4. Install relative path: the path starts with an install/tarball identifier (installs.id, tarballs.root.id)
         and refers to a file relative to that identifier's path
             pdkroot/dac/dac.lib -> /nfs/ecad/tsmc100/stdcells/dac/dac.lib
         5. Library extra_prefix path: the path starts with an identifier present in the provided
-            library's extra_prefixes
+            library's extra_prefixes Field
             lib1/cap150f.lib -> /design_files/caps/cap150f.lib
         """
         assert len(path) > 0, "path must not be empty"
