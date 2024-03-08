@@ -15,6 +15,10 @@ technology.sky130:
   # this key is OPTIONAL, and is only required if you are running Pegasus DRC/LVS.
   sky130_cds: str
 
+  # This contains the Cadence standard cell library
+  # this key is OPTIONAL, and is only required if you want to do Voltus IR drop analysis.
+  sky130_scl: str
+
   # RAM paths
   # OpenRAM
   openram_lib: str

@@ -11,6 +11,9 @@ technology.sky130:
   
   sky130_cds: "/path/to/sky130_cds" # This contains the Cadence PDK
   # this key is OPTIONAL, and is only required if you are running Pegasus DRC/LVS.
+  
+  sky130_scl: "/path/to/sky130_cdl" # This contains the Cadence standard cell library
+  # this key is OPTIONAL, and is only required if you want to do Voltus IR drop analysis.
 
   sram22_sky130_macros: "/path/to/sram22_sky130_macros"  # SRAM path
   # /path/to/sram22_sky130_macros

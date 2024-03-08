@@ -125,7 +125,7 @@ class LEFUtils:
                 if '#' in line: line = line[:line.index('#')]
                 words = line.split()
                 if line.startswith('LAYER') and len(words) > 1:
-                    if words[1].startswith('li') or words[1].startswith('met'):
+                    if lines[idx+1].strip().startswith('TYPE ROUTING'):
                         metal_name = words[1]
                         metal_index += 1
                         metal = {}
@@ -155,8 +155,20 @@ class LEFUtils:
                                 d["width_at_least"] = float(words[1])
                                 d["min_spacing"] = float(words[2])
                                 metal["power_strap_widths_and_spacings"].append(d.copy())  # type: ignore
-                    # TODO: need power_strap_width_table
+                    #width table is a bit more complex
+                    metal["power_strap_width_table"] = []  # type: ignore
+                    # definition on one line
+                    if "WIDTHTABLE" in line:
+                        # definition on one line
+                        if "LEF58_WIDTHTABLE" in line:
+                            metal["power_strap_width_table"] = list(filter(lambda s: is_float(s), line.split()))  # type: ignore
+                        # multiple tables, only want routing direction one
+                        if not any(s in line for s in ["ORTHOGONAL", "WRONGDIRECTION"]):
+                            metal["power_strap_width_table"] = list(filter(lambda s: is_float(s), line.split()))  # type: ignore
+
                     if line.startswith("END"):
+                        # TODO: grid_unit is not currently parsed as part of the Metal data structure!
+                        # See #379
                         metal["grid_unit"] = 0.001  # type: ignore
                         # Give 'offset' a default value to make pydantic happy
                         if 'offset' not in metal:
