@@ -11,18 +11,10 @@ import importlib
 import json
 import functools
 
-#import hammer.tech
-from hammer.config import HammerDatabase
 from hammer.tech import *
-from hammer.tech.stackup import *
-from hammer.tech.specialcells import *
 from hammer.vlsi import HammerTool, HammerPlaceAndRouteTool, TCLTool, HammerDRCTool, HammerLVSTool, \
     HammerToolHookAction, HierarchicalMode
-
-import hammer.tech.specialcells as specialcells
-from hammer.tech.specialcells import CellType, SpecialCell
 from hammer.utils import LEFUtils
-
 
 class SKY130Tech(HammerTechnology):
     """
@@ -34,13 +26,17 @@ class SKY130Tech(HammerTechnology):
         slib = self.get_setting("technology.sky130.stdcell_library")
         SKY130A = self.get_setting("technology.sky130.sky130A")
         SKY130_CDS = self.get_setting("technology.sky130.sky130_cds")
+        # TODO elam propogate to examples that this should look like "sky130_cds/LIB/sky130_scl_9T_0.0.2" on bwrc
+        SKY130_CDS_LIB = self.get_setting("technology.sky130.sky130_cds_lib")
 
         # Common tech LEF and IO cell spice netlists
+        # TODO elam use different techlef based on stdcell lib
         libs = [
             Library(lef_file = "cache/sky130_fd_sc_hd__nom.tlef", verilog_sim = "cache/primitives.v", provides = [Provide(lib_type = "technology")]),
             Library(spice_file = "$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io__analog.spice", provides = [Provide(lib_type = "IO library")])
         ]
         # Generate IO cells
+        # TODO elam do this with cadence pdk?
         library='sky130_fd_io'
         SKYWATER_LIBS = os.path.join('$SKY130A', 'libs.ref', library)
         LIBRARY_PATH  = os.path.join(  SKY130A,  'libs.ref', library, 'lib')
@@ -137,15 +133,15 @@ class SKY130Tech(HammerTechnology):
                 "sky130_fd_sc_hd__probec_p_*"
             ]
             spcl_cells = [
-                SpecialCell(cell_type = "tiehilocell", name = ["sky130_fd_sc_hd__conb_1"]),
-                SpecialCell(cell_type = "tiehicell", name = ["sky130_fd_sc_hd__conb_1"], output_ports = ["HI"]),
-                SpecialCell(cell_type = "tielocell", name = ["sky130_fd_sc_hd__conb_1"], output_ports = ["LO"]),
-                SpecialCell(cell_type = "endcap", name = ["sky130_fd_sc_hd__tap_1"]),
-                SpecialCell(cell_type = "tapcell", name = ["sky130_fd_sc_hd__tapvpwrvgnd_1"]),
-                SpecialCell(cell_type = "stdfiller", name = ["sky130_fd_sc_hd__fill_1", "sky130_fd_sc_hd__fill_2", "sky130_fd_sc_hd__fill_4", "sky130_fd_sc_hd__fill_8"]),
-                SpecialCell(cell_type = "decap", name = ["sky130_fd_sc_hd__decap_3", "sky130_fd_sc_hd__decap_4", "sky130_fd_sc_hd__decap_6", "sky130_fd_sc_hd__decap_8", "sky130_fd_sc_hd__decap_12"]),
-                SpecialCell(cell_type = "driver", name = ["sky130_fd_sc_hd__buf_4"], input_ports = ["A"], output_ports = ["X"]),
-                SpecialCell(cell_type = "ctsbuffer", name = ["sky130_fd_sc_hd__clkbuf_1"])
+                SpecialCell(cell_type = CellType("tiehilocell"), name = ["sky130_fd_sc_hd__conb_1"]),
+                SpecialCell(cell_type = CellType("tiehicell"), name = ["sky130_fd_sc_hd__conb_1"], output_ports = ["HI"]),
+                SpecialCell(cell_type = CellType("tielocell"), name = ["sky130_fd_sc_hd__conb_1"], output_ports = ["LO"]),
+                SpecialCell(cell_type = CellType("endcap"), name = ["sky130_fd_sc_hd__tap_1"]),
+                SpecialCell(cell_type = CellType("tapcell"), name = ["sky130_fd_sc_hd__tapvpwrvgnd_1"]),
+                SpecialCell(cell_type = CellType("stdfiller"), name = ["sky130_fd_sc_hd__fill_1", "sky130_fd_sc_hd__fill_2", "sky130_fd_sc_hd__fill_4", "sky130_fd_sc_hd__fill_8"]),
+                SpecialCell(cell_type = CellType("decap"), name = ["sky130_fd_sc_hd__decap_3", "sky130_fd_sc_hd__decap_4", "sky130_fd_sc_hd__decap_6", "sky130_fd_sc_hd__decap_8", "sky130_fd_sc_hd__decap_12"]),
+                SpecialCell(cell_type = CellType("driver"), name = ["sky130_fd_sc_hd__buf_4"], input_ports = ["A"], output_ports = ["X"]),
+                SpecialCell(cell_type = CellType("ctsbuffer"), name = ["sky130_fd_sc_hd__clkbuf_1"])
             ]
 
             # Generate standard cell library
@@ -203,70 +199,11 @@ class SKY130Tech(HammerTechnology):
                 libs.append(lib_entry)
 
             # Generate stackup
-            metals = []  #type: List[Metal]
-            def is_float(string):
-                try:
-                    float(string)
-                    return True
-                except ValueError:
-                    return False
-
-            def get_min_from_line(line):
-                words = line.split()
-                nums = [float(w) for w in words if is_float(w)]
-                return min(nums)
-
             tlef_path = os.path.join(SKY130A, 'libs.ref', library, 'techlef', f"{library}__min.tlef")
-            with open(tlef_path, 'r') as f:
-                metal_name = None
-                metal_index = 0
-                lines = f.readlines()
-                idx = -1
-                while idx < len(lines):
-                    idx += 1
-                    if idx == len(lines) - 1: break
-                    line = lines[idx]
-                    if '#' in line: line = line[:line.index('#')]
-                    words = line.split()
-                    if line.startswith('LAYER') and len(words) > 1:
-                        if words[1].startswith('li') or words[1].startswith('met'):
-                            metal_name = words[1]
-                            metal_index += 1
-                            metal = {}
-                            metal["name"] = metal_name
-                            metal["index"] = metal_index
+            metals = list(map(lambda m: Metal.model_validate(m), LEFUtils.get_metals(tlef_path)))
+            stackups.append(Stackup(name = slib, grid_unit = Decimal("0.001"), metals = metals))
 
-                    if metal_name is not None:
-                        line = line.strip()
-                        if line.startswith("DIRECTION"):
-                            metal["direction"] = words[1].lower()
-                        if line.startswith("PITCH"):
-                            metal["pitch"] = get_min_from_line(line)
-                        if line.startswith("OFFSET"):
-                            metal["offset"] = get_min_from_line(line)
-                        if line.startswith("WIDTH"):
-                            metal["min_width"] = get_min_from_line(line)
-                        if line.startswith("SPACINGTABLE"):
-                            metal["power_strap_widths_and_spacings"] = []
-                            while ';' not in line:
-                                idx += 1
-                                if idx == len(lines) - 1: break
-                                line = lines[idx].strip()
-                                if '#' in line: line = line[:line.index('#')]
-                                words = line.split()
-                                d = {}
-                                if line.startswith("WIDTH"):
-                                    d["width_at_least"] = float(words[1])
-                                    d["min_spacing"] = float(words[2])
-                                    metal["power_strap_widths_and_spacings"].append(d.copy())
-                        if line.startswith("END"):
-                            metal["grid_unit"] = 0.001
-                            metals.append(Metal.model_validate(metal.copy()))
-                            metal_name = None
-                stackups.append(Stackup(name = slib, grid_unit = Decimal("0.001"), metals = metals))
-
-        elif slib == "sky130_scl_9T_0.0.2": #sky130_scl":
-            base_slib = "sky130_scl"
+        elif slib == "sky130_scl": #sky130_scl":
             phys_only = [
                 "sky130_fd_sc_hd__tap_1", "sky130_fd_sc_hd__tap_2", "sky130_fd_sc_hd__tapvgnd_1", "sky130_fd_sc_hd__tapvpwrvgnd_1",
                 "sky130_fd_sc_hd__fill_1", "sky130_fd_sc_hd__fill_2", "sky130_fd_sc_hd__fill_4", "sky130_fd_sc_hd__fill_8",
@@ -291,7 +228,7 @@ class SKY130Tech(HammerTechnology):
             # Generate standard cell library
             library=slib
 
-            LIBRARY_PATH  = os.path.join(  SKY130_CDS,  'LIB', slib)
+            LIBRARY_PATH  =   SKY130_CDS_LIB
             lib_corner_files=os.listdir(LIBRARY_PATH)
             lib_corner_files.sort()
             for cornerfilename in lib_corner_files:
@@ -356,7 +293,7 @@ class SKY130Tech(HammerTechnology):
                 return min(nums)
 
             # TODO elam is 9t ok to hard code
-            tlef_path = os.path.join(SKY130_CDS, 'LIB', library, 'lef', f"{base_slib}_9T.tlef")
+            tlef_path = os.path.join(SKY130_CDS_LIB, 'lef', f"{slib}_9T.tlef")
             metals = list(map(lambda m: Metal.model_validate(m), LEFUtils.get_metals(tlef_path)))
             stackups.append(Stackup(name = slib, grid_unit = Decimal("0.001"), metals = metals))
 
@@ -402,10 +339,11 @@ class SKY130Tech(HammerTechnology):
         self.library_name = 'sky130_fd_sc_hd'
         # check whether variables were overriden to point to a valid path
         self.use_sram22 = os.path.exists(self.get_setting("technology.sky130.sram22_sky130_macros"))
-        self.setup_cdl()
-        self.setup_verilog()
-        self.setup_techlef()
-        self.setup_io_lefs()
+        if self.get_setting("technology.sky130.stdcell_library") == "sky130_fd_sc_hd":
+            self.setup_cdl()
+            self.setup_verilog()
+            self.setup_techlef()
+            self.setup_io_lefs()
         self.logger.info('Loaded Sky130 Tech')
 
 
@@ -449,11 +387,12 @@ class SKY130Tech(HammerTechnology):
     #           (the open-source RTL sim tools don't treat undeclared signals as errors)
     #   - Deal with numerous inconsistencies in timing specify blocks.
     def setup_verilog(self) -> None:
-        setting_dir = self.get_setting("technology.sky130.sky130A")
+        setting_dir = self.get_setting("technology.sky130.sky130_cds_lib")
         setting_dir = Path(setting_dir)
+        slib = self.get_setting("technology.sky130.stdcell_library")
 
         # <library_name>.v
-        source_path = setting_dir / 'libs.ref' / self.library_name / 'verilog' / f'{self.library_name}.v'
+        source_path = Path(os.path.join(setting_dir, 'verilog',  f'{slib}_9T.v'))
         if not source_path.exists():
             raise FileNotFoundError(f"Verilog not found: {source_path}")
 
@@ -470,51 +409,51 @@ class SKY130Tech(HammerTechnology):
                     line = line.replace('`endif SKY130_FD_SC_HD__LPFLOW_BLEEDER_FUNCTIONAL_V','`endif // SKY130_FD_SC_HD__LPFLOW_BLEEDER_FUNCTIONAL_V')
                     df.write(line)
 
-        # Additionally hack out the specifies
-        sl = []
-        with open(dest_path, 'r') as sf:
-            sl = sf.readlines()
+        if 0:
+            # Additionally hack out the specifies
+            sl = []
+            with open(dest_path, 'r') as sf:
+                sl = sf.readlines()
 
-            # Find timing declaration
-            import pdb; pdb.set_trace()
-            start_idx = [idx for idx, line in enumerate(sl) if "`ifndef SKY130_FD_SC_HD__LPFLOW_BLEEDER_1_TIMING_V" in line][0]
+                # Find timing declaration
+                start_idx = [idx for idx, line in enumerate(sl) if "`ifndef SKY130_FD_SC_HD__LPFLOW_BLEEDER_1_TIMING_V" in line][0]
 
-            # Search for the broken statement
-            search_range = range(start_idx+1, len(sl))
-            broken_specify_idx = len(sl)-1
-            broken_substr = "(SHORT => VPWR) = (0:0:0,0:0:0,0:0:0,0:0:0,0:0:0,0:0:0);"
+                # Search for the broken statement
+                search_range = range(start_idx+1, len(sl))
+                broken_specify_idx = len(sl)-1
+                broken_substr = "(SHORT => VPWR) = (0:0:0,0:0:0,0:0:0,0:0:0,0:0:0,0:0:0);"
 
-            broken_specify_idx = [idx for idx in search_range if broken_substr in sl[idx]][0]
-            endif_idx = [idx for idx in search_range if "`endif" in sl[idx]][0]
+                broken_specify_idx = [idx for idx in search_range if broken_substr in sl[idx]][0]
+                endif_idx = [idx for idx in search_range if "`endif" in sl[idx]][0]
 
-            # Now, delete all the specify statements if specify exists before an endif.
-            if broken_specify_idx < endif_idx:
-                self.logger.info("Removing incorrectly formed specify block.")
-                cell_def_range = range(start_idx+1, endif_idx)
-                start_specify_idx = [idx for idx in cell_def_range if "specify" in sl[idx]][0]
-                end_specify_idx = [idx for idx in cell_def_range if "endspecify" in sl[idx]][0]
-                sl[start_specify_idx:end_specify_idx+1] = [] # Dice
+                # Now, delete all the specify statements if specify exists before an endif.
+                if broken_specify_idx < endif_idx:
+                    self.logger.info("Removing incorrectly formed specify block.")
+                    cell_def_range = range(start_idx+1, endif_idx)
+                    start_specify_idx = [idx for idx in cell_def_range if "specify" in sl[idx]][0]
+                    end_specify_idx = [idx for idx in cell_def_range if "endspecify" in sl[idx]][0]
+                    sl[start_specify_idx:end_specify_idx+1] = [] # Dice
 
-        # Deal with the nonexistent net tactfully (don't code in brittle replacements)
-        self.logger.info("Fixing broken net references with select specify blocks.")
-        pattern = r"^\s*wire SLEEP.*B.*delayed;"
-        capture_pattern = r".*(SLEEP.*?B.*?delayed).*"
-        pattern_idx = [(idx, re.findall(capture_pattern, value)[0]) for idx, value in enumerate(sl) if re.search(pattern, value)]
-        for list_idx, pattern_tuple in enumerate(pattern_idx):
-            if list_idx != len(pattern_idx)-1:
-                search_range = range(pattern_tuple[0]+1, pattern_idx[list_idx+1][0])
-            else:
-                search_range = range(pattern_tuple[0]+1, len(sl))
-            for idx in search_range:
-                list = re.findall(capture_pattern, sl[idx])
-                for elem in list:
-                    if elem != pattern_tuple[1]:
-                        sl[idx] = sl[idx].replace(elem, pattern_tuple[1])
-                        self.logger.info(f"Incorrect reference `{elem}` to be replaced with: `{pattern_tuple[1]}` on raw line {idx}.")
+            # Deal with the nonexistent net tactfully (don't code in brittle replacements)
+            self.logger.info("Fixing broken net references with select specify blocks.")
+            pattern = r"^\s*wire SLEEP.*B.*delayed;"
+            capture_pattern = r".*(SLEEP.*?B.*?delayed).*"
+            pattern_idx = [(idx, re.findall(capture_pattern, value)[0]) for idx, value in enumerate(sl) if re.search(pattern, value)]
+            for list_idx, pattern_tuple in enumerate(pattern_idx):
+                if list_idx != len(pattern_idx)-1:
+                    search_range = range(pattern_tuple[0]+1, pattern_idx[list_idx+1][0])
+                else:
+                    search_range = range(pattern_tuple[0]+1, len(sl))
+                for idx in search_range:
+                    list = re.findall(capture_pattern, sl[idx])
+                    for elem in list:
+                        if elem != pattern_tuple[1]:
+                            sl[idx] = sl[idx].replace(elem, pattern_tuple[1])
+                            self.logger.info(f"Incorrect reference `{elem}` to be replaced with: `{pattern_tuple[1]}` on raw line {idx}.")
 
-        # Write back into destination
-        with open(dest_path, 'w') as df:
-            df.writelines(sl)
+            # Write back into destination
+            with open(dest_path, 'w') as df:
+                df.writelines(sl)
 
         # primitives.v
         source_path = setting_dir / 'libs.ref' / self.library_name / 'verilog' / 'primitives.v'

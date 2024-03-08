@@ -6,7 +6,7 @@
 
 import re
 from decimal import Decimal
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict, Union
 
 __all__ = ['LEFUtils']
 
@@ -92,3 +92,73 @@ class LEFUtils:
             raise ValueError("Unexpected end of file in MACRO block {m}".format(m=in_macro))
 
         return output
+
+    @staticmethod
+    def get_metals(source: str) -> List[Dict]:
+        """
+        Parse a tech LEF to extract Metal fields.
+        Note: list(map(lambda m: Metal.model_validate(m), LEFUtils.get_metals(tlef_path)))
+        is required to convert this into a list of Metals (we can't import stackups classes here)
+        """
+        metals = []
+        def is_float(string):
+            try:
+                float(string)
+                return True
+            except ValueError:
+                return False
+
+        def get_min_from_line(line):
+            words = line.split()
+            nums = [float(w) for w in words if is_float(w)]
+            return min(nums)
+
+        with open(source, 'r') as f:
+            metal_name = None
+            metal_index = 0
+            lines = f.readlines()
+            idx = -1
+            while idx < len(lines):
+                idx += 1
+                if idx == len(lines) - 1: break
+                line = lines[idx]
+                if '#' in line: line = line[:line.index('#')]
+                words = line.split()
+                if line.startswith('LAYER') and len(words) > 1:
+                    if words[1].startswith('li') or words[1].startswith('met'):
+                        metal_name = words[1]
+                        metal_index += 1
+                        metal = {}
+                        metal["name"] = metal_name
+                        metal["index"] = metal_index  # type: ignore
+
+                if metal_name is not None:
+                    line = line.strip()
+                    if line.startswith("DIRECTION"):
+                        metal["direction"] = words[1].lower()
+                    if line.startswith("PITCH"):
+                        metal["pitch"] = get_min_from_line(line)
+                    if line.startswith("OFFSET"):
+                        metal["offset"] = get_min_from_line(line)
+                    if line.startswith("WIDTH"):
+                        metal["min_width"] = get_min_from_line(line)
+                    if line.startswith("SPACINGTABLE"):
+                        metal["power_strap_widths_and_spacings"] = []  # type: ignore
+                        while ';' not in line:
+                            idx += 1
+                            if idx == len(lines) - 1: break
+                            line = lines[idx].strip()
+                            if '#' in line: line = line[:line.index('#')]
+                            words = line.split()
+                            d = {}
+                            if line.startswith("WIDTH"):
+                                d["width_at_least"] = float(words[1])
+                                d["min_spacing"] = float(words[2])
+                                metal["power_strap_widths_and_spacings"].append(d.copy())  # type: ignore
+                    # TODO: need power_strap_width_table
+                    if line.startswith("END"):
+                        metal["grid_unit"] = 0.001  # type: ignore
+                        metals.append(metal.copy())
+                        metal_name = None
+
+        return metals
