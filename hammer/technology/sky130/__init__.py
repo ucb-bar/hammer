@@ -27,7 +27,7 @@ class SKY130Tech(HammerTechnology):
         SKY130A = self.get_setting("technology.sky130.sky130A")
         SKY130_CDS = self.get_setting("technology.sky130.sky130_cds")
         # TODO elam propogate to examples that this should look like "sky130_cds/LIB/sky130_scl_9T_0.0.2" on bwrc
-        SKY130_CDS_LIB = self.get_setting("technology.sky130.sky130_cds_lib")
+        SKY130_CDS_LIB = self.get_setting("technology.sky130.sky130_scl")
 
         # Common tech LEF and IO cell spice netlists
         # TODO elam use different techlef based on stdcell lib
@@ -308,7 +308,8 @@ class SKY130Tech(HammerTechnology):
             installs = [
                 PathPrefix(id = "$SKY130_NDA", path = "technology.sky130.sky130_nda"),
                 PathPrefix(id = "$SKY130A", path = "technology.sky130.sky130A"),
-                PathPrefix(id = "$SKY130_CDS", path = "technology.sky130.sky130_cds")
+                PathPrefix(id = "$SKY130_CDS", path = "technology.sky130.sky130_cds"),
+              PathPrefix(id = "$SKY130_SCL", path = "technology.sky130.sky130_scl")
             ],
             libraries = libs,
             gds_map_file = "extra/sky130_lefpin.map",
@@ -387,7 +388,7 @@ class SKY130Tech(HammerTechnology):
     #           (the open-source RTL sim tools don't treat undeclared signals as errors)
     #   - Deal with numerous inconsistencies in timing specify blocks.
     def setup_verilog(self) -> None:
-        setting_dir = self.get_setting("technology.sky130.sky130_cds_lib")
+        setting_dir = self.get_setting("technology.sky130.sky130_scl")
         setting_dir = Path(setting_dir)
         slib = self.get_setting("technology.sky130.stdcell_library")
 
