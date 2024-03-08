@@ -353,8 +353,14 @@ class HammerTechnology:
         self.time_unit: Optional[str] = None
         self.cap_unit: Optional[str] = None
 
+    @abstractmethod
+    def gen_config(self) -> None:
+        """For subclasses to set self.config directly, instead of from static JSON file"""
+        pass
+
     @classmethod
-    def load_from_module(cls, tech_module: str) -> Optional["HammerTechnology"]:
+    #def load_from_module(cls, tech_module: str) -> Optional["HammerTechnology"]:
+    def load_from_module(cls, tech_module: str) -> "HammerTechnology":
         """Load a technology from a given module.
 
         :param tech_module: Technology module (e.g. "hammer.technology.asap7")
@@ -366,17 +372,21 @@ class HammerTechnology:
         tech.name = technology_name
         tech.package = tech_module
 
+        #tech.config = tech.gen_config()
         tech_json = importlib.resources.files(tech_module) / f"{technology_name}.tech.json"
         tech_yaml = importlib.resources.files(tech_module) / f"{technology_name}.tech.yml"
 
+        #if tech.config is not None: # pydantic model already created
+        #    print("Tech gen")
+        #    return tech
         if tech_json.is_file():
             tech.config = TechJSON.model_validate_json(tech_json.read_text())
             return tech
         elif tech_yaml.is_file():
             tech.config = TechJSON.model_validate_json(json.dumps(load_yaml(tech_yaml.read_text())))
             return tech
-        else: #TODO - from Pydantic model instance
-            return None
+        else: # Assume tech implents gen_config()
+            return tech
 
     def get_lib_units(self) -> None:
         """

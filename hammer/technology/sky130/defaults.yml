@@ -32,7 +32,8 @@ technology.sky130:
 
   io_file: "extra/efabless_template.io"  # IO ring - take this template and modify for your own use
   io_file_meta: prependlocal
-  
+
+  stdcell_library: "sky130_fd_sc_hd"  # Choose between "sky130_fd_sc_hd" (open-source) or "sky130_scl" (Cadence)
 
 mentor.extra_env_vars_meta: lazydeepsubst # Mentor environment variables
 # Override this in project
@@ -109,9 +110,6 @@ synthesis.yosys:
 
 par.inputs:
   gds_merge: true
-  gds_map_mode: manual
-  gds_map_file: "extra/sky130_lefpin.map"
-  gds_map_file_meta: prependlocal
 
 par.openroad:  # openroad setup/files
   setrc_file: "extra/setRC.tcl"

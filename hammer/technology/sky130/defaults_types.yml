@@ -27,3 +27,6 @@ technology.sky130:
 
   # Path to IO file
   io_file: str
+
+  # Choose between "sky130_fd_sc_hd" (open-source) or "sky130_scl" (Cadence) 
+  stdcell_library: str
