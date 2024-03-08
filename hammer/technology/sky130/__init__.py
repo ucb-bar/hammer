@@ -213,7 +213,7 @@ class SKY130Tech(HammerTechnology):
                 PathPrefix(id = "$SKY130_CDS", path = "technology.sky130.sky130_cds")
             ],
             libraries = libs,
-            gds_map_file = "extra/sky130_lefpin.map",
+            gds_map_file = "sky130_lefpin.map",
             physical_only_cells_list = phys_only,
             dont_use_list = dont_use,
             drc_decks = [

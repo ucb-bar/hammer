@@ -17,7 +17,7 @@ Path prefixes can be supplied in multiple forms. The options are as follows (tak
 
 #. Absolute path: the path starts with "/" and refers to an absolute path on the filesystem
    * ``/path/to/a/lib/file.lib`` -> ``/path/to/a/lib/file.lib``
-#. Tech plugin relative path: the path has no "/"s and refers to a file directly inside the tech plugin folder
+#. Tech plugin relative path: the path has no "/"s and refers to a file directly inside the tech plugin folder (no subdirectories allowed, else it conflicts with 3-5. below!)
    * ``techlib.lib`` -> ``<tech plugin package>/techlib.lib``
 #. Tech cache relative path: the path starts with an identifier which is "cache" (this is used in the SKY130 example below)
    * ``cache/primitives.v`` -> ``<tech plugin cache dir>/primitives.v``
