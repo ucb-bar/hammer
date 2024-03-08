@@ -11,16 +11,10 @@ import importlib
 import json
 import functools
 
-#import hammer.tech
-from hammer.config import HammerDatabase
 from hammer.tech import *
-from hammer.tech.stackup import *
-from hammer.tech.specialcells import *
 from hammer.vlsi import HammerTool, HammerPlaceAndRouteTool, TCLTool, HammerDRCTool, HammerLVSTool, \
     HammerToolHookAction, HierarchicalMode
-
-import hammer.tech.specialcells as specialcells
-from hammer.tech.specialcells import CellType, SpecialCell
+from hammer.utils import LEFUtils
 
 class SKY130Tech(HammerTechnology):
     """
@@ -134,15 +128,15 @@ class SKY130Tech(HammerTechnology):
                 "sky130_fd_sc_hd__probec_p_*"
             ]
             spcl_cells = [
-                SpecialCell(cell_type = "tiehilocell", name = ["sky130_fd_sc_hd__conb_1"]),
-                SpecialCell(cell_type = "tiehicell", name = ["sky130_fd_sc_hd__conb_1"], output_ports = ["HI"]),
-                SpecialCell(cell_type = "tielocell", name = ["sky130_fd_sc_hd__conb_1"], output_ports = ["LO"]),
-                SpecialCell(cell_type = "endcap", name = ["sky130_fd_sc_hd__tap_1"]),
-                SpecialCell(cell_type = "tapcell", name = ["sky130_fd_sc_hd__tapvpwrvgnd_1"]),
-                SpecialCell(cell_type = "stdfiller", name = ["sky130_fd_sc_hd__fill_1", "sky130_fd_sc_hd__fill_2", "sky130_fd_sc_hd__fill_4", "sky130_fd_sc_hd__fill_8"]),
-                SpecialCell(cell_type = "decap", name = ["sky130_fd_sc_hd__decap_3", "sky130_fd_sc_hd__decap_4", "sky130_fd_sc_hd__decap_6", "sky130_fd_sc_hd__decap_8", "sky130_fd_sc_hd__decap_12"]),
-                SpecialCell(cell_type = "driver", name = ["sky130_fd_sc_hd__buf_4"], input_ports = ["A"], output_ports = ["X"]),
-                SpecialCell(cell_type = "ctsbuffer", name = ["sky130_fd_sc_hd__clkbuf_1"])
+                SpecialCell(cell_type = CellType("tiehilocell"), name = ["sky130_fd_sc_hd__conb_1"]),
+                SpecialCell(cell_type = CellType("tiehicell"), name = ["sky130_fd_sc_hd__conb_1"], output_ports = ["HI"]),
+                SpecialCell(cell_type = CellType("tielocell"), name = ["sky130_fd_sc_hd__conb_1"], output_ports = ["LO"]),
+                SpecialCell(cell_type = CellType("endcap"), name = ["sky130_fd_sc_hd__tap_1"]),
+                SpecialCell(cell_type = CellType("tapcell"), name = ["sky130_fd_sc_hd__tapvpwrvgnd_1"]),
+                SpecialCell(cell_type = CellType("stdfiller"), name = ["sky130_fd_sc_hd__fill_1", "sky130_fd_sc_hd__fill_2", "sky130_fd_sc_hd__fill_4", "sky130_fd_sc_hd__fill_8"]),
+                SpecialCell(cell_type = CellType("decap"), name = ["sky130_fd_sc_hd__decap_3", "sky130_fd_sc_hd__decap_4", "sky130_fd_sc_hd__decap_6", "sky130_fd_sc_hd__decap_8", "sky130_fd_sc_hd__decap_12"]),
+                SpecialCell(cell_type = CellType("driver"), name = ["sky130_fd_sc_hd__buf_4"], input_ports = ["A"], output_ports = ["X"]),
+                SpecialCell(cell_type = CellType("ctsbuffer"), name = ["sky130_fd_sc_hd__clkbuf_1"])
             ]
 
             # Generate standard cell library
@@ -200,67 +194,9 @@ class SKY130Tech(HammerTechnology):
                 libs.append(lib_entry)
 
             # Generate stackup
-            metals = []  #type: List[Metal]
-            def is_float(string):
-                try:
-                    float(string)
-                    return True
-                except ValueError:
-                    return False
-
-            def get_min_from_line(line):
-                words = line.split()
-                nums = [float(w) for w in words if is_float(w)]
-                return min(nums)
-
             tlef_path = os.path.join(SKY130A, 'libs.ref', library, 'techlef', f"{library}__min.tlef")
-            with open(tlef_path, 'r') as f:
-                metal_name = None
-                metal_index = 0
-                lines = f.readlines()
-                idx = -1
-                while idx < len(lines):
-                    idx += 1
-                    if idx == len(lines) - 1: break
-                    line = lines[idx]
-                    if '#' in line: line = line[:line.index('#')]
-                    words = line.split()
-                    if line.startswith('LAYER') and len(words) > 1:
-                        if words[1].startswith('li') or words[1].startswith('met'):
-                            metal_name = words[1]
-                            metal_index += 1
-                            metal = {}
-                            metal["name"] = metal_name
-                            metal["index"] = metal_index
-
-                    if metal_name is not None:
-                        line = line.strip()
-                        if line.startswith("DIRECTION"):
-                            metal["direction"] = words[1].lower()
-                        if line.startswith("PITCH"):
-                            metal["pitch"] = get_min_from_line(line)
-                        if line.startswith("OFFSET"):
-                            metal["offset"] = get_min_from_line(line)
-                        if line.startswith("WIDTH"):
-                            metal["min_width"] = get_min_from_line(line)
-                        if line.startswith("SPACINGTABLE"):
-                            metal["power_strap_widths_and_spacings"] = []
-                            while ';' not in line:
-                                idx += 1
-                                if idx == len(lines) - 1: break
-                                line = lines[idx].strip()
-                                if '#' in line: line = line[:line.index('#')]
-                                words = line.split()
-                                d = {}
-                                if line.startswith("WIDTH"):
-                                    d["width_at_least"] = float(words[1])
-                                    d["min_spacing"] = float(words[2])
-                                    metal["power_strap_widths_and_spacings"].append(d.copy())
-                        if line.startswith("END"):
-                            metal["grid_unit"] = 0.001
-                            metals.append(Metal.model_validate(metal.copy()))
-                            metal_name = None
-                stackups.append(Stackup(name = slib, grid_unit = Decimal("0.001"), metals = metals))
+            metals = list(map(lambda m: Metal.model_validate(m), LEFUtils.get_metals(tlef_path)))
+            stackups.append(Stackup(name = slib, grid_unit = Decimal("0.001"), metals = metals))
 
         elif slib == "sky130_scl":
             raise NotImplementedError(f"sky130_scl not yet supported")
