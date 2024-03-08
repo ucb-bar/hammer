@@ -353,9 +353,8 @@ class HammerTechnology:
         self.time_unit: Optional[str] = None
         self.cap_unit: Optional[str] = None
 
-    @abstractmethod
     def gen_config(self) -> None:
-        """For subclasses to set self.config directly, instead of from static JSON file"""
+        """For subclasses to set self.config (type: TechJSON) directly, instead of from static JSON file"""
         pass
 
     @classmethod
