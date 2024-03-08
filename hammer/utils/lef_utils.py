@@ -158,6 +158,9 @@ class LEFUtils:
                     # TODO: need power_strap_width_table
                     if line.startswith("END"):
                         metal["grid_unit"] = 0.001  # type: ignore
+                        # Give 'offset' a default value to make pydantic happy
+                        if 'offset' not in metal:
+                            metal['offset'] = Decimal("0.0")
                         metals.append(metal.copy())
                         metal_name = None
 
