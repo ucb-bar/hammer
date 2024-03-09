@@ -223,7 +223,7 @@ class SKY130Tech(HammerTechnology):
             ],
             additional_drc_text = "",
             lvs_decks = [
-                LVSDeck(tool_name = "calibre", deck_name = "calibre_lvs", path = "$SKY130_NDA/s8/V2.0.1/LVS/Calibre/lvsRules_s8"),
+                LVSDeck(tool_name = "calibre", deck_name = "calibre_lvs", path = "cache/lvsControlFile_s8"),
                 LVSDeck(tool_name = "pegasus", deck_name = "pegasus_lvs", path = "$SKY130_CDS/Sky130_LVS/Sky130_rev_0.0_0.1.lvs.pvl")
             ],
             additional_lvs_text = "",
