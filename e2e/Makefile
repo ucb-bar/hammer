@@ -45,4 +45,4 @@ $(HAMMER_D_MK):
 -include $(HAMMER_D_MK)
 
 clean:
-    rm -rf $(OBJ_DIR) hammer-vlsi-*.log
+	rm -rf $(OBJ_DIR) hammer-vlsi-*.log
