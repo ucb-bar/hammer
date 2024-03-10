@@ -198,6 +198,8 @@ class Genus(HammerSynthesisTool, CadenceTool):
             verbose_append("set_db lp_clock_gating_prefix  {CLKGATE}")
             verbose_append("set_db lp_insert_clock_gating  true")
             verbose_append("set_db lp_clock_gating_register_aware true")
+        else:
+            verbose_append("set_db lp_clock_gating_infer_enable false")
 
         # Set up libraries.
         # Read timing libraries.

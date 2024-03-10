@@ -48,7 +48,6 @@ class SKY130Tech(HammerTechnology):
             raise ValueError(
                 f"Incorrect standard cell library selection: {slib}")
         # Generate IO cells
-        # TODO elam do this with cadence pdk?
         library = 'sky130_fd_io'
         SKYWATER_LIBS = os.path.join('$SKY130A', 'libs.ref', library)
         LIBRARY_PATH = os.path.join(SKY130A,  'libs.ref', library, 'lib')
@@ -147,6 +146,7 @@ class SKY130Tech(HammerTechnology):
 
         # Select standard cell libraries
         if slib == "sky130_fd_sc_hd":
+
             phys_only = [
                 "sky130_fd_sc_hd__tap_1", "sky130_fd_sc_hd__tap_2", "sky130_fd_sc_hd__tapvgnd_1", "sky130_fd_sc_hd__tapvpwrvgnd_1",
                 "sky130_fd_sc_hd__fill_1", "sky130_fd_sc_hd__fill_2", "sky130_fd_sc_hd__fill_4", "sky130_fd_sc_hd__fill_8",
@@ -185,7 +185,7 @@ class SKY130Tech(HammerTechnology):
             lib_corner_files = os.listdir(LIBRARY_PATH)
             lib_corner_files.sort()
             for cornerfilename in lib_corner_files:
-                if (not (library in cornerfilename)):
+                if (not ("sky130" in cornerfilename)): # cadence doesn't use the lib name in their corner libs
                     continue
                 if ('ccsnoise' in cornerfilename):
                     continue  # ignore duplicate corner.lib/corner_ccsnoise.lib files
@@ -250,6 +250,9 @@ class SKY130Tech(HammerTechnology):
                 Stackup(name=slib, grid_unit=Decimal("0.001"), metals=metals))
 
         elif slib == "sky130_scl":
+            # Cadence's stdcell library doesn't contain clock or power gate cells, so we can't use discrete clock gating
+            self.set_setting("synthesis.clock_gating_mode", "")
+
             phys_only = [
                 "sky130_fd_sc_hd__tap_1", "sky130_fd_sc_hd__tap_2", "sky130_fd_sc_hd__tapvgnd_1", "sky130_fd_sc_hd__tapvpwrvgnd_1",
                 "sky130_fd_sc_hd__fill_1", "sky130_fd_sc_hd__fill_2", "sky130_fd_sc_hd__fill_4", "sky130_fd_sc_hd__fill_8",
@@ -260,35 +263,21 @@ class SKY130Tech(HammerTechnology):
                 "sky130_fd_sc_hd__probec_p_*"
             ]
             spcl_cells = [
-                SpecialCell(cell_type="tiehilocell", name=[
-                            "sky130_fd_sc_hd__conb_1"]),
-                SpecialCell(cell_type="tiehicell", name=[
-                            "sky130_fd_sc_hd__conb_1"], output_ports=["HI"]),
-                SpecialCell(cell_type="tielocell", name=[
-                            "sky130_fd_sc_hd__conb_1"], output_ports=["LO"]),
-                SpecialCell(cell_type="endcap", name=[
-                            "sky130_fd_sc_hd__tap_1"]),
-                SpecialCell(cell_type="tapcell", name=[
-                            "sky130_fd_sc_hd__tapvpwrvgnd_1"]),
-                SpecialCell(cell_type="stdfiller", name=[
-                            "sky130_fd_sc_hd__fill_1", "sky130_fd_sc_hd__fill_2", "sky130_fd_sc_hd__fill_4", "sky130_fd_sc_hd__fill_8"]),
-                SpecialCell(cell_type="decap", name=["sky130_fd_sc_hd__decap_3", "sky130_fd_sc_hd__decap_4",
-                            "sky130_fd_sc_hd__decap_6", "sky130_fd_sc_hd__decap_8", "sky130_fd_sc_hd__decap_12"]),
+                SpecialCell(cell_type="stdfiller", name=
+                            [f"FILL{i**2}" for i in range(7)]),
                 SpecialCell(cell_type="driver", name=[
-                            "sky130_fd_sc_hd__buf_4"], input_ports=["A"], output_ports=["X"]),
-                # TODO elam port the above ones too
-                # SpecialCell(cell_type = "ctsbuffer", name = ["sky130_fd_sc_hd__clkbuf_1"])
+                            "TBUF"], input_ports=["A"], output_ports=["Y"]),
                 SpecialCell(cell_type="ctsbuffer", name=["CLKBUFX2"])
             ]
 
             # Generate standard cell library
             library = slib
 
-            LIBRARY_PATH = SKY130_CDS_LIB
+            LIBRARY_PATH = os.path.join(SKY130_CDS_LIB,  'lib')
             lib_corner_files = os.listdir(LIBRARY_PATH)
             lib_corner_files.sort()
             for cornerfilename in lib_corner_files:
-                if (not (library in cornerfilename)):
+                if (not ("sky130" in cornerfilename)): # cadence doesn't use the lib name in their corner libs
                     continue
                 if ('ccsnoise' in cornerfilename):
                     continue  # ignore duplicate corner.lib/corner_ccsnoise.lib files
@@ -297,35 +286,35 @@ class SKY130Tech(HammerTechnology):
                 if (tmp+'_ccsnoise.lib' in lib_corner_files):
                     cornerfilename = tmp+'_ccsnoise.lib'  # use ccsnoise version of lib file
 
-                cornername = tmp.split('__')[1]
+                cornername = tmp.replace("sky130_", "")
                 cornerparts = cornername.split('_')
 
+                # Hardcode corners since they don't exactly match
                 speed = cornerparts[0]
+                vdd = ""
+                temp = ""
                 if (speed == 'ff'):
+                    temp = "-40 C"
+                    vdd = "1.95 V"
                     speed = 'fast'
                 if (speed == 'tt'):
+                    vdd = "1.80 V"
+                    temp = "25 C"
                     speed = 'typical'
                 if (speed == 'ss'):
+                    vdd = "1.60 V"
                     speed = 'slow'
+                    temp = "100 C"
 
-                temp = cornerparts[1]
-                temp = temp.replace('n', '-')
-                temp = temp.split('C')[0]+' C'
-
-                vdd = cornerparts[2]
-                vdd = vdd.split('v')[0]+'.'+vdd.split('v')[1]+' V'
-
-                import pdb
-                pdb.set_trace()
                 lib_entry = Library(
                     nldm_liberty_file=os.path.join(
-                        SKY130_CDS, 'lib', cornerfilename),
+                        SKY130_CDS_LIB, 'lib', cornerfilename),
                     verilog_sim=os.path.join(
                         'cache',             library+'.v'),
-                    lef_file=os.path.join(SKY130_CDS, 'lef', library+'.lef'),
+                    lef_file=os.path.join(SKY130_CDS_LIB, 'lef', library+'_9T.lef'),
                     spice_file=os.path.join(
                         'cache',             library+'.cdl'),
-                    gds_file=os.path.join(SKY130_CDS, 'gds', library+'.gds'),
+                    gds_file=os.path.join(SKY130_CDS, 'gds', library+'_9T.gds'),
                     corner=Corner(
                         nmos=speed,
                         pmos=speed,
@@ -347,19 +336,6 @@ class SKY130Tech(HammerTechnology):
             # Generate stackup
             metals = []  # type: List[Metal]
 
-            def is_float(string):
-                try:
-                    float(string)
-                    return True
-                except ValueError:
-                    return False
-
-            def get_min_from_line(line):
-                words = line.split()
-                nums = [float(w) for w in words if is_float(w)]
-                return min(nums)
-
-            # TODO elam is 9t ok to hard code
             tlef_path = os.path.join(SKY130_CDS_LIB, 'lef', f"{slib}_9T.tlef")
             metals = list(map(lambda m: Metal.model_validate(m),
                           LEFUtils.get_metals(tlef_path)))
@@ -490,7 +466,6 @@ class SKY130Tech(HammerTechnology):
                                         '`endif // SKY130_FD_SC_HD__LPFLOW_BLEEDER_FUNCTIONAL_V')
                     df.write(line)
 
-        if 0:
             # Additionally hack out the specifies
             sl = []
             with open(dest_path, 'r') as sf:
@@ -567,7 +542,6 @@ class SKY130Tech(HammerTechnology):
 
     # Copy and hack the tech-lef, adding this very important `licon` section
     def setup_techlef(self) -> None:
-        import pdb; pdb.set_trace()
         slib = self.get_setting("technology.sky130.stdcell_library")
         source_path = Path("")
         if slib == "sky130_fd_sc_hd":
@@ -639,12 +613,12 @@ class SKY130Tech(HammerTechnology):
                 # Current version has two one-off error that break lef parser.
                 self.logger.info(
                     "Fixing broken sky130_ef_io__analog_esd_pad LEF definition.")
-                start_broken_macro_list = [
-                    "MACRO sky130_ef_io__analog_esd_pad\n", "MACRO sky130_ef_io__analog_pad\n"]
-                end_broken_macro_list = [
-                    "END sky130_ef_io__analog_pad\n", "END sky130_ef_io__analog_noesd_pad\n"]
-                end_fixed_macro_list = [
-                    "END sky130_ef_io__analog_esd_pad\n", "END sky130_ef_io__analog_pad\n"]
+                start_broken_macro_list = []
+                    #"MACRO sky130_ef_io__analog_esd_pad\n", "MACRO sky130_ef_io__analog_pad\n"]
+                end_broken_macro_list = []
+                    #"END sky130_ef_io__analog_pad\n", "END sky130_ef_io__analog_noesd_pad\n"]
+                end_fixed_macro_list = []
+                    #"END sky130_ef_io__analog_esd_pad\n", "END sky130_ef_io__analog_pad\n"]
 
                 for start_broken_macro, end_broken_macro, end_fixed_macro in zip(start_broken_macro_list, end_broken_macro_list, end_fixed_macro_list):
                     # Get all start indices to be checked
@@ -805,6 +779,7 @@ set_db route_design_detail_use_multi_cut_via_effort medium
 set_db floorplan_snap_die_grid manufacturing
         '''
         )
+
     return True
 
 
