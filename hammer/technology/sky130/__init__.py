@@ -442,13 +442,11 @@ class SKY130Tech(HammerTechnology):
     #           (the open-source RTL sim tools don't treat undeclared signals as errors)
     #   - Deal with numerous inconsistencies in timing specify blocks.
     def setup_verilog(self) -> None:
-        setting_dir = self.get_setting("technology.sky130.sky130_scl")
+        setting_dir = self.get_setting("technology.sky130.sky130A")
         setting_dir = Path(setting_dir)
-        slib = self.get_setting("technology.sky130.stdcell_library")
 
         # <library_name>.v
-        source_path = Path(os.path.join(
-            setting_dir, 'verilog',  f'{slib}_9T.v'))
+        source_path = setting_dir / 'libs.ref' / self.library_name / 'verilog' / f'{self.library_name}.v'
         if not source_path.exists():
             raise FileNotFoundError(f"Verilog not found: {source_path}")
 
@@ -466,60 +464,50 @@ class SKY130Tech(HammerTechnology):
                                         '`endif // SKY130_FD_SC_HD__LPFLOW_BLEEDER_FUNCTIONAL_V')
                     df.write(line)
 
-            # Additionally hack out the specifies
-            sl = []
-            with open(dest_path, 'r') as sf:
-                sl = sf.readlines()
+        # Additionally hack out the specifies
+        sl = []
+        with open(dest_path, 'r') as sf:
+            sl = sf.readlines()
 
-                # Find timing declaration
-                start_idx = [idx for idx, line in enumerate(
-                    sl) if "`ifndef SKY130_FD_SC_HD__LPFLOW_BLEEDER_1_TIMING_V" in line][0]
+            # Find timing declaration
+            start_idx = [idx for idx, line in enumerate(sl) if "`ifndef SKY130_FD_SC_HD__LPFLOW_BLEEDER_1_TIMING_V" in line][0]
 
-                # Search for the broken statement
-                search_range = range(start_idx+1, len(sl))
-                broken_specify_idx = len(sl)-1
-                broken_substr = "(SHORT => VPWR) = (0:0:0,0:0:0,0:0:0,0:0:0,0:0:0,0:0:0);"
+            # Search for the broken statement
+            search_range = range(start_idx+1, len(sl))
+            broken_specify_idx = len(sl)-1
+            broken_substr = "(SHORT => VPWR) = (0:0:0,0:0:0,0:0:0,0:0:0,0:0:0,0:0:0);"
 
-                broken_specify_idx = [
-                    idx for idx in search_range if broken_substr in sl[idx]][0]
-                endif_idx = [
-                    idx for idx in search_range if "`endif" in sl[idx]][0]
+            broken_specify_idx = [idx for idx in search_range if broken_substr in sl[idx]][0]
+            endif_idx = [idx for idx in search_range if "`endif" in sl[idx]][0]
 
-                # Now, delete all the specify statements if specify exists before an endif.
-                if broken_specify_idx < endif_idx:
-                    self.logger.info(
-                        "Removing incorrectly formed specify block.")
-                    cell_def_range = range(start_idx+1, endif_idx)
-                    start_specify_idx = [
-                        idx for idx in cell_def_range if "specify" in sl[idx]][0]
-                    end_specify_idx = [
-                        idx for idx in cell_def_range if "endspecify" in sl[idx]][0]
-                    sl[start_specify_idx:end_specify_idx+1] = []  # Dice
+            # Now, delete all the specify statements if specify exists before an endif.
+            if broken_specify_idx < endif_idx:
+                self.logger.info("Removing incorrectly formed specify block.")
+                cell_def_range = range(start_idx+1, endif_idx)
+                start_specify_idx = [idx for idx in cell_def_range if "specify" in sl[idx]][0]
+                end_specify_idx = [idx for idx in cell_def_range if "endspecify" in sl[idx]][0]
+                sl[start_specify_idx:end_specify_idx+1] = [] # Dice
 
-            # Deal with the nonexistent net tactfully (don't code in brittle replacements)
-            self.logger.info(
-                "Fixing broken net references with select specify blocks.")
-            pattern = r"^\s*wire SLEEP.*B.*delayed;"
-            capture_pattern = r".*(SLEEP.*?B.*?delayed).*"
-            pattern_idx = [(idx, re.findall(capture_pattern, value)[0])
-                           for idx, value in enumerate(sl) if re.search(pattern, value)]
-            for list_idx, pattern_tuple in enumerate(pattern_idx):
-                if list_idx != len(pattern_idx)-1:
-                    search_range = range(
-                        pattern_tuple[0]+1, pattern_idx[list_idx+1][0])
-                else:
-                    search_range = range(pattern_tuple[0]+1, len(sl))
-                for idx in search_range:
-                    list = re.findall(capture_pattern, sl[idx])
-                    for elem in list:
-                        if elem != pattern_tuple[1]:
-                            sl[idx] = sl[idx].replace(elem, pattern_tuple[1])
-                            self.logger.info(
-                                f"Incorrect reference `{elem}` to be replaced with: `{pattern_tuple[1]}` on raw line {idx}.")
+        # Deal with the nonexistent net tactfully (don't code in brittle replacements)
+        self.logger.info("Fixing broken net references with select specify blocks.")
+        pattern = r"^\s*wire SLEEP.*B.*delayed;"
+        capture_pattern = r".*(SLEEP.*?B.*?delayed).*"
+        pattern_idx = [(idx, re.findall(capture_pattern, value)[0]) for idx, value in enumerate(sl) if re.search(pattern, value)]
+        for list_idx, pattern_tuple in enumerate(pattern_idx):
+            if list_idx != len(pattern_idx)-1:
+                search_range = range(pattern_tuple[0]+1, pattern_idx[list_idx+1][0])
+            else: 
+                search_range = range(pattern_tuple[0]+1, len(sl))
+            for idx in search_range:
+                list = re.findall(capture_pattern, sl[idx])
+                for elem in list:
+                    if elem != pattern_tuple[1]:
+                        sl[idx] = sl[idx].replace(elem, pattern_tuple[1])
+                        self.logger.info(f"Incorrect reference `{elem}` to be replaced with: `{pattern_tuple[1]}` on raw line {idx}.")
 
-            # Write back into destination
-            with open(dest_path, 'w') as df:
-                df.writelines(sl)
+        # Write back into destination
+        with open(dest_path, 'w') as df:
+            df.writelines(sl)
 
         # primitives.v
         source_path = setting_dir / 'libs.ref' / \
@@ -536,22 +524,14 @@ class SKY130Tech(HammerTechnology):
                 self.logger.info("Modifying Verilog netlist: {} -> {}".format
                                  (source_path, dest_path))
                 for line in sf:
-                    line = line.replace(
-                        '`default_nettype none', '`default_nettype wire')
+                    line = line.replace('`default_nettype none','`default_nettype wire')
                     df.write(line)
 
     # Copy and hack the tech-lef, adding this very important `licon` section
     def setup_techlef(self) -> None:
-        slib = self.get_setting("technology.sky130.stdcell_library")
-        source_path = Path("")
-        if slib == "sky130_fd_sc_hd":
-            setting_dir = self.get_setting("technology.sky130.sky130A")
-            setting_dir = Path(setting_dir)
-            source_path = setting_dir / 'libs.ref' / self.library_name / \
-                'techlef' / f'{self.library_name}__nom.tlef'
-        elif slib == "sky130_scl":
-            source_path = Path(os.path.join(self.get_setting(
-                "technology.sky130.sky130_scl"), 'lef', f"{slib}_9T.tlef"))
+        setting_dir = self.get_setting("technology.sky130.sky130A")
+        setting_dir = Path(setting_dir)
+        source_path = setting_dir / 'libs.ref' / self.library_name / 'techlef' / f'{self.library_name}__nom.tlef'
         if not source_path.exists():
             raise FileNotFoundError(f"Tech-LEF not found: {source_path}")
 
