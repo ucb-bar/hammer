@@ -82,7 +82,38 @@ class ValueWithUnit(ABC):
         match = re.search(regex, value)
         if match is None:
             try:
-                num = str(float(value))
+                num = str(float(value.strip("\\"))) # TODO elam this is to fix the following ValueError
+                """
+                Traceback (most recent call last):
+  File "/scratch/eecs251b-aae/chipyard/vlsi/./eecs251b-vlsi", line 36, in <module>
+    Eecs251bDriver().main()
+  File "/scratch/eecs251b-aae/chipyard/vlsi/hammer/hammer/vlsi/cli_driver.py", line 1725, in main
+    sys.exit(self.run_main_parsed(vars(parser.parse_args(args))))
+  File "/scratch/eecs251b-aae/chipyard/vlsi/hammer/hammer/vlsi/cli_driver.py", line 1630, in run_main_parsed
+    output_config = action_func(driver, errors.append)  # type: Optional[dict]
+  File "/scratch/eecs251b-aae/chipyard/vlsi/hammer/hammer/vlsi/cli_driver.py", line 612, in action
+    success, output = driver.run_par(
+  File "/scratch/eecs251b-aae/chipyard/vlsi/hammer/hammer/vlsi/driver.py", line 1200, in run_par
+    run_succeeded = self.par_tool.run(hooks_to_use)
+  File "/scratch/eecs251b-aae/chipyard/vlsi/hammer/hammer/vlsi/hammer_tool.py", line 114, in run
+    if not self.run_steps(self.steps, hook_actions):
+  File "/scratch/eecs251b-aae/chipyard/vlsi/hammer/hammer/vlsi/hammer_tool.py", line 623, in run_steps
+    func_out = step.func(self)  # type: bool
+  File "/scratch/eecs251b-aae/chipyard/vlsi/hammer/hammer/vlsi/hammer_tool.py", line 667, in wrapper
+    return func.__func__(x)  # type: ignore # no type stub for builtin __func__
+  File "/scratch/eecs251b-aae/chipyard/vlsi/hammer/hammer/par/innovus/__init__.py", line 288, in init_design
+    self.write_contents_to_path(self.generate_mmmc_script(), mmmc_path)
+  File "/scratch/eecs251b-aae/chipyard/vlsi/hammer/hammer/common/cadence/__init__.py", line 133, in generate_mmmc_script
+    sdc_files = self.generate_sdc_files()
+  File "/scratch/eecs251b-aae/chipyard/vlsi/hammer/hammer/common/cadence/__init__.py", line 113, in generate_sdc_files
+    self.write_contents_to_path(self.sdc_pin_constraints, pin_constraints_fragment)
+  File "/scratch/eecs251b-aae/chipyard/vlsi/hammer/hammer/vlsi/hammer_vlsi_impl.py", line 2220, in sdc_pin_constraints
+    cap_unit = self.get_cap_unit().value_prefix + self.get_cap_unit().unit
+  File "/scratch/eecs251b-aae/chipyard/vlsi/hammer/hammer/vlsi/hammer_tool.py", line 1096, in get_cap_unit
+    return CapacitanceValue(get_or_else(self.technology.cap_unit, "1 pF"))
+  File "/scratch/eecs251b-aae/chipyard/vlsi/hammer/hammer/vlsi/units.py", line 88, in __init__
+    raise ValueError("Malformed {type} value {value}".format(type=self.unit_type,
+ValueError: Malformed capacitance value 1.000000\\ """
                 self._value_prefix = default_prefix
             except ValueError:
                 raise ValueError("Malformed {type} value {value}".format(type=self.unit_type,
