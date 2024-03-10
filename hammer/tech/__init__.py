@@ -419,6 +419,12 @@ class HammerTechnology:
             print(e)  # TODO: fix the root cause
             return None
 
+    def set_setting(self, key: str, value: Any) -> None:
+        """
+        Set a runtime setting in the database.
+        """
+        self._database.set_setting(key, value)
+
     def get_setting_suffix(self, key: str) -> Any:
         """Get a particular setting from the database with a suffix.
         """
