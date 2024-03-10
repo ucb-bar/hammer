@@ -96,13 +96,15 @@ class SKY130Tech(HammerTechnology):
             if cell_name == 'sky130_ef_io__gpiov2_pad_wrapped':
                 file_lib = 'sky130_ef_io'
                 gds_file = cell_name + '.gds'
-                lef_file = 'cache/sky130_ef_io.lef'
+                lef_file = os.path.join(
+                    SKY130A, 'libs.ref', library, 'lef', "sky130_ef_io.lef")
                 spice_file = os.path.join(
                     SKYWATER_LIBS, 'cdl', file_lib + '.cdl')
             elif 'sky130_ef_io' in cell_name:
                 file_lib = 'sky130_ef_io'
                 gds_file = file_lib + '.gds'
-                lef_file = 'cache/' + file_lib + '.lef'
+                lef_file = os.path.join(
+                    SKY130A, 'libs.ref', library, 'lef', "sky130_ef_io.lef")
                 spice_file = os.path.join(
                     SKYWATER_LIBS, 'cdl', file_lib + '.cdl')
             else:
@@ -398,7 +400,6 @@ class SKY130Tech(HammerTechnology):
             self.setup_cdl()
             self.setup_verilog()
             self.setup_techlef()
-        self.setup_io_lefs()
         self.logger.info('Loaded Sky130 Tech')
 
     def setup_cdl(self) -> None:
@@ -547,79 +548,6 @@ class SKY130Tech(HammerTechnology):
                     df.write(line)
                     if line.strip() == 'END pwell':
                         df.write(_the_tlef_edit)
-
-    # Power pins for clamps must be CLASS CORE
-    # connect/disconnect spacers must be CLASS PAD SPACER, not AREAIO
-    # Current version has two errors in MACRO class definitions that break lef parser.
-    def setup_io_lefs(self) -> None:
-        sky130A_path = Path(self.get_setting('technology.sky130.sky130A'))
-        source_path = sky130A_path / 'libs.ref' / \
-            'sky130_fd_io' / 'lef' / 'sky130_ef_io.lef'
-        if not source_path.exists():
-            raise FileNotFoundError(f"IO LEF not found: {source_path}")
-
-        cache_tech_dir_path = Path(self.cache_dir)
-        os.makedirs(cache_tech_dir_path, exist_ok=True)
-        dest_path = cache_tech_dir_path / 'sky130_ef_io.lef'
-
-        with open(source_path, 'r') as sf:
-            with open(dest_path, 'w') as df:
-                self.logger.info("Modifying IO LEF: {} -> {}".format
-                                 (source_path, dest_path))
-                sl = sf.readlines()
-                for net in ['VCCD1', 'VSSD1']:
-                    start = [idx for idx, line in enumerate(
-                        sl) if 'PIN ' + net in line]
-                    end = [idx for idx, line in enumerate(
-                        sl) if 'END ' + net in line]
-                    intervals = zip(start, end)
-                    for intv in intervals:
-                        port_idx = [idx for idx, line in enumerate(
-                            sl[intv[0]:intv[1]]) if 'PORT' in line]
-                        for idx in port_idx:
-                            sl[intv[0]+idx] = sl[intv[0] +
-                                                 idx].replace('PORT', 'PORT\n      CLASS CORE ;')
-                for cell in [
-                    'sky130_ef_io__connect_vcchib_vccd_and_vswitch_vddio_slice_20um',
-                    'sky130_ef_io__disconnect_vccd_slice_5um',
-                    'sky130_ef_io__disconnect_vdda_slice_5um',
-                ]:
-                    # force class to spacer
-                    start = [idx for idx, line in enumerate(
-                        sl) if f'MACRO {cell}' in line]
-                    sl[start[0] + 1] = sl[start[0] +
-                                          1].replace('AREAIO', 'SPACER')
-
-                # Current version has two one-off error that break lef parser.
-                self.logger.info(
-                    "Fixing broken sky130_ef_io__analog_esd_pad LEF definition.")
-                start_broken_macro_list = []
-                    #"MACRO sky130_ef_io__analog_esd_pad\n", "MACRO sky130_ef_io__analog_pad\n"]
-                end_broken_macro_list = []
-                    #"END sky130_ef_io__analog_pad\n", "END sky130_ef_io__analog_noesd_pad\n"]
-                end_fixed_macro_list = []
-                    #"END sky130_ef_io__analog_esd_pad\n", "END sky130_ef_io__analog_pad\n"]
-
-                for start_broken_macro, end_broken_macro, end_fixed_macro in zip(start_broken_macro_list, end_broken_macro_list, end_fixed_macro_list):
-                    # Get all start indices to be checked
-                    start_check_indices = [idx for idx, line in enumerate(
-                        sl) if line == start_broken_macro]
-
-                    # Extract broken macro
-                    for idx_broken_macro in start_check_indices:
-                        # Find the start of the next_macro
-                        idx_start_next_macro = [idx for idx in range(
-                            idx_broken_macro+1, len(sl)) if "MACRO" in sl[idx]][0]
-                        # Find the broken macro ending
-                        idx_end_broken_macro = len(sl)
-                        idx_end_broken_macro = [idx for idx in range(
-                            idx_broken_macro+1, len(sl)) if end_broken_macro in sl[idx]][0]
-
-                        # Fix
-                        if idx_end_broken_macro < idx_start_next_macro:
-                            sl[idx_end_broken_macro] = end_fixed_macro
-
-                df.writelines(sl)
 
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {
