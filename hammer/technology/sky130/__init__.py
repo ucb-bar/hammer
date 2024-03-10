@@ -29,25 +29,20 @@ class SKY130Tech(HammerTechnology):
         slib = self.get_setting("technology.sky130.stdcell_library")
         SKY130A = self.get_setting("technology.sky130.sky130A")
         SKY130_CDS = self.get_setting("technology.sky130.sky130_cds")
-        # TODO elam propogate to examples that this should look like "sky130_cds/LIB/sky130_scl_9T_0.0.2" on bwrc
         SKY130_CDS_LIB = self.get_setting("technology.sky130.sky130_scl")
 
         # Common tech LEF and IO cell spice netlists
-        # TODO elam use different techlef based on stdcell lib
-        libs = []
+        libs = [Library(spice_file="$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io__analog.spice",
+                        provides=[Provide(lib_type="IO library")])]
         if slib == "sky130_fd_sc_hd":
-            libs = [
-                Library(lef_file="/sky130_fd_sc_hd__nom.tlef",
+            libs += [
+                Library(lef_file="$SKY130A/sky130_fd_sc_hd__nom.tlef",
                         verilog_sim="cache/primitives.v", provides=[Provide(lib_type="technology")]),
-                Library(spice_file="$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io__analog.spice",
-                        provides=[Provide(lib_type="IO library")])
             ]
         elif slib == "sky130_scl":
-            libs = [
+            libs += [
                 Library(lef_file="$SKY130_SCL/lef/sky130_scl_9T.tlef",
                         verilog_sim="$SKY130_SCL/verilog/sky130_scl_9T.v", provides=[Provide(lib_type="technology")]),
-                # Library(spice_file="$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io__analog.spice",
-                # provides=[Provide(lib_type="IO library")])
             ]
         else:
             raise ValueError(
@@ -427,7 +422,7 @@ class SKY130Tech(HammerTechnology):
             self.setup_cdl()
             self.setup_verilog()
             self.setup_techlef()
-            self.setup_io_lefs()
+        self.setup_io_lefs()
         self.logger.info('Loaded Sky130 Tech')
 
     def setup_cdl(self) -> None:
