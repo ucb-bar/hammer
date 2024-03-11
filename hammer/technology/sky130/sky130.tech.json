@@ -1927,6 +1927,22 @@
       "name": [
         "sky130_fd_sc_hd__clkbuf_1"
       ]
+    },
+    {
+      "cell_type": "levelshifter",
+      "name": [
+        "sky130_fd_sc_hd__lpflow_lsbuf_lh_isowell",
+        "sky130_fd_sc_hd__lpflow_lsbuf_lh_hl_isowell_tap",
+        "sky130_fd_sc_hd__lpflow_lsbuf_lh_isowell_tap"
+      ]
+    },
+    {
+      "cell_type": "isolation",
+      "name": [
+        "sky130_fd_sc_hd__lpflow_inputiso1p",
+        "sky130_fd_sc_hd__lpflow_isobufsrc",
+        "sky130_fd_sc_hd__lpflow_isobufsrckapwr"
+      ]
     }
   ],
   "stackups": [

@@ -22,6 +22,8 @@ class CellType(str, Enum):
     CTSInverter = "ctsinverter"
     CTSGate = "ctsgate"
     CTSLogic = "ctslogic"
+    LevelShifter = "levelshifter"
+    Isolation = "isolation"
 
 
 class SpecialCell(BaseModel):
