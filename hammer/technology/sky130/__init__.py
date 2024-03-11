@@ -255,15 +255,6 @@ class SKY130Tech(HammerTechnology):
             # Cadence's stdcell library doesn't contain clock or power gate cells, so we can't use discrete clock gating
             self.set_setting("synthesis.clock_gating_mode", "")
 
-            phys_only = [
-                "sky130_fd_sc_hd__tap_1", "sky130_fd_sc_hd__tap_2", "sky130_fd_sc_hd__tapvgnd_1", "sky130_fd_sc_hd__tapvpwrvgnd_1",
-                "sky130_fd_sc_hd__fill_1", "sky130_fd_sc_hd__fill_2", "sky130_fd_sc_hd__fill_4", "sky130_fd_sc_hd__fill_8",
-                "sky130_fd_sc_hd__diode_2"]
-            dont_use = [
-                "*sdf*",
-                "sky130_fd_sc_hd__probe_p_*",
-                "sky130_fd_sc_hd__probec_p_*"
-            ]
             spcl_cells = [
                 SpecialCell(cell_type="stdfiller", name=
                             [f"FILL{i**2}" for i in range(7)]),
@@ -291,7 +282,7 @@ class SKY130Tech(HammerTechnology):
                 cornername = tmp.replace("sky130_", "")
                 cornerparts = cornername.split('_')
 
-                # Hardcode corners since they don't exactly match
+                # Hardcode corner annotations since they don't exactly match the sky130a
                 speed = cornerparts[0]
                 vdd = ""
                 temp = ""
@@ -394,13 +385,13 @@ class SKY130Tech(HammerTechnology):
     def post_install_script(self) -> None:
         self.library_name = 'sky130_fd_sc_hd'
         # check whether variables were overriden to point to a valid path
-        self.use_sram22 = os.path.exists(self.get_setting(
-            "technology.sky130.sram22_sky130_macros"))
+        self.use_sram22 = os.path.exists(self.get_setting("technology.sky130.sram22_sky130_macros"))
         if self.get_setting("technology.sky130.stdcell_library") == "sky130_fd_sc_hd":
             self.setup_cdl()
             self.setup_verilog()
             self.setup_techlef()
         self.logger.info('Loaded Sky130 Tech')
+
 
     def setup_cdl(self) -> None:
         ''' Copy and hack the cdl, replacing pfet_01v8_hvt/nfet_01v8 with
@@ -408,8 +399,7 @@ class SKY130Tech(HammerTechnology):
         '''
         setting_dir = self.get_setting("technology.sky130.sky130A")
         setting_dir = Path(setting_dir)
-        source_path = setting_dir / 'libs.ref' / \
-            self.library_name / 'cdl' / f'{self.library_name}.cdl'
+        source_path = setting_dir / 'libs.ref' / \ self.library_name / 'cdl' / f'{self.library_name}.cdl'
         if not source_path.exists():
             raise FileNotFoundError(f"CDL not found: {source_path}")
 
@@ -430,7 +420,7 @@ class SKY130Tech(HammerTechnology):
         with open(source_path, 'r') as sf:
             with open(dest_path, 'w') as df:
                 self.logger.info("Modifying CDL netlist: {} -> {}".format
-                                 (source_path, dest_path))
+                    (source_path, dest_path))
                 df.write("*.SCALE MICRON\n")
                 for line in sf:
                     line = line.replace('pfet_01v8_hvt', pmos)
@@ -552,14 +542,10 @@ class SKY130Tech(HammerTechnology):
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {
             "innovus": [
-                HammerTool.make_post_insertion_hook(
-                    "init_design",      sky130_innovus_settings),
-                HammerTool.make_pre_insertion_hook(
-                    "place_tap_cells",   sky130_add_endcaps),
-                HammerTool.make_pre_insertion_hook(
-                    "power_straps",      sky130_connect_nets),
-                HammerTool.make_pre_insertion_hook(
-                    "write_design",      sky130_connect_nets2)
+            HammerTool.make_post_insertion_hook( "init_design",      sky130_innovus_settings),
+            HammerTool.make_pre_insertion_hook( "place_tap_cells",   sky130_add_endcaps),
+            HammerTool.make_pre_insertion_hook( "power_straps",      sky130_connect_nets),
+            HammerTool.make_pre_insertion_hook( "write_design",      sky130_connect_nets2)
             ]}
         return hooks.get(tool_name, [])
 
@@ -567,27 +553,21 @@ class SKY130Tech(HammerTechnology):
         calibre_hooks = []
         pegasus_hooks = []
         if self.get_setting("technology.sky130.drc_blackbox_srams"):
-            calibre_hooks.append(HammerTool.make_post_insertion_hook(
-                "generate_drc_run_file", calibre_drc_blackbox_srams))
-            pegasus_hooks.append(HammerTool.make_post_insertion_hook(
-                "generate_drc_ctl_file", pegasus_drc_blackbox_srams))
+            calibre_hooks.append(HammerTool.make_post_insertion_hook("generate_drc_run_file", calibre_drc_blackbox_srams))
+            pegasus_hooks.append(HammerTool.make_post_insertion_hook("generate_drc_ctl_file", pegasus_drc_blackbox_srams))
         hooks = {"calibre": calibre_hooks,
-                 "pegasus": pegasus_hooks
+                "pegasus": pegasus_hooks
                  }
         return hooks.get(tool_name, [])
 
     def get_tech_lvs_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
-        calibre_hooks = [HammerTool.make_post_insertion_hook(
-            "generate_lvs_run_file", setup_calibre_lvs_deck)]
+        calibre_hooks = [HammerTool.make_post_insertion_hook("generate_lvs_run_file", setup_calibre_lvs_deck)]
         pegasus_hooks = []
         if self.use_sram22:
-            calibre_hooks.append(HammerTool.make_post_insertion_hook(
-                "generate_lvs_run_file", sram22_lvs_recognize_gates_all))
+            calibre_hooks.append(HammerTool.make_post_insertion_hook("generate_lvs_run_file", sram22_lvs_recognize_gates_all))
         if self.get_setting("technology.sky130.lvs_blackbox_srams"):
-            calibre_hooks.append(HammerTool.make_post_insertion_hook(
-                "generate_lvs_run_file", calibre_lvs_blackbox_srams))
-            pegasus_hooks.append(HammerTool.make_post_insertion_hook(
-                "generate_lvs_ctl_file", pegasus_lvs_blackbox_srams))
+            calibre_hooks.append(HammerTool.make_post_insertion_hook("generate_lvs_run_file", calibre_lvs_blackbox_srams))
+            pegasus_hooks.append(HammerTool.make_post_insertion_hook("generate_lvs_ctl_file", pegasus_lvs_blackbox_srams))
         hooks = {"calibre": calibre_hooks,
                  "pegasus": pegasus_hooks
                  }
@@ -605,8 +585,7 @@ class SKY130Tech(HammerTechnology):
     @staticmethod
     def sky130_sram_names() -> List[str]:
         sky130_sram_names = []
-        sram_cache_json = importlib.resources.files(
-            "hammer.technology.sky130").joinpath("sram-cache.json").read_text()
+        sram_cache_json = importlib.resources.files("hammer.technology.sky130").joinpath("sram-cache.json").read_text()
         dl = json.loads(sram_cache_json)
         for d in dl:
             sky130_sram_names.append(d['name'])
@@ -622,10 +601,8 @@ END licon
 
 # various Innovus database settings
 def sky130_innovus_settings(ht: HammerTool) -> bool:
-    assert isinstance(
-        ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
-    assert isinstance(
-        ht, TCLTool), "innovus settings can only run on TCL tools"
+    assert isinstance(ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
+    assert isinstance(ht, TCLTool), "innovus settings can only run on TCL tools"
     """Settings for every tool invocation"""
     ht.append(
         '''
@@ -697,30 +674,24 @@ def sky130_connect_nets(ht: HammerTool) -> bool:
     assert isinstance(
         ht, TCLTool), "connect global nets can only run on TCL tools"
     for pwr_gnd_net in (ht.get_all_power_nets() + ht.get_all_ground_nets()):
-        if pwr_gnd_net.tie is not None:
-            ht.append("connect_global_net {tie} -type pg_pin -pin_base_name {net} -all -auto_tie -netlist_override".format(
-                tie=pwr_gnd_net.tie, net=pwr_gnd_net.name))
-            ht.append("connect_global_net {tie} -type net    -net_base_name {net} -all -netlist_override".format(
-                tie=pwr_gnd_net.tie, net=pwr_gnd_net.name))
+            if pwr_gnd_net.tie is not None:
+                ht.append("connect_global_net {tie} -type pg_pin -pin_base_name {net} -all -auto_tie -netlist_override".format(tie=pwr_gnd_net.tie, net=pwr_gnd_net.name))
+                ht.append("connect_global_net {tie} -type net    -net_base_name {net} -all -netlist_override".format(tie=pwr_gnd_net.tie, net=pwr_gnd_net.name))
     return True
 
 # Pair VDD/VPWR and VSS/VGND nets
 #   these commands are already added in Innovus.write_netlist,
 #   but must also occur before power straps are placed
-
-
 def sky130_connect_nets2(ht: HammerTool) -> bool:
     sky130_connect_nets(ht)
     return True
 
 
 def sky130_add_endcaps(ht: HammerTool) -> bool:
-    assert isinstance(
-        ht, HammerPlaceAndRouteTool), "endcap insertion only for par"
-    assert isinstance(
-        ht, TCLTool), "endcap insertion can only run on TCL tools"
-    endcap_cells = ht.technology.get_special_cell_by_type(CellType.EndCap)
-    endcap_cell = endcap_cells[0].name[0]
+    assert isinstance(ht, HammerPlaceAndRouteTool), "endcap insertion only for par"
+    assert isinstance(ht, TCLTool), "endcap insertion can only run on TCL tools"
+    endcap_cells=ht.technology.get_special_cell_by_type(CellType.EndCap)
+    endcap_cell=endcap_cells[0].name[0]
     ht.append(
         f'''
 set_db add_endcaps_boundary_tap     true
@@ -731,12 +702,9 @@ add_endcaps
     )
     return True
 
-
 def efabless_ring_io(ht: HammerTool) -> bool:
-    assert isinstance(
-        ht, HammerPlaceAndRouteTool), "IO ring instantiation only for par"
-    assert isinstance(
-        ht, TCLTool), "IO ring instantiation can only run on TCL tools"
+    assert isinstance(ht, HammerPlaceAndRouteTool), "IO ring instantiation only for par"
+    assert isinstance(ht, TCLTool), "IO ring instantiation can only run on TCL tools"
     io_file = ht.get_setting("technology.sky130.io_file")
     ht.append(f"read_io_file {io_file} -no_die_size_adjust")
     p_nets = list(map(lambda s: s.name, ht.get_independent_power_nets()))
@@ -777,7 +745,6 @@ set_dont_touch [get_db [get_db pins -if {.name == *TIE*ESD}] .net]
     ''')
     return True
 
-
 def calibre_drc_blackbox_srams(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerDRCTool), "Exlude SRAMs only in DRC"
     drc_box = ''
@@ -787,7 +754,6 @@ def calibre_drc_blackbox_srams(ht: HammerTool) -> bool:
     with open(run_file, "a") as f:
         f.write(drc_box)
     return True
-
 
 def pegasus_drc_blackbox_srams(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerDRCTool), "Exlude SRAMs only in DRC"
@@ -799,10 +765,8 @@ def pegasus_drc_blackbox_srams(ht: HammerTool) -> bool:
         f.write(drc_box)
     return True
 
-
 def calibre_lvs_blackbox_srams(ht: HammerTool) -> bool:
-    assert isinstance(
-        ht, HammerLVSTool), "Blackbox and filter SRAMs only in LVS"
+    assert isinstance(ht, HammerLVSTool), "Blackbox and filter SRAMs only in LVS"
     lvs_box = ''
     for name in SKY130Tech.sky130_sram_names():
         lvs_box += f"\nLVS BOX {name}"
@@ -812,18 +776,15 @@ def calibre_lvs_blackbox_srams(ht: HammerTool) -> bool:
         f.write(lvs_box)
     return True
 
-
 def pegasus_lvs_blackbox_srams(ht: HammerTool) -> bool:
-    assert isinstance(
-        ht, HammerLVSTool), "Blackbox and filter SRAMs only in LVS"
+    assert isinstance(ht, HammerLVSTool), "Blackbox and filter SRAMs only in LVS"
     lvs_box = ''
     for name in SKY130Tech.sky130_sram_names():
         lvs_box += f"\nlvs_black_box {name} -gray"
     run_file = ht.lvs_ctl_file  # type: ignore
     with open(run_file, "r+") as f:
         # Remove SRAM SPICE file includes.
-        pattern = 'schematic_path.*({}).*spice;\n'.format(
-            '|'.join(SKY130Tech.sky130_sram_names()))
+        pattern = 'schematic_path.*({}).*spice;\n'.format('|'.join(SKY130Tech.sky130_sram_names()))
         matcher = re.compile(pattern)
         contents = f.read()
         fixed_contents = matcher.sub("", contents) + lvs_box
@@ -831,10 +792,8 @@ def pegasus_lvs_blackbox_srams(ht: HammerTool) -> bool:
         f.write(fixed_contents)
     return True
 
-
 def sram22_lvs_recognize_gates_all(ht: HammerTool) -> bool:
-    assert isinstance(
-        ht, HammerLVSTool), "Change 'LVS RECOGNIZE GATES' from 'NONE' to 'ALL' for SRAM22"
+    assert isinstance(ht, HammerLVSTool), "Change 'LVS RECOGNIZE GATES' from 'NONE' to 'ALL' for SRAM22"
     run_file = ht.lvs_run_file  # type: ignore
     with open(run_file, "a") as f:
         f.write("LVS RECOGNIZE GATES ALL")
@@ -867,9 +826,8 @@ def setup_calibre_lvs_deck(ht: HammerTool) -> bool:
     lvs_decks = ht.technology.config.lvs_decks
     if not lvs_decks:
         return True
-    for i, deck in enumerate(lvs_decks):
-        if deck.tool_name != 'calibre':
-            continue
+    for i,deck in enumerate(lvs_decks):
+        if deck.tool_name != 'calibre': continue
         try:
             source_path = Path(source_paths[i])
         except IndexError:
@@ -883,7 +841,7 @@ def setup_calibre_lvs_deck(ht: HammerTool) -> bool:
         with open(source_path, 'r') as sf:
             with open(dest_path, 'w') as df:
                 ht.logger.info("Modifying LVS deck: {} -> {}".format
-                               (source_path, dest_path))
+                    (source_path, dest_path))
                 df.write(matcher.sub("", sf.read()))
                 df.write(LVS_DECK_INSERT_LINES)
     return True
