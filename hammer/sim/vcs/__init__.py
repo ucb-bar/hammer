@@ -240,8 +240,8 @@ class VCS(HammerSimTool, SynopsysTool):
         force_regs_filename = self.force_regs_file_path
         tb_prefix = self.get_setting("sim.inputs.tb_dut")
         saif_mode = self.get_setting("sim.inputs.saif.mode")
-        saif_start_time: Optional[TimeValue] = None
-        saif_end_time: Optional[TimeValue] = None
+        saif_start_time: Optional[str] = None
+        saif_end_time: Optional[str] = None
         saif_start_trigger_raw: Optional[str] = None
         saif_end_trigger_raw: Optional[str] = None
         if saif_mode == "time":

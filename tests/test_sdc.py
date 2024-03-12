@@ -1,7 +1,7 @@
 from typing import Optional
 
 from hammer import vlsi as hammer_vlsi, config as hammer_config
-from hammer import technology as hammer_techs
+import hammer.technology.nop
 from tests.utils.tool import DummyTool
 
 
@@ -26,7 +26,7 @@ class TestSDC:
         }
 
         tool = SDCDummyTool()
-        tool.technology = hammer_techs.nop.NopTechnology()
+        tool.technology = hammer.technology.nop.NopTechnology()
         database = hammer_config.HammerDatabase()
         hammer_vlsi.HammerVLSISettings.load_builtins_and_core(database)
         database.update_project([inputs])

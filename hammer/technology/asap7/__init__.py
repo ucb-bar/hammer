@@ -52,6 +52,7 @@ class ASAP7Tech(HammerTechnology):
 
             stdcell_dir = self.get_setting("technology.asap7.stdcell_install_dir")
             orig_gds = os.path.join(stdcell_dir, "GDS/asap7sc7p5t_27_R_201211.gds")
+            cell_list: Optional[List[str]] = None
 
             if self.gds_tool.__name__ == 'gdstk':
                 # load original GDS
@@ -140,6 +141,7 @@ class ASAP7Tech(HammerTechnology):
 
             # Write out cell list for scaling script
             with open(os.path.join(self.cache_dir, 'stdcells.txt'), 'w') as f:
+                assert cell_list
                 f.writelines('{}\n'.format(cell) for cell in cell_list)
 
         except:

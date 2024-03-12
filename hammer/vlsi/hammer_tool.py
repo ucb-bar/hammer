@@ -273,8 +273,6 @@ class HammerTool(metaclass=ABCMeta):
             return self._rundir
         except AttributeError:
             return self._rundir
-        except AttributeError:
-            raise ValueError("Internal error: run dir location not set by hammer-vlsi")
 
     @run_dir.setter
     def run_dir(self, path: str) -> None:
@@ -1329,7 +1327,7 @@ class HammerTool(metaclass=ABCMeta):
 
             p_nets = self.get_all_power_nets() #type: List[Supply]
             g_nets = self.get_all_ground_nets() #type: List[Supply]
-            for b in bumps.assignments: # type: BumpAssignment
+            for b in bumps.assignments:
                 bump_type = 'signal'
                 if b.no_connect:
                     bump_type = 'nc'

@@ -7,7 +7,7 @@ from abc import abstractmethod
 import importlib
 import importlib.resources as resources
 import json
-from typing import Iterable
+from typing import Iterable, Dict, Any
 import inspect
 import datetime
 from statistics import mode
@@ -213,7 +213,7 @@ class HammerSRAMGeneratorTool(HammerTool):
     def export_config_outputs(self) -> Dict[str, Any]:
         outputs = deepdict(super().export_config_outputs())
         simple_ex = []
-        for ex in self.output_libraries: # type: ExtraLibrary
+        for ex in self.output_libraries:
             simple_lib = json.loads(ex.library.model_dump_json())
             if(ex.prefix == None):
                 new_ex = {"library": simple_lib}
@@ -943,6 +943,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         masters = set(map(lambda m: m["master"], self._hardmacro_power_straps))
 
         for master in masters:
+            above_desc: Dict[str, Any] = {}
             insts = list(filter(lambda m: m["master"] == master, self._hardmacro_power_straps))
             # All instances of this master should specify the same top_layer
             if len(set(map(lambda m: m["top_layer"], insts))) > 1:

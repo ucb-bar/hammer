@@ -1,6 +1,6 @@
 import json
 import os
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import sys
 from pathlib import Path
 from abc import ABCMeta, abstractmethod
@@ -12,6 +12,7 @@ from hammer.config import HammerJSONEncoder
 from hammer.logging import HammerVLSILogging, HammerVLSIFileLogger
 from hammer.logging.test import HammerLoggingCaptureContext
 from hammer.utils import deeplist, deepdict
+from hammer.vlsi.constraints import BumpsDefinition, PinAssignment
 from tests.utils.stackup import StackupTestHelper
 from tests.utils.tech import HasGetTech
 from tests.utils.tool import HammerToolTestHelpers, SingleStepTool, DummyTool
@@ -509,7 +510,7 @@ export lol=abc"cat"
 }"""
         database.update_project([hammer_config.load_config_from_string(settings, is_yaml=False)])
         test.set_database(database)
-
+        my_bumps: Optional[BumpsDefinition] = None
         with HammerLoggingCaptureContext() as c:
             my_bumps = test.get_bumps()
         # TODO: reenable when logging fixed
@@ -596,6 +597,7 @@ export lol=abc"cat"
         database.update_project([hammer_config.load_config_from_string(settings, is_yaml=False)])
         test.set_database(database)
 
+        my_pins: List[PinAssignment] = []
         with HammerLoggingCaptureContext() as c:
             my_pins = test.get_pin_assignments()
 
@@ -651,6 +653,7 @@ export lol=abc"cat"
         database.update_project([hammer_config.load_config_from_string(settings, is_yaml=False)])
         test.set_database(database)
 
+        my_pins: List[PinAssignment] = []
         with HammerLoggingCaptureContext() as c:
             my_pins = test.get_pin_assignments()
 
@@ -765,6 +768,7 @@ export lol=abc"cat"
         database.update_project([hammer_config.load_config_from_string(settings, is_yaml=False)])
         test.set_database(database)
 
+        my_pins: List[PinAssignment] = []
         with HammerLoggingCaptureContext() as c:
             my_pins = test.get_pin_assignments()
         # TODO: reenable when logging fixed

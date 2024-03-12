@@ -306,8 +306,8 @@ class xcelium(HammerSimTool, CadenceTool):
     saif_args = ""
 
     # Process saif options
-    saif_start_time: Optional[TimeValue] = None
-    saif_end_time: Optional[TimeValue] = None
+    saif_start_time: Optional[str] = None
+    saif_end_time: Optional[str] = None
     saif_start_trigger_raw: Optional[str] = None
     saif_end_trigger_raw: Optional[str] = None
     if saif_opts["mode"] == "time":
