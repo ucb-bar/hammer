@@ -272,7 +272,7 @@ class HammerTool(metaclass=ABCMeta):
         try:
             return self._rundir
         except AttributeError:
-            return self._rundir
+            raise ValueError("Internal error: run dir location not set by hammer-vlsi")
 
     @run_dir.setter
     def run_dir(self, path: str) -> None:

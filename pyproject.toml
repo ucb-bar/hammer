@@ -85,7 +85,7 @@ reports = true
 disable = ["no-else-return", "len-as-condition"]
 
 [tool.pyright]
-exclude = ["doc/**", "e2e/**", "test_scripts/**", "hammer/technology/asap7/gds_scale.py"]
+exclude = ["doc/**", "e2e/**", "test_scripts/**"]
 include = ["hammer", "tests"]
 reportMissingImports = true
 typeCheckingMode = "standard"

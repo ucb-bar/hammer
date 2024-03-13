@@ -266,7 +266,7 @@ class VCS(HammerSimTool, SynopsysTool):
                 stime: Optional[TimeValue] = None
                 if saif_mode == "time":
                     assert saif_start_time
-                    stime = TimeValue(saif_start_time[0])
+                    stime = TimeValue(saif_start_time)
                     find_regs_run_tcl.append("run {start}ns".format(start=stime.value_in_units("ns")))
                 elif saif_mode == "trigger_raw":
                     find_regs_run_tcl.append(saif_start_trigger_raw)
@@ -299,7 +299,7 @@ class VCS(HammerSimTool, SynopsysTool):
                 stime: Optional[TimeValue] = None
                 if saif_mode == "time":
                     assert saif_start_time
-                    stime = TimeValue(saif_start_time[0])
+                    stime = TimeValue(saif_start_time)
                     find_regs_run_tcl.append("run {start}ns".format(start=stime.value_in_units("ns")))
                 elif saif_mode == "trigger_raw":
                     find_regs_run_tcl.append(saif_start_trigger_raw)

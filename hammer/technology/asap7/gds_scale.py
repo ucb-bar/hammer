@@ -4,6 +4,7 @@
 # This is called by a tech hook that should be inserted post write_design
 
 import sys, glob, os, re
+from typing import Any
 
 def main():
     assert len(sys.argv) == 3, 'Must have 2 arguments: 1) Path to list of standard cells, 2) Path to GDS file'
@@ -26,6 +27,7 @@ def main():
     # load the standard cell list
     cell_list = [line.rstrip() for line in open(stdcells, 'r')]
 
+    gds_lib: Any = None
     if gds_tool.__name__ == 'gdstk':
         # load original_gds
         gds_lib = gds_tool.read_gds(infile=gds_file)
