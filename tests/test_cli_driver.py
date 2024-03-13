@@ -418,8 +418,8 @@ class TestCLIDriver:
         class OverriddenDriver(CLIDriver):
             synthesis_called = False  # type: bool
 
-            def synthesis_action(self, driver: HammerDriver,
-                                 append_error_func: Callable[[str], None]) -> Optional[Dict]:
+            def synthesis_action(self, driver: HammerDriver, # type: ignore
+                                 append_error_func: Callable[[str], None]) -> Optional[Dict]:  # type: ignore
                 def post_run_func(driver: HammerDriver) -> None:
                     OverriddenDriver.synthesis_called = True
 

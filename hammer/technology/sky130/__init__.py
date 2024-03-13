@@ -8,6 +8,7 @@ import os, shutil
 from pathlib import Path
 from typing import NamedTuple, List, Optional, Tuple, Dict, Set, Any
 import importlib
+import importlib.resources
 import json
 
 import hammer.tech

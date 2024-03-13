@@ -137,7 +137,7 @@ class Graph:
     auto_auxiliary: bool = True
 
     def __post_init__(self) -> None:
-        self.networkx = nx.DiGraph(Graph.insert_auxiliary_actions(self.edge_list) if self.auto_auxiliary else self.edge_list)
+        self.networkx = nx.DiGraph(Graph.insert_auxiliary_actions(self.edge_list) if self.auto_auxiliary else self.edge_list) # type: ignore
 
     def verify(self) -> bool:
         """Checks if a graph is valid via its inputs and outputs.
