@@ -1,6 +1,6 @@
 [submodule "src/tools/pyyaml"]
 	path = src/tools/pyyaml
-	url = https://github.com/sifive/pyyaml.git
+	url = git@github.com:sifive/pyyaml.git
 [submodule "src/python-jsonschema-objects"]
 	path = src/python-jsonschema-objects
 	url = https://github.com/edwardcwang/python-jsonschema-objects.git
