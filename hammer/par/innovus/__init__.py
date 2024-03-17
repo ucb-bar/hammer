@@ -566,7 +566,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
 
     def clock_tree(self) -> bool:
         """Setup and route a clock tree for clock nets."""
-        if len(self.get_clock_ports()) > 0 or len(self.get_setting("vlsi.inputs.custom_sdc_files") > 0):
+        if len(self.get_clock_ports()) > 0 or len(self.get_setting("vlsi.inputs.custom_sdc_files")) > 0:
             # Fix fanout load violations
             self.verbose_append("set_db opt_fix_fanout_load true")
             # Ignore clock tree when there are no clocks
