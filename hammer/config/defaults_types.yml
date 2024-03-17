@@ -128,6 +128,9 @@ vlsi.inputs:
   # List of custom sdc constraints to use. (List[str])
   custom_sdc_constraints: list[str]
 
+  # List of custom sdc files to append. (List[str])
+  custom_sdc_files: list[str]
+
   # List of placement constraints for floorplanning.
   placement_constraints: list[dict[str, Any]]
 

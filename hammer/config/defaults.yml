@@ -212,6 +212,9 @@ vlsi.inputs:
   custom_sdc_constraints: [] # List of custom sdc constraints to use. (List[str])
   # These are appended after all other generated constraints (clock, pin, delay, load, etc.).
   # IMPORTANT: Since SDC is unitless, you must manually verify that your time & cap units match the tech library's units.
+  
+  custom_sdc_files: [] # List of custom sdc files to append. (List[str])
+  # These are appended after all other generated constraints and custom_sdc_constraints.
 
   placement_constraints: [] # List of placement constraints for floorplanning.
   # Each item is a struct member:

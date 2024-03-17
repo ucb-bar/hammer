@@ -1960,6 +1960,11 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             f.write(self.sdc_pin_constraints)
         sdc_files.append(pin_constraints_fragment)
 
+        # Append any custom SDC files.
+        custom_sdcs = self.get_setting("vlsi.inputs.custom_sdc_files")
+        for sdc in custom_sdcs:
+            sdc_files.append(self.process_sdc_file(sdc))
+
         # Add the post-synthesis SDC, if present.
         post_synth_sdc = self.post_synth_sdc
         if post_synth_sdc is not None:
