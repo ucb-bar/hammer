@@ -103,7 +103,7 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
         """
         sdc_files = [] # type: List[str]
 
-        # Generate constraints
+        # Generate clock constraints
         clock_constraints_fragment = os.path.join(self.run_dir, "clock_constraints_fragment.sdc")
         self.write_contents_to_path(self.sdc_clock_constraints, clock_constraints_fragment)
         sdc_files.append(clock_constraints_fragment)
@@ -131,6 +131,9 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
         constraint_mode = "my_constraint_mode"
 
         sdc_files = self.generate_sdc_files()
+
+        # Append any custom SDC files.
+        sdc_files.extend(self.get_setting("vlsi.inputs.custom_sdc_files"))
 
         # Add the post-synthesis SDC, if present.
         post_synth_sdc = self.post_synth_sdc
