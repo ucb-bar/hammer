@@ -353,8 +353,12 @@ class HammerTechnology:
         self.time_unit: Optional[str] = None
         self.cap_unit: Optional[str] = None
 
+    def gen_config(self) -> None:
+        """For subclasses to set self.config (type: TechJSON) directly, instead of from static JSON file"""
+        pass
+
     @classmethod
-    def load_from_module(cls, tech_module: str) -> Optional["HammerTechnology"]:
+    def load_from_module(cls, tech_module: str) -> "HammerTechnology":
         """Load a technology from a given module.
 
         :param tech_module: Technology module (e.g. "hammer.technology.asap7")
@@ -375,8 +379,8 @@ class HammerTechnology:
         elif tech_yaml.is_file():
             tech.config = TechJSON.model_validate_json(json.dumps(load_yaml(tech_yaml.read_text())))
             return tech
-        else: #TODO - from Pydantic model instance
-            return None
+        else: # Assume tech implents gen_config()
+            return tech
 
     def get_lib_units(self) -> None:
         """
@@ -414,6 +418,12 @@ class HammerTechnology:
         except KeyError as e:  # this function is expected to return Optional[str] from extracted_tarballs_dir()
             print(e)  # TODO: fix the root cause
             return None
+
+    def set_setting(self, key: str, value: Any) -> None:
+        """
+        Set a runtime setting in the database.
+        """
+        self._database.set_setting(key, value)
 
     def get_setting_suffix(self, key: str) -> Any:
         """Get a particular setting from the database with a suffix.
@@ -648,15 +658,15 @@ class HammerTechnology:
 
         1. Absolute path: the path starts with "/" and refers to an absolute path on the filesystem
             /path/to/a/lib/file.lib -> /path/to/a/lib/file.lib
-        2. Tech plugin relative path: the path has no "/"s and refers to a file directly inside the tech plugin folder
+        2. Tech plugin relative path: the path has no "/"s and refers to a file directly inside the tech plugin folder (no subdirectories allowed, else it conflicts with 3-5. below!)
             techlib.lib -> <tech plugin package>/techlib.lib
-        3. Tech cache relative path: the path starts with an identifier which is "cache" (this is used in the SKY130 tech JSON)
+        3. Tech cache relative path: the path starts with an identifier which is "cache" (this is used in the SKY130 Libraries)
             cache/primitives.v -> <tech plugin cache dir>/primitives.v
         4. Install relative path: the path starts with an install/tarball identifier (installs.id, tarballs.root.id)
         and refers to a file relative to that identifier's path
             pdkroot/dac/dac.lib -> /nfs/ecad/tsmc100/stdcells/dac/dac.lib
         5. Library extra_prefix path: the path starts with an identifier present in the provided
-            library's extra_prefixes
+            library's extra_prefixes Field
             lib1/cap150f.lib -> /design_files/caps/cap150f.lib
         """
         assert len(path) > 0, "path must not be empty"

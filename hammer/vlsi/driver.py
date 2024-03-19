@@ -65,7 +65,7 @@ class HammerDriver:
         file_logger = HammerVLSIFileLogger(options.log_file)
         HammerVLSILogging.add_callback(file_logger.callback)
         self.log = HammerVLSILogging.context()  # type: HammerVLSILoggingContext
-        
+
         # Create a new hammer database.
         self.database = hammer_config.HammerDatabase()  # type: hammer_config.HammerDatabase
 
@@ -152,17 +152,15 @@ class HammerDriver:
             cache_dir = os.path.join(self.obj_dir, "tech-%s-cache" % tech_name)
 
         self.log.info("Loading technology '{0}'".format(tech_module))
-        tech_opt = hammer_tech.HammerTechnology.load_from_module(tech_module)
-        if tech_opt is None:
-            self.log.fatal("Technology {0} not found or missing .tech.[json/yml]!".format(tech_module))
-            return
-        else:
-            tech: hammer_tech.HammerTechnology = tech_opt
-        # Update database as soon as possible since e.g. extract_technology_files could use those settings
+        tech = hammer_tech.HammerTechnology.load_from_module(tech_module)
         self.database.update_technology(*tech.get_config())
         tech.logger = self.log.context("tech")
         tech.set_database(self.database)
         tech.cache_dir = cache_dir
+        tech.gen_config()
+        if tech.config is None:
+            self.log.fatal("Technology {0} config not generated or missing .tech.[json/yml]!".format(tech_module))
+            return
         tech.extract_technology_files()
         tech.get_lib_units()
 
