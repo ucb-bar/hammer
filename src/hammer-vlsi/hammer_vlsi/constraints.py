@@ -900,14 +900,147 @@ class MMMCCornerType(Enum):
         else:
             raise ValueError("Invalid MMMC corner type '{}'".format(input_str))
 
+class ProcessVariationType(Enum):
+    Slow = 1
+    Typical = 2
+    Fast = 3
 
-MMMCCorner = NamedTuple('MMMCCorner', [
+    @staticmethod
+    def from_str(input_str: str) -> "ProcessVariationType":
+        if input_str == "slow":  # pylint: disable=no-else-return
+            return ProcessVariationType.Slow
+        elif input_str == "typical":
+            return ProcessVariationType.Typical
+        elif input_str == "fast":
+            return ProcessVariationType.Fast
+        else:
+            raise ValueError("Invalid process variation type '{}'".format(input_str))
+
+class ProcessVariation(NamedTuple('ProcessVariation', [
+    ('nmos', ProcessVariationType),
+    ('pmos', ProcessVariationType),
+])):
+    @staticmethod
+    def from_dict(d: dict) -> "ProcessVariation":
+        return ProcessVariation(
+            nmos = ProcessVariationType.from_str(str(d['nmos'])),
+            pmos = ProcessVariationType.from_str(str(d['pmos']))
+        )
+    def to_dict(self) -> dict:
+        output = {'nmos': str(self.nmos), 'pmos': str(self.pmos)}
+        return output
+
+class PrimaryRCVariation(Enum):
+    Cworst = 1
+    Cbest = 2
+    RCworst = 3
+    RCbest = 4
+    Typical = 5
+
+    @staticmethod
+    def from_str(input_str: str) -> "PrimaryRCVariation":
+        if input_str == "cworst":  # pylint: disable=no-else-return
+            return PrimaryRCVariation.Cworst
+        elif input_str == "cbest":
+            return PrimaryRCVariation.Cbest
+        elif input_str == "rcworst":
+            return PrimaryRCVariation.RCworst
+        elif input_str == "rcbest":
+            return PrimaryRCVariation.RCbest
+        elif input_str == "typical":
+            return PrimaryRCVariation.Typical
+        else:
+            raise ValueError("Invalid primary RC variation type '{}'".format(input_str))
+
+class CouplingRCVariation(Enum):
+    CCworst = 1
+    CCbest = 2
+
+    @staticmethod
+    def from_str(input_str: str) -> "CouplingRCVariation":
+        if input_str == "ccworst":  # pylint: disable=no-else-return
+            return CouplingRCVariation.CCworst
+        elif input_str == "ccbest":
+            return CouplingRCVariation.CCbest
+        else:
+            raise ValueError("Invalid coupling RC variation type '{}'".format(input_str))
+
+
+class RCVariation(NamedTuple('RCVariation', [
+    ('primary', PrimaryRCVariation),
+    ('coupling', Optional[CouplingRCVariation]),
+    ])):
+    @staticmethod
+    def from_dict(d: dict) -> "RCVariation":
+        coupling_value = None
+        if 'coupling' in d:
+            coupling_value = CouplingRCVariation.from_str(str(d['coupling']))
+        return RCVariation(
+            primary=PrimaryRCVariation.from_str(str(d['primary'])),
+            coupling=coupling_value
+        )
+
+    def to_dict(self) -> dict:
+        output = {'primary': str(self.primary)}
+        if self.coupling is not None:
+            output.update({'coupling': str(self.coupling)})
+        return output
+
+
+class MMMCCorner(NamedTuple('MMMCCorner', [
     ('name', str),
     ('type', MMMCCornerType),
     ('voltage', VoltageValue),
     ('temp', TemperatureValue),
+    ('pvt', Optional[ProcessVariation]),
+    ('rc', Optional[RCVariation]),
     ('sdc', Optional[str]),
-])
+])):
+    def __new__(cls,
+            name: str,
+            type: MMMCCornerType,
+            voltage: VoltageValue,
+            temp: TemperatureValue,
+            pvt: Optional[ProcessVariation] = None,
+            rc: Optional[RCVariation] = None,
+            sdc: Optional[str] = None) -> "MMMCCorner":
+        return super().__new__(cls, name, type, voltage, temp, pvt, rc, sdc)
+
+    @staticmethod
+    def from_dict(d: dict) -> "MMMCCorner":
+        pvt_value = None
+        rc_value = None
+        sdc_value = None
+        if 'pvt' in d:
+            pvt_value = ProcessVariation.from_dict(d['pvt'])
+        if 'rc' in d:
+            rc_value = RCVariation.from_dict(d['rc'])
+        if 'sdc' in d:
+            sdc_value = str(d['sdc'])
+        return MMMCCorner(
+            name=str(d['name']),
+            type=MMMCCornerType.from_string(str(d['type'])),
+            voltage=VoltageValue(str(d['voltage'])),
+            temp=TemperatureValue(str(d['temp'])),
+            pvt=pvt_value,
+            rc=rc_value,
+            sdc=sdc_value
+        )
+
+    def to_dict(self) -> dict:
+        output = {
+            "name": self.name,
+            "type": str(self.type),
+            "voltage": str(self.voltage),
+            "temp": str(self.temp)
+        }
+        if self.pvt is not None:
+            output.update({'pvt': self.pvt.to_dict()})
+        if self.rc is not None:
+            output.update({'rc': self.rc.to_dict()})
+        if self.sdc is not None:
+            output.update({'sdc': str(self.sdc)})
+        return output
 
 class GroupPath(NamedTuple('Margins', [
     ('name', str),

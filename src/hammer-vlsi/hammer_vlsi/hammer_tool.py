@@ -932,7 +932,7 @@ class HammerTool(metaclass=ABCMeta):
                 error = True
         return not error
 
-    def filter_for_mmmc(self, voltage: VoltageValue, temp: TemperatureValue) -> Callable[[hammer_tech.Library],bool]:
+    def filter_for_mmmc(self, voltage: VoltageValue, temp: TemperatureValue, pvt: Optional[ProcessVariation] = None) -> Callable[[hammer_tech.Library],bool]:
         """
         Selecting libraries that match given temp and voltage.
         """
@@ -941,11 +941,19 @@ class HammerTool(metaclass=ABCMeta):
                 return False
             if lib.supplies is None or lib.supplies.VDD is None:
                 return False
+            if pvt is not None:
+                if lib.corner is None or lib.corner.nmos is None or lib.corner.pmos is None:
+                    return False
+                lib_nmos = ProcessVariationType.from_str(str(lib.corner.nmos))
+                lib_pmos = ProcessVariationType.from_str(str(lib.corner.pmos))
             lib_temperature = TemperatureValue(str(lib.corner.temperature))
             lib_VDD = VoltageValue(str(lib.supplies.VDD))
             if lib_temperature == temp:
                 if lib_VDD == voltage:
-                    return True
+                    if pvt is not None:
+                        return pvt.nmos == lib_nmos and pvt.pmos == lib_pmos
+                    else:
+                        return True
                 else:
                     return False
             else:
@@ -1451,17 +1459,7 @@ class HammerTool(metaclass=ABCMeta):
         corners = self.get_setting("vlsi.inputs.mmmc_corners")
         output = []  # type: List[MMMCCorner]
         for corner in corners:
-            corner_type = MMMCCornerType.from_string(str(corner["type"]))
-            sdc = None  # type: Optional[str]
-            if "sdc" in corner:
-                sdc = str(corner["sdc"])
-            corn = MMMCCorner(
-                name=str(corner["name"]),
-                type=corner_type,
-                voltage=VoltageValue(str(corner["voltage"])),
-                temp=TemperatureValue(str(corner["temp"])),
-                sdc=sdc
-            )
+            corn = MMMCCorner.from_dict(corner)
             output.append(corn)
         return output
 
