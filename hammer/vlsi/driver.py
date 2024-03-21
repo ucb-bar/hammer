@@ -1742,14 +1742,11 @@ class HammerDriver:
                 # Check if the hierarchical constraints are a list of dicts or a dict
                 # list of dicts is for legacy compatibility. Meta directives don't work.
                 if isinstance(next(iter(list_of_hier_constraints[0].values())), list):
-                    print("list of dicts")
                     hier_constraints = reduce(add_dicts, list_of_hier_constraints, {})
                 else:
                     # run combine_configs per module to resolve meta directives
                     for module in combined_raw_placement_dict:
                         mod_configs = list(map(lambda x: x.get(module, {}), list_of_hier_constraints))
-                        print(module)
-                        print(mod_configs)
                         hier_constraints[module] = hammer_config.combine_configs(mod_configs)
         elif hier_source == "from_placement":
             raise NotImplementedError("Generation from placement not implemented yet")
