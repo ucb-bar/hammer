@@ -138,7 +138,7 @@ class HammerDriver:
         return hammer_config.combine_configs(self.project_configs)
 
     @property
-    def active_tool(self) -> HammerTool:
+    def active_tool(self) -> Optional[HammerTool]:
         """
         Get the active tool. This is the tool that is currently being run.
         """
@@ -148,7 +148,7 @@ class HammerDriver:
         try:
             return next(filter(lambda x: x is not None, tools))
         except:
-            raise ValueError("No active tool in the HammerDriver (did you call get_active_tool before instantiate_tool_from_config?)")
+            return None
 
     def update_project_configs(self, project_configs: List[dict]) -> None:
         """
@@ -1676,11 +1676,14 @@ class HammerDriver:
         Remove the current module's hierarchical settings from the given config dict.
         This is to prevent these settings from polluting the parent module's configs.
         """
-        mod = self.active_tool.top_module
-        mod_config = next(d for m, d in self.get_hierarchical_settings() if m == mod)
-        for k in mod_config:
-            if k in config:
-                del config[k]
+        tool = self.active_tool
+        if tool is not None:
+            mod = tool.top_module
+            mod_config = [d for m, d in self.get_hierarchical_settings() if m == mod]
+            if len(mod_config) > 0:
+                for k in mod_config[0]:
+                    if k in config:
+                        del config[k]
 
     def _hierarchical_helper(self) -> Tuple[List[Tuple[str, dict]], Dict[str, Tuple[List[str], List[str]]]]:
         """
@@ -1741,9 +1744,9 @@ class HammerDriver:
             # For each file that does append its path to the special key in the extracted
             # hierarchical constraints section.
             hier_constraint_source = ""  # type: str
+            [config_path_key, _] = self.database.internal_keys()
             for project_conf in self.project_configs:
-                if "vlsi.inputs.hierarchical.constraints" in project_conf:
-                    [config_path_key, _] = self.database.internal_keys()
+                try:
                     hier_constraint_source = project_conf[config_path_key]
                     pc = project_conf["vlsi.inputs.hierarchical.constraints"]  # type: List[Dict]
                     # Add CONFIG_PATH_KEY to actual project configs for each project config's hierarchical constraint
@@ -1759,6 +1762,10 @@ class HammerDriver:
                                 mc[config_path_key] = hier_constraint_source
                             else:
                                 raise TypeError("Invalid type for hierarchical constraints")
+                except:
+                    # No _config_path in the config (from tests)
+                    # Or no vlsi.inputs.hierarchical.constraints in project_conf
+                    continue
             self.update_project_configs(self.project_configs)
             list_of_hier_constraints = self.database.get_setting(
                     "vlsi.inputs.hierarchical.constraints") # type: List[Dict]
