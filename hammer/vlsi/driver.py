@@ -137,19 +137,6 @@ class HammerDriver:
     def project_config(self) -> dict:
         return hammer_config.combine_configs(self.project_configs)
 
-    @property
-    def active_tool(self) -> Optional[HammerTool]:
-        """
-        Get the active tool. This is the tool that is currently being run.
-        """
-        tools = [self.syn_tool, self.par_tool, self.drc_tool, self.lvs_tool,
-                 self.sram_generator_tool, self.sim_tool, self.power_tool,
-                 self.formal_tool, self.timing_tool]
-        try:
-            return next(filter(lambda x: x is not None, tools))
-        except:
-            return None
-
     def update_project_configs(self, project_configs: List[dict]) -> None:
         """
         Update the project configs in the driver and database.
@@ -1671,20 +1658,6 @@ class HammerDriver:
         """
         return self._hierarchical_helper()[0]
 
-    def remove_hierarchical_settings(self, config: dict) -> None:
-        """
-        Remove the current module's hierarchical settings from the given config dict.
-        This is to prevent these settings from polluting the parent module's configs.
-        """
-        tool = self.active_tool
-        if tool is not None:
-            mod = tool.top_module
-            mod_config = [d for m, d in self.get_hierarchical_settings() if m == mod]
-            if len(mod_config) > 0:
-                for k in mod_config[0]:
-                    if k in config:
-                        del config[k]
-
     def _hierarchical_helper(self) -> Tuple[List[Tuple[str, dict]], Dict[str, Tuple[List[str], List[str]]]]:
         """
         Read settings from the database, determine leaf/hierarchical modules, an order of execution, and return an
@@ -1697,8 +1670,8 @@ class HammerDriver:
         hier_source_key = "vlsi.inputs.hierarchical.config_source"
         hier_source = str(self.database.get_setting(hier_source_key))
         hier_modules = {}  # type: Dict[str, List[str]]
-        hier_placement_constraints = {}  # type: Dict[str, List[PlacementConstraint]]
         hier_constraints = {}  # type: Dict[str, Any]
+        hier_placement_constraints = {}  # type: Dict[str, List[PlacementConstraint]]
 
         # This is retrieving the list of hard macro sizes to be used when creating PlacementConstraint tuples later
         list_of_hard_macros = self.database.get_setting("vlsi.technology.extra_macro_sizes")  # type: List[Dict]
@@ -1713,33 +1686,9 @@ class HammerDriver:
             if len(list_of_hier_modules) == 0:
                 raise ValueError("No hierarchical modules defined manually in manual hierarchical mode")
             hier_modules = reduce(add_dicts, list_of_hier_modules)
+            all_modules = list(hier_modules.keys()) + reduce_list_str(add_lists, hier_modules.values())
+            in_place_unique(all_modules)
 
-            list_of_placement_constraints = self.database.get_setting(
-                "vlsi.inputs.hierarchical.manual_placement_constraints")  # type: List[Dict]
-            assert isinstance(list_of_placement_constraints, list)
-            combined_raw_placement_dict = reduce(add_dicts, list_of_placement_constraints, {})  # type: Dict[str, List[Dict[str, Any]]]
-
-            # This helper function filters only the dict containing the toplevel placement constraint, if any, from the provided list of dicts.
-            # If the list does not contain a toplevel constraint, it returns None.
-            def get_toplevel(d: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
-                results = list(filter(lambda x: x["type"] == "toplevel", d))
-                if len(results) == 0:
-                    return None
-                else:
-                    return results[-1]
-
-            # Use the above helper method to filter down the combined raw placement dict into a dict:
-            # - keys are hierarchical module name
-            # - values are dicts containing toplevel constraints or None
-            toplevels_opt = {k: get_toplevel(v) for k, v in combined_raw_placement_dict.items()}  # type: Dict[str, Optional[Dict[str, Any]]]
-            # This filters out all of the Nones to get only hierarchical modules with toplevel placement constraints
-            toplevels = {k: v for k, v in toplevels_opt.items() if v is not None}  # type: Dict[str, Dict[str, Any]]
-            # This converts each dict entry into a MacroSize tuple, which should now represent all hierarchical modules
-            hier_macros = [MacroSize(library="", name=x[0], width=x[1]["width"], height=x[1]["height"]) for x in toplevels.items()]
-            masters = hard_macros + hier_macros
-
-            hier_placement_constraints = {key: list(map(partial(PlacementConstraint.from_masters_and_dict, masters), lst))
-                                          for key, lst in combined_raw_placement_dict.items()}
             # Iterate over project configs to find which ones contain hierarchical constraints
             # For each file that does append its path to the special key in the extracted
             # hierarchical constraints section.
@@ -1773,12 +1722,47 @@ class HammerDriver:
                 # Check if the hierarchical constraints are a list of dicts or a dict
                 # list of dicts is for legacy compatibility. Meta directives don't work.
                 if isinstance(next(iter(list_of_hier_constraints[0].values())), list):
+                    self.log.warning("In vlsi.inputs.hierarchical.constraints, specifying constraints for each module " +
+                        "as a list of single key/value pair dicts is deprecated but still functional. " +
+                        "Recommend using a full dict (like in a flat flow) instead.")
                     hier_constraints = reduce(add_dicts, list_of_hier_constraints, {})
                 else:
                     # run combine_configs per module to resolve meta directives
-                    for module in combined_raw_placement_dict:
+                    for module in all_modules:
                         mod_configs = list(map(lambda x: x.get(module, {}), list_of_hier_constraints))
                         hier_constraints[module] = hammer_config.combine_configs(mod_configs)
+
+            # Process manual placement constraints
+            list_of_placement_constraints = self.database.get_setting(
+                "vlsi.inputs.hierarchical.manual_placement_constraints")  # type: List[Dict]
+            assert isinstance(list_of_placement_constraints, list)
+            # Legacy method: derived from module's vlsi.inputs.placement_constraints
+            if len(list_of_placement_constraints) > 0:
+                self.log.warning("Use of vlsi.inputs.hierarchical.manual_placement_constraints is legacy. " +
+                    "Place them constraints inside vlsi.inputs.placement_constraints for each module instead.")
+                combined_raw_placement_dict = reduce(add_dicts, list_of_placement_constraints, {})  # type: Dict[str, List[Dict[str, Any]]]
+
+                # This helper function filters only the dict containing the toplevel placement constraint, if any, from the provided list of dicts.
+                # If the list does not contain a toplevel constraint, it returns None.
+                def get_toplevel(d: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+                    results = list(filter(lambda x: x["type"] == "toplevel", d))
+                    if len(results) == 0:
+                        return None
+                    else:
+                        return results[-1]
+
+                # Use the above helper method to filter down the combined raw placement dict into a dict:
+                # - keys are hierarchical module name
+                # - values are dicts containing toplevel constraints or None
+                toplevels_opt = {k: get_toplevel(v) for k, v in combined_raw_placement_dict.items()}  # type: Dict[str, Optional[Dict[str, Any]]]
+                # This filters out all of the Nones to get only hierarchical modules with toplevel placement constraints
+                toplevels = {k: v for k, v in toplevels_opt.items() if v is not None}  # type: Dict[str, Dict[str, Any]]
+                # This converts each dict entry into a MacroSize tuple, which should now represent all hierarchical modules
+                hier_macros = [MacroSize(library="", name=x[0], width=x[1]["width"], height=x[1]["height"]) for x in toplevels.items()]
+                masters = hard_macros + hier_macros
+
+                hier_placement_constraints = {key: list(map(partial(PlacementConstraint.from_masters_and_dict, masters), lst))
+                                              for key, lst in combined_raw_placement_dict.items()}
         elif hier_source == "from_placement":
             raise NotImplementedError("Generation from placement not implemented yet")
         else:
@@ -1838,10 +1822,14 @@ class HammerDriver:
 
             constraint_dict = {
                 "vlsi.inputs.hierarchical.mode": str(mode),
-                "synthesis.inputs.top_module": module,
-                "vlsi.inputs.placement_constraints": list(
-                    map(PlacementConstraint.to_dict, hier_placement_constraints.get(module, [])))
+                "synthesis.inputs.top_module": module
             }
+            # manual_placement_constraints specified (legacy)
+            if len(hier_placement_constraints) > 0:
+                constraint_dict = add_dicts(constraint_dict, {
+                    "vlsi.inputs.placement_constraints": list(
+                        map(PlacementConstraint.to_dict, hier_placement_constraints.get(module, [])))
+                })
             if len(hier_constraints) > 0:
                 if isinstance(next(iter(hier_constraints.values())), dict):  # new
                     constraint_dict = add_dicts(hier_constraints.get(module, {}), constraint_dict)

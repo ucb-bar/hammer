@@ -35,28 +35,14 @@ The hierarchal flow is controlled in the ``vlsi.inputs.hierarchal`` namespace. T
 Note how the configuration specific to each module in ``vlsi.inputs.hierarchical.constraints`` appears like they would in a flat flow. This means you can apply meta directives to them as normal, as long as the references are in the same parent dictionary (i.e., key = module name).
 If you have constraints for the same module in multiple files, you can use ``vlsi.inputs.hierarchical.constraints_meta: append`` and the constraints will be combined properly.
 
-There is legacy support for configurations where each item in the constraints is a list - in this case, meta actions are not supported and the entire project configuration must be specified in a single file.
+.. note::
+    In a bottom-up hierarchical flow, submodule instances must have ``type: hardmacro`` in ``vlsi.inputs.placement_constraints`` because they are hardened from below.
 
-Placement constraints for each module, however, are not specified here. Instead, they should be specified in ``vlsi.inputs.hierarchical.manual_placement_constraints``. The parameters such as ``x``, ``y``, ``width``, ``height``, etc. are omitted from each constraint for clarity. In the bottom-up hierarchal flow, instances of submodules are of ``type: hardmacro`` because they are hardened from below.
+Special considerations for legacy support:
 
-.. code-block:: yaml
+* If each module's ``constraints`` is a list of dicts with a single key/value pair, meta actions are not supported and the entire project configuration must be specified in a single file.
 
-    vlsi.inputs.hierarchical:
-      manual_placement_constraints_meta: append
-      manual_placement_constraints:
-      - ChipTop:
-        - path: "ChipTop"
-          type: toplevel
-        - path: "ChipTop/path/to/instance/of/ModuleA"
-          type: hardmacro
-      - ModuleA:
-        - path: "ModuleA"
-          type: toplevel
-        - path: "ModuleA/path/to/instance/of/ModuleAA"
-          type: hardmacro
-      - ModuleAA:
-        - path: "moduleAA"
-          type: toplevel
+* If placement constraints are specified with ``vlsi.inputs.hierarchical.manual_placement_constraints``, all of a given module's placement constraints must be specified in a single file.
 
 Flow Management and Actions
 ---------------------------
@@ -96,7 +82,7 @@ In a bottom-up hierarchical flow, is is important to remember that submodules do
 Special Notes & Limitations
 ---------------------------
 
-#. Hammer IR keys specified at the root level (i.e. outside of ``vlsi.inputs.hierarchical.constraints``) do not override the corresponding submodule constraints. However, if you add a Hammer IR file using ``-p`` on the command line (after the file containing ``vlsi.inputs.hierarchical.constraints``), those keys are global and override submodule constraints unless a meta action is specified. To avoid confusion, it is recommended to specify all constraints module-by-module with ``vlsi.inputs.hierarchical.constraints``.
+#. Hammer IR keys specified at the root level (i.e. outside of ``vlsi.inputs.hierarchical.constraints``) are overridden by the corresponding submodule constraints. Generally, to avoid confusion, it is recommended to specify all constraints module-by-module with ``vlsi.inputs.hierarchical.constraints``.
 
 #. Most Hammer APIs are not yet intelligent enough to constrain across hierarchical boundaries. For example:
 
