@@ -11,7 +11,7 @@ Hierarchical Hammer Config
 The hierarchal flow is controlled in the ``vlsi.inputs.hierarchal`` namespace. To specify hierarchical mode, you must specify the following keys. In this example, we have our top module set as ``ChipTop``, with a submodule ``ModuleA`` and another submdule ``ModuleAA`` below that (these are names of Verilog modules).
 
 .. code-block:: yaml
-    
+
     vlsi.inputs.hierarchical:
       mode: hierarchical
       top_module: ChipTop
@@ -23,42 +23,31 @@ The hierarchal flow is controlled in the ``vlsi.inputs.hierarchal`` namespace. T
         - ModuleAA
       constraints:
       - ChipTop:
-        - vlsi.core...
-        - vlsi.inputs...
+          vlsi.core...
+          vlsi.inputs...
       - ModuleA:
-        - vlsi.core...
-        - vlsi.inputs...
+          vlsi.core...
+          vlsi.inputs...
       - ModuleAA:
-        - vlsi.core...
-        - vlsi.inputs...
+          vlsi.core...
+          vlsi.inputs...
 
-Note how the configuration specific to each module in ``vlsi.inputs.hierarchical.constraints`` are list items, whereas in a flat flow, they would be at the root level.
+Note how the configuration specific to each module in ``vlsi.inputs.hierarchical.constraints`` appears like they would in a flat flow. This means you can apply meta directives to them as normal, as long as the references are in the same parent dictionary (i.e., key = module name).
+If you have constraints for the same module in multiple files, you can use ``vlsi.inputs.hierarchical.constraints_meta: append`` and the constraints will be combined properly.
 
-Placement constraints for each module, however, are not specified here. Instead, they should be specified in ``vlsi.inputs.hierarchical.manual_placement_constraints``. The parameters such as ``x``, ``y``, ``width``, ``height``, etc. are omitted from each constraint for clarity. In the bottom-up hierarchal flow, instances of submodules are of ``type: hardmacro`` because they are hardened from below.
+.. note::
+    In a bottom-up hierarchical flow, submodule instances must have ``type: hardmacro`` in ``vlsi.inputs.placement_constraints`` because they are hardened from below.
 
-.. code-block:: yaml
+Special considerations for legacy support:
 
-    vlsi.inputs.hierarchical:
-      manual_placement_constraints_meta: append
-      manual_placement_constraints:
-      - ChipTop:
-        - path: "ChipTop"
-          type: toplevel
-        - path: "ChipTop/path/to/instance/of/ModuleA"
-          type: hardmacro
-      - ModuleA:
-        - path: "ModuleA"
-          type: toplevel
-        - path: "ModuleA/path/to/instance/of/ModuleAA"
-          type: hardmacro
-      - ModuleAA:
-        - path: "moduleAA"
-          type: toplevel
+* If each module's ``constraints`` is a list of dicts with a single key/value pair, meta actions are not supported and the entire project configuration must be specified in a single file.
+
+* If placement constraints are specified with ``vlsi.inputs.hierarchical.manual_placement_constraints``, all of a given module's placement constraints must be specified in a single file.
 
 Flow Management and Actions
 ---------------------------
 
-Based on the structure in ``vlsi.inputs.hierarchical.manual_modules``, Hammer constructs a hierarchical flow graph of dependencies. In this particular example, synthesis and place-and-route of ``ModuleAA`` will happen first. Synthesis of ``ModuleA`` will then depend on the place-and-route output of ``ModuleAA``, and so forth. 
+Based on the structure in ``vlsi.inputs.hierarchical.manual_modules``, Hammer constructs a hierarchical flow graph of dependencies. In this particular example, synthesis and place-and-route of ``ModuleAA`` will happen first. Synthesis of ``ModuleA`` will then depend on the place-and-route output of ``ModuleAA``, and so forth.
 
 These are enumerated in the auto-generated Makefile, ``hammer.d``, which is placed in the directory pointed to by the ``--obj_dir`` command line flag when the ``buildfile`` action is run. This action must be run BEFORE executing your flow. If you adjust the hierarchy, you must re-run this action.
 
@@ -93,15 +82,7 @@ In a bottom-up hierarchical flow, is is important to remember that submodules do
 Special Notes & Limitations
 ---------------------------
 
-#. Hammer IR keys propagate up through the hierarchical tree. For example, if ``vlsi.inputs.clocks`` was specified in the constraints for ``ModuleAA`` but not for ``ModuleA``, ``ModuleA`` will inherit ``ModuleAA``'s constraints. Take special care of where your constraints come from, especially for a parent module with more than one submodule. To avoid confusion, it is recommended to specify the same set of keys for every module.
-
-#. Hammer IR keys specified at the root level (i.e. outside of ``vlsi.inputs.hierarchical.constraints``) do not override the corresponding submodule constraints. However, if you add a Hammer IR file using ``-p`` on the command line (after the file containing ``vlsi.inputs.hierarchical.constraints``), those keys are global and override submodule constraints unless a meta action is specified. To avoid confusion, it is recommended to specify all constraints with ``vlsi.inputs.hierarchical.constraints``.
-
-#. Due to the structure of ``vlsi.inputs.hierarchical.constraints`` as a list structure, currently, there are the following limitations:
-
-    * You must include all of the constraints in a single file. The config parser is unable to combine constraints from differnt files because most meta actions do not work on list items (advanced users will need to use ``deepsubst``). This will make it harder for collaboration, and unfortunately, changes to module constraints at a higher level of hierarchy after submodules are hardened will trigger the Make dependencies, so you will need to modify the generated Makefile or use redo-targets.
-
-    * Other issues have been observed, such as the bump API failing (see `this issue <https://github.com/ucb-bar/hammer/issues/401>`_ at the top module level. This is caused by similar mechanisms as above. The workaround is to ensure that bumps are specified at the root level for only the top module and the bumps step is removed from submodule par actions.
+#. Hammer IR keys specified at the root level (i.e. outside of ``vlsi.inputs.hierarchical.constraints``) are overridden by the corresponding submodule constraints. Generally, to avoid confusion, it is recommended to specify all constraints module-by-module with ``vlsi.inputs.hierarchical.constraints``.
 
 #. Most Hammer APIs are not yet intelligent enough to constrain across hierarchical boundaries. For example:
 
