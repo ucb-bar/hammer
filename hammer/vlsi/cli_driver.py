@@ -475,6 +475,7 @@ class CLIDriver:
             raise ValueError("Output-only config does not appear to be output only")
 
         output_full = deepdict(driver.project_config)
+        driver.remove_hierarchical_settings(output_full)
         output_full.update(deepdict(output))
         # Merged configs are always complete
         if "vlsi.builtins.is_complete" in output_full:

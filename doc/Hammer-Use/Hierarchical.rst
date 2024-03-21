@@ -96,9 +96,7 @@ In a bottom-up hierarchical flow, is is important to remember that submodules do
 Special Notes & Limitations
 ---------------------------
 
-#. Hammer IR keys propagate up through the hierarchical tree when using the auto-generated Makefile. For example, if ``vlsi.inputs.clocks`` was specified in the constraints for ``ModuleAA`` but not for ``ModuleA``, ``ModuleA`` will inherit ``ModuleAA``'s constraints. Take special care of where your constraints come from, especially for a parent module with more than one submodule. To avoid confusion, it is recommended to specify the same set of keys for every module.
-
-#. Hammer IR keys specified at the root level (i.e. outside of ``vlsi.inputs.hierarchical.constraints``) do not override the corresponding submodule constraints. However, if you add a Hammer IR file using ``-p`` on the command line (after the file containing ``vlsi.inputs.hierarchical.constraints``), those keys are global and override submodule constraints unless a meta action is specified. To avoid confusion, it is recommended to specify all constraints with ``vlsi.inputs.hierarchical.constraints``.
+#. Hammer IR keys specified at the root level (i.e. outside of ``vlsi.inputs.hierarchical.constraints``) do not override the corresponding submodule constraints. However, if you add a Hammer IR file using ``-p`` on the command line (after the file containing ``vlsi.inputs.hierarchical.constraints``), those keys are global and override submodule constraints unless a meta action is specified. To avoid confusion, it is recommended to specify all constraints module-by-module with ``vlsi.inputs.hierarchical.constraints``.
 
 #. Most Hammer APIs are not yet intelligent enough to constrain across hierarchical boundaries. For example:
 

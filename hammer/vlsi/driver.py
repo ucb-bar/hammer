@@ -137,6 +137,19 @@ class HammerDriver:
     def project_config(self) -> dict:
         return hammer_config.combine_configs(self.project_configs)
 
+    @property
+    def active_tool(self) -> HammerTool:
+        """
+        Get the active tool. This is the tool that is currently being run.
+        """
+        tools = [self.syn_tool, self.par_tool, self.drc_tool, self.lvs_tool,
+                 self.sram_generator_tool, self.sim_tool, self.power_tool,
+                 self.formal_tool, self.timing_tool]
+        try:
+            return next(filter(lambda x: x is not None, tools))
+        except:
+            raise ValueError("No active tool in the HammerDriver (did you call get_active_tool before instantiate_tool_from_config?)")
+
     def update_project_configs(self, project_configs: List[dict]) -> None:
         """
         Update the project configs in the driver and database.
@@ -1657,6 +1670,17 @@ class HammerDriver:
         :return: List of tuples of (module name, config snippet)
         """
         return self._hierarchical_helper()[0]
+
+    def remove_hierarchical_settings(self, config: dict) -> None:
+        """
+        Remove the current module's hierarchical settings from the given config dict.
+        This is to prevent these settings from polluting the parent module's configs.
+        """
+        mod = self.active_tool.top_module
+        mod_config = next(d for m, d in self.get_hierarchical_settings() if m == mod)
+        for k in mod_config:
+            if k in config:
+                del config[k]
 
     def _hierarchical_helper(self) -> Tuple[List[Tuple[str, dict]], Dict[str, Tuple[List[str], List[str]]]]:
         """
