@@ -1671,7 +1671,7 @@ class HammerDriver:
         hier_source = str(self.database.get_setting(hier_source_key))
         hier_modules = {}  # type: Dict[str, List[str]]
         hier_placement_constraints = {}  # type: Dict[str, List[PlacementConstraint]]
-        hier_constraints = {}  # type: Dict[str, List[Dict]]
+        hier_constraints = {}  # type: Dict[str, Any]
 
         # This is retrieving the list of hard macro sizes to be used when creating PlacementConstraint tuples later
         list_of_hard_macros = self.database.get_setting("vlsi.technology.extra_macro_sizes")  # type: List[Dict]
@@ -1725,16 +1725,32 @@ class HammerDriver:
                     # Add CONFIG_PATH_KEY to actual project configs for each project config's hierarchical constraint
                     # keys then update project configs at the end
                     for md in pc:
-                        md  # one entry dict with a list
-                        for m in md.keys():
-                            if config_path_key in md[m][-1]:
+                        md  # one entry dict with a list or dict
+                        for mc in md.values():
+                            if config_path_key in mc:
                                 pass
+                            elif isinstance(mc, list):  # legacy (see below)
+                                mc.append({config_path_key: hier_constraint_source})
+                            elif isinstance(mc, dict):  # new (see below)
+                                mc[config_path_key] = hier_constraint_source
                             else:
-                                md[m].append({config_path_key: hier_constraint_source})
+                                raise TypeError("Invalid type for hierarchical constraints")
             self.update_project_configs(self.project_configs)
             list_of_hier_constraints = self.database.get_setting(
                     "vlsi.inputs.hierarchical.constraints") # type: List[Dict]
-            hier_constraints = reduce(add_dicts, list_of_hier_constraints, {})
+            if len(list_of_hier_constraints) > 0:
+                # Check if the hierarchical constraints are a list of dicts or a dict
+                # list of dicts is for legacy compatibility. Meta directives don't work.
+                if isinstance(next(iter(list_of_hier_constraints[0].values())), list):
+                    print("list of dicts")
+                    hier_constraints = reduce(add_dicts, list_of_hier_constraints, {})
+                else:
+                    # run combine_configs per module to resolve meta directives
+                    for module in combined_raw_placement_dict:
+                        mod_configs = list(map(lambda x: x.get(module, {}), list_of_hier_constraints))
+                        print(module)
+                        print(mod_configs)
+                        hier_constraints[module] = hammer_config.combine_configs(mod_configs)
         elif hier_source == "from_placement":
             raise NotImplementedError("Generation from placement not implemented yet")
         else:
@@ -1798,7 +1814,11 @@ class HammerDriver:
                 "vlsi.inputs.placement_constraints": list(
                     map(PlacementConstraint.to_dict, hier_placement_constraints.get(module, [])))
             }
-            constraint_dict = reduce(add_dicts, hier_constraints.get(module, []), constraint_dict)
+            if len(hier_constraints) > 0:
+                if isinstance(next(iter(hier_constraints.values())), dict):  # new
+                    constraint_dict = add_dicts(hier_constraints.get(module, {}), constraint_dict)
+                else:  # legacy
+                    constraint_dict = reduce(add_dicts, hier_constraints.get(module, []), constraint_dict)
             output.append((module, constraint_dict))
 
         return (output, dependency_graph)

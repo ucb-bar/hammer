@@ -29,9 +29,10 @@ vlsi.inputs.hierarchical:
     - SubModD: []
     - SubModE: []
   constraints:
-    - SubModA:
-        - vlsi.inputs.power_spec_type: manual
-        - vlsi.inputs.power_spec_contents: fake_upf_command
+    - SubModC:
+        vlsi.inputs.power_spec_type: manual
+        vlsi.inputs.power_spec_contents: fake_command
+        par.generate_power_straps_options.by_tracks.strap_layers: [m3, m4, m5]
 
 vlsi.core.synthesis_tool: "hammer.synthesis.mocksynth"
 synthesis.mocksynth.temp_folder: "obj_dir"
