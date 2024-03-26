@@ -994,7 +994,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         assert self.get_setting("par.generate_power_straps_method") == "by_tracks", "Hierarchical write_ilm currently requires auto power_straps by_tracks"
         top_layer = self.get_setting("par.generate_power_straps_options.by_tracks.pin_layers")
         assert len(top_layer) == 1, "Hierarchical write_ilm requires 1 pin layer specified"
-        self.verbose_append("write_lef_abstract -5.8 -top_layer {top_layer} -stripe_pins -pg_pin_layers {{{top_layer}}} {top}ILM.lef".format(
+        self.verbose_append("write_lef_abstract -5.8 -top_layer {top_layer} -stripe_pins -portForEachStripePin -pg_pin_layers {{{top_layer}}} {top}ILM.lef".format(
             top=self.top_module,
             top_layer=top_layer[0]
         ))
