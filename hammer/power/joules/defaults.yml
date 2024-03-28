@@ -8,4 +8,4 @@ power.joules:
 
   # Joules version to use.
   # Used to locate the binary - e.g. the '221' in ${cadence.cadence_home}/DDI/DDI221/JLS221/bin/joules
-  version: "221"
+  version: "231"

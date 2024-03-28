@@ -2,7 +2,7 @@ import json
 import os
 from typing import Dict, Any, Iterator
 
-from pydantic import BaseModel
+from pydantic import ConfigDict, BaseModel
 import pytest
 
 import hammer.pcb.generic
@@ -15,9 +15,7 @@ class PCBToolTextContext(BaseModel):
     driver: hammer_vlsi.HammerDriver
     temp_dir: str
     env: Dict[Any, Any] = {}
-
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 @pytest.fixture()

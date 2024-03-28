@@ -7,7 +7,7 @@ from enum import Enum
 from functools import partial
 from typing import Any, List, Tuple, Optional
 
-from pydantic import BaseModel, root_validator
+from pydantic import model_validator, ConfigDict, BaseModel
 
 from hammer.utils import coerce_to_grid
 from hammer.logging import HammerVLSILoggingContext
@@ -51,8 +51,8 @@ class WidthSpacingTuple(BaseModel):
 
     @staticmethod
     def from_setting(grid_unit: Decimal, d: dict) -> "WidthSpacingTuple":
-        width_at_least = coerce_to_grid(d["width_at_least"], grid_unit)
-        min_spacing = coerce_to_grid(d["min_spacing"], grid_unit)
+        width_at_least = coerce_to_grid(Decimal(str(d["width_at_least"])), grid_unit)
+        min_spacing = coerce_to_grid(Decimal(str(d["min_spacing"])), grid_unit)
         assert width_at_least >= 0
         assert min_spacing > 0
         return WidthSpacingTuple(
@@ -110,11 +110,10 @@ class Metal(BaseModel):
     # Note: grid_unit is not currently parsed as part of the Metal data structure!
     # See #379
     grid_unit: Decimal
+    model_config = ConfigDict(use_enum_values=True)
 
-    class Config:
-        use_enum_values = True
-
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def widths_must_snap_to_grid(cls, values):
         grid_unit = Decimal(str(values.get("grid_unit")))
         for field in ["min_width", "pitch", "offset"]:
@@ -148,10 +147,10 @@ class Metal(BaseModel):
             name=str(d["name"]),
             index=int(d["index"]),
             direction=RoutingDirection(d["direction"]),
-            min_width=coerce_to_grid(d["min_width"], grid_unit),
-            max_width=coerce_to_grid(d["max_width"], grid_unit) if "max_width" in d and d["max_width"] is not None else None,
-            pitch=coerce_to_grid(d["pitch"], grid_unit),
-            offset=coerce_to_grid(d["offset"], grid_unit),
+            min_width=coerce_to_grid(Decimal(str(d["min_width"])), grid_unit),
+            max_width=coerce_to_grid(Decimal(str(d["max_width"])), grid_unit) if "max_width" in d and d["max_width"] is not None else None,
+            pitch=coerce_to_grid(Decimal(str(d["pitch"])), grid_unit),
+            offset=coerce_to_grid(Decimal(str(d["offset"])), grid_unit),
             power_strap_widths_and_spacings=WidthSpacingTuple.from_list(grid_unit, d["power_strap_widths_and_spacings"]),
             power_strap_width_table=Metal.power_strap_widths_from_list(grid_unit, d["power_strap_width_table"] if "power_strap_width_table" in d and d["power_strap_width_table"] else [])
         )
@@ -245,6 +244,7 @@ class Metal(BaseModel):
         Issues a logger warning for the user if the returned width was quantized.
         """
         width_table = self.power_strap_width_table
+        qwidth: Optional[Decimal] = None
         if len(width_table) == 0:
             qwidth = width
         else:
@@ -265,6 +265,7 @@ class Metal(BaseModel):
                         logger.warning("The desired power strap width {dw} on {lay} was quantized down to {fw} based on the technology's width table. Please check your power grid.".format(dw=str(width), lay=layer, fw=str(width_table[i-1])))
                     qwidth = width_table[i-1]
                     break
+        assert qwidth
         return qwidth
 
     def get_width_spacing_start_twt(self,

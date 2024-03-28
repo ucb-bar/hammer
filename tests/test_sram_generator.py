@@ -2,7 +2,7 @@ import json
 import os
 from typing import Dict, Any, List, Iterator
 
-from pydantic import BaseModel
+from pydantic import ConfigDict, BaseModel
 import pytest
 
 from hammer import vlsi as hammer_vlsi
@@ -14,9 +14,7 @@ class SRAMGeneratorTestContext(BaseModel):
     env: Dict[Any, Any] = {}
     driver: hammer_vlsi.HammerDriver
     temp_dir: str
-
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 @pytest.fixture()

@@ -54,9 +54,9 @@ class TestVoltageValue:
 
         # Check that comparing against the wrong type leads to TypeError
         with pytest.raises(TypeError):
-            value_125_mV == "125 mV"
+            value_125_mV == "125 mV"  # type: ignore
         with pytest.raises(TypeError):
-            value_125_mV2 == hammer_vlsi.units.TimeValue("0.125")
+            value_125_mV2 == hammer_vlsi.units.TimeValue("0.125")  # type: ignore
         with pytest.raises(TypeError):
             value_125_mV < 1  # type: ignore
         with pytest.raises(TypeError):

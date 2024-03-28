@@ -18,11 +18,11 @@ class TestHammerVLSILogging:
 
         HammerVLSILogging.enable_colour = True
         log.info(msg)
-        assert HammerVLSILogging.get_colour_escape(Level.INFO) + "[test] " + msg + HammerVLSILogging.COLOUR_CLEAR == HammerVLSILogging.get_buffer()[0]
+        assert HammerVLSILogging.get_colour_escape(Level.INFO) + "[test] " + msg + HammerVLSILogging.COLOUR_CLEAR == list(HammerVLSILogging.get_buffer())[0]
 
         HammerVLSILogging.enable_colour = False
         log.info(msg)
-        assert "[test] " + msg == HammerVLSILogging.get_buffer()[0]
+        assert "[test] " + msg == list(HammerVLSILogging.get_buffer())[0]
 
     def test_subcontext(self):
         HammerVLSILogging.enable_colour = False
