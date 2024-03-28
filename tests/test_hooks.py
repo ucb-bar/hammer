@@ -2,7 +2,7 @@ import json
 import os
 from typing import Optional, Callable, Iterator
 
-from pydantic import BaseModel
+from pydantic import ConfigDict, BaseModel
 import pytest
 
 from hammer import vlsi as hammer_vlsi
@@ -13,10 +13,8 @@ from hammer.vlsi.hooks import HammerStartStopStep
 
 class HooksTestContext(BaseModel):
     temp_dir: str
-    driver: Optional[hammer_vlsi.HammerDriver]
-
-    class Config:
-        arbitrary_types_allowed = True
+    driver: Optional[hammer_vlsi.HammerDriver] = None
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 @pytest.fixture()

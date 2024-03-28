@@ -4,6 +4,7 @@ Adapted from https://raw.githubusercontent.com/vasil9v/yaml2json.py/c4cfa408bbab
 """
 import sys
 import yaml
+import json
 from hammer.config.yaml2json import convertArrays, compare
 
 def load(f):
@@ -27,7 +28,9 @@ def yaml2json():
         f2 = None
         if len(sys.argv) > 2:
             f2 = sys.argv[2]
-        obj = yaml.safe_load(load(f))
+        loaded_file = load(f)
+        assert loaded_file
+        obj = yaml.safe_load(loaded_file)
         obj = convertArrays(obj)
         outputContent = json.dumps(obj, indent=2)
         obj2 = json.loads(outputContent)

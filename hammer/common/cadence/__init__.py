@@ -103,7 +103,7 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
         """
         sdc_files = [] # type: List[str]
 
-        # Generate constraints
+        # Generate clock constraints
         clock_constraints_fragment = os.path.join(self.run_dir, "clock_constraints_fragment.sdc")
         self.write_contents_to_path(self.sdc_clock_constraints, clock_constraints_fragment)
         sdc_files.append(clock_constraints_fragment)
@@ -131,6 +131,9 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
         constraint_mode = "my_constraint_mode"
 
         sdc_files = self.generate_sdc_files()
+
+        # Append any custom SDC files.
+        sdc_files.extend(self.get_setting("vlsi.inputs.custom_sdc_files"))
 
         # Add the post-synthesis SDC, if present.
         post_synth_sdc = self.post_synth_sdc
@@ -207,10 +210,15 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
 
             # Finally, apply the analysis view.
             # TODO: should not need to analyze extra views as well. Defaulting to hold for now (min. runtime impact).
-            append_mmmc("set_analysis_view -setup {{ {setup_views} }} -hold {{ {hold_views} {extra_views} }}".format(
+            # First extra view is assumed to be for dynamic and leakage power calculation.
+            power_opts = ""
+            if len(extra_view_names) > 0:
+                power_opts = f"-dynamic {extra_view_names[0]} -leakage {extra_view_names[0]}"
+            append_mmmc("set_analysis_view -setup {{ {setup_views} }} -hold {{ {hold_views} {extra_views} }} {power}".format(
                 setup_views=" ".join(setup_view_names),
                 hold_views=" ".join(hold_view_names),
-                extra_views=" ".join(extra_view_names)
+                extra_views=" ".join(extra_view_names),
+                power=power_opts
             ))
         else:
             # First, create an Innovus library set.

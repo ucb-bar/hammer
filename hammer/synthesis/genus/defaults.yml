@@ -6,7 +6,7 @@ synthesis.genus:
 
   # Genus version to use.
   # Used to locate the binary - e.g. the '221' in ${cadence.cadence_home}/DDI/DDI221/GENUS221/bin/genus
-  version: "221"
+  version: "231"
 
   # Generate the TCL file but do not run it yet.
   generate_only: false
