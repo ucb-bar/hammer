@@ -68,7 +68,7 @@ def power_straps_test_context(tmp_path, tech_name: str, straps_options: Dict[str
     driver = hammer_vlsi.HammerDriver(options)
     assert driver.load_par_tool()
     yield PowerStrapsTestContext(temp_dir=tech_dir_base, driver=driver)
-# one test mesh, the other mixed
+
 def simple_straps_options() -> Dict[str, Any]:
     # TODO clean this up a bit
 
@@ -323,7 +323,6 @@ class TestPowerStrapsTest(HasGetTech):
                 assert entry["nets"] == nets
                 # TODO more tests in a future PR
                 assert strap_spacing == strap_pitch / 2 - strap_width
-                print('========================================',strap_width)
             elif layer_name == "M5":
                 assert entry["bbox"] == []
                 assert entry["nets"] == nets
