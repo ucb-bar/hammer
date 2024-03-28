@@ -332,6 +332,7 @@ par:
       # type: list[str]
       strap_layers: list[str]
 
+
       # Indicates if Hammer should generate straps for the stdcell rail layer
       # type: bool
       generate_rail_layer: bool
@@ -343,6 +344,11 @@ par:
       # Indicates which power nets straps should be generated for
       # type: list[str]
       power_nets: list[str]
+
+      # Powerstrap patterns: e.g. "coupled" or "mesh"
+      # type: str
+      pattern: str
+
 
 # DRC settings
 drc.inputs:
