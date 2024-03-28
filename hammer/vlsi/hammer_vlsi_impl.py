@@ -685,7 +685,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         :param blockage_spacing: The minimum spacing between the end of a strap and the beginning of a macro or blockage.
         :param track_pitch: The integer pitch between groups of power straps (i.e. from left edge of strap A to the next left edge of strap A) in units of the routing pitch.
         :param track_width: The desired number of routing tracks to consume by a single power strap.
-        :param track_spacing: The desired number of USABLE routing tracks between power straps. It is recommended to leave this at 0 except to fix DRC issues.
+        :param track_spacing: The desired number of USABLE routing tracks between power straps (e.g. between VDD and VSS). It is recommended to leave this at 0 except to fix DRC issues.
         :param track_start: The index of the first track to start using for power straps relative to the bounding box.
         :param bbox: The optional (2N)-point bounding box of the area to generate straps. By default the entire core area is used.
         :param nets: A list of power nets to create (e.g. ["VDD", "VSS"], ["VDDA", "VSS", "VDDB"], ... etc.).
@@ -700,7 +700,9 @@ class HammerPlaceAndRouteTool(HammerTool):
         width = Decimal(0)
         spacing = Decimal(0)
         strap_offset = Decimal(0)
-        
+        # Force unit spacing for correct power utilization to reuse twt
+        if pattern == 'mesh':
+            track_spacing = 1
         if track_spacing == 0:
             # An all-power (100% utilization) layer results in us wanting to do a uniform strap pattern, so we can just calculate the
             # maximum width and minimum spacing from the desired pitch, instead of using TWWT.

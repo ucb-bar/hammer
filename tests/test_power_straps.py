@@ -325,6 +325,7 @@ class TestPowerStrapsTest(HasGetTech):
                 assert entry["nets"] == nets
                 # TODO more tests in a future PR
                 assert strap_spacing == strap_pitch / 2 - strap_width
+                print('========================================',strap_width)
             elif layer_name == "M5":
                 assert entry["bbox"] == []
                 assert entry["nets"] == nets
