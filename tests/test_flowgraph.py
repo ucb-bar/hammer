@@ -1,11 +1,9 @@
-import json
 import os
 import tempfile
 import unittest
 from textwrap import dedent
 
 import networkx as nx
-import pytest
 
 from hammer.vlsi.cli_driver import (
     CLIDriver,
@@ -13,7 +11,6 @@ from hammer.vlsi.cli_driver import (
     HammerToolHookAction
 )
 
-from hammer import flowgraph
 from hammer.flowgraph import convert_to_acyclic, Graph, Node, Status
 from hammer.logging import HammerVLSILogging
 
@@ -469,49 +466,6 @@ class TestFlowgraph(unittest.TestCase):
                 else:
                     self.assertTrue(os.path.exists(file))
 
-    @pytest.mark.skip
-    def test_encode_decode(self) -> None:
-        """
-        Test that a flowgraph can be encoded and decoded.
-        """
-        HammerVLSILogging.clear_callbacks()
-        HammerVLSILogging.add_callback(HammerVLSILogging.callback_buffering)
-
-        with tempfile.TemporaryDirectory() as td:
-            os.mkdir(os.path.join(td, "syn_dir"))
-            os.mkdir(os.path.join(td, "par_dir"))
-
-            with open(os.path.join(td, "syn_dir", "syn-in.yml"), 'w', encoding="utf-8") as tf1:
-                tf1.write(MOCK_CFG)
-                
-            syn = Node(
-                "syn", "nop",
-                os.path.join(td, "syn_dir"), os.path.join(td, "s2p_dir"),
-                ["syn-in.yml"],
-                ["syn-out.json"],
-            )
-            s2p = Node(
-                "syn-to-par", "nop",
-                os.path.join(td, "s2p_dir"), os.path.join(td, "par_dir"),
-                ["syn-out.json"],
-                ["s2p-out.json"],
-            )
-            par = Node(
-                "par", "nop",
-                os.path.join(td, "par_dir"), os.path.join(td, "out_dir"),
-                ["s2p-out.json"],
-                ["par-out.json"],
-            )
-            g = Graph({
-                syn: [s2p],
-                s2p: [par],
-                par: []
-            })
-
-            out = json.dumps(g.to_json(), cls=flowgraph.NodeEncoder)
-            g_dec = json.loads(out, object_hook=flowgraph.as_node)
-            # print(g.to_json())
-            # print(json_graph.node_link_graph(g_dec).nodes)
 
 class NodeDummyDriver(CLIDriver):
     def get_extra_synthesis_hooks(self) -> list[HammerToolHookAction]:
