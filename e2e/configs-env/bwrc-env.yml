@@ -33,7 +33,8 @@ technology.sky130:
   sram22_sky130_macros: "/tools/commercial/skywater/local/sram22_sky130_macros"
   openram_lib: "/tools/commercial/skywater/local/sky130_sram_macros"
   sky130_nda: "/tools/commercial/skywater/swtech130/skywater-src-nda-20221031"
-  sky130_cds: "/tools/commercial/skywater/sky130_cds/sky130_prelim_release_091123"
+  sky130_cds: "/tools/commercial/skywater/sky130_cds/PDK/sky130_release_0.0.3/"
+  sky130_scl: "/tools/commercial/skywater/sky130_cds/LIB/sky130_scl_9T_0.0.3/"
 
 # ASAP7 paths
 technology.asap7:

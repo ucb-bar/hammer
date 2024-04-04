@@ -252,15 +252,17 @@ class SKY130Tech(HammerTechnology):
                 Stackup(name=slib, grid_unit=Decimal("0.001"), metals=metals))
 
         elif slib == "sky130_scl":
-            # Cadence's stdcell library doesn't contain clock or power gate cells, so we can't use discrete clock gating
-            self.set_setting("synthesis.clock_gating_mode", "")
 
+            # The cadence PDK (as of version 0.0.3) doesn't seem to have tap nor decap cells, so par won't run (and if we forced it to, lvs would fail)
             spcl_cells = [
                 SpecialCell(cell_type="stdfiller", name=
                             [f"FILL{i**2}" for i in range(7)]),
                 SpecialCell(cell_type="driver", name=[
                             "TBUF"], input_ports=["A"], output_ports=["Y"]),
-                SpecialCell(cell_type="ctsbuffer", name=["CLKBUFX2"])
+                SpecialCell(cell_type="ctsbuffer", name=["CLKBUFX2"]),
+            # NOTE: this cell is marked don't use/touch in v0.0.3 of the cadence stdcell library. we're bypassing this with `enable_scl_clk_gating_cell`.
+                SpecialCell(cell_type=CellType("ctsgate"),
+                            name=["ICGX1"])
             ]
 
             # Generate standard cell library
@@ -399,7 +401,7 @@ class SKY130Tech(HammerTechnology):
         '''
         setting_dir = self.get_setting("technology.sky130.sky130A")
         setting_dir = Path(setting_dir)
-        source_path = setting_dir / 'libs.ref' / \ self.library_name / 'cdl' / f'{self.library_name}.cdl'
+        source_path = setting_dir / 'libs.ref' / self.library_name / 'cdl' / f'{self.library_name}.cdl'
         if not source_path.exists():
             raise FileNotFoundError(f"CDL not found: {source_path}")
 
@@ -538,6 +540,18 @@ class SKY130Tech(HammerTechnology):
                     df.write(line)
                     if line.strip() == 'END pwell':
                         df.write(_the_tlef_edit)
+    def get_tech_syn_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
+        hooks = {}
+
+        def enable_scl_clk_gating_cell(ht: HammerTool) -> bool:
+            ht.append("set_db [get_db lib_cells -if {.base_name == ICGX1}] .avoid false")
+            return True
+
+        # The clock gating cell is set to don't touch/use in the cadence pdk (as of v0.0.3), work around that
+        if self.get_setting("technology.sky130.stdcell_library") == "sky130_scl": 
+            hooks["genus"] = [HammerTool.make_pre_insertion_hook("syn_generic", enable_scl_clk_gating_cell)]
+
+        return hooks.get(tool_name, [])
 
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {
