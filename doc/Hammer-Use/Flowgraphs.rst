@@ -10,15 +10,15 @@ They can be imported via the ``hammer.flowgraph`` module.
 Construction
 ------------
 
-Flowgraphs are nothing more than a collection of ``Node`` instances linked together via a ``Graph`` instance.
+Flowgraphs are consist of a collection of ``Node`` instances linked together via a ``Graph`` instance.
 Each ``Node`` "pulls" from a directory to feed in inputs and "pushes" output files to another directory to be used by other nodes.
-``Node`` instances are roughly equivalent to a single call to the ``hammer-vlsi`` CLI, so they take in similar attributes:
+``Node`` instances are roughly equivalent to a single call to the ``hammer-vlsi`` CLI tool, so they take in similar attributes:
 
 * The action being called
 * The tool used to perform the action
 * The pull and push directories
 * Any *required* input/output files
-* Any *optional* input/output files
+* Any *optional* input/output files (the name of the *first* output file corresponds to the name of the JSON that the action emits)
 * A driver to run the node with; this enables backwards compatibility with :ref:`hooks <hooks>`.
 * Options to specify steps within an action; this enables backwards compatibility with :ref:`flow control <flow-control>`.
 
@@ -71,7 +71,7 @@ This list can be used to instantiate a ``Graph``:
 Using the Hammer CLI tool, separate actions are manually linked via an *auxiliary* action, such as ``syn-to-par``.
 By using a flowgraph, ``Graph`` instances by default *automatically* insert auxiliary actions.
 This means that actions no longer need to be specified in a flow; the necessary nodes are inserted by the flowgraph tool.
-This feature can be disabled by setting ``auto_auxiliary=False``.
+This feature can be disabled by setting ``auto_auxiliary`` to ``False`` in a ``Graph``.
 
 A ``Graph`` can be run by calling the ``run`` method and passing in a starting node.
 When running a flow, each ``Node`` keeps an internal status based on the status of the action being run:
@@ -82,7 +82,7 @@ When running a flow, each ``Node`` keeps an internal status based on the status 
 * ``INCOMPLETE``: The action ran into an error while being run.
 * ``INVALID``: The action's outputs have been invalidated (e.g. inputs or attributes have changed).
 
-The interactions between the statuses are described in the diagram:
+The interactions between the statuses are described in the following state diagram:
 
 .. mermaid::
 
@@ -155,3 +155,11 @@ Which would render like this:
         syn_to_par --> par
 
 Note that the separators have been changed to comply with Mermaid syntax.
+
+Caveats
+-------
+
+The flowgraph frontend has a number of caveats that prevent it from full parity with the current CLI tool:
+
+* If flows are constructed in a Python interactive session, then errors from the underlying tool do *not* propagate to the flowgraph and thus render the interactive session unusable.
+  This can be worked around by embedding the flow in a Python script and running it from the command line.
