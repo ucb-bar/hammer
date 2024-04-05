@@ -40,6 +40,8 @@ class SKY130Tech(HammerTechnology):
                         verilog_sim="cache/primitives.v", provides=[Provide(lib_type="technology")]),
             ]
         elif slib == "sky130_scl":
+        # Since the cadence (v0.0.3) tlef doesn't have nwell/pwell/li1, we can't use the sky130A IO libs. 
+        # TODO: should we just take those layers out of the IO tlef? they shouldn't be necessary since we don't route on those layers
             libs += [
                 Library(lef_file="$SKY130_SCL/lef/sky130_scl_9T.tlef",
                         verilog_sim="$SKY130_SCL/verilog/sky130_scl_9T.v", provides=[Provide(lib_type="technology")]),
@@ -47,98 +49,100 @@ class SKY130Tech(HammerTechnology):
         else:
             raise ValueError(
                 f"Incorrect standard cell library selection: {slib}")
-        # Generate IO cells
-        library = 'sky130_fd_io'
-        SKYWATER_LIBS = os.path.join('$SKY130A', 'libs.ref', library)
-        LIBRARY_PATH = os.path.join(SKY130A,  'libs.ref', library, 'lib')
-        lib_corner_files = os.listdir(LIBRARY_PATH)
-        lib_corner_files.sort()
-        for cornerfilename in lib_corner_files:
-            # Skip versions with no internal power
-            if ('nointpwr' in cornerfilename):
-                continue
-
-            tmp = cornerfilename.replace('.lib', '')
-            # Split into cell, and corner strings
-            # Resulting list if only one ff/ss/tt in name: [<cell_name>, <match 'ff'?>, <match 'ss'?>, <match 'tt'?>, <temp & voltages>]
-            # Resulting list if ff_ff/ss_ss/tt_tt in name: [<cell_name>, <match 'ff'?>, <match 'ss'?>, <match 'tt'?>, '', <match 'ff'?>, <match 'ss'?>, <match 'tt'?>, <temp & voltages>]
-            split_cell_corner = re.split('_(ff)|_(ss)|_(tt)', tmp)
-            cell_name = split_cell_corner[0]
-            process = split_cell_corner[1:-1]
-            temp_volt = split_cell_corner[-1].split('_')[1:]
-
-            # Filter out cross corners (e.g ff_ss or ss_ff)
-            if len(process) > 3:
-                if not functools.reduce(lambda x, y: x and y, map(lambda p, q: p == q, process[0:3], process[4:]), True):
-                    continue
-            # Determine actual corner
-            speed = next(c for c in process if c is not None).replace('_', '')
-            if (speed == 'ff'):
-                speed = 'fast'
-            if (speed == 'tt'):
-                speed = 'typical'
-            if (speed == 'ss'):
-                speed = 'slow'
-
-            temp = temp_volt[0]
-            temp = temp.replace('n', '-')
-            temp = temp.split('C')[0]+' C'
-
-            vdd = ('.').join(temp_volt[1].split('v')) + ' V'
-            # Filter out IO/analog voltages that are not high voltage
-            if temp_volt[2].startswith('1'):
-                continue
-            if len(temp_volt) == 4:
-                if temp_volt[3].startswith('1'):
+        # Generate IO cells unless we're using the Cadence stdcell lib (see above comment about missing layers in tlef)
+        if slib != "sky130_scl": 
+            library = 'sky130_fd_io'
+            SKYWATER_LIBS = os.path.join('$SKY130A', 'libs.ref', library)
+            LIBRARY_PATH = os.path.join(SKY130A,  'libs.ref', library, 'lib')
+            lib_corner_files = os.listdir(LIBRARY_PATH)
+            lib_corner_files.sort()
+            for cornerfilename in lib_corner_files:
+                # Skip versions with no internal power
+                if ('nointpwr' in cornerfilename):
                     continue
 
-            # gpiov2_pad_wrapped has separate GDS
-            if cell_name == 'sky130_ef_io__gpiov2_pad_wrapped':
-                file_lib = 'sky130_ef_io'
-                gds_file = cell_name + '.gds'
-                lef_file = os.path.join(
-                    SKY130A, 'libs.ref', library, 'lef', "sky130_ef_io.lef")
-                spice_file = os.path.join(
-                    SKYWATER_LIBS, 'cdl', file_lib + '.cdl')
-            elif 'sky130_ef_io' in cell_name:
-                file_lib = 'sky130_ef_io'
-                gds_file = file_lib + '.gds'
-                lef_file = os.path.join(
-                    SKY130A, 'libs.ref', library, 'lef', "sky130_ef_io.lef")
-                spice_file = os.path.join(
-                    SKYWATER_LIBS, 'cdl', file_lib + '.cdl')
-            else:
-                file_lib = library
-                gds_file = file_lib + '.gds'
-                lef_file = os.path.join(
-                    SKYWATER_LIBS, 'lef', file_lib + '.lef')
-                spice_file = os.path.join(
-                    SKYWATER_LIBS, 'spice', file_lib + '.spice')
+                tmp = cornerfilename.replace('.lib', '')
+                # Split into cell, and corner strings
+                # Resulting list if only one ff/ss/tt in name: [<cell_name>, <match 'ff'?>, <match 'ss'?>, <match 'tt'?>, <temp & voltages>]
+                # Resulting list if ff_ff/ss_ss/tt_tt in name: [<cell_name>, <match 'ff'?>, <match 'ss'?>, <match 'tt'?>, '', <match 'ff'?>, <match 'ss'?>, <match 'tt'?>, <temp & voltages>]
+                split_cell_corner = re.split('_(ff)|_(ss)|_(tt)', tmp)
+                cell_name = split_cell_corner[0]
+                process = split_cell_corner[1:-1]
+                temp_volt = split_cell_corner[-1].split('_')[1:]
 
-            lib_entry = Library(
-                nldm_liberty_file=os.path.join(
-                    SKYWATER_LIBS, 'lib', cornerfilename),
-                verilog_sim=os.path.join(
-                    SKYWATER_LIBS, 'verilog', file_lib + '.v'),
-                lef_file=lef_file,
-                spice_file=spice_file,
-                gds_file=os.path.join(SKYWATER_LIBS, 'gds', gds_file),
-                corner=Corner(
-                    nmos=speed,
-                    pmos=speed,
-                    temperature=temp
-                ),
-                supplies=Supplies(
-                    VDD=vdd,
-                    GND="0 V"
-                ),
-                provides=[Provide(
-                    lib_type=cell_name,
-                    vt="RVT"
+                # Filter out cross corners (e.g ff_ss or ss_ff)
+                if len(process) > 3:
+                    if not functools.reduce(lambda x, y: x and y, map(lambda p, q: p == q, process[0:3], process[4:]), True):
+                        continue
+                # Determine actual corner
+                speed = next(c for c in process if c is not None).replace('_', '')
+                if (speed == 'ff'):
+                    speed = 'fast'
+                if (speed == 'tt'):
+                    speed = 'typical'
+                if (speed == 'ss'):
+                    speed = 'slow'
+
+                temp = temp_volt[0]
+                temp = temp.replace('n', '-')
+                temp = temp.split('C')[0]+' C'
+
+                vdd = ('.').join(temp_volt[1].split('v')) + ' V'
+                # Filter out IO/analog voltages that are not high voltage
+                if temp_volt[2].startswith('1'):
+                    continue
+                if len(temp_volt) == 4:
+                    if temp_volt[3].startswith('1'):
+                        continue
+
+                # gpiov2_pad_wrapped has separate GDS
+                if cell_name == 'sky130_ef_io__gpiov2_pad_wrapped':
+
+                    file_lib = 'sky130_ef_io'
+                    gds_file = cell_name + '.gds'
+                    lef_file = os.path.join(
+                        SKY130A, 'libs.ref', library, 'lef', "sky130_ef_io.lef")
+                    spice_file = os.path.join(
+                        SKYWATER_LIBS, 'cdl', file_lib + '.cdl')
+                elif 'sky130_ef_io' in cell_name:
+                    file_lib = 'sky130_ef_io'
+                    gds_file = file_lib + '.gds'
+                    lef_file = os.path.join(
+                        SKY130A, 'libs.ref', library, 'lef', "sky130_ef_io.lef")
+                    spice_file = os.path.join(
+                        SKYWATER_LIBS, 'cdl', file_lib + '.cdl')
+                else:
+                    file_lib = library
+                    gds_file = file_lib + '.gds'
+                    lef_file = os.path.join(
+                        SKYWATER_LIBS, 'lef', file_lib + '.lef')
+                    spice_file = os.path.join(
+                        SKYWATER_LIBS, 'spice', file_lib + '.spice')
+
+                lib_entry = Library(
+                    nldm_liberty_file=os.path.join(
+                        SKYWATER_LIBS, 'lib', cornerfilename),
+                    verilog_sim=os.path.join(
+                        SKYWATER_LIBS, 'verilog', file_lib + '.v'),
+                    lef_file=lef_file,
+                    spice_file=spice_file,
+                    gds_file=os.path.join(SKYWATER_LIBS, 'gds', gds_file),
+                    corner=Corner(
+                        nmos=speed,
+                        pmos=speed,
+                        temperature=temp
+                    ),
+                    supplies=Supplies(
+                        VDD=vdd,
+                        GND="0 V"
+                    ),
+                    provides=[Provide(
+                        lib_type=cell_name,
+                        vt="RVT"
+                    )
+                    ]
                 )
-                ]
-            )
-            libs.append(lib_entry)
+                libs.append(lib_entry)
 
         # Stdcell library-dependent lists
         stackups = []  # type: List[Stackup]
@@ -181,6 +185,10 @@ class SKY130Tech(HammerTechnology):
 
             # Generate standard cell library
             library = slib
+
+
+            # scl vs 130a have different site names
+            sites = None
 
             SKYWATER_LIBS = os.path.join('$SKY130A', 'libs.ref', library)
             LIBRARY_PATH = os.path.join(SKY130A,  'libs.ref', library, 'lib')
@@ -251,6 +259,11 @@ class SKY130Tech(HammerTechnology):
             stackups.append(
                 Stackup(name=slib, grid_unit=Decimal("0.001"), metals=metals))
 
+            sites = [
+                Site(name="unithd", x=Decimal("0.46"), y=Decimal("2.72")),
+                Site(name="unithddbl", x=Decimal("0.46"), y=Decimal("5.44"))
+            ]
+
         elif slib == "sky130_scl":
 
             # The cadence PDK (as of version 0.0.3) doesn't seem to have tap nor decap cells, so par won't run (and if we forced it to, lvs would fail)
@@ -262,7 +275,7 @@ class SKY130Tech(HammerTechnology):
                 SpecialCell(cell_type="ctsbuffer", name=["CLKBUFX2"]),
             # NOTE: this cell is marked don't use/touch in v0.0.3 of the cadence stdcell library. we're bypassing this with `enable_scl_clk_gating_cell`.
                 SpecialCell(cell_type=CellType("ctsgate"),
-                            name=["ICGX1"])
+                            name=["ICGX1"]),
             ]
 
             # Generate standard cell library
@@ -309,7 +322,7 @@ class SKY130Tech(HammerTechnology):
                     lef_file=os.path.join(SKY130_CDS_LIB, 'lef', library+'_9T.lef'),
                     spice_file=os.path.join(
                         'cache',             library+'.cdl'),
-                    gds_file=os.path.join(SKY130_CDS, 'gds', library+'_9T.gds'),
+                    gds_file=os.path.join(SKY130_CDS_LIB, 'gds', library+'_9T.gds'),
                     corner=Corner(
                         nmos=speed,
                         pmos=speed,
@@ -336,6 +349,12 @@ class SKY130Tech(HammerTechnology):
                           LEFUtils.get_metals(tlef_path)))
             stackups.append(
                 Stackup(name=slib, grid_unit=Decimal("0.001"), metals=metals))
+
+            sites = [
+                Site(name="CoreSite", x=Decimal("0.46"), y=Decimal("4.14")),
+                Site(name="IOSite", x=Decimal("1.0"), y=Decimal("240.0")),
+                Site(name="CornerSite", x=Decimal("240.0"), y=Decimal("240.0"))
+            ]
 
         else:
             raise ValueError(
@@ -375,10 +394,7 @@ class SKY130Tech(HammerTechnology):
             ],
             additional_lvs_text="",
             tarballs=None,
-            sites=[
-                Site(name="unithd", x=Decimal("0.46"), y=Decimal("2.72")),
-                Site(name="unithddbl", x=Decimal("0.46"), y=Decimal("5.44"))
-            ],
+            sites=sites,
             stackups=stackups,
             special_cells=spcl_cells,
             extra_prefixes=None
@@ -557,10 +573,16 @@ class SKY130Tech(HammerTechnology):
         hooks = {
             "innovus": [
             HammerTool.make_post_insertion_hook( "init_design",      sky130_innovus_settings),
-            HammerTool.make_pre_insertion_hook( "place_tap_cells",   sky130_add_endcaps),
             HammerTool.make_pre_insertion_hook( "power_straps",      sky130_connect_nets),
             HammerTool.make_pre_insertion_hook( "write_design",      sky130_connect_nets2)
             ]}
+        # there are no cap/decap cells in the cadence stdcell library as of version 0.0.3, so we can't do things that reference them
+        if self.get_setting("technology.sky130.stdcell_library") == "sky130_scl": 
+            hooks['innovus'].append(HammerTool.make_replacement_hook("power_straps", power_straps_no_tapcells))
+        else:
+            hooks['innovus'].append(HammerTool.make_pre_insertion_hook( "place_tap_cells",   sky130_add_endcaps))
+
+
         return hooks.get(tool_name, [])
 
     def get_tech_drc_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
@@ -758,6 +780,42 @@ route_special -connect pad_pin -nets {{ {p_nets[0]} {g_nets[0]} }} -detailed_log
 set_dont_touch [get_db [get_db pins -if {.name == *TIE*ESD}] .net]
     ''')
     return True
+
+def power_straps_no_tapcells(ht: HammerTool) -> bool:
+    ht.append('''
+# --------------------------------------------------------------------------------
+# This script was written and developed by HAMMER at UC Berkeley; however, the
+# underlying commands and reports are copyrighted by Cadence. We thank Cadence for
+# granting permission to share our research to help promote and foster the next
+# generation of innovators.
+# --------------------------------------------------------------------------------
+
+# Power strap definition for layer met1 (rails):
+
+set_db add_stripes_stacked_via_bottom_layer met1
+set_db add_stripes_stacked_via_top_layer met1
+set_db add_stripes_spacing_from_block 2.000
+# Provide some stdcells to use as reference because the Cadence (v0.0.3) pdk doesn't have tapcells
+add_stripes -pin_layer met1 -layer met1 -over_pins 1 -master SDFF* -block_ring_bottom_layer_limit met1 -block_ring_top_layer_limit met1 -pad_core_ring_bottom_layer_limit met1 -pad_core_ring_top_layer_limit met1 -direction horizontal -width pin_width -nets { VSS VDD }
+
+# Power strap definition for layer met4:
+
+set_db add_stripes_stacked_via_top_layer met4
+set_db add_stripes_stacked_via_bottom_layer met1
+set_db add_stripes_trim_antenna_back_to_shape {stripe}
+set_db add_stripes_spacing_from_block 2.000
+add_stripes -create_pins 0 -block_ring_bottom_layer_limit met4 -block_ring_top_layer_limit met1 -direction vertical -layer met4 -nets {VSS VDD} -pad_core_ring_bottom_layer_limit met1 -set_to_set_distance 75.90 -spacing 3.66 -switch_layer_over_obs 0 -width 1.86 -area [get_db designs .core_bbox] -start [expr [lindex [lindex [get_db designs .core_bbox] 0] 0] + 7.35]
+
+# Power strap definition for layer met5:
+
+set_db add_stripes_stacked_via_top_layer met5
+set_db add_stripes_stacked_via_bottom_layer met4
+set_db add_stripes_trim_antenna_back_to_shape {stripe}
+set_db add_stripes_spacing_from_block 2.000
+add_stripes -create_pins 1 -block_ring_bottom_layer_limit met5 -block_ring_top_layer_limit met4 -direction horizontal -layer met5 -nets {VSS VDD} -pad_core_ring_bottom_layer_limit met4 -set_to_set_distance 225.40 -spacing 17.68 -switch_layer_over_obs 0 -width 1.64 -area [get_db designs .core_bbox] -start [expr [lindex [lindex [get_db designs .core_bbox] 0] 1] + 5.62]
+''')
+    return True
+
 
 def calibre_drc_blackbox_srams(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerDRCTool), "Exlude SRAMs only in DRC"
