@@ -774,11 +774,11 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
                 raise ValueError(f"Obstruction constraint must contain obs_types: {constraint}")
 
         ### Power Domain ###
-        # This field is disallowed in PowerDomain constraints, optional otherwise
+        # This field is optional
         power_domain = None  # type: Optional[str]
+        if constraint_type == PlacementConstraintType.PowerDomain and "power_domain" not in constraint:
+            raise ValueError(f"Power domain constraint must contain power_domain {constraint}")
         if "power_domain" in constraint:
-            if constraint_type == PlacementConstraintType.PowerDomain:
-                raise ValueError(f"PowerDomain constraint must not contain power_domain: {constraint}")
             power_domain = str(constraint["power_domain"])
 
         ### Master ###

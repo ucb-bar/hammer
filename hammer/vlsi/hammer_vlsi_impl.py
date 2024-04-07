@@ -2079,7 +2079,7 @@ class HasUPFSupport(HammerTool):
         output.append(f'set_design_top {self.top_module}')
         # Create Power Domains
         for domain in domains:
-            pd_name = domain.path if domain.type == PlacementConstraintType.PowerDomain else domain.power_domain
+            pd_name = domain.power_domain
             output.append(f'create_power_domain {pd_name} \\')
             output.append('\t-elements {.}')
         # Get Supply Nets
@@ -2115,7 +2115,7 @@ class HasUPFSupport(HammerTool):
         # Create Level Shifters
         for domain in domains:
             # Input Shifter
-            pd_name = domain.path if domain.type == PlacementConstraintType.PowerDomain else domain.power_domain
+            pd_name = domain.power_domain
             output.append(f'set_level_shifter {pd_name}_INPUTS \\')
             output.append(f'\t-domain {pd_name} \\')
             output.append('\t-applies_to inputs \\')
@@ -2158,10 +2158,10 @@ class HasCPFSupport(HammerTool):
         output.append(f'create_ground_nets -nets {{ {" ".join(g_net.name for g_net in ground_nets)} }}')
         # Define power domain and connections
         first_domain = domains[0]
-        first_domain_name = first_domain.path if first_domain.type == PlacementConstraintType.PowerDomain else first_domain.power_domain
+        first_domain_name = first_domain.power_domain
         output.append(f'create_power_domain -name {first_domain_name} -default')
         for domain in domains[1:]:
-            output.append(f'create_power_domain -name {domain.path if domain.type == PlacementConstraintType.PowerDomain else domain.power_domain}')
+            output.append(f'create_power_domain -name {domain.power_domain}')
             # Assume primary power are first in list
         for p_net, g_net in [(p_net, ground_nets[0]) for p_net in power_nets]:
             output.append(f'update_power_domain -name {p_net.domain} -primary_power_net {p_net.name} -primary_ground_net {g_net.name}')
