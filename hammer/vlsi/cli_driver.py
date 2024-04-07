@@ -157,6 +157,7 @@ class CLIDriver:
         self.timing_rundir = "" # type: Optional[str]
         self.pcb_rundir = ""  # type: Optional[str]
 
+        self.synthesis_action: CLIActionConfigType
         # If a subclass has defined these, don't clobber them in init
         # since the subclass still uses this init function.
         if hasattr(self, "sram_generator_action"):
@@ -322,8 +323,8 @@ class CLIDriver:
                     if "_meta" not in k:
                         print(k)
                 while True:
+                    key = input("Select from the current level of keys: ")
                     try:
-                        key = input("Select from the current level of keys: ")
                         next_level = curr_level[key]
                         break
                     except KeyError:

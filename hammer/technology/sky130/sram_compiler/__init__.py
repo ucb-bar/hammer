@@ -6,7 +6,7 @@ from hammer.vlsi import MMMCCorner, MMMCCornerType, HammerTool, HammerToolStep, 
 from hammer.tech import Corner, Supplies, Provide
 from hammer.vlsi.units import VoltageValue, TemperatureValue
 from hammer.tech import Library, ExtraLibrary
-from typing import NamedTuple, Dict, Any, List
+from typing import NamedTuple, Dict, Any, List, Optional
 from abc import ABCMeta, abstractmethod
 
 class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
@@ -19,7 +19,7 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
     # Run generator for a single sram and corner
     def generate_sram(self, params: SRAMParameters, corner: MMMCCorner) -> ExtraLibrary:
         cache_dir = os.path.abspath(self.technology.cache_dir)
-
+        speed_name: Optional[str] = None
         #TODO: this is really an abuse of the corner stuff
         if corner.type == MMMCCornerType.Setup:
             speed_name = "slow"
@@ -54,6 +54,7 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
             base_dir=self.get_setting('technology.sky130.sram22_sky130_macros')
 
             found = False
+            lib_path: Optional[str] = None
             for fidelity in ["rcc", "rc", "c"]:
                 lib_path="{b}/{n}/{n}_{c}.{f}.lib".format(b=base_dir,n=sram_name,c=corner_str, f=fidelity)
                 if os.path.exists(lib_path):
@@ -64,7 +65,7 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
 
             if not found:
                 self.logger.error(f"SKY130 {params.name} SRAM cache does not support corner {corner_str}")
-
+            assert speed_name
             return ExtraLibrary(prefix=None, library=Library(
                 name=sram_name,
                 nldm_liberty_file=lib_path,
@@ -104,6 +105,7 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
             self.setup_openram_lef(sram_name)
             self.setup_openram_verilog(sram_name)
             # self.setup_sram_lib(sram_name)
+            assert speed_name
             return ExtraLibrary(prefix=None, library=Library(
                 name=sram_name,
                 nldm_liberty_file="{b}/{n}/{n}_{c}.lib".format(b=base_dir,n=sram_name,c=corner_str),

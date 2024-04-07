@@ -61,6 +61,7 @@ class PegasusLVS(HammerLVSTool, CadenceTool):
             "-check_schematic",  # check schematic integrity
             "-control", self.lvs_ctl_file,
             "-log_dir", f"{self.top_module}_logs",
+            "-rc_data", # for PEX
             "-ui_data"  # for results viewer
             ] + rules
 
@@ -115,7 +116,7 @@ class PegasusLVS(HammerLVSTool, CadenceTool):
                 else:
                     f.write(f'schematic_path "{sf}" spice;\n')
             for vf in verilog_files:
-                f.write(f'schematic_path "{vf}" verilog -keep_backslash -detect_buses -check_inconsistent_instances;\n')
+                f.write(f'schematic_path "{vf}" verilog -keep_backslash -detect_buses -check_inconsistent_instances -ignore_instances_with_missing_cell_master;\n')
             f.write(textwrap.dedent(f'''
             schematic_primary {self.top_module};
             layout_path "{self.layout_file}";

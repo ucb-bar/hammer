@@ -5,7 +5,7 @@
 from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import ConfigDict, BaseModel
 
 
 class CellType(str, Enum):
@@ -31,10 +31,7 @@ class SpecialCell(BaseModel):
     # Endcap, filler, etc.
     cell_type: CellType
     name: List[str]
-    size: Optional[List[str]]
-    input_ports: Optional[List[str]]
-    output_ports: Optional[List[str]]
-
-    class Config:
-        # https://stackoverflow.com/questions/65209934/pydantic-enum-field-does-not-get-converted-to-string
-        use_enum_values = True
+    size: Optional[List[str]] = None
+    input_ports: Optional[List[str]] = None
+    output_ports: Optional[List[str]] = None
+    model_config = ConfigDict(use_enum_values=True)

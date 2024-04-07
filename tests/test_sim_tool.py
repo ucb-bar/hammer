@@ -2,7 +2,7 @@ import json
 import os
 from typing import Dict, Iterator, Any
 
-from pydantic import BaseModel
+from pydantic import ConfigDict, BaseModel
 import pytest
 
 from hammer import vlsi as hammer_vlsi
@@ -13,9 +13,7 @@ class SimToolTestContext(BaseModel):
     driver: hammer_vlsi.HammerDriver
     temp_dir: str
     env: Dict[Any, Any] = {}
-
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 @pytest.fixture()

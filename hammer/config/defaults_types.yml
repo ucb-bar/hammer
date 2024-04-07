@@ -129,6 +129,9 @@ vlsi.inputs:
   # List of custom sdc constraints to use. (List[str])
   custom_sdc_constraints: list[str]
 
+  # List of custom sdc files to append. (List[str])
+  custom_sdc_files: list[str]
+
   # List of placement constraints for floorplanning.
   placement_constraints: list[dict[str, Any]]
 
@@ -280,6 +283,9 @@ par:
 
   # Spacing around blocks and hardmacros in microns
   blockage_spacing: float
+
+  # Ratio between the power blockage + place halo relative to route blockage. Route blockage should be smaller. 
+  power_to_route_blockage_ratio: float
 
   # Top metal layer that is pulled back around blocks and hardmacros
   # type: Optional[str]

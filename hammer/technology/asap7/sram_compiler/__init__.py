@@ -2,6 +2,7 @@ import math
 import os
 import importlib.resources
 from pathlib import Path
+from typing import Optional
 
 from hammer.tech import Library, ExtraLibrary
 from hammer.vlsi import MMMCCorner, MMMCCornerType, HammerSRAMGeneratorTool, SRAMParameters
@@ -17,6 +18,8 @@ class ASAP7SRAMGenerator(HammerSRAMGeneratorTool):
     # Run generator for a single sram and corner
     def generate_sram(self, params: SRAMParameters, corner: MMMCCorner) -> ExtraLibrary:
         tech_cache_dir = os.path.abspath(self.technology.cache_dir)
+        fam_code: Optional[str] = None
+        speed_name: Optional[str] = None
         if params.family == "1RW" or params.family == "2RW":
             fam_code = params.family
         else:
@@ -208,6 +211,7 @@ endmodule
         gds_dir = package_dir / "memories/gds"
 
         from hammer.tech import Corner, Supplies, Provide
+        assert speed_name is not None
         lib = ExtraLibrary(prefix=None, library=Library(
             name=sram_name,
             nldm_liberty_file=f"{nldm_lib_dir}/{nldm_lib_file}",

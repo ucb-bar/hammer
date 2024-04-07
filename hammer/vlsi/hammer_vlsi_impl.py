@@ -5,6 +5,10 @@
 
 import importlib
 import json
+from typing import Iterable, Dict, Any
+import inspect
+import datetime
+from statistics import mode
 import os
 from abc import abstractmethod
 from importlib import resources
@@ -209,9 +213,9 @@ class HammerSRAMGeneratorTool(HammerTool):
     def export_config_outputs(self) -> dict[str, Any]:
         outputs = deepdict(super().export_config_outputs())
         simple_ex = []
-        for ex in self.output_libraries: # type: ExtraLibrary
-            simple_lib = json.loads(ex.library.json())
-            if ex.prefix is None:
+        for ex in self.output_libraries:
+            simple_lib = json.loads(ex.library.model_dump_json())
+            if(ex.prefix == None):
                 new_ex = {"library": simple_lib}
             else:
                 new_ex = {"prefix": ex.prefix, "library": simple_lib}
@@ -939,6 +943,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         masters = set(map(lambda m: m["master"], self._hardmacro_power_straps))
 
         for master in masters:
+            above_desc: Dict[str, Any] = {}
             insts = list(filter(lambda m: m["master"] == master, self._hardmacro_power_straps))
             # All instances of this master should specify the same top_layer
             if len(set(map(lambda m: m["top_layer"], insts))) > 1:
@@ -2250,7 +2255,7 @@ class HasSDCSupport(HammerTool):
 
         # Also specify loads for specific pins.
         for load in self.get_output_load_constraints():
-            output.append("set_load {load} [get_port {name}]".format(
+            output.append("set_load {load} [get_ports {name}]".format(
                 load=load.load.value_in_units(cap_unit),
                 name=load.name
             ))
@@ -2258,7 +2263,7 @@ class HasSDCSupport(HammerTool):
         # Also specify delays for specific pins.
         for delay in self.get_delay_constraints():
             minmax = {None: "", "setup": "-max", "hold": "-min"}
-            output.append("set_{direction}_delay {delay} -clock {clock} {minmax} [get_port {name}]".format(
+            output.append("set_{direction}_delay {delay} -clock {clock} {minmax} [get_ports {name}] -add_delay".format(
                 delay=delay.delay.value_in_units(self.get_time_unit().value_prefix + self.get_time_unit().unit),
                 clock=delay.clock,
                 direction=delay.direction,

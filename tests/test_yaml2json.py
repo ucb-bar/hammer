@@ -1,7 +1,6 @@
-import pytest
 import json
 import yaml
-from hammer.config.yaml2json import load_yaml, compare, convertArrays
+from hammer.config.yaml2json import compare, convertArrays
 from hammer.shell.yaml2json import load, save
 
 # unittest suite for yaml2json
@@ -10,6 +9,7 @@ class TestYaml2Json:
         with open(tmpdir + "/file.py", 'w') as f:
             f.write("some text here")
         c = load(tmpdir + "/file.py")
+        assert c
         assert len(c) > 0
         assert c.find("some text here") != -1
 

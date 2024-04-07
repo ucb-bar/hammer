@@ -2,7 +2,7 @@
 #
 #  See LICENSE for licence details.
 
-from typing import List, Dict, Optional, Callable
+from typing import List, Dict, Optional, Callable, cast
 
 import os
 import json
@@ -303,7 +303,8 @@ class Voltus(HammerPowerTool, CadenceTool):
                 rechar_libs = list(filter(lambda l: l.library.lef_file in mod_lefs, named_extra_libs))
                 macros = list(map(lambda l: l.library.name, rechar_libs)) # type: ignore
                 in_place_unique(macros)
-                self.macro_pgv_cells = macros
+                assert all([m is not None for m in macros])
+                self.macro_pgv_cells = cast(list[str], macros)
 
             if len(self.macro_pgv_cells) > 0:
                 self.logger.info("Characterizing the following macros: {}".format(" ".join(self.macro_pgv_cells)))
@@ -359,7 +360,7 @@ class Voltus(HammerPowerTool, CadenceTool):
                         if len(spice_corners) > 0:
                             options.extend(["-spice_corners", "{{", "} {".join(spice_corners), "}}"])
                     m_output.append("set_pg_library_mode {}".format(" ".join(options)))
-                    m_output.append("write_pg_library -out_dir {}".format(os.path.join(self.macro_lib_dir, corner.name)))
+                    m_output.append("write_pg_library -out_dir {}".format(os.path.join(self.macro_lib_dir, corner.name))) # type: ignore
 
                 else:
                     for corner in corners:
@@ -408,6 +409,9 @@ class Voltus(HammerPowerTool, CadenceTool):
         verbose_append("check_pg_shorts -out_file shorts.rpt")
 
         # TODO (daniel) deal with multiple power domains
+        vdd_net: str = ""
+        vss_net: str = ""
+        assert len(self.get_all_power_nets()) > 0 and len(self.get_all_ground_nets()) > 0
         for power_net in self.get_all_power_nets():
             vdd_net = power_net.name
         for gnd_net in self.get_all_ground_nets():

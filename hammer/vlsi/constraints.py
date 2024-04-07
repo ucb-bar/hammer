@@ -532,19 +532,22 @@ class ObstructionType(Enum):
 
 class PlacementConstraintType(Enum):
     Dummy = 1
-    Placement = 2
-    TopLevel = 3
-    HardMacro = 4
-    Hierarchical = 5
-    Obstruction = 6
-    Overlap = 7
-    PowerDomain = 8
+    SoftPlacement = 2
+    HardPlacement = 3
+    TopLevel = 4
+    HardMacro = 5
+    Hierarchical = 6
+    Obstruction = 7
+    Overlap = 8
+    PowerDomain = 9
 
     @classmethod
     def __mapping(cls) -> dict[str, "PlacementConstraintType"]:
         return {
             "dummy": PlacementConstraintType.Dummy,
-            "placement": PlacementConstraintType.Placement,
+            "placement": PlacementConstraintType.SoftPlacement,
+            "soft_placement": PlacementConstraintType.SoftPlacement,
+            "hard_placement": PlacementConstraintType.HardPlacement,
             "toplevel": PlacementConstraintType.TopLevel,
             "hardmacro": PlacementConstraintType.HardMacro,
             "hierarchical": PlacementConstraintType.Hierarchical,
@@ -794,7 +797,7 @@ class PlacementConstraint(NamedTuple('PlacementConstraint', [
             assert isinstance(create_physical, bool)
 
         ### Width & height ###
-        # These fields are mandatory for Hierarchical, Dummy, Placement, TopLevel, and Obstruction constraints
+        # These fields are mandatory for Hierarchical, Dummy, Soft/HardPlacement, TopLevel, and Obstruction constraints
         # These fields are optional for HardMacro and Overlap constraints
         # TODO(ucb-bar/hammer#414) make them mandatory for HardMacro and Overlap once there's a more robust way of automatically getting that data into hammer
         # This is not None because we don't want to make width optional for the reason above
