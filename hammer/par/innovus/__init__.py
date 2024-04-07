@@ -1252,6 +1252,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
                             area_flag="rects" if self.version() >= self.version_number("181") else "area",
                             layers="all {route}" if constraint.layers is None else f'layers {{{" ".join(get_or_else(constraint.layers, []))}}}'
                         ))
+                elif constraint.type == PlacementConstraintType.PowerDomain:
+                    pass
                 else:
                     assert False, "Should not reach here"
         return [chip_size_constraint] + output
