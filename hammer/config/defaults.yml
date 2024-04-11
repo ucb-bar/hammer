@@ -632,6 +632,9 @@ par:
       power_nets: [] # List of power nets to generate straps for. If empty, generates straps for all nets in vlsi.inputs.supplies
       # type: List[str]
 
+      pattern: "coupled" # existing default powerstrap pattern (e.g. ----VDD-VSS----VDD-VSS----VDD-VSS----)
+
+
 # DRC settings
 drc.inputs:
 # DRC settings
