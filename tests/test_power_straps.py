@@ -323,6 +323,7 @@ class TestPowerStrapsTest(HasGetTech):
                 assert entry["nets"] == nets
                 # TODO more tests in a future PR
                 assert strap_spacing == strap_pitch / 2 - strap_width
+                assert strap_pitch / metal.pitch == track_width * 2 / power_utilization 
             elif layer_name == "M5":
                 assert entry["bbox"] == []
                 assert entry["nets"] == nets
@@ -333,6 +334,7 @@ class TestPowerStrapsTest(HasGetTech):
                 min_spacing = metal.get_spacing_for_width(strap_width)
                 assert strap_spacing >= min_spacing
                 # TODO more tests in a future PR
+                assert strap_pitch / metal.pitch == (track_width * 2 + track_spacing) / power_utilization 
             elif layer_name == "M6":
                 assert entry["bbox"] == []
                 assert entry["nets"] == nets

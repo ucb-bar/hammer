@@ -702,7 +702,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         strap_offset = Decimal(0)
         # Force unit spacing for correct power utilization to reuse twt
         if pattern == 'mesh':
-            track_spacing = 1
+            track_spacing = 1 # just for sizing power-straps using twt
         if track_spacing == 0:
             # An all-power (100% utilization) layer results in us wanting to do a uniform strap pattern, so we can just calculate the
             # maximum width and minimum spacing from the desired pitch, instead of using TWWT.
@@ -780,7 +780,6 @@ class HammerPlaceAndRouteTool(HammerTool):
             track_offset = Decimal(str(self._get_by_tracks_metal_setting("track_offset", layer_name)))
             antenna_trim_shape = self._get_by_tracks_metal_setting("antenna_trim_shape", layer_name)
             offset = layer.offset # TODO this is relaxable if we can auto-recalculate this based on hierarchical setting
-
             add_pins = layer_name in pin_layers
             # For multiple domains, we'll stripe them like this:
             # 2:1 :   A A B A A B ...
@@ -1051,13 +1050,17 @@ class HammerPlaceAndRouteTool(HammerTool):
         track_width = int(self._get_by_tracks_metal_setting("track_width", layer_name))
         track_spacing = int(self._get_by_tracks_metal_setting("track_spacing", layer_name))
         power_utilization = float(self._get_by_tracks_metal_setting("power_utilization", layer_name))
+        pattern = self._get_by_tracks_metal_setting("pattern", layer_name)
 
         assert power_utilization > 0.0
         assert power_utilization <= 1.0
 
         # Calculate how many tracks we consume
         # This strategy uses pairs of power and ground
-        consumed_tracks = 2 * track_width + track_spacing
+        if pattern == 'mesh':
+            consumed_tracks = 2 * track_width
+        else:
+            consumed_tracks = 2 * track_width + track_spacing
         return round(consumed_tracks / power_utilization)
 
     @abstractmethod

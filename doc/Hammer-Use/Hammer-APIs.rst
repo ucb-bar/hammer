@@ -89,7 +89,7 @@ The currently supported API supports power strap generation by tracks, which aut
 
 For mesh pattern, the following diagram shows how the sizings of a mesh-patterned strap is derived from user inputs.
 
-.. image:: mesh_description.png
+.. image:: mesh_no_space.png
 
 Notice that for a mesh pattern, users do not need to specify the layer track spacing, since that should not matter for a regular mesh pattern. 
 
