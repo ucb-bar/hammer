@@ -1,6 +1,10 @@
 sim.xcelium:
   # Tool version (e.g., "XCELIUM2103")
   version: str
+  # Spectre version (e.g. "SPECTRE211")
+  spectreversion: Optional[str]
+  # Path to spectre binary.
+  spectre_bin: Optional[str]
   # Path to xcelium binary.
   xcelium_bin: str
   # Path to xmsimrc_def file.
@@ -19,6 +23,29 @@ sim.xcelium:
   global_access: bool
   # If true, enable multicore support.
   mce: bool
+  # If true, enable AMS sims.
+  ams: bool
+  # Path to analog control file.
+  acf: Optional[str]
+  # Path to ams control file.
+  amscf: Optional[str]
+  # If true, create a partially populated template of the AMS control file.
+  gen_amscf: Optional[bool]
+  # Path to analog models directory.
+  # To be removed in future, pulled instead from PDK library models
+  anamodels: Optional[str]
+  # Path to analog schematics directory.
+  # To be removed in future, pulled from EXTRA_LIBS
+  schematics: Optional[str]
+  # Path to .txt file containing formatted disciplines.
+  disciplines: Optional[str]
+  # Path to connect library files (cross-power domain libs).
+  connectlibs: Optional[str]
+  # Path to file specifying cross-power domain connection rules (if applicable).
+  amsconnrules: Optional[str]
+  # Path to ams control file template.
+  amscf_template: Optional[str]
 
   compile_opts: Optional[list[str]]
   elab_opts: Optional[list[str]]
+  ams_opts: Optional[list[str]]
