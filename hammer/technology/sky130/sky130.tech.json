@@ -1931,9 +1931,13 @@
     {
       "cell_type": "levelshifter",
       "name": [
-        "sky130_fd_sc_hd__lpflow_lsbuf_lh_isowell",
-        "sky130_fd_sc_hd__lpflow_lsbuf_lh_hl_isowell_tap",
-        "sky130_fd_sc_hd__lpflow_lsbuf_lh_isowell_tap"
+        "sky130_fd_sc_hd__lpflow_lsbuf_lh_isowell_4",
+        "sky130_fd_sc_hd__lpflow_lsbuf_lh_hl_isowell_tap_1",
+        "sky130_fd_sc_hd__lpflow_lsbuf_lh_hl_isowell_tap_2",
+        "sky130_fd_sc_hd__lpflow_lsbuf_lh_hl_isowell_tap_4",
+        "sky130_fd_sc_hd__lpflow_lsbuf_lh_isowell_tap_1",
+        "sky130_fd_sc_hd__lpflow_lsbuf_lh_isowell_tap_2",
+        "sky130_fd_sc_hd__lpflow_lsbuf_lh_isowell_tap_4"
       ]
     },
     {
