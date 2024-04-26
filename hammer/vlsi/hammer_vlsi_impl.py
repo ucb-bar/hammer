@@ -513,6 +513,26 @@ class HammerPlaceAndRouteTool(HammerTool):
 
 
     @property
+    def output_physical_netlist(self) -> str:
+        """
+        Get the path to the output physical netlist file.
+
+        :return: The path to the output physical netlist file.
+        """
+        try:
+            return self.attr_getter("_output_physical_netlist", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the path to the output physical netlist file yet")
+
+    @output_physical_netlist.setter
+    def output_physical_netlist(self, value: str) -> None:
+        """Set the path to the output physical netlist file."""
+        if not (isinstance(value, str)):
+            raise TypeError("output_physical_netlist must be a str")
+        self.attr_setter("_output_physical_netlist", value)
+
+
+    @property
     def output_sim_netlist(self) -> str:
         """
         Get the path to the output simulation netlist file.
@@ -2084,6 +2104,26 @@ class HammerTimingTool(HammerTool):
         if not (isinstance(value, str) or (value is None)):
             raise TypeError("sdf_file must be a Optional[str]")
         self.attr_setter("_sdf_file", value)
+
+
+    @property
+    def def_file(self) -> Optional[str]:
+        """
+        Get the (optional) input DEF file.
+
+        :return: The (optional) input DEF file.
+        """
+        try:
+            return self.attr_getter("_def_file", None)
+        except AttributeError:
+            return None
+
+    @def_file.setter
+    def def_file(self, value: Optional[str]) -> None:
+        """Set the (optional) input DEF file."""
+        if not (isinstance(value, str) or (value is None)):
+            raise TypeError("def_file must be a Optional[str]")
+        self.attr_setter("_def_file", value)
 
 
     ### Outputs ###
