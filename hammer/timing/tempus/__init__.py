@@ -108,7 +108,7 @@ class Tempus(HammerTimingTool, CadenceTool):
             hammer_tech.filters.lef_filter
         ], hammer_tech.HammerTechnologyUtils.to_plain_item)
         if self.hierarchical_mode.is_nonleaf_hierarchical():
-            ilm_lefs = list(map(lambda ilm: ilm.lef, self.get_input_ilms()))
+            ilm_lefs = list(map(lambda ilm: ilm.lef, self.get_input_ilms(full_tree=True)))
             lef_files.extend(ilm_lefs)
         verbose_append("read_physical -lef {{ {files} }}".format(
             files=" ".join(lef_files)
