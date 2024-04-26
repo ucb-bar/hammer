@@ -130,7 +130,7 @@ class Tempus(HammerTimingTool, CadenceTool):
             for ilm in self.get_input_ilms():
                 # Assumes that the ILM was created by Innovus (or at least the file/folder structure).
                 # TODO: support non-Innovus hierarchical (read netlists, etc.)
-                verbose_append("read_ilm -cell {module} -directory {dir}".format(dir=ilm.dir, module=ilm.module))
+                verbose_append("set_ilm -cell {module} -in_dir {dir}".format(dir=ilm.dir, module=ilm.module))
 
         # Read power intent
         if self.get_setting("vlsi.inputs.power_spec_mode") != "empty":
@@ -168,7 +168,8 @@ class Tempus(HammerTimingTool, CadenceTool):
 
         verbose_append("init_design")
 
-        # TODO: Optionally read additional DEF or OA physical data
+        if self.def_file is not None:
+            verbose_append("read_def " + os.path.join(os.getcwd(), self.def_file))
 
 
         # Set some default analysis settings for max accuracy

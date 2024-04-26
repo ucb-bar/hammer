@@ -1165,13 +1165,13 @@ class HammerDriver:
                  or None if output_dict was invalid
         """
         try:
-            input_files = deeplist([output_dict["par.outputs.output_netlist"]])
+            input_files = deeplist([output_dict["par.outputs.output_physical_netlist"]])
             result = {
                 "timing.inputs.input_files": input_files,
                 "timing.inputs.input_files_meta": "append",
                 "timing.inputs.top_module": output_dict["par.inputs.top_module"],
                 "timing.inputs.spefs": output_dict["par.outputs.spefs"],
-                "timing.inputs.sdf_file": output_dict["par.outputs.sdf_file"],
+                "timing.inputs.def": output_dict.get("par.outputs.def_file", None),
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             return result

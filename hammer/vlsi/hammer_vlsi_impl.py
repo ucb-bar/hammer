@@ -397,6 +397,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         outputs["vlsi.inputs.ilms_meta"] = "append"  # to coalesce ILMs for entire hierarchical tree
         outputs["par.outputs.output_gds"] = str(self.output_gds)
         outputs["par.outputs.output_netlist"] = str(self.output_netlist)
+        outputs["par.outputs.output_physical_netlist"] = str(self.output_physical_netlist)
         outputs["par.outputs.output_sim_netlist"] = str(self.output_sim_netlist)
         outputs["par.outputs.hcells_list"] = list(self.hcells_list)
         outputs["par.outputs.seq_cells"] = self.output_seq_cells

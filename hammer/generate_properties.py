@@ -145,6 +145,7 @@ def main(args) -> int:
                                                          "(optional) output ILM information for hierarchical mode"),
                                             InterfaceVar("output_gds", "str", "path to the output GDS file"),
                                             InterfaceVar("output_netlist", "str", "path to the output netlist file"),
+                                            InterfaceVar("output_physical_netlist", "str", "path to the output physical netlist file"),
                                             InterfaceVar("output_sim_netlist", "str", "path to the output simulation netlist file"),
                                             InterfaceVar("hcells_list", "List[str]",
                                                          "list of cells to explicitly map hierarchically in LVS"),
@@ -249,7 +250,9 @@ def main(args) -> int:
                                 InterfaceVar("spefs", "Optional[List]",
                                     "(optional) list of SPEF files"),
                                 InterfaceVar("sdf_file", "Optional[str]",
-                                    "(optional) input SDF file")
+                                    "(optional) input SDF file"),
+                                InterfaceVar("def_file", "Optional[str]",
+                                             "(optional) input DEF file")
                             ],
                             outputs=[]
                             )
