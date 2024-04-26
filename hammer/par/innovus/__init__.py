@@ -563,8 +563,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         if self.hierarchical_mode.is_nonleaf_hierarchical():
             self.verbose_append('''
             flatten_ilm
-            update_constraint_mode -name my_constraint_mode -ilm_sdc_files {sdc}
-            '''.format(sdc=self.post_synth_sdc), clean=True)
+            update_constraint_mode -name {name} -ilm_sdc_files {sdc}
+            '''.format(name=self.constraint_mode, sdc=self.post_synth_sdc), clean=True)
 
         # Use place_opt_design V2 (POD-Turbo). Option must be explicitly set only in 22.1.
         if self.version() >= self.version_number("221") and self.version() < self.version_number("231"):

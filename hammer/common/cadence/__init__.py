@@ -13,6 +13,7 @@ import hammer.tech as hammer_tech
 
 class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTool):
     """Mix-in trait with functions useful for Cadence-based tools."""
+
     constraint_mode = "my_constraint_mode"
 
     @property
