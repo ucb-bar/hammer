@@ -101,6 +101,7 @@ class Tempus(HammerTimingTool, CadenceTool):
         mmmc_path = os.path.join(self.run_dir, "mmmc.tcl")
         self.write_contents_to_path(self.generate_mmmc_script(), mmmc_path)
         verbose_append("read_mmmc {mmmc_path}".format(mmmc_path=mmmc_path))
+        verbose_append("update_constraint_mode -name {name} -ilm_sdc_files {post_synth_sdc}".format(name=self.constraint_mode, post_synth_sdc=self.post_synth_sdc))
 
         # Read physical LEFs (optional in Tempus)
         lef_files = self.technology.read_libs([

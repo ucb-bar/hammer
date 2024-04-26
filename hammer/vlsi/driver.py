@@ -1170,6 +1170,7 @@ class HammerDriver:
                 "timing.inputs.input_files": input_files,
                 "timing.inputs.input_files_meta": "append",
                 "timing.inputs.top_module": output_dict["par.inputs.top_module"],
+                "timing.inputs.post_synth_sdc": output_dict["par.inputs.post_synth_sdc"],
                 "timing.inputs.spefs": output_dict["par.outputs.spefs"],
                 "timing.inputs.def": output_dict.get("par.outputs.def_file", None),
                 "vlsi.builtins.is_complete": False
