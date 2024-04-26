@@ -128,7 +128,7 @@ class Tempus(HammerTimingTool, CadenceTool):
 
         if self.hierarchical_mode.is_nonleaf_hierarchical():
             # Read ILMs.
-            for ilm in self.get_input_ilms():
+            for ilm in self.get_input_ilms(full_tree=True):
                 # Assumes that the ILM was created by Innovus (or at least the file/folder structure).
                 # TODO: support non-Innovus hierarchical (read netlists, etc.)
                 verbose_append("set_ilm -cell {module} -in_dir {dir}".format(dir=ilm.dir, module=ilm.module))
@@ -138,6 +138,11 @@ class Tempus(HammerTimingTool, CadenceTool):
             # Setup power settings from cpf/upf
             for l in self.generate_power_spec_commands():
                 verbose_append(l)
+
+        verbose_append("init_design")
+
+        if self.def_file is not None:
+            verbose_append("read_def " + os.path.join(os.getcwd(), self.def_file))
 
         # Read parasitics
         if self.spefs is not None: # post-P&R
@@ -167,11 +172,9 @@ class Tempus(HammerTimingTool, CadenceTool):
         if self.sdf_file is not None:
             verbose_append("read_sdf " + os.path.join(os.getcwd(), self.sdf_file))
 
-        verbose_append("init_design")
-
-        if self.def_file is not None:
-            verbose_append("read_def " + os.path.join(os.getcwd(), self.def_file))
-
+        if self.hierarchical_mode.is_nonleaf_hierarchical() and len(self.get_input_ilms(full_tree=True)):
+            verbose_append("read_ilm")
+            verbose_append("flatten_ilm")
 
         # Set some default analysis settings for max accuracy
         # Clock path pessimism removal
