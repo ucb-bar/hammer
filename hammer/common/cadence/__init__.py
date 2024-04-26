@@ -150,7 +150,7 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
             self.run_executable(["touch", blank_sdc])
             sdc_files_arg = "-sdc_files {{ {} }}".format(blank_sdc)
         if self.hierarchical_mode.is_nonleaf_hierarchical():
-            ilm_sdcs = reduce_list_str(add_lists, list(map(lambda ilm: ilm.sdcs, self.get_input_ilms())))  # type: List[str]
+            ilm_sdcs = reduce_list_str(add_lists, list(map(lambda ilm: ilm.sdcs, self.get_input_ilms())), [])  # type: List[str]
             ilm_sdc_files_arg = "-ilm_sdc_files [list {sdc_files}]".format(
                 sdc_files=" ".join(ilm_sdcs))
         else:
