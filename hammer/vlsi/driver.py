@@ -1168,7 +1168,7 @@ class HammerDriver:
                  or None if output_dict was invalid
         """
         try:
-            input_files = deeplist([output_dict.get("par.outputs.output_physical_netlist", output_dict.get("par.outputs.output_netlist"))])
+            input_files = deeplist([output_dict.get("par.outputs.output_physical_netlist", output_dict["par.outputs.output_netlist")]])
             result = {
                 "timing.inputs.input_files": input_files,
                 "timing.inputs.input_files_meta": "append",
