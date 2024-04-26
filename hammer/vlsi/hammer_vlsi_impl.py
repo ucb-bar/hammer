@@ -513,22 +513,22 @@ class HammerPlaceAndRouteTool(HammerTool):
 
 
     @property
-    def output_physical_netlist(self) -> str:
+    def output_physical_netlist(self) -> Optional[str]:
         """
-        Get the path to the output physical netlist file.
+        Get the (optional) path to the output physical netlist file.
 
-        :return: The path to the output physical netlist file.
+        :return: The (optional) path to the output physical netlist file.
         """
         try:
             return self.attr_getter("_output_physical_netlist", None)
         except AttributeError:
-            raise ValueError("Nothing set for the path to the output physical netlist file yet")
+            return None
 
     @output_physical_netlist.setter
-    def output_physical_netlist(self, value: str) -> None:
-        """Set the path to the output physical netlist file."""
-        if not (isinstance(value, str)):
-            raise TypeError("output_physical_netlist must be a str")
+    def output_physical_netlist(self, value: Optional[str]) -> None:
+        """Set the (optional) path to the output physical netlist file."""
+        if not (isinstance(value, str) or (value is None)):
+            raise TypeError("output_physical_netlist must be a Optional[str]")
         self.attr_setter("_output_physical_netlist", value)
 
 
