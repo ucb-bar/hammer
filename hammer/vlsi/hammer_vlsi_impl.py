@@ -2173,7 +2173,8 @@ class HasCPFSupport(HammerTool):
                 pins_str = ' '.join(pins)
                 output.append(f'create_global_connection -domain {pg_net.domain} -net {pg_net.name} -pins [list {pins_str}]')
         # Define level shifters
-        output.append(f"define_level_shifter_cell -cells {self.technology.get_special_cell_by_type(specialcells.CellType.LevelShifter)}")
+        for ls in self.technology.get_special_cell_by_type(specialcells.CellType.LevelShifter)[0].name:
+            output.append(f"define_level_shifter_cell -cells {ls}")
         # Create level shifters
         for power_net in power_nets:
             if power_net.interacts is not None and power_net.interacts != []:
