@@ -1943,9 +1943,16 @@
     {
       "cell_type": "isolation",
       "name": [
-        "sky130_fd_sc_hd__lpflow_inputiso1p",
-        "sky130_fd_sc_hd__lpflow_isobufsrc",
-        "sky130_fd_sc_hd__lpflow_isobufsrckapwr"
+        "sky130_fd_sc_hd__lpflow_inputiso0n_1",
+        "sky130_fd_sc_hd__lpflow_inputiso0p_1",
+        "sky130_fd_sc_hd__lpflow_inputiso1n_1",
+        "sky130_fd_sc_hd__lpflow_inputiso1p_1",
+        "sky130_fd_sc_hd__lpflow_inputisolatch_1",
+        "sky130_fd_sc_hd__lpflow_isobufsrc_1",
+        "sky130_fd_sc_hd__lpflow_isobufsrc_2",
+        "sky130_fd_sc_hd__lpflow_isobufsrc_4",
+        "sky130_fd_sc_hd__lpflow_isobufsrc_8",
+        "sky130_fd_sc_hd__lpflow_isobufsrckapwr_16"
       ]
     }
   ],
