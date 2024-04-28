@@ -16,6 +16,7 @@ from statistics import mode
 
 import hammer.config as hammer_config
 import hammer.tech as hammer_tech
+from hammer.tech import specialcells
 from hammer.utils import deepdict, coerce_to_grid, get_or_else
 
 from .constraints import *
@@ -2171,6 +2172,8 @@ class HasCPFSupport(HammerTool):
             if len(pins) > 0:
                 pins_str = ' '.join(pins)
                 output.append(f'create_global_connection -domain {pg_net.domain} -net {pg_net.name} -pins [list {pins_str}]')
+        # Define level shifters
+        output.append(f"define_level_shifter_cell -cells {self.technology.get_special_cell_by_type(specialcells.CellType.LevelShifter)}")
         # Create level shifters
         for power_net in power_nets:
             if power_net.interacts is not None and power_net.interacts != []:
