@@ -32,7 +32,7 @@ class SKY130Tech(HammerTechnology):
         SKY130_CDS_LIB = self.get_setting("technology.sky130.sky130_scl")
 
         # Common tech LEF and IO cell spice netlists
-        libs = [Library(spice_file="$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io__analog.spice",
+        libs = [Library(spice_file="$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
                         provides=[Provide(lib_type="IO library")])]
         if slib == "sky130_fd_sc_hd":
             libs += [
@@ -317,11 +317,10 @@ class SKY130Tech(HammerTechnology):
                 lib_entry = Library(
                     nldm_liberty_file=os.path.join(
                         SKY130_CDS_LIB, 'lib', cornerfilename),
-                    verilog_sim=os.path.join(
-                        'cache',             library+'.v'),
+                    verilog_sim=os.path.join(SKY130_CDS_LIB, 'verilog', library+'_9T.v'),
                     lef_file=os.path.join(SKY130_CDS_LIB, 'lef', library+'_9T.lef'),
                     spice_file=os.path.join(
-                        'cache',             library+'.cdl'),
+                        SKY130_CDS_LIB,             'cdl', library+'_9T.cdl'),
                     gds_file=os.path.join(SKY130_CDS_LIB, 'gds', library+'_9T.gds'),
                     corner=Corner(
                         nmos=speed,
@@ -556,16 +555,35 @@ class SKY130Tech(HammerTechnology):
                     df.write(line)
                     if line.strip() == 'END pwell':
                         df.write(_the_tlef_edit)
+
+
+
+    # syn_power seems to not take hooks from `get_tech_syn_hooks` 
+    # also, syn_power is called from joules so we need to add the hook to joules
+    # TODO: clean this up, there should be a way to always include this hook whenever genus will be invoked
+    def get_tech_power_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
+        hooks = {}
+        def enable_scl_clk_gating_cell_hook(ht: HammerTool) -> bool:
+            ht.append("set_db [get_db lib_cells -if {.base_name == ICGX1}] .avoid false")
+            return True
+
+
+        # The clock gating cell is set to don't touch/use in the cadence pdk (as of v0.0.3), work around that
+        if self.get_setting("technology.sky130.stdcell_library") == "sky130_scl": 
+            hooks["joules"] = [HammerTool.make_pre_insertion_hook("synthesize_design", enable_scl_clk_gating_cell_hook)]
+
+        return hooks.get(tool_name, [])
+
     def get_tech_syn_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {}
 
-        def enable_scl_clk_gating_cell(ht: HammerTool) -> bool:
+        def enable_scl_clk_gating_cell_hook(ht: HammerTool) -> bool:
             ht.append("set_db [get_db lib_cells -if {.base_name == ICGX1}] .avoid false")
             return True
 
         # The clock gating cell is set to don't touch/use in the cadence pdk (as of v0.0.3), work around that
         if self.get_setting("technology.sky130.stdcell_library") == "sky130_scl": 
-            hooks["genus"] = [HammerTool.make_pre_insertion_hook("syn_generic", enable_scl_clk_gating_cell)]
+            hooks["genus"] = [HammerTool.make_pre_insertion_hook("syn_generic", enable_scl_clk_gating_cell_hook)]
 
         return hooks.get(tool_name, [])
 
