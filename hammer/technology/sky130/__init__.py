@@ -28,9 +28,9 @@ class SKY130Tech(HammerTechnology):
         # check whether variables were overriden to point to a valid path
         self.use_sram22 = os.path.exists(self.get_setting("technology.sky130.sram22_sky130_macros"))
         self.setup_cdl()
-        self.setup_verilog()
+        # self.setup_verilog()
         self.setup_techlef()
-        self.setup_io_lefs()
+        # self.setup_io_lefs()
         self.logger.info('Loaded Sky130 Tech')
 
 

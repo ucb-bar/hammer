@@ -85,9 +85,9 @@ class Genus(HammerSynthesisTool, CadenceTool):
     def steps(self) -> List[HammerToolStep]:
         steps_methods = [
             self.init_environment,
+            self.predict_floorplan,
             self.syn_generic,
             self.syn_map,
-            self.ispatial_opt,
             self.add_tieoffs,
             self.write_regs,
             self.generate_reports,
@@ -232,6 +232,11 @@ class Genus(HammerSynthesisTool, CadenceTool):
             files=" ".join(qrc_files)
         ))
 
+        # Quit when ispatial is used with sky130
+        if(not qrc_files and self.get_setting("synthesis.genus.phys_flow_effort").lower() == "high"):
+            self.logger.warning("Sky130 does not support ISpatial due to missing of qrc tech files.")
+            verbose_append("quit")
+
         # Load input files and check that they are all Verilog.
         if not self.check_input_files([".v", ".sv", "vh"]):
             return False
@@ -274,8 +279,6 @@ class Genus(HammerSynthesisTool, CadenceTool):
         verbose_append(f"set_db phys_flow_effort {self.get_setting('synthesis.genus.phys_flow_effort')}")
 
         if self.get_setting("synthesis.genus.phys_flow_effort").lower() == "high":
-            self.verbose_append(f"set_db innovus_executable {self.get_setting('par.innovus.innovus_bin')}")
-            self.verbose_append("set_db invs_temp_dir innovus")
             self.verbose_append("set_db opt_spatial_effort extreme")
 
         # Set "don't use" cells.
@@ -343,7 +346,6 @@ set_db hinst:{inst} .preserve true
         if self.get_setting("synthesis.genus.phys_flow_effort").lower() == "none":
             self.verbose_append("syn_generic")
         else:
-            self.verbose_append(f"read_def {self.get_setting('synthesis.genus.def_file')}")
             self.verbose_append("syn_generic -physical")
 
         self.dedup_ilms()
@@ -357,7 +359,9 @@ set_db hinst:{inst} .preserve true
             self.verbose_append("syn_map -physical")
             
         # High QoR optimization.
-        if self.get_setting("synthesis.genus.phys_flow_effort").lower() == "high":
+        if self.get_setting("synthesis.genus.phys_flow_effort").lower() == "medium":
+            self.verbose_append("syn_opt")
+        elif self.get_setting("synthesis.genus.phys_flow_effort").lower() == "high":
             self.verbose_append("syn_opt -spatial")
 
         # Need to suffix modules for hierarchical simulation if not top
@@ -367,8 +371,30 @@ set_db hinst:{inst} .preserve true
         self.dedup_ilms()
 
         return True
+    
+    def predict_floorplan(self) -> bool:
+        if self.get_setting("synthesis.genus.phys_flow_effort").lower() == "none":
+            self.verbose_append("set_db predict_floorplan_enable_during_generic false")
+            self.verbose_append("set_db physical_force_predict_floorplan false")
+        else:
+            self.verbose_append("set_db invs_temp_dir temp_invs")
+            self.verbose_append(f"set_db innovus_executable {self.get_setting('par.innovus.innovus_bin')}")
+            self.verbose_append("set_db predict_floorplan_enable_during_generic true")
+            self.verbose_append("set_db physical_force_predict_floorplan true")
+            self.verbose_append(f"set_db predict_floorplan_use_innovus true")
+            self.verbose_append("predict_floorplan")
+        return True
 
     def add_tieoffs(self) -> bool:
+        
+        qrc_files = self.technology.read_libs([
+            hammer_tech.filters.qrc_tech_filter
+        ], hammer_tech.HammerTechnologyUtils.to_plain_item)
+
+        # using asap7 don't add tieoffs
+        if(qrc_files):
+            return True
+        
         tie_hi_cells = self.technology.get_special_cell_by_type(CellType.TieHiCell)
         tie_lo_cells = self.technology.get_special_cell_by_type(CellType.TieLoCell)
         tie_hilo_cells = self.technology.get_special_cell_by_type(CellType.TieHiLoCell)
@@ -451,6 +477,7 @@ set_db hinst:{inst} .preserve true
             verbose_append("write_design -innovus {hier_flag} -gzip_files {top}".format(
                 hier_flag="-hierarchical" if is_hier else "", top=top))
 
+        verbose_append("write_db -common")
         self.ran_write_outputs = True
 
         return True

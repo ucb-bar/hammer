@@ -156,7 +156,7 @@ class CLIDriver:
         self.formal_rundir = "" # type: Optional[str]
         self.timing_rundir = "" # type: Optional[str]
         self.pcb_rundir = ""  # type: Optional[str]
-
+        self.synthesis_action: CLIActionConfigType
         # If a subclass has defined these, don't clobber them in init
         # since the subclass still uses this init function.
         if hasattr(self, "sram_generator_action"):
