@@ -58,7 +58,7 @@ vlsi.technology:
 
   # Offset of the first column of tape cells from the edge of the floorplan
   # type: float
-  tap_cell_offset: float 
+  tap_cell_offset: float
 
   # Set the [bottom, top] layer used for routing. (Optional[Tuple[int, int]])
   routing_layers: Optional[list[int]]
@@ -105,7 +105,7 @@ vlsi.inputs:
     manual_placement_constraints: list[dict[str, list]]
 
     # Manual hierarchical constraints. Overrides generic constraints on a per module basis.
-    constraints: list[dict[str, list]]
+    constraints: list[dict[str, Any]]
 
   # ILMs for hierarchical mode.
   ilms: list[dict[str, str]]
@@ -160,9 +160,9 @@ vlsi.inputs:
     y: int
     # pitch (float) - pitch of bumps in microns
     pitch: float
-    # global_x_offset (float) - offset the bump map in the x-axis 
+    # global_x_offset (float) - offset the bump map in the x-axis
     global_x_offset: float
-    # global_y_offset (float) - offset the bump map in the y-axis 
+    # global_y_offset (float) - offset the bump map in the y-axis
     global_y_offset: float
     # cell (str) - Name of the default bump cell
     cell: str
@@ -283,7 +283,7 @@ par:
   # Spacing around blocks and hardmacros in microns
   blockage_spacing: float
 
-  # Ratio between the power blockage + place halo relative to route blockage. Route blockage should be smaller. 
+  # Ratio between the power blockage + place halo relative to route blockage. Route blockage should be smaller.
   power_to_route_blockage_ratio: float
 
   # Top metal layer that is pulled back around blocks and hardmacros
@@ -332,6 +332,7 @@ par:
       # type: list[str]
       strap_layers: list[str]
 
+
       # Indicates if Hammer should generate straps for the stdcell rail layer
       # type: bool
       generate_rail_layer: bool
@@ -343,6 +344,11 @@ par:
       # Indicates which power nets straps should be generated for
       # type: list[str]
       power_nets: list[str]
+
+      # Powerstrap patterns: e.g. "coupled" or "mesh"
+      # type: str
+      pattern: str
+
 
 # DRC settings
 drc.inputs:

@@ -1,0 +1,6 @@
+vlsi.inputs.hierarchical.constraints_meta: append
+vlsi.inputs.hierarchical.constraints:
+  - SubModC:
+      vlsi.inputs.power_spec_type: upf
+      par.generate_power_straps_options.by_tracks.strap_layers: [m6]
+      par.generate_power_straps_options.by_tracks.strap_layers_meta: append
