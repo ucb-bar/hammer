@@ -306,6 +306,10 @@ class xcelium(HammerSimTool, CadenceTool):
     saif_args = ""
 
     # Process saif options
+    saif_start_time: Optional[str] = None
+    saif_end_time: Optional[str] = None
+    saif_start_trigger_raw: Optional[str] = None
+    saif_end_trigger_raw: Optional[str] = None
     if saif_opts["mode"] == "time":
       saif_start_time = saif_opts["start_time"]
       saif_end_time   = saif_opts["end_time"]
@@ -322,12 +326,16 @@ class xcelium(HammerSimTool, CadenceTool):
     
     if saif_opts["mode"] is not None: 
       if saif_opts["mode"] == "time":
+        assert saif_start_time
+        assert saif_end_time
         stime = TimeValue(saif_start_time)
         etime = TimeValue(saif_end_time)
         saif_args = saif_args + f'dumpsaif -output ucli.saif -overwrite -scope {prefix} -start {stime.value_in_units("ns")}ns -stop{etime.value_in_units("ns")}ns'
       elif saif_opts["mode"] == "full":
         saif_args = saif_args + f"dumpsaif -output ucli.saif -overwrite -scope {prefix}"
       elif saif_opts["mode"] == "trigger_raw":
+        assert saif_start_trigger_raw
+        assert saif_end_trigger_raw
         saif_args = saif_args + f"dumpsaif -output ucli.saif -overwrite -scope {prefix} {saif_start_trigger_raw} {saif_end_trigger_raw}"
     return saif_args
 

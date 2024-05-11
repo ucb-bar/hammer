@@ -1,34 +1,6 @@
 [
   {
     "type": "sram",
-    "name": "sram22_4096x8m8w8",
-    "source": "sram22",
-    "depth": "4096",
-    "width": 8,
-    "family": "1rw",
-    "mask": "true",
-    "vt": "svt",
-    "mux": 8,
-    "ports": [
-      {
-        "address port name": "addr",
-        "address port polarity": "active high",
-        "clock port name": "clk",
-        "clock port polarity": "active high",
-        "write enable port name": "we",
-        "write enable port polarity": "active high",
-        "output port name": "dout",
-        "output port polarity": "active high",
-        "input port name": "din",
-        "input port polarity": "active high",
-        "mask port name": "wmask",
-        "mask granularity": 8,
-        "mask port polarity": "active high"
-      }
-    ]
-  },
-  {
-    "type": "sram",
     "name": "sram22_512x32m4w32",
     "source": "sram22",
     "depth": "512",
@@ -163,34 +135,6 @@
         "input port polarity": "active high",
         "mask port name": "wmask",
         "mask granularity": 24,
-        "mask port polarity": "active high"
-      }
-    ]
-  },
-  {
-    "type": "sram",
-    "name": "sram22_4096x32m8w8",
-    "source": "sram22",
-    "depth": "4096",
-    "width": 32,
-    "family": "1rw",
-    "mask": "true",
-    "vt": "svt",
-    "mux": 8,
-    "ports": [
-      {
-        "address port name": "addr",
-        "address port polarity": "active high",
-        "clock port name": "clk",
-        "clock port polarity": "active high",
-        "write enable port name": "we",
-        "write enable port polarity": "active high",
-        "output port name": "dout",
-        "output port polarity": "active high",
-        "input port name": "din",
-        "input port polarity": "active high",
-        "mask port name": "wmask",
-        "mask granularity": 8,
         "mask port polarity": "active high"
       }
     ]

@@ -1266,7 +1266,7 @@ class HammerTool(metaclass=ABCMeta):
         if viz_mode in ["all", "floorplan"]:
             macro_rects = macro_text = obs_rects = obs_text = orient_lines = '<g transform="{}">\n'.format(translate)
             for c in fp_consts:
-                if c.type in [PlacementConstraintType.Placement, PlacementConstraintType.HardMacro, PlacementConstraintType.Hierarchical]:
+                if c.type in [PlacementConstraintType.SoftPlacement, PlacementConstraintType.HardPlacement, PlacementConstraintType.HardMacro, PlacementConstraintType.Hierarchical]:
                     # macros & hierarchical not required to have width/height, will resolve to 0
                     (width, height) = (c.width, c.height)
                     if width == 0 or height == 0:
@@ -1327,7 +1327,7 @@ class HammerTool(metaclass=ABCMeta):
 
             p_nets = self.get_all_power_nets() #type: List[Supply]
             g_nets = self.get_all_ground_nets() #type: List[Supply]
-            for b in bumps.assignments: # type: BumpAssignment
+            for b in bumps.assignments:
                 bump_type = 'signal'
                 if b.no_connect:
                     bump_type = 'nc'

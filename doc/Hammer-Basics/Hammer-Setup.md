@@ -135,25 +135,9 @@ pytest tests/test_build_systems.py -k "flat_makefile" -rA -v
 > PASSED tests/test_build_systems.py::TestHammerBuildSystems::test_flat_makefile
 ```
 
-### Type Checking with mypy
+### Type Checking with pyright
 
-There is a [small issue with the ruamel.yaml package typechecking](https://github.com/python/mypy/issues/12664) which can be hacked around with:
-
-```shell
-touch .venv/lib/python3.10/site-packages/ruamel/py.typed
-```
-
-Inside your poetry virtualenv, from the root of Hammer, run:
-
-```shell
-mypy --namespace-packages --warn-unused-ignores -p hammer
-
-Success: no issues found in 146 source files
-
-mypy --namespace-packages --warn-unused-ignores tests
-
-Success: no issues found in 25 source files
-```
+Run: `poetry run pyright`
 
 ### Testing Different Python Versions with tox
 
@@ -218,7 +202,14 @@ Run `poetry update` and `poetry install` and commit `poetry.lock`.
 
 ### Building Documentation
 
-- Within your poetry virutualenv, `cd doc`
+First, generate the `schema.json` file from within your poetry virtualenv:
+
+```shell
+python3 -c "from hammer.tech import TechJSON; print(TechJSON.schema_json(indent=2))" > doc/Technology/schema.json
+```
+
+Then:
+- `cd doc`
 - Modify any documentation files. You can migrate any rst file to Markdown if desired.
 - Run `sphinx-build . build`
 - The generated HTML files are placed in `build/`

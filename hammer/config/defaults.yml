@@ -212,6 +212,9 @@ vlsi.inputs:
   custom_sdc_constraints: [] # List of custom sdc constraints to use. (List[str])
   # These are appended after all other generated constraints (clock, pin, delay, load, etc.).
   # IMPORTANT: Since SDC is unitless, you must manually verify that your time & cap units match the tech library's units.
+  
+  custom_sdc_files: [] # List of custom sdc files to append. (List[str])
+  # These are appended after all other generated constraints and custom_sdc_constraints.
 
   placement_constraints: [] # List of placement constraints for floorplanning.
   # Each item is a struct member:
@@ -221,7 +224,8 @@ vlsi.inputs:
   # - Required for all types
   # - One of the following:
   #   - "dummy" (does nothing with this constraint)
-  #   - "placement" (creates a placement constraint for an instance)
+  #   - "placement" or "soft_placement" (creates a soft placement constraint for a hierarchical instance)
+  #   - "hard_placement" (creates a hard placement constraint for a hierarchical instance)
   #   - "toplevel" (top-level chip dimensions; may only occur once, for the top-level module)
   #   - "hardmacro" (places this hard macro at a particular spot)
   #   - "hierarchical" (marks this instance as part of hierarchical place and route)
@@ -564,6 +568,8 @@ par:
   blockage_spacing: 0.0 # Spacing around blocks and hardmacros in microns
   # Used by power straps and floorplanning
   # type: Decimal
+
+  power_to_route_blockage_ratio: 1.1 # By default, set the power halo + blockage spacing to 1.1x in every dimension relative to route blockage.
 
   blockage_spacing_top_layer: null # Top metal layer that is pulled back around blocks and hardmacros
   # Used by floorplanning.

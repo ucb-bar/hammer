@@ -1,34 +1,33 @@
 import json
 import os
-from typing import Dict, Any, List, Iterator
+from typing import Dict, Any, List, Iterator, ClassVar
 import importlib.resources as resources
 
-from pydantic import BaseModel, validator
+from pydantic import field_validator, ConfigDict, BaseModel
 import pytest
 
 from hammer import vlsi as hammer_vlsi
 from hammer.config import HammerJSONEncoder
-from hammer.logging import HammerVLSILogging
+from hammer.logging import HammerVLSILogging, HammerVLSILoggingContext
 from hammer.utils import get_or_else
 
 
 class SubmitCommandTestContext(BaseModel):
     echo_command_args: List[str] = ["go", "bears", "!"]
     echo_command: List[str] = ["echo", "go", "bears", "!"]
-    logger = HammerVLSILogging.context("")
+    logger: ClassVar[HammerVLSILoggingContext] = HammerVLSILogging.context("")
     env: Dict[Any, Any] = {}
     driver: hammer_vlsi.HammerDriver
     cmd_type: str
     submit_command: hammer_vlsi.HammerSubmitCommand
     temp_dir: str
 
-    @validator("cmd_type")
+    @field_validator("cmd_type")
+    @classmethod
     def cmd_type_validator(cls, cmd_type):
         if cmd_type not in ["lsf", "local"]:
             raise NotImplementedError("Have not built a test for %s yet" % cmd_type)
-
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 @pytest.fixture()
