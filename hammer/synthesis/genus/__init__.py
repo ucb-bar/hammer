@@ -389,15 +389,6 @@ set_db hinst:{inst} .preserve true
         return True
 
     def add_tieoffs(self) -> bool:
-        
-        qrc_files = self.technology.read_libs([
-            hammer_tech.filters.qrc_tech_filter
-        ], hammer_tech.HammerTechnologyUtils.to_plain_item)
-
-        # using asap7 don't add tieoffs
-        if(qrc_files):
-            return True
-        
         tie_hi_cells = self.technology.get_special_cell_by_type(CellType.TieHiCell)
         tie_lo_cells = self.technology.get_special_cell_by_type(CellType.TieLoCell)
         tie_hilo_cells = self.technology.get_special_cell_by_type(CellType.TieHiLoCell)
