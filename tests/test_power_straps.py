@@ -69,22 +69,8 @@ def power_straps_test_context(tmp_path, tech_name: str, straps_options: Dict[str
     assert driver.load_par_tool()
     yield PowerStrapsTestContext(temp_dir=tech_dir_base, driver=driver)
 
-
 def simple_straps_options() -> Dict[str, Any]:
     # TODO clean this up a bit
-
-    strap_layers = ["M4", "M5", "M6", "M7", "M8"]
-    pin_layers = ["M7", "M8"]
-    track_width = 4
-    track_width_M7 = 8
-    track_width_M8 = 10
-    track_spacing = 0
-    track_spacing_M6 = 1
-    power_utilization = 0.2
-    power_utilization_M8 = 1.0
-    track_start_M5 = 1
-    track_offset_M5 = 1.2
-    bottom_via_layer = "rail"
 
     # VSS comes before VDD
     nets = ["VSS", "VDD"]
@@ -99,32 +85,59 @@ def simple_straps_options() -> Dict[str, Any]:
         "par.power_straps_mode": "generate",
         "par.generate_power_straps_method": "by_tracks",
         "par.generate_power_straps_options.by_tracks": {
-            "strap_layers": strap_layers,
-            "pin_layers": pin_layers,
-            "track_width": track_width,
-            "track_width_M7": track_width_M7,
-            "track_width_M8": track_width_M8,
-            "track_spacing": track_spacing,
-            "track_spacing_M6": track_spacing_M6,
-            "power_utilization": power_utilization,
-            "power_utilization_M8": power_utilization_M8,
-            "track_start_M5": track_start_M5,
-            "track_offset_M5": track_offset_M5,
-            "bottom_via_layer": bottom_via_layer
+
+            "strap_layers": ["M4", "M5", "M6", "M7", "M8"],
+            "pin_layers": ["M7", "M8"],
+            "track_width": 4,
+            "track_width_M7": 8,
+            "track_width_M8": 10,
+            "track_spacing": 0,
+            "track_spacing_M6": 1,
+            "power_utilization": 0.2,
+            "power_utilization_M8": 1.0,
+            "track_start_M5": 1,
+            "track_offset_M5": 1.2,
+            "bottom_via_layer": "rail"
         }
     }
     return straps_options
 
+def mesh_straps_options() -> Dict[str, Any]:
+    # TODO clean this up a bit
+
+    # VSS comes before VDD
+    nets = ["VSS", "VDD"]
+
+    straps_options = {
+        "vlsi.inputs.supplies": {
+            "power": [{"name": "VDD", "pins": ["VDD"]}],
+            "ground": [{"name": "VSS", "pins": ["VSS"]}],
+            "VDD": "1.00 V",
+            "GND": "0 V"
+        },
+        "par.power_straps_mode": "generate",
+        "par.generate_power_straps_method": "by_tracks",
+        "par.generate_power_straps_options.by_tracks": {
+            "strap_layers": ["M4", "M5", "M6", "M7", "M8"],
+            "pin_layers": ["M7", "M8"],
+            "track_width": 4,
+            "track_width_M7": 8,
+            "track_width_M8": 10,
+            "track_spacing": 0,
+            "track_spacing_M6": 1,
+            "power_utilization": 0.2,
+            "power_utilization_M8": 1.0,
+            "track_start_M5": 1,
+            "track_offset_M5": 1.2,
+            "pattern": 'coupled',
+            "pattern_M4": 'mesh',
+            "track_spacing_M4": 1,
+            "bottom_via_layer": "rail"
+        }
+    }
+    return straps_options
 
 def multiple_domains_straps_options() -> Dict[str, Any]:
-    strap_layers = ["M4", "M5", "M8"]
-    pin_layers = ["M8"]
-    track_width = 8
-    track_spacing = 0
-    power_utilization = 0.2
-    power_utilization_M8 = 1.0
-    bottom_via_layer = "rail"
-
     straps_options = {
         "vlsi.inputs.supplies": {
             "power": [{"name": "VDD", "pins": ["VDD"]}, {"name": "VDD2", "pins": ["VDD2"]}],
@@ -135,13 +148,13 @@ def multiple_domains_straps_options() -> Dict[str, Any]:
         "par.power_straps_mode": "generate",
         "par.generate_power_straps_method": "by_tracks",
         "par.generate_power_straps_options.by_tracks": {
-            "strap_layers": strap_layers,
-            "pin_layers": pin_layers,
-            "track_width": track_width,
-            "track_spacing": track_spacing,
-            "power_utilization": power_utilization,
-            "power_utilization_M8": power_utilization_M8,
-            "bottom_via_layer": bottom_via_layer
+            "strap_layers": ["M4", "M5", "M8"],
+            "pin_layers": ["M8"],
+            "track_width": 8,
+            "track_spacing": 0,
+            "power_utilization": 0.2,
+            "power_utilization_M8": 1.0,
+            "bottom_via_layer": "rail"
         }
     }
     return straps_options
@@ -251,7 +264,117 @@ class TestPowerStrapsTest(HasGetTech):
                 assert strap_pitch == required_pitch
             else:
                 assert False, "Got the wrong layer_name: {}".format(layer_name)
+    
+    @pytest.mark.parametrize("straps_options, tech_name", [(mesh_straps_options(), "mesh")])
+    def test_mesh_power_straps(self, power_straps_test_context) -> None:
+        """ Creates simple power straps using the by_tracks method """
+        c = power_straps_test_context
+        success, par_output = c.driver.run_par()
+        assert success
 
+        par_tool = c.driver.par_tool
+        # It's surpringly annoying to import mockpar.MockPlaceAndRoute, which is the class
+        # that contains the parse_mock_power_straps_file() method, so we're just ignoring
+        # that particular part of this
+        assert isinstance(par_tool, hammer_vlsi.HammerPlaceAndRouteTool)
+        stackup = par_tool.get_stackup()
+        parsed_out = par_tool.parse_mock_power_straps_file()  # type: ignore
+        entries = cast(List[Dict[str, Any]], parsed_out)
+
+        # TODO: this is copied, avoid that
+        strap_layers = ["M4", "M5", "M6", "M7", "M8"]
+        pin_layers = ["M7", "M8"]
+        track_width = 4
+        track_spacing_M4 = 1
+        pattern_M4 = 'mesh'
+        track_width_M7 = 8
+        track_width_M8 = 10
+        track_spacing = 0
+        track_spacing_M6 = 1
+        power_utilization = 0.2
+        power_utilization_M8 = 1.0
+        track_start_M5 = 1
+        track_offset_M5 = 1.2
+        nets = ["VSS", "VDD"]
+
+        for entry in entries:
+            print(entry)
+            c.logger.debug("Power strap entry:" + str(entry))
+            layer_name = entry["layer_name"]
+            if layer_name == "M1":
+                # Standard cell rails
+                assert entry["tap_cell_name"] == "FakeTapCell"
+                assert entry["bbox"] == []
+                assert entry["nets"] == nets
+                continue
+
+            strap_width = Decimal(entry["width"])
+            strap_spacing = Decimal(entry["spacing"])
+            strap_pitch = Decimal(entry["pitch"])
+            strap_offset = Decimal(entry["offset"])
+            metal = stackup.get_metal(layer_name)
+            min_width = metal.min_width
+            group_track_pitch = strap_pitch / metal.pitch
+            track_offset = Decimal(str(track_offset_M5)) if layer_name == "M5" else Decimal(0)
+            track_start = Decimal(str(track_start_M5)) if layer_name == "M5" else Decimal(0)
+            used_tracks = round(Decimal(strap_offset + strap_width + strap_spacing + strap_width + strap_offset - 2 * (track_offset + track_start * metal.pitch)) / metal.pitch) - 1
+            if layer_name == "M4":
+                assert entry["bbox"] == []
+                assert entry["nets"] == nets
+                # TODO more tests in a future PR
+                assert strap_spacing == strap_pitch / 2 - strap_width
+                assert strap_pitch / metal.pitch == track_width * 2 / power_utilization 
+            elif layer_name == "M5":
+                assert entry["bbox"] == []
+                assert entry["nets"] == nets
+                # Check that the requested tracks equals the used tracks
+                requested_tracks = track_width * 2 + track_spacing
+                assert used_tracks == requested_tracks
+                # Spacing should be at least the min spacing
+                min_spacing = metal.get_spacing_for_width(strap_width)
+                assert strap_spacing >= min_spacing
+                # TODO more tests in a future PR
+                assert strap_pitch / metal.pitch == (track_width * 2 + track_spacing) / power_utilization 
+            elif layer_name == "M6":
+                assert entry["bbox"] == []
+                assert entry["nets"] == nets
+                # This is a sanity check that we didn't accidentally change something up above
+                assert track_spacing_M6 == 1
+                # We should be able to fit a track in between the stripes because track_spacing_M6 == 1
+                wire_to_strap_spacing = (strap_spacing - min_width) / 2
+                min_spacing = metal.get_spacing_for_width(strap_width)
+                assert wire_to_strap_spacing >= min_spacing
+                # Check that the requested tracks equals the used tracks
+                requested_tracks = track_width * 2 + track_spacing_M6
+                assert used_tracks == requested_tracks
+                # Spacing should be at least the min spacing
+                min_spacing = metal.get_spacing_for_width(strap_width)
+                assert wire_to_strap_spacing >= min_spacing
+                # TODO more tests in a future PR
+            elif layer_name == "M7":
+                assert entry["bbox"] == []
+                assert entry["nets"] == nets
+                # TODO more tests in a future PR
+            elif layer_name == "M8":
+                other_spacing = strap_pitch - (2 * strap_width) - strap_spacing
+                # Track spacing should be 0
+                assert track_spacing == 0
+                # Test that the power straps are symmetric
+                assert other_spacing == strap_spacing
+                # Spacing should be at least the min spacing
+                min_spacing = metal.get_spacing_for_width(strap_width)
+                assert other_spacing >= min_spacing
+                # Test that a slightly larger strap would be a DRC violation
+                new_spacing = metal.get_spacing_for_width(strap_width + metal.grid_unit)
+                new_pitch = (strap_width + metal.grid_unit + new_spacing) * 2
+                assert strap_pitch < new_pitch
+                # Test that the pitch does consume the right number of tracks
+                required_pitch = Decimal(track_width_M8 * 2) * metal.pitch
+                # 100% power utilzation should produce straps that consume 2*strap_width + strap_spacing tracks
+                assert strap_pitch == required_pitch
+            else:
+                assert False, "Got the wrong layer_name: {}".format(layer_name)
+    
     @pytest.mark.parametrize("straps_options, tech_name", [(multiple_domains_straps_options(), "multiple_domains")])
     def test_multiple_domains(self, power_straps_test_context) -> None:
         """ Tests multiple power domains """
