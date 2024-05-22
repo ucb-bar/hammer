@@ -381,7 +381,7 @@ class xcelium(HammerSimTool, CadenceTool):
     f.close()  
     return True
 
-  def generate_amscf(self) -> bool:
+  """def generate_amscf(self) -> bool:
     # Open AMS control file template for read.
     # Hardcoded path for now
     t = open("amscf_template.scs", "r")
@@ -434,110 +434,7 @@ class xcelium(HammerSimTool, CadenceTool):
     # Close files properly.
     t.close()
     f.close()
-    return True
-  
-  def retrieve_files(path, exts=[], output_type=str, relative=True):
-    """
-    Returns a list or line-seperated string of all filepaths in a directory and any of its subdirectories.
-    """
-    file_list = []
-    extslower = [extension.lower() for extension in exts]
-    exts_proc = [f".{ext}" if ("." not in ext) else ext for ext in extslower]
-
-    for (root, directories, filenames) in os.walk(path):
-        for filename in filenames:
-            file_ext = (os.path.splitext(filename)[1]).lower()
-            rel_root = os.path.relpath(root)
-            if (relative):
-              filepath = os.path.join(rel_root, filename)
-            else:
-              filepath = f"{os.path.join(root, filename)}"
-
-            if (not exts):
-               file_list.append(filepath)
-            elif (file_ext in exts_proc):
-               file_list.append(filepath)
-    
-    if (output_type is str):
-      return "".join(file_list) + "\n"
-    elif (output_type is list):
-      return file_list
-    else:
-      return "".join(file_list) + "\n"
-
-  def generate_ams_opts(self): #Hardcoded to example
-    ams_opts_def = {
-      "ams": False,
-      "gen_amscf": False,
-      "amsconnrules": ""
-    }
-
-    bool_list = ["ams", "gen_amscf"]
-
-    ### Read in, process, and convert AMS opts into formatted string.
-    ams_opts = self.get_settings_from_dict(ams_opts_def, key_prefix=self.tool_config_prefix())
-    ams_opts_proc = ams_opts.copy()
-
-    # Process special AMS opts 
-    if ams_opts_proc ["ams"]:
-      ams_opts_proc ["ams"] = "-ams_flex"
-    else:
-      ams_opts_proc ["ams"] = ""
-
-    if ams_opts_proc ["gen_amscf"]:
-      pass
-    else:
-      ams_opts_proc ["gen_amscf"] = ""
-
-    if ams_opts_proc ["amsconnrules"]:
-      ams_opts_proc ["amsconnrules"] = "ConnRules_multpower"
-    else:
-      ams_opts_proc ["amsconnrules"] = ""
-
-    # Process non-specified standard AMS opts
-    for (opt, setting) in ams_opts_proc.items():
-      if (opt not in bool_list and setting is not None):
-        ams_opts_proc [opt] = f"-{opt} {setting}"
-      
-    # Convert AMS opt dictionary into formatted string
-    ams_opt_str = ""
-    for (opt, setting) in ams_opts_proc.items():
-      ams_opt_str += f"{setting}\n"
-
-    ### Read in disciplines file, if it exists.
-    disciplines = self.get_setting("sim.xcelium.disciplines")
-
-    if (disciplines):
-      df = open(disciplines, "r")
-      discpline_str = df.read() + "\n"
-      df.close()
-    else:
-      discpline_str = ""
-
-    ### Read in A/MS schematics, control files, connect libs, and convert them into formatted strings
-    cwd = os.getcwd()
-    schematicdir = os.path.join(cwd, self.get_setting("sim.xcelium.schematics"))
-    connectdir = os.path.join(cwd, self.get_setting("sim.xcelium.connectlibs"))
-    #acf = os.path.join(cwd, self.get_setting("sim.xcelium.acf")) + "\n"
-    amscf = os.path.join(cwd, self.get_setting("sim.xcelium.amscf")) + "\n"
-
-    # Retrieve formatted string of schematic files
-    schematics = self.retrieve_files(schematicdir, exts=[".sp", ".vams"])
-
-    # Retrieve formatted string of connect files
-    connectlibs = self.retrieve_files(connectdir, exts=[".vams"])
-
-    ### Attach additional options 
-    additional_opts = "-spectre_args \"++aps\"\n-messages \n-ieinfo \n"
-
-    ### Create and return combined string 
-    ams_opt_header = "# AMS OPTS:\n"
-    formatted_opts = ams_opt_header + ams_opt_str + discpline_str + additional_opts + "\n"
-
-    ams_file_header = "# AMS FILES:\n"
-    formatted_files = ams_file_header + amscf + connectlibs + "\n"
-    
-    return formatted_files + formatted_opts
+    return True"""
 
   def attach_opts(self, filepath, attachment):
     f = open(filepath, "a+")
@@ -557,159 +454,6 @@ class xcelium(HammerSimTool, CadenceTool):
       return discipline_opts
     else:
       return ""
-
-    
-
-    if (disciplines):
-      dpath = os.path.join(cwd, disciplines)
-      df = open(dpath, "r")
-      discpline_str = df.read()
-      disciplines = "\n".split(discpline_str)
-      discipline_opts = [opt for opt in disciplines if opt != ""]
-      df.close()
-    else:
-      discipline_opts = []
-
-    if discipline_opts:
-      discipline_opts_proc = [f"-SETD \"{opt}\"" for opt in discipline_opts]
-    else:
-      discipline_opts = []
-
-    return discipline_opts_proc
-  
-  def extract_ams_opts(self, step):
-    ams_opts = self.get_setting(f"{self.tool_config_prefix()}.ams_opts", [])
-    cwd = os.getcwd()
-    match (step):
-      case ("compile"):
-        ### Compiles only the files (Digital, V-AMS)
-
-        # Gather compile-time options
-        
-        compile_opts = self.extract_ams_compile_opts()[0]
-        compile_opts_list = []#[setting for setting in compile_opts.values()]
-
-        # Gather AMS files from specified locations.
-        amscf = os.path.join(cwd, self.get_setting("sim.xcelium.amscf"))
-        connectdir = os.path.join(cwd, self.get_setting("sim.xcelium.connectlibs"))
-
-        # Gather connect libraries (currently manually added, in future pull from Xcelium install) & connect rules
-        connectlibs = self.retrieve_files(connectdir, exts=[".vams"], output_type=str)
-        connrules = os.path.join(cwd, self.get_setting(f"{self.tool_config_prefix()}.amsconnrules")) + ".vams"
-
-        # Add AMS files to compile stage.
-        #compile_opts_list.append(connectlibs)
-        #compile_opts_list.append(connrules)
-        compile_opts_list.append(f"{amscf}")
-
-        #ams_compile_inputs = connectlibs + connrules
-        #compile_opts_list.append(f"-AMSINPUT\n{ams_compile_inputs}\n")
-
-        return compile_opts_list
-    
-      case ("elaborate"):
-        ### Parses/compiles the source files and elaborates the design.
-
-        # Gather AMS Control File
-        amscf = os.path.join(cwd, self.get_setting("sim.xcelium.amscf"))
-
-        # Gather elaboration stage options
-        elab_opts_proc = self.extract_ams_elab_opts(ams_opts)[0]
-        elab_opts_str = ""
-        for (opt, setting) in elab_opts_proc.items():
-          elab_opts_str += setting + "\n"
-
-        # Gather and add discipline options, if any.
-        discpline_opts = self.get_disciplines()
-        elab_opts_str += discpline_opts
-        
-        # Gather AMS Files from specified locations.
-        amscf = os.path.join(cwd, self.get_setting("sim.xcelium.amscf"))
-        connectdir = os.path.join(cwd, self.get_setting("sim.xcelium.connectlibs"))
-
-        # Gather connect libraries and rules.
-        connectlibs = self.retrieve_files(connectdir, exts=[".vams"], output_type=str)
-        connrules = os.path.join(cwd, self.get_setting(f"{self.tool_config_prefix()}.amsconnrules")) + ".vams"
-        
-        # Add AMS files to elaboration stage as AMS inputs.
-        elab_opts_str += f"\n{connectlibs}\n"
-        elab_opts_str += f"{connrules}\n"
-
-        # Add AMS Control File.
-        #elab_opts_str += f"{amscf}\n"
-
-        return elab_opts_str
-      case ("sim"):
-        return self.extract_ams_sim_opts(ams_opts)
-    return
-  
-  def extract_ams_compile_opts(self) -> Tuple[Dict[str, str], Dict[str, str]]:
-    ams_compile_opts_def = {
-      "genamscf": False
-    }
-
-    ams_compile_opts = self.get_settings_from_dict(ams_compile_opts_def, key_prefix=self.tool_config_prefix())
-    ams_compile_opts_proc = ams_compile_opts.copy()
-    bool_list = ["genamscf"]
-    if ams_compile_opts_proc ["genamscf"]:
-      pass #In future, generate AMSCF from template and place it in specified location
-    else:
-      pass
-
-    for opt, setting in ams_compile_opts_proc.items():
-      if opt not in bool_list and setting is not None:
-        ams_compile_opts_proc [opt] = f"-{opt} {setting}"
-
-    return ams_compile_opts_proc, ams_compile_opts
-  
-  def extract_ams_elab_opts(self, ams_opts) -> Tuple[Dict[str, str], Dict[str, str]]:
-    ams_elab_opts_def = {
-      "ams_flex": False,
-      "amsconnrules": None,
-      "ieinfo": False
-    }
-
-    bool_list = ["ams_flex", "ieinfo"]
-
-    ams_elab_opts = {}
-    for opt in ams_opts:
-      ams_elab_opts [opt] = opt
-    ams_elab_opts_proc = ams_elab_opts.copy()
-
-    for opt in ams_elab_opts_proc:
-      if opt in bool_list:
-        ams_elab_opts_proc [opt] = f"-{opt}"
-
-    # Specific settings for AMS connection rules
-    amsconnrules = self.get_setting(f"{self.tool_config_prefix()}.amsconnrules")
-    amsconnrules_basepath, amsconnrules_name = os.path.split(amsconnrules)
-    if amsconnrules: 
-      ams_elab_opts_proc ["amsconnrules"] = f"-AMSCONNRULES\n{amsconnrules_name}"
-    elif ("amsconnrules" not in ams_elab_opts):
-      ams_elab_opts_proc.pop("amsconnrules")
-    
-    # Extra args
-
-    ams_elab_opts_proc ["spectre_args"] = f"-SPECTRE_ARGS \"++aps\""
-    #ams_elab_opts_proc ["AMSINPUT"] = f"-AMSINPUT {amscf}"
-
-    amscf = self.get_setting(f"{self.tool_config_prefix()}.amscf")
-    ams_elab_opts_proc ["analogcontrol"] = f"-ANALOGCONTROL {amscf}"
-    #ams_elab_opts_proc ["AMS_ELAB"] = f"-AMS_ELAB"
-    
-    return ams_elab_opts_proc, ams_elab_opts
-  
-  def extract_ams_sim_opts(self, ams_opts):
-    cwd = os.getcwd()
-    amscf = os.path.join(cwd, self.get_setting("sim.xcelium.amscf"))
-    sim_opts = [f"-ANALOGCONTROL {amscf}", f"-AMS_FLEX", f"-SPECTRE_ARGS \"++aps\""]
-    sim_opts_str = ""
-
-    sim_opts_str += f"-ANALOGCONTROL {amscf}"
-    sim_opts_str += f"-AMS_FLEX"
-    sim_opts_str += f"-SPECTRE_ARGS \"++aps\""
-  
-    return sim_opts
 
   def compile_xrun(self) -> bool:
     
@@ -777,17 +521,12 @@ class xcelium(HammerSimTool, CadenceTool):
     ### If AMS enabled, submit options but do not run elaborate sub-step.
     if self.get_setting(f"{self.tool_config_prefix()}.ams"):
       return True
-    """if self.get_setting(f"{self.tool_config_prefix()}.ams"):
-      ams_elab_opts = self.extract_ams_opts("elaborate")
-      self.attach_opts(arg_file_path, ams_elab_opts)
-      #Add all necessary AMS specific commands, remove other commands as necessary"""
     
     self.run_executable(args, cwd=self.run_dir)
     return True
 
   def sim_xrun(self) -> bool:
     sim_opts  = self.extract_sim_opts()[1]
-    ams_opts = self.extract_ams_opts("sim")
     sim_cmd_opts = self.get_setting(f"{self.sim_input_prefix}.options", [])
     sim_opts_removal  = ["tb_name", "input_files", "incdir"]
     xrun_opts_removal = ["enhanced_recompile", "mce"]
@@ -822,16 +561,15 @@ class xcelium(HammerSimTool, CadenceTool):
     return True
 
   
-  def sift_exts(list, exts):
+  def sift_exts(filelist, exts=[]):
     """
     Returns a list of filepaths whose filenames contain any of the extensions in the specified extension list
     """
-    exts_lower = [extension.lower() for extension in exts]
-    exts_proc = [f".{ext}" if ("." not in ext) else ext for ext in exts_lower]
 
-    list_proc = [os.path.splitext(path.lower()) for path in list]
 
-    sifted = [f"{name}{ext}" for (name, ext) in list_proc if ext in exts_proc]
+    exts_lower = list(map(str.lower, exts))
+    filelist_lower = list(map(str.lower, filelist))
+    sifted = list(filter(lambda x: os.path.splitext(x)[1] in exts_lower, filelist_lower))
 
     return sifted
 
@@ -927,14 +665,19 @@ class xcelium(HammerSimTool, CadenceTool):
 
       return f"{control}"
 
-  def discipline_collector(discipline_filename) -> str:
+  def discipline_collector(self, discipline_filename) -> str:
       """
       Returns a formatted string of all disciplines from the disciplines.txt file
       """
       ### Read in disciplines file, if it exists.
-      disciplines = os.path.join(os.getcwd(), discipline_filename)
-      dpath = os.path.join(os.getcwd(), disciplines)
-      if disciplines:
+      
+  
+      dpath = os.path.join(os.getcwd(), discipline_filename)
+
+      if not os.path.isfile(dpath):
+        self.logger.error(f"No discipline file found at {dpath}.")
+
+      if dpath:
         df = open(dpath, "r")
         discipline_opts = df.read()
         disciplines_formatted = re.sub("\n", " \\\n", discipline_opts) + " \\"
@@ -943,12 +686,13 @@ class xcelium(HammerSimTool, CadenceTool):
       else:
         return ""
 
-  def option_preparer(self, opts, pseudo_step=True) -> str:
+  def option_preparer(self, opts, addt_opts, pseudo_step=True) -> str:
       """
       Returns a formatted string of all provided AMS options and their arguments
       """
       bool_list = ["ams", "disciplines", "gen_amscf"]
       opts_proc = opts.copy()
+      header = ""
 
       if not opts:
         return ""
@@ -965,7 +709,7 @@ class xcelium(HammerSimTool, CadenceTool):
         opts_proc ["gen_amscf"] = ""
 
       if opts ["disciplines"]:
-        opts_proc ["disciplines"] = xcelium.discipline_collector(opts["disciplines"])
+        header += self.discipline_collector(opts["disciplines"]) + "\n"
       
       if opts ["amsconnrules"]:
         opts_proc ["amsconnrules"] = opts["amsconnrules"]
@@ -976,12 +720,13 @@ class xcelium(HammerSimTool, CadenceTool):
           opts_proc = digital_opts
       
       #Fixed Extra Opts
-      opts_proc ["timescale"] = self.get_setting("sim.inputs.timescale")
-      opts_proc ["input"] = "probe.tcl"
-      opts_proc ["access"] = "+rwc"
-      opts_proc ["messages"] = ""
-      opts_proc ["spectre_args"] = "\"++aps\""
-      opts_proc ["ieinfo"] = ""
+      #opts_proc ["timescale"] = self.get_setting("sim.inputs.timescale")
+      #opts_proc ["input"] = "probe.tcl"
+      #opts_proc ["access"] = "+rwc"
+      #opts_proc ["messages"] = ""
+      #opts_proc ["spectre_args"] = "\"++aps\""
+      #opts_proc ["ieinfo"] = ""
+
 
       opts_proc = {opt:setting for (opt, setting) in opts_proc.items() if opt not in bool_list and setting is not None}
 
@@ -1002,12 +747,27 @@ class xcelium(HammerSimTool, CadenceTool):
       opts_rev = {k: v for k, v in opts_proc.items() if v}
 
       opts_proc_str = "\n".join(opts_rev.values())
-      return f"{opts_proc_str}"
+
+      # Attach user-defined commands, if any are included
+      if (addt_opts):
+        opts_proc_str += " \\\n"
+
+      footer = " \\\n".join(addt_opts)
+
+      return header + f"{opts_proc_str}" + footer
 
   def generate_amscf(self, template_filename, amscontrol_filename) -> bool:
       """
       Creates an AMS control file based on templated format with available analog models & schematics
       """
+      
+      # Get analog models, schematics from directories specified in extralibs
+      extralib = self.get_setting("vlsi.technologies.extra_libraries")
+      extralib_dict = extralib[0]
+      anamodels_dir = extralib_dict["anamodels"]
+      schematics_dir = extralib_dict["schematics"]
+
+
       # Open AMS control file template for read.
       template_path = os.path.join(os.getcwd(), template_filename)
       t = open(template_path, "r")
@@ -1017,11 +777,11 @@ class xcelium(HammerSimTool, CadenceTool):
       f = open(amscontrol_path, "w+")
 
       # Get normalized, absolute paths for analog model files
-      model_path = os.path.join(os.getcwd(), self.get_setting("sim.xcelium.anamodels"))
+      model_path = os.path.join(os.getcwd(), anamodels_dir)
       models = [os.path.normpath(modelfile.path) for modelfile in os.scandir(model_path)]
 
       # Get normalized, absolute paths for analog schematic files
-      schematic_path = os.path.join(os.getcwd(), self.get_setting("sim.xcelium.schematics"))
+      schematic_path = os.path.join(os.getcwd(), schematics_dir)
       schematics = [os.path.normpath(schematic.path) for schematic in os.scandir(schematic_path)]
 
       # Warnings for missing files.
@@ -1086,7 +846,7 @@ class xcelium(HammerSimTool, CadenceTool):
 
     return opts
 
-  def scriptwriter(self, collect=False, sourcedir="", blacklist=[], sourcelist=[], options={"ams": False, "disciplines": "", "amsconnrules": "", "gen_amscf": False}):
+  def scriptwriter(self, options, additional_options, collect=False, sourcedir="", blacklist=[], sourcelist=[]):
     """
     Writes all prepared files and arguments to the run_mxh shell script
     """
@@ -1105,42 +865,19 @@ class xcelium(HammerSimTool, CadenceTool):
     f.write(xcelium.analog_preparer(collect, sourcelist, sourcedir, blacklist))
 
     # Write Options
-    f.write(self.option_preparer(options))
+    f.write(self.option_preparer(options, additional_options))
 
     f.close()
     return
 
-  def run_mxh(self) -> bool:
-    if not os.path.isfile(self.xcelium_bin):
-      self.logger.error(f"Xcelium (xrun) binary not found at {self.xcelium_bin}.")
-      return False
-  
-    if not self.check_input_files(self.xcelium_ext):
-      return False
+  def name_finder(self, name, sourcelist):
+    # Helper function, should probably be moved later
+    sourcelist_proc = [element.lower() for element in sourcelist if (type(element) == str)]
+    for element in sourcelist_proc:
+        if (name in element):
+            return element
     
-    digital_files = self.get_setting("sim.inputs.input_files")
-    acf = self.get_setting("sim.xcelium.acf")
-    amscf = self.get_setting("sim.xcelium.amscf")
-    connectlibs = self.get_setting("sim.xcelium.connectlibs")
-    anamodels_dir = self.get_setting("sim.xcelium.schematics")
-    
-    connrules = self.get_setting("sim.xcelium.amsconnrules")
-    ams_opts = self.get_setting("sim.xcelium.ams_opts")
-
-    source = digital_files + [acf, amscf, connectlibs]
-
-    ams_opts_dict = {
-      "ams": self.get_setting("sim.xcelium.ams"),
-      "disciplines": self.get_setting("sim.xcelium.disciplines"),
-      "amsconnrules": self.get_setting("sim.xcelium.amsconnrules"),
-      "gen_amscf": self.get_setting("sim.xcelium.genamscf")
-    }
-
-    self.scriptwriter(collect=True, sourcedir="src/", blacklist=["src/amscf_template.scs", "src/ams_control/acf.scs"], options=ams_opts_dict)
-    
-    self.update_submit_options()
-    self.run_executable(["./run_mxh"], cwd=self.run_dir)
-    return True
+    return ""
 
   def run_mxh_pseudo_three_step(self) -> bool:
     if not os.path.isfile(self.xcelium_bin):
@@ -1150,35 +887,37 @@ class xcelium(HammerSimTool, CadenceTool):
     if not self.check_input_files(self.xcelium_ext):
       return False
     
-
     digital_files = self.get_setting("sim.inputs.input_files")
     acf = self.get_setting("sim.xcelium.acf")
     amscf = self.get_setting("sim.xcelium.amscf")
 
-    #Alt Connectlibs
-    connectlibs = self.get_setting("vlsi.technologies.extralib.library.connectlibs")
-    #connectlibs = self.get_setting("sim.xcelium.connectlibs")
-    anamodels_dir = self.get_setting("sim.xcelium.schematics")
+    # Extralibs Autorecognition
+    extralib = self.get_setting("vlsi.technologies.extra_libraries")
+    extralib_dict = extralib[0]
     
-    connrules = self.get_setting("sim.xcelium.amsconnrules")
-    ams_opts = self.get_setting("sim.xcelium.ams_opts")
+    #ams_opts = self.get_setting("sim.xcelium.ams_opts")
 
-    source = digital_files + [acf, amscf, connectlibs]
+    #source = digital_files + [acf, amscf, connectlibs]
 
     ams_opts_dict = {
       "ams": self.get_setting("sim.xcelium.ams"),
-      "disciplines": self.get_setting("sim.xcelium.disciplines"),
-      "amsconnrules": self.get_setting("sim.xcelium.amsconnrules"),
-      "gen_amscf": self.get_setting("sim.xcelium.genamscf")
+      "disciplines": extralib_dict["disciplines"],
+      #"disciplines": self.name_finder("disciplines", extralibs),
+      "amsconnrules": extralib_dict["amsconnrules"],
+      "gen_amscf": extralib_dict["gen_amscf"]
     }
 
-    self.scriptwriter(collect=True, sourcedir="src/", blacklist=["src/amscf_template.scs", "src/ams_control/acf.scs"], options=ams_opts_dict)
+    ams_addt_opts = extralib_dict["ams_addt_opts"]
+
+    filepath_blacklist = extralib_dict["filepath_blacklist"] + [extralib_dict["amscf_template"]]
+
+    self.scriptwriter(options=ams_opts_dict, additional_options=ams_addt_opts, collect=True, sourcedir="src/", blacklist=filepath_blacklist)
     
     # Extract digital-only options from compile, elab, and sim argfiles
     combined_opts = self.option_extractor(["xrun_compile.arg", "xrun_elab.arg", "xrun_sim.arg"])
 
 
     self.update_submit_options()
-    self.run_executable(["./run_mxh"], cwd=self.run_dir)
+    self.run_executable([self.xcelium_bin, './run_mxh'], cwd=self.run_dir)
     return True
 tool = xcelium

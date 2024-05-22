@@ -47,19 +47,9 @@ sim.xcelium:
   acf: null
   # Specifies location of ams control file.
   amscf: null
-  # If true, create a partially populated template of the AMS control file.
-  gen_amscf: False
-  # To be removed in future.
-  anamodels: null
-  # To be removed in future.
-  schematics: null
   # List of strings specifying ams options.
   ams_opts: null
-  # Path to .txt file containing formatted disciplines.
-  disciplines: null
-  # Path to connect library files (cross-power domain libs).
-  connectlibs: null
-  # Path to file specifying cross-power domain connection rules (if applicable).
-  amsconnrules: null
-  # Path to ams control file template.
-  amscf_template: null
+  compile_opts: null
+  elab_opts: null
+
+

@@ -30,21 +30,6 @@ sim.xcelium:
   # Path to ams control file.
   amscf: Optional[str]
   # If true, create a partially populated template of the AMS control file.
-  gen_amscf: Optional[bool]
-  # Path to analog models directory.
-  # To be removed in future, pulled instead from PDK library models
-  anamodels: Optional[str]
-  # Path to analog schematics directory.
-  # To be removed in future, pulled from EXTRA_LIBS
-  schematics: Optional[str]
-  # Path to .txt file containing formatted disciplines.
-  disciplines: Optional[str]
-  # Path to connect library files (cross-power domain libs).
-  connectlibs: Optional[str]
-  # Path to file specifying cross-power domain connection rules (if applicable).
-  amsconnrules: Optional[str]
-  # Path to ams control file template.
-  amscf_template: Optional[str]
 
   compile_opts: Optional[list[str]]
   elab_opts: Optional[list[str]]
