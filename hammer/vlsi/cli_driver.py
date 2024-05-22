@@ -156,7 +156,6 @@ class CLIDriver:
         self.formal_rundir = "" # type: Optional[str]
         self.timing_rundir = "" # type: Optional[str]
         self.pcb_rundir = ""  # type: Optional[str]
-
         self.synthesis_action: CLIActionConfigType
         # If a subclass has defined these, don't clobber them in init
         # since the subclass still uses this init function.
@@ -456,31 +455,6 @@ class CLIDriver:
         return self.create_action("par", hooks if len(hooks) > 0 else None,
                                   pre_action_func, post_load_func, post_run_func)
 
-    @staticmethod
-    def get_full_config(driver: HammerDriver, output: dict) -> dict:
-        """
-        Get the full configuration by combining the project config from the
-        driver with the given output dict (i.e. it contains only
-        "synthesis.output.blah") that we want to combine with the project
-        config.
-        :param driver: HammerDriver that has the full project config.
-        :param output: Output dict containing specific settings we want to add
-                       to the full project config.
-        :return: Full project config combined with the output dict
-        """
-        if "vlsi.builtins.is_complete" in output:
-            if bool(output["vlsi.builtins.is_complete"]):
-                raise ValueError("Output-only config claims it is complete")
-        else:
-            raise ValueError("Output-only config does not appear to be output only")
-
-        output_full = deepdict(driver.project_config)
-        output_full.update(deepdict(output))
-        # Merged configs are always complete
-        if "vlsi.builtins.is_complete" in output_full:
-            del output_full["vlsi.builtins.is_complete"]
-        return output_full
-
     def create_drc_action(self, custom_hooks: List[HammerToolHookAction],
                           pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
                           post_load_func: Optional[Callable[[HammerDriver], None]] = None,
@@ -597,13 +571,13 @@ class CLIDriver:
                 if not success:
                     driver.log.error("Synthesis tool did not succeed")
                     return None
+                post_run_func_checked(driver)
                 dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.syn_tool.run_dir, "syn-output-full.json"),
                                          self.get_full_config(driver, output))
                 if driver.dump_history:
                     dump_config_to_yaml_file(os.path.join(driver.syn_tool.run_dir, "syn-output-history.yml"),
                                             add_key_history(self.get_full_config(driver, output), key_history))
-                post_run_func_checked(driver)
             elif action_type == "par":
                 if not driver.load_par_tool(get_or_else(self.par_rundir, "")):
                     return None
@@ -617,13 +591,13 @@ class CLIDriver:
                 if not success:
                     driver.log.error("Place-and-route tool did not succeed")
                     return None
+                post_run_func_checked(driver)
                 dump_config_to_json_file(os.path.join(driver.par_tool.run_dir, "par-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.par_tool.run_dir, "par-output-full.json"),
                                          self.get_full_config(driver, output))
                 if driver.dump_history:
                     dump_config_to_yaml_file(os.path.join(driver.par_tool.run_dir, "par-output-history.yml"),
                                             add_key_history(self.get_full_config(driver, output), key_history))
-                post_run_func_checked(driver)
             elif action_type == "drc":
                 if not driver.load_drc_tool(get_or_else(self.drc_rundir, "")):
                     return None
@@ -637,13 +611,13 @@ class CLIDriver:
                 if not success:
                     driver.log.error("DRC tool did not succeed")
                     return None
+                post_run_func_checked(driver)
                 dump_config_to_json_file(os.path.join(driver.drc_tool.run_dir, "drc-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.drc_tool.run_dir, "drc-output-full.json"),
                                          self.get_full_config(driver, output))
                 if driver.dump_history:
                     dump_config_to_yaml_file(os.path.join(driver.drc_tool.run_dir, "drc-output-history.yml"),
                                             add_key_history(self.get_full_config(driver, output), key_history))
-                post_run_func_checked(driver)
             elif action_type == "lvs":
                 if not driver.load_lvs_tool(get_or_else(self.lvs_rundir, "")):
                     return None
@@ -657,13 +631,13 @@ class CLIDriver:
                 if not success:
                     driver.log.error("LVS tool did not succeed")
                     return None
+                post_run_func_checked(driver)
                 dump_config_to_json_file(os.path.join(driver.lvs_tool.run_dir, "lvs-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.lvs_tool.run_dir, "lvs-output-full.json"),
                                          self.get_full_config(driver, output))
                 if driver.dump_history:
                     dump_config_to_yaml_file(os.path.join(driver.lvs_tool.run_dir, "lvs-output-history.yml"),
                                             add_key_history(self.get_full_config(driver, output), key_history))
-                post_run_func_checked(driver)
             elif action_type == "sram_generator":
                 if not driver.load_sram_generator_tool(get_or_else(self.sram_generator_rundir, "")):
                     return None
@@ -691,13 +665,13 @@ class CLIDriver:
                 if not success:
                     driver.log.error("Sim tool did not succeed")
                     return None
+                post_run_func_checked(driver)
                 dump_config_to_json_file(os.path.join(driver.sim_tool.run_dir, "sim-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.sim_tool.run_dir, "sim-output-full.json"),
                                          self.get_full_config(driver, output))
                 if driver.dump_history:
                     dump_config_to_yaml_file(os.path.join(driver.sim_tool.run_dir, "sim-output-history.yml"),
                                             add_key_history(self.get_full_config(driver, output), key_history))
-                post_run_func_checked(driver)
             elif action_type == "power":
                 if not driver.load_power_tool(get_or_else(self.power_rundir, "")):
                     return None
@@ -711,13 +685,13 @@ class CLIDriver:
                 if not success:
                     driver.log.error("Power tool did not succeed")
                     return None
+                post_run_func_checked(driver)
                 dump_config_to_json_file(os.path.join(driver.power_tool.run_dir, "power-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.power_tool.run_dir, "power-output-full.json"),
                                          self.get_full_config(driver, output))
                 if driver.dump_history:
                     dump_config_to_yaml_file(os.path.join(driver.power_tool.run_dir, "power-output-history.yml"),
                                             add_key_history(self.get_full_config(driver, output), key_history))
-                post_run_func_checked(driver)
             elif action_type == "formal":
                 if not driver.load_formal_tool(get_or_else(self.formal_rundir, "")):
                     return None
@@ -731,13 +705,13 @@ class CLIDriver:
                 if not success:
                     driver.log.error("Formal tool did not succeed")
                     return None
+                post_run_func_checked(driver)
                 dump_config_to_json_file(os.path.join(driver.formal_tool.run_dir, "formal-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.formal_tool.run_dir, "formal-output-full.json"),
                                          self.get_full_config(driver, output))
                 if driver.dump_history:
                     dump_config_to_yaml_file(os.path.join(driver.formal_tool.run_dir, "formal-output-history.yml"),
                                             add_key_history(self.get_full_config(driver, output), key_history))
-                post_run_func_checked(driver)
             elif action_type == "timing":
                 if not driver.load_timing_tool(get_or_else(self.timing_rundir, "")):
                     return None
@@ -751,10 +725,10 @@ class CLIDriver:
                 if not success:
                     driver.log.error("Timing tool did not succeed")
                     return None
+                post_run_func_checked(driver)
                 dump_config_to_json_file(os.path.join(driver.timing_tool.run_dir, "timing-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.timing_tool.run_dir, "timing-output-full.json"),
                                          self.get_full_config(driver, output))
-                post_run_func_checked(driver)
             elif action_type == "pcb":
                 if not driver.load_pcb_tool(get_or_else(self.pcb_rundir, "")):
                     return None
@@ -768,13 +742,13 @@ class CLIDriver:
                 if not success:
                     driver.log.error("PCB deliverable tool did not succeed")
                     return None
+                post_run_func_checked(driver)
                 dump_config_to_json_file(os.path.join(driver.pcb_tool.run_dir, "pcb-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.pcb_tool.run_dir, "pcb-output-full.json"),
                                          self.get_full_config(driver, output))
                 if driver.dump_history:
                     dump_config_to_yaml_file(os.path.join(driver.pcb_tool.run_dir, "pcb-output-history.yml"),
                                             add_key_history(self.get_full_config(driver, output), key_history))
-                post_run_func_checked(driver)
             else:
                 raise ValueError("Invalid action_type = " + str(action_type))
             # TODO: detect errors
@@ -1263,6 +1237,31 @@ class CLIDriver:
         """Get the list of valid actions for the command-line driver."""
         return list(self.action_map().keys())
 
+    @staticmethod
+    def get_full_config(driver: HammerDriver, output: dict) -> dict:
+        """
+        Get the full configuration by combining the project config from the
+        driver with the given output dict (i.e. it contains only
+        "synthesis.output.blah") that we want to combine with the project
+        config.
+        :param driver: HammerDriver that has the full project config.
+        :param output: Output dict containing specific settings we want to add
+                       to the full project config.
+        :return: Full project config combined with the output dict
+        """
+        if "vlsi.builtins.is_complete" in output:
+            if bool(output["vlsi.builtins.is_complete"]):
+                raise ValueError("Output-only config claims it is complete")
+        else:
+            raise ValueError("Output-only config does not appear to be output only")
+
+        output_full = deepdict(driver.project_config)
+        output_full.update(deepdict(output))
+        # Merged configs are always complete
+        if "vlsi.builtins.is_complete" in output_full:
+            del output_full["vlsi.builtins.is_complete"]
+        return output_full
+
     def args_to_driver(self, args: dict,
                        default_options: Optional[HammerDriverOptions] = None) -> \
             Tuple[HammerDriver, List[str]]:
@@ -1424,6 +1423,8 @@ class CLIDriver:
                         module=module))  # TODO(edwardw): fix this ugly os.path.join; it doesn't belong here.
                     # TODO(edwardw): remove ugly hack to store stuff in parent context
                     base_project_config[0] = deeplist(driver.project_configs)
+                    print(base_project_config[0])
+                    print(config)
                     d.update_project_configs(deeplist(base_project_config[0]) + [config])
 
                 def par_pre_func(d: HammerDriver) -> None:
@@ -1483,7 +1484,7 @@ class CLIDriver:
                     with open(os.path.join(rundir, "module_config.json"), "w") as f:
                         new_output_json = json.dumps(config, cls=HammerJSONEncoder, indent=4)
                         f.write(new_output_json)
-
+                    # Restore the original project config to remove hierarchical settings.
                     d.update_project_configs(deeplist(base_project_config[0]))
 
                 def syn_post_run(d: HammerDriver) -> None:

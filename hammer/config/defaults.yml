@@ -60,13 +60,13 @@ vlsi.technology:
   bump_block_cut_layer: null # Top cut/via layer for blockage under bumps. (Optional[str])
   # Only used if using vlsi.inputs.bumps
   # TODO: remove this after stackup supports vias ucb-bar/hammer#354
-  
+
   tap_cell_interval: 10.0 # Spacing between columns of tap cells (float)
   # Must be overridden by technology plugin defaults or else you will have DRC/latch-up errors.
 
   tap_cell_offset: 0.0 # Offset of the first column of tape cells from the edge of the floorplan (float)
   # Should be overridden by technology plugin defaults.
-  
+
   routing_layers: null # If specified, set/override the [bottom, top] layers used for routing. (Optional[Tuple[int, int]])
   # Both must match the index number (not name) of layers used in the stackup.
 
@@ -103,7 +103,7 @@ vlsi.technology:
 
   timing_lib_pref: "NLDM"
   # Select a timing lib preference, available options include:
-  # NLDM, ECSM, and CCS (lower or upper case acceptable). 
+  # NLDM, ECSM, and CCS (lower or upper case acceptable).
   # If no preference is specified, then the following preference order is followed:
   # NLDM -> ECSM -> CCS
 
@@ -145,7 +145,7 @@ vlsi.inputs:
     manual_modules: [] # Manual hierarchical definitions used only if hierarchical_definition_source is set to manual mode.
     # Should be a list along the lines of [{"module1": "module1_sub1", "module1_sub2", "module2": "module2_sub"}].
 
-    manual_placement_constraints: [] # Manual hierarchical placement constraints used only if hierarchical_definition_source is set to manual mode.
+    manual_placement_constraints: [] # (Deprecated) Manual hierarchical placement constraints used only if hierarchical_definition_source is set to manual mode.
     # Should be a list along the lines of [{"module1": <list of PlacementConstraint structs>}].
 
     constraints: [] # Manual hierarchical constraints. Overrides generic constraints on a per module basis.
@@ -212,7 +212,7 @@ vlsi.inputs:
   custom_sdc_constraints: [] # List of custom sdc constraints to use. (List[str])
   # These are appended after all other generated constraints (clock, pin, delay, load, etc.).
   # IMPORTANT: Since SDC is unitless, you must manually verify that your time & cap units match the tech library's units.
-  
+
   custom_sdc_files: [] # List of custom sdc files to append. (List[str])
   # These are appended after all other generated constraints and custom_sdc_constraints.
 
@@ -328,7 +328,7 @@ vlsi.inputs:
     # type: float
     pitch: 0.0
     global_x_offset: 0.0 # offset the bump map in the x-axis (float)
-    global_y_offset: 0.0 # offset the bump map in the y-axis (float)    
+    global_y_offset: 0.0 # offset the bump map in the y-axis (float)
     cell: "" # cell (str) - Name of the default bump cell
     assignments: [] # assignments - List of BumpAssignment structs. You must specify one of name or no_connect.
     # If both are specified the bump will be left unconnected
@@ -901,7 +901,7 @@ power.inputs:
   #       "write_profile" - profiles all power types on all categories for all the sub-hierarchies for a given design instance (*.fsdb)
   #       "profile" - run plot_profile + dump_profile
   #       "all" - generate all of the above report formats
-  
+
   # examples:
   #   report_configs: [{waveform_path: "/path/to/fsdb", module: "chiptop", levels:3, start_time: "0ns", end_time: "1ns", toggle_signal:"/ChipTop/clock", num_toggles:1, frame_count:1000, report_name: "my_fsdb_report"}]
   #   report_configs: [{waveform_path: "/path/to/fsdb", inst: "ChipTop/system/tile_prci_domain/tile_reset_domain_tile", interval_size: "1ns", output_formats: ["plot_profile"]}]
