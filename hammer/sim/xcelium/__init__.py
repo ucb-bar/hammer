@@ -1150,10 +1150,14 @@ class xcelium(HammerSimTool, CadenceTool):
     if not self.check_input_files(self.xcelium_ext):
       return False
     
+
     digital_files = self.get_setting("sim.inputs.input_files")
     acf = self.get_setting("sim.xcelium.acf")
     amscf = self.get_setting("sim.xcelium.amscf")
-    connectlibs = self.get_setting("sim.xcelium.connectlibs")
+
+    #Alt Connectlibs
+    connectlibs = self.get_setting("vlsi.technologies.extralib.library.connectlibs")
+    #connectlibs = self.get_setting("sim.xcelium.connectlibs")
     anamodels_dir = self.get_setting("sim.xcelium.schematics")
     
     connrules = self.get_setting("sim.xcelium.amsconnrules")
