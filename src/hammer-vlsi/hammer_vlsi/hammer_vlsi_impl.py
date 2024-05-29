@@ -78,6 +78,26 @@ class SimulationLevel(Enum):
     def __str__(self) -> str:
         return reverse_dict(SimulationLevel.__mapping())[self]
 
+class PowerSpecFormat(Enum):
+    cpf = 1
+    upf = 2
+
+    @classmethod
+    def __mapping(cls) -> Dict[str, "PowerSpecFormat"]:
+        return {
+            "cpf": PowerSpecFormat.cpf,
+            "upf": PowerSpecFormat.upf,
+        }
+
+    @staticmethod
+    def from_str(x: str) -> "PowerSpecFormat":
+        try:
+            return PowerSpecFormat.__mapping()[x]
+        except KeyError:
+            raise ValueError("Invalid string for PowerSpecFormats: " + str(x))
+
+    def __str__(self) -> str:
+        return reverse_dict(PowerSpecFormat.__mapping())[self]
 
 import hammer_tech
 
@@ -1392,13 +1412,64 @@ class HammerPowerTool(HammerTool):
     ### END Generated interface HammerPowerTool ###
     ### Generated interface HammerPowerTool ###
 
+class HammerStaticVerificationTool(HammerTool):
+    #TODO to be replaced by generated code as functionality is added
+    @property
+    def config_name(self) -> str:
+        try:
+            return self.attr_getter("_config_name", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the config name yet")
+
+    @config_name.setter
+    def config_name(self, value: str) -> None:
+        """Set the name of the current configuration."""
+        if not (isinstance(value, str)):
+            raise TypeError("config_name must be a string")
+        self.attr_setter("_config_name", value)
+
 class HasUPFSupport(HammerTool):
     """Mix-in trait with functions useful for tools with UPF style power
     constraints"""
     @property
-    def upf_power_specification(self) -> str:
-        raise NotImplementedError("Automatic generation of UPF power specifications is not supported yet.")
+    def power_spec_file(self) -> str:
+        try:
+            return self.attr_getter("_power_spec_file", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the power spec file yet")
 
+    @power_spec_file.setter
+    def power_spec_file(self, value: str) -> None:
+        """Set the top level power spec file."""
+        if not (isinstance(value, str)):
+            raise TypeError("power_spec_file must be a string")
+        self.attr_setter("_power_spec_file", value)
+
+    @property
+    def power_spec_type(self) -> PowerSpecFormat:
+        try:
+            return self.attr_getter("_power_spec_type", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the power spec type yet")
+
+    @power_spec_type.setter
+    def power_spec_type(self, value: PowerSpecFormat) -> None:
+        """Set the power spec type between upf and cpf."""
+        if not isinstance(value, PowerSpecFormat):
+            raise TypeError("power_spec_type must be a PowerSpecFormat")
+        self.attr_setter("_power_spec_type", value)
+
+    @property
+    def upf_power_specification(self) -> str:
+        #TODO implementing this leads to the previously broken code path in
+        # hammer-cadence-plugins/common/tool.py l382 being acessible; does this break anything?
+        try:
+            if self.power_spec_type == PowerSpecFormat.upf:
+                return self.power_spec_file
+            else:
+                raise ValueError(f"Expected a UPF power spec but found a {self.power_spec_type} power spec instead")
+        except ValueError as e: # @reviewer is this reasonable?
+            raise ValueError(f"Could not resolve UPF power spec:\n{e}")
 
 class HasCPFSupport(HammerTool):
     """Mix-in trait with functions useful for tools with CPF style power

@@ -21,7 +21,8 @@ from .hammer_tool import HammerTool
 from .hooks import HammerToolHookAction
 from .hammer_vlsi_impl import HammerVLSISettings, HammerPlaceAndRouteTool, HammerSynthesisTool, \
     HammerSignoffTool, HammerDRCTool, HammerLVSTool, HammerSRAMGeneratorTool, HammerPCBDeliverableTool, HammerSimTool, HammerPowerTool, \
-    HierarchicalMode, load_tool, PlacementConstraint, SRAMParameters, ILMStruct, SimulationLevel
+    HammerStaticVerificationTool, HasUPFSupport, PowerSpecFormat, HierarchicalMode, load_tool, PlacementConstraint, SRAMParameters, \
+    ILMStruct, SimulationLevel
 from hammer_logging import HammerVLSIFileLogger, HammerVLSILogging, HammerVLSILoggingContext
 from .submit_command import HammerSubmitCommand
 
@@ -133,6 +134,7 @@ class HammerDriver:
         self.post_custom_sram_generator_tool_hooks = []  # type: List[HammerToolHookAction]
         self.post_custom_sim_tool_hooks = []  # type: List[HammerToolHookAction]
         self.post_custom_power_tool_hooks = [] # type: List[HammerToolHookAction]
+        self.post_custom_static_verification_tool_hooks = [] # type: List[HammerToolHookAction]
         self.post_custom_pcb_tool_hooks = []  # type: List[HammerToolHookAction]
 
     @property
@@ -627,6 +629,57 @@ class HammerDriver:
 
         self.tool_configs["power"] = power_tool.get_config()
         self.update_tool_configs()
+        return True
+
+    def load_static_verification_tool(self, run_dir: str = "") -> bool:
+        """
+        Load the static verification tool based on the given database.
+
+        :param run_dir: Directory to use for the tool run_dir. Defaults to the run_dir passed in the HammerDriver
+                        constructor.
+        :return: True if simulation tool loading was successful, False otherwise.
+        """
+        config_result = self.instantiate_tool_from_config("static_verification", HammerStaticVerificationTool)
+
+        if self.tech is None and self.database.get_setting("tech_specific"):
+            self.log.error("Must load technology for tech specific static verification")
+            return False
+
+
+        if run_dir == "":
+            run_dir = os.path.join(self.obj_dir, "static-verification-rundir")
+
+        static_verif_tool_name = self.database.get_setting("vlsi.core.static_verification_tool")
+        static_verif_tool_get = load_tool(
+            path=self.database.get_setting("vlsi.core.static_verification_tool_path"),
+            tool_name=static_verif_tool_name
+        )
+        assert isinstance(static_verif_tool_get, HammerStaticVerificationTool), \
+            "Static verification tool must be a HammerStaticVerificationTool"
+        assert isinstance(static_verif_tool_get, HasUPFSupport), "Static verification tool must have UPF support"
+        static_verif_tool = static_verif_tool_get  # type: HammerStaticVerificationTool
+        static_verif_tool.name = static_verif_tool_name
+        static_verif_tool.logger = self.log.context("static_verification")
+        static_verif_tool.technology = self.tech
+        static_verif_tool.set_database(self.database)
+        static_verif_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
+        static_verif_tool.top_module = self.database.get_setting("synthesis.inputs.top_module")
+        static_verif_tool.config_name = self.database.get_setting("synthesis.inputs.config_name")
+        static_verif_tool.power_spec_file = self.database.get_setting("vlsi.inputs.power_spec_file")
+        static_verif_tool.power_spec_type = PowerSpecFormat.from_str(
+            self.database.get_setting("vlsi.inputs.power_spec_type"))
+
+        static_verif_tool.hierarchical_mode = HierarchicalMode.from_str(
+            self.database.get_setting("vlsi.inputs.hierarchical.mode"))
+        static_verif_tool.hierarchical_settings = self.get_hierarchical_settings()
+        static_verif_tool.submit_command = HammerSubmitCommand.get("static_verification", self.database)
+        static_verif_tool.run_dir = run_dir
+
+        self.static_verification_tool = static_verif_tool
+
+        self.tool_configs["static_verification"] = static_verif_tool.get_config()
+        self.update_tool_configs()
+
         return True
 
     def load_pcb_tool(self, run_dir: str = "") -> bool:
@@ -1202,6 +1255,46 @@ class HammerDriver:
         output_config = {}  # type: Dict[str, Any]
         try:
             output_config.update(self.power_tool.export_config_outputs())
+        except ValueError as e:
+            self.log.fatal(e.args[0])
+            return False, {}
+
+        return run_succeeded, output_config
+
+    def run_static_verification(self, hook_actions: Optional[List[HammerToolHookAction]] = None, force_override: bool = False) -> \
+            Tuple[bool, dict]:
+        """
+        Run static_verification analysis based on the given database.
+        The output config dict returned does NOT have a copy of the input config settings.
+
+        :param hook_actions: List of hook actions, or leave as None to use the hooks sets in set_static_verification_hooks.
+                             Hooks from set_static_verification_hooks, if present, will be appended afterwards.
+        :param force_override: Set to true to overwrite instead of append.
+        :return: Tuple of (success, output config dict)
+        """
+        if self.static_verification_tool is None:
+            self.log.error("Must load static verification tool before calling run_static_verification")
+            return False, {}
+
+        self.log.info("Starting static verification with tool '%s'" % (self.static_verification_tool.name))
+        if hook_actions is None:
+            hooks_to_use = self.post_custom_static_verification_tool_hooks
+        else:
+            if force_override:
+                hooks_to_use = hook_actions
+            else:
+                hooks_to_use = hook_actions + self.post_custom_static_verification_tool_hooks
+
+        run_succeeded = self.static_verification_tool.run(hooks_to_use)
+        if not run_succeeded:
+            self.log.error("Static verification tool %s failed! Please check its output." % self.static_verification_tool.name)
+            # Allow the flow to keep running, just in case.
+            # TODO: make this an option
+
+        # Record output from the static_verification tool into the JSON output.
+        output_config = {}  # type: Dict[str, Any]
+        try:
+            output_config.update(self.static_verification_tool.export_config_outputs())
         except ValueError as e:
             self.log.fatal(e.args[0])
             return False, {}

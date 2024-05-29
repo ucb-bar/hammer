@@ -1005,6 +1005,12 @@ power.submit:
   settings: "vlsi.submit.settings"
   settings_meta: lazycrossref
 
+static_verification.submit:
+  command: "${vlsi.submit.command}"
+  command_meta: lazysubst
+  settings: "vlsi.submit.settings"
+  settings_meta: lazycrossref
+
 technology.pcb:
   # Desired pad opening diameter (in post-shrink um)
   # Typically this should be defined in the technology plugin, assuming everyone will use the same pad and board strategy

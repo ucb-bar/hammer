@@ -217,6 +217,14 @@ def main(args) -> int:
                                 ],
                                 outputs=[]
                                 )
+    HammerStaticVerificationTool = Interface(module="HammerStaticVerificationTool",
+                                filename="hammer_vlsi/hammer_vlsi_impl.py",
+                                inputs=[
+                                  #TODO fill this out as more tools are added
+                                  InterfaceVar("config_name", "str", "the name of the current configuration"),
+                                ],
+                                outputs=[]
+                                )
     HammerPCBDeliverableTool = Interface(module="HammerPCBDeliverableTool",
                                        filename="hammer_vlsi/hammer_vlsi_impl.py",
                                        inputs=[],
@@ -238,6 +246,7 @@ def main(args) -> int:
     generate_interface(HammerSRAMGeneratorTool)
     generate_interface(HammerSimTool)
     generate_interface(HammerPowerTool)
+    generate_interface(HammerStaticVerificationTool)
     generate_interface(HammerPCBDeliverableTool)
 
     if selected_file == "":
