@@ -24,6 +24,7 @@ from hammer.vlsi import TimeValue
 from hammer.vlsi import HammerSimTool, HammerToolStep, HammerLSFSubmitCommand, HammerLSFSettings
 from hammer.logging import HammerVLSILogging
 from hammer.common.cadence import CadenceTool
+from hammer.utils import retrieve_files, sift_exts
 
 # MXHammer version
 
@@ -318,6 +319,10 @@ class xcelium(HammerSimTool, CadenceTool):
     saif_args = ""
 
     # Process saif options
+    saif_start_time: Optional[str] = None
+    saif_end_time: Optional[str] = None
+    saif_start_trigger_raw: Optional[str] = None
+    saif_end_trigger_raw: Optional[str] = None
     if saif_opts["mode"] == "time":
       saif_start_time = saif_opts["start_time"]
       saif_end_time   = saif_opts["end_time"]
@@ -334,12 +339,16 @@ class xcelium(HammerSimTool, CadenceTool):
     
     if saif_opts["mode"] is not None: 
       if saif_opts["mode"] == "time":
+        assert saif_start_time
+        assert saif_end_time
         stime = TimeValue(saif_start_time)
         etime = TimeValue(saif_end_time)
         saif_args = saif_args + f'dumpsaif -output ucli.saif -overwrite -scope {prefix} -start {stime.value_in_units("ns")}ns -stop{etime.value_in_units("ns")}ns'
       elif saif_opts["mode"] == "full":
         saif_args = saif_args + f"dumpsaif -output ucli.saif -overwrite -scope {prefix}"
       elif saif_opts["mode"] == "trigger_raw":
+        assert saif_start_trigger_raw
+        assert saif_end_trigger_raw
         saif_args = saif_args + f"dumpsaif -output ucli.saif -overwrite -scope {prefix} {saif_start_trigger_raw} {saif_end_trigger_raw}"
     return saif_args
 
@@ -530,19 +539,13 @@ class xcelium(HammerSimTool, CadenceTool):
     sim_cmd_opts = self.get_setting(f"{self.sim_input_prefix}.options", [])
     sim_opts_removal  = ["tb_name", "input_files", "incdir"]
     xrun_opts_removal = ["enhanced_recompile", "mce"]
-    ams_opts_removal = []
-
-    #if (self.get_setting(f"sim.xcelium.ams")): sim_cmd_opts.extend(ams_opts)
-
     sim_cmd_opts = ('SIMULATION', sim_cmd_opts)
     
     if not sim_opts["execute_sim"]:
       self.logger.warning("Not running any simulations because sim.inputs.execute_sim is unset.")
       return True
     
-    
-
-    arg_file_path = self.generate_arg_file("xrun_sim.arg", "HAMMER-GEN XRUN SIM ARG FILE", [sim_cmd_opts, 'SIMULATION'],
+    arg_file_path = self.generate_arg_file("xrun_sim.arg", "HAMMER-GEN XRUN SIM ARG FILE", [sim_cmd_opts],
                                            sim_opt_removal = sim_opts_removal,
                                            xrun_opt_removal = xrun_opts_removal)    
     args =[self.xcelium_bin]
@@ -550,68 +553,22 @@ class xcelium(HammerSimTool, CadenceTool):
 
     self.generate_sim_tcl() 
     self.update_submit_options()
-
-    ### If AMS enabled, submit options and procede to AMS single-step function
-    if self.get_setting(f"{self.tool_config_prefix()}.ams"):
-      self.run_mxh_pseudo_three_step()
-      return True
-
-
     self.run_executable(args, cwd=self.run_dir)
     return True
 
   
-  def sift_exts(filelist, exts=[]):
-    """
-    Returns a list of filepaths whose filenames contain any of the extensions in the specified extension list
-    """
+  
 
-
-    exts_lower = list(map(str.lower, exts))
-    filelist_lower = list(map(str.lower, filelist))
-    sifted = list(filter(lambda x: os.path.splitext(x)[1] in exts_lower, filelist_lower))
-
-    return sifted
-
-  def retrieve_files(path, exts=[], output_type=str, relative=True):
-      """
-      Returns a list or line-seperated string of all filepaths in a directory and any of its subdirectories.
-      """
-      file_list = []
-      extslower = [extension.lower() for extension in exts]
-      exts_proc = [f".{ext}" if ("." not in ext) else ext for ext in extslower]
-
-      for (root, directories, filenames) in os.walk(path):
-          for filename in filenames:
-              file_ext = (os.path.splitext(filename)[1]).lower()
-              rel_root = os.path.relpath(root)
-              if (relative):
-                filepath = os.path.join(rel_root, filename)
-              else:
-                filepath = f"{os.path.join(root, filename)}"
-
-              if (not exts):
-                file_list.append(filepath)
-              elif (file_ext in exts_proc):
-                file_list.append(filepath)
-      
-      if (output_type is str):
-        return "".join(file_list) + "\n"
-      elif (output_type is list):
-        return file_list
-      else:
-        return "".join(file_list) + "\n"
-
-  def vlog_preparer(collect=False, sourcelist=[], sourcedir="", blacklist=[]) -> str:
+  def vlog_preparer(self, collect=False, sourcelist=[], sourcedir="", blacklist=[]) -> str:
       """
       Returns a formatted string of all verilog/VHDL files in the source
       """
       vlog = ""
       if (collect):
         sourcepath = os.path.join(os.getcwd(), sourcedir)
-        vlog_list = xcelium.retrieve_files(sourcepath, [".v", ".vhdl"], list)
+        vlog_list = retrieve_files(sourcepath, [".v", ".vhdl"], list)
       else:
-        vlog_list = xcelium.sift_exts(sourcelist, [".v"])
+        vlog_list = sift_exts(sourcelist, [".v"])
 
       if (blacklist and vlog_list):
         for pathname in blacklist:
@@ -623,16 +580,16 @@ class xcelium(HammerSimTool, CadenceTool):
         
       return f"{vlog}"
 
-  def vams_preparer(collect=False, sourcelist=[], sourcedir="", blacklist=[]) -> str:
+  def vams_preparer(self, collect=False, sourcelist=[], sourcedir="", blacklist=[]) -> str:
       """
       Returns a formatted string of all V-AMS files in the source
       """
       vams = ""
       if (collect):
         sourcepath = os.path.join(os.getcwd(), sourcedir)
-        vams_list = xcelium.retrieve_files(sourcepath, [".vams"], list)
+        vams_list = retrieve_files(sourcepath, [".vams"], list)
       else:
-        vams_list = xcelium.sift_exts(sourcelist, [".vams"])
+        vams_list = sift_exts(sourcelist, [".vams"])
 
       if (blacklist and vams_list):
         for pathname in blacklist:
@@ -644,16 +601,16 @@ class xcelium(HammerSimTool, CadenceTool):
 
       return f"{vams}"
 
-  def analog_preparer(collect=False, sourcelist=[], sourcedir="", blacklist=[]) -> str:
+  def analog_preparer(self, collect=False, sourcelist=[], sourcedir="", blacklist=[]) -> str:
       """
       Returns a formatted string of all analog (.scs) files in the source
       """
       control = ""
       if (collect):
         sourcepath = os.path.join(os.getcwd(), sourcedir)
-        control_list = xcelium.retrieve_files(sourcepath, [".scs"], list)
+        control_list = retrieve_files(sourcepath, [".scs"], list)
       else:
-        control_list = xcelium.sift_exts(sourcelist, [".scs"])
+        control_list = sift_exts(sourcelist, [".scs"])
       
       if (blacklist and control_list):
         for pathname in blacklist:
