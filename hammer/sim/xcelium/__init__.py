@@ -610,7 +610,7 @@ class xcelium(HammerSimTool, CadenceTool):
       control = ""
       if (collect):
         sourcepath = os.path.join(os.getcwd(), sourcedir)
-        control_list = self.retrieve_files(sourcepath, [".scs"])
+        control_list = self.retrieve_file_list(sourcepath, [".scs"])
       else:
         control_list = sift_exts(sourcelist, [".scs"])
       
