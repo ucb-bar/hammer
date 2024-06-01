@@ -790,9 +790,9 @@ class HammerDatabase:
         return [self._runtime]
 
     @staticmethod
-    def internal_keys() -> Set[str]:
+    def internal_keys() -> List[str]:
         """Internal keys that shouldn't show up in any final config."""
-        return {_CONFIG_PATH_KEY, _NEXT_FREE_INDEX_KEY}
+        return [_CONFIG_PATH_KEY, _NEXT_FREE_INDEX_KEY]
 
     def get_config(self) -> dict:
         """
