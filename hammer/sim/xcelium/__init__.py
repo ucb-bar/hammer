@@ -675,15 +675,6 @@ class xcelium(HammerSimTool, CadenceTool):
           digital_opts = self.option_extractor(["xrun_compile.arg", "xrun_elab.arg", "xrun_sim.arg"])
           digital_opts.update(opts_proc) # Should any keys match, AMS arguments take precedence
           opts_proc = digital_opts
-      
-      #Fixed Extra Opts
-      #opts_proc ["timescale"] = self.get_setting("sim.inputs.timescale")
-      #opts_proc ["input"] = "probe.tcl"
-      #opts_proc ["access"] = "+rwc"
-      #opts_proc ["messages"] = ""
-      #opts_proc ["spectre_args"] = "\"++aps\""
-      #opts_proc ["ieinfo"] = ""
-
 
       opts_proc = {opt:setting for (opt, setting) in opts_proc.items() if opt not in bool_list and setting is not None}
 
@@ -815,11 +806,11 @@ class xcelium(HammerSimTool, CadenceTool):
     f.write("#!/bin/csh -f\n#\nxrun -clean \\\n")
     
     # Write Digital Files
-    f.write(xcelium.vlog_preparer(collect, sourcelist, sourcedir, blacklist))
-    f.write(xcelium.vams_preparer(collect, sourcelist, sourcedir, blacklist))
+    f.write(self.vlog_preparer(collect, sourcelist, sourcedir, blacklist))
+    f.write(self.vams_preparer(collect, sourcelist, sourcedir, blacklist))
 
     # Write Analog Files
-    f.write(xcelium.analog_preparer(collect, sourcelist, sourcedir, blacklist))
+    f.write(self.analog_preparer(collect, sourcelist, sourcedir, blacklist))
 
     # Write Options
     f.write(self.option_preparer(options, additional_options))
