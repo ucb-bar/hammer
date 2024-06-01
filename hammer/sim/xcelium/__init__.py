@@ -566,7 +566,7 @@ class xcelium(HammerSimTool, CadenceTool):
       vlog = ""
       if (collect):
         sourcepath = os.path.join(os.getcwd(), sourcedir)
-        vlog_list = retrieve_files(sourcepath, [".v", ".vhdl"], list)
+        vlog_list = retrieve_files(sourcepath, [".v", ".vhdl"], "list")
       else:
         vlog_list = sift_exts(sourcelist, [".v"])
 
@@ -587,7 +587,7 @@ class xcelium(HammerSimTool, CadenceTool):
       vams = ""
       if (collect):
         sourcepath = os.path.join(os.getcwd(), sourcedir)
-        vams_list = retrieve_files(sourcepath, [".vams"], list)
+        vams_list = retrieve_files(sourcepath, [".vams"], "list")
       else:
         vams_list = sift_exts(sourcelist, [".vams"])
 
@@ -608,7 +608,7 @@ class xcelium(HammerSimTool, CadenceTool):
       control = ""
       if (collect):
         sourcepath = os.path.join(os.getcwd(), sourcedir)
-        control_list = retrieve_files(sourcepath, [".scs"], list)
+        control_list = retrieve_files(sourcepath, [".scs"], "list")
       else:
         control_list = sift_exts(sourcelist, [".scs"])
       
