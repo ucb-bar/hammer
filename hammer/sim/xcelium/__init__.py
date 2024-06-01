@@ -557,7 +557,26 @@ class xcelium(HammerSimTool, CadenceTool):
     return True
 
   def retrieve_file_list(self, path, exts=[], relative=True) -> list:
-    return retrieve_files(path, exts, output_type="list")
+    file_list = []
+    extslower = [extension.lower() for extension in exts]
+    exts_proc = [f".{ext}" if ("." not in ext) else ext for ext in extslower]
+
+    for (root, directories, filenames) in os.walk(path):
+        for filename in filenames:
+            file_ext = (os.path.splitext(filename)[1]).lower()
+            rel_root = os.path.relpath(root)
+            if (relative):
+              filepath = os.path.join(rel_root, filename)
+            else:
+              filepath = f"{os.path.join(root, filename)}"
+
+            if (not exts):
+               file_list.append(filepath)
+            elif (file_ext in exts_proc):
+               file_list.append(filepath)
+    
+    return file_list
+
   
   
 
