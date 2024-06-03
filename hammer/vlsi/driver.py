@@ -3,6 +3,9 @@
 #
 #  See LICENSE for licence details.
 
+import pdb
+pdb.set_trace()
+
 from functools import reduce, partial
 from typing import NamedTuple, List, Optional, Tuple, Dict, Set, Any
 from pathlib import Path
@@ -60,7 +63,7 @@ class HammerDriver:
         :param options: Driver options.
         :param extra_project_config: An extra flattened config for the project. Optional.
         """
-
+        pdb.set_trace()
         # Create global logging context.
         file_logger = HammerVLSIFileLogger(options.log_file)
         HammerVLSILogging.add_callback(file_logger.callback)

@@ -5,5 +5,8 @@
 
 from hammer.vlsi import CLIDriver
 
+import pdb
+pdb.set_trace()
+
 def main():
     CLIDriver().main()

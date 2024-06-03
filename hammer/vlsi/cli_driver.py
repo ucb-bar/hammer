@@ -28,6 +28,8 @@ from hammer.utils import add_dicts, deeplist, deepdict, get_or_else, check_funct
 
 from hammer.config import HammerJSONEncoder
 
+import pdb
+pdb.set_trace()
 
 KEY_DIR = tempfile.mkdtemp()
 KEY_PATH = os.path.join(KEY_DIR, "key-history.json")
@@ -1274,6 +1276,7 @@ class CLIDriver:
         # Resolve default_options.
         # Can't call HammerDriver.get_default_driver_options in the
         # parameters as it will be called when args_to_driver is defined
+        pdb.set_trace()
         default_options_resolved = HammerDriver.get_default_driver_options()  # type: HammerDriverOptions
         if default_options is not None:
             default_options_resolved = default_options
@@ -1600,6 +1603,7 @@ class CLIDriver:
         :param append_error_func: The function to use to append an error
         :return: The diplomacy graph
         """
+        pdb.set_trace()
         build_system = str(driver.database.get_setting("vlsi.core.build_system", "none"))
         if build_system in BuildSystems:
             return BuildSystems[build_system](driver, append_error_func)
@@ -1612,6 +1616,7 @@ class CLIDriver:
 
         :return: Return code (0 for success)
         """
+        pdb.set_trace()
         if args['firrtl'] is not None and len(args['firrtl']) > 0:
             print("firrtl convenience argument not yet implemented", file=sys.stderr)
             return 1
@@ -1658,6 +1663,7 @@ class CLIDriver:
         >>> if __name__ == '__main__':
         >>>   CLIDriver().main()
         """
+        pdb.set_trace()
         parser = argparse.ArgumentParser()
 
         parser.add_argument('action', metavar='ACTION', type=str,  # choices=self.valid_actions() <- sadly incompatible w/custom actions
