@@ -229,7 +229,7 @@ class Genus(HammerSynthesisTool, CadenceTool):
             hammer_tech.filters.qrc_tech_filter
         ], hammer_tech.HammerTechnologyUtils.to_plain_item)
         verbose_append("set_db qrc_tech_file {{ {files} }}".format(
-            files=" ".join(qrc_files)
+            files=qrc_files[0]
         ))
 
         # Quit when ispatial is used with sky130

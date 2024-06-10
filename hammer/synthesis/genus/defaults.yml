@@ -13,7 +13,7 @@ synthesis.genus:
   # High effort:     Provides the best QoR at the cost of runtime.  Requires Genus_Physical_Opt license.
   # Medium effort:   Offers the best trade-off between the runtime and QoR and turns legalization off by default.  
   # None:            Will result in the best runtime.  Works with all base Genus products.
-  phys_flow_effort: "medium"
+  phys_flow_effort: "none"
 
   # Generate the TCL file but do not run it yet.
   generate_only: false
