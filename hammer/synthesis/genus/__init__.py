@@ -472,7 +472,8 @@ set_db hinst:{inst} .preserve true
             verbose_append("write_design -innovus {hier_flag} -gzip_files {top}".format(
                 hier_flag="-hierarchical" if is_hier else "", top=top))
 
-        verbose_append("write_db -common")
+        if self.get_setting("synthesis.genus.phys_flow_effort").lower() != "none":
+            verbose_append("write_db -common")
         self.ran_write_outputs = True
 
         return True
