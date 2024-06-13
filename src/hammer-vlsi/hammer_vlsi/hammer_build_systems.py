@@ -38,6 +38,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         - par
         - drc
         - lvs
+        - vclp
         - sim-rtl
         - sim-syn
         - sim-par
@@ -134,7 +135,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         ####################################################################################
         ## Steps for {mod}
         ####################################################################################
-        .PHONY: sim-rtl{suffix} syn{suffix} power{suffix} sim-syn{suffix} par{suffix} sim-par{suffix} power-par{suffix} drc{suffix} lvs{suffix}
+        .PHONY: sim-rtl{suffix} syn{suffix} power{suffix} sim-syn{suffix} par{suffix} sim-par{suffix} power-par{suffix} drc{suffix} lvs{suffix} vclp{suffix}
         sim-rtl{suffix}: {sim_rtl_out}
         syn{suffix}: {syn_out}
         power{suffix}: {power_out}
@@ -144,6 +145,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         power-par{suffix}: {power_par_out}
         drc{suffix}: {drc_out}
         lvs{suffix}: {lvs_out}
+        vclp{suffix}: {vclp_out}
 
         {par_to_syn}
 
@@ -195,6 +197,12 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         {lvs_out}: {lvs_in} $(HAMMER_LVS_DEPENDENCIES)
         \t$(HAMMER_EXEC) {env_confs} -p {lvs_in} $(HAMMER_EXTRA_ARGS) --obj_dir {obj_dir} lvs{suffix}
 
+        {vclp_in}: {par_out}
+        \t$(HAMMER_EXEC) {env_confs} -p {par_out} $(HAMMER_EXTRA_ARGS) -o {vclp_in} --obj_dir {obj_dir} par-to-vclp
+
+        {vclp_out}: {vclp_in} $(HAMMER_VCLP_DEPENDENCIES)
+        \t$(HAMMER_EXEC) {env_confs} -p {vclp_in} $(HAMMER_EXTRA_ARGS) --obj_dir {obj_dir} vclp{suffix}
+
         # Redo steps
         # These intentionally break the dependency graph, but allow the flexibility to rerun a step after changing a config.
         # Hammer doesn't know what settings impact synthesis only, e.g., so these are for power-users who "know better."
@@ -244,6 +252,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         power_par_run_dir = os.path.join(obj_dir, "power-par-rundir")
         drc_run_dir = os.path.join(obj_dir, "drc-rundir")
         lvs_run_dir = os.path.join(obj_dir, "lvs-rundir")
+        vclp_run_dir = os.path.join(obj_dir, "vclp-rundir")
 
         p_sim_rtl_in = proj_confs
         sim_rtl_out = os.path.join(sim_rtl_run_dir, "sim-output-full.json")
@@ -264,6 +273,8 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         drc_out = os.path.join(drc_run_dir, "drc-output-full.json")
         lvs_in = os.path.join(obj_dir, "lvs-input.json")
         lvs_out = os.path.join(lvs_run_dir, "lvs-output-full.json")
+        vclp_in = os.path.join(obj_dir, "vclp-input.json")
+        vclp_out = os.path.join(vclp_run_dir, "vclp-output-full.json")
 
         par_to_syn = ""
 
@@ -275,7 +286,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
             p_syn_in=p_syn_in, syn_out=syn_out, par_in=par_in, par_out=par_out,
             p_power_in=p_power_in, power_out=power_out, power_run_dir=power_run_dir,
             power_sim_par_in=power_sim_par_in, power_par_in=power_par_in, power_par_out=power_par_out, power_par_run_dir=power_par_run_dir,
-            drc_in=drc_in, drc_out=drc_out, lvs_in=lvs_in, lvs_out=lvs_out)
+            drc_in=drc_in, drc_out=drc_out, lvs_in=lvs_in, lvs_out=lvs_out, vclp_in=vclp_in, vclp_out=vclp_out)
     else:
         # Hierarchical flow
         for node, edges in dependency_graph.items():
@@ -321,6 +332,8 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
             power_par_out = os.path.join(power_par_run_dir, "power-output-full.json")
             drc_in = os.path.join(obj_dir, "drc-{}-input.json".format(node))
             drc_out = os.path.join(drc_run_dir, "drc-output-full.json")
+            lvs_in = os.path.join(obj_dir, "lvs-{}-input.json".format(node))
+            lvs_out = os.path.join(lvs_run_dir, "lvs-output-full.json")
             lvs_in = os.path.join(obj_dir, "lvs-{}-input.json".format(node))
             lvs_out = os.path.join(lvs_run_dir, "lvs-output-full.json")
 
