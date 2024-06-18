@@ -964,8 +964,8 @@ class HammerPlaceAndRouteTool(HammerTool):
             copy_fields = ["layer", "direction", "net_order", "width", "spacing", "group_pitch"]
             if len(above_insts) > 0:  # in some cases top_layer == top layer in power strap API
                 above_desc = {k: above_insts[0][k] for k in copy_fields}
-            elif not check_abut:
-                self.logger.error(f"par.power_straps_abutment is False, but you do not have power straps generated on layer {above_insts[0]['layer']} above instances of module {master}! Double check that you will supply power to them.")
+            elif len(insts) > 0 and not check_abut:
+                self.logger.error(f"par.power_straps_abutment is False, but you do not have power straps generated on layer {insts[0]['layer']} above instances of module {master}! Double check that you will supply power to them.")
 
             # Filter for top_layer == layer and valid/bad orientation
             abut_insts = list(filter(lambda m: m["top_layer"] == m["layer"] and
