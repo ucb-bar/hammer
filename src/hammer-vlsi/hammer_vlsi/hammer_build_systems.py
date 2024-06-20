@@ -159,7 +159,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         \t$(HAMMER_EXEC) {env_confs} {p_power_in} $(HAMMER_EXTRA_ARGS) --obj_dir {obj_dir} power{suffix}
 
         {vclp_out}: {syn_deps} $(HAMMER_POWER_DEPENDENCIES)
-        \t$(HAMMER_EXEC) {env_confs} {p_vclp_in} $(HAMMER_EXTRA_ARGS) --obj_dir {obj_dir} vclp{suffix}
+        \t$(HAMMER_EXEC) {env_confs} {p_vclp_in} $(HAMMER_EXTRA_ARGS) --obj_dir {obj_dir} static_verification{suffix}
 
         {sim_syn_in}: {syn_out}
         \t$(HAMMER_EXEC) {env_confs} -p {syn_out} $(HAMMER_EXTRA_ARGS) -o {sim_syn_in} --obj_dir {obj_dir} syn-to-sim
