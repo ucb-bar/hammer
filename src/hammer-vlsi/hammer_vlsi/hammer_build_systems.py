@@ -306,7 +306,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
             sim_rtl_run_dir = os.path.join(obj_dir, "sim-rtl-" + node)
             syn_run_dir = os.path.join(obj_dir, "syn-" + node)
             power_run_dir = os.path.join(obj_dir, "power-" + node)
-            vclp_run_dir = os.path.join(obj_dir, "power-" + node)
+            vclp_run_dir = os.path.join(obj_dir, "vclp-" + node)
             sim_syn_run_dir = os.path.join(obj_dir, "sim-syn-" + node)
             par_run_dir = os.path.join(obj_dir, "par-" + node)
             sim_par_run_dir = os.path.join(obj_dir, "sim-par-" + node)
@@ -321,7 +321,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
             p_power_in = proj_confs
             power_out = os.path.join(power_run_dir, "power-output-full.json")
             p_vclp_in = proj_confs
-            vclp_out = os.path.join(vclp_run_dir, "power-output-full.json")
+            vclp_out = os.path.join(vclp_run_dir, "vclp-output-full.json")
             sim_syn_in = os.path.join(obj_dir, "sim-syn-{}-input.json".format(node))
             sim_syn_out = os.path.join(sim_syn_run_dir, "sim-output-full.json")
             par_in = os.path.join(obj_dir, "par-{}-input.json".format(node))
