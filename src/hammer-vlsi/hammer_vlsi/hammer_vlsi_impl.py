@@ -1733,7 +1733,8 @@ def load_tool(tool_name: str, path: Iterable[str]) -> HammerTool:
             del sys.modules[tool_name]
         mod = importlib.import_module(tool_name)
     except ImportError:
-        raise ValueError("No such tool " + tool_name)
+        paths_string = '\n'.join(path)
+        raise ValueError(f"No such tool {tool_name} found at paths:\n{paths_string}")
     # Now restore the original import path.
     for _ in path:
         sys.path.pop(0)
