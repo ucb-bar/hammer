@@ -382,6 +382,10 @@ vlsi.inputs:
   # auto - Hammer will generate a power specification based on other settings,
   #        including vlsi.inputs.supplies.
   # manual - Use the value given in power_spec_contents with type given in power_spec_type
+  # file_list - Assume the power_spec_contents is a list of files with the first one being
+  #             the entry point for the design. Assumes files will reference each other
+  #             based on their path at time of inclusion, e.g. something like 
+  #             [file dirname [file normalize [info script]]]
   # empty - Do not use any power specification
   power_spec_mode: empty
   # Optional: Power specification type. (str)

@@ -1461,14 +1461,12 @@ class HasUPFSupport(HammerTool):
 
     @property
     def upf_power_specification(self) -> str:
-        #TODO implementing this leads to the previously broken code path in
-        # hammer-cadence-plugins/common/tool.py l382 being acessible; does this break anything?
         try:
             if self.power_spec_type == PowerSpecFormat.upf:
                 return self.power_spec_file
             else:
                 raise ValueError(f"Expected a UPF power spec but found a {self.power_spec_type} power spec instead")
-        except ValueError as e: # @reviewer is this reasonable?
+        except ValueError as e:
             raise ValueError(f"Could not resolve UPF power spec:\n{e}")
 
 class HasCPFSupport(HammerTool):
