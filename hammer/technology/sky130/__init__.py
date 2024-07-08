@@ -32,11 +32,12 @@ class SKY130Tech(HammerTechnology):
         SKY130_CDS_LIB = self.get_setting("technology.sky130.sky130_scl")
 
         # Common tech LEF and IO cell spice netlists
-        libs = [Library(spice_file="$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
-                        provides=[Provide(lib_type="IO library")])]
+        libs = []
         if slib == "sky130_fd_sc_hd":
             libs += [
-                Library(lef_file="$SKY130A/sky130_fd_sc_hd__nom.tlef",
+            Library(spice_file="$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+                                    provides=[Provide(lib_type="IO library")]),
+                Library(lef_file="cache/sky130_fd_sc_hd__nom.tlef",
                         verilog_sim="cache/primitives.v", provides=[Provide(lib_type="technology")]),
             ]
         elif slib == "sky130_scl":
@@ -263,6 +264,12 @@ class SKY130Tech(HammerTechnology):
                 Site(name="unithd", x=Decimal("0.46"), y=Decimal("2.72")),
                 Site(name="unithddbl", x=Decimal("0.46"), y=Decimal("5.44"))
             ]
+            lvs_decks=[
+                LVSDeck(tool_name="calibre", deck_name="calibre_lvs",
+                        path="$SKY130_NDA/s8/V2.0.1/LVS/Calibre/lvsRules_s8"),
+                LVSDeck(tool_name="pegasus", deck_name="pegasus_lvs",
+                        path="$SKY130_CDS/Sky130_LVS/Sky130_rev_0.0_0.1.lvs.pvl")
+            ]
 
         elif slib == "sky130_scl":
 
@@ -355,6 +362,14 @@ class SKY130Tech(HammerTechnology):
                 Site(name="CornerSite", x=Decimal("240.0"), y=Decimal("240.0"))
             ]
 
+            lvs_decks=[
+                #LVSDeck(tool_name="calibre", deck_name="calibre_lvs",
+                        #path="$SKY130_NDA/s8/V2.0.1/LVS/Calibre/lvsRules_s8"),
+                        # seems like cadence just hasthis hardcoded lvs deck name?
+                LVSDeck(tool_name="pegasus", deck_name="pegasus_lvs",
+                        path=os.path.join(SKY130_CDS, 'Sky130_LVS', 'sky130.lvs.pvl')) 
+            ]
+
         else:
             raise ValueError(
                 f"Incorrect standard cell library selection: {slib}")
@@ -385,12 +400,7 @@ class SKY130Tech(HammerTechnology):
                         path="$SKY130_CDS/Sky130_DRC/sky130_rev_0.0_1.0.drc.pvl")
             ],
             additional_drc_text="",
-            lvs_decks=[
-                LVSDeck(tool_name="calibre", deck_name="calibre_lvs",
-                        path="$SKY130_NDA/s8/V2.0.1/LVS/Calibre/lvsRules_s8"),
-                LVSDeck(tool_name="pegasus", deck_name="pegasus_lvs",
-                        path="$SKY130_CDS/Sky130_LVS/Sky130_rev_0.0_0.1.lvs.pvl")
-            ],
+            lvs_decks=lvs_decks,
             additional_lvs_text="",
             tarballs=None,
             sites=sites,
@@ -405,7 +415,7 @@ class SKY130Tech(HammerTechnology):
         self.use_sram22 = os.path.exists(self.get_setting("technology.sky130.sram22_sky130_macros"))
         if self.get_setting("technology.sky130.stdcell_library") == "sky130_fd_sc_hd":
             self.setup_cdl()
-            self.setup_verilog()
+            #self.setup_verilog()
             self.setup_techlef()
         self.logger.info('Loaded Sky130 Tech')
 
@@ -621,7 +631,9 @@ class SKY130Tech(HammerTechnology):
             calibre_hooks.append(HammerTool.make_post_insertion_hook("generate_lvs_run_file", sram22_lvs_recognize_gates_all))
         if self.get_setting("technology.sky130.lvs_blackbox_srams"):
             calibre_hooks.append(HammerTool.make_post_insertion_hook("generate_lvs_run_file", calibre_lvs_blackbox_srams))
-            pegasus_hooks.append(HammerTool.make_post_insertion_hook("generate_lvs_ctl_file", pegasus_lvs_blackbox_srams))
+
+        if self.get_setting("technology.sky130.stdcell_library") == "sky130_scl":
+            pegasus_hooks.append(HammerTool.make_post_insertion_hook("generate_lvs_ctl_file", pegasus_lvs_add_130a_primitives))
         hooks = {"calibre": calibre_hooks,
                  "pegasus": pegasus_hooks
                  }
@@ -635,6 +647,17 @@ class SKY130Tech(HammerTechnology):
             "sky130_sram_1kbyte_1rw1r_8x1024_8",
             "sky130_sram_2kbyte_1rw1r_32x512_8"
         ]
+
+    @staticmethod
+    def sky130_sram_primitive_names() -> List[str]:
+        # TODO: fix this
+        spice_filenames = ["sky130_fd_pr__pfet_01v8", "sky130_fd_pr__nfet_01v8", "sky130_fd_pr__pfet_01v8_hvt", "sky130_fd_pr__special_nfet_latch", "sky130_fd_pr__special_nfet_pass"] #"sky130_fd_pr__special_pfet_latch", ]
+        paths = []
+        for fname in spice_filenames:
+            paths.append(f"/tools/commercial/skywater/local/sky130A/libs.ref/sky130_fd_pr/spice/{fname}.pm3.spice")
+        # TODO: this is bc line 535 in the bwrc one causes a syntax error
+        paths.append("/tools/C/elamdf/chipyard_dev/vlsi/sky130_fd_pr__special_pfet_latch.pm3.spice")
+        return paths
 
     @staticmethod
     def sky130_sram_names() -> List[str]:
@@ -866,10 +889,32 @@ def calibre_lvs_blackbox_srams(ht: HammerTool) -> bool:
         f.write(lvs_box)
     return True
 
+# required for sram22 since they use the 130a primiviites
+def pegasus_lvs_add_130a_primitives(ht: HammerTool) -> bool:
+    assert isinstance(ht, HammerLVSTool), "Blackbox and filter SRAMs only in LVS"
+    lvs_box = ''
+    for name in SKY130Tech.sky130_sram_primitive_names():
+        lvs_box += f"""\nschematic_path "{name}" spice;"""
+    # this is because otherwise lvs crashes with tons of stdcell-level pin mismatches
+    # TODO elam move this somewhere better
+    #lvs_box += f"""\nlvs_discard_pins yes;"""
+    #lvs_box += f"""\nlvs_expand_cell_on_error yes;"""
+    lvs_box += f"""\nlvs_inconsistent_reduction_threshold -none;"""
+    run_file = ht.lvs_ctl_file  # type: ignore
+    with open(run_file, "r+") as f:
+        # Remove SRAM SPICE file includes.
+        pattern = 'schematic_path.*({}).*spice;\n'.format('|'.join(SKY130Tech.sky130_sram_primitive_names()))
+        matcher = re.compile(pattern)
+        contents = f.read()
+        fixed_contents = contents + lvs_box
+        f.seek(0)
+        f.write(fixed_contents)
+    return True
+
 def pegasus_lvs_blackbox_srams(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerLVSTool), "Blackbox and filter SRAMs only in LVS"
     lvs_box = ''
-    for name in SKY130Tech.sky130_sram_names():
+    for name in SKY130Tech.sky130_sram_names() + SKY130Tech.sky130_sram_primitive_names():
         lvs_box += f"\nlvs_black_box {name} -gray"
     run_file = ht.lvs_ctl_file  # type: ignore
     with open(run_file, "r+") as f:
