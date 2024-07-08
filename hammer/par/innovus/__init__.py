@@ -32,6 +32,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         outputs["par.outputs.seq_cells"] = self.output_seq_cells
         outputs["par.outputs.all_regs"] = self.output_all_regs
         outputs["par.outputs.sdf_file"] = self.output_sdf_path
+        outputs["par.outputs.def_file"] = self.output_def_path
         outputs["par.outputs.spefs"] = self.output_spef_paths
         return outputs
 
@@ -115,6 +116,10 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         return os.path.join(self.run_dir, "{top}.lvs.v".format(top=self.top_module))
 
     @property
+    def output_physical_netlist_filename(self) -> str:
+        return os.path.join(self.run_dir, "{top}.physical.v".format(top=self.top_module))
+
+    @property
     def output_sim_netlist_filename(self) -> str:
         return os.path.join(self.run_dir, "{top}.sim.v".format(top=self.top_module))
 
@@ -129,6 +134,10 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
     @property
     def output_sdf_path(self) -> str:
         return os.path.join(self.run_dir, "{top}.par.sdf".format(top=self.top_module))
+
+    @property
+    def output_def_path(self) -> str:
+        return os.path.join(self.run_dir, "{top}.def".format(top=self.top_module))
 
     @property
     def output_spef_paths(self) -> List[str]:
@@ -554,8 +563,8 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         if self.hierarchical_mode.is_nonleaf_hierarchical():
             self.verbose_append('''
             flatten_ilm
-            update_constraint_mode -name my_constraint_mode -ilm_sdc_files {sdc}
-            '''.format(sdc=self.post_synth_sdc), clean=True)
+            update_constraint_mode -name {name} -ilm_sdc_files {sdc}
+            '''.format(name=self.constraint_mode, sdc=self.post_synth_sdc), clean=True)
 
         # Use place_opt_design V2 (POD-Turbo). Option must be explicitly set only in 22.1.
         if self.version() >= self.version_number("221") and self.version() < self.version_number("231"):
@@ -771,9 +780,16 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             if pwr_gnd_net.tie is not None:
                 self.verbose_append("connect_global_net {tie} -type net -net_base_name {net}".format(tie=pwr_gnd_net.tie, net=pwr_gnd_net.name))
 
-        # Output the Verilog netlist for the design and include physical cells (-phys) like decaps and fill
+        # Output a flattened Verilog netlist for the design and include physical cells (-phys) like decaps and fill
         self.verbose_append("write_netlist {netlist} -top_module_first -top_module {top} -exclude_leaf_cells -phys -flat -exclude_insts_of_cells {{ {pcells} }} ".format(
             netlist=self.output_netlist_filename,
+            top=self.top_module,
+            pcells=" ".join(self.get_physical_only_cells())
+        ))
+
+        # Output a non-flattened Verilog netlist with physical instances
+        self.verbose_append("write_netlist {netlist} -top_module_first -top_module {top} -exclude_leaf_cells -phys -exclude_insts_of_cells {{ {pcells} }} ".format(
+            netlist=self.output_physical_netlist_filename,
             top=self.top_module,
             pcells=" ".join(self.get_physical_only_cells())
         ))
@@ -846,6 +862,11 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
             gds=self.output_gds_filename,
             unit=unit
         ))
+        return True
+
+    def write_def(self) -> bool:
+        self.verbose_append("write_def {def_file} -floorplan -netlist -routing".format(def_file=self.output_def_path))
+
         return True
 
     def write_sdf(self) -> bool:
@@ -935,6 +956,9 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
 
         # Write netlist
         self.write_netlist()
+
+        # Write DEF
+        self.write_def()
 
         # GDS streamout.
         self.write_gds()
