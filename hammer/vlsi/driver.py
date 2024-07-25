@@ -1649,6 +1649,7 @@ class HammerDriver:
 
         :return: The dependency graph.
         """
+        pdb.set_trace()
         return self._hierarchical_helper()[1]
 
     def get_hierarchical_settings(self) -> List[Tuple[str, dict]]:
@@ -1662,6 +1663,7 @@ class HammerDriver:
         return self._hierarchical_helper()[0]
 
     def _hierarchical_helper(self) -> Tuple[List[Tuple[str, dict]], Dict[str, Tuple[List[str], List[str]]]]:
+        pdb.set_trace()
         """
         Read settings from the database, determine leaf/hierarchical modules, an order of execution, and return an
         ordered list (from leaf to top) of modules and associated config snippets needed to run syn+par for that module
@@ -1786,6 +1788,7 @@ class HammerDriver:
 
         # If there is a hierarchy, find the leaf and intermediate modules.
         def visit_module(mod: str) -> None:
+            pdb.set_trace()
             if mod not in hier_modules:
                 if mod == top_module:
                     raise ValueError("Cannot have a hierarchical flow with top as leaf")

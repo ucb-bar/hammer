@@ -104,6 +104,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
     :return: The dependency graph
     """
     dependency_graph = driver.get_hierarchical_dependency_graph()
+    pdb.set_trace()
     makefile = os.path.join(driver.obj_dir, "hammer.d")
     default_dependencies = driver.options.project_configs + driver.options.environment_configs
     default_dependencies.extend(list(driver.database.get_setting("synthesis.inputs.input_files", [])))

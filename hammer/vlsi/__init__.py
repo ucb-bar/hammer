@@ -6,7 +6,7 @@
 # Just import everything that the public hammer_vlsi module should see.
 
 import pdb
-pdb.set_trace()
+#pdb.set_trace()
 
 from . import units
 

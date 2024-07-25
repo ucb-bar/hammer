@@ -50,10 +50,10 @@ vlsi.inputs.hierarchical:
             bottom: 0
         vlsi.inputs.power_spec_type: manual
         vlsi.inputs.power_spec_contents: fake_command
-        par.generate_power_straps_options.by_tracks.strap_layers: [m3, m4, m5]
+        #par.generate_power_straps_options.by_tracks.strap_layers: [m3, m4, m5]
 
 vlsi.core.synthesis_tool: "hammer.synthesis.mocksynth"
-synthesis.mocksynth.temp_folder: "obj_dir"
+#synthesis.mocksynth.temp_folder: "obj_dir"
 vlsi.core.par_tool: "hammer.par.mockpar"
 vlsi.core.sim_tool: "hammer.sim.mocksim"
 vlsi.core.drc_tool: "hammer.drc.mockdrc"

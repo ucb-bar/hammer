@@ -8,7 +8,7 @@ pdk                 ?= sky130
 tools               ?= nop
 env                 ?= bwrc
 
-extra               ?=  # extra configs
+extra               ?= #"configs-design/$(design)/mock_hier.yml"  # extra configs
 args                ?=  # command-line args (including step flow control)
 
 
@@ -45,4 +45,4 @@ $(HAMMER_D_MK):
 -include $(HAMMER_D_MK)
 
 clean:
-    rm -rf $(OBJ_DIR) hammer-vlsi-*.log
+	rm -rf $(OBJ_DIR) hammer-vlsi-*.log
