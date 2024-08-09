@@ -249,7 +249,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
 
     def syn_generic(self) -> bool:
         # TODO: is there a better way to do this? like self.get_setting()
-        if self._database.has_setting("synthesis.yosys.latch_map_file"):
+        if self._database.has_setting("synthesis.yosys.latch_map_file") and self.get_setting('synthesis.yosys.latch_map_file') is not None:
             latch_map = f"techmap -map {self.get_setting('synthesis.yosys.latch_map_file')}"
         else:  # TODO: make the else case better
             latch_map = ""

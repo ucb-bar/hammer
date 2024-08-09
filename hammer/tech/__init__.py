@@ -127,6 +127,7 @@ class Library(BaseModel):
     spice_model_file: Optional[SpiceModelFile] = None
     power_grid_library: Optional[str] = None
     extra_prefixes: Optional[List[PathPrefix]] = None
+    def_file: Optional[str] = None
 
 
 PathsFunctionType = Callable[[Library], List[str]]

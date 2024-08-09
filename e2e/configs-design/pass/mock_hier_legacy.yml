@@ -21,33 +21,26 @@ vlsi.inputs.hierarchical:
         - SubModD
     - SubModB:
         - SubModE
-  constraints:
-    - ChipTop:
-        vlsi.inputs.placement_constraints:
-        - path: ChipTop
-          type: toplevel
-          x: 0
-          y: 0
-          width: 1000
-          height: 1000
-          margins:
-            left: 0
-            right: 0
-            top: 0
-            bottom: 0
+  manual_placement_constraints:
+    - ChipTop: []
+    - SubModA: []
+    - SubModB: []
     - SubModC:
-        vlsi.inputs.placement_constraints:
-        - path: SubModC
-          type: toplevel
-          x: 0
-          y: 0
-          width: 100
-          height: 100
-          margins:
-            left: 0
-            right: 0
-            top: 0
-            bottom: 0
+      - path: SubModC
+        type: toplevel
+        x: 0
+        y: 0
+        width: 100
+        height: 100
+        margins:
+          left: 0
+          right: 0
+          top: 0
+          bottom: 0
+    - SubModD: []
+    - SubModE: []
+  constraints:
+    - SubModC:
         vlsi.inputs.power_spec_type: manual
         vlsi.inputs.power_spec_contents: fake_command
         par.generate_power_straps_options.by_tracks.strap_layers: [m3, m4, m5]
