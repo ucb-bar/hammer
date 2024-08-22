@@ -664,7 +664,6 @@ class HammerDriver:
         static_verif_tool.set_database(self.database)
         static_verif_tool.input_files = self.database.get_setting("synthesis.inputs.input_files")
         static_verif_tool.top_module = self.database.get_setting("synthesis.inputs.top_module")
-        static_verif_tool.config_name = self.database.get_setting("synthesis.inputs.config_name")
         static_verif_tool.power_spec_file = self.database.get_setting("vlsi.inputs.power_spec_file")
         static_verif_tool.power_spec_type = PowerSpecFormat.from_str(
             self.database.get_setting("vlsi.inputs.power_spec_type"))
