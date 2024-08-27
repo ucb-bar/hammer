@@ -314,6 +314,25 @@ class SKY130Tech(HammerTechnology):
                     path="$SKY130_CDS/Sky130_LVS/sky130.lvs.pvl",
                 ),
             ]
+            drc_decks = (
+                [
+                    DRCDeck(
+                        tool_name="calibre",
+                        deck_name="calibre_drc",
+                        path="$SKY130_NDA/s8/V2.0.1/DRC/Calibre/s8_drcRules",
+                    ),
+                    DRCDeck(
+                        tool_name="klayout",
+                        deck_name="klayout_drc",
+                        path="$SKY130A/libs.tech/klayout/drc/sky130A.lydrc",
+                    ),
+                    DRCDeck(
+                        tool_name="pegasus",
+                        deck_name="pegasus_drc",
+                        path="$SKY130_CDS/Sky130_DRC/sky130_rev_0.0_1.0.drc.pvl",
+                    ),
+                ],
+            )
 
         elif slib == "sky130_scl":
 
@@ -422,6 +441,15 @@ class SKY130Tech(HammerTechnology):
                     path=os.path.join(SKY130_CDS, "Sky130_LVS", "sky130.lvs.pvl"),
                 )
             ]
+            drc_decks = [
+                DRCDeck(
+                    tool_name="pegasus",
+                    deck_name="pegasus_drc",
+                    path=os.path.join(
+                        SKY130_CDS, "Sky130_DRC", "sky130_rev_0.0_1.0.drc.pvl"
+                    ),
+                )
+            ]
 
         else:
             raise ValueError(f"Incorrect standard cell library selection: {slib}")
@@ -440,25 +468,9 @@ class SKY130Tech(HammerTechnology):
             gds_map_file="sky130_lefpin.map",
             physical_only_cells_list=phys_only,
             dont_use_list=dont_use,
-            drc_decks=[
-                DRCDeck(
-                    tool_name="calibre",
-                    deck_name="calibre_drc",
-                    path="$SKY130_NDA/s8/V2.0.1/DRC/Calibre/s8_drcRules",
-                ),
-                DRCDeck(
-                    tool_name="klayout",
-                    deck_name="klayout_drc",
-                    path="$SKY130A/libs.tech/klayout/drc/sky130A.lydrc",
-                ),
-                DRCDeck(
-                    tool_name="pegasus",
-                    deck_name="pegasus_drc",
-                    path="$SKY130_CDS/Sky130_DRC/sky130_rev_0.0_1.0.drc.pvl",
-                ),
-            ],
             additional_drc_text="",
             lvs_decks=lvs_decks,
+            drc_decks=drc_decks,
             additional_lvs_text="",
             tarballs=None,
             sites=sites,

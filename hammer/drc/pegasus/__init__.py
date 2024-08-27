@@ -30,7 +30,9 @@ class PegasusDRC(HammerDRCTool, CadenceTool):
 
     @property
     def steps(self) -> List[HammerToolStep]:
-        steps = [self.generate_drc_ctl_file]  # TODO: DRC steps require multiple runs of the tool how do we support this?
+        steps = [
+            self.generate_drc_ctl_file
+        ]  # TODO: DRC steps require multiple runs of the tool how do we support this?
         return self.make_steps_from_methods(steps)
 
     def do_post_steps(self) -> bool:
@@ -50,17 +52,22 @@ class PegasusDRC(HammerDRCTool, CadenceTool):
         args = [
             pegasus_bin,
             "-drc",  # DRC mode
-            "-dp", str(self.get_setting("vlsi.core.max_threads")),
+            "-dp",
+            str(self.get_setting("vlsi.core.max_threads")),
             "-license_dp_continue",  # don't quit if requested dp license not available
-            "-control", self.drc_ctl_file,
-            "-log_dir", f"{self.top_module}_logs",
-            "-ui_data"  # for results viewer
+            "-control",
+            self.drc_ctl_file,
+            "-log_dir",
+            f"{self.top_module}_logs",
+            "-ui_data",  # for results viewer
             # TODO: -interactive for block level
-            ] + rules
+        ] + rules
 
         HammerVLSILogging.enable_colour = False
         HammerVLSILogging.enable_tag = False
-        self.run_executable(args, cwd=self.run_dir)  # TODO: check for errors and deal with them
+        self.run_executable(
+            args, cwd=self.run_dir
+        )  # TODO: check for errors and deal with them
         HammerVLSILogging.enable_colour = True
         HammerVLSILogging.enable_tag = True
 
@@ -72,31 +79,43 @@ class PegasusDRC(HammerDRCTool, CadenceTool):
 
         technology = self.get_setting("vlsi.core.technology").split(".")[-1]
         with open(self.view_drc_script, "w") as f:
-            f.write(textwrap.dedent(f"""
+            f.write(
+                textwrap.dedent(
+                    f"""
         cd {self.run_dir}
         source ./enter
         {pegasus_bin}DesignReview -qrv -tech {technology} -data {self.layout_file} -post {self.dr_rv_macro} -verbose
-        """))
+        """
+                )
+            )
         os.chmod(self.view_drc_script, 0o755)
 
         with open(self.dr_rv_macro, "w") as f:
-            f.write(textwrap.dedent(f'''
+            f.write(
+                textwrap.dedent(
+                    f"""
         PVS::invoke_pvsrv("{self.run_dir}");
-        '''))
+        """
+                )
+            )
 
         return True
 
     def generate_drc_ctl_file(self) -> bool:
-        """ Generate the DRC control file self.drc_ctl_file and fill its contents """
+        """Generate the DRC control file self.drc_ctl_file and fill its contents"""
         with open(self.drc_ctl_file, "w") as f:
-            f.write(self.header.replace("#","//"))
-            f.write(textwrap.dedent(f'''
+            f.write(self.header.replace("#", "//"))
+            f.write(
+                textwrap.dedent(
+                    f"""
             virtual_connect -report yes;
             layout_path "{self.layout_file}";
             layout_primary {self.top_module};
             results_db -drc "{self.drc_results_db}" -ascii;
             report_summary -drc "{self.drc_results_file}" -replace;
-            '''))
+            """
+                )
+            )
             f.write(self.get_additional_drc_text())
         return True
 
@@ -132,10 +151,14 @@ class PegasusDRC(HammerDRCTool, CadenceTool):
         """
         v = dict(super().env_vars)
         v["PEGASUS_BIN"] = self.get_setting("drc.pegasus.pegasus_bin")
+        v["PEGASUS_DRC"] = os.path.join(
+            self.get_setting("technology.sky130.sky130_cds"), "Sky130_DRC"
+        )
         return v
 
     @property
     def post_synth_sdc(self) -> Optional[str]:
         pass
+
 
 tool = PegasusDRC
