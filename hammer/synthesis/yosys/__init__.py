@@ -270,7 +270,7 @@ class YosysSynth(HammerSynthesisTool, OpenROADTool, TCLTool):
         # Technology mapping of flip-flops
         """)
         for liberty_file in self.liberty_files_tt.split():
-            self.verbose_append(f"dfflibmap -map-only -liberty {liberty_file}")
+            self.verbose_append(f"dfflibmap -liberty {liberty_file}")
         self.verbose_append("opt")
 
         self.write_sdc_file()
