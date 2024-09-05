@@ -122,6 +122,7 @@ class CLIDriver:
         self.sram_generator_rundir = ""  # type: Optional[str]
         self.sim_rundir = ""  # type: Optional[str]
         self.power_rundir = "" # type: Optional[str]
+        self.static_verification_rundir = "" # type: Optional[str]
         self.pcb_rundir = ""  # type: Optional[str]
 
         # If a subclass has defined these, don't clobber them in init
@@ -171,6 +172,12 @@ class CLIDriver:
             check_CLIActionType_type(self.power_action) # type: ignore
         else:
             self.power_action = self.create_power_action([]) # type: CLIActionConfigType
+        if hasattr(self, "static_verification_action"):
+            check_CLIActionType_type(self.static_verification_action) # type: ignore
+        else:
+            self.static_verification_action = self.create_static_verification_action([]) # type: CLIActionConfigType
+
+
 
         # Dictionaries of module-CLIActionConfigType for hierarchical flows.
         # See all_hierarchical_actions() below.
@@ -181,6 +188,7 @@ class CLIDriver:
         self.hierarchical_lvs_actions = {}  # type: Dict[str, CLIActionConfigType]
         self.hierarchical_sim_actions = {}  # type: Dict[str, CLIActionConfigType]
         self.hierarchical_power_actions = {}  # type: Dict[str, CLIActionConfigType]
+        self.hierarchical_static_verification_actions = {}  # type: Dict[str, CLIActionConfigType]
         self.hierarchical_auto_action = None  # type: Optional[CLIActionConfigType]
 
     def action_map(self) -> Dict[str, CLIActionType]:
@@ -229,6 +237,8 @@ class CLIDriver:
             "par_sim": self.par_sim_action,
             "par-sim": self.par_sim_action,
             "power": self.power_action,
+            "static_verification": self.static_verification_action,
+            "static-verification": self.static_verification_action,
             "par-to-power": self.par_to_power_action,
             "par_to_power": self.par_to_power_action,
             "sim-to-power": self.sim_to_power_action,
@@ -296,6 +306,13 @@ class CLIDriver:
     def get_extra_power_hooks(self) -> List[HammerToolHookAction]:
         """
         Return a list of extra power hooks in this project.
+        To be overridden by subclasses.
+        """
+        return list()
+    
+    def get_extra_static_verification_hooks(self) -> List[HammerToolHookAction]:
+        """
+        Return a list of extra static verification hooks in this project.
         To be overridden by subclasses.
         """
         return list()
@@ -380,6 +397,15 @@ class CLIDriver:
         hooks = self.get_extra_power_hooks() + custom_hooks  # type: List[HammerToolHookAction]
         return self.create_action("power", hooks if len(hooks) > 0 else None,
                                   pre_action_func, post_load_func, post_run_func)
+
+    def create_static_verification_action(self, custom_hooks: List[HammerToolHookAction],
+                          pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_load_func: Optional[Callable[[HammerDriver], None]] = None,
+                          post_run_func: Optional[Callable[[HammerDriver], None]] = None) -> CLIActionConfigType:
+        hooks = self.get_extra_static_verification_hooks() + custom_hooks  # type: List[HammerToolHookAction]
+        return self.create_action("static_verification", hooks if len(hooks) > 0 else None,
+                                  pre_action_func, post_load_func, post_run_func)
+
 
     def create_sram_generator_action(self, custom_hooks: List[HammerToolHookAction],
                           pre_action_func: Optional[Callable[[HammerDriver], None]] = None,
@@ -548,6 +574,23 @@ class CLIDriver:
                     return None
                 dump_config_to_json_file(os.path.join(driver.power_tool.run_dir, "power-output.json"), output)
                 dump_config_to_json_file(os.path.join(driver.power_tool.run_dir, "power-output-full.json"),
+                                         self.get_full_config(driver, output))
+                post_run_func_checked(driver)
+            elif action_type == "static_verification":
+                if not driver.load_static_verification_tool(get_or_else(self.static_verification_rundir, "")):
+                    return None
+                else:
+                    post_load_func_checked(driver)
+                assert driver.static_verification_tool is not None, "load_static_verification_tool was unsuccessful"
+                success, output = driver.run_static_verification(
+                        driver.static_verification_tool.get_tool_hooks() + \
+                        driver.tech.get_tech_static_verification_hooks(driver.static_verification_tool.name) + \
+                        list(extra_hooks or []))
+                if not success:
+                    driver.log.error("Static verification tool did not succeed")
+                    return None
+                dump_config_to_json_file(os.path.join(driver.static_verification_tool.run_dir, "static-verification-output.json"), output)
+                dump_config_to_json_file(os.path.join(driver.static_verification_tool.run_dir, "static-verification-output-full.json"),
                                          self.get_full_config(driver, output))
                 post_run_func_checked(driver)
             elif action_type == "pcb":
@@ -810,6 +853,12 @@ class CLIDriver:
                 "power_{block}"
             ], module, action)
 
+        for module, action in self.hierarchical_static_verification_actions.items():
+            add_variants([
+                "static-verification-{block}",
+                "static_verification_{block}"
+            ], module, action)
+
         return actions
 
     def get_extra_hierarchical_synthesis_hooks(self, driver: HammerDriver) -> Dict[str, List[HammerToolHookAction]]:
@@ -860,6 +909,15 @@ class CLIDriver:
     def get_extra_hierarchical_power_hooks(self, driver: HammerDriver) -> Dict[str, List[HammerToolHookAction]]:
         """
         Return a list of extra hierarchical power hooks in this project.
+        To be overridden by subclasses.
+
+        :return: Dictionary of (module name, list of hooks)
+        """
+        return dict()
+
+    def get_extra_hierarchical_static_verification_hooks(self, driver: HammerDriver) -> Dict[str, List[HammerToolHookAction]]:
+        """
+        Return a list of extra hierarchical static verification hooks in this project.
         To be overridden by subclasses.
 
         :return: Dictionary of (module name, list of hooks)
@@ -952,6 +1010,18 @@ class CLIDriver:
         """
         return self.hierarchical_power_actions[module]
 
+    def set_hierarchical_static_verification_action(self, module: str, action: CLIActionConfigType) -> None:
+        """
+        Set the action associated with hierarchical static verification for the given module (in hierarchical flows).
+        """
+        self.hierarchical_static_verification_actions[module] = action
+
+    def get_hierarchical_static_verification_action(self, module: str) -> CLIActionConfigType:
+        """
+        Get the action associated with hierarchical static verification for the given module (in hierarchical flows).
+        """
+        return self.hierarchical_static_verification_actions[module]
+
     def valid_actions(self) -> List[str]:
         """Get the list of valid actions for the command-line driver."""
         return list(self.action_map().keys())
@@ -1040,6 +1110,7 @@ class CLIDriver:
         self.lvs_rundir = get_nonempty_str(args['lvs_rundir'])
         self.sim_rundir = get_nonempty_str(args['sim_rundir'])
         self.power_rundir = get_nonempty_str(args['power_rundir'])
+        self.static_verification_rundir = get_nonempty_str(args['static_verification_rundir'])
 
         # Stage control: from/to
         from_step = get_nonempty_str(args['from_step'])
@@ -1129,6 +1200,13 @@ class CLIDriver:
                     base_project_config[0] = deeplist(driver.project_configs)
                     d.update_project_configs(deeplist(base_project_config[0]) + [config])
 
+                def static_verification_pre_func(d: HammerDriver) -> None:
+                    self.lvs_rundir = os.path.join(d.obj_dir, "static-verification-{module}".format(
+                        module=module))  # TODO(edwardw): fix this ugly os.path.join; it doesn't belong here.
+                    # TODO(edwardw): remove ugly hack to store stuff in parent context
+                    base_project_config[0] = deeplist(driver.project_configs)
+                    d.update_project_configs(deeplist(base_project_config[0]) + [config])
+
                 def post_run(d: HammerDriver, rundir: str) -> None:
                     # Write out the configs used/generated for logging/debugging.
                     with open(os.path.join(rundir, "full_config.json"), "w") as f:
@@ -1158,6 +1236,9 @@ class CLIDriver:
                 def power_post_run(d: HammerDriver) -> None:
                     post_run(d, get_or_else(self.power_rundir, ""))
 
+                def static_verification_post_run(d: HammerDriver) -> None:
+                    post_run(d, get_or_else(self.power_rundir, ""))
+
                 syn_action = self.create_synthesis_action(self.get_extra_hierarchical_synthesis_hooks(driver).get(module, []),
                                                           pre_action_func=syn_pre_func, post_load_func=None,
                                                           post_run_func=syn_post_run)
@@ -1184,6 +1265,10 @@ class CLIDriver:
                                                     pre_action_func=power_pre_func, post_load_func=None,
                                                     post_run_func=power_post_run)
                 self.set_hierarchical_power_action(module, power_action)
+                static_verification_action = self.create_static_verification_action(self.get_extra_hierarchical_static_verification_hooks(driver).get(module, []),
+                                                    pre_action_func=static_verification_pre_func, post_load_func=None,
+                                                    post_run_func=static_verification_post_run)
+                self.set_hierarchical_static_verification_action(module, static_verification_action)
 
             create_actions(module_iter, config_iter)
 
@@ -1320,6 +1405,8 @@ class CLIDriver:
                             help='(optional) Directory to store simulation results in')
         parser.add_argument("--power_rundir", required=False, default="",
                             help='(optional) Directory to store power results in')
+        parser.add_argument("--static_verification_rundir", required=False, default="",
+                            help='(optional) Directory to store static verification results in')
         # Optional arguments for step control.
         parser.add_argument("--start_before_step", "--from_step", dest="from_step", required=False,
                             help="Run the given action from before the given step (inclusive). Not compatible with --start_after_step.")

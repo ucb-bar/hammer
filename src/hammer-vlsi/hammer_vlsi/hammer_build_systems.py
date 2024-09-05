@@ -38,6 +38,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         - par
         - drc
         - lvs
+        - static-verification
         - sim-rtl
         - sim-syn
         - sim-par
@@ -134,7 +135,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         ####################################################################################
         ## Steps for {mod}
         ####################################################################################
-        .PHONY: sim-rtl{suffix} syn{suffix} power{suffix} sim-syn{suffix} par{suffix} sim-par{suffix} power-par{suffix} drc{suffix} lvs{suffix}
+        .PHONY: sim-rtl{suffix} syn{suffix} power{suffix} sim-syn{suffix} par{suffix} sim-par{suffix} power-par{suffix} drc{suffix} lvs{suffix} static-verification{suffix}
         sim-rtl{suffix}: {sim_rtl_out}
         syn{suffix}: {syn_out}
         power{suffix}: {power_out}
@@ -144,6 +145,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         power-par{suffix}: {power_par_out}
         drc{suffix}: {drc_out}
         lvs{suffix}: {lvs_out}
+        static-verification{suffix}: {static_verification_out}
 
         {par_to_syn}
 
@@ -155,6 +157,9 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
 
         {power_out}: {syn_deps} $(HAMMER_POWER_DEPENDENCIES)
         \t$(HAMMER_EXEC) {env_confs} {p_power_in} $(HAMMER_EXTRA_ARGS) --obj_dir {obj_dir} power{suffix}
+
+        {static_verification_out}: {syn_deps} $(HAMMER_POWER_DEPENDENCIES)
+        \t$(HAMMER_EXEC) {env_confs} {p_static_verification_in} $(HAMMER_EXTRA_ARGS) --obj_dir {obj_dir} static-verification{suffix}
 
         {sim_syn_in}: {syn_out}
         \t$(HAMMER_EXEC) {env_confs} -p {syn_out} $(HAMMER_EXTRA_ARGS) -o {sim_syn_in} --obj_dir {obj_dir} syn-to-sim
@@ -238,6 +243,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         sim_rtl_run_dir = os.path.join(obj_dir, "sim-rtl-rundir")
         syn_run_dir = os.path.join(obj_dir, "syn-rundir")
         power_run_dir = os.path.join(obj_dir, "power-rundir")
+        static_verification_run_dir = os.path.join(obj_dir, "static-verification-rundir")
         sim_syn_run_dir = os.path.join(obj_dir, "sim-syn-rundir")
         par_run_dir = os.path.join(obj_dir, "par-rundir")
         sim_par_run_dir = os.path.join(obj_dir, "sim-par-rundir")
@@ -251,6 +257,8 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         syn_out = os.path.join(syn_run_dir, "syn-output-full.json")
         p_power_in = proj_confs
         power_out = os.path.join(power_run_dir, "power-output-full.json")
+        p_static_verification_in = proj_confs
+        static_verification_out = os.path.join(power_run_dir, "static-verification-output-full.json")
         sim_syn_in = os.path.join(obj_dir, "sim-syn-input.json")
         sim_syn_out = os.path.join(sim_syn_run_dir, "sim-output-full.json")
         par_in = os.path.join(obj_dir, "par-input.json")
@@ -274,6 +282,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
             sim_par_in=sim_par_in, sim_par_out=sim_par_out, sim_par_run_dir=sim_par_run_dir,
             p_syn_in=p_syn_in, syn_out=syn_out, par_in=par_in, par_out=par_out,
             p_power_in=p_power_in, power_out=power_out, power_run_dir=power_run_dir,
+            p_static_verification_in=p_static_verification_in, static_verification_out=static_verification_out, static_verification_run_dir=static_verification_run_dir,
             power_sim_par_in=power_sim_par_in, power_par_in=power_par_in, power_par_out=power_par_out, power_par_run_dir=power_par_run_dir,
             drc_in=drc_in, drc_out=drc_out, lvs_in=lvs_in, lvs_out=lvs_out)
     else:
@@ -297,6 +306,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
             sim_rtl_run_dir = os.path.join(obj_dir, "sim-rtl-" + node)
             syn_run_dir = os.path.join(obj_dir, "syn-" + node)
             power_run_dir = os.path.join(obj_dir, "power-" + node)
+            static_verification_run_dir = os.path.join(obj_dir, "static-verification-" + node)
             sim_syn_run_dir = os.path.join(obj_dir, "sim-syn-" + node)
             par_run_dir = os.path.join(obj_dir, "par-" + node)
             sim_par_run_dir = os.path.join(obj_dir, "sim-par-" + node)
@@ -310,6 +320,8 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
             syn_out = os.path.join(syn_run_dir, "syn-output-full.json")
             p_power_in = proj_confs
             power_out = os.path.join(power_run_dir, "power-output-full.json")
+            p_static_verification_in = proj_confs
+            static_verification_out = os.path.join(static_verification_run_dir, "static-verification-output-full.json")
             sim_syn_in = os.path.join(obj_dir, "sim-syn-{}-input.json".format(node))
             sim_syn_out = os.path.join(sim_syn_run_dir, "sim-output-full.json")
             par_in = os.path.join(obj_dir, "par-{}-input.json".format(node))
@@ -321,6 +333,8 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
             power_par_out = os.path.join(power_par_run_dir, "power-output-full.json")
             drc_in = os.path.join(obj_dir, "drc-{}-input.json".format(node))
             drc_out = os.path.join(drc_run_dir, "drc-output-full.json")
+            lvs_in = os.path.join(obj_dir, "lvs-{}-input.json".format(node))
+            lvs_out = os.path.join(lvs_run_dir, "lvs-output-full.json")
             lvs_in = os.path.join(obj_dir, "lvs-{}-input.json".format(node))
             lvs_out = os.path.join(lvs_run_dir, "lvs-output-full.json")
 
@@ -346,6 +360,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
                 sim_par_in=sim_par_in, sim_par_out=sim_par_out, sim_par_run_dir=sim_par_run_dir,
                 p_syn_in=p_syn_in, syn_out=syn_out, par_in=par_in, par_out=par_out,
                 p_power_in=p_power_in, power_out=power_out, power_run_dir=power_run_dir,
+                p_static_verification_in=p_static_verification_in, static_verification_out=static_verification_out, static_verification_run_dir=static_verification_run_dir,
                 power_sim_par_in=power_sim_par_in, power_par_in=power_par_in, power_par_out=power_par_out, power_par_run_dir=power_par_run_dir,
                 drc_in=drc_in, drc_out=drc_out, lvs_in=lvs_in, lvs_out=lvs_out)
 

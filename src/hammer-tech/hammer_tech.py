@@ -1096,6 +1096,13 @@ class HammerTechnology:
         """
         return list()
 
+    def get_tech_static_verification_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
+        """
+        Return a list of static verification hooks for this technology and tool.
+        To be overridden by subclasses.
+        """
+        return list()
+
     def get_tech_pcb_hooks(self, tool_name: str) -> List['HammerToolHookAction']:
         """
         Return a list of pcb hooks for this technology and tool.
