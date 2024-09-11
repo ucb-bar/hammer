@@ -2,6 +2,7 @@
 #  CLI driver class for the Hammer VLSI abstraction.
 #
 #  See LICENSE for licence details.
+import pdb
 
 import argparse
 import json
@@ -35,8 +36,9 @@ KEY_PATH = os.path.join(KEY_DIR, "key-history.json")
 def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callable[[str], None]) -> List[str]:
     """Parse a possibly null list of files, validate the existence of each file, and return a list of paths (possibly
     empty)."""
+    pdb.set_trace()
     results = []  # type: List[str]
-    if args_list is None:
+    if args_list is None:                                       #Andre tmp: args_list is not being populated properly.
         # No arguments
         pass
     elif isinstance(args_list, List):
@@ -1268,7 +1270,7 @@ class CLIDriver:
         """Parse command line arguments and environment variables for the command line front-end to hammer-vlsi.
 
         :return: HammerDriver and a list of errors."""
-
+        pdb.set_trace()
         # TODO: rewrite this less tediously?
 
         # Resolve default_options.
@@ -1288,7 +1290,7 @@ class CLIDriver:
         errors = []  # type: List[str]
 
         # Load environment configs.
-        env_configs = parse_optional_file_list_from_args(args['environment_config'],
+        env_configs = parse_optional_file_list_from_args(args['environment_config'],                        #Andre tmp: Env config not populated
                                                          append_error_func=errors.append)  # type: List[str]
         # Also load any environment configs from the environment.
         split_env_var_s = os.environ.get("HAMMER_ENVIRONMENT_CONFIGS", default="").split(os.pathsep)  # type: List[str]
@@ -1301,7 +1303,7 @@ class CLIDriver:
         options = options._replace(environment_configs=list(env_configs))
 
         # Load project configs.
-        project_configs = parse_optional_file_list_from_args(args['configs'], append_error_func=errors.append)
+        project_configs = parse_optional_file_list_from_args(args['configs'], append_error_func=errors.append)  #Andre tmp
         options = options._replace(project_configs=list(project_configs))
 
         # Log file.
@@ -1348,7 +1350,7 @@ class CLIDriver:
             config_str = Path(conf_file).read_text()
             project_configs_yaml.append(hammer.config.load_config_from_string(config_str, is_yaml=True, path=str(Path(conf_file).resolve().parent)))
         project_configs_yaml_keys = [set(i.keys()) for i in project_configs_yaml]
-        key_history: Dict[str, List[str]] = {i: [] for i in reduce(lambda x, y: x.union(y), project_configs_yaml_keys)}
+        key_history: Dict[str, List[str]] = {i: [] for i in reduce(lambda x, y: x.union(y), project_configs_yaml_keys)}     #Andre tmp
         for cfg_file, cfg in zip(project_configs, project_configs_yaml_keys):
             for key in cfg:
                 key_history[key].append(cfg_file)
@@ -1592,6 +1594,7 @@ class CLIDriver:
 
     @staticmethod
     def generate_build_inputs(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        pdb.set_trace()
         """
         Generate the build tool artifacts for this flow, specified by the "vlsi.core.build_system" key.
         The flow is the set of steps configured by the current HammerIR input.
@@ -1607,6 +1610,7 @@ class CLIDriver:
             raise ValueError("Unsupported build system: {}".format(build_system))
 
     def run_main_parsed(self, args: dict) -> int:
+        pdb.set_trace()
         """
         Given a parsed dictionary of arguments, find and run the given action.
 
@@ -1650,6 +1654,7 @@ class CLIDriver:
 
 
     def main(self, args: Optional[List[str]] = None) -> None:
+        pdb.set_trace()
         """
         Main function to call from your entry point script.
         Parses command line arguments.
