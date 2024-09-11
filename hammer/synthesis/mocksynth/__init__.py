@@ -22,7 +22,8 @@ class MockSynth(HammerSynthesisTool, DummyHammerTool):
     def temp_file(self, filename: str) -> str:
         """Helper function to get the full path to a filename under temp_folder."""
         if self.get_setting("synthesis.mocksynth.temp_folder", nullvalue="") == "":
-            raise ValueError("synthesis.mocksynth.temp_folder is not set correctly")
+            return os.path.join(self.run_dir, filename)
+            #raise ValueError("synthesis.mocksynth.temp_folder is not set correctly")
         return os.path.join(self.get_setting("synthesis.mocksynth.temp_folder"), filename)
 
     @property
