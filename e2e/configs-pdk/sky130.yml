@@ -1,8 +1,5 @@
 vlsi.core.technology: "hammer.technology.sky130"
 
-vlsi.core.sram_generator_tool: "hammer.technology.sky130.sram_compiler"
-
-
 # Pin placement constraints
 vlsi.inputs.pin_mode: generated
 vlsi.inputs.pin.generate_mode: semi_auto
@@ -13,5 +10,11 @@ vlsi.inputs.pin.assignments: [
 # TODO: _meta configs aren't propagated into action output configs, so tech/tool plugin _meta's are lost
 # ex. flags below are lost during sim-syn/par (but not sim-rtl)
 sim.inputs:
-  defines: ["FUNCTIONAL", "UNIT_DELAY=#1"]
-  defines_meta: "append"
+  defines: ["FUNCTIONAL", "UNIT_DELAY=#1", "USE_POWER_PINS"]
+  defines_meta: 'append'
+
+# SRAM Compiler compiler options
+vlsi.core.sram_generator_tool: "hammer.technology.sky130.sram_compiler"
+# Specify this since we are not using macrocompiler
+vlsi.inputs.sram_parameters: "../../hammer/technology/sky130/sram-cache.json"
+vlsi.inputs.sram_parameters_meta: ["prependlocal", "transclude", "json2list"]
