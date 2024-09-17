@@ -15,6 +15,3 @@ sim.inputs:
 
 # SRAM Compiler compiler options
 vlsi.core.sram_generator_tool: "hammer.technology.sky130.sram_compiler"
-# Specify this since we are not using macrocompiler
-vlsi.inputs.sram_parameters: "../../hammer/technology/sky130/sram-cache.json"
-vlsi.inputs.sram_parameters_meta: ["prependlocal", "transclude", "json2list"]

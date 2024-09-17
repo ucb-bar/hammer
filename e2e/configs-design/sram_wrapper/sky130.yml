@@ -22,3 +22,7 @@ vlsi.inputs.placement_constraints:
       right: 0
       top: 0
       bottom: 0
+
+# Compile all srams in our cache
+vlsi.inputs.sram_parameters: "../../../hammer/technology/sky130/sram-cache.json"
+vlsi.inputs.sram_parameters_meta: ["prependlocal", "transclude", "json2list"]
