@@ -5,7 +5,7 @@ vlsi_dir=$(abspath .)
 # minimal flow configuration variables
 design              ?= pass
 pdk                 ?= sky130
-tools               ?= nop
+tools               ?= cm
 env                 ?= bwrc
 
 extra               ?=  # extra configs
@@ -28,9 +28,10 @@ SIM_CONF            ?= $(if $(findstring -rtl,$(MAKECMDGOALS)), configs-design/$
 POWER_CONF          ?= $(if $(findstring power-rtl,$(MAKECMDGOALS)), configs-design/$(design)/power-rtl-$(pdk).yml, \
                        $(if $(findstring power-syn,$(MAKECMDGOALS)), configs-design/$(design)/power-syn-$(pdk).yml, \
                        $(if $(findstring power-par,$(MAKECMDGOALS)), configs-design/$(design)/power-par-$(pdk).yml, )))
+SRAM_CONF           ?= $(OBJ_DIR)/sram_generator-output.json
 
 PROJ_YMLS           ?= $(PDK_CONF) $(TOOLS_CONF) $(DESIGN_CONF) $(DESIGN_PDK_CONF) $(SIM_CONF) $(POWER_CONF) $(extra)
-HAMMER_EXTRA_ARGS   ?= $(foreach conf, $(PROJ_YMLS), -p $(conf)) $(args)
+HAMMER_EXTRA_ARGS   ?= $(foreach conf, $(PROJ_YMLS), -p $(conf)) -p $(SRAM_CONF) $(args)
 
 
 
@@ -39,10 +40,14 @@ HAMMER_D_MK = $(OBJ_DIR)/hammer.d
 
 build: $(HAMMER_D_MK)
 
-$(HAMMER_D_MK):
+$(HAMMER_D_MK): $(SRAM_CONF)
 	hammer-vlsi --obj_dir $(OBJ_DIR) -e $(ENV_YML) $(HAMMER_EXTRA_ARGS) build
 
 -include $(HAMMER_D_MK)
 
+$(SRAM_CONF) srams:
+	hammer-vlsi --obj_dir $(OBJ_DIR) -e $(ENV_YML) $(foreach conf, $(PROJ_YMLS), -p $(conf)) sram_generator
+	cp output.json $(SRAM_CONF)
+
 clean:
-    rm -rf $(OBJ_DIR) hammer-vlsi-*.log
+	rm -rf $(OBJ_DIR) hammer-vlsi-*.log
