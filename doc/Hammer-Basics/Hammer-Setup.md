@@ -2,43 +2,53 @@
 
 Hammer depends on Python 3.9+.
 
-The default technology, ASAP7, has some extra requirements. See its [README](https://github.com/ucb-bar/hammer/blob/master/hammer/technology/asap7/README.md) for instructions.
+The Hammer setup is different based on its usecase, which are summarized as follows:
+
+[User Setup](#user-setup): Use Hammer with no modifications.
+[Power User Setup](#power-user-setup): Modify Hammer and see these changes immediately reflected when calling Hammer [most common case].
+[Developer Setup](#developer-setup): Developing major Hammer features, adding dependencies, running Hammer unit tests, etc.
+
+Note that some tools and technologies have extra setup requirements:
+* [ASAP7 setup directions](https://github.com/ucb-bar/hammer/blob/master/hammer/technology/asap7/README.md)
+* [Sky130 & OpenROAD tools setup](https://hammer-vlsi.readthedocs.io/en/stable/Examples/openroad-sky130.html)
 
 ## User Setup
 
-You can install Hammer from PyPI:
+Install the hammer python package from PyPI.
 
 ```shell
 pip install hammer-vlsi
+
+# if using the ASAP7 PDK you need the gdspy or gdstk dependencies
+pip install hammer-vlsi[asap7]  # default: gdspy
+pip install hammer-vlsi[asap7-gdstk]  # install gdstk instead
 ```
 
-If you are using ASAP7, you need to install hammer-vlsi with the asap7 extra dependency (gdspy or gdstk). By default, gdspy is installed:
-
-```shell
-pip install hammer-vlsi[asap7]
-```
-
-If instead, you want to install gdstk:
-
-```shell
-pip install hammer-vlsi[asap7-gdstk]
-```
-
-After installation, verify that you can run the `hammer-vlsi` script from the command line.
+Verify that you can run the `hammer-vlsi` script from the command line.
 
 ```shell
 hammer-vlsi -h
 ```
 
-Note: certain tools and technologies will have additional system requirements. For example, LVS with Netgen requires Tcl/Tk 8.6, which is not installed for CentOS7/RHEL7 and below. Refer to each respective tool and technology's documentation for those requirements.
+## Power User Setup
+Install Hammer as a source dependency to some target virtual environment, such as Conda.
 
-### Installing Hammer as a Source Dependency
+```shell
+# clone Hammer somewhere on your disk
+git clone https://github.com/ucb-bar/hammer.git
 
-In some cases, it is useful to install Hammer as a source dependency.
-For instance, when developing tool or PDK plugins alongside a new feature or API changes in main Hammer, installing hammer as a source dependency will allow you to make changes in main hammer and see them reflected immediately when running code for your tool/PDK plugin.
+# activate your target virtual environment (e.g. Chipyard)
+# commands vary for this based on your package/environment manager
+conda activate <env name>
+source <path>/.venv/bin/activate
 
-(poetry_project)=
-#### From Another Poetry Project
+# install hammer package in editable mode to your environment
+cd hammer
+pip install -e .
+
+```
+
+### Installing from Another Poetry Project
 
 Hammer tool (e.g. `hammer-cadence-plugins`) and PDK plugin repositories are poetry projects (with a `pyproject.toml` in their root).
 To depend on Hammer as a source dependency, first clone Hammer somewhere on your disk.
@@ -54,15 +64,6 @@ Run `poetry update` and `poetry install`.
 Do not commit the changes to `pyproject.toml` or `poetry.lock` without first removing the source dependency.
 You only need to specify `extras` if you need the `asap7` optional dependency (gdstk).
 
-#### From a Generic Python Project
-
-Other repos, such as Chipyard, are not poetry projects, but still depend on Hammer.
-To use Hammer as a source dependency:
-
-1. Remove the PyPI hammer-vlsi dependency from the project (e.g. by editing a conda env.yml file and rerunning dependency resolution)
-1. Clone Hammer somewhere on your disk
-1. Activate the virtualenv of the project (e.g. Chipyard)
-1. Run `pip install -e .` from the root of Hammer *within the project's virtualenv*
 
 ## Developer Setup
 
