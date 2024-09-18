@@ -4,9 +4,9 @@ Hammer depends on Python 3.9+.
 
 The Hammer setup is different based on its usecase, which are summarized as follows:
 
-[User Setup](#user-setup): Use Hammer with no modifications.
-[Power User Setup](#power-user-setup): Modify Hammer and see these changes immediately reflected when calling Hammer [most common case].
-[Developer Setup](#developer-setup): Developing major Hammer features, adding dependencies, running Hammer unit tests, etc.
+* [User Setup](#user-setup): Use Hammer with no modifications.
+* [Power User Setup](#power-user-setup): Modify Hammer and see these changes immediately reflected when calling Hammer [recommended].
+* [Developer Setup](#developer-setup): Developing major Hammer features, adding dependencies, running Hammer unit tests, etc.
 
 Note that some tools and technologies have extra setup requirements:
 * [ASAP7 setup directions](https://github.com/ucb-bar/hammer/blob/master/hammer/technology/asap7/README.md)
@@ -20,31 +20,28 @@ Install the hammer python package from PyPI.
 pip install hammer-vlsi
 
 # if using the ASAP7 PDK you need the gdspy or gdstk dependencies
-pip install hammer-vlsi[asap7]  # default: gdspy
+pip install hammer-vlsi[asap7]        # default: gdspy
 pip install hammer-vlsi[asap7-gdstk]  # install gdstk instead
-```
 
-Verify that you can run the `hammer-vlsi` script from the command line.
-
-```shell
+# verify that you can run the `hammer-vlsi` script from the command line
 hammer-vlsi -h
 ```
 
 ## Power User Setup
-Install Hammer as a source dependency to some target virtual environment, such as Conda.
+Install Hammer as a source dependency to some target virtual environment, such as conda.
 
 ```shell
 # clone Hammer somewhere on your disk
 git clone https://github.com/ucb-bar/hammer.git
 
-# activate your target virtual environment (e.g. Chipyard)
-# commands vary for this based on your package/environment manager
-conda activate <env name>
-source <path>/.venv/bin/activate
+# activate your target virtual environment, e.g. Chipyard
+#   commands vary for this based on your package/environment manager:
+#     conda activate <env name>
+#     source <path>/.venv/bin/activate
 
 # install hammer package in editable mode to your environment
 cd hammer
-pip install -e .
+pip install -e .  # run this after activating your target environment
 
 ```
 
