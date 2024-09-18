@@ -31,7 +31,7 @@ class SKY130Tech(HammerTechnology):
         self.setup_cdl()
         self.setup_verilog()
         self.setup_techlef()
-        # self.setup_io_lefs()
+        self.setup_io_lefs()
         self.logger.info('Loaded Sky130 Tech')
 
 
@@ -98,11 +98,13 @@ class SKY130Tech(HammerTechnology):
                     
         # Additionally hack out the specifies
         sl = []
-        with open(dest_path, 'r') as sf:
-            sl = sf.readlines()
+        with open(dest_path, 'r') as df:
+            sl = df.readlines()
 
-            # Find timing declaration
-            start_idx = [idx for idx, line in enumerate(sl) if "`ifndef SKY130_FD_SC_HD__LPFLOW_BLEEDER_1_TIMING_V" in line][0]
+        # Find timing declaration
+        idxs = [idx for idx, line in enumerate(sl) if "`ifndef SKY130_FD_SC_HD__LPFLOW_BLEEDER_1_TIMING_V" in line]
+        if len(idxs) > 0:
+            start_idx = idxs[0]
 
             # Search for the broken statement
             search_range = range(start_idx+1, len(sl))
@@ -230,7 +232,9 @@ class SKY130Tech(HammerTechnology):
                         idx_start_next_macro = [idx for idx in range(idx_broken_macro+1, len(sl)) if "MACRO" in sl[idx]][0]
                         # Find the broken macro ending
                         idx_end_broken_macro = len(sl)
-                        idx_end_broken_macro = [idx for idx in range(idx_broken_macro+1, len(sl)) if end_broken_macro in sl[idx]][0]
+                        idxs = [idx for idx in range(idx_broken_macro+1, len(sl)) if end_broken_macro in sl[idx]]
+                        if len(idxs) == 0: continue
+                        idx_end_broken_macro = idxs[0]
 
                         # Fix
                         if idx_end_broken_macro < idx_start_next_macro:

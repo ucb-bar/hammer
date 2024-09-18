@@ -11,13 +11,10 @@ synopsys.MGLS_LICENSE_FILE: "1717@bwrcflex-1.eecs.berkeley.edu:1717@bwrcflex-2.e
 
 
 # Commercial tool versions
-# synthesis.genus.version: "231"
-# par.innovus.version: "231"
-# power.joules.version: "231"
-# sim.vcs.version: "V-2023.12-SP1"
-sim.vcs.version: "S-2021.09-SP1-1" # need to bump down these versions because joules requires older FSDB version
-sim.vcs.verdi_home: "/tools/synopsys/verdi/${sim.vcs.version}"
-sim.vcs.verdi_home_meta: lazysubst
+synthesis.genus.version: "231"
+par.innovus.version: "231"
+power.joules.version: "231"
+sim.vcs.version: "V-2023.12-SP1"
 
 # Open-source tool paths
 synthesis.yosys.yosys_bin: "/tools/C/openeda/conda-yosys/bin/yosys"

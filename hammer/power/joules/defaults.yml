@@ -3,7 +3,7 @@
 
 power.joules:
   # Location of the binary.
-  joules_bin: "${cadence.cadence_home}/DDI/DDI${power.joules.version}/JLS${power.joules.version}/bin/joules"
+  joules_bin: "${cadence.cadence_home}/DDI/DDI${power.joules.version}/JSTUDIO${power.joules.version}/bin/joules"
   joules_bin_meta: lazysubst # we want later overrides to be able to affect this
 
   # Joules version to use.
