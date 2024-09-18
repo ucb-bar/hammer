@@ -4,11 +4,10 @@ The following directions will get a simple ``pass`` design from RTL to GDS using
 
 ## Instructions
 
-First, follow the [Hammer Developer Setup](https://hammer-vlsi.readthedocs.io/en/stable/Hammer-Basics/Hammer-Setup.html#developer-setup) to clone Hammer and install/activate the poetry virtual environment.
+First, follow the [Hammer Power User Setup](https://hammer-vlsi.readthedocs.io/en/stable/Hammer-Basics/Hammer-Setup.html#power-user-setup) to clone Hammer and install/activate the poetry virtual environment.
 
-Next, run the setup script to install the OpenROAD tools using Conda, and Skywater 130nm PDK using the [Open-PDKs tool](https://github.com/RTimothyEdwards/open_pdks).
-This step will take a long time due to the amount and size of the required installs.
-You should supply a ``PREFIX`` path to a directory that will serve as the root of all PDK files and supporting tools (total size of all files is ~42GB),
+Next, run the setup script to install the OpenROAD tools and Skywater 130nm PDK using Conda.
+You should supply a ``PREFIX`` path to a directory that will serve as the root of all PDK files and supporting tools (total size of all files is ~4GB),
 otherwise the script will default to installing to your home directory (``~/``).
 
 ```shell
