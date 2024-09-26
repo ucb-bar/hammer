@@ -71,9 +71,14 @@ def main():
     # Proceed with the default CLIDriver
     CLIDriver().main()
 if __name__ == '__main__':
-    sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
+    #sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
+    #Adds configuration to system arguments, so they are visible to ArgumentParser
+    HAMMER_EXTRA_ARGS_split = HAMMER_EXTRA_ARGS.split()
+    for arg in ['--obj_dir', OBJ_DIR, '-e', ENV_YML]:
+        sys.argv.append(arg)
+    for arg in HAMMER_EXTRA_ARGS_split:
+        sys.argv.append(arg)
     sys.exit(main())
 
 #Use the makecmdgoals variable to determine which function will be accessed
 #Need to know how the hammer-vlsi command works with make build. Refer to graphic
-#

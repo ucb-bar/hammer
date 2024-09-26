@@ -1272,7 +1272,6 @@ class CLIDriver:
         """Parse command line arguments and environment variables for the command line front-end to hammer-vlsi.
 
         :return: HammerDriver and a list of errors."""
-        pdb.set_trace()
         # TODO: rewrite this less tediously?
 
         # Resolve default_options.
@@ -1614,7 +1613,6 @@ class CLIDriver:
             raise ValueError("Unsupported build system: {}".format(build_system))
 
     def run_main_parsed(self, args: dict) -> int:
-        pdb.set_trace()
         """
         Given a parsed dictionary of arguments, find and run the given action.
 
