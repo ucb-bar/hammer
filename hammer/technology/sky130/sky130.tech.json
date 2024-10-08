@@ -51,6 +51,7 @@
   "libraries": [
     {
       "lef_file": "cache/sky130_fd_sc_hd__nom.tlef",
+      "milkyway_techfile": "cache/sky130_fd_sc_hd.tf",
       "verilog_sim": "cache/primitives.v",
       "provides": [
         {

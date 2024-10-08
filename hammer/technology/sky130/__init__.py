@@ -162,6 +162,9 @@ class SKY130Tech(HammerTechnology):
     def setup_techlef(self) -> None:
         setting_dir = self.get_setting("technology.sky130.sky130A")
         setting_dir = Path(setting_dir)
+
+        package_dir = importlib.resources.files(self.package)
+
         source_path = setting_dir / 'libs.ref' / self.library_name / 'techlef' / f'{self.library_name}__nom.tlef'
         if not source_path.exists():
             raise FileNotFoundError(f"Tech-LEF not found: {source_path}")
@@ -178,6 +181,9 @@ class SKY130Tech(HammerTechnology):
                     df.write(line)
                     if line.strip() == 'END pwell':
                         df.write(_the_tlef_edit)
+
+        # Copy Synopsys techfile
+        shutil.copy2(package_dir / f'sky130_fd_sc_hd.tf', cache_tech_dir_path / f'sky130_fd_sc_hd.tf')
 
     # Power pins for clamps must be CLASS CORE
     # connect/disconnect spacers must be CLASS PAD SPACER, not AREAIO
