@@ -1669,10 +1669,10 @@ class CLIDriver:
         #pdb.set_trace()
         parser = argparse.ArgumentParser()
 
-        #parser.add_argument('action', metavar='ACTION', type=str,  # choices=self.valid_actions() <- sadly incompatible w/custom actions
-        #                    help='Action to perform with the command-line driver.')
-        parser.add_argument("--action", metavar='ACTION', type=str,  # choices=self.valid_actions() <- sadly incompatible w/custom actions
+        parser.add_argument('action', metavar='ACTION', type=str,  # choices=self.valid_actions() <- sadly incompatible w/custom actions
                             help='Action to perform with the command-line driver.')
+        #parser.add_argument("--action", metavar='ACTION', type=str,  # choices=self.valid_actions() <- sadly incompatible w/custom actions
+        #                    help='Action to perform with the command-line driver.')
         # Required arguments for (Python) hammer driver.
         parser.add_argument("-e", "--environment_config", action='append', required=False,
                             help="Environment config files (.yml or .json) - .json will take precendence over any .yml. These config files will not be re-emitted in the output json. Can also be specified as a colon-separated list in the environment variable HAMMER_ENVIRONMENT_CONFIGS.")

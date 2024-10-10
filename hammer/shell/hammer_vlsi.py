@@ -148,7 +148,10 @@ class AIRFlow:
         #sys.argv.append("build")
         
         #for arg in ['--obj_dir', self.OBJ_DIR, '-e', self.ENV_YML]:
-        for arg in ['--action', self.makecmdgoals, '--obj_dir', self.OBJ_DIR, '-e', self.ENV_YML]:
+        airflow_command = sys.argv[0]
+        sys.argv = []
+        #for arg in [airflow_command, '--action', self.makecmdgoals, '--obj_dir', self.OBJ_DIR, '-e', self.ENV_YML]:
+        for arg in [airflow_command, self.makecmdgoals, '--obj_dir', self.OBJ_DIR, '-e', self.ENV_YML]:
             sys.argv.append(arg)
         for arg in HAMMER_EXTRA_ARGS_split:
             sys.argv.append(arg)
