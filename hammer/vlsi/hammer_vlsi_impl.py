@@ -20,8 +20,8 @@ from hammer.tech import ExtraLibrary, RoutingDirection
 from .constraints import *
 from .units import VoltageValue, TimeValue
 
-import pdb
-pdb.set_trace()
+#import pdb
+#pdb.set_trace()
 
 class HierarchicalMode(Enum):
     Flat = 1

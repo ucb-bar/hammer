@@ -14,7 +14,7 @@ import os
 import subprocess
 import sys
 
-from airflow import DAG
+from airflow.models.dag import DAG
 from airflow.operators.python import PythonOperator
 from airflow.decorators import task, dag
 from datetime import datetime, timedelta
@@ -25,8 +25,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'v
 
 from hammer.vlsi import CLIDriver
 
-import pdb
-pdb.set_trace()
+#import pdb
+#pdb.set_trace()
 '''
 def main():
     
@@ -98,7 +98,7 @@ main()
 
 class AIRFlow:
     def __init__(self):
-        pdb.set_trace()
+        #pdb.set_trace()
         # minimal flow configuration variables
         self.design = os.getenv('design', 'pass')
         self.pdk = os.getenv('pdk', 'sky130')
@@ -119,7 +119,10 @@ class AIRFlow:
         self.DESIGN_PDK_CONF = os.getenv('DESIGN_PDK_CONF', f"configs-design/{self.design}/{self.pdk}.yml")
         
         # This should be your target, build is passed in
-        self.makecmdgoals = os.getenv('MAKECMDGOALS', sys.argv[1])
+        
+        #sys.argv[1] = "build"
+        #self.makecmdgoals = os.getenv('MAKECMDGOALS', sys.argv[1])
+        self.makecmdgoals = os.getenv('MAKECMDGOALS', "build")
         
         # simulation and power configurations
         self.SIM_CONF = os.getenv('SIM_CONF',
@@ -138,49 +141,71 @@ class AIRFlow:
         self.HAMMER_EXTRA_ARGS = ' '.join([f"-p {conf}" for conf in self.PROJ_YMLS if conf]) + f" {self.args}"
         self.HAMMER_D_MK = os.getenv('HAMMER_D_MK', f"{self.OBJ_DIR}/hammer.d")
 
-        if __name__ == '__main__':
-            # Adds configuration to system arguments, so they are visible to ArgumentParser
-            HAMMER_EXTRA_ARGS_split = self.HAMMER_EXTRA_ARGS.split()
-            for arg in ['--obj_dir', self.OBJ_DIR, '-e', self.ENV_YML]:
-                sys.argv.append(arg)
-            for arg in HAMMER_EXTRA_ARGS_split:
-                sys.argv.append(arg)
-
-    #@task
-    def build(self):
-        pdb.set_trace()
-        #print(f"Build command would run here with OBJ_DIR: {self.OBJ_DIR}")
-        CLIDriver().main()
-
-    #@task
-    def clean(self):
-        pdb.set_trace()
-        if os.path.exists(self.OBJ_DIR):
-            subprocess.run(f"rm -rf {self.OBJ_DIR} hammer-vlsi-*.log", shell=True, check=True)
-
-    #@task
-    def run(self):
-        if 'clean' in sys.argv:
-            self.clean()
-        else:
-            self.build()
+        #if __name__ == '__main__':
+        # Adds configuration to system arguments, so they are visible to ArgumentParser
+        HAMMER_EXTRA_ARGS_split = self.HAMMER_EXTRA_ARGS.split()
+        
+        #sys.argv.append("build")
+        
+        #for arg in ['--obj_dir', self.OBJ_DIR, '-e', self.ENV_YML]:
+        for arg in ['--action', self.makecmdgoals, '--obj_dir', self.OBJ_DIR, '-e', self.ENV_YML]:
+            sys.argv.append(arg)
+        for arg in HAMMER_EXTRA_ARGS_split:
+            sys.argv.append(arg)
 
 #@task
-def airflow_run(flow):
-    pdb.set_trace()
-    flow.run()
+def build():
+    #pdb.set_trace()
+    #print(f"Build command would run here with OBJ_DIR: {self.OBJ_DIR}")
+    CLIDriver().main()
+
+#@task
+def clean(flow):
+    #pdb.set_trace()
+    if os.path.exists(flow.OBJ_DIR):
+        subprocess.run(f"rm -rf {flow.OBJ_DIR} hammer-vlsi-*.log", shell=True, check=True)
+
+#@task
+#def run(self):
+#    if 'clean' in sys.argv:
+#        self.clean()
+#    else:
+#        self.build()
+@task
+def run(flow):
+    #pdb.set_trace()
+    #if 'clean' in sys.argv:
+    if 'clean' in flow.makecmdgoals:
+        clean(flow)
+    else:
+        build()
+
+
+#@task
+#def airflow_run(flow):
+#    #pdb.set_trace()
+#    flow.run()
 
 @dag(
-    schedule_interval='None',
-    start_date=datetime(2024, 1, 1),
+    schedule_interval=None,
+    start_date=datetime(2024, 1, 1, 0, 0),
     catchup=False,
-    dag_id='make_build_dag'
+    dag_id='make_build'
 )
 def taskflow_dag():
+    #pdb.set_trace()
     # Create an instance of the class and run the process
     flow = AIRFlow()
+    run(flow)  # Pass the command as a parameter
     #flow.run()
-    airflow_run(flow)
-
+    #irflow_run(flow)
+    
+    '''
+    if 'clean' in flow.makecmdgoals:
+        clean(flow)
+    else:
+        build()
+    '''
 #Create instance of DAG
 dag = taskflow_dag()
+#dag.test()

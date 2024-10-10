@@ -2,7 +2,7 @@
 #  CLI driver class for the Hammer VLSI abstraction.
 #
 #  See LICENSE for licence details.
-import pdb
+#import pdb
 
 import argparse
 import json
@@ -29,8 +29,8 @@ from hammer.utils import add_dicts, deeplist, deepdict, get_or_else, check_funct
 
 from hammer.config import HammerJSONEncoder
 
-import pdb
-pdb.set_trace()
+#import pdb
+#pdb.set_trace()
 
 KEY_DIR = tempfile.mkdtemp()
 KEY_PATH = os.path.join(KEY_DIR, "key-history.json")
@@ -38,7 +38,7 @@ KEY_PATH = os.path.join(KEY_DIR, "key-history.json")
 def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callable[[str], None]) -> List[str]:
     """Parse a possibly null list of files, validate the existence of each file, and return a list of paths (possibly
     empty)."""
-    pdb.set_trace()
+    #pdb.set_trace()
     results = []  # type: List[str]
     if args_list is None:                                       #Andre tmp: args_list is not being populated properly.
         # No arguments
@@ -1277,7 +1277,7 @@ class CLIDriver:
         # Resolve default_options.
         # Can't call HammerDriver.get_default_driver_options in the
         # parameters as it will be called when args_to_driver is defined
-        pdb.set_trace()
+        #pdb.set_trace()
         default_options_resolved = HammerDriver.get_default_driver_options()  # type: HammerDriverOptions
         if default_options is not None:
             default_options_resolved = default_options
@@ -1596,7 +1596,7 @@ class CLIDriver:
 
     @staticmethod
     def generate_build_inputs(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
-        pdb.set_trace()
+        #pdb.set_trace()
         """
         Generate the build tool artifacts for this flow, specified by the "vlsi.core.build_system" key.
         The flow is the set of steps configured by the current HammerIR input.
@@ -1605,7 +1605,7 @@ class CLIDriver:
         :param append_error_func: The function to use to append an error
         :return: The diplomacy graph
         """
-        pdb.set_trace()
+        #pdb.set_trace()
         build_system = str(driver.database.get_setting("vlsi.core.build_system", "none"))
         if build_system in BuildSystems:
             return BuildSystems[build_system](driver, append_error_func)
@@ -1618,7 +1618,7 @@ class CLIDriver:
 
         :return: Return code (0 for success)
         """
-        pdb.set_trace()
+        #pdb.set_trace()
         if args['firrtl'] is not None and len(args['firrtl']) > 0:
             print("firrtl convenience argument not yet implemented", file=sys.stderr)
             return 1
@@ -1657,7 +1657,7 @@ class CLIDriver:
 
 
     def main(self, args: Optional[List[str]] = None) -> None:
-        pdb.set_trace()
+        #pdb.set_trace()
         """
         Main function to call from your entry point script.
         Parses command line arguments.
@@ -1666,10 +1666,12 @@ class CLIDriver:
         >>> if __name__ == '__main__':
         >>>   CLIDriver().main()
         """
-        pdb.set_trace()
+        #pdb.set_trace()
         parser = argparse.ArgumentParser()
 
-        parser.add_argument('action', metavar='ACTION', type=str,  # choices=self.valid_actions() <- sadly incompatible w/custom actions
+        #parser.add_argument('action', metavar='ACTION', type=str,  # choices=self.valid_actions() <- sadly incompatible w/custom actions
+        #                    help='Action to perform with the command-line driver.')
+        parser.add_argument("--action", metavar='ACTION', type=str,  # choices=self.valid_actions() <- sadly incompatible w/custom actions
                             help='Action to perform with the command-line driver.')
         # Required arguments for (Python) hammer driver.
         parser.add_argument("-e", "--environment_config", action='append', required=False,
