@@ -1,5 +1,4 @@
-// 8-bit Add Module
-
+// W-bit Add Module
 
 
 module add #( parameter W = 8 ) (
