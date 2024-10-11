@@ -1,0 +1,25 @@
+# Generate Make include to aid in flow
+vlsi.core.build_system: make
+
+vlsi.inputs.power_spec_type: "cpf"
+vlsi.inputs.power_spec_mode: "auto"
+
+synthesis.inputs:
+  top_module: "add"
+  input_files: ["src/add.v"]
+
+sim.inputs:
+  top_module: "add"
+  tb_name: "add_tb"
+  tb_dut: "add_dut"
+  
+power.inputs:
+  top_module: "add"
+  tb_name: "add_tb"
+  tb_dut: "add_dut"
+
+vlsi.inputs.delays: [
+  {name: "in0", clock: "clock", delay: "1", direction: "input"},
+  {name: "in1", clock: "clock", delay: "1", direction: "input"},
+  {name: "out", clock: "clock", delay: "1", direction: "output"}
+]
