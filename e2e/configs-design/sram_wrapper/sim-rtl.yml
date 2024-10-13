@@ -1,0 +1,5 @@
+# RTL Simulation
+
+sim.inputs:
+  level: "rtl"
+  input_files: ['src/sram_wrapper.v', 'src/sram_wrapper_tb.v']

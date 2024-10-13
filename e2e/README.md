@@ -1,15 +1,11 @@
 # Hammer End-to-End Integration Tests
 
-This folder contains an end-to-end (RTL -> GDS) smoketest flow using Hammer, using the Cadence toolchain, and the ASAP7 or Skywater 130 PDKs.
+The `hammer/e2e` folder contains an end-to-end (RTL -> GDS) smoketest flow using Hammer, either the Cadence or OpenROAD toolchain, and the ASAP7 or Skywater 130 PDKs.
 
 ## Setup
 
-The integration tests use Hammer as a source dependency, so create the e2e poetry environment.
+The integration tests use Hammer as a source dependency, so follow the [Hammer Developer Setup](https://hammer-vlsi.readthedocs.io/en/stable/Hammer-Basics/Hammer-Setup.html#developer-setup) to clone Hammer and install/activate the virtual environment.
 
-```shell
-poetry install
-poetry shell
-```
 
 ## Overview
 
