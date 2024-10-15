@@ -757,6 +757,9 @@ class HammerDriver:
             missing_inputs = True
         if missing_inputs:
             return False
+        timing_tool.post_synth_sdc = self.database.get_setting("timing.inputs.post_synth_sdc")
+        timing_tool.spefs = self.database.get_setting("timing.inputs.spefs")
+        timing_tool.def_file = self.database.get_setting("timing.inputs.def_file")
 
         self.timing_tool = timing_tool
 
@@ -1165,13 +1168,14 @@ class HammerDriver:
                  or None if output_dict was invalid
         """
         try:
-            input_files = deeplist([output_dict["par.outputs.output_netlist"]])
+            input_files = deeplist([output_dict.get("par.outputs.output_physical_netlist", output_dict["par.outputs.output_netlist"])])
             result = {
                 "timing.inputs.input_files": input_files,
                 "timing.inputs.input_files_meta": "append",
                 "timing.inputs.top_module": output_dict["par.inputs.top_module"],
+                "timing.inputs.post_synth_sdc": output_dict["par.inputs.post_synth_sdc"],
                 "timing.inputs.spefs": output_dict["par.outputs.spefs"],
-                "timing.inputs.sdf_file": output_dict["par.outputs.sdf_file"],
+                "timing.inputs.def_file": output_dict.get("par.outputs.def_file", None),
                 "vlsi.builtins.is_complete": False
             }  # type: Dict[str, Any]
             return result
