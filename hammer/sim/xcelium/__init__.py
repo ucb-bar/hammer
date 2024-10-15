@@ -15,6 +15,8 @@ import os
 import json
 import datetime
 import io
+import re
+import logging # Remove later to use hammer logging
 from typing import Dict, List, Optional, Tuple, Any
 
 import hammer.tech as hammer_tech
@@ -22,7 +24,9 @@ from hammer.vlsi import TimeValue
 from hammer.vlsi import HammerSimTool, HammerToolStep, HammerLSFSubmitCommand, HammerLSFSettings
 from hammer.logging import HammerVLSILogging
 from hammer.common.cadence import CadenceTool
+from hammer.utils import retrieve_files, sift_exts
 
+# MXHammer version
 
 class xcelium(HammerSimTool, CadenceTool):
 
@@ -30,17 +34,20 @@ class xcelium(HammerSimTool, CadenceTool):
   def xcelium_ext(self) -> List[str]:
     verilog_ext  = [".v", ".V", ".VS", ".vp", ".VP"]
     sverilog_ext = [".sv",".SV",".svp",".SVP",".svi",".svh",".vlib",".VLIB"]
+    verilogams_ext = [".vams", ".VAMS", ".Vams", ".vAMS"]
+    vhdl_ext = [".vhdl", ".VHDL"]
+    scs_ext = [".scs", ".SCS", ".sp", ".SP"] 
     c_cxx_ext    = [".c",".cc",".cpp"]
-    gz_ext       = [ext + ".gz" for ext in verilog_ext + sverilog_ext]
-    z_ext        = [ext + ".z" for ext  in verilog_ext + sverilog_ext]
-    return (verilog_ext + sverilog_ext + c_cxx_ext + gz_ext + z_ext)
+    gz_ext       = [ext + ".gz" for ext in verilog_ext + sverilog_ext + verilogams_ext + scs_ext]
+    z_ext        = [ext + ".z" for ext  in verilog_ext + sverilog_ext + verilogams_ext + scs_ext]
+    return (verilog_ext + sverilog_ext + verilogams_ext + vhdl_ext + scs_ext + c_cxx_ext + gz_ext + z_ext)
 
   @property
   def steps(self) -> List[HammerToolStep]:
     return self.make_steps_from_methods([self.compile_xrun,
                                          self.elaborate_xrun,
                                          self.sim_xrun])
-    
+
   def tool_config_prefix(self) -> str:
     return "sim.xcelium"
   
@@ -55,6 +62,10 @@ class xcelium(HammerSimTool, CadenceTool):
   @property
   def xcelium_bin(self) -> str:
     return self.get_setting("sim.xcelium.xcelium_bin")
+  
+  @property
+  def spectre_bin(self) -> str:
+    return self.get_setting("sim.xcelium.spectre_bin")
 
   @property
   def sim_tcl_file(self) -> str: 
@@ -107,7 +118,7 @@ class xcelium(HammerSimTool, CadenceTool):
 
     xrun_opts = self.get_settings_from_dict(xrun_opts_def ,key_prefix=self.tool_config_prefix())
     xrun_opts_proc = xrun_opts.copy()
-    bool_list = ["global_access", "enhanced_recompile", "mce"]
+    bool_list = ["global_access", "enhanced_recompile", "mce", "ams"]
     
     if xrun_opts_proc ["global_access"]: 
       xrun_opts_proc ["global_access"] = "+access+rcw"
@@ -123,7 +134,7 @@ class xcelium(HammerSimTool, CadenceTool):
       xrun_opts_proc ["mce"] = "-mce"
     else:
       xrun_opts_proc ["mce"] = ""
-
+    
     for opt, setting in xrun_opts_proc.items():
       if opt not in bool_list and setting is not None:
         xrun_opts_proc [opt] = f"-{opt} {setting}"
@@ -247,7 +258,9 @@ class xcelium(HammerSimTool, CadenceTool):
         [f.write(elem + "\n") for elem in opt_list[1]]
     f.close()  
     
-    return arg_path  
+    return arg_path
+
+  
   
   # Convenience function invoked when multicore options are needed.
   def generate_mc_cmd(self) -> str:
@@ -377,6 +390,80 @@ class xcelium(HammerSimTool, CadenceTool):
     f.close()  
     return True
 
+  """def generate_amscf(self) -> bool:
+    # Open AMS control file template for read.
+    # Hardcoded path for now
+    t = open("amscf_template.scs", "r")
+
+    # Create AMS control file (or overwrite if one already exists) for read/write.
+    # Hardcoded path for now.
+    f = open(f"./src/amscf.scs", "w+")
+
+    # Get absolute paths for analog models from PDK and schematics from extralibs, respectively.
+    model_path = self.get_setting("sim.xcelium.anamodels")
+    models = [modelfile for modelfile in os.scandir(model_path)]
+    schematic_path = self.get_setting("sim.xcelium.schematics")
+    schematics = [schematic for schematic in os.scandir(schematic_path)]
+
+    # Get list of paths to individual files within the PDK models (?) and schematic directories, respectively.
+    #models = []
+    #schematics = []
+
+    # Warnings for missing files.
+    if (len(schematics) > 0 and len(models) == 0):
+      self.logger.warning(f"No models found in {model_path} to support analog schematics.")
+    else:
+      if (len(models) == 0):
+        self.logger.warning(f"No models found in {model_path}.")
+      if (len(schematicpath) == 0):
+        self.logger.warning(f"No analog schematics found {schematics}.")
+
+    # Get string representation of AMS control file template.
+    template = t.read()
+
+    # Format modelpaths list as a single string with include statements.
+    formatted_models = ""
+    for modelpath in models:
+      formatted_models += f"include {modelpath}"
+    
+    # Format schematicpaths list as a single string with include statements.
+    formatted_schematics = ""
+    for schematicpath in schematics:
+      formatted_schematics += f"include {schematicpath}"
+
+    # Replace empty model deck with formatted string of model paths.
+    template = re.sub("// model deck\n", "// model deck\n" + formatted_models)
+
+    # Replace empty schematic deck with formatted string of schematic paths.
+    template = re.sub("// schematic deck\n", "// schematic deck\n" + formatted_schematics)
+
+    # Write filled template to AMS control file.
+    f.write(template)
+
+    # Close files properly.
+    t.close()
+    f.close()
+    return True"""
+
+  def attach_opts(self, filepath, attachment):
+    f = open(filepath, "a+")
+    f.write(attachment)
+    f.close
+    return 
+  
+  def get_disciplines(self) -> str:
+    ### Read in disciplines file, if it exists.
+    disciplines = self.get_setting("sim.xcelium.disciplines")
+    cwd = os.getcwd()
+    dpath = os.path.join(cwd, disciplines)
+    if disciplines:
+      df = open(dpath, "r")
+      discipline_opts = df.read() + "\n"
+      df.close()
+      return discipline_opts
+    else:
+      return ""
+
   def compile_xrun(self) -> bool:
     
     if not os.path.isfile(self.xcelium_bin):
@@ -388,7 +475,7 @@ class xcelium(HammerSimTool, CadenceTool):
 
     # Gather complation-only options
     xrun_opts     = self.extract_xrun_opts()[1]
-    compile_opts  = self.get_setting(f"{self.tool_config_prefix}.compile_opts", [])       
+    compile_opts  = self.get_setting(f"{self.tool_config_prefix()}.compile_opts", [])
     compile_opts.append("-logfile xrun_compile.log")
     if xrun_opts["mce"]: compile_opts.append(self.generate_mc_cmd())
     compile_opts  = ('COMPILE', compile_opts)
@@ -398,6 +485,11 @@ class xcelium(HammerSimTool, CadenceTool):
     args.append(f"-compile -f {arg_file_path}")
     
     self.update_submit_options()  
+
+    ### If AMS enabled, submit options but do not run compile sub-step.
+    if self.get_setting(f"{self.tool_config_prefix()}.ams"):
+      return True
+    
     self.run_executable(args, cwd=self.run_dir)
     HammerVLSILogging.enable_colour = True
     HammerVLSILogging.enable_tag = True
@@ -406,7 +498,7 @@ class xcelium(HammerSimTool, CadenceTool):
   def elaborate_xrun(self) -> bool: 
     xrun_opts = self.extract_xrun_opts()[1]
     sim_opts  = self.extract_sim_opts()[1]
-    elab_opts = self.get_setting(f"{self.tool_config_prefix}.elab_opts", [])
+    elab_opts = self.get_setting(f"{self.tool_config_prefix()}.elab_opts", [])
     elab_opts.append("-logfile xrun_elab.log")
     elab_opts.append("-glsperf")
     elab_opts.append("-genafile access.txt")  
@@ -427,12 +519,18 @@ class xcelium(HammerSimTool, CadenceTool):
       
     if xrun_opts["mce"]: elab_opts.append(self.generate_mc_cmd())
     elab_opts = ('ELABORATION', elab_opts)
+
+    
         
     arg_file_path = self.generate_arg_file("xrun_elab.arg", "HAMMER-GEN XRUN ELAB ARG FILE", [elab_opts])
     args =[self.xcelium_bin]
     args.append(f"-elaborate -f {arg_file_path}")
-    
+
     self.update_submit_options()
+    ### If AMS enabled, submit options but do not run elaborate sub-step.
+    if self.get_setting(f"{self.tool_config_prefix()}.ams"):
+      return True
+    
     self.run_executable(args, cwd=self.run_dir)
     return True
 
@@ -458,4 +556,337 @@ class xcelium(HammerSimTool, CadenceTool):
     self.run_executable(args, cwd=self.run_dir)
     return True
 
+  def retrieve_file_list(self, path, exts=[], relative=True) -> list:
+    file_list = []
+    extslower = [extension.lower() for extension in exts]
+    exts_proc = [f".{ext}" if ("." not in ext) else ext for ext in extslower]
+
+    for (root, directories, filenames) in os.walk(path):
+        for filename in filenames:
+            file_ext = (os.path.splitext(filename)[1]).lower()
+            rel_root = os.path.relpath(root)
+            if (relative):
+              filepath = os.path.join(rel_root, filename)
+            else:
+              filepath = f"{os.path.join(root, filename)}"
+
+            if (not exts):
+               file_list.append(filepath)
+            elif (file_ext in exts_proc):
+               file_list.append(filepath)
+    
+    return file_list
+
+  
+  
+
+  def vlog_preparer(self, collect=False, sourcelist=[], sourcedir="", blacklist=[]) -> str:
+      """
+      Returns a formatted string of all verilog/VHDL files in the source
+      """
+      vlog = ""
+      if (collect):
+        sourcepath = os.path.join(os.getcwd(), sourcedir)
+        vlog_list = self.retrieve_file_list(sourcepath, [".v", ".vhdl"])
+      else:
+        vlog_list = sift_exts(sourcelist, [".v"])
+
+      if (blacklist and vlog_list):
+        for pathname in blacklist:
+          if pathname in vlog_list:
+            vlog_list.remove(pathname)
+
+      if vlog_list:
+          vlog = " \\\n".join(vlog_list) + " \\\n"
+        
+      return f"{vlog}"
+
+  def vams_preparer(self, collect=False, sourcelist=[], sourcedir="", blacklist=[]) -> str:
+      """
+      Returns a formatted string of all V-AMS files in the source
+      """
+      vams = ""
+      if (collect):
+        sourcepath = os.path.join(os.getcwd(), sourcedir)
+        vams_list = self.retrieve_file_list(sourcepath, [".vams"])
+      else:
+        vams_list = sift_exts(sourcelist, [".vams"])
+
+      if (blacklist and vams_list):
+        for pathname in blacklist:
+          if pathname in vams_list:
+            vams_list.remove(pathname)
+
+      if vams_list:
+          vams = " \\\n".join(vams_list) + " \\\n"
+
+      return f"{vams}"
+
+  def analog_preparer(self, collect=False, sourcelist=[], sourcedir="", blacklist=[]) -> str:
+      """
+      Returns a formatted string of all analog (.scs) files in the source
+      """
+      control = ""
+      if (collect):
+        sourcepath = os.path.join(os.getcwd(), sourcedir)
+        control_list = self.retrieve_file_list(sourcepath, [".scs"])
+      else:
+        control_list = sift_exts(sourcelist, [".scs"])
+      
+      if (blacklist and control_list):
+        for pathname in blacklist:
+          if pathname in control_list:
+            control_list.remove(pathname)
+      
+      if control_list:
+          control = " \\\n".join(control_list) + " \\\n"
+
+      return f"{control}"
+
+  def discipline_collector(self, discipline_filename) -> str:
+      """
+      Returns a formatted string of all disciplines from the disciplines.txt file
+      """
+      ### Read in disciplines file, if it exists.
+      
+  
+      dpath = os.path.join(os.getcwd(), discipline_filename)
+
+      if not os.path.isfile(dpath):
+        self.logger.error(f"No discipline file found at {dpath}.")
+
+      if dpath:
+        df = open(dpath, "r")
+        discipline_opts = df.read()
+        disciplines_formatted = re.sub("\n", " \\\n", discipline_opts) + " \\"
+        df.close()
+        return disciplines_formatted
+      else:
+        return ""
+
+  def option_preparer(self, opts, addt_opts, pseudo_step=True) -> str:
+      """
+      Returns a formatted string of all provided AMS options and their arguments
+      """
+      bool_list = ["ams", "disciplines", "gen_amscf"]
+      opts_proc = opts.copy()
+      header = ""
+
+      if not opts:
+        return ""
+
+      if opts ["ams"] is True:
+          opts_proc ["ams"] = "-ams_flex" + " \\"
+      else:
+        opts_proc ["ams"] = ""
+      
+      if opts ["gen_amscf"] is True:
+        self.generate_amscf(self.get_setting("sim.xcelium.amscf_template"), self.get_setting("sim.xcelium.amscf")) # Expect names, not filepaths
+        opts_proc ["gen_amscf"] = ""
+      else:
+        opts_proc ["gen_amscf"] = ""
+
+      if opts ["disciplines"]:
+        header += self.discipline_collector(opts["disciplines"]) + "\n"
+      
+      if opts ["amsconnrules"]:
+        opts_proc ["amsconnrules"] = opts["amsconnrules"]
+
+      if (pseudo_step):
+          digital_opts = self.option_extractor(["xrun_compile.arg", "xrun_elab.arg", "xrun_sim.arg"])
+          digital_opts.update(opts_proc) # Should any keys match, AMS arguments take precedence
+          opts_proc = digital_opts
+
+      opts_proc = {opt:setting for (opt, setting) in opts_proc.items() if opt not in bool_list and setting is not None}
+
+      opts_len = len(opts_proc) - 1
+      for (n, (opt, setting)) in enumerate(opts_proc.items()):
+        if (n == opts_len):
+            if (setting == ""):
+                opts_proc [opt] = f"-{opt}"
+            else:
+                opts_proc [opt] = f"-{opt} {setting}"
+        else:
+          if (setting == ""):
+              opts_proc [opt] = f"-{opt} \\"
+          else:
+              opts_proc [opt] = f"-{opt} {setting} \\"
+
+
+      opts_rev = {k: v for k, v in opts_proc.items() if v}
+
+      opts_proc_str = "\n".join(opts_rev.values())
+
+      # Attach user-defined commands, if any are included
+      if (addt_opts):
+        opts_proc_str += " \\\n"
+
+      footer = " \\\n".join(addt_opts)
+
+      return header + f"{opts_proc_str}" + footer
+
+  def generate_amscf(self, template_filename, amscontrol_filename) -> bool:
+      """
+      Creates an AMS control file based on templated format with available analog models & schematics
+      """
+      
+      # Get analog models, schematics from directories specified in extralibs
+      extralib = self.get_setting("vlsi.technologies.extra_libraries")
+      extralib_dict = extralib[0]
+      anamodels_dir = extralib_dict["anamodels"]
+      schematics_dir = extralib_dict["schematics"]
+
+
+      # Open AMS control file template for read.
+      template_path = os.path.join(os.getcwd(), template_filename)
+      t = open(template_path, "r")
+
+      # Create AMS control file (or overwrite if one already exists) for read/write.
+      amscontrol_path = os.path.join(os.getcwd(), amscontrol_filename)
+      f = open(amscontrol_path, "w+")
+
+      # Get normalized, absolute paths for analog model files
+      model_path = os.path.join(os.getcwd(), anamodels_dir)
+      models = [os.path.normpath(modelfile.path) for modelfile in os.scandir(model_path)]
+
+      # Get normalized, absolute paths for analog schematic files
+      schematic_path = os.path.join(os.getcwd(), schematics_dir)
+      schematics = [os.path.normpath(schematic.path) for schematic in os.scandir(schematic_path)]
+
+      # Warnings for missing files.
+      if (len(schematics) > 0 and len(models) == 0):
+        logging.warning(f"No models found in {model_path} to support analog schematics.")
+      else:
+        if (len(models) == 0):
+          logging.warning(f"No models found in {model_path}.")
+        if (len(schematic_path) == 0):
+          logging.warning(f"No analog schematics found {schematics}.")
+
+      # Get string representation of AMS control file template.
+      template = t.read()
+
+      # Format model_paths list as a single string with include statements.
+      formatted_models = ""
+      for modelpath in models:
+        formatted_models += f"include {modelpath!r}\n"
+      # Format schematic_paths list as a single string with include statements.
+      formatted_schematics = ""
+      for schematicpath in schematics:
+        formatted_schematics += f"include {schematicpath!r}\n"
+
+      # Replace empty model deck with formatted string of model paths.
+      model_template = re.sub("// model deck\n", "// model deck\n" + formatted_models, template)
+
+      # Replace empty schematic deck with formatted string of schematic paths.
+      schematic_template = re.sub("// schematic deck\n", "// schematic deck\n" + formatted_schematics, model_template)
+
+      # Write filled template to AMS control file.
+      f.write(schematic_template)
+
+      # Close files properly.
+      t.close()
+      f.close()
+      return True
+  
+  def option_extractor(self, argfile_names=[]):
+    if not argfile_names:
+      return {}
+
+    opts = {}
+    
+    # Extract the options from each argfile listed, ignoring duplicate opts and file inclusions
+    for filename in argfile_names:
+      path = os.path.join(self.run_dir, filename) 
+      file_opts = {}
+      f = open(path, "r")
+
+      for line in f:
+        if (line[0] == "-"):
+          split_line = line.split(sep=None, maxsplit=2)
+          if (len(split_line) > 1):
+            opt_key, opt_arg = split_line[0].strip("- "), split_line[1].lstrip("\n")
+          else:
+            opt_key, opt_arg = split_line[0].strip("- "), ""
+          
+          file_opts[opt_key] = opt_arg
+
+      opts.update(file_opts)
+      f.close()
+
+    return opts
+
+  def scriptwriter(self, options, additional_options, collect=False, sourcedir="", blacklist=[], sourcelist=[]):
+    """
+    Writes all prepared files and arguments to the run_mxh shell script
+    """
+    runpath = os.path.join(self.run_dir, "run_mxh")
+
+    f = open(runpath, "w+")
+
+    # Write Shebang + xrun clean
+    f.write("#!/bin/csh -f\n#\nxrun -clean \\\n")
+    
+    # Write Digital Files
+    f.write(self.vlog_preparer(collect, sourcelist, sourcedir, blacklist))
+    f.write(self.vams_preparer(collect, sourcelist, sourcedir, blacklist))
+
+    # Write Analog Files
+    f.write(self.analog_preparer(collect, sourcelist, sourcedir, blacklist))
+
+    # Write Options
+    f.write(self.option_preparer(options, additional_options))
+
+    f.close()
+    return
+
+  def name_finder(self, name, sourcelist):
+    # Helper function, should probably be moved later
+    sourcelist_proc = [element.lower() for element in sourcelist if (type(element) == str)]
+    for element in sourcelist_proc:
+        if (name in element):
+            return element
+    
+    return ""
+
+  def run_mxh_pseudo_three_step(self) -> bool:
+    if not os.path.isfile(self.xcelium_bin):
+      self.logger.error(f"Xcelium (xrun) binary not found at {self.xcelium_bin}.")
+      return False
+  
+    if not self.check_input_files(self.xcelium_ext):
+      return False
+    
+    digital_files = self.get_setting("sim.inputs.input_files")
+    acf = self.get_setting("sim.xcelium.acf")
+    amscf = self.get_setting("sim.xcelium.amscf")
+
+    # Extralibs Autorecognition
+    extralib = self.get_setting("vlsi.technologies.extra_libraries")
+    extralib_dict = extralib[0]
+    
+    #ams_opts = self.get_setting("sim.xcelium.ams_opts")
+
+    #source = digital_files + [acf, amscf, connectlibs]
+
+    ams_opts_dict = {
+      "ams": self.get_setting("sim.xcelium.ams"),
+      "disciplines": extralib_dict["disciplines"],
+      #"disciplines": self.name_finder("disciplines", extralibs),
+      "amsconnrules": extralib_dict["amsconnrules"],
+      "gen_amscf": extralib_dict["gen_amscf"]
+    }
+
+    ams_addt_opts = extralib_dict["ams_addt_opts"]
+
+    filepath_blacklist = extralib_dict["filepath_blacklist"] + [extralib_dict["amscf_template"]]
+
+    self.scriptwriter(options=ams_opts_dict, additional_options=ams_addt_opts, collect=True, sourcedir="src/", blacklist=filepath_blacklist)
+    
+    # Extract digital-only options from compile, elab, and sim argfiles
+    combined_opts = self.option_extractor(["xrun_compile.arg", "xrun_elab.arg", "xrun_sim.arg"])
+
+
+    self.update_submit_options()
+    self.run_executable([self.xcelium_bin, './run_mxh'], cwd=self.run_dir)
+    return True
 tool = xcelium
