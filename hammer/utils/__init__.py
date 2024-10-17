@@ -391,7 +391,7 @@ def get_filetype(filename: str) -> HammerFiletype:
     if len(split) == 1:
         return HammerFiletype.NONE
     extension = split[-1]
-    if extension in ["sp", "spi", "nl", "cir", "spice", "cdl"]:
+    if extension in ["sp", "spi", "nl", "cir", "spice", "cdl", "net"]:
         return HammerFiletype.SPICE
     elif extension in ["v", "sv", "vh"]:
         return HammerFiletype.VERILOG
