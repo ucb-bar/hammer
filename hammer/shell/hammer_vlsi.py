@@ -21,6 +21,7 @@ from datetime import datetime, timedelta
 
 # Add the parent directory to the Python path to allow imports from 'vlsi'
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'vlsi')))
+#sys.path.append(os.path.abspath(os.path.join('/bwrcq/C/isabellehsu/hammer/hammer/vlsi')))
 #sys.path.append(os.path.abspath(os.path.join('/bwrcq/C/andre_green/hammer/hammer/vlsi')))
 
 from hammer.vlsi import CLIDriver
@@ -34,12 +35,12 @@ def main():
         pdb.set_trace()
         # minimal flow configuration variables
         design = os.getenv('design', 'pass')
-        pdk = os.getenv('pdk', 'sky130')
+        pdk = os.getenv('pdk', 'sky131')
         tools = os.getenv('tools', 'nop')
         env = os.getenv('env', 'bwrc')
         extra = os.getenv('extra', '')  # extra configs
         args = os.getenv('args', '')  # command-line args (including step flow control)
-        vlsi_dir = os.path.abspath('../e2e/')
+        vlsi_dir = os.path.abspath('../e3e/')
         OBJ_DIR = os.getenv('OBJ_DIR', f"{vlsi_dir}/build-{pdk}-{tools}/{design}")
         # non-overlapping default configs
         ENV_YML = os.getenv('ENV_YML', f"configs-env/{env}-env.yml")
@@ -49,7 +50,7 @@ def main():
         # design-specific overrides of default configs
         DESIGN_CONF = os.getenv('DESIGN_CONF', f"configs-design/{design}/common.yml")
         DESIGN_PDK_CONF = os.getenv('DESIGN_PDK_CONF', f"configs-design/{design}/{pdk}.yml")
-        makecmdgoals = os.getenv('MAKECMDGOALS', sys.argv[1]) ##This should be our target. Build is passed in
+        makecmdgoals = os.getenv('MAKECMDGOALS', sys.argv[2]) ##This should be our target. Build is passed in
         SIM_CONF = os.getenv('SIM_CONF',
             f"configs-design/{design}/sim-rtl.yml" if '-rtl' in makecmdgoals else
             f"configs-design/{design}/sim-syn.yml" if '-syn' in makecmdgoals else
@@ -66,7 +67,7 @@ def main():
         HAMMER_D_MK = os.getenv('HAMMER_D_MK', f"{OBJ_DIR}/hammer.d")
         
         if __name__ == '__main__':
-            #sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
+            #sys.argv[1] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
             #Adds configuration to system arguments, so they are visible to ArgumentParser
             HAMMER_EXTRA_ARGS_split = HAMMER_EXTRA_ARGS.split()
             for arg in ['--obj_dir', OBJ_DIR, '-e', ENV_YML]:
@@ -101,12 +102,12 @@ class AIRFlow:
         #pdb.set_trace()
         # minimal flow configuration variables
         self.design = os.getenv('design', 'pass')
-        self.pdk = os.getenv('pdk', 'sky130')
+        self.pdk = os.getenv('pdk', 'sky131')
         self.tools = os.getenv('tools', 'nop')
         self.env = os.getenv('env', 'bwrc')
         self.extra = os.getenv('extra', '')  # extra configs
         self.args = os.getenv('args', '')  # command-line args (including step flow control)
-        self.vlsi_dir = os.path.abspath('../e2e/')
+        self.vlsi_dir = os.path.abspath('../e3e/')
         self.OBJ_DIR = os.getenv('OBJ_DIR', f"{self.vlsi_dir}/build-{self.pdk}-{self.tools}/{self.design}")
         
         # non-overlapping default configs
@@ -120,8 +121,8 @@ class AIRFlow:
         
         # This should be your target, build is passed in
         
-        #sys.argv[1] = "build"
-        #self.makecmdgoals = os.getenv('MAKECMDGOALS', sys.argv[1])
+        #sys.argv[2] = "build"
+        #self.makecmdgoals = os.getenv('MAKECMDGOALS', sys.argv[2])
         self.makecmdgoals = os.getenv('MAKECMDGOALS', "build")
         
         # simulation and power configurations
@@ -148,7 +149,7 @@ class AIRFlow:
         #sys.argv.append("build")
         
         #for arg in ['--obj_dir', self.OBJ_DIR, '-e', self.ENV_YML]:
-        airflow_command = sys.argv[0]
+        airflow_command = sys.argv[1]
         sys.argv = []
         #for arg in [airflow_command, '--action', self.makecmdgoals, '--obj_dir', self.OBJ_DIR, '-e', self.ENV_YML]:
         for arg in [airflow_command, self.makecmdgoals, '--obj_dir', self.OBJ_DIR, '-e', self.ENV_YML]:
@@ -162,7 +163,7 @@ def build():
     #print(f"Build command would run here with OBJ_DIR: {self.OBJ_DIR}")
     CLIDriver().main()
 
-#@task
+@task
 def clean(flow):
     #pdb.set_trace()
     if os.path.exists(flow.OBJ_DIR):
@@ -191,7 +192,7 @@ def run(flow):
 
 @dag(
     schedule_interval=None,
-    start_date=datetime(2024, 1, 1, 0, 0),
+    start_date=datetime(2025, 1, 1, 0, 0),
     catchup=False,
     dag_id='make_build'
 )
@@ -199,16 +200,35 @@ def taskflow_dag():
     #pdb.set_trace()
     # Create an instance of the class and run the process
     flow = AIRFlow()
-    run(flow)  # Pass the command as a parameter
+    #run(flow)  # Pass the command as a parameter
     #flow.run()
     #irflow_run(flow)
-    
+#    def run_task(flow):
+#        run(flow)
+#
+#    def clean_task(flow):
+#        clean(flow)
     '''
     if 'clean' in flow.makecmdgoals:
         clean(flow)
     else:
         build()
     '''
+    run_task = PythonOperator (
+      task_id="run_task",
+      python_callable=run,
+    )
+    build_task = PythonOperator (
+       task_id="build_task",
+       python_callable=build,
+    )
+    clean_task = PythonOperator (
+      task_id="clean_task",
+      python_callable=clean,
+    )
+    
+    run_task>>build_task>>clean_task
 #Create instance of DAG
 dag = taskflow_dag()
 #dag.test()
+
