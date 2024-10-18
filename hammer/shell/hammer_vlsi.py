@@ -35,7 +35,7 @@ def main():
         pdb.set_trace()
         # minimal flow configuration variables
         design = os.getenv('design', 'pass')
-        pdk = os.getenv('pdk', 'sky131')
+        pdk = os.getenv('pdk', 'sky130')
         tools = os.getenv('tools', 'nop')
         env = os.getenv('env', 'bwrc')
         extra = os.getenv('extra', '')  # extra configs
@@ -102,7 +102,7 @@ class AIRFlow:
         #pdb.set_trace()
         # minimal flow configuration variables
         self.design = os.getenv('design', 'pass')
-        self.pdk = os.getenv('pdk', 'sky131')
+        self.pdk = os.getenv('pdk', 'sky130')
         self.tools = os.getenv('tools', 'nop')
         self.env = os.getenv('env', 'bwrc')
         self.extra = os.getenv('extra', '')  # extra configs
@@ -157,7 +157,7 @@ class AIRFlow:
         for arg in HAMMER_EXTRA_ARGS_split:
             sys.argv.append(arg)
 
-#@task
+@task
 def build():
     #pdb.set_trace()
     #print(f"Build command would run here with OBJ_DIR: {self.OBJ_DIR}")
@@ -175,15 +175,14 @@ def clean(flow):
 #        self.clean()
 #    else:
 #        self.build()
-@task
+@task.branch()
 def run(flow):
     #pdb.set_trace()
     #if 'clean' in sys.argv:
     if 'clean' in flow.makecmdgoals:
-        clean(flow)
+        return "clean"
     else:
-        build()
-
+        return "build"
 
 #@task
 #def airflow_run(flow):
@@ -192,7 +191,8 @@ def run(flow):
 
 @dag(
     schedule_interval=None,
-    start_date=datetime(2025, 1, 1, 0, 0),
+    schedule=None,
+    start_date=datetime(2024, 1, 1, 0, 0),
     catchup=False,
     dag_id='make_build'
 )
@@ -203,31 +203,21 @@ def taskflow_dag():
     #run(flow)  # Pass the command as a parameter
     #flow.run()
     #irflow_run(flow)
-#    def run_task(flow):
-#        run(flow)
-#
-#    def clean_task(flow):
-#        clean(flow)
-    '''
-    if 'clean' in flow.makecmdgoals:
-        clean(flow)
-    else:
-        build()
-    '''
-    run_task = PythonOperator (
-      task_id="run_task",
-      python_callable=run,
-    )
-    build_task = PythonOperator (
-       task_id="build_task",
-       python_callable=build,
-    )
-    clean_task = PythonOperator (
-      task_id="clean_task",
-      python_callable=clean,
-    )
-    
-    run_task>>build_task>>clean_task
+    run(flow) >> [build(), clean(flow)]
+#    run_task = PythonOperator (
+#      task_id="run_task",
+#      python_callable=run,
+#    )
+#    build_task = PythonOperator (
+#       task_id="build_task",
+#       python_callable=build,
+#    )
+#    clean_task = PythonOperator (
+#      task_id="clean_task",
+#      python_callable=clean,
+#    )
+#    
+#    run_task>>build_task>>clean_task
 #Create instance of DAG
 dag = taskflow_dag()
 #dag.test()
