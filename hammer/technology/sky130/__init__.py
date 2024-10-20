@@ -1040,28 +1040,29 @@ add_stripes -nets {VDD VSS} -layer met1 -direction horizontal -start_offset -.2 
 
 # Power strap definition for layer met2:
 
-set_db add_stripes_stacked_via_top_layer met2
-set_db add_stripes_stacked_via_bottom_layer met1
-set_db add_stripes_trim_antenna_back_to_shape {stripe}
-#set_db add_stripes_spacing_from_block 4.000
-#add_stripes -create_pins 0 -block_ring_bottom_layer_limit met2 -block_ring_top_layer_limit met1 -direction vertical -layer met2 -nets {VSS VDD} -pad_core_ring_bottom_layer_limit met1 -set_to_set_distance 101.20 -spacing 2.26 -switch_layer_over_obs 0 -width 1.42 -area [get_db designs .core_bbox] -start [expr [lindex [lindex [get_db designs .core_bbox] 0] 0] + 4.81]
-add_stripes -nets {VDD VSS} -layer met2 -direction vertical -width .2 -spacing 0.14 -number_of_sets 1 -extend_to all_domains -start_from left -switch_layer_over_obs false -max_same_layer_jog_length 2 -pad_core_ring_top_layer_limit met5 -pad_core_ring_bottom_layer_limit met1 -block_ring_top_layer_limit met5 -block_ring_bottom_layer_limit met1 -use_wire_group 0 -snap_wire_center_to_grid none
+#set_db add_stripes_stacked_via_top_layer met2
+#set_db add_stripes_stacked_via_bottom_layer met1
+#set_db add_stripes_trim_antenna_back_to_shape {stripe}
+##set_db add_stripes_spacing_from_block 4.000
+##add_stripes -create_pins 0 -block_ring_bottom_layer_limit met2 -block_ring_top_layer_limit met1 -direction vertical -layer met2 -nets {VSS VDD} -pad_core_ring_bottom_layer_limit met1 -set_to_set_distance 101.20 -spacing 2.26 -switch_layer_over_obs 0 -width 1.42 -area [get_db designs .core_bbox] -start [expr [lindex [lindex [get_db designs .core_bbox] 0] 0] + 4.81]
+#add_stripes -nets {VDD VSS} -layer met2 -direction vertical -width .2 -spacing 0.14 -number_of_sets 1 -extend_to all_domains -start_from left -switch_layer_over_obs false -max_same_layer_jog_length 2 -pad_core_ring_top_layer_limit met5 -pad_core_ring_bottom_layer_limit met1 -block_ring_top_layer_limit met5 -block_ring_bottom_layer_limit met1 -use_wire_group 0 -snap_wire_center_to_grid none
 
-# Power strap definition for layer met3:
+## Power strap definition for layer met3:
 
-set_db add_stripes_stacked_via_top_layer met3
-set_db add_stripes_stacked_via_bottom_layer met2
-set_db add_stripes_trim_antenna_back_to_shape {stripe}
-set_db add_stripes_spacing_from_block 2.000
-add_stripes -create_pins 0 -block_ring_bottom_layer_limit met3 -block_ring_top_layer_limit met2 -direction horizontal -layer met3 -nets {VSS VDD} -pad_core_ring_bottom_layer_limit met2 -set_to_set_distance 75.90 -spacing 3.66 -switch_layer_over_obs 0 -width 1.86 -area [get_db designs .core_bbox] -start [expr [lindex [lindex [get_db designs .core_bbox] 0] 1] + 7.35]
+#set_db add_stripes_stacked_via_top_layer met3
+#set_db add_stripes_stacked_via_bottom_layer met2
+#set_db add_stripes_trim_antenna_back_to_shape {stripe}
+#set_db add_stripes_spacing_from_block 2.000
+#add_stripes -create_pins 0 -block_ring_bottom_layer_limit met3 -block_ring_top_layer_limit met2 -direction horizontal -layer met3 -nets {VSS VDD} -pad_core_ring_bottom_layer_limit met2 -set_to_set_distance 75.90 -spacing 3.66 -switch_layer_over_obs 0 -width 1.86 -area [get_db designs .core_bbox] -start [expr [lindex [lindex [get_db designs .core_bbox] 0] 1] + 7.35]
 
 # Power strap definition for layer met4:
 
 set_db add_stripes_stacked_via_top_layer met4
-set_db add_stripes_stacked_via_bottom_layer met3
+set_db add_stripes_stacked_via_bottom_layer met1
 set_db add_stripes_trim_antenna_back_to_shape {stripe}
 set_db add_stripes_spacing_from_block 2.000
-add_stripes -create_pins 0 -block_ring_bottom_layer_limit met4 -block_ring_top_layer_limit met3 -direction vertical -layer met4 -nets {VSS VDD} -pad_core_ring_bottom_layer_limit met3 -set_to_set_distance 75.90 -spacing 3.66 -switch_layer_over_obs 0 -width 1.86 -area [get_db designs .core_bbox] -start [expr [lindex [lindex [get_db designs .core_bbox] 0] 0] + 7.35]
+#add_stripes -create_pins 0 -block_ring_bottom_layer_limit met4 -block_ring_top_layer_limit met3 -direction vertical -layer met4 -nets {VSS VDD} -pad_core_ring_bottom_layer_limit met3 -set_to_set_distance 75.90 -spacing 3.66 -switch_layer_over_obs 0 -width 1.86 -area [get_db designs .core_bbox] -start [expr [lindex [lindex [get_db designs .core_bbox] 0] 0] + 7.35]
+add_stripes -create_pins 0 -block_ring_bottom_layer_limit met4 -block_ring_top_layer_limit met1 -direction vertical -layer met4 -nets {VSS VDD} -pad_core_ring_bottom_layer_limit met1 -set_to_set_distance 75.90 -spacing 3.66 -switch_layer_over_obs 0 -width 1.86 -area [get_db designs .core_bbox] -start [expr [lindex [lindex [get_db designs .core_bbox] 0] 0] + 7.35]
 
 # Power strap definition for layer met5:
 
