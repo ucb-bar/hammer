@@ -55,6 +55,9 @@ def main(args: List[str]) -> int:
                 port_dict['clock port name'] = "clk"
                 port_dict['clock port polarity'] = "active high"
 
+                port_dict['write enable port name'] = "ce"
+                port_dict['write enable port polarity'] = "active high" # ???
+
                 port_dict['write enable port name'] = "we"
                 port_dict['write enable port polarity'] = "active high" # ???
 
@@ -69,6 +72,13 @@ def main(args: List[str]) -> int:
                 port_dict['mask port polarity'] = "active high"  # ???
                 
                 sram_dict['ports'].append(port_dict.copy())
+
+                sram_dict['extra_ports'] = [{
+                    "name": "rstb",
+                    "width": 1,
+                    "type": "constant",
+                    "value": 1,
+                }]
 
                 sram_dicts.append(sram_dict.copy())
             
