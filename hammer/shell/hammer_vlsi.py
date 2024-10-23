@@ -37,7 +37,7 @@ class AIRFlow:
         self.env = os.getenv('env', 'bwrc')
         self.extra = os.getenv('extra', '')  # extra configs
         self.args = os.getenv('args', '')  # command-line args (including step flow control)
-        self.vlsi_dir = os.path.abspath('../e2e/')
+        self.vlsi_dir = os.path.abspath('../e3e/')
         self.OBJ_DIR = os.getenv('OBJ_DIR', f"{self.vlsi_dir}/build-{self.pdk}-{self.tools}/{self.design}")
         
         # non-overlapping default configs
@@ -51,8 +51,8 @@ class AIRFlow:
         
         # This should be your target, build is passed in
         
-        #sys.argv[1] = "build"
-        #self.makecmdgoals = os.getenv('MAKECMDGOALS', sys.argv[1])
+        #sys.argv[2] = "build"
+        #self.makecmdgoals = os.getenv('MAKECMDGOALS', sys.argv[2])
         self.makecmdgoals = os.getenv('MAKECMDGOALS', "build")
         
         # simulation and power configurations
@@ -79,7 +79,7 @@ class AIRFlow:
         #sys.argv.append("build")
         
         #for arg in ['--obj_dir', self.OBJ_DIR, '-e', self.ENV_YML]:
-        airflow_command = sys.argv[0]
+        airflow_command = sys.argv[1]
         sys.argv = []
         #for arg in [airflow_command, '--action', self.makecmdgoals, '--obj_dir', self.OBJ_DIR, '-e', self.ENV_YML]:
         for arg in [airflow_command, self.makecmdgoals, '--obj_dir', self.OBJ_DIR, '-e', self.ENV_YML]:
@@ -142,6 +142,7 @@ function_map = {
 
 @dag(
     schedule_interval=None,
+    schedule=None,
     start_date=datetime(2024, 1, 1, 0, 0),
     catchup=False,
     dag_id='make_build'
@@ -156,3 +157,4 @@ def taskflow_dag():
 #Create instance of DAG
 dag = taskflow_dag()
 #dag.test()
+
