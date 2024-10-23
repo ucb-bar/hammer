@@ -21,80 +21,11 @@ from datetime import datetime, timedelta
 
 # Add the parent directory to the Python path to allow imports from 'vlsi'
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'vlsi')))
-#sys.path.append(os.path.abspath(os.path.join('/bwrcq/C/andre_green/hammer/hammer/vlsi')))
 
 from hammer.vlsi import CLIDriver
 
 #import pdb
 #pdb.set_trace()
-'''
-def main():
-    
-    def __init__():
-        pdb.set_trace()
-        # minimal flow configuration variables
-        design = os.getenv('design', 'pass')
-        pdk = os.getenv('pdk', 'sky130')
-        tools = os.getenv('tools', 'nop')
-        env = os.getenv('env', 'bwrc')
-        extra = os.getenv('extra', '')  # extra configs
-        args = os.getenv('args', '')  # command-line args (including step flow control)
-        vlsi_dir = os.path.abspath('../e2e/')
-        OBJ_DIR = os.getenv('OBJ_DIR', f"{vlsi_dir}/build-{pdk}-{tools}/{design}")
-        # non-overlapping default configs
-        ENV_YML = os.getenv('ENV_YML', f"configs-env/{env}-env.yml")
-        PDK_CONF = os.getenv('PDK_CONF', f"configs-pdk/{pdk}.yml")
-        TOOLS_CONF = os.getenv('TOOLS_CONF', f"configs-tool/{tools}.yml")
-
-        # design-specific overrides of default configs
-        DESIGN_CONF = os.getenv('DESIGN_CONF', f"configs-design/{design}/common.yml")
-        DESIGN_PDK_CONF = os.getenv('DESIGN_PDK_CONF', f"configs-design/{design}/{pdk}.yml")
-        makecmdgoals = os.getenv('MAKECMDGOALS', sys.argv[1]) ##This should be our target. Build is passed in
-        SIM_CONF = os.getenv('SIM_CONF',
-            f"configs-design/{design}/sim-rtl.yml" if '-rtl' in makecmdgoals else
-            f"configs-design/{design}/sim-syn.yml" if '-syn' in makecmdgoals else
-            f"configs-design/{design}/sim-par.yml" if '-par' in makecmdgoals else ''
-        )
-        POWER_CONF = os.getenv('POWER_CONF',
-            f"configs-design/{design}/power-rtl-{pdk}.yml" if 'power-rtl' in makecmdgoals else
-            f"configs-design/{design}/power-syn-{pdk}.yml" if 'power-syn' in makecmdgoals else
-            f"configs-design/{design}/power-par-{pdk}.yml" if 'power-par' in makecmdgoals else ''
-        )
-        PROJ_YMLS = [PDK_CONF, TOOLS_CONF, DESIGN_CONF, DESIGN_PDK_CONF, SIM_CONF, POWER_CONF, extra]
-        #PROJ_YMLS = ' '.join([PDK_CONF, TOOLS_CONF, DESIGN_CONF, DESIGN_PDK_CONF, SIM_CONF, POWER_CONF, extra]) #Shouldn't be a list, changes format from Makefile
-        HAMMER_EXTRA_ARGS = ' '.join([f"-p {conf}" for conf in PROJ_YMLS if conf]) + f" {args}"
-        HAMMER_D_MK = os.getenv('HAMMER_D_MK', f"{OBJ_DIR}/hammer.d")
-        
-        if __name__ == '__main__':
-            #sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
-            #Adds configuration to system arguments, so they are visible to ArgumentParser
-            HAMMER_EXTRA_ARGS_split = HAMMER_EXTRA_ARGS.split()
-            for arg in ['--obj_dir', OBJ_DIR, '-e', ENV_YML]:
-                sys.argv.append(arg)
-            for arg in HAMMER_EXTRA_ARGS_split:
-                sys.argv.append(arg)
-
-        #These functions don't really make sense
-        def build():
-            pdb.set_trace()
-            print(f"Build command would run here with OBJ_DIR: {OBJ_DIR}")
-            # can add logic to run for the build here
-            # Proceed with the default CLIDriver
-            CLIDriver().main()
-        def clean():
-            pdb.set_trace()
-            if os.path.exists(OBJ_DIR):
-                subprocess.run(f"rm -rf {OBJ_DIR} hammer-vlsi-*.log", shell=True, check=True)
-
-    __init__()
-
-    if 'clean' in sys.argv:
-        clean()
-    else:
-        build()
-main()
-'''
-
 
 class AIRFlow:
     def __init__(self):
@@ -155,14 +86,24 @@ class AIRFlow:
             sys.argv.append(arg)
         for arg in HAMMER_EXTRA_ARGS_split:
             sys.argv.append(arg)
+## Current status - Determine how to fix task dependency issues
+## Try function mapping or dynamic conditional dependency checks
 
-#@task
+'''
+if task_function:
+        # Call the corresponding function
+        task_function(flow)
+    else:
+        raise ValueError(f"Invalid command: {flow.makecmdgoals}")
+'''
+
+@task
 def build():
     #pdb.set_trace()
     #print(f"Build command would run here with OBJ_DIR: {self.OBJ_DIR}")
     CLIDriver().main()
 
-#@task
+@task
 def clean(flow):
     #pdb.set_trace()
     if os.path.exists(flow.OBJ_DIR):
@@ -174,20 +115,30 @@ def clean(flow):
 #        self.clean()
 #    else:
 #        self.build()
-@task
+@task.branch
 def run(flow):
     #pdb.set_trace()
-    #if 'clean' in sys.argv:
+    #function_map[flow.makecmdgoals](flow)
+    
+    '''
     if 'clean' in flow.makecmdgoals:
         clean(flow)
+        #run >> clean
     else:
         build()
-
-
-#@task
-#def airflow_run(flow):
-#    #pdb.set_trace()
-#    flow.run()
+        #run >> build
+    '''
+    if 'clean' in flow.makecmdgoals:
+        return "clean"
+    else:
+        return "build"
+    
+'''
+function_map = {
+    "build": build,
+    "clean": clean
+}
+'''
 
 @dag(
     schedule_interval=None,
@@ -199,16 +150,9 @@ def taskflow_dag():
     #pdb.set_trace()
     # Create an instance of the class and run the process
     flow = AIRFlow()
-    run(flow)  # Pass the command as a parameter
-    #flow.run()
-    #irflow_run(flow)
+    #run(flow)  # Pass the command as a parameter
+    run(flow) >> [build(), clean(flow)]
     
-    '''
-    if 'clean' in flow.makecmdgoals:
-        clean(flow)
-    else:
-        build()
-    '''
 #Create instance of DAG
 dag = taskflow_dag()
 #dag.test()
