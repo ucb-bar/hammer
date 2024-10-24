@@ -58,7 +58,8 @@ class SKY130Tech(HammerTechnology):
             # TODO: should we just take those layers out of the IO tlef? they shouldn't be necessary since we don't route on those layers
             libs += [
                 Library(
-                    lef_file="$SKY130_SCL/lef/sky130_scl_9T.tlef",
+                    lef_file="cache/sky130_scl_9T.tlef",
+                    # lef_file="$SKY130_SCL/lef/sky130_scl_9T.tlef",
                     verilog_sim="$SKY130_SCL/verilog/sky130_scl_9T.v",
                     provides=[Provide(lib_type="technology")],
                 ),
@@ -66,7 +67,8 @@ class SKY130Tech(HammerTechnology):
         else:
             raise ValueError(f"Incorrect standard cell library selection: {slib}")
         # Generate IO cells unless we're using the Cadence stdcell lib (see above comment about missing layers in tlef)
-        if slib != "sky130_scl":
+        # nvm we need to do this 
+        if True: # slib != "sky130_scl":
             library = "sky130_fd_io"
             SKYWATER_LIBS = os.path.join("$SKY130A", "libs.ref", library)
             LIBRARY_PATH = os.path.join(SKY130A, "libs.ref", library, "lib")
@@ -488,7 +490,7 @@ class SKY130Tech(HammerTechnology):
         if self.get_setting("technology.sky130.stdcell_library") == "sky130_fd_sc_hd":
             self.setup_cdl()
             # self.setup_verilog()
-            self.setup_techlef()
+        self.setup_techlef()
         self.logger.info("Loaded Sky130 Tech")
 
     def setup_cdl(self) -> None:
@@ -654,21 +656,31 @@ class SKY130Tech(HammerTechnology):
 
     # Copy and hack the tech-lef, adding this very important `licon` section
     def setup_techlef(self) -> None:
-        setting_dir = self.get_setting("technology.sky130.sky130A")
-        setting_dir = Path(setting_dir)
-        source_path = (
-            setting_dir
-            / "libs.ref"
-            / self.library_name
-            / "techlef"
-            / f"{self.library_name}__nom.tlef"
-        )
+        cache_tech_dir_path = Path(self.cache_dir)
+        os.makedirs(cache_tech_dir_path, exist_ok=True)
+        if self.get_setting("technology.sky130.stdcell_library") == "sky130_fd_sc_hd":
+            setting_dir = self.get_setting("technology.sky130.sky130A")
+            setting_dir = Path(setting_dir)
+            source_path = (
+                setting_dir
+                / "libs.ref"
+                / self.library_name
+                / "techlef"
+                / f"{self.library_name}__nom.tlef"
+            )
+            dest_path = cache_tech_dir_path / f"{self.library_name}__nom.tlef"
+        else: 
+            setting_dir = self.get_setting("technology.sky130.sky130_scl")
+            setting_dir = Path(setting_dir)
+            source_path = (
+                setting_dir
+                / "lef"
+                / "sky130_scl_9T.tlef"
+            )
+            dest_path = cache_tech_dir_path / "sky130_scl_9T.tlef"
         if not source_path.exists():
             raise FileNotFoundError(f"Tech-LEF not found: {source_path}")
 
-        cache_tech_dir_path = Path(self.cache_dir)
-        os.makedirs(cache_tech_dir_path, exist_ok=True)
-        dest_path = cache_tech_dir_path / f"{self.library_name}__nom.tlef"
 
         with open(source_path, "r") as sf:
             with open(dest_path, "w") as df:
@@ -677,7 +689,7 @@ class SKY130Tech(HammerTechnology):
                 )
                 for line in sf:
                     df.write(line)
-                    if line.strip() == "END pwell":
+                    if line.strip() == "END poly":
                         df.write(_the_tlef_edit)
 
     # syn_power seems to not take hooks from `get_tech_syn_hooks`
@@ -788,6 +800,11 @@ class SKY130Tech(HammerTechnology):
                     "generate_lvs_run_file", calibre_lvs_blackbox_srams
                 )
             )
+            pegasus_hooks.append(
+                HammerTool.make_post_insertion_hook(
+                    "generate_lvs_ctl_file", pegasus_lvs_blackbox_srams
+                )
+            )
 
         if self.get_setting("technology.sky130.stdcell_library") == "sky130_scl":
             pegasus_hooks.append(
@@ -841,7 +858,17 @@ class SKY130Tech(HammerTechnology):
         return sky130_sram_names
 
 
+# the io libs (sky130a)
 _the_tlef_edit = """
+LAYER nwell
+  TYPE MASTERSLICE ;
+END nwell
+LAYER pwell
+  TYPE MASTERSLICE ;
+END pwell
+LAYER li1
+  TYPE MASTERSLICE ;
+END li1
 LAYER licon
   TYPE CUT ;
 END licon
@@ -1141,7 +1168,7 @@ def pegasus_lvs_blackbox_srams(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerLVSTool), "Blackbox and filter SRAMs only in LVS"
     lvs_box = ""
     for name in (
-        SKY130Tech.sky130_sram_names() + SKY130Tech.sky130_sram_primitive_names()
+        SKY130Tech.sky130_sram_names() # + SKY130Tech.sky130_sram_primitive_names()
     ):
         lvs_box += f"\nlvs_black_box {name} -gray"
     run_file = ht.lvs_ctl_file  # type: ignore
