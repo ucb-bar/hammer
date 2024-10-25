@@ -345,11 +345,11 @@ class SKY130Tech(HammerTechnology):
                 ),
                 SpecialCell(
                     cell_type="driver",
-                    name=["TBUF"],
+                    name=["TBUFX1", "TBUFX4",  "TBUFX8"],
                     input_ports=["A"],
                     output_ports=["Y"],
                 ),
-                SpecialCell(cell_type="ctsbuffer", name=["CLKBUFX2"]),
+                SpecialCell(cell_type="ctsbuffer", name=["CLKBUFX2","CLKBUFX4", "CLKBUFX8" ]),
                 SpecialCell(cell_type=CellType("ctsgate"), name=["ICGX1"]),
                 SpecialCell(
                     cell_type=CellType("tiehicell"), name=["TIEHI"], input_ports=["Y"]
@@ -881,7 +881,7 @@ def sky130_innovus_settings(ht: HammerTool) -> bool:
     assert isinstance(ht, TCLTool), "innovus settings can only run on TCL tools"
     """Settings for every tool invocation"""
     ht.append(
-        """
+        f"""
 
 ##########################################################
 # Placement attributes  [get_db -category place]
@@ -922,7 +922,7 @@ set_db opt_hold_target_slack 0.10
 ##########################################################
 #-------------------------------------------------------------------------------
 set_db route_design_antenna_diode_insertion 1
-set_db route_design_antenna_cell_name "sky130_fd_sc_hd__diode_2"
+set_db route_design_antenna_cell_name "{"sky130_fd_sc_hd__diode_2" if ht.get_setting("technology.sky130.stdcell_library") == "sky130_fd_sc_hd" else "ANTENNA"}"
 
 set_db route_design_high_freq_search_repair true
 set_db route_design_detail_post_route_spread_wire true
