@@ -122,16 +122,18 @@ class SKY130Tech(HammerTechnology):
 
                     file_lib = "sky130_ef_io"
                     gds_file = cell_name + ".gds"
-                    lef_file = os.path.join(
-                        SKY130A, "libs.ref", library, "lef", "sky130_ef_io.lef"
-                    )
+                    lef_file="cache/sky130_ef_io.lef"
+                    #lef_file = os.path.join(
+                        #SKY130A, "libs.ref", library, "lef", "sky130_ef_io.lef"
+                    #)
                     spice_file = os.path.join(SKYWATER_LIBS, "cdl", file_lib + ".cdl")
                 elif "sky130_ef_io" in cell_name:
                     file_lib = "sky130_ef_io"
                     gds_file = file_lib + ".gds"
-                    lef_file = os.path.join(
-                        SKY130A, "libs.ref", library, "lef", "sky130_ef_io.lef"
-                    )
+                    lef_file="cache/sky130_ef_io.lef"
+                    #lef_file = os.path.join(
+                        #SKY130A, "libs.ref", library, "lef", "sky130_ef_io.lef"
+                    #)
                     spice_file = os.path.join(SKYWATER_LIBS, "cdl", file_lib + ".cdl")
                 else:
                     file_lib = library
