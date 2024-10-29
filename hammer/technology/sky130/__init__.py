@@ -126,7 +126,10 @@ class SKY130Tech(HammerTechnology):
                     #lef_file = os.path.join(
                         #SKY130A, "libs.ref", library, "lef", "sky130_ef_io.lef"
                     #)
-                    spice_file = os.path.join(SKYWATER_LIBS, "cdl", file_lib + ".cdl")
+                    if self.get_setting("vlsi.core.lvs_tool")   == "hammer.lvs.pegasus" and slib == "sky130_scl":
+                        spice_file = None
+                    else:
+                        spice_file = os.path.join(SKYWATER_LIBS, "cdl", file_lib + ".cdl")
                 elif "sky130_ef_io" in cell_name:
                     file_lib = "sky130_ef_io"
                     gds_file = file_lib + ".gds"
@@ -134,14 +137,21 @@ class SKY130Tech(HammerTechnology):
                     #lef_file = os.path.join(
                         #SKY130A, "libs.ref", library, "lef", "sky130_ef_io.lef"
                     #)
-                    spice_file = os.path.join(SKYWATER_LIBS, "cdl", file_lib + ".cdl")
+                    if self.get_setting("vlsi.core.lvs_tool")   == "hammer.lvs.pegasus" and slib == "sky130_scl":
+                        spice_file = None
+                    else:
+                        spice_file = os.path.join(SKYWATER_LIBS, "cdl", file_lib + ".cdl")
                 else:
+                    if "sky130_fd_io" in cell_name and self.get_setting("vlsi.core.lvs_tool")   == "hammer.lvs.pegasus" :
+                    # going to blackbox these
+                        spice_file = None
+                    else:
+                        spice_file = os.path.join(
+                            SKYWATER_LIBS, "spice", file_lib + ".spice"
+                        )
                     file_lib = library
                     gds_file = file_lib + ".gds"
                     lef_file = os.path.join(SKYWATER_LIBS, "lef", file_lib + ".lef")
-                    spice_file = os.path.join(
-                        SKYWATER_LIBS, "spice", file_lib + ".spice"
-                    )
 
                 lib_entry = Library(
                     nldm_liberty_file=os.path.join(
@@ -923,8 +933,10 @@ set_db opt_hold_target_slack 0.10
 # Routing attributes  [get_db -category route]
 ##########################################################
 #-------------------------------------------------------------------------------
-set_db route_design_antenna_diode_insertion 1
-set_db route_design_antenna_cell_name "{"sky130_fd_sc_hd__diode_2" if ht.get_setting("technology.sky130.stdcell_library") == "sky130_fd_sc_hd" else "ANTENNA"}"
+puts "WARNING ELAM ELAM ELAM REMOVING ANTENNA DIODES FOR NOW BC THEY BREAK LVS and ARE NOT DRC CLEAN WITH CADENCE STDCELLS REMOVE MEEEEE"
+set_db route_design_antenna_diode_insertion 0
+#set_db route_design_antenna_diode_insertion 1
+#set_db route_design_antenna_cell_name "{"sky130_fd_sc_hd__diode_2" if ht.get_setting("technology.sky130.stdcell_library") == "sky130_fd_sc_hd" else "ANTENNA"}"
 
 set_db route_design_high_freq_search_repair true
 set_db route_design_detail_post_route_spread_wire true
@@ -1148,9 +1160,6 @@ def pegasus_lvs_add_130a_primitives(ht: HammerTool) -> bool:
     for name in SKY130Tech.sky130_sram_primitive_names():
         lvs_box += f"""\nschematic_path "{name}" spice;"""
     # this is because otherwise lvs crashes with tons of stdcell-level pin mismatches
-    # TODO elam move this somewhere better
-    # lvs_box += f"""\nlvs_discard_pins yes;"""
-    # lvs_box += f"""\nlvs_expand_cell_on_error yes;"""
     lvs_box += f"""\nlvs_inconsistent_reduction_threshold -none;"""
     run_file = ht.lvs_ctl_file  # type: ignore
     with open(run_file, "r+") as f:
