@@ -16,6 +16,7 @@ import sys
 
 from airflow.models.dag import DAG
 from airflow.operators.python import PythonOperator
+from airflow.models.baseoperator import chain
 from airflow.decorators import task, dag
 from datetime import datetime, timedelta
 
@@ -37,7 +38,7 @@ class AIRFlow:
         self.env = os.getenv('env', 'bwrc')
         self.extra = os.getenv('extra', '')  # extra configs
         self.args = os.getenv('args', '')  # command-line args (including step flow control)
-        self.vlsi_dir = os.path.abspath('../e3e/')
+        self.vlsi_dir = os.path.abspath('../e2e/')
         self.OBJ_DIR = os.getenv('OBJ_DIR', f"{self.vlsi_dir}/build-{self.pdk}-{self.tools}/{self.design}")
         
         # non-overlapping default configs
@@ -119,7 +120,10 @@ def clean(flow):
 def run(flow):
     #pdb.set_trace()
     #function_map[flow.makecmdgoals](flow)
-    
+    if 'clean' in flow.makecmdgoals:
+        return "clean"
+    else:
+        return "build"
     '''
     if 'clean' in flow.makecmdgoals:
         clean(flow)
@@ -128,10 +132,7 @@ def run(flow):
         build()
         #run >> build
     '''
-    if 'clean' in flow.makecmdgoals:
-        return "clean"
-    else:
-        return "build"
+
     
 '''
 function_map = {
@@ -149,11 +150,17 @@ function_map = {
 )
 def taskflow_dag():
     #pdb.set_trace()
-    # Create an instance of the class and run the process
+    # Create an instance of the class and run the process 
     flow = AIRFlow()
     #run(flow)  # Pass the command as a parameter
-    run(flow) >> [build(), clean(flow)]
     
+    run_task = run(flow)
+    build_task = build()
+    clean_task = clean(flow)
+    taskList = [run_task, [build_task, clean_task]]
+    #run(flow) >> [build(), clean(flow)]
+    chain(*taskList)
+
 #Create instance of DAG
 dag = taskflow_dag()
 #dag.test()
