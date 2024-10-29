@@ -122,10 +122,9 @@ class SKY130Tech(HammerTechnology):
 
                     file_lib = "sky130_ef_io"
                     gds_file = cell_name + ".gds"
-                    lef_file="cache/sky130_ef_io.lef"
-                    #lef_file = os.path.join(
-                        #SKY130A, "libs.ref", library, "lef", "sky130_ef_io.lef"
-                    #)
+                    lef_file = os.path.join(
+                        SKY130A, "libs.ref", library, "lef", "sky130_ef_io.lef"
+                    )
                     if self.get_setting("vlsi.core.lvs_tool")   == "hammer.lvs.pegasus" and slib == "sky130_scl":
                         spice_file = None
                     else:
@@ -133,10 +132,9 @@ class SKY130Tech(HammerTechnology):
                 elif "sky130_ef_io" in cell_name:
                     file_lib = "sky130_ef_io"
                     gds_file = file_lib + ".gds"
-                    lef_file="cache/sky130_ef_io.lef"
-                    #lef_file = os.path.join(
-                        #SKY130A, "libs.ref", library, "lef", "sky130_ef_io.lef"
-                    #)
+                    lef_file = os.path.join(
+                        SKY130A, "libs.ref", library, "lef", "sky130_ef_io.lef"
+                    )
                     if self.get_setting("vlsi.core.lvs_tool")   == "hammer.lvs.pegasus" and slib == "sky130_scl":
                         spice_file = None
                     else:
