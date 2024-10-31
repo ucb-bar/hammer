@@ -28,7 +28,7 @@
     ],
     "extra_ports": [
       {
-        "name": "resetb",
+        "name": "rstb",
         "width": 1,
         "type": "constant",
         "value": 1
@@ -64,7 +64,7 @@
     ],
     "extra_ports": [
       {
-        "name": "resetb",
+        "name": "rstb",
         "width": 1,
         "type": "constant",
         "value": 1
@@ -100,7 +100,7 @@
     ],
     "extra_ports": [
       {
-        "name": "resetb",
+        "name": "rstb",
         "width": 1,
         "type": "constant",
         "value": 1
@@ -136,7 +136,7 @@
     ],
     "extra_ports": [
       {
-        "name": "resetb",
+        "name": "rstb",
         "width": 1,
         "type": "constant",
         "value": 1
@@ -172,7 +172,7 @@
     ],
     "extra_ports": [
       {
-        "name": "resetb",
+        "name": "rstb",
         "width": 1,
         "type": "constant",
         "value": 1
@@ -208,7 +208,7 @@
     ],
     "extra_ports": [
       {
-        "name": "resetb",
+        "name": "rstb",
         "width": 1,
         "type": "constant",
         "value": 1
@@ -244,7 +244,7 @@
     ],
     "extra_ports": [
       {
-        "name": "resetb",
+        "name": "rstb",
         "width": 1,
         "type": "constant",
         "value": 1
@@ -280,7 +280,7 @@
     ],
     "extra_ports": [
       {
-        "name": "resetb",
+        "name": "rstb",
         "width": 1,
         "type": "constant",
         "value": 1
@@ -316,7 +316,7 @@
     ],
     "extra_ports": [
       {
-        "name": "resetb",
+        "name": "rstb",
         "width": 1,
         "type": "constant",
         "value": 1
@@ -352,7 +352,7 @@
     ],
     "extra_ports": [
       {
-        "name": "resetb",
+        "name": "rstb",
         "width": 1,
         "type": "constant",
         "value": 1
@@ -388,7 +388,7 @@
     ],
     "extra_ports": [
       {
-        "name": "resetb",
+        "name": "rstb",
         "width": 1,
         "type": "constant",
         "value": 1
@@ -424,7 +424,7 @@
     ],
     "extra_ports": [
       {
-        "name": "resetb",
+        "name": "rstb",
         "width": 1,
         "type": "constant",
         "value": 1
@@ -460,7 +460,7 @@
     ],
     "extra_ports": [
       {
-        "name": "resetb",
+        "name": "rstb",
         "width": 1,
         "type": "constant",
         "value": 1
@@ -496,7 +496,7 @@
     ],
     "extra_ports": [
       {
-        "name": "resetb",
+        "name": "rstb",
         "width": 1,
         "type": "constant",
         "value": 1
@@ -532,7 +532,7 @@
     ],
     "extra_ports": [
       {
-        "name": "resetb",
+        "name": "rstb",
         "width": 1,
         "type": "constant",
         "value": 1
@@ -568,7 +568,7 @@
     ],
     "extra_ports": [
       {
-        "name": "resetb",
+        "name": "rstb",
         "width": 1,
         "type": "constant",
         "value": 1
@@ -604,7 +604,7 @@
     ],
     "extra_ports": [
       {
-        "name": "resetb",
+        "name": "rstb",
         "width": 1,
         "type": "constant",
         "value": 1
@@ -640,7 +640,7 @@
     ],
     "extra_ports": [
       {
-        "name": "resetb",
+        "name": "rstb",
         "width": 1,
         "type": "constant",
         "value": 1
@@ -676,7 +676,7 @@
     ],
     "extra_ports": [
       {
-        "name": "resetb",
+        "name": "rstb",
         "width": 1,
         "type": "constant",
         "value": 1
@@ -712,7 +712,7 @@
     ],
     "extra_ports": [
       {
-        "name": "resetb",
+        "name": "rstb",
         "width": 1,
         "type": "constant",
         "value": 1
@@ -748,7 +748,7 @@
     ],
     "extra_ports": [
       {
-        "name": "resetb",
+        "name": "rstb",
         "width": 1,
         "type": "constant",
         "value": 1
@@ -784,7 +784,7 @@
     ],
     "extra_ports": [
       {
-        "name": "resetb",
+        "name": "rstb",
         "width": 1,
         "type": "constant",
         "value": 1

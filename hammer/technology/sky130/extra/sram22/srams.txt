@@ -1,4 +1,4 @@
-sram22_64x24m4w24
+sram22_64x24m4w8
 sram22_64x32m4w8 
 sram22_128x16m4w8
 sram22_128x24m4w8
@@ -9,7 +9,7 @@ sram22_256x32m4w8
 sram22_256x64m4w8
 sram22_256x128m4w8
 sram22_512x8m8w1 
-sram22_512x32m4w32
+sram22_512x32m4w8
 sram22_512x64m4w8
 sram22_512x128m4w8
 sram22_1024x8m8w1
