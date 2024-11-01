@@ -1,7 +1,7 @@
 [
   {
     "type": "sram",
-    "name": "sram22_64x24m4w24",
+    "name": "sram22_64x24m4w8",
     "source": "sram22",
     "depth": "64",
     "width": 24,
@@ -22,7 +22,7 @@
         "input port name": "din",
         "input port polarity": "active high",
         "mask port name": "wmask",
-        "mask granularity": 24,
+        "mask granularity": 8,
         "mask port polarity": "active high"
       }
     ],
@@ -397,7 +397,7 @@
   },
   {
     "type": "sram",
-    "name": "sram22_512x32m4w32",
+    "name": "sram22_512x32m4w8",
     "source": "sram22",
     "depth": "512",
     "width": 32,
@@ -418,7 +418,7 @@
         "input port name": "din",
         "input port polarity": "active high",
         "mask port name": "wmask",
-        "mask granularity": 32,
+        "mask granularity": 8,
         "mask port polarity": "active high"
       }
     ],
@@ -577,14 +577,14 @@
   },
   {
     "type": "sram",
-    "name": "sram22_1024x64m8w8",
+    "name": "sram22_1024x64m4w8",
     "source": "sram22",
     "depth": "1024",
     "width": 64,
     "family": "1rw",
     "mask": "true",
     "vt": "svt",
-    "mux": 8,
+    "mux": 4,
     "ports": [
       {
         "address port name": "addr",

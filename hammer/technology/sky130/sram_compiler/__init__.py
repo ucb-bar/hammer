@@ -46,19 +46,17 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
             sram_name = params.name
             #TODO: replace this if SRAM22 characterization done for other corners
             # we only have typical lib for sky130 srams
-            corner_str = "tt_025C_1v80"
-            #corner_str = "{speed}_{volt}V_{temp}C".format(
-            #        speed = speed,
-            #        volt = str(corner.voltage.value_in_units("V")).replace(".","p"),
-            #        temp = str(int(corner.temp.value_in_units("C"))).replace(".","p"))
+            temp = corner.temp.value_in_units("C")
+            corner_str = "{speed}_{temp}C_{volt}".format(
+                    speed = speed.lower(),
+                    volt = "{:.2f}".format(corner.voltage.value_in_units("V")).replace(".","v"),
+                    temp = ("{:03g}".format(temp).replace(".","p") if temp > 0 else "n{:02g}".format(-temp).replace(".","p"))
+            )
 
             base_dir=self.get_setting('technology.sky130.sram22_sky130_macros')
-            lib_path="{b}/{n}/{n}_{c}.rc.lib".format(b=base_dir,n=sram_name,c=corner_str)
+            lib_path="{b}/{n}/{n}_{c}.lib".format(b=base_dir,n=sram_name,c=corner_str)
             if not os.path.exists(lib_path):
-                self.logger.warning(f"SKY130 {params.family} SRAM cache does not have a PEX LIB, attempting to use schematic LIB")
-                lib_path="{b}/{n}/{n}_{c}.schematic.lib".format(b=base_dir,n=sram_name,c=corner_str)
-                if not os.path.exists(lib_path):
-                    self.logger.error(f"SKY130 {params.family} SRAM cache does not support corner: {corner_str}")
+                self.logger.error(f"SKY130 {params.family} SRAM cache does not support corner: {corner_str}")
             
             lef_file="{b}/{n}/{n}.lef".format(b=base_dir,n=sram_name)
             if not os.path.exists(lef_file):
