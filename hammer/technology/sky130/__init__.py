@@ -343,7 +343,7 @@ class SKY130Tech(HammerTechnology):
                         deck_name="pegasus_drc",
                         path="$SKY130_CDS/Sky130_DRC/sky130_rev_0.0_1.0.drc.pvl",
                     ),
-                ],
+                ]
             )
 
         elif slib == "sky130_scl":
@@ -699,8 +699,12 @@ class SKY130Tech(HammerTechnology):
                 )
                 for line in sf:
                     df.write(line)
-                    if line.strip() == "END poly":
-                        df.write(_the_tlef_edit)
+                    if self.get_setting("technology.sky130.stdcell_library") == "sky130_scl":
+                        if line.strip() == "END poly":
+                            df.write(_the_tlef_edit + _additional_tlef_edit_for_scl)
+                    else:
+                        if line.strip() == "END pwell":
+                            df.write(_the_tlef_edit)
 
     # syn_power seems to not take hooks from `get_tech_syn_hooks`
     # also, syn_power is called from joules so we need to add the hook to joules
@@ -870,6 +874,11 @@ class SKY130Tech(HammerTechnology):
 
 # the io libs (sky130a)
 _the_tlef_edit = """
+LAYER licon
+  TYPE CUT ;
+END licon
+"""
+_additional_tlef_edit_for_scl = """"
 LAYER nwell
   TYPE MASTERSLICE ;
 END nwell
@@ -879,9 +888,6 @@ END pwell
 LAYER li1
   TYPE MASTERSLICE ;
 END li1
-LAYER licon
-  TYPE CUT ;
-END licon
 """
 
 
