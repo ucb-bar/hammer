@@ -15,6 +15,8 @@
         "address port polarity": "active high",
         "clock port name": "clk",
         "clock port polarity": "active high",
+        "chip enable port name": "ce",
+        "chip enable port polarity": "active high",
         "write enable port name": "we",
         "write enable port polarity": "active high",
         "output port name": "dout",
@@ -26,7 +28,7 @@
         "mask port polarity": "active high"
       }
     ],
-    "extra_ports": [
+    "extra ports": [
       {
         "name": "rstb",
         "width": 1,
@@ -51,6 +53,8 @@
         "address port polarity": "active high",
         "clock port name": "clk",
         "clock port polarity": "active high",
+        "chip enable port name": "ce",
+        "chip enable port polarity": "active high",
         "write enable port name": "we",
         "write enable port polarity": "active high",
         "output port name": "dout",
@@ -62,7 +66,7 @@
         "mask port polarity": "active high"
       }
     ],
-    "extra_ports": [
+    "extra ports": [
       {
         "name": "rstb",
         "width": 1,
@@ -87,6 +91,8 @@
         "address port polarity": "active high",
         "clock port name": "clk",
         "clock port polarity": "active high",
+        "chip enable port name": "ce",
+        "chip enable port polarity": "active high",
         "write enable port name": "we",
         "write enable port polarity": "active high",
         "output port name": "dout",
@@ -98,7 +104,7 @@
         "mask port polarity": "active high"
       }
     ],
-    "extra_ports": [
+    "extra ports": [
       {
         "name": "rstb",
         "width": 1,
@@ -123,6 +129,8 @@
         "address port polarity": "active high",
         "clock port name": "clk",
         "clock port polarity": "active high",
+        "chip enable port name": "ce",
+        "chip enable port polarity": "active high",
         "write enable port name": "we",
         "write enable port polarity": "active high",
         "output port name": "dout",
@@ -134,7 +142,7 @@
         "mask port polarity": "active high"
       }
     ],
-    "extra_ports": [
+    "extra ports": [
       {
         "name": "rstb",
         "width": 1,
@@ -159,6 +167,8 @@
         "address port polarity": "active high",
         "clock port name": "clk",
         "clock port polarity": "active high",
+        "chip enable port name": "ce",
+        "chip enable port polarity": "active high",
         "write enable port name": "we",
         "write enable port polarity": "active high",
         "output port name": "dout",
@@ -170,7 +180,7 @@
         "mask port polarity": "active high"
       }
     ],
-    "extra_ports": [
+    "extra ports": [
       {
         "name": "rstb",
         "width": 1,
@@ -195,6 +205,8 @@
         "address port polarity": "active high",
         "clock port name": "clk",
         "clock port polarity": "active high",
+        "chip enable port name": "ce",
+        "chip enable port polarity": "active high",
         "write enable port name": "we",
         "write enable port polarity": "active high",
         "output port name": "dout",
@@ -206,7 +218,7 @@
         "mask port polarity": "active high"
       }
     ],
-    "extra_ports": [
+    "extra ports": [
       {
         "name": "rstb",
         "width": 1,
@@ -231,6 +243,8 @@
         "address port polarity": "active high",
         "clock port name": "clk",
         "clock port polarity": "active high",
+        "chip enable port name": "ce",
+        "chip enable port polarity": "active high",
         "write enable port name": "we",
         "write enable port polarity": "active high",
         "output port name": "dout",
@@ -242,7 +256,7 @@
         "mask port polarity": "active high"
       }
     ],
-    "extra_ports": [
+    "extra ports": [
       {
         "name": "rstb",
         "width": 1,
@@ -267,6 +281,8 @@
         "address port polarity": "active high",
         "clock port name": "clk",
         "clock port polarity": "active high",
+        "chip enable port name": "ce",
+        "chip enable port polarity": "active high",
         "write enable port name": "we",
         "write enable port polarity": "active high",
         "output port name": "dout",
@@ -278,7 +294,7 @@
         "mask port polarity": "active high"
       }
     ],
-    "extra_ports": [
+    "extra ports": [
       {
         "name": "rstb",
         "width": 1,
@@ -303,6 +319,8 @@
         "address port polarity": "active high",
         "clock port name": "clk",
         "clock port polarity": "active high",
+        "chip enable port name": "ce",
+        "chip enable port polarity": "active high",
         "write enable port name": "we",
         "write enable port polarity": "active high",
         "output port name": "dout",
@@ -314,7 +332,7 @@
         "mask port polarity": "active high"
       }
     ],
-    "extra_ports": [
+    "extra ports": [
       {
         "name": "rstb",
         "width": 1,
@@ -339,6 +357,8 @@
         "address port polarity": "active high",
         "clock port name": "clk",
         "clock port polarity": "active high",
+        "chip enable port name": "ce",
+        "chip enable port polarity": "active high",
         "write enable port name": "we",
         "write enable port polarity": "active high",
         "output port name": "dout",
@@ -350,7 +370,7 @@
         "mask port polarity": "active high"
       }
     ],
-    "extra_ports": [
+    "extra ports": [
       {
         "name": "rstb",
         "width": 1,
@@ -375,6 +395,8 @@
         "address port polarity": "active high",
         "clock port name": "clk",
         "clock port polarity": "active high",
+        "chip enable port name": "ce",
+        "chip enable port polarity": "active high",
         "write enable port name": "we",
         "write enable port polarity": "active high",
         "output port name": "dout",
@@ -386,7 +408,7 @@
         "mask port polarity": "active high"
       }
     ],
-    "extra_ports": [
+    "extra ports": [
       {
         "name": "rstb",
         "width": 1,
@@ -411,6 +433,8 @@
         "address port polarity": "active high",
         "clock port name": "clk",
         "clock port polarity": "active high",
+        "chip enable port name": "ce",
+        "chip enable port polarity": "active high",
         "write enable port name": "we",
         "write enable port polarity": "active high",
         "output port name": "dout",
@@ -422,7 +446,7 @@
         "mask port polarity": "active high"
       }
     ],
-    "extra_ports": [
+    "extra ports": [
       {
         "name": "rstb",
         "width": 1,
@@ -447,6 +471,8 @@
         "address port polarity": "active high",
         "clock port name": "clk",
         "clock port polarity": "active high",
+        "chip enable port name": "ce",
+        "chip enable port polarity": "active high",
         "write enable port name": "we",
         "write enable port polarity": "active high",
         "output port name": "dout",
@@ -458,7 +484,7 @@
         "mask port polarity": "active high"
       }
     ],
-    "extra_ports": [
+    "extra ports": [
       {
         "name": "rstb",
         "width": 1,
@@ -483,6 +509,8 @@
         "address port polarity": "active high",
         "clock port name": "clk",
         "clock port polarity": "active high",
+        "chip enable port name": "ce",
+        "chip enable port polarity": "active high",
         "write enable port name": "we",
         "write enable port polarity": "active high",
         "output port name": "dout",
@@ -494,7 +522,7 @@
         "mask port polarity": "active high"
       }
     ],
-    "extra_ports": [
+    "extra ports": [
       {
         "name": "rstb",
         "width": 1,
@@ -519,6 +547,8 @@
         "address port polarity": "active high",
         "clock port name": "clk",
         "clock port polarity": "active high",
+        "chip enable port name": "ce",
+        "chip enable port polarity": "active high",
         "write enable port name": "we",
         "write enable port polarity": "active high",
         "output port name": "dout",
@@ -530,7 +560,7 @@
         "mask port polarity": "active high"
       }
     ],
-    "extra_ports": [
+    "extra ports": [
       {
         "name": "rstb",
         "width": 1,
@@ -555,6 +585,8 @@
         "address port polarity": "active high",
         "clock port name": "clk",
         "clock port polarity": "active high",
+        "chip enable port name": "ce",
+        "chip enable port polarity": "active high",
         "write enable port name": "we",
         "write enable port polarity": "active high",
         "output port name": "dout",
@@ -566,7 +598,7 @@
         "mask port polarity": "active high"
       }
     ],
-    "extra_ports": [
+    "extra ports": [
       {
         "name": "rstb",
         "width": 1,
@@ -591,6 +623,8 @@
         "address port polarity": "active high",
         "clock port name": "clk",
         "clock port polarity": "active high",
+        "chip enable port name": "ce",
+        "chip enable port polarity": "active high",
         "write enable port name": "we",
         "write enable port polarity": "active high",
         "output port name": "dout",
@@ -602,7 +636,7 @@
         "mask port polarity": "active high"
       }
     ],
-    "extra_ports": [
+    "extra ports": [
       {
         "name": "rstb",
         "width": 1,
@@ -627,6 +661,8 @@
         "address port polarity": "active high",
         "clock port name": "clk",
         "clock port polarity": "active high",
+        "chip enable port name": "ce",
+        "chip enable port polarity": "active high",
         "write enable port name": "we",
         "write enable port polarity": "active high",
         "output port name": "dout",
@@ -638,7 +674,7 @@
         "mask port polarity": "active high"
       }
     ],
-    "extra_ports": [
+    "extra ports": [
       {
         "name": "rstb",
         "width": 1,
@@ -663,6 +699,8 @@
         "address port polarity": "active high",
         "clock port name": "clk",
         "clock port polarity": "active high",
+        "chip enable port name": "ce",
+        "chip enable port polarity": "active high",
         "write enable port name": "we",
         "write enable port polarity": "active high",
         "output port name": "dout",
@@ -674,7 +712,7 @@
         "mask port polarity": "active high"
       }
     ],
-    "extra_ports": [
+    "extra ports": [
       {
         "name": "rstb",
         "width": 1,
@@ -699,6 +737,8 @@
         "address port polarity": "active high",
         "clock port name": "clk",
         "clock port polarity": "active high",
+        "chip enable port name": "ce",
+        "chip enable port polarity": "active high",
         "write enable port name": "we",
         "write enable port polarity": "active high",
         "output port name": "dout",
@@ -710,7 +750,7 @@
         "mask port polarity": "active high"
       }
     ],
-    "extra_ports": [
+    "extra ports": [
       {
         "name": "rstb",
         "width": 1,
@@ -735,6 +775,8 @@
         "address port polarity": "active high",
         "clock port name": "clk",
         "clock port polarity": "active high",
+        "chip enable port name": "ce",
+        "chip enable port polarity": "active high",
         "write enable port name": "we",
         "write enable port polarity": "active high",
         "output port name": "dout",
@@ -746,7 +788,7 @@
         "mask port polarity": "active high"
       }
     ],
-    "extra_ports": [
+    "extra ports": [
       {
         "name": "rstb",
         "width": 1,
@@ -771,6 +813,8 @@
         "address port polarity": "active high",
         "clock port name": "clk",
         "clock port polarity": "active high",
+        "chip enable port name": "ce",
+        "chip enable port polarity": "active high",
         "write enable port name": "we",
         "write enable port polarity": "active high",
         "output port name": "dout",
@@ -782,7 +826,7 @@
         "mask port polarity": "active high"
       }
     ],
-    "extra_ports": [
+    "extra ports": [
       {
         "name": "rstb",
         "width": 1,
