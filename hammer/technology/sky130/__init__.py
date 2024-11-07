@@ -783,6 +783,11 @@ class SKY130Tech(HammerTechnology):
                 # TODO: the disconnect_* slices are also broken like this, but we're not using them
                 start = [idx for idx, line in enumerate(sl) if 'MACRO sky130_ef_io__connect_vcchib_vccd_and_vswitch_vddio_slice_20um' in line]
                 sl[start[0] + 1] = sl[start[0] + 1].replace('AREAIO', 'SPACER')
+
+                for idx, line in enumerate(sl):
+                    if "PIN OUT" in line:
+                        sl[idx+1].replace("DIRECTION INPUT ;", "DIRECTION INPUT ;\n    ANTENNAGATEAREA 1.529 LAYER met3 ;")
+
                 df.writelines(sl)
 
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
@@ -911,6 +916,10 @@ class SKY130Tech(HammerTechnology):
 ## string constants
 # the io libs (sky130a)
 _the_tlef_edit = """
+LAYER AREAIDLD
+  TYPE MASTERSLICE ;
+END AREAIDLD
+
 LAYER licon
   TYPE CUT ;
 END licon
@@ -927,10 +936,10 @@ LAYER li1
 END li1
 """
 
-LVS_DECK_INSERT_LINES = '''
+LVS_DECK_INSERT_LINES = """
 LVS FILTER D  OPEN  SOURCE
 LVS FILTER D  OPEN  LAYOUT
-'''
+"""
 
 LVS_DECK_SCRUB_LINES = [
     "VIRTUAL CONNECT REPORT",

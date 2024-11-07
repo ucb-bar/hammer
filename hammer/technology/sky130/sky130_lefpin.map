@@ -44,4 +44,5 @@ met5            LEFPIN,LEFOBS,PIN,NET,SPNET,VIA      72    20
 met5            PIN                                  72    16
 NAME            met5/PIN,met5/LEFPIN                 72    5
 
+AREAIDLD        ALL                                  81    14
 DIEAREA         ALL                                  235   4
