@@ -771,12 +771,12 @@ class SKY130Tech(HammerTechnology):
                 self.logger.info("Modifying IO LEF: {} -> {}".format
                     (source_path, dest_path))
                 sl = sf.readlines()
-                for net in ['VCCD1', 'VSSD1']:
+                for net in ['VCCD1', 'VSSD1', 'VDDA', 'VSSA', 'VSSIO']:
                     start = [idx for idx,line in enumerate(sl) if 'PIN ' + net in line]
                     end = [idx for idx,line in enumerate(sl) if 'END ' + net in line]
                     intervals = zip(start, end)
                     for intv in intervals:
-                        port_idx = [idx for idx,line in enumerate(sl[intv[0]:intv[1]]) if 'PORT' in line]
+                        port_idx = [idx for idx,line in enumerate(sl[intv[0]:intv[1]]) if 'PORT' in line and "met3" in sl[intv[0] + idx + 1]]
                         for idx in port_idx:
                             sl[intv[0]+idx]=sl[intv[0]+idx].replace('PORT', 'PORT\n      CLASS CORE ;')
                 # force class to spacer
