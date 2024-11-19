@@ -2,21 +2,21 @@
 
 module sram_sim_tb;
 
-parameter DATA_WIDTH = 4;
-parameter ADDR_WIDTH = 6;
-parameter WMASK_WIDTH = 2;
-parameter RAM_DEPTH = 1 << ADDR_WIDTH;
-
 reg clk = 0;
 always #(`CLOCK_PERIOD/2.0) clk = ~clk;
 
 reg we;
-reg [WMASK_WIDTH-1:0] wmask;
-reg [ADDR_WIDTH-1:0]  addr;
-reg [DATA_WIDTH-1:0]  din;
-wire [DATA_WIDTH-1:0] dout;
+reg [`WMASK_WIDTH-1:0] wmask;
+reg [`ADDR_WIDTH-1:0]  addr;
+reg [`DATA_WIDTH-1:0]  din;
+wire [`DATA_WIDTH-1:0] dout;
 
-sram_sim sram_sim_dut (
+sram_sim #(
+    .DATA_WIDTH(`DATA_WIDTH),
+    .ADDR_WIDTH(`ADDR_WIDTH),
+    .WMASK_WIDTH(`WMASK_WIDTH),
+    .RAM_DEPTH(1 << `ADDR_WIDTH)
+) sram_sim_dut (
     .clock(clk),
     .we(we),
     .wmask(wmask),
@@ -82,6 +82,7 @@ task automatic read_input (input string file_path);
         $display("File not found.");
 
     end
+
 endtask
 
 initial begin
@@ -89,9 +90,9 @@ initial begin
     @(negedge clk);
 
     // reset SRAM signals
-    din = {DATA_WIDTH{'d13}};
-    wmask = {DATA_WIDTH{1'b1}}; 
-    addr = {DATA_WIDTH{'b0}};
+    din = {`DATA_WIDTH{'d13}};
+    wmask = {`DATA_WIDTH{1'b1}}; 
+    addr = {`DATA_WIDTH{'b0}};
     we = 0'b0;
     
     read_input({"/tools/scratch/henrycen/main/hammer/test_data/", `"`TESTNAME`", "/reset.txt"});

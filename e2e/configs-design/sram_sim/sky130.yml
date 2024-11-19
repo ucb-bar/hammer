@@ -4,7 +4,7 @@ vlsi.inputs.clocks: [
 ]
 
 sim.inputs:
-  defines: ["CLOCK_PERIOD=7", "TESTNAME=test_all_zeroes", "SRAM=sram22_64x4m4w2"]
+  defines: ["CLOCK_PERIOD=7", "TESTNAME=test_all_zeroes", "SRAM=sram22_64x4m4w2", "DATA_WIDTH=4", "ADDR_WIDTH=6", "WMASK_WIDTH=2"]
   defines_meta: "append"
   options: ["-timescale=1ns/10ps"]
   options_meta: append
