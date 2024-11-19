@@ -1,0 +1,13 @@
+# RTL Simulation
+
+sim.inputs:
+  level: "rtl"
+  input_files: ['src/sram_sim.v', 'src/sram_sim_tb.sv']
+  options:
+    - "-notice"
+    - "-line"
+    - "+lint=none,noVCDE"
+    - "+v2k"
+    - "-debug"
+    - "-sverilog"
+    - "-lca"

@@ -1,0 +1,27 @@
+# Generate Make include to aid in flow
+vlsi.core.build_system: make
+
+vlsi.inputs.power_spec_type: "cpf"
+vlsi.inputs.power_spec_mode: "auto"
+
+synthesis.inputs:
+  top_module: "sram_sim"
+  input_files: ["src/sram_sim.v"]
+
+sim.inputs:
+  top_module: "sram_sim"
+  tb_name: "sram_sim_tb"
+  tb_dut: "sram_sim_dut"
+  
+power.inputs:
+  top_module: "sram_sim"
+  tb_name: "sram_sim_tb"
+  tb_dut: "sram_sim_dut"
+
+vlsi.inputs.delays: [
+  {name: "we", clock: "clock", delay: "1", direction: "input"},
+  {name: "wmask", clock: "clock", delay: "1", direction: "input"},
+  {name: "addr", clock: "clock", delay: "1", direction: "input"},
+  {name: "din", clock: "clock", delay: "1", direction: "input"},
+  {name: "dout", clock: "clock", delay: "1", direction: "output"}
+]

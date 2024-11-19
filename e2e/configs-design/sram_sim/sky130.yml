@@ -1,0 +1,28 @@
+# Specify clock signals
+vlsi.inputs.clocks: [
+  {name: "clock", period: "7ns", uncertainty: "100ps"}
+]
+
+sim.inputs:
+  defines: ["CLOCK_PERIOD=7", "TESTNAME=test_all_zeroes", "SRAM=sram22_64x4m4w2"]
+  defines_meta: "append"
+  options: ["-timescale=1ns/10ps"]
+  options_meta: append
+
+# Placement Constraints
+vlsi.inputs.placement_constraints:
+  - path: "sram_sim"
+    type: toplevel
+    x: 0
+    y: 0
+    width: 100
+    height: 100
+    margins:
+      left: 0
+      right: 0
+      top: 0
+      bottom: 0
+
+# Compile all srams in our cache
+vlsi.inputs.sram_parameters: "../../../hammer/technology/sky130/sram-cache.json"
+vlsi.inputs.sram_parameters_meta: ["prependlocal", "transclude", "json2list"]
