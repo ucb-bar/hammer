@@ -451,6 +451,9 @@ synthesis.inputs:
   input_files: [] # Input files.
   # Typically a list of Verilog/VHDL files, depending on the synthesis tool.
 
+  defines: [] # Define options passed when reading HDL
+  # type: List[str]
+
   top_module: null # Top RTL module.
   # Set to null to not specify from the JSON.
 
@@ -864,6 +867,9 @@ power.inputs:
   # type: bool
 
   input_files: [] # A list of the paths to the design inputs files (HDL or netlist) for power analysis
+  # type: List[str]
+
+  defines: [] # Define options passed when reading HDL
   # type: List[str]
 
   sdc: "" # SDC input file

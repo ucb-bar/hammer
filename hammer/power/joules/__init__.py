@@ -153,11 +153,16 @@ class Joules(HammerPowerTool, CadenceTool):
         # Replace . to / formatting in case argument passed from sim tool
         tb_dut = self.tb_dut.replace(".", "/")
 
+        defines = self.get_setting("power.inputs.defines",[])
+        defines_str = " ".join(["-define "+d for d in defines])
+
         if self.level == FlowLevel.RTL:
             # We are switching working directories and Joules still needs to find paths.
             abspath_input_files = list(map(lambda name: os.path.join(os.getcwd(), name), self.input_files))  # type: List[str]
             # Read in the design files
-            block_append("read_hdl -sv {}".format(" ".join(abspath_input_files)))
+            block_append("""read_hdl {DEFINES} -sv {FILES}""".format(
+                DEFINES=defines_str,
+                FILES=" ".join(abspath_input_files)))
 
         # Setup the power specification
         power_spec_arg = self.map_power_spec_name()
@@ -176,7 +181,9 @@ class Joules(HammerPowerTool, CadenceTool):
             block_append("elaborate {TOP_MODULE}".format(TOP_MODULE=top_module))
         elif self.level == FlowLevel.SYN:
             # Read in the synthesized netlist
-            block_append("read_netlist {}".format(" ".join(self.input_files)))
+            block_append("read_netlist {DEFINES} {FILES}".format(
+                DEFINES=defines_str,
+                FILES=" ".join(self.input_files)))
 
             # Read in the post-synth SDCs
             block_append("read_sdc {}".format(self.sdc))

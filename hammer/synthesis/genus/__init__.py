@@ -255,7 +255,9 @@ class Genus(HammerSynthesisTool, CadenceTool):
         ], hammer_tech.HammerTechnologyUtils.to_plain_item)
 
         # Read the RTL.
-        verbose_append("read_hdl -sv {{ {} }}".format(" ".join(abspath_input_files)))
+        verbose_append("read_hdl {DEFINES} -sv {{ {FILES} }}".format(
+            DEFINES=" ".join(["-define "+define for define in self.get_setting("synthesis.inputs.defines",[])]),
+            FILES=" ".join(abspath_input_files)))
 
         # Elaborate/parse the RTL.
         verbose_append("elaborate {}".format(self.top_module))
