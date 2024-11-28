@@ -24,10 +24,9 @@ from datetime import datetime, timedelta
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'vlsi')))
 
 from hammer.vlsi import CLIDriver
-
+from hammer.vlsi.cli_driver import import_task_to_dag
 #import pdb
 #pdb.set_trace()
-
 class AIRFlow:
     def __init__(self):
         #pdb.set_trace()
@@ -154,10 +153,11 @@ def taskflow_dag():
     flow = AIRFlow()
     #run(flow)  # Pass the command as a parameter
     
+    import_task = import_task_to_dag()
     run_task = run(flow)
     build_task = build()
     clean_task = clean(flow)
-    taskList = [run_task, [build_task, clean_task]]
+    taskList = [import_task, run_task, [build_task, clean_task]]
     #run(flow) >> [build(), clean(flow)]
     chain(*taskList)
 
