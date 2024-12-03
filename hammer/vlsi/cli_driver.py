@@ -12,6 +12,10 @@ import sys
 import tempfile
 from pathlib import Path
 import importlib.resources
+import re
+import os
+import subprocess
+import sys
 
 import ruamel.yaml
 
@@ -28,6 +32,12 @@ from typing import List, Dict, Tuple, Any, Callable, Optional, Union, cast
 from hammer.utils import add_dicts, deeplist, deepdict, get_or_else, check_function_type
 
 from hammer.config import HammerJSONEncoder
+
+from airflow.models.dag import DAG
+from airflow.operators.python import PythonOperator
+from airflow.models.baseoperator import chain
+from airflow.decorators import task, dag
+from datetime import datetime, timedelta
 
 #import pdb
 #pdb.set_trace()
@@ -1736,3 +1746,8 @@ class CLIDriver:
             sys.exit(1)
 
         sys.exit(self.run_main_parsed(vars(parser.parse_args(args))))
+
+@task
+def import_task_to_dag():
+    print("hi")
+    return
