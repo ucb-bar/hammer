@@ -19,7 +19,7 @@ module add_tb;
 
     initial begin
         // reset
-        in0 = `WIDTH'b`IN0_R; in1 = `WIDTH'b`IN1_R;
+        in0 = `WIDTH'b0; in1 = `WIDTH'b0;
         @(negedge clk);
         
         // open test file
