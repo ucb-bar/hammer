@@ -12,7 +12,9 @@ sim.inputs:
   top_module: "add"
   tb_name: "add_tb"
   tb_dut: "add_dut"
-  
+  options: ["-timescale=1ns/10ps"]
+  options_meta: append
+
 power.inputs:
   top_module: "add"
   tb_name: "add_tb"

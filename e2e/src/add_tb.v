@@ -1,7 +1,5 @@
 `timescale 1ns/10ps
 
-// `define WIDTH 8
-// `define CLOCK_PERIOD 1
 
 module add_tb;
 
@@ -11,6 +9,8 @@ module add_tb;
     reg [`WIDTH-1:0] in0, in1;
     wire [`WIDTH-1:0] out;
 
+    integer file, status;
+
     add #(`WIDTH) add_dut (
         .clock(clk),
         .in0(in0), .in1(in1),
@@ -19,31 +19,35 @@ module add_tb;
 
     initial begin
         // reset
-        in0 = `WIDTH'b0; in1 = `WIDTH'b0;
-        
-        // load vals
+        in0 = `WIDTH'b`IN0_R; in1 = `WIDTH'b`IN1_R;
         @(negedge clk);
-
-        $fsdbDumpfile("output.fsdb");
+        
+        // open test file
+        $fsdbDumpfile({`"`TESTROOT`", "/output.fsdb"});
         $fsdbDumpvars("+all");
         $fsdbDumpon;
 
-        in0 = `WIDTH'b110; in1 = `WIDTH'b001;
-
-        // perform add
-        @(posedge clk);
-        
-
-        // check results
-        @(negedge clk);
-        $display(" %d + %d = %d",in0,in1,out);
-
+        file = $fopen({`"`TESTROOT`", "/input.txt"}, "r");
+        if (file) begin
+            while (!$feof(file)) begin
+                // load vals
+                status = $fscanf(file, "%b %b", in0, in1);
+                if (status == 2) begin
+                end else if (status == -1) begin
+                    $display("Finished reading file.");
+                end else begin
+                    $display("Error reading line.");
+                end
+                // perform operation
+                @(posedge clk);
+                @(negedge clk);
+                $display(" %d + %d = %d",in0,in1,out);
+            end
+        end
         $fsdbDumpoff;
         $finish;
 
-        // end
-        @(posedge clk);
-        
+        // end        
 
     end
 

@@ -259,11 +259,15 @@ class Joules(HammerPowerTool, CadenceTool):
                 PowerReport(
                     waveform_path=waveform,
                     inst=None, module=None,
-                    levels=None, start_time=None,
-                    end_time=None, interval_size=None,
+                    levels=None,
+                    start_time=None, end_time=None,
+                    interval_list=None,
+                    interval_size=None,
                     toggle_signal=None, num_toggles=None,
                     frame_count=None,
-                    report_name=waveform_name, output_formats=['report']))
+                    power_type=None,
+                    report_stem=waveform_name,
+                    output_formats=['report']))
         power_report_configs += self.get_power_report_configs() # append report configs from yaml file
         for report in power_report_configs:
             abspath_waveform = os.path.join(os.getcwd(), report.waveform_path)
@@ -303,14 +307,14 @@ class Joules(HammerPowerTool, CadenceTool):
             inst_str = f"-inst {report.inst}" if report.inst else ""
             module_str = f"-module {report.module}" if report.module else ""
             levels_str = f"-levels {report.levels}" if report.levels else ""
-            m_levels_str = levels_str if (report.module or report.inst) else ""
+            type_str = f"-types {report.power_type}" if report.power_type else "-types total"
             output_formats = set(report.output_formats) if report.output_formats else {'report'}  
 
-            report_path = report.report_name if report.report_name else waveform_name
-            if not report_path.startswith('/'):
+            report_stem = report.report_stem
+            if not report_stem.startswith('/'):
                 save_dir = os.path.join(self.run_dir, 'reports')
                 os.makedirs(save_dir, exist_ok=True)
-                report_path = os.path.join(save_dir, report_path)              
+                report_stem = os.path.join(save_dir, report_stem)              
 
             # frames TCL variable to be used across different commands
             self.append(f"set frames [get_sdb_frames -stims {stim_alias}]")
@@ -320,27 +324,27 @@ class Joules(HammerPowerTool, CadenceTool):
             if {'report','all'} & output_formats:
                 # -frames $frames explodes the runtime & doesn't seem to change result
                 h_levels_str = "-levels all" if levels_str == "" else levels_str
-                self.block_append(f"report_power -stims {stim_alias} {inst_str} {module_str} {m_levels_str} -unit mW -out {report_path}.power.rpt")
-                self.block_append(f"report_power -stims {stim_alias} {inst_str} {module_str} {m_levels_str} -by_hierarchy {h_levels_str} -unit mW -out {report_path}.hier.power.rpt")
+                self.block_append(f"report_power -stims {stim_alias} {inst_str} {module_str} {levels_str} -unit mW -out {report_stem}.power.rpt")
+                self.block_append(f"report_power -stims {stim_alias} {inst_str} {module_str} {levels_str} -by_hierarchy {h_levels_str} -unit mW -out {report_stem}.hier.power.rpt")
             if {'activity','all'} & output_formats:
-                self.block_append(f"report_activity -stims {stim_alias} {inst_str} {module_str} {levels_str} -out {report_path}.activity.rpt")
-                self.block_append(f"report_activity -stims {stim_alias} -by_hierarchy {levels_str} -out {report_path}.hier.activity.rpt")
+                self.block_append(f"report_activity -stims {stim_alias} {inst_str} {module_str} {levels_str} -out {report_stem}.activity.rpt")
+                self.block_append(f"report_activity -stims {stim_alias} -by_hierarchy {levels_str} -out {report_stem}.hier.activity.rpt")
             if {'ppa','all'} & output_formats:
                 root_str = inst_str.replace('-inst','-root')
-                self.block_append(f"report_ppa {root_str} {module_str} > {report_path}.ppa.rpt")
+                self.block_append(f"report_ppa {root_str} {module_str} > {report_stem}.ppa.rpt")
             if {'area','all'} & output_formats:
-                self.block_append(f"report_area > {report_path}.area.rpt")
+                self.block_append(f"report_area > {report_stem}.area.rpt")
             if {'plot_profile','profile','all'} & output_formats:
                 if not time_based_analysis:
                     self.logger.error("Must specify either interval_size or toggle_signal+num_toggles in power.inputs.report_configs to generate plot_profile report (frame-based analysis).")
                     return False
                 # NOTE: we don't include levels_str here bc category is total power anyways
-                self.block_append(f"plot_power_profile -stims {stim_alias} {inst_str} {module_str} {m_levels_str} -by_category {{total}} -types {{total}} -unit mW -format png -out {report_path}.profile.png")
+                self.block_append(f"plot_power_profile -stims {stim_alias} {inst_str} {module_str} {levels_str} -by_category {{total}} {type_str} -unit mW -format png -out {report_stem}.profile.png")
             if {'write_profile','profile','all'} & output_formats:
                 if not time_based_analysis:
                     self.logger.error("Must specify either interval_size or toggle_signal+num_toggles in power.inputs.report_configs to generate write_profile report (frame-based analysis).")
                     return False
-                block_append(f"write_power_profile -stims {stim_alias} -root [get_insts -rtl_type hier] {levels_str} -unit mW -format fsdb -out {report_path}.profile.fsdb")
+                block_append(f"write_power_profile -stims {stim_alias} -root [get_insts -rtl_type hier] {levels_str} -unit mW -format fsdb -out {report_stem}.profile.fsdb")
 
         saifs = self.get_setting("power.inputs.saifs")
         for saif in saifs:

@@ -3,3 +3,12 @@
 sim.inputs:
   level: "rtl"
   input_files: ['src/add.v', 'src/add_tb.v']
+  options:
+    - "-notice"
+    - "-line"
+    - "+lint=none,noVCDE"
+    - "+v2k"
+    - "-debug"
+    - "-sverilog"
+    - "-lca"
+  options_meta: 'append'
