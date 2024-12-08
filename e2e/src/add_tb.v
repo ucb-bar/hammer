@@ -11,7 +11,7 @@ module add_tb;
 
     integer file, status;
 
-    add #(`WIDTH) add_dut (
+    add add_dut (
         .clock(clk),
         .in0(in0), .in1(in1),
         .out(out)
