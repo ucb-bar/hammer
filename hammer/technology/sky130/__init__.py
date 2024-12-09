@@ -528,12 +528,12 @@ class SKY130Tech(HammerTechnology):
         dest_path = cache_tech_dir_path / f"{self.library_name}.cdl"
 
         # device names expected in LVS decks
-        if (self.get_setting('vlsi.core.lvs_tool') == "hammer.lvs.calibre"):
-            pmos = 'phighvt'
-            nmos = 'nshort'
-        elif (self.get_setting('vlsi.core.lvs_tool') == "hammer.lvs.netgen"):
-            pmos = 'sky130_fd_pr__pfet_01v8_hvt'
-            nmos = 'sky130_fd_pr__nfet_01v8'
+        if self.get_setting("vlsi.core.lvs_tool") == "hammer.lvs.calibre":
+            pmos = "phighvt"
+            nmos = "nshort"
+        elif self.get_setting("vlsi.core.lvs_tool") == "hammer.lvs.netgen":
+            pmos = "sky130_fd_pr__pfet_01v8_hvt"
+            nmos = "sky130_fd_pr__nfet_01v8"
         else:
             shutil.copy2(source_path, dest_path)
             return
@@ -1180,8 +1180,6 @@ add_stripes -create_pins 1 -block_ring_bottom_layer_limit met5 -block_ring_top_l
     return True
 
 
-def calibre_drc_blackbox_srams(ht: HammerTool) -> bool:
-=======
 def efabless_ring_io(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerPlaceAndRouteTool), "IO ring instantiation only for par"
     assert isinstance(ht, TCLTool), "IO ring instantiation can only run on TCL tools"
@@ -1219,7 +1217,7 @@ def efabless_ring_io(ht: HammerTool) -> bool:
     ''')
     return True
 
-def drc_blackbox_srams(ht: HammerTool) -> bool:
+def calibre_drc_blackbox_srams(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerDRCTool), "Exlude SRAMs only in DRC"
     drc_box = ""
     for name in SKY130Tech.sky130_sram_names():
