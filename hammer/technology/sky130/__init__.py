@@ -239,9 +239,11 @@ class SKY130Tech(HammerTechnology):
                     input_ports=["A"],
                     output_ports=["X"],
                 ),
-                SpecialCell(
-                    cell_type=CellType("ctsbuffer"), name=["sky130_fd_sc_hd__clkbuf_1"]
-                ),
+                # this breaks synthesis with a complaint about "Cannot perform synthesis because libraries do not have usable inverters." from Genus.
+                # note that innovus still recognizes and uses this cell as a buffer 
+                #SpecialCell(
+                    #cell_type=CellType("ctsbuffer"), name=["sky130_fd_sc_hd__clkbuf_1"]
+                    #),
             ]
 
             # Generate standard cell library
