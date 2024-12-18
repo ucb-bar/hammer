@@ -322,6 +322,33 @@ class HammerTechnology:
             self.logger.info('Creating directory: {}'.format(dir_name))
             os.makedirs(dir_name)
 
+    # return whichever exists first: overriden collateral file > cached collateral file > `path`
+    def override_if_present_in_cache_or_extra_libraries(self, path):
+        # prioritize extra libraries (manual override from environment yml) over cache override
+        fname = os.path.basename(path)
+        for lib in self.get_setting("vlsi.technology.extra_libraries"):
+            lib = lib["library"]
+            assert (
+                len(lib and [i for i in lib.values() if i and fname in i])
+                <= 1
+            ), "error: ambiguous override for " + fname
+            for override_path in lib.values():
+                if override_path and fname in override_path:
+                    self.logger.info(
+                        f"overriding {fname} with extra_libraries entry {override_path}"
+                    )
+                    return override_path
+
+        cached_path = os.path.join(self.cache_dir, fname)
+        if os.path.exists(
+            cached_path
+        ):  # file has been modified + chucked in cache
+            self.logger.info(
+                f"overriding {fname} with cache entry {cached_path}"
+            )
+            return cached_path
+        return path
+
     # hammer-vlsi properties.
     # TODO: deduplicate/put these into an interface to share with HammerTool?
     @property

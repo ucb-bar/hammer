@@ -2,31 +2,42 @@
 #
 #  See LICENSE for licence details.
 
-import sys
-import re
-import os
-import shutil
-from pathlib import Path
-from typing import NamedTuple, List, Optional, Tuple, Dict, Set, Any
+import functools
 import importlib
 import json
-import functools
+import os
+import re
+import shutil
+from pathlib import Path
+from typing import List
 
-from hammer.tech import *
+from hammer.tech import (
+    Corner,
+    Decimal,
+    DRCDeck,
+    HammerTechnology,
+    Library,
+    LVSDeck,
+    Metal,
+    PathPrefix,
+    Provide,
+    Site,
+    Stackup,
+    Supplies,
+    TechJSON,
+)
+from hammer.tech.specialcells import CellType, SpecialCell
+from hammer.utils import LEFUtils
 from hammer.vlsi import (
-    HammerTool,
-    HammerPlaceAndRouteTool,
-    TCLTool,
     HammerDRCTool,
     HammerLVSTool,
+    HammerPlaceAndRouteTool,
+    HammerTool,
     HammerToolHookAction,
     HierarchicalMode,
+    TCLTool,
 )
-from hammer.utils import LEFUtils
-from hammer.vlsi.hammer_vlsi_impl import HammerSimTool
 
-import hammer.tech.specialcells as specialcells
-from hammer.tech.specialcells import CellType, SpecialCell
 
 class SKY130Tech(HammerTechnology):
     """
@@ -45,10 +56,11 @@ class SKY130Tech(HammerTechnology):
         libs = []
         if slib == "sky130_fd_sc_hd":
             libs += [
-                Library(
-                    spice_file="$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
-                    provides=[Provide(lib_type="IO library")],
-                ),
+                # a hacked version this is manually included in design.yml
+                # Library(
+                #     spice_file="$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
+                #     provides=[Provide(lib_type="IO library")],
+                # ),
                 Library(
                     lef_file="cache/sky130_fd_sc_hd__nom.tlef",
                     verilog_sim="cache/primitives.v",
@@ -68,107 +80,6 @@ class SKY130Tech(HammerTechnology):
             ]
         else:
             raise ValueError(f"Incorrect standard cell library selection: {slib}")
-        # Generate IO cells unless we're using the Cadence stdcell lib (see above comment about missing layers in tlef)
-        # nvm we need to do this 
-        if True: # slib != "sky130_scl":
-            library = "sky130_fd_io"
-            SKYWATER_LIBS = os.path.join("$SKY130A", "libs.ref", library)
-            LIBRARY_PATH = os.path.join(SKY130A, "libs.ref", library, "lib")
-            lib_corner_files = os.listdir(LIBRARY_PATH)
-            lib_corner_files.sort()
-            for cornerfilename in lib_corner_files:
-                # Skip versions with no internal power
-                if "nointpwr" in cornerfilename:
-                    continue
-
-                tmp = cornerfilename.replace(".lib", "")
-                # Split into cell, and corner strings
-                # Resulting list if only one ff/ss/tt in name: [<cell_name>, <match 'ff'?>, <match 'ss'?>, <match 'tt'?>, <temp & voltages>]
-                # Resulting list if ff_ff/ss_ss/tt_tt in name: [<cell_name>, <match 'ff'?>, <match 'ss'?>, <match 'tt'?>, '', <match 'ff'?>, <match 'ss'?>, <match 'tt'?>, <temp & voltages>]
-                split_cell_corner = re.split("_(ff)|_(ss)|_(tt)", tmp)
-                cell_name = split_cell_corner[0]
-                process = split_cell_corner[1:-1]
-                temp_volt = split_cell_corner[-1].split("_")[1:]
-
-                # Filter out cross corners (e.g ff_ss or ss_ff)
-                if len(process) > 3:
-                    if not functools.reduce(
-                        lambda x, y: x and y,
-                        map(lambda p, q: p == q, process[0:3], process[4:]),
-                        True,
-                    ):
-                        continue
-                # Determine actual corner
-                speed = next(c for c in process if c is not None).replace("_", "")
-                if speed == "ff":
-                    speed = "fast"
-                if speed == "tt":
-                    speed = "typical"
-                if speed == "ss":
-                    speed = "slow"
-
-                temp = temp_volt[0]
-                temp = temp.replace("n", "-")
-                temp = temp.split("C")[0] + " C"
-
-                vdd = (".").join(temp_volt[1].split("v")) + " V"
-                # Filter out IO/analog voltages that are not high voltage
-                if temp_volt[2].startswith("1"):
-                    continue
-                if len(temp_volt) == 4:
-                    if temp_volt[3].startswith("1"):
-                        continue
-
-                # gpiov2_pad_wrapped has separate GDS
-                if cell_name == "sky130_ef_io__gpiov2_pad_wrapped":
-
-                    file_lib = "sky130_ef_io"
-                    gds_file = cell_name + ".gds"
-                    lef_file = os.path.join(
-                        SKY130A, "libs.ref", library, "lef", "sky130_ef_io.lef"
-                    )
-                    if self.get_setting("vlsi.core.lvs_tool")   == "hammer.lvs.pegasus" and slib == "sky130_scl":
-                        spice_file = None
-                    else:
-                        spice_file = os.path.join(SKYWATER_LIBS, "cdl", file_lib + ".cdl")
-                elif "sky130_ef_io" in cell_name:
-                    file_lib = "sky130_ef_io"
-                    gds_file = file_lib + ".gds"
-                    lef_file = os.path.join(
-                        SKY130A, "libs.ref", library, "lef", "sky130_ef_io.lef"
-                    )
-                    # if self.get_setting("vlsi.core.lvs_tool")   == "hammer.lvs.pegasus" and slib == "sky130_scl":
-                    #     spice_file = None
-                    # else:
-                    #     spice_file = os.path.join(SKYWATER_LIBS, "cdl", file_lib + ".cdl")
-                    # either manually include the modified netlist (calibre) or blackbox (pegasus)
-                    spice_file = None
-                else:
-                    # either manually include the modified netlist (calibre) or blackbox (pegasus)
-                    if "sky130_fd_io" in cell_name: #  and self.get_setting("vlsi.core.lvs_tool")   == "hammer.lvs.pegasus" :
-                    # going to blackbox these
-                        spice_file = None
-                    else:
-                        spice_file = os.path.join(
-                            SKYWATER_LIBS, "spice", file_lib + ".spice"
-                        )
-                    file_lib = library
-                    gds_file = file_lib + ".gds"
-                    lef_file = os.path.join(SKYWATER_LIBS, "lef", file_lib + ".lef")
-
-                lib_entry = Library(
-                    nldm_liberty_file=os.path.join(
-                        SKYWATER_LIBS, "lib", cornerfilename
-                    ),
-                    verilog_sim=os.path.join(SKYWATER_LIBS, "verilog", file_lib + ".v"),
-                    lef_file=lef_file,
-                    spice_file=spice_file,
-                    gds_file=os.path.join(SKYWATER_LIBS, "gds", gds_file),
-                    corner=Corner(nmos=speed, pmos=speed, temperature=temp),
-                    supplies=Supplies(VDD=vdd, GND="0 V"),
-                    provides=[Provide(lib_type=cell_name, vt="RVT")],
-                )
-                libs.append(lib_entry)
 
         # Stdcell library-dependent lists
         stackups = []  # type: List[Stackup]
@@ -176,9 +87,11 @@ class SKY130Tech(HammerTechnology):
         dont_use = []  # type: List[Cell]
         spcl_cells = []  # type: List[SpecialCell]
 
+        # base path -> list of corners
+        lib_corner_files = {}
+
         # Select standard cell libraries
         if slib == "sky130_fd_sc_hd":
-
             phys_only = [
                 "sky130_fd_sc_hd__tap_1",
                 "sky130_fd_sc_hd__tap_2",
@@ -243,10 +156,10 @@ class SKY130Tech(HammerTechnology):
                     output_ports=["X"],
                 ),
                 # this breaks synthesis with a complaint about "Cannot perform synthesis because libraries do not have usable inverters." from Genus.
-                # note that innovus still recognizes and uses this cell as a buffer 
-                #SpecialCell(
-                    #cell_type=CellType("ctsbuffer"), name=["sky130_fd_sc_hd__clkbuf_1"]
-                    #),
+                # note that innovus still recognizes and uses this cell as a buffer
+                # SpecialCell(
+                # cell_type=CellType("ctsbuffer"), name=["sky130_fd_sc_hd__clkbuf_1"]
+                # ),
             ]
 
             # Generate standard cell library
@@ -255,56 +168,11 @@ class SKY130Tech(HammerTechnology):
             # scl vs 130a have different site names
             sites = None
 
-            SKYWATER_LIBS = os.path.join("$SKY130A", "libs.ref", library)
-            LIBRARY_PATH = os.path.join(SKY130A, "libs.ref", library, "lib")
-            lib_corner_files = os.listdir(LIBRARY_PATH)
-            lib_corner_files.sort()
-            for cornerfilename in lib_corner_files:
-                if not (
-                    "sky130" in cornerfilename
-                ):  # cadence doesn't use the lib name in their corner libs
-                    continue
-                if "ccsnoise" in cornerfilename:
-                    continue  # ignore duplicate corner.lib/corner_ccsnoise.lib files
-
-                tmp = cornerfilename.replace(".lib", "")
-                if tmp + "_ccsnoise.lib" in lib_corner_files:
-                    cornerfilename = (
-                        tmp + "_ccsnoise.lib"
-                    )  # use ccsnoise version of lib file
-
-                cornername = tmp.split("__")[1]
-                cornerparts = cornername.split("_")
-
-                speed = cornerparts[0]
-                if speed == "ff":
-                    speed = "fast"
-                if speed == "tt":
-                    speed = "typical"
-                if speed == "ss":
-                    speed = "slow"
-
-                temp = cornerparts[1]
-                temp = temp.replace("n", "-")
-                temp = temp.split("C")[0] + " C"
-
-                vdd = cornerparts[2]
-                vdd = vdd.split("v")[0] + "." + vdd.split("v")[1] + " V"
-
-                lib_entry = Library(
-                    nldm_liberty_file=os.path.join(
-                        SKYWATER_LIBS, "lib", cornerfilename
-                    ),
-                    verilog_sim=os.path.join("cache", library + ".v"),
-                    lef_file=os.path.join(SKYWATER_LIBS, "lef", library + ".lef"),
-                    spice_file=os.path.join("cache", library + ".cdl"),
-                    gds_file=os.path.join(SKYWATER_LIBS, "gds", library + ".gds"),
-                    corner=Corner(nmos=speed, pmos=speed, temperature=temp),
-                    supplies=Supplies(VDD=vdd, GND="0 V"),
-                    provides=[Provide(lib_type="stdcell", vt="RVT")],
-                )
-
-                libs.append(lib_entry)
+            STDCELL_LIBRARY_BASE_PATH = os.path.join(SKY130A, "libs.ref", library)
+            lib_corner_files[STDCELL_LIBRARY_BASE_PATH] = os.listdir(
+                os.path.join(STDCELL_LIBRARY_BASE_PATH, "lib")
+            )
+            lib_corner_files[STDCELL_LIBRARY_BASE_PATH].sort()
 
             # Generate stackup
             tlef_path = os.path.join(
@@ -333,27 +201,26 @@ class SKY130Tech(HammerTechnology):
                     path="$SKY130_CDS/Sky130_LVS/sky130.lvs.pvl",
                 ),
             ]
-            drc_decks = (
-                [
-                    DRCDeck(
-                        tool_name="calibre",
-                        deck_name="calibre_drc",
-                        path="$SKY130_NDA/s8/V2.0.1/DRC/Calibre/s8_drcRules",
-                    ),
-                    DRCDeck(
-                        tool_name="klayout",
-                        deck_name="klayout_drc",
-                        path="$SKY130A/libs.tech/klayout/drc/sky130A.lydrc",
-                    ),
-                    DRCDeck(
-                        tool_name="pegasus",
-                        deck_name="pegasus_drc",
-                        path="$SKY130_CDS/Sky130_DRC/sky130_rev_0.0_1.0.drc.pvl",
-                    ),
-                ]
-            )
+            drc_decks = [
+                DRCDeck(
+                    tool_name="calibre",
+                    deck_name="calibre_drc",
+                    path="$SKY130_NDA/s8/V2.0.1/DRC/Calibre/s8_drcRules",
+                ),
+                DRCDeck(
+                    tool_name="klayout",
+                    deck_name="klayout_drc",
+                    path="$SKY130A/libs.tech/klayout/drc/sky130A.lydrc",
+                ),
+                DRCDeck(
+                    tool_name="pegasus",
+                    deck_name="pegasus_drc",
+                    path="$SKY130_CDS/Sky130_DRC/sky130_rev_0.0_1.0.drc.pvl",
+                ),
+            ]
 
         elif slib == "sky130_scl":
+            # note: you need to manually include io cells in design.yml if using scl
 
             # The cadence PDK (as of version 0.0.3) doesn't seem to have tap nor decap cells, so par won't run (and if we forced it to, lvs would fail)
             spcl_cells = [
@@ -362,11 +229,13 @@ class SKY130Tech(HammerTechnology):
                 ),
                 SpecialCell(
                     cell_type="driver",
-                    name=["TBUFX1", "TBUFX4",  "TBUFX8"],
+                    name=["TBUFX1", "TBUFX4", "TBUFX8"],
                     input_ports=["A"],
                     output_ports=["Y"],
                 ),
-                SpecialCell(cell_type="ctsbuffer", name=["CLKBUFX2","CLKBUFX4", "CLKBUFX8" ]),
+                SpecialCell(
+                    cell_type="ctsbuffer", name=["CLKBUFX2", "CLKBUFX4", "CLKBUFX8"]
+                ),
                 SpecialCell(cell_type=CellType("ctsgate"), name=["ICGX1"]),
                 SpecialCell(
                     cell_type=CellType("tiehicell"), name=["TIEHI"], input_ports=["Y"]
@@ -378,60 +247,11 @@ class SKY130Tech(HammerTechnology):
 
             # Generate standard cell library
             library = slib
-
-            LIBRARY_PATH = os.path.join(SKY130_CDS_LIB, "lib")
-            lib_corner_files = os.listdir(LIBRARY_PATH)
-            lib_corner_files.sort()
-            for cornerfilename in lib_corner_files:
-                if not (
-                    "sky130" in cornerfilename
-                ):  # cadence doesn't use the lib name in their corner libs
-                    continue
-                if "ccsnoise" in cornerfilename:
-                    continue  # ignore duplicate corner.lib/corner_ccsnoise.lib files
-
-                tmp = cornerfilename.replace(".lib", "")
-                if tmp + "_ccsnoise.lib" in lib_corner_files:
-                    cornerfilename = (
-                        tmp + "_ccsnoise.lib"
-                    )  # use ccsnoise version of lib file
-
-                cornername = tmp.replace("sky130_", "")
-                cornerparts = cornername.split("_")
-
-                # Hardcode corner annotations since they don't exactly match the sky130a
-                speed = cornerparts[0]
-                vdd = ""
-                temp = ""
-                if speed == "ff":
-                    temp = "-40 C"
-                    vdd = "1.95 V"
-                    speed = "fast"
-                if speed == "tt":
-                    vdd = "1.80 V"
-                    temp = "25 C"
-                    speed = "typical"
-                if speed == "ss":
-                    vdd = "1.60 V"
-                    speed = "slow"
-                    temp = "100 C"
-
-                lib_entry = Library(
-                    nldm_liberty_file=os.path.join(
-                        SKY130_CDS_LIB, "lib", cornerfilename
-                    ),
-                    verilog_sim=os.path.join(
-                        SKY130_CDS_LIB, "verilog", library + "_9T.v"
-                    ),
-                    lef_file=os.path.join(SKY130_CDS_LIB, "lef", library + "_9T.lef"),
-                    spice_file=os.path.join(SKY130_CDS_LIB, "cdl", library + "_9T.cdl"),
-                    gds_file=os.path.join(SKY130_CDS_LIB, "gds", library + "_9T.gds"),
-                    corner=Corner(nmos=speed, pmos=speed, temperature=temp),
-                    supplies=Supplies(VDD=vdd, GND="0 V"),
-                    provides=[Provide(lib_type="stdcell", vt="RVT")],
-                )
-
-                libs.append(lib_entry)
+            STDCELL_LIBRARY_BASE_PATH = SKY130_CDS_LIB
+            lib_corner_files[STDCELL_LIBRARY_BASE_PATH] = os.listdir(
+                os.path.join(STDCELL_LIBRARY_BASE_PATH, "lib")
+            )
+            lib_corner_files[STDCELL_LIBRARY_BASE_PATH].sort()
 
             # Generate stackup
             metals = []  # type: List[Metal]
@@ -451,9 +271,6 @@ class SKY130Tech(HammerTechnology):
             ]
 
             lvs_decks = [
-                # LVSDeck(tool_name="calibre", deck_name="calibre_lvs",
-                # path="$SKY130_NDA/s8/V2.0.1/LVS/Calibre/lvsRules_s8"),
-                # seems like cadence just hasthis hardcoded lvs deck name?
                 LVSDeck(
                     tool_name="pegasus",
                     deck_name="pegasus_lvs",
@@ -473,6 +290,130 @@ class SKY130Tech(HammerTechnology):
         else:
             raise ValueError(f"Incorrect standard cell library selection: {slib}")
 
+        # add skywater io cells
+        io_library_base_path = os.path.join(SKY130A, "libs.ref", "sky130_fd_io")
+        lib_corner_files[io_library_base_path] = os.listdir(
+            os.path.join(io_library_base_path, "lib")
+        )
+
+        for library_base_path, cornerfiles in lib_corner_files.items():
+            for cornerfilename in cornerfiles:
+                if "sky130" not in cornerfilename:
+                    # cadence doesn't use the lib name in their corner libs
+                    continue
+                if "ccsnoise" in cornerfilename:
+                    continue  # ignore duplicate corner.lib/corner_ccsnoise.lib files
+
+                tmp = cornerfilename.replace(".lib", "")
+                if tmp + "_ccsnoise.lib" in lib_corner_files:
+                    cornerfilename = (
+                        tmp + "_ccsnoise.lib"
+                    )  # use ccsnoise version of lib file
+
+                split_cell_corner = re.split("_(ff)|_(ss)|_(tt)", tmp)
+                cell_name = split_cell_corner[0]
+                library = tmp.split("__")[0]
+                process = split_cell_corner[1:-1]
+                temp_volt = split_cell_corner[-1].split("_")[1:]
+
+                # Filter out cross corners (e.g ff_ss or ss_ff)
+                if len(process) > 3:
+                    if not functools.reduce(
+                        lambda x, y: x and y,
+                        map(lambda p, q: p == q, process[0:3], process[4:]),
+                        True,
+                    ):
+                        continue
+                # Determine actual corner
+                speed = next(c for c in process if c is not None).replace("_", "")
+                if speed == "ff":
+                    speed = "fast"
+                elif speed == "tt":
+                    speed = "typical"
+                elif speed == "ss":
+                    speed = "slow"
+                else:
+                    self.logger.info(
+                        "Skipping lib with unsupported corner: {}".format(speed)
+                    )
+                    continue
+
+                temp = temp_volt[0]
+                temp = temp.replace("n", "-")
+                temp = temp.split("C")[0] + " C"
+
+                vdd = (".").join(temp_volt[1].split("v")) + " V"
+                
+                cdl_path = self.override_if_present_in_cache_or_extra_libraries(os.path.join(library_base_path, "cdl", library + ".cdl"))
+                spice_path = self.override_if_present_in_cache_or_extra_libraries(os.path.join(library_base_path, "spice", library + ".spice"))
+                cdl_overriden = library_base_path not in cdl_path
+                spice_overriden = library_base_path not in spice_path
+                assert not (spice_overriden and cdl_overriden), "both spice and cdl netlists were overriden! this is ambiguous :("
+
+                netlist_path = spice_path if os.path.exists(spice_path) and not cdl_overriden else cdl_path
+
+                lib_entry = Library(
+                    nldm_liberty_file=self.override_if_present_in_cache_or_extra_libraries(
+                        os.path.join(library_base_path, "lib", cornerfilename)
+                    ),
+                    verilog_sim=self.override_if_present_in_cache_or_extra_libraries(
+                        os.path.join(
+                            SKY130_CDS_LIB,
+                            "verilog",
+                            library + "_9T.v" if slib == "sky130_scl" else ".v",
+                        )
+                    ),
+                    lef_file=self.override_if_present_in_cache_or_extra_libraries(
+                        os.path.join(library_base_path, "lef", library + ".lef")
+                    ),
+                    spice_file=netlist_path,
+                    gds_file=os.path.join(library_base_path, "gds", library + ".gds"),
+                    corner=Corner(nmos=speed, pmos=speed, temperature=temp),
+                    supplies=Supplies(VDD=vdd, GND="0 V"),
+                    provides=[Provide(lib_type="stdcell", vt="RVT")],
+                )
+                libs.append(lib_entry)
+
+                if "sky130_fd_io" in library_base_path:
+                    # these are seperate from the io gds
+                    extra_gds_files = [
+                        "sky130_ef_io__analog.gds",
+                        "sky130_ef_io__disconnect_vccd_slice_5um.gds",
+                        "sky130_ef_io__gpiov2_pad_wrapped.gds",
+                        "sky130_ef_io__bare_pad.gds",
+                        "sky130_ef_io__disconnect_vdda_slice_5um.gds",
+                        "sky130_ef_io__connect_vcchib_vccd_and_vswitch_vddio_slice_20um.gds",
+                        "sky130_ef_io.gds",
+                    ]
+                    for extra_gds_file in extra_gds_files:
+
+                        lib_entry = Library(
+                            nldm_liberty_file=self.override_if_present_in_cache_or_extra_libraries(
+                                os.path.join(library_base_path, "lib", cornerfilename),
+                            ),
+                            verilog_sim=self.override_if_present_in_cache_or_extra_libraries(
+                                os.path.join(
+                                    SKY130_CDS_LIB,
+                                    "verilog",
+                                    library + "_9T.v" if slib == "sky130_scl" else ".v",
+                                ),
+                            ),
+                            lef_file=self.override_if_present_in_cache_or_extra_libraries(
+                                os.path.join(
+                                    library_base_path, "lef", library + ".lef"
+                                ),
+                            ),
+                            spice_file=netlist_path,
+                            gds_file=self.override_if_present_in_cache_or_extra_libraries(
+                                os.path.join(library_base_path, "gds", extra_gds_file),
+                            ),
+                            corner=Corner(nmos=speed, pmos=speed, temperature=temp),
+                            supplies=Supplies(VDD=vdd, GND="0 V"),
+                            provides=[Provide(lib_type="stdcell", vt="RVT")],
+                        )
+                        libs.append(lib_entry)
+
+        # TODO rename this to TechConfig or something, since we don';t use json
         self.config = TechJSON(
             name="Skywater 130nm Library",
             grid_unit="0.001",
@@ -508,9 +449,8 @@ class SKY130Tech(HammerTechnology):
             self.setup_cdl()
             self.setup_verilog()
         self.setup_techlef()
-        #self.setup_io_lefs()
-        print('Loaded Sky130 Tech')
-
+        # self.setup_io_lefs()
+        print("Loaded Sky130 Tech")
 
     def setup_cdl(self) -> None:
         """Copy and hack the cdl, replacing pfet_01v8_hvt/nfet_01v8 with
@@ -591,7 +531,7 @@ class SKY130Tech(HammerTechnology):
                     )
                     df.write(line)
 
-# TODO(elamdf): check if this is still required
+        # TODO(elamdf): check if this is still required
         # # Additionally hack out the specifies
         # sl = []
         # with open(dest_path, "r") as sf:
@@ -690,18 +630,13 @@ class SKY130Tech(HammerTechnology):
                 / f"{self.library_name}__nom.tlef"
             )
             dest_path = cache_tech_dir_path / f"{self.library_name}__nom.tlef"
-        else: 
+        else:
             setting_dir = self.get_setting("technology.sky130.sky130_scl")
             setting_dir = Path(setting_dir)
-            source_path = (
-                setting_dir
-                / "lef"
-                / "sky130_scl_9T.tlef"
-            )
+            source_path = setting_dir / "lef" / "sky130_scl_9T.tlef"
             dest_path = cache_tech_dir_path / "sky130_scl_9T.tlef"
         if not source_path.exists():
             raise FileNotFoundError(f"Tech-LEF not found: {source_path}")
-
 
         with open(source_path, "r") as sf:
             with open(dest_path, "w") as df:
@@ -710,7 +645,10 @@ class SKY130Tech(HammerTechnology):
                 )
                 for line in sf:
                     df.write(line)
-                    if self.get_setting("technology.sky130.stdcell_library") == "sky130_scl":
+                    if (
+                        self.get_setting("technology.sky130.stdcell_library")
+                        == "sky130_scl"
+                    ):
                         if line.strip() == "END poly":
                             df.write(_the_tlef_edit + _additional_tlef_edit_for_scl)
                     else:
@@ -762,36 +700,53 @@ class SKY130Tech(HammerTechnology):
 
     # Power pins for clamps must be CLASS CORE
     def setup_io_lefs(self) -> None:
-        sky130A_path = Path(self.get_setting('technology.sky130.sky130A'))
-        source_path = sky130A_path / 'libs.ref' / 'sky130_fd_io' / 'lef' / 'sky130_ef_io.lef'
+        sky130A_path = Path(self.get_setting("technology.sky130.sky130A"))
+        source_path = (
+            sky130A_path / "libs.ref" / "sky130_fd_io" / "lef" / "sky130_ef_io.lef"
+        )
         if not source_path.exists():
             raise FileNotFoundError(f"IO LEF not found: {source_path}")
 
         cache_tech_dir_path = Path(self.cache_dir)
         os.makedirs(cache_tech_dir_path, exist_ok=True)
-        dest_path = cache_tech_dir_path / 'sky130_ef_io.lef'
+        dest_path = cache_tech_dir_path / "sky130_ef_io.lef"
 
-        with open(source_path, 'r') as sf:
-            with open(dest_path, 'w') as df:
-                self.logger.info("Modifying IO LEF: {} -> {}".format
-                    (source_path, dest_path))
+        with open(source_path, "r") as sf:
+            with open(dest_path, "w") as df:
+                self.logger.info(
+                    "Modifying IO LEF: {} -> {}".format(source_path, dest_path)
+                )
                 sl = sf.readlines()
-                for net in ['VCCD1', 'VSSD1', 'VDDA', 'VSSA', 'VSSIO']:
-                    start = [idx for idx,line in enumerate(sl) if 'PIN ' + net in line]
-                    end = [idx for idx,line in enumerate(sl) if 'END ' + net in line]
+                for net in ["VCCD1", "VSSD1", "VDDA", "VSSA", "VSSIO"]:
+                    start = [idx for idx, line in enumerate(sl) if "PIN " + net in line]
+                    end = [idx for idx, line in enumerate(sl) if "END " + net in line]
                     intervals = zip(start, end)
                     for intv in intervals:
-                        port_idx = [idx for idx,line in enumerate(sl[intv[0]:intv[1]]) if 'PORT' in line and "met3" in sl[intv[0] + idx + 1]]
+                        port_idx = [
+                            idx
+                            for idx, line in enumerate(sl[intv[0] : intv[1]])
+                            if "PORT" in line and "met3" in sl[intv[0] + idx + 1]
+                        ]
                         for idx in port_idx:
-                            sl[intv[0]+idx]=sl[intv[0]+idx].replace('PORT', 'PORT\n      CLASS CORE ;')
+                            sl[intv[0] + idx] = sl[intv[0] + idx].replace(
+                                "PORT", "PORT\n      CLASS CORE ;"
+                            )
                 # force class to spacer
                 # TODO: the disconnect_* slices are also broken like this, but we're not using them
-                start = [idx for idx, line in enumerate(sl) if 'MACRO sky130_ef_io__connect_vcchib_vccd_and_vswitch_vddio_slice_20um' in line]
-                sl[start[0] + 1] = sl[start[0] + 1].replace('AREAIO', 'SPACER')
+                start = [
+                    idx
+                    for idx, line in enumerate(sl)
+                    if "MACRO sky130_ef_io__connect_vcchib_vccd_and_vswitch_vddio_slice_20um"
+                    in line
+                ]
+                sl[start[0] + 1] = sl[start[0] + 1].replace("AREAIO", "SPACER")
 
                 for idx, line in enumerate(sl):
                     if "PIN OUT" in line:
-                        sl[idx+1].replace("DIRECTION INPUT ;", "DIRECTION INPUT ;\n    ANTENNAGATEAREA 1.529 LAYER met3 ;")
+                        sl[idx + 1].replace(
+                            "DIRECTION INPUT ;",
+                            "DIRECTION INPUT ;\n    ANTENNAGATEAREA 1.529 LAYER met3 ;",
+                        )
 
                 df.writelines(sl)
 
@@ -809,7 +764,6 @@ class SKY130Tech(HammerTechnology):
         }
         # there are no cap/decap cells in the cadence stdcell library as of version 0.0.3, so we can't do things that reference them
         if self.get_setting("technology.sky130.stdcell_library") == "sky130_scl":
-
             hooks["innovus"].append(
                 HammerTool.make_replacement_hook(
                     "power_straps", power_rail_straps_no_tapcells
@@ -956,6 +910,7 @@ LVS_DECK_SCRUB_LINES = [
     "LVS REPORT",
 ]
 
+
 # various Innovus database settings
 def sky130_innovus_settings(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
@@ -1067,57 +1022,6 @@ add_endcaps
     return True
 
 
-# TODO(elamdf): port this from hammer-driver once rebase is done
-# def efabless_ring_io(ht: HammerTool) -> bool:
-#     assert isinstance(ht, HammerPlaceAndRouteTool), "IO ring instantiation only for par"
-#     assert isinstance(ht, TCLTool), "IO ring instantiation can only run on TCL tools"
-#     io_file = ht.get_setting("technology.sky130.io_file")
-#     ht.append(f"read_io_file {io_file} -no_die_size_adjust")
-#     p_nets = list(map(lambda s: s.name, ht.get_independent_power_nets()))
-#     g_nets = list(map(lambda s: s.name, ht.get_independent_ground_nets()))
-#     ht.append(
-#         f"""
-# # Global net connections
-# connect_global_net VDDA -type pg_pin -pin_base_name VDDA -verbose
-# connect_global_net VDDIO -type pg_pin -pin_base_name VDDIO* -verbose
-# connect_global_net {p_nets[0]} -type pg_pin -pin_base_name VCCD* -verbose
-# connect_global_net {p_nets[0]} -type pg_pin -pin_base_name VCCHIB -verbose
-# connect_global_net {p_nets[0]} -type pg_pin -pin_base_name VSWITCH -verbose
-# connect_global_net {g_nets[0]} -type pg_pin -pin_base_name VSSA -verbose
-# connect_global_net {g_nets[0]} -type pg_pin -pin_base_name VSSIO* -verbose
-# connect_global_net {g_nets[0]} -type pg_pin -pin_base_name VSSD* -verbose
-#     """
-#     )
-#     ht.append(
-#         """
-# # IO fillers
-# set io_fillers {sky130_ef_io__connect_vcchib_vccd_and_vswitch_vddio_slice_20um sky130_ef_io__com_bus_slice_10um sky130_ef_io__com_bus_slice_5um sky130_ef_io__com_bus_slice_1um}
-# add_io_fillers -prefix IO_FILLER -io_ring 1 -cells $io_fillers -side top -filler_orient r0
-# add_io_fillers -prefix IO_FILLER -io_ring 1 -cells $io_fillers -side right -filler_orient r270
-# add_io_fillers -prefix IO_FILLER -io_ring 1 -cells $io_fillers -side bottom -filler_orient r180
-# add_io_fillers -prefix IO_FILLER -io_ring 1 -cells $io_fillers -side left -filler_orient r90
-# # Fix placement
-# set io_filler_insts [get_db insts IO_FILLER_*]
-# set_db $io_filler_insts .place_status fixed
-#     """
-#     )
-#     # An offset of 40um is used to place the core ring inside the core area. It
-#     # can be decreased down to 5um as desired, but will require additional
-#     # routing / settings to connect the core power stripes to the ring.
-#     ht.append(
-#         f"""
-# # Core ring
-# add_rings -follow io -layer met5 -nets {{ {p_nets[0]} {g_nets[0]} }} -offset 40 -width 13 -spacing 3
-# route_special -connect pad_pin -nets {{ {p_nets[0]} {g_nets[0]} }} -detailed_log
-#     """
-#     )
-#     ht.append(
-#         """
-# # Prevent buffering on TIE_LO_ESD and TIE_HI_ESD
-# set_dont_touch [get_db [get_db pins -if {.name == *TIE*ESD}] .net]
-#     """
-#     )
-#     return True
 
 
 def power_rail_straps_no_tapcells(ht: HammerTool) -> bool:
@@ -1186,6 +1090,7 @@ add_stripes -create_pins 1 -block_ring_bottom_layer_limit met5 -block_ring_top_l
     return True
 
 
+# TODO do we want this to be in upstream hammer?
 # def efabless_ring_io(ht: HammerTool) -> bool:
 #     assert isinstance(ht, HammerPlaceAndRouteTool), "IO ring instantiation only for par"
 #     assert isinstance(ht, TCLTool), "IO ring instantiation can only run on TCL tools"
@@ -1222,6 +1127,7 @@ add_stripes -create_pins 1 -block_ring_bottom_layer_limit met5 -block_ring_top_l
 #         set_dont_touch [get_db [get_db pins -if {.name == *TIE*ESD}] .net]
 #     ''')
 #     return True
+
 
 def calibre_drc_blackbox_srams(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerDRCTool), "Exlude SRAMs only in DRC"
@@ -1265,7 +1171,7 @@ def pegasus_lvs_add_130a_primitives(ht: HammerTool) -> bool:
     for name in SKY130Tech.sky130_sram_primitive_names():
         lvs_box += f"""\nschematic_path "{name}" spice;"""
     # this is because otherwise lvs crashes with tons of stdcell-level pin mismatches
-    lvs_box += f"""\nlvs_inconsistent_reduction_threshold -none;"""
+    lvs_box += """\nlvs_inconsistent_reduction_threshold -none;"""
     run_file = ht.lvs_ctl_file  # type: ignore
     with open(run_file, "r+") as f:
         # Remove SRAM SPICE file includes.
@@ -1284,7 +1190,7 @@ def pegasus_lvs_blackbox_srams(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerLVSTool), "Blackbox and filter SRAMs only in LVS"
     lvs_box = ""
     for name in (
-        SKY130Tech.sky130_sram_names() # + SKY130Tech.sky130_sram_primitive_names()
+        SKY130Tech.sky130_sram_names()  # + SKY130Tech.sky130_sram_primitive_names()
     ):
         lvs_box += f"\nlvs_black_box {name} -gray"
     run_file = ht.lvs_ctl_file  # type: ignore
@@ -1311,35 +1217,33 @@ def sram22_lvs_recognize_gates_all(ht: HammerTool) -> bool:
     return True
 
 
-
-
-
 def setup_calibre_lvs_deck(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerLVSTool), "Modify Calibre LVS deck for LVS only"
     # Remove conflicting specification statements found in PDK LVS decks
-    pattern = '.*({}).*\n'.format('|'.join(LVS_DECK_SCRUB_LINES))
+    pattern = ".*({}).*\n".format("|".join(LVS_DECK_SCRUB_LINES))
     matcher = re.compile(pattern)
 
-    source_paths = ht.get_setting('technology.sky130.lvs_deck_sources')
+    source_paths = ht.get_setting("technology.sky130.lvs_deck_sources")
     lvs_decks = ht.technology.config.lvs_decks
     if not lvs_decks:
         return True
-    for i,deck in enumerate(lvs_decks):
-        if deck.tool_name != 'calibre': continue
+    for i, deck in enumerate(lvs_decks):
+        if deck.tool_name != "calibre":
+            continue
         try:
             source_path = Path(source_paths[i])
         except IndexError:
-            ht.logger.error(
-                'No corresponding source for LVS deck {}'.format(deck))
+            ht.logger.error("No corresponding source for LVS deck {}".format(deck))
             continue
         if not source_path.exists():
             raise FileNotFoundError(f"LVS deck not found: {source_path}")
         dest_path = deck.path
         ht.technology.ensure_dirs_exist(dest_path)
-        with open(source_path, 'r') as sf:
-            with open(dest_path, 'w') as df:
-                ht.logger.info("Modifying LVS deck: {} -> {}".format
-                    (source_path, dest_path))
+        with open(source_path, "r") as sf:
+            with open(dest_path, "w") as df:
+                ht.logger.info(
+                    "Modifying LVS deck: {} -> {}".format(source_path, dest_path)
+                )
                 df.write(matcher.sub("", sf.read()))
                 df.write(LVS_DECK_INSERT_LINES)
     return True
