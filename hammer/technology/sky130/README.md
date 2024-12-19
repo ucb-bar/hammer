@@ -6,16 +6,42 @@ Hammer supports the Skywater 130nm Technology process. The [SkyWater Open Source
 PDK Setup
 ---------
 
-All Sky130 PDK files required for the Hammer VLSI flow can now be [installed via conda](https://anaconda.org/litex-hub/open_pdks.sky130a) by running:
+The Skywater 130nm PDK files are located in a repo called [skywater-pdk](https://github.com/google/skywater-pdk/). A tool called [Open-PDKs (open_pdks)](https://github.com/RTimothyEdwards/open_pdks/) was developed to generate all the files typically found in a PDK.
+Open-PDKs uses the contents in `skywater-pdk`, and outputs files to a directory called `sky130A`.
 
-# TODO(elamdf) bring back manual pdk docs
+This will take around 40-50GB of disk space as of September 2024.
+
 ### PDK Install
 
 ```shell
-conda install -c litex-hub open_pdks.sky130a
+# create a root directory that will contain all PDK files and supporting tools (install size is ~42GB)
+export PREFIX=/path/to/install/root
+mkdir -p $PREFIX
+cd $PREFIX
+
+# install magic via conda, required for open_pdks
+conda create -y -c litex-hub --prefix $PREFIX/.conda-signoff magic
+export PATH=$PREFIX/.conda-signoff/bin:$PATH
+
+# clone required repos
+git clone https://github.com/google/skywater-pdk.git
+# rev 7198cf647113f56041e02abf3eb623692820c5e1
+git clone https://github.com/RTimothyEdwards/open_pdks.git
+# rev 320597ea84b2816eb2fcc4fbe10c3874f19c92fc
+
+# install Sky130 PDK via Open-PDKs
+#    we disable some install steps to save time
+cd $PREFIX/open_pdks
+./configure \
+    --enable-sky130-pdk=${PREFIX}/skywater-pdk/libraries --prefix=$PREFIX \
+    --disable-gf180mcu-pdk --disable-alpha-sky130 --disable-xschem-sky130 --disable-primitive-gf180mcu \
+    --disable-verification-gf180mcu --disable-io-gf180mcu --disable-sc-7t5v0-gf180mcu \
+    --disable-sc-9t5v0-gf180mcu --disable-sram-gf180mcu --disable-osu-sc-gf180mcu
+make
+make install
 ```
 
-We recommend using the conda install, but the [manual PDK setup is documented below](#manual-pdk-setup) (although it may be outdated).
+This generates all the Sky130 PDK files and installs them to `$PREFIX/share/pdk/sky130A`
 
 Now in your Hammer YAML configs, point to the location of this install:
 
@@ -23,22 +49,6 @@ Now in your Hammer YAML configs, point to the location of this install:
 technology.sky130.sky130A: "<PREFIX>/share/pdk/sky130A"
 ```
 
-### Cadence PDK
-
-Cadence has also created a PDK and standard cell library based on the original open PDK, and optimized for use with Cadence tools. Usage of this PDK is purely optional, but enables DRC/LVS with Pegasus, and IR drop analysis with Voltus.
-
-You can download them from [here](https://support.cadence.com/apex/ArticleAttachmentPortal?id=a1Od000000051TqEAI&pageName=ArticleContent) (Cadence Support account is required). After downloading and untar-ing the packages, point to the location of this install:
-
-```yaml
-technology.sky130.sky130_cds: "<path/to/sky130_pdk>"
-technology.sky130.sky130_scl: "<path/to/sky130_scl>"
-```
-
-To select this standard cell library (instead of the default `sky130_fd_sc_hd`):
-
-```yaml
-technology.sky130.stdcell_library: "sky130_scl"
-```
 
 SRAM Macros
 -----------
@@ -68,12 +78,10 @@ navigate to ``./extra/[sram22|openram]`` and run the script ``./sram-cache-gen.p
 
 IO Library
 ----------
-<<<<<<< HEAD
 
 The IO ring required by efabless for MPW/ChipIgnite can be created in Innovus using the `sky130_fd_io` and `sky130_ef_io `IO cell libraries. Here are the steps to use them:
 
 1. `extra/efabless_template.io` is a template IO file. You should modify this by replacing the `<inst_path>`s with the netlist paths to your GPIO & analog pads. **DO NOT MODIFY ANY POSITIONS OR REPLACE CLAMP CELLS WITH IO CELLS**.
-<<<<<<< HEAD
 
     a. For pad assignment: the ordering in the instance lists are from left to right (for top/bottom edges) and **bottom to top (for left/right edges)**.
 
@@ -123,79 +131,6 @@ The IO ring required by efabless for MPW/ChipIgnite can be created in Innovus us
 4. If you want to use the NDA s8iom0s8 library, you must include the `s8io.yml` file with `-p` on the `hammer-vlsi` command line, and then change the cells to that library in the IO file. Net names in the hook above will need to be lower-cased.
 
 5. DRC requires a rectangle of `areaid.lowTapDensity` (GDS layer 81/14) around the core area to check latchup correctly. Currently, this is not yet implemented in Hammer, and will need to be added manually in a GDS editor after GDS streamout.
-
-NDA Files
----------
-The NDA version of the Sky130 PDK is only required for Siemens Calibre to perform DRC/LVS signoff with the commercial VLSI flow.
-It is NOT REQUIRED for the remaining commercial flow, as well as the open-source tool flow.
-Therefore this NDA PDK is not used to generate a GDS.
-
-If you have access to the NDA repo, you should add this path to your Hammer YAML configs:
-
-```yaml
-technology.sky130.sky130_nda: "/path/to/skywater-src-nda"
-```
-
-We use the Calibre decks in the ``s8`` PDK, version ``V2.0.1``, 
-see [here for the DRC deck path](https://github.com/ucb-bar/hammer/blob/612b4b662a774b1cab5cf25e8f41c6a771388e47/hammer/technology/sky130/sky130.tech.json#L16) 
-and [here for the LVS deck path](https://github.com/ucb-bar/hammer/blob/612b4b662a774b1cab5cf25e8f41c6a771388e47/hammer/technology/sky130/sky130.tech.json#L24).
-
-### Sky130 s8io Library
-
-The IO ring expected by efabless for MPW/ChipIgnite can be created in Innovus using the `sky130_fd_io` IO cell library. Here are the steps to use it:
-=======
-
-The IO ring required by efabless for MPW/ChipIgnite can be created in Innovus using the `sky130_fd_io` and `sky130_ef_io `IO cell libraries. Here are the steps to use them:
->>>>>>> e6d55b34 (typos, move section)
-
-1. `extra/efabless_template.io` is a template IO file. You should modify this by replacing the `<inst_path>`s with the paths to the IO cell instances in your netlist. **DO NOT MODIFY THE POSITIONS OF THE CELLS OR REPLACE CLAMP CELLS WITH IO CELLS**.
-=======
->>>>>>> 525f7eda (More clarity)
-
-    a. For pad assignment: the ordering in the instance lists are from left to right (for top/bottom edges) and **bottom to top (for left/right edges)**.
-
-    b. Refer to [this documentation](https://skywater-pdk.readthedocs.io/en/main/contents/libraries/sky130_fd_io/docs/user_guide.html) for how to configure the pins of the IO cells (not exhaustive).
-
-<<<<<<< HEAD
-    c. The `enable_inp_h` pin must be hard-tied to `tie_hi_esd` (or `tie_lo_esd`). Since this is at a higher voltage, this must be placed and routed as a wire only (no buffers can be inserted).
-=======
-    c. Your chip reset signal must go thru the `xres4v2` cell. Since this is in your netlist, you must remove the `cell=...` instantiation from your IO file (it is only in the template for clarity) and update the inst name. Otherwise a separate instance will be placed instead.
-
-<<<<<<< HEAD
-    d. The `enable_inp_h` pin must be hard-tied to `TIE_HI_ESD` or `TIE_LO_ESD`. Since this is at a higher voltage, verify that this is routed as a wire only (no buffers can be inserted).
->>>>>>> e6d55b34 (typos, move section)
-=======
-    d. The `ENABLE_INP_H` pin must be hard-tied to `TIE_HI_ESD` or `TIE_LO_ESD`. Since this is at a higher voltage, verify that this is routed as a wire only (no buffers can be inserted).
-
-    e. `ENABLE_H` must be low at chip startup before going high. Absent using the power detector cell from the NDA IO library, you may elect to connect this to a reset signal.
->>>>>>> 525f7eda (More clarity)
-
-2. Then, in your design YAML file, specify your IO file with the following. The top-level constraint must be exactly as below:
-
-        technology.sky130.io_file: <path/to/ring.io>
-        technology.sky130.io_file_meta: prependlocal
-
-        path: Top
-        type: toplevel
-        x: 0
-        y: 0
-        width: 3588
-        height: 5188
-        margins:
-          left: 200.1
-          right: 200.1
-          top: 201.28
-          bottom: 201.28
-
-3. In your CLIDriver, you must import the following hook from the tech plugin and insert it as a `post_insertion_hook` after `floorplan_design`.
-
-        from hammer.technology.sky130 import efabless_ring_io
-
-<<<<<<< HEAD
-4. If you want to use the NDA s8 library instead, you must include the `s8io.yml` file with `-p` on the `hammer-vlsi` command line.
-=======
-4. If you want to use the NDA s8iom0s8 library, you must include the `s8io.yml` file with `-p` on the `hammer-vlsi` command line, and then change the cells to that library in the IO file. Net names in the hook above will need to be lower-cased.
->>>>>>> 525f7eda (More clarity)
 
 NDA Files
 ---------
@@ -268,77 +203,4 @@ Documentation:
 
   * Additional useful documentation for the PDK
 
-
-## Manual PDK Setup
-
-### PDK Structure
-
-OpenLANE expects a certain file structure for the Sky130 PDK. 
-We recommend adhering to this file structure for Hammer as well.
-All the files reside in a root folder (named something like `skywater` or `sky130`).
-The environment variable `$PDK_ROOT` should be set to this folder's path:
-
-```shell
-export PDK_ROOT=<path-to-skywater-directory>
-```
-
-`$PDK_ROOT` contains the following:
-
-* `skywater-pdk`
-
-  * Original PDK source files
-
-* `open_pdks`
-
-  * install of Open-PDKs tool
-
-* `share/pdk/sky130A`
-
-  * output files from Open-PDKs compilation process
-
-
-### Prerequisites for PDK Setup
-
-* [Magic](http://opencircuitdesign.com/magic/)
-
-  * required for `open_pdks` file generation
-  * tricky to install, closely follow the directions on the `Install` page of the website
-  
-    * as the directions indicate, you will likely need to manually specify the location of the Tcl/Tk package installation using `--with-tcl` and `--with-tk`
- 
- If using conda, these installs alone caused the Magic install to work:
-
-```shell
-conda install -c intel tcl 
-conda install -c anaconda tk 
-conda install -c anaconda libglu
-```
-
-### PDK Install
-
-In `$PDK_ROOT`, clone the skywater-pdk repo and generate the liberty files for each library:
-
-```shell
-git clone https://github.com/google/skywater-pdk.git
-cd skywater-pdk
-# Expect a large download! ~7GB at time of writing.
-git submodule init libraries/*/latest
-git submodule update
-# Regenerate liberty files
-make timing
-```
-
-Again in `$PDK_ROOT`, clone the open_pdks repo and run the install process to generate the `sky130A` directory:
-
-```shell
-git clone https://github.com/RTimothyEdwards/open_pdks.git
-cd open_pdks
-./configure \
-    --enable-sky130-pdk=$PDK_ROOT/skywater-pdk/libraries \
-    --prefix=$PDK_ROOT \
-make
-make install
-```
-
-This generates all the Sky130 PDK files and installs them to `$PDK_ROOT/share/pdk/sky130A`
 
