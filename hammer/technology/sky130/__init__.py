@@ -233,10 +233,13 @@ class SKY130Tech(HammerTechnology):
                     input_ports=["A"],
                     output_ports=["Y"],
                 ),
-                SpecialCell(
-                    cell_type="ctsbuffer", name=["CLKBUFX2", "CLKBUFX4", "CLKBUFX8"]
-                ),
-                SpecialCell(cell_type=CellType("ctsgate"), name=["ICGX1"]),
+                # this breaks synthesis with a complaint about "Cannot perform synthesis because libraries do not have usable inverters." from Genus.
+                # note that innovus still recognizes and uses this cell as a buffer
+                # added for par with a hook `set_cts_base_cells`
+                # SpecialCell(
+                    # cell_type="ctsbuffer", name=["CLKBUFX2", "CLKBUFX4", "CLKBUFX8"]
+                # ),
+                # SpecialCell(cell_type=CellType("ctsgate"), name=["ICGX1"]),
                 SpecialCell(
                     cell_type=CellType("tiehicell"), name=["TIEHI"], input_ports=["Y"]
                 ),
@@ -304,53 +307,81 @@ class SKY130Tech(HammerTechnology):
                 if "ccsnoise" in cornerfilename:
                     continue  # ignore duplicate corner.lib/corner_ccsnoise.lib files
 
-                tmp = cornerfilename.replace(".lib", "")
+                tmp = cornerfilename.replace(".lib", "").strip("_nldm")
                 if tmp + "_ccsnoise.lib" in lib_corner_files:
                     cornerfilename = (
                         tmp + "_ccsnoise.lib"
                     )  # use ccsnoise version of lib file
 
-                split_cell_corner = re.split("_(ff)|_(ss)|_(tt)", tmp)
-                cell_name = split_cell_corner[0]
-                library = tmp.split("__")[0]
-                process = split_cell_corner[1:-1]
-                temp_volt = split_cell_corner[-1].split("_")[1:]
+                # different naming conventions
+                if "sky130A" in library_base_path:
+                    split_cell_corner = re.split("_(ff)|_(ss)|_(tt)", tmp)
+                    cell_name = split_cell_corner[0]
+                    library = tmp.split("__")[0]
+                    process = split_cell_corner[1:-1]
+                    temp_volt = split_cell_corner[-1].split("_")[1:]
 
-                # Filter out cross corners (e.g ff_ss or ss_ff)
-                if len(process) > 3:
-                    if not functools.reduce(
-                        lambda x, y: x and y,
-                        map(lambda p, q: p == q, process[0:3], process[4:]),
-                        True,
-                    ):
+                    # Filter out cross corners (e.g ff_ss or ss_ff)
+                    if len(process) > 3:
+                        if not functools.reduce(
+                            lambda x, y: x and y,
+                            map(lambda p, q: p == q, process[0:3], process[4:]),
+                            True,
+                        ):
+                            continue
+                    # Determine actual corner
+                    speed = next(c for c in process if c is not None).replace("_", "")
+                    temp = temp_volt[0]
+                    temp = temp.replace("n", "-")
+                    temp = temp.split("C")[0] + " C"
+
+                    vdd = (".").join(temp_volt[1].split("v")) + " V"
+                    if speed == "ff":
+                        speed = "fast"
+                    elif speed == "tt":
+                        speed = "typical"
+                    elif speed == "ss":
+                        speed = "slow"
+                    else:
+                        self.logger.info(
+                            "Skipping lib with unsupported corner: {}".format(speed)
+                        )
                         continue
-                # Determine actual corner
-                speed = next(c for c in process if c is not None).replace("_", "")
-                if speed == "ff":
-                    speed = "fast"
-                elif speed == "tt":
-                    speed = "typical"
-                elif speed == "ss":
-                    speed = "slow"
                 else:
-                    self.logger.info(
-                        "Skipping lib with unsupported corner: {}".format(speed)
-                    )
-                    continue
+                    library = "sky130_scl_9T"
+                    _, speed, vdd, temp = tmp.split("_")
 
-                temp = temp_volt[0]
-                temp = temp.replace("n", "-")
-                temp = temp.split("C")[0] + " C"
+                    # force equivalent operating conditions for speed, since they're different between sky130a and scl
+                    if speed == "ff":
+                        temp = "-40 C"
+                        vdd = "1.95 V"
+                        speed = "fast"
+                    if speed == "tt":
+                        vdd = "1.80 V"
+                        temp = "25 C"
+                        speed = "typical"
+                    if speed == "ss":
+                        vdd = "1.60 V"
+                        speed = "slow"
+                        temp = "100 C"
 
-                vdd = (".").join(temp_volt[1].split("v")) + " V"
-                
-                cdl_path = self.override_if_present_in_cache_or_extra_libraries(os.path.join(library_base_path, "cdl", library + ".cdl"))
-                spice_path = self.override_if_present_in_cache_or_extra_libraries(os.path.join(library_base_path, "spice", library + ".spice"))
+                cdl_path = self.override_if_present_in_cache_or_extra_libraries(
+                    os.path.join(library_base_path, "cdl", library + ".cdl")
+                )
+                spice_path = self.override_if_present_in_cache_or_extra_libraries(
+                    os.path.join(library_base_path, "spice", library + ".spice")
+                )
                 cdl_overriden = library_base_path not in cdl_path
                 spice_overriden = library_base_path not in spice_path
-                assert not (spice_overriden and cdl_overriden), "both spice and cdl netlists were overriden! this is ambiguous :("
+                assert not (
+                    spice_overriden and cdl_overriden
+                ), "both spice and cdl netlists were overriden! this is ambiguous :("
 
-                netlist_path = spice_path if os.path.exists(spice_path) and not cdl_overriden else cdl_path
+                netlist_path = (
+                    spice_path
+                    if os.path.exists(spice_path) and not cdl_overriden
+                    else cdl_path
+                )
 
                 lib_entry = Library(
                     nldm_liberty_file=self.override_if_present_in_cache_or_extra_libraries(
@@ -386,7 +417,6 @@ class SKY130Tech(HammerTechnology):
                         "sky130_ef_io.gds",
                     ]
                     for extra_gds_file in extra_gds_files:
-
                         lib_entry = Library(
                             nldm_liberty_file=self.override_if_present_in_cache_or_extra_libraries(
                                 os.path.join(library_base_path, "lib", cornerfilename),
@@ -650,7 +680,7 @@ class SKY130Tech(HammerTechnology):
                         == "sky130_scl"
                     ):
                         if line.strip() == "END poly":
-                            df.write(_the_tlef_edit + _additional_tlef_edit_for_scl)
+                            df.write(_additional_tlef_edit_for_scl + _the_tlef_edit)
                     else:
                         if line.strip() == "END pwell":
                             df.write(_the_tlef_edit)
@@ -764,10 +794,15 @@ class SKY130Tech(HammerTechnology):
         }
         # there are no cap/decap cells in the cadence stdcell library as of version 0.0.3, so we can't do things that reference them
         if self.get_setting("technology.sky130.stdcell_library") == "sky130_scl":
-            hooks["innovus"].append(
-                HammerTool.make_replacement_hook(
-                    "power_straps", power_rail_straps_no_tapcells
-                )
+            hooks["innovus"].extend(
+                [
+                    HammerTool.make_replacement_hook(
+                        "power_straps", power_rail_straps_no_tapcells
+                    ),
+                    HammerTool.make_pre_insertion_hook(
+                        "clock_tree", set_cts_base_cells
+                    ),
+                ]
             )
         else:
             hooks["innovus"].append(
@@ -884,7 +919,7 @@ LAYER licon
   TYPE CUT ;
 END licon
 """
-_additional_tlef_edit_for_scl = """"
+_additional_tlef_edit_for_scl = """
 LAYER nwell
   TYPE MASTERSLICE ;
 END nwell
@@ -1023,8 +1058,16 @@ add_endcaps
     return True
 
 
+# this needs to only be emitted in innovus, since it breaks the genus flow with the complaint that there are no usable inverters/logic cells (???) in version 211
+def set_cts_base_cells(ht: HammerTool) -> bool:
+    ht.append("""
+set_db cts_buffer_cells {CLKBUFX2 CLKBUFX4 CLKBUFX8}
+set_db cts_clock_gating_cells {ICGX1}
+              """)
+    return True
 
 
+# TODO: this should just be placign rail straps, so higher straps are placed by non-hardocded tcl
 def power_rail_straps_no_tapcells(ht: HammerTool) -> bool:
     #  We do this since there are no explicit tapcells in sky130_scl
 
