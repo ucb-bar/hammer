@@ -50,31 +50,39 @@ class SKY130Tech(HammerTechnology):
         slib = self.get_setting("technology.sky130.stdcell_library")
         SKY130A = self.get_setting("technology.sky130.sky130A")
         SKY130_CDS = self.get_setting("technology.sky130.sky130_cds")
-        SKY130_CDS_LIB = self.get_setting("technology.sky130.sky130_scl")
+        SKY130_SCL = self.get_setting("technology.sky130.sky130_scl")
 
         # Common tech LEF and IO cell spice netlists
         libs = []
         if slib == "sky130_fd_sc_hd":
             libs += [
-                # a hacked version this is manually included in design.yml
-                # Library(
-                #     spice_file="$SKY130A/libs.ref/sky130_fd_io/spice/sky130_ef_io.spice",
-                #     provides=[Provide(lib_type="IO library")],
-                # ),
                 Library(
-                    lef_file="cache/sky130_fd_sc_hd__nom.tlef",
-                    verilog_sim="cache/primitives.v",
+                    lef_file=self.override_if_present_in_cache_or_extra_libraries(
+                        SKY130A
+                        / "libs.ref"
+                        / self.library_name
+                        / "techlef"
+                        / f"{self.library_name}__nom.tlef"
+                    ),
+                    verilog_sim=self.override_if_present_in_cache_or_extra_libraries(
+                        SKY130A
+                        / "libs.ref"
+                        / self.library_name
+                        / "verilog"
+                        / "primitives.v"
+                    ),
                     provides=[Provide(lib_type="technology")],
                 ),
             ]
         elif slib == "sky130_scl":
-            # Since the cadence (v0.0.3) tlef doesn't have nwell/pwell/li1, we can't use the sky130A IO libs.
-            # TODO: should we just take those layers out of the IO tlef? they shouldn't be necessary since we don't route on those layers
             libs += [
                 Library(
-                    lef_file="cache/sky130_scl_9T.tlef",
-                    # lef_file="$SKY130_SCL/lef/sky130_scl_9T.tlef",
-                    verilog_sim="$SKY130_SCL/verilog/sky130_scl_9T.v",
+                    lef_file=self.override_if_present_in_cache_or_extra_libraries(
+                        os.path.join(SKY130_SCL, "/lef/sky130_scl_9T.tlef")
+                    ),
+                    verilog_sim=self.override_if_present_in_cache_or_extra_libraries(
+                        os.path.join(SKY130_SCL, "/verilog/sky130_scl_9T.v")
+                    ),
                     provides=[Provide(lib_type="technology")],
                 ),
             ]
@@ -237,7 +245,7 @@ class SKY130Tech(HammerTechnology):
                 # note that innovus still recognizes and uses this cell as a buffer
                 # added for par with a hook `set_cts_base_cells`
                 # SpecialCell(
-                    # cell_type="ctsbuffer", name=["CLKBUFX2", "CLKBUFX4", "CLKBUFX8"]
+                # cell_type="ctsbuffer", name=["CLKBUFX2", "CLKBUFX4", "CLKBUFX8"]
                 # ),
                 # SpecialCell(cell_type=CellType("ctsgate"), name=["ICGX1"]),
                 SpecialCell(
@@ -250,7 +258,7 @@ class SKY130Tech(HammerTechnology):
 
             # Generate standard cell library
             library = slib
-            STDCELL_LIBRARY_BASE_PATH = SKY130_CDS_LIB
+            STDCELL_LIBRARY_BASE_PATH = SKY130_SCL
             lib_corner_files[STDCELL_LIBRARY_BASE_PATH] = os.listdir(
                 os.path.join(STDCELL_LIBRARY_BASE_PATH, "lib")
             )
@@ -259,7 +267,7 @@ class SKY130Tech(HammerTechnology):
             # Generate stackup
             metals = []  # type: List[Metal]
 
-            tlef_path = os.path.join(SKY130_CDS_LIB, "lef", f"{slib}_9T.tlef")
+            tlef_path = os.path.join(SKY130_SCL, "lef", f"{slib}_9T.tlef")
             metals = list(
                 map(lambda m: Metal.model_validate(m), LEFUtils.get_metals(tlef_path))
             )
@@ -292,7 +300,7 @@ class SKY130Tech(HammerTechnology):
                     path=os.path.join(
                         SKY130_CDS, "Sky130_DRC", "sky130_rev_0.0_1.0.drc.pvl"
                     ),
-                )
+                ),
             ]
 
         else:
@@ -395,7 +403,7 @@ class SKY130Tech(HammerTechnology):
                     ),
                     verilog_sim=self.override_if_present_in_cache_or_extra_libraries(
                         os.path.join(
-                            SKY130_CDS_LIB,
+                            SKY130_SCL,
                             "verilog",
                             library + "_9T.v" if slib == "sky130_scl" else ".v",
                         )
@@ -429,7 +437,7 @@ class SKY130Tech(HammerTechnology):
                             ),
                             verilog_sim=self.override_if_present_in_cache_or_extra_libraries(
                                 os.path.join(
-                                    SKY130_CDS_LIB,
+                                    SKY130_SCL,
                                     "verilog",
                                     library + "_9T.v" if slib == "sky130_scl" else ".v",
                                 ),
@@ -1135,16 +1143,22 @@ def calibre_drc_blackbox_srams(ht: HammerTool) -> bool:
 
 # pegasus won't be able to drc the sky130a ios
 def pegasus_drc_blackbox_io_cells(ht: HammerTool) -> bool:
-    assert isinstance(ht, HammerDRCTool) and ht.tool_config_prefix() == "drc.pegasus", "Exlude IOs only for Pegasus DRC"
+    assert (
+        isinstance(ht, HammerDRCTool) and ht.tool_config_prefix() == "drc.pegasus"
+    ), "Exlude IOs only for Pegasus DRC"
     drc_box = ""
-    io_cell_names = ["sky130_ef_io__*"] # TODO i don't think epgasus actually recognizes these?
-    #io_cell_names = ["sky130_ef_io__gpiov2_pad_wrapped"]
+    io_cell_names = [
+        "sky130_ef_io__*"
+    ]  # TODO i don't think epgasus actually recognizes these?
+    # io_cell_names = ["sky130_ef_io__gpiov2_pad_wrapped"]
     for name in io_cell_names:
         drc_box += f"\nexclude_cell {name}"
     run_file = ht.drc_ctl_file  # type: ignore
     with open(run_file, "a") as f:
         f.write(drc_box)
     return True
+
+
 def pegasus_drc_blackbox_srams(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerDRCTool), "Exlude SRAMs only in DRC"
     drc_box = ""

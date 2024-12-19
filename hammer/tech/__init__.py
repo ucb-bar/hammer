@@ -323,6 +323,7 @@ class HammerTechnology:
             os.makedirs(dir_name)
 
     # return whichever exists first: overriden collateral file > cached collateral file > `path`
+    # TODO: maybe shorter name, or use setters and enforce this that way
     def override_if_present_in_cache_or_extra_libraries(self, path):
         # prioritize extra libraries (manual override from environment yml) over cache override
         fname = os.path.basename(path)
