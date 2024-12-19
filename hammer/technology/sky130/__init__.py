@@ -931,6 +931,7 @@ set_db place_detail_color_aware_legal true
 set_db place_global_solver_effort high
 set_db place_detail_check_cut_spacing true
 set_db place_global_cong_effort high
+set_db add_fillers_with_drc false
 
 ##########################################################
 # Optimization attributes  [get_db -category opt]
