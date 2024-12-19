@@ -96,7 +96,7 @@ vlsi:
     tap_cell_interval: 15.0 # Set the interval and offset for tap cells
     tap_cell_offset: 5.0
 
-    routing_layers: [2, 6]
+    routing_layers: [1, 6]
 
 technology.core:
   stackup: "sky130_fd_sc_hd" # This key should exist in the stackups list in the tech json
