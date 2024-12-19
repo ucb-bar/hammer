@@ -41,6 +41,10 @@ vlsi:
 
     routing_layers: [2, 7]
 
+    # WARNING: BREAK GLASS flag to override tech collateral with the paths provided in `override_libraries`
+    technology.manually_override_pdk_collateral: false 
+    technology.override_libraries: [] # hacked collateral files to be used instead of default tech files with the same name
+
 
 technology.core:
   stackup: "asap7_3Ma_2Mb_2Mc_2Md" # This key should exist in the stackups list in the tech json

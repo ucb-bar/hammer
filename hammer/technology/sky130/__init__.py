@@ -57,19 +57,12 @@ class SKY130Tech(HammerTechnology):
         if slib == "sky130_fd_sc_hd":
             libs += [
                 Library(
-                    lef_file=self.override_if_present_in_cache_or_extra_libraries(
-                        SKY130A
-                        / "libs.ref"
-                        / self.library_name
-                        / "techlef"
-                        / f"{self.library_name}__nom.tlef"
+                    lef_file=os.path.join(
+                        SKY130A,
+                        "libs.ref/sky130_fd_sc_hd/techlef/sky130_fd_sc_hd__nom.tlef",
                     ),
-                    verilog_sim=self.override_if_present_in_cache_or_extra_libraries(
-                        SKY130A
-                        / "libs.ref"
-                        / self.library_name
-                        / "verilog"
-                        / "primitives.v"
+                    verilog_sim=os.path.join(
+                        SKY130A, "libs.ref/sky130_fd_sc_hd/verilog/primitives.v"
                     ),
                     provides=[Provide(lib_type="technology")],
                 ),
@@ -77,12 +70,8 @@ class SKY130Tech(HammerTechnology):
         elif slib == "sky130_scl":
             libs += [
                 Library(
-                    lef_file=self.override_if_present_in_cache_or_extra_libraries(
-                        os.path.join(SKY130_SCL, "/lef/sky130_scl_9T.tlef")
-                    ),
-                    verilog_sim=self.override_if_present_in_cache_or_extra_libraries(
-                        os.path.join(SKY130_SCL, "/verilog/sky130_scl_9T.v")
-                    ),
+                    lef_file=os.path.join(SKY130_SCL, "/lef/sky130_scl_9T.tlef"),
+                    verilog_sim=os.path.join(SKY130_SCL, "/verilog/sky130_scl_9T.v"),
                     provides=[Provide(lib_type="technology")],
                 ),
             ]
@@ -379,38 +368,29 @@ class SKY130Tech(HammerTechnology):
                         speed = "slow"
                         temp = "100 C"
 
-                cdl_path = self.override_if_present_in_cache_or_extra_libraries(
-                    os.path.join(library_base_path, "cdl", library + ".cdl")
-                )
-                spice_path = self.override_if_present_in_cache_or_extra_libraries(
-                    os.path.join(library_base_path, "spice", library + ".spice")
-                )
-                cdl_overriden = library_base_path not in cdl_path
-                spice_overriden = library_base_path not in spice_path
-                assert not (
-                    spice_overriden and cdl_overriden
-                ), "both spice and cdl netlists were overriden! this is ambiguous :("
+                cdl_path = os.path.join(library_base_path, "cdl", library + ".cdl")
+                spice_path = os.path.join(library_base_path, "spice", library + ".spice")
+                
+
+                # just prioritize spice, arbitrary choice
+                #assert not (os.path.exists(cdl_path) and os.path.exists(spice_path)), "both spice and cdl netlists exist! this is ambiguous :("
 
                 netlist_path = (
                     spice_path
-                    if os.path.exists(spice_path) and not cdl_overriden
+                    if os.path.exists(spice_path)
                     else cdl_path
                 )
 
                 lib_entry = Library(
-                    nldm_liberty_file=self.override_if_present_in_cache_or_extra_libraries(
-                        os.path.join(library_base_path, "lib", cornerfilename)
+                    nldm_liberty_file=os.path.join(
+                        library_base_path, "lib", cornerfilename
                     ),
-                    verilog_sim=self.override_if_present_in_cache_or_extra_libraries(
-                        os.path.join(
-                            SKY130_SCL,
-                            "verilog",
-                            library + "_9T.v" if slib == "sky130_scl" else ".v",
-                        )
+                    verilog_sim=os.path.join(
+                        SKY130_SCL,
+                        "verilog",
+                        library + "_9T.v" if slib == "sky130_scl" else ".v",
                     ),
-                    lef_file=self.override_if_present_in_cache_or_extra_libraries(
-                        os.path.join(library_base_path, "lef", library + ".lef")
-                    ),
+                    lef_file=os.path.join(library_base_path, "lef", library + ".lef"),
                     spice_file=netlist_path,
                     gds_file=os.path.join(library_base_path, "gds", library + ".gds"),
                     corner=Corner(nmos=speed, pmos=speed, temperature=temp),
@@ -432,24 +412,20 @@ class SKY130Tech(HammerTechnology):
                     ]
                     for extra_gds_file in extra_gds_files:
                         lib_entry = Library(
-                            nldm_liberty_file=self.override_if_present_in_cache_or_extra_libraries(
-                                os.path.join(library_base_path, "lib", cornerfilename),
+                            nldm_liberty_file=os.path.join(
+                                library_base_path, "lib", cornerfilename
                             ),
-                            verilog_sim=self.override_if_present_in_cache_or_extra_libraries(
-                                os.path.join(
-                                    SKY130_SCL,
-                                    "verilog",
-                                    library + "_9T.v" if slib == "sky130_scl" else ".v",
-                                ),
+                            verilog_sim=os.path.join(
+                                SKY130_SCL,
+                                "verilog",
+                                library + "_9T.v" if slib == "sky130_scl" else ".v",
                             ),
-                            lef_file=self.override_if_present_in_cache_or_extra_libraries(
-                                os.path.join(
-                                    library_base_path, "lef", library + ".lef"
-                                ),
+                            lef_file=os.path.join(
+                                library_base_path, "lef", library + ".lef"
                             ),
                             spice_file=netlist_path,
-                            gds_file=self.override_if_present_in_cache_or_extra_libraries(
-                                os.path.join(library_base_path, "gds", extra_gds_file),
+                            gds_file=os.path.join(
+                                library_base_path, "gds", extra_gds_file
                             ),
                             corner=Corner(nmos=speed, pmos=speed, temperature=temp),
                             supplies=Supplies(VDD=vdd, GND="0 V"),

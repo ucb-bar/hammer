@@ -1,4 +1,6 @@
 # Settings for the sky130 technology
+#
+
 technology.sky130:
   sky130A: "/path/to/sky130A" # This should be output files from the OpenPDKs compilation process.
   # This is $PDK_ROOT/share/pdk/sky130A from the README.
@@ -37,6 +39,10 @@ technology.sky130:
   io_file_meta: prependlocal
 
   stdcell_library: "sky130_fd_sc_hd"  # Choose between "sky130_fd_sc_hd" (open-source) or "sky130_scl" (Cadence)
+
+# WARNING: BREAK GLASS flag to override tech collateral with the paths provided in `override_libraries`
+vlsi.technology.manually_override_pdk_collateral: false 
+vlsi.technology.override_libraries: [] # hacked collateral files to be used instead of default tech files with the same name
 
 mentor.extra_env_vars_meta: lazydeepsubst # Mentor environment variables
 # Override this in project
