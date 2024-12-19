@@ -282,6 +282,11 @@ class SKY130Tech(HammerTechnology):
             ]
             drc_decks = [
                 DRCDeck(
+                    tool_name="calibre",
+                    deck_name="calibre_drc",
+                    path="$SKY130_NDA/s8/V2.0.1/DRC/Calibre/s8_drcRules",
+                ),
+                DRCDeck(
                     tool_name="pegasus",
                     deck_name="pegasus_drc",
                     path=os.path.join(
@@ -301,8 +306,9 @@ class SKY130Tech(HammerTechnology):
 
         for library_base_path, cornerfiles in lib_corner_files.items():
             for cornerfilename in cornerfiles:
-                if "sky130" not in cornerfilename:
+                if "sky130" not in cornerfilename or "#" in cornerfilename:
                     # cadence doesn't use the lib name in their corner libs
+                    # also skip random temp files sometimes included in sky130_scl
                     continue
                 if "ccsnoise" in cornerfilename:
                     continue  # ignore duplicate corner.lib/corner_ccsnoise.lib files
@@ -827,6 +833,11 @@ class SKY130Tech(HammerTechnology):
                     "generate_drc_ctl_file", pegasus_drc_blackbox_srams
                 )
             )
+        pegasus_hooks.append(
+            HammerTool.make_post_insertion_hook(
+                "generate_drc_ctl_file", pegasus_drc_blackbox_io_cells
+            )
+        )
         hooks = {"calibre": calibre_hooks, "pegasus": pegasus_hooks}
         return hooks.get(tool_name, [])
 
@@ -1184,6 +1195,18 @@ def calibre_drc_blackbox_srams(ht: HammerTool) -> bool:
     return True
 
 
+# pegasus won't be able to drc the sky130a ios
+def pegasus_drc_blackbox_io_cells(ht: HammerTool) -> bool:
+    assert isinstance(ht, HammerDRCTool) and ht.tool_config_prefix() == "drc.pegasus", "Exlude IOs only for Pegasus DRC"
+    drc_box = ""
+    io_cell_names = ["sky130_ef_io__*"] # TODO i don't think epgasus actually recognizes these?
+    #io_cell_names = ["sky130_ef_io__gpiov2_pad_wrapped"]
+    for name in io_cell_names:
+        drc_box += f"\nexclude_cell {name}"
+    run_file = ht.drc_ctl_file  # type: ignore
+    with open(run_file, "a") as f:
+        f.write(drc_box)
+    return True
 def pegasus_drc_blackbox_srams(ht: HammerTool) -> bool:
     assert isinstance(ht, HammerDRCTool), "Exlude SRAMs only in DRC"
     drc_box = ""
