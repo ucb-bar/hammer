@@ -683,42 +683,4 @@
       }
     ]
   },
-  {
-    "type": "sram",
-    "name": "sram22_2048x32m8w8",
-    "source": "sram22",
-    "depth": "2048",
-    "width": 32,
-    "family": "1rw",
-    "mask": "true",
-    "vt": "svt",
-    "mux": 8,
-    "ports": [
-      {
-        "address port name": "addr",
-        "address port polarity": "active high",
-        "clock port name": "clk",
-        "clock port polarity": "active high",
-        "chip enable port name": "ce",
-        "chip enable port polarity": "active high",
-        "write enable port name": "we",
-        "write enable port polarity": "active high",
-        "output port name": "dout",
-        "output port polarity": "active high",
-        "input port name": "din",
-        "input port polarity": "active high",
-        "mask port name": "wmask",
-        "mask granularity": 8,
-        "mask port polarity": "active high"
-      }
-    ],
-    "extra ports": [
-      {
-        "name": "rstb",
-        "width": 1,
-        "type": "constant",
-        "value": 1
-      }
-    ]
-  },
 ]
