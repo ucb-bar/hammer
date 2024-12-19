@@ -49,6 +49,18 @@ Now in your Hammer YAML configs, point to the location of this install:
 technology.sky130.sky130A: "<PREFIX>/share/pdk/sky130A"
 ```
 
+### Cadence PDK
+Cadence has also created a PDK and standard cell library based on the original open PDK, and optimized for use with Cadence tools. Usage of this PDK is purely optional, but enables DRC/LVS with Pegasus, and IR drop analysis with Voltus.
+You can download them from [here](https://support.cadence.com/apex/ArticleAttachmentPortal?id=a1Od000000051TqEAI&pageName=ArticleContent) (Cadence Support account is required). After downloading and untar-ing the packages, point to the location of this install:
+```yaml
+technology.sky130.sky130_cds: "<path/to/sky130_pdk>"
+technology.sky130.sky130_scl: "<path/to/sky130_scl>"
+```
+To select this standard cell library (instead of the default `sky130_fd_sc_hd`):
+
+```yaml
+technology.sky130.stdcell_library: "sky130_scl"
+```
 
 SRAM Macros
 -----------
