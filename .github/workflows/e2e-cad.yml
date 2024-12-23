@@ -38,14 +38,14 @@ jobs:
 
           echo "Checking that LVS passed..." | tee -a $tempfile
           # TODO these are probably pretty brittle...
-          if grep -q "Result             : MATCH" "$tempfile"; then
+          if grep "Run Result             : MATCH" "$tempfile"; then
             echo "There's an LVS mismatch! see $tempfile for log" | tee -a $tempfile
             exit 1
           fi
           echo "LVS passed!" | tee -a $tempfile
 
           echo "Checking that DRC is clean..." | tee -a $tempfile
-          if grep -q "Total DRC Results                 : 0 (0)" "$tempfile"; then
+          if grep "Total DRC Results                 : 0 (0)" "$tempfile"; then
             echo "There are DRC violations! see $tempfile for log" | tee -a $tempfile
             exit 1
           fi
