@@ -345,7 +345,6 @@ class HammerTechnology:
             if len(self.get_setting("vlsi.technology.override_libraries")) > 0:
                 self.logger.warning("You've attempted to specify override libraries without enabling vlsi.technology.manually_override_pdk_collateral! collateral paths will not be overwritten")
 
-
         used_overrides = []
         for lib in self.config.libraries:
             for field_name in lib.model_fields:
@@ -362,16 +361,25 @@ class HammerTechnology:
                     cached_paths = [f for f in cached_paths if os.path.exists(f)]
 
                     # only allow 1 valid cached path, otherwise ambiguous
-                    assert len(cached_paths) <= 1, f"ambiguous cache override: {cached_paths}"
+                    if len(cached_paths) > 1:
+                        self.logger.error(f"ambiguous cache override: {cached_paths}")
                     if cached_paths:
+                        used_overrides.append((field_name, fname))
                         new_path = cached_paths[0]
                         self.logger.info(
                             f"overriding {default_path} with cache entry {new_path}"
                         )
+
+                    manual_override_paths = set([f for f in fnames if (field_name, f) in manual_overrides])
+                    manual_override_paths = [manual_overrides[(field_name, f)] for f in manual_override_paths]
+
+                    # only allow 1 valid manual_override path, otherwise ambiguous
+                    if len(manual_override_paths) > 1:
+                        self.logger.error(f"ambiguous cache override: {manual_override_paths}")
                     # prioritize manual overrides over cache
-                    if (field_name, fname) in manual_overrides:
+                    if manual_override_paths:
                         used_overrides.append((field_name, fname))
-                        new_path = manual_overrides[(field_name, fname)]
+                        new_path = manual_override_paths[0]
                         self.logger.info(
                             f"overriding {default_path} with manual override {new_path}"
                         )

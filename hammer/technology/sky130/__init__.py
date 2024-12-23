@@ -1208,7 +1208,7 @@ def sram22_lvs_recognize_gates_all(ht: HammerTool) -> bool:
     ), "Change 'LVS RECOGNIZE GATES' from 'NONE' to 'ALL' for SRAM22"
     run_file = ht.lvs_run_file  # type: ignore
     with open(run_file, "a") as f:
-        f.write("LVS RECOGNIZE GATES ALL")
+        f.write("\nLVS RECOGNIZE GATES ALL")
     return True
 
 
