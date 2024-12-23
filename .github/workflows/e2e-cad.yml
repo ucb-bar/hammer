@@ -1,4 +1,4 @@
-name: End-to-end CAD flow CI smoketest
+name: End-to-end CAD flow smoketests
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
   pull_request:
 
 jobs:
-  test:
+  sky130-cm-e2e:
     runs-on: [self-hosted] # TODO: replace with something centrally admined
 
     steps:
