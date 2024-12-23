@@ -13,25 +13,15 @@ jobs:
     runs-on: [self-hosted] # TODO: replace with something centrally admined
 
     steps:
-      # Step 1: Create a temporary directory
-      - name: Create temporary directory
-        run: |
-          TMP_DIR=$(mktemp -d)
-          echo "Temporary directory created at: $TMP_DIR"
-          echo "TMP_DIR=$TMP_DIR" >> $GITHUB_ENV
-
         # Clone this repo
       - name: Checkout
         uses: actions/checkout@v4.1.6
 
-
-      - name: Run `make build` in the `e2e` directory
+      - name: Run syn (Genus), par (Innovus), drc (Pegasus), and lvs (Pegasus) on the GCD design in sky130, using sky130_scl.
         run: |
           cd e2e
-          # TODO make sure poetry is installed
-          #curl -sSL https://install.python-poetry.org | python3 -
           poetry install
-          poetry shell
+          source $(poetry env info --path)/bin/activate
           # redirect all hammer output a temp file, since it contains proprietary tool logs
           tempfile=$(mktemp)
           echo "log file is $tempfile on $(hostname)" | tee -a $tempfile
