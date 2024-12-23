@@ -497,6 +497,9 @@ class SKY130Tech(HammerTechnology):
         if self.get_setting("vlsi.core.lvs_tool") == "hammer.lvs.calibre":
             pmos = "phighvt"
             nmos = "nshort"
+        elif self.get_setting("vlsi.core.lvs_tool") == "hammer.lvs.pegasus":
+            pmos = "pfet_01v8_hvt"
+            nmos = "nfet_01v8"
         elif self.get_setting("vlsi.core.lvs_tool") == "hammer.lvs.netgen":
             pmos = "sky130_fd_pr__pfet_01v8_hvt"
             nmos = "sky130_fd_pr__nfet_01v8"
