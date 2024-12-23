@@ -24,6 +24,8 @@ jobs:
           source $(poetry env info --path)/bin/activate
           # redirect all hammer output a temp file, since it contains proprietary tool logs
           tempfile=$(mktemp)
+
+          # run cadence tools on design
           echo "log file is $tempfile on $(hostname)" | tee -a $tempfile
           echo "End-to-end CAD flow CI smoketest running on" ${{ github.head_ref }}.${{ github.sha }} > $tempfile 2>&1
           make build >> $tempfile 2>&1
@@ -34,8 +36,7 @@ jobs:
           echo "running lvs.." | tee -a $tempfile
           make lvs >> $tempfile 2>&1
 
-          # Verify DRC/LVS is clean (this is a very simple design, it should be clean without hacks)
-
+          # Verify DRC, LVS are clean (this is a very simple design, it should be clean without hacks)
           echo "Checking that LVS passed..." | tee -a $tempfile
           # TODO these are probably pretty brittle...
           if [[ $(grep "Run Result             : MATCH" "$tempfile") ]]; then
