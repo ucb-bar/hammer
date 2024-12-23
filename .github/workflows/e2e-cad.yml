@@ -33,3 +33,20 @@ jobs:
           make drc >> $tempfile 2>&1
           echo "running lvs.." | tee -a $tempfile
           make lvs >> $tempfile 2>&1
+
+          # Verify DRC/LVS is clean (this is a very simple design, it should be clean without hacks)
+
+          echo "Checking that LVS passed..." | tee -a $tempfile
+          # TODO these are probably pretty brittle...
+          if grep -q "Result             : MATCH" "$tempfile"; then
+            echo "There's an LVS mismatch! see $tempfile for log" | tee -a $tempfile
+            exit 1
+          fi
+          echo "LVS passed!" | tee -a $tempfile
+
+          echo "Checking that DRC is clean..." | tee -a $tempfile
+          if grep -q "Total DRC Results                 : 0 (0)" "$tempfile"; then
+            echo "There are DRC violations! see $tempfile for log" | tee -a $tempfile
+            exit 1
+          fi
+          echo "DRC is clean!" | tee -a $tempfile
