@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - test-ci
+      - sky130_pydantic
   pull_request:
 
 jobs:
