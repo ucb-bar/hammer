@@ -297,9 +297,10 @@ class SKY130Tech(HammerTechnology):
 
         # add skywater io cells
         io_library_base_path = os.path.join(SKY130A, "libs.ref", "sky130_fd_io")
-        lib_corner_files[io_library_base_path] = os.listdir(
-            os.path.join(io_library_base_path, "lib")
-        )
+        if os.path.exists(io_library_base_path):
+            lib_corner_files[io_library_base_path] = os.listdir(
+                os.path.join(io_library_base_path, "lib")
+            )
 
         for library_base_path, cornerfiles in lib_corner_files.items():
             for cornerfilename in cornerfiles:
