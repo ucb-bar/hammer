@@ -1,0 +1,44 @@
+name: End-to-end CAD flow CI smoketest
+
+on:
+  push:
+    branches:
+      - main
+      - test-ci
+  pull_request:
+
+jobs:
+  test:
+    runs-on: [self-hosted] # TODO: replace with something centrally admined
+
+    steps:
+      # Step 1: Create a temporary directory
+      - name: Create temporary directory
+        run: |
+          TMP_DIR=$(mktemp -d)
+          echo "Temporary directory created at: $TMP_DIR"
+          echo "TMP_DIR=$TMP_DIR" >> $GITHUB_ENV
+
+        # Clone this repo
+      - name: Checkout
+        uses: actions/checkout@v4.1.6
+
+
+      - name: Run `make build` in the `e2e` directory
+        run: |
+          cd e2e
+          # TODO make sure poetry is installed
+          #curl -sSL https://install.python-poetry.org | python3 -
+          poetry install
+          poetry shell
+          # redirect all hammer output a temp file, since it contains proprietary tool logs
+          tempfile=$(mktemp)
+          echo "log file is $tempfile on $(uname -a)" | tee -a $tempfile
+          echo "End-to-end CAD flow CI smoketest running on" ${{ github.head_ref }}.${{ github.sha }} > $tempfile 2>&1
+          make build >> $tempfile 2>&1
+          echo "running par.." | tee -a $tempfile
+          make par >> $tempfile 2>&1
+          echo "running drc.." | tee -a $tempfile
+          make drc >> $tempfile 2>&1
+          echo "running lvs.." | tee -a $tempfile
+          make lvs >> $tempfile 2>&1
