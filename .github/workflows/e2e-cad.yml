@@ -26,6 +26,7 @@ jobs:
           tempfile=$(mktemp)
 
           # run cadence tools on design
+          # WARNING: do not create/modify tool invocations to output to stdout! All output should go to $tempfile
           echo "log file is $tempfile on $(hostname)" | tee -a $tempfile
           echo "End-to-end CAD flow CI smoketest running on" ${{ github.head_ref }}.${{ github.sha }} > $tempfile 2>&1
           make build >> $tempfile 2>&1
