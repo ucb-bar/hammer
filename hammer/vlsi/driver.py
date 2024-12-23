@@ -162,6 +162,7 @@ class HammerDriver:
             self.log.fatal("Technology {0} config not generated or missing .tech.[json/yml]!".format(tech_module))
             return
         tech.extract_technology_files()
+        tech.override_tech_libraries()
         tech.get_lib_units()
 
         self.tech = tech

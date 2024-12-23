@@ -322,6 +322,65 @@ class HammerTechnology:
             self.logger.info('Creating directory: {}'.format(dir_name))
             os.makedirs(dir_name)
 
+    def override_tech_libraries(self) -> None:
+        """
+        Override library paths to cached or manually overriden tech collateral
+        """
+        if not self.config.libraries:
+            return
+
+        tech_module: str = self.get_setting("vlsi.core.technology")
+        tech_name = tech_module.split('.')[-1]
+        manual_overrides = {}
+
+        # if user has broken glass, map tech filename -> manual path
+        if self.get_setting("vlsi.technology.manually_override_pdk_collateral"):
+            for lib in self.get_setting("vlsi.technology.override_libraries"):
+                for key, path in lib['library'].items():
+                    fname = os.path.basename(path)
+                    if (key, fname) in manual_overrides:
+                        self.logger.error("Attempted to add {(key,path)} to overrides when {manual_overrides[(key, fname)]} already exists!")
+                    manual_overrides[(key, fname)] = path
+        else:
+            if len(self.get_setting("vlsi.technology.override_libraries")) > 0:
+                self.logger.warning("You've attempted to specify override libraries without enabling vlsi.technology.manually_override_pdk_collateral! collateral paths will not be overwritten")
+
+
+        used_overrides = []
+        for lib in self.config.libraries:
+            for field_name in lib.model_fields:
+                if field_name.endswith("_file") or field_name == "verilog_sim":
+                    # check if that file exists in cache, override if so
+                    default_path = getattr(lib, field_name)
+                    if not default_path:
+                        continue
+                    new_path = default_path
+                    fname = os.path.basename(default_path)
+                    fnames = [fname, fname.replace(".spice", ".cdl"), fname.replace(".cdl", ".spice")]
+
+                    cached_paths = set(os.path.join(self.cache_dir, f) for f in fnames)
+                    cached_paths = [f for f in cached_paths if os.path.exists(f)]
+
+                    # only allow 1 valid cached path, otherwise ambiguous
+                    assert len(cached_paths) <= 1, f"ambiguous cache override: {cached_paths}"
+                    if cached_paths:
+                        new_path = cached_paths[0]
+                        self.logger.info(
+                            f"overriding {default_path} with cache entry {new_path}"
+                        )
+                    # prioritize manual overrides over cache
+                    if (field_name, fname) in manual_overrides:
+                        used_overrides.append((field_name, fname))
+                        new_path = manual_overrides[(field_name, fname)]
+                        self.logger.info(
+                            f"overriding {default_path} with manual override {new_path}"
+                        )
+
+                    setattr(lib, field_name, new_path)
+        unused_overrides = [k for k in manual_overrides.keys() if k not in used_overrides]
+        if unused_overrides:
+            self.logger.warning(f"Unused tech collateral overrides: {unused_overrides}")
+
     # hammer-vlsi properties.
     # TODO: deduplicate/put these into an interface to share with HammerTool?
     @property

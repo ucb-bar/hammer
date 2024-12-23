@@ -9,6 +9,8 @@ PDK Setup
 The Skywater 130nm PDK files are located in a repo called [skywater-pdk](https://github.com/google/skywater-pdk/). A tool called [Open-PDKs (open_pdks)](https://github.com/RTimothyEdwards/open_pdks/) was developed to generate all the files typically found in a PDK.
 Open-PDKs uses the contents in `skywater-pdk`, and outputs files to a directory called `sky130A`.
 
+This will take around 40-50GB of disk space as of September 2024.
+
 ### PDK Install
 
 ```shell
@@ -23,7 +25,9 @@ export PATH=$PREFIX/.conda-signoff/bin:$PATH
 
 # clone required repos
 git clone https://github.com/google/skywater-pdk.git
+# rev 7198cf647113f56041e02abf3eb623692820c5e1
 git clone https://github.com/RTimothyEdwards/open_pdks.git
+# rev 320597ea84b2816eb2fcc4fbe10c3874f19c92fc
 
 # install Sky130 PDK via Open-PDKs
 #    we disable some install steps to save time
@@ -50,7 +54,6 @@ technology.sky130.sky130A: "<PREFIX>/share/pdk/sky130A"
 Cadence has also created a PDK and standard cell library based on the original open PDK, and optimized for use with Cadence tools. Usage of this PDK is purely optional, but enables DRC/LVS with Pegasus, and IR drop analysis with Voltus.
 
 You can download them from [here](https://support.cadence.com/apex/ArticleAttachmentPortal?id=a1Od000000051TqEAI&pageName=ArticleContent) (Cadence Support account is required). After downloading and untar-ing the packages, point to the location of this install:
-
 ```yaml
 technology.sky130.sky130_cds: "<path/to/sky130_pdk>"
 technology.sky130.sky130_scl: "<path/to/sky130_scl>"
