@@ -7,8 +7,35 @@ on:
       - test-ci
       - sky130_pydantic
   pull_request:
+    types: [opened]
+
 
 jobs:
+  create-branch:
+    runs-on: [self-hosted] # TODO: replace with something centrally admined
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Create branch in private repo
+      env:
+        GITHUB_TOKEN: ${{ secrets.PRIVATE_REPO_TOKEN }}
+      run: |
+        PR_NUMBER=${{ github.event.number }}
+        PR_BRANCH="pr-${PR_NUMBER}"
+        PRIVATE_REPO="elamdf/hammer-private-test"
+
+        # Create the branch in the private repo
+        curl -X POST -H "Authorization: token $GITHUB_TOKEN" \
+             -H "Accept: application/vnd.github+json" \
+             https://api.github.com/repos/${PRIVATE_REPO}/git/refs \
+             -d @- <<EOF
+        {
+          "ref": "refs/heads/${PR_BRANCH}",
+          "sha": "$(git rev-parse HEAD)"
+        }
+        EOF
   sky130-cm-e2e:
     runs-on: [self-hosted] # TODO: replace with something centrally admined
 
