@@ -27,7 +27,7 @@ jobs:
         PRIVATE_REPO="elamdf/hammer-private-test"
 
         # Create the branch in the private repo
-        curl -X POST -H "Authorization: token $GITHUB_TOKEN" \
+        curl -X POST -H "Authorization: token $PRIVATE_REPO_PAT" \
              -H "Accept: application/vnd.github+json" \
              https://api.github.com/repos/${PRIVATE_REPO}/git/refs \
              -d @- <<EOF
