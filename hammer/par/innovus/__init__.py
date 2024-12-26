@@ -108,7 +108,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
 
     @property
     def output_gds_filename(self) -> str:
-        return os.path.join(self.run_dir, "{top}.gds.gz".format(top=self.top_module))
+        return os.path.join(self.run_dir, "{top}.gds".format(top=self.top_module))
 
     @property
     def output_netlist_filename(self) -> str:
