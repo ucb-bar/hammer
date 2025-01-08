@@ -13,6 +13,7 @@ import re
 import os
 import subprocess
 import sys
+import json
 
 from airflow.models.dag import DAG
 from airflow.operators.python import PythonOperator
@@ -31,9 +32,9 @@ class AIRFlow:
     def __init__(self):
         #pdb.set_trace()
         # minimal flow configuration variables
-        self.design = os.getenv('design', 'pass')
+        self.design = os.getenv('design', 'gcd')
         self.pdk = os.getenv('pdk', 'sky130')
-        self.tools = os.getenv('tools', 'nop')
+        self.tools = os.getenv('tools', 'cm')
         self.env = os.getenv('env', 'bwrc')
         self.extra = os.getenv('extra', '')  # extra configs
         self.args = os.getenv('args', '')  # command-line args (including step flow control)
@@ -98,9 +99,60 @@ if task_function:
 '''
 
 @task
-def build():
-    #pdb.set_trace()
-    #print(f"Build command would run here with OBJ_DIR: {self.OBJ_DIR}")
+def build(flow):
+    # Set up sys.argv with all necessary arguments
+    sys.argv = [
+        'hammer-vlsi',  # Command name
+        'build',        # Action
+        '--obj_dir', flow.OBJ_DIR,
+        '-e', flow.ENV_YML
+    ]
+    # Add all project configs
+    for conf in flow.PROJ_YMLS:
+        if conf:
+            sys.argv.extend(['-p', conf])
+    
+    # Add any additional arguments
+    if flow.args:
+        sys.argv.extend(flow.args.split())
+    
+    CLIDriver().main()
+
+@task
+def sim_rtl(flow):
+    # Set up sys.argv with all necessary arguments
+    sys.argv = [
+        'hammer-vlsi',  # Command name
+        'sim',          # Use 'sim' instead of 'sim-rtl' as it's the valid Hammer action
+        '--obj_dir', flow.OBJ_DIR,
+        '-e', flow.ENV_YML
+    ]
+    # Add all project configs
+    for conf in flow.PROJ_YMLS:
+        if conf:
+            sys.argv.extend(['-p', conf])
+    
+    if flow.args:
+        sys.argv.extend(flow.args.split())
+    
+    CLIDriver().main()
+
+@task
+def syn(flow):
+    sys.argv = [
+        'hammer-vlsi',
+        'syn',
+        '--obj_dir', flow.OBJ_DIR,
+        '-e', flow.ENV_YML
+    ]
+    # Add all project configs
+    for conf in flow.PROJ_YMLS:
+        if conf:
+            sys.argv.extend(['-p', conf])
+    
+    if flow.args:
+        sys.argv.extend(flow.args.split())
+    
     CLIDriver().main()
 
 @task
@@ -117,22 +169,65 @@ def clean(flow):
 #        self.build()
 @task.branch
 def run(flow):
-    #pdb.set_trace()
-    #function_map[flow.makecmdgoals](flow)
-    if 'clean' in flow.makecmdgoals:
-        return "clean"
-    else:
-        return "build"
-    '''
-    if 'clean' in flow.makecmdgoals:
-        clean(flow)
-        #run >> clean
-    else:
-        build()
-        #run >> build
-    '''
+    # Map actions to their corresponding tasks
+    action_map = {
+        "build": "build",
+        "clean": "clean",
+        "sim_rtl": "sim_rtl",
+        "syn": "syn",
+        "par": "par"
+    }
+    return action_map.get(flow.makecmdgoals, "sim_rtl")
 
+@task
+def par(flow):
+    # Get par-input.json path from OBJ_DIR
+    par_input_json = f"{flow.OBJ_DIR}/par-input.json"
     
+    # Generate par-input.json if it doesn't exist
+    if not os.path.exists(par_input_json):
+        syn_to_par(flow)
+    
+    sys.argv = [
+        'hammer-vlsi',
+        'par',
+        '--obj_dir', flow.OBJ_DIR,
+        '-e', flow.ENV_YML,
+        '-p', par_input_json
+    ]
+    
+    # Add all project configs
+    for conf in flow.PROJ_YMLS:
+        if conf:
+            sys.argv.extend(['-p', conf])
+    
+    if flow.args:
+        sys.argv.extend(flow.args.split())
+    
+    CLIDriver().main()
+
+def syn_to_par(flow):
+    """
+    Generate par-input.json from synthesis outputs if it doesn't exist
+    """
+    par_input_json = f"{flow.OBJ_DIR}/par-input.json"
+    
+    # Only generate if file doesn't exist
+    if not os.path.exists(par_input_json):
+        # Basic PAR configuration
+        par_config = {
+            "vlsi.inputs.placement_constraints": [],
+            "vlsi.inputs.gds_merge": True,
+            "par.inputs": {
+                "top_module": flow.design,
+                "input_files": [f"{flow.OBJ_DIR}/syn-rundir/{flow.design}.mapped.v"]
+            }
+        }
+        
+        # Write configuration to par-input.json
+        with open(par_input_json, 'w') as f:
+            json.dump(par_config, f, indent=2)
+
 '''
 function_map = {
     "build": build,
@@ -145,23 +240,113 @@ function_map = {
     schedule=None,
     start_date=datetime(2024, 1, 1, 0, 0),
     catchup=False,
-    dag_id='make_build'
+    dag_id='build'
 )
-def taskflow_dag():
-    #pdb.set_trace()
-    # Create an instance of the class and run the process 
-    flow = AIRFlow()
-    #run(flow)  # Pass the command as a parameter
+def build_dag():
+    # Force sim-rtl for testing
+    os.environ['MAKECMDGOALS'] = 'build'
     
+    flow = AIRFlow()
     import_task = import_task_to_dag()
     run_task = run(flow)
-    build_task = build()
+    build_task = build(flow)
     clean_task = clean(flow)
-    taskList = [import_task, run_task, [build_task, clean_task]]
-    #run(flow) >> [build(), clean(flow)]
-    chain(*taskList)
+    sim_rtl_task = sim_rtl(flow)
+    syn_task = syn(flow)
+    par_task = par(flow)
+    # Set up task dependencies
+    chain(
+        import_task,
+        run_task,
+        [build_task, clean_task, sim_rtl_task, syn_task, par_task]
+    )
 
+
+
+@dag(
+    schedule_interval=None,
+    schedule=None,
+    start_date=datetime(2024, 1, 1, 0, 0),
+    catchup=False,
+    dag_id='sim-rtl'
+)
+def sim_rtl_dag():
+    # Force sim-rtl for testing
+    os.environ['MAKECMDGOALS'] = 'build'
+    
+    flow = AIRFlow()
+    import_task = import_task_to_dag()
+    run_task = run(flow)
+    build_task = build(flow)
+    clean_task = clean(flow)
+    sim_rtl_task = sim_rtl(flow)
+    syn_task = syn(flow)
+    par_task = par(flow)
+    # Set up task dependencies
+    chain(
+        import_task,
+        run_task,
+        [build_task, clean_task, sim_rtl_task, syn_task, par_task]
+    )
+
+@dag(
+    schedule_interval=None,
+    schedule=None,
+    start_date=datetime(2024, 1, 1, 0, 0),
+    catchup=False,
+    dag_id='syn'
+)
+def syn_dag():
+    # Force sim-rtl for testing
+    os.environ['MAKECMDGOALS'] = 'syn'
+    
+    flow = AIRFlow()
+    import_task = import_task_to_dag()
+    run_task = run(flow)
+    build_task = build(flow)
+    clean_task = clean(flow)
+    sim_rtl_task = sim_rtl(flow)
+    syn_task = syn(flow)
+    par_task = par(flow)
+    
+    # Set up task dependencies
+    chain(
+        import_task,
+        run_task,
+        [build_task, clean_task, sim_rtl_task, syn_task, par_task]
+    )
+
+@dag(
+    schedule_interval=None,
+    schedule=None,
+    start_date=datetime(2024, 1, 1, 0, 0),
+    catchup=False,
+    dag_id='par'
+)
+def par_dag():
+    # Force sim-rtl for testing
+    os.environ['MAKECMDGOALS'] = 'par'
+    
+    flow = AIRFlow()
+    import_task = import_task_to_dag()
+    run_task = run(flow)
+    build_task = build(flow)
+    clean_task = clean(flow)
+    sim_rtl_task = sim_rtl(flow)
+    syn_task = syn(flow)
+    par_task = par(flow)
+    # Set up task dependencies
+    chain(
+        import_task,
+        run_task,
+        [build_task, clean_task, sim_rtl_task, syn_task, par_task]
+    )
 #Create instance of DAG
-dag = taskflow_dag()
+dag = build_dag()
+dag2 = sim_rtl_dag()
+dag3 = syn_dag()
+dag4 = par_dag()
 #dag.test()
 
+def main():
+    CLIDriver().main()
