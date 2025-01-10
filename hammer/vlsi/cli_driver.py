@@ -2,6 +2,7 @@
 #  CLI driver class for the Hammer VLSI abstraction.
 #
 #  See LICENSE for licence details.
+#import pdb
 
 import argparse
 import json
@@ -11,6 +12,10 @@ import sys
 import tempfile
 from pathlib import Path
 import importlib.resources
+import re
+import os
+import subprocess
+import sys
 
 import ruamel.yaml
 
@@ -28,6 +33,14 @@ from hammer.utils import add_dicts, deeplist, deepdict, get_or_else, check_funct
 
 from hammer.config import HammerJSONEncoder
 
+from airflow.models.dag import DAG
+from airflow.operators.python import PythonOperator
+from airflow.models.baseoperator import chain
+from airflow.decorators import task, dag
+from datetime import datetime, timedelta
+
+#import pdb
+#pdb.set_trace()
 
 KEY_DIR = tempfile.mkdtemp()
 KEY_PATH = os.path.join(KEY_DIR, "key-history.json")
@@ -35,8 +48,9 @@ KEY_PATH = os.path.join(KEY_DIR, "key-history.json")
 def parse_optional_file_list_from_args(args_list: Any, append_error_func: Callable[[str], None]) -> List[str]:
     """Parse a possibly null list of files, validate the existence of each file, and return a list of paths (possibly
     empty)."""
+    #pdb.set_trace()
     results = []  # type: List[str]
-    if args_list is None:
+    if args_list is None:                                       #Andre tmp: args_list is not being populated properly.
         # No arguments
         pass
     elif isinstance(args_list, List):
@@ -1268,12 +1282,12 @@ class CLIDriver:
         """Parse command line arguments and environment variables for the command line front-end to hammer-vlsi.
 
         :return: HammerDriver and a list of errors."""
-
         # TODO: rewrite this less tediously?
 
         # Resolve default_options.
         # Can't call HammerDriver.get_default_driver_options in the
         # parameters as it will be called when args_to_driver is defined
+        #pdb.set_trace()
         default_options_resolved = HammerDriver.get_default_driver_options()  # type: HammerDriverOptions
         if default_options is not None:
             default_options_resolved = default_options
@@ -1288,7 +1302,7 @@ class CLIDriver:
         errors = []  # type: List[str]
 
         # Load environment configs.
-        env_configs = parse_optional_file_list_from_args(args['environment_config'],
+        env_configs = parse_optional_file_list_from_args(args['environment_config'],                        #Andre tmp: Env config not populated
                                                          append_error_func=errors.append)  # type: List[str]
         # Also load any environment configs from the environment.
         split_env_var_s = os.environ.get("HAMMER_ENVIRONMENT_CONFIGS", default="").split(os.pathsep)  # type: List[str]
@@ -1301,7 +1315,7 @@ class CLIDriver:
         options = options._replace(environment_configs=list(env_configs))
 
         # Load project configs.
-        project_configs = parse_optional_file_list_from_args(args['configs'], append_error_func=errors.append)
+        project_configs = parse_optional_file_list_from_args(args['configs'], append_error_func=errors.append)  #Andre tmp
         options = options._replace(project_configs=list(project_configs))
 
         # Log file.
@@ -1348,7 +1362,7 @@ class CLIDriver:
             config_str = Path(conf_file).read_text()
             project_configs_yaml.append(hammer.config.load_config_from_string(config_str, is_yaml=True, path=str(Path(conf_file).resolve().parent)))
         project_configs_yaml_keys = [set(i.keys()) for i in project_configs_yaml]
-        key_history: Dict[str, List[str]] = {i: [] for i in reduce(lambda x, y: x.union(y), project_configs_yaml_keys)}
+        key_history: Dict[str, List[str]] = {i: [] for i in reduce(lambda x, y: x.union(y), project_configs_yaml_keys)}     #Andre tmp
         for cfg_file, cfg in zip(project_configs, project_configs_yaml_keys):
             for key in cfg:
                 key_history[key].append(cfg_file)
@@ -1592,6 +1606,7 @@ class CLIDriver:
 
     @staticmethod
     def generate_build_inputs(driver: HammerDriver, append_error_func: Callable[[str], None]) -> Optional[dict]:
+        #pdb.set_trace()
         """
         Generate the build tool artifacts for this flow, specified by the "vlsi.core.build_system" key.
         The flow is the set of steps configured by the current HammerIR input.
@@ -1600,6 +1615,7 @@ class CLIDriver:
         :param append_error_func: The function to use to append an error
         :return: The diplomacy graph
         """
+        #pdb.set_trace()
         build_system = str(driver.database.get_setting("vlsi.core.build_system", "none"))
         if build_system in BuildSystems:
             return BuildSystems[build_system](driver, append_error_func)
@@ -1612,6 +1628,7 @@ class CLIDriver:
 
         :return: Return code (0 for success)
         """
+        #pdb.set_trace()
         if args['firrtl'] is not None and len(args['firrtl']) > 0:
             print("firrtl convenience argument not yet implemented", file=sys.stderr)
             return 1
@@ -1650,6 +1667,7 @@ class CLIDriver:
 
 
     def main(self, args: Optional[List[str]] = None) -> None:
+        #pdb.set_trace()
         """
         Main function to call from your entry point script.
         Parses command line arguments.
@@ -1658,10 +1676,13 @@ class CLIDriver:
         >>> if __name__ == '__main__':
         >>>   CLIDriver().main()
         """
+        #pdb.set_trace()
         parser = argparse.ArgumentParser()
 
         parser.add_argument('action', metavar='ACTION', type=str,  # choices=self.valid_actions() <- sadly incompatible w/custom actions
                             help='Action to perform with the command-line driver.')
+        #parser.add_argument("--action", metavar='ACTION', type=str,  # choices=self.valid_actions() <- sadly incompatible w/custom actions
+        #                    help='Action to perform with the command-line driver.')
         # Required arguments for (Python) hammer driver.
         parser.add_argument("-e", "--environment_config", action='append', required=False,
                             help="Environment config files (.yml or .json) - .json will take precendence over any .yml. These config files will not be re-emitted in the output json. Can also be specified as a colon-separated list in the environment variable HAMMER_ENVIRONMENT_CONFIGS.")
@@ -1725,3 +1746,8 @@ class CLIDriver:
             sys.exit(1)
 
         sys.exit(self.run_main_parsed(vars(parser.parse_args(args))))
+
+@task
+def import_task_to_dag():
+    print("hi")
+    return

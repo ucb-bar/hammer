@@ -10,6 +10,9 @@ import sys
 import textwrap
 from typing import List, Dict, Tuple, Callable
 
+#import pdb
+#pdb.set_trace()
+
 def build_noop(driver: HammerDriver, append_error_func: Callable[[str], None]) -> dict:
     """
     Do nothing, just return the dependency graph.
@@ -22,6 +25,7 @@ def build_noop(driver: HammerDriver, append_error_func: Callable[[str], None]) -
 
 
 def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None]) -> dict:
+    #pdb.set_trace()    #[Trace Path 1]
     """
     Build a Makefile include in the obj_dir called hammer.d. This is intended to be dynamically
     created and included into a top-level Makefile.
@@ -100,6 +104,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
     :return: The dependency graph
     """
     dependency_graph = driver.get_hierarchical_dependency_graph()
+    #pdb.set_trace()
     makefile = os.path.join(driver.obj_dir, "hammer.d")
     default_dependencies = driver.options.project_configs + driver.options.environment_configs
     default_dependencies.extend(list(driver.database.get_setting("synthesis.inputs.input_files", [])))
@@ -118,7 +123,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
     pcb_out = os.path.join(pcb_run_dir, "pcb-output-full.json")
     output += textwrap.dedent("""
         ####################################################################################
-        ## Global steps
+        ## Global steps temp
         ####################################################################################
         .PHONY: pcb
         pcb: {pcb_out}
