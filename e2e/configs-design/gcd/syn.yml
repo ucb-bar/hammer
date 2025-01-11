@@ -1,0 +1,39 @@
+# Specify Global Variables
+clockPeriod: &CLK_PERIOD "20.0ns"
+clockPeriodby5: &CLK_PERIOD_BY_5 "4.0" # used for pin delays, update accordingly
+verilogSrc: &VERILOG_SRC
+  - "/bwrcq/C/isabellehsu/hammer_main/e2e/src/gcd.v"
+  # Add more source files here if you need
+
+
+# Specify clock signals
+vlsi.inputs.clocks: [
+  {name: "clk", period: *CLK_PERIOD, uncertainty: "0.1ns"}
+]
+
+# Input delays match INPUT_DELAY parameter in riscv_test_harness.v
+vlsi.inputs.delays: [
+  {name: "mem*", clock: "clk", direction: "input", delay: *CLK_PERIOD_BY_5}
+]
+
+# Synthesis Constraints
+synthesis.inputs:
+  top_module: "gcd"
+  input_files: *VERILOG_SRC
+
+# Genus-specific settings
+synthesis.genus:
+  # Disable QRC
+  use_qrc: false
+  # Set empty QRC files to prevent the tool from looking for them
+  qrc_files: []
+  # Basic tool configuration
+  generate_reports: true
+  generate_final_netlist: true
+  timing_driven: true
+  # Add any other required Genus settings
+  clock_gating_mode: "empty"
+  
+# Technology settings
+technology.sky130:
+  synthesis_tool: "genus"
