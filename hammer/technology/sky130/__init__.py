@@ -946,6 +946,15 @@ set_db floorplan_snap_die_grid manufacturing
         """
         )
 
+        ht.append("""
+# note this is required for sky130_fd_sc_hd, the design has a ton of drcs if bottom layer is 1
+                  # TODO: why is setting routing_layer not enough?
+set_db design_bottom_routing_layer 2
+set_db design_top_routing_layer 6
+# deprected syntax, but this used to always work
+set_db route_design_bottom_routing_layer 2
+                  """)
+
     return True
 
 
