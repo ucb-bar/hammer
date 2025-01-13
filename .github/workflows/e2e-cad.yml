@@ -1,0 +1,56 @@
+name: End-to-end CAD flow smoketests
+
+on:
+  push:
+    branches:
+      - main
+      - test-ci
+      - sky130_pydantic
+  pull_request:
+
+jobs:
+  sky130-cm-e2e:
+    runs-on: [self-hosted] # TODO: replace with something centrally admined
+
+    steps:
+        # Clone this repo
+      - name: Checkout
+        uses: actions/checkout@v4.1.6
+
+      - name: Run syn (Genus), par (Innovus), drc (Pegasus), and lvs (Pegasus) on the GCD design in sky130, using sky130_scl.
+        run: |
+          cd e2e
+          poetry install
+          source $(poetry env info --path)/bin/activate
+          # redirect all hammer output a temp file, since it contains proprietary tool logs
+          tempfile=$(mktemp)
+
+          # run cadence tools on design
+          # WARNING: do not create/modify tool invocations to output to stdout! All output should go to $tempfile
+          echo "log file is $tempfile on $(hostname)" | tee -a $tempfile
+          echo "End-to-end CAD flow CI smoketest running on" ${{ github.head_ref }}.${{ github.sha }} > $tempfile 2>&1
+          make build >> $tempfile 2>&1
+          echo "running par.." | tee -a $tempfile
+          make par >> $tempfile 2>&1
+          echo "running drc.." | tee -a $tempfile
+          make drc >> $tempfile 2>&1
+          echo "running lvs.." | tee -a $tempfile
+          make lvs >> $tempfile 2>&1
+
+          # Verify DRC, LVS are clean (this is a very simple design, it should be clean without hacks)
+          echo "Checking that LVS passed..." | tee -a $tempfile
+          # TODO these are probably pretty brittle...
+          if [[ $(grep "Run Result             : MATCH" "$tempfile") ]]; then
+            echo "LVS passed!" | tee -a $tempfile
+          else
+            echo "There's an LVS mismatch! see $tempfile for log" | tee -a $tempfile
+            exit 1
+          fi
+
+          echo "Checking that DRC is clean..." | tee -a $tempfile
+          if [[ $(grep "Total DRC Results                 : 0 (0)" "$tempfile") ]]; then
+            echo "DRC is clean!" | tee -a $tempfile
+          else
+            echo "There are DRC violations! see $tempfile for log" | tee -a $tempfile
+            exit 1
+          fi

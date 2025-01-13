@@ -5,7 +5,7 @@ vlsi_dir=$(abspath .)
 # minimal flow configuration variables
 design              ?= pass
 pdk                 ?= sky130
-tools               ?= nop
+tools               ?= cm
 env                 ?= bwrc
 
 extra               ?=  # extra configs

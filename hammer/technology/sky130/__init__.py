@@ -297,9 +297,10 @@ class SKY130Tech(HammerTechnology):
 
         # add skywater io cells
         io_library_base_path = os.path.join(SKY130A, "libs.ref", "sky130_fd_io")
-        lib_corner_files[io_library_base_path] = os.listdir(
-            os.path.join(io_library_base_path, "lib")
-        )
+        if os.path.exists(io_library_base_path):
+            lib_corner_files[io_library_base_path] = os.listdir(
+                os.path.join(io_library_base_path, "lib")
+            )
 
         for library_base_path, cornerfiles in lib_corner_files.items():
             for cornerfilename in cornerfiles:
@@ -496,6 +497,9 @@ class SKY130Tech(HammerTechnology):
         if self.get_setting("vlsi.core.lvs_tool") == "hammer.lvs.calibre":
             pmos = "phighvt"
             nmos = "nshort"
+        elif self.get_setting("vlsi.core.lvs_tool") == "hammer.lvs.pegasus":
+            pmos = "pfet_01v8_hvt"
+            nmos = "nfet_01v8"
         elif self.get_setting("vlsi.core.lvs_tool") == "hammer.lvs.netgen":
             pmos = "sky130_fd_pr__pfet_01v8_hvt"
             nmos = "sky130_fd_pr__nfet_01v8"
