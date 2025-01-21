@@ -11,7 +11,7 @@ env                 ?= bwrc
 extra               ?=  # extra configs
 args                ?=  # command-line args (including step flow control)
 
-
+HAMMER_DRIVER		?= ./example-driver
 OBJ_DIR             ?= $(vlsi_dir)/build-$(pdk)-$(tools)/$(design)
 
 # non-overlapping default configs
@@ -41,12 +41,12 @@ HAMMER_D_MK = $(OBJ_DIR)/hammer.d
 build: $(HAMMER_D_MK)
 
 $(HAMMER_D_MK): $(SRAM_CONF)
-	hammer-vlsi --obj_dir $(OBJ_DIR) -e $(ENV_YML) $(HAMMER_EXTRA_ARGS) build
+	$(HAMMER_DRIVER) --obj_dir $(OBJ_DIR) -e $(ENV_YML) $(HAMMER_EXTRA_ARGS) build
 
 -include $(HAMMER_D_MK)
 
 $(SRAM_CONF) srams:
-	hammer-vlsi --obj_dir $(OBJ_DIR) -e $(ENV_YML) $(foreach conf, $(PROJ_YMLS), -p $(conf)) sram_generator
+	$(HAMMER_DRIVER) --obj_dir $(OBJ_DIR) -e $(ENV_YML) $(foreach conf, $(PROJ_YMLS), -p $(conf)) sram_generator
 	cp output.json $(SRAM_CONF)
 
 clean:
