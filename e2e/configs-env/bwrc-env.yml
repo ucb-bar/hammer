@@ -11,10 +11,10 @@ synopsys.MGLS_LICENSE_FILE: "1717@bwrcflex-1.eecs.berkeley.edu:1717@bwrcflex-2.e
 
 
 # Commercial tool versions
-synthesis.genus.version: "231"
-par.innovus.version: "231"
-power.joules.version: "231"
-sim.vcs.version: "V-2023.12-SP1"
+synthesis.genus.version: "231_ISR2"
+par.innovus.version: "231_ISR2"
+power.joules.version: "231_ISR2"
+sim.vcs.version: "W-2024.09-1"
 
 # Open-source tool paths
 synthesis.yosys.yosys_bin: "/tools/C/openeda/conda-yosys/bin/yosys"
