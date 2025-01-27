@@ -337,7 +337,11 @@ class HammerTechnology:
         if self.get_setting("vlsi.technology.manually_override_pdk_collateral"):
             for lib in self.get_setting("vlsi.technology.override_libraries"):
                 for key, path in lib['library'].items():
-                    fname = os.path.basename(path)
+                    if isinstance(path, list): # path fname and fname to replace are different
+                        fname = path[1]
+                        path = path[0]
+                    else:
+                        fname = os.path.basename(path)
                     if (key, fname) in manual_overrides:
                         self.logger.error("Attempted to add {(key,path)} to overrides when {manual_overrides[(key, fname)]} already exists!")
                     manual_overrides[(key, fname)] = path
