@@ -470,7 +470,7 @@ class SKY130Tech(HammerTechnology):
             self.setup_cdl()
             self.setup_verilog()
         self.setup_techlef()
-        # self.setup_io_lefs()
+        self.setup_io_lefs()
         print("Loaded Sky130 Tech")
 
     def setup_cdl(self) -> None:

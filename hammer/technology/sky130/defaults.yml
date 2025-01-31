@@ -43,6 +43,7 @@ technology.sky130:
 # WARNING: BREAK GLASS flag to override tech collateral with the paths provided in `override_libraries`
 vlsi.technology.manually_override_pdk_collateral: false 
 vlsi.technology.override_libraries: [] # hacked collateral files to be used instead of default tech files with the same name
+# either it's key:path or key:[path,name_to_override] if the path fname is diff than the fname to override
 
 mentor.extra_env_vars_meta: lazydeepsubst # Mentor environment variables
 # Override this in project
