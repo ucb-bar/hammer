@@ -27,26 +27,13 @@ drc.magic.magic_bin: "/tools/commercial/skywater/local/chipyard-tutorial/.conda-
 lvs.netgen.netgen_bin: "/tools/commercial/skywater/local/chipyard-tutorial/.conda-signoff/bin/netgen"
 
 
-# Technology paths
+# Sky130 paths
 technology.sky130:
-  #sky130A: "/tools/commercial/skywater/local/open_pdks-2022.10/share/pdk/sky130A"
-  # sram22_sky130_macros: "/tools/commercial/skywater/local/chipyard-tutorial/sram22_sky130_macros"
-  sram22_sky130_macros: "/tools/C/rohankumar/stac-top/vlsi/sram22_sky130_macros/"
-  # https://github.com/rahulk29/sram22_sky130_macros/tree/dev
-
-  # this key is OPTIONAL, no NDA files will be used if it does not point to a valid path
-  #sky130_nda: "/tools/commercial/skywater/swtech130/skywater-src-nda"
-
-  # for caravel collateral pulled in by this design
-  caravel: /tools/commercial/skywater/local/caravel/v6.0
-
-  lvs_blackbox_srams: true
-  sky130_scl: "/tools/C/elamdf/sky130/sky130_scl_9T_0.0.6"
-  sky130_cds: "/tools/C/elamdf/sky130/sky130_release_0.0.4/"
-  stdcell_library: "sky130_scl"
-
-technology.core.stackup: "sky130_scl"
-vlsi.technology.placement_site: "CoreSite"
+  sky130A: "/tools/commercial/skywater/local/sky130A"
+  sram22_sky130_macros: "/tools/commercial/skywater/local/sram22_sky130_macros"
+  openram_lib: "/tools/commercial/skywater/local/sky130_sram_macros"
+  sky130_nda: "/tools/commercial/skywater/swtech130/skywater-src-nda-20221031"
+  sky130_cds: "/tools/commercial/skywater/sky130_cds/sky130_prelim_release_091123"
 
 # ASAP7 paths
 technology.asap7:

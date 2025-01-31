@@ -5,10 +5,8 @@ technology.sky130:
   openram_lib: "/tools/commercial/skywater/local/sky130_sram_macros"
   sky130_nda: "/tools/commercial/skywater/swtech130/skywater-src-nda-20221031"
   sky130_cds: "/tools/commercial/skywater/sky130_cds/sky130_prelim_release_091123"
-  sky130_cds: "/tools/commercial/skywater/sky130_cds/PDK/sky130_release_0.0.3/"
-  sky130_scl: "/tools/commercial/skywater/sky130_cds/LIB/sky130_scl_9T_0.0.3/"
 
-synthesis.genus.version: "221"
+synthesis.genus.version: "211"
 par.innovus.version: "211"
 
 sim.vcs.version: "S-2021.09-SP1-1"
