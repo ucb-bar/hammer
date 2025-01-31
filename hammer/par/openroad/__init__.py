@@ -1118,6 +1118,10 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         tie_lo_cells = self.technology.get_special_cell_by_type(CellType.TieLoCell)
         tie_hilo_cells = self.technology.get_special_cell_by_type(CellType.TieHiLoCell)
 
+        tie_hi_cell = ""
+        tie_hi_port = ""
+        tie_lo_cell = ""
+        tie_lo_port = ""
         if len(tie_hi_cells) != 1 or len (tie_lo_cells) != 1:
             self.logger.warning("Hi and Lo tiecells are unspecified or improperly specified and will not be added.")
         elif tie_hi_cells[0].output_ports is None or tie_lo_cells[0].output_ports is None:
@@ -1957,6 +1961,11 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
         with open(pin_constraints_fragment, "w") as f:
             f.write(self.sdc_pin_constraints)
         sdc_files.append(pin_constraints_fragment)
+
+        # Append any custom SDC files.
+        custom_sdcs = self.get_setting("vlsi.inputs.custom_sdc_files")
+        for sdc in custom_sdcs:
+            sdc_files.append(self.process_sdc_file(sdc))
 
         # Add the post-synthesis SDC, if present.
         post_synth_sdc = self.post_synth_sdc

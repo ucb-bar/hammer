@@ -10,21 +10,18 @@
 
 import json
 import os
-import uuid
 from dataclasses import dataclass, field, asdict
 from enum import Enum
 from typing import Any, Union
 
 import networkx as nx
-from networkx.readwrite import json_graph
 
 from hammer.logging import HammerVLSILogging
 from hammer.vlsi.cli_driver import CLIDriver
 
 
 class Status(Enum):
-    """Represents the status of a node in the flowgraph.
-    """
+    """Represents the status of a node in the flowgraph."""
     NOT_RUN    = "NOT_RUN"
     RUNNING    = "RUNNING"
     INCOMPLETE = "INCOMPLETE"
@@ -39,18 +36,17 @@ class Node:
     Returns:
         Node: Complete description of an action.
     """
-    action:            str
-    tool:              str
-    pull_dir:          str
-    push_dir:          str
-    required_inputs:   list[str]
-    required_outputs:  list[str]
-    status:            Status    = Status.NOT_RUN
-    # __uuid:            uuid.UUID = field(default_factory=uuid.uuid4)
-    driver:            CLIDriver = field(default_factory=CLIDriver)
-    optional_inputs:   list[str] = field(default_factory=list)
-    optional_outputs:  list[str] = field(default_factory=list)
-    step_controls:     dict[str, str] = field(default_factory=lambda: {
+    action:           str
+    tool:             str
+    pull_dir:         str
+    push_dir:         str
+    required_inputs:  list[str]
+    required_outputs: list[str]
+    status:           Status    = Status.NOT_RUN
+    driver:           CLIDriver = field(default_factory=CLIDriver)
+    optional_inputs:  list[str] = field(default_factory=list)
+    optional_outputs: list[str] = field(default_factory=list)
+    step_controls:    dict[str, str] = field(default_factory=lambda: {
         "start_before_step": "",
         "start_after_step": "",
         "stop_before_step": "",
@@ -137,7 +133,7 @@ class Graph:
     auto_auxiliary: bool = True
 
     def __post_init__(self) -> None:
-        self.networkx = nx.DiGraph(Graph.insert_auxiliary_actions(self.edge_list) if self.auto_auxiliary else self.edge_list)
+        self.networkx = nx.DiGraph(Graph.insert_auxiliary_actions(self.edge_list) if self.auto_auxiliary else self.edge_list) # type: ignore
 
     def verify(self) -> bool:
         """Checks if a graph is valid via its inputs and outputs.
@@ -204,7 +200,7 @@ class Graph:
                         parent.push_dir,
                         child.pull_dir,
                         parent.required_outputs,
-                        [f"{aux_action}-out.json"],
+                        child.required_inputs,
                     )
                     changes.append((parent_idx, child_idx, aux_node))
 
@@ -213,7 +209,7 @@ class Graph:
             parent, children = list(edge_list_copy.items())[parent_idx]
 
             child = children[child_idx]
-            child.required_inputs = aux_node.required_outputs
+            child.required_inputs.extend(aux_node.required_outputs)
 
             children[child_idx] = aux_node
             if aux_node not in edge_list_copy:
@@ -299,13 +295,6 @@ class Graph:
             ctxt.fatal(f"Step {node.action} failed")
         return code
 
-    def to_json(self) -> dict:
-        """Encodes a graph as a JSON string.
-
-        Returns:
-            str: JSON dump of a flowgraph.
-        """
-        return json_graph.node_link_data(self.networkx)
 
     def to_mermaid(self) -> str:
         """Converts the flowgraph into Mermaid format for visualization.

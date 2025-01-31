@@ -566,7 +566,7 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
 
     def clock_tree(self) -> bool:
         """Setup and route a clock tree for clock nets."""
-        if len(self.get_clock_ports()) > 0:
+        if len(self.get_clock_ports()) > 0 or len(self.get_setting("vlsi.inputs.custom_sdc_files")) > 0:
             # Fix fanout load violations
             self.verbose_append("set_db opt_fix_fanout_load true")
             # Ignore clock tree when there are no clocks
@@ -928,10 +928,6 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         return True
 
     def write_design(self) -> bool:
-        # Because implementation is done, enable report_timing -early/late and SDF writing
-        # without recalculating timing graph for each analysis view
-        self.append("set_db timing_enable_simultaneous_setup_hold_mode true")
-
         # Save the Innovus design.
         self.verbose_append("write_db {lib_name} -def -verilog".format(
             lib_name=self.output_innovus_lib_name
@@ -1026,6 +1022,11 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         self.output.clear()
         assert super().do_pre_steps(self.first_step)
         self.append("read_db latest")
+        if self.ran_write_design:
+            # Because implementation is done, enable report_timing -early/late and SDF writing
+            # without recalculating timing graph for each analysis view
+            self.append("set_db timing_enable_simultaneous_setup_hold_mode true")
+
         self.write_contents_to_path("\n".join(self.output), self.open_chip_tcl)
 
         with open(self.open_chip_script, "w") as f:

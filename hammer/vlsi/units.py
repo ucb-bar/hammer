@@ -5,15 +5,7 @@
 
 from abc import abstractmethod
 import sys
-try:
-    from abc import ABC  # pylint: disable=ungrouped-imports
-except ImportError:
-    if sys.version_info.major == 3 and sys.version_info.minor < 4:
-        # Python compatibility: 3.3
-        # Python 3.3 and below don't have abc.ABC
-        import abc  # pylint: disable=ungrouped-imports
-        ABC = abc.ABCMeta('ABC', (object,), {'__slots__': ()})  # type: ignore
-
+from abc import ABC
 from typing import Optional, TypeVar
 
 from hammer.utils import get_or_else

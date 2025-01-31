@@ -244,6 +244,7 @@ class Metal(BaseModel):
         Issues a logger warning for the user if the returned width was quantized.
         """
         width_table = self.power_strap_width_table
+        qwidth: Optional[Decimal] = None
         if len(width_table) == 0:
             qwidth = width
         else:
@@ -264,6 +265,7 @@ class Metal(BaseModel):
                         logger.warning("The desired power strap width {dw} on {lay} was quantized down to {fw} based on the technology's width table. Please check your power grid.".format(dw=str(width), lay=layer, fw=str(width_table[i-1])))
                     qwidth = width_table[i-1]
                     break
+        assert qwidth
         return qwidth
 
     def get_width_spacing_start_twt(self,

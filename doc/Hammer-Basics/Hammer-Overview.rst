@@ -34,7 +34,7 @@ Further details about these keys and how they are manipulated is found in the :r
 Tech Plugins
 -------------------------------
 
-A techonology plugin consists of two or more files: a ``*.tech.json`` and a ``defaults.yml``.
+A technology plugin consists of two or more files: a ``*.tech.json`` and a ``defaults.yml``.
 
 The ``*.tech.json`` contains pointers to relevant PDK files and fundamental technology constants.  These values are not meant to be overriden, nor can they be for the time being.
 

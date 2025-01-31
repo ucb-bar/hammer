@@ -37,7 +37,7 @@ asap7 = ["gdspy"]
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1"
-mypy = "^1.0.0"
+pyright = "^1.1"
 types-PyYAML = "^6.0.0"
 tox = "^3.25.1"
 Sphinx = "^5.1.1"
@@ -83,3 +83,9 @@ reports = true
 # Disable len-as-condition since len(lst) == 0 is more clear on types
 # where as if <var> is confusing since it's not clear what <var> is.
 disable = ["no-else-return", "len-as-condition"]
+
+[tool.pyright]
+exclude = ["doc/**", "e2e/**", "test_scripts/**"]
+include = ["hammer", "tests"]
+reportMissingImports = true
+typeCheckingMode = "standard"

@@ -31,6 +31,7 @@ def generate_from_list(template: str, lst) -> list:
             var_type_instance_check = isinstance_check("List")
         elif var.type.startswith("Optional"):
             m = re.search(r"Optional\[(\S+)\]", var.type)
+            assert m
             subtype = str(m.group(1))
             var_type_instance_check = isinstance_check(subtype) + " or (value is None)"
             attr_error_logic = "return None"

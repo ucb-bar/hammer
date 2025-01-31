@@ -87,6 +87,12 @@ For track spacing > 0 and effective power utilization < 100%, powerstraps are ro
 
 The currently supported API supports power strap generation by tracks, which auto-calculates power strap width, spacing, set-to-set distance, and offsets based on basic DRC rules specified in the technology Stackup object. The basic pieces of information needed are the desired track utilization per strap and overall power strap density. Different values can be specified on a layer-by-layer basis by appending ``_<layer name>`` to the end of the desired option.
 
+For mesh pattern, the following diagram shows how the sizings of a mesh-patterned strap is derived from user inputs.
+
+.. image:: mesh_no_space.png
+
+Notice that for a mesh pattern, users do not need to specify the layer track spacing, since that should not matter for a regular mesh pattern. 
+
 Special Cells
 -------------
 Special cells are specified in the technology's JSON, but are exposed to provide lists of cells needed for certain steps, such as for fill, well taps, and more. Synthesis and place-and-route tool plugins can grab the appropriate type of special cell for the relevant steps.

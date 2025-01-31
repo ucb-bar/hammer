@@ -135,26 +135,9 @@ pytest tests/test_build_systems.py -k "flat_makefile" -rA -v
 > PASSED tests/test_build_systems.py::TestHammerBuildSystems::test_flat_makefile
 ```
 
-### Type Checking with mypy
+### Type Checking with pyright
 
-There is a [small issue with the ruamel.yaml package typechecking](https://github.com/python/mypy/issues/12664) which can be hacked around with (replace the python version with your own):
-
-```shell
-touch .venv/lib/python3.10/site-packages/ruamel/py.typed
-touch .venv/lib/python3.10/site-packages/networkx/py.typed
-```
-
-Inside your poetry virtualenv, from the root of Hammer, run:
-
-```shell
-mypy --namespace-packages --warn-unused-ignores -p hammer
-
-Success: no issues found in 146 source files
-
-mypy --namespace-packages --warn-unused-ignores tests
-
-Success: no issues found in 25 source files
-```
+Run: `poetry run pyright`
 
 ### Testing Different Python Versions with tox
 

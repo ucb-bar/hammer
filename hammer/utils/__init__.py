@@ -325,8 +325,8 @@ def check_function_type(function: Callable, args: List[type], return_type: type)
         elif a == dict and b == typing.Dict:
             return True
         elif is_union(a) and is_union(b):
-            if len(a.__args__) == len(b.__args__):
-                for ai, bi in list(zip(a.__args__, b.__args__)):
+            if len(a.__args__) == len(b.__args__):  # type: ignore
+                for ai, bi in list(zip(a.__args__, b.__args__)):  # type: ignore
                     if not compare_types(ai, bi):
                         return False
                 return True
@@ -391,7 +391,7 @@ def get_filetype(filename: str) -> HammerFiletype:
     if len(split) == 1:
         return HammerFiletype.NONE
     extension = split[-1]
-    if extension in ["sp", "spi", "nl", "cir", "spice", "cdl"]:
+    if extension in ["sp", "spi", "nl", "cir", "spice", "cdl", "net"]:
         return HammerFiletype.SPICE
     elif extension in ["v", "sv", "vh"]:
         return HammerFiletype.VERILOG

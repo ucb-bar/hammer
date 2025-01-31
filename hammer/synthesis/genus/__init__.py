@@ -85,12 +85,14 @@ class Genus(HammerSynthesisTool, CadenceTool):
     def steps(self) -> List[HammerToolStep]:
         steps_methods = [
             self.init_environment,
+            self.predict_floorplan,
             self.syn_generic,
             self.syn_map,
             self.add_tieoffs,
             self.write_regs,
             self.generate_reports,
-            self.write_outputs
+            self.write_outputs,
+            self.run_genus
         ]
         if self.get_setting("synthesis.inputs.retime_modules"):
             steps_methods.insert(1, self.retime_modules)
@@ -111,8 +113,7 @@ class Genus(HammerSynthesisTool, CadenceTool):
 
     def do_post_steps(self) -> bool:
         assert super().do_post_steps()
-        return self.run_genus()
-
+        return True
     @property
     def mapped_v_path(self) -> str:
         return os.path.join(self.run_dir, "{}.mapped.v".format(self.top_module))
@@ -225,6 +226,20 @@ class Genus(HammerSynthesisTool, CadenceTool):
             files=" ".join(lef_files)
         ))
 
+        # Read qrc tech files for physical synthesis.
+        qrc_files = self.technology.read_libs([
+            hammer_tech.filters.qrc_tech_filter
+        ], hammer_tech.HammerTechnologyUtils.to_plain_item)
+        if qrc_files:
+            verbose_append("set_db qrc_tech_file {{ {files} }}".format(
+                files=qrc_files[0]
+            ))
+
+        # Quit when ispatial is used with sky130
+        if(not qrc_files and self.get_setting("synthesis.genus.phys_flow_effort").lower() == "high"):
+            self.logger.warning("Sky130 does not support ISpatial due to missing of qrc tech files.")
+            verbose_append("quit")
+
         # Load input files and check that they are all Verilog.
         if not self.check_input_files([".v", ".sv", "vh"]):
             return False
@@ -265,6 +280,12 @@ class Genus(HammerSynthesisTool, CadenceTool):
         # Prevent floorplanning targets from getting flattened.
         # TODO: is there a way to track instance paths through the synthesis process?
         verbose_append("set_db root: .auto_ungroup none")
+
+        # Set design effort.
+        verbose_append(f"set_db phys_flow_effort {self.get_setting('synthesis.genus.phys_flow_effort')}")
+
+        if self.get_setting("synthesis.genus.phys_flow_effort").lower() == "high":
+            self.verbose_append("set_db opt_spatial_effort extreme")
 
         # Set "don't use" cells.
         for l in self.generate_dont_use_commands():
@@ -327,20 +348,47 @@ set_db hinst:{inst} .preserve true
             if len(inverter_cells) > 0 and len(logic_cells) > 0:
                 # Clock mapping needs at least the attributes cts_inverter_cells and cts_logic_cells to be set
                 self.append("set_db map_clock_tree true")
-        self.verbose_append("syn_generic")
+
+        if self.get_setting("synthesis.genus.phys_flow_effort").lower() == "none":
+            self.verbose_append("syn_generic")
+        else:
+            self.verbose_append("syn_generic -physical")
 
         self.dedup_ilms()
 
         return True
 
     def syn_map(self) -> bool:
-        self.verbose_append("syn_map")
+        if self.get_setting("synthesis.genus.phys_flow_effort").lower() == "none":
+            self.verbose_append("syn_map")
+        else:
+            self.verbose_append("syn_map -physical")
+            
+        # High QoR optimization.
+        if self.get_setting("synthesis.genus.phys_flow_effort").lower() == "medium":
+            self.verbose_append("syn_opt")
+        elif self.get_setting("synthesis.genus.phys_flow_effort").lower() == "high":
+            self.verbose_append("syn_opt -spatial")
+
         # Need to suffix modules for hierarchical simulation if not top
         if self.hierarchical_mode not in [HierarchicalMode.Flat, HierarchicalMode.Top]:
             self.verbose_append("update_names -module -log hier_updated_names.log -suffix _{MODULE}".format(MODULE=self.top_module))
 
         self.dedup_ilms()
 
+        return True
+    
+    def predict_floorplan(self) -> bool:
+        if self.get_setting("synthesis.genus.phys_flow_effort").lower() == "none":
+            self.verbose_append("set_db predict_floorplan_enable_during_generic false")
+            self.verbose_append("set_db physical_force_predict_floorplan false")
+        else:
+            self.verbose_append("set_db invs_temp_dir temp_invs")
+            self.verbose_append(f"set_db innovus_executable {self.get_setting('par.innovus.innovus_bin')}")
+            self.verbose_append("set_db predict_floorplan_enable_during_generic true")
+            self.verbose_append("set_db physical_force_predict_floorplan true")
+            self.verbose_append(f"set_db predict_floorplan_use_innovus true")
+            self.verbose_append("predict_floorplan")
         return True
 
     def add_tieoffs(self) -> bool:
@@ -378,8 +426,13 @@ set_db hinst:{inst} .preserve true
         """Generate reports."""
         # TODO: extend report generation capabilities
         self.verbose_append("write_reports -directory reports -tag final")
+        if self.get_setting("synthesis.genus.phys_flow_effort").lower() != "none":
+            self.verbose_append("report_ple > reports/final_ple.rpt")
+            #qor done by write_reports 
+
         # Write reports does not normally report unconstrained paths
         self.verbose_append("report_timing -unconstrained -max_paths 50 > reports/final_unconstrained.rpt")
+
         return True
 
     def write_regs(self) -> bool:
@@ -422,10 +475,12 @@ set_db hinst:{inst} .preserve true
             verbose_append("write_design -innovus {hier_flag} -gzip_files {top}".format(
                 hier_flag="-hierarchical" if is_hier else "", top=top))
 
+        if self.get_setting("synthesis.genus.phys_flow_effort").lower() != "none":
+            verbose_append("write_db -common")
         self.ran_write_outputs = True
 
         return True
-
+    
     def run_genus(self) -> bool:
         verbose_append = self.verbose_append
 
@@ -434,13 +489,13 @@ set_db hinst:{inst} .preserve true
         verbose_append("quit")
 
         # Create synthesis script.
-        syn_tcl_filename = os.path.join(self.run_dir, "syn.tcl")
-        self.write_contents_to_path("\n".join(self.output), syn_tcl_filename)
+        self.syn_tcl_filename = os.path.join(self.run_dir, "syn.tcl")
+        self.write_contents_to_path("\n".join(self.output), self.syn_tcl_filename)
 
         # Build args.
         args = [
             self.get_setting("synthesis.genus.genus_bin"),
-            "-f", syn_tcl_filename,
+            "-f", self.syn_tcl_filename,
             "-no_gui"
         ]
 
