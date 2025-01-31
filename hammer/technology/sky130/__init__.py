@@ -490,7 +490,41 @@ class SKY130Tech(HammerTechnology):
             self.setup_verilog()
         self.setup_techlef()
         self.setup_io_lefs()
+        self.setup_calibre_lvs_deck()
         print("Loaded Sky130 Tech")
+
+    def setup_calibre_lvs_deck(self) -> bool:
+        # Remove conflicting specification statements found in PDK LVS decks
+        pattern = ".*({}).*\n".format("|".join(LVS_DECK_SCRUB_LINES))
+        matcher = re.compile(pattern)
+
+        source_paths = self.get_setting("technology.sky130.lvs_deck_sources")
+        lvs_decks = self.config.lvs_decks
+        if not lvs_decks:
+            return True
+        for i, deck in enumerate(lvs_decks):
+            if deck.tool_name != "calibre":
+                continue
+            try:
+                source_path = Path(source_paths[i])
+            except IndexError:
+                self.logger.error(
+                    "No corresponding source for LVS deck {}".format(deck))
+                continue
+            if not source_path.exists():
+                raise FileNotFoundError(f"LVS deck not found: {source_path}")
+            cache_tech_dir_path = Path(self.cache_dir)
+            dest_path = os.path.join(cache_tech_dir_path,
+                                     os.path.basename(deck.path))
+            with open(source_path, "r") as sf:
+                with open(dest_path, "w") as df:
+                    self.logger.info(
+                        "Modifying LVS deck: {} -> {}".format(
+                            source_path, dest_path)
+                    )
+                    df.write(matcher.sub("", sf.read()))
+                    df.write(LVS_DECK_INSERT_LINES)
+        return True
 
     def setup_cdl(self) -> None:
         """Copy and hack the cdl, replacing pfet_01v8_hvt/nfet_01v8 with
@@ -795,11 +829,6 @@ class SKY130Tech(HammerTechnology):
         return hooks.get(tool_name, [])
 
     def get_tech_lvs_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
-        # calibre_hooks = [
-        #     HammerTool.make_post_insertion_hook(
-        #         "generate_lvs_run_file", setup_calibre_lvs_deck
-        #     )
-        # ]
         calibre_hooks = []
         pegasus_hooks = []
         if self.use_sram22:
@@ -1055,7 +1084,6 @@ set_db cts_clock_gating_cells {ICGX1}
 # TODO: this should just be placign rail straps, so higher straps are placed by non-hardocded tcl
 def power_rail_straps_no_tapcells(ht: HammerTool) -> bool:
     #  We do this since there are no explicit tapcells in sky130_scl
-
     # just need the rail ones, others are placed as usual.
     ht.append(
         """
@@ -1118,44 +1146,6 @@ add_stripes -create_pins 1 -block_ring_bottom_layer_limit met5 -block_ring_top_l
     )
     return True
 
-
-# TODO do we want this to be in upstream hammer?
-# def efabless_ring_io(ht: HammerTool) -> bool:
-#     assert isinstance(ht, HammerPlaceAndRouteTool), "IO ring instantiation only for par"
-#     assert isinstance(ht, TCLTool), "IO ring instantiation can only run on TCL tools"
-#     io_file = ht.get_setting("technology.sky130.io_file")
-#     ht.append(f"read_io_file {io_file} -no_die_size_adjust")
-#     p_nets = list(map(lambda s: s.name, ht.get_independent_power_nets()))
-#     g_nets = list(map(lambda s: s.name, ht.get_independent_ground_nets()))
-#     ht.append(f'''
-#         # Global net connections
-#         connect_global_net VDDA -type pg_pin -pin_base_name VDDA -verbose
-#         connect_global_net VDDIO -type pg_pin -pin_base_name VDDIO* -verbose
-#         connect_global_net {p_nets[0]} -type pg_pin -pin_base_name VCCD* -verbose
-#         connect_global_net {p_nets[0]} -type pg_pin -pin_base_name VCCHIB -verbose
-#         connect_global_net {p_nets[0]} -type pg_pin -pin_base_name VSWITCH -verbose
-#         connect_global_net {g_nets[0]} -type pg_pin -pin_base_name VSSA -verbose
-#         connect_global_net {g_nets[0]} -type pg_pin -pin_base_name VSSIO* -verbose
-#         connect_global_net {g_nets[0]} -type pg_pin -pin_base_name VSSD* -verbose
-#     ''')
-#     ht.append('''
-#         # IO fillers
-#         set io_fillers {sky130_ef_io__com_bus_slice_20um sky130_ef_io__com_bus_slice_10um sky130_ef_io__com_bus_slice_5um sky130_ef_io__com_bus_slice_1um}
-#         add_io_fillers -io_ring 1 -cells $io_fillers -side top -filler_orient r0
-#         add_io_fillers -io_ring 1 -cells $io_fillers -side right -filler_orient r270
-#         add_io_fillers -io_ring 1 -cells $io_fillers -side bottom -filler_orient r180
-#         add_io_fillers -io_ring 1 -cells $io_fillers -side left -filler_orient r90
-#     ''')
-#     ht.append(f'''
-#         # Core ring
-#         add_rings -follow io -layer met5 -nets {{ {p_nets[0]} {g_nets[0]} }} -offset 5 -width 13 -spacing 3
-#         route_special -connect pad_pin -nets {{ {p_nets[0]} {g_nets[0]} }} -detailed_log
-#     ''')
-#     ht.append('''
-#         # Prevent buffering on TIE_LO_ESD and TIE_HI_ESD
-#         set_dont_touch [get_db [get_db pins -if {.name == *TIE*ESD}] .net]
-#     ''')
-#     return True
 
 
 def calibre_drc_blackbox_srams(ht: HammerTool) -> bool:
@@ -1267,40 +1257,6 @@ def sram22_lvs_recognize_gates_all(ht: HammerTool) -> bool:
         f.write("\nLVS RECOGNIZE GATES ALL")
     return True
 
-
-def setup_calibre_lvs_deck(ht: HammerTool) -> bool:
-    assert isinstance(
-        ht, HammerLVSTool), "Modify Calibre LVS deck for LVS only"
-    # Remove conflicting specification statements found in PDK LVS decks
-    pattern = ".*({}).*\n".format("|".join(LVS_DECK_SCRUB_LINES))
-    matcher = re.compile(pattern)
-
-    source_paths = ht.get_setting("technology.sky130.lvs_deck_sources")
-    lvs_decks = ht.technology.config.lvs_decks
-    if not lvs_decks:
-        return True
-    for i, deck in enumerate(lvs_decks):
-        if deck.tool_name != "calibre":
-            continue
-        try:
-            source_path = Path(source_paths[i])
-        except IndexError:
-            ht.logger.error(
-                "No corresponding source for LVS deck {}".format(deck))
-            continue
-        if not source_path.exists():
-            raise FileNotFoundError(f"LVS deck not found: {source_path}")
-        dest_path = deck.path
-        ht.technology.ensure_dirs_exist(dest_path)
-        with open(source_path, "r") as sf:
-            with open(dest_path, "w") as df:
-                ht.logger.info(
-                    "Modifying LVS deck: {} -> {}".format(
-                        source_path, dest_path)
-                )
-                df.write(matcher.sub("", sf.read()))
-                df.write(LVS_DECK_INSERT_LINES)
-    return True
 
 
 tech = SKY130Tech()
