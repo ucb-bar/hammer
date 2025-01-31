@@ -351,9 +351,9 @@ class HammerTechnology:
                 self.logger.warning("You've attempted to specify override libraries without enabling vlsi.technology.manually_override_pdk_collateral! collateral paths will not be overwritten")
 
         used_overrides = []
-        for lib in self.config.libraries:
+        for lib in self.config.libraries + self.config.drc_decks + self.config.lvs_decks:
             for field_name in lib.model_fields:
-                if field_name.endswith("_file") or field_name == "verilog_sim":
+                if "file" in field_name or "path" in field_name or field_name == "verilog_sim":
                     # check if that file exists in cache, override if so
                     default_path = getattr(lib, field_name)
                     if not default_path:
