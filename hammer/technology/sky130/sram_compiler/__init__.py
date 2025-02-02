@@ -76,8 +76,8 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
             )
             if not os.path.exists(lib_path):
                 self.logger.error(
-                    f"SKY130 {params.family} SRAM cache does not support corner: {
-                        corner_str}"
+                    f"""SKY130 {params.family} SRAM cache does not support corner: {
+                        corner_str}"""
                 )
 
             lef_file = "{b}/{n}/{n}.lef".format(b=base_dir, n=sram_name)
@@ -127,8 +127,8 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
             )
             if not os.path.exists(lib_path):
                 self.logger.error(
-                    f"SKY130 {params.family} SRAM cache does not support corner: {
-                        corner_str}"
+                    f"""SKY130 {params.family} SRAM cache does not support corner: {
+                        corner_str}"""
                 )
 
             self.setup_openram_spice(sram_name)
@@ -168,8 +168,8 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
             / sram_name
             / f"{sram_name}.lvs.sp"
         )
-        dest_path = f"{os.path.abspath(
-            self.technology.cache_dir)}/{sram_name}/{sram_name}.lvs.sp"
+        dest_path = f"""{os.path.abspath(
+            self.technology.cache_dir)}/{sram_name}/{sram_name}.lvs.sp"""
         self.technology.ensure_dirs_exist(dest_path)
         if not source_path.exists():
             raise FileNotFoundError(f"SRAM Spice file not found: {source_path}")
@@ -191,8 +191,8 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
             / sram_name
             / f"{sram_name}.lef"
         )
-        dest_path = f"{os.path.abspath(self.technology.cache_dir)
-               }/{sram_name}/{sram_name}.lef"
+        dest_path = f"""{os.path.abspath(self.technology.cache_dir)
+               }/{sram_name}/{sram_name}.lef"""
         self.technology.ensure_dirs_exist(dest_path)
         if not source_path.exists():
             raise FileNotFoundError(f"SRAM LEF file not found: {source_path}")
@@ -218,8 +218,8 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
             / sram_name
             / f"{sram_name}.v"
         )
-        dest_path = f"{os.path.abspath(self.technology.cache_dir)
-               }/{sram_name}/{sram_name}.v"
+        dest_path = f"""{os.path.abspath(self.technology.cache_dir)
+               }/{sram_name}/{sram_name}.v"""
         if not source_path.exists():
             raise FileNotFoundError(f"SRAM Spice file not found: {source_path}")
         self.technology.ensure_dirs_exist(dest_path)
@@ -247,8 +247,8 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
             / sram_name
             / f"{sram_name}_TT_1p8V_25C.lib"
         )
-        dest_path = f"{os.path.abspath(self.technology.cache_dir)
-               }/{sram_name}/{sram_name}.v"
+        dest_path = f"""{os.path.abspath(self.technology.cache_dir)
+               }/{sram_name}/{sram_name}.v"""
         if not source_path.exists():
             raise FileNotFoundError(f"SRAM Lib file not found: {source_path}")
         self.technology.ensure_dirs_exist(dest_path)
