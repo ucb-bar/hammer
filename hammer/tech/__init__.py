@@ -350,7 +350,7 @@ class HammerTechnology:
             if len(self.get_setting("vlsi.technology.override_libraries")) > 0:
                 self.logger.warning("You've attempted to specify override libraries without enabling vlsi.technology.manually_override_pdk_collateral! collateral paths will not be overwritten")
 
-        used_overrides = []
+        used_overrides = {}
         for lib in self.config.libraries + self.config.drc_decks + self.config.lvs_decks:
             for field_name in lib.model_fields:
                 if "file" in field_name or "path" in field_name or field_name == "verilog_sim":
@@ -369,11 +369,8 @@ class HammerTechnology:
                     if len(cached_paths) > 1:
                         self.logger.error(f"ambiguous cache override: {cached_paths}")
                     if cached_paths:
-                        used_overrides.append((field_name, fname))
                         new_path = cached_paths[0]
-                        self.logger.info(
-                            f"overriding {default_path} with cache entry {new_path}"
-                        )
+                        used_overrides[(field_name, fname)] = (new_path, False) # non-manual override
 
                     manual_override_paths = set([f for f in fnames if (field_name, f) in manual_overrides])
                     manual_override_paths = [manual_overrides[(field_name, f)] for f in manual_override_paths]
@@ -383,13 +380,16 @@ class HammerTechnology:
                         self.logger.error(f"ambiguous cache override: {manual_override_paths}")
                     # prioritize manual overrides over cache
                     if manual_override_paths:
-                        used_overrides.append((field_name, fname))
                         new_path = manual_override_paths[0]
-                        self.logger.info(
-                            f"overriding {default_path} with manual override {new_path}"
-                        )
+                        used_overrides[(field_name, fname)] = (new_path, True) # manual override
 
                     setattr(lib, field_name, new_path)
+        # do logging at the end to prevent spamming stdout with the same overrides
+        for field, new_path in used_overrides.items():
+            override_type = "manual" if new_path[1] else "cache"
+            self.logger.info( 
+                f"Overriding {field[0]} {field[1]} with {override_type} path {new_path[0]}"
+            )
         unused_overrides = [k for k in manual_overrides.keys() if k not in used_overrides]
         if unused_overrides:
             self.logger.warning(f"Unused tech collateral overrides: {unused_overrides}")
