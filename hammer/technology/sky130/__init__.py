@@ -491,6 +491,7 @@ class SKY130Tech(HammerTechnology):
         self.setup_techlef()
         self.setup_io_lefs()
         self.setup_calibre_lvs_deck()
+        self.setup_hvl_ls_lef()
         print("Loaded Sky130 Tech")
 
     def setup_calibre_lvs_deck(self) -> bool:
@@ -771,6 +772,35 @@ class SKY130Tech(HammerTechnology):
                         )
 
                 df.writelines(sl)
+
+    def setup_hvl_ls_lef(self) -> bool:
+        # Treat HVL cells as if they were hard macros to avoid needing to set them
+        # up "properly" with multiple power domains
+
+        lef_name = "sky130_fd_sc_hvl__lsbufhv2lv_1.lef"
+
+        sky130A_path = Path(self.get_setting('technology.sky130.sky130A'))
+        source_path = sky130A_path / 'libs.ref' / 'sky130_fd_sc_hvl' / 'lef' / "sky130_fd_sc_hvl.lef"
+        cache_path = Path(self.cache_dir) / "fd_sc_hvl__lef" / lef_name
+        cache_path.parent.mkdir(exist_ok=True)
+
+        with source_path.open("r") as sf, cache_path.open("w") as df:
+            self.logger.info(f"Patching HVL LS LEF: {source_path} -> {cache_path}")
+            is_in_site_def = False
+            is_in_macro_def = False
+            for line in sf:
+                if is_in_site_def:
+                    if 'END unithv' in line:
+                        is_in_site_def = False
+                elif not is_in_macro_def and 'SITE unithv' in line:
+                    is_in_site_def = True
+                elif 'MACRO ' in line:
+                    is_in_macro_def = True
+                    df.write(line)
+                elif 'SITE unithv' in line:
+                    pass
+                else:
+                    df.write(line.replace("CLASS CORE", "CLASS BLOCK") if not (("ANTENNACELL" in line) or ("SPACER" in line)) else line)
 
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {
