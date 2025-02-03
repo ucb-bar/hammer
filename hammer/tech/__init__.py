@@ -343,8 +343,8 @@ class HammerTechnology:
                         path = path[0]
                     else:
                         fname = os.path.basename(path)
-                    if (key, fname) in manual_overrides:
-                        self.logger.error("Attempted to add {(key,path)} to overrides when {manual_overrides[(key, fname)]} already exists!")
+                    if (key, fname) in manual_overrides and manual_overrides[(key,fname)] != path:
+                        self.logger.error(f"Attempted to add {(key,path)} to overrides when {manual_overrides[(key, fname)]} already exists!")
                     manual_overrides[(key, fname)] = path
         else:
             if len(self.get_setting("vlsi.technology.override_libraries")) > 0:
