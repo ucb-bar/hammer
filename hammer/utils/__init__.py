@@ -368,6 +368,50 @@ def check_function_type(function: Callable, args: List[type], return_type: type)
 
     return None
 
+def retrieve_files(path: str, exts=[], output_type="str", relative=True): 
+    """
+    Returns a list or line-seperated string of all filepaths in a directory and any of its subdirectories
+    with the specified extensions, returning all filepaths within that directory if no extension is specified.
+
+    :param path: Specifies the filepath to the directory
+    :param exts: List of strings specifying whitelisted extensions
+    :param output_type: Specifies whether output will be a list or string, by "list" or "str"
+    :param relative: If true, return filepaths relative to the directory. Else, return absolute filepaths.
+    """
+    file_list = []
+    extslower = [extension.lower() for extension in exts]
+    exts_proc = [f".{ext}" if ("." not in ext) else ext for ext in extslower]
+
+    for (root, directories, filenames) in os.walk(path):
+        for filename in filenames:
+            file_ext = (os.path.splitext(filename)[1]).lower()
+            rel_root = os.path.relpath(root)
+            if (relative):
+              filepath = os.path.join(rel_root, filename)
+            else:
+              filepath = f"{os.path.join(root, filename)}"
+
+            if (not exts):
+               file_list.append(filepath)
+            elif (file_ext in exts_proc):
+               file_list.append(filepath)
+    
+    if (output_type is "str"):
+      return "".join(file_list) + "\n"
+    elif (output_type is "list"):
+      return file_list
+    else:
+      return "".join(file_list) + "\n"
+
+def sift_exts(filelist, exts=[]):
+    """
+    Returns a list of filepaths whose filenames contain any of the extensions in the specified extension list
+    """
+    exts_lower = list(map(str.lower, exts))
+    filelist_lower = list(map(str.lower, filelist))
+    sifted = list(filter(lambda x: os.path.splitext(x)[1] in exts_lower, filelist_lower))
+
+    return sifted
 
 # Contributors: Be sure to add to this list if you need to call get_filetype
 @unique
