@@ -248,218 +248,174 @@ class AIRFlow:
         if os.path.exists(self.OBJ_DIR):
             subprocess.run(f"rm -rf {self.OBJ_DIR} hammer-vlsi-*.log", shell=True, check=True)
 
-# Define the configuration UI parameters
-default_args = {
-    'owner': 'airflow',
-    'params': {
-        'clean': {
-            'type': 'boolean',
-            'default': False,
-            'description': 'Clean build directory'
-        },
-        'build': {
-            'type': 'boolean',
-            'default': False,
-            'description': 'Run build step'
-        },
-        'sim_rtl': {
-            'type': 'boolean',
-            'default': False,
-            'description': 'Run RTL simulation'
-        },
-        'syn': {
-            'type': 'boolean',
-            'default': False,
-            'description': 'Run synthesis'
-        },
-        'par': {
-            'type': 'boolean',
-            'default': False,
-            'description': 'Run place and route'
-        }
+def generic_task_callable(task_name, flow):
+    """
+    Generic callable for handling different hammer tasks.
+    Args:
+        task_name: Name of the task to execute (e.g., 'build_task', 'sim_rtl_task')
+        flow: AIRFlow instance containing configuration
+    """
+    # Map UI task names to hammer commands
+    task_map = {
+        'build_task': 'build',
+        'sim_rtl_task': 'sim',
+        'syn_task': 'syn',
+        'par_task': 'par',
+        'clean_task': 'clean'
     }
-}
+    
+    if task_name not in task_map:
+        raise ValueError(f"Unknown task: {task_name}. Available tasks: {list(task_map.keys())}")
+    
+    hammer_action = task_map[task_name]
+    
+    # Set up sys.argv with common arguments
+    sys.argv = [
+        'hammer-vlsi',      # Command name
+        hammer_action,      # Action
+        '--obj_dir', flow.OBJ_DIR,
+        '-e', flow.ENV_YML
+    ]
+    
+    # Add all project configs
+    for conf in flow.PROJ_YMLS:
+        if conf and conf != '':
+            sys.argv.extend(['-p', conf])
+    
+    # Add any additional arguments from flow
+    if flow.args:
+        sys.argv.extend(flow.args.split())
+    
+    print(f"Running hammer-vlsi with arguments: {sys.argv}")
+    
+    try:
+        CLIDriver().main()
+    except Exception as e:
+        print(f"Error executing {task_name}: {str(e)}")
+        raise
+
+@task.branch(task_id='start_task')
+def start_task(**context):
+    """Initial branching task"""
+    tasks_to_run = []
+    if context['dag_run'].conf.get('clean', False):
+        tasks_to_run.append('clean_task')
+    tasks_to_run.append('build_decision')
+    tasks_to_run.append('exit_task')
+    return tasks_to_run
+
+def build_decide(**context):
+    """Decide whether to run build"""
+    if context['dag_run'].conf.get('build', False):
+        return ['build_task', 'sim_or_syn_decision']
+    return ['sim_or_syn_decision', 'exit_task']
+
+def sim_or_syn_decide(**context):
+    """Decide whether to run sim_rtl or continue to syn"""
+    if context['dag_run'].conf.get('sim_rtl', False):
+        return 'sim_rtl_task'
+    return 'syn_decision'
+
+def syn_decide(**context):
+    """Decide whether to run synthesis"""
+    if context['dag_run'].conf.get('syn', False):
+        return ['syn_task', 'par_decision']
+    return ['par_decision', 'exit_task']
+
+def par_decide(**context):
+    """Decide whether to run par"""
+    if context['dag_run'].conf.get('par', False):
+        return 'par_task'
+    return 'exit_task'
 
 @dag(
-    dag_id='hammer_vlsi_pipeline',
-    start_date=datetime(2024, 1, 1),
+    schedule_interval=None,
     schedule=None,
+    start_date=datetime(2024, 1, 1, 0, 0),
     catchup=False,
-    params={
-        'clean': Param(
-            default=False,
-            type='boolean',
-            title='Clean Build Directory',
-            description='Clean the build directory before running'
-        ),
-        'build': Param(
-            default=False,
-            type='boolean',
-            title='Build Design',
-            description='Run the build step'
-        ),
-        'sim_rtl': Param(
-            default=False,
-            type='boolean',
-            title='RTL Simulation',
-            description='Run RTL simulation'
-        ),
-        'syn': Param(
-            default=False,
-            type='boolean',
-            title='Synthesis',
-            description='Run logic synthesis'
-        ),
-        'par': Param(
-            default=False,
-            type='boolean',
-            title='Place and Route',
-            description='Run place and route'
-        )
-    },
-    render_template_as_native_obj=True
+    dag_id='hammer_vlsi'
 )
-def create_hammer_dag():
-    @task
-    def clean_task(**context):
-        """Clean the build directory"""
-        print("Starting clean task")
-        if context['dag_run'].conf.get('clean', False):
-            print("Clean parameter is True, executing clean")
-            flow = AIRFlow()
-            import shutil
-            if os.path.exists(flow.OBJ_DIR):
-                shutil.rmtree(flow.OBJ_DIR)
-                print(f"Cleaned directory: {flow.OBJ_DIR}")
-        else:
-            print("Clean parameter is False, skipping")
-            raise AirflowSkipException("Clean task skipped")
-
-    @task
-    def build_task(**context):
-        """Execute build task"""
-        print("Starting build task")
-        if context['dag_run'].conf.get('build', False):
-            print("Build parameter is True, executing build")
-            flow = AIRFlow()
-            flow.build()
-        else:
-            print("Build parameter is False, skipping")
-            raise AirflowSkipException("Build task skipped")
-
-    @task
-    def sim_rtl_task(**context):
-        """Execute RTL simulation task"""
-        print("Starting sim_rtl task")
-        if context['dag_run'].conf.get('sim_rtl', False):
-            print("Sim-RTL parameter is True, executing sim_rtl")
-            flow = AIRFlow()
-            flow.sim_rtl()
-        else:
-            print("Sim-RTL parameter is False, skipping")
-            raise AirflowSkipException("Sim-RTL task skipped")
-
-    @task
-    def syn_task(**context):
-        """Execute synthesis task"""
-        print("Starting syn task")
-        if context['dag_run'].conf.get('syn', False):
-            print("Synthesis parameter is True, executing syn")
-            flow = AIRFlow()
-            flow.syn()
-        else:
-            print("Synthesis parameter is False, skipping")
-            raise AirflowSkipException("Synthesis task skipped")
-
-    @task
-    def par_task(**context):
-        """Execute PAR task"""
-        print("Starting par task")
-        if context['dag_run'].conf.get('par', False):
-            print("PAR parameter is True, executing par")
-            flow = AIRFlow()
-            flow.par()
-        else:
-            print("PAR parameter is False, skipping")
-            raise AirflowSkipException("PAR task skipped")
-
-    @task.branch(trigger_rule=TriggerRule.NONE_FAILED)
-    def clean_decider(**context):
-        """Decide whether to run clean"""
-        if context['dag_run'].conf.get('clean', False):
-            return ['clean_task', 'build_decider']
-        return 'build_decider'
-
-    @task.branch(trigger_rule=TriggerRule.NONE_FAILED)
-    def build_decider(**context):
-        """Decide whether to run build"""
-        if context['dag_run'].conf.get('build', False):
-            return ['build_task', 'sim_rtl_decider']
-        return 'sim_rtl_decider'
-
-    @task.branch(trigger_rule=TriggerRule.NONE_FAILED)
-    def sim_rtl_decider(**context):
-        """Decide whether to run sim_rtl"""
-        if context['dag_run'].conf.get('sim_rtl', False):
-            return ['sim_rtl_task', 'syn_decider']
-        return 'syn_decider'
-
-    @task.branch(trigger_rule=TriggerRule.NONE_FAILED)
-    def syn_decider(**context):
-        """Decide whether to run synthesis"""
-        if context['dag_run'].conf.get('syn', False):
-            return ['syn_task', 'par_decider']
-        return 'par_decider'
-
-    @task.branch(trigger_rule=TriggerRule.NONE_FAILED)
-    def par_decider(**context):
-        """Decide whether to run par"""
-        if context['dag_run'].conf.get('par', False):
-            return 'par_task'
-        return None
-
-    # Create task instances
-    clean_decide = clean_decider()
-    clean = clean_task()
-    build_decide = build_decider()
-    build = build_task()
-    sim_rtl_decide = sim_rtl_decider()
-    sim_rtl = sim_rtl_task()
-    syn_decide = syn_decider()
-    syn = syn_task()
-    par_decide = par_decider()
-    par = par_task()
-
-    # Set up dependencies to ensure deciders always run
-    clean_decide >> [clean, build_decide]
-    clean >> build_decide
+def hammer_vlsi_dag():
+    flow = AIRFlow()
     
-    build_decide >> [build, sim_rtl_decide]
-    build >> sim_rtl_decide
+    # Create tasks
+    start = start_task()
     
-    sim_rtl_decide >> [sim_rtl, syn_decide]
-    sim_rtl >> syn_decide
+    # Create decision tasks
+    build_decision = PythonOperator(
+        task_id='build_decision',
+        python_callable=build_decide,
+        provide_context=True
+    )
     
-    syn_decide >> [syn, par_decide]
-    syn >> par_decide
+    sim_or_syn_decision = PythonOperator(
+        task_id='sim_or_syn_decision',
+        python_callable=sim_or_syn_decide,
+        provide_context=True
+    )
     
-    par_decide >> par
+    syn_decision = PythonOperator(
+        task_id='syn_decision',
+        python_callable=syn_decide,
+        provide_context=True
+    )
+    
+    par_decision = PythonOperator(
+        task_id='par_decision',
+        python_callable=par_decide,
+        provide_context=True
+    )
+    
+    # Create execution tasks
+    clean_task = PythonOperator(
+        task_id='clean_task',
+        python_callable=generic_task_callable,
+        op_kwargs={'task_name': 'clean_task', 'flow': flow}
+    )
+    
+    build_task = PythonOperator(
+        task_id='build_task',
+        python_callable=generic_task_callable,
+        op_kwargs={'task_name': 'build_task', 'flow': flow}
+    )
+    
+    sim_rtl_task = PythonOperator(
+        task_id='sim_rtl_task',
+        python_callable=generic_task_callable,
+        op_kwargs={'task_name': 'sim_rtl_task', 'flow': flow}
+    )
+    
+    syn_task = PythonOperator(
+        task_id='syn_task',
+        python_callable=generic_task_callable,
+        op_kwargs={'task_name': 'syn_task', 'flow': flow}
+    )
+    
+    par_task = PythonOperator(
+        task_id='par_task',
+        python_callable=generic_task_callable,
+        op_kwargs={'task_name': 'par_task', 'flow': flow}
+    )
+    
+    exit_task = PythonOperator(
+        task_id='exit_task',
+        python_callable=lambda **context: print("Path completed")
+    )
+    
+    # Set dependencies using operators
+    start.set_downstream([clean_task, build_decision, exit_task])
+    clean_task.set_downstream([build_decision, exit_task])
+    build_decision.set_downstream([build_task, sim_or_syn_decision, exit_task])
+    build_task.set_downstream(sim_or_syn_decision)
+    sim_or_syn_decision.set_downstream([sim_rtl_task, syn_decision])
+    sim_rtl_task.set_downstream(exit_task)
+    syn_decision.set_downstream([syn_task, par_decision, exit_task])
+    syn_task.set_downstream(par_decision)
+    par_decision.set_downstream([par_task, exit_task])
+    par_task.set_downstream(exit_task)
 
-    return {
-        'clean_decide': clean_decide,
-        'clean': clean,
-        'build_decide': build_decide,
-        'build': build,
-        'sim_rtl_decide': sim_rtl_decide,
-        'sim_rtl': sim_rtl,
-        'syn_decide': syn_decide,
-        'syn': syn,
-        'par_decide': par_decide,
-        'par': par
-    }
-
-# Create the DAG
-hammer_dag = create_hammer_dag()
+# Create the DAG instance
+dag = hammer_vlsi_dag()
 
 def main():
     CLIDriver().main()
