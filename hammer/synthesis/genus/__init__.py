@@ -224,18 +224,18 @@ class Genus(HammerSynthesisTool, CadenceTool):
             files=" ".join(lef_files)
         ))
 
-        # Read qrc tech files for physical synthesis.
-        qrc_files = self.technology.read_libs([
-            hammer_tech.filters.qrc_tech_filter
-        ], hammer_tech.HammerTechnologyUtils.to_plain_item)
-        verbose_append("set_db qrc_tech_file {{ {files} }}".format(
-            files=qrc_files[0]
-        ))
+        # # Read qrc tech files for physical synthesis.
+        # qrc_files = self.technology.read_libs([
+        #     hammer_tech.filters.qrc_tech_filter
+        # ], hammer_tech.HammerTechnologyUtils.to_plain_item)
+        # verbose_append("set_db qrc_tech_file {{ {files} }}".format(
+        #     files=qrc_files[0]
+        # ))
 
-        # Quit when ispatial is used with sky130
-        if(not qrc_files and self.get_setting("synthesis.genus.phys_flow_effort").lower() == "high"):
-            self.logger.warning("Sky130 does not support ISpatial due to missing of qrc tech files.")
-            verbose_append("quit")
+        # # Quit when ispatial is used with sky130
+        # if(not qrc_files and self.get_setting("synthesis.genus.phys_flow_effort").lower() == "high"):
+        #     self.logger.warning("Sky130 does not support ISpatial due to missing of qrc tech files.")
+        #     verbose_append("quit")
 
         # Load input files and check that they are all Verilog.
         if not self.check_input_files([".v", ".sv", "vh"]):
