@@ -270,16 +270,34 @@ def hammer_pipeline_dag():
         else:
             return "exit_task"
 
-    @task.branch(trigger_rule=TriggerRule.ONE_SUCCESS)  
+    #@task
+    @task.branch(trigger_rule=TriggerRule.NONE_FAILED)
     def sim_or_syn_decide(**context):
         """Decide whether to run sim_rtl or syn"""
-        if context['dag_run'].conf.get('sim_rtl', True):
-            return "sim_rtl"
+        if context['dag_run'].conf.get('sim_rtl', False):
+            return 'sim_rtl_task'
+        return 'syn_decider'
+
+    @task
+    def sim_rtl_task(**context):
+        """Execute RTL simulation task"""
+        print("Starting sim_rtl task")
+        if context['dag_run'].conf.get('sim_rtl', False):
+            print("Sim-RTL parameter is True, executing sim_rtl")
+            flow = AIRFlow()
+            flow.sim_rtl()
         else:
             return "syn_decide"
 
-    @task.branch(trigger_rule=TriggerRule.ALL_SUCCESS)
-    def syn_decide(**context):
+    @task.branch(trigger_rule=TriggerRule.NONE_FAILED)
+    def build_decider(**context):
+        """Decide whether to run build"""
+        if context['dag_run'].conf.get('build', False):
+            return ['build_task', 'sim_or_syn_decide', 'exit_task']
+        return 'sim_rtl_decider'
+
+    @task.branch(trigger_rule=TriggerRule.NONE_FAILED)
+    def syn_decider(**context):
         """Decide whether to run synthesis"""
         if context['dag_run'].conf.get('syn', True):
             return "syn"
@@ -291,42 +309,68 @@ def hammer_pipeline_dag():
     @task.branch(trigger_rule=TriggerRule.ONE_SUCCESS)
     def par_decide(**context):
         """Decide whether to run par"""
-        if context['dag_run'].conf.get('par', True):
-            return 'par'
-        else:
-            return "exit_task"
+        if context['dag_run'].conf.get('par', False):
+            return 'par_task'
+        return 'exit_task'
 
     @task(trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS)
     def exit_task():
         """Exit task"""
         print("Exiting")
+        sys.exit(0)
 
-    ##Airflow branches
+    # Create task instances
     start = start_task()
-    build_choice = build_decide()
-    sim_or_syn_choice = sim_or_syn_decide()
-    syn_choice = syn_decide()
-    par_choice = par_decide()
-    finish = exit_task()
-    ##Hammer task from airflow class
-    flow = AIRFlow()
-    clean_task = clean(flow)
-    build_task = build(flow)
-    sim_rtl_task = sim_rtl(flow)
-    syn_task = syn(flow)
-    par_task = par(flow)
-    # Set up task dependencies
-    start >> [clean_task, build_choice, finish]
-    clean_task >> finish
-    build_choice >> [build_task, sim_or_syn_choice, finish]
-    build_task >> sim_or_syn_choice >> [sim_rtl_task, syn_choice]
-    sim_rtl_task >> finish 
-    syn_choice >> [syn_task, par_choice, finish]
-    syn_task >> par_choice >> [par_task, finish]
-    par_task >> finish
+    clean = clean_task()
+    build_decide = build_decider()
+    build = build_task()
+    sim_or_syn_decide = sim_or_syn_decide()
+    sim_rtl = sim_rtl_task()
+    syn_decide = syn_decider()
+    syn = syn_task()
+    par_decide = par_decider()
+    par = par_task()
+    exit_ = exit_task()
 
-#Create instance of DAG
-dag = hammer_pipeline_dag()
+    # Set up dependencies to ensure deciders always run
+    '''
+    start >> [clean, build_decide, exit_]
+    clean >> exit_
+    build_decide >> [build, sim_or_syn_decide, exit_]
+    build >> sim_or_syn_decide
+    sim_or_syn_decide >> [sim_rtl, syn_decide]
+    sim_rtl >> exit_
+    syn_decide >> [syn, par_decide, exit_]
+    syn >> par_decide
+    par_decide >> [par, exit_]
+    par >> exit_
+    '''
+
+    start >> [clean, build_decide, exit_]
+    clean >> exit_
+    build_decide >> [build, sim_or_syn_decide, exit_]
+    build >> sim_or_syn_decide
+    sim_or_syn_decide >> [sim_rtl, syn_decide]
+    sim_rtl >> exit_
+    syn_decide >> [syn, par_decide, exit_]
+    syn >> par_decide
+    par_decide >> [par, exit_]
+    par >> exit_
+
+    return {
+        'clean': clean,
+        'build_decide': build_decide,
+        'build': build,
+        'sim_or_syn_decide': sim_or_syn_decide,
+        'sim_rtl': sim_rtl,
+        'syn_decide': syn_decide,
+        'syn': syn,
+        'par_decide': par_decide,
+        'par': par
+    }
+
+# Create the DAG
+hammer_dag = create_hammer_dag()
 
 def main():
     CLIDriver().main()
