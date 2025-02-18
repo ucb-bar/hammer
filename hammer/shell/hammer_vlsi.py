@@ -17,12 +17,11 @@ import json
 
 from airflow.models.dag import DAG
 from airflow.operators.python import PythonOperator
+from airflow.models.baseoperator import chain
+from airflow.decorators import task, dag
 from airflow.models.param import Param
 from airflow.utils.trigger_rule import TriggerRule
-from datetime import datetime
-from airflow.exceptions import AirflowSkipException
-from airflow.decorators import task, dag
-from airflow.models import Variable
+from datetime import datetime, timedelta
 
 # Add the parent directory to the Python path to allow imports from 'vlsi'
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'vlsi')))
@@ -33,6 +32,7 @@ from hammer.vlsi.cli_driver import import_task_to_dag
 #pdb.set_trace()
 class AIRFlow:
     def __init__(self):
+        #pdb.set_trace()
         # minimal flow configuration variables
         self.design = os.getenv('design', 'gcd')
         self.pdk = os.getenv('pdk', 'sky130')
@@ -40,222 +40,176 @@ class AIRFlow:
         self.env = os.getenv('env', 'bwrc')
         self.extra = os.getenv('extra', '')  # extra configs
         self.args = os.getenv('args', '')  # command-line args (including step flow control)
-        
-        # Directory structure
         self.vlsi_dir = os.path.abspath('../e2e/')
-        self.e2e_dir = os.getenv('e2e_dir', self.vlsi_dir)
-        self.OBJ_DIR = os.getenv('OBJ_DIR', f"{self.e2e_dir}/build-{self.pdk}-{self.tools}/{self.design}")
+        self.OBJ_DIR = os.getenv('OBJ_DIR', f"{self.vlsi_dir}/build-{self.pdk}-{self.tools}/{self.design}")
         
         # non-overlapping default configs
-        self.ENV_YML = os.getenv('ENV_YML', f"{self.e2e_dir}/configs-env/{self.env}-env.yml")
-        self.PDK_CONF = os.getenv('PDK_CONF', f"{self.e2e_dir}/configs-pdk/{self.pdk}.yml")
-        self.TOOLS_CONF = os.getenv('TOOLS_CONF', f"{self.e2e_dir}/configs-tool/{self.tools}.yml")
+        self.ENV_YML = os.getenv('ENV_YML', f"configs-env/{self.env}-env.yml")
+        self.PDK_CONF = os.getenv('PDK_CONF', f"configs-pdk/{self.pdk}.yml")
+        self.TOOLS_CONF = os.getenv('TOOLS_CONF', f"configs-tool/{self.tools}.yml")
 
         # design-specific overrides of default configs
-        self.DESIGN_CONF = os.getenv('DESIGN_CONF', f"{self.e2e_dir}/configs-design/{self.design}/common.yml")
-        self.DESIGN_PDK_CONF = os.getenv('DESIGN_PDK_CONF', f"{self.e2e_dir}/configs-design/{self.design}/{self.pdk}.yml")
-        
-        # synthesis and par configurations
-        self.SYN_CONF = os.getenv('SYN_CONF', f"{self.e2e_dir}/configs-design/{self.design}/syn.yml")
-        self.PAR_CONF = os.getenv('PAR_CONF', f"{self.e2e_dir}/configs-design/{self.design}/par.yml")
+        self.DESIGN_CONF = os.getenv('DESIGN_CONF', f"configs-design/{self.design}/common.yml")
+        self.DESIGN_PDK_CONF = os.getenv('DESIGN_PDK_CONF', f"configs-design/{self.design}/{self.pdk}.yml")
         
         # This should be your target, build is passed in
+        
+        #sys.argv[2] = "build"
+        #self.makecmdgoals = os.getenv('MAKECMDGOALS', sys.argv[2])
         self.makecmdgoals = os.getenv('MAKECMDGOALS', "build")
         
         # simulation and power configurations
         self.SIM_CONF = os.getenv('SIM_CONF',
-            f"{self.e2e_dir}/configs-design/{self.design}/sim-rtl.yml" if '-rtl' in self.makecmdgoals else
-            f"{self.e2e_dir}/configs-design/{self.design}/sim-syn.yml" if '-syn' in self.makecmdgoals else
-            f"{self.e2e_dir}/configs-design/{self.design}/sim-par.yml" if '-par' in self.makecmdgoals else ''
+            f"configs-design/{self.design}/sim-rtl.yml" if '-rtl' in self.makecmdgoals else
+            f"configs-design/{self.design}/sim-syn.yml" if '-syn' in self.makecmdgoals else
+            f"configs-design/{self.design}/sim-par.yml" if '-par' in self.makecmdgoals else ''
         )
         self.POWER_CONF = os.getenv('POWER_CONF',
-            f"{self.e2e_dir}/configs-design/{self.design}/power-rtl-{self.pdk}.yml" if 'power-rtl' in self.makecmdgoals else
-            f"{self.e2e_dir}/configs-design/{self.design}/power-syn-{self.pdk}.yml" if 'power-syn' in self.makecmdgoals else
-            f"{self.e2e_dir}/configs-design/{self.design}/power-par-{self.pdk}.yml" if 'power-par' in self.makecmdgoals else ''
+            f"configs-design/{self.design}/power-rtl-{self.pdk}.yml" if 'power-rtl' in self.makecmdgoals else
+            f"configs-design/{self.design}/power-syn-{self.pdk}.yml" if 'power-syn' in self.makecmdgoals else
+            f"configs-design/{self.design}/power-par-{self.pdk}.yml" if 'power-par' in self.makecmdgoals else ''
         )
 
         # create project configuration
-        self.PROJ_YMLS = [
-            self.PDK_CONF, 
-            self.TOOLS_CONF, 
-            self.DESIGN_CONF, 
-            self.DESIGN_PDK_CONF,
-            self.SYN_CONF, 
-            self.SIM_CONF, 
-            self.POWER_CONF, 
-            self.extra
-        ]
-        
+        self.PROJ_YMLS = [self.PDK_CONF, self.TOOLS_CONF, self.DESIGN_CONF, self.DESIGN_PDK_CONF, self.SIM_CONF, self.POWER_CONF, self.extra]
         self.HAMMER_EXTRA_ARGS = ' '.join([f"-p {conf}" for conf in self.PROJ_YMLS if conf]) + f" {self.args}"
         self.HAMMER_D_MK = os.getenv('HAMMER_D_MK', f"{self.OBJ_DIR}/hammer.d")
 
-        # Set up system arguments
+        #if __name__ == '__main__':
+        # Adds configuration to system arguments, so they are visible to ArgumentParser
+        HAMMER_EXTRA_ARGS_split = self.HAMMER_EXTRA_ARGS.split()
+        
+        #sys.argv.append("build")
+        
+        #for arg in ['--obj_dir', self.OBJ_DIR, '-e', self.ENV_YML]:
         airflow_command = sys.argv[1]
         sys.argv = []
+        #for arg in [airflow_command, '--action', self.makecmdgoals, '--obj_dir', self.OBJ_DIR, '-e', self.ENV_YML]:
         for arg in [airflow_command, self.makecmdgoals, '--obj_dir', self.OBJ_DIR, '-e', self.ENV_YML]:
             sys.argv.append(arg)
-        for arg in self.HAMMER_EXTRA_ARGS.split():
+        for arg in HAMMER_EXTRA_ARGS_split:
             sys.argv.append(arg)
+## Current status - Determine how to fix task dependency issues
+## Try function mapping or dynamic conditional dependency checks
 
-    def build(self):
-        print("Executing build")
-        print(f"Using config files:")
-        print(f"ENV_YML: {self.ENV_YML}")
-        print(f"PDK_CONF: {self.PDK_CONF}")
-        print(f"TOOLS_CONF: {self.TOOLS_CONF}")
-        print(f"DESIGN_CONF: {self.DESIGN_CONF}")
-        print(f"DESIGN_PDK_CONF: {self.DESIGN_PDK_CONF}")
-        
-        sys.argv = [
-            'hammer-vlsi',
-            'build',
-            '--obj_dir', self.OBJ_DIR,
-            '-e', self.ENV_YML,
-            '-p', self.PDK_CONF,
-            '-p', self.TOOLS_CONF,
-            '-p', self.DESIGN_CONF,
-            '-p', self.DESIGN_PDK_CONF
-        ]
-        
-        if self.extra:
-            sys.argv.extend(['-p', self.extra])
-        
-        if self.args:
-            sys.argv.extend(self.args.split())
-            
-        print(f"Running command: {' '.join(sys.argv)}")
-        CLIDriver().main()
+@task
+def build(flow):
+    # Set up sys.argv with all necessary arguments
+    sys.argv = [
+        'hammer-vlsi',  # Command name
+        'build',        # Action
+        '--obj_dir', flow.OBJ_DIR,
+        '-e', flow.ENV_YML
+    ]
+    # Add all project configs
+    for conf in flow.PROJ_YMLS:
+        if conf:
+            sys.argv.extend(['-p', conf])
+    
+    # Add any additional arguments
+    if flow.args:
+        sys.argv.extend(flow.args.split())
+    
+    CLIDriver().main()
 
-    def sim_rtl(self):
-        print("Executing sim-rtl")
-        print(f"Using config files:")
-        print(f"ENV_YML: {self.ENV_YML}")
-        print(f"PDK_CONF: {self.PDK_CONF}")
-        print(f"TOOLS_CONF: {self.TOOLS_CONF}")
-        print(f"DESIGN_CONF: {self.DESIGN_CONF}")
-        print(f"DESIGN_PDK_CONF: {self.DESIGN_PDK_CONF}")
-        
-        # Add simulation config
-        self.SIM_CONF = os.path.join(self.e2e_dir, "configs-design", self.design, "sim-rtl.yml")
-        print(f"SIM_CONF: {self.SIM_CONF}")
-        
-        sys.argv = [
-            'hammer-vlsi',
-            'sim',
-            '--obj_dir', self.OBJ_DIR,
-            '-e', self.ENV_YML,
-            '-p', self.PDK_CONF,
-            '-p', self.TOOLS_CONF,
-            '-p', self.DESIGN_CONF,
-            '-p', self.DESIGN_PDK_CONF,
-            '-p', self.SIM_CONF
-        ]
-        
-        if self.extra:
-            sys.argv.extend(['-p', self.extra])
-        
-        if self.args:
-            sys.argv.extend(self.args.split())
-            
-        print(f"Running command: {' '.join(sys.argv)}")
-        CLIDriver().main()
+@task
+def sim_rtl(flow):
+    # Set up sys.argv with all necessary arguments
+    sys.argv = [
+        'hammer-vlsi',  # Command name
+        'sim',          # Use 'sim' instead of 'sim-rtl' as it's the valid Hammer action
+        '--obj_dir', flow.OBJ_DIR,
+        '-e', flow.ENV_YML
+    ]
+    # Add all project configs
+    for conf in flow.PROJ_YMLS:
+        if conf:
+            sys.argv.extend(['-p', conf])
+    
+    if flow.args:
+        sys.argv.extend(flow.args.split())
+    
+    CLIDriver().main()
 
-    def syn(self):
-        print("Executing synthesis")
-        print(f"Using config files:")
-        print(f"ENV_YML: {self.ENV_YML}")
-        print(f"PDK_CONF: {self.PDK_CONF}")
-        print(f"TOOLS_CONF: {self.TOOLS_CONF}")
-        print(f"DESIGN_CONF: {self.DESIGN_CONF}")
-        print(f"DESIGN_PDK_CONF: {self.DESIGN_PDK_CONF}")
-        
-        # Add synthesis config
-        self.SYN_CONF = os.path.join(self.e2e_dir, "configs-design", self.design, "syn.yml")
-        print(f"SYN_CONF: {self.SYN_CONF}")
-        
-        sys.argv = [
-            'hammer-vlsi',
-            'syn',
-            '--obj_dir', self.OBJ_DIR,
-            '-e', self.ENV_YML,
-            '-p', self.PDK_CONF,
-            '-p', self.TOOLS_CONF,
-            '-p', self.DESIGN_CONF,
-            '-p', self.DESIGN_PDK_CONF,
-            '-p', self.SYN_CONF
-        ]
-        
-        if self.extra:
-            sys.argv.extend(['-p', self.extra])
-        
-        if self.args:
-            sys.argv.extend(self.args.split())
-            
-        print(f"Running command: {' '.join(sys.argv)}")
-        CLIDriver().main()
+@task
+def syn(flow):
+    sys.argv = [
+        'hammer-vlsi',
+        'syn',
+        '--obj_dir', flow.OBJ_DIR,
+        '-e', flow.ENV_YML
+    ]
+    # Add all project configs
+    for conf in flow.PROJ_YMLS:
+        if conf:
+            sys.argv.extend(['-p', conf])
+    
+    if flow.args:
+        sys.argv.extend(flow.args.split())
+    
+    CLIDriver().main()
 
-    def syn_to_par(self):
-        """
-        Generate par-input.json from synthesis outputs if it doesn't exist
-        """
-        par_input_json = f"{self.OBJ_DIR}/par-input.json"
-        
-        # Only generate if file doesn't exist
-        if not os.path.exists(par_input_json):
-            print("Generating par-input.json")
-            par_config = {
-                "vlsi.inputs.placement_constraints": [],
-                "vlsi.inputs.gds_merge": True,
-                "par.inputs": {
-                    "top_module": self.design,
-                    "input_files": [f"{self.OBJ_DIR}/syn-rundir/{self.design}.mapped.v"]
-                }
+@task
+def clean(flow):
+    #pdb.set_trace()
+    if os.path.exists(flow.OBJ_DIR):
+        subprocess.run(f"rm -rf {flow.OBJ_DIR} hammer-vlsi-*.log", shell=True, check=True)
+
+@task
+def par(flow):
+    # Get par-input.json path from OBJ_DIR
+    par_input_json = f"{flow.OBJ_DIR}/par-input.json"
+    
+    # Generate par-input.json if it doesn't exist
+    if not os.path.exists(par_input_json):
+        syn_to_par(flow)
+    
+    sys.argv = [
+        'hammer-vlsi',
+        'par',
+        '--obj_dir', flow.OBJ_DIR,
+        '-e', flow.ENV_YML,
+        '-p', par_input_json
+    ]
+    
+    # Add all project configs
+    for conf in flow.PROJ_YMLS:
+        if conf:
+            sys.argv.extend(['-p', conf])
+    
+    if flow.args:
+        sys.argv.extend(flow.args.split())
+    
+    CLIDriver().main()
+
+def syn_to_par(flow):
+    """
+    Generate par-input.json from synthesis outputs if it doesn't exist
+    """
+    par_input_json = f"{flow.OBJ_DIR}/par-input.json"
+    
+    # Only generate if file doesn't exist
+    if not os.path.exists(par_input_json):
+        # Basic PAR configuration
+        par_config = {
+            "vlsi.inputs.placement_constraints": [],
+            "vlsi.inputs.gds_merge": True,
+            "par.inputs": {
+                "top_module": flow.design,
+                "input_files": [f"{flow.OBJ_DIR}/syn-rundir/{flow.design}.mapped.v"]
             }
-            
-            # Write configuration to par-input.json
-            with open(par_input_json, 'w') as f:
-                json.dump(par_config, f, indent=2)
+        }
         
-        return par_input_json
-
-    def par(self):
-        """Execute PAR flow."""
-        # Generate par-input.json
-        par_input_json = self.syn_to_par()
-
-        # Set up command line arguments
-        sys.argv = [
-            'hammer-vlsi',
-            'par',
-            '--obj_dir', self.OBJ_DIR,
-            '-e', self.ENV_YML,
-            '-p', par_input_json
-        ]
-        
-        # Add all project configs
-        for conf in self.PROJ_YMLS:
-            if conf:
-                sys.argv.extend(['-p', conf])
-        
-        if self.args:
-            sys.argv.extend(self.args.split())
-        
-        print(f"Running command: {' '.join(sys.argv)}")
-        CLIDriver().main()
-
-    def clean(self):
-        print("Executing clean")
-        if os.path.exists(self.OBJ_DIR):
-            subprocess.run(f"rm -rf {self.OBJ_DIR} hammer-vlsi-*.log", shell=True, check=True)
-
-
-
+        # Write configuration to par-input.json
+        with open(par_input_json, 'w') as f:
+            json.dump(par_config, f, indent=2)
 
 @dag(
-    dag_id='hammer_vlsi_pipeline',
-    start_date=datetime(2024, 1, 1),
+    schedule_interval=None,
     schedule=None,
+    start_date=datetime(2024, 1, 1, 0, 0),
     catchup=False,
+    dag_id='hammer_pipeline_dag',
     params={
         'clean': Param(
             default=False,
@@ -290,167 +244,89 @@ class AIRFlow:
     },
     render_template_as_native_obj=True
 )
-def create_hammer_dag():
-    @task
-    def start_task():
+def hammer_pipeline_dag():
+    @task.branch(trigger_rule=TriggerRule.NONE_FAILED)
+    def start_task(**context):
         """Start task"""
-        print("Starting")
-        return None
-
-    @task
-    def clean_task(**context):
-        """Clean the build directory"""
-        print("Starting clean task")
-        if context['dag_run'].conf.get('clean', False):
-            print("Clean parameter is True, executing clean")
-            flow = AIRFlow()
-            import shutil
-            if os.path.exists(flow.OBJ_DIR):
-                shutil.rmtree(flow.OBJ_DIR)
-                print(f"Cleaned directory: {flow.OBJ_DIR}")
+        if context['dag_run'].conf.get('clean', True):
+            return "clean"
+        elif (context['dag_run'].conf.get('build', True) or 
+            context['dag_run'].conf.get('sim_rtl', True) or
+            context['dag_run'].conf.get('syn', True) or
+            context['dag_run'].conf.get('par', True)):
+            return "build_decide"
         else:
-            print("Clean parameter is False, skipping")
-            raise AirflowSkipException("Clean task skipped")
-
-    @task
-    def build_task(**context):
-        """Execute build task"""
-        print("Starting build task")
-        if context['dag_run'].conf.get('build', False):
-            print("Build parameter is True, executing build")
-            flow = AIRFlow()
-            flow.build()
+            return "exit_task"
+    
+    @task.branch(trigger_rule=TriggerRule.ALL_SUCCESS)
+    def build_decide(**context):
+        """Decide whether to run build"""  
+        if context['dag_run'].conf.get('build', True):
+            return "build"
+        elif (context['dag_run'].conf.get('sim_rtl', True) or
+            context['dag_run'].conf.get('syn', True) or
+            context['dag_run'].conf.get('par', True)):
+            return "sim_or_syn_decide"
         else:
-            print("Build parameter is False, skipping")
-            raise AirflowSkipException("Build task skipped")
+            return "exit_task"
 
-    @task
+    @task.branch(trigger_rule=TriggerRule.ONE_SUCCESS)  
     def sim_or_syn_decide(**context):
         """Decide whether to run sim_rtl or syn"""
-        if context['dag_run'].conf.get('sim_rtl', False):
-            return 'sim_rtl_task'
-        return 'syn_task'
-
-    @task
-    def sim_rtl_task(**context):
-        """Execute RTL simulation task"""
-        print("Starting sim_rtl task")
-        if context['dag_run'].conf.get('sim_rtl', False):
-            print("Sim-RTL parameter is True, executing sim_rtl")
-            flow = AIRFlow()
-            flow.sim_rtl()
+        if context['dag_run'].conf.get('sim_rtl', True):
+            return "sim_rtl"
         else:
-            print("Sim-RTL parameter is False, skipping")
-            raise AirflowSkipException("Sim-RTL task skipped")
+            return "syn_decide"
 
-    @task
-    def syn_task(**context):
-        """Execute synthesis task"""
-        print("Starting syn task")
-        if context['dag_run'].conf.get('syn', False):
-            print("Synthesis parameter is True, executing syn")
-            flow = AIRFlow()
-            flow.syn()
-        else:
-            print("Synthesis parameter is False, skipping")
-            raise AirflowSkipException("Synthesis task skipped")
-
-    @task
-    def par_task(**context):
-        """Execute PAR task"""
-        print("Starting par task")
-        if context['dag_run'].conf.get('par', False):
-            print("PAR parameter is True, executing par")
-            flow = AIRFlow()
-            flow.par()
-        else:
-            print("PAR parameter is False, skipping")
-            raise AirflowSkipException("PAR task skipped")
-
-    @task.branch(trigger_rule=TriggerRule.NONE_FAILED)
-    def clean_decider(**context):
-        """Decide whether to run clean"""
-        if context['dag_run'].conf.get('clean', False):
-            return ['clean_task', 'build_decider']
-        return 'build_decider'
-
-    @task.branch(trigger_rule=TriggerRule.NONE_FAILED)
-    def build_decider(**context):
-        """Decide whether to run build"""
-        if context['dag_run'].conf.get('build', False):
-            return ['build_task', 'sim_rtl_decider']
-        return 'sim_rtl_decider'
-
-    @task.branch(trigger_rule=TriggerRule.NONE_FAILED)
-    def sim_rtl_decider(**context):
-        """Decide whether to run sim_rtl"""
-        if context['dag_run'].conf.get('sim_rtl', False):
-            return ['sim_rtl_task', 'syn_decider']
-        return 'syn_decider'
-
-    @task.branch(trigger_rule=TriggerRule.NONE_FAILED)
-    def syn_decider(**context):
+    @task.branch(trigger_rule=TriggerRule.ALL_SUCCESS)
+    def syn_decide(**context):
         """Decide whether to run synthesis"""
-        if context['dag_run'].conf.get('syn', False):
-            return ['syn_task', 'par_decider']
-        return 'par_decider'
+        if context['dag_run'].conf.get('syn', True):
+            return "syn"
+        elif (context['dag_run'].conf.get('par', True)):
+            return "par_decide"
+        else:
+            return "exit_task"
 
-    @task.branch(trigger_rule=TriggerRule.NONE_FAILED)
-    def par_decider(**context):
+    @task.branch(trigger_rule=TriggerRule.ONE_SUCCESS)
+    def par_decide(**context):
         """Decide whether to run par"""
-        if context['dag_run'].conf.get('par', False):
-            return 'par_task'
-        return None
+        if context['dag_run'].conf.get('par', True):
+            return 'par'
+        else:
+            return "exit_task"
 
-    @task
+    @task(trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS)
     def exit_task():
         """Exit task"""
         print("Exiting")
-        sys.exit(0)
 
-    
-
-    # Create task instances
+    ##Airflow branches
     start = start_task()
-    clean_decide = clean_decider()
-    clean = clean_task()
-    build_decide = build_decider()
-    build = build_task()
-    sim_rtl_decide = sim_rtl_decider()
-    sim_rtl = sim_rtl_task()
-    syn_decide = syn_decider()
-    syn = syn_task()
-    par_decide = par_decider()
-    par = par_task()
-    exit = exit_task()
+    build_choice = build_decide()
+    sim_or_syn_choice = sim_or_syn_decide()
+    syn_choice = syn_decide()
+    par_choice = par_decide()
+    finish = exit_task()
+    ##Hammer task from airflow class
+    flow = AIRFlow()
+    clean_task = clean(flow)
+    build_task = build(flow)
+    sim_rtl_task = sim_rtl(flow)
+    syn_task = syn(flow)
+    par_task = par(flow)
+    # Set up task dependencies
+    start >> [clean_task, build_choice, finish]
+    clean_task >> finish
+    build_choice >> [build_task, sim_or_syn_choice, finish]
+    build_task >> sim_or_syn_choice >> [sim_rtl_task, syn_choice]
+    sim_rtl_task >> finish 
+    syn_choice >> [syn_task, par_choice, finish]
+    syn_task >> par_choice >> [par_task, finish]
+    par_task >> finish
 
-    # Set up dependencies to ensure deciders always run
-    start >> [clean, build_decide, exit]
-    clean >> exit
-    build_decide >> [build, sim_or_syn_decide, exit]
-    build >> sim_or_syn_decide
-    sim_or_syn_decide >> [sim_rtl, syn_decide]
-    sim_rtl >> exit
-    syn_decide >> [syn, par_decide, exit]
-    syn >> par_decide
-    par_decide >> [par, exit]
-    par >> exit
-
-    return {
-        'clean_decide': clean_decide,
-        'clean': clean,
-        'build_decide': build_decide,
-        'build': build,
-        'sim_rtl_decide': sim_rtl_decide,
-        'sim_rtl': sim_rtl,
-        'syn_decide': syn_decide,
-        'syn': syn,
-        'par_decide': par_decide,
-        'par': par
-    }
-
-# Create the DAG
-hammer_dag = create_hammer_dag()
+#Create instance of DAG
+dag = hammer_pipeline_dag()
 
 def main():
     CLIDriver().main()
