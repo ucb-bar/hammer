@@ -248,37 +248,8 @@ class AIRFlow:
         if os.path.exists(self.OBJ_DIR):
             subprocess.run(f"rm -rf {self.OBJ_DIR} hammer-vlsi-*.log", shell=True, check=True)
 
-# Define the configuration UI parameters
-default_args = {
-    'owner': 'airflow',
-    'params': {
-        'clean': {
-            'type': 'boolean',
-            'default': False,
-            'description': 'Clean build directory'
-        },
-        'build': {
-            'type': 'boolean',
-            'default': False,
-            'description': 'Run build step'
-        },
-        'sim_rtl': {
-            'type': 'boolean',
-            'default': False,
-            'description': 'Run RTL simulation'
-        },
-        'syn': {
-            'type': 'boolean',
-            'default': False,
-            'description': 'Run synthesis'
-        },
-        'par': {
-            'type': 'boolean',
-            'default': False,
-            'description': 'Run place and route'
-        }
-    }
-}
+
+
 
 @dag(
     dag_id='hammer_vlsi_pipeline',
@@ -321,6 +292,12 @@ default_args = {
 )
 def create_hammer_dag():
     @task
+    def start_task():
+        """Start task"""
+        print("Starting")
+        return None
+
+    @task
     def clean_task(**context):
         """Clean the build directory"""
         print("Starting clean task")
@@ -346,6 +323,13 @@ def create_hammer_dag():
         else:
             print("Build parameter is False, skipping")
             raise AirflowSkipException("Build task skipped")
+
+    @task
+    def sim_or_syn_decide(**context):
+        """Decide whether to run sim_rtl or syn"""
+        if context['dag_run'].conf.get('sim_rtl', False):
+            return 'sim_rtl_task'
+        return 'syn_task'
 
     @task
     def sim_rtl_task(**context):
@@ -418,7 +402,16 @@ def create_hammer_dag():
             return 'par_task'
         return None
 
+    @task
+    def exit_task():
+        """Exit task"""
+        print("Exiting")
+        sys.exit(0)
+
+    
+
     # Create task instances
+    start = start_task()
     clean_decide = clean_decider()
     clean = clean_task()
     build_decide = build_decider()
@@ -429,21 +422,19 @@ def create_hammer_dag():
     syn = syn_task()
     par_decide = par_decider()
     par = par_task()
+    exit = exit_task()
 
     # Set up dependencies to ensure deciders always run
-    clean_decide >> [clean, build_decide]
-    clean >> build_decide
-    
-    build_decide >> [build, sim_rtl_decide]
-    build >> sim_rtl_decide
-    
-    sim_rtl_decide >> [sim_rtl, syn_decide]
-    sim_rtl >> syn_decide
-    
-    syn_decide >> [syn, par_decide]
+    start >> [clean, build_decide, exit]
+    clean >> exit
+    build_decide >> [build, sim_or_syn_decide, exit]
+    build >> sim_or_syn_decide
+    sim_or_syn_decide >> [sim_rtl, syn_decide]
+    sim_rtl >> exit
+    syn_decide >> [syn, par_decide, exit]
     syn >> par_decide
-    
-    par_decide >> par
+    par_decide >> [par, exit]
+    par >> exit
 
     return {
         'clean_decide': clean_decide,
