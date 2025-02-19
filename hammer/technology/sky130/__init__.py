@@ -71,16 +71,13 @@ class SKY130Tech(HammerTechnology):
         elif slib == "sky130_scl":
             libs += [
                 Library(
-                    lef_file=os.path.join(
-                        SKY130_SCL, "/lef/sky130_scl_9T.tlef"),
-                    verilog_sim=os.path.join(
-                        SKY130_SCL, "/verilog/sky130_scl_9T.v"),
+                    lef_file=os.path.join(SKY130_SCL, "/lef/sky130_scl_9T.tlef"),
+                    verilog_sim=os.path.join(SKY130_SCL, "/verilog/sky130_scl_9T.v"),
                     provides=[Provide(lib_type="technology")],
                 ),
             ]
         else:
-            raise ValueError(
-                f"Incorrect standard cell library selection: {slib}")
+            raise ValueError(f"Incorrect standard cell library selection: {slib}")
 
         # Stdcell library-dependent lists
         stackups = []  # type: List[Stackup]
@@ -169,8 +166,7 @@ class SKY130Tech(HammerTechnology):
             # scl vs 130a have different site names
             sites = None
 
-            STDCELL_LIBRARY_BASE_PATH = os.path.join(
-                SKY130A, "libs.ref", library)
+            STDCELL_LIBRARY_BASE_PATH = os.path.join(SKY130A, "libs.ref", library)
             lib_corner_files[STDCELL_LIBRARY_BASE_PATH] = os.listdir(
                 os.path.join(STDCELL_LIBRARY_BASE_PATH, "lib")
             )
@@ -181,8 +177,7 @@ class SKY130Tech(HammerTechnology):
                 SKY130A, "libs.ref", library, "techlef", f"{library}__min.tlef"
             )
             metals = list(
-                map(lambda m: Metal.model_validate(m),
-                    LEFUtils.get_metals(tlef_path))
+                map(lambda m: Metal.model_validate(m), LEFUtils.get_metals(tlef_path))
             )
             stackups.append(
                 Stackup(name=slib, grid_unit=Decimal("0.001"), metals=metals)
@@ -264,8 +259,7 @@ class SKY130Tech(HammerTechnology):
 
             tlef_path = os.path.join(SKY130_SCL, "lef", f"{slib}_9T.tlef")
             metals = list(
-                map(lambda m: Metal.model_validate(m),
-                    LEFUtils.get_metals(tlef_path))
+                map(lambda m: Metal.model_validate(m), LEFUtils.get_metals(tlef_path))
             )
             stackups.append(
                 Stackup(name=slib, grid_unit=Decimal("0.001"), metals=metals)
@@ -274,16 +268,14 @@ class SKY130Tech(HammerTechnology):
             sites = [
                 Site(name="CoreSite", x=Decimal("0.46"), y=Decimal("4.14")),
                 Site(name="IOSite", x=Decimal("1.0"), y=Decimal("240.0")),
-                Site(name="CornerSite", x=Decimal(
-                    "240.0"), y=Decimal("240.0")),
+                Site(name="CornerSite", x=Decimal("240.0"), y=Decimal("240.0")),
             ]
 
             lvs_decks = [
                 LVSDeck(
                     tool_name="pegasus",
                     deck_name="pegasus_lvs",
-                    path=os.path.join(
-                        SKY130_CDS, "Sky130_LVS", "sky130.lvs.pvl"),
+                    path=os.path.join(SKY130_CDS, "Sky130_LVS", "sky130.lvs.pvl"),
                 )
             ]
             drc_decks = [
@@ -302,12 +294,10 @@ class SKY130Tech(HammerTechnology):
             ]
 
         else:
-            raise ValueError(
-                f"Incorrect standard cell library selection: {slib}")
+            raise ValueError(f"Incorrect standard cell library selection: {slib}")
 
         # add skywater io cells
-        io_library_base_path = os.path.join(
-            SKY130A, "libs.ref", "sky130_fd_io")
+        io_library_base_path = os.path.join(SKY130A, "libs.ref", "sky130_fd_io")
         if os.path.exists(io_library_base_path):
             lib_corner_files[io_library_base_path] = os.listdir(
                 os.path.join(io_library_base_path, "lib")
@@ -340,14 +330,12 @@ class SKY130Tech(HammerTechnology):
                     if len(process) > 3:
                         if not functools.reduce(
                             lambda x, y: x and y,
-                            map(lambda p, q: p == q,
-                                process[0:3], process[4:]),
+                            map(lambda p, q: p == q, process[0:3], process[4:]),
                             True,
                         ):
                             continue
                     # Determine actual corner
-                    speed = next(
-                        c for c in process if c is not None).replace("_", "")
+                    speed = next(c for c in process if c is not None).replace("_", "")
                     temp = temp_volt[0]
                     temp = temp.replace("n", "-")
                     temp = temp.split("C")[0] + " C"
@@ -361,8 +349,7 @@ class SKY130Tech(HammerTechnology):
                         speed = "slow"
                     else:
                         self.logger.info(
-                            "Skipping lib with unsupported corner: {}".format(
-                                speed)
+                            "Skipping lib with unsupported corner: {}".format(speed)
                         )
                         continue
                 else:
@@ -383,8 +370,7 @@ class SKY130Tech(HammerTechnology):
                         speed = "slow"
                         temp = "100 C"
 
-                cdl_path = os.path.join(
-                    library_base_path, "cdl", library + ".cdl")
+                cdl_path = os.path.join(library_base_path, "cdl", library + ".cdl")
                 spice_path = os.path.join(
                     library_base_path, "spice", library + ".spice"
                 )
@@ -392,8 +378,7 @@ class SKY130Tech(HammerTechnology):
                 # just prioritize spice, arbitrary choice
                 # assert not (os.path.exists(cdl_path) and os.path.exists(spice_path)), "both spice and cdl netlists exist! this is ambiguous :("
 
-                netlist_path = spice_path if os.path.exists(
-                    spice_path) else cdl_path
+                netlist_path = spice_path if os.path.exists(spice_path) else cdl_path
 
                 lib_entry = Library(
                     nldm_liberty_file=os.path.join(
@@ -404,11 +389,9 @@ class SKY130Tech(HammerTechnology):
                         "verilog",
                         library + "_9T.v" if slib == "sky130_scl" else ".v",
                     ),
-                    lef_file=os.path.join(
-                        library_base_path, "lef", library + ".lef"),
+                    lef_file=os.path.join(library_base_path, "lef", library + ".lef"),
                     spice_file=netlist_path,
-                    gds_file=os.path.join(
-                        library_base_path, "gds", library + ".gds"),
+                    gds_file=os.path.join(library_base_path, "gds", library + ".gds"),
                     corner=Corner(nmos=speed, pmos=speed, temperature=temp),
                     supplies=Supplies(VDD=vdd, GND="0 V"),
                     provides=[Provide(lib_type="stdcell", vt="RVT")],
@@ -443,8 +426,7 @@ class SKY130Tech(HammerTechnology):
                             gds_file=os.path.join(
                                 library_base_path, "gds", extra_gds_file
                             ),
-                            corner=Corner(nmos=speed, pmos=speed,
-                                          temperature=temp),
+                            corner=Corner(nmos=speed, pmos=speed, temperature=temp),
                             supplies=Supplies(VDD=vdd, GND="0 V"),
                             provides=[Provide(lib_type="stdcell", vt="RVT")],
                         )
@@ -455,13 +437,10 @@ class SKY130Tech(HammerTechnology):
             grid_unit="0.001",
             shrink_factor=None,
             installs=[
-                PathPrefix(id="$SKY130_NDA",
-                           path="technology.sky130.sky130_nda"),
+                PathPrefix(id="$SKY130_NDA", path="technology.sky130.sky130_nda"),
                 PathPrefix(id="$SKY130A", path="technology.sky130.sky130A"),
-                PathPrefix(id="$SKY130_CDS",
-                           path="technology.sky130.sky130_cds"),
-                PathPrefix(id="$SKY130_SCL",
-                           path="technology.sky130.sky130_scl"),
+                PathPrefix(id="$SKY130_CDS", path="technology.sky130.sky130_cds"),
+                PathPrefix(id="$SKY130_SCL", path="technology.sky130.sky130_scl"),
             ],
             libraries=libs,
             gds_map_file="sky130_lefpin.map",
@@ -509,18 +488,17 @@ class SKY130Tech(HammerTechnology):
                 source_path = Path(source_paths[i])
             except IndexError:
                 self.logger.error(
-                    "No corresponding source for LVS deck {}".format(deck))
+                    "No corresponding source for LVS deck {}".format(deck)
+                )
                 continue
             if not source_path.exists():
                 raise FileNotFoundError(f"LVS deck not found: {source_path}")
             cache_tech_dir_path = Path(self.cache_dir)
-            dest_path = os.path.join(cache_tech_dir_path,
-                                     os.path.basename(deck.path))
+            dest_path = os.path.join(cache_tech_dir_path, os.path.basename(deck.path))
             with open(source_path, "r") as sf:
                 with open(dest_path, "w") as df:
                     self.logger.info(
-                        "Modifying LVS deck: {} -> {}".format(
-                            source_path, dest_path)
+                        "Modifying LVS deck: {} -> {}".format(source_path, dest_path)
                     )
                     df.write(matcher.sub("", sf.read()))
                     df.write(LVS_DECK_INSERT_LINES)
@@ -563,8 +541,7 @@ class SKY130Tech(HammerTechnology):
         with open(source_path, "r") as sf:
             with open(dest_path, "w") as df:
                 self.logger.info(
-                    "Modifying CDL netlist: {} -> {}".format(
-                        source_path, dest_path)
+                    "Modifying CDL netlist: {} -> {}".format(source_path, dest_path)
                 )
                 df.write("*.SCALE MICRON\n")
                 for line in sf:
@@ -599,8 +576,7 @@ class SKY130Tech(HammerTechnology):
         with open(source_path, "r") as sf:
             with open(dest_path, "w") as df:
                 self.logger.info(
-                    "Modifying Verilog netlist: {} -> {}".format(
-                        source_path, dest_path)
+                    "Modifying Verilog netlist: {} -> {}".format(source_path, dest_path)
                 )
                 for line in sf:
                     line = line.replace("wire 1", "// wire 1")
@@ -624,8 +600,7 @@ class SKY130Tech(HammerTechnology):
         with open(source_path, "r") as sf:
             with open(dest_path, "w") as df:
                 self.logger.info(
-                    "Modifying Verilog netlist: {} -> {}".format(
-                        source_path, dest_path)
+                    "Modifying Verilog netlist: {} -> {}".format(source_path, dest_path)
                 )
                 for line in sf:
                     line = line.replace(
@@ -659,8 +634,7 @@ class SKY130Tech(HammerTechnology):
         with open(source_path, "r") as sf:
             with open(dest_path, "w") as df:
                 self.logger.info(
-                    "Modifying Technology LEF: {} -> {}".format(
-                        source_path, dest_path)
+                    "Modifying Technology LEF: {} -> {}".format(source_path, dest_path)
                 )
                 for line in sf:
                     df.write(line)
@@ -669,15 +643,11 @@ class SKY130Tech(HammerTechnology):
                         == "sky130_scl"
                     ):
                         if line.strip() == "END poly":
-                            df.write(_additional_tlef_edit_for_scl +
-                                     _the_tlef_edit)
+                            df.write(_additional_tlef_edit_for_scl + _the_tlef_edit)
                     else:
                         if line.strip() == "END pwell":
                             df.write(_the_tlef_edit)
 
-    # syn_power seems to not take hooks from `get_tech_syn_hooks`
-    # also, syn_power is called from joules so we need to add the hook to joules
-    # TODO: clean this up, there should be a way to always include this hook whenever genus will be invoked
     def get_tech_power_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {}
 
@@ -738,15 +708,13 @@ class SKY130Tech(HammerTechnology):
                 )
                 sl = sf.readlines()
                 for net in ["VCCD1", "VSSD1", "VDDA", "VSSA", "VSSIO"]:
-                    start = [idx for idx, line in enumerate(
-                        sl) if "PIN " + net in line]
-                    end = [idx for idx, line in enumerate(
-                        sl) if "END " + net in line]
+                    start = [idx for idx, line in enumerate(sl) if "PIN " + net in line]
+                    end = [idx for idx, line in enumerate(sl) if "END " + net in line]
                     intervals = zip(start, end)
                     for intv in intervals:
                         port_idx = [
                             idx
-                            for idx, line in enumerate(sl[intv[0]: intv[1]])
+                            for idx, line in enumerate(sl[intv[0] : intv[1]])
                             if "PORT" in line and "met3" in sl[intv[0] + idx + 1]
                         ]
                         for idx in port_idx:
@@ -778,8 +746,14 @@ class SKY130Tech(HammerTechnology):
 
         lef_name = "sky130_fd_sc_hvl__lsbufhv2lv_1.lef"
 
-        sky130A_path = Path(self.get_setting('technology.sky130.sky130A'))
-        source_path = sky130A_path / 'libs.ref' / 'sky130_fd_sc_hvl' / 'lef' / "sky130_fd_sc_hvl.lef"
+        sky130A_path = Path(self.get_setting("technology.sky130.sky130A"))
+        source_path = (
+            sky130A_path
+            / "libs.ref"
+            / "sky130_fd_sc_hvl"
+            / "lef"
+            / "sky130_fd_sc_hvl.lef"
+        )
         cache_path = Path(self.cache_dir) / "fd_sc_hvl__lef" / lef_name
         cache_path.parent.mkdir(exist_ok=True)
 
@@ -789,17 +763,21 @@ class SKY130Tech(HammerTechnology):
             is_in_macro_def = False
             for line in sf:
                 if is_in_site_def:
-                    if 'END unithv' in line:
+                    if "END unithv" in line:
                         is_in_site_def = False
-                elif not is_in_macro_def and 'SITE unithv' in line:
+                elif not is_in_macro_def and "SITE unithv" in line:
                     is_in_site_def = True
-                elif 'MACRO ' in line:
+                elif "MACRO " in line:
                     is_in_macro_def = True
                     df.write(line)
-                elif 'SITE unithv' in line:
+                elif "SITE unithv" in line:
                     pass
                 else:
-                    df.write(line.replace("CLASS CORE", "CLASS BLOCK") if not (("ANTENNACELL" in line) or ("SPACER" in line)) else line)
+                    df.write(
+                        line.replace("CLASS CORE", "CLASS BLOCK")
+                        if not (("ANTENNACELL" in line) or ("SPACER" in line))
+                        else line
+                    )
 
     def get_tech_par_hooks(self, tool_name: str) -> List[HammerToolHookAction]:
         hooks = {
@@ -807,8 +785,7 @@ class SKY130Tech(HammerTechnology):
                 HammerTool.make_post_insertion_hook(
                     "init_design", sky130_innovus_settings
                 ),
-                HammerTool.make_pre_insertion_hook(
-                    "power_straps", sky130_connect_nets),
+                HammerTool.make_pre_insertion_hook("power_straps", sky130_connect_nets),
                 HammerTool.make_pre_insertion_hook(
                     "write_design", sky130_connect_nets2
                 ),
@@ -972,10 +949,8 @@ LVS_DECK_SCRUB_LINES = [
 
 # various Innovus database settings
 def sky130_innovus_settings(ht: HammerTool) -> bool:
-    assert isinstance(
-        ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
-    assert isinstance(
-        ht, TCLTool), "innovus settings can only run on TCL tools"
+    assert isinstance(ht, HammerPlaceAndRouteTool), "Innovus settings only for par"
+    assert isinstance(ht, TCLTool), "innovus settings can only run on TCL tools"
     """Settings for every tool invocation"""
     ht.append(
         f"""
@@ -1042,7 +1017,7 @@ set_db floorplan_snap_die_grid manufacturing
         ht.append(
             """
 # note this is required for sky130_fd_sc_hd, the design has a ton of drcs if bottom layer is 1
-                  # TODO: why is setting routing_layer not enough?
+# TODO: why is setting routing_layer not enough?
 set_db design_bottom_routing_layer 2
 set_db design_top_routing_layer 6
 # deprected syntax, but this used to always work
@@ -1054,10 +1029,8 @@ set_db route_design_bottom_routing_layer 2
 
 
 def sky130_connect_nets(ht: HammerTool) -> bool:
-    assert isinstance(
-        ht, HammerPlaceAndRouteTool), "connect global nets only for par"
-    assert isinstance(
-        ht, TCLTool), "connect global nets can only run on TCL tools"
+    assert isinstance(ht, HammerPlaceAndRouteTool), "connect global nets only for par"
+    assert isinstance(ht, TCLTool), "connect global nets can only run on TCL tools"
     for pwr_gnd_net in ht.get_all_power_nets() + ht.get_all_ground_nets():
         if pwr_gnd_net.tie is not None:
             ht.append(
@@ -1082,10 +1055,8 @@ def sky130_connect_nets2(ht: HammerTool) -> bool:
 
 
 def sky130_add_endcaps(ht: HammerTool) -> bool:
-    assert isinstance(
-        ht, HammerPlaceAndRouteTool), "endcap insertion only for par"
-    assert isinstance(
-        ht, TCLTool), "endcap insertion can only run on TCL tools"
+    assert isinstance(ht, HammerPlaceAndRouteTool), "endcap insertion only for par"
+    assert isinstance(ht, TCLTool), "endcap insertion can only run on TCL tools"
     endcap_cells = ht.technology.get_special_cell_by_type(CellType.EndCap)
     endcap_cell = endcap_cells[0].name[0]
     ht.append(
@@ -1110,9 +1081,10 @@ set_db cts_clock_gating_cells {ICGX1}
     return True
 
 
-# TODO: this should just be placign rail straps, so higher straps are placed by non-hardocded tcl
 def power_rail_straps_no_tapcells(ht: HammerTool) -> bool:
-    assert not ht.get_setting("par.generate_power_straps_options.by_tracks.generate_rail_layer"), "rails must be placed by this hook for sky130_scl!"
+    assert not ht.get_setting(
+        "par.generate_power_straps_options.by_tracks.generate_rail_layer"
+    ), "rails must be placed by this hook for sky130_scl!"
     #  We do this since there are no explicit tapcells in sky130_scl
     # just need the rail ones, others are placed as usual.
     ht.append(
@@ -1126,7 +1098,6 @@ add_stripes -nets {VDD VSS} -layer met1 -direction horizontal -start_offset -.2 
 """
     )
     return True
-
 
 
 def calibre_drc_blackbox_srams(ht: HammerTool) -> bool:
@@ -1170,8 +1141,7 @@ def pegasus_drc_blackbox_srams(ht: HammerTool) -> bool:
 
 
 def calibre_lvs_blackbox_srams(ht: HammerTool) -> bool:
-    assert isinstance(
-        ht, HammerLVSTool), "Blackbox and filter SRAMs only in LVS"
+    assert isinstance(ht, HammerLVSTool), "Blackbox and filter SRAMs only in LVS"
     lvs_box = ""
     for name in SKY130Tech.sky130_sram_names():
         lvs_box += f"\nLVS BOX {name}"
@@ -1185,8 +1155,7 @@ def calibre_lvs_blackbox_srams(ht: HammerTool) -> bool:
 # required for sram22 since they use the 130a primiviites
 def pegasus_lvs_add_130a_primitives(ht: HammerTool) -> bool:
     return True
-    assert isinstance(
-        ht, HammerLVSTool), "Blackbox and filter SRAMs only in LVS"
+    assert isinstance(ht, HammerLVSTool), "Blackbox and filter SRAMs only in LVS"
     lvs_box = ""
     for name in SKY130Tech.sky130_sram_primitive_names():
         lvs_box += f"""\nschematic_path "{name}" spice;"""
@@ -1207,8 +1176,7 @@ def pegasus_lvs_add_130a_primitives(ht: HammerTool) -> bool:
 
 
 def pegasus_lvs_blackbox_srams(ht: HammerTool) -> bool:
-    assert isinstance(
-        ht, HammerLVSTool), "Blackbox and filter SRAMs only in LVS"
+    assert isinstance(ht, HammerLVSTool), "Blackbox and filter SRAMs only in LVS"
     lvs_box = ""
     for (
         name
@@ -1237,7 +1205,6 @@ def sram22_lvs_recognize_gates_all(ht: HammerTool) -> bool:
     with open(run_file, "a") as f:
         f.write("\nLVS RECOGNIZE GATES ALL")
     return True
-
 
 
 tech = SKY130Tech()
