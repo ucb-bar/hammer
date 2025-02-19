@@ -211,7 +211,7 @@ class Site(BaseModel):
         )
 
 
-class TechJSON(BaseModel):
+class TechConfig(BaseModel):
     name: str
     grid_unit: Optional[str] = None
     shrink_factor: Optional[str] = None
@@ -419,14 +419,14 @@ class HammerTechnology:
         self.package: str = ""
 
         # Configuration, since this constructor will never be used, self.config will never seen as None
-        self.config: TechJSON = None  # type: ignore
+        self.config: TechConfig = None  # type: ignore
 
         # Units (converted to Time/CapacitanceValue later)
         self.time_unit: Optional[str] = None
         self.cap_unit: Optional[str] = None
 
     def gen_config(self) -> None:
-        """For subclasses to set self.config (type: TechJSON) directly, instead of from static JSON file"""
+        """For subclasses to set self.config (type: TechConfig) directly, instead of from static JSON file"""
         pass
 
     @classmethod
@@ -446,10 +446,10 @@ class HammerTechnology:
         tech_yaml = importlib.resources.files(tech_module) / f"{technology_name}.tech.yml"
 
         if tech_json.is_file():
-            tech.config = TechJSON.model_validate_json(tech_json.read_text())
+            tech.config = TechConfig.model_validate_json(tech_json.read_text())
             return tech
         elif tech_yaml.is_file():
-            tech.config = TechJSON.model_validate_json(json.dumps(load_yaml(tech_yaml.read_text())))
+            tech.config = TechConfig.model_validate_json(json.dumps(load_yaml(tech_yaml.read_text())))
             return tech
         else: # Assume tech implents gen_config()
             return tech

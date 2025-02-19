@@ -4,9 +4,9 @@ Hammer Tech Config (Tech JSON)
 ===============================
 
 Technology plugins must set up some general information about the install of the PDK, set up DRC rule decks, set up pointers to PDK files, and supply technology stackup information. 
-Formerly, this information was provided in a static ``<tech_name>.tech.json`` file. We now encourage you to generate this information in the form of ``TechJSON`` Pydantic BaseModel instances (see ``hammer/tech/__init__.py`` for all BaseModel definitions). Instructions are given below for both forms, with examples from the Sky130 and ASAP7 plugins.
+Formerly, this information was provided in a static ``<tech_name>.tech.json`` file. We now encourage you to generate this information in the form of ``TechConfig`` Pydantic BaseModel instances (see ``hammer/tech/__init__.py`` for all BaseModel definitions). Instructions are given below for both forms, with examples from the Sky130 and ASAP7 plugins.
 
-For the full schema of the tech configuration, please see the :ref:`full_schema` section below, which is derived from ``TechJSON``.
+For the full schema of the tech configuration, please see the :ref:`full_schema` section below, which is derived from ``TechConfig``.
 
 Technology Install
 ---------------------------------
@@ -34,7 +34,7 @@ Pydantic:
 
   def gen_config(self) -> None:
       #...
-      self.config = TechJSON(
+      self.config = TechConfig(
           name = "Skywater 130nm Library",
           grid_unit = "0.001",
           installs = [
@@ -85,7 +85,7 @@ Pydantic:
 
   def gen_config(self) -> None:
       #...
-      self.config = TechJSON(
+      self.config = TechConfig(
           #fields skipped...
           drc_decks = [
               DRCDeck(tool_name = "calibre", deck_name = "calibre_drc", path = "$SKY130_NDA/s8/V2.0.1/DRC/Calibre/s8_drcRules"),
@@ -116,7 +116,7 @@ The file pointers, in this case, use the tarball prefix because Hammer will be e
 Library Setup
 ---------------------------------
 
-The ``libraries`` Field also must be set in the TechJSON instance. This will tell Hammer where to find all of the relevant files for standard cells and other blocks for the VLSI flow. Path prefixes are used most heavily here.
+The ``libraries`` Field also must be set in the TechConfig instance. This will tell Hammer where to find all of the relevant files for standard cells and other blocks for the VLSI flow. Path prefixes are used most heavily here.
 
 The ``corner`` Field (BaseModel type: Corner) tells Hammer what process and temperature corner that these files correspond to.  The ``supplies`` Field (BaseModel type: Supplies) tells Hammer what the nominal supply for these cells are.  
 The ``provides`` Field (type: List[Provide]) has several sub-fields that tell Hammer what kind of library this is (examples include ``stdcell``, ``fiducials``, ``io pad cells``, ``bump``, and ``level shifters``) and the threshold voltage flavor of the cells, if applicable.
@@ -160,7 +160,7 @@ Pydantic:
           )
           libs.append(lib_entry)
       #...
-      self.config = TechJSON(
+      self.config = TechConfig(
           #fields skipped...
           libraries = libs,
           #fields skipped...
@@ -237,7 +237,7 @@ You can use ``LEFUtils.get_metals`` to generate the stackup information for simp
           metals = list(map(lambda m: Metal.model_validate(m), LEFUtils.get_metals(tlef_path)))
           stackups.append(Stackup(name = library, grid_unit = Decimal("0.001"), metals = metals))
 
-          self.config = TechJSON(
+          self.config = TechConfig(
               #fields skipped...
               stackups = stackups,
               #fields skipped...
@@ -261,7 +261,7 @@ The ``sites`` field specifies the unit standard cell size of the technology for 
 
   def gen_config(self) -> None:
       #...
-      self.config = TechJSON(
+      self.config = TechConfig(
           #fields skipped...
           sites = [
               Site(name = "unithd", x = Decimal("0.46"), y = Decimal("2.72")),
@@ -287,7 +287,7 @@ The example below shows a subset of the Sky130 and ASAP7 tech plugin for 2 types
 
   def gen_config(self) -> None:
       #...
-      self.config = TechJSON(
+      self.config = TechConfig(
           #fields skipped...
           special_cells = [
               SpecialCell(cell_type = CellType("tapcell"), name = ["sky130_fd_sc_hd__tapvpwrvgnd_1"]),
@@ -318,7 +318,7 @@ The ``physical_only_cells_list`` is used to denote cells that contain only physi
 
   def gen_config(self) -> None:
       #...
-      self.config = TechJSON(
+      self.config = TechConfig(
           #fields skipped...
           physical_only_cells_list = [
               "sky130_fd_sc_hd__tap_1", "sky130_fd_sc_hd__tap_2", "sky130_fd_sc_hd__tapvgnd_1", "sky130_fd_sc_hd__tapvpwrvgnd_1",

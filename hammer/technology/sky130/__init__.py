@@ -25,7 +25,7 @@ from hammer.tech import (
     Site,
     Stackup,
     Supplies,
-    TechJSON,
+    TechConfig,
 )
 from hammer.tech.specialcells import CellType, SpecialCell
 from hammer.utils import LEFUtils
@@ -450,8 +450,7 @@ class SKY130Tech(HammerTechnology):
                         )
                         libs.append(lib_entry)
 
-        # TODO rename this to TechConfig or something, since we don';t use json
-        self.config = TechJSON(
+        self.config = TechConfig(
             name="Skywater 130nm Library",
             grid_unit="0.001",
             shrink_factor=None,
