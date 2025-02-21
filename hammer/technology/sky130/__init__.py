@@ -53,6 +53,10 @@ class SKY130Tech(HammerTechnology):
         SKY130_CDS = self.get_setting("technology.sky130.sky130_cds")
         SKY130_SCL = self.get_setting("technology.sky130.sky130_scl")
 
+        self.use_sram22 = os.path.exists(
+            self.get_setting("technology.sky130.sram22_sky130_macros")
+        )
+
         # Common tech LEF and IO cell spice netlists
         libs = []
         if slib == "sky130_fd_sc_hd":
@@ -78,6 +82,16 @@ class SKY130Tech(HammerTechnology):
             ]
         else:
             raise ValueError(f"Incorrect standard cell library selection: {slib}")
+        if self.use_sram22:
+            libs += [
+                Library(
+                    spice_file=os.path.join(
+                        self.get_setting("technology.sky130.sram22_sky130_macros"),
+                        "sram22.spice",
+                    ),
+                    provides=[Provide(lib_type="technology")],
+                ),
+            ]
 
         # Stdcell library-dependent lists
         stackups = []  # type: List[Stackup]
@@ -460,9 +474,6 @@ class SKY130Tech(HammerTechnology):
     def post_install_script(self) -> None:
         self.library_name = "sky130_fd_sc_hd"
         # check whether variables were overriden to point to a valid path
-        self.use_sram22 = os.path.exists(
-            self.get_setting("technology.sky130.sram22_sky130_macros")
-        )
         if self.get_setting("technology.sky130.stdcell_library") == "sky130_fd_sc_hd":
             self.setup_cdl()
             self.setup_verilog()
