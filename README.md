@@ -19,6 +19,7 @@ For a deeper dive into available options and environment configuration:
 * [Core Hammer settings](hammer/config/defaults.yml)
 * [Setup documentation](https://hammer-vlsi.readthedocs.io/en/latest/Hammer-Basics/Hammer-Setup.html)
 * [Hammer technology library schema](https://hammer-vlsi.readthedocs.io/en/latest/Technology/Tech-json.html#full-schema)
+* [Sledgehammer Quickstart Guide](doc/sledgehammer/sledgehammer.md)
 * For CAD tool settings, please see the relevant `defaults.yml` for those plugins.
 
 Hammer is an integral component of UC Berkeley Architecture Research's [Chipyard framework](https://github.com/ucb-bar/chipyard).
