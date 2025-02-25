@@ -332,7 +332,8 @@ def create_hammer_dag():
     #Cannot use NONE_SKIPPED bc of build_task
     #Need to either find trigger flag to pass in, so this task runs if build_decider is success or change flow graph
     #@task
-    @task.branch(trigger_rule=TriggerRule.ONE_SUCCESS)
+    #@task.branch(trigger_rule=TriggerRule.ONE_SUCCESS)
+    @task.branch(trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS)
     def sim_or_syn_decide(**context):
         """Decide whether to run sim_rtl or syn"""
         if context['dag_run'].conf.get('sim_rtl', False):
@@ -402,7 +403,7 @@ def create_hammer_dag():
             return "exit_task"
 
     #@task.branch(trigger_rule=TriggerRule.NONE_FAILED)
-    @task.branch(trigger_rule=TriggerRule.ALL_SUCCESS)
+    @task.branch(trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS)
     def par_decider(**context):
         """Decide whether to run par"""
         if context['dag_run'].conf.get('par', False):
