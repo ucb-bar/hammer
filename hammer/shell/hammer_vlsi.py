@@ -24,6 +24,8 @@ from airflow.exceptions import AirflowSkipException
 from airflow.decorators import task, dag
 from airflow.models import Variable
 
+import pendulum
+
 # Add the parent directory to the Python path to allow imports from 'vlsi'
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'vlsi')))
 
@@ -252,10 +254,11 @@ class AIRFlow:
 
 
 @dag(
-    dag_id='hammer_vlsi_pipeline',
-    start_date=datetime(2024, 1, 1),
+    dag_id='Sledgehammer_demo_gcd',
+    start_date=pendulum.datetime(2024, 1, 1, tz="America/Los_Angeles"),
     schedule=None,
     catchup=False,
+    tags=["gcd"],
     params={
         'clean': Param(
             default=False,
@@ -293,20 +296,20 @@ class AIRFlow:
 def create_hammer_dag():
     #@task.branch(trigger_rule=TriggerRule.NONE_FAILED)
     @task.branch(trigger_rule=TriggerRule.ALL_SUCCESS)
-    def start_task(**context):
+    def start(**context):
         """Start task"""
         if context['dag_run'].conf.get('clean', False):
-            return "clean_task"
+            return "clean"
         elif (context['dag_run'].conf.get('build', False) or 
             context['dag_run'].conf.get('sim_rtl', False) or
             context['dag_run'].conf.get('syn', False) or
             context['dag_run'].conf.get('par', False)):
             return "build_decider"
         else:
-            return "exit_task"
+            return "exit_"
 
     @task
-    def clean_task(**context):
+    def clean(**context):
         """Clean the build directory"""
         print("Starting clean task")
         flow = AIRFlow()
@@ -314,7 +317,7 @@ def create_hammer_dag():
             subprocess.run(f"rm -rf {flow.OBJ_DIR} hammer-vlsi-*.log", shell=True, check=True)
     
     @task
-    def build_task(**context):
+    def build(**context):
         """Execute build task"""
         print("Starting build task")
         if context['dag_run'].conf.get('build', False):
@@ -326,10 +329,10 @@ def create_hammer_dag():
             raise AirflowSkipException("Build task skipped")
 
     #Bug where sim_or_syn_decide is being triggered, even when clean is passed in.
-    #Cannot use ONE_SUCCESS bc of start_task
-    #Cannot use NONE_FAILED bc of clean_task
-    #Cannot use ALL_SUCCESS bc of build_task
-    #Cannot use NONE_SKIPPED bc of build_task
+    #Cannot use ONE_SUCCESS bc of start
+    #Cannot use NONE_FAILED bc of clean
+    #Cannot use ALL_SUCCESS bc of build
+    #Cannot use NONE_SKIPPED bc of build
     #Need to either find trigger flag to pass in, so this task runs if build_decider is success or change flow graph
     #@task
     #@task.branch(trigger_rule=TriggerRule.ONE_SUCCESS)
@@ -337,14 +340,14 @@ def create_hammer_dag():
     def sim_or_syn_decide(**context):
         """Decide whether to run sim_rtl or syn"""
         if context['dag_run'].conf.get('sim_rtl', False):
-            return 'sim_rtl_task'
+            return 'sim_rtl'
         elif (context['dag_run'].conf.get('syn', False) or 
             context['dag_run'].conf.get('par', False)):
             return 'syn_decider'
-        return 'exit_task'
+        return 'exit_'
 
     @task
-    def sim_rtl_task(**context):
+    def sim_rtl(**context):
         """Execute RTL simulation task"""
         print("Starting sim_rtl task")
         if context['dag_run'].conf.get('sim_rtl', False):
@@ -356,7 +359,7 @@ def create_hammer_dag():
             raise AirflowSkipException("Sim-RTL task skipped")
 
     @task
-    def syn_task(**context):
+    def syn(**context):
         """Execute synthesis task"""
         print("Starting syn task")
         if context['dag_run'].conf.get('syn', False):
@@ -368,7 +371,7 @@ def create_hammer_dag():
             raise AirflowSkipException("Synthesis task skipped")
 
     @task
-    def par_task(**context):
+    def par(**context):
         """Execute PAR task"""
         print("Starting par task")
         if context['dag_run'].conf.get('par', False):
@@ -384,50 +387,50 @@ def create_hammer_dag():
     def build_decider(**context):
         """Decide whether to run build"""
         if context['dag_run'].conf.get('build', True):
-            return 'build_task'
+            return 'build'
         elif (context['dag_run'].conf.get('sim_rtl', False) or
             context['dag_run'].conf.get('syn', False) or
             context['dag_run'].conf.get('par', False)):
             return "sim_or_syn_decide"
-        return 'exit_task'
+        return 'exit_'
 
     #@task.branch(trigger_rule=TriggerRule.NONE_FAILED)
     @task.branch(trigger_rule=TriggerRule.ALL_SUCCESS)
     def syn_decider(**context):
         """Decide whether to run synthesis"""
         if context['dag_run'].conf.get('syn', False):
-            return 'syn_task'
+            return 'syn'
         elif (context['dag_run'].conf.get('par', False)):
             return "par_decider"
         else:
-            return "exit_task"
+            return "exit_"
 
     #@task.branch(trigger_rule=TriggerRule.NONE_FAILED)
     @task.branch(trigger_rule=TriggerRule.NONE_FAILED_MIN_ONE_SUCCESS)
     def par_decider(**context):
         """Decide whether to run par"""
         if context['dag_run'].conf.get('par', False):
-            return 'par_task'
-        return 'exit_task'
+            return 'par'
+        return 'exit_'
 
     @task(trigger_rule=TriggerRule.NONE_FAILED)
-    def exit_task():
+    def exit_():
         """Exit task"""
         print("Exiting")
         sys.exit(0)
 
     # Create task instances
-    start = start_task()
-    clean = clean_task()
+    start = start()
+    clean = clean()
     build_decide = build_decider()
-    build = build_task()
+    build = build()
     sim_or_syn_decide = sim_or_syn_decide()
-    sim_rtl = sim_rtl_task()
+    sim_rtl = sim_rtl()
     syn_decide = syn_decider()
-    syn = syn_task()
+    syn = syn()
     par_decide = par_decider()
-    par = par_task()
-    exit_ = exit_task()
+    par = par()
+    exit_ = exit_()
 
     # Set up dependencies to ensure deciders always run
     start >> [clean, build_decide, exit_]
