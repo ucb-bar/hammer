@@ -8,7 +8,8 @@ build:
     python: '3.10'
   jobs:
     post_create_environment:
-      - pip install poetry myst-parser
+      - pip install poetry==1.4.2 myst-parser
+      - pip install virtualenv==20.23.1
     post_install:
       # VIRTUAL_ENV needs to be set manually for now.
       # See https://github.com/readthedocs/readthedocs.org/pull/11152/
