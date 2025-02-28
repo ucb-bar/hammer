@@ -16,10 +16,11 @@ class TestSynopsysTool(unittest.TestCase):
             def tool_config_prefix(self):
                 return "synopsys"
             
-            def get_setting(self, key, default=None):
-                return default
+            def get_setting(self, key, nullvalue=None):
+                return nullvalue
                 
-            # Implement the abstract method steps
+            # Implement the abstract property steps
+            @property
             def steps(self):
                 return []
         
