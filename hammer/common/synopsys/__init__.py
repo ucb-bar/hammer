@@ -32,13 +32,25 @@ class SynopsysTool(HasSDCSupport, TCLTool, HammerTool):
         """
         Assumes versions look like NAME-YYYY.MM-SPMINOR.
         Assumes less than 100 minor versions.
+        
+        Handles various version formats:
+        - NAME-YYYY.MM (no minor version)
+        - NAME-YYYY.MM-N (where N is a number like 4)
+        - NAME-YYYY.MM-SPN (where SP is a prefix and N is a number)
+        - NAME-YYYY.MM-PREFIXN (where PREFIX is any text and N is a number)
         """
         date = "-".join(version.split("-")[1:])  # type: str
         year = int(date.split(".")[0])  # type: int
         month = int(date.split(".")[1][:2])  # type: int
         minor_version = 0  # type: int
         if "-" in date:
-            minor_version = int(date.split("-")[1][2:])
+            minor_part = date.split("-")[1]
+            # Try to handle both formats: with prefix (like "SP4") and without (like "4")
+            # If the minor part starts with non-digits, skip them
+            for i, char in enumerate(minor_part):
+                if char.isdigit():
+                    minor_version = int(minor_part[i:])
+                    break
         return (year * 100 + month) * 100 + minor_version
 
     @property
