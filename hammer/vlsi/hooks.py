@@ -18,7 +18,9 @@ HammerToolStep = NamedTuple('HammerToolStep', [
     # Function to call to execute this step
     ('func', HammerStepFunction),
     # Name of the step
-    ('name', str)
+    ('name', str),
+    # Whether pre/post db should be writtn
+    ('write_db', bool)
 ])
 
 # Specify step to start/stop
@@ -42,6 +44,7 @@ class HookLocation(Enum):
     PersistentStep = 40
     PersistentPreStep = 41
     PersistentPostStep = 42
+    PersistentEndStep = 43
 
 # An hook action. Actions can insert new steps before or after an existing one,
 # or replace an existing stage.

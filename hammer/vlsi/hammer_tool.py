@@ -30,15 +30,22 @@ from .units import TemperatureValue, TimeValue, VoltageValue, CapacitanceValue
 __all__ = ['HammerTool']
 
 
-def make_raw_hammer_tool_step(func: HammerStepFunction, name: str) -> HammerToolStep:
+def make_raw_hammer_tool_step(func: HammerStepFunction, name: str, write_db: bool = True) -> HammerToolStep:
     # Check the type of the HammerStepFunction
     check_hammer_step_function(func)
-    return HammerToolStep(func, name)
+    return HammerToolStep(func, name, write_db)
 
 
 def check_hammer_step_function(func: HammerStepFunction) -> None:
     """Internal alias for checking HammerStepFunction signatures."""
     assert_function_type(func, args=[HammerTool], return_type=bool)
+
+# Decorator to add attribute to hooks preventing write_db
+def nowritedb(func):
+    def wrapper():
+        func.write_db = False
+        return func
+    return wrapper()
 
 
 class HammerTool(metaclass=ABCMeta):
@@ -208,6 +215,16 @@ class HammerTool(metaclass=ABCMeta):
 
         :return: True if successful, False otherwise.
         """
+
+        # Go through persistent hooks and find end ones
+        # print(f"ORANGES: {self.persistent_steps}")
+        # for pst in list(filter(lambda p: p.location == HookLocation.PersistentEndStep, self.persistent_steps)):
+        #     func_out = pst.step.func(self)  # type: bool
+        #     print("\n\n\nAPLLES\n\n")
+        #     assert isinstance(func_out, bool)
+        #     if not func_out:
+        #         return False
+
         return True
 
     def fill_outputs(self) -> bool:
@@ -462,12 +479,24 @@ class HammerTool(metaclass=ABCMeta):
         resume_step_pre = True  # type: bool
         pause_step_pre = True  # type: bool
 
+        # Add persistent hooks        
+        hook_actions.insert(0, HammerTool.make_persistent_hook(global_start_timer))
+        hook_actions.insert(1, HammerTool.make_persistent_hook(create_timing_arrays))
+        hook_actions.append(HammerTool.make_end_persistent_hook(global_stop_timer))
+        hook_actions.append(HammerTool.make_end_persistent_hook(print_runtime))
+
+        for step in steps.copy(): 
+            print("ADDING TIME ACTIONS\n")
+            hook_actions.append(HammerTool.make_pre_insertion_hook(step.name, unique_start_time_hook(step.name)))
+            hook_actions.append(HammerTool.make_post_insertion_hook(step.name, unique_stop_time_hook(step.name)))
+        print(f"ACTIONS: {hook_actions}")
+
         for action in hook_actions:
             step_id = -1
             pstep_id = -1
 
             # First, process which step is being targeted - set step_id or pstep_id accordingly.
-            if action.location != HookLocation.PersistentStep:
+            if action.location not in [HookLocation.PersistentStep, HookLocation.PersistentEndStep]:
                 if not has_step(action.target_name):
                     if action.location in [HookLocation.ResumePreStep, HookLocation.ResumePostStep, HookLocation.PausePreStep, HookLocation.PausePostStep]:
                         self.logger.error("Target step '{step}' specified by --from/after/to/until_step does not exist".format(step=action.target_name))
@@ -542,9 +571,9 @@ class HammerTool(metaclass=ABCMeta):
                     return False
                 pause_step = action.target_name
                 pause_step_pre = action.location == HookLocation.PausePreStep
-            elif action.location in [HookLocation.PersistentStep, HookLocation.PersistentPreStep, HookLocation.PersistentPostStep]:
+            elif action.location in [HookLocation.PersistentStep, HookLocation.PersistentPreStep, HookLocation.PersistentPostStep, HookLocation.PersistentEndStep]:
                 assert action.step is not None, "Persistent(Pre/Post)Step requires a step"
-                if action.location != HookLocation.PersistentStep and step_id == -1:
+                if action.location not in [HookLocation.PersistentStep, HookLocation.PersistentEndStep] and step_id == -1:
                     self.logger.error("make_pre/post_persistent_hook cannot target a persistent step")
                     return False
                 if has_step(action.step.name):
@@ -572,6 +601,7 @@ class HammerTool(metaclass=ABCMeta):
                 step = cast(HammerToolStep, pstep.step)
                 check_hammer_step_function(step.func)
 
+        # Manaually add hooks to support timing
         # Set properties
         if len(new_steps) == 0:
             def dummy_step(x: HammerTool) -> bool:
@@ -583,6 +613,7 @@ class HammerTool(metaclass=ABCMeta):
 
         # Run steps.
         prev_step = None  # type: Optional[HammerToolStep]
+        pre_steps_ran = False
 
         for step_index, step in enumerate(new_steps):
             # Do this step?
@@ -606,7 +637,10 @@ class HammerTool(metaclass=ABCMeta):
                 # First step
                 if prev_step is None:
                     # Run pre-step hook.
-                    self.do_pre_steps(step)
+                    if not pre_steps_ran:
+                        self.do_pre_steps(step)
+                        pre_steps_ran = True
+                        
                     # If pre-persistent hooks don't target the first step, now run them
                     for pst in list(filter(lambda p: p.location == HookLocation.PersistentPreStep and any(s.name == p.target_name for s in new_steps[step_index:]), self.persistent_steps)):
                         if pst.target_name != self.first_step.name:
@@ -615,11 +649,23 @@ class HammerTool(metaclass=ABCMeta):
                     for pst in list(filter(lambda p: p.location == HookLocation.PersistentPostStep and any(s.name == p.target_name for s in new_steps[:step_index]), self.persistent_steps)):
                         self.run_persistent_step(pst, step)
                 else:
-                    self.do_between_steps(prev_step, step)
+                    if (not hasattr(step.func, 'write_db') or step.func.write_db):
+                        # print(f"Writing DB for {step.name}")
+                        self.do_between_steps(prev_step, step)
+
+                # For end persistent hooks
+                if (step_index == len(new_steps)-1):
+                    for p_action in list(filter(lambda p: p.location == HookLocation.PersistentEndStep, self.persistent_steps)):
+                        pstep = p_action.step
+                        func_out = pstep.func(self)  # type: bool
+                        self.logger.debug("Running sub-step '{step}'".format(step=pstep.name))
+                        assert isinstance(func_out, bool)
+   
 
                 self.logger.debug("Running sub-step '{step}'".format(step=step.name))
                 func_out = step.func(self)  # type: bool
-                prev_step = step
+                if (not hasattr(step.func, 'write_db') or step.func.write_db):
+                    prev_step = step
                 assert isinstance(func_out, bool)
                 if not func_out:
                     return False
@@ -666,7 +712,14 @@ class HammerTool(metaclass=ABCMeta):
 
         if name == "":
             name = func.__name__
-        return make_raw_hammer_tool_step(func=wrapper, name=name)
+
+        write_db = True
+        # print(f"\n\nmake_step_from_method: {name}\n")
+        if hasattr(func, 'write_db'):
+            write_db = getattr(func, 'write_db')
+            print(f"\n\n{name} STEP DB WRITE DISABLED]\n")
+
+        return make_raw_hammer_tool_step(func=wrapper, name=name, write_db=write_db)
 
     @staticmethod
     def make_steps_from_methods(funcs: List[Callable[[], bool]]) -> List[HammerToolStep]:
@@ -691,7 +744,13 @@ class HammerTool(metaclass=ABCMeta):
             raise ValueError("This function does not take bound methods")
         if name == "":
             name = func.__name__
-        return make_raw_hammer_tool_step(func=func, name=name)
+
+        write_db = True
+        if hasattr(func, 'write_db'):
+            write_db = getattr(func, 'write_db')  
+
+
+        return make_raw_hammer_tool_step(func=func, name=name, write_db=write_db)
 
     @staticmethod
     def make_replacement_hook(step: str, func: HammerStepFunction) -> HammerToolHookAction:
@@ -863,6 +922,22 @@ class HammerTool(metaclass=ABCMeta):
             location=HookLocation.PersistentPostStep,
             step=HammerTool.make_step_from_function(func)
         )
+
+    @staticmethod
+    def make_end_persistent_hook(func: HammerStepFunction) -> HammerToolHookAction:
+        """
+        Helper function to always insert a step at the beginning,
+        when the steps to be executed are all after the given step.
+
+        :return: Hook action which is inserted at the beginning of the list of steps
+        """
+        return HammerToolHookAction(
+            target_name="",
+            location=HookLocation.PersistentEndStep,
+            step=HammerTool.make_step_from_function(func)
+        )
+
+
 
     ##############################
     # Accessory functions available to tools.
@@ -1681,3 +1756,84 @@ class HammerTool(metaclass=ABCMeta):
             verbose_commands.append(line)
             prev_line = line
         HammerTool.tcl_append('\n'.join(verbose_commands), output_buffer=output_buffer, clean=clean)
+
+# All the functions belwo are to support timing steps
+@nowritedb
+def create_timing_arrays(x : HammerTool) -> bool:
+    x.append('''
+        set step_name []
+        set step_runtime []
+    ''')
+    return True
+
+@nowritedb
+def print_runtime(x : HammerTool) -> bool:
+    x.append('''
+        # Print the header of the table
+        puts "-----------------------------------------"
+        puts [format "| %-15s | %-17s |" "Step" "Runtime (seconds)"]
+        puts "-----------------------------------------"
+
+        # Loop through the arrays and print the function names and runtimes
+        set len [llength $step_names]
+        for {set i 0} {$i < $len} {incr i} {
+            set funcName [lindex $step_names $i]
+            set runtime [lindex $step_runtimes $i]
+            # Format the output to ensure the table looks nice
+            puts [format "| %-15s | %-17s |" $funcName $runtime]
+        }
+
+        puts "-----------------------------------------"
+        ''')
+    return True
+
+@nowritedb
+def global_start_timer(x : HammerTool) -> bool:
+    x.append(f'''
+        set global_start_time_sec [clock seconds]
+    ''')
+    return True
+
+@nowritedb
+def global_stop_timer(x : HammerTool) -> bool:
+    x.append(f'''
+        set global_end_time_sec [clock seconds]
+        set global_runtime [expr $global_end_time_sec - $global_start_time_sec]
+        lappend step_name "global"
+        lappend step_runtime $global_runtime
+        puts "global Total Runtime: [clock format $runtime -format %H:%M:%S]"
+    ''')
+    return True
+
+
+def unique_start_time_hook(name: str):
+    @nowritedb
+    def dynamic_function(x: HammerTool) -> bool:
+        x.append(f'''
+            set {name}_start_time_sec [clock seconds]
+        ''')
+        return True
+
+    func_name = f"{name}_start_time"
+
+    # Change underlying function name to ensure functional
+    dynamic_function.__name__ = func_name
+
+    return nowritedb(dynamic_function)
+
+def unique_stop_time_hook(name: str):
+    @nowritedb
+    def dynamic_function(x: HammerTool) -> bool:
+        x.append(f'''
+            set {name}_end_time_sec [clock seconds]
+            set {name}_runtime [expr ${name}_end_time_sec - ${name}_start_time_sec]
+            lappend step_name "{name}"
+            lappend step_runtime ${name}_runtime
+            puts "{name} Total Runtime: [clock format ${name}_runtime -format %H:%M:%S]"
+        ''')
+        return True
+
+    # Change underlying function name to ensure functional
+    dynamic_function.__name__ = f"{name}_stop_time"
+
+    return nowritedb(dynamic_function)
