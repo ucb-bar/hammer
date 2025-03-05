@@ -65,8 +65,6 @@
         (inst name = "<pad_inst>"   orientation=R270    offset=4392)
         (inst name = "clamp_6"      orientation=R270    cell="sky130_ef_io__vccd_lvc_clamped3_pad"  offset=4613)
         (inst name = "<pad_inst>"   orientation=R270    offset=4838)
-        (inst name = "IO_FILLER_MANUAL_E_1" orientation = R270 offset = 4593 cell = "sky130_ef_io__com_bus_slice_20um")
-        (inst name = "IO_FILLER_MANUAL_E_2" orientation = R270 offset = 2354 cell = "sky130_ef_io__com_bus_slice_20um")
     )
 
     (bottomright
@@ -117,8 +115,5 @@
         (inst name = "clamp_16"     orientation=R90     cell="sky130_ef_io__vddio_hvc_clamped_pad"   offset=4349)
         (inst name = "clamp_17"     orientation=R90     cell="sky130_ef_io__vccd_lvc_clamped3_pad"   offset=4560)
         (inst name = "<pad_inst>"   orientation=R90     offset=4771)
-        (inst name = "IO_FILLER_MANUAL_W_1" orientation = R90 offset = 415 cell = "sky130_ef_io__com_bus_slice_20um")
-        (inst name = "IO_FILLER_MANUAL_W_2" orientation = R90 offset = 2279 cell = "sky130_ef_io__com_bus_slice_20um")
-        (inst name = "IO_FILLER_MANUAL_W_3" orientation = R90 offset = 4635 cell = "sky130_ef_io__com_bus_slice_20um")
     )
 )

@@ -74,7 +74,7 @@ class ValueWithUnit(ABC):
         match = re.search(regex, value)
         if match is None:
             try:
-                num = str(float(value))
+                num = str(float(value.strip("\\")))
                 self._value_prefix = default_prefix
             except ValueError:
                 raise ValueError("Malformed {type} value {value}".format(type=self.unit_type,

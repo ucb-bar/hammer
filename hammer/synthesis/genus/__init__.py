@@ -199,6 +199,8 @@ class Genus(HammerSynthesisTool, CadenceTool):
             verbose_append("set_db lp_clock_gating_prefix  {CLKGATE}")
             verbose_append("set_db lp_insert_clock_gating  true")
             verbose_append("set_db lp_clock_gating_register_aware true")
+        else:
+            verbose_append("set_db lp_clock_gating_infer_enable false")
 
         # Set up libraries.
         # Read timing libraries.
@@ -228,9 +230,10 @@ class Genus(HammerSynthesisTool, CadenceTool):
         qrc_files = self.technology.read_libs([
             hammer_tech.filters.qrc_tech_filter
         ], hammer_tech.HammerTechnologyUtils.to_plain_item)
-        verbose_append("set_db qrc_tech_file {{ {files} }}".format(
-            files=qrc_files[0]
-        ))
+        if qrc_files:
+            verbose_append("set_db qrc_tech_file {{ {files} }}".format(
+                files=qrc_files[0]
+            ))
 
         # Quit when ispatial is used with sky130
         if(not qrc_files and self.get_setting("synthesis.genus.phys_flow_effort").lower() == "high"):
