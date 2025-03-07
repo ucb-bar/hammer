@@ -1,22 +1,24 @@
 # Default settings for ICV DRC, for project/technology configuration and overriding.
 drc.icv:
+    # Note: Older versions of ICV are often located at /icv/ instead of /icvalidator/.
+    # If you are using an older version, you should change the path in addition to the version.
     # Location of the binary
-    icv_drc_bin: "${synopsys.synopsys_home}/icv/${drc.icv.version}/bin/LINUX.64/icv"
+    icv_drc_bin: "${synopsys.synopsys_home}/icvalidator/${drc.icv.version}/bin/LINUX.64/icv"
     icv_drc_bin_meta: lazysubst
 
-    icv_vue_bin: "${synopsys.synopsys_home}/icv/${drc.icv.version}/bin/LINUX.64/icv_vue"
+    icv_vue_bin: "${synopsys.synopsys_home}/icvalidator/${drc.icv.version}/bin/LINUX.64/icv_vue"
     icv_vue_bin_meta: lazysubst
 
     icvwb_bin: "${synopsys.synopsys_home}/icvwb/${drc.icv.icvwb_version}/bin/icvwb"
     icvwb_bin_meta: lazysubst
 
-    ICV_HOME_DIR: "${synopsys.synopsys_home}/icv/${drc.icv.version}"
+    ICV_HOME_DIR: "${synopsys.synopsys_home}/icvalidator/${drc.icv.version}"
     ICV_HOME_DIR_meta: lazysubst
 
     # type: str
-    version: "S-2021.06-SP3-2"
+    version: "W-2024.09-4"
     # type: str
-    icvwb_version: "S-2021.06-SP2"
+    icvwb_version: "V-2023.09-SP2"
     # Port for VUE (violation browser) to communicate with ICVWB (layout browser)
     # Any open port 1000 to 65536 allowed
     # type: int

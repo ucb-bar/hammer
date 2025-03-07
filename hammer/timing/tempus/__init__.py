@@ -107,7 +107,7 @@ class Tempus(HammerTimingTool, CadenceTool):
             hammer_tech.filters.lef_filter
         ], hammer_tech.HammerTechnologyUtils.to_plain_item)
         if self.hierarchical_mode.is_nonleaf_hierarchical():
-            ilm_lefs = list(map(lambda ilm: ilm.lef, self.get_input_ilms()))
+            ilm_lefs = list(map(lambda ilm: ilm.lef, self.get_input_ilms(full_tree=True)))
             lef_files.extend(ilm_lefs)
         verbose_append("read_physical -lef {{ {files} }}".format(
             files=" ".join(lef_files)
@@ -127,16 +127,21 @@ class Tempus(HammerTimingTool, CadenceTool):
 
         if self.hierarchical_mode.is_nonleaf_hierarchical():
             # Read ILMs.
-            for ilm in self.get_input_ilms():
+            for ilm in self.get_input_ilms(full_tree=True):
                 # Assumes that the ILM was created by Innovus (or at least the file/folder structure).
                 # TODO: support non-Innovus hierarchical (read netlists, etc.)
-                verbose_append("read_ilm -cell {module} -directory {dir}".format(dir=ilm.dir, module=ilm.module))
+                verbose_append("set_ilm -cell {module} -in_dir {dir}".format(dir=ilm.dir, module=ilm.module))
 
         # Read power intent
         if self.get_setting("vlsi.inputs.power_spec_mode") != "empty":
             # Setup power settings from cpf/upf
             for l in self.generate_power_spec_commands():
                 verbose_append(l)
+
+        verbose_append("init_design")
+
+        if self.def_file is not None:
+            verbose_append("read_def " + os.path.join(os.getcwd(), self.def_file))
 
         # Read parasitics
         if self.spefs is not None: # post-P&R
@@ -166,10 +171,9 @@ class Tempus(HammerTimingTool, CadenceTool):
         if self.sdf_file is not None:
             verbose_append("read_sdf " + os.path.join(os.getcwd(), self.sdf_file))
 
-        verbose_append("init_design")
-
-        # TODO: Optionally read additional DEF or OA physical data
-
+        if self.hierarchical_mode.is_nonleaf_hierarchical() and len(self.get_input_ilms(full_tree=True)):
+            verbose_append("read_ilm")
+            verbose_append("flatten_ilm")
 
         # Set some default analysis settings for max accuracy
         # Clock path pessimism removal

@@ -14,6 +14,8 @@ import hammer.tech as hammer_tech
 class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTool):
     """Mix-in trait with functions useful for Cadence-based tools."""
 
+    constraint_mode = "my_constraint_mode"
+
     @property
     def env_vars(self) -> Dict[str, str]:
         """
@@ -127,9 +129,6 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
         def append_mmmc(cmd: str) -> None:
             self.verbose_tcl_append(cmd, mmmc_output)
 
-        # Create an Innovus constraint mode.
-        constraint_mode = "my_constraint_mode"
-
         sdc_files = self.generate_sdc_files()
 
         # Append any custom SDC files.
@@ -150,13 +149,13 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
             self.run_executable(["touch", blank_sdc])
             sdc_files_arg = "-sdc_files {{ {} }}".format(blank_sdc)
         if self.hierarchical_mode.is_nonleaf_hierarchical():
-            ilm_sdcs = reduce_list_str(add_lists, list(map(lambda ilm: ilm.sdcs, self.get_input_ilms())))  # type: List[str]
+            ilm_sdcs = reduce_list_str(add_lists, list(map(lambda ilm: ilm.sdcs, self.get_input_ilms())), [])  # type: List[str]
             ilm_sdc_files_arg = "-ilm_sdc_files [list {sdc_files}]".format(
                 sdc_files=" ".join(ilm_sdcs))
         else:
             ilm_sdc_files_arg = ""
         append_mmmc("create_constraint_mode -name {name} {sdc_files_arg} {ilm_sdc_files_arg}".format(
-            name=constraint_mode,
+            name=self.constraint_mode,
             sdc_files_arg=sdc_files_arg,
             ilm_sdc_files_arg=ilm_sdc_files_arg
         ))
@@ -205,7 +204,7 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
                 # Next, create the analysis views
                 append_mmmc("create_analysis_view -name {name}_view -delay_corner {name}_delay -constraint_mode {constraint}".format(
                     name=corner_name,
-                    constraint=constraint_mode
+                    constraint=self.constraint_mode
                 ))
 
             # Finally, apply the analysis view.
@@ -251,7 +250,7 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
             # Next, create an Innovus analysis view.
             analysis_view_name = "my_view"
             append_mmmc("create_analysis_view -name {name} -delay_corner {corner} -constraint_mode {constraint}".format(
-                name=analysis_view_name, corner=delay_corner_name, constraint=constraint_mode))
+                name=analysis_view_name, corner=delay_corner_name, constraint=self.constraint_mode))
             # Finally, apply the analysis view.
             # TODO: introduce different views of setup/hold and true multi-corner
             append_mmmc("set_analysis_view -setup {{ {setup_view} }} -hold {{ {hold_view} }}".format(
