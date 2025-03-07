@@ -1,5 +1,7 @@
 # Default settings for ICV lvs, for project/technology configuration and overriding.
 lvs.icv:
+    # Note: Older versions of ICV are often located at /icv/ instead of /icvalidator/.
+    # If you are using an older version, you should change the path in addition to the version.
     # Location of the binary
     icv_lvs_bin: "${synopsys.synopsys_home}/icvalidator/${lvs.icv.version}/bin/LINUX.64/icv"
     icv_lvs_bin_meta: lazysubst
