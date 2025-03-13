@@ -132,6 +132,20 @@ class HammerTool(metaclass=ABCMeta):
         """
         pass
 
+    def __init__(self):
+        self._tcl_time_steps  = False
+
+    @property
+    def tcl_time_steps(self) -> bool:
+        """
+        Internal variable which adds TCL commands to time each step
+        """
+        return self._tcl_time_steps
+
+    @tcl_time_steps.setter
+    def tcl_time_steps(self, enable):
+       self._tcl_time_steps = enable
+
     @property
     def first_step(self) -> HammerToolStep:
         """
@@ -479,17 +493,20 @@ class HammerTool(metaclass=ABCMeta):
         resume_step_pre = True  # type: bool
         pause_step_pre = True  # type: bool
 
-        # Add persistent hooks        
-        hook_actions.insert(0, HammerTool.make_persistent_hook(global_start_timer))
-        hook_actions.insert(1, HammerTool.make_persistent_hook(create_timing_arrays))
-        hook_actions.append(HammerTool.make_end_persistent_hook(global_stop_timer))
-        hook_actions.append(HammerTool.make_end_persistent_hook(print_runtime))
+        # Add persistent hooks
+        if self.tcl_time_steps:
+            print(self)
+            print("Timing each step")
+            hook_actions.insert(0, HammerTool.make_persistent_hook(global_start_timer))
+            hook_actions.insert(1, HammerTool.make_persistent_hook(create_timing_arrays))
+            hook_actions.append(HammerTool.make_end_persistent_hook(global_stop_timer))
+            hook_actions.append(HammerTool.make_end_persistent_hook(print_runtime))
 
-        for step in steps.copy(): 
-            print("ADDING TIME ACTIONS\n")
-            hook_actions.append(HammerTool.make_pre_insertion_hook(step.name, unique_start_time_hook(step.name)))
-            hook_actions.append(HammerTool.make_post_insertion_hook(step.name, unique_stop_time_hook(step.name)))
-        print(f"ACTIONS: {hook_actions}")
+            for step in steps.copy():
+                print("ADDING TIME ACTIONS\n")
+                hook_actions.append(HammerTool.make_pre_insertion_hook(step.name, unique_start_time_hook(step.name)))
+                hook_actions.append(HammerTool.make_post_insertion_hook(step.name, unique_stop_time_hook(step.name)))
+            print(f"ACTIONS: {hook_actions}")
 
         for action in hook_actions:
             step_id = -1
@@ -640,7 +657,7 @@ class HammerTool(metaclass=ABCMeta):
                     if not pre_steps_ran:
                         self.do_pre_steps(step)
                         pre_steps_ran = True
-                        
+
                     # If pre-persistent hooks don't target the first step, now run them
                     for pst in list(filter(lambda p: p.location == HookLocation.PersistentPreStep and any(s.name == p.target_name for s in new_steps[step_index:]), self.persistent_steps)):
                         if pst.target_name != self.first_step.name:
@@ -660,7 +677,7 @@ class HammerTool(metaclass=ABCMeta):
                         func_out = pstep.func(self)  # type: bool
                         self.logger.debug("Running sub-step '{step}'".format(step=pstep.name))
                         assert isinstance(func_out, bool)
-   
+
 
                 self.logger.debug("Running sub-step '{step}'".format(step=step.name))
                 func_out = step.func(self)  # type: bool
@@ -747,7 +764,7 @@ class HammerTool(metaclass=ABCMeta):
 
         write_db = True
         if hasattr(func, 'write_db'):
-            write_db = getattr(func, 'write_db')  
+            write_db = getattr(func, 'write_db')
 
 
         return make_raw_hammer_tool_step(func=func, name=name, write_db=write_db)
