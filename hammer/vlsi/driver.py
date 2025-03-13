@@ -216,6 +216,7 @@ class HammerDriver:
             run_dir = os.path.join(self.obj_dir, "syn-rundir")
         # TODO: generate this automatically
         syn_tool.name = name
+        syn_tool.tcl_time_steps = True
         syn_tool.logger = self.log.context("synthesis")
         syn_tool.technology = self.tech
         syn_tool.set_database(self.database)
@@ -280,6 +281,7 @@ class HammerDriver:
             run_dir = os.path.join(self.obj_dir, "par-rundir")
 
         par_tool.name = name
+        par_tool.tcl_time_steps = True
         par_tool.logger = self.log.context("par")
         par_tool.technology = self.tech
         par_tool.set_database(self.database)
