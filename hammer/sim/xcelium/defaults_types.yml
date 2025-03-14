@@ -1,6 +1,10 @@
 sim.xcelium:
   # Tool version (e.g., "XCELIUM2103")
   version: str
+  # Spectre version (e.g. "SPECTRE211")
+  spectreversion: Optional[str]
+  # Path to spectre binary.
+  spectre_bin: Optional[str]
   # Path to xcelium binary.
   xcelium_bin: str
   # Path to xmsimrc_def file.
@@ -19,6 +23,14 @@ sim.xcelium:
   global_access: bool
   # If true, enable multicore support.
   mce: bool
+  # If true, enable AMS sims.
+  ams: bool
+  # Path to analog control file.
+  acf: Optional[str]
+  # Path to ams control file.
+  amscf: Optional[str]
+  # If true, create a partially populated template of the AMS control file.
 
   compile_opts: Optional[list[str]]
   elab_opts: Optional[list[str]]
+  ams_opts: Optional[list[str]]

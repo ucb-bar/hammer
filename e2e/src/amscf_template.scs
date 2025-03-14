@@ -1,0 +1,19 @@
+simulator lang=spectre
+
+// global signals
+
+// model deck
+
+// analog control file
+include "acf.scs"
+
+// schematic deck
+
+// ams configuration options
+amsd {
+    // set the connect rule power supply
+
+    // mix analog and digital
+    // portmap subckt=cell_name
+    // config cell=cell_name use=spice
+}
