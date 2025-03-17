@@ -493,20 +493,13 @@ class HammerTool(metaclass=ABCMeta):
         resume_step_pre = True  # type: bool
         pause_step_pre = True  # type: bool
 
-        # Add persistent hooks
-        if self.tcl_time_steps:
-            print(self)
-            print("Timing each step")
-            hook_actions.insert(0, HammerTool.make_persistent_hook(global_start_timer))
-            hook_actions.insert(1, HammerTool.make_persistent_hook(create_timing_arrays))
-            hook_actions.append(HammerTool.make_end_persistent_hook(global_stop_timer))
-            hook_actions.append(HammerTool.make_end_persistent_hook(print_runtime))
+        print("Printing Existing Hooks\n")
+        for action in hook_actions:
+            print(f"\thook action: {action}")
 
-            for step in steps.copy():
-                print("ADDING TIME ACTIONS\n")
-                hook_actions.append(HammerTool.make_pre_insertion_hook(step.name, unique_start_time_hook(step.name)))
-                hook_actions.append(HammerTool.make_post_insertion_hook(step.name, unique_stop_time_hook(step.name)))
-            print(f"ACTIONS: {hook_actions}")
+
+        for i,name in enumerate(names):
+            print(f"Name{i}: {name}")
 
         for action in hook_actions:
             step_id = -1
@@ -514,6 +507,7 @@ class HammerTool(metaclass=ABCMeta):
 
             # First, process which step is being targeted - set step_id or pstep_id accordingly.
             if action.location not in [HookLocation.PersistentStep, HookLocation.PersistentEndStep]:
+                print(f"Performing action with target: {action.target_name} {action.target_name in names} {'place_tap_cells' in names}")
                 if not has_step(action.target_name):
                     if action.location in [HookLocation.ResumePreStep, HookLocation.ResumePostStep, HookLocation.PausePreStep, HookLocation.PausePostStep]:
                         self.logger.error("Target step '{step}' specified by --from/after/to/until_step does not exist".format(step=action.target_name))
@@ -618,7 +612,83 @@ class HammerTool(metaclass=ABCMeta):
                 step = cast(HammerToolStep, pstep.step)
                 check_hammer_step_function(step.func)
 
-        # Manaually add hooks to support timing
+
+
+        #************  Manaually add hooks to support timing
+        print("List all steps before running\n")
+        for i, step in enumerate(new_steps):
+             print(f"Step {i}: {step}")
+
+        # Add persistent hooks
+        if self.tcl_time_steps:
+        #     print(self)
+        #     print("Timing each step")
+
+            # new_steps.append(HammerTool.make_end_persistent_hook(global_stop_timer).step)
+            # new_steps.append(HammerTool.make_end_persistent_hook(print_runtime).step)
+
+        #     existing_replace_actions = [x for x in hook_actions if (x.location == HookLocation.ReplaceStep) and (x.step.name != "dummy_step")]
+        #     replace_target_dict = {}
+        #     for replace in existing_replace_actions:
+        #         replace_target_dict[replace.target_name] = replace.step.name
+
+
+        #     print("Adding time actions\n")
+        #     for step in steps.copy():
+        #         name = step.name
+        #         if (step.name in replace_target_dict.keys()):
+        #             name = replace_target_dict[name]
+        #         hook_actions.append(HammerTool.make_pre_insertion_hook(name, unique_start_time_hook(name)))
+        #         hook_actions.append(HammerTool.make_post_insertion_hook(name, unique_stop_time_hook(name)))
+        #     print(f"ACTIONS: ")
+
+        #     for action in hook_actions:
+        #         print(f"\thook action: {action}")
+        #     for i,step in enumerate(steps.copy()):
+        #         print(f"Step {i}: {step}")
+
+            added_steps = 0
+            for i, step in enumerate(new_steps.copy()):
+                step_id = i + added_steps
+                if (step.name != "dummy_step"):
+                    print(f"Add Timing {step}")
+                    pre_step_action = HammerTool.make_pre_insertion_hook(step.name, unique_start_time_hook(step.name))
+                    post_step_action = HammerTool.make_post_insertion_hook(step.name, unique_stop_time_hook(step.name))
+
+                    # Add PreStep timing step
+                    assert pre_step_action.step is not None, "InsertPreStep requires a step"
+                    if has_step(pre_step_action.step.name):
+                        self.logger.error("[InsertPreStep] New step '{step}' already exists".format(step=pre_step_action.step.name))
+                        return False
+                    if pstep_id > -1:
+                        # Inherit replaced persistent step's location and target
+                        p_steps.insert(pstep_id, pre_step_action._replace(location=p_steps[pstep_id].location,
+                                                                          target_name=p_steps[pstep_id].target_name))
+                    elif step_id > -1:
+                        new_steps.insert(step_id, pre_step_action.step)
+                        new_steps.insert(step_id + 2, post_step_action.step)
+                    names.add(post_step_action.step.name)
+                    names.add(pre_step_action.step.name)
+
+                    # # Add PostStep timing step
+                    # assert post_step_action.step is not None, "InsertPostStep requires a step"
+                    # if has_step(post_step_action.step.name):
+                    #     self.logger.error("[InsertPostStep] New step '{step}' already exists".format(step=post_step_action.step.name))
+                    #     return False
+                    # if pstep_id > -1:
+                    #     # Inherit replaced persistent step's location and target
+                    #     p_steps.insert(pstep_id + 2, post_step_action._replace(location=p_steps[pstep_id].location,
+                    #                                                           target_name=p_steps[pstep_id].target_name))
+                    # elif step_id > -1:
+                    #     new_steps.insert(step_id + 2, post_step_action.step)
+                    # names.add(post_step_action.step.name)
+
+                added_steps += 2
+            new_steps.insert(0, HammerTool.make_persistent_hook(global_start_timer).step)
+            new_steps.insert(1, HammerTool.make_persistent_hook(create_timing_arrays).step)
+
+        #************
+
         # Set properties
         if len(new_steps) == 0:
             def dummy_step(x: HammerTool) -> bool:
@@ -631,6 +701,7 @@ class HammerTool(metaclass=ABCMeta):
         # Run steps.
         prev_step = None  # type: Optional[HammerToolStep]
         pre_steps_ran = False
+
 
         for step_index, step in enumerate(new_steps):
             # Do this step?
@@ -1778,8 +1849,8 @@ class HammerTool(metaclass=ABCMeta):
 @nowritedb
 def create_timing_arrays(x : HammerTool) -> bool:
     x.append('''
-        set step_name []
-        set step_runtime []
+        set step_names []
+        set step_runtimes []
     ''')
     return True
 
@@ -1818,7 +1889,7 @@ def global_stop_timer(x : HammerTool) -> bool:
         set global_runtime [expr $global_end_time_sec - $global_start_time_sec]
         lappend step_name "global"
         lappend step_runtime $global_runtime
-        puts "global Total Runtime: [clock format $runtime -format %H:%M:%S]"
+        puts "global Total Runtime: [clock format $global_runtime -format %H:%M:%S]"
     ''')
     return True
 
@@ -1828,6 +1899,7 @@ def unique_start_time_hook(name: str):
     def dynamic_function(x: HammerTool) -> bool:
         x.append(f'''
             set {name}_start_time_sec [clock seconds]
+            puts "{name}_start_time_sec ${name}_start_time_sec"
         ''')
         return True
 
@@ -1846,6 +1918,8 @@ def unique_stop_time_hook(name: str):
             set {name}_runtime [expr ${name}_end_time_sec - ${name}_start_time_sec]
             lappend step_name "{name}"
             lappend step_runtime ${name}_runtime
+            puts "{name}_start_time_sec: ${name}_start_time_sec"
+            puts "{name}_end_time_sec: ${name}_end_time_sec"
             puts "{name} Total Runtime: [clock format ${name}_runtime -format %H:%M:%S]"
         ''')
         return True
