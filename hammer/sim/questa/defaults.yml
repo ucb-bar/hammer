@@ -1,0 +1,18 @@
+sim.questa:
+  # Tool version
+  version: "24.1std"
+  # Installation path
+  questa_home: "${mentor.mentor_home}/intelFPGA/${sim.questa.version}"
+  questa_home_meta: lazysubst
+  # Executable
+  questa_bin: "qhsim"
+  questa_bin_meta: lazysubst
+
+# Default sim.inputs options
+sim.inputs:
+  sdf_corner: max
+  wave_file: null
+  no_gui: null
+  vlog_args: ""
+  vopt_args: ""
+  vsim_args: ""
