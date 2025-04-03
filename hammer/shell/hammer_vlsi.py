@@ -603,13 +603,13 @@ class AIRFlow_rocket:
         
         # Add synthesis config
         self.SYN_CONF = (f"{self.specs_dir}/rockettile-inputs.yml") #Point to rockettile-inputs.yml
-        self.SRAM_CONF = (f"{self.OBJ_DIR}/sram_generator-output.json") #Point to sramp_generator-output.json
+        self.SRAM_CONF = (f"{self.OBJ_DIR}/sram_generator-output.json") #Point to sram_generator-output.json
         print(f"SYN_CONF: {self.SYN_CONF}")
         print(f"SRAM_CONF: {self.SRAM_CONF}")
         
         sys.argv = [
             'hammer-vlsi',
-            'syn',
+            'syn-RocketTile',
             '--obj_dir', self.OBJ_DIR,
             '-e', self.ENV_YML,
             '-p', self.PDK_CONF,
@@ -629,9 +629,8 @@ class AIRFlow_rocket:
         print(f"Running command: {' '.join(sys.argv)}")
         CLIDriver().main()
 
-    '''
-    def sram(self):
-        print("Executing synthesis")
+    def sram_generator(self):
+        print("Executing sram_generator")
         print(f"Using config files:")
         print(f"ENV_YML: {self.ENV_YML}")
         print(f"PDK_CONF: {self.PDK_CONF}")
@@ -640,8 +639,9 @@ class AIRFlow_rocket:
         print(f"DESIGN_PDK_CONF: {self.DESIGN_PDK_CONF}")
     
         # Add synthesis config
+        self.SYN_CONF = (f"{self.specs_dir}/rockettile-inputs.yml") #Point to rockettile-inputs.yml
         self.SRAM_GENERATOR_CONF = (f"{self.OBJ_DIR}/sram_generator-input.yml") #Point to sram_generator-input.yml
-        self.SRAM_CONF = (f"{self.OBJ_DIR}/sram_generator-output.json") #Point to sramp_generator-output.json
+        self.SRAM_CONF = (f"{self.OBJ_DIR}/sram_generator-output.json") #Point to sram_generator-output.json
         
         print(f"SYN_CONF: {self.SYN_CONF}")
         
@@ -654,6 +654,7 @@ class AIRFlow_rocket:
             '-p', self.TOOLS_CONF,
             '-p', self.DESIGN_CONF,
             '-p', self.DESIGN_PDK_CONF,
+            '-p', self.SYN_CONF,
             '-p', self.SRAM_GENERATOR_CONF
         ]
         
@@ -665,14 +666,58 @@ class AIRFlow_rocket:
             
         print(f"Running command: {' '.join(sys.argv)}")
         CLIDriver().main()
-    '''
 
     def syn_to_par(self):
         """
         Generate par-input.json from synthesis outputs if it doesn't exist
         """
-        par_input_json = f"{self.OBJ_DIR}/par-input.json"
+        #par_input_json = f"{self.OBJ_DIR}/par-input.json"
+        par_input_json = f"{self.OBJ_DIR}/par-RocketTile-input.json"
         
+        print("Executing syn-to-par")
+        print(f"Using config files:")
+        print(f"ENV_YML: {self.ENV_YML}")
+        print(f"PDK_CONF: {self.PDK_CONF}")
+        print(f"TOOLS_CONF: {self.TOOLS_CONF}")
+        print(f"DESIGN_CONF: {self.DESIGN_CONF}")
+        print(f"DESIGN_PDK_CONF: {self.DESIGN_PDK_CONF}")
+    
+        # Add synthesis config
+        self.SYN_CONF = (f"{self.specs_dir}/rockettile-inputs.yml") #Point to rockettile-inputs.yml
+        #self.SRAM_GENERATOR_CONF = (f"{self.OBJ_DIR}/sram_generator-input.yml") #Point to sram_generator-input.yml
+        #self.SRAM_CONF = (f"{self.OBJ_DIR}/sram_generator-output.json") #Point to sram_generator-output.json
+        
+        print(f"SYN_CONF: {self.SYN_CONF}")
+        #par_input_json = "/bwrcq/C/andre_green/chipyard-sledgehammer/vlsi/hammer/e2e/build-intech22-cm/intel2x2/par-RocketTile-input.json"
+        syn_output = f"{self.OBJ_DIR}/syn-RocketTile/syn-output-full.json"
+        #syn_output = "/bwrcq/C/andre_green/chipyard-sledgehammer/vlsi/hammer/e2e/build-intech22-cm/intel2x2/syn-RocketTile/syn-output-full.json"
+        
+        sys.argv = [
+            'hammer-vlsi',
+            'syn-to-par',
+            '--obj_dir', self.OBJ_DIR,
+            '-e', self.ENV_YML,
+            '-p', self.PDK_CONF,
+            '-p', self.TOOLS_CONF,
+            '-p', self.DESIGN_CONF,
+            '-p', self.DESIGN_PDK_CONF,
+            '-p', self.SYN_CONF,
+            #'-p', self.SRAM_GENERATOR_CONF,
+            '-p', syn_output,
+            '-o', par_input_json
+        ]
+        
+        if self.extra:
+            sys.argv.extend(['-p', self.extra])
+        
+        if self.args:
+            sys.argv.extend(self.args.split())
+            
+        print(f"Running command: {' '.join(sys.argv)}")
+        CLIDriver().main()
+        
+        
+        '''
         # Only generate if file doesn't exist
         if not os.path.exists(par_input_json):
             print("Generating par-input.json")
@@ -689,19 +734,21 @@ class AIRFlow_rocket:
             # Write configuration to par-input.json
             with open(par_input_json, 'w') as f:
                 json.dump(par_config, f, indent=2)
-        
+        '''        
         return par_input_json
 
     def par(self):
         """Execute PAR flow."""
         # Generate par-input.json
-        par_input_json = self.syn_to_par()
+        #par_input_json = self.syn_to_par()
 
         #self.PAR_CONF = (f"{self.specs_dir}/rockettile-inputs.yml") #Point to rockettile-inputs.yml
+        par_input_json = f"{self.OBJ_DIR}/par-RocketTile-input.json"
+        
         # Set up command line arguments
         sys.argv = [
             'hammer-vlsi',
-            'par',
+            'par-RocketTile',
             '--obj_dir', self.OBJ_DIR,
             '-e', self.ENV_YML,
             '-p', self.PDK_CONF,
@@ -756,6 +803,12 @@ class AIRFlow_rocket:
             title='RTL Simulation',
             description='Run RTL simulation'
         ),
+        'sram_generator': Param(
+            default=False,
+            type='boolean',
+            title='SRAM Generator',
+            description='Generate SRAM macros'
+        ),
         'syn': Param(
             default=False,
             type='boolean',
@@ -780,6 +833,7 @@ def create_hammer_dag_rocket():
             return "clean"
         elif (context['dag_run'].conf.get('build', False) or 
             context['dag_run'].conf.get('sim_rtl', False) or
+            context['dag_run'].conf.get('sram_generator', False) or
             context['dag_run'].conf.get('syn', False) or
             context['dag_run'].conf.get('par', False)):
             return "build_decider"
@@ -819,7 +873,8 @@ def create_hammer_dag_rocket():
         """Decide whether to run sim_rtl or syn"""
         if context['dag_run'].conf.get('sim_rtl', False):
             return 'sim_rtl'
-        elif (context['dag_run'].conf.get('syn', False) or 
+        elif (context['dag_run'].conf.get('sram_generator', False) or 
+            context['dag_run'].conf.get('syn', False) or
             context['dag_run'].conf.get('par', False)):
             return 'syn_decider'
         return 'exit_'
@@ -837,10 +892,23 @@ def create_hammer_dag_rocket():
             raise AirflowSkipException("Sim-RTL task skipped")
 
     @task
+    def sram_generator(**context):
+        """Execute sram generator task"""
+        print("Starting sram task")
+        if context['dag_run'].conf.get('sram_generator', False):
+            print("SRAM parameter is True, executing sram_generator")
+            flow = AIRFlow_rocket()
+            flow.sram_generator()
+        else:
+            print("SRAM parameter is False, skipping")
+            raise AirflowSkipException("SRAM task skipped")
+
+    @task(trigger_rule=TriggerRule.NONE_FAILED)
     def syn(**context):
         """Execute synthesis task"""
         print("Starting syn task")
-        if context['dag_run'].conf.get('syn', False):
+        if (context['dag_run'].conf.get('sram_generator', False) or
+         context['dag_run'].conf.get('syn', False)):
             print("Synthesis parameter is True, executing syn")
             flow = AIRFlow_rocket()
             flow.syn()
@@ -848,6 +916,18 @@ def create_hammer_dag_rocket():
             print("Synthesis parameter is False, skipping")
             raise AirflowSkipException("Synthesis task skipped")
 
+    @task
+    def syn_to_par(**context):
+        """Execute PAR task"""
+        print("Starting syn-to-par task")
+        if context['dag_run'].conf.get('par', False):
+            print("PAR parameter is True, executing syn-to-par")
+            flow = AIRFlow_rocket()
+            flow.syn_to_par()
+        else:
+            print("PAR parameter is False, skipping")
+            raise AirflowSkipException("PAR task skipped")
+    
     @task
     def par(**context):
         """Execute PAR task"""
@@ -867,6 +947,7 @@ def create_hammer_dag_rocket():
         if context['dag_run'].conf.get('build', True):
             return 'build'
         elif (context['dag_run'].conf.get('sim_rtl', False) or
+            context['dag_run'].conf.get('sram_generator', False) or
             context['dag_run'].conf.get('syn', False) or
             context['dag_run'].conf.get('par', False)):
             return "sim_or_syn_decide"
@@ -876,7 +957,9 @@ def create_hammer_dag_rocket():
     @task.branch(trigger_rule=TriggerRule.ALL_SUCCESS)
     def syn_decider(**context):
         """Decide whether to run synthesis"""
-        if context['dag_run'].conf.get('syn', False):
+        if context['dag_run'].conf.get('sram_generator', False):
+            return 'sram_generator'
+        elif context['dag_run'].conf.get('syn', False):
             return 'syn'
         elif (context['dag_run'].conf.get('par', False)):
             return "par_decider"
@@ -888,7 +971,7 @@ def create_hammer_dag_rocket():
     def par_decider(**context):
         """Decide whether to run par"""
         if context['dag_run'].conf.get('par', False):
-            return 'par'
+            return 'syn_to_par'
         return 'exit_'
 
     @task(trigger_rule=TriggerRule.NONE_FAILED)
@@ -905,8 +988,10 @@ def create_hammer_dag_rocket():
     sim_or_syn_decide = sim_or_syn_decide()
     sim_rtl = sim_rtl()
     syn_decide = syn_decider()
+    sram_generator = sram_generator()
     syn = syn()
     par_decide = par_decider()
+    syn_to_par = syn_to_par()
     par = par()
     exit_ = exit_()
 
@@ -917,9 +1002,11 @@ def create_hammer_dag_rocket():
     build >> sim_or_syn_decide
     sim_or_syn_decide >> [sim_rtl, syn_decide, exit_]
     sim_rtl >> exit_
-    syn_decide >> [syn, par_decide, exit_]
+    syn_decide >> [syn, sram_generator, par_decide, exit_]
+    sram_generator >> syn
     syn >> par_decide
-    par_decide >> [par, exit_]
+    par_decide >> [syn_to_par, exit_]
+    syn_to_par >> par
     par >> exit_
 
     return {
@@ -929,6 +1016,7 @@ def create_hammer_dag_rocket():
         'sim_or_syn_decide': sim_or_syn_decide,
         'sim_rtl': sim_rtl,
         'syn_decide': syn_decide,
+        'sram_generator': sram_generator,
         'syn': syn,
         'par_decide': par_decide,
         'par': par
