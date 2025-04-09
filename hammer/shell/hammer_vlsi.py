@@ -1019,6 +1019,7 @@ def create_hammer_dag_rocket():
         'sram_generator': sram_generator,
         'syn': syn,
         'par_decide': par_decide,
+        'syn_to_par': syn_to_par,
         'par': par
     }
 
