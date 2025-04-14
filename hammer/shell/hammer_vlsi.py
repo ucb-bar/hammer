@@ -876,7 +876,7 @@ def create_hammer_dag_rocket():
         elif (context['dag_run'].conf.get('sram_generator', False) or 
             context['dag_run'].conf.get('syn', False) or
             context['dag_run'].conf.get('par', False)):
-            return 'syn_decider'
+            return 'sram_decider'
         return 'exit_'
 
     @task
@@ -902,6 +902,17 @@ def create_hammer_dag_rocket():
         else:
             print("SRAM parameter is False, skipping")
             raise AirflowSkipException("SRAM task skipped")
+
+    #@task.branch(trigger_rule=TriggerRule.NONE_FAILED)
+    @task.branch(trigger_rule=TriggerRule.ALL_SUCCESS)
+    def sram_decider(**context):
+        """Decide whether to run sram generator"""
+        if context['dag_run'].conf.get('sram_generator', False):
+            return 'sram_generator'
+        elif (context['dag_run'].conf.get('syn', False) or
+            context['dag_run'].conf.get('par', False)):
+            return 'syn_decider'
+        return 'exit_'
 
     @task(trigger_rule=TriggerRule.NONE_FAILED)
     def syn(**context):
@@ -957,9 +968,7 @@ def create_hammer_dag_rocket():
     @task.branch(trigger_rule=TriggerRule.ALL_SUCCESS)
     def syn_decider(**context):
         """Decide whether to run synthesis"""
-        if context['dag_run'].conf.get('sram_generator', False):
-            return 'sram_generator'
-        elif context['dag_run'].conf.get('syn', False):
+        if context['dag_run'].conf.get('syn', False):
             return 'syn'
         elif (context['dag_run'].conf.get('par', False)):
             return "par_decider"
@@ -988,6 +997,7 @@ def create_hammer_dag_rocket():
     sim_or_syn_decide = sim_or_syn_decide()
     sim_rtl = sim_rtl()
     syn_decide = syn_decider()
+    sram_decide = sram_decider()
     sram_generator = sram_generator()
     syn = syn()
     par_decide = par_decider()
@@ -1000,10 +1010,11 @@ def create_hammer_dag_rocket():
     clean >> exit_
     build_decide >> [build, sim_or_syn_decide, exit_]
     build >> sim_or_syn_decide
-    sim_or_syn_decide >> [sim_rtl, syn_decide, exit_]
+    sim_or_syn_decide >> [sim_rtl, sram_decide, exit_]
     sim_rtl >> exit_
-    syn_decide >> [syn, sram_generator, par_decide, exit_]
-    sram_generator >> syn
+    sram_decide >> [sram_generator, syn_decide, exit_]
+    sram_generator >> syn_decide
+    syn_decide >> [syn, par_decide, exit_]
     syn >> par_decide
     par_decide >> [syn_to_par, exit_]
     syn_to_par >> par
@@ -1016,6 +1027,7 @@ def create_hammer_dag_rocket():
         'sim_or_syn_decide': sim_or_syn_decide,
         'sim_rtl': sim_rtl,
         'syn_decide': syn_decide,
+        'sram_decide': sram_decide,
         'sram_generator': sram_generator,
         'syn': syn,
         'par_decide': par_decide,
