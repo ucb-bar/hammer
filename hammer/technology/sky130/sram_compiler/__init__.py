@@ -55,8 +55,8 @@ class SKY130SRAMGenerator(HammerSRAMGeneratorTool):
 
             found = False
             lib_path: Optional[str] = None
-            for fidelity in ["rcc", "rc", "c"]:
-                lib_path="{b}/{n}/{n}_{c}.{f}.lib".format(b=base_dir,n=sram_name,c=corner_str, f=fidelity)
+            for fidelity in [".rcc", ".rc", ".c", ""]:
+                lib_path="{b}/{n}/{n}_{c}{f}.lib".format(b=base_dir,n=sram_name,c=corner_str, f=fidelity)
                 if os.path.exists(lib_path):
                     found = True
                     break
