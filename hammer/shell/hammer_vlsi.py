@@ -1223,7 +1223,8 @@ class SledgeHammerKodiak:
         ]
         '''
         self.SOURCES = list(Path(f"{self.specs_dir}/constr").rglob(f"{self.design}*.yml"))
-        self.INPUT_CONFS = f'-p {self.TECH_CONF} ' + ' '.join([f"-p {conf}" for conf in self.SOURCES if conf])
+        self.INPUTS = (f"{self.OBJ_DIR}/inputs.yml") #Point to inputs.yml
+        self.INPUT_CONFS = f'-p {self.TECH_CONF} ' + f'-p {self.INPUTS} ' + ' '.join([f"-p {conf}" for conf in self.SOURCES if conf])
         self.HAMMER_EXTRA_ARGS = ' '.join([f"-p {conf}" for conf in self.extra]) + f" {self.args}"
         self.HAMMER_D_MK = os.getenv('HAMMER_D_MK', f"{self.OBJ_DIR}/hammer.d")
         self.SRAM_GENERATOR_CONF = (f"{self.OBJ_DIR}/sram_generator-input.yml") #Point to sram_generator-input.yml
@@ -1322,7 +1323,7 @@ class SledgeHammerKodiak:
             f'syn-{target}',
             '--obj_dir', self.OBJ_DIR,
             '-e', self.ENV_YML,
-            '-p', f"{self.OBJ_DIR}syn-{target}-input.json",
+            #'-p', f"{self.OBJ_DIR}syn-{target}-input.json",
             '-p', self.SRAM_CONF
         ]
         
@@ -1431,10 +1432,47 @@ class SledgeHammerKodiak:
             '-e', self.ENV_YML,
             '-p', par_input
         ]
-        
-        
+
         print(f"Running command: {' '.join(sys.argv)}")
         CLIDriver().main()
+
+
+    #$(HAMMER_EXEC) -e /bwrcq/C/andre_green/kodiak-cy/vlsi/specs/bwrc-env.yml 
+    #-p /bwrcq/C/andre_green/kodiak-cy/vlsi/hammer/e2e/build-intech22-cm/kodiak/par-ScratchpadBank/par-output-full.json 
+    #-p /bwrcq/C/andre_green/kodiak-cy/vlsi/hammer/e2e/build-intech22-cm/kodiak/par-ScratchpadBank_1/par-output-full.json 
+    #-p /bwrcq/C/andre_green/kodiak-cy/vlsi/hammer/e2e/build-intech22-cm/kodiak/par-ShuttleTile/par-output-full.json 
+    #-p /bwrcq/C/andre_green/kodiak-cy/vlsi/hammer/e2e/build-intech22-cm/kodiak/par-InclusiveCacheBankScheduler/par-output-full.json 
+    #-p /bwrcq/C/andre_green/kodiak-cy/vlsi/hammer/e2e/build-intech22-cm/kodiak/par-RocketTile/par-output-full.json 
+    #-p /bwrcq/C/andre_green/kodiak-cy/vlsi/hammer/e2e/build-intech22-cm/kodiak/par-UciephyTestTL/par-output-full.json 
+    #-o /bwrcq/C/andre_green/kodiak-cy/vlsi/hammer/e2e/build-intech22-cm/kodiak/syn-Intel4x4ChipTop-input.json 
+    #--obj_dir /bwrcq/C/andre_green/kodiak-cy/vlsi/hammer/e2e/build-intech22-cm/kodiak 
+    #hier-par-to-syn
+    #Only performed after all hierarchical modules have been routed
+    def hier_par_to_syn(self, target=None):
+        """Execute PAR flow."""
+        if (target == None):
+            target = self.top
+        
+        #par_input = f"{self.OBJ_DIR}/par-{target}-input.json"
+        
+        # Set up command line arguments
+        sys.argv = [
+            'hammer-vlsi',
+            f'hier-par-to-syn',
+            '-e', self.ENV_YML,
+            '-p', f'{self.OBJ_DIR}/par-Scratchpad/par-output-full.json',
+            '-p', f'{self.OBJ_DIR}/par-Scratchpad_1/par-output-full.json',
+            '-p', f'{self.OBJ_DIR}/par-ShuttleTile/par-output-full.json',
+            '-p', f'{self.OBJ_DIR}/par-InclusiveCacheBankScheduler/par-output-full.json',
+            '-p', f'{self.OBJ_DIR}/par-RocketTile/par-output-full.json',
+            '-p', f'{self.OBJ_DIR}/par-UciephyTestTL/par-output-full.json',
+            '-o', f'{self.OBJ_DIR}/syn-Intel4x4ChipTop-input.json',
+            '--obj_dir', self.OBJ_DIR,
+        ]
+
+        print(f"Running command: {' '.join(sys.argv)}")
+        CLIDriver().main()
+        
 
     def clean(self):
         print("Executing clean")
@@ -1560,7 +1598,7 @@ def create_hammer_dag_kodiak():
          context['dag_run'].conf.get('syn', False)):
             print("Synthesis parameter is True, executing syn")
             flow = SledgeHammerKodiak()
-            flow.syn('Intel4x4ChipTop', '-p syn-Intel4x4ChipTop-input.json')
+            flow.syn('Intel4x4ChipTop', f'-p {self.OBJ_DIR}/syn-Intel4x4ChipTop-input.json')
         else:
             print("Synthesis parameter is False, skipping")
             raise AirflowSkipException("Synthesis task skipped")
@@ -1588,6 +1626,18 @@ def create_hammer_dag_kodiak():
         else:
             print("PAR parameter is False, skipping")
             raise AirflowSkipException("PAR task skipped")
+    
+    @task
+    def hier_par_to_syn(**context):
+        """Execute PAR task"""
+        print("Starting par task")
+        if context['dag_run'].conf.get('syn', False):
+            print("PAR parameter is True, executing hier-par-to-syn")
+            flow = SledgeHammerKodiak()
+            flow.hier_par_to_syn('Intel4x4ChipTop')
+        else:
+            print("PAR parameter is False, skipping")
+            raise AirflowSkipException("hier-par-to-syn task skipped")
 
     #@task.branch(trigger_rule=TriggerRule.NONE_FAILED)
     @task.branch(trigger_rule=TriggerRule.ALL_SUCCESS)
@@ -1625,7 +1675,7 @@ def create_hammer_dag_kodiak():
          context['dag_run'].conf.get('syn', False)):
             print("Synthesis parameter is True, executing syn")
             flow = SledgeHammerKodiak()
-            flow.syn('UciephyTestTL', self.INPUT_CONFS)
+            flow.syn('UciephyTestTL', flow.INPUT_CONFS)
         else:
             print("Synthesis parameter is False, skipping")
             raise AirflowSkipException("Synthesis task skipped")
@@ -1689,7 +1739,7 @@ def create_hammer_dag_kodiak():
          context['dag_run'].conf.get('syn', False)):
             print("Synthesis parameter is True, executing syn")
             flow = SledgeHammerKodiak()
-            flow.syn('RocketTile', self.INPUT_CONFS)
+            flow.syn('RocketTile', flow.INPUT_CONFS)
         else:
             print("Synthesis parameter is False, skipping")
             raise AirflowSkipException("Synthesis task skipped")
@@ -1753,7 +1803,7 @@ def create_hammer_dag_kodiak():
          context['dag_run'].conf.get('syn', False)):
             print("Synthesis parameter is True, executing syn")
             flow = SledgeHammerKodiak()
-            flow.syn('InclusiveCacheBankScheduler', self.INPUT_CONFS)
+            flow.syn('InclusiveCacheBankScheduler', flow.INPUT_CONFS)
         else:
             print("Synthesis parameter is False, skipping")
             raise AirflowSkipException("Synthesis task skipped")
@@ -1817,7 +1867,7 @@ def create_hammer_dag_kodiak():
          context['dag_run'].conf.get('syn', False)):
             print("Synthesis parameter is True, executing syn")
             flow = SledgeHammerKodiak()
-            flow.syn('ShuttleTile', self.INPUT_CONFS)
+            flow.syn('ShuttleTile', flow.INPUT_CONFS)
         else:
             print("Synthesis parameter is False, skipping")
             raise AirflowSkipException("Synthesis task skipped")
@@ -1862,7 +1912,7 @@ def create_hammer_dag_kodiak():
     def par_decider_shuttle(**context):
         """Decide whether to run par"""
         if context['dag_run'].conf.get('par', False):
-            return 'ShuttleTile.ShuttleTile.syn_to_par_shuttle'
+            return 'ShuttleTile.ShuttleTile_par.syn_to_par_shuttle'
         return 'ShuttleTile.exit_shuttle'
 
     @task(trigger_rule=TriggerRule.NONE_FAILED)
@@ -1881,7 +1931,7 @@ def create_hammer_dag_kodiak():
          context['dag_run'].conf.get('syn', False)):
             print("Synthesis parameter is True, executing syn")
             flow = SledgeHammerKodiak()
-            flow.syn('ScratchpadBank_1', self.INPUT_CONFS)
+            flow.syn('ScratchpadBank_1', flow.INPUT_CONFS)
         else:
             print("Synthesis parameter is False, skipping")
             raise AirflowSkipException("Synthesis task skipped")
@@ -1945,7 +1995,7 @@ def create_hammer_dag_kodiak():
          context['dag_run'].conf.get('syn', False)):
             print("Synthesis parameter is True, executing syn")
             flow = SledgeHammerKodiak()
-            flow.syn('ScratchpadBank', self.INPUT_CONFS)
+            flow.syn('ScratchpadBank', flow.INPUT_CONFS)
         else:
             print("Synthesis parameter is False, skipping")
             raise AirflowSkipException("Synthesis task skipped")
@@ -2011,6 +2061,7 @@ def create_hammer_dag_kodiak():
         syn_decide = syn_decider()
         syn = syn()
         par_decide = par_decider()
+        hier_par_to_syn = hier_par_to_syn()
     
         with TaskGroup(group_id='Intel4x4ChipTop_par') as Intel4x4ChipTop_par:
             syn_to_par = syn_to_par()
@@ -2026,6 +2077,7 @@ def create_hammer_dag_kodiak():
         sram_decide >> [sram_generator, syn_decide, _exit_]
         sram_generator >> syn_decide
         syn_decide >> [syn, par_decide, _exit_]
+        hier_par_to_syn >> syn
         syn >> par_decide
         par_decide >> syn_to_par
         syn_to_par >> par
@@ -2142,7 +2194,7 @@ def create_hammer_dag_kodiak():
 
     ### Hierarchical Dependency Management
     syn_decide >> UciephyTestTL
-    exit_ucie >> syn
+    exit_ucie >> hier_par_to_syn
     syn_decide_ucie >> RocketTile
     exit_rocket >> syn_ucie
     syn_decide_rocket >> ShuttleTile
@@ -2164,6 +2216,7 @@ def create_hammer_dag_kodiak():
         'Intel4x4ChipTop.sram_decider': sram_decider,
         'Intel4x4ChipTop.sram_generator': sram_generator,
         'Intel4x4ChipTop.syn': syn,
+        'Intel4x4ChipTop.hier_par_to_syn': hier_par_to_syn,
         'Intel4x4ChipTop.par_decider': par_decider,
         'Intel4x4ChipTop.Intel4x4ChipTop_par.syn_to_par': syn_to_par,
         'Intel4x4ChipTop.Intel4x4ChipTop_par.par': par,
@@ -2192,11 +2245,11 @@ def create_hammer_dag_kodiak():
         'ShuttleTile.ShuttleTile_par.syn_to_par_shuttle': syn_to_par_shuttle,
         'ShuttleTile.ShuttleTile_par.par_shuttle': par_shuttle,
         #ScratchpadBank_1
-        'ScracthpadBank_1.syn_decider_scratch1': syn_decider_scratch1,
-        'ScracthpadBank_1.syn_scratch1': syn_scratch1,
-        'ScracthpadBank_1.par_decider_scratch1': par_decider_scratch1,
-        'ScracthpadBank_1.ScratchpadBank_1_par.syn_to_par_scratch1': syn_to_par_scratch1,
-        'ScracthpadBank_1.ScratchpadBank_1_par.par_scratch1': par_scratch1,
+        'ScratchpadBank_1.syn_decider_scratch1': syn_decider_scratch1,
+        'ScratchpadBank_1.syn_scratch1': syn_scratch1,
+        'ScratchpadBank_1.par_decider_scratch1': par_decider_scratch1,
+        'ScratchpadBank_1.ScratchpadBank_1_par.syn_to_par_scratch1': syn_to_par_scratch1,
+        'ScratchpadBank_1.ScratchpadBank_1_par.par_scratch1': par_scratch1,
         #ScratchpadBank
         'ScratchpadBank.syn_decider_scratch': syn_decider_scratch,
         'ScratchpadBank.syn_scratch': syn_scratch,
