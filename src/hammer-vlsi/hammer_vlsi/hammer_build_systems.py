@@ -215,6 +215,9 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         redo-power{suffix}:
         \t$(HAMMER_EXEC) {env_confs} {p_power_in} $(HAMMER_EXTRA_ARGS) --obj_dir {obj_dir} power{suffix}
 
+        redo-static-verification{suffix}:
+        \t$(HAMMER_EXEC) {env_confs} {p_static_verification_in} $(HAMMER_EXTRA_ARGS) --obj_dir {obj_dir} static-verification{suffix}
+
         redo-sim-syn{suffix}:
         \t$(HAMMER_EXEC) {env_confs} -p {sim_syn_in} $(HAMMER_EXTRA_ARGS) --sim_rundir {sim_syn_run_dir} --obj_dir {obj_dir} sim{suffix}
 
