@@ -844,14 +844,11 @@ class HammerDatabase:
         :param check_type: Flag to enforce type checking
         :return: The given config
         """
-        if key not in self.get_config():
-            raise KeyError("Key " + key + " is missing")
         if key not in self.defaults:
             self.logger.warning(f"Key {key} does not have a default implementation")
         if check_type:
             self.check_setting(key)
-        value = self.get_config()[key]
-        return nullvalue if value is None else value
+        return self.get_config().get(key, nullvalue)
 
     def get_setting_suffix(self, key: str, suffix: str, nullvalue: Any = None, check_type: bool = True) -> Any:
         """

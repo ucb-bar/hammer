@@ -16,9 +16,9 @@ drc.icv:
     ICV_HOME_DIR_meta: lazysubst
 
     # type: str
-    version: "W-2024.09-4"
+    version: "W-2024.09-SP2"
     # type: str
-    icvwb_version: "V-2023.09-SP2"
+    icvwb_version: "W-2024.09-SP2"
     # Port for VUE (violation browser) to communicate with ICVWB (layout browser)
     # Any open port 1000 to 65536 allowed
     # type: int

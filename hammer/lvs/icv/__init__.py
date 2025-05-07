@@ -187,8 +187,8 @@ class ICVLVS(HammerLVSTool, SynopsysTool):
                 f.write(" -runset_config " + config_rs)
 
             # Equivalence files
-            equiv_files = self.get_setting("lvs.icv.equiv_files")  # type: Optional[str]
-            if equiv_files is not None:
+            equiv_files = self.get_setting("lvs.icv.equiv_files", None)  # type: Optional[str]
+            if equiv_files is not None and len(equiv_files) > 0:
                 f.write(" -e " + equiv_files)
         return True
 
