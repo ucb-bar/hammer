@@ -1914,13 +1914,15 @@ def unique_stop_time_hook(name: str):
     @nowritedb
     def dynamic_function(x: HammerTool) -> bool:
         x.append(f'''
-            set {name}_end_time_sec [clock seconds]
-            set {name}_runtime [expr ${name}_end_time_sec - ${name}_start_time_sec]
-            lappend step_name "{name}"
-            lappend step_runtime ${name}_runtime
-            puts "{name}_start_time_sec: ${name}_start_time_sec"
-            puts "{name}_end_time_sec: ${name}_end_time_sec"
-            puts "{name} Total Runtime: [clock format ${name}_runtime -format %H:%M:%S]"
+            if {{[info exists {name}_start_time_sec]}} {{
+                set {name}_end_time_sec [clock seconds]
+                set {name}_runtime [expr ${name}_end_time_sec - ${name}_start_time_sec]
+                lappend step_name "{name}"
+                lappend step_runtime ${name}_runtime
+                puts "{name}_start_time_sec: ${name}_start_time_sec"
+                puts "{name}_end_time_sec: ${name}_end_time_sec"
+                puts "{name} Total Runtime: [clock format ${name}_runtime -format %H:%M:%S]"
+            }}
         ''')
         return True
 
