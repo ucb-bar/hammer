@@ -227,7 +227,7 @@ class SKY130Tech(HammerTechnology):
                 DRCDeck(
                     tool_name="pegasus",
                     deck_name="pegasus_drc",
-                    path="$SKY130_CDS/Sky130_DRC/sky130_rev_0.0_1.0.drc.pvl",
+                    path="$SKY130_CDS/Sky130_DRC/sky130_rev_0.0_2.2.drc.pvl",
                 ),
             ]
 
@@ -302,7 +302,7 @@ class SKY130Tech(HammerTechnology):
                     tool_name="pegasus",
                     deck_name="pegasus_drc",
                     path=os.path.join(
-                        SKY130_CDS, "Sky130_DRC", "sky130_rev_0.0_1.0.drc.pvl"
+                        SKY130_CDS, "Sky130_DRC", "sky130_rev_0.0_2.2.drc.pvl"
                     ),
                 ),
             ]
