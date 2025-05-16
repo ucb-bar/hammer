@@ -75,8 +75,14 @@ class SKY130Tech(HammerTechnology):
         elif slib == "sky130_scl":
             libs += [
                 Library(
-                    lef_file=os.path.join(SKY130_SCL, "sky130_scl_9T_tech/lefn/sky130_scl_9T.tlef"),
+                    lef_file=os.path.join(SKY130_SCL, "sky130_scl_9T_tech/lef/sky130_scl_9T.tlef"),
                     verilog_sim=os.path.join(SKY130_SCL, "sky130_scl_9T/verilog/sky130_scl_9T.v"),
+                    provides=[Provide(lib_type="technology")],
+                ),
+            ]
+            libs += [
+                Library(
+                    lef_file=os.path.join(SKY130_SCL, "sky130_scl_9T_tech/lef/sky130_scl_9T_phyCells.lef"),
                     provides=[Provide(lib_type="technology")],
                 ),
             ]
