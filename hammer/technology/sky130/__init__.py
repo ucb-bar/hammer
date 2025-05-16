@@ -75,8 +75,8 @@ class SKY130Tech(HammerTechnology):
         elif slib == "sky130_scl":
             libs += [
                 Library(
-                    lef_file=os.path.join(SKY130_SCL, "/lef/sky130_scl_9T.tlef"),
-                    verilog_sim=os.path.join(SKY130_SCL, "/verilog/sky130_scl_9T.v"),
+                    lef_file=os.path.join(SKY130_SCL, "sky130_scl_9T_tech/lefn/sky130_scl_9T.tlef"),
+                    verilog_sim=os.path.join(SKY130_SCL, "sky130_scl_9T/verilog/sky130_scl_9T.v"),
                     provides=[Provide(lib_type="technology")],
                 ),
             ]
@@ -262,7 +262,7 @@ class SKY130Tech(HammerTechnology):
 
             # Generate standard cell library
             library = slib
-            STDCELL_LIBRARY_BASE_PATH = SKY130_SCL
+            STDCELL_LIBRARY_BASE_PATH = os.path.join(SKY130_SCL, "sky130_scl_9T")
             lib_corner_files[STDCELL_LIBRARY_BASE_PATH] = os.listdir(
                 os.path.join(STDCELL_LIBRARY_BASE_PATH, "lib")
             )
@@ -271,7 +271,7 @@ class SKY130Tech(HammerTechnology):
             # Generate stackup
             metals = []  # type: List[Metal]
 
-            tlef_path = os.path.join(SKY130_SCL, "lef", f"{slib}_9T.tlef")
+            tlef_path = os.path.join(SKY130_SCL, "sky130_scl_9T_tech", "lef", f"{slib}_9T.tlef")
             metals = list(
                 map(lambda m: Metal.model_validate(m), LEFUtils.get_metals(tlef_path))
             )
@@ -368,7 +368,7 @@ class SKY130Tech(HammerTechnology):
                         continue
                 else:
                     library = "sky130_scl_9T"
-                    _, speed, vdd, temp = tmp.split("_")
+                    _, speed, vdd, temp, _ = tmp.split("_")
 
                     # force equivalent operating conditions for speed, since they're different between sky130a and scl
                     if speed == "ff":
@@ -400,6 +400,7 @@ class SKY130Tech(HammerTechnology):
                     ),
                     verilog_sim=os.path.join(
                         SKY130_SCL,
+                        "sky130_scl_9T",
                         "verilog",
                         library + "_9T.v" if slib == "sky130_scl" else ".v",
                     ),
@@ -430,6 +431,7 @@ class SKY130Tech(HammerTechnology):
                             ),
                             verilog_sim=os.path.join(
                                 SKY130_SCL,
+                                "sky130_scl_9T",
                                 "verilog",
                                 library + "_9T.v" if slib == "sky130_scl" else ".v",
                             ),
@@ -637,7 +639,7 @@ class SKY130Tech(HammerTechnology):
         else:
             setting_dir = self.get_setting("technology.sky130.sky130_scl")
             setting_dir = Path(setting_dir)
-            source_path = setting_dir / "lef" / "sky130_scl_9T.tlef"
+            source_path = setting_dir / "sky130_scl_9T_tech" /  "lef" / "sky130_scl_9T.tlef"
             dest_path = cache_tech_dir_path / "sky130_scl_9T.tlef"
         if not source_path.exists():
             raise FileNotFoundError(f"Tech-LEF not found: {source_path}")
