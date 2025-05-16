@@ -205,7 +205,7 @@ Run `poetry update` and `poetry install` and commit `poetry.lock`.
 First, generate the `schema.json` file from within your poetry virtualenv:
 
 ```shell
-python3 -c "from hammer.tech import TechJSON; print(TechJSON.schema_json(indent=2))" > doc/Technology/schema.json
+python3 -c "from hammer.tech import TechConfig; print(TechConfig.schema_json(indent=2))" > doc/Technology/schema.json
 ```
 
 Then:

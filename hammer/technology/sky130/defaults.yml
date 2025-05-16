@@ -1,4 +1,6 @@
 # Settings for the sky130 technology
+#
+
 technology.sky130:
   sky130A: "/path/to/sky130A" # This should be output files from the OpenPDKs compilation process.
   # This is $PDK_ROOT/share/pdk/sky130A from the README.
@@ -11,6 +13,9 @@ technology.sky130:
   
   sky130_cds: "/path/to/sky130_cds" # This contains the Cadence PDK
   # this key is OPTIONAL, and is only required if you are running Pegasus DRC/LVS.
+  
+  sky130_scl: "/path/to/sky130_cdl" # This contains the Cadence standard cell library
+  # this key is OPTIONAL, and is only required if you want to do Voltus IR drop analysis.
 
   sram22_sky130_macros: "/path/to/sram22_sky130_macros"  # SRAM path
   # /path/to/sram22_sky130_macros
@@ -32,7 +37,13 @@ technology.sky130:
 
   io_file: "extra/efabless_template.io"  # IO ring - take this template and modify for your own use
   io_file_meta: prependlocal
-  
+
+  stdcell_library: "sky130_fd_sc_hd"  # Choose between "sky130_fd_sc_hd" (open-source) or "sky130_scl" (Cadence)
+
+# WARNING: BREAK GLASS flag to override tech collateral with the paths provided in `override_libraries`
+vlsi.technology.manually_override_pdk_collateral: false 
+vlsi.technology.override_libraries: [] # hacked collateral files to be used instead of default tech files with the same name
+# either it's key:path or key:[path,name_to_override] if the path fname is diff than the fname to override
 
 mentor.extra_env_vars_meta: lazydeepsubst # Mentor environment variables
 # Override this in project
@@ -109,9 +120,6 @@ synthesis.yosys:
 
 par.inputs:
   gds_merge: true
-  gds_map_mode: manual
-  gds_map_file: "extra/sky130_lefpin.map"
-  gds_map_file_meta: prependlocal
 
 par.openroad:  # openroad setup/files
   setrc_file: "extra/setRC.tcl"

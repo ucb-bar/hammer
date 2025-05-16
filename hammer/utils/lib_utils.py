@@ -53,4 +53,6 @@ class LIBUtils:
             # TODO: handle other compressed file types? Tools only seem to support gzip.
             fd = os.open(source, os.O_RDONLY)
             lines = os.pread(fd, nbytes, 0).splitlines()
-        return list(map(lambda l: l.decode('ascii', errors='ignore'), lines))
+        lines = list(map(lambda l: l.decode('ascii', errors='ignore'), lines))
+        all_lines = '\n'.join(lines).replace('\\\n','')  # combine lines that are split by \ character
+        return all_lines.split('\n')

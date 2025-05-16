@@ -211,7 +211,7 @@ class Site(BaseModel):
         )
 
 
-class TechJSON(BaseModel):
+class TechConfig(BaseModel):
     name: str
     grid_unit: Optional[str] = None
     shrink_factor: Optional[str] = None
@@ -323,6 +323,77 @@ class HammerTechnology:
             self.logger.info('Creating directory: {}'.format(dir_name))
             os.makedirs(dir_name)
 
+    def override_tech_libraries(self) -> None:
+        """
+        Override library paths to cached or manually overriden tech collateral
+        """
+        if not self.config.libraries:
+            return
+
+        tech_module: str = self.get_setting("vlsi.core.technology")
+        tech_name = tech_module.split('.')[-1]
+        manual_overrides = {}
+
+        # if user has broken glass, map tech filename -> manual path
+        if self.get_setting("vlsi.technology.manually_override_pdk_collateral"):
+            for lib in self.get_setting("vlsi.technology.override_libraries"):
+                for key, path in lib['library'].items():
+                    if isinstance(path, list): # path fname and fname to replace are different
+                        fname = path[1]
+                        path = path[0]
+                    else:
+                        fname = os.path.basename(path)
+                    if (key, fname) in manual_overrides and manual_overrides[(key,fname)] != path:
+                        self.logger.error(f"Attempted to add {(key,path)} to overrides when {manual_overrides[(key, fname)]} already exists!")
+                    manual_overrides[(key, fname)] = path
+        else:
+            if len(self.get_setting("vlsi.technology.override_libraries")) > 0:
+                self.logger.warning("You've attempted to specify override libraries without enabling vlsi.technology.manually_override_pdk_collateral! collateral paths will not be overwritten")
+
+        used_overrides = {}
+        for lib in self.config.libraries + self.config.drc_decks + self.config.lvs_decks:
+            for field_name in lib.model_fields:
+                if "file" in field_name or "path" in field_name or field_name == "verilog_sim":
+                    # check if that file exists in cache, override if so
+                    default_path = getattr(lib, field_name)
+                    if not default_path:
+                        continue
+                    new_path = default_path
+                    fname = os.path.basename(default_path)
+                    fnames = [fname, fname.replace(".spice", ".cdl"), fname.replace(".cdl", ".spice")]
+
+                    cached_paths = set(os.path.join(self.cache_dir, f) for f in fnames)
+                    cached_paths = [f for f in cached_paths if os.path.exists(f)]
+
+                    # only allow 1 valid cached path, otherwise ambiguous
+                    if len(cached_paths) > 1:
+                        self.logger.error(f"ambiguous cache override: {cached_paths}")
+                    if cached_paths:
+                        new_path = cached_paths[0]
+                        used_overrides[(field_name, fname)] = (new_path, False) # non-manual override
+
+                    manual_override_paths = set([f for f in fnames if (field_name, f) in manual_overrides])
+                    manual_override_paths = [manual_overrides[(field_name, f)] for f in manual_override_paths]
+
+                    # only allow 1 valid manual_override path, otherwise ambiguous
+                    if len(manual_override_paths) > 1:
+                        self.logger.error(f"ambiguous cache override: {manual_override_paths}")
+                    # prioritize manual overrides over cache
+                    if manual_override_paths:
+                        new_path = manual_override_paths[0]
+                        used_overrides[(field_name, fname)] = (new_path, True) # manual override
+
+                    setattr(lib, field_name, new_path)
+        # do logging at the end to prevent spamming stdout with the same overrides
+        for field, new_path in used_overrides.items():
+            override_type = "manual" if new_path[1] else "cache"
+            self.logger.info( 
+                f"Overriding {field[0]} {field[1]} with {override_type} path {new_path[0]}"
+            )
+        unused_overrides = [k for k in manual_overrides.keys() if k not in used_overrides]
+        if unused_overrides:
+            self.logger.warning(f"Unused tech collateral overrides: {unused_overrides}")
+
     # hammer-vlsi properties.
     # TODO: deduplicate/put these into an interface to share with HammerTool?
     @property
@@ -348,14 +419,18 @@ class HammerTechnology:
         self.package: str = ""
 
         # Configuration, since this constructor will never be used, self.config will never seen as None
-        self.config: TechJSON = None  # type: ignore
+        self.config: TechConfig = None  # type: ignore
 
         # Units (converted to Time/CapacitanceValue later)
         self.time_unit: Optional[str] = None
         self.cap_unit: Optional[str] = None
 
+    def gen_config(self) -> None:
+        """For subclasses to set self.config (type: TechConfig) directly, instead of from static JSON file"""
+        pass
+
     @classmethod
-    def load_from_module(cls, tech_module: str) -> Optional["HammerTechnology"]:
+    def load_from_module(cls, tech_module: str) -> "HammerTechnology":
         """Load a technology from a given module.
 
         :param tech_module: Technology module (e.g. "hammer.technology.asap7")
@@ -371,13 +446,13 @@ class HammerTechnology:
         tech_yaml = importlib.resources.files(tech_module) / f"{technology_name}.tech.yml"
 
         if tech_json.is_file():
-            tech.config = TechJSON.model_validate_json(tech_json.read_text())
+            tech.config = TechConfig.model_validate_json(tech_json.read_text())
             return tech
         elif tech_yaml.is_file():
-            tech.config = TechJSON.model_validate_json(json.dumps(load_yaml(tech_yaml.read_text())))
+            tech.config = TechConfig.model_validate_json(json.dumps(load_yaml(tech_yaml.read_text())))
             return tech
-        else: #TODO - from Pydantic model instance
-            return None
+        else: # Assume tech implents gen_config()
+            return tech
 
     def get_lib_units(self) -> None:
         """
@@ -415,6 +490,12 @@ class HammerTechnology:
         except KeyError as e:  # this function is expected to return Optional[str] from extracted_tarballs_dir()
             print(e)  # TODO: fix the root cause
             return None
+
+    def set_setting(self, key: str, value: Any) -> None:
+        """
+        Set a runtime setting in the database.
+        """
+        self._database.set_setting(key, value)
 
     def get_setting_suffix(self, key: str) -> Any:
         """Get a particular setting from the database with a suffix.
@@ -649,15 +730,15 @@ class HammerTechnology:
 
         1. Absolute path: the path starts with "/" and refers to an absolute path on the filesystem
             /path/to/a/lib/file.lib -> /path/to/a/lib/file.lib
-        2. Tech plugin relative path: the path has no "/"s and refers to a file directly inside the tech plugin folder
+        2. Tech plugin relative path: the path has no "/"s and refers to a file directly inside the tech plugin folder (no subdirectories allowed, else it conflicts with 3-5. below!)
             techlib.lib -> <tech plugin package>/techlib.lib
-        3. Tech cache relative path: the path starts with an identifier which is "cache" (this is used in the SKY130 tech JSON)
+        3. Tech cache relative path: the path starts with an identifier which is "cache" (this is used in the SKY130 Libraries)
             cache/primitives.v -> <tech plugin cache dir>/primitives.v
         4. Install relative path: the path starts with an install/tarball identifier (installs.id, tarballs.root.id)
         and refers to a file relative to that identifier's path
             pdkroot/dac/dac.lib -> /nfs/ecad/tsmc100/stdcells/dac/dac.lib
         5. Library extra_prefix path: the path starts with an identifier present in the provided
-            library's extra_prefixes
+            library's extra_prefixes Field
             lib1/cap150f.lib -> /design_files/caps/cap150f.lib
         """
         assert len(path) > 0, "path must not be empty"

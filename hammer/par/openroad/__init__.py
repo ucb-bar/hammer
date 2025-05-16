@@ -1452,7 +1452,9 @@ class OpenROADPlaceAndRoute(OpenROADPlaceAndRouteTool):
             ilm_gds = list(map(lambda ilm: ilm.gds, self.get_input_ilms()))
             gds_files.extend(ilm_gds)
 
-        layer_map_file=self.get_setting('par.inputs.gds_map_file')
+        layer_map_file=self.get_gds_map_file()
+        if layer_map_file is None:
+            raise FileNotFoundError(f"Must have GDS layer map for write_gds! KLayout won't be able to write GDS file. ({layer_map_file}")
 
         # the first entry of $KLAYOUT_PATH will be the one where the configuration is stored when KLayout exits
         #   otherwise KLayout tries to write everything to the same directory as the klayout binary and throws an error if it is not writeable

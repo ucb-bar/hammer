@@ -5,7 +5,7 @@ vlsi_dir=$(abspath .)
 # minimal flow configuration variables
 design              ?= pass
 pdk                 ?= sky130
-tools               ?= nop
+tools               ?= cm
 env                 ?= bwrc
 
 extra               ?=  # extra configs
@@ -45,4 +45,4 @@ $(HAMMER_D_MK):
 -include $(HAMMER_D_MK)
 
 clean:
-    rm -rf $(OBJ_DIR) hammer-vlsi-*.log
+	rm -rf $(OBJ_DIR) hammer-vlsi-*.log
