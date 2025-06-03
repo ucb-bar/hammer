@@ -156,7 +156,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         \t$(HAMMER_EXEC) {env_confs} {p_syn_in} $(HAMMER_EXTRA_ARGS) --obj_dir {obj_dir} syn{suffix}
 
         {power_out}: {syn_deps} $(HAMMER_POWER_DEPENDENCIES)
-        \t$(HAMMER_EXEC) {env_confs} {p_power_in} $(HAMMER_EXTRA_ARGS) --obj_dir {obj_dir} power{suffix}
+        \t$(HAMMER_EXEC) {env_confs} {p_power_in} $(HAMMER_EXTRA_ARGS) --power_rundir {power_run_dir} --obj_dir {obj_dir} power{suffix}
 
         {static_verification_out}: {syn_deps} $(HAMMER_POWER_DEPENDENCIES)
         \t$(HAMMER_EXEC) {env_confs} {p_static_verification_in} $(HAMMER_EXTRA_ARGS) --obj_dir {obj_dir} static-verification{suffix}
@@ -213,7 +213,7 @@ def build_makefile(driver: HammerDriver, append_error_func: Callable[[str], None
         \t$(HAMMER_EXEC) {env_confs} {p_syn_in} $(HAMMER_EXTRA_ARGS) --obj_dir {obj_dir} syn{suffix}
 
         redo-power{suffix}:
-        \t$(HAMMER_EXEC) {env_confs} {p_power_in} $(HAMMER_EXTRA_ARGS) --obj_dir {obj_dir} power{suffix}
+        \t$(HAMMER_EXEC) {env_confs} {p_power_in} $(HAMMER_EXTRA_ARGS) --power_rundir {power_run_dir} --obj_dir {obj_dir} power{suffix}
 
         redo-static-verification{suffix}:
         \t$(HAMMER_EXEC) {env_confs} {p_static_verification_in} $(HAMMER_EXTRA_ARGS) --obj_dir {obj_dir} static-verification{suffix}
