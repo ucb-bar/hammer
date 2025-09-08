@@ -1078,7 +1078,23 @@ class HammerTool(metaclass=ABCMeta):
                 assert clock.period is not None, f"Non-generated clock {clock.name} must have a period specified."
             output.append(clock)
         return output
+    
+    def get_reset_ports(self) -> List[ResetPort]:
+        """"
+        Get the reset ports of the top-level module, as specified in vlsi.inputs.resets.
+        """
+        resets = self.get_setting("vlsi.inputs.resets")
+        output = [] # type: List[ResetPort]
+        for reset_port in resets:
+            reset = ResetPort(name=reset_port["name"], active_negated=None,
+                synchronous=None)
+            if "active_negated" in reset_port:
+                reset = reset._replace(active_negated=bool(reset_port["active_negated"]))
+            if "path" in reset_port:
+                reset = reset._replace(synchronous=bool(reset_port["synchronous"]))
+            output.append(reset)
 
+        return output 
     def get_time_unit(self) -> TimeValue:
         """
         Return the library time value.
