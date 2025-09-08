@@ -20,7 +20,7 @@ vlsi:
     placement_site: "FreePDK45_38x28_10R_NP_162NW_34O" # Set standard cell LEF placement site
 
 technology.core:
-  stackup: "nangate45_3Ma_3Mb_2Mc_2Md" # This key should exist in the stackups list in the tech json
+  stackup: "nangate45_3Ma_2Mb_2Mc_2Md" # This key should exist in the stackups list in the tech json
   std_cell_rail_layer: "metal1" # This should specify the TOPMOST metal layer the 
   # standard cells use for power rails
   # Note that this is not usually stackup specific; 
