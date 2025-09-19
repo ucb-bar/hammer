@@ -4,8 +4,7 @@ The `hammer/e2e` folder contains an end-to-end (RTL -> GDS) smoketest flow using
 
 ## Setup
 
-The integration tests use Hammer as a source dependency, so follow the [Hammer Developer Setup](https://hammer-vlsi.readthedocs.io/en/stable/Hammer-Basics/Hammer-Setup.html#developer-setup) to clone Hammer and install/activate the virtual environment.
-
+First, follow the [Hammer Power User Setup](https://hammer-vlsi.readthedocs.io/en/stable/Hammer-Basics/Hammer-Setup.html#power-user-setup) to clone Hammer and install/activate the virtual environment.
 
 ## Overview
 
