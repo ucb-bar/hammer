@@ -1,32 +1,30 @@
-`timescale 1ns/10ps
+`timescale 1ns / 1ps
+
+// wrap a sky130 SRAM instance for simulation
+// assumes defines: SRAM_NAME, ADDR_WIDTH, DATA_WIDTH, WMASK_WIDTH
 
 
-module sram_wrapper_tb;
-
-    parameter DATA_WIDTH = 4 ;
-    parameter ADDR_WIDTH = 6 ;
-    parameter WMASK_WIDTH = 2 ;
-    parameter RAM_DEPTH = 1 << ADDR_WIDTH;
+module sram_wrapper_sky130_tb;
 
     reg clk = 0;
     always #(`CLOCK_PERIOD/2.0) clk = ~clk;
 
     reg  we; // write enable
-    reg [WMASK_WIDTH-1:0] wmask; // write mask
-    reg [ADDR_WIDTH-1:0]  addr; // address
-    reg [DATA_WIDTH-1:0]  din; // data in
-    wire [DATA_WIDTH-1:0] dout; // data out
+    reg [`WMASK_WIDTH-1:0] wmask; // write mask
+    reg [`ADDR_WIDTH-1:0]  addr; // address
+    reg [`DATA_WIDTH-1:0]  din; // data in
+    wire [`DATA_WIDTH-1:0] dout; // data out
 
-    sram_wrapper sram_wrapper_dut (
+    sram_wrapper_sky130 sram_wrapper_sky130_dut (
         .clock(clk),.we(we),.wmask(wmask),
         .addr(addr),.din(din),.dout(dout)
     );
 
     initial begin
         // reset - SRAM behavioral verilog resets all values to 0
-        din = {DATA_WIDTH{'d13}};
-        wmask = {DATA_WIDTH{1'b1}};
-        addr = {DATA_WIDTH{'b0}};
+        din = {`DATA_WIDTH{'d13}};
+        wmask = {`DATA_WIDTH{1'b1}};
+        addr = {`DATA_WIDTH{'b0}};
         we = 0'b0;
 
         // load vals

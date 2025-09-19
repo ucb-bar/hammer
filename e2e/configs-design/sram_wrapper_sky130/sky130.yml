@@ -11,17 +11,22 @@ sim.inputs:
 
 # Placement Constraints
 vlsi.inputs.placement_constraints:
-  - path: "sram_wrapper"
+  - path: "sram_wrapper_sky130"
     type: toplevel
     x: 0
     y: 0
-    width: 100
-    height: 100
+    width: 500
+    height: 500
     margins:
       left: 0
       right: 0
       top: 0
       bottom: 0
+  - path: "sram_wrapper_sky130/mem0"
+    type: hardmacro
+    x: 20
+    y: 20
+    orientation: r90
 
 # Compile all srams in our cache
 vlsi.inputs.sram_parameters: "../../../hammer/technology/sky130/sram-cache.json"
