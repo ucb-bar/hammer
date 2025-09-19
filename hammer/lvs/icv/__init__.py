@@ -185,6 +185,11 @@ class ICVLVS(HammerLVSTool, SynopsysTool):
             config_rs = self.get_setting("lvs.icv.config_runset")  # type: Optional[str]
             if config_rs is not None:
                 f.write(" -runset_config " + config_rs)
+
+            # Equivalence files
+            equiv_files = self.get_setting("lvs.icv.equiv_files")  # type: Optional[str]
+            if equiv_files is not None:
+                f.write(" -e " + equiv_files)
         return True
 
     @property

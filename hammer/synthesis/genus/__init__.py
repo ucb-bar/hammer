@@ -91,7 +91,8 @@ class Genus(HammerSynthesisTool, CadenceTool):
             self.add_tieoffs,
             self.write_regs,
             self.generate_reports,
-            self.write_outputs
+            self.write_outputs,
+            self.run_genus
         ]
         if self.get_setting("synthesis.inputs.retime_modules"):
             steps_methods.insert(1, self.retime_modules)
@@ -112,8 +113,7 @@ class Genus(HammerSynthesisTool, CadenceTool):
 
     def do_post_steps(self) -> bool:
         assert super().do_post_steps()
-        return self.run_genus()
-
+        return True
     @property
     def mapped_v_path(self) -> str:
         return os.path.join(self.run_dir, "{}.mapped.v".format(self.top_module))
@@ -480,7 +480,7 @@ set_db hinst:{inst} .preserve true
         self.ran_write_outputs = True
 
         return True
-
+    
     def run_genus(self) -> bool:
         verbose_append = self.verbose_append
 
@@ -489,13 +489,13 @@ set_db hinst:{inst} .preserve true
         verbose_append("quit")
 
         # Create synthesis script.
-        syn_tcl_filename = os.path.join(self.run_dir, "syn.tcl")
-        self.write_contents_to_path("\n".join(self.output), syn_tcl_filename)
+        self.syn_tcl_filename = os.path.join(self.run_dir, "syn.tcl")
+        self.write_contents_to_path("\n".join(self.output), self.syn_tcl_filename)
 
         # Build args.
         args = [
             self.get_setting("synthesis.genus.genus_bin"),
-            "-f", syn_tcl_filename,
+            "-f", self.syn_tcl_filename,
             "-no_gui"
         ]
 

@@ -1084,6 +1084,9 @@ def load_config_from_string(contents: str, is_yaml: bool, path: str = "unspecifi
     :param path: Path to the folder/package where the config file is located.
     :return: Loaded config dictionary, unpacked.
     """
+    # Expand any environment variables.
+    contents = os.path.expandvars(contents)
+
     unpacked = unpack(load_yaml(contents) if is_yaml else json.loads(contents))
     unpacked[_CONFIG_PATH_KEY] = path
     return unpacked

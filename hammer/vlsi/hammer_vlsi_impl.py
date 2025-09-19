@@ -399,6 +399,7 @@ class HammerPlaceAndRouteTool(HammerTool):
         outputs["vlsi.inputs.ilms_meta"] = "append"  # to coalesce ILMs for entire hierarchical tree
         outputs["par.outputs.output_gds"] = str(self.output_gds)
         outputs["par.outputs.output_netlist"] = str(self.output_netlist)
+        outputs["par.outputs.output_physical_netlist"] = str(self.output_physical_netlist)
         outputs["par.outputs.output_sim_netlist"] = str(self.output_sim_netlist)
         outputs["par.outputs.hcells_list"] = list(self.hcells_list)
         outputs["par.outputs.seq_cells"] = self.output_seq_cells
@@ -511,6 +512,26 @@ class HammerPlaceAndRouteTool(HammerTool):
         if not (isinstance(value, str)):
             raise TypeError("output_netlist must be a str")
         self.attr_setter("_output_netlist", value)
+
+
+    @property
+    def output_physical_netlist(self) -> Optional[str]:
+        """
+        Get the (optional) path to the output physical netlist file.
+
+        :return: The (optional) path to the output physical netlist file.
+        """
+        try:
+            return self.attr_getter("_output_physical_netlist", None)
+        except AttributeError:
+            return None
+
+    @output_physical_netlist.setter
+    def output_physical_netlist(self, value: Optional[str]) -> None:
+        """Set the (optional) path to the output physical netlist file."""
+        if not (isinstance(value, str) or (value is None)):
+            raise TypeError("output_physical_netlist must be a Optional[str]")
+        self.attr_setter("_output_physical_netlist", value)
 
 
     @property
@@ -966,8 +987,8 @@ class HammerPlaceAndRouteTool(HammerTool):
             copy_fields = ["layer", "direction", "net_order", "width", "spacing", "group_pitch"]
             if len(above_insts) > 0:  # in some cases top_layer == top layer in power strap API
                 above_desc = {k: above_insts[0][k] for k in copy_fields}
-            elif not check_abut:
-                self.logger.error(f"par.power_straps_abutment is False, but you do not have power straps generated on layer {above_insts[0]['layer']} above instances of module {master}! Double check that you will supply power to them.")
+            elif len(insts) > 0 and not check_abut:
+                self.logger.error(f"par.power_straps_abutment is False, but power straps for instances of module {master} are being generated on layer {insts[0]['layer']}, which is the same as the module's top layer! Double check that you will supply power to these instances.")
 
             # Filter for top_layer == layer and valid/bad orientation
             abut_insts = list(filter(lambda m: m["top_layer"] == m["layer"] and
@@ -2094,6 +2115,26 @@ class HammerTimingTool(HammerTool):
         if not (isinstance(value, str) or (value is None)):
             raise TypeError("sdf_file must be a Optional[str]")
         self.attr_setter("_sdf_file", value)
+
+
+    @property
+    def def_file(self) -> Optional[str]:
+        """
+        Get the (optional) input DEF file.
+
+        :return: The (optional) input DEF file.
+        """
+        try:
+            return self.attr_getter("_def_file", None)
+        except AttributeError:
+            return None
+
+    @def_file.setter
+    def def_file(self, value: Optional[str]) -> None:
+        """Set the (optional) input DEF file."""
+        if not (isinstance(value, str) or (value is None)):
+            raise TypeError("def_file must be a Optional[str]")
+        self.attr_setter("_def_file", value)
 
 
     ### Outputs ###
