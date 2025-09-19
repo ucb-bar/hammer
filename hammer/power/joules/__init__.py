@@ -254,7 +254,7 @@ class Joules(HammerPowerTool, CadenceTool):
         power_report_configs = []
         # create power report config for each waveform
         for waveform in self.waveforms:
-            waveform_name = os.path.basename(waveform).split('.')[0]
+            waveform_name = '.'.join(os.path.basename(waveform).split('.')[0:-1])
             power_report_configs.append(
                 PowerReport(
                     waveform_path=waveform,
@@ -266,7 +266,7 @@ class Joules(HammerPowerTool, CadenceTool):
                     toggle_signal=None, num_toggles=None,
                     frame_count=None,
                     power_type=None,
-                    report_stem=waveform_name,
+                    report_stem=None,
                     output_formats=['report']))
         power_report_configs += self.get_power_report_configs() # append report configs from yaml file
         for report in power_report_configs:
@@ -310,7 +310,8 @@ class Joules(HammerPowerTool, CadenceTool):
             type_str = f"-types {report.power_type}" if report.power_type else "-types total"
             output_formats = set(report.output_formats) if report.output_formats else {'report'}  
 
-            report_stem = report.report_stem
+            report_stem = waveform_name if report.report_stem is None else report.report_stem
+            print(report_stem)
             if not report_stem.startswith('/'):
                 save_dir = os.path.join(self.run_dir, 'reports')
                 os.makedirs(save_dir, exist_ok=True)
