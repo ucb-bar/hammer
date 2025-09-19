@@ -580,17 +580,6 @@ power.inputs:
 
   # Power report configs that are run in addition to the average power reports in power.inputs.waveforms
   # type: List[PowerReport]
-  # PowerReport struct members:
-  # waveform_path (str) - Path to the waveform for the report
-  # module (str) - Optional. the path to the module to report power for (default here is the Chipyard top level)
-  # levels (int) - Optional. the number of levels in the design hierachy to report
-  # start_time (str) - Optional. The start time of the power report in the waveform
-  # end_time (str) - Optional. The end time of the power report in the waveform
-  # toggle_signal (str) - Optional. Path to the signal to generate report windows based on toggles
-  # num_toggles (int) - Optional (must be specified if num_toggles is specified). The number of toggles of the toggle_signal for each frame to report power
-  # frame_count (int) - Optional. The number of frames to report the power for
-  # report_name (str) - Optional. Name of the power report
-  # example: report_configs: [{waveform_path: "/path/to/fsdb", module: "chiptop", levels:3, start_time: "0ns", end_time: "1ns", toggle_signal:"/ChipTop/clock", num_toggles:1, frame_count:1000, report_name: "my_fsdb_report"}]
   report_configs: list[dict[str, str]]
 
   # Power analysis mode for different levels of the VLSI flow

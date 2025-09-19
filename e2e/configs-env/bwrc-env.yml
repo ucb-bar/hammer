@@ -11,27 +11,25 @@ synopsys.MGLS_LICENSE_FILE: "1717@bwrcflex-1.eecs.berkeley.edu:1717@bwrcflex-2.e
 
 
 # Commercial tool versions
-synthesis.genus.version: "221"
-par.innovus.version: "221"
-power.joules.version: "221"
-sim.vcs.version: "S-2021.09-SP1-1" # need to bump down these versions because joules requires older FSDB version
-sim.vcs.verdi_home: "/tools/synopsys/verdi/${sim.vcs.version}"
-sim.vcs.verdi_home_meta: lazysubst
+synthesis.genus.version: "231_ISR2"
+par.innovus.version: "231_ISR2"
+power.joules.version: "231_ISR2"
+sim.vcs.version: "W-2024.09-1"
 
 # Open-source tool paths
-synthesis.yosys.yosys_bin: "/tools/commercial/skywater/local/chipyard-tutorial/.conda-yosys/bin/yosys"
-par.openroad.openroad_bin: "/tools/commercial/skywater/local/chipyard-tutorial/.conda-openroad/bin/openroad"
-par.openroad.klayout_bin: "/tools/commercial/skywater/local/chipyard-tutorial/.conda-klayout/bin/klayout"
-drc.klayout.klayout_bin: "/tools/commercial/skywater/local/chipyard-tutorial/.conda-klayout/bin/klayout"
-drc.magic.magic_bin: "/tools/commercial/skywater/local/chipyard-tutorial/.conda-signoff/bin/magic"
-lvs.netgen.netgen_bin: "/tools/commercial/skywater/local/chipyard-tutorial/.conda-signoff/bin/netgen"
+synthesis.yosys.yosys_bin: "/tools/C/openeda/conda-yosys/bin/yosys"
+par.openroad.openroad_bin: "/tools/C/openeda/conda-openroad/bin/openroad"
+par.openroad.klayout_bin: "/tools/C/openeda/conda-klayout/bin/klayout"
+drc.klayout.klayout_bin: "/tools/C/openeda/conda-klayout/bin/klayout"
+drc.magic.magic_bin: "/tools/C/openeda/conda-signoff/bin/magic"
+lvs.netgen.netgen_bin: "/tools/C/openeda/conda-signoff/bin/netgen"
 
 
 # Sky130 paths
 technology.sky130:
-  sky130A: "/tools/commercial/skywater/local/sky130A"
-  sram22_sky130_macros: "/tools/commercial/skywater/local/sram22_sky130_macros"
-  openram_lib: "/tools/commercial/skywater/local/sky130_sram_macros"
+  sky130A: "/tools/C/openeda/conda-sky130/share/pdk/sky130A"
+  sram22_sky130_macros: "/tools/C/openeda/sram22_sky130_macros"
+  openram_lib: "/tools/C/openeda/sky130_sram_macros"
   sky130_nda: "/tools/commercial/skywater/swtech130/skywater-src-nda-20221031"
   sky130_cds: "/tools/commercial/skywater/sky130_cds/sky130_prelim_release_091123"
 

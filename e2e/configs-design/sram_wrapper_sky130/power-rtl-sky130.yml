@@ -1,0 +1,20 @@
+# Test Joules Flow
+
+vlsi.core.power_tool: "hammer.power.joules"
+
+power.inputs:
+  level: "rtl"
+  input_files: ["src/sram_wrapper_sky130.v"]
+  waveforms: ["build-sky130-cm/sram_wrapper_sky130/sim-rtl-rundir/output.fsdb"]
+  report_configs:
+    - waveform_path: "build-sky130-cm/sram_wrapper_sky130/sim-rtl-rundir/output.fsdb"
+      inst: /sram_wrapper_sky130/mem0
+      # specify either interval_size or toggle_signal+num_toggles
+      # interval_size: 2.5ns
+      levels: 2
+      report_stem: sram22_64x32m4w8-write-din_13
+      toggle_signal: clock
+      num_toggles: 1
+      output_formats:
+      - report
+      - ppa

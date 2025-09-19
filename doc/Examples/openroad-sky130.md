@@ -2,19 +2,20 @@
 
 The following directions will get a simple ``pass`` design from RTL to GDS using the [OpenROAD tools](https://theopenroadproject.org) and the [Skywater 130nm PDK](https://github.com/google/skywater-pdk). These directions are meant to provide the minimal set of steps to do so, please reference the next section, [Hammer End-to-End Integration Tests](https://hammer-vlsi.readthedocs.io/en/stable/Examples/e2e.html), for more detailed descriptions of all files and commands.
 
-## Instructions
+## Prerequisites Setup
 
-First, follow the [Hammer Developer Setup](https://hammer-vlsi.readthedocs.io/en/stable/Hammer-Basics/Hammer-Setup.html#developer-setup) to clone Hammer and install/activate the poetry virtual environment.
+First, follow the [Hammer Power User Setup](https://hammer-vlsi.readthedocs.io/en/stable/Hammer-Basics/Hammer-Setup.html#power-user-setup) to clone Hammer and install/activate the virtual environment.
 
-Next, run the setup script to install the OpenROAD tools using Conda, and Skywater 130nm PDK using the [Open-PDKs tool](https://github.com/RTimothyEdwards/open_pdks).
-This step will take a long time due to the amount and size of the required installs.
-You should supply a ``PREFIX`` path to a directory that will serve as the root of all PDK files and supporting tools (total size of all files is ~42GB),
+Next, run the setup script to install the OpenROAD tools and Skywater 130nm PDK using Conda.
+You should supply a ``PREFIX`` path to a directory that will serve as the root of all PDK files and supporting tools (total size of all files is ~4GB),
 otherwise the script will default to installing to your home directory (``~/``).
 
 ```shell
 cd hammer/e2e
 ./scripts/setup-sky130-openroad.sh [PREFIX]
 ```
+
+## Running Hammer
 
 You should now have a file ``configs-env/my-env.yml`` containing all required tool and technology paths for this tutorial.
 To point to your custom environment setup, set the Make variable ``env=my``.

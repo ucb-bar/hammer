@@ -1,0 +1,39 @@
+# Generate Make include to aid in flow
+vlsi.core.build_system: make
+
+vlsi.inputs.power_spec_type: "cpf"
+vlsi.inputs.power_spec_mode: "auto"
+
+design.defines: &DEFINES
+  - SRAM_NAME=sram22_64x32m4w8
+  - DATA_WIDTH=32
+  - ADDR_WIDTH=6
+  - WMASK_WIDTH=4
+
+synthesis.inputs:
+  top_module: "sram_wrapper_sky130"
+  input_files: ["src/sram_wrapper_sky130.v"]
+  defines: *DEFINES
+  defines_meta: append
+
+sim.inputs:
+  top_module: "sram_wrapper_sky130"
+  tb_name: "sram_wrapper_sky130_tb"
+  tb_dut: "sram_wrapper_sky130_dut"
+  defines: *DEFINES
+  defines_meta: append
+  
+power.inputs:
+  top_module: "sram_wrapper_sky130"
+  tb_name: "sram_wrapper_sky130_tb"
+  tb_dut: "sram_wrapper_sky130_dut"
+  defines: *DEFINES
+  defines_meta: append
+
+vlsi.inputs.delays: [
+  {name: "we", clock: "clock", delay: "1", direction: "input"},
+  {name: "wmask", clock: "clock", delay: "1", direction: "input"},
+  {name: "addr", clock: "clock", delay: "1", direction: "input"},
+  {name: "din", clock: "clock", delay: "1", direction: "input"},
+  {name: "dout", clock: "clock", delay: "1", direction: "output"}
+]

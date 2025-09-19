@@ -1,0 +1,13 @@
+# RTL Simulation
+
+sim.inputs:
+  level: "rtl"
+  input_files: ['src/sram_wrapper_sky130.v', 'src/sram_wrapper_sky130_tb.v']
+  options:
+    - "-notice"
+    - "-line"
+    - "+lint=all,noVCDE"
+    - "+v2k"
+    - "-debug"
+    - "-sverilog"
+    - "-lca"
