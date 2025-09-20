@@ -379,6 +379,12 @@ ClockPort = NamedTuple('ClockPort', [
     ('group', Optional[str])
 ])
 
+ResetPort = NamedTuple('ResetPort', [
+    ('name', str),
+    ('active_negated', Optional[bool]),
+    ('synchronous', Optional[bool]),
+])
+
 OutputLoadConstraint = NamedTuple('OutputLoadConstraint', [
     ('name', str),
     ('load', CapacitanceValue)
