@@ -19,3 +19,11 @@ echo "Installing Apache Airflow ${AIRFLOW_VERSION} (Python ${PYTHON_VERSION})"
 pip install "apache-airflow==${AIRFLOW_VERSION}" --constraint "${CONSTRAINT_URL}"
 
 echo "Airflow installed successfully."
+
+
+if [ ! -f "$AIRFLOW_HOME/airflow.db" ]; then
+    echo "Initializing Airflow database..."
+    airflow db reset
+else
+    echo "Airflow database already exists at $AIRFLOW_HOME, skipping reset."
+fi
