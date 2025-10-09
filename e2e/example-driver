@@ -39,7 +39,7 @@ set_db route_design_top_routing_layer 5
     return True
 
 class ExampleDriver(CLIDriver):
-    def get_extra_par_hooks(self) -> List[HammerToolHookAction]:
+    def get_extra_syn_hooks(self) -> List[HammerToolHookAction]:
         extra_hooks = [
             # add any hooks for synthesis tool
         ]
