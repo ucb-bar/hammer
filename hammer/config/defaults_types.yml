@@ -116,6 +116,9 @@ vlsi.inputs:
   # Clock ports of the top-level module.
   clocks: list[dict[str, Any]]
 
+  # Reset ports of the top-level module.
+  resets: list[dict[str, Any]]
+
   # Default output pin load capacitance.
   default_output_load: str
 
