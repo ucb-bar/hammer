@@ -18,13 +18,20 @@
   "lvs_decks": [],
   "additional_lvs_text": "", 
 
-  "libraries": [{
-    "lef_file": "nangate45/lef/NangateOpenCellLibrary.tech.lef",
+  "libraries": [
+    {"milkyway_techfile" : "nangate45/Back_End/virtuoso/technology.tf",
+    "provides": [{"lib_type": "milkyway_techfile"}]
+    },
+    {
+    "lef_file": "nangate45/Back_End/lef/NangateOpenCellLibrary.tech.lef",
     "provides": [{"lib_type": "technology"}]
-  },{
-    "nldm_liberty_file": "nangate45/lib/NangateOpenCellLibrary_typical.lib",
-    "lef_file": "nangate45/lef/NangateOpenCellLibrary.macro.lef",
-    "gds_file": "nangate45/gds/NangateOpenCellLibrary.gds",
+    },
+    {
+    "ccs_library_file" : "nangate45/fix_scan/NangateOpenCellLibrary_typical_ccs_scan.db",
+    "ccs_liberty_file" : "nangate45/Front_End/Liberty/CCS/NangateOpenCellLibrary_typical_ccs.lib",
+    "nldm_liberty_file": "nangate45/Front_End/Liberty/NLDM/NangateOpenCellLibrary_typical.lib",
+    "lef_file": "nangate45/Back_End/lef/NangateOpenCellLibrary.macro.lef",
+    "gds_file": "nangate45/Back_End/gds/NangateOpenCellLibrary.gds",
     "corner": {
       "nmos": "typical",
       "pmos": "typical",

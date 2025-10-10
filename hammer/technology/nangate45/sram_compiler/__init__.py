@@ -32,7 +32,13 @@ class Nangate45SRAMGenerator(OpenROADTool, HammerSRAMGeneratorTool):
 
         self.validate_openroad_installation()
         openroad = self.openroad_flow_path()
-        base_dir = os.path.join(openroad, "flow/designs/src/tinyRocket")
+        
+        # Check what type of installation we have
+        if not os.path.exists(openroad + "flow/designs/src/tinyRocket"):
+            # This uses the OpenRoad repository
+            base_dir = os.path.join(openroad, "test/Nangate45/")
+        else: 
+            base_dir = os.path.join(openroad, "flow/designs/src/tinyRocket")
 
         tech_cache_dir = os.path.abspath(self.technology.cache_dir)
         if params.family == "1RW":
