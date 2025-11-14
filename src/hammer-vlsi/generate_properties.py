@@ -220,8 +220,9 @@ def main(args) -> int:
     HammerStaticVerificationTool = Interface(module="HammerStaticVerificationTool",
                                 filename="hammer_vlsi/hammer_vlsi_impl.py",
                                 inputs=[
-                                  #TODO fill this out as more tools are added
-                                  InterfaceVar("config_name", "str", "the name of the current configuration"),
+                                  InterfaceVar("config_name", "str", "name of the current configuration"),
+                                  InterfaceVar("waiver_file_mode", "str", "waiver file mode (valid modes are auto, manual, and append)"),
+                                  InterfaceVar("waiver_file", "str|Path|None", "path to waiver file or string with waiver tcl code"),
                                 ],
                                 outputs=[]
                                 )
@@ -264,7 +265,7 @@ def main(args) -> int:
         if dry_run:
             print(contents, end='')
         else:
-            with open(filename, "w") as f:
+            with open(get_full_filename(selected_file), "w") as f:
                 f.write(contents)
 
     return 0
