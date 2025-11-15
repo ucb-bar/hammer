@@ -672,7 +672,8 @@ class HammerDriver:
             self.database.get_setting("vlsi.inputs.hierarchical.mode"))
         static_verif_tool.hierarchical_settings = self.get_hierarchical_settings()
         static_verif_tool.submit_command = HammerSubmitCommand.get("static_verification", self.database)
-        static_verif_tool.waiver_file = self.database.get_setting("synthesis.inputs.waiver_file")
+        static_verif_tool.waiver_file_mode = self.database.get_setting("static_verification.inputs.waiver_file_mode")
+        static_verif_tool.waiver_file = self.database.get_setting("static_verification.inputs.waiver_file")
         static_verif_tool.run_dir = run_dir
 
         self.static_verification_tool = static_verif_tool

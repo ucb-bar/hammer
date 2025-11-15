@@ -15,6 +15,7 @@ import os
 import sys
 import json
 from typing import Callable, Iterable, List, NamedTuple, Optional, Dict, Any, Union
+from pathlib import Path
 from decimal import Decimal
 
 import hammer_config
@@ -1413,20 +1414,72 @@ class HammerPowerTool(HammerTool):
     ### Generated interface HammerPowerTool ###
 
 class HammerStaticVerificationTool(HammerTool):
-    #TODO to be replaced by generated code as functionality is added
+    ### Generated interface HammerStaticVerificationTool ###
+    ### DO NOT MODIFY THIS CODE, EDIT generate_properties.py INSTEAD ###
+    ### Inputs ###
+
     @property
     def config_name(self) -> str:
+        """
+        Get the name of the current configuration.
+
+        :return: The name of the current configuration.
+        """
         try:
             return self.attr_getter("_config_name", None)
         except AttributeError:
-            raise ValueError("Nothing set for the config name yet")
+            raise ValueError("Nothing set for the name of the current configuration yet")
 
     @config_name.setter
     def config_name(self, value: str) -> None:
         """Set the name of the current configuration."""
         if not (isinstance(value, str)):
-            raise TypeError("config_name must be a string")
+            raise TypeError("config_name must be a str")
         self.attr_setter("_config_name", value)
+
+
+    @property
+    def waiver_file_mode(self) -> str:
+        """
+        Get the waiver file mode (valid modes are auto, manual, and append).
+
+        :return: The waiver file mode (valid modes are auto, manual, and append).
+        """
+        try:
+            return self.attr_getter("_waiver_file_mode", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the waiver file mode (valid modes are auto, manual, and append) yet")
+
+    @waiver_file_mode.setter
+    def waiver_file_mode(self, value: str) -> None:
+        """Set the waiver file mode (valid modes are auto, manual, and append)."""
+        if not (isinstance(value, str)):
+            raise TypeError("waiver_file_mode must be a str")
+        self.attr_setter("_waiver_file_mode", value)
+
+
+    @property
+    def waiver_file(self) -> str|Path|None:
+        """
+        Get the path to waiver file or string with waiver tcl code.
+
+        :return: The path to waiver file or string with waiver tcl code.
+        """
+        try:
+            return self.attr_getter("_waiver_file", None)
+        except AttributeError:
+            raise ValueError("Nothing set for the path to waiver file or string with waiver tcl code yet")
+
+    @waiver_file.setter
+    def waiver_file(self, value: str|Path|None) -> None:
+        """Set the path to waiver file or string with waiver tcl code."""
+        if not (isinstance(value, str|Path|None)):
+            raise TypeError("waiver_file must be a str|Path|None")
+        self.attr_setter("_waiver_file", value)
+
+
+    ### Outputs ###
+    ### END Generated interface HammerStaticVerificationTool ###
 
 class HasUPFSupport(HammerTool):
     """Mix-in trait with functions useful for tools with UPF style power
