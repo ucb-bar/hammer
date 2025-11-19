@@ -169,34 +169,6 @@
   },
   {
     "type": "sram",
-    "name": "sram22_64x4m4w2",
-    "source": "sram22",
-    "depth": "64",
-    "width": 4,
-    "family": "1rw",
-    "mask": "true",
-    "vt": "svt",
-    "mux": 4,
-    "ports": [
-      {
-        "address port name": "addr",
-        "address port polarity": "active high",
-        "clock port name": "clk",
-        "clock port polarity": "active high",
-        "write enable port name": "we",
-        "write enable port polarity": "active high",
-        "output port name": "dout",
-        "output port polarity": "active high",
-        "input port name": "din",
-        "input port polarity": "active high",
-        "mask port name": "wmask",
-        "mask granularity": 2,
-        "mask port polarity": "active high"
-      }
-    ]
-  },
-  {
-    "type": "sram",
     "name": "sram22_2048x32m8w8",
     "source": "sram22",
     "depth": "2048",

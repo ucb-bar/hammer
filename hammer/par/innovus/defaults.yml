@@ -3,7 +3,7 @@
 
 par.innovus:
   # Location of the binary.
-  innovus_bin: "${cadence.cadence_home}/DDI/DDI${par.innovus.version}/INNOVUS${par.innovus.version}/bin/innovus"
+  innovus_bin: "${cadence.cadence_home}/DDI/DDI${par.innovus.version}/bin/innovus"
   innovus_bin_meta: lazysubst # we want later overrides to be able to affect this
 
   # Innovus version to use.

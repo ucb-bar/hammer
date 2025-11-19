@@ -1,15 +1,10 @@
 # Hammer End-to-End Integration Tests
 
-This folder contains an end-to-end (RTL -> GDS) smoketest flow using Hammer, using the Cadence toolchain, and the ASAP7 or Skywater 130 PDKs.
+The `hammer/e2e` folder contains an end-to-end (RTL -> GDS) smoketest flow using Hammer, either the Cadence or OpenROAD toolchain, and the ASAP7 or Skywater 130 PDKs.
 
 ## Setup
 
-The integration tests use Hammer as a source dependency, so create the e2e poetry environment.
-
-```shell
-poetry install
-poetry shell
-```
+First, follow the [Hammer Power User Setup](https://hammer-vlsi.readthedocs.io/en/stable/Hammer-Basics/Hammer-Setup.html#power-user-setup) to clone Hammer and install/activate the virtual environment.
 
 ## Overview
 
@@ -19,7 +14,7 @@ poetry shell
 The following variables in the Makefile select the target flow to run:
 
 - `design` - RTL name
-    - {`pass`, `gcd`}
+    - {`pass`, `gcd`, `sram_wrapper_sky130`}
 - `pdk` - PDK name
     - {`sky130`, `asap7`}
 - `tools` - CAD tool flow
@@ -86,6 +81,9 @@ make lvs
 
 These actions are summarized in more detail:
 
+- SRAM generation
+    - `make srams`
+    - Generated SRAM configs in `OBJ_DIR/sram_generator-output.json` (empty unless `vlsi.inputs.sram_parameters` is specified)
 - RTL simulation
     - `make sim-rtl`
     - Generated waveform in `OBJ_DIR/sim-rtl-rundir/output.fsdb`
@@ -151,3 +149,22 @@ Clone the [asap7 repo](https://github.com/The-OpenROAD-Project/asap7) somewhere 
 
 Refer to the [Hammer Sky130 plugin README](https://hammer-vlsi.readthedocs.io/en/stable/Technology/Sky130.html)
 to install the Sky130 PDK, then reference the path in your `ENV_YML` config (only the `technology.sky130.sky130A` key is required).
+
+## Pipecleaning
+
+We have provided several reference designs of increasing complexity to aid with pipecleaning your Hammer VLSI flow setup. These are summarized as follows, in order of complexity:
+
+- `pass`: single register
+- `gcd`: computes greatest common denominator, good for testing more complex logic
+- `sram_wrapper_sky130`: example wrapper for an SRAM instance in Sky130, useful for ensuring correct SRAM integration into flow
+    - wraps any Sky130 SRAM instance available in `hammer/hammer/technology/sky130/sram-cache.json`
+    - SRAM instance specified via defines in `configs-design/sram_wrapper_sky130/common.yml`
+    - all SRAM configurations are loaded via these config fragments in `configs-design/sram_wrapper_sky130/sky130.yml`:
+        - ```yaml
+            # Compile all srams in our cache
+            vlsi.inputs.sram_parameters: "../../../hammer/technology/sky130/sram-cache.json"
+            vlsi.inputs.sram_parameters_meta: ["prependlocal", "transclude", "json2list"]
+            ```
+
+
+

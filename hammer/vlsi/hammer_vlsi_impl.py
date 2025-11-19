@@ -81,16 +81,18 @@ class FlowLevel(Enum):
 
 PowerReport = NamedTuple('PowerReport', [
     ('waveform_path', str),
+    ('report_stem', Optional[str]),
     ('inst', Optional[str]),
     ('module', Optional[str]),
     ('levels', Optional[int]),
     ('start_time', Optional[TimeValue]),
     ('end_time', Optional[TimeValue]),
     ('interval_size', Optional[TimeValue]),
+    ('interval_list', Optional[TimeValue]),
     ('toggle_signal', Optional[str]),
     ('num_toggles', Optional[int]),
     ('frame_count', Optional[int]),
-    ('report_name', Optional[str]),
+    ('power_type', Optional[int]),
     ('output_formats', Optional[List[str]])
 ])
 
@@ -1666,12 +1668,17 @@ class HammerPowerTool(HammerTool):
         for config in configs:
             report = PowerReport(
                 waveform_path=config["waveform_path"],
+                report_stem=None,
+                output_formats=None,
                 inst=None, module=None,
-                levels=None, start_time=None,
-                end_time=None, interval_size=None,
+                levels=None,
+                start_time=None,
+                end_time=None,
+                interval_size=None,
+                interval_list=None,
                 toggle_signal=None, num_toggles=None,
+                power_type=None,
                 frame_count=None,
-                report_name=None, output_formats=None
             )
             if "inst" in config:
                 report = report._replace(inst=config["inst"])
@@ -1685,14 +1692,18 @@ class HammerPowerTool(HammerTool):
                 report = report._replace(end_time=TimeValue(config["end_time"]))
             if "interval_size" in config:
                 report = report._replace(interval_size=TimeValue(config["interval_size"]))
+            if "interval_list" in config:
+                report = report._replace(interval_list=config["interval_list"])
             if "toggle_signal" in config:
                 report = report._replace(toggle_signal=config["toggle_signal"])
             if "num_toggles" in config:
                 report = report._replace(num_toggles=config["num_toggles"])
             if "frame_count" in config:
                 report = report._replace(frame_count=config["frame_count"])
-            if "report_name" in config:
-                report = report._replace(report_name=config["report_name"])
+            if "report_stem" in config:
+                report = report._replace(report_stem=config["report_stem"])
+            if "power_type" in config:
+                report = report._replace(power_type=config["power_type"])
             if "output_formats" in config:
                 report = report._replace(output_formats=config["output_formats"])
             output.append(report)

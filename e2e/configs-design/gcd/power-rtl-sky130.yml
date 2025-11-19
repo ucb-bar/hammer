@@ -11,7 +11,7 @@ power.inputs:
       levels: 1
       toggle_signal: /gcd/clk
       num_toggles: 1
-      report_name: levels-1
+      report_stem: levels-1
       output_formats:
       - all
     # the following two should produce equivalent results:
@@ -19,13 +19,13 @@ power.inputs:
       inst: /gcd/GCDctrl0
       toggle_signal: /gcd/clk
       num_toggles: 1
-      report_name: inst-GCDctrl0
+      report_stem: inst-GCDctrl0
       output_formats:
       - all
     - waveform_path: "build-sky130-cm/gcd/sim-rtl-rundir/output.fsdb"
       module: gcd_control
       interval_size: 5ns
-      report_name: module-gcd_control
+      report_stem: module-gcd_control
       output_formats:
       - all
     
