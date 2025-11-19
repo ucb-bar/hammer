@@ -24,6 +24,7 @@
     },
     {
     "lef_file": "nangate45/Back_End/lef/NangateOpenCellLibrary.tech.lef",
+    "verilog_sim" : "nangate45/Front_End/Verilog/NangateOpenCellLibrary_fixed.v",
     "provides": [{"lib_type": "technology"}]
     },
     {

@@ -1,53 +1,123 @@
 [{
   "type" : "sram",
-  "name" : "fakeram45_1024x32",
+  "name" : "fakeram45_1RW_1024x32",
   "depth" : "1024",
   "width" : 32,
   "family" : "1RW",
   "vt" : "SRAM",
+  "mask" : "true", 
   "mux" : 1,
-  "ports" : [{
-    "address port name" : "addr_in",
-    "address port polarity" : "active high",
-    "chip enable port name" : "ce_in",
-    "chip enable port polarity" : "active high",
-    "clock port name" : "clk",
-    "clock port polarity" : "positive edge",
-    "input port name" : "wd_in",
-    "input port polarity" : "active high",
-    "mask granularity" : 1,
-    "mask port name" : "w_mask_in",
-    "mask port polarity": "active high",
-    "output port name" : "rd_out",
-    "output port polarity" : "active high",
-    "write enable port name" : "we_in",
-    "write enable port polarity" : "active high"
-  }],
-  "extra ports" : []
+  "ports": [
+      {
+        "address port name": "RW0_addr",
+        "address port polarity": "active high",
+        "chip enable port name": "RW0_en",
+        "chip enable port polarity": "active high",
+        "clock port name": "RW0_clk",
+        "clock port polarity": "positive edge",
+        "output port name": "RW0_rdata",
+        "output port polarity": "active high",
+        "input port name": "RW0_wdata",
+        "input port polarity": "active high",
+        "write enable port name": "RW0_wmode",
+        "write enable port polarity": "active high",
+        "mask port name" : "RW0_wmask",
+        "mask port polarity" : "active high",
+        "mask granularity" : 32
+      }
+    ]
 },{
   "type" : "sram",
-  "name" : "fakeram45_64x32",
+  "name" : "fakeram45_1RW_64x32",
   "depth" : "64",
   "width" : 32,
   "family" : "1RW",
   "vt" : "SRAM",
+  "mask" : "true", 
   "mux" : 1,
-  "ports" : [{
-    "address port name" : "addr_in",
+  "ports": [
+      {
+        "address port name": "RW0_addr",
+        "address port polarity": "active high",
+        "chip enable port name": "RW0_en",
+        "chip enable port polarity": "active high",
+        "clock port name": "RW0_clk",
+        "clock port polarity": "positive edge",
+        "output port name": "RW0_rdata",
+        "output port polarity": "active high",
+        "input port name": "RW0_wdata",
+        "input port polarity": "active high",
+        "write enable port name": "RW0_wmode",
+        "write enable port polarity": "active high",
+        "mask port name" : "RW0_wmask",
+        "mask port polarity" : "active high",
+        "mask granularity" : 32
+      }
+    ]
+},
+  
+{
+  "type" : "sram",
+  "name" : "fakeram45_1R1W_64x32",
+  "depth" : "64",
+  "width" : 32,
+  "family" : "1R1W",
+  "vt" : "SRAM",
+ "mask" : "false",
+  "ports": [ {
+    "address port name" : "R0_addr",
     "address port polarity" : "active high",
-    "chip enable port name" : "ce_in",
-    "chip enable port polarity" : "active high",
-    "clock port name" : "clk",
+    "read enable port name" : "R0_en",
+    "read enable port polarity" : "active high",
+    "clock port name" : "R0_clk",
     "clock port polarity" : "positive edge",
-    "input port name" : "wd_in",
+    "output port name" : "R0_data",
+    "output port polarity" : "active high"
+  }, 
+  {
+    "address port name" : "W0_addr",
+    "address port polarity" : "active high",
+    "write enable port name" : "W0_en",
+    "write enable port polarity" : "active high",
+    "clock port name" : "W0_clk",
+    "clock port polarity" : "positive edge",
+    "input port name" : "W0_data",
+    "input port polarity" : "active high"
+  } 
+]
+},
+
+
+{
+  "type" : "sram",
+  "name" : "fakeram45_2RmW_64x32",
+  "depth" : "64",
+  "width" : 32,
+  "family" : "2RmW",
+  "vt" : "SRAM",
+  "mask"  : "true",
+  "ports": [ {
+    "address port name" : "R0_addr",
+    "address port polarity" : "active high",
+    "read enable port name" : "R0_en",
+    "read enable port polarity" : "active high",
+    "clock port name" : "R0_clk",
+    "clock port polarity" : "positive edge",
+    "output port name" : "R0_data",
+    "output port polarity" : "active high"
+  },{
+    "address port name" : "W0_addr",
+    "address port polarity" : "active high",
+    "write enable port name" : "W0_en",
+    "write enable port polarity" : "active high",
+    "clock port name" : "W0_clk",
+    "clock port polarity" : "positive edge",
+    "input port name" : "W0_data",
     "input port polarity" : "active high",
-    "mask granularity" : 1,
-    "mask port name" : "w_mask_in",
-    "mask port polarity": "active high",
-    "output port name" : "rd_out",
-    "output port polarity" : "active high",
-    "write enable port name" : "we_in",
-    "write enable port polarity" : "active high"
-  }],
-  "extra ports" : []
-}]
+    "mask port name" : "W0_wmask",
+    "mask port polarity" : "active high",
+    "mask granularity" : 32
+  } 
+]
+}
+]
