@@ -1459,22 +1459,22 @@ class HammerStaticVerificationTool(HammerTool):
 
 
     @property
-    def waiver_file(self) -> str|Path|None:
+    def waiver_file(self) -> str|None:
         """
-        Get the path to waiver file or string with waiver tcl code.
+        Get the string with waiver tcl code.
 
-        :return: The path to waiver file or string with waiver tcl code.
+        :return: The string with waiver tcl code.
         """
         try:
             return self.attr_getter("_waiver_file", None)
         except AttributeError:
-            raise ValueError("Nothing set for the path to waiver file or string with waiver tcl code yet")
+            raise ValueError("Nothing set for the string with waiver tcl code yet")
 
     @waiver_file.setter
-    def waiver_file(self, value: str|Path|None) -> None:
-        """Set the path to waiver file or string with waiver tcl code."""
-        if not (isinstance(value, str|Path|None)):
-            raise TypeError("waiver_file must be a str|Path|None")
+    def waiver_file(self, value: str|None) -> None:
+        """Set the string with waiver tcl code."""
+        if not (isinstance(value, str|None)):
+            raise TypeError("waiver_file must be a str|None")
         self.attr_setter("_waiver_file", value)
 
 

@@ -1007,7 +1007,7 @@ static_verification.inputs:
   # Valid modes are auto, manual, and append
   # type: str
   waiver_file_mode: "manual"
-  # If waiver_file_mode is manual takes a path to a waiver file
+  # If waiver_file_mode is manual takes tcl code as a full waiver
   # If mode is append, takes string holding tcl code to append to the auto waiver
   # If mode is auto this is ignored and a waiver is generated based on the technologies supplied
   # type : str|Path
