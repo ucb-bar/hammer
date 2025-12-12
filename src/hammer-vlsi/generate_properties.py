@@ -222,7 +222,7 @@ def main(args) -> int:
                                 inputs=[
                                   InterfaceVar("config_name", "str", "name of the current configuration"),
                                   InterfaceVar("waiver_file_mode", "str", "waiver file mode (valid modes are auto, manual, and append)"),
-                                  InterfaceVar("waiver_file", "str|None", "string with waiver tcl code"),
+                                  InterfaceVar("waiver_file", "Optional[str]", "string with waiver tcl code"),
                                 ],
                                 outputs=[]
                                 )

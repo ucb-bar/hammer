@@ -1471,10 +1471,10 @@ class HammerStaticVerificationTool(HammerTool):
             raise ValueError("Nothing set for the string with waiver tcl code yet")
 
     @waiver_file.setter
-    def waiver_file(self, value: str|None) -> None:
+    def waiver_file(self, value: Optional[str]) -> None:
         """Set the string with waiver tcl code."""
-        if not (isinstance(value, str|None)):
-            raise TypeError("waiver_file must be a str|None")
+        if not (isinstance(value, Optional[str])):
+            raise TypeError("waiver_file must be a Optional[str]")
         self.attr_setter("_waiver_file", value)
 
 
