@@ -139,12 +139,10 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
         if post_synth_sdc is not None:
             clock_fragment = os.path.join(self.run_dir, "clock_constraints_fragment.sdc")
             sdc_files = [f for f in sdc_files if f != clock_fragment]
+            sdc_files.insert(0, post_synth_sdc)
 
         # Append any custom SDC files.
         sdc_files.extend(self.get_setting("vlsi.inputs.custom_sdc_files"))
-
-        if post_synth_sdc is not None:
-            sdc_files.append(post_synth_sdc)
 
         # TODO: add floorplanning SDC
         if len(sdc_files) > 0:
