@@ -88,6 +88,25 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
                                                  self.filter_for_mmmc(voltage=corner.voltage, temp=corner.temp)])
         return " ".join(lib_args)
 
+    def get_socv_libs(self, corner: Optional[MMMCCorner] = None) -> str:
+        """
+        Helper function to get the list of SOCV derate files in space separated format.
+        Returns an empty string if no SOCV files are present.
+
+        :param corner: Optional corner to consider. If supplied, filters SOCV files matching the corner.
+        :return: List of SOCV files separated by spaces
+        """
+        pre_filters = optional_map(corner, lambda c: [self.filter_for_mmmc(voltage=c.voltage, temp=c.temp)])
+        lib_args = self.technology.read_libs([hammer_tech.filters.socv_filter],
+                                             hammer_tech.HammerTechnologyUtils.to_plain_item,
+                                             extra_pre_filters=pre_filters)
+        return " ".join(lib_args)
+
+    @property
+    def has_socv(self) -> bool:
+        """True if any library provides SOCV derate files."""
+        return self.get_socv_libs() != ""
+
     def get_qrc_tech(self) -> str:
         """
         Helper function to get the list of rc corner tech files in space separated format.
@@ -186,9 +205,11 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
                     raise ValueError("Unsupported MMMCCornerType")
 
                 # First, create Innovus library sets
-                append_mmmc("create_library_set -name {name}_set -timing [list {list}]".format(
+                socv = self.get_socv_libs(corner)
+                append_mmmc("create_library_set -name {name}_set -timing [list {list}]{socv}".format(
                     name=corner_name,
-                    list=self.get_timing_libs(corner)
+                    list=self.get_timing_libs(corner),
+                    socv=" -socv [list {}]".format(socv) if socv else ""
                 ))
                 # Skip opconds for now
                 # Next, create Innovus timing conditions
@@ -227,9 +248,11 @@ class CadenceTool(HasSDCSupport, HasCPFSupport, HasUPFSupport, TCLTool, HammerTo
         else:
             # First, create an Innovus library set.
             library_set_name = "my_lib_set"
-            append_mmmc("create_library_set -name {name} -timing [list {list}]".format(
+            socv = self.get_socv_libs()
+            append_mmmc("create_library_set -name {name} -timing [list {list}]{socv}".format(
                 name=library_set_name,
-                list=self.get_timing_libs()
+                list=self.get_timing_libs(),
+                socv=" -socv [list {}]".format(socv) if socv else ""
             ))
             # Next, create an Innovus timing condition.
             timing_condition_name = "my_timing_condition"
