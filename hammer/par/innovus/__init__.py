@@ -280,6 +280,12 @@ class Innovus(HammerPlaceAndRouteTool, CadenceTool):
         verbose_append("set_db timing_analysis_cppr both")
         # Use OCV mode for timing analysis by default
         verbose_append("set_db timing_analysis_type ocv")
+        # Enable SOCV analysis if any library provides SOCV derate files
+        if self.has_socv:
+            verbose_append("set_db timing_analysis_socv true")
+            verbose_append("set_db timing_socv_rc_variation_mode true")
+            verbose_append("set_db timing_enable_socv_skewness_propagation_mode true")
+            verbose_append("set_db delaycal_socv_accuracy_mode medium")
 
         # Read LEF layouts.
         lef_files = self.technology.read_libs([

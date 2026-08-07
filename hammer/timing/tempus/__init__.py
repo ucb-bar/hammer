@@ -180,6 +180,12 @@ class Tempus(HammerTimingTool, CadenceTool):
         verbose_append("set_db timing_analysis_cppr both")
         # On-chip variation analysis
         verbose_append("set_db timing_analysis_type ocv")
+        # Enable SOCV analysis if any library provides SOCV derate files
+        if self.has_socv:
+            verbose_append("set_db timing_analysis_socv true")
+            verbose_append("set_db timing_socv_rc_variation_mode true")
+            verbose_append("set_db timing_enable_socv_skewness_propagation_mode true")
+            verbose_append("set_db delaycal_socv_accuracy_mode medium")
         # Partial path-based analysis even in graph-based analysis mode
         verbose_append("set_db timing_analysis_graph_pba_mode true")
         # Equivalent waveform model w/ waveform propagation

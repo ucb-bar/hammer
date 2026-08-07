@@ -119,6 +119,7 @@ class Library(BaseModel):
     openaccess_techfile: Optional[str] = None
     provides: Optional[List[Provide]] = None
     qrc_techfile: Optional[str] = None
+    socv_file: Optional[str] = None
     supplies: Optional[Supplies] = None
     tluplus_files: Optional[MinMaxCap] = None
     tluplus_map_file: Optional[TLUPlusMapFile] = None
@@ -1330,6 +1331,25 @@ class LibraryFilterHolder:
         return LibraryFilter(
             tag="qrc",
             description="qrc RC corner tech file",
+            paths_func=paths_func,
+            is_file=True
+        )
+
+    @property
+    def socv_filter(self) -> LibraryFilter:
+        """
+        Selecting SOCV (Statistical On-Chip Variation) derate files.
+        """
+
+        def paths_func(lib: Library) -> List[str]:
+            if lib.socv_file is not None:
+                return [lib.socv_file]
+            else:
+                return []
+
+        return LibraryFilter(
+            tag="socv",
+            description="SOCV derate file",
             paths_func=paths_func,
             is_file=True
         )
